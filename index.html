@@ -150,23 +150,24 @@ independently sourced — it may just belong to more than one thing with that na
 <!-- ================= REASON PANEL ================= -->
 <div id="p-think" class="panel">
 <p class="small" style="margin-top:0">A lookup answers one hop. This <strong>chains</strong> them:
-<em>the continent of the country Nairobi is in</em> is not a recorded fact — it is
-Nairobi&nbsp;→&nbsp;country&nbsp;→&nbsp;Kenya&nbsp;→&nbsp;continent&nbsp;→&nbsp;Africa, a path the
-engine has to <em>find</em>. Watch it walk the graph, and watch the confidence compound.</p>
+<em>the capital of the country Melbourne is in</em> is not a recorded fact — it is
+Melbourne&nbsp;→&nbsp;country&nbsp;→&nbsp;Australia&nbsp;→&nbsp;capital&nbsp;→&nbsp;Canberra, a path
+the engine has to <em>find</em>. Watch it walk the graph, and watch the confidence compound.</p>
 
 <div class="ask">
-  <input id="tq" placeholder="the continent of the country Nairobi is in" autocomplete="off">
+  <input id="tq" placeholder="capital of the country Melbourne is in" autocomplete="off">
   <button id="tgo" disabled>loading…</button>
 </div>
 <p class="hint">Try
+  <code>capital of the country Melbourne is in</code>
   <code>the continent of the country Nairobi is in</code>
   <code>the continent of the country Tokyo is in</code>
   <code>the genre of the performer of Abbey Road</code>
-  <code>capital of the country Melbourne is in</code>
 </p>
-<p class="small" style="margin-top:-16px">That last one is deliberate: “Melbourne” names more than
-one real place, so the chain is genuinely ambiguous and the engine shows you the rival readings
-instead of picking one and sounding certain.</p>
+<p class="small" style="margin-top:-16px">The first one also shows the honest part. “Melbourne”
+names several real places, so several chains genuinely complete — the engine ranks them and shows
+you the rivals (a Melbourne in Quebec really does lead to Ottawa) instead of picking one and
+sounding certain.</p>
 
 <div class="stage">
   <canvas id="cv"></canvas>
