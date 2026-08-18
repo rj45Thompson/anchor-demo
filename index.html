@@ -69,6 +69,27 @@ font-family:ui-monospace,Menlo,monospace}
 .step .ok{color:var(--good)}.step .no{color:var(--low)}
 .field-lbl{font-size:.82rem;color:var(--muted);margin:14px 0 4px;
 font-family:ui-sans-serif,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+/* ---- reason lane: the 3D graph stage + the chain trace ---- */
+.stage{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+background:linear-gradient(180deg,var(--card),var(--bg));margin:0 0 10px}
+.stage canvas{display:block;width:100%;height:430px;cursor:grab;touch-action:none}
+.stage canvas.grabbing{cursor:grabbing}
+.stage .badge{position:absolute;left:11px;top:10px;font:11px ui-monospace,Menlo,monospace;
+color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:5px;
+padding:3px 8px;pointer-events:none;opacity:.92}
+.stage .tip{position:absolute;right:11px;bottom:10px;font:11px ui-sans-serif,system-ui,sans-serif;
+color:var(--muted);pointer-events:none;opacity:.75}
+@media (max-width:620px){.stage canvas{height:300px}}
+.trace{border-left:2px solid var(--line);padding:2px 0 2px 14px;margin:0 0 14px}
+.hop{margin:0 0 11px;font-size:.93rem}
+.hop .lead{font-family:ui-monospace,Menlo,monospace;font-size:.9rem}
+.hop .meta{color:var(--muted);font-size:.85rem;margin-top:2px}
+.hop.live{animation:pop .32s ease-out}
+@keyframes pop{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:none}}
+.verdict{background:var(--code);border-radius:8px;padding:13px 15px;margin:0 0 12px}
+.verdict .big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.chip{display:inline-block;background:var(--code);padding:2px 7px;border-radius:4px;
+font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 </style></head><body><div class="wrap">
 
 <h1>How sure is it, and why?</h1>
@@ -78,6 +99,7 @@ doesn't have enough.</p>
 
 <div class="tabs">
   <div class="tab on" data-p="facts">Ask a question</div>
+  <div class="tab" data-p="think">Watch it think</div>
   <div class="tab" data-p="code">Write a function</div>
 </div>
 
@@ -125,6 +147,55 @@ towns are named "Berlin") can appear merged under one heading. Every fact shown 
 independently sourced — it may just belong to more than one thing with that name.</div>
 </div>
 
+<!-- ================= REASON PANEL ================= -->
+<div id="p-think" class="panel">
+<p class="small" style="margin-top:0">A lookup answers one hop. This <strong>chains</strong> them:
+<em>the continent of the country Nairobi is in</em> is not a recorded fact — it is
+Nairobi&nbsp;→&nbsp;country&nbsp;→&nbsp;Kenya&nbsp;→&nbsp;continent&nbsp;→&nbsp;Africa, a path the
+engine has to <em>find</em>. Watch it walk the graph, and watch the confidence compound.</p>
+
+<div class="ask">
+  <input id="tq" placeholder="the continent of the country Nairobi is in" autocomplete="off">
+  <button id="tgo" disabled>loading…</button>
+</div>
+<p class="hint">Try
+  <code>the continent of the country Nairobi is in</code>
+  <code>the continent of the country Tokyo is in</code>
+  <code>the genre of the performer of Abbey Road</code>
+  <code>capital of the country Melbourne is in</code>
+</p>
+<p class="small" style="margin-top:-16px">That last one is deliberate: “Melbourne” names more than
+one real place, so the chain is genuinely ambiguous and the engine shows you the rival readings
+instead of picking one and sounding certain.</p>
+
+<div class="stage">
+  <canvas id="cv"></canvas>
+  <div class="badge" id="badge">idle</div>
+  <div class="tip">drag to orbit · click a node to expand it</div>
+</div>
+
+<div id="tout"></div>
+
+<h2>Why this is not a lookup</h2>
+<p>No source recorded “Melbourne → capital of its country → Canberra.” The engine finds it by
+<strong>searching</strong> outward from the subject, hop by hop, fetching each new shard only when
+it needs it — and every edge it walks is a real fact with real sources, so the chain is auditable
+end to end.</p>
+<p>The confidence is <strong>composed, not asserted</strong>: the chain probability is the product
+of each hop's own measured probability. Two 87% hops give 76% — chaining <em>costs</em> certainty,
+and the engine reports that cost instead of hiding it.</p>
+<div class="warn"><strong>The assumption, stated.</strong> Multiplying hop probabilities treats the
+hops as <em>independent</em>. That is an assumption, not a measurement — the single-hop numbers on
+the first tab are measured against held-out data, this composition on top of them is not. It is
+labelled that way everywhere it appears, because a number you can't source is exactly what this
+whole project is arguing against.</p>
+
+<h2>Failure is a result</h2>
+<p>When a chain dead-ends, the engine names <em>the exact node it could not get out of</em> rather
+than inventing a plausible ending. A broken chain that says where it broke is more useful than a
+complete-looking chain that is quietly wrong.</p>
+</div>
+
 <!-- ================= CODE PANEL ================= -->
 <div id="p-code" class="panel">
 <p class="small" style="margin-top:0">The other half of the same idea, in a different domain: given
@@ -157,7 +228,10 @@ execution, report a measured confidence, refuse rather than invent.</strong><br>
 Facts data derived from REBEL, Wikidata5M, Wikidata-truthy, ConceptNet&nbsp;5, YAGO&nbsp;3, T-REx,
 DBpedia and KELM, released under
 <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:var(--hi)">CC&nbsp;BY-SA&nbsp;4.0</a>
-per their ShareAlike terms. Site code MIT.</footer>
+per their ShareAlike terms. Site code MIT.<br><br>
+Built by <strong>RJ Thompson</strong> — no frameworks, no server, no model: one HTML file, a 512-way
+sharded graph and a Bloom filter, all running in your browser.
+<a href="https://github.com/rj45Thompson/anchor-demo" style="color:var(--hi)">Source on GitHub</a>.</footer>
 </div>
 
 <script>
@@ -384,6 +458,7 @@ fetch("index.json").then(r=>r.json()).then(d=>{
   RELS=d.rels;NSHARD=d.nshard;
   RELSET=new Set(RELS.filter(Boolean).map(r=>r.toLowerCase()));
   $("go").disabled=false;$("go").textContent="Ask";
+  if($("tgo")){$("tgo").disabled=false;$("tgo").textContent="Reason";}
   $("factsWarn").insertAdjacentHTML("beforeend"," <em>Index loaded: "+
     d.subjects.toLocaleString()+" subjects, "+d.facts.toLocaleString()+" facts, "+
     d.nshard+" shards.</em>");
@@ -394,6 +469,434 @@ fetch("index.json").then(r=>r.json()).then(d=>{
   if(!$("q").value.trim()){ $("q").value="what is a car"; answer("what is a car"); }
 }).catch(e=>{$("go").textContent="index failed";console.error(e)});
 }
+
+/* ---------------------------------------------------------------- reason lane
+   The facts lane answers ONE hop: look a subject up, report what sources said. That is a lookup,
+   and a lookup is not reasoning. This lane does the part that needs an actual engine - it CHAINS
+   hops. "The capital of the country Melbourne is in" is Melbourne -country-> Australia -capital->
+   Canberra: a path no source ever recorded as a single fact, so no lookup can return it. It has to
+   be SEARCHED for, outward from the subject, fetching each new shard only when the search reaches
+   it.
+
+   Two properties make this worth showing rather than a party trick:
+   (1) confidence is COMPOSED, not asserted - P(chain) = the product of each hop's own measured
+       probability, and the page says out loud that the product assumes hop INDEPENDENCE, which is
+       an assumption rather than a measurement;
+   (2) it abstains AT THE HOP THAT BROKE, naming the node it could not get out of, instead of
+       inventing a plausible ending.
+
+   The 3D view is a real perspective projection over a force-settled layout: no WebGL, no library,
+   just arithmetic on a 2D canvas - the same "check every step yourself" claim the rest of the page
+   makes, applied to the graphics. */
+const R={
+  MAX_DEPTH:3,          // hops the search will chain before giving up (depth is cheap, shards are not)
+  BEAM:4,               // nodes carried to the next depth, best-anchored first - bounds shard fetches
+  MAX_NODES:190,        // drawn-node ceiling; legibility backstop, not a search limit
+  DRAW_PER_NODE:8,      // neighbours DRAWN per expanded node (all facts are still SEARCHED)
+  REPULSE:1000,         // n-body repulsion between every node pair (O(n^2), fine at this ceiling)
+  SPRING:0.045,         // edge spring constant pulling linked nodes to REST
+  REST:64,              // preferred edge length in world units
+  CENTER:0.0065,        // gentle pull to origin so the cloud cannot drift off-camera
+  DAMP:0.86,            // velocity damping per step - settles instead of oscillating forever
+  FOCAL:540,            // perspective focal length; larger = flatter, smaller = more dramatic
+  NODE_R:5.5, HIT_R:16, // node radius, and click-test radius in screen px
+  RELAX:2,              // physics substeps per animation frame
+  STEP_MS:460           // pause between replayed chain steps, slow enough to read
+};
+let G={nodes:[],edges:[],byId:new Map()};
+let rotY=0.55,rotX=-0.22,autoSpin=true,dragging=null,thinking=false,rafOn=false;
+const cv=$("cv"),cx=cv?cv.getContext("2d"):null;
+
+function pal(){
+  const s=getComputedStyle(document.documentElement),g=n=>s.getPropertyValue(n).trim();
+  return {fg:g("--fg"),hi:g("--hi"),muted:g("--muted"),line:g("--line"),
+          good:g("--good"),mid:g("--mid"),low:g("--low"),card:g("--card")};
+}
+function gClear(){G={nodes:[],edges:[],byId:new Map()};}
+function gNode(id,label,hop){
+  if(G.byId.has(id))return G.byId.get(id);
+  if(G.nodes.length>=R.MAX_NODES)return null;
+  // seed on a small random shell: the layout needs SOME asymmetry to push apart from, and a
+  // deterministic seed (all at origin) makes every repulsion force exactly zero.
+  const a=Math.random()*Math.PI*2,b=Math.acos(2*Math.random()-1),r=26+hop*30;
+  const n={id,label,hop,on:false,
+    x:r*Math.sin(b)*Math.cos(a),y:r*Math.sin(b)*Math.sin(a),z:r*Math.cos(b),
+    vx:0,vy:0,vz:0};
+  G.nodes.push(n);G.byId.set(id,n);return n;
+}
+function gEdge(a,b,rel,k){
+  if(!a||!b)return;
+  if(G.edges.some(e=>e.a===a&&e.b===b&&e.rel===rel))return;
+  G.edges.push({a,b,rel,k,on:false});
+}
+function physics(){
+  const N=G.nodes;
+  for(let s=0;s<R.RELAX;s++){
+    for(let i=0;i<N.length;i++){
+      const p=N[i];
+      for(let j=i+1;j<N.length;j++){
+        const q=N[j];
+        let dx=p.x-q.x,dy=p.y-q.y,dz=p.z-q.z;
+        let d2=dx*dx+dy*dy+dz*dz; if(d2<1)d2=1;
+        const f=R.REPULSE/d2,d=Math.sqrt(d2),ux=dx/d,uy=dy/d,uz=dz/d;
+        p.vx+=ux*f;p.vy+=uy*f;p.vz+=uz*f; q.vx-=ux*f;q.vy-=uy*f;q.vz-=uz*f;
+      }
+      p.vx-=p.x*R.CENTER;p.vy-=p.y*R.CENTER;p.vz-=p.z*R.CENTER;
+    }
+    for(const e of G.edges){
+      const dx=e.b.x-e.a.x,dy=e.b.y-e.a.y,dz=e.b.z-e.a.z;
+      const d=Math.sqrt(dx*dx+dy*dy+dz*dz)||1,f=(d-R.REST)*R.SPRING;
+      const ux=dx/d*f,uy=dy/d*f,uz=dz/d*f;
+      e.a.vx+=ux;e.a.vy+=uy;e.a.vz+=uz; e.b.vx-=ux;e.b.vy-=uy;e.b.vz-=uz;
+    }
+    for(const p of N){
+      p.vx*=R.DAMP;p.vy*=R.DAMP;p.vz*=R.DAMP;
+      p.x+=p.vx;p.y+=p.vy;p.z+=p.vz;
+    }
+  }
+}
+/* rotate into camera space, then divide by depth. Two rotations (yaw then pitch) is enough to
+   read a cloud as solid; the returned s is BOTH the projection scale and the depth cue. */
+function project(p,w,h){
+  const cy=Math.cos(rotY),sy=Math.sin(rotY),cxr=Math.cos(rotX),sxr=Math.sin(rotX);
+  let x=p.x*cy-p.z*sy, z=p.x*sy+p.z*cy, y=p.y;
+  const y2=y*cxr-z*sxr; z=y*sxr+z*cxr; y=y2;
+  const s=R.FOCAL/(R.FOCAL+z+320);
+  return {sx:w/2+x*s, sy:h/2+y*s, s, z};
+}
+function draw(){
+  if(!cx)return;
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==w*dpr||cv.height!==h*dpr){cv.width=w*dpr;cv.height=h*dpr;}
+  cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,w,h);
+  const c=pal();
+  const pts=G.nodes.map(n=>({n,p:project(n,w,h)})).sort((a,b)=>b.p.z-a.p.z);
+  const anyOn=G.edges.some(e=>e.on);
+  for(const e of G.edges){
+    const A=project(e.a,w,h),B=project(e.b,w,h);
+    const hot=e.on, dim=anyOn&&!hot;
+    cx.strokeStyle=hot?c.hi:c.line;
+    cx.globalAlpha=hot?0.95:(dim?0.14:0.42);
+    cx.lineWidth=hot?2.4:Math.max(0.5,(e.k>=2?1.3:0.8)*A.s);
+    cx.beginPath();cx.moveTo(A.sx,A.sy);cx.lineTo(B.sx,B.sy);cx.stroke();
+    if(hot){   // label the walked relation right on the edge - the chain should be readable in-place
+      cx.globalAlpha=0.95;cx.fillStyle=c.hi;
+      cx.font="11px ui-monospace,Menlo,monospace";cx.textAlign="center";
+      cx.fillText(relLabel(e.rel),(A.sx+B.sx)/2,(A.sy+B.sy)/2-4);
+    }
+  }
+  for(const {n,p} of pts){
+    const hot=n.on, dim=anyOn&&!hot;
+    const r=Math.max(1.6,(hot?R.NODE_R*1.7:R.NODE_R)*p.s);
+    cx.globalAlpha=dim?0.28:1;
+    if(hot){ cx.shadowColor=c.hi; cx.shadowBlur=18; }
+    cx.fillStyle=hot?c.hi:(n.hop===0?c.good:(n.hop===1?c.mid:c.muted));
+    cx.beginPath();cx.arc(p.sx,p.sy,r,0,6.2832);cx.fill();
+    cx.shadowBlur=0;
+    if(p.s>0.72||hot){
+      cx.globalAlpha=dim?0.3:(hot?1:0.8);
+      cx.fillStyle=hot?c.fg:c.muted;
+      cx.font=(hot?"600 12px":"11px")+" ui-sans-serif,system-ui,sans-serif";
+      cx.textAlign="center";
+      const t=n.label.length>22?n.label.slice(0,21)+"…":n.label;
+      cx.fillText(t,p.sx,p.sy-r-5);
+    }
+  }
+  cx.globalAlpha=1;
+}
+function loop(){
+  if(!rafOn)return;
+  if(autoSpin&&!dragging)rotY+=0.0022;
+  physics();draw();requestAnimationFrame(loop);
+}
+function startLoop(){ if(!rafOn){rafOn=true;requestAnimationFrame(loop);} }
+function stopLoop(){ rafOn=false; }
+
+/* ---- interaction: orbit by drag, expand by click ---- */
+if(cv){
+  const pos=e=>{const r=cv.getBoundingClientRect();
+    const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};};
+  const down=e=>{dragging={...pos(e),moved:0};autoSpin=false;cv.classList.add("grabbing");};
+  const move=e=>{
+    if(!dragging)return;
+    const p=pos(e),dx=p.x-dragging.x,dy=p.y-dragging.y;
+    rotY+=dx*0.008; rotX=Math.max(-1.3,Math.min(1.3,rotX+dy*0.006));
+    dragging.moved+=Math.abs(dx)+Math.abs(dy); dragging.x=p.x;dragging.y=p.y;
+    if(e.cancelable)e.preventDefault();
+  };
+  const up=e=>{
+    if(dragging&&dragging.moved<5){   // a click, not a drag: expand the node under the cursor
+      const w=cv.clientWidth,h=cv.clientHeight,p=pos(e);
+      let best=null,bd=R.HIT_R;
+      for(const n of G.nodes){
+        const q=project(n,w,h),d=Math.hypot(q.sx-p.x,q.sy-p.y);
+        if(d<bd){bd=d;best=n;}
+      }
+      if(best&&!thinking)expand(best);
+    }
+    dragging=null;cv.classList.remove("grabbing");
+  };
+  cv.addEventListener("mousedown",down);cv.addEventListener("touchstart",down,{passive:true});
+  window.addEventListener("mousemove",move);cv.addEventListener("touchmove",move,{passive:false});
+  window.addEventListener("mouseup",up);cv.addEventListener("touchend",up);
+}
+
+/* ---- graph access: one subject's real facts, decoded from the shard's packed rows ---- */
+async function factsOf(name){
+  let d;try{d=await loadShard(shardOf(name));}catch(e){return[];}
+  const raw=d[name];if(!raw||!raw.length)return[];
+  return raw.map(f=>{
+    const src=f[2],a=[];
+    for(const b in SOURCES){const bit=+b;if((src&bit)&&bit!==TRUTH_BIT)a.push(SOURCES[bit]);}
+    return{rel:RELS[f[0]]||"?",obj:f[1],k:a.length,anchors:a,heldOut:!!(src&TRUTH_BIT)};
+  });
+}
+function variantsOf(s){
+  const t=String(s).trim();
+  return [...new Set([t,t.replace(/\b\w/g,c=>c.toUpperCase()),
+                      t.charAt(0).toUpperCase()+t.slice(1),t.toLowerCase()])];
+}
+async function resolveSubject(s){
+  for(const v of variantsOf(s)){const f=await factsOf(v);if(f.length)return{name:v,facts:f};}
+  return null;
+}
+function relMatches(rel,goal){
+  const a=relLabel(rel),g=goal.toLowerCase();
+  return a===g||a.split(/\s+/).includes(g)||a.includes(g);
+}
+function badge(t){const b=$("badge");if(b)b.textContent=t;}
+
+/* Read the question into (start subject, goal relation). Deliberately simple and ALWAYS shown back
+   to the reader: a parser that silently guesses wrong is worse than one you can see being wrong. */
+function readQuery(q){
+  const ql=" "+q.toLowerCase().replace(/[?.!]+$/,"")+" ";
+  let goal=null,at=1e9;
+  for(const r of RELS){
+    if(!r||r.length<4)continue;
+    const i=ql.indexOf(" "+r.toLowerCase()+" ");
+    if(i>=0&&i<at){at=i;goal=r;}
+  }
+  return {goal};
+}
+/* A chained question decomposes into RELATIONS TO TRAVERSE plus THE ENTITY TO START FROM, so the
+   subject is what remains once the relation words are removed. Reusing the facts lane's span
+   generator here was a real bug: for "capital of the country Melbourne is in" it happily built the
+   two-word span "Capital Country", which resolves to an unrelated entity, and the search then set
+   off from the wrong node entirely. Relation words are removed BEFORE spans are formed, not
+   filtered out afterwards - "Capital Country" is not a relation word, so no after-the-fact test
+   catches it. */
+async function findStart(q,goal){
+  const ql=q.toLowerCase().trim().replace(/[?.!]+$/,"");
+  const rel=new Set();
+  for(const r of RELS){
+    if(!r||r.length<4)continue;
+    const t=r.toLowerCase();
+    if((" "+ql+" ").includes(" "+t+" "))t.split(/\s+/).forEach(w=>rel.add(w));
+  }
+  if(goal)goal.toLowerCase().split(/\s+/).forEach(w=>rel.add(w));
+  const w=ql.split(/[\s',]+/).filter(x=>x&&!STOP.has(x)&&!rel.has(x));
+  // Casing variants are DIFFERENT vocabulary entries, and taking whichever resolved first is the
+  // same bug the facts lane already fixed: lowercase "melbourne" is ConceptNet's generic node
+  // ("is a city", one source) while capitalized "Melbourne" is the Wikidata city that actually
+  // carries country->Australia at four. Starting a chain from the wrong one produces a fluent,
+  // fully-sourced, completely useless walk. So: gather every reading and let ANCHOR COUNT
+  // arbitrate, exactly as it does everywhere else on this page.
+  for(let n=w.length;n>=1;n--){
+    const hits=[];
+    for(let i=0;i+n<=w.length;i++){
+      for(const v of variantsOf(w.slice(i,i+n).join(" "))){
+        if(RELSET.has(v.toLowerCase()))continue;
+        const f=await factsOf(v);
+        if(f.length)hits.push({name:v,facts:f,best:Math.max(...f.map(x=>x.k))});
+      }
+    }
+    if(hits.length){
+      hits.sort((a,b)=>b.best-a.best||b.facts.length-a.facts.length);
+      return hits[0];
+    }
+  }
+  return null;
+}
+/* pull a node's neighbours into the graph (click-to-expand, and the search's own frontier step) */
+async function expand(node){
+  badge("fetching shard "+String(shardOf(node.id)).padStart(3,"0")+" · "+node.id);
+  const facts=await factsOf(node.id);
+  let added=0;
+  for(const f of facts.slice(0,10)){
+    const t=gNode(f.obj,f.obj,node.hop+1);
+    if(t){gEdge(node,t,f.rel,f.k);added++;}
+  }
+  badge(added?("expanded "+node.id+" · +"+added+" facts"):("no further facts recorded for "+node.id));
+}
+
+function pctOf(k){return pFor(k).p;}
+function hopHTML(i,from,rel,to,k,running){
+  const q=pFor(k);
+  return '<div class="hop live"><div class="lead">'+
+    '<span style="color:var(--muted)">'+(i+1)+'.</span> '+esc(from)+
+    ' <span style="color:var(--hi)">—'+esc(relLabel(rel))+'→</span> <b>'+esc(to)+'</b></div>'+
+    '<div class="meta">'+k+' independent source'+(k===1?"":"s")+
+    (k?' ('+esc(pFor(k).measured?"measured":"base rate")+') · this hop '+(q.p*100).toFixed(1)+'%'
+      :' · base rate '+(q.p*100).toFixed(1)+'%')+
+    ' · chain so far <b>'+(running*100).toFixed(1)+'%</b></div></div>';
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function reason(q){
+  if(thinking)return;
+  thinking=true;$("tgo").disabled=true;
+  const out=$("tout");out.innerHTML="";
+  gClear();startLoop();
+  try{
+    const {goal}=readQuery(q);
+    badge("reading the question");
+    const start=await findStart(q,goal);
+    out.innerHTML='<div class="row"><span class="lbl">reading as</span><span>'+
+      'start at <span class="chip">'+esc(start?start.name:"?")+'</span>'+
+      (goal?' · looking for the <span class="chip">'+esc(goal)+'</span> relation':
+            ' · <span class="chip">no target relation found in the question</span>')+
+      '</span></div>';
+    if(!start){
+      out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>No answer.</b>'+
+        '</div><div class="row"><span class="lbl">why</span><span>nothing in that question '+
+        'resolved to a subject in the graph, so there is no node to start from.</span></div></div>');
+      badge("idle");return;
+    }
+    if(!goal){
+      out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>No target.'+
+        '</b></div><div class="row"><span class="lbl">why</span><span>no relation name in that '+
+        'question matched one the graph actually records, so there is nothing to search FOR. '+
+        'The graph around <b>'+esc(start.name)+'</b> is drawn anyway — click any node to walk it '+
+        'by hand.</span></div></div>');
+      const s0=gNode(start.name,start.name,0);
+      for(const f of start.facts.slice(0,12)){const t=gNode(f.obj,f.obj,1);gEdge(s0,t,f.rel,f.k);}
+      badge("idle");return;
+    }
+
+    // ---- breadth-first over real shards, drawing the frontier as it is fetched ----
+    const s0=gNode(start.name,start.name,0);
+    let frontier=[{node:s0,facts:start.facts,path:[]}];
+    const seen=new Set([start.name]);
+    let done=[],depth=0;
+
+    // Greedy first-match was wrong, and the flagship example proved it: "Melbourne" has a country
+    // edge to Australia AND one to Canada (there really is a Melbourne in Quebec), both at two
+    // sources, and taking whichever came first announced "Melbourne is in Canada" with total
+    // composure. So the search does not commit at the first hit. It finishes the depth level,
+    // collects EVERY chain that completed, and ranks them by composed confidence - and when more
+    // than one completes, it says so, because a surface-name collision is a real property of the
+    // data rather than something to hide behind a confident single answer.
+    while(depth<R.MAX_DEPTH&&frontier.length&&!done.length){
+      depth++;
+      const next=[];
+      for(const cur of frontier){
+        badge("depth "+depth+" · expanding "+cur.node.id);
+        // CORRECTNESS first: every fact is tested for the goal relation. Only the DRAWING is
+        // capped - a hub subject can carry 80 facts and rendering all of them buries the chain.
+        for(const w of cur.facts.filter(f=>relMatches(f.rel,goal)).sort((a,b)=>b.k-a.k)){
+          const path=cur.path.concat([{from:cur.node.id,rel:w.rel,to:w.obj,k:w.k}]);
+          done.push({path,p:path.reduce((acc,h)=>acc*pctOf(h.k),1)});
+          const t=gNode(w.obj,w.obj,depth);   // the winning hop is always drawn, cap or no cap
+          if(t)gEdge(cur.node,t,w.rel,w.k);
+        }
+        for(const f of cur.facts.slice().sort((a,b)=>b.k-a.k).slice(0,R.DRAW_PER_NODE)){
+          const t=gNode(f.obj,f.obj,depth);
+          if(t)gEdge(cur.node,t,f.rel,f.k);
+        }
+        if(done.length)continue;   // finish this LEVEL before ranking; do not go deeper
+        // carry only the best-anchored objects forward: every extra node is another shard fetch
+        const cand=cur.facts.filter(f=>!seen.has(f.obj)).sort((a,b)=>b.k-a.k).slice(0,R.BEAM);
+        for(const f of cand){
+          seen.add(f.obj);
+          next.push({node:G.byId.get(f.obj)||gNode(f.obj,f.obj,depth),
+                     _pending:f.obj,path:cur.path.concat([{from:cur.node.id,rel:f.rel,to:f.obj,k:f.k}])});
+        }
+      }
+      if(done.length)break;
+      for(const nx of next){
+        badge("depth "+depth+" · fetching shard "+
+              String(shardOf(nx._pending)).padStart(3,"0")+" · "+nx._pending);
+        nx.facts=await factsOf(nx._pending);
+        await sleep(30);   // let a frame render between fetches so the graph visibly grows
+      }
+      frontier=next.filter(n=>n.node&&n.facts&&n.facts.length);
+    }
+    done.sort((a,b)=>b.p-a.p);
+    const found=done[0]||null;
+
+    if(!found){
+      const dead=frontier.length?frontier[frontier.length-1].node.id:start.name;
+      out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>Chain broke.'+
+        '</b></div><div class="row"><span class="lbl">why</span><span>searched '+depth+
+        ' hop'+(depth===1?"":"s")+' out from <b>'+esc(start.name)+'</b> and never found a '+
+        '<span class="chip">'+esc(goal)+'</span> relation. The furthest node it could not get out '+
+        'of was <b>'+esc(dead)+'</b>.</span></div>'+
+        '<div class="row"><span class="lbl">note</span><span>Naming the hop that broke is the '+
+        'result. Inventing the rest would not be.</span></div></div>');
+      badge("no chain found");return;
+    }
+
+    // ---- replay the found chain, step by step, lighting each hop in the 3D view ----
+    out.insertAdjacentHTML("beforeend",'<div class="field-lbl">the chain</div>'+
+      '<div class="trace" id="trace"></div>');
+    const trace=$("trace");
+    let running=1;
+    for(let i=0;i<found.path.length;i++){
+      const h=found.path[i];
+      running*=pctOf(h.k);
+      const a=G.byId.get(h.from),b=G.byId.get(h.to);
+      if(a)a.on=true; if(b)b.on=true;
+      for(const e of G.edges)if(e.a===a&&e.b===b&&e.rel===h.rel)e.on=true;
+      trace.insertAdjacentHTML("beforeend",hopHTML(i,h.from,h.rel,h.to,h.k,running));
+      badge("walking hop "+(i+1)+" of "+found.path.length);
+      await sleep(R.STEP_MS);
+    }
+    const last=found.path[found.path.length-1];
+    out.insertAdjacentHTML("beforeend",
+      '<div class="verdict"><div class="big">'+(running*100).toFixed(1)+'%</div>'+
+      '<div style="margin-top:4px"><b>'+esc(start.name)+'</b>'+
+      found.path.map(h=>' <span style="color:var(--muted)">—'+esc(relLabel(h.rel))+'→</span> '+
+        (h===last?'<b>'+esc(h.to)+'</b>':esc(h.to))).join("")+'</div>'+
+      '<div class="small" style="margin-top:8px">'+
+      found.path.map(h=>(pctOf(h.k)*100).toFixed(1)+"%").join(" × ")+' = '+
+      (running*100).toFixed(1)+'% over '+found.path.length+' hop'+
+      (found.path.length===1?"":"s")+'. Each factor is measured; the product assumes the hops are '+
+      '<b>independent</b>, which is an assumption and not a measurement.</div></div>');
+    // More than one chain completing is not a bug to hide - it is the surface-name collision this
+    // graph genuinely has (a Melbourne in Victoria and a Melbourne in Quebec both have a country
+    // edge). Showing the rivals, ranked, is the honest reading of the evidence.
+    if(done.length>1){
+      out.insertAdjacentHTML("beforeend",'<div class="field-lbl">other chains that also '+
+        'completed</div><div class="small">More than one route satisfied the question — either a '+
+        'name shared by several real things, or several recorded edges of the same relation. '+
+        'Ranked by the same composed confidence:'+
+        '<ul style="margin:7px 0 0;padding-left:20px">'+
+        done.slice(1,4).map(d=>'<li>'+d.path.map(h=>esc(h.to)).join(" → ")+
+          ' <span class="chip">'+(d.p*100).toFixed(1)+'%</span></li>').join("")+
+        '</ul></div>');
+    }
+    badge("chain complete · "+(running*100).toFixed(1)+"%");
+  }catch(e){
+    console.error(e);
+    $("tout").insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim">'+
+      '<b>Search failed.</b></div><div class="row"><span class="lbl">error</span><span>'+
+      esc(e.message||String(e))+'</span></div></div>');
+    badge("error");
+  }finally{ thinking=false;$("tgo").disabled=false; }
+}
+if($("tq")){
+  $("tq").addEventListener("keydown",e=>{if(e.key==="Enter")$("tgo").click()});
+  $("tgo").addEventListener("click",()=>{const v=$("tq").value.trim();if(v)reason(v)});
+  document.querySelectorAll("#p-think .hint code").forEach(c=>c.addEventListener("click",()=>{
+    $("tq").value=c.textContent;$("tgo").click();}));
+}
+// the render loop is per-tab: an invisible canvas spinning an n-body sim is pure battery burn.
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  if(t.dataset.p==="think"){
+    startLoop();
+    if(!G.nodes.length&&!thinking&&$("tgo")&&!$("tgo").disabled)$("tgo").click();
+  } else stopLoop();
+}));
 
 /* ---------------------------------------------------------------- code lane
    A small, HONEST reimplementation. No eval() anywhere - every primitive is a real JS closure, so
