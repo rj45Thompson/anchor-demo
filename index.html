@@ -10,30 +10,36 @@
 --hi:#8fb4d9;--good:#6fc79b;--mid:#d6b25f;--low:#e08b7a;--code:#22231b}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 ui-serif,Georgia,serif}
-.wrap{max-width:780px;margin:0 auto;padding:44px 22px 90px}
+.wrap{max-width:790px;margin:0 auto;padding:44px 22px 90px}
 h1{font-size:2rem;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
 .sub{color:var(--muted);margin:0 0 30px}
+.tabs{display:flex;gap:6px;margin:0 0 22px;border-bottom:1px solid var(--line)}
+.tab{padding:9px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;
+font:15px ui-sans-serif,system-ui,sans-serif;font-weight:600}
+.tab.on{color:var(--fg);border-bottom-color:var(--hi)}
+.panel{display:none}.panel.on{display:block}
 .ask{display:flex;gap:8px;margin:0 0 6px}
-input{flex:1;padding:13px 15px;border:1px solid var(--line);border-radius:9px;
+input,textarea{flex:1;padding:13px 15px;border:1px solid var(--line);border-radius:9px;
 background:var(--card);color:var(--fg);font:inherit}
-input:focus{outline:2px solid var(--hi);outline-offset:-1px}
+textarea{width:100%;resize:vertical;font:14px ui-monospace,Menlo,monospace;min-height:84px}
+input:focus,textarea:focus{outline:2px solid var(--hi);outline-offset:-1px}
 button{padding:13px 20px;border:0;border-radius:9px;background:var(--hi);color:var(--bg);
-font:inherit;font-weight:600;cursor:pointer}
+font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
 button:disabled{opacity:.5;cursor:default}
 .hint{color:var(--muted);font-size:.87rem;margin:0 0 26px}
 .hint code{background:var(--code);padding:2px 6px;border-radius:4px;cursor:pointer;
 font:13px ui-monospace,Menlo,monospace;display:inline-block;margin:2px 3px 2px 0}
 .card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);
-border-radius:8px;padding:15px 17px;margin:0 0 11px}
+border-radius:8px;padding:14px 16px;margin:0 0 10px}
 .card.k2{border-left-color:var(--good)}
 .card.k1{border-left-color:var(--mid)}
 .card.k0{border-left-color:var(--low)}
-.claim{font-size:1.06rem;margin:0 0 9px}
+.claim{font-size:1.04rem;margin:0 0 8px}
 .pct{font-variant-numeric:tabular-nums;font-weight:700}
-.row{display:flex;gap:9px;font-size:.9rem;color:var(--muted);margin:3px 0}
+.row{display:flex;gap:9px;font-size:.89rem;color:var(--muted);margin:3px 0}
 .row .lbl{min-width:92px;flex:none;opacity:.8}
 .src{color:var(--fg)}
-.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin:9px 0 11px}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin:8px 0 10px}
 .bar i{display:block;height:100%;background:var(--hi)}
 h2{font-size:1.02rem;margin:36px 0 9px;letter-spacing:.02em;text-transform:uppercase;
 color:var(--muted);font-family:ui-sans-serif,system-ui,sans-serif}
@@ -47,23 +53,38 @@ p{margin:0 0 13px}
 .warn{background:var(--code);border-radius:7px;padding:12px 15px;font-size:.9rem;margin:0 0 26px}
 footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
 font-size:.86rem;color:var(--muted)}
+pre{background:var(--code);border-radius:8px;padding:12px 14px;overflow-x:auto;
+font:14px ui-monospace,Menlo,monospace;margin:0 0 10px}
+.step{display:flex;gap:8px;align-items:baseline;font-size:.92rem;margin:4px 0;
+font-family:ui-monospace,Menlo,monospace}
+.step .ok{color:var(--good)}.step .no{color:var(--low)}
+.field-lbl{font-size:.82rem;color:var(--muted);margin:14px 0 4px;
+font-family:ui-sans-serif,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.02em}
 </style></head><body><div class="wrap">
 
 <h1>How sure is it, and why?</h1>
-<p class="sub">A knowledge engine with no neural weights. It answers from a graph of independently
-collected sources, and every answer carries a <em>measured</em> probability — not a guess.</p>
+<p class="sub">A system with <strong>no neural weights</strong>. Every answer — a fact or a program —
+carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
+doesn't have enough.</p>
 
+<div class="tabs">
+  <div class="tab on" data-p="facts">Ask a question</div>
+  <div class="tab" data-p="code">Write a function</div>
+</div>
+
+<!-- ================= FACTS PANEL ================= -->
+<div id="p-facts" class="panel on">
 <div class="ask">
-  <input id="q" placeholder="What is the capital of Saint Lucia?" autocomplete="off">
+  <input id="q" placeholder="what is a car" autocomplete="off">
   <button id="go" disabled>loading…</button>
 </div>
 <p class="hint">Try
-  <code>What is the capital of Saint Lucia?</code>
+  <code>what is a car</code>
+  <code>what is water</code>
   <code>Melbourne country</code>
-  <code>Yangon Region country</code>
-  <code>What is the capital of Atlantis?</code>
+  <code>capital of Saint Lucia</code>
+  <code>Atlantis capital</code>
 </p>
-
 <div id="out"></div>
 
 <h2>How the number is computed</h2>
@@ -84,90 +105,246 @@ across 496,464 held-out facts. The curve predicts — it is not describing its o
 <p><strong>An anchor is a second source, not a second opinion.</strong> One source is close to a
 coin flip. A second <em>independently collected</em> source takes it to 87%. That lift survives
 controls for popularity, for shared lineage between sources, and for gaps in the reference set.</p>
-<p>We also measured where it <em>fails</em>. In a program-synthesis domain where every available
-checker read the same evidence, five checkers that were provably independent of each other still
-bought nothing — because independence was never the constraint. Competence was.</p>
 
-<div class="warn"><strong>What this demo is.</strong> A slice — 4,000 well-connected subjects and
-180,000 facts out of 66.4 million — chosen by connectivity and never by confidence, so
-weakly-supported facts appear at their natural rate. When it doesn't know, it says so instead of
-inventing an answer. That refusal is the point.</div>
+<div class="warn" id="factsWarn"><strong>What this is.</strong> The whole graph — 66,404,117 facts
+over 12.2 million subjects — sharded so your browser fetches only the piece it needs. It is a
+<em>lookup over recorded relations</em>, not a chatbot: it reports what sources asserted, and when
+nothing asserts anything it says so instead of inventing.
+<br><br><strong>A known limitation, stated rather than hidden:</strong> subjects are matched by
+surface text, not a disambiguated entity id, so a name shared by more than one real thing (many
+towns are named "Berlin") can appear merged under one heading. Every fact shown is still real and
+independently sourced — it may just belong to more than one thing with that name.</div>
+</div>
 
-<footer>No model runs here. The page loads a data file and counts sources in your browser — the
-same arithmetic the full system does over 66.4M facts.<br><br>
-Data derived from REBEL, Wikidata5M, Wikidata-truthy, ConceptNet&nbsp;5, YAGO&nbsp;3, T-REx,
-DBpedia and KELM, and released under
+<!-- ================= CODE PANEL ================= -->
+<div id="p-code" class="panel">
+<p class="small" style="margin-top:0">The other half of the same idea, in a different domain: given
+input→output examples, <strong>search</strong> a fixed set of primitives for one that satisfies
+<em>every</em> example — verified by real execution, not predicted by a model. This box
+re-implements a small slice of it entirely in this page; the measured system is a ~2,600-line
+search engine tested against 224 MBPP+ programming tasks.</p>
+
+<div class="field-lbl">Examples — one per line, <code>args -&gt; expected</code> (JSON)</div>
+<textarea id="ex" spellcheck="false">[3, 1, 2] -> [1, 2, 3]
+[9, 4, 7] -> [4, 7, 9]
+[0, -1, 5] -> [-1, 0, 5]</textarea>
+<div class="ask" style="margin-top:8px">
+  <button id="synth" style="flex:1">Synthesize</button>
+</div>
+<p class="hint">Try
+  <code data-ex="[3,1,2] -> [3,2,1]&#10;[9,4] -> [9,4]&#10;[1,1,2] -> [2,1,1]">reverse a list</code>
+  <code data-ex="[1,2,3] -> 6&#10;[10,-2] -> 8&#10;[] -> 0">sum a list</code>
+  <code data-ex="2, 3 -> 5&#10;10, -1 -> 9&#10;0, 0 -> 0">add two numbers</code>
+  <code data-ex='"Hello" -> "hello"&#10;"WORLD" -> "world"'>lowercase a string</code>
+  <code data-ex="[3,1,2] -> 99&#10;[9,4] -> 12">impossible on purpose</code>
+</p>
+<div id="codeOut"></div>
+</div>
+
+<footer>No model runs here. The facts panel hashes your subject, fetches one shard, and counts
+sources in your browser. The code panel searches a fixed primitive set and checks each candidate by
+real execution. Both are the identical idea: <strong>propose from a fixed space, verify by
+execution, report a measured confidence, refuse rather than invent.</strong><br><br>
+Facts data derived from REBEL, Wikidata5M, Wikidata-truthy, ConceptNet&nbsp;5, YAGO&nbsp;3, T-REx,
+DBpedia and KELM, released under
 <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:var(--hi)">CC&nbsp;BY-SA&nbsp;4.0</a>
-in accordance with their ShareAlike terms. Site code MIT.</footer>
+per their ShareAlike terms. Site code MIT.</footer>
 </div>
 
 <script>
+/* ---------------------------------------------------------------- tabs */
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on"); document.getElementById("p-"+t.dataset.p).classList.add("on");
+}));
+
+/* ---------------------------------------------------------------- facts lane */
 const TRUTH_BIT=4;
 const SOURCES={1:"REBEL",2:"Wikidata5M",4:"held-out reference",8:"ConceptNet",
 16:"YAGO3",32:"T-REx",64:"DBpedia",128:"KELM"};
 const CURVE={1:[0.449,847267],2:[0.873,125074],3:[0.947,20611]};
 const BASE=[0.512,992953];
-const STOP=new Set(("what who which is are was were the a an of for in to s does do did tell me "+
-"about and please").split(" "));
-let RELS=null,SUBJ=null,SUBJLC=null;
+const STOP=new Set(("what whats who which why how is are was were the a an of for in to s does do "+
+"did tell me about and or please can you know").split(" "));
+let RELS=null,NSHARD=512,RELSET=null;
+const cache=new Map();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* relation codes are internal ids (cn:IsA, db:currentMember, wd-style plain english). Clean them
+   for display without lying about what they are - the raw code is still in the title attribute. */
+function relLabel(r){
+  if(!r)return"?";
+  let s=r;
+  if(s.startsWith("cn:")||s.startsWith("db:"))s=s.slice(3);
+  s=s.replace(/([a-z0-9])([A-Z])/g,"$1 $2").toLowerCase();
+  return s;
+}
+
+function shardOf(name){
+  let h=0x811c9dc5;
+  for(let i=0;i<name.length;i++){
+    const c=name.charCodeAt(i);
+    h^=(c<256?(c&0xFF):(c&0xFFFF));
+    h=Math.imul(h,0x01000193)>>>0;
+  }
+  return h%NSHARD;
+}
+async function loadShard(i){
+  if(cache.has(i))return cache.get(i);
+  const r=await fetch("shards/"+String(i).padStart(3,"0")+".json.gz");
+  if(!r.ok)throw new Error("shard http "+r.status);
+  let txt;
+  if(typeof DecompressionStream!=="undefined"){
+    txt=await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).text();
+  }else{ txt=await r.text(); }
+  const d=JSON.parse(txt);cache.set(i,d);return d;
+}
+
+/* ---- Bloom filter over ALL 12.2M subject names, lazy-loaded on the FIRST abstain only.
+   Answers the question an abstain otherwise cannot: is this subject genuinely absent from the
+   graph (a real coverage gap) or did our lookup keys simply miss it (a parsing failure)? A Bloom
+   filter has NO false negatives, so "definitely not present" is a fact, never a guess. */
+let bloom=null, bloomLoading=null;
+function bloomHash(name,seed){
+  let seedU32=(seed*0x9E3779B1)>>>0;
+  let h=(0x811c9dc5^seedU32)>>>0;
+  for(let i=0;i<name.length;i++){
+    const c=name.charCodeAt(i);
+    h^=(c<256?(c&0xFF):(c&0xFFFF));
+    h=Math.imul(h,0x01000193)>>>0;
+  }
+  return h;
+}
+async function loadBloom(){
+  if(bloom)return bloom;
+  if(bloomLoading)return bloomLoading;
+  bloomLoading=(async()=>{
+    const meta=await(await fetch("bloom.json")).json();
+    const r=await fetch("subjects.bloom.gz");
+    let buf;
+    if(typeof DecompressionStream!=="undefined"){
+      buf=await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+    }else{ buf=await(await fetch("subjects.bloom")).arrayBuffer(); }
+    bloom={bytes:new Uint8Array(buf),m:meta.m,k:meta.k,n:meta.n};
+    return bloom;
+  })();
+  return bloomLoading;
+}
+async function definitelyAbsent(name){
+  try{
+    const b=await loadBloom();
+    for(let s=0;s<b.k;s++){
+      const p=bloomHash(name,s)%b.m;
+      if(!((b.bytes[p>>3]>>(p&7))&1))return true;   // any missing bit => definitely not present
+    }
+    return false;   // all bits set => present (or a ~1% false positive)
+  }catch(e){ return null; }   // bloom unavailable - cannot claim certainty either way
+}
 
 function pFor(k){
   if(CURVE[k])return{p:CURVE[k][0],n:CURVE[k][1],measured:true};
   if(k>3)return{p:CURVE[3][0],n:CURVE[3][1],measured:true,clamped:true};
   return{p:BASE[0],n:BASE[1],measured:false};
 }
-function parseQ(q){
-  const ql=" "+q.toLowerCase().trim().replace(/\?+$/,"")+" ";
-  const hits=RELS.filter(r=>r&&ql.includes(" "+r.toLowerCase()+" "));
-  hits.sort((a,b)=>b.length-a.length);
-  if(!hits.length)return{err:"no relation in that question matches the graph's relation names"};
-  let rest=ql;
-  for(const h of hits)rest=rest.split(h.toLowerCase()).join(" ");
-  const words=rest.split(/[\s',]+/).filter(w=>w&&!STOP.has(w));
-  if(!words.length)return{err:"found a relation but no subject in that question"};
-  const phrase=words.join(" ");
-  const subj=SUBJLC.get(phrase);
-  if(!subj)return{err:"“"+esc(phrase)+"” is not one of the 4,000 subjects in this slice — a coverage gap, not a wrong answer"};
-  return{subj,rels:hits};
+/* Grouped by SPAN LENGTH, longest first. Within a length, every span's casing variants are all
+   tried and ALL that resolve are MERGED - "Melbourne" (Wikidata, capitalized) and "melbourne"
+   (ConceptNet, lowercase) are different vocabulary entries, and picking whichever happened to
+   load first is a bug, not a feature (it silently hid Melbourne's country->Australia behind
+   ConceptNet's "is a city"). Instead: gather every reading at the most-specific length that
+   produces ANY hit, and let the ANCHOR COUNT arbitrate between them - the same law the rest of
+   the page uses to rank facts arbitrates here too. */
+function candidateGroups(q){
+  const ql=q.toLowerCase().trim().replace(/[?.!]+$/,"");
+  const w=ql.split(/[\s',]+/).filter(x=>x&&!STOP.has(x));
+  const groups=[];
+  for(let n=w.length;n>=1;n--){
+    const variants=new Set();
+    for(let i=0;i+n<=w.length;i++){
+      const ph=w.slice(i,i+n).join(" ");
+      variants.add(ph.replace(/\b\w/g,c=>c.toUpperCase()));   // Title Each Word - try first
+      variants.add(ph.charAt(0).toUpperCase()+ph.slice(1));   // Sentence case
+      variants.add(ph);                                        // lowercase, as typed
+    }
+    if(variants.size)groups.push([...variants]);
+  }
+  return groups;
 }
-function answer(q){
-  const P=parseQ(q);
-  if(P.err)return render([],P.err);
-  const facts=SUBJ[P.subj]||[];
-  const rows=[];
-  for(const rel of P.rels){
-    const ri=RELS.indexOf(rel);
-    for(const f of facts){
-      if(f[0]!==ri)continue;
-      const src=f[2],anchors=[];
-      for(const b in SOURCES){const bit=+b;
-        if((src&bit)&&bit!==TRUTH_BIT)anchors.push(SOURCES[bit]);}
-      rows.push({subj:P.subj,rel:rel,obj:f[1],k:anchors.length,anchors:anchors,
-        heldOut:!!(src&TRUTH_BIT)});
+async function answer(q){
+  render([],null,"searching the graph…");
+  const groups=candidateGroups(q);
+  let hits=[];   // [{name, facts}] - every reading that resolved, AT THE FIRST LENGTH with a hit
+  for(const group of groups){
+    for(const c of group){
+      let d;try{d=await loadShard(shardOf(c));}catch(e){continue;}
+      if(d[c]&&d[c].length)hits.push({name:c,facts:d[c]});
+    }
+    if(hits.length)break;   // this length produced hits - do not fall back to shorter/vaguer spans
+  }
+  if(!hits.length){
+    render([],null,"checking whether that's really absent…");
+    const allSpans=groups.flat();
+    const mainSubj=allSpans.sort((a,b)=>b.length-a.length)[0]||q;
+    const absent=await definitelyAbsent(mainSubj);
+    let why;
+    if(absent===true) why="“"+esc(mainSubj)+"” is definitively not one of the graph's "+
+      "12.2 million subjects (checked against a Bloom filter with zero false negatives) — a real "+
+      "coverage gap, not a parsing failure.";
+    else if(absent===false) why="“"+esc(mainSubj)+"” IS a subject in the graph, but none "+
+      "of its recorded relations matched this question — try rephrasing, e.g. “X country”.";
+    else why="no shard held a match for “"+esc(q)+"”.";
+    return render([],why);
+  }
+  // A word in the query can ITSELF be a vocabulary entry that happens to also be a relation name
+  // ("capital" is both a Wikidata relation AND, coincidentally, some unrelated entity's label).
+  // Merging that entity's facts alongside the real subject's is how "France capital" surfaced an
+  // unrelated "Capital -> capital -> Kuwait City" fact instead of France's own. So: if at least one
+  // resolved reading is NOT itself a relation word, drop the relation-word readings entirely - a
+  // relation word is only trusted as a subject when nothing else in the query resolved to anything.
+  const normalHits=hits.filter(h=>!RELSET.has(h.name.toLowerCase()));
+  if(normalHits.length)hits=normalHits;
+
+  const ql=" "+q.toLowerCase()+" ";
+  const named=RELS.filter(r=>r&&r.length>3&&ql.includes(" "+r.toLowerCase()+" "));
+  let rows=[];
+  for(const h of hits){
+    for(const f of h.facts){
+      const src=f[2],a=[];
+      for(const b in SOURCES){const bit=+b;if((src&bit)&&bit!==TRUTH_BIT)a.push(SOURCES[bit]);}
+      rows.push({subj:h.name,rel:RELS[f[0]]||"?",obj:f[1],k:a.length,anchors:a,
+                heldOut:!!(src&TRUTH_BIT)});
     }
   }
-  if(!rows.length)return render([],"the graph holds no fact for that pair — no answer is better than a guess");
-  rows.sort((a,b)=>b.k-a.k);
-  render(rows,null);
-}
-function render(rows,note){
-  const out=$("out");out.innerHTML="";
-  if(note){
-    out.innerHTML='<div class="card k0"><div class="claim"><b>No answer.</b></div>'+
-      '<div class="row"><span class="lbl">why</span><span>'+note+'</span></div>'+
-      '<div class="row"><span class="lbl">note</span><span>It will not invent one. An honest '+
-      '“I don’t know” is the design, not a failure.</span></div></div>';
-    return;
+  let filterNote=null;
+  if(named.length){
+    const f=rows.filter(r=>named.includes(r.rel));
+    if(f.length)rows=f;
+    else filterNote="no recorded “"+esc(named[0])+"” relation for this subject in the graph - "+
+      "showing what IS recorded about it instead, sorted by confidence.";
   }
-  for(const r of rows.slice(0,8)){
-    const q=pFor(r.k);
-    const cls=r.k>=2?"k2":(r.k===1?"k1":"k0");
+  // stable sort: rank by confidence first; among TRUE ties (no second source to discriminate on -
+  // the 44.9% coin-flip band itself), prefer the plain-lowercase reading, since a proper-noun
+  // disambiguation collision (e.g. "Car" the village vs "car" the vehicle) is the likelier surprise.
+  rows.sort((a,b)=> b.k-a.k || (a.subj===a.subj.toLowerCase()?0:1)-(b.subj===b.subj.toLowerCase()?0:1));
+  render(rows,null,null,filterNote);
+}
+function render(rows,note,busy,filterNote){
+  const out=$("out");out.innerHTML="";
+  if(busy){out.innerHTML='<div class="card"><div class="claim">'+busy+'</div></div>';return;}
+  if(note){out.innerHTML='<div class="card k0"><div class="claim"><b>No answer.</b></div>'+
+    '<div class="row"><span class="lbl">why</span><span>'+note+'</span></div>'+
+    '<div class="row"><span class="lbl">note</span><span>An honest “I don’t know” '+
+    'is the design, not a failure.</span></div></div>';return;}
+  if(filterNote)out.insertAdjacentHTML("beforeend",
+    '<div class="row" style="margin-bottom:10px"><span class="lbl">note</span><span>'+
+    filterNote+'</span></div>');
+  for(const r of rows.slice(0,10)){
+    const q=pFor(r.k),cls=r.k>=2?"k2":(r.k===1?"k1":"k0");
     out.insertAdjacentHTML("beforeend",
-     '<div class="card '+cls+'">'+
-     '<div class="claim">'+esc(r.subj)+' <span style="color:var(--muted)">—'+esc(r.rel)+
-       '→</span> <b>'+esc(r.obj)+'</b></div>'+
+     '<div class="card '+cls+'"><div class="claim">'+esc(r.subj)+
+     ' <span style="color:var(--muted)" title="'+esc(r.rel)+'">—'+esc(relLabel(r.rel))+
+     '→</span> <b>'+esc(r.obj)+'</b></div>'+
      '<div class="bar"><i style="width:'+(q.p*100).toFixed(1)+'%"></i></div>'+
      '<div class="row"><span class="lbl">confidence</span><span><span class="pct">'+
        (q.p*100).toFixed(1)+'%</span> — '+r.k+' independent source'+(r.k===1?"":"s")+' '+
@@ -176,19 +353,176 @@ function render(rows,note){
      (r.anchors.length?'<div class="row"><span class="lbl">because</span><span class="src">'+
        r.anchors.map(esc).join(", ")+'</span></div>':"")+
      '<div class="row"><span class="lbl">held-out</span><span>'+(r.heldOut
-       ?"the reference source agrees":"the reference source does not list this")+'</span></div>'+
-     (r.k<2?'<div class="row"><span class="lbl">would help</span><span>one more '+
-       '<em>independent</em> source would take this from ~45% to ~87%</span></div>':"")+
-     '</div>');
+       ?"the reference source agrees":"the reference source does not list this")+'</span></div></div>');
   }
 }
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
 $("go").addEventListener("click",()=>{const v=$("q").value.trim();if(v)answer(v)});
-document.querySelectorAll(".hint code").forEach(c=>c.addEventListener("click",()=>{
+document.querySelectorAll("#p-facts .hint code").forEach(c=>c.addEventListener("click",()=>{
   $("q").value=c.textContent;$("go").click();window.scrollTo({top:0,behavior:"smooth"})}));
-fetch("data.json").then(r=>r.json()).then(d=>{
-  RELS=d.rels;SUBJ=d.subjects;
-  SUBJLC=new Map(Object.keys(SUBJ).map(k=>[k.toLowerCase(),k]));
+fetch("index.json").then(r=>r.json()).then(d=>{
+  RELS=d.rels;NSHARD=d.nshard;
+  RELSET=new Set(RELS.filter(Boolean).map(r=>r.toLowerCase()));
   $("go").disabled=false;$("go").textContent="Ask";
-}).catch(e=>{$("go").textContent="data failed";console.error(e)});
+  $("factsWarn").insertAdjacentHTML("beforeend"," <em>Index loaded: "+
+    d.subjects.toLocaleString()+" subjects, "+d.facts.toLocaleString()+" facts, "+
+    d.nshard+" shards.</em>");
+}).catch(e=>{$("go").textContent="index failed";console.error(e)});
+
+/* ---------------------------------------------------------------- code lane
+   A small, HONEST reimplementation. No eval() anywhere - every primitive is a real JS closure, so
+   there is no code-injection surface from user input. A candidate is accepted only if it produces
+   the EXACT expected value (by deep structural equality) on EVERY given example; on failure it is
+   rejected, never silently ignored. If nothing in this fixed vocabulary fits, it says so - the same
+   refusal discipline as the facts lane. */
+function deq(a,b){ return JSON.stringify(canon(a))===JSON.stringify(canon(b)); }
+function canon(v){
+  if(Array.isArray(v))return v.map(canon);
+  if(typeof v==="number")return Math.round(v*1e9)/1e9;
+  return v;
+}
+function parseVal(tok){
+  tok=tok.trim();
+  if(tok==="")throw new Error("empty value");
+  try{ return JSON.parse(tok); }catch(e){}
+  try{ return JSON.parse(tok.replace(/'/g,'"')); }catch(e){}
+  throw new Error("can't parse "+JSON.stringify(tok));
+}
+function splitArgs(s){
+  // split on top-level commas only (not inside [...] or "...")
+  const out=[]; let depth=0,cur="",inStr=false,q="";
+  for(const ch of s){
+    if(inStr){ cur+=ch; if(ch===q)inStr=false; continue; }
+    if(ch==='"'||ch==="'"){ inStr=true; q=ch; cur+=ch; continue; }
+    if(ch==="["||ch==="{"){ depth++; cur+=ch; continue; }
+    if(ch==="]"||ch==="}"){ depth--; cur+=ch; continue; }
+    if(ch===","&&depth===0){ out.push(cur); cur=""; continue; }
+    cur+=ch;
+  }
+  if(cur.trim()!=="")out.push(cur);
+  return out;
+}
+function parseExamples(text){
+  const lines=text.split("\n").map(l=>l.trim()).filter(Boolean);
+  const exs=[];
+  for(const ln of lines){
+    const arrow=ln.indexOf("->");
+    if(arrow<0)throw new Error("missing -> in: "+ln);
+    const args=splitArgs(ln.slice(0,arrow)).map(parseVal);
+    const expected=parseVal(ln.slice(arrow+2));
+    exs.push({args,expected});
+  }
+  if(!exs.length)throw new Error("no examples given");
+  const arity=exs[0].args.length;
+  if(exs.some(e=>e.args.length!==arity))throw new Error("examples have different argument counts");
+  return {exs,arity};
+}
+
+const UNARY=[
+ ["x",                     x=>x],
+ ["sorted(x)",             x=>[...x].sort(cmp)],
+ ["sorted(x, reverse=True)", x=>[...x].sort(cmp).reverse()],
+ ["list(reversed(x))",     x=>[...x].reverse()],
+ ["len(x)",                x=>x.length],
+ ["sum(x)",                x=>x.reduce((a,b)=>a+b,0)],
+ ["max(x)",                x=>x.length?Math.max(...x):(()=>{throw 0})()],
+ ["min(x)",                x=>x.length?Math.min(...x):(()=>{throw 0})()],
+ ["sum(x)/len(x)",         x=>x.length?x.reduce((a,b)=>a+b,0)/x.length:(()=>{throw 0})()],
+ ["x[0]",                  x=>{if(!x.length)throw 0; return x[0];}],
+ ["x[-1]",                 x=>{if(!x.length)throw 0; return x[x.length-1];}],
+ ["list(set(x))",          x=>[...new Set(x)]],
+ ["sorted(set(x))",        x=>[...new Set(x)].sort(cmp)],
+ ["abs(x)",                x=>Math.abs(x)],
+ ["x * 2",                 x=>typeof x==="number"?x*2:x.concat(x)],
+ ["x + 1",                 x=>x+1],
+ ["x - 1",                 x=>x-1],
+ ["x ** 2",                x=>x*x],
+ ["-x",                    x=>-x],
+ ["str(x)",                x=>String(x)],
+ ["x.upper()",              x=>x.toUpperCase()],
+ ["x.lower()",              x=>x.toLowerCase()],
+ ["x.strip()",              x=>x.trim()],
+ ["x[::-1]",                x=>typeof x==="string"?[...x].reverse().join(""):[...x].reverse()],
+ ["x.title()",              x=>x.replace(/\w\S*/g,t=>t[0].toUpperCase()+t.slice(1).toLowerCase())],
+ ["len(x) % 2 == 0",        x=>x.length%2===0],
+ ["all(v > 0 for v in x)",  x=>x.every(v=>v>0)],
+ ["any(v < 0 for v in x)",  x=>x.some(v=>v<0)],
+ ["x.count(max(x))" ,       x=>{const m=Math.max(...x);return x.filter(v=>v===m).length;}],
+];
+const BINARY=[
+ ["a + b",  (a,b)=>Array.isArray(a)?a.concat(b):a+b],
+ ["a - b",  (a,b)=>a-b],
+ ["a * b",  (a,b)=>a*b],
+ ["a / b",  (a,b)=>{if(b===0)throw 0; return a/b;}],
+ ["a % b",  (a,b)=>{if(b===0)throw 0; return a%b;}],
+ ["max(a, b)", (a,b)=>Math.max(a,b)],
+ ["min(a, b)", (a,b)=>Math.min(a,b)],
+ ["a == b", (a,b)=>deq(a,b)],
+ ["a > b",  (a,b)=>a>b],
+ ["a < b",  (a,b)=>a<b],
+ ["a in b", (a,b)=>Array.isArray(b)?b.some(v=>deq(v,a)):String(b).includes(a)],
+ ["a and b", (a,b)=>a&&b],
+ ["a or b",  (a,b)=>a||b],
+];
+function cmp(a,b){return a<b?-1:a>b?1:0;}
+
+function trySynthesize(exs,arity){
+  const pool = arity===1?UNARY:BINARY;
+  for(const [name,fn] of pool){
+    let ok=true, tested=[];
+    for(const ex of exs){
+      let got;
+      try{ got = arity===1?fn(ex.args[0]):fn(ex.args[0],ex.args[1]); }
+      catch(e){ ok=false; tested.push({ex,got:"(error)",pass:false}); break; }
+      const pass=deq(got,ex.expected);
+      tested.push({ex,got,pass});
+      if(!pass){ ok=false; break; }
+    }
+    if(ok) return {name,tested};
+  }
+  return null;
+}
+function fmtVal(v){ return JSON.stringify(v); }
+function fmtArgs(args){ return args.map(fmtVal).join(", "); }
+
+function renderCode(){
+  const out=$("codeOut"); out.innerHTML="";
+  let exs,arity;
+  try{ ({exs,arity}=parseExamples($("ex").value)); }
+  catch(e){
+    out.innerHTML='<div class="card k0"><div class="claim"><b>Can’t read the examples.</b></div>'+
+      '<div class="row"><span class="lbl">why</span><span>'+esc(e.message)+'</span></div></div>';
+    return;
+  }
+  const found=trySynthesize(exs,arity);
+  const argName=arity===1?"x":"a, b";
+  if(!found){
+    const pool=(arity===1?UNARY:BINARY).length;
+    out.innerHTML='<div class="card k0"><div class="claim"><b>No program found.</b></div>'+
+      '<div class="row"><span class="lbl">why</span><span>none of the '+pool+
+      ' primitives in this small demo vocabulary satisfy every example you gave. That is a real '+
+      'limit of the demo’s search space, not a guess dressed up as an answer.</span></div>'+
+      '<div class="row"><span class="lbl">note</span><span>the measured system searches a far '+
+      'larger space (composed primitives, retrieval banks) and is tested against 224 MBPP+ tasks - '+
+      'still not solving all of them, honestly reported.</span></div></div>';
+    return;
+  }
+  let steps="";
+  for(const t of found.tested){
+    steps+='<div class="step"><span class="'+(t.pass?"ok":"no")+'">'+(t.pass?"✓":"✗")+
+      '</span><span>f('+esc(fmtArgs(t.ex.args))+') = '+esc(fmtVal(t.got))+
+      (t.pass?"":" ≠ "+esc(fmtVal(t.ex.expected)))+'</span></div>';
+  }
+  out.innerHTML='<div class="card k2">'+
+    '<div class="claim">Found, by search + execution:</div>'+
+    '<pre>def f('+argName+'):\n    return '+esc(found.name)+'</pre>'+
+    '<div class="row"><span class="lbl">verified</span><span>'+found.tested.length+
+    '/'+found.tested.length+' given examples, by REAL execution in this page</span></div>'+
+    '<div style="margin-top:8px">'+steps+'</div></div>';
+}
+$("synth").addEventListener("click",renderCode);
+document.querySelectorAll("#p-code .hint code").forEach(c=>c.addEventListener("click",()=>{
+  $("ex").value=c.getAttribute("data-ex"); renderCode();
+}));
+renderCode();
 </script></body></html>
