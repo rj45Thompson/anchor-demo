@@ -1,0 +1,20 @@
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+
+This repository contains a derived database slice built from knowledge graphs that
+carry ShareAlike obligations. ShareAlike propagates: this derived slice is therefore
+released under CC BY-SA 4.0.
+
+Full licence text: https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+SOURCES AND ATTRIBUTION (data.json)
+
+  REBEL            Huguet Cabot & Navigli, 2021.  CC BY-SA 4.0
+  Wikidata5M       Wang et al., 2021, from Wikidata.  CC0 / CC BY-SA
+  Wikidata truthy  Wikimedia Foundation.  CC0 1.0
+  ConceptNet 5     Speer, Chin & Havasi, 2017.  CC BY-SA 4.0
+  YAGO 3           Max Planck Institute for Informatics.  CC BY 4.0
+  T-REx            Elsahar et al., 2018.  CC BY-SA 4.0
+  DBpedia          DBpedia Association.  CC BY-SA 4.0
+  KELM             Agarwal et al., 2021 (Google Research).  CC BY-SA 4.0
+
+The site code (index.html) is MIT licensed; the DATA is CC BY-SA 4.0 as above.

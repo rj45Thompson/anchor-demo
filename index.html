@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anchor — a knowledge engine that tells you how sure it is</title>
+<style>
+:root{--bg:#fbfaf8;--fg:#1a1a19;--muted:#6b6b66;--line:#e3e0da;--card:#fff;
+--hi:#1f3b57;--good:#1a6b4a;--mid:#8a6a1f;--low:#8a3a2f;--code:#f2efe9}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+--bg:#14150f;--fg:#eceade;--muted:#9c9a8e;--line:#2e2f27;--card:#1b1c15;
+--hi:#8fb4d9;--good:#6fc79b;--mid:#d6b25f;--low:#e08b7a;--code:#22231b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 ui-serif,Georgia,serif}
+.wrap{max-width:780px;margin:0 auto;padding:44px 22px 90px}
+h1{font-size:2rem;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 30px}
+.ask{display:flex;gap:8px;margin:0 0 6px}
+input{flex:1;padding:13px 15px;border:1px solid var(--line);border-radius:9px;
+background:var(--card);color:var(--fg);font:inherit}
+input:focus{outline:2px solid var(--hi);outline-offset:-1px}
+button{padding:13px 20px;border:0;border-radius:9px;background:var(--hi);color:var(--bg);
+font:inherit;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.hint{color:var(--muted);font-size:.87rem;margin:0 0 26px}
+.hint code{background:var(--code);padding:2px 6px;border-radius:4px;cursor:pointer;
+font:13px ui-monospace,Menlo,monospace;display:inline-block;margin:2px 3px 2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);
+border-radius:8px;padding:15px 17px;margin:0 0 11px}
+.card.k2{border-left-color:var(--good)}
+.card.k1{border-left-color:var(--mid)}
+.card.k0{border-left-color:var(--low)}
+.claim{font-size:1.06rem;margin:0 0 9px}
+.pct{font-variant-numeric:tabular-nums;font-weight:700}
+.row{display:flex;gap:9px;font-size:.9rem;color:var(--muted);margin:3px 0}
+.row .lbl{min-width:92px;flex:none;opacity:.8}
+.src{color:var(--fg)}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin:9px 0 11px}
+.bar i{display:block;height:100%;background:var(--hi)}
+h2{font-size:1.02rem;margin:36px 0 9px;letter-spacing:.02em;text-transform:uppercase;
+color:var(--muted);font-family:ui-sans-serif,system-ui,sans-serif}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:0 0 8px}
+th,td{text-align:right;padding:6px 9px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:.84rem;
+font-family:ui-sans-serif,system-ui,sans-serif}
+p{margin:0 0 13px}
+.small{font-size:.9rem;color:var(--muted)}
+.warn{background:var(--code);border-radius:7px;padding:12px 15px;font-size:.9rem;margin:0 0 26px}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
+font-size:.86rem;color:var(--muted)}
+</style></head><body><div class="wrap">
+
+<h1>How sure is it, and why?</h1>
+<p class="sub">A knowledge engine with no neural weights. It answers from a graph of independently
+collected sources, and every answer carries a <em>measured</em> probability — not a guess.</p>
+
+<div class="ask">
+  <input id="q" placeholder="What is the capital of Saint Lucia?" autocomplete="off">
+  <button id="go" disabled>loading…</button>
+</div>
+<p class="hint">Try
+  <code>What is the capital of Saint Lucia?</code>
+  <code>Melbourne country</code>
+  <code>Yangon Region country</code>
+  <code>What is the capital of Atlantis?</code>
+</p>
+
+<div id="out"></div>
+
+<h2>How the number is computed</h2>
+<p>Count how many <strong>independent sources</strong> assert the fact. That count maps to a
+probability through a curve fitted against a <strong>held-out</strong> source the system never
+consults when answering.</p>
+<table><thead><tr><th>independent sources</th><th>predicted</th><th>actual (held out)</th><th>n</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>45.0%</td><td>44.8%</td><td>423,406</td></tr>
+<tr><td>2</td><td>87.1%</td><td>87.5%</td><td>62,749</td></tr>
+<tr><td>3</td><td>94.6%</td><td>94.7%</td><td>10,309</td></tr>
+</tbody></table>
+<p class="small">Fitted on one half of the entities and tested on the other, split by subject so no
+entity appears on both sides. <strong>Expected calibration error: 0.20 percentage points</strong>
+across 496,464 held-out facts. The curve predicts — it is not describing its own training data.</p>
+
+<h2>The law</h2>
+<p><strong>An anchor is a second source, not a second opinion.</strong> One source is close to a
+coin flip. A second <em>independently collected</em> source takes it to 87%. That lift survives
+controls for popularity, for shared lineage between sources, and for gaps in the reference set.</p>
+<p>We also measured where it <em>fails</em>. In a program-synthesis domain where every available
+checker read the same evidence, five checkers that were provably independent of each other still
+bought nothing — because independence was never the constraint. Competence was.</p>
+
+<div class="warn"><strong>What this demo is.</strong> A slice — 4,000 well-connected subjects and
+180,000 facts out of 66.4 million — chosen by connectivity and never by confidence, so
+weakly-supported facts appear at their natural rate. When it doesn't know, it says so instead of
+inventing an answer. That refusal is the point.</div>
+
+<footer>No model runs here. The page loads a data file and counts sources in your browser — the
+same arithmetic the full system does over 66.4M facts.<br><br>
+Data derived from REBEL, Wikidata5M, Wikidata-truthy, ConceptNet&nbsp;5, YAGO&nbsp;3, T-REx,
+DBpedia and KELM, and released under
+<a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:var(--hi)">CC&nbsp;BY-SA&nbsp;4.0</a>
+in accordance with their ShareAlike terms. Site code MIT.</footer>
+</div>
+
+<script>
+const TRUTH_BIT=4;
+const SOURCES={1:"REBEL",2:"Wikidata5M",4:"held-out reference",8:"ConceptNet",
+16:"YAGO3",32:"T-REx",64:"DBpedia",128:"KELM"};
+const CURVE={1:[0.449,847267],2:[0.873,125074],3:[0.947,20611]};
+const BASE=[0.512,992953];
+const STOP=new Set(("what who which is are was were the a an of for in to s does do did tell me "+
+"about and please").split(" "));
+let RELS=null,SUBJ=null,SUBJLC=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function pFor(k){
+  if(CURVE[k])return{p:CURVE[k][0],n:CURVE[k][1],measured:true};
+  if(k>3)return{p:CURVE[3][0],n:CURVE[3][1],measured:true,clamped:true};
+  return{p:BASE[0],n:BASE[1],measured:false};
+}
+function parseQ(q){
+  const ql=" "+q.toLowerCase().trim().replace(/\?+$/,"")+" ";
+  const hits=RELS.filter(r=>r&&ql.includes(" "+r.toLowerCase()+" "));
+  hits.sort((a,b)=>b.length-a.length);
+  if(!hits.length)return{err:"no relation in that question matches the graph's relation names"};
+  let rest=ql;
+  for(const h of hits)rest=rest.split(h.toLowerCase()).join(" ");
+  const words=rest.split(/[\s',]+/).filter(w=>w&&!STOP.has(w));
+  if(!words.length)return{err:"found a relation but no subject in that question"};
+  const phrase=words.join(" ");
+  const subj=SUBJLC.get(phrase);
+  if(!subj)return{err:"“"+esc(phrase)+"” is not one of the 4,000 subjects in this slice — a coverage gap, not a wrong answer"};
+  return{subj,rels:hits};
+}
+function answer(q){
+  const P=parseQ(q);
+  if(P.err)return render([],P.err);
+  const facts=SUBJ[P.subj]||[];
+  const rows=[];
+  for(const rel of P.rels){
+    const ri=RELS.indexOf(rel);
+    for(const f of facts){
+      if(f[0]!==ri)continue;
+      const src=f[2],anchors=[];
+      for(const b in SOURCES){const bit=+b;
+        if((src&bit)&&bit!==TRUTH_BIT)anchors.push(SOURCES[bit]);}
+      rows.push({subj:P.subj,rel:rel,obj:f[1],k:anchors.length,anchors:anchors,
+        heldOut:!!(src&TRUTH_BIT)});
+    }
+  }
+  if(!rows.length)return render([],"the graph holds no fact for that pair — no answer is better than a guess");
+  rows.sort((a,b)=>b.k-a.k);
+  render(rows,null);
+}
+function render(rows,note){
+  const out=$("out");out.innerHTML="";
+  if(note){
+    out.innerHTML='<div class="card k0"><div class="claim"><b>No answer.</b></div>'+
+      '<div class="row"><span class="lbl">why</span><span>'+note+'</span></div>'+
+      '<div class="row"><span class="lbl">note</span><span>It will not invent one. An honest '+
+      '“I don’t know” is the design, not a failure.</span></div></div>';
+    return;
+  }
+  for(const r of rows.slice(0,8)){
+    const q=pFor(r.k);
+    const cls=r.k>=2?"k2":(r.k===1?"k1":"k0");
+    out.insertAdjacentHTML("beforeend",
+     '<div class="card '+cls+'">'+
+     '<div class="claim">'+esc(r.subj)+' <span style="color:var(--muted)">—'+esc(r.rel)+
+       '→</span> <b>'+esc(r.obj)+'</b></div>'+
+     '<div class="bar"><i style="width:'+(q.p*100).toFixed(1)+'%"></i></div>'+
+     '<div class="row"><span class="lbl">confidence</span><span><span class="pct">'+
+       (q.p*100).toFixed(1)+'%</span> — '+r.k+' independent source'+(r.k===1?"":"s")+' '+
+       (q.measured?"(measured on n="+q.n.toLocaleString()+(q.clamped?", clamped at 3+":"")+")"
+                  :"(no anchor — base rate)")+'</span></div>'+
+     (r.anchors.length?'<div class="row"><span class="lbl">because</span><span class="src">'+
+       r.anchors.map(esc).join(", ")+'</span></div>':"")+
+     '<div class="row"><span class="lbl">held-out</span><span>'+(r.heldOut
+       ?"the reference source agrees":"the reference source does not list this")+'</span></div>'+
+     (r.k<2?'<div class="row"><span class="lbl">would help</span><span>one more '+
+       '<em>independent</em> source would take this from ~45% to ~87%</span></div>':"")+
+     '</div>');
+  }
+}
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
+$("go").addEventListener("click",()=>{const v=$("q").value.trim();if(v)answer(v)});
+document.querySelectorAll(".hint code").forEach(c=>c.addEventListener("click",()=>{
+  $("q").value=c.textContent;$("go").click();window.scrollTo({top:0,behavior:"smooth"})}));
+fetch("data.json").then(r=>r.json()).then(d=>{
+  RELS=d.rels;SUBJ=d.subjects;
+  SUBJLC=new Map(Object.keys(SUBJ).map(k=>[k.toLowerCase(),k]));
+  $("go").disabled=false;$("go").textContent="Ask";
+}).catch(e=>{$("go").textContent="data failed";console.error(e)});
+</script></body></html>
