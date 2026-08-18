@@ -369,6 +369,17 @@ $("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
 $("go").addEventListener("click",()=>{const v=$("q").value.trim();if(v)answer(v)});
 document.querySelectorAll("#p-facts .hint code").forEach(c=>c.addEventListener("click",()=>{
   $("q").value=c.textContent;$("go").click();window.scrollTo({top:0,behavior:"smooth"})}));
+// A clone opened by double-clicking index.html loads as file://, where every browser blocks
+// fetch() by design (CORS forbids reading local files this way) - the page would otherwise fail
+// with no explanation. Catch that specific case and say so, rather than a silent "index failed".
+if(location.protocol==="file:"){
+  $("go").textContent="won't run from a local file";
+  $("factsWarn").insertAdjacentHTML("beforeend",
+    ' <strong>This copy won\'t run.</strong> Browsers block fetch() from a file:// page by design '+
+    '(a security restriction, not a bug here) - open it via a local server '+
+    '(<code>python -m http.server</code> in this folder), or visit '+
+    '<a href="https://rj45thompson.github.io/anchor-demo/" style="color:var(--hi)">the hosted page</a> instead.');
+} else {
 fetch("index.json").then(r=>r.json()).then(d=>{
   RELS=d.rels;NSHARD=d.nshard;
   RELSET=new Set(RELS.filter(Boolean).map(r=>r.toLowerCase()));
@@ -382,6 +393,7 @@ fetch("index.json").then(r=>r.json()).then(d=>{
   // index can finish loading while someone is mid-keystroke).
   if(!$("q").value.trim()){ $("q").value="what is a car"; answer("what is a car"); }
 }).catch(e=>{$("go").textContent="index failed";console.error(e)});
+}
 
 /* ---------------------------------------------------------------- code lane
    A small, HONEST reimplementation. No eval() anywhere - every primitive is a real JS closure, so
