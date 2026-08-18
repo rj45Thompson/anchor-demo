@@ -2,6 +2,15 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Anchor — a knowledge engine that tells you how sure it is</title>
+<meta name="description" content="A knowledge engine with no neural weights. Every answer carries a measured, held-out-calibrated confidence and its independent sources — over a 66.4M-fact graph, live in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Anchor — a knowledge engine that tells you how sure it is">
+<meta property="og:description" content="No neural weights. Every answer carries a measured confidence, calibrated against held-out data (ECE 0.20pp), plus a zero-weight code synthesizer verified by real execution.">
+<meta property="og:url" content="https://rj45thompson.github.io/anchor-demo/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Anchor — a knowledge engine that tells you how sure it is">
+<meta name="twitter:description" content="No neural weights. Measured confidence, independent sources, honest refusals — over a 66.4M-fact graph, live in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231f3b57'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Georgia,serif' font-weight='700' fill='%23fbfaf8' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <style>
 :root{--bg:#fbfaf8;--fg:#1a1a19;--muted:#6b6b66;--line:#e3e0da;--card:#fff;
 --hi:#1f3b57;--good:#1a6b4a;--mid:#8a6a1f;--low:#8a3a2f;--code:#f2efe9}
@@ -221,12 +230,12 @@ async function loadBloom(){
   if(bloom)return bloom;
   if(bloomLoading)return bloomLoading;
   bloomLoading=(async()=>{
+    if(typeof DecompressionStream==="undefined")
+      throw new Error("this browser cannot decompress gzip in JS (needs Chrome/Edge 80+, "+
+        "Firefox 113+, or Safari 16.4+) - the coverage check is unavailable, not the graph itself");
     const meta=await(await fetch("bloom.json")).json();
     const r=await fetch("subjects.bloom.gz");
-    let buf;
-    if(typeof DecompressionStream!=="undefined"){
-      buf=await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
-    }else{ buf=await(await fetch("subjects.bloom")).arrayBuffer(); }
+    const buf=await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
     bloom={bytes:new Uint8Array(buf),m:meta.m,k:meta.k,n:meta.n};
     return bloom;
   })();
@@ -367,6 +376,11 @@ fetch("index.json").then(r=>r.json()).then(d=>{
   $("factsWarn").insertAdjacentHTML("beforeend"," <em>Index loaded: "+
     d.subjects.toLocaleString()+" subjects, "+d.facts.toLocaleString()+" facts, "+
     d.nshard+" shards.</em>");
+  // A visitor who never types anything should still see the system actually work - answer the
+  // placeholder example itself, unprompted, as soon as the index is ready. Never overwrites
+  // something the visitor already typed (checked at call time, not at index-load time, since the
+  // index can finish loading while someone is mid-keystroke).
+  if(!$("q").value.trim()){ $("q").value="what is a car"; answer("what is a car"); }
 }).catch(e=>{$("go").textContent="index failed";console.error(e)});
 
 /* ---------------------------------------------------------------- code lane
