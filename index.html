@@ -546,7 +546,8 @@ const R={
   MAX_FETCH:26,         // hard ceiling on shard downloads per question (~1.2MB each). When this
                         // stops the search the trace SAYS SO - a bound is not an absence.
   TRACE_KEEP:600,       // trace lines held in the DOM (the counter still reports the true total)
-  YIELD_EVERY:9,        // facts scanned between paint yields, so the trace visibly streams
+  FRAME_MS:24,          // ms of scanning between paint yields - TIME based, so the pacing
+                        // does not scale with how many facts a subject happens to carry
   MAX_NODES:190,        // drawn-node ceiling; legibility backstop, not a search limit
   DRAW_PER_NODE:8,      // neighbours DRAWN per expanded node (all facts are still SEARCHED)
   REPULSE:1000,         // n-body repulsion between every node pair (O(n^2), fine at this ceiling)
@@ -785,16 +786,26 @@ function badge(t){const b=$("badge");if(b)b.textContent=t;}
    of it is narration written to look busy. If the engine reads 312 facts the trace has 312 SCAN
    lines, and if a bound stops the search the trace says which bound and what was left unexplored.
    A trace that flatters the engine would be worth less than no trace at all. */
-let traceN=0;
-function traceClear(){traceN=0;const e=$("tlog");if(e)e.innerHTML="";const c=$("tcount");
-  if(c)c.textContent="0 steps";}
-function trace(kind,msg){
-  traceN++;
-  const e=$("tlog");if(!e)return;
-  const d=document.createElement("div");
-  d.className="t-"+kind;
-  d.textContent=String(traceN).padStart(4,"0")+"  "+kind.toUpperCase().padEnd(5)+" "+msg;
-  e.appendChild(d);
+let traceN=0, traceBuf=[];
+function traceClear(){traceN=0;traceBuf=[];const e=$("tlog");if(e)e.innerHTML="";
+  const c=$("tcount");if(c)c.textContent="0 steps";}
+/* Buffered on purpose. Removing the per-subject cap took hub entities from 80 facts to 975, and
+   appending one DOM node per fact (with a sleep every 9) hung the tab outright - a real regression
+   caused by the fix, not by the tracing idea. Every fact is still READ and still COUNTED; only the
+   painting is batched, so the step total stays honest while the page stays responsive. */
+function trace(kind,msg){ traceN++; traceBuf.push([traceN,kind,msg]); }
+function traceFlush(){
+  const e=$("tlog");if(!e||!traceBuf.length)return;
+  const frag=document.createDocumentFragment();
+  // only the tail can survive TRACE_KEEP, so building the whole buffer would be wasted work
+  for(const [n,kind,msg] of traceBuf.slice(-R.TRACE_KEEP)){
+    const d=document.createElement("div");
+    d.className="t-"+kind;
+    d.textContent=String(n).padStart(4,"0")+"  "+kind.toUpperCase().padEnd(5)+" "+msg;
+    frag.appendChild(d);
+  }
+  traceBuf=[];
+  e.appendChild(frag);
   while(e.childElementCount>R.TRACE_KEEP)e.removeChild(e.firstChild);
   e.scrollTop=e.scrollHeight;
   const c=$("tcount");if(c)c.textContent=traceN.toLocaleString()+" steps";
@@ -969,7 +980,13 @@ async function reason(q){
     let fetches=1, scanned=0, budgetHit=false;
     trace("fetch","shard "+String(shardOf(start.name)).padStart(3,"0")+" <- \""+start.name+
       "\"  ("+start.facts.length+" facts)  [resolved subject]");
-    while(depth<R.MAX_DEPTH&&frontier.length&&!done.length&&!budgetHit){
+    // Search to the BUDGET, not to the first completion. Stopping at the first depth that
+    // completed was hidden by the old 80-fact cap and surfaced the moment it was removed:
+    // Melbourne now carries `capital of -> Izard County` (Melbourne, Arkansas is that county's
+    // seat), a 1-hop match at 44.9% that ended the search before the 2-hop
+    // Melbourne -> Australia -> Canberra at 89.7% was ever reachable. A shorter chain is not a
+    // better one; ranking only settles that if every candidate was actually explored.
+    while(depth<R.MAX_DEPTH&&frontier.length&&!budgetHit){
       depth++;
       const next=[];
       for(const cur of frontier){
@@ -977,13 +994,17 @@ async function reason(q){
         trace("beam","depth "+depth+": opening \""+cur.node.id+"\" ("+cur.facts.length+" facts)");
         // CORRECTNESS first: every fact is tested for the goal relation. Only the DRAWING is
         // capped - a hub subject can carry 80 facts and rendering all of them buries the chain.
+        // Yield on ELAPSED TIME, not on a fact count. A fixed "every 9 facts" was fine at 80
+        // facts per subject and pathological at 975 - the sleep budget scaled with the data.
+        let lastY=performance.now();
         for(const f of cur.facts){
           scanned++;
           const hit=relMatches(f.rel,goal);
           trace(hit?"hit":"miss", cur.node.id+" --"+relLabel(f.rel)+"--> "+f.obj+
             "   k="+f.k+(hit?"   *** satisfies `"+goal+"`":""));
-          if(scanned%R.YIELD_EVERY===0)await sleep(6);   // stream instead of dumping
+          if(performance.now()-lastY>R.FRAME_MS){ traceFlush(); await sleep(0); lastY=performance.now(); }
         }
+        traceFlush();
         for(const w of cur.facts.filter(f=>relMatches(f.rel,goal)).sort((a,b)=>b.k-a.k)){
           const path=cur.path.concat([{from:cur.node.id,rel:w.rel,to:w.obj,k:w.k}]);
           const p=path.reduce((acc,h)=>acc*pctOf(h.k),1);
@@ -997,7 +1018,7 @@ async function reason(q){
           const t=gNode(f.obj,f.obj,depth);
           if(t)gEdge(cur.node,t,f.rel,f.k);
         }
-        if(done.length)continue;   // finish this LEVEL before ranking; do not go deeper
+        // keep expanding even after a completion: a deeper chain can outrank a shallow one
         // carry only the best-anchored objects forward: every extra node is another shard fetch
         const cand=cur.facts.filter(f=>!seen.has(f.obj)).sort((a,b)=>b.k-a.k).slice(0,R.BEAM);
         trace("beam","no match on \""+cur.node.id+"\"; carrying "+cand.length+" of "+
@@ -1009,7 +1030,18 @@ async function reason(q){
                      _pending:f.obj,path:cur.path.concat([{from:cur.node.id,rel:f.rel,to:f.obj,k:f.k}])});
         }
       }
-      if(done.length)break;
+      // ADMISSIBLE PRUNE, not a cap. Every hop multiplies the chain probability by at most
+      // pctOf(3+) = 0.947, so the best conceivable chain at depth d is 0.947^d. If what we already
+      // hold beats that ceiling, no deeper chain can ever overtake it and searching on is provably
+      // wasted - which is a different thing from giving up, and the trace says which it was.
+      const bestNow=done.length?Math.max(...done.map(d=>d.p)):0;
+      const ceilNext=Math.pow(pctOf(99).p,depth+1);   // pctOf clamps k>3 to the top curve point
+      if(bestNow>=ceilNext){
+        trace("done","stopping at depth "+depth+": best chain "+(bestNow*100).toFixed(1)+
+          "% already exceeds the best POSSIBLE "+(depth+1)+"-hop chain ("+(ceilNext*100).toFixed(1)+
+          "%). Proven unbeatable, not abandoned.");
+        break;
+      }
       for(const nx of next){
         if(fetches>=R.MAX_FETCH){
           budgetHit=true;
@@ -1103,7 +1135,11 @@ async function reason(q){
       '<b>Search failed.</b></div><div class="row"><span class="lbl">error</span><span>'+
       esc(e.message||String(e))+'</span></div></div>');
     badge("error");
-  }finally{ thinking=false;$("tgo").disabled=false; }
+  }finally{
+    traceFlush();   // covers EVERY exit path: early returns, abstains and thrown errors all
+                    // otherwise leave their last lines sitting unpainted in the buffer
+    thinking=false;$("tgo").disabled=false;
+  }
 }
 if($("tq")){
   $("tq").addEventListener("keydown",e=>{if(e.key==="Enter")$("tgo").click()});
