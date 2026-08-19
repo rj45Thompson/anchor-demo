@@ -157,10 +157,13 @@ nothing asserts anything it says so instead of inventing.
 surface text, not a disambiguated entity id, so a name shared by more than one real thing (many
 towns are named "Berlin") can appear merged under one heading. Every fact shown is still real and
 independently sourced — it may just belong to more than one thing with that name.
-(2) Each subject carries at most <strong>80 facts</strong>, kept highest-anchor-count first. Very
-well-documented entities therefore have real edges that are not here, so <em>"not recorded" on
-this page means "not in the 80 kept for that subject"</em>, which is a weaker claim than "not
-true". This cap is the whole reason an earlier build could not tell you Australia's capital.</div>
+(2) There is <strong>no per-subject cap</strong>: every one of the 66,404,117 facts is here, and a
+well-documented subject keeps all of its edges (Australia carries 975). An earlier build capped
+each subject at 80 facts and, by doing so, silently deleted <code>Australia&nbsp;→&nbsp;capital
+&nbsp;→&nbsp;Canberra</code> — the answer to this page's own headline example. Measuring the cap
+rather than defending it is what removed it: it was discarding 1.58% of the graph, and 99.9% of
+subjects never came near it. "Not recorded here" now genuinely means the sources did not record
+it.</div>
 </div>
 
 <!-- ================= REASON PANEL ================= -->
