@@ -87,6 +87,16 @@ color:#64748b;pointer-events:none}
    only the winning 2 lines made a few hundred real operations look like a lookup. */
 .tbar{display:flex;justify-content:space-between;align-items:center;font:11px ui-monospace,
 Menlo,monospace;color:#64748b;padding:0 2px 5px}
+.legend{position:absolute;left:11px;bottom:10px;display:flex;flex-wrap:wrap;gap:9px;
+max-width:70%;font:10.5px ui-monospace,Menlo,monospace;color:#8ea3c0;pointer-events:none}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.hover{position:absolute;left:11px;top:38px;background:rgba(6,8,13,.88);border:1px solid #1c2534;
+border-radius:6px;padding:5px 9px;font:11px ui-monospace,Menlo,monospace;color:#c9d6e8;
+pointer-events:none;max-width:80%}
+.ndtable{width:100%;font-size:.86rem;margin:0 0 14px}
+.ndtable th{color:var(--muted);font-size:.76rem;text-align:left}
+.ndtable td{border-bottom:1px solid var(--line);padding:4px 8px}
 .tlog{border:1px solid #1c2534;border-radius:8px;background:#06080d;height:250px;overflow-y:auto;
 padding:8px 11px;margin:0 0 16px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#7e93b0}
 .tlog div{white-space:pre-wrap;word-break:break-word}
@@ -195,7 +205,9 @@ target it abstains, goes and learns what else that thing is called, and tries ag
 <div class="stage">
   <canvas id="cv"></canvas>
   <div class="badge" id="badge">idle</div>
-  <div class="tip"><span id="modeBtn">chase cam (F to fly)</span> · drag to look · scroll to zoom · WASD+QE in first person</div>
+  <div class="tip">WASD fly · Q/E up-down · shift boost · drag to look</div>
+  <div class="legend" id="legend"></div>
+  <div class="hover" id="hover" style="display:none"></div>
 </div>
 
 <div class="tbar"><span>SEARCH TRACE — every fact the engine actually reads</span>
@@ -205,6 +217,7 @@ target it abstains, goes and learns what else that thing is called, and tries ag
 <div id="tout"></div>
 <div class="livebar"><span>ANSWERS SO FAR — every completed chain, ranked live as it is found</span><span id="lcount">0</span></div>
 <div class="live" id="live"></div>
+<div id="ndbox"></div>
 
 <h2>What you are watching</h2>
 <p>No source recorded “Melbourne → capital of its country → Canberra”. The engine has to
@@ -592,7 +605,13 @@ let rotY=0.55,rotX=-0.22,autoSpin=true,dragging=null,thinking=false,rafOn=false;
 // fitCur is view state, not graph state; kept for compatibility with the older call sites.
 let fitCur=1;
 let tick=0;   // frame counter: gNode stamps it as a node's birth time for the arrival flash
-function gClear(){ G={nodes:[],edges:[],byId:new Map()}; fitCur=1; }
+function gClear(){
+  G={nodes:[],edges:[],byId:new Map()}; fitCur=1;
+  // Force the scene to rebuild even if the next graph happens to have the same node count -
+  // comparing counts alone meant a new question could leave the previous cloud on screen.
+  lastN3=-1; lastE3=-1;
+  if(typeof rebuild3==="function"&&typeof sc!=="undefined"&&sc)rebuild3();
+}
 function gNode(id,label,hop){
   if(G.byId.has(id))return G.byId.get(id);
   if(G.nodes.length>=R.MAX_NODES)return null;
@@ -636,180 +655,245 @@ function physics(){
 }
 
 /* ---------------------------------------------------------------- the stage, in three.js
-   The 2D canvas conveyed the idea but could not show a node's DETAIL and you could never get
-   INSIDE the cloud. This is a real scene: the starfighter's own procedurally-built hull
-   (HULLMODELS - the same code the game flies), instanced glowing nodes, additive edges, a
-   starfield for depth, and two camera modes. No external assets: three.min.js and hullmodels.js
-   ship in the repo, so the page stays self-contained. */
-const T=window.THREE;
-let sc,cam,ren,ship,nodeGrp,edgeGrp,labGrp,stars;
-let camYaw=0,camPitch=-0.12,camDist=300,drag3=null,flyT=0,flyPath=[];
-let fps=false;                       // false = chase cam on the ship, true = first-person WASD
-const keys=Object.create(null);
-const fpPos=new T.Vector3(0,0,600), fpVel=new T.Vector3();
-let glowT=null;
+   You fly it yourself with WASD. There is no ship touring node to node - that was decoration,
+   it told you nothing the trace did not already say, and it moved the camera away from whatever
+   you were trying to look at.
 
+   Everything drawn here answers "what is it thinking?":
+     ROLE COLOUR   start / target / on the winning chain / opened / queued / dead end / unopened
+     EDGE WEIGHT   thickness and brightness = independent source count, so confidence is visible
+     FLOW          walked edges animate source -> target, showing the DIRECTION of the relation
+     PULSE         queued nodes breathe: it is about to open these
+     DIM           dead ends stay visible but recede: opened, led nowhere
+     SIZE          node radius grows with how many facts it holds
+     DETAIL        look at a node and its name, facts, role and sources appear
+   A legend names every one of those, because a colour nobody can decode is decoration too. */
+const T=window.THREE;
+let sc,cam,ren,nodeGrp,edgeGrp,labGrp,stars,flowGrp;
+let camYaw=0,camPitch=0,drag3=null;
+const keys=Object.create(null);
+const camPos=new T.Vector3(0,0,900), camVel=new T.Vector3();
+let glowT=null, ray=null, mouseNDC=new T.Vector2(0,0);
+
+const ROLE={
+  start :{c:0x6ee7b7,name:"start"},
+  target:{c:0xff5fa2,name:"target"},
+  chain :{c:0x67d8ff,name:"on the answer chain"},
+  opened:{c:0x8fa8c8,name:"opened (facts read)"},
+  frontier:{c:0xfbbf24,name:"queued next"},
+  dead  :{c:0x6b4a52,name:"dead end"},
+  unseen:{c:0x44546b,name:"not opened yet"}
+};
+function roleOf(n){
+  if(n.on)return "chain";
+  if(n.hop===0)return "start";
+  if(n.isTarget)return "target";
+  return n.role||"unseen";
+}
 function glowTex(){
   if(glowT)return glowT;
   const c=document.createElement("canvas");c.width=c.height=64;
   const x=c.getContext("2d"),g=x.createRadialGradient(32,32,0,32,32,32);
-  g.addColorStop(0,"rgba(255,255,255,1)");g.addColorStop(.25,"rgba(255,255,255,.55)");
+  g.addColorStop(0,"rgba(255,255,255,1)");g.addColorStop(.25,"rgba(255,255,255,.5)");
   g.addColorStop(1,"rgba(255,255,255,0)");
   x.fillStyle=g;x.fillRect(0,0,64,64);
   glowT=new T.CanvasTexture(c);return glowT;
 }
-/* A node's label is drawn to its own canvas so it can carry DETAIL - the name, how many facts it
-   holds, how many sources back it - which a 2D dot could never show. */
 function labelSprite(text,sub,hot){
-  const f=hot?30:23, pad=14;
-  const mc=document.createElement("canvas"),mx=mc.getContext("2d");
-  mx.font="600 "+f+"px ui-sans-serif,system-ui,sans-serif";
-  const w1=mx.measureText(text).width;
-  mx.font="15px ui-monospace,Menlo,monospace";
-  const w2=sub?mx.measureText(sub).width:0;
+  const f=hot?30:22,pad=13;
+  const m=document.createElement("canvas").getContext("2d");
+  m.font="600 "+f+"px ui-sans-serif,system-ui,sans-serif";
+  const w1=m.measureText(text).width;
+  m.font="14px ui-monospace,Menlo,monospace";
+  const w2=sub?m.measureText(sub).width:0;
   const c=document.createElement("canvas");
-  c.width=Math.min(700,Math.max(w1,w2)+pad*2); c.height=f+(sub?26:0)+pad*2;
+  c.width=Math.min(760,Math.max(w1,w2)+pad*2); c.height=f+(sub?24:0)+pad*2;
   const g=c.getContext("2d");
-  g.fillStyle=hot?"rgba(8,14,24,.88)":"rgba(8,14,24,.62)";
-  g.fillRect(0,0,c.width,c.height);
-  g.fillStyle=hot?"#67d8ff":"#22364e"; g.fillRect(0,0,3,c.height);
+  g.fillStyle=hot?"rgba(8,14,24,.9)":"rgba(8,14,24,.6)";g.fillRect(0,0,c.width,c.height);
   g.font="600 "+f+"px ui-sans-serif,system-ui,sans-serif";
-  g.fillStyle=hot?"#ffffff":"#c9d6e8"; g.textBaseline="top";
-  g.fillText(text,pad,pad);
-  if(sub){ g.font="15px ui-monospace,Menlo,monospace"; g.fillStyle="#7e93b0";
-           g.fillText(sub,pad,pad+f+6); }
+  g.fillStyle=hot?"#fff":"#c9d6e8";g.textBaseline="top";g.fillText(text,pad,pad);
+  if(sub){g.font="14px ui-monospace,Menlo,monospace";g.fillStyle="#7e93b0";
+          g.fillText(sub,pad,pad+f+5);}
   const sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),transparent:true,
     depthWrite:false}));
-  sp.scale.set(c.width*0.14,c.height*0.14,1);
+  sp.scale.set(c.width*0.13,c.height*0.13,1);
   return sp;
 }
 function init3(){
   const cv=$("cv"); if(!cv||!T)return false;
   ren=new T.WebGLRenderer({canvas:cv,antialias:true});
   ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  sc=new T.Scene(); sc.fog=new T.FogExp2(0x05070d,0.00085);
-  cam=new T.PerspectiveCamera(60,1,1,30000);
-  sc.add(new T.AmbientLight(0x5577aa,.75));
-  const key=new T.DirectionalLight(0xbfe0ff,1.2); key.position.set(1,1,1); sc.add(key);
-  const rim=new T.PointLight(0x67d8ff,1.6,4000); rim.position.set(0,400,0); sc.add(rim);
-  const sg=new T.BufferGeometry(),N=2800,pos=new Float32Array(N*3);
-  for(let i=0;i<N;i++){const r=5000+Math.random()*5000,a=Math.random()*6.283,
+  sc=new T.Scene(); sc.fog=new T.FogExp2(0x05070d,0.00055);
+  cam=new T.PerspectiveCamera(65,1,1,40000);
+  ray=new T.Raycaster();
+  sc.add(new T.AmbientLight(0x5577aa,.8));
+  const k=new T.DirectionalLight(0xbfe0ff,1.15); k.position.set(1,1,1); sc.add(k);
+  sc.add(new T.PointLight(0x67d8ff,1.5,5000));
+  const sg=new T.BufferGeometry(),N=3000,pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){const r=6000+Math.random()*6000,a=Math.random()*6.283,
     b=Math.acos(2*Math.random()-1);
     pos[i*3]=r*Math.sin(b)*Math.cos(a);pos[i*3+1]=r*Math.cos(b);pos[i*3+2]=r*Math.sin(b)*Math.sin(a);}
   sg.setAttribute("position",new T.BufferAttribute(pos,3));
-  stars=new T.Points(sg,new T.PointsMaterial({color:0x9fb4d0,size:11,sizeAttenuation:true,
-    map:glowTex(),transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:.9}));
+  stars=new T.Points(sg,new T.PointsMaterial({color:0x9fb4d0,size:12,sizeAttenuation:true,
+    map:glowTex(),transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:.85}));
   sc.add(stars);
-  nodeGrp=new T.Group(); edgeGrp=new T.Group(); labGrp=new T.Group();
-  sc.add(nodeGrp); sc.add(edgeGrp); sc.add(labGrp);
-  try{ ship=window.HULLMODELS.build("interceptor",T,{tint:0x8fd8ff}); }
-  catch(e){ ship=new T.Mesh(new T.ConeGeometry(6,20,8),
-              new T.MeshStandardMaterial({color:0x8fd8ff,emissive:0x113344})); }
-  ship.scale.setScalar(3); sc.add(ship);
+  nodeGrp=new T.Group();edgeGrp=new T.Group();labGrp=new T.Group();flowGrp=new T.Group();
+  sc.add(nodeGrp);sc.add(edgeGrp);sc.add(labGrp);sc.add(flowGrp);
 
   const P=e=>{const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};};
   const md=e=>{drag3=P(e);cv.style.cursor="grabbing";};
-  const mm=e=>{ if(!drag3)return; const p=P(e);
-    camYaw-=(p.x-drag3.x)*0.006;
-    camPitch=Math.max(-1.45,Math.min(1.45,camPitch-(p.y-drag3.y)*0.005));
-    drag3=p; if(e.cancelable&&e.touches)e.preventDefault(); };
+  const mm=e=>{
+    const r=cv.getBoundingClientRect(),p=P(e);
+    mouseNDC.x=((p.x-r.left)/r.width)*2-1; mouseNDC.y=-((p.y-r.top)/r.height)*2+1;
+    if(!drag3)return;
+    camYaw-=(p.x-drag3.x)*0.005;
+    camPitch=Math.max(-1.5,Math.min(1.5,camPitch-(p.y-drag3.y)*0.004));
+    drag3=p; if(e.touches&&e.cancelable)e.preventDefault();
+  };
   cv.addEventListener("mousedown",md); cv.addEventListener("touchstart",md,{passive:true});
   window.addEventListener("mousemove",mm); cv.addEventListener("touchmove",mm,{passive:false});
   window.addEventListener("mouseup",()=>{drag3=null;cv.style.cursor="grab";});
   cv.addEventListener("touchend",()=>{drag3=null;});
-  cv.addEventListener("wheel",e=>{camDist=Math.max(70,Math.min(2600,camDist+e.deltaY*0.7));
-    e.preventDefault();},{passive:false});
-  // WASD only while the pointer is over the stage, so the page still scrolls normally
   let over=false;
-  cv.addEventListener("mouseenter",()=>over=true); cv.addEventListener("mouseleave",()=>over=false);
-  window.addEventListener("keydown",e=>{ if(!over&&!fps)return;
+  cv.addEventListener("mouseenter",()=>over=true);
+  cv.addEventListener("mouseleave",()=>over=false);
+  window.addEventListener("keydown",e=>{ if(!over)return;
     keys[e.key.toLowerCase()]=true;
-    if(e.key.toLowerCase()==="f"){ fps=!fps; if(fps)fpPos.copy(cam.position); setMode(); }
     if(["w","a","s","d","q","e"," "].includes(e.key.toLowerCase()))e.preventDefault(); });
   window.addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
+  // click a node to inspect it (a drag must not count as a click)
+  let downAt=null;
+  cv.addEventListener("mousedown",e=>{downAt={x:e.clientX,y:e.clientY};});
+  cv.addEventListener("mouseup",e=>{
+    if(!downAt)return;
+    const moved=Math.abs(e.clientX-downAt.x)+Math.abs(e.clientY-downAt.y); downAt=null;
+    if(moved>5||!ray)return;
+    ray.setFromCamera(mouseNDC,cam);
+    const hit=ray.intersectObjects(nodeGrp.children.filter(o=>o.isMesh),false)[0];
+    if(hit&&hit.object.userData.node)inspectNode(hit.object.userData.node);
+  });
   return true;
-}
-function setMode(){
-  const b=$("modeBtn"); if(b)b.textContent=fps?"first person — WASD (F to chase)":"chase cam (F to fly)";
 }
 function rebuild3(){
   if(!sc)return;
-  for(const g of [nodeGrp,edgeGrp,labGrp]){
-    while(g.children.length){ const c=g.children.pop();
+  for(const g of [nodeGrp,edgeGrp,labGrp,flowGrp]){
+    while(g.children.length){const c=g.children.pop();
       if(c.geometry)c.geometry.dispose();
-      if(c.material){ if(c.material.map)c.material.map.dispose(); c.material.dispose(); } }
+      if(c.material){if(c.material.map)c.material.map.dispose();c.material.dispose();}}
   }
-  const COL={start:0x6ee7b7,near:0xfbbf24,far:0x7f96b5,hot:0x67d8ff};
-  const sph=new T.SphereGeometry(1,18,14);
+  const sph=new T.SphereGeometry(1,20,16);
   for(const n of G.nodes){
-    const hot=n.on, col=hot?COL.hot:(n.hop===0?COL.start:(n.hop===1?COL.near:COL.far));
+    const rk=roleOf(n), col=ROLE[rk].c, hot=(rk==="chain"||rk==="start"||rk==="target");
+    const dead=rk==="dead";
+    // size carries how much the node KNOWS - a 900-fact hub should not look like a leaf
+    const rad=(hot?12:6)+Math.min(9,Math.log2(1+(n.facts||0))*1.5);
     const m=new T.Mesh(sph,new T.MeshStandardMaterial({color:col,emissive:col,
-      emissiveIntensity:hot?1.6:.5,roughness:.35,metalness:.3}));
-    m.position.set(n.x*2.4,n.y*2.4,n.z*2.4);
-    m.scale.setScalar(hot?11:6); m.userData.node=n; nodeGrp.add(m);
+      emissiveIntensity:hot?1.7:(dead?.12:.5),roughness:.3,metalness:.35,
+      transparent:true,opacity:dead?.4:1}));
+    m.position.set(n.x*2.4,n.y*2.4,n.z*2.4); m.scale.setScalar(rad);
+    m.userData.node=n; m.userData.role=rk; nodeGrp.add(m);
     const halo=new T.Sprite(new T.SpriteMaterial({map:glowTex(),color:col,transparent:true,
-      depthWrite:false,blending:T.AdditiveBlending,opacity:hot?.95:.35}));
-    halo.position.copy(m.position); halo.scale.setScalar(hot?110:50); nodeGrp.add(halo);
-    if(hot||n.hop<=1){
-      const sp=labelSprite(n.label.slice(0,34), n.facts!=null?n.facts+" facts":"", hot);
-      sp.position.copy(m.position); sp.position.y+=hot?34:22; labGrp.add(sp);
+      depthWrite:false,blending:T.AdditiveBlending,opacity:hot?.95:(dead?.08:.3)}));
+    halo.position.copy(m.position); halo.scale.setScalar(rad*(hot?9:6));
+    halo.userData.pulse=(rk==="frontier"); halo.userData.base=rad*(hot?9:6); nodeGrp.add(halo);
+    if(hot||(n.facts||0)>40){
+      const sp=labelSprite(n.label.slice(0,36),
+        (n.facts!=null?n.facts+" facts · ":"")+ROLE[rk].name, hot);
+      sp.position.copy(m.position); sp.position.y+=rad+14; labGrp.add(sp);
     }
   }
   for(const e of G.edges){
-    const hot=e.on;
-    const g=new T.BufferGeometry().setFromPoints([
-      new T.Vector3(e.a.x*2.4,e.a.y*2.4,e.a.z*2.4),
-      new T.Vector3(e.b.x*2.4,e.b.y*2.4,e.b.z*2.4)]);
-    edgeGrp.add(new T.Line(g,new T.LineBasicMaterial({color:hot?COL.hot:0x243448,
-      transparent:true,opacity:hot?1:.3,
+    const hot=e.on, k=e.k||0;
+    const a=new T.Vector3(e.a.x*2.4,e.a.y*2.4,e.a.z*2.4);
+    const b=new T.Vector3(e.b.x*2.4,e.b.y*2.4,e.b.z*2.4);
+    // CONFIDENCE IS THE LINE: more independent sources = brighter, more opaque
+    const op=hot?1:Math.min(.75,.12+k*0.2);
+    const col=hot?0x67d8ff:(k>=2?0x4f7fa8:0x243448);
+    const g=new T.BufferGeometry().setFromPoints([a,b]);
+    edgeGrp.add(new T.Line(g,new T.LineBasicMaterial({color:col,transparent:true,opacity:op,
       blending:hot?T.AdditiveBlending:T.NormalBlending})));
+    if(hot){ // a bead runs source -> target so the DIRECTION of the relation is visible
+      const d=new T.Sprite(new T.SpriteMaterial({map:glowTex(),color:0xffffff,transparent:true,
+        depthWrite:false,blending:T.AdditiveBlending}));
+      d.scale.setScalar(26); d.userData.a=a; d.userData.b=b; flowGrp.add(d);
+    }
   }
-  // the ship tours the WALKED chain, so the camera path IS the reasoning path
-  flyPath=G.nodes.filter(n=>n.on).map(n=>new T.Vector3(n.x*2.4,n.y*2.4,n.z*2.4));
-  if(flyPath.length<2)
-    flyPath=G.nodes.slice(0,10).map(n=>new T.Vector3(n.x*2.4,n.y*2.4,n.z*2.4));
 }
 function draw3(){
   if(!sc||!ren)return;
+  tick++;
   const cv=$("cv"),w=cv.clientWidth,h=cv.clientHeight;
   if(cv.width!==Math.floor(w*ren.getPixelRatio())){
     ren.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix();
   }
-  tick++;
-  flyT+=0.0013;
-  if(flyPath.length>1&&ship){
-    const seg=flyPath.length-1,t=(flyT%1)*seg,i=Math.floor(t),f=t-i;
-    const a=flyPath[i],b=flyPath[Math.min(seg,i+1)];
-    ship.position.lerpVectors(a,b,f);
-    const dir=b.clone().sub(a);
-    if(dir.lengthSq()>0.0001)ship.lookAt(ship.position.clone().sub(dir.normalize()));
-  }
-  if(fps){
-    // first person: WASD translate in view space, Q/E roll-free vertical, shift to boost
-    const sp=(keys["shift"]?26:9);
-    const fwd=new T.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
-    const rgt=new T.Vector3(1,0,0).applyQuaternion(cam.quaternion);
-    if(keys["w"])fpVel.addScaledVector(fwd,sp);
-    if(keys["s"])fpVel.addScaledVector(fwd,-sp);
-    if(keys["a"])fpVel.addScaledVector(rgt,-sp);
-    if(keys["d"])fpVel.addScaledVector(rgt,sp);
-    if(keys["e"]||keys[" "])fpVel.y+=sp;
-    if(keys["q"])fpVel.y-=sp;
-    fpVel.multiplyScalar(0.88); fpPos.add(fpVel);
-    cam.position.copy(fpPos);
-    const look=new T.Vector3(Math.sin(camYaw)*Math.cos(camPitch),Math.sin(camPitch),
-                             Math.cos(camYaw)*Math.cos(camPitch));
-    cam.lookAt(fpPos.clone().sub(look));
-  } else {
-    const tgt=ship?ship.position:new T.Vector3();
-    const off=new T.Vector3(Math.sin(camYaw)*Math.cos(camPitch),Math.sin(camPitch),
-                            Math.cos(camYaw)*Math.cos(camPitch)).multiplyScalar(camDist);
-    cam.position.lerp(tgt.clone().add(off),0.06);
-    cam.lookAt(tgt);
-  }
+  // free flight: WASD translate, Q/E or space vertical, shift boosts
+  const sp=(keys["shift"]?34:11);
+  const fwd=new T.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
+  const rgt=new T.Vector3(1,0,0).applyQuaternion(cam.quaternion);
+  if(keys["w"])camVel.addScaledVector(fwd,sp);
+  if(keys["s"])camVel.addScaledVector(fwd,-sp);
+  if(keys["a"])camVel.addScaledVector(rgt,-sp);
+  if(keys["d"])camVel.addScaledVector(rgt,sp);
+  if(keys["e"]||keys[" "])camVel.y+=sp;
+  if(keys["q"])camVel.y-=sp;
+  camVel.multiplyScalar(0.87); camPos.add(camVel);
+  cam.position.copy(camPos);
+  const look=new T.Vector3(Math.sin(camYaw)*Math.cos(camPitch),Math.sin(camPitch),
+                           Math.cos(camYaw)*Math.cos(camPitch));
+  cam.lookAt(camPos.clone().sub(look));
+  // queued nodes breathe: "these are the ones I am about to open"
+  const ps=1+Math.sin(tick*0.09)*0.28;
+  for(const o of nodeGrp.children)
+    if(o.userData&&o.userData.pulse)o.scale.setScalar(o.userData.base*ps);
+  // beads travel the walked chain in the relation's own direction
+  const t=(tick%110)/110;
+  for(const d of flowGrp.children)
+    d.position.lerpVectors(d.userData.a,d.userData.b,t);
   for(const s of labGrp.children)s.quaternion.copy(cam.quaternion);
-  if(stars)stars.rotation.y+=0.00007;
+  if(stars)stars.rotation.y+=0.00006;
+  // look at a node, read what it is
+  if(ray&&nodeGrp.children.length){
+    ray.setFromCamera(mouseNDC,cam);
+    const hit=ray.intersectObjects(nodeGrp.children.filter(o=>o.isMesh),false)[0];
+    const el=$("hover");
+    if(el){
+      if(hit&&hit.object.userData.node){
+        const n=hit.object.userData.node, rk=hit.object.userData.role;
+        el.style.display="block";
+        el.innerHTML="<b>"+esc(n.label)+"</b> · "+ROLE[rk].name+
+          (n.facts!=null?" · "+n.facts+" facts":" · not opened")+" · hop "+n.hop;
+      } else el.style.display="none";
+    }
+  }
   ren.render(sc,cam);
+}
+
+function buildLegend(){
+  const el=$("legend"); if(!el)return;
+  el.innerHTML=Object.keys(ROLE).map(k=>
+    '<span><i style="background:#'+ROLE[k].c.toString(16).padStart(6,"0")+'"></i>'+
+    ROLE[k].name+'</span>').join("")+
+    '<span style="opacity:.75">edge brightness = independent sources</span>';
+}
+/* Click a node and get the FULL record: every relation it holds, with its own measured
+   confidence and the sources behind it. The 3D view shows structure; this shows evidence. */
+async function inspectNode(n){
+  const box=$("ndbox"); if(!box)return;
+  box.innerHTML='<div class="livebar"><span>NODE — '+esc(n.label)+
+    '</span><span>reading…</span></div>';
+  const f=await factsOf(n.id);
+  n.facts=f.length; n.role=n.role||(f.length?"opened":"dead");
+  const rows=f.slice().sort((a,b)=>b.k-a.k);
+  box.innerHTML='<div class="livebar"><span>NODE — <b>'+esc(n.label)+
+    '</b> · hop '+n.hop+' · '+ROLE[roleOf(n)].name+'</span><span>'+rows.length+' facts</span></div>'+
+    (rows.length?'<table class="ndtable"><tr><th>relation</th><th>object</th><th>conf</th>'+
+      '<th>sources</th></tr>'+rows.slice(0,40).map(r=>{const q=pFor(r.k);
+      return '<tr><td>'+esc(relLabel(r.rel))+'</td><td><b>'+esc(r.obj)+'</b></td><td>'+
+        (q.p*100).toFixed(1)+'%</td><td style="color:var(--muted)">'+
+        (r.anchors&&r.anchors.length?esc(r.anchors.join(", ")):"—")+'</td></tr>';}).join("")+
+      '</table>'+(rows.length>40?'<div class="small">showing 40 of '+rows.length+'</div>':'')
+    :'<div class="small">no facts recorded for this subject</div>');
+  box.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
 /* The animation loop. The earlier edit that swapped the 2D renderer for the scene sliced these
@@ -819,7 +903,7 @@ function draw3(){
 let built3=false, lastN3=-1, lastE3=-1;
 function loop(){
   if(!rafOn)return;
-  if(!built3){ built3=(init3()!==false); setMode(); }
+  if(!built3){ built3=(init3()!==false); if(built3)buildLegend(); }
   physics();
   if(G.nodes.length!==lastN3||G.edges.length!==lastE3){
     lastN3=G.nodes.length; lastE3=G.edges.length; rebuild3();
@@ -1134,7 +1218,9 @@ async function reason(q){
   // Static copy about a DIFFERENT example must not sit above a running answer - it reads as
   // hardcoded, which is exactly the impression this page cannot afford.
   const intro=$("thinkIntro"); if(intro)intro.style.display="none";
-  gClear();traceClear();liveClear();startLoop();
+  gClear();traceClear();liveClear();
+  if(typeof camPos!=="undefined"){camPos.set(0,0,900);camVel.set(0,0,0);camYaw=0;camPitch=0;}
+  startLoop();
   try{
     const {goal}=readQuery(q);
     badge("reading the question");
@@ -1146,6 +1232,7 @@ async function reason(q){
     // Two named entities = "is A connected to B", which is a PATH question, not a relation lookup.
     const target=ents.length>1?ents[1]:null;
     const start=ents.length?ents[0]:null;
+    if(target){const tn=G.byId.get(target.name); if(tn)tn.isTarget=true;}
     if(target)trace("beam","two entities named -> searching for a PATH from \""+start.name+
       "\" to \""+target.name+"\" rather than a relation");
     // MERGE: the one-hop lookup is fast and never fails, so it answers FIRST and the multi-hop
@@ -1301,6 +1388,7 @@ async function reason(q){
           cand.map(f=>f.obj+"("+f.k+")").join(", "));
         for(const f of cand){
           seen.add(f.obj);
+          const fn=G.byId.get(f.obj); if(fn&&!fn.role)fn.role="frontier";   // queued, not opened
           next.push({node:G.byId.get(f.obj)||gNode(f.obj,f.obj,depth),
                      _pending:f.obj,path:cur.path.concat([{from:cur.node.id,rel:f.rel,to:f.obj,k:f.k}])});
         }
@@ -1329,7 +1417,8 @@ async function reason(q){
         badge("depth "+depth+" · fetching shard "+
               String(shardOf(nx._pending)).padStart(3,"0")+" · "+nx._pending);
         nx.facts=await factsOf(nx._pending);
-        if(nx.node)nx.node.facts=nx.facts.length;   // label detail
+        if(nx.node){ nx.node.facts=nx.facts.length;
+          nx.node.role=nx.facts.length?"opened":"dead"; }   // dead = opened, led nowhere
         fetches++;
         trace("fetch","shard "+String(shardOf(nx._pending)).padStart(3,"0")+" <- \""+
           nx._pending+"\"  ("+nx.facts.length+" facts)   [fetch "+fetches+"/"+R.MAX_FETCH+"]");
@@ -1465,11 +1554,26 @@ async function reason(q){
 }
 if($("tq")){
   $("tq").addEventListener("keydown",e=>{if(e.key==="Enter")$("tgo").click()});
-  $("tgo").addEventListener("click",()=>{
-  // While a search runs this is a STOP control: the engine never decides it has done enough.
-  if(thinking){ stopped=true; badge("stopped by you"); trace("dead","STOPPED BY THE USER. The "+
-    "search had not run out of graph - it was still expanding. Nothing here is an absence."); return; }
-  const v=$("tq").value.trim(); if(v)reason(v);
+  let runningQ="";   // what the in-flight search is actually answering
+$("tgo").addEventListener("click",()=>{
+  const v=$("tq").value.trim();
+  if(thinking){
+    // Pressing it with a NEW question means "ask this instead", not "stop". Treating every
+    // press as Stop is why typing a new question and hitting the button appeared to do
+    // nothing: the old search halted and the new one was never started.
+    stopped=true;
+    if(v&&v!==runningQ){
+      badge("switching question");
+      trace("dead","SUPERSEDED: you asked something else. Abandoning this search.");
+      setTimeout(()=>{ runningQ=v; reason(v); },180);
+    } else {
+      badge("stopped by you");
+      trace("dead","STOPPED BY THE USER. The search had not run out of graph - it was still "+
+        "expanding. Nothing here is an absence.");
+    }
+    return;
+  }
+  if(v){ runningQ=v; reason(v); }
 });
   document.querySelectorAll("#p-think .hint code").forEach(c=>c.addEventListener("click",()=>{
     $("tq").value=c.textContent;$("tgo").click();}));
