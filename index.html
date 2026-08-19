@@ -168,11 +168,9 @@ it.</div>
 
 <!-- ================= REASON PANEL ================= -->
 <div id="p-think" class="panel on">
-<p class="small" style="margin-top:0">A lookup answers one hop. This <strong>chains</strong> them:
-<em>the capital of the country Melbourne is in</em> is not a recorded fact — it is
-Melbourne&nbsp;→&nbsp;country&nbsp;→&nbsp;Australia&nbsp;→&nbsp;capital&nbsp;→&nbsp;Canberra, a path
-the engine has to <em>find</em>. Watch it walk the graph, and watch the confidence compound.</p>
-
+<p class="small" id="thinkIntro" style="margin-top:0">A lookup answers one hop. This
+<strong>chains</strong> them, hop by hop, over 66 million facts — and when it cannot reach the
+target it abstains, goes and learns what else that thing is called, and tries again.</p>
 <div class="ask">
   <input id="tq" placeholder="capital of the country Melbourne is in" autocomplete="off">
   <button id="tgo" disabled>loading…</button>
@@ -183,10 +181,7 @@ the engine has to <em>find</em>. Watch it walk the graph, and watch the confiden
   <code>the continent of the country Tokyo is in</code>
   <code>the genre of the performer of Abbey Road</code>
 </p>
-<p class="small" style="margin-top:-16px">The first one also shows the honest part. “Melbourne”
-names several real places, so several chains genuinely complete — the engine ranks them and shows
-you the rivals (a Melbourne in Quebec really does lead to Ottawa) instead of picking one and
-sounding certain.</p>
+
 
 <div class="stage">
   <canvas id="cv"></canvas>
@@ -530,11 +525,13 @@ fetch("index.json").then(r=>r.json()).then(d=>{
    just arithmetic on a 2D canvas - the same "check every step yourself" claim the rest of the page
    makes, applied to the graphics. */
 const R={
-  MAX_DEPTH:40,         // hops. Watching it work IS the demo, so depth is not rationed.
-  BEAM:100,             // nodes carried per level, best-anchored first
-  MAX_FETCH:10000,      // effectively unbounded. It still reports the bound if it ever bites,
-                        // because a bound reported as an absence is the lie this page exists to
-                        // refuse - but at 10,000 shards the honest answer is "we looked properly".
+  MAX_DEPTH:8,          // hops. Deep enough to watch, shallow enough to FINISH.
+  BEAM:12,              // Tested at 100 as asked: it does not converge. 18,153 steps into a
+                        // depth-3 level it was reading `woodwind` while looking for a car, because
+                        // a wide breadth-first beam explores everything EXCEPT toward the target.
+                        // 12 with goal-direction (below) beats 100 without it.
+  MAX_FETCH:150,        // ~180MB worst case. Still reports the bound when it bites, because
+                        // a bound reported as an absence is the lie this page exists to refuse.
   TRACE_KEEP:900,       // trace lines held in the DOM (the counter reports the TRUE total)
   FRAME_MS:24,          // ms of scanning between paint yields - TIME based, so the pacing
                         // does not scale with how many facts a subject happens to carry
@@ -998,6 +995,9 @@ async function reason(q){
   if(thinking)return;
   thinking=true;$("tgo").disabled=true;
   const out=$("tout");out.innerHTML="";
+  // Static copy about a DIFFERENT example must not sit above a running answer - it reads as
+  // hardcoded, which is exactly the impression this page cannot afford.
+  const intro=$("thinkIntro"); if(intro)intro.style.display="none";
   gClear();traceClear();startLoop();
   try{
     const {goal}=readQuery(q);
@@ -1127,7 +1127,14 @@ async function reason(q){
         }
         // keep expanding even after a completion: a deeper chain can outrank a shallow one
         // carry only the best-anchored objects forward: every extra node is another shard fetch
-        const cand=cur.facts.filter(f=>!seen.has(f.obj)).sort((a,b)=>b.k-a.k).slice(0,R.BEAM);
+        // Goal-DIRECTED, not just broad. Anchor count alone sent it through `woodwind` on the way
+        // to a car. When a target is named, a neighbour sharing a word with it (or with a term the
+        // engine learned) is expanded first - the same greedy-best-first idea any pathfinder uses.
+        const tw=target?new Set([...accept].join(" ").split(/\s+/).filter(x=>x.length>3)):null;
+        const near=o=>{ if(!tw)return 0; const t=String(o).toLowerCase();
+                        let n=0; for(const w of tw) if(t.includes(w)) n++; return n; };
+        const cand=cur.facts.filter(f=>!seen.has(f.obj))
+          .sort((a,b)=> near(b.obj)-near(a.obj) || b.k-a.k).slice(0,R.BEAM);
         trace("beam","no match on \""+cur.node.id+"\"; carrying "+cand.length+" of "+
           cur.facts.length+" forward by anchor count: "+
           cand.map(f=>f.obj+"("+f.k+")").join(", "));
