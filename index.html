@@ -830,6 +830,10 @@ const ASK_ALIASES=[
   [/\bwhere\b|\blocated\b|\blocation\b/,               "location"],
   [/\bpopulation\b/,                                   "population"],
   [/\bcurrency\b/,                                     "currency"],
+  // "used in" is a question verb, but "Used car" is also a real entity, so leaving `used`
+  // unstripped let the longest-span reader answer about second-hand cars when the question was
+  // about brake calipers. Question verbs lose to nouns.
+  [/\bused?\b|\buses\b|\busing\b/,                     "uses"],
   [/\bgenres?\b/,                                      "genre"],
   [/\bcontinent\b/,                                    "continent"],
   [/\bcapital\b/,                                      "capital"],
@@ -909,6 +913,33 @@ async function findStart(q,goal){
   }
   return null;
 }
+/* Find EVERY entity the question names, longest span first. "is a caliper used in a car" names
+   two of them, and asking "from caliper, find relation R" was never going to answer it - the
+   question is whether a PATH exists between two known nodes. Worse, the old single-subject reader
+   glued the leftover words into "Used car" and set off from an entity nobody asked about. */
+async function findEntities(q){
+  const ql=String(q).toLowerCase().trim().replace(/[?.!]+$/,"");
+  const caps=properNouns(q);
+  const asked=x=>ASK_ALIASES.some(([re])=>re.test(" "+x+" "));
+  const w=ql.split(/[\s',]+/).filter(x=>x&&!STOP.has(x)&&!asked(x));
+  const found=[],used=new Set();
+  for(let n=Math.min(w.length,4);n>=1;n--){
+    for(let i=0;i+n<=w.length;i++){
+      if([...Array(n).keys()].some(k=>used.has(i+k)))continue;   // no overlapping spans
+      const ph=w.slice(i,i+n).join(" ");
+      let best=null;
+      for(const v of variantsOf(ph)){
+        const vl=v.toLowerCase();
+        if(RELSET.has(vl)&&!vl.split(/\s+/).some(x=>caps.has(x)))continue;
+        const f=await factsOf(v);
+        if(f.length){const b=Math.max(...f.map(x=>x.k));
+          if(!best||b>best.best)best={name:v,facts:f,best:b};}
+      }
+      if(best){found.push(best);for(let k=0;k<n;k++)used.add(i+k);}
+    }
+  }
+  return found;
+}
 /* pull a node's neighbours into the graph (click-to-expand, and the search's own frontier step) */
 async function expand(node){
   badge("fetching shard "+String(shardOf(node.id)).padStart(3,"0")+" · "+node.id);
@@ -943,27 +974,58 @@ async function reason(q){
     const {goal}=readQuery(q);
     badge("reading the question");
     trace("beam","question: \""+q+"\"");
+    const ents=await findEntities(q);
+    trace("beam","entities found in the question: "+
+      (ents.length?ents.map(e=>"\""+e.name+"\" ("+e.facts.length+" facts)").join(", "):"none"));
     trace("beam","target relation read as `"+(goal||"none found")+"`");
-    const start=await findStart(q,goal);
-    out.innerHTML='<div class="row"><span class="lbl">reading as</span><span>'+
-      'start at <span class="chip">'+esc(start?start.name:"?")+'</span>'+
-      (goal?' · looking for the <span class="chip">'+esc(goal)+'</span> relation':
-            ' · <span class="chip">no target relation found in the question</span>')+
-      '</span></div>';
+    // Two named entities = "is A connected to B", which is a PATH question, not a relation lookup.
+    const target=ents.length>1?ents[1]:null;
+    const start=ents.length?ents[0]:null;
+    if(target)trace("beam","two entities named -> searching for a PATH from \""+start.name+
+      "\" to \""+target.name+"\" rather than a relation");
     if(!start){
-      out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>No answer.</b>'+
-        '</div><div class="row"><span class="lbl">why</span><span>nothing in that question '+
-        'resolved to a subject in the graph, so there is no node to start from.</span></div></div>');
+      // The coverage check lived only on the facts tab, so this lane used to give up with no idea
+      // whether the words were absent from the graph or merely unparsed. Same Bloom filter, same
+      // zero-false-negative guarantee, now on the question that actually needed it.
+      badge("checking coverage");
+      const raw=String(q).toLowerCase().replace(/[?.!]+$/,"")
+        .split(/[\s',]+/).filter(x=>x&&!STOP.has(x)).sort((a,b)=>b.length-a.length)[0]||q;
+      render([],null,null);
+      out.insertAdjacentHTML("beforeend",'<div class="row"><span class="lbl">checking</span>'+
+        '<span>fetching the coverage index to see whether “'+esc(raw)+'” is genuinely absent…'+
+        '</span></div>');
+      const absent=await definitelyAbsent(raw);
+      trace("dead","coverage check on \""+raw+"\": "+
+        (absent===true?"DEFINITELY absent from all 12.2M subjects":
+         absent===false?"present as a subject, but nothing here parsed to it":
+         "coverage index unavailable"));
+      out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>No answer.'+
+        '</b></div><div class="row"><span class="lbl">why</span><span>'+
+        (absent===true?"nothing in that question is one of the graph's 12.2 million subjects "+
+          "(checked against a Bloom filter with zero false negatives) — a real coverage gap":
+         absent===false?"those words ARE in the graph, but no span of the question resolved to a "+
+          "subject — a parsing miss on our side, not a gap in the data":
+         "nothing resolved, and the coverage index could not be loaded to say why")+
+        '</span></div></div>');
       badge("idle");return;
     }
-    if(!goal){
-      out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>No target.'+
-        '</b></div><div class="row"><span class="lbl">why</span><span>no relation name in that '+
-        'question matched one the graph actually records, so there is nothing to search FOR. '+
-        'The graph around <b>'+esc(start.name)+'</b> is drawn anyway — click any node to walk it '+
-        'by hand.</span></div></div>');
+    // One line, not a paragraph: what it is looking for and where it starts.
+    out.innerHTML='<div class="row"><span class="lbl">reading as</span><span>'+
+      esc(start.name)+(target?' <span style="color:var(--muted)">— is it connected to —</span> '+
+      esc(target.name) : (goal?' <span style="color:var(--muted)">—'+esc(goal)+'→</span> ?'
+                              :' <span class="chip">no relation named; showing its neighbourhood</span>'))+
+      '</span></div>';
+    if(!goal&&!target){
       const s0=gNode(start.name,start.name,0);
-      for(const f of start.facts.slice(0,12)){const t=gNode(f.obj,f.obj,1);gEdge(s0,t,f.rel,f.k);}
+      // count disclosed, list not silently trimmed
+      for(const f of start.facts.slice().sort((a,b)=>b.k-a.k).slice(0,R.DRAW_PER_NODE)){
+        const t=gNode(f.obj,f.obj,1);gEdge(s0,t,f.rel,f.k);}
+      out.insertAdjacentHTML("beforeend",'<div class="card k1"><div class="claim">'+
+        'Nothing to search <b>for</b>.</div><div class="row"><span class="lbl">why</span><span>'+
+        'no word in that question names a relation this graph records, and only one entity was '+
+        'named, so there is no target. <b>'+esc(start.name)+'</b> has '+start.facts.length+
+        ' recorded facts; its best-anchored '+Math.min(R.DRAW_PER_NODE,start.facts.length)+
+        ' are drawn — click any node to walk it by hand.</span></div></div>');
       badge("idle");return;
     }
 
@@ -999,16 +1061,22 @@ async function reason(q){
         // capped - a hub subject can carry 80 facts and rendering all of them buries the chain.
         // Yield on ELAPSED TIME, not on a fact count. A fixed "every 9 facts" was fine at 80
         // facts per subject and pathological at 975 - the sleep budget scaled with the data.
+        // A path question is satisfied by REACHING THE NODE, whatever relation got us there.
+        // "is a caliper used in a car" names no relation at all, so matching on relation could
+        // never have answered it - which is why it produced nonsense instead of an answer.
+        const sat=f=> target ? String(f.obj).toLowerCase()===target.name.toLowerCase()
+                             : relMatches(f.rel,goal);
         let lastY=performance.now();
         for(const f of cur.facts){
           scanned++;
-          const hit=relMatches(f.rel,goal);
+          const hit=sat(f);
           trace(hit?"hit":"miss", cur.node.id+" --"+relLabel(f.rel)+"--> "+f.obj+
-            "   k="+f.k+(hit?"   *** satisfies `"+goal+"`":""));
+            "   k="+f.k+(hit?"   *** "+(target?"REACHED \""+target.name+"\"":
+                                                "satisfies `"+goal+"`"):""));
           if(performance.now()-lastY>R.FRAME_MS){ traceFlush(); await sleep(0); lastY=performance.now(); }
         }
         traceFlush();
-        for(const w of cur.facts.filter(f=>relMatches(f.rel,goal)).sort((a,b)=>b.k-a.k)){
+        for(const w of cur.facts.filter(sat).sort((a,b)=>b.k-a.k)){
           const path=cur.path.concat([{from:cur.node.id,rel:w.rel,to:w.obj,k:w.k}]);
           const p=path.reduce((acc,h)=>acc*pctOf(h.k),1);
           done.push({path,p});
@@ -1077,9 +1145,9 @@ async function reason(q){
       // exactly the kind of quiet overclaim this page exists to argue against.
       out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>Chain broke.'+
         '</b></div><div class="row"><span class="lbl">why</span><span>searched '+depth+
-        ' hop'+(depth===1?"":"s")+' out from <b>'+esc(start.name)+'</b> without reaching a '+
-        '<span class="chip">'+esc(goal)+'</span> relation. The furthest node it could not get out '+
-        'of was <b>'+esc(dead)+'</b>.</span></div>'+
+        ' hop'+(depth===1?"":"s")+' out from <b>'+esc(start.name)+'</b> without reaching '+
+        (target?'<b>'+esc(target.name)+'</b>':'a <span class="chip">'+esc(goal)+'</span> relation')+
+        '. The furthest node it could not get out of was <b>'+esc(dead)+'</b>.</span></div>'+
         '<div class="row"><span class="lbl">bound</span><span>This was a <b>bounded</b> search, '+
         'not an exhaustive one: at most '+R.BEAM+' branches per hop, '+R.MAX_DEPTH+' hops deep, '+
         R.MAX_FETCH+' shard fetches. <b>Absence of a chain here is not proof there is none</b> — '+
