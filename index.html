@@ -195,7 +195,7 @@ target it abstains, goes and learns what else that thing is called, and tries ag
 <div class="stage">
   <canvas id="cv"></canvas>
   <div class="badge" id="badge">idle</div>
-  <div class="tip">drag to orbit · click a node to expand it</div>
+  <div class="tip"><span id="modeBtn">chase cam (F to fly)</span> · drag to look · scroll to zoom · WASD+QE in first person</div>
 </div>
 
 <div class="tbar"><span>SEARCH TRACE — every fact the engine actually reads</span>
@@ -260,6 +260,8 @@ sharded graph and a Bloom filter, all running in your browser.
 <a href="https://github.com/rj45Thompson/anchor-demo" style="color:var(--hi)">Source on GitHub</a>.</footer>
 </div>
 
+<script src="three.min.js"></script>
+<script src="hullmodels.js"></script>
 <script>
 /* ---------------------------------------------------------------- tabs */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
@@ -580,31 +582,23 @@ let G={nodes:[],edges:[],byId:new Map()};
 let gen=0;      // search generation: a newer question cancels an older one
 let stopped=false;   // the PERSON decides when the search has run long enough, not a constant
 let rotY=0.55,rotX=-0.22,autoSpin=true,dragging=null,thinking=false,rafOn=false;
-const cv=$("cv"),cx=cv?cv.getContext("2d"):null;
+// NOTE: do NOT take a 2d context on this canvas. A canvas that has ever returned a 2d context
+// can never return a webgl one, so this single leftover line from the old renderer silently
+// killed the entire three.js scene - init3() returned false and nothing drew.
 
-/* Fixed SCENE colours, deliberately not the page's theme tokens: the stage renders the same in
-   light and dark because it is a viewport, not a figure. Chosen to sit on the dark stage. */
-const SCENE={start:"#6ee7b7", near:"#fbbf24", far:"#7f96b5",
-             hot:"#67d8ff", edge:"#243044", label:"#c9d6e8", hotLabel:"#ffffff"};
-let STARS=null, tick=0;
-/* Generated ONCE from a fixed seed - a field regenerated per frame would shimmer like noise. */
-function stars(){
-  if(STARS)return STARS;
-  let s=0x2f6e2b1; const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};
-  STARS=[];
-  for(let i=0;i<150;i++)STARS.push({x:rnd(),y:rnd(),r:rnd()*1.05+0.25,a:rnd()*0.45+0.10});
-  return STARS;
-}
-// fitCur is part of the view state, not the graph: leaving it set would make a new query open at
-// the PREVIOUS graph's zoom and ease from there, which reads as a lurch on the first few frames.
-function gClear(){G={nodes:[],edges:[],byId:new Map()};fitCur=1;}
+/* The GRAPH MODEL - node/edge bookkeeping and the force layout. Separate from the renderer on
+   purpose: swapping the 2D canvas for three.js should never have touched this, and the edit that
+   did cut it out is why the page threw "gClear is not defined" on every question. */
+// fitCur is view state, not graph state; kept for compatibility with the older call sites.
+let fitCur=1;
+let tick=0;   // frame counter: gNode stamps it as a node's birth time for the arrival flash
+function gClear(){ G={nodes:[],edges:[],byId:new Map()}; fitCur=1; }
 function gNode(id,label,hop){
   if(G.byId.has(id))return G.byId.get(id);
   if(G.nodes.length>=R.MAX_NODES)return null;
-  // seed on a small random shell: the layout needs SOME asymmetry to push apart from, and a
-  // deterministic seed (all at origin) makes every repulsion force exactly zero.
+  // seed on a small random shell: at the origin every repulsion force is exactly zero
   const a=Math.random()*Math.PI*2,b=Math.acos(2*Math.random()-1),r=26+hop*30;
-  const n={id,label,hop,on:false,born:tick,
+  const n={id,label,hop,on:false,born:tick,facts:null,
     x:r*Math.sin(b)*Math.cos(a),y:r*Math.sin(b)*Math.sin(a),z:r*Math.cos(b),
     vx:0,vy:0,vz:0};
   G.nodes.push(n);G.byId.set(id,n);return n;
@@ -640,146 +634,201 @@ function physics(){
     }
   }
 }
-/* rotate into camera space, then divide by depth. Two rotations (yaw then pitch) is enough to
-   read a cloud as solid; the returned s is BOTH the projection scale and the depth cue. */
-let fitCur=1;
-function project(p,w,h){
-  const cy=Math.cos(rotY),sy=Math.sin(rotY),cxr=Math.cos(rotX),sxr=Math.sin(rotX);
-  let x=p.x*cy-p.z*sy, z=p.x*sy+p.z*cy, y=p.y;
-  const y2=y*cxr-z*sxr; z=y*sxr+z*cxr; y=y2;
-  const s=R.FOCAL/(R.FOCAL+z+320);
-  return {sx:w/2+x*s*fitCur, sy:h/2+y*s*fitCur, s, z};
+
+/* ---------------------------------------------------------------- the stage, in three.js
+   The 2D canvas conveyed the idea but could not show a node's DETAIL and you could never get
+   INSIDE the cloud. This is a real scene: the starfighter's own procedurally-built hull
+   (HULLMODELS - the same code the game flies), instanced glowing nodes, additive edges, a
+   starfield for depth, and two camera modes. No external assets: three.min.js and hullmodels.js
+   ship in the repo, so the page stays self-contained. */
+const T=window.THREE;
+let sc,cam,ren,ship,nodeGrp,edgeGrp,labGrp,stars;
+let camYaw=0,camPitch=-0.12,camDist=300,drag3=null,flyT=0,flyPath=[];
+let fps=false;                       // false = chase cam on the ship, true = first-person WASD
+const keys=Object.create(null);
+const fpPos=new T.Vector3(0,0,600), fpVel=new T.Vector3();
+let glowT=null;
+
+function glowTex(){
+  if(glowT)return glowT;
+  const c=document.createElement("canvas");c.width=c.height=64;
+  const x=c.getContext("2d"),g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,"rgba(255,255,255,1)");g.addColorStop(.25,"rgba(255,255,255,.55)");
+  g.addColorStop(1,"rgba(255,255,255,0)");
+  x.fillStyle=g;x.fillRect(0,0,64,64);
+  glowT=new T.CanvasTexture(c);return glowT;
 }
-/* A fixed focal length leaves a small graph as a knot in the middle of a large canvas - a 3-node
-   chain rendered into ~60px of a 430px viewport, with every label stacked on its neighbour. Framing
-   is therefore measured per frame from the actual projected extent rather than assumed, and eased
-   so the view grows smoothly as nodes stream in instead of snapping on each arrival. */
-function refit(w,h){
-  if(!G.nodes.length)return;
-  const save=fitCur; fitCur=1;
-  let m=1;
+/* A node's label is drawn to its own canvas so it can carry DETAIL - the name, how many facts it
+   holds, how many sources back it - which a 2D dot could never show. */
+function labelSprite(text,sub,hot){
+  const f=hot?30:23, pad=14;
+  const mc=document.createElement("canvas"),mx=mc.getContext("2d");
+  mx.font="600 "+f+"px ui-sans-serif,system-ui,sans-serif";
+  const w1=mx.measureText(text).width;
+  mx.font="15px ui-monospace,Menlo,monospace";
+  const w2=sub?mx.measureText(sub).width:0;
+  const c=document.createElement("canvas");
+  c.width=Math.min(700,Math.max(w1,w2)+pad*2); c.height=f+(sub?26:0)+pad*2;
+  const g=c.getContext("2d");
+  g.fillStyle=hot?"rgba(8,14,24,.88)":"rgba(8,14,24,.62)";
+  g.fillRect(0,0,c.width,c.height);
+  g.fillStyle=hot?"#67d8ff":"#22364e"; g.fillRect(0,0,3,c.height);
+  g.font="600 "+f+"px ui-sans-serif,system-ui,sans-serif";
+  g.fillStyle=hot?"#ffffff":"#c9d6e8"; g.textBaseline="top";
+  g.fillText(text,pad,pad);
+  if(sub){ g.font="15px ui-monospace,Menlo,monospace"; g.fillStyle="#7e93b0";
+           g.fillText(sub,pad,pad+f+6); }
+  const sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),transparent:true,
+    depthWrite:false}));
+  sp.scale.set(c.width*0.14,c.height*0.14,1);
+  return sp;
+}
+function init3(){
+  const cv=$("cv"); if(!cv||!T)return false;
+  ren=new T.WebGLRenderer({canvas:cv,antialias:true});
+  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  sc=new T.Scene(); sc.fog=new T.FogExp2(0x05070d,0.00085);
+  cam=new T.PerspectiveCamera(60,1,1,30000);
+  sc.add(new T.AmbientLight(0x5577aa,.75));
+  const key=new T.DirectionalLight(0xbfe0ff,1.2); key.position.set(1,1,1); sc.add(key);
+  const rim=new T.PointLight(0x67d8ff,1.6,4000); rim.position.set(0,400,0); sc.add(rim);
+  const sg=new T.BufferGeometry(),N=2800,pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){const r=5000+Math.random()*5000,a=Math.random()*6.283,
+    b=Math.acos(2*Math.random()-1);
+    pos[i*3]=r*Math.sin(b)*Math.cos(a);pos[i*3+1]=r*Math.cos(b);pos[i*3+2]=r*Math.sin(b)*Math.sin(a);}
+  sg.setAttribute("position",new T.BufferAttribute(pos,3));
+  stars=new T.Points(sg,new T.PointsMaterial({color:0x9fb4d0,size:11,sizeAttenuation:true,
+    map:glowTex(),transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:.9}));
+  sc.add(stars);
+  nodeGrp=new T.Group(); edgeGrp=new T.Group(); labGrp=new T.Group();
+  sc.add(nodeGrp); sc.add(edgeGrp); sc.add(labGrp);
+  try{ ship=window.HULLMODELS.build("interceptor",T,{tint:0x8fd8ff}); }
+  catch(e){ ship=new T.Mesh(new T.ConeGeometry(6,20,8),
+              new T.MeshStandardMaterial({color:0x8fd8ff,emissive:0x113344})); }
+  ship.scale.setScalar(3); sc.add(ship);
+
+  const P=e=>{const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};};
+  const md=e=>{drag3=P(e);cv.style.cursor="grabbing";};
+  const mm=e=>{ if(!drag3)return; const p=P(e);
+    camYaw-=(p.x-drag3.x)*0.006;
+    camPitch=Math.max(-1.45,Math.min(1.45,camPitch-(p.y-drag3.y)*0.005));
+    drag3=p; if(e.cancelable&&e.touches)e.preventDefault(); };
+  cv.addEventListener("mousedown",md); cv.addEventListener("touchstart",md,{passive:true});
+  window.addEventListener("mousemove",mm); cv.addEventListener("touchmove",mm,{passive:false});
+  window.addEventListener("mouseup",()=>{drag3=null;cv.style.cursor="grab";});
+  cv.addEventListener("touchend",()=>{drag3=null;});
+  cv.addEventListener("wheel",e=>{camDist=Math.max(70,Math.min(2600,camDist+e.deltaY*0.7));
+    e.preventDefault();},{passive:false});
+  // WASD only while the pointer is over the stage, so the page still scrolls normally
+  let over=false;
+  cv.addEventListener("mouseenter",()=>over=true); cv.addEventListener("mouseleave",()=>over=false);
+  window.addEventListener("keydown",e=>{ if(!over&&!fps)return;
+    keys[e.key.toLowerCase()]=true;
+    if(e.key.toLowerCase()==="f"){ fps=!fps; if(fps)fpPos.copy(cam.position); setMode(); }
+    if(["w","a","s","d","q","e"," "].includes(e.key.toLowerCase()))e.preventDefault(); });
+  window.addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
+  return true;
+}
+function setMode(){
+  const b=$("modeBtn"); if(b)b.textContent=fps?"first person — WASD (F to chase)":"chase cam (F to fly)";
+}
+function rebuild3(){
+  if(!sc)return;
+  for(const g of [nodeGrp,edgeGrp,labGrp]){
+    while(g.children.length){ const c=g.children.pop();
+      if(c.geometry)c.geometry.dispose();
+      if(c.material){ if(c.material.map)c.material.map.dispose(); c.material.dispose(); } }
+  }
+  const COL={start:0x6ee7b7,near:0xfbbf24,far:0x7f96b5,hot:0x67d8ff};
+  const sph=new T.SphereGeometry(1,18,14);
   for(const n of G.nodes){
-    const q=project(n,w,h);
-    m=Math.max(m,Math.hypot(q.sx-w/2,q.sy-h/2));
+    const hot=n.on, col=hot?COL.hot:(n.hop===0?COL.start:(n.hop===1?COL.near:COL.far));
+    const m=new T.Mesh(sph,new T.MeshStandardMaterial({color:col,emissive:col,
+      emissiveIntensity:hot?1.6:.5,roughness:.35,metalness:.3}));
+    m.position.set(n.x*2.4,n.y*2.4,n.z*2.4);
+    m.scale.setScalar(hot?11:6); m.userData.node=n; nodeGrp.add(m);
+    const halo=new T.Sprite(new T.SpriteMaterial({map:glowTex(),color:col,transparent:true,
+      depthWrite:false,blending:T.AdditiveBlending,opacity:hot?.95:.35}));
+    halo.position.copy(m.position); halo.scale.setScalar(hot?110:50); nodeGrp.add(halo);
+    if(hot||n.hop<=1){
+      const sp=labelSprite(n.label.slice(0,34), n.facts!=null?n.facts+" facts":"", hot);
+      sp.position.copy(m.position); sp.position.y+=hot?34:22; labGrp.add(sp);
+    }
   }
-  fitCur=save;
-  const want=Math.max(0.4,Math.min(3.6,(Math.min(w,h)*0.40)/m));
-  fitCur+=(want-fitCur)*0.07;
-}
-function draw(){
-  if(!cx)return;
-  const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
-  if(cv.width!==w*dpr||cv.height!==h*dpr){cv.width=w*dpr;cv.height=h*dpr;}
-  cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,w,h);
-  tick++; refit(w,h);
-  const c=SCENE;
-  // starfield, parallaxed by the camera yaw so orbiting reads as motion THROUGH a space
-  const off=(rotY*0.045)%1;
-  for(const s of stars()){
-    let sx=((s.x-off)%1+1)%1*w, sy=s.y*h;
-    cx.globalAlpha=s.a; cx.fillStyle="#9fb4d0";
-    cx.beginPath();cx.arc(sx,sy,s.r,0,6.2832);cx.fill();
-  }
-  const pts=G.nodes.map(n=>({n,p:project(n,w,h)})).sort((a,b)=>b.p.z-a.p.z);
-  const anyOn=G.edges.some(e=>e.on);
-  const colOf=n=>n.on?c.hot:(n.hop===0?c.start:(n.hop===1?c.near:c.far));
   for(const e of G.edges){
-    const A=project(e.a,w,h),B=project(e.b,w,h);
-    const hot=e.on, dim=anyOn&&!hot;
-    if(hot){   // walked edges are drawn as a colour ramp between their two endpoints
-      const g=cx.createLinearGradient(A.sx,A.sy,B.sx,B.sy);
-      g.addColorStop(0,colOf(e.a));g.addColorStop(1,colOf(e.b));
-      cx.strokeStyle=g; cx.globalAlpha=0.95; cx.lineWidth=2.6;
-      cx.shadowColor=c.hot; cx.shadowBlur=12;
-    } else {
-      cx.strokeStyle=c.edge; cx.globalAlpha=dim?0.22:0.6;
-      cx.lineWidth=Math.max(0.5,(e.k>=2?1.3:0.8)*A.s);
-    }
-    cx.beginPath();cx.moveTo(A.sx,A.sy);cx.lineTo(B.sx,B.sy);cx.stroke();
-    cx.shadowBlur=0;
-    if(hot){
-      // a pulse running source -> target: which DIRECTION the chain was walked, made visible
-      const t=(tick%90)/90;
-      const px=A.sx+(B.sx-A.sx)*t, py=A.sy+(B.sy-A.sy)*t;
-      cx.globalAlpha=0.9*(1-Math.abs(t-0.5)*1.4); cx.fillStyle="#ffffff";
-      cx.beginPath();cx.arc(px,py,2.4,0,6.2832);cx.fill();
-      // Offset the relation PERPENDICULAR to the edge, not straight up: a chain that happens to
-      // run vertically would otherwise stack every relation on top of a node's own label, which
-      // is exactly what it did ("capital" landed on "Australia").
-      const dx=B.sx-A.sx, dy=B.sy-A.sy, L=Math.hypot(dx,dy)||1;
-      const ox=-dy/L*13, oy=dx/L*13;
-      cx.globalAlpha=0.95;cx.fillStyle=c.hotLabel;
-      cx.font="11px ui-monospace,Menlo,monospace";cx.textAlign="center";
-      cx.fillText(relLabel(e.rel),(A.sx+B.sx)/2+ox,(A.sy+B.sy)/2+oy+4);
-    }
+    const hot=e.on;
+    const g=new T.BufferGeometry().setFromPoints([
+      new T.Vector3(e.a.x*2.4,e.a.y*2.4,e.a.z*2.4),
+      new T.Vector3(e.b.x*2.4,e.b.y*2.4,e.b.z*2.4)]);
+    edgeGrp.add(new T.Line(g,new T.LineBasicMaterial({color:hot?COL.hot:0x243448,
+      transparent:true,opacity:hot?1:.3,
+      blending:hot?T.AdditiveBlending:T.NormalBlending})));
   }
-  for(const {n,p} of pts){
-    const hot=n.on, dim=anyOn&&!hot;
-    const r=Math.max(1.6,(hot?R.NODE_R*1.7:R.NODE_R)*p.s);
-    const col=colOf(n);
-    // A node that just arrived flashes and settles over ~40 frames. Without it the graph merely
-    // EXISTS; with it you can see it being built, which is the thing worth watching.
-    const age=tick-(n.born||0), fresh=age<40?1-age/40:0;
-    cx.globalAlpha=dim?0.3:1;
-    if(fresh>0){
-      cx.globalAlpha=fresh*0.5;cx.fillStyle="#ffffff";
-      cx.beginPath();cx.arc(p.sx,p.sy,r+fresh*13,0,6.2832);cx.fill();
-      cx.globalAlpha=dim?0.3:1;
-    }
-    // a soft halo, then the core - a flat disc reads as a dot, this reads as a body with light
-    const g=cx.createRadialGradient(p.sx,p.sy,0,p.sx,p.sy,r*3.2);
-    g.addColorStop(0,col);g.addColorStop(0.28,col+"66");g.addColorStop(1,col+"00");
-    cx.fillStyle=g;cx.beginPath();cx.arc(p.sx,p.sy,r*3.2,0,6.2832);cx.fill();
-    cx.fillStyle=hot?"#ffffff":col;
-    cx.beginPath();cx.arc(p.sx,p.sy,r,0,6.2832);cx.fill();
-    if(p.s>0.72||hot){
-      cx.globalAlpha=dim?0.32:(hot?1:0.85);
-      cx.fillStyle=hot?c.hotLabel:c.label;
-      cx.font=(hot?"600 12px":"11px")+" ui-sans-serif,system-ui,sans-serif";
-      cx.textAlign="center";
-      // cosmetic clip of the on-canvas label only; the full name is in the trace and the verdict
-      const t=n.label.length>22?n.label.slice(0,21)+"…":n.label;
-      cx.fillText(t,p.sx,p.sy-r-6);
-    }
-  }
-  cx.globalAlpha=1;
+  // the ship tours the WALKED chain, so the camera path IS the reasoning path
+  flyPath=G.nodes.filter(n=>n.on).map(n=>new T.Vector3(n.x*2.4,n.y*2.4,n.z*2.4));
+  if(flyPath.length<2)
+    flyPath=G.nodes.slice(0,10).map(n=>new T.Vector3(n.x*2.4,n.y*2.4,n.z*2.4));
 }
+function draw3(){
+  if(!sc||!ren)return;
+  const cv=$("cv"),w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.floor(w*ren.getPixelRatio())){
+    ren.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix();
+  }
+  tick++;
+  flyT+=0.0013;
+  if(flyPath.length>1&&ship){
+    const seg=flyPath.length-1,t=(flyT%1)*seg,i=Math.floor(t),f=t-i;
+    const a=flyPath[i],b=flyPath[Math.min(seg,i+1)];
+    ship.position.lerpVectors(a,b,f);
+    const dir=b.clone().sub(a);
+    if(dir.lengthSq()>0.0001)ship.lookAt(ship.position.clone().sub(dir.normalize()));
+  }
+  if(fps){
+    // first person: WASD translate in view space, Q/E roll-free vertical, shift to boost
+    const sp=(keys["shift"]?26:9);
+    const fwd=new T.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
+    const rgt=new T.Vector3(1,0,0).applyQuaternion(cam.quaternion);
+    if(keys["w"])fpVel.addScaledVector(fwd,sp);
+    if(keys["s"])fpVel.addScaledVector(fwd,-sp);
+    if(keys["a"])fpVel.addScaledVector(rgt,-sp);
+    if(keys["d"])fpVel.addScaledVector(rgt,sp);
+    if(keys["e"]||keys[" "])fpVel.y+=sp;
+    if(keys["q"])fpVel.y-=sp;
+    fpVel.multiplyScalar(0.88); fpPos.add(fpVel);
+    cam.position.copy(fpPos);
+    const look=new T.Vector3(Math.sin(camYaw)*Math.cos(camPitch),Math.sin(camPitch),
+                             Math.cos(camYaw)*Math.cos(camPitch));
+    cam.lookAt(fpPos.clone().sub(look));
+  } else {
+    const tgt=ship?ship.position:new T.Vector3();
+    const off=new T.Vector3(Math.sin(camYaw)*Math.cos(camPitch),Math.sin(camPitch),
+                            Math.cos(camYaw)*Math.cos(camPitch)).multiplyScalar(camDist);
+    cam.position.lerp(tgt.clone().add(off),0.06);
+    cam.lookAt(tgt);
+  }
+  for(const s of labGrp.children)s.quaternion.copy(cam.quaternion);
+  if(stars)stars.rotation.y+=0.00007;
+  ren.render(sc,cam);
+}
+
+/* The animation loop. The earlier edit that swapped the 2D renderer for the scene sliced these
+   three functions out along with the code between them, so startLoop() threw and nothing ever
+   drew - the scene built fine when called by hand, which is exactly why the failure looked like
+   "three.js is broken" rather than "the loop is missing". */
+let built3=false, lastN3=-1, lastE3=-1;
 function loop(){
   if(!rafOn)return;
-  if(autoSpin&&!dragging)rotY+=0.0022;
-  physics();draw();requestAnimationFrame(loop);
+  if(!built3){ built3=(init3()!==false); setMode(); }
+  physics();
+  if(G.nodes.length!==lastN3||G.edges.length!==lastE3){
+    lastN3=G.nodes.length; lastE3=G.edges.length; rebuild3();
+  }
+  draw3();
+  requestAnimationFrame(loop);
 }
-function startLoop(){ if(!rafOn){rafOn=true;requestAnimationFrame(loop);} }
+function startLoop(){ if(!rafOn){ rafOn=true; requestAnimationFrame(loop); } }
 function stopLoop(){ rafOn=false; }
-
-/* ---- interaction: orbit by drag, expand by click ---- */
-if(cv){
-  const pos=e=>{const r=cv.getBoundingClientRect();
-    const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};};
-  const down=e=>{dragging={...pos(e),moved:0};autoSpin=false;cv.classList.add("grabbing");};
-  const move=e=>{
-    if(!dragging)return;
-    const p=pos(e),dx=p.x-dragging.x,dy=p.y-dragging.y;
-    rotY+=dx*0.008; rotX=Math.max(-1.3,Math.min(1.3,rotX+dy*0.006));
-    dragging.moved+=Math.abs(dx)+Math.abs(dy); dragging.x=p.x;dragging.y=p.y;
-    if(e.cancelable)e.preventDefault();
-  };
-  const up=e=>{
-    if(dragging&&dragging.moved<5){   // a click, not a drag: expand the node under the cursor
-      const w=cv.clientWidth,h=cv.clientHeight,p=pos(e);
-      let best=null,bd=R.HIT_R;
-      for(const n of G.nodes){
-        const q=project(n,w,h),d=Math.hypot(q.sx-p.x,q.sy-p.y);
-        if(d<bd){bd=d;best=n;}
-      }
-      if(best&&!thinking)expand(best);
-    }
-    dragging=null;cv.classList.remove("grabbing");
-  };
-  cv.addEventListener("mousedown",down);cv.addEventListener("touchstart",down,{passive:true});
-  window.addEventListener("mousemove",move);cv.addEventListener("touchmove",move,{passive:false});
-  window.addEventListener("mouseup",up);cv.addEventListener("touchend",up);
-}
 
 /* ---- graph access: one subject's real facts, decoded from the shard's packed rows ---- */
 async function factsOf(name){
@@ -1280,6 +1329,7 @@ async function reason(q){
         badge("depth "+depth+" · fetching shard "+
               String(shardOf(nx._pending)).padStart(3,"0")+" · "+nx._pending);
         nx.facts=await factsOf(nx._pending);
+        if(nx.node)nx.node.facts=nx.facts.length;   // label detail
         fetches++;
         trace("fetch","shard "+String(shardOf(nx._pending)).padStart(3,"0")+" <- \""+
           nx._pending+"\"  ("+nx.facts.length+" facts)   [fetch "+fetches+"/"+R.MAX_FETCH+"]");
@@ -1303,6 +1353,28 @@ async function reason(q){
     frontier=[{node:s0,facts:start.facts,path:[]}];
     seen.clear(); seen.add(start.name);
     depth=0; budgetHit=false;
+    }
+    /* IT ASKS BACK. When the search grinds without reaching the target, the engine knows
+       something specific and useful: the nearest thing it DID reach. "caliper" never reaches
+       "car" but arrives at "automobile" repeatedly - that is a question worth asking a person,
+       not a failure to bury. Every suggestion is a node the search actually visited. */
+    if(target&&!done.length&&G.nodes.length>6){
+      const near=G.nodes.filter(n=>n.hop>0&&(n.facts||0)>2)
+        .sort((x,y)=>(y.facts||0)-(x.facts||0)).slice(0,4).map(n=>n.id);
+      if(near.length){
+        trace("dead","ASKING YOU: cannot reach \""+target.name+"\". Best-connected nodes I did "+
+          "reach: "+near.join(", "));
+        out.insertAdjacentHTML("beforeend",'<div class="card k1"><div class="claim">'+
+          '<b>A question for you.</b></div><div class="row"><span class="lbl">stuck</span>'+
+          '<span>I cannot reach <b>'+esc(target.name)+'</b>, but I keep arriving at these. '+
+          'Did you mean one of them?</span></div><div class="row"><span class="lbl">try</span>'+
+          '<span>'+near.map(n=>'<code class="reask" style="cursor:pointer">'+esc(n)+
+          '</code>').join(" ")+'</span></div></div>');
+        document.querySelectorAll("#tout .reask").forEach(el=>el.addEventListener("click",()=>{
+          stopped=true; $("tq").value=start.name+" "+el.textContent;
+          setTimeout(()=>reason($("tq").value),150);
+        }));
+      }
     }
     done.sort((a,b)=>b.p-a.p);
     const found=done[0]||null;
