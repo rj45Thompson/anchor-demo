@@ -92,6 +92,16 @@ padding:8px 11px;margin:0 0 16px;font:11px/1.5 ui-monospace,Menlo,monospace;colo
 .tlog div{white-space:pre-wrap;word-break:break-word}
 .tlog .t-hit{color:#6ee7b7}.tlog .t-miss{color:#46566e}.tlog .t-fetch{color:#67d8ff}
 .tlog .t-beam{color:#fbbf24}.tlog .t-dead{color:#f87171}.tlog .t-done{color:#fff;font-weight:600}
+.livebar{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px;
+font:11px ui-monospace,Menlo,monospace;color:var(--muted)}
+.live{margin:0 0 14px}
+.lrow{display:flex;gap:10px;align-items:baseline;padding:6px 9px;border:1px solid var(--line);
+border-left:3px solid var(--line);border-radius:6px;margin:0 0 5px;font-size:.92rem;
+animation:pop .3s ease-out}
+.lrow.k2{border-left-color:var(--good)}.lrow.k1{border-left-color:var(--mid)}
+.lrow.k0{border-left-color:var(--low)}
+.lrow .lp{font-variant-numeric:tabular-nums;font-weight:700;min-width:58px;flex:none}
+.lrow .lc{flex:1}.lrow .lh{color:var(--muted);font-size:.8rem;flex:none}
 .trace{border-left:2px solid var(--line);padding:2px 0 2px 14px;margin:0 0 14px}
 .hop{margin:0 0 11px;font-size:.93rem}
 .hop .lead{font-family:ui-monospace,Menlo,monospace;font-size:.9rem}
@@ -110,8 +120,7 @@ carries a <em>measured</em> confidence, the evidence behind it, and an honest re
 doesn't have enough.</p>
 
 <div class="tabs">
-  <div class="tab" data-p="facts">Ask a question</div>
-  <div class="tab on" data-p="think">Watch it think</div>
+  <div class="tab on" data-p="think">Ask anything · watch it think</div>
   <div class="tab" data-p="code">Write a function</div>
 </div>
 
@@ -194,6 +203,8 @@ target it abstains, goes and learns what else that thing is called, and tries ag
 <div class="tlog" id="tlog"></div>
 
 <div id="tout"></div>
+<div class="livebar"><span>ANSWERS SO FAR — every completed chain, ranked live as it is found</span><span id="lcount">0</span></div>
+<div class="live" id="live"></div>
 
 <h2>What you are watching</h2>
 <p>No source recorded “Melbourne → capital of its country → Canberra”. The engine has to
@@ -537,13 +548,15 @@ fetch("index.json").then(r=>r.json()).then(d=>{
    just arithmetic on a 2D canvas - the same "check every step yourself" claim the rest of the page
    makes, applied to the graphics. */
 const R={
-  MAX_DEPTH:8,          // hops. Deep enough to watch, shallow enough to FINISH.
+  MAX_DEPTH:40,         // it does not give up: a bound reported as an absence is the lie this
+                        // page exists to refuse, so the search runs until the frontier is truly
+                        // empty or the PERSON stops it.
   BEAM:12,              // Tested at 100 as asked: it does not converge. 18,153 steps into a
                         // depth-3 level it was reading `woodwind` while looking for a car, because
                         // a wide breadth-first beam explores everything EXCEPT toward the target.
                         // 12 with goal-direction (below) beats 100 without it.
-  MAX_FETCH:150,        // ~180MB worst case. Still reports the bound when it bites, because
-                        // a bound reported as an absence is the lie this page exists to refuse.
+  MAX_FETCH:100000,     // effectively unbounded. Kept only as a runaway backstop, and if it ever
+                        // bites the trace still names it rather than calling it an absence.
   TRACE_KEEP:900,       // trace lines held in the DOM (the counter reports the TRUE total)
   FRAME_MS:24,          // ms of scanning between paint yields - TIME based, so the pacing
                         // does not scale with how many facts a subject happens to carry
@@ -564,6 +577,8 @@ const R={
   STEP_MS:460           // pause between replayed chain steps, slow enough to read
 };
 let G={nodes:[],edges:[],byId:new Map()};
+let gen=0;      // search generation: a newer question cancels an older one
+let stopped=false;   // the PERSON decides when the search has run long enough, not a constant
 let rotY=0.55,rotX=-0.22,autoSpin=true,dragging=null,thinking=false,rafOn=false;
 const cv=$("cv"),cx=cv?cv.getContext("2d"):null;
 
@@ -990,6 +1005,34 @@ function hopHTML(i,from,rel,to,k,running){
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
+/* A ten-minute search that reports ONE line at the end throws away everything it paid for: the
+   last run found 26 complete chains across 3,503 facts and showed four. If speed is not the
+   objective then completeness is, so every chain is published the MOMENT it completes and the
+   list re-ranks itself live. You watch the answer set grow and improve rather than waiting. */
+let liveN=0;
+function liveClear(){liveN=0;const e=$("live");if(e)e.innerHTML="";const c=$("lcount");
+  if(c)c.textContent="0";}
+function liveAdd(path,p){
+  const e=$("live");if(!e)return;
+  liveN++;
+  const minK=Math.min(...path.map(h=>h.k));
+  const row=document.createElement("div");
+  row.className="lrow "+(minK>=2?"k2":(minK===1?"k1":"k0"));
+  row.dataset.p=p;
+  row.innerHTML='<span class="lp">'+(p*100).toFixed(1)+'%</span>'+
+    '<span class="lc">'+esc(path[0].from)+path.map(h=>
+      ' <span style="color:var(--muted)">—'+esc(relLabel(h.rel))+'→</span> '+esc(h.to)).join("")+
+    '</span><span class="lh">'+path.length+' hop'+(path.length===1?"":"s")+
+    ' · min '+minK+' src</span>';
+  // insert in rank order so the best answer is always the top line, even mid-search
+  let placed=false;
+  for(const ex of e.children){
+    if(p>parseFloat(ex.dataset.p)){e.insertBefore(row,ex);placed=true;break;}
+  }
+  if(!placed)e.appendChild(row);
+  const c=$("lcount");if(c)c.textContent=liveN+(liveN===1?" chain":" chains");
+}
+
 /* ---- LEARNING ON ABSTAIN --------------------------------------------------------------------
    Abstaining is honest, but stopping there is lazy. When the search cannot reach the target, the
    most likely reason is not that the world lacks the connection - it is that the graph files it
@@ -1030,13 +1073,19 @@ async function learnAliases(term){
 }
 
 async function reason(q){
-  if(thinking)return;
-  thinking=true;$("tgo").disabled=true;
+  // Do NOT swallow the click. The landing search runs for ~30s, and a visitor who arrives and
+  // immediately types their own question was getting silence - the worst possible first thirty
+  // seconds. A newer question preempts the older one instead.
+  const my=++gen;
+  // Deliberately NOT disabled. A disabled button fires no click event at all, so the whole
+  // preempt path was unreachable and the visitor's question vanished in silence. The label
+  // says what pressing it will do instead.
+  thinking=true;stopped=false;$("tgo").textContent="Stop";
   const out=$("tout");out.innerHTML="";
   // Static copy about a DIFFERENT example must not sit above a running answer - it reads as
   // hardcoded, which is exactly the impression this page cannot afford.
   const intro=$("thinkIntro"); if(intro)intro.style.display="none";
-  gClear();traceClear();startLoop();
+  gClear();traceClear();liveClear();startLoop();
   try{
     const {goal}=readQuery(q);
     badge("reading the question");
@@ -1050,6 +1099,27 @@ async function reason(q){
     const start=ents.length?ents[0]:null;
     if(target)trace("beam","two entities named -> searching for a PATH from \""+start.name+
       "\" to \""+target.name+"\" rather than a relation");
+    // MERGE: the one-hop lookup is fast and never fails, so it answers FIRST and the multi-hop
+    // search streams in underneath it. Previously these were separate tabs and the slow one was
+    // the landing page, so the demo looked broken for the first thirty seconds while the lane
+    // that actually worked sat on a tab nobody was on.
+    if(start){
+      const rows=start.facts.slice().sort((a,b)=>b.k-a.k);
+      const show=goal?rows.filter(r=>relMatches(r.rel,goal)):rows;
+      const use=(show.length?show:rows).slice(0,8);
+      out.insertAdjacentHTML("beforeend",
+        '<div class="livebar" style="margin-top:10px"><span>DIRECTLY RECORDED about '+
+        esc(start.name)+' — one hop, no search</span><span>'+rows.length+' facts</span></div>'+
+        use.map(r=>{const q=pFor(r.k);
+          return '<div class="lrow '+(r.k>=2?"k2":(r.k===1?"k1":"k0"))+'">'+
+            '<span class="lp">'+(q.p*100).toFixed(1)+'%</span>'+
+            '<span class="lc">'+esc(start.name)+' <span style="color:var(--muted)">—'+
+            esc(relLabel(r.rel))+'→</span> <b>'+esc(r.obj)+'</b></span>'+
+            '<span class="lh">'+r.k+' src'+(r.anchors&&r.anchors.length?' · '+
+            esc(r.anchors.join(", ")):'')+'</span></div>';}).join("")+
+        (rows.length>use.length?'<div class="small" style="margin:2px 0 0">showing '+use.length+
+          ' of '+rows.length+' — the rest are in the graph above, click any node</div>':''));
+    }
     if(!start){
       // The coverage check lived only on the facts tab, so this lane used to give up with no idea
       // whether the words were absent from the graph or merely unparsed. Same Bloom filter, same
@@ -1077,11 +1147,13 @@ async function reason(q){
       badge("idle");return;
     }
     // One line, not a paragraph: what it is looking for and where it starts.
-    out.innerHTML='<div class="row"><span class="lbl">reading as</span><span>'+
+    // PREPEND, do not assign: `innerHTML=` here silently wiped the instant one-hop answer that
+    // had just been written above it, so the merged fast lane rendered and vanished in one frame.
+    out.insertAdjacentHTML("afterbegin",'<div class="row"><span class="lbl">reading as</span><span>'+
       esc(start.name)+(target?' <span style="color:var(--muted)">— is it connected to —</span> '+
       esc(target.name) : (goal?' <span style="color:var(--muted)">—'+esc(goal)+'→</span> ?'
                               :' <span class="chip">no relation named; showing its neighbourhood</span>'))+
-      '</span></div>';
+      '</span></div>');
     if(!goal&&!target){
       const s0=gNode(start.name,start.name,0);
       // count disclosed, list not silently trimmed
@@ -1125,7 +1197,7 @@ async function reason(q){
     // seat), a 1-hop match at 44.9% that ended the search before the 2-hop
     // Melbourne -> Australia -> Canberra at 89.7% was ever reachable. A shorter chain is not a
     // better one; ranking only settles that if every candidate was actually explored.
-    while(depth<R.MAX_DEPTH&&frontier.length&&!budgetHit){
+    while(depth<R.MAX_DEPTH&&frontier.length&&!budgetHit&&!stopped){
       depth++;
       const next=[];
       for(const cur of frontier){
@@ -1142,6 +1214,7 @@ async function reason(q){
                              : relMatches(f.rel,goal);
         let lastY=performance.now();
         for(const f of cur.facts){
+          if(my!==gen||stopped)return;   // superseded or stopped by the person
           scanned++;
           const hit=sat(f);
           trace(hit?"hit":"miss", cur.node.id+" --"+relLabel(f.rel)+"--> "+f.obj+
@@ -1154,6 +1227,7 @@ async function reason(q){
           const path=cur.path.concat([{from:cur.node.id,rel:w.rel,to:w.obj,k:w.k}]);
           const p=path.reduce((acc,h)=>acc*pctOf(h.k),1);
           done.push({path,p});
+          liveAdd(path,p);   // published immediately, not hoarded until the end
           trace("done","complete chain, "+path.length+" hop"+(path.length===1?"":"s")+
             ", composed "+(p*100).toFixed(1)+"%  ->  "+path.map(h=>h.to).join(" / "));
           const t=gNode(w.obj,w.obj,depth);   // the winning hop is always drawn, cap or no cap
@@ -1195,6 +1269,7 @@ async function reason(q){
         break;
       }
       for(const nx of next){
+        if(my!==gen||stopped)return;   // superseded or stopped by the person
         if(fetches>=R.MAX_FETCH){
           budgetHit=true;
           trace("dead","FETCH BUDGET reached ("+R.MAX_FETCH+" shards). "+
@@ -1313,12 +1388,17 @@ async function reason(q){
   }finally{
     traceFlush();   // covers EVERY exit path: early returns, abstains and thrown errors all
                     // otherwise leave their last lines sitting unpainted in the buffer
-    thinking=false;$("tgo").disabled=false;
+    if(my===gen){ thinking=false;$("tgo").textContent="Ask"; }
   }
 }
 if($("tq")){
   $("tq").addEventListener("keydown",e=>{if(e.key==="Enter")$("tgo").click()});
-  $("tgo").addEventListener("click",()=>{const v=$("tq").value.trim();if(v)reason(v)});
+  $("tgo").addEventListener("click",()=>{
+  // While a search runs this is a STOP control: the engine never decides it has done enough.
+  if(thinking){ stopped=true; badge("stopped by you"); trace("dead","STOPPED BY THE USER. The "+
+    "search had not run out of graph - it was still expanding. Nothing here is an absence."); return; }
+  const v=$("tq").value.trim(); if(v)reason(v);
+});
   document.querySelectorAll("#p-think .hint code").forEach(c=>c.addEventListener("click",()=>{
     $("tq").value=c.textContent;$("tgo").click();}));
 }
