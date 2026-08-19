@@ -263,8 +263,12 @@ const SOURCES={1:"REBEL",2:"Wikidata5M",4:"held-out reference",8:"ConceptNet",
 16:"YAGO3",32:"T-REx",64:"DBpedia",128:"KELM"};
 const CURVE={1:[0.449,847267],2:[0.873,125074],3:[0.947,20611]};
 const BASE=[0.512,992953];
+// Auxiliary and filler verbs are never the SUBJECT of a question. "have" was missing, so
+// "does a car have a wheel" read its entities as [car, have, wheel] and set the target to
+// "have" - which is why it went hunting through highway synonyms instead of answering.
 const STOP=new Set(("what whats who which why how is are was were the a an of for in to s does do "+
-"did tell me about and or please can you know").split(" "));
+"did tell me about and or please can you know have has had having be been being am were will "+
+"would could should shall may might must there here it its this that these those").split(" "));
 let RELS=null,NSHARD=512,RELSET=null;
 const cache=new Map();
 const $=id=>document.getElementById(id);
@@ -492,7 +496,15 @@ fetch("index.json").then(r=>r.json()).then(d=>{
   RELS=d.rels;NSHARD=d.nshard;
   RELSET=new Set(RELS.filter(Boolean).map(r=>r.toLowerCase()));
   $("go").disabled=false;$("go").textContent="Ask";
-  if($("tgo")){$("tgo").disabled=false;$("tgo").textContent="Reason";}
+  if($("tgo")){
+    $("tgo").disabled=false;$("tgo").textContent="Reason";
+    // The search IS the demo, so the landing tab should already be working when you arrive
+    // rather than waiting behind a button nobody has pressed yet.
+    if(!$("tq").value.trim()&&document.getElementById("p-think").classList.contains("on")){
+      $("tq").value="is a caliper used in a car";
+      setTimeout(()=>reason("is a caliper used in a car"),250);
+    }
+  }
   $("factsWarn").insertAdjacentHTML("beforeend"," <em>Index loaded: "+
     d.subjects.toLocaleString()+" subjects, "+d.facts.toLocaleString()+" facts, "+
     d.nshard+" shards.</em>");
@@ -577,7 +589,7 @@ function gNode(id,label,hop){
   // seed on a small random shell: the layout needs SOME asymmetry to push apart from, and a
   // deterministic seed (all at origin) makes every repulsion force exactly zero.
   const a=Math.random()*Math.PI*2,b=Math.acos(2*Math.random()-1),r=26+hop*30;
-  const n={id,label,hop,on:false,
+  const n={id,label,hop,on:false,born:tick,
     x:r*Math.sin(b)*Math.cos(a),y:r*Math.sin(b)*Math.sin(a),z:r*Math.cos(b),
     vx:0,vy:0,vz:0};
   G.nodes.push(n);G.byId.set(id,n);return n;
@@ -690,7 +702,15 @@ function draw(){
     const hot=n.on, dim=anyOn&&!hot;
     const r=Math.max(1.6,(hot?R.NODE_R*1.7:R.NODE_R)*p.s);
     const col=colOf(n);
+    // A node that just arrived flashes and settles over ~40 frames. Without it the graph merely
+    // EXISTS; with it you can see it being built, which is the thing worth watching.
+    const age=tick-(n.born||0), fresh=age<40?1-age/40:0;
     cx.globalAlpha=dim?0.3:1;
+    if(fresh>0){
+      cx.globalAlpha=fresh*0.5;cx.fillStyle="#ffffff";
+      cx.beginPath();cx.arc(p.sx,p.sy,r+fresh*13,0,6.2832);cx.fill();
+      cx.globalAlpha=dim?0.3:1;
+    }
     // a soft halo, then the core - a flat disc reads as a dot, this reads as a body with light
     const g=cx.createRadialGradient(p.sx,p.sy,0,p.sx,p.sy,r*3.2);
     g.addColorStop(0,col);g.addColorStop(0.28,col+"66");g.addColorStop(1,col+"00");
@@ -924,6 +944,24 @@ async function findEntities(q){
       }
       if(best){found.push(best);for(let k=0;k<n;k++)used.add(i+k);}
     }
+  }
+  // Longest-span-first can swallow a question whole: "does a car have a wheel" resolved to the
+  // single compound entity "car wheel" (6 facts) instead of car (401) and wheel, so there were
+  // never two endpoints to find a path between. When one multi-word entity is all we have, try
+  // the split and PREFER it when the parts are better attested than the compound - the same
+  // evidence-decides rule the rest of the page uses, applied to reading rather than to ranking.
+  if(found.length===1&&found[0].name.includes(" ")){
+    const parts=[];
+    for(const wd of found[0].name.split(/\s+/)){
+      let best=null;
+      for(const v of variantsOf(wd)){
+        const f=await factsOf(v);
+        if(f.length&&(!best||f.length>best.facts.length))
+          best={name:v,facts:f,best:Math.max(...f.map(x=>x.k))};
+      }
+      if(best)parts.push(best);
+    }
+    if(parts.length>1&&Math.max(...parts.map(p=>p.facts.length))>found[0].facts.length)return parts;
   }
   return found;
 }
