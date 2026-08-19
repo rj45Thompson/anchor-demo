@@ -83,6 +83,15 @@ padding:3px 8px;pointer-events:none}
 .stage .tip{position:absolute;right:11px;bottom:10px;font:11px ui-sans-serif,system-ui,sans-serif;
 color:#64748b;pointer-events:none}
 @media (max-width:620px){.stage canvas{height:300px}}
+/* The search console. The engine really does examine every fact on every node it opens; showing
+   only the winning 2 lines made a few hundred real operations look like a lookup. */
+.tbar{display:flex;justify-content:space-between;align-items:center;font:11px ui-monospace,
+Menlo,monospace;color:#64748b;padding:0 2px 5px}
+.tlog{border:1px solid #1c2534;border-radius:8px;background:#06080d;height:250px;overflow-y:auto;
+padding:8px 11px;margin:0 0 16px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#7e93b0}
+.tlog div{white-space:pre-wrap;word-break:break-word}
+.tlog .t-hit{color:#6ee7b7}.tlog .t-miss{color:#46566e}.tlog .t-fetch{color:#67d8ff}
+.tlog .t-beam{color:#fbbf24}.tlog .t-dead{color:#f87171}.tlog .t-done{color:#fff;font-weight:600}
 .trace{border-left:2px solid var(--line);padding:2px 0 2px 14px;margin:0 0 14px}
 .hop{margin:0 0 11px;font-size:.93rem}
 .hop .lead{font-family:ui-monospace,Menlo,monospace;font-size:.9rem}
@@ -144,10 +153,14 @@ controls for popularity, for shared lineage between sources, and for gaps in the
 over 12.2 million subjects — sharded so your browser fetches only the piece it needs. It is a
 <em>lookup over recorded relations</em>, not a chatbot: it reports what sources asserted, and when
 nothing asserts anything it says so instead of inventing.
-<br><br><strong>A known limitation, stated rather than hidden:</strong> subjects are matched by
+<br><br><strong>Two limits, stated rather than hidden.</strong> (1) Subjects are matched by
 surface text, not a disambiguated entity id, so a name shared by more than one real thing (many
 towns are named "Berlin") can appear merged under one heading. Every fact shown is still real and
-independently sourced — it may just belong to more than one thing with that name.</div>
+independently sourced — it may just belong to more than one thing with that name.
+(2) Each subject carries at most <strong>80 facts</strong>, kept highest-anchor-count first. Very
+well-documented entities therefore have real edges that are not here, so <em>"not recorded" on
+this page means "not in the 80 kept for that subject"</em>, which is a weaker claim than "not
+true". This cap is the whole reason an earlier build could not tell you Australia's capital.</div>
 </div>
 
 <!-- ================= REASON PANEL ================= -->
@@ -178,6 +191,10 @@ sounding certain.</p>
   <div class="tip">drag to orbit · click a node to expand it</div>
 </div>
 
+<div class="tbar"><span>SEARCH TRACE — every fact the engine actually reads</span>
+  <span id="tcount">0 steps</span></div>
+<div class="tlog" id="tlog"></div>
+
 <div id="tout"></div>
 
 <h2>Why this is not a lookup</h2>
@@ -193,6 +210,18 @@ hops as <em>independent</em>. That is an assumption, not a measurement — the s
 the first tab are measured against held-out data, this composition on top of them is not. It is
 labelled that way everywhere it appears, because a number you can't source is exactly what this
 whole project is arguing against.</p>
+
+<h2>What is hand-written here, and what isn't</h2>
+<p>An honest demo has to say where the human help is. <strong>Hand-written:</strong> a fixed table
+of about fifteen question-word aliases, so “who founded X” reaches the <code>founded by</code>
+relation and “how tall” reaches <code>height</code>. It is a listed, auditable mapping in the page
+source — not learned, and not per-question. <strong>Not hand-written:</strong> the chains, the
+answers, the confidences, and the ranking. Nothing about any specific subject is special-cased, and
+no answer is stored anywhere. Type a subject nobody would put in a demo and it does the same work.</p>
+<p>The bounds are real too: at most <strong>8 branches per hop</strong>, <strong>4 hops</strong>
+deep, <strong>26 shard fetches</strong> per question. When a bound stops the search the trace says
+which one and what was left unopened, because a bounded search reported as a settled absence is
+the exact failure this project argues against.</p>
 
 <h2>Failure is a result</h2>
 <p>When a chain dead-ends, the engine names <em>the exact node it could not get out of</em> rather
@@ -512,8 +541,12 @@ fetch("index.json").then(r=>r.json()).then(d=>{
    just arithmetic on a 2D canvas - the same "check every step yourself" claim the rest of the page
    makes, applied to the graphics. */
 const R={
-  MAX_DEPTH:3,          // hops the search will chain before giving up (depth is cheap, shards are not)
-  BEAM:4,               // nodes carried to the next depth, best-anchored first - bounds shard fetches
+  MAX_DEPTH:4,          // hops the search will chain before giving up (depth is cheap, shards are not)
+  BEAM:8,               // nodes carried to the next depth, best-anchored first - bounds shard fetches
+  MAX_FETCH:26,         // hard ceiling on shard downloads per question (~1.2MB each). When this
+                        // stops the search the trace SAYS SO - a bound is not an absence.
+  TRACE_KEEP:600,       // trace lines held in the DOM (the counter still reports the true total)
+  YIELD_EVERY:9,        // facts scanned between paint yields, so the trace visibly streams
   MAX_NODES:190,        // drawn-node ceiling; legibility backstop, not a search limit
   DRAW_PER_NODE:8,      // neighbours DRAWN per expanded node (all facts are still SEARCHED)
   REPULSE:1000,         // n-body repulsion between every node pair (O(n^2), fine at this ceiling)
@@ -678,6 +711,7 @@ function draw(){
       cx.fillStyle=hot?c.hotLabel:c.label;
       cx.font=(hot?"600 12px":"11px")+" ui-sans-serif,system-ui,sans-serif";
       cx.textAlign="center";
+      // cosmetic clip of the on-canvas label only; the full name is in the trace and the verdict
       const t=n.label.length>22?n.label.slice(0,21)+"…":n.label;
       cx.fillText(t,p.sx,p.sy-r-6);
     }
@@ -746,17 +780,69 @@ function relMatches(rel,goal){
 }
 function badge(t){const b=$("badge");if(b)b.textContent=t;}
 
-/* Read the question into (start subject, goal relation). Deliberately simple and ALWAYS shown back
-   to the reader: a parser that silently guesses wrong is worse than one you can see being wrong. */
+/* ---- the search console ------------------------------------------------------------------
+   ANTI-DEMO LAW. Every line below is emitted from the code path that actually did the work; none
+   of it is narration written to look busy. If the engine reads 312 facts the trace has 312 SCAN
+   lines, and if a bound stops the search the trace says which bound and what was left unexplored.
+   A trace that flatters the engine would be worth less than no trace at all. */
+let traceN=0;
+function traceClear(){traceN=0;const e=$("tlog");if(e)e.innerHTML="";const c=$("tcount");
+  if(c)c.textContent="0 steps";}
+function trace(kind,msg){
+  traceN++;
+  const e=$("tlog");if(!e)return;
+  const d=document.createElement("div");
+  d.className="t-"+kind;
+  d.textContent=String(traceN).padStart(4,"0")+"  "+kind.toUpperCase().padEnd(5)+" "+msg;
+  e.appendChild(d);
+  while(e.childElementCount>R.TRACE_KEEP)e.removeChild(e.firstChild);
+  e.scrollTop=e.scrollHeight;
+  const c=$("tcount");if(c)c.textContent=traceN.toLocaleString()+" steps";
+}
+
+/* People do not speak the graph's relation vocabulary. "who founded X" has to reach `founded by`,
+   "how tall" has to reach `height`. The map is EXPLICIT and auditable rather than fuzzy-matched,
+   because quietly answering a DIFFERENT question is the worst failure this page can have. Each
+   entry is [what a person types, the relation it means]. */
+const ASK_ALIASES=[
+  [/\bfounded?\b|\bfounder\b|\bcreated?\b|\bcreator\b/, "founded by"],
+  [/\bdirected?\b|\bdirector\b/,                       "director"],
+  [/\blanguages?\b|\bspeaks?\b|\bspoken\b/,            "official language"],
+  [/\btall\b|\bheight\b|\bhigh\b|\belevation\b/,       "height"],
+  [/\bborn\b|\bbirthplace\b/,                          "place of birth"],
+  [/\bdied\b|\bdeath\b/,                               "place of death"],
+  [/\bwrote\b|\bauthor(ed)?\b|\bwritten\b/,            "author"],
+  [/\bperformed?\b|\bperformer\b|\bartist\b|\bsings?\b/,"performer"],
+  [/\bwhere\b|\blocated\b|\blocation\b/,               "location"],
+  [/\bpopulation\b/,                                   "population"],
+  [/\bcurrency\b/,                                     "currency"],
+  [/\bgenres?\b/,                                      "genre"],
+  [/\bcontinent\b/,                                    "continent"],
+  [/\bcapital\b/,                                      "capital"],
+];
+/* A word CAPITALISED mid-sentence is a proper noun, and several relation names are also ordinary
+   words ("inception", "capital", "mount", "child"). Position 0 is excluded because a
+   sentence-initial capital is grammar, not evidence ("Capital of France"). Both the relation
+   reader and the subject finder need this: one was reading "Inception" as the `inception` DATE
+   relation, the other was then STRIPPING it as a relation word and finding no subject at all. */
+function properNouns(raw){
+  return new Set(String(raw).split(/\s+/).slice(1)
+    .filter(w=>/^[A-Z][a-z]/.test(w)).map(w=>w.toLowerCase().replace(/[^a-z]/g,"")));
+}
+/* Read the question into (start subject, goal relation). ALWAYS shown back to the reader: a parser
+   that silently guesses wrong is worse than one you can watch being wrong. */
 function readQuery(q){
-  const ql=" "+q.toLowerCase().replace(/[?.!]+$/,"")+" ";
-  let goal=null,at=1e9;
-  for(const r of RELS){
-    if(!r||r.length<4)continue;
-    const i=ql.indexOf(" "+r.toLowerCase()+" ");
-    if(i>=0&&i<at){at=i;goal=r;}
-  }
-  return {goal};
+  const raw=String(q).replace(/[?.!]+$/,"");
+  const ql=" "+raw.toLowerCase()+" ";
+  for(const [re,rel] of ASK_ALIASES)
+    if(re.test(ql)&&RELS.some(r=>r&&r.toLowerCase()===rel))return {goal:rel};
+  // Fall back to literal relation names, longest first so "official language" beats "language".
+  const caps=properNouns(raw);
+  const cands=RELS
+    .filter(r=>r&&r.length>3&&ql.includes(" "+r.toLowerCase()+" "))
+    .filter(r=>!r.toLowerCase().split(/\s+/).every(w=>caps.has(w)))
+    .sort((a,b)=>b.length-a.length);
+  return {goal:cands[0]||null};
 }
 /* A chained question decomposes into RELATIONS TO TRAVERSE plus THE ENTITY TO START FROM, so the
    subject is what remains once the relation words are removed. Reusing the facts lane's span
@@ -767,14 +853,21 @@ function readQuery(q){
    catches it. */
 async function findStart(q,goal){
   const ql=q.toLowerCase().trim().replace(/[?.!]+$/,"");
+  const caps=properNouns(q);
   const rel=new Set();
   for(const r of RELS){
     if(!r||r.length<4)continue;
     const t=r.toLowerCase();
-    if((" "+ql+" ").includes(" "+t+" "))t.split(/\s+/).forEach(w=>rel.add(w));
+    // Never strip a capitalised proper noun as though it were a relation word - that is what left
+    // "who directed Inception" with no subject at all once "directed" had also been removed.
+    if(t.split(/\s+/).every(w=>caps.has(w)))continue;
+    if((" "+ql+" ").includes(" "+t+" "))t.split(/\s+/).forEach(w=>{if(!caps.has(w))rel.add(w);});
   }
   if(goal)goal.toLowerCase().split(/\s+/).forEach(w=>rel.add(w));
-  const w=ql.split(/[\s',]+/).filter(x=>x&&!STOP.has(x)&&!rel.has(x));
+  // The words that TRIGGERED an alias are part of the question, not the subject: without this,
+  // "who directed Inception" offers "directed" as a candidate subject alongside the actual film.
+  const asked=x=>ASK_ALIASES.some(([re])=>re.test(" "+x+" "));
+  const w=ql.split(/[\s',]+/).filter(x=>x&&!STOP.has(x)&&!rel.has(x)&&!asked(x));
   // Casing variants are DIFFERENT vocabulary entries, and taking whichever resolved first is the
   // same bug the facts lane already fixed: lowercase "melbourne" is ConceptNet's generic node
   // ("is a city", one source) while capitalized "Melbourne" is the Wikidata city that actually
@@ -785,7 +878,12 @@ async function findStart(q,goal){
     const hits=[];
     for(let i=0;i+n<=w.length;i++){
       for(const v of variantsOf(w.slice(i,i+n).join(" "))){
-        if(RELSET.has(v.toLowerCase()))continue;
+        // Blocking relation-named tokens as subjects is right for a bare "capital", but it also
+        // blocked "Inception" - a real film with cast-member edges - purely because `inception`
+        // is also a relation. Capitalisation in the ORIGINAL question breaks the tie: a proper
+        // noun is allowed through even when its lowercase form names a relation.
+        const vl=v.toLowerCase();
+        if(RELSET.has(vl)&&!vl.split(/\s+/).some(x=>caps.has(x)))continue;
         const f=await factsOf(v);
         if(f.length)hits.push({name:v,facts:f,best:Math.max(...f.map(x=>x.k))});
       }
@@ -826,10 +924,12 @@ async function reason(q){
   if(thinking)return;
   thinking=true;$("tgo").disabled=true;
   const out=$("tout");out.innerHTML="";
-  gClear();startLoop();
+  gClear();traceClear();startLoop();
   try{
     const {goal}=readQuery(q);
     badge("reading the question");
+    trace("beam","question: \""+q+"\"");
+    trace("beam","target relation read as `"+(goal||"none found")+"`");
     const start=await findStart(q,goal);
     out.innerHTML='<div class="row"><span class="lbl">reading as</span><span>'+
       'start at <span class="chip">'+esc(start?start.name:"?")+'</span>'+
@@ -866,16 +966,30 @@ async function reason(q){
     // collects EVERY chain that completed, and ranks them by composed confidence - and when more
     // than one completes, it says so, because a surface-name collision is a real property of the
     // data rather than something to hide behind a confident single answer.
-    while(depth<R.MAX_DEPTH&&frontier.length&&!done.length){
+    let fetches=1, scanned=0, budgetHit=false;
+    trace("fetch","shard "+String(shardOf(start.name)).padStart(3,"0")+" <- \""+start.name+
+      "\"  ("+start.facts.length+" facts)  [resolved subject]");
+    while(depth<R.MAX_DEPTH&&frontier.length&&!done.length&&!budgetHit){
       depth++;
       const next=[];
       for(const cur of frontier){
-        badge("depth "+depth+" · expanding "+cur.node.id);
+        badge("depth "+depth+" · reading "+cur.node.id);
+        trace("beam","depth "+depth+": opening \""+cur.node.id+"\" ("+cur.facts.length+" facts)");
         // CORRECTNESS first: every fact is tested for the goal relation. Only the DRAWING is
         // capped - a hub subject can carry 80 facts and rendering all of them buries the chain.
+        for(const f of cur.facts){
+          scanned++;
+          const hit=relMatches(f.rel,goal);
+          trace(hit?"hit":"miss", cur.node.id+" --"+relLabel(f.rel)+"--> "+f.obj+
+            "   k="+f.k+(hit?"   *** satisfies `"+goal+"`":""));
+          if(scanned%R.YIELD_EVERY===0)await sleep(6);   // stream instead of dumping
+        }
         for(const w of cur.facts.filter(f=>relMatches(f.rel,goal)).sort((a,b)=>b.k-a.k)){
           const path=cur.path.concat([{from:cur.node.id,rel:w.rel,to:w.obj,k:w.k}]);
-          done.push({path,p:path.reduce((acc,h)=>acc*pctOf(h.k),1)});
+          const p=path.reduce((acc,h)=>acc*pctOf(h.k),1);
+          done.push({path,p});
+          trace("done","complete chain, "+path.length+" hop"+(path.length===1?"":"s")+
+            ", composed "+(p*100).toFixed(1)+"%  ->  "+path.map(h=>h.to).join(" / "));
           const t=gNode(w.obj,w.obj,depth);   // the winning hop is always drawn, cap or no cap
           if(t)gEdge(cur.node,t,w.rel,w.k);
         }
@@ -886,6 +1000,9 @@ async function reason(q){
         if(done.length)continue;   // finish this LEVEL before ranking; do not go deeper
         // carry only the best-anchored objects forward: every extra node is another shard fetch
         const cand=cur.facts.filter(f=>!seen.has(f.obj)).sort((a,b)=>b.k-a.k).slice(0,R.BEAM);
+        trace("beam","no match on \""+cur.node.id+"\"; carrying "+cand.length+" of "+
+          cur.facts.length+" forward by anchor count: "+
+          cand.map(f=>f.obj+"("+f.k+")").join(", "));
         for(const f of cand){
           seen.add(f.obj);
           next.push({node:G.byId.get(f.obj)||gNode(f.obj,f.obj,depth),
@@ -894,23 +1011,44 @@ async function reason(q){
       }
       if(done.length)break;
       for(const nx of next){
+        if(fetches>=R.MAX_FETCH){
+          budgetHit=true;
+          trace("dead","FETCH BUDGET reached ("+R.MAX_FETCH+" shards). "+
+            (next.length-next.indexOf(nx))+" node(s) left unopened, including \""+nx._pending+
+            "\". This is a BOUND, not an absence - the answer may exist beyond it.");
+          break;
+        }
         badge("depth "+depth+" · fetching shard "+
               String(shardOf(nx._pending)).padStart(3,"0")+" · "+nx._pending);
         nx.facts=await factsOf(nx._pending);
-        await sleep(30);   // let a frame render between fetches so the graph visibly grows
+        fetches++;
+        trace("fetch","shard "+String(shardOf(nx._pending)).padStart(3,"0")+" <- \""+
+          nx._pending+"\"  ("+nx.facts.length+" facts)   [fetch "+fetches+"/"+R.MAX_FETCH+"]");
+        if(!nx.facts.length)trace("dead","\""+nx._pending+"\" has no recorded facts - dead end");
+        await sleep(20);   // let a frame render between fetches so the graph visibly grows
       }
       frontier=next.filter(n=>n.node&&n.facts&&n.facts.length);
     }
+    trace("done","search finished: "+scanned.toLocaleString()+" facts read across "+fetches+
+      " shard fetch"+(fetches===1?"":"es")+", "+done.length+" complete chain(s)");
     done.sort((a,b)=>b.p-a.p);
     const found=done[0]||null;
 
     if(!found){
       const dead=frontier.length?frontier[frontier.length-1].node.id:start.name;
+      // ANTI-CHEAT: this used to say it "never found" the relation, which claims an EXHAUSTIVE
+      // search the engine did not run. It explores a beam of R.BEAM per level to a depth of
+      // R.MAX_DEPTH under a fetch budget. Reporting a bounded search as a settled absence is
+      // exactly the kind of quiet overclaim this page exists to argue against.
       out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>Chain broke.'+
         '</b></div><div class="row"><span class="lbl">why</span><span>searched '+depth+
-        ' hop'+(depth===1?"":"s")+' out from <b>'+esc(start.name)+'</b> and never found a '+
+        ' hop'+(depth===1?"":"s")+' out from <b>'+esc(start.name)+'</b> without reaching a '+
         '<span class="chip">'+esc(goal)+'</span> relation. The furthest node it could not get out '+
         'of was <b>'+esc(dead)+'</b>.</span></div>'+
+        '<div class="row"><span class="lbl">bound</span><span>This was a <b>bounded</b> search, '+
+        'not an exhaustive one: at most '+R.BEAM+' branches per hop, '+R.MAX_DEPTH+' hops deep, '+
+        R.MAX_FETCH+' shard fetches. <b>Absence of a chain here is not proof there is none</b> — '+
+        'the full trace above shows exactly what was and was not opened.</span></div>'+
         '<div class="row"><span class="lbl">note</span><span>Naming the hop that broke is the '+
         'result. Inventing the rest would not be.</span></div></div>');
       badge("no chain found");return;
@@ -919,7 +1057,8 @@ async function reason(q){
     // ---- replay the found chain, step by step, lighting each hop in the 3D view ----
     out.insertAdjacentHTML("beforeend",'<div class="field-lbl">the chain</div>'+
       '<div class="trace" id="trace"></div>');
-    const trace=$("trace");
+    const traceEl=$("trace");   // NOT `trace`: that shadowed the trace() function for this
+                               // whole scope and put every earlier call in the temporal dead zone
     let running=1;
     for(let i=0;i<found.path.length;i++){
       const h=found.path[i];
@@ -927,7 +1066,7 @@ async function reason(q){
       const a=G.byId.get(h.from),b=G.byId.get(h.to);
       if(a)a.on=true; if(b)b.on=true;
       for(const e of G.edges)if(e.a===a&&e.b===b&&e.rel===h.rel)e.on=true;
-      trace.insertAdjacentHTML("beforeend",hopHTML(i,h.from,h.rel,h.to,h.k,running));
+      traceEl.insertAdjacentHTML("beforeend",hopHTML(i,h.from,h.rel,h.to,h.k,running));
       badge("walking hop "+(i+1)+" of "+found.path.length);
       await sleep(R.STEP_MS);
     }
@@ -949,8 +1088,10 @@ async function reason(q){
       out.insertAdjacentHTML("beforeend",'<div class="field-lbl">other chains that also '+
         'completed</div><div class="small">More than one route satisfied the question — either a '+
         'name shared by several real things, or several recorded edges of the same relation. '+
-        'Ranked by the same composed confidence:'+
-        '<ul style="margin:7px 0 0;padding-left:20px">'+
+        'Ranked by the same composed confidence — <b>'+(done.length-1)+'</b> rival'+
+        (done.length===2?'':'s')+' found'+
+        (done.length>4?', showing the top 3 (count is disclosed, not the list truncated silently)':'')+
+        ':<ul style="margin:7px 0 0;padding-left:20px">'+
         done.slice(1,4).map(d=>'<li>'+d.path.map(h=>esc(h.to)).join(" → ")+
           ' <span class="chip">'+(d.p*100).toFixed(1)+'%</span></li>').join("")+
         '</ul></div>');
