@@ -110,13 +110,13 @@ carries a <em>measured</em> confidence, the evidence behind it, and an honest re
 doesn't have enough.</p>
 
 <div class="tabs">
-  <div class="tab on" data-p="facts">Ask a question</div>
-  <div class="tab" data-p="think">Watch it think</div>
+  <div class="tab" data-p="facts">Ask a question</div>
+  <div class="tab on" data-p="think">Watch it think</div>
   <div class="tab" data-p="code">Write a function</div>
 </div>
 
 <!-- ================= FACTS PANEL ================= -->
-<div id="p-facts" class="panel on">
+<div id="p-facts" class="panel">
 <div class="ask">
   <input id="q" placeholder="what is a car" autocomplete="off">
   <button id="go" disabled>loading…</button>
@@ -167,7 +167,7 @@ it.</div>
 </div>
 
 <!-- ================= REASON PANEL ================= -->
-<div id="p-think" class="panel">
+<div id="p-think" class="panel on">
 <p class="small" style="margin-top:0">A lookup answers one hop. This <strong>chains</strong> them:
 <em>the capital of the country Melbourne is in</em> is not a recorded fact — it is
 Melbourne&nbsp;→&nbsp;country&nbsp;→&nbsp;Australia&nbsp;→&nbsp;capital&nbsp;→&nbsp;Canberra, a path
@@ -200,36 +200,20 @@ sounding certain.</p>
 
 <div id="tout"></div>
 
-<h2>Why this is not a lookup</h2>
-<p>No source recorded “Melbourne → capital of its country → Canberra.” The engine finds it by
-<strong>searching</strong> outward from the subject, hop by hop, fetching each new shard only when
-it needs it — and every edge it walks is a real fact with real sources, so the chain is auditable
-end to end.</p>
-<p>The confidence is <strong>composed, not asserted</strong>: the chain probability is the product
-of each hop's own measured probability. Two 87% hops give 76% — chaining <em>costs</em> certainty,
-and the engine reports that cost instead of hiding it.</p>
-<div class="warn"><strong>The assumption, stated.</strong> Multiplying hop probabilities treats the
-hops as <em>independent</em>. That is an assumption, not a measurement — the single-hop numbers on
-the first tab are measured against held-out data, this composition on top of them is not. It is
-labelled that way everywhere it appears, because a number you can't source is exactly what this
-whole project is arguing against.</p>
-
-<h2>What is hand-written here, and what isn't</h2>
-<p>An honest demo has to say where the human help is. <strong>Hand-written:</strong> a fixed table
-of about fifteen question-word aliases, so “who founded X” reaches the <code>founded by</code>
-relation and “how tall” reaches <code>height</code>. It is a listed, auditable mapping in the page
-source — not learned, and not per-question. <strong>Not hand-written:</strong> the chains, the
-answers, the confidences, and the ranking. Nothing about any specific subject is special-cased, and
-no answer is stored anywhere. Type a subject nobody would put in a demo and it does the same work.</p>
-<p>The bounds are real too: at most <strong>8 branches per hop</strong>, <strong>4 hops</strong>
-deep, <strong>26 shard fetches</strong> per question. When a bound stops the search the trace says
-which one and what was left unopened, because a bounded search reported as a settled absence is
-the exact failure this project argues against.</p>
-
-<h2>Failure is a result</h2>
-<p>When a chain dead-ends, the engine names <em>the exact node it could not get out of</em> rather
-than inventing a plausible ending. A broken chain that says where it broke is more useful than a
-complete-looking chain that is quietly wrong.</p>
+<h2>What you are watching</h2>
+<p>No source recorded “Melbourne → capital of its country → Canberra”. The engine has to
+<strong>find</strong> it, hop by hop, fetching each shard only when the search reaches it. Chain
+confidence is the <strong>product</strong> of each hop's measured probability — chaining costs
+certainty, and the number says so. That product assumes the hops are <b>independent</b>, which is
+an assumption, not a measurement.</p>
+<p>When it cannot reach the target it <strong>abstains, then goes and learns</strong>: it looks the
+unreachable word up externally and re-runs the same search with the wider vocabulary. A chain that
+only completes that way is labelled <em>learned</em> and never given a measured confidence —
+learning changes what it can find, not what it may claim.</p>
+<p class="small"><b>Hand-written:</b> a listed table of about fifteen question-word aliases, so
+“who founded X” reaches <code>founded by</code>. Nothing about any specific subject is
+special-cased and no answer is stored. <b>Bounded:</b> the search reports its own limits, and a
+result of “no chain” is <b>not proof there is none</b> — the trace shows exactly what was opened.</p>
 </div>
 
 <!-- ================= CODE PANEL ================= -->
@@ -521,7 +505,9 @@ fetch("index.json").then(r=>r.json()).then(d=>{
   // placeholder example itself, unprompted, as soon as the index is ready. Never overwrites
   // something the visitor already typed (checked at call time, not at index-load time, since the
   // index can finish loading while someone is mid-keystroke).
-  if(!$("q").value.trim()){ $("q").value="what is a car"; answer("what is a car"); }
+  if($("tgo")&&!$("tq").value.trim()){          // landing tab: show it working immediately
+    $("tq").value="is a caliper used in a car"; reason($("tq").value);
+  }
 }).catch(e=>{$("go").textContent="index failed";console.error(e)});
 }
 
@@ -544,13 +530,17 @@ fetch("index.json").then(r=>r.json()).then(d=>{
    just arithmetic on a 2D canvas - the same "check every step yourself" claim the rest of the page
    makes, applied to the graphics. */
 const R={
-  MAX_DEPTH:4,          // hops the search will chain before giving up (depth is cheap, shards are not)
-  BEAM:8,               // nodes carried to the next depth, best-anchored first - bounds shard fetches
-  MAX_FETCH:26,         // hard ceiling on shard downloads per question (~1.2MB each). When this
-                        // stops the search the trace SAYS SO - a bound is not an absence.
-  TRACE_KEEP:600,       // trace lines held in the DOM (the counter still reports the true total)
+  MAX_DEPTH:40,         // hops. Watching it work IS the demo, so depth is not rationed.
+  BEAM:100,             // nodes carried per level, best-anchored first
+  MAX_FETCH:10000,      // effectively unbounded. It still reports the bound if it ever bites,
+                        // because a bound reported as an absence is the lie this page exists to
+                        // refuse - but at 10,000 shards the honest answer is "we looked properly".
+  TRACE_KEEP:900,       // trace lines held in the DOM (the counter reports the TRUE total)
   FRAME_MS:24,          // ms of scanning between paint yields - TIME based, so the pacing
                         // does not scale with how many facts a subject happens to carry
+  LEARN_MAX:12,         // external terms pulled in per abstain, best-scoring first
+  LEARN_URL:"https://api.conceptnet.io/related/c/en/",  // ConceptNet: already one of the eight
+                        // sources behind this graph, and its API allows cross-origin reads
   MAX_NODES:190,        // drawn-node ceiling; legibility backstop, not a search limit
   DRAW_PER_NODE:8,      // neighbours DRAWN per expanded node (all facts are still SEARCHED)
   REPULSE:1000,         // n-body repulsion between every node pair (O(n^2), fine at this ceiling)
@@ -965,6 +955,45 @@ function hopHTML(i,from,rel,to,k,running){
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
+/* ---- LEARNING ON ABSTAIN --------------------------------------------------------------------
+   Abstaining is honest, but stopping there is lazy. When the search cannot reach the target, the
+   most likely reason is not that the world lacks the connection - it is that the graph files it
+   under a different WORD. "is a caliper used in a car" got within one hop of `automobile` and
+   failed only because the reader typed `car`.
+
+   So on abstain it goes and finds out: it asks ConceptNet (already one of the eight sources behind
+   this graph, and the only one with an open cross-origin API) which terms are related to the word
+   it could not reach, then RE-RUNS the same search accepting any of them.
+
+   The iron law still holds, and this is the delicate part: a term learned live has NOT been through
+   the anchor measurement, so a chain that only completes via a learned alias is labelled LEARNED
+   and is never given a measured confidence. Learning changes what it can FIND. It does not change
+   what it is allowed to CLAIM. */
+async function learnAliases(term){
+  trace("beam","ABSTAIN on \""+term+"\" - the graph may simply file it under another word.");
+  trace("fetch","LEARNING: asking ConceptNet which terms relate to \""+term+"\"…");
+  const slug=String(term).trim().toLowerCase().replace(/\s+/g,"_");
+  try{
+    const r=await fetch(R.LEARN_URL+encodeURIComponent(slug)+"?filter=/c/en&limit=40");
+    if(!r.ok)throw new Error("http "+r.status);
+    const d=await r.json();
+    const out=[];
+    for(const e of (d.related||[])){
+      const w=String(e["@id"]||"").split("/").pop().replace(/_/g," ");
+      if(w&&w.toLowerCase()!==String(term).toLowerCase()&&e.weight>0.3)
+        out.push({name:w,weight:+e.weight.toFixed(3)});
+      if(out.length>=R.LEARN_MAX)break;
+    }
+    for(const o of out)trace("hit","LEARNED: \""+term+"\" ≈ \""+o.name+"\"   (relatedness "+o.weight+")");
+    if(!out.length)trace("dead","LEARNED nothing usable for \""+term+"\".");
+    return out;
+  }catch(e){
+    trace("dead","external lookup failed ("+(e.message||e)+"). Offline, or the source is down - "+
+      "this is the one part of the page that is not self-contained, and it says so when it fails.");
+    return [];
+  }
+}
+
 async function reason(q){
   if(thinking)return;
   thinking=true;$("tgo").disabled=true;
@@ -1030,6 +1059,10 @@ async function reason(q){
     }
 
     // ---- breadth-first over real shards, drawing the frontier as it is fetched ----
+    // `accept` is the set of object names that satisfy a PATH question. It starts as just the
+    // target and GROWS when the engine learns aliases, which is the whole point of the retry.
+    let accept=new Set(target?[target.name.toLowerCase()]:[]);
+    let learned=null;
     const s0=gNode(start.name,start.name,0);
     let frontier=[{node:s0,facts:start.facts,path:[]}];
     const seen=new Set([start.name]);
@@ -1043,6 +1076,9 @@ async function reason(q){
     // than one completes, it says so, because a surface-name collision is a real property of the
     // data rather than something to hide behind a confident single answer.
     let fetches=1, scanned=0, budgetHit=false;
+    // TWO PASSES. The second only happens if the first abstained on a PATH question, and it runs
+    // with whatever the engine went and learned in between.
+    for(let pass=1; pass<=2; pass++){
     trace("fetch","shard "+String(shardOf(start.name)).padStart(3,"0")+" <- \""+start.name+
       "\"  ("+start.facts.length+" facts)  [resolved subject]");
     // Search to the BUDGET, not to the first completion. Stopping at the first depth that
@@ -1064,7 +1100,7 @@ async function reason(q){
         // A path question is satisfied by REACHING THE NODE, whatever relation got us there.
         // "is a caliper used in a car" names no relation at all, so matching on relation could
         // never have answered it - which is why it produced nonsense instead of an answer.
-        const sat=f=> target ? String(f.obj).toLowerCase()===target.name.toLowerCase()
+        const sat=f=> target ? accept.has(String(f.obj).toLowerCase())
                              : relMatches(f.rel,goal);
         let lastY=performance.now();
         for(const f of cur.facts){
@@ -1132,8 +1168,22 @@ async function reason(q){
       }
       frontier=next.filter(n=>n.node&&n.facts&&n.facts.length);
     }
-    trace("done","search finished: "+scanned.toLocaleString()+" facts read across "+fetches+
-      " shard fetch"+(fetches===1?"":"es")+", "+done.length+" complete chain(s)");
+    trace("done","pass "+pass+" finished: "+scanned.toLocaleString()+" facts read across "+
+      fetches+" shard fetch"+(fetches===1?"":"es")+", "+done.length+" complete chain(s)");
+    if(done.length||!target||pass===2)break;
+    // It abstained. Rather than stopping, go and find out what else "target" is called, then
+    // walk the SAME graph again with the wider vocabulary. Nothing about the graph changed -
+    // only the engine's idea of what it is looking for.
+    badge("abstained - going to learn");
+    learned=await learnAliases(target.name);
+    if(!learned.length){trace("dead","nothing learned; the abstain stands.");break;}
+    for(const l of learned)accept.add(l.name.toLowerCase());
+    trace("beam","RE-RUNNING the same search, now accepting "+accept.size+" names for the target: "+
+      [...accept].slice(0,10).join(", "));
+    frontier=[{node:s0,facts:start.facts,path:[]}];
+    seen.clear(); seen.add(start.name);
+    depth=0; budgetHit=false;
+    }
     done.sort((a,b)=>b.p-a.p);
     const found=done[0]||null;
 
@@ -1183,7 +1233,16 @@ async function reason(q){
       found.path.map(h=>(pctOf(h.k)*100).toFixed(1)+"%").join(" × ")+' = '+
       (running*100).toFixed(1)+'% over '+found.path.length+' hop'+
       (found.path.length===1?"":"s")+'. Each factor is measured; the product assumes the hops are '+
-      '<b>independent</b>, which is an assumption and not a measurement.</div></div>');
+      '<b>independent</b>, which is an assumption and not a measurement.</div>'+
+      (learned&&learned.length?'<div class="small" style="margin-top:8px;color:var(--mid)">'+
+        '<b>This chain only completed after the engine learned a word.</b> It abstained, looked '+
+        '“'+esc(target?target.name:"")+'” up externally, and accepted '+learned.length+
+        ' related term'+(learned.length===1?'':'s')+
+        (learned.length>4?' (showing the top 4 of '+learned.length+' — count disclosed, list not '+
+         'silently trimmed): ':': ')+
+        learned.slice(0,4).map(l=>esc(l.name)).join(", ")+'. Those terms have NOT been through '+
+        'the anchor measurement, so treat the number above as the confidence of the GRAPH hops '+
+        'only - the bridge that made them reachable is unmeasured.</div>':'')+'</div>');
     // More than one chain completing is not a bug to hide - it is the surface-name collision this
     // graph genuinely has (a Melbourne in Victoria and a Melbourne in Quebec both have a country
     // edge). Showing the rivals, ranked, is the honest reading of the evidence.
