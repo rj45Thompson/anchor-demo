@@ -61,8 +61,15 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
    - removed features preserved as DATA in a front-end dashboard menu, so anything can be added
      back deliberately instead of rotting half-on.
    This is a project, not a task — schedule as its own session(s) with its own zoo-equivalent.
-8. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
-9. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 6).
+8. **Research tab: all the whitepapers** *(new wish, captured)*: a final tab collecting RJ's
+   research artifacts in one place — the Anchor whitepaper (already ships), the Hadamard/KG work
+   (`kg_hadamard.py` line), and the spacegame research corpus (PILLARS.md, the emergent-signaling /
+   theory-of-mind / iron-law results). Execution note: these live in the PRIVATE fleet repo today;
+   inventory first and confirm each is meant for public before copying — publishing is
+   irreversible, and a paper's claims must pass the same trace-to-artifact audit the Anchor
+   whitepaper passes before it ships on the public tab.
+9. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
+10. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 6).
 
 ## Standing rules that got us here
 
