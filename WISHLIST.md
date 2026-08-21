@@ -40,6 +40,7 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | step debugger (conclusion as a program) | 🟡 | execution pointer, measured variables pane, divergence points = chains really completed; time-travel rule: replay the record, never re-run |
 | the SYSTEM uses the debugger (self-check/repair, save/load, rewind) | 🟡 | dbgVerify re-steps its own record vs shards (CHECK/REPAIR lines, k re-measured + recomposed); record persists + restores (no autorun); ⟲ resume-from-hop re-runs the real engine with the rejected edge excluded |
 | vision loop: engine reads its own map | 🟡 | settled-layout distance orders frontier ties (order only, can never change an answer); every re-rank traced + counted in __visionFlips; NOT yet benchmarked - O8 |
+| ergonomics pass on the geometry (RJ: natural to understand, elegant) | 🟡 | baseline + gridlines where one gridline = ONE IDEAL HOP (rulers read in natural units); two-way selection sync (debugger pick = bright ruler); one-click camera fly-to with instant manual override; winner labelled in place |
 | crash trap | ✅ | any uncaught error becomes a red CRASH line in trace + narration bar; scene-rebuild churn throttled (likeliest crash vector) |
 
 ## Open — in the priority order I set

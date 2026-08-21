@@ -169,6 +169,10 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   border-radius:4px;font-size:12px}
 .dbg-alt:hover{background:#101c30}
 .dbg-alt.on{border-color:#2f7fd8;background:#101c30}
+.viewchip{position:absolute;right:10px;bottom:10px;background:rgba(16,28,48,.92);
+  border:1px solid #2f7fd8;color:#cfe3ff;padding:6px 12px;border-radius:6px;cursor:pointer;
+  font-size:12px;z-index:5}
+.viewchip:hover{background:#14273f}
 </style></head><body><div class="wrap">
 
 <h1>How sure is it, and why?</h1>
@@ -241,6 +245,7 @@ target it abstains, goes and learns what else that thing is called, and tries ag
   <div class="badge" id="badge">idle</div>
   <div class="tip">WASD fly · Q/E up-down · shift boost · drag to look</div>
   <div class="legend" id="legend"></div>
+  <div class="viewchip" id="viewgeo" style="display:none">⤴ see the confidence geometry</div>
   <div class="hover" id="hover" style="display:none"></div>
 </div>
 
@@ -273,8 +278,12 @@ benefit is counted, not yet benchmarked).</p>
 is a floating ruler: one segment per hop, segment length = −log(p_hop), so multiplying hop
 probabilities becomes adding lengths and <b>the most probable chain is literally the shortest
 ruler</b> — the weak hop is the long segment, a single-source hop is amber, and no number needs
-reading. Hover a segment for the fact it stands for; click it and this debugger jumps to that
-hop. One record, three views: geometry, program, graph.</p></div>
+reading. A faint gridline marks the length of <b>one ideal hop</b> (94.7%), so a ruler reads
+in ideal-hop units the way a lane reads in metres. The chain selected here is the bright ruler
+there — pick either side and the other follows. The ⤴ chip on the stage frames the geometry
+with one click (any movement of yours takes the camera back). Hover a segment for the fact it
+stands for; click it and this debugger jumps to that hop. One record, three views: geometry,
+program, graph.</p></div>
 
 <h2>What just happened</h2>
 <div id="whatbox"><p class="small">Ask something and this panel will explain, in plain English,
@@ -743,7 +752,7 @@ let sc,cam,ren,nodeGrp,edgeGrp,labGrp,stars,flowGrp,rackGrp;
 let camYaw=0,camPitch=0,drag3=null;
 const keys=Object.create(null);
 const camPos=new T.Vector3(0,0,900), camVel=new T.Vector3();
-let glowT=null, ray=null, mouseNDC=new T.Vector2(0,0);
+let glowT=null, ray=null, mouseNDC=new T.Vector2(0,0), flyT=null;
 
 const ROLE={
   start :{c:0x6ee7b7,name:"start"},
@@ -829,12 +838,13 @@ function init3(){
   cv.addEventListener("mouseenter",()=>over=true);
   cv.addEventListener("mouseleave",()=>over=false);
   window.addEventListener("keydown",e=>{ if(!over)return;
+    flyT=null;   // your hands beat the autopilot
     keys[e.key.toLowerCase()]=true;
     if(["w","a","s","d","q","e"," "].includes(e.key.toLowerCase()))e.preventDefault(); });
   window.addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
   // click a node to inspect it (a drag must not count as a click)
   let downAt=null;
-  cv.addEventListener("mousedown",e=>{downAt={x:e.clientX,y:e.clientY};});
+  cv.addEventListener("mousedown",e=>{flyT=null;downAt={x:e.clientX,y:e.clientY};});
   cv.addEventListener("mouseup",e=>{
     if(!downAt)return;
     const moved=Math.abs(e.clientX-downAt.x)+Math.abs(e.clientY-downAt.y); downAt=null;
@@ -845,12 +855,26 @@ function init3(){
       false)[0];
     if(hit&&hit.object.userData.rackHop){
       const rh=hit.object.userData.rackHop;
-      if(typeof DBG!=="undefined"&&DBG){ DBG.sel=rh.ci; DBG.pc=rh.hi+1; dbgRender();
+      if(typeof DBG!=="undefined"&&DBG){ DBG.sel=rh.ci; DBG.pc=rh.hi+1; G.dirty=true; dbgRender();
         const d=$("dbgbox"); if(d&&d.scrollIntoView)d.scrollIntoView({behavior:"smooth",block:"center"}); }
       return;
     }
     if(hit&&hit.object.userData.node)inspectNode(hit.object.userData.node);
   });
+  // ERGONOMICS: the geometry must not depend on the visitor thinking to look up. One click
+  // frames it; the same click returns; manual input hands control back at once (see flyT).
+  const vg=$("viewgeo");
+  if(vg&&vg.addEventListener){
+    vg.addEventListener("click",()=>{
+      const atRack=vg.dataset.at==="rack";
+      flyT=atRack?{pos:new T.Vector3(0,0,900),yaw:0,pitch:0}
+                 :{pos:new T.Vector3(210,330,640),yaw:0,pitch:0};
+      vg.dataset.at=atRack?"graph":"rack";
+      vg.textContent=atRack?"⤴ see the confidence geometry":"⟲ back to the graph";
+    });
+    if(typeof DBG!=="undefined"&&DBG)vg.style.display="block";   // restored record: chip on
+  }
+  window.showGeoChip=function(){ if(vg)vg.style.display="block"; };
   return true;
 }
 function rebuild3(){
@@ -891,24 +915,42 @@ function rebuild3(){
   if(typeof DBG!=="undefined"&&DBG&&DBG.chains&&DBG.chains.length){
     const RACKY=470, ROW=42, SCL=400, seg=new T.BoxGeometry(1,1,1);
     rackGrp.add((()=>{const sp=labelSprite("CONFIDENCE GEOMETRY",
-      "shorter ruler = stronger chain · segment = one hop, length = -log p",true);
+      "shorter = stronger · one gridline = one ideal hop (94.7%)",true);
       sp.position.set(0,RACKY+56,0);return sp;})());
+    // lane markings: the bright line is the start, each faint gridline is the length of ONE
+    // IDEAL HOP (the top of the measured curve) - a ruler is read in ideal-hop units, by eye
+    {
+      const UNIT=-Math.log(pctOf(99))*SCL;
+      const maxL=Math.max(...DBG.chains.slice(0,8).map(c=>
+        c.path.reduce((a,h)=>a+Math.max(6,-Math.log(pctOf(h.k))*SCL)+3,0)));
+      const yTop=RACKY+22, yBot=RACKY-7*ROW-22;
+      for(let u=0;u*UNIT<=maxL+UNIT;u++){
+        const gm=new T.Mesh(seg,new T.MeshBasicMaterial({color:u?0x22314a:0x4f7fa8,
+          transparent:true,opacity:u?.5:.9}));
+        gm.position.set(u*UNIT,(yTop+yBot)/2,-6);
+        gm.scale.set(u?1.2:2.5,yTop-yBot,1);
+        rackGrp.add(gm);
+      }
+    }
     // top 8 rulers - a DISCLOSED cut (stated in the debugger panel): the rack is a length
     // comparison, and the full untruncated ranking lives in the ANSWERS list and the debugger.
+    const selIdx=DBG.sel||0;
     DBG.chains.slice(0,8).forEach((c,ci)=>{
+      const isSel=ci===selIdx;
       let x=0; const y=RACKY-ci*ROW;
       c.path.forEach((h,hi)=>{
         const L=Math.max(6,-Math.log(pctOf(h.k))*SCL);
         const col=h.k>=2?0x67d8ff:0xffb347;
         const m=new T.Mesh(seg,new T.MeshStandardMaterial({color:col,emissive:col,
-          emissiveIntensity:ci===0?1.4:.5,roughness:.35,metalness:.3,transparent:true,
-          opacity:ci===0?1:.75}));
-        m.position.set(x+L/2,y,0); m.scale.set(L,ci===0?10:7,ci===0?10:7);
+          emissiveIntensity:isSel?1.4:.5,roughness:.35,metalness:.3,transparent:true,
+          opacity:isSel?1:.75}));
+        m.position.set(x+L/2,y,0); m.scale.set(L,isSel?10:7,isSel?10:7);
         m.userData.rackHop={ci,hi,h,p:c.p}; rackGrp.add(m);
         x+=L+3;
       });
       const lab=labelSprite(c.path[c.path.length-1].to,
-        (c.p*100).toFixed(1)+"% · "+c.path.length+" hop"+(c.path.length===1?"":"s"),ci===0);
+        (c.p*100).toFixed(1)+"% · "+c.path.length+" hop"+(c.path.length===1?"":"s")+
+        (ci===0?" · strongest":""),isSel);
       lab.position.set(x+46,y,0); rackGrp.add(lab);
     });
   }
@@ -935,6 +977,16 @@ function draw3(){
   const cv=$("cv"),w=cv.clientWidth,h=cv.clientHeight;
   if(cv.width!==Math.floor(w*ren.getPixelRatio())){
     ren.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix();
+  }
+  // camera fly-to (the "see the geometry" chip): eased, and ANY manual input cancels it -
+  // the camera is borrowed, never taken
+  if(flyT){
+    camPos.lerp(flyT.pos,0.08);
+    camYaw+=(flyT.yaw-camYaw)*0.08; camPitch+=(flyT.pitch-camPitch)*0.08;
+    camVel.set(0,0,0);
+    if(camPos.distanceTo(flyT.pos)<4){
+      camPos.copy(flyT.pos); camYaw=flyT.yaw; camPitch=flyT.pitch; flyT=null;
+    }
   }
   // free flight: WASD translate, Q/E or space vertical, shift boosts
   const sp=(keys["shift"]?34:11);
@@ -1504,7 +1556,7 @@ function dbgWire(){
     else if(act==="back")DBG.pc=Math.max(0,DBG.pc-1);
     else if(act==="first")DBG.pc=0;
     else if(act==="last")DBG.pc=len-1;
-    else if(act==="sel"){DBG.sel=Number(t.dataset.i)||0;DBG.pc=0;}
+    else if(act==="sel"){DBG.sel=Number(t.dataset.i)||0;DBG.pc=0;G.dirty=true;}
     else if(act==="resume"){
       const prog2=dbgProgram(DBG.chains[DBG.sel]),row=prog2[DBG.pc];
       if(row&&row.h){ const h=row.h,qq=DBG.q; stopped=true;
@@ -1524,6 +1576,7 @@ function dbgLoad(q,chains){
   try{localStorage.setItem("anchor_lastrun",
     JSON.stringify({q,chains:DBG.chains,t:Date.now()}));}catch(_){}
   dbgWire(); dbgRender();
+  if(window.showGeoChip)window.showGeoChip();
   dbgVerify();   // and the system steps its own record: see dbgVerify
 }
 /* THE SYSTEM USES THE DEBUGGER TOO. After every run it re-steps its own record the way a
