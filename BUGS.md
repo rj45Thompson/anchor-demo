@@ -92,6 +92,24 @@ then `loop`/`startLoop`/`stopLoop`, then `tick`. *Fixed:* model restored; it is 
 One leftover `getContext("2d")` line from the old renderer silently killed the entire three.js
 scene — a canvas that has ever returned a 2d context can never return a webgl one.
 
+### B12 - Completed chains were invisible in the 3D view until the very end
+`n.on`/`e.on` (the "on the answer chain" role) were set only by the final replay, and only for
+the single best chain. The search is DESIGNED to run long - so for its whole duration the stage
+showed growth but none of the reasoning it had already finished. Reported by RJ as "the
+visualization doesn't show the chains". *Fixed:* `liveAdd` marks every chain's nodes and edges
+the moment it completes, and the render loop rebuilds on a role-change flag, not only when the
+node count changes.
+
+### B13 - The screen froze during fetch phases; no live narration existed
+`traceFlush()` was only called inside the fact-scanning loop, so during a long stretch of
+awaited shard downloads nothing painted - "it keeps working but there is no more updates after a
+few seconds". The engine was working; the screen was not. *Fixed:* a 300ms interval owned by the
+run flushes the trace and repaints during awaits, plus a fixed bottom narration bar: one plain
+sentence about the current step, a progress bar whose fill is the position in the current hop's
+lead list (and which pulses during downloads, because download time is not knowable), and live
+step/chain counters. The "What just happened" panel now also states it is working, per question,
+from the moment the search starts.
+
 ---
 
 ## Claude-contrast harness (added after the zoo)

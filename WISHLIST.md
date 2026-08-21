@@ -32,6 +32,9 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | path ≠ assertion honesty; samples removed; clone size | ✅ | all shipped |
 | basics work ("what is an apple", plurals, "eat" not an entity) | ✅ | probe verified: cow(340) not [cows,eat]; worm the animal not malware; suite stayed green |
 | footer links to whitepaper / bug ledger / no-toys / wishlist | ✅ | shipped |
+| loading bar + live step-by-step narration at the bottom | ✅ | fixed bottom bar: current-step sentence, honest progress fill, pulse while downloading; 300ms liveness flush kills the "updates stop after a few seconds" freeze (B13) |
+| 3D view shows the chains AS they complete | ✅ | liveAdd marks every completed chain's nodes+edges live (B12); was end-of-search, best-chain-only |
+| visible build stamp (cache diagnosis) | ✅ | footer says `build 2026-08-21`; Pages caches HTML ~10 min, so "still auto-starts" = stale copy, provable on sight |
 
 ## Open — in the priority order I set
 

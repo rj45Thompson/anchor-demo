@@ -134,6 +134,21 @@ animation:pop .3s ease-out}
 .verdict .big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
 .chip{display:inline-block;background:var(--code);padding:2px 7px;border-radius:4px;
 font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+/* the bottom narration bar: what the engine is doing RIGHT NOW - one sentence, one bar.
+   The bar is honest: its fill is the engine's position in the CURRENT hop's lead list, and it
+   pulses (indeterminate) while a shard is downloading, because download time is not knowable. */
+#nowbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;
+  background:rgba(7,10,18,.95);border-top:1px solid #22314a;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:#cfe3ff}
+#nowtrack{height:3px;background:#16233a}
+#nowfill{height:3px;width:0%;background:linear-gradient(90deg,#2f7fd8,#67d8ff);
+  transition:width .25s ease}
+#nowfill.pulse{width:100%!important;background:linear-gradient(90deg,#16233a,#67d8ff,#16233a);
+  background-size:200% 100%;animation:nowslide 1.1s linear infinite}
+@keyframes nowslide{from{background-position:200% 0}to{background-position:0 0}}
+#nowrow{display:flex;justify-content:space-between;gap:12px;padding:7px 14px;align-items:baseline}
+#nowtext{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nowstats{color:#7d93b8;flex:none}
 </style></head><body><div class="wrap">
 
 <h1>How sure is it, and why?</h1>
@@ -268,7 +283,7 @@ sharded graph and a Bloom filter, all running in your browser.
 <a href="WHITEPAPER.md" style="color:var(--hi)">whitepaper</a> ·
 <a href="BUGS.md" style="color:var(--hi)">bug ledger</a> ·
 <a href="NO_TOYS.md" style="color:var(--hi)">the no-toys law</a> ·
-<a href="WISHLIST.md" style="color:var(--hi)">burn-down list</a>.</footer>
+<a href="WISHLIST.md" style="color:var(--hi)">burn-down list</a> · build 2026-08-21.</footer>
 </div>
 
 <script src="three.min.js"></script>
@@ -932,14 +947,16 @@ function loop(){
   if(!rafOn)return;
   if(!built3){ built3=(init3()!==false); if(built3)buildLegend(); }
   physics();
-  if(G.nodes.length!==lastN3||G.edges.length!==lastE3){
-    lastN3=G.nodes.length; lastE3=G.edges.length; rebuild3();
+  if(G.nodes.length!==lastN3||G.edges.length!==lastE3||G.dirty){
+    lastN3=G.nodes.length; lastE3=G.edges.length; G.dirty=false; rebuild3();
   }
   draw3();
   requestAnimationFrame(loop);
 }
-function startLoop(){ if(!rafOn){ rafOn=true; requestAnimationFrame(loop); } }
-function stopLoop(){ rafOn=false; }
+function startLoop(){ if(!rafOn){ rafOn=true; requestAnimationFrame(loop); }
+  const nb=$("nowbar"); if(nb)nb.style.display="block"; }
+function stopLoop(){ rafOn=false;
+  const nb=$("nowbar"); if(nb)nb.style.display="none"; }
 
 /* ---- graph access: one subject's real facts, decoded from the shard's packed rows ---- */
 async function factsOf(name){
@@ -973,6 +990,23 @@ function relMatches(rel,goal){
   return a===g||a.split(/\s+/).includes(g)||a.includes(g);
 }
 function badge(t){const b=$("badge");if(b)b.textContent=t;}
+/* The narration bar's state. nowSet is called at every phase change inside reason(); nowPaint
+   is ALSO called on a 300ms interval while a search runs, because during a long stretch of
+   shard downloads nothing else touches the DOM and the page looked frozen (the "no more
+   updates after a few seconds" report - the engine was working, the screen was not). */
+const NOW={text:"",frac:null,pulse:false};
+function nowSet(text,frac,pulse){
+  NOW.text=text; NOW.frac=(frac==null?null:Math.max(0,Math.min(1,frac))); NOW.pulse=!!pulse;
+  nowPaint();
+}
+function nowPaint(){
+  const t=$("nowtext"),st=$("nowstats"),f=$("nowfill");
+  if(t)t.textContent=NOW.text||"idle";
+  if(st)st.textContent=thinking?(traceN.toLocaleString()+" steps · "+liveN+
+    (liveN===1?" chain":" chains")):"";
+  if(f){ f.style.width=(NOW.frac==null?"100%":(NOW.frac*100).toFixed(1)+"%");
+         f.className=NOW.pulse?"pulse":""; }   // className, not classList: harness stub safe
+}
 
 /* ---- the search console ------------------------------------------------------------------
    ANTI-DEMO LAW. Every line below is emitted from the code path that actually did the work; none
@@ -1223,6 +1257,18 @@ let liveN=0;
 function liveClear(){liveN=0;const e=$("live");if(e)e.innerHTML="";const c=$("lcount");
   if(c)c.textContent="0";}
 function liveAdd(path,p){
+  // The stage marks every chain the MOMENT it completes. Before this, n.on/e.on were set only
+  // by the final replay, only for the single best chain - so for the whole (long, deliberate)
+  // search the 3D view showed growth but never the reasoning it had already finished.
+  for(const h of path){
+    const a=G.byId.get(h.from),b=G.byId.get(h.to);
+    if(a)a.on=true; if(b)b.on=true;
+    let hit=false;
+    for(const e of G.edges)if(e.a===a&&e.b===b&&e.rel===h.rel){e.on=true;hit=true;}
+    if(!hit&&a&&b){ gEdge(a,b,h.rel,h.k);
+      for(const e of G.edges)if(e.a===a&&e.b===b&&e.rel===h.rel)e.on=true; }
+  }
+  G.dirty=true;   // roles changed with no count change; the render loop rebuilds on this flag
   const e=$("live");if(!e)return;
   liveN++;
   const minK=Math.min(...path.map(h=>h.k));
@@ -1287,6 +1333,14 @@ async function reason(q){
   // immediately types their own question was getting silence - the worst possible first thirty
   // seconds. A newer question preempts the older one instead.
   const my=++gen; runningQ=q;
+  // liveness, owned by THIS run: flush buffered trace lines and repaint the narration bar every
+  // 300ms even while the engine is deep in awaited shard fetches (where no scan-loop flush runs)
+  const nowTimer=setInterval(()=>{ if(my!==gen){clearInterval(nowTimer);return;}
+    traceFlush(); nowPaint(); },300);
+  nowSet("reading the question…",null,true);
+  {const wb=$("whatbox"); if(wb)wb.innerHTML='<p class="small">Working on <b>'+esc(q)+
+    '</b> — the bar at the very bottom of the page narrates each step as it happens; the full '+
+    'plain-English explanation of what was done lands here when the search ends.</p>';}
   // Deliberately NOT disabled. A disabled button fires no click event at all, so the whole
   // preempt path was unreachable and the visitor's question vanished in silence. The label
   // says what pressing it will do instead.
@@ -1405,6 +1459,8 @@ async function reason(q){
     for(let pass=1; pass<=2; pass++){
     trace("fetch","shard "+String(shardOf(start.name)).padStart(3,"0")+" <- \""+start.name+
       "\"  ("+start.facts.length+" facts)  [resolved subject]");
+    nowSet("resolved the subject \""+start.name+"\" — "+start.facts.length+
+      " facts loaded; scanning them for the goal",null,true);
     // Search to the BUDGET, not to the first completion. Stopping at the first depth that
     // completed was hidden by the old 80-fact cap and surfaced the moment it was removed:
     // Melbourne now carries `capital of -> Izard County` (Melbourne, Arkansas is that county's
@@ -1414,9 +1470,14 @@ async function reason(q){
     while(depth<R.MAX_DEPTH&&frontier.length&&!budgetHit&&!stopped){
       depth++;
       const next=[];
+      let fi=0;
       for(const cur of frontier){
         if(my!==gen||stopped)return;   // superseded: stop BEFORE touching the new question's graph
+        fi++;
         badge("depth "+depth+" · reading "+cur.node.id);
+        nowSet("hop "+depth+" — examining lead "+fi+" of "+frontier.length+": \""+cur.node.id+
+          "\" ("+cur.facts.length+" facts to read)"+(done.length?" — best chain so far "+
+          (Math.max(...done.map(d=>d.p))*100).toFixed(1)+"%":""),fi/frontier.length,false);
         trace("goal","HYPOTHESIS: "+(cur.path.length?cur.path.map(h=>h.to).join(" -> ")+" -> ?"
           :"start from \""+cur.node.id+"\"")+"   (opening "+cur.node.id+", "+cur.facts.length+" facts)");
         {const sn=G.byId.get(cur.node.id); if(sn)sn.active=tick;
@@ -1499,6 +1560,9 @@ async function reason(q){
         }
         badge("depth "+depth+" · fetching shard "+
               String(shardOf(nx._pending)).padStart(3,"0")+" · "+nx._pending);
+        nowSet("hop "+(depth+1)+" — downloading facts for \""+nx._pending+"\" (lead "+
+          (next.indexOf(nx)+1)+" of "+next.length+" queued; "+fetches+
+          " shards fetched so far)",(next.indexOf(nx)+1)/next.length,true);
         nx.facts=await factsOf(nx._pending);
         if(nx.node){ nx.node.facts=nx.facts.length;
           nx.node.role=nx.facts.length?"opened":"dead"; }   // dead = opened, led nowhere
@@ -1518,6 +1582,8 @@ async function reason(q){
     // walk the SAME graph again with the wider vocabulary. Nothing about the graph changed -
     // only the engine's idea of what it is looking for.
     badge("abstained - going to learn");
+    nowSet("no chain reached the target — looking up other names for \""+target.name+
+      "\" before retrying",null,true);
     learned=await learnAliases(target.name);
     if(!learned.length){trace("dead","nothing learned; the abstain stands.");break;}
     for(const l of learned)accept.add(l.name.toLowerCase());
@@ -1707,7 +1773,11 @@ async function reason(q){
       esc(e.message||String(e))+'</span></div></div>');
     badge("error");
   }finally{
-    if(my===gen){ traceFlush(); thinking=false; $("tgo").textContent="Ask"; }
+    clearInterval(nowTimer);
+    if(my===gen){ traceFlush(); thinking=false; $("tgo").textContent="Ask";
+      nowSet((stopped?"stopped by you":"search ended")+" — "+liveN+
+        (liveN===1?" chain":" chains")+" completed; the plain-English account is in \"What "+
+        "just happened\" below",1,false); }
     else traceBuf=[];   // a superseded search's unpainted lines belong to a dead question
   }
 }
@@ -1897,4 +1967,7 @@ document.querySelectorAll("#p-code .hint code").forEach(c=>c.addEventListener("c
   $("ex").value=c.getAttribute("data-ex"); renderCode();
 }));
 renderCode();
-</script></body></html>
+</script>
+<div id="nowbar"><div id="nowtrack"><div id="nowfill"></div></div>
+<div id="nowrow"><span id="nowtext">idle — ask a question above and every step will be narrated here, live</span><span id="nowstats"></span></div></div>
+</body></html>
