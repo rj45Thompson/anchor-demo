@@ -113,7 +113,7 @@ font-size:.9rem;background:var(--card)}
 padding:8px 11px;margin:0 0 16px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#7e93b0}
 .tlog div{white-space:pre-wrap;word-break:break-word}
 .tlog .t-hit{color:#6ee7b7}.tlog .t-miss{color:#46566e}.tlog .t-fetch{color:#67d8ff}
-.tlog .t-beam{color:#fbbf24}.tlog .t-dead{color:#f87171}.tlog .t-done{color:#fff;font-weight:600}
+.tlog .t-beam{color:#fbbf24}.tlog .t-goal{color:#e2e8f0;font-weight:600}.tlog .t-dead{color:#f87171}.tlog .t-done{color:#fff;font-weight:600}
 .livebar{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px;
 font:11px ui-monospace,Menlo,monospace;color:var(--muted)}
 .live{margin:0 0 14px}
@@ -592,6 +592,8 @@ const R={
 let G={nodes:[],edges:[],byId:new Map()};
 let gen=0;      // search generation: a newer question cancels an older one
 let stopped=false;   // the PERSON decides when the search has run long enough, not a constant
+let runningQ="";     // set by reason() itself: the autorun and re-ask call reason() directly, so
+                     // the click handler's private copy stayed "" and Stop RESTARTED the autorun
 let rotY=0.55,rotX=-0.22,autoSpin=true,dragging=null,thinking=false,rafOn=false;
 // NOTE: do NOT take a 2d context on this canvas. A canvas that has ever returned a 2d context
 // can never return a webgl one, so this single leftover line from the old renderer silently
@@ -848,6 +850,14 @@ function draw3(){
   const t=(tick%110)/110;
   for(const d of flowGrp.children)
     d.position.lerpVectors(d.userData.a,d.userData.b,t);
+  // the live hypothesis path glows and fades over ~60 frames - you can SEE what it is testing
+  for(const o of nodeGrp.children){
+    const n=o.userData&&o.userData.node;
+    if(o.isMesh&&n&&n.active){
+      const age=tick-n.active;
+      if(age<60&&o.material.emissive)o.material.emissiveIntensity=1.8-age*0.02;
+    }
+  }
   for(const s of labGrp.children)s.quaternion.copy(cam.quaternion);
   if(stars)stars.rotation.y+=0.00006;
   // look at a node, read what it is
@@ -1251,7 +1261,7 @@ async function reason(q){
   // Do NOT swallow the click. The landing search runs for ~30s, and a visitor who arrives and
   // immediately types their own question was getting silence - the worst possible first thirty
   // seconds. A newer question preempts the older one instead.
-  const my=++gen;
+  const my=++gen; runningQ=q;
   // Deliberately NOT disabled. A disabled button fires no click event at all, so the whole
   // preempt path was unreachable and the visitor's question vanished in silence. The label
   // says what pressing it will do instead.
@@ -1380,8 +1390,12 @@ async function reason(q){
       depth++;
       const next=[];
       for(const cur of frontier){
+        if(my!==gen||stopped)return;   // superseded: stop BEFORE touching the new question's graph
         badge("depth "+depth+" · reading "+cur.node.id);
-        trace("beam","depth "+depth+": opening \""+cur.node.id+"\" ("+cur.facts.length+" facts)");
+        trace("goal","HYPOTHESIS: "+(cur.path.length?cur.path.map(h=>h.to).join(" -> ")+" -> ?"
+          :"start from \""+cur.node.id+"\"")+"   (opening "+cur.node.id+", "+cur.facts.length+" facts)");
+        {const sn=G.byId.get(cur.node.id); if(sn)sn.active=tick;
+         for(const h of cur.path){const nn=G.byId.get(h.to); if(nn)nn.active=tick;}}
         // CORRECTNESS first: every fact is tested for the goal relation. Only the DRAWING is
         // capped - a hub subject can carry 80 facts and rendering all of them buries the chain.
         // Yield on ELAPSED TIME, not on a fact count. A fixed "every 9 facts" was fine at 80
@@ -1426,9 +1440,10 @@ async function reason(q){
                         let n=0; for(const w of tw) if(t.includes(w)) n++; return n; };
         const cand=cur.facts.filter(f=>!seen.has(f.obj))
           .sort((a,b)=> near(b.obj)-near(a.obj) || b.k-a.k).slice(0,R.BEAM);
-        trace("beam","no match on \""+cur.node.id+"\"; carrying "+cand.length+" of "+
-          cur.facts.length+" forward by anchor count: "+
-          cand.map(f=>f.obj+"("+f.k+")").join(", "));
+        trace(cand.length?"beam":"dead", cand.length
+          ? "REVISE: \""+cur.node.id+"\" did not satisfy the goal; best "+cand.length+
+            " leads by evidence: "+cand.map(f=>f.obj+"("+f.k+")").join(", ")
+          : "DEAD END: \""+cur.node.id+"\" offers nothing new - abandoning this branch");
         for(const f of cand){
           seen.add(f.obj);
           const fn=G.byId.get(f.obj); if(fn&&!fn.role)fn.role="frontier";   // queued, not opened
@@ -1470,6 +1485,7 @@ async function reason(q){
       }
       frontier=next.filter(n=>n.node&&n.facts&&n.facts.length);
     }
+    if(my!==gen){ traceBuf=[]; return; }   // a dead question asks nothing and reports nothing
     trace("done","pass "+pass+" finished: "+scanned.toLocaleString()+" facts read across "+
       fetches+" shard fetch"+(fetches===1?"":"es")+", "+done.length+" complete chain(s)");
     if(done.length||!target||pass===2)break;
@@ -1510,6 +1526,10 @@ async function reason(q){
         }));
       }
     }
+    // Loop guards stop the SEARCH but the tail (verdict, rivals, ask-back) ran unguarded, so a
+    // superseded search rendered its verdict into the NEW question's cleared panel - the exact
+    // "page does not refresh when the question changes" report.
+    if(my!==gen){ traceBuf=[]; return; }
     done.sort((a,b)=>b.p-a.p);
     const found=done[0]||null;
 
@@ -1540,6 +1560,7 @@ async function reason(q){
                                // whole scope and put every earlier call in the temporal dead zone
     let running=1;
     for(let i=0;i<found.path.length;i++){
+      if(my!==gen)return;   // superseded mid-replay
       const h=found.path[i];
       running*=pctOf(h.k);
       const a=G.byId.get(h.from),b=G.byId.get(h.to);
@@ -1598,14 +1619,12 @@ async function reason(q){
       esc(e.message||String(e))+'</span></div></div>');
     badge("error");
   }finally{
-    traceFlush();   // covers EVERY exit path: early returns, abstains and thrown errors all
-                    // otherwise leave their last lines sitting unpainted in the buffer
-    if(my===gen){ thinking=false;$("tgo").textContent="Ask"; }
+    if(my===gen){ traceFlush(); thinking=false; $("tgo").textContent="Ask"; }
+    else traceBuf=[];   // a superseded search's unpainted lines belong to a dead question
   }
 }
 if($("tq")){
   $("tq").addEventListener("keydown",e=>{if(e.key==="Enter")$("tgo").click()});
-  let runningQ="";   // what the in-flight search is actually answering
 $("tgo").addEventListener("click",()=>{
   const v=$("tq").value.trim();
   if(thinking){
