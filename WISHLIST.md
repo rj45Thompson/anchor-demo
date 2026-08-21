@@ -36,25 +36,34 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | 3D view shows the chains AS they complete | ✅ | liveAdd marks every completed chain's nodes+edges live (B12); was end-of-search, best-chain-only |
 | visible build stamp (cache diagnosis) | ✅ | footer says `build 2026-08-21`; Pages caches HTML ~10 min, so "still auto-starts" = stale copy, provable on sight |
 | O7 inverse relations + one-hop-short (the confident-WRONG class) | ✅ | B14: contrast 4/8 → 6/8, zoo held 97.5%, suite floor raised to 6 |
+| ⭐ GEOMETRY debugger (RJ priority-one) | 🟡 | chains as floating rulers: segment length = -log(p_hop), so best chain = SHORTEST ruler (Viterbi duality, exact); hover segment = its fact; click = jump the step debugger there. Built + suite-green, motion unwatched |
+| step debugger (conclusion as a program) | 🟡 | execution pointer, measured variables pane, divergence points = chains really completed; time-travel rule: replay the record, never re-run |
+| the SYSTEM uses the debugger (self-check/repair, save/load, rewind) | 🟡 | dbgVerify re-steps its own record vs shards (CHECK/REPAIR lines, k re-measured + recomposed); record persists + restores (no autorun); ⟲ resume-from-hop re-runs the real engine with the rejected edge excluded |
+| vision loop: engine reads its own map | 🟡 | settled-layout distance orders frontier ties (order only, can never change an answer); every re-rank traced + counted in __visionFlips; NOT yet benchmarked - O8 |
+| crash trap | ✅ | any uncaught error becomes a red CRASH line in trace + narration bar; scene-rebuild churn throttled (likeliest crash vector) |
 
 ## Open — in the priority order I set
 
-1. **UI-in-motion pass (#132).** One visible-pane session (or RJ's 60-second click-through)
+1. **Crash repro.** RJ reports a crash; the trap now prints a red CRASH line in the trace and
+   the narration bar. Reproduce (needs the preview popup closed or RJ's console), read the line, fix.
+2. **UI-in-motion pass (#132)** — now also covers the geometry rack, step debugger, self-check
+   marks, resume-from-hop, save/load restore. One watched session collapses every 🟡.
+3. **O8: benchmark the vision loop headless** — run physics() in the harness, A/B SPATIAL on/off
+   over the chain set (fetches-to-first-chain, agreement). Prove the counted flips help, or demote
+   the feature to off-by-default. No third state.
+
+4. **UI-in-motion pass (#132).** One visible-pane session (or RJ's 60-second click-through)
    collapses every 🟡 to ✅ or to a real bug.
-2. **Debugger game** *(new wish, captured)*: after a conclusion, compile the winning chain into
-   stepped pseudo-code — step/back through it watching a variables pane (subject, hop, k, p_hop,
-   p_chain, shard), each step lighting its hop in 3D. Human help = at divergence points, switch to
-   another chain the search ACTUALLY completed. Every value measured, nothing recomputed.
-3. **Live "top 3 questions for you"** *(new wish, captured)*: while searching, keep a live-updating
+5. **Live "top 3 questions for you"** *(new wish, captured)*: while searching, keep a live-updating
    panel of the three questions whose answers would most move the search (ambiguous readings,
    endpoint disagreements, unopened high-fact frontier nodes) — updating in real time as it figures
    things out, each clickable to act. The ask-back-on-ambiguity (7/8) is the seed of this.
-4. **Learn-on-abstain (#135)** — still never fired. Prove or delete; no third state.
-5. **Liars Game, human-in-the-loop** *(new wish, re-scoped)*: a tab where the engine presents
+6. **Learn-on-abstain (#135)** — still never fired. Prove or delete; no third state.
+7. **Liars Game, human-in-the-loop** *(new wish, re-scoped)*: a tab where the engine presents
    facts/chains and the HUMAN adjudicates in real time. RJ's framing solves the old provenance
    objection: the human judge IS the independent second anchor, so adjudications can honestly
    carry anchor semantics. Design before build.
-6. **Spacegame in the demo** *(new wish, large — needs its own arc)*:
+8. **Spacegame in the demo** *(new wish, large — needs its own arc)*:
    - a tab hosting the three.js spacegame, restored to its ORIGINAL intent: the chat/arena where
      AIs battle to improve;
    - a fork `SpaceGame-simple` cut down to a verified end-to-end core (the main game has hundreds
@@ -62,15 +71,15 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
    - removed features preserved as DATA in a front-end dashboard menu, so anything can be added
      back deliberately instead of rotting half-on.
    This is a project, not a task — schedule as its own session(s) with its own zoo-equivalent.
-7. **Research tab: all the whitepapers** *(new wish, captured)*: a final tab collecting RJ's
+9. **Research tab: all the whitepapers** *(new wish, captured)*: a final tab collecting RJ's
    research artifacts in one place — the Anchor whitepaper (already ships), the Hadamard/KG work
    (`kg_hadamard.py` line), and the spacegame research corpus (PILLARS.md, the emergent-signaling /
    theory-of-mind / iron-law results). Execution note: these live in the PRIVATE fleet repo today;
    inventory first and confirm each is meant for public before copying — publishing is
    irreversible, and a paper's claims must pass the same trace-to-artifact audit the Anchor
    whitepaper passes before it ships on the public tab.
-8. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
-9. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 6).
+10. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
+11. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 6).
 
 ## Standing rules that got us here
 

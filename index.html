@@ -149,6 +149,26 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 #nowrow{display:flex;justify-content:space-between;gap:12px;padding:7px 14px;align-items:baseline}
 #nowtext{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #nowstats{color:#7d93b8;flex:none}
+/* the step debugger: the conclusion as a little program you step through. Replay of RECORDED
+   values only (the time-travel-debugger rule) - stepping never re-runs the search. */
+#dbgbox .dbg-head{display:flex;gap:6px;align-items:baseline;margin:8px 0}
+#dbgbox .dbg-head button{background:#101c30;border:1px solid #2f7fd8;color:#cfe3ff;
+  padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px}
+#dbgbox .dbg-head button:hover{background:#14273f}
+.dbg-code{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#0a0f1a;
+  border:1px solid #22314a;border-radius:6px;padding:6px 0;margin:6px 0;overflow-x:auto}
+.dbg-ln{display:grid;grid-template-columns:30px 46px minmax(200px,1fr) auto;gap:10px;
+  padding:3px 10px;white-space:nowrap}
+.dbg-ln.pc{background:#14273f;outline:1px solid #2f7fd8}
+.dbg-n{color:#4c5a72}.dbg-op{color:#67d8ff}.dbg-det{color:#7d93b8}
+.dbg-vars{font-family:ui-monospace,Consolas,monospace;font-size:12px;border-collapse:collapse;
+  margin:6px 0;width:100%}
+.dbg-vars td{border:1px solid #22314a;padding:4px 10px}
+.dbg-vars td:first-child{color:#7d93b8;width:220px}
+.dbg-alt{cursor:pointer;padding:4px 10px;border:1px solid #22314a;margin:3px 0;
+  border-radius:4px;font-size:12px}
+.dbg-alt:hover{background:#101c30}
+.dbg-alt.on{border-color:#2f7fd8;background:#101c30}
 </style></head><body><div class="wrap">
 
 <h1>How sure is it, and why?</h1>
@@ -232,6 +252,29 @@ target it abstains, goes and learns what else that thing is called, and tries ag
 <div class="livebar"><span>ANSWERS SO FAR — every completed chain, ranked live as it is found</span><span id="lcount">0</span></div>
 <div class="live" id="live"></div>
 <div id="ndbox"></div>
+
+<h2>Step debugger — the conclusion as a program</h2>
+<div id="dbgbox"><p class="small">When a search completes, its best chain compiles here into
+stepped pseudo-code: move the execution pointer back and forth and watch the variables the
+engine actually measured — sources, curve points, composed confidence, shard ids. Nothing is
+recomputed while you step (the time-travel-debugger rule: replay the record). The other listed
+chains are real divergence points — routes this search <em>also</em>
+completed (top 12 by composed confidence here, top 8 in the geometry rack — disclosed cuts; the
+ANSWERS list above is never truncated) — click one to debug that route instead. <b>The engine
+uses this debugger itself:</b> after every run it self-checks by re-stepping its own record
+against the shards (CHECK lines in the trace) and repairs any hop whose measurement drifted —
+re-measured, recomposed, re-ranked, out loud. The record save/loads across visits (a replay of
+stored values, never a hidden re-run), and <b>⟲ resume from here</b> re-runs the real search
+from any hop with that edge excluded — rewind-and-branch on the live engine. The picture is not only for you: once the layout settles, the engine
+reads its own map to order the frontier (every re-rank is a VISION line in the trace, counted
+in <code>window.__visionFlips</code>; ordering only, it can never change an answer — and its
+benefit is counted, not yet benchmarked).</p>
+<p class="small"><b>The same conclusion, as geometry.</b> Above the graph, each completed chain
+is a floating ruler: one segment per hop, segment length = −log(p_hop), so multiplying hop
+probabilities becomes adding lengths and <b>the most probable chain is literally the shortest
+ruler</b> — the weak hop is the long segment, a single-source hop is amber, and no number needs
+reading. Hover a segment for the fact it stands for; click it and this debugger jumps to that
+hop. One record, three views: geometry, program, graph.</p></div>
 
 <h2>What just happened</h2>
 <div id="whatbox"><p class="small">Ask something and this panel will explain, in plain English,
@@ -543,6 +586,15 @@ fetch("index.json").then(r=>r.json()).then(d=>{
     // No autorun: the person decides when it starts. The stage still boots (starfield) so the
     // page is visibly alive, but no question fires until one is asked.
     if(document.getElementById("p-think").classList.contains("on"))startLoop();
+// LOAD: the last run's RECORD restores into the debugger and the geometry rack. A record
+// replay, not a re-run - nothing searches until asked; the no-autorun rule stands.
+try{
+  const sv=JSON.parse(localStorage.getItem("anchor_lastrun")||"null");
+  if(sv&&sv.chains&&sv.chains.length){
+    DBG={q:sv.q,chains:sv.chains,sel:0,pc:0,restored:true};
+    dbgWire(); dbgRender(); G.dirty=true;
+  }
+}catch(_){}
   }
   $("factsWarn").insertAdjacentHTML("beforeend"," <em>Index loaded: "+
     d.subjects.toLocaleString()+" subjects, "+d.facts.toLocaleString()+" facts, "+
@@ -602,7 +654,8 @@ const R={
   FOCAL:540,            // perspective focal length; larger = flatter, smaller = more dramatic
   NODE_R:5.5, HIT_R:16, // node radius, and click-test radius in screen px
   RELAX:2,              // physics substeps per animation frame
-  STEP_MS:460           // pause between replayed chain steps, slow enough to read
+  STEP_MS:460,          // pause between replayed chain steps, slow enough to read
+  SPATIAL:1             // the vision loop: the engine reads its own settled map (order only)
 };
 let G={nodes:[],edges:[],byId:new Map()};
 let gen=0;      // search generation: a newer question cancels an older one
@@ -642,7 +695,9 @@ function gEdge(a,b,rel,k){
   if(G.edges.some(e=>e.a===a&&e.b===b&&e.rel===rel))return;
   G.edges.push({a,b,rel,k,on:false});
 }
+let physicsSteps=0;   // the vision loop reads the map only after the layout has SETTLED
 function physics(){
+  physicsSteps++;
   const N=G.nodes;
   for(let s=0;s<R.RELAX;s++){
     for(let i=0;i<N.length;i++){
@@ -684,7 +739,7 @@ function physics(){
      DETAIL        look at a node and its name, facts, role and sources appear
    A legend names every one of those, because a colour nobody can decode is decoration too. */
 const T=window.THREE;
-let sc,cam,ren,nodeGrp,edgeGrp,labGrp,stars,flowGrp;
+let sc,cam,ren,nodeGrp,edgeGrp,labGrp,stars,flowGrp,rackGrp;
 let camYaw=0,camPitch=0,drag3=null;
 const keys=Object.create(null);
 const camPos=new T.Vector3(0,0,900), camVel=new T.Vector3();
@@ -753,7 +808,8 @@ function init3(){
     map:glowTex(),transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:.85}));
   sc.add(stars);
   nodeGrp=new T.Group();edgeGrp=new T.Group();labGrp=new T.Group();flowGrp=new T.Group();
-  sc.add(nodeGrp);sc.add(edgeGrp);sc.add(labGrp);sc.add(flowGrp);
+  rackGrp=new T.Group();
+  sc.add(nodeGrp);sc.add(edgeGrp);sc.add(labGrp);sc.add(flowGrp);sc.add(rackGrp);
 
   const P=e=>{const t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};};
   const md=e=>{drag3=P(e);cv.style.cursor="grabbing";};
@@ -784,14 +840,22 @@ function init3(){
     const moved=Math.abs(e.clientX-downAt.x)+Math.abs(e.clientY-downAt.y); downAt=null;
     if(moved>5||!ray)return;
     ray.setFromCamera(mouseNDC,cam);
-    const hit=ray.intersectObjects(nodeGrp.children.filter(o=>o.isMesh),false)[0];
+    const hit=ray.intersectObjects(
+      nodeGrp.children.filter(o=>o.isMesh).concat(rackGrp?rackGrp.children.filter(o=>o.isMesh):[]),
+      false)[0];
+    if(hit&&hit.object.userData.rackHop){
+      const rh=hit.object.userData.rackHop;
+      if(typeof DBG!=="undefined"&&DBG){ DBG.sel=rh.ci; DBG.pc=rh.hi+1; dbgRender();
+        const d=$("dbgbox"); if(d&&d.scrollIntoView)d.scrollIntoView({behavior:"smooth",block:"center"}); }
+      return;
+    }
     if(hit&&hit.object.userData.node)inspectNode(hit.object.userData.node);
   });
   return true;
 }
 function rebuild3(){
   if(!sc)return;
-  for(const g of [nodeGrp,edgeGrp,labGrp,flowGrp]){
+  for(const g of [nodeGrp,edgeGrp,labGrp,flowGrp,rackGrp]){
     while(g.children.length){const c=g.children.pop();
       if(c.geometry)c.geometry.dispose();
       if(c.material){if(c.material.map)c.material.map.dispose();c.material.dispose();}}
@@ -817,6 +881,36 @@ function rebuild3(){
         (n.facts!=null?n.facts+" facts · ":"")+ROLE[rk].name, hot);
       sp.position.copy(m.position); sp.position.y+=rad+14; labGrp.add(sp);
     }
+  }
+  /* CONFIDENCE GEOMETRY. Each completed chain is a ruler floating above the graph: segment
+     length = -log(p_hop) * 400, so the PRODUCT of hop probabilities becomes the SUM of segment
+     lengths and the most probable chain is literally the shortest ruler (Viterbi / shortest-
+     path duality - exact, not decorative). The weak hop is the LONG segment; a single-source
+     hop is amber. Hover a segment for the fact it stands for; click it and the step debugger
+     jumps to that hop - geometry on one side, the symbolic record on the other. */
+  if(typeof DBG!=="undefined"&&DBG&&DBG.chains&&DBG.chains.length){
+    const RACKY=470, ROW=42, SCL=400, seg=new T.BoxGeometry(1,1,1);
+    rackGrp.add((()=>{const sp=labelSprite("CONFIDENCE GEOMETRY",
+      "shorter ruler = stronger chain · segment = one hop, length = -log p",true);
+      sp.position.set(0,RACKY+56,0);return sp;})());
+    // top 8 rulers - a DISCLOSED cut (stated in the debugger panel): the rack is a length
+    // comparison, and the full untruncated ranking lives in the ANSWERS list and the debugger.
+    DBG.chains.slice(0,8).forEach((c,ci)=>{
+      let x=0; const y=RACKY-ci*ROW;
+      c.path.forEach((h,hi)=>{
+        const L=Math.max(6,-Math.log(pctOf(h.k))*SCL);
+        const col=h.k>=2?0x67d8ff:0xffb347;
+        const m=new T.Mesh(seg,new T.MeshStandardMaterial({color:col,emissive:col,
+          emissiveIntensity:ci===0?1.4:.5,roughness:.35,metalness:.3,transparent:true,
+          opacity:ci===0?1:.75}));
+        m.position.set(x+L/2,y,0); m.scale.set(L,ci===0?10:7,ci===0?10:7);
+        m.userData.rackHop={ci,hi,h,p:c.p}; rackGrp.add(m);
+        x+=L+3;
+      });
+      const lab=labelSprite(c.path[c.path.length-1].to,
+        (c.p*100).toFixed(1)+"% · "+c.path.length+" hop"+(c.path.length===1?"":"s"),ci===0);
+      lab.position.set(x+46,y,0); rackGrp.add(lab);
+    });
   }
   for(const e of G.edges){
     const hot=e.on, k=e.k||0;
@@ -878,8 +972,18 @@ function draw3(){
   // look at a node, read what it is
   if(ray&&nodeGrp.children.length){
     ray.setFromCamera(mouseNDC,cam);
-    const hit=ray.intersectObjects(nodeGrp.children.filter(o=>o.isMesh),false)[0];
+    const hit=ray.intersectObjects(
+      nodeGrp.children.filter(o=>o.isMesh).concat(rackGrp?rackGrp.children.filter(o=>o.isMesh):[]),
+      false)[0];
     const el=$("hover");
+    if(el&&hit&&hit.object.userData.rackHop){
+      const rh=hit.object.userData.rackHop;
+      el.style.display="block";
+      el.innerHTML="<b>"+esc(rh.h.from)+"</b> —"+esc(relLabel(rh.h.rel))+"→ <b>"+esc(rh.h.to)+
+        "</b><br>k="+rh.h.k+" · p_hop "+(pctOf(rh.h.k)*100).toFixed(1)+
+        "% · length = -log p · click: open this hop in the step debugger";
+      return;
+    }
     if(el){
       if(hit&&hit.object.userData.node){
         const n=hit.object.userData.node, rk=hit.object.userData.role;
@@ -942,13 +1046,17 @@ async function inspectNode(n){
    three functions out along with the code between them, so startLoop() threw and nothing ever
    drew - the scene built fine when called by hand, which is exactly why the failure looked like
    "three.js is broken" rather than "the loop is missing". */
-let built3=false, lastN3=-1, lastE3=-1;
+let built3=false, lastN3=-1, lastE3=-1, lastDirty3=0;
 function loop(){
   if(!rafOn)return;
   if(!built3){ built3=(init3()!==false); if(built3)buildLegend(); }
   physics();
-  if(G.nodes.length!==lastN3||G.edges.length!==lastE3||G.dirty){
-    lastN3=G.nodes.length; lastE3=G.edges.length; G.dirty=false; rebuild3();
+  // count changes rebuild at once; role-only changes coalesce to ~2/s - a burst of completing
+  // chains was one full scene dispose+rebuild EACH, and that churn is the likeliest crash vector
+  if(G.nodes.length!==lastN3||G.edges.length!==lastE3||(G.dirty&&tick-lastDirty3>24)){
+    lastN3=G.nodes.length; lastE3=G.edges.length;
+    if(G.dirty)lastDirty3=tick;
+    G.dirty=false; rebuild3();
   }
   draw3();
   requestAnimationFrame(loop);
@@ -1036,8 +1144,20 @@ function trace(kind,msg){
 window.anchorDump=function(){
   return { question:runningQ, gen, thinking, stopped,
     graph:{nodes:G.nodes.length,edges:G.edges.length},
-    steps:traceN, lastEvents:(window.__anchorLog||[]).slice(-120) };
+    steps:traceN, vision:window.__visionFlips||0,
+    lastEvents:(window.__anchorLog||[]).slice(-120) };
 };
+/* RJ reports a crash and the page could not say so. Any uncaught error is now a red CRASH line
+   in the trace AND the narration bar - an invisible failure is a lie of omission. */
+window.addEventListener("error",e=>{
+  trace("dead","CRASH: "+e.message+"  @"+String(e.filename||"").split("/").pop()+":"+e.lineno);
+  try{traceFlush();nowSet("crashed - "+e.message+" (details in the trace)",1,false);}catch(_){}
+});
+window.addEventListener("unhandledrejection",e=>{
+  const m=(e.reason&&e.reason.message)||String(e.reason);
+  trace("dead","CRASH (async): "+m);
+  try{traceFlush();nowSet("crashed - "+m+" (details in the trace)",1,false);}catch(_){}
+});
 function traceFlush(){
   const e=$("tlog");if(!e||!traceBuf.length)return;
   const frag=document.createDocumentFragment();
@@ -1308,6 +1428,150 @@ function liveAdd(path,p){
   const c=$("lcount");if(c)c.textContent=liveN+(liveN===1?" chain":" chains");
 }
 
+/* ---- THE STEP DEBUGGER ----------------------------------------------------------------
+   The conclusion as a program. Every value shown is a value the finished run RECORDED (k
+   counts, curve points, shard ids); stepping replays the record and never re-runs the search -
+   the same contract a time-travel debugger keeps. Rival chains are divergence points the
+   search really completed, not hypotheticals. */
+let DBG=null,dbgWired=false;
+function dbgProgram(ch){
+  const rows=[]; let run=1;
+  rows.push({op:"LOAD",txt:'subject := "'+ch.path[0].from+'"',
+    det:"shard "+String(shardOf(ch.path[0].from)).padStart(3,"0")});
+  ch.path.forEach((h,i)=>{ run*=pctOf(h.k);
+    rows.push({op:"WALK",txt:h.from+" --"+relLabel(h.rel)+'--> "'+h.to+'"',
+      det:"k="+h.k+"  p_hop="+(pctOf(h.k)*100).toFixed(1)+"%  p_chain="+
+          (run*100).toFixed(1)+"%",h,i}); });
+  rows.push({op:"RET",txt:'return "'+ch.path[ch.path.length-1].to+'"',
+    det:"composed "+(ch.p*100).toFixed(1)+"% (assumes hop independence)"});
+  return rows;
+}
+function dbgRender(){
+  const b=$("dbgbox"); if(!b||!DBG)return;
+  const ch=DBG.chains[DBG.sel], prog=dbgProgram(ch);
+  if(DBG.pc>=prog.length)DBG.pc=prog.length-1;
+  const cur=prog[DBG.pc];
+  if(cur.h){ const a=G.byId.get(cur.h.from),bb=G.byId.get(cur.h.to);
+    if(a)a.active=tick; if(bb)bb.active=tick; }   // light this hop in the 3D view
+  let vars;
+  if(cur.h){
+    let run=1; for(let j=0;j<=cur.i;j++)run*=pctOf(ch.path[j].k);
+    vars=[["subject",cur.h.from],["relation",relLabel(cur.h.rel)],["object",cur.h.to],
+      ["k (independent sources)",cur.h.k],
+      ["p_hop (measured curve)",(pctOf(cur.h.k)*100).toFixed(1)+"%"],
+      ["p_chain so far",(run*100).toFixed(1)+"%"],
+      ["shard",String(shardOf(cur.h.from)).padStart(3,"0")],
+      ["hop",(cur.i+1)+" / "+ch.path.length]];
+  } else if(cur.op==="LOAD"){
+    vars=[["subject",ch.path[0].from],
+      ["shard",String(shardOf(ch.path[0].from)).padStart(3,"0")],
+      ["p_chain","100.0% (nothing claimed yet)"]];
+  } else {
+    vars=[["return value",ch.path[ch.path.length-1].to],
+      ["composed confidence",(ch.p*100).toFixed(1)+"%"],["hops",ch.path.length]];
+  }
+  b.innerHTML=
+    (DBG.restored?'<p class="small">Restored from the last visit\'s saved RECORD - a replay '+
+     'of stored values, nothing re-ran. Ask a new question any time.</p>':"")+
+    '<div class="dbg-head"><button data-act="first">⏮</button>'+
+    '<button data-act="back">◀ step</button><button data-act="fwd">step ▶</button>'+
+    '<button data-act="last">⏭</button>'+
+    (cur.h?'<button data-act="resume" title="re-run the real search from this hop, with this edge excluded">⟲ resume from here</button>':"")+
+    '<span class="small" style="margin-left:8px">chain '+
+    (DBG.sel+1)+" of "+DBG.chains.length+
+    ' · recorded values only, nothing re-run</span></div>'+
+    '<div class="dbg-code">'+prog.map((r,i)=>'<div class="dbg-ln'+(i===DBG.pc?" pc":"")+
+      '"><span class="dbg-n">'+String(i).padStart(2,"0")+'</span><span class="dbg-op">'+r.op+
+      '</span><span>'+esc(r.txt)+'</span><span class="dbg-det">'+esc(r.det+dbgCk(r))+
+      "</span></div>").join("")+"</div>"+
+    '<table class="dbg-vars">'+vars.map(v=>"<tr><td>"+esc(String(v[0]))+"</td><td>"+
+      esc(String(v[1]))+"</td></tr>").join("")+"</table>"+
+    '<div class="field-lbl" style="margin-top:8px">divergence points — chains this search '+
+    "really completed</div>"+
+    DBG.chains.map((c,i)=>'<div class="dbg-alt'+(i===DBG.sel?" on":"")+
+      '" data-act="sel" data-i="'+i+'">'+(c.p*100).toFixed(1)+"% · "+esc(c.path[0].from)+
+      " → "+c.path.map(h=>esc(h.to)).join(" → ")+"</div>").join("");
+}
+function dbgWire(){
+  if(dbgWired)return;
+  const b=$("dbgbox"); if(!b||!b.addEventListener)return;
+  b.addEventListener("click",ev=>{
+    let t=ev.target;
+    while(t&&t!==b&&!(t.dataset&&t.dataset.act))t=t.parentNode;
+    const act=t&&t.dataset&&t.dataset.act; if(!act||!DBG)return;
+    const len=dbgProgram(DBG.chains[DBG.sel]).length;
+    if(act==="fwd")DBG.pc=Math.min(len-1,DBG.pc+1);
+    else if(act==="back")DBG.pc=Math.max(0,DBG.pc-1);
+    else if(act==="first")DBG.pc=0;
+    else if(act==="last")DBG.pc=len-1;
+    else if(act==="sel"){DBG.sel=Number(t.dataset.i)||0;DBG.pc=0;}
+    else if(act==="resume"){
+      const prog2=dbgProgram(DBG.chains[DBG.sel]),row=prog2[DBG.pc];
+      if(row&&row.h){ const h=row.h,qq=DBG.q; stopped=true;
+        setTimeout(()=>reason(qq,{startName:h.from,exclude:h}),180); return; }
+    }
+    dbgRender();
+  });
+  dbgWired=true;
+}
+function dbgLoad(q,chains){
+  // top 12 by composed confidence - a DISCLOSED cut, stated in the panel; every completed
+  // chain stays in the ranked ANSWERS list, which is never truncated.
+  DBG={q,chains:chains.slice(0,12),sel:0,pc:0};
+  G.dirty=true;   // the confidence-geometry rack is built from DBG during the next rebuild
+  // SAVE: the record (not the search) persists, so the debugger and the geometry survive a
+  // reload without anything re-running.
+  try{localStorage.setItem("anchor_lastrun",
+    JSON.stringify({q,chains:DBG.chains,t:Date.now()}));}catch(_){}
+  dbgWire(); dbgRender();
+  dbgVerify();   // and the system steps its own record: see dbgVerify
+}
+/* THE SYSTEM USES THE DEBUGGER TOO. After every run it re-steps its own record the way a
+   person steps a suspect function: each hop's fact is RE-READ from the shard it came from and
+   asserted against the record. A missing fact is flagged out loud; a drifted k is re-measured,
+   the chain's confidence recomposed and the ranking redone - a repair you can watch in the
+   trace (CHECK / REPAIR lines), never a silent patch. */
+async function dbgVerify(){
+  const myDBG=DBG; if(!myDBG)return;
+  try{
+    const ch=myDBG.chains[myDBG.sel];
+    myDBG.check=myDBG.check||{};
+    if(myDBG.check[myDBG.sel])return;
+    const marks=myDBG.check[myDBG.sel]={};
+    trace("beam","SELF-CHECK: stepping my own record - every hop re-read from its shard");
+    let changed=false;
+    for(let i=0;i<ch.path.length;i++){
+      if(DBG!==myDBG)return;   // a newer record supersedes this check
+      const h=ch.path[i];
+      const fs=await factsOf(h.from);
+      const hit=fs.find(f=>f.rel===h.rel&&String(f.obj)===String(h.to));
+      if(!hit){ marks[i]="missing";
+        trace("dead","CHECK hop "+(i+1)+": \""+h.from+"\" -"+relLabel(h.rel)+"-> \""+h.to+
+          "\" not found on re-read - record and shard disagree; flagged, not hidden");
+      } else if(hit.k!==h.k){ marks[i]="fixed"; h.k=hit.k; changed=true;
+        trace("dead","CHECK hop "+(i+1)+": recorded k="+h.k+" but the shard says k="+hit.k+
+          " - REPAIR: re-measured, recomposing the chain");
+      } else { marks[i]="ok";
+        trace("hit","CHECK hop "+(i+1)+": verified against shard "+
+          String(shardOf(h.from)).padStart(3,"0")+" (k="+h.k+")");
+      }
+    }
+    if(changed){
+      ch.p=ch.path.reduce((a,h)=>a*pctOf(h.k),1);
+      myDBG.chains.sort((a,b)=>b.p-a.p);
+      G.dirty=true;
+      trace("done","REPAIR: chain recomposed from re-measured hops and re-ranked");
+    }
+    traceFlush(); if(DBG===myDBG)dbgRender();
+  }catch(_){}
+}
+function dbgCk(r){
+  if(r.i==null||!DBG||!DBG.check)return "";
+  const c=DBG.check[DBG.sel]; if(!c||c[r.i]==null)return "";
+  return c[r.i]==="ok"?"  ✓ shard-verified":
+         c[r.i]==="fixed"?"  ⟲ re-measured":"  ✗ not found on re-read";
+}
+
 /* ---- LEARNING ON ABSTAIN --------------------------------------------------------------------
    Abstaining is honest, but stopping there is lazy. When the search cannot reach the target, the
    most likely reason is not that the world lacks the connection - it is that the graph files it
@@ -1347,7 +1611,7 @@ async function learnAliases(term){
   }
 }
 
-async function reason(q){
+async function reason(q,opts){
   // Do NOT swallow the click. The landing search runs for ~30s, and a visitor who arrives and
   // immediately types their own question was getting silence - the worst possible first thirty
   // seconds. A newer question preempts the older one instead.
@@ -1381,7 +1645,20 @@ async function reason(q){
     trace("beam","target relation read as `"+(goal||"none found")+"`");
     // Two named entities = "is A connected to B", which is a PATH question, not a relation lookup.
     const target=ents.length>1?ents[1]:null;
-    const start=ents.length?ents[0]:null;
+    let start=ents.length?ents[0]:null;
+    // REWIND-AND-BRANCH (the debugger's set-next-statement, run by the system): a resume
+    // request forces the search to restart from the rewound hop's node, and the rejected edge
+    // is excluded below, so the engine must find a DIFFERENT route onward. Real search, no
+    // replay theatre.
+    if(opts&&opts.startName){
+      const rf=await factsOf(opts.startName);
+      if(rf.length){
+        start={name:opts.startName,facts:rf,best:Math.max(...rf.map(x=>x.k))};
+        trace("beam","REWIND: resuming the search from \""+opts.startName+"\""+
+          (opts.exclude?", excluding "+opts.exclude.from+" -"+relLabel(opts.exclude.rel)+
+           "-> "+opts.exclude.to:""));
+      }
+    }
     if(target){const tn=G.byId.get(target.name); if(tn)tn.isTarget=true;}
     if(target)trace("beam","two entities named -> searching for a PATH from \""+start.name+
       "\" to \""+target.name+"\" rather than a relation");
@@ -1492,6 +1769,9 @@ async function reason(q){
       let fi=0;
       for(const cur of frontier){
         if(my!==gen||stopped)return;   // superseded: stop BEFORE touching the new question's graph
+        // the rewound-away edge is excluded at ITS node only - one edge, not a subject ban
+        if(opts&&opts.exclude&&cur.node.id===opts.exclude.from)
+          cur.facts=cur.facts.filter(f=>!(f.rel===opts.exclude.rel&&f.obj===opts.exclude.to));
         fi++;
         badge("depth "+depth+" · reading "+cur.node.id);
         nowSet("hop "+depth+" — examining lead "+fi+" of "+frontier.length+": \""+cur.node.id+
@@ -1543,8 +1823,37 @@ async function reason(q){
         const tw=target?new Set([...accept].join(" ").split(/\s+/).filter(x=>x.length>3)):null;
         const near=o=>{ if(!tw)return 0; const t=String(o).toLowerCase();
                         let n=0; for(const w of tw) if(t.includes(w)) n++; return n; };
-        const cand=cur.facts.filter(f=>!seen.has(f.obj))
-          .sort((a,b)=> near(b.obj)-near(a.obj) || b.k-a.k).slice(0,R.BEAM);
+        /* THE VISION LOOP. The drawn layout is a spring-physics embedding of the graph this
+           search built - the same idea as landmark/embedding heuristics for A* (FastMap, EHO),
+           where layout distance estimates graph distance. Those need admissibility because A*
+           PRUNES on the heuristic; here the map signal only breaks ties in exploration ORDER
+           (same word-overlap tier), never prunes and never touches a probability, so an
+           imperfect layout cannot make an answer wrong - only earlier or later. Gated on a
+           settled layout (>=50 physics frames, so headless runs are untouched); every re-rank
+           is traced as a VISION line and counted in window.__visionFlips. Counted live, not
+           yet benchmarked - see the ledger. */
+        const tNodes=(R.SPATIAL&&physicsSteps>=50&&target)?
+          G.nodes.filter(n=>accept.has(String(n.id).toLowerCase())):[];
+        const spat=o=>{ if(!tNodes.length)return -1e4; const n=G.byId.get(o);
+          if(!n)return -1e4;   // the map can only rank what it has seen; unseen defers to k
+          let best=1e9; for(const t of tNodes){ const dx=n.x-t.x,dy=n.y-t.y,dz=n.z-t.z;
+            const d=dx*dx+dy*dy+dz*dz; if(d<best)best=d; }
+          return -Math.sqrt(best); };
+        const pool=cur.facts.filter(f=>!seen.has(f.obj));
+        const base=pool.slice().sort((a,b)=> near(b.obj)-near(a.obj) || b.k-a.k)
+          .slice(0,R.BEAM);
+        let cand=base;
+        if(tNodes.length){
+          cand=pool.slice().sort((a,b)=> near(b.obj)-near(a.obj) || spat(b.obj)-spat(a.obj)
+            || b.k-a.k).slice(0,R.BEAM);
+          const bs=new Set(base.map(f=>f.obj));
+          const flips=cand.filter(f=>!bs.has(f.obj)).map(f=>f.obj);
+          if(flips.length){
+            window.__visionFlips=(window.__visionFlips||0)+flips.length;
+            trace("beam","VISION: the settled map moved "+flips.length+" lead(s) up, closer "+
+              "to the target's position: "+flips.join(", "));
+          }
+        }
         trace(cand.length?"beam":"dead", cand.length
           ? "REVISE: \""+cur.node.id+"\" did not satisfy the goal; best "+cand.length+
             " leads by evidence: "+cand.map(f=>f.obj+"("+f.k+")").join(", ")
@@ -1784,6 +2093,7 @@ async function reason(q){
           ' <span class="chip">'+(d.p*100).toFixed(1)+'%</span></li>').join("")+
         '</ul></div>');
     }
+    dbgLoad(q,done);   // the finished run's own record becomes the debugger's program
     badge("chain complete · "+(running*100).toFixed(1)+"%");
   }catch(e){
     console.error(e);

@@ -146,6 +146,19 @@ Suite floor raised: chainAgree 4 -> 6.
 
 ## OPEN
 
+### O-crash - RJ reports "it seems to crash"; not yet reproduced
+A crash trap now converts any uncaught error into a red CRASH line in the trace and the
+narration bar, and the likeliest vector (a full scene dispose+rebuild for EVERY completing
+chain - 74 rebuilds in one Abbey Road run) is throttled to ~2/s. Awaiting a repro with the
+trap's line in hand; do not close on a guess.
+
+### O8 - the vision loop is counted, not benchmarked
+The engine reads its own settled layout to order frontier ties (landmark-heuristic style;
+order-only, so it cannot change an answer). Every re-rank is traced and counted in
+window.__visionFlips - but nobody has yet measured whether it SAVES anything. Benchmark
+headless (physics in the harness, A/B on the chain set) - prove it or demote it.
+
+
 
 ### O1 — `learn-on-abstain` has never fired *(shipping unproven)*
 Built and wired: when a chain cannot reach its target, look the term up externally and re-walk.
