@@ -173,6 +173,11 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   border:1px solid #2f7fd8;color:#cfe3ff;padding:6px 12px;border-radius:6px;cursor:pointer;
   font-size:12px;z-index:5}
 .viewchip:hover{background:#14273f}
+/* a working system must never look like a stopped one */
+.spin{display:inline-block;width:9px;height:9px;border:2px solid #2f7fd8;
+  border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;
+  vertical-align:-1px;margin-right:7px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style></head><body><div class="wrap">
 
 <h1>How sure is it, and why?</h1>
@@ -913,29 +918,35 @@ function rebuild3(){
      hop is amber. Hover a segment for the fact it stands for; click it and the step debugger
      jumps to that hop - geometry on one side, the symbolic record on the other. */
   if(typeof DBG!=="undefined"&&DBG&&DBG.chains&&DBG.chains.length){
-    const RACKY=470, ROW=42, SCL=400, seg=new T.BoxGeometry(1,1,1);
+    const RACKY=210, ROW=34, SCL=400, seg=new T.BoxGeometry(1,1,1);
+    const shown=DBG.chains.slice(0,8);
+    const lenOf=c=>c.path.reduce((a,h)=>a+Math.max(6,-Math.log(pctOf(h.k))*SCL)+3,0);
+    const maxL=Math.max(...shown.map(lenOf));
+    // The rack sat at y=470 - outside the frustum from the default camera, so the geometry was
+    // invisible unless you flew to it by luck. It now floats in front of the graph, and the
+    // GROUP is centred while the rulers stay LEFT-ALIGNED inside it: a shared left edge is what
+    // makes "shortest ruler wins" readable at a glance.
+    rackGrp.position.set(-maxL/2,0,300);
     rackGrp.add((()=>{const sp=labelSprite("CONFIDENCE GEOMETRY",
       "shorter = stronger · one gridline = one ideal hop (94.7%)",true);
-      sp.position.set(0,RACKY+56,0);return sp;})());
+      sp.position.set(maxL/2,RACKY+52,0);return sp;})());
     // lane markings: the bright line is the start, each faint gridline is the length of ONE
     // IDEAL HOP (the top of the measured curve) - a ruler is read in ideal-hop units, by eye
     {
       const UNIT=-Math.log(pctOf(99))*SCL;
-      const maxL=Math.max(...DBG.chains.slice(0,8).map(c=>
-        c.path.reduce((a,h)=>a+Math.max(6,-Math.log(pctOf(h.k))*SCL)+3,0)));
-      const yTop=RACKY+22, yBot=RACKY-7*ROW-22;
-      for(let u=0;u*UNIT<=maxL+UNIT;u++){
+      const yTop=RACKY+20, yBot=RACKY-(shown.length-1)*ROW-20;
+      for(let u=0;u*UNIT<=maxL+UNIT&&u<60;u++){
         const gm=new T.Mesh(seg,new T.MeshBasicMaterial({color:u?0x22314a:0x4f7fa8,
           transparent:true,opacity:u?.5:.9}));
         gm.position.set(u*UNIT,(yTop+yBot)/2,-6);
-        gm.scale.set(u?1.2:2.5,yTop-yBot,1);
+        gm.scale.set(u?1.2:2.5,Math.max(20,yTop-yBot),1);
         rackGrp.add(gm);
       }
     }
     // top 8 rulers - a DISCLOSED cut (stated in the debugger panel): the rack is a length
     // comparison, and the full untruncated ranking lives in the ANSWERS list and the debugger.
     const selIdx=DBG.sel||0;
-    DBG.chains.slice(0,8).forEach((c,ci)=>{
+    shown.forEach((c,ci)=>{
       const isSel=ci===selIdx;
       let x=0; const y=RACKY-ci*ROW;
       c.path.forEach((h,hi)=>{
@@ -954,6 +965,7 @@ function rebuild3(){
       lab.position.set(x+46,y,0); rackGrp.add(lab);
     });
   }
+  else if(rackGrp)rackGrp.position.set(0,0,0);
   for(const e of G.edges){
     const hot=e.on, k=e.k||0;
     const a=new T.Vector3(e.a.x*2.4,e.a.y*2.4,e.a.z*2.4);
@@ -1155,7 +1167,11 @@ function relMatches(rel,goal){
   if(a===g+" of"||g===a+" of")return false;
   return a.split(/\s+/).includes(g)||a.includes(g);
 }
-function badge(t){const b=$("badge");if(b)b.textContent=t;}
+function badge(t){const b=$("badge");if(!b)return;
+  // innerHTML, not textContent: a spinner rides along while a search is running, so a long
+  // fetch phase reads as WORKING rather than as a frozen page
+  if(typeof thinking!=="undefined"&&thinking)b.innerHTML='<span class="spin"></span>'+esc(t);
+  else b.textContent=t;}
 /* The narration bar's state. nowSet is called at every phase change inside reason(); nowPaint
    is ALSO called on a 300ms interval while a search runs, because during a long stretch of
    shard downloads nothing else touches the DOM and the page looked frozen (the "no more
@@ -1167,7 +1183,7 @@ function nowSet(text,frac,pulse){
 }
 function nowPaint(){
   const t=$("nowtext"),st=$("nowstats"),f=$("nowfill");
-  if(t)t.textContent=NOW.text||"idle";
+  if(t)t.innerHTML=(thinking?'<span class="spin"></span>':"")+esc(NOW.text||"idle");
   if(st)st.textContent=thinking?(traceN.toLocaleString()+" steps · "+liveN+
     (liveN===1?" chain":" chains")):"";
   if(f){ f.style.width=(NOW.frac==null?"100%":(NOW.frac*100).toFixed(1)+"%");
@@ -1445,8 +1461,8 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
    objective then completeness is, so every chain is published the MOMENT it completes and the
    list re-ranks itself live. You watch the answer set grow and improve rather than waiting. */
 let liveN=0;
-function liveClear(){liveN=0;const e=$("live");if(e)e.innerHTML="";const c=$("lcount");
-  if(c)c.textContent="0";}
+function liveClear(){liveN=0;LIVECH=[];const e=$("live");if(e)e.innerHTML="";
+  const c=$("lcount"); if(c)c.textContent="0";}
 function liveAdd(path,p){
   // The stage marks every chain the MOMENT it completes. Before this, n.on/e.on were set only
   // by the final replay, only for the single best chain - so for the whole (long, deliberate)
@@ -1460,6 +1476,11 @@ function liveAdd(path,p){
       for(const e of G.edges)if(e.a===a&&e.b===b&&e.rel===h.rel)e.on=true; }
   }
   G.dirty=true;   // roles changed with no count change; the render loop rebuilds on this flag
+  // THE DEBUGGER IS LIVE. It used to be built only at the very end of a finished run, so
+  // watching a long search showed an empty panel and an empty sky - "I don't see any
+  // debugger". Every completed chain now feeds it as it lands.
+  LIVECH.push({path,p});
+  if(typeof dbgLive==="function")dbgLive();
   const e=$("live");if(!e)return;
   liveN++;
   const minK=Math.min(...path.map(h=>h.k));
@@ -1485,7 +1506,27 @@ function liveAdd(path,p){
    counts, curve points, shard ids); stepping replays the record and never re-runs the search -
    the same contract a time-travel debugger keeps. Rival chains are divergence points the
    search really completed, not hypotheticals. */
-let DBG=null,dbgWired=false;
+let DBG=null,dbgWired=false,LIVECH=[],dbgLiveT=0;
+/* Build the debugger from the chains completed SO FAR, throttled so a burst of completions
+   cannot thrash the DOM. Live mode is labelled as live; the end-of-run dbgLoad replaces it
+   with the final record (and saves + self-checks that one). */
+function dbgLive(){
+  if(!LIVECH.length)return;
+  const first=!DBG||!DBG.live;
+  const now=performance.now();
+  if(!first&&now-dbgLiveT<600)return;
+  dbgLiveT=now;
+  // top 12 by composed confidence - the same DISCLOSED cut the finished run uses (stated in
+  // the debugger panel); the ranked ANSWERS list beside it is never truncated.
+  const chains=LIVECH.slice().sort((a,b)=>b.p-a.p).slice(0,12);
+  const keepSel=(DBG&&DBG.live)?Math.min(DBG.sel,chains.length-1):0;
+  DBG={q:runningQ,chains,sel:keepSel<0?0:keepSel,pc:(DBG&&DBG.live)?DBG.pc:0,live:true};
+  G.dirty=true;
+  dbgWire(); dbgRender();
+  if(window.showGeoChip)window.showGeoChip();
+  if(first)trace("done","the step debugger and the confidence geometry are now LIVE below - "+
+    "they update as each chain completes");
+}
 function dbgProgram(ch){
   const rows=[]; let run=1;
   rows.push({op:"LOAD",txt:'subject := "'+ch.path[0].from+'"',
@@ -1529,9 +1570,11 @@ function dbgRender(){
     '<button data-act="back">◀ step</button><button data-act="fwd">step ▶</button>'+
     '<button data-act="last">⏭</button>'+
     (cur.h?'<button data-act="resume" title="re-run the real search from this hop, with this edge excluded">⟲ resume from here</button>':"")+
-    '<span class="small" style="margin-left:8px">chain '+
+    '<span class="small" style="margin-left:8px">'+
+    (DBG.live?'<span class="spin"></span>still searching · ':"")+"chain "+
     (DBG.sel+1)+" of "+DBG.chains.length+
-    ' · recorded values only, nothing re-run</span></div>'+
+    (DBG.live?" completed so far · updating live":
+              " · recorded values only, nothing re-run")+"</span></div>"+
     '<div class="dbg-code">'+prog.map((r,i)=>'<div class="dbg-ln'+(i===DBG.pc?" pc":"")+
       '"><span class="dbg-n">'+String(i).padStart(2,"0")+'</span><span class="dbg-op">'+r.op+
       '</span><span>'+esc(r.txt)+'</span><span class="dbg-det">'+esc(r.det+dbgCk(r))+
@@ -1674,6 +1717,10 @@ async function reason(q,opts){
   const nowTimer=setInterval(()=>{ if(my!==gen){clearInterval(nowTimer);return;}
     traceFlush(); nowPaint(); },300);
   nowSet("reading the question…",null,true);
+  {const db=$("dbgbox"); if(db)db.innerHTML='<p class="small"><span class="spin"></span>'+
+    'Searching. The moment the first chain completes, its program appears here and its ruler '+
+    'appears in the 3D view above — both keep updating while the search runs. Please wait; the '+
+    'bar at the bottom of the page narrates every step meanwhile.</p>';}
   {const wb=$("whatbox"); if(wb)wb.innerHTML='<p class="small">Working on <b>'+esc(q)+
     '</b> — the bar at the very bottom of the page narrates each step as it happens; the full '+
     'plain-English explanation of what was done lands here when the search ends.</p>';}
@@ -1923,7 +1970,10 @@ async function reason(q,opts){
       // hold beats that ceiling, no deeper chain can ever overtake it and searching on is provably
       // wasted - which is a different thing from giving up, and the trace says which it was.
       const bestNow=done.length?Math.max(...done.map(d=>d.p)):0;
-      const ceilNext=Math.pow(pctOf(99).p,depth+1);   // pctOf clamps k>3 to the top curve point
+      // pctOf RETURNS A NUMBER. `.p` on it was undefined, so this was Math.pow(undefined,d) =
+      // NaN, and `bestNow >= NaN` is false forever: the admissible prune never once fired and
+      // every search ran its whole budget even holding a provably unbeatable chain.
+      const ceilNext=Math.pow(pctOf(99),depth+1);   // pctOf clamps k>3 to the top curve point
       if(bestNow>=ceilNext){
         trace("done","stopping at depth "+depth+": best chain "+(bestNow*100).toFixed(1)+
           "% already exceeds the best POSSIBLE "+(depth+1)+"-hop chain ("+(ceilNext*100).toFixed(1)+
@@ -2351,5 +2401,5 @@ document.querySelectorAll("#p-code .hint code").forEach(c=>c.addEventListener("c
 renderCode();
 </script>
 <div id="nowbar"><div id="nowtrack"><div id="nowfill"></div></div>
-<div id="nowrow"><span id="nowtext">idle — ask a question above and every step will be narrated here, live</span><span id="nowstats"></span></div></div>
+<div id="nowrow"><span id="nowtext"><span class="spin" id="nowspin" style="display:none"></span>idle — ask a question above and every step will be narrated here, live</span><span id="nowstats"></span></div></div>
 </body></html>
