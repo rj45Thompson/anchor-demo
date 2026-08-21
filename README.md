@@ -51,3 +51,24 @@ fact shown is still real and independently sourced.
 
 Site code MIT. Facts data **CC BY-SA 4.0** — ShareAlike propagates from REBEL, ConceptNet, DBpedia
 and others. See [LICENSE](LICENSE) for full attribution.
+
+
+## Measured, not claimed
+
+- Single-hop answer rate on an **uncurated hold-out** sampled from the shipped shards:
+  **39/40 (97.5%)** — see `BUGS.md` for the full development ledger (baseline was 40%,
+  and the ledger says exactly what was broken and how each fix was verified).
+- Multi-hop chains vs a frontier-model reference: **4/8 agree**, and every disagreement is
+  diagnosed in the ledger (one is a genuine open bug: inverse relations conflated).
+- Standing gates: `audit_demo.py` (0 violations), question zoo (`demo_probe.py` +
+  `zoo_harness.mjs`), and the whitepaper (`WHITEPAPER.md`, 66/66 claims traced to artifacts).
+
+## Cloning
+
+The repo carries the full 607MB graph plus its history. For a working copy:
+
+```
+git clone --depth 1 https://github.com/rj45Thompson/anchor-demo.git
+```
+
+(~600MB instead of ~1.8GB.)

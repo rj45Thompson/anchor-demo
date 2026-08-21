@@ -1108,10 +1108,19 @@ async function findEntities(q){
   // The RELATION being asked about is framing too. Without this, "what country is Nirauli in"
   // trimmed only "what" - the scan stops at the first non-framing word - leaving "country is"
   // to win as a longer span than "Nirauli", and there really is a subject called "Country Is".
+  // Connectives are never a NAME on their own: "of the" is literally a subject in this graph
+  // ("of the -time period-> Roman Empire"), so without this guard the chain question "capital of
+  // the country Melbourne is in" started its search from the entity "of the". A span may CONTAIN
+  // function words ("Anastasia at This Address") but may not consist of nothing else.
+  const FUNC=new Set(("of the a an and or for in on at to from with by is are was were be been "+
+    "it its this that these those").split(" "));
   const goalRel=(readQuery(raw).goal||"").toLowerCase();
   const frame=new Set([...LEAD,...goalRel.split(/\s+/).filter(Boolean)]);
   const frameTail=new Set([...TAIL,...goalRel.split(/\s+/).filter(Boolean)]);
-  const isFrame=(w,set)=>set.has(w.toLowerCase())||asked(w);
+  const isFrame=(w,set)=>set.has(w.toLowerCase())||FUNC.has(w.toLowerCase())||asked(w);
+  // a span is junk if EVERY word is framing, a connective, or an uncapitalised relation word
+  const junkSpan=list=>list.every(w=>{const l=w.toLowerCase();
+    return FUNC.has(l)||frame.has(l)||frameTail.has(l)||(RELSET.has(l)&&!caps.has(l));});
 
   // trim the question's framing off both ends, never out of the middle
   let i=0,j=words.length;
@@ -1124,8 +1133,9 @@ async function findEntities(q){
   async function bestSpan(list){
     for(let n=list.length;n>=1;n--){
       for(let st=0;st+n<=list.length;st++){
-        const ph=list.slice(st,st+n).join(" ");
-        if(n===1&&(isFrame(ph,frame)||isFrame(ph,frameTail)))continue;
+        const words2=list.slice(st,st+n);
+        if(junkSpan(words2))continue;
+        const ph=words2.join(" ");
         for(const v of variantsOf(ph)){
           const vl=v.toLowerCase();
           // a bare relation word is not a subject, unless it is capitalised in the question
