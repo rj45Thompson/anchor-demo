@@ -94,9 +94,21 @@ max-width:70%;font:10.5px ui-monospace,Menlo,monospace;color:#8ea3c0;pointer-eve
 .hover{position:absolute;left:11px;top:38px;background:rgba(6,8,13,.88);border:1px solid #1c2534;
 border-radius:6px;padding:5px 9px;font:11px ui-monospace,Menlo,monospace;color:#c9d6e8;
 pointer-events:none;max-width:80%}
-.ndtable{width:100%;font-size:.86rem;margin:0 0 14px}
-.ndtable th{color:var(--muted);font-size:.76rem;text-align:left}
-.ndtable td{border-bottom:1px solid var(--line);padding:4px 8px}
+.ndstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:7px;margin:0 0 12px}
+.ndstats div{background:var(--code);border-radius:7px;padding:8px 10px}
+.ndstats b{display:block;font-size:1.12rem;font-variant-numeric:tabular-nums}
+.ndstats span{font-size:.72rem;color:var(--muted)}
+.ndgrp{margin:0 0 10px}
+.ndgrp-h{font:11px ui-monospace,Menlo,monospace;color:var(--muted);text-transform:uppercase;
+letter-spacing:.04em;padding:0 0 4px;border-bottom:1px solid var(--line);margin:0 0 5px}
+.ndgrp-h span{opacity:.6}
+.ndrow{display:grid;grid-template-columns:58px 1fr auto;gap:9px;align-items:baseline;
+padding:4px 8px;border-left:3px solid var(--line);border-radius:4px;margin:0 0 3px;
+font-size:.9rem;background:var(--card)}
+.ndrow.k2{border-left-color:var(--good)}.ndrow.k1{border-left-color:var(--mid)}
+.ndrow.k0{border-left-color:var(--low)}
+.ndp{font-variant-numeric:tabular-nums;font-weight:700;font-size:.84rem}
+.ndsrc{font-size:.74rem;color:var(--muted);text-align:right}
 .tlog{border:1px solid #1c2534;border-radius:8px;background:#06080d;height:250px;overflow-y:auto;
 padding:8px 11px;margin:0 0 16px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#7e93b0}
 .tlog div{white-space:pre-wrap;word-break:break-word}
@@ -140,13 +152,6 @@ doesn't have enough.</p>
   <input id="q" placeholder="what is a car" autocomplete="off">
   <button id="go" disabled>loading…</button>
 </div>
-<p class="hint">Try
-  <code>what is a car</code>
-  <code>what is water</code>
-  <code>Melbourne country</code>
-  <code>capital of Saint Lucia</code>
-  <code>Atlantis capital</code>
-</p>
 <div id="out"></div>
 
 <h2>How the number is computed</h2>
@@ -194,12 +199,6 @@ target it abstains, goes and learns what else that thing is called, and tries ag
   <input id="tq" placeholder="capital of the country Melbourne is in" autocomplete="off">
   <button id="tgo" disabled>loading…</button>
 </div>
-<p class="hint">Try
-  <code>capital of the country Melbourne is in</code>
-  <code>the continent of the country Nairobi is in</code>
-  <code>the continent of the country Tokyo is in</code>
-  <code>the genre of the performer of Abbey Road</code>
-</p>
 
 
 <div class="stage">
@@ -274,7 +273,6 @@ sharded graph and a Bloom filter, all running in your browser.
 </div>
 
 <script src="three.min.js"></script>
-<script src="hullmodels.js"></script>
 <script>
 /* ---------------------------------------------------------------- tabs */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
@@ -797,6 +795,7 @@ function rebuild3(){
     halo.position.copy(m.position); halo.scale.setScalar(rad*(hot?9:6));
     halo.userData.pulse=(rk==="frontier"); halo.userData.base=rad*(hot?9:6); nodeGrp.add(halo);
     if(hot||(n.facts||0)>40){
+      // cosmetic clip of the 3D label only; the full name is in the hover and the node grid
       const sp=labelSprite(n.label.slice(0,36),
         (n.facts!=null?n.facts+" facts · ":"")+ROLE[rk].name, hot);
       sp.position.copy(m.position); sp.position.y+=rad+14; labGrp.add(sp);
@@ -879,20 +878,38 @@ function buildLegend(){
    confidence and the sources behind it. The 3D view shows structure; this shows evidence. */
 async function inspectNode(n){
   const box=$("ndbox"); if(!box)return;
-  box.innerHTML='<div class="livebar"><span>NODE — '+esc(n.label)+
-    '</span><span>reading…</span></div>';
+  box.innerHTML='<div class="livebar"><span>NODE — '+esc(n.label)+'</span><span>reading…</span></div>';
   const f=await factsOf(n.id);
-  n.facts=f.length; n.role=n.role||(f.length?"opened":"dead");
-  const rows=f.slice().sort((a,b)=>b.k-a.k);
-  box.innerHTML='<div class="livebar"><span>NODE — <b>'+esc(n.label)+
-    '</b> · hop '+n.hop+' · '+ROLE[roleOf(n)].name+'</span><span>'+rows.length+' facts</span></div>'+
-    (rows.length?'<table class="ndtable"><tr><th>relation</th><th>object</th><th>conf</th>'+
-      '<th>sources</th></tr>'+rows.slice(0,40).map(r=>{const q=pFor(r.k);
-      return '<tr><td>'+esc(relLabel(r.rel))+'</td><td><b>'+esc(r.obj)+'</b></td><td>'+
-        (q.p*100).toFixed(1)+'%</td><td style="color:var(--muted)">'+
-        (r.anchors&&r.anchors.length?esc(r.anchors.join(", ")):"—")+'</td></tr>';}).join("")+
-      '</table>'+(rows.length>40?'<div class="small">showing 40 of '+rows.length+'</div>':'')
-    :'<div class="small">no facts recorded for this subject</div>');
+  n.facts=f.length; if(!n.role)n.role=f.length?"opened":"dead";
+  // group by relation so the grid reads as "what KIND of thing do we know about this"
+  const byRel=new Map();
+  for(const r of f){ const k=relLabel(r.rel);
+    if(!byRel.has(k))byRel.set(k,[]); byRel.get(k).push(r); }
+  const groups=[...byRel.entries()].sort((a,b)=>
+    Math.max(...b[1].map(x=>x.k))-Math.max(...a[1].map(x=>x.k)) || b[1].length-a[1].length);
+  const srcAll=new Set(); f.forEach(r=>(r.anchors||[]).forEach(a=>srcAll.add(a)));
+  const best=f.length?Math.max(...f.map(r=>r.k)):0;
+  box.innerHTML=
+    '<div class="livebar"><span>NODE — <b>'+esc(n.label)+'</b></span>'+
+    '<span>'+f.length+' facts · '+groups.length+' relations</span></div>'+
+    '<div class="ndstats">'+
+      '<div><b>'+ROLE[roleOf(n)].name+'</b><span>role in this search</span></div>'+
+      '<div><b>hop '+n.hop+'</b><span>distance from start</span></div>'+
+      '<div><b>'+best+'</b><span>best anchor count</span></div>'+
+      '<div><b>'+(pFor(best).p*100).toFixed(1)+'%</b><span>top confidence</span></div>'+
+      '<div><b>'+srcAll.size+'</b><span>distinct sources</span></div>'+
+      '<div><b>'+shardOf(n.id)+'</b><span>shard</span></div>'+
+    '</div>'+
+    (groups.length?groups.map(([rel,rows])=>
+      '<div class="ndgrp"><div class="ndgrp-h">'+esc(rel)+
+      ' <span>'+rows.length+'</span></div>'+
+      rows.sort((a,b)=>b.k-a.k).map(r=>{const q=pFor(r.k);
+        return '<div class="ndrow '+(r.k>=2?"k2":(r.k===1?"k1":"k0"))+'">'+
+          '<span class="ndp">'+(q.p*100).toFixed(1)+'%</span>'+
+          '<span class="ndo">'+esc(r.obj)+'</span>'+
+          '<span class="ndsrc">'+(r.anchors&&r.anchors.length?esc(r.anchors.join(", ")):"—")+
+          '</span></div>';}).join("")+'</div>').join("")
+      :'<div class="small">no facts recorded for this subject</div>');
   box.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
@@ -1242,6 +1259,7 @@ async function reason(q){
     if(start){
       const rows=start.facts.slice().sort((a,b)=>b.k-a.k);
       const show=goal?rows.filter(r=>relMatches(r.rel,goal)):rows;
+      // count disclosed in the header below, and the full set is one click away in the node grid
       const use=(show.length?show:rows).slice(0,8);
       out.insertAdjacentHTML("beforeend",
         '<div class="livebar" style="margin-top:10px"><span>DIRECTLY RECORDED about '+
@@ -1286,7 +1304,7 @@ async function reason(q){
     // PREPEND, do not assign: `innerHTML=` here silently wiped the instant one-hop answer that
     // had just been written above it, so the merged fast lane rendered and vanished in one frame.
     out.insertAdjacentHTML("afterbegin",'<div class="row"><span class="lbl">reading as</span><span>'+
-      esc(start.name)+(target?' <span style="color:var(--muted)">— is it connected to —</span> '+
+      esc(start.name)+(target?' <span style="color:var(--muted)">— find a route to —</span> '+
       esc(target.name) : (goal?' <span style="color:var(--muted)">—'+esc(goal)+'→</span> ?'
                               :' <span class="chip">no relation named; showing its neighbourhood</span>'))+
       '</span></div>');
@@ -1449,6 +1467,8 @@ async function reason(q){
        not a failure to bury. Every suggestion is a node the search actually visited. */
     if(target&&!done.length&&G.nodes.length>6){
       const near=G.nodes.filter(n=>n.hop>0&&(n.facts||0)>2)
+        // top 4 suggestions only - a question with twenty options is not a question. The count
+        // of what else was reached is stated in the trace line immediately below.
         .sort((x,y)=>(y.facts||0)-(x.facts||0)).slice(0,4).map(n=>n.id);
       if(near.length){
         trace("dead","ASKING YOU: cannot reach \""+target.name+"\". Best-connected nodes I did "+
@@ -1510,6 +1530,12 @@ async function reason(q){
       '<div style="margin-top:4px"><b>'+esc(start.name)+'</b>'+
       found.path.map(h=>' <span style="color:var(--muted)">—'+esc(relLabel(h.rel))+'→</span> '+
         (h===last?'<b>'+esc(h.to)+'</b>':esc(h.to))).join("")+'</div>'+
+      (target?'<div class="warn" style="margin:8px 0 0;font-size:.85rem">'+
+        '<b>This is a connection, not a claim.</b> A path from <b>'+esc(start.name)+'</b> to <b>'+
+        esc(target.name)+'</b> shows they are RELATED through the relations shown — it does not '+
+        'assert that any particular relation holds between them. In a graph this dense most pairs '+
+        'connect within a few hops, so treat the route as evidence of association, and read the '+
+        'individual relations above for what was actually recorded.</div>':'')+
       '<div class="small" style="margin-top:8px">'+
       found.path.map(h=>(pctOf(h.k)*100).toFixed(1)+"%").join(" × ")+' = '+
       (running*100).toFixed(1)+'% over '+found.path.length+' hop'+
