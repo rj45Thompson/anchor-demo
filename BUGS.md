@@ -318,6 +318,21 @@ resolves subject=wheel, target=car, and the multi-hop search finds the real edge
 `wheel -part of-> car` (44.9%, disclosed as association not assertion) - a genuinely informative
 answer, not merely a non-crash. Added to the permanent stress set as the "cardinality" shape.
 
+### B31 - the step debugger never loaded for counting questions
+RJ reported "the debugger fails to load." REPRODUCED LIVE immediately: `countAnswer()` never
+called `dbgLoad`, so the default placeholder question ("how many types of bear have brown
+hair") AND the B28 empty-click fallback both route to the count lane, which left the debugger
+on an eternal "Searching. The moment the first chain completes, its program appears here"
+spinner - a promise counting questions can never keep, since they never produce a chain.
+Verified: the count itself completed correctly ("count complete: 7", `toutHasVerdict:true`)
+while `DBG` stayed `null` the entire time.
+*Fixed:* built a real count-mode program for the debugger, reusing its existing UI (execution
+pointer, step forward/back, variables pane): LOAD the class, CHECK each member in the exact
+order it was actually read (PASS/FAIL/NAMED-ONLY with the qualifying fact), RET the count.
+Nothing invented - every step is a value `countAnswer` already computed. The confidence-geometry
+rack is chain-specific and now stays honestly hidden for a counting run rather than being forced
+into a shape that does not fit it.
+
 ## OPEN
 
 
