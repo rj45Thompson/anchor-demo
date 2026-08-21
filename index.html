@@ -608,7 +608,13 @@ function render(rows,note,busy,filterNote){
   }
 }
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
-$("go").addEventListener("click",()=>{const v=$("q").value.trim();if(v)answer(v)});
+$("go").addEventListener("click",()=>{
+  const v=$("q").value.trim();
+  if(v){ answer(v); return; }
+  // Same B28 fix as the reasoning tab's Ask button: an empty click used to do nothing at all.
+  const ph=($("q").placeholder||"").trim();
+  if(ph){ $("q").value=ph; answer(ph); }
+});
 document.querySelectorAll("#p-facts .hint code").forEach(c=>c.addEventListener("click",()=>{
   $("q").value=c.textContent;$("go").click();window.scrollTo({top:0,behavior:"smooth"})}));
 // A clone opened by double-clicking index.html loads as file://, where every browser blocks
@@ -650,7 +656,30 @@ try{
   // run aborted (its reason() call bumped `gen` out from under the one in progress). The page
   // now does nothing until it is asked. The button is simply enabled instead.
   if($("tgo")){ $("tgo").textContent="Ask"; $("tgo").disabled=false; }
-}).catch(e=>{$("go").textContent="index failed";console.error(e)});
+}).catch(e=>{
+  // B27: this used to update ONLY the facts-tab button. The reasoning tab's button - the one in
+  // front by default - stayed `disabled` with "loading..." forever on an index-load failure,
+  // with nothing on screen to explain why. Same symptom as B26 (Ask does nothing), different
+  // cause: independent, and both are now closed.
+  $("go").textContent="index failed - reload";
+  const tg=$("tgo");
+  if(tg){
+    tg.textContent="failed - reload the page";
+    tg.title="the fact index could not be loaded: "+(e&&e.message||e);
+  }
+  if(typeof trace==="function")
+    trace("dead","INDEX LOAD FAILED: "+(e&&e.message||e)+" - reload the page to retry.");
+  console.error("index.json failed to load:",e);
+});
+// STALL DETECTOR. A fetch that HANGS (never resolves, never rejects - a dead connection, a
+// proxy that swallows the response) is caught by neither .then nor .catch. Nothing above can
+// see that; only a clock can.
+setTimeout(()=>{
+  const tg=$("tgo");
+  if(tg&&tg.disabled&&/loading/i.test(tg.textContent||"")){
+    tg.textContent="still loading the index... reload if this doesn't change";
+  }
+},8000);
 }
 
 /* ---------------------------------------------------------------- reason lane
@@ -2558,7 +2587,16 @@ $("tgo").addEventListener("click",()=>{
     }
     return;
   }
-  if(v){ runningQ=v; reason(v); }
+  if(v){ runningQ=v; reason(v); return; }
+  // B28: REPRODUCED LIVE. A visitor sees the placeholder text sitting in the box and reasonably
+  // expects Ask to run it - `if(v){...}` with no else meant clicking with an empty box was a
+  // PERMANENT, SILENT no-op: no error, no message, nothing. The placeholder now does what it
+  // visibly promises, and the field is filled BEFORE running so nothing is a hidden default -
+  // the same disclosure rule as everywhere else on this page. If there is ever no placeholder
+  // either, an inline message appears; there is no longer an input state where Ask does nothing.
+  const ph=($("tq").placeholder||"").trim();
+  if(ph){ $("tq").value=ph; runningQ=ph; reason(ph); }
+  else{ badge("type a question first"); }
 });
   document.querySelectorAll("#p-think .hint code").forEach(c=>c.addEventListener("click",()=>{
     $("tq").value=c.textContent;$("tgo").click();}));
