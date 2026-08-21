@@ -1446,6 +1446,14 @@ function readCount(q){
   // carrying the word "there" - which is none of them, reported as a confident zero.
   const raw=String(q).replace(/[?.!]+$/,"")
     .replace(/\s+(?:are|is)\s+there$/i,"").replace(/\s+exists?$/i,"").trim();
+  // B29: "how many wheels DOES a car have" is a question about ONE entity's own parts, not an
+  // enumeration of a class - "how many types of bear have brown hair" never has do/does between
+  // the noun and "have". Routing this into the class-count lane produced a dead "I cannot count
+  // that" (the "class" it tried to resolve was the garbage span "wheels does a car"). This
+  // graph records RELATIONS, not numeric cardinalities - it has no "4" to report for wheels on
+  // a car - so the honest answer lives in the ordinary relation-lookup lane, which can surface
+  // the real fact (car -has part-> ..., wheel -part of-> car) instead of a dead end.
+  if(/\bhow\s+many\s+.+?\b(?:do|does)\b.+?\bhave\b/i.test(raw))return null;
   let m=raw.match(/^how\s+many\s+(?:types?|kinds?|sorts?|species|breeds?|varieties)\s+of\s+(.+?)\s+(?:have|has|had|are|is|with|possess)\s+(.+)$/i);
   if(!m)m=raw.match(/^how\s+many\s+(.+?)\s+(?:have|has|had|are|is|with|possess)\s+(.+)$/i);
   if(!m){
@@ -1524,6 +1532,11 @@ async function findStart(q,goal){
    sought in what is left over, so "is a caliper used in a car" still finds both. */
 const LEAD=new Set(("what whats which who whom whose why where when how is are was were am does do "+
   "did a an the tell me about and or please can you know").split(" "));
+// QUANTIFIERS. "many" carries 59 real ConceptNet facts (it IS a graph node - "many -antonym->
+// one" etc.), so it survived every earlier framing filter and got linked as the SUBJECT of
+// "how many wheels does a car have", returning trivia about the WORD "many" instead of
+// anything about cars. A quantifier is never the thing a question is about.
+const QUANT=new Set("many much few several a lot lots plenty".split(" "));
 const TAIL=new Set(("in on at of from by is are was were located born the a an").split(" "));
 
 async function findEntities(q){
@@ -1554,8 +1567,11 @@ async function findEntities(q){
   const frameTail=new Set([...TAIL,...QVERBS,...goalRel.split(/\s+/).filter(Boolean)]);
   const isFrame=(w,set)=>set.has(w.toLowerCase())||FUNC.has(w.toLowerCase())||asked(w);
   // a span is junk if EVERY word is framing, a connective, or an uncapitalised relation word
+  // B30: "many" carries 59 real ConceptNet facts and would otherwise survive every other
+  // filter and get linked as if it were the question's own subject - a quantifier never is.
   const junkSpan=list=>list.every(w=>{const l=w.toLowerCase();
-    return FUNC.has(l)||frame.has(l)||frameTail.has(l)||((RELSET.has(l)||QVERBS.has(l))&&!caps.has(l));});
+    return QUANT.has(l)||FUNC.has(l)||frame.has(l)||frameTail.has(l)||
+      ((RELSET.has(l)||QVERBS.has(l))&&!caps.has(l));});
 
   // trim the question's framing off both ends, never out of the middle
   let i=0,j=words.length;

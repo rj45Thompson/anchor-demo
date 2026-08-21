@@ -102,3 +102,5 @@
 {"stress": true, "shape": "allcaps", "expect": "answer", "question": "WHAT IS THE CAPITAL OF FRANCE"}
 {"stress": true, "shape": "noquestion", "expect": "answer", "question": "cars"}
 {"stress": true, "shape": "twoq", "expect": "safe", "question": "what is a car and what is a dog"}
+{"stress":true,"shape":"cardinality","expect":"answer","question":"how many wheels does a car have usually"}
+{"stress":true,"shape":"cardinality","expect":"answer","question":"how many legs does a spider have"}

@@ -260,6 +260,64 @@ wired: true` (was `false`), script completes (was: threw, halted).
 gate so this class of bug - the ones no topic-curated test could ever see - cannot ship silently
 again.
 
+### B27 - index-load failure never touched the reasoning tab's own button
+The `.catch` on `fetch("index.json")` updated only the FACTS tab's button. The REASONING tab's
+button - the one in front by default - was never touched on failure, so an index-fetch failure
+left it `disabled` with "loading..." forever, with nothing on screen to explain why. *Fixed:*
+both buttons report failure now, plus a stall detector for a fetch that hangs instead of rejecting.
+
+### B28 - Ask on an empty box was a silent, permanent no-op (the ACTUAL bug)
+RJ reported "ask button still not working" a second time, AFTER B26 (the THREE.js load
+landmine) had already shipped and been confirmed live. Rather than theorize again, I opened the
+live deployed page myself, read its state directly (`THREE_OK:true`, index loaded, button text
+"Ask", zero console errors) and then did the one thing nobody - including me - had actually
+tried: click Ask **without typing anything**, exactly what a visitor does on landing, since the
+box shows a full, real question as placeholder text and reasonably looks pre-filled.
+```
+$("tgo").addEventListener("click",()=>{
+  const v=$("tq").value.trim();
+  ...
+  if(v){ runningQ=v; reason(v); }
+});
+```
+No `else`. An empty box means `v` is falsy, and the handler does **nothing** - not silently
+in the sense of a swallowed error, but literally: no code path exists for this input at all. No
+console error (there is no exception to report), no message, not even a shake. Same pattern,
+same fix needed, on the facts tab's button; Enter inherited it via `.click()`.
+*Fixed:* the placeholder now does what it visibly promises. An empty click visibly fills the
+field with the placeholder text FIRST - never a hidden default, the same disclosure rule as
+everywhere else on this page - then runs it. If a placeholder is ever missing too, an inline
+message appears instead of silence. There is no longer an input state where pressing Ask can do
+nothing.
+
+**Root-cause lesson:** two real, separately-shippable bugs (B26, B27) were found and fixed
+first, and each one was a genuine hardening the page needed - but neither was the thing actually
+in front of a visitor on a normal page load. The bug that mattered was found only by driving the
+real, live, deployed page as a stranger would: open it, and click the button without reading the
+code first.
+
+### B29 - "how many wheels does a car have" mis-routed into the count lane's dead end
+The class-count fallback pattern (`how many X have/are Y`) matched ANY "how many X (verb) Y"
+shape, including questions that are not about a class at all. "how many wheels DOES a car have"
+extracted the garbage class name "wheels does a car", found no members, and answered "I cannot
+count that" - a dead end for a perfectly good question, live-reported by RJ.
+*Fixed:* `do`/`does` between the noun and "have" is a reliable signal this is a question about
+ONE named entity's own parts, not an enumeration of a class - "how many types of bear have brown
+hair" never has do/does in that position. Detected and routed to the ordinary relation-lookup
+lane instead, where a real fact can surface honestly. Measured first: this graph stores no
+numeric cardinality anywhere (no "4" for wheels-on-a-car) - it records RELATIONS, not counts, so
+inventing a number would have been dishonest regardless of routing.
+
+### B30 - "many" got entity-linked as the subject, returning trivia about the WORD "many"
+"many" carries 59 real ConceptNet facts (`many -antonym-> one`, etc.) - it IS a graph node - so
+it survived every existing framing filter and got linked as if it were the question's subject,
+answering about the WORD "many" instead of anything in the actual question.
+*Fixed:* quantifiers (many/much/few/several/...) are now excluded from ever being read as a
+subject, the same pattern as QVERBS. Verified: "how many wheels does a car have" now correctly
+resolves subject=wheel, target=car, and the multi-hop search finds the real edge
+`wheel -part of-> car` (44.9%, disclosed as association not assertion) - a genuinely informative
+answer, not merely a non-crash. Added to the permanent stress set as the "cardinality" shape.
+
 ## OPEN
 
 
