@@ -264,7 +264,11 @@ DBpedia and KELM, released under
 per their ShareAlike terms. Site code MIT.<br><br>
 Built by <strong>RJ Thompson</strong> — no frameworks, no server, no model: one HTML file, a 512-way
 sharded graph and a Bloom filter, all running in your browser.
-<a href="https://github.com/rj45Thompson/anchor-demo" style="color:var(--hi)">Source on GitHub</a>.</footer>
+<a href="https://github.com/rj45Thompson/anchor-demo" style="color:var(--hi)">Source on GitHub</a> ·
+<a href="WHITEPAPER.md" style="color:var(--hi)">whitepaper</a> ·
+<a href="BUGS.md" style="color:var(--hi)">bug ledger</a> ·
+<a href="NO_TOYS.md" style="color:var(--hi)">the no-toys law</a> ·
+<a href="WISHLIST.md" style="color:var(--hi)">burn-down list</a>.</footer>
 </div>
 
 <script src="three.min.js"></script>
@@ -288,6 +292,10 @@ const BASE=[0.512,992953];
 const STOP=new Set(("what whats who which why how is are was were the a an of for in to s does do "+
 "did tell me about and or please can you know have has had having be been being am were will "+
 "would could should shall may might must there here it its this that these those").split(" "));
+  // question VERBS: real graph nodes ("eat" carries 334 facts) that are never the subject of
+  // the question naming them - unless capitalised, as in a title
+  const QVERBS=new Set(("eat eats eating drink drinks live lives grow grows make makes made go "+
+    "goes come comes look looks work works mean means called").split(" "));
 let RELS=null,NSHARD=512,RELSET=null;
 const cache=new Map();
 const $=id=>document.getElementById(id);
@@ -945,8 +953,16 @@ async function factsOf(name){
 }
 function variantsOf(s){
   const t=String(s).trim();
-  return [...new Set([t,t.replace(/\b\w/g,c=>c.toUpperCase()),
-                      t.charAt(0).toUpperCase()+t.slice(1),t.toLowerCase()])];
+  const base=[t,t.replace(/\b\w/g,c=>c.toUpperCase()),
+              t.charAt(0).toUpperCase()+t.slice(1),t.toLowerCase()];
+  // singulars last so exact forms try first: "worms" found only computer-worm malware while
+  // "worm" the animal sat unread one variant away
+  const sing=[];
+  for(const w of base){
+    if(/ies$/.test(w))sing.push(w.replace(/ies$/,"y"));
+    else if(/s$/.test(w)&&w.length>3&&!/ss$/.test(w))sing.push(w.slice(0,-1));
+  }
+  return [...new Set([...base,...sing])];
 }
 async function resolveSubject(s){
   for(const v of variantsOf(s)){const f=await factsOf(v);if(f.length)return{name:v,facts:f};}
@@ -1128,12 +1144,12 @@ async function findEntities(q){
   const FUNC=new Set(("of the a an and or for in on at to from with by is are was were be been "+
     "it its this that these those").split(" "));
   const goalRel=(readQuery(raw).goal||"").toLowerCase();
-  const frame=new Set([...LEAD,...goalRel.split(/\s+/).filter(Boolean)]);
-  const frameTail=new Set([...TAIL,...goalRel.split(/\s+/).filter(Boolean)]);
+  const frame=new Set([...LEAD,...QVERBS,...goalRel.split(/\s+/).filter(Boolean)]);
+  const frameTail=new Set([...TAIL,...QVERBS,...goalRel.split(/\s+/).filter(Boolean)]);
   const isFrame=(w,set)=>set.has(w.toLowerCase())||FUNC.has(w.toLowerCase())||asked(w);
   // a span is junk if EVERY word is framing, a connective, or an uncapitalised relation word
   const junkSpan=list=>list.every(w=>{const l=w.toLowerCase();
-    return FUNC.has(l)||frame.has(l)||frameTail.has(l)||(RELSET.has(l)&&!caps.has(l));});
+    return FUNC.has(l)||frame.has(l)||frameTail.has(l)||((RELSET.has(l)||QVERBS.has(l))&&!caps.has(l));});
 
   // trim the question's framing off both ends, never out of the middle
   let i=0,j=words.length;
@@ -1149,13 +1165,19 @@ async function findEntities(q){
         const words2=list.slice(st,st+n);
         if(junkSpan(words2))continue;
         const ph=words2.join(" ");
+        let bestV=null;
         for(const v of variantsOf(ph)){
           const vl=v.toLowerCase();
           // a bare relation word is not a subject, unless it is capitalised in the question
           if(RELSET.has(vl)&&!vl.split(/\s+/).some(x=>caps.has(x)))continue;
           const f=await factsOf(v);
-          if(f.length)return {name:v,facts:f,best:Math.max(...f.map(x=>x.k)),st,n};
+          // best-attested WITHIN the span: "worms"(22, malware) loses to "worm" the animal.
+          // (Across DIFFERENT spans this arbitration was the B1 disaster; within one span the
+          // candidates are readings of the SAME words, so evidence may arbitrate.)
+          if(f.length&&(!bestV||f.length>bestV.facts.length))
+            bestV={name:v,facts:f,best:Math.max(...f.map(x=>x.k)),st,n};
         }
+        if(bestV)return bestV;
       }
     }
     return null;
