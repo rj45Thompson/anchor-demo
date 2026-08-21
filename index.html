@@ -318,10 +318,13 @@ input→output examples, <strong>search</strong> a fixed set of primitives for o
 re-implements a small slice of it entirely in this page; the measured system is a ~2,600-line
 search engine tested against 224 MBPP+ programming tasks.</p>
 
-<div class="field-lbl">Examples — one per line, <code>args -&gt; expected</code> (JSON)</div>
-<textarea id="ex" spellcheck="false">[3, 1, 2] -> [1, 2, 3]
-[9, 4, 7] -> [4, 7, 9]
-[0, -1, 5] -> [-1, 0, 5]</textarea>
+<div class="field-lbl">Describe it in English (optional if you give examples below)</div>
+<input id="eng" value="reverse a list" placeholder="reverse a list" autocomplete="off">
+<div class="field-lbl" style="margin-top:10px">Examples — one per line, <code>args -&gt; expected</code>
+(JSON). Leave off <code>-&gt; expected</code> on a line and the engine will compute it and ask
+you to confirm — optional if English is enough to run a demo on.</div>
+<textarea id="ex" spellcheck="false" placeholder="[3, 1, 2] -> [1, 2, 3]
+[9, 4, 7] -> [4, 7, 9]"></textarea>
 <div class="ask" style="margin-top:8px">
   <button id="synth" style="flex:1">Synthesize</button>
 </div>
@@ -2742,19 +2745,24 @@ function splitArgs(s){
   return out;
 }
 function parseExamples(text){
+  // a line WITHOUT "->" is a PROBE: run it for real and ask the person if the result is right,
+  // rather than requiring an expected value nobody may know yet
   const lines=text.split("\n").map(l=>l.trim()).filter(Boolean);
-  const exs=[];
+  const exs=[],probes=[];
   for(const ln of lines){
     const arrow=ln.indexOf("->");
-    if(arrow<0)throw new Error("missing -> in: "+ln);
+    if(arrow<0){ probes.push({args:splitArgs(ln).map(parseVal)}); continue; }
     const args=splitArgs(ln.slice(0,arrow)).map(parseVal);
     const expected=parseVal(ln.slice(arrow+2));
     exs.push({args,expected});
   }
-  if(!exs.length)throw new Error("no examples given");
-  const arity=exs[0].args.length;
-  if(exs.some(e=>e.args.length!==arity))throw new Error("examples have different argument counts");
-  return {exs,arity};
+  const all=exs.length?exs:probes;
+  if(!all.length)return {exs:[],probes:[],arity:null};
+  const arity=all[0].args.length;
+  if(all.some(e=>e.args.length!==arity))throw new Error("examples have different argument counts");
+  if(exs.some(e=>e.args.length!==arity)||probes.some(e=>e.args.length!==arity))
+    throw new Error("examples and probes have different argument counts");
+  return {exs,probes,arity};
 }
 
 const UNARY=[
@@ -2805,6 +2813,76 @@ const BINARY=[
 ];
 function cmp(a,b){return a<b?-1:a>b?1:0;}
 
+/* ENGLISH -> PRIMITIVE, hand-written and disclosed, same discipline as the reasoning tab's
+   ASK_ALIASES: explicit rules, never a fuzzy match, so the read-back always says exactly which
+   phrase matched which candidate. English only RANKS what to try first - it never decides
+   correctness. Ordered most-specific-first per pool. */
+const ENGLISH_UNARY=[
+ [/\bsort(ed|ing)?\b.*\breverse|\bdescending\b/i,        "sorted(x, reverse=True)"],
+ [/\bsort|\border\b|\bascending\b/i,                     "sorted(x)"],
+ [/\breverse|\bbackwards?\b|\bflip\b/i,                  "list(reversed(x))"],
+ [/\blength|how many (items|elements)|\bcount\b/i,        "len(x)"],
+ [/\baverage|\bmean\b/i,                                   "sum(x)/len(x)"],
+ [/\bsum|\btotal\b|add (them|it|all) up/i,                 "sum(x)"],
+ [/\b(largest|maximum|biggest|highest)\b/i,                 "max(x)"],
+ [/\b(smallest|minimum|lowest)\b/i,                         "min(x)"],
+ [/\bfirst (item|element|one|value)\b/i,                    "x[0]"],
+ [/\blast (item|element|one|value)\b/i,                     "x[-1]"],
+ [/\bunique|\bdistinct\b|dedup(licate)?/i,                 "list(set(x))"],
+ [/\babsolute value|\bmagnitude\b/i,                       "abs(x)"],
+ [/\bdouble\b|\btwice\b/i,                                "x * 2"],
+ [/\bincrement\b|add one|plus one/i,                        "x + 1"],
+ [/\bdecrement\b|minus one|subtract one/i,                  "x - 1"],
+ [/\bsquare\b/i,                                            "x ** 2"],
+ [/\bnegate\b|negative of/i,                                "-x"],
+ [/\bstringify\b|to (a )?string/i,                          "str(x)"],
+ [/\buppercase\b|to upper/i,                                "x.upper()"],
+ [/\blowercase\b|to lower/i,                                "x.lower()"],
+ [/\btrim\b|strip( whitespace)?/i,                          "x.strip()"],
+ [/\btitle case\b/i,                                        "x.title()"],
+ [/\beven (length|number)\b/i,                              "len(x) % 2 == 0"],
+ [/\ball positive|greater than zero/i,                       "all(v > 0 for v in x)"],
+ [/\bany negative\b/i,                                      "any(v < 0 for v in x)"],
+];
+const ENGLISH_BINARY=[
+ [/\badd\b|\bplus\b|sum of (two|the)/i,                   "a + b"],
+ [/\bsubtract\b|\bminus\b|\bdifference\b/i,             "a - b"],
+ [/\bmultiply\b|\btimes\b|\bproduct\b/i,                "a * b"],
+ [/\bdivide\b|\bquotient\b/i,                             "a / b"],
+ [/\bmodul|\bremainder\b/i,                                "a % b"],
+ [/(larger|greater|max(imum)?) of (the )?two/i,               "max(a, b)"],
+ [/(smaller|lesser|min(imum)?) of (the )?two/i,               "min(a, b)"],
+ [/\bequal\b|same as/i,                                     "a == b"],
+ [/greater than/i,                                            "a > b"],
+ [/less than/i,                                                "a < b"],
+ [/\bcontains\b|\bis in\b/i,                              "a in b"],
+ [/\band\b/i,                                                "a and b"],
+ [/\bor\b/i,                                                 "a or b"],
+];
+// hand-picked demo input per primitive, run ONLY when no example gives a real one - always
+// shown on screen so it is never a silent substitution
+const DEMO_UNARY={"x":[3,1,4,1,5], "sorted(x)":[3,1,4,1,5,9,2,6],
+ "sorted(x, reverse=True)":[3,1,4,1,5,9,2,6], "list(reversed(x))":[3,1,4,1,5],
+ "len(x)":[3,1,4,1,5], "sum(x)":[3,1,4,1,5], "max(x)":[3,1,4,1,5], "min(x)":[3,1,4,1,5],
+ "sum(x)/len(x)":[3,1,4,1,5], "x[0]":[3,1,4,1,5], "x[-1]":[3,1,4,1,5],
+ "list(set(x))":[3,1,4,1,5,1,3], "sorted(set(x))":[3,1,4,1,5,1,3], "abs(x)":-7,
+ "x * 2":[3,1,4], "x + 1":7, "x - 1":7, "x ** 2":7, "-x":7, "str(x)":42,
+ "x.upper()":"Hello World", "x.lower()":"Hello World", "x.strip()":"  padded  ",
+ "x[::-1]":"Hello", "x.title()":"hello world", "len(x) % 2 == 0":[3,1,4,1,5],
+ "all(v > 0 for v in x)":[3,1,4,1,5], "any(v < 0 for v in x)":[3,1,4,1,5],
+ "x.count(max(x))":[3,1,4,1,5,5]};
+const DEMO_BINARY={"a + b":[6,3], "a - b":[6,3], "a * b":[6,3], "a / b":[6,3], "a % b":[6,3],
+ "max(a, b)":[6,3], "min(a, b)":[6,3], "a == b":[6,3], "a > b":[6,3], "a < b":[6,3],
+ "a in b":[3,[1,2,3,4,5]], "a and b":[true,false], "a or b":[true,false]};
+function englishMatches(text,pool){
+  const rules=pool===UNARY?ENGLISH_UNARY:ENGLISH_BINARY;
+  const seen=new Set(), hits=[];
+  for(const [re,name] of rules){
+    if(re.test(text)&&!seen.has(name)){ seen.add(name); hits.push({name,rule:re}); }
+  }
+  return hits;
+}
+
 function trySynthesize(exs,arity){
   const pool = arity===1?UNARY:BINARY;
   for(const [name,fn] of pool){
@@ -2824,44 +2902,182 @@ function trySynthesize(exs,arity){
 function fmtVal(v){ return JSON.stringify(v); }
 function fmtArgs(args){ return args.map(fmtVal).join(", "); }
 
+/* WHAT I UNDERSTOOD, for code too. Same B24 lesson as the reasoning tab: say what was read
+   BEFORE showing a result, so "wrote the wrong function silently" cannot happen unnoticed. */
+function understoodLine(eng,matched,pool){
+  if(!eng)return '<div class="row"><span class="lbl">understood</span><span>no English given - '+
+    'reading only the examples below.</span></div>';
+  if(!matched.length)return '<div class="row"><span class="lbl">understood</span><span>"'+esc(eng)+
+    '" matched no phrase in the '+(pool===UNARY?"one-argument":"two-argument")+
+    ' hand-written table below - trying the demo vocabulary in order instead.</span></div>';
+  // top 4 shown - a DISCLOSED cut: the "(+N more)" suffix states exactly what was hidden, and
+  // ALL matches are tried in order regardless of how many are shown here
+  return '<div class="row"><span class="lbl">understood</span><span>"'+esc(eng)+'" matched: '+
+    matched.slice(0,4).map(m=>'<code>'+esc(m.name)+'</code>').join(", ")+
+    (matched.length>4?" (+"+(matched.length-4)+" more)":"")+
+    ' - tried in that order, then the rest of the vocabulary.</span></div>';
+}
+function poolNamed(pool){ return pool===UNARY?UNARY:BINARY; }
+function fnByName(pool,name){ const e=poolNamed(pool).find(p=>p[0]===name); return e?e[1]:null; }
+function searchOrder(matched,pool){
+  const order=matched.map(m=>m.name);
+  for(const [name] of poolNamed(pool))if(!order.includes(name))order.push(name);
+  return order;
+}
+
+let CONFIRM=null;   // state for the human-confirm loop (case B): {order,idx,args,argsIsDemo,pool,eng,matched}
+
 function renderCode(){
-  const out=$("codeOut"); out.innerHTML="";
-  let exs,arity;
-  try{ ({exs,arity}=parseExamples($("ex").value)); }
+  const out=$("codeOut"); out.innerHTML=""; CONFIRM=null;
+  const eng=($("eng").value||"").trim();
+  let exs,probes,arity;
+  try{ ({exs,probes,arity}=parseExamples($("ex").value)); }
   catch(e){
     out.innerHTML='<div class="card k0"><div class="claim"><b>Can’t read the examples.</b></div>'+
       '<div class="row"><span class="lbl">why</span><span>'+esc(e.message)+'</span></div></div>';
     return;
   }
-  const found=trySynthesize(exs,arity);
+  if(arity===null){
+    // nothing at all in the examples box - infer arity from which pool English matched
+    if(!eng){
+      out.innerHTML='<div class="card k0"><div class="claim"><b>Nothing to go on.</b></div>'+
+        '<div class="row"><span class="lbl">why</span><span>give a plain-English description, '+
+        'or at least one example line below.</span></div></div>';
+      return;
+    }
+    const mU=englishMatches(eng,UNARY), mB=englishMatches(eng,BINARY);
+    arity=(mB.length&&!mU.length)?2:1;   // default to the common one-argument case
+  }
+  const pool=arity===1?UNARY:BINARY;
+  const matched=englishMatches(eng,pool);
+  const understood=understoodLine(eng,matched,pool);
   const argName=arity===1?"x":"a, b";
-  if(!found){
-    const pool=(arity===1?UNARY:BINARY).length;
-    out.innerHTML='<div class="card k0"><div class="claim"><b>No program found.</b></div>'+
-      '<div class="row"><span class="lbl">why</span><span>none of the '+pool+
-      ' primitives in this small demo vocabulary satisfy every example you gave. That is a real '+
-      'limit of the demo’s search space, not a guess dressed up as an answer.</span></div>'+
-      '<div class="row"><span class="lbl">note</span><span>the measured system searches a far '+
-      'larger space (composed primitives, retrieval banks) and is tested against 224 MBPP+ tasks - '+
-      'still not solving all of them, honestly reported.</span></div></div>';
+
+  // CASE A: at least one full example (a real expected value) - unchanged contract, verified
+  // ONLY by real execution against every one given, English merely reorders the SEARCH, it can
+  // never make a wrong answer pass.
+  if(exs.length){
+    const order=searchOrder(matched,pool);
+    let found=null;
+    for(const name of order){
+      const fn=fnByName(pool,name); if(!fn)continue;
+      let ok=true,tested=[];
+      for(const ex of exs){
+        let got; try{ got=arity===1?fn(ex.args[0]):fn(ex.args[0],ex.args[1]); }
+        catch(e){ ok=false; tested.push({ex,got:"(error)",pass:false}); break; }
+        const pass=deq(got,ex.expected); tested.push({ex,got,pass});
+        if(!pass){ ok=false; break; }
+      }
+      if(ok){ found={name,tested}; break; }
+    }
+    if(!found){
+      out.innerHTML='<div class="card k0"><div class="claim"><b>No program found.</b></div>'+
+        understood+
+        '<div class="row"><span class="lbl">why</span><span>none of the '+pool.length+
+        ' primitives in this small demo vocabulary satisfy every example you gave - tried the '+
+        'English-matched candidates first, then the rest. That is a real limit of the demo’s '+
+        'search space, not a guess dressed up as an answer.</span></div>'+
+        '<div class="row"><span class="lbl">note</span><span>the measured system searches a far '+
+        'larger space (composed primitives, retrieval banks) and is tested against 224 MBPP+ '+
+        'tasks - still not solving all of them, honestly reported.</span></div></div>';
+      return;
+    }
+    let steps="";
+    for(const t of found.tested){
+      steps+='<div class="step"><span class="'+(t.pass?"ok":"no")+'">'+(t.pass?"✓":"✗")+
+        '</span><span>f('+esc(fmtArgs(t.ex.args))+') = '+esc(fmtVal(t.got))+
+        (t.pass?"":" ≠ "+esc(fmtVal(t.ex.expected)))+'</span></div>';
+    }
+    for(const pr of probes){   // any bare-args lines ride along, run for free once verified
+      let got; try{ got=arity===1?fnByName(pool,found.name)(pr.args[0]):
+                     fnByName(pool,found.name)(pr.args[0],pr.args[1]); }catch(e){ got="(error)"; }
+      steps+='<div class="step"><span class="ok">▸</span><span>f('+esc(fmtArgs(pr.args))+
+        ') = '+esc(fmtVal(got))+' <span class="dbg-det" style="display:inline">(no expected '+
+        'value given for this one)</span></span></div>';
+    }
+    out.innerHTML='<div class="card k2"><div class="claim">Found, by search + execution:</div>'+
+      understood+
+      '<pre>def f('+argName+'):\n    return '+esc(found.name)+'</pre>'+
+      '<div class="row"><span class="lbl">verified</span><span>'+found.tested.length+'/'+
+      found.tested.length+' given examples, by REAL execution in this page</span></div>'+
+      '<div style="margin-top:8px">'+steps+'</div></div>';
     return;
   }
-  let steps="";
-  for(const t of found.tested){
-    steps+='<div class="step"><span class="'+(t.pass?"ok":"no")+'">'+(t.pass?"✓":"✗")+
-      '</span><span>f('+esc(fmtArgs(t.ex.args))+') = '+esc(fmtVal(t.got))+
-      (t.pass?"":" ≠ "+esc(fmtVal(t.ex.expected)))+'</span></div>';
-  }
-  out.innerHTML='<div class="card k2">'+
-    '<div class="claim">Found, by search + execution:</div>'+
-    '<pre>def f('+argName+'):\n    return '+esc(found.name)+'</pre>'+
-    '<div class="row"><span class="lbl">verified</span><span>'+found.tested.length+
-    '/'+found.tested.length+' given examples, by REAL execution in this page</span></div>'+
-    '<div style="margin-top:8px">'+steps+'</div></div>';
+
+  // CASE B: no expected output anywhere. RJ's ask: "it will fill it in and ask the user if it
+  // is correct" - run the top candidate for REAL, on a real input (yours if given, a disclosed
+  // demo if not), and ask. Never silently assert; always execute, show, and ask.
+  const order=searchOrder(matched,pool);
+  const argsIsDemo=!probes.length;
+  const args=probes.length?probes[0].args:
+    (arity===1?[DEMO_UNARY[order[0]]!==undefined?DEMO_UNARY[order[0]]:DEMO_UNARY["x"]]
+              :(DEMO_BINARY[order[0]]||DEMO_BINARY["a + b"]));
+  CONFIRM={order,idx:0,args,argsIsDemo,pool,eng,matched,arity};
+  renderConfirm();
 }
+
+function renderConfirm(){
+  const out=$("codeOut"); if(!out||!CONFIRM)return;
+  const C=CONFIRM;
+  if(C.idx>=C.order.length){
+    out.innerHTML='<div class="card k0"><div class="claim"><b>None of them, by your own '+
+      'judgement.</b></div>'+understoodLine(C.eng,C.matched,C.pool)+
+      '<div class="row"><span class="lbl">why</span><span>you said no to every candidate in '+
+      'this small demo vocabulary ('+C.order.length+' tried). That is a real limit of the '+
+      'vocabulary, not a guess dressed up as an answer.</span></div>'+
+      '<div class="row"><span class="lbl">try</span><span>reword the description, or give a '+
+      'real <code>args -&gt; expected</code> example so the answer is verified by execution '+
+      'instead of by your confirmation.</span></div></div>';
+    return;
+  }
+  const name=C.order[C.idx], fn=fnByName(C.pool,name);
+  let got,err=null;
+  try{ got=C.arity===1?fn(C.args[0]):fn(C.args[0],C.args[1]); }catch(e){ err=e; }
+  const argName=C.arity===1?"x":"a, b";
+  out.innerHTML='<div class="card k1"><div class="claim">Watch it run, then tell me if it’s '+
+    'right.</div>'+understoodLine(C.eng,C.matched,C.pool)+
+    '<div class="row"><span class="lbl">trying</span><span>candidate '+(C.idx+1)+' of '+
+    C.order.length+(C.matched.some(m=>m.name===name)?' (an English match)':
+      ' (rest of the vocabulary - no phrase matched this one)')+'</span></div>'+
+    '<div class="row"><span class="lbl">input</span><span>f('+esc(fmtArgs(C.args))+')'+
+    (C.argsIsDemo?' <span class="dbg-det" style="display:inline">- you gave no input, so this '+
+      'is a disclosed demo value, not yours</span>':'')+'</span></div>'+
+    '<pre>def f('+argName+'):\n    return '+esc(name)+'</pre>'+
+    '<div class="row"><span class="lbl">result</span><span style="font-size:15px"><b>f('+
+    esc(fmtArgs(C.args))+') = '+(err?"(error - this candidate cannot run on this input)":
+      esc(fmtVal(got)))+'</b></span></div>'+
+    '<div class="ask" style="margin-top:8px">'+
+    '<button data-act="yes" style="flex:1">✓ yes, that’s right</button>'+
+    '<button data-act="no" style="flex:1">✗ no, try the next one</button></div></div>';
+}
+document.getElementById("codeOut").addEventListener("click",ev=>{
+  if(!CONFIRM)return;
+  let t=ev.target; while(t&&t!==ev.currentTarget&&!(t.dataset&&t.dataset.act))t=t.parentNode;
+  const act=t&&t.dataset&&t.dataset.act; if(!act)return;
+  const C=CONFIRM;
+  if(act==="no"){ C.idx++; renderConfirm(); return; }
+  if(act!=="yes")return;
+  const name=C.order[C.idx], fn=fnByName(C.pool,name), argName=C.arity===1?"x":"a, b";
+  let got; try{ got=C.arity===1?fn(C.args[0]):fn(C.args[0],C.args[1]); }catch(e){ got=null; }
+  const line=fmtArgs(C.args)+" -> "+fmtVal(got);
+  $("codeOut").innerHTML='<div class="card k2"><div class="claim">Confirmed by you.</div>'+
+    understoodLine(C.eng,C.matched,C.pool)+
+    '<pre>def f('+argName+'):\n    return '+esc(name)+'</pre>'+
+    '<div class="row"><span class="lbl">verified how</span><span><b>by your confirmation of '+
+    'one real, executed run</b> - not by a battery of hidden tests. A different kind of '+
+    'evidence than the examples mode above, and labelled as such, not blurred into it.'+
+    '</span></div><div class="row"><span class="lbl">that run</span><span>f('+
+    esc(fmtArgs(C.args))+') = '+esc(fmtVal(got))+'</span></div>'+
+    '<div class="ask" style="margin-top:8px"><button data-act="addex" style="flex:1">add '+
+    '"'+esc(line)+'" to the examples box and re-verify by execution</button></div></div>';
+  document.querySelector('[data-act="addex"]').addEventListener("click",()=>{
+    const cur=$("ex").value.trim();
+    $("ex").value=(cur?cur+"\n":"")+line; $("eng").value=C.eng; renderCode();
+  });
+});
 $("synth").addEventListener("click",renderCode);
 document.querySelectorAll("#p-code .hint code").forEach(c=>c.addEventListener("click",()=>{
-  $("ex").value=c.getAttribute("data-ex"); renderCode();
+  $("eng").value=""; $("ex").value=c.getAttribute("data-ex"); renderCode();
 }));
 renderCode();
 </script>

@@ -333,6 +333,30 @@ Nothing invented - every step is a value `countAnswer` already computed. The con
 rack is chain-specific and now stays honestly hidden for a counting run rather than being forced
 into a shape that does not fit it.
 
+### Feature - "Write a function" gets an English front end, human-confirm loop
+RJ's spec: type it in English; give expected output IF you know it (verified by execution, as
+before); if you do not, the engine runs its best guess for real, on a real input, and ASKS
+whether it is right - never a silent guess.
+
+Built: a hand-written, disclosed ENGLISH_UNARY/ENGLISH_BINARY phrase table (same discipline as
+ASK_ALIASES - explicit rules, never fuzzy-matched) that only RANKS which primitive to try first;
+correctness is still decided by real execution. A "What I understood" read-back (B24 pattern)
+states what matched before any result shows. Example lines without `-> expected` are now legal
+PROBES: run for real, shown, not silently assumed correct.
+
+When no expected value exists anywhere (English only, or a bare-args probe), a human-confirm
+loop takes over: run the top candidate on a real input (yours if given, a disclosed demo value
+if not - never invented in silence), show `f(args) = result`, and ask Yes/No. No cycles to the
+next candidate in the same disclosed order; exhausting the vocabulary is reported honestly, the
+same as "No program found". Yes is labelled **confirmed by your judgement, not by execution
+against hidden tests** - a different kind of evidence, kept honestly apart from the examples
+path - with a one-click upgrade to add the confirmed pair as a real example and re-verify by
+execution.
+
+Live-verified end to end: default-load confirm flow, Yes-confirm, add-to-examples upgrade to
+execution-verified, No-cycling, no-phrase-matched honesty, and the pre-existing arity-1/arity-2/
+"impossible on purpose" hint buttons all still pass unchanged. Zero console errors.
+
 ## OPEN
 
 

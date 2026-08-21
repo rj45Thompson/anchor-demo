@@ -46,6 +46,7 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | ⭐⭐ B28: Ask-on-empty-box was a silent permanent no-op (the ACTUAL reported bug) | ✅ | reproduced LIVE by driving the real deployed page as a stranger would - clicked Ask without typing, exactly what the placeholder invites; `if(v){...}` had no else. Placeholder now runs when clicked empty, visibly filled first |
 | B31: step debugger never loaded for counting questions (live-reported: "debugger fails to load") | ✅ | countAnswer never called dbgLoad - default question + B28 fallback both left an eternal fake-spinner; built a real count-mode program (LOAD/CHECK/RET) reusing the existing debugger UI |
 | B29/B30: "how many wheels does a car have" (do/does-cardinality + "many" mis-link) | ✅ | live-reported by RJ, reproduced immediately; do/does now routes to relation-lookup instead of the count lane's dead end; quantifiers excluded from entity-linking; now finds the real wheel-part of-car edge |
+| ⭐⭐ "Write a function": English input + human-confirm loop | ✅ | ENGLISH_UNARY/BINARY disclosed phrase table (ASK_ALIASES pattern) ranks candidates; no expected value -> runs top candidate for real, asks Yes/No, cycles honestly; Yes labelled human-confirmed (not execution-verified) with one-click upgrade; live-verified 6 paths, 0 console errors |
 | B27: index-load failure never touched the reasoning tab's button | ✅ | .catch only updated the facts-tab button; both now report failure + a stall detector for a hung fetch |
 | B26: THREE-load failure could never again kill the whole page | ✅ | guarded top-level construction + zero-dependency crash trap installed FIRST; reproduced (Ask unwired) and re-verified fixed (Ask wired) headless |
 | autorun REALLY removed (B19) | ✅ | a third autorun lived in the index-load .then(); it also aborted running searches by bumping gen - removing it took chain contrast 6/8 → 7/8 |
@@ -53,29 +54,22 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 
 ## Open — in the priority order I set
 
-1. **"Write a function" tab: English -> program, same rigor as the reasoning tab.** *(new
-   wish, captured)* Right now this tab only synthesizes code. RJ wants it to ALSO accept a plain-
-   English ask, and show its own understanding read-back (same B24 lesson: say what was parsed
-   before generating) plus the produced program, side by side - the same "watch it think"
-   contract this session just hardened for the reasoning tab, applied to the coding tab.
-2. **UI-in-motion pass (#132)** — now also covers the geometry rack, step debugger, self-check
-   marks, resume-from-hop, save/load restore. One watched session collapses every 🟡.
-3. **O8: benchmark the vision loop headless** — run physics() in the harness, A/B SPATIAL on/off
+1. **UI-in-motion pass (#132)** — covers the geometry rack, step debugger, self-check marks,
+   resume-from-hop, save/load restore, the new code-lane confirm loop, WASD flight, node
+   gridview. One watched session collapses every 🟡 to ✅ or to a real bug.
+2. **O8: benchmark the vision loop headless** — run physics() in the harness, A/B SPATIAL on/off
    over the chain set (fetches-to-first-chain, agreement). Prove the counted flips help, or demote
    the feature to off-by-default. No third state.
-
-4. **UI-in-motion pass (#132).** One visible-pane session (or RJ's 60-second click-through)
-   collapses every 🟡 to ✅ or to a real bug.
-5. **Live "top 3 questions for you"** *(new wish, captured)*: while searching, keep a live-updating
+3. **Live "top 3 questions for you"** *(new wish, captured)*: while searching, keep a live-updating
    panel of the three questions whose answers would most move the search (ambiguous readings,
    endpoint disagreements, unopened high-fact frontier nodes) — updating in real time as it figures
    things out, each clickable to act. The ask-back-on-ambiguity (7/8) is the seed of this.
-6. **Learn-on-abstain (#135)** — still never fired. Prove or delete; no third state.
-7. **Liars Game, human-in-the-loop** *(new wish, re-scoped)*: a tab where the engine presents
+4. **Learn-on-abstain (#135)** — still never fired. Prove or delete; no third state.
+5. **Liars Game, human-in-the-loop** *(new wish, re-scoped)*: a tab where the engine presents
    facts/chains and the HUMAN adjudicates in real time. RJ's framing solves the old provenance
    objection: the human judge IS the independent second anchor, so adjudications can honestly
    carry anchor semantics. Design before build.
-8. **Spacegame in the demo** *(new wish, large — needs its own arc)*:
+6. **Spacegame in the demo** *(new wish, large — needs its own arc)*:
    - a tab hosting the three.js spacegame, restored to its ORIGINAL intent: the chat/arena where
      AIs battle to improve;
    - a fork `SpaceGame-simple` cut down to a verified end-to-end core (the main game has hundreds
@@ -83,15 +77,25 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
    - removed features preserved as DATA in a front-end dashboard menu, so anything can be added
      back deliberately instead of rotting half-on.
    This is a project, not a task — schedule as its own session(s) with its own zoo-equivalent.
-9. **Research tab: all the whitepapers** *(new wish, captured)*: a final tab collecting RJ's
+7. **Research tab: all the whitepapers** *(new wish, captured)*: a final tab collecting RJ's
    research artifacts in one place — the Anchor whitepaper (already ships), the Hadamard/KG work
    (`kg_hadamard.py` line), and the spacegame research corpus (PILLARS.md, the emergent-signaling /
    theory-of-mind / iron-law results). Execution note: these live in the PRIVATE fleet repo today;
    inventory first and confirm each is meant for public before copying — publishing is
    irreversible, and a paper's claims must pass the same trace-to-artifact audit the Anchor
    whitepaper passes before it ships on the public tab.
-10. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
-11. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 6).
+8. **"The story behind Anchor" tab** *(new wish, captured 2026-08-21)*: a sci-fi thought-experiment
+   piece — Asimov-style, in the spirit of RJ's INCANTATION novel (`D:/code/priority-book`) — asking
+   whether AGI could be *prompted* into existing, and how, tied to RJ's own origin story (early
+   work lost when a laptop was stolen; an OpenGL graph built in high school with the same shape as
+   this project's 3D view; arriving at perceptron-like ideas before knowing the term; grasping
+   evolution in grade 6). RJ was explicit: this is a captured wish, not a build order — Anchor
+   stays the resume-focused priority; draft only when he asks. Sent a note to a possible
+   `novel-agent` session via `agent_mail` (topic `story-of-anchor`, msg `0557e773`) offering the
+   crossover in case that session is listening — no agent by that name has ever used the Tami
+   mailbox before, so treat this as posted, not as confirmed received.
+9. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
+10. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 5).
 
 ## Standing rules that got us here
 
