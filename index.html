@@ -288,7 +288,9 @@ in ideal-hop units the way a lane reads in metres. The chain selected here is th
 there — pick either side and the other follows. The ⤴ chip on the stage frames the geometry
 with one click (any movement of yours takes the camera back). Hover a segment for the fact it
 stands for; click it and this debugger jumps to that hop. One record, three views: geometry,
-program, graph.</p></div>
+program, graph. <b>Counting questions get their own program</b> too - LOAD the class, CHECK each
+member in the order it was actually read, RET the count; the geometry rack is chain-specific and
+stays hidden for a counting run rather than being forced into a shape that does not fit it.</p></div>
 
 <h2>What just happened</h2>
 <div id="whatbox"><p class="small">Ask something and this panel will explain, in plain English,
@@ -1818,6 +1820,7 @@ async function countAnswer(q,cq,my){
       '.</span></div>':"")+
     '<div class="row"><span class="lbl">not</span><span>This is a count of what the graph '+
     'RECORDS, not a count of what exists.</span></div></div>');
+  dbgLoadCount(q,cls,hits,misses,named,LIM,members.length);
   nowSet("counted "+hits.length+" of "+LIM+" recorded "+cls+" types",1,false);
   badge("count complete · "+hits.length);
   trace("done","COUNT complete: "+hits.length+"/"+LIM+" members qualify"+
@@ -1852,6 +1855,31 @@ function dbgLive(){
   if(first)trace("done","the step debugger and the confidence geometry are now LIVE below - "+
     "they update as each chain completes");
 }
+/* COUNT-MODE PROGRAM. B31: countAnswer never populated the debugger, so the default question
+   (and the B28 empty-click fallback) left it on an eternal "Searching..." spinner that a
+   counting run can never resolve - it doesn't produce a chain. A counting run genuinely IS
+   steppable though: LOAD the class, CHECK each member in the exact order it was read, RET the
+   count - every value here is one countAnswer already computed, nothing recomputed. */
+function countProgram(cd){
+  const rows=[{op:"LOAD",txt:'class := "'+cd.cls+'"',
+    det:cd.total+" member"+(cd.total===1?"":"s")+" recorded · reading "+cd.read}];
+  let n=0;
+  for(const h of cd.hits){ n++;
+    rows.push({op:"CHECK",txt:esc(h.mem.name)+"  -- attests it?",
+      det:"k="+h.mem.k+"  "+(h.ev&&h.ev[0]?relLabel(h.ev[0].x.rel)+" -> "+h.ev[0].x.obj:"")+
+        "   PASS  (tally "+n+")",mem:h.mem,verdict:"PASS"}); }
+  for(const nm of cd.named)
+    rows.push({op:"CHECK",txt:esc(nm.mem.name)+"  -- attests it?",
+      det:"named for "+nm.words.join("+")+", no fact attests it   NAMED-ONLY (not counted)",
+      mem:nm.mem,verdict:"NAMED"});
+  for(const m of cd.misses)
+    rows.push({op:"CHECK",txt:esc(m.name)+"  -- attests it?",
+      det:"k="+m.k+"   FAIL",mem:m,verdict:"FAIL"});
+  rows.push({op:"RET",txt:"return count := "+cd.hits.length,
+    det:cd.hits.length+" of "+cd.read+" read qualify"+
+      (cd.total>cd.read?" ("+(cd.total-cd.read)+" left unread - a bound)":"")});
+  return rows;
+}
 function dbgProgram(ch){
   const rows=[]; let run=1;
   rows.push({op:"LOAD",txt:'subject := "'+ch.path[0].from+'"',
@@ -1864,8 +1892,66 @@ function dbgProgram(ch){
     det:"composed "+(ch.p*100).toFixed(1)+"% (assumes hop independence)"});
   return rows;
 }
+function dbgRenderCount(){
+  const b=$("dbgbox"); if(!b||!DBG||DBG.mode!=="count")return;
+  const cd=DBG.count, prog=countProgram(cd);
+  if(DBG.pc>=prog.length)DBG.pc=prog.length-1;
+  const cur=prog[DBG.pc];
+  const vars=cur.mem?
+    [["member",cur.mem.name],["k (independent sources)",cur.mem.k],
+     ["p (measured curve)",(pctOf(cur.mem.k)*100).toFixed(1)+"%"],
+     ["verdict",cur.verdict],
+     ["tally so far",prog.slice(0,DBG.pc+1).filter(r=>r.verdict==="PASS").length+" / "+
+       cd.hits.length+" total"]]
+    :cur.op==="LOAD"?
+    [["class",cd.cls],["members recorded",cd.total],["members read",cd.read],
+     ["shard",String(shardOf(cd.cls)).padStart(3,"0")]]
+    :[["count",cd.hits.length],["read",cd.read],["recorded",cd.total]];
+  b.innerHTML=
+    '<div class="dbg-head"><button data-act="cfirst">⏮</button>'+
+    '<button data-act="cback">◀ step</button><button data-act="cfwd">step ▶</button>'+
+    '<button data-act="clast">⏭</button>'+
+    '<span class="small" style="margin-left:8px">counting run · recorded values only, '+
+    'nothing re-run</span></div>'+
+    '<div class="dbg-code">'+prog.map((r,i)=>'<div class="dbg-ln'+(i===DBG.pc?" pc":"")+
+      '"><span class="dbg-n">'+String(i).padStart(2,"0")+'</span><span class="dbg-op">'+r.op+
+      '</span><span>'+r.txt+'</span><span class="dbg-det">'+esc(r.det)+
+      "</span></div>").join("")+"</div>"+
+    '<table class="dbg-vars">'+vars.map(v=>"<tr><td>"+esc(String(v[0]))+"</td><td>"+
+      esc(String(v[1]))+"</td></tr>").join("")+"</table>"+
+    '<div class="field-lbl" style="margin-top:8px">jump to a member — click any row above, or '+
+    "here</div><div>"+
+    cd.hits.map((h,i)=>'<div class="dbg-alt'+(cur.mem===h.mem?" on":"")+
+      '" data-act="cjump" data-i="'+(1+i)+'">✓ '+esc(h.mem.name)+"</div>").join("")+"</div>";
+}
+function dbgLoadCount(q,cls,hits,misses,named,read,total){
+  DBG={q,mode:"count",sel:0,pc:0,count:{cls,hits,misses,named,read,total}};
+  dbgWireCount(); dbgRenderCount();
+  if(window.showGeoChip){ const vg=$("viewgeo"); if(vg)vg.style.display="none"; }
+}
+let dbgWiredCount=false;
+function dbgWireCount(){
+  if(dbgWiredCount)return;
+  const b=$("dbgbox"); if(!b||!b.addEventListener)return;
+  b.addEventListener("click",ev=>{
+    if(!DBG||DBG.mode!=="count")return;
+    let t=ev.target;
+    while(t&&t!==b&&!(t.dataset&&t.dataset.act))t=t.parentNode;
+    const act=t&&t.dataset&&t.dataset.act; if(!act)return;
+    const len=countProgram(DBG.count).length;
+    if(act==="cfwd")DBG.pc=Math.min(len-1,DBG.pc+1);
+    else if(act==="cback")DBG.pc=Math.max(0,DBG.pc-1);
+    else if(act==="cfirst")DBG.pc=0;
+    else if(act==="clast")DBG.pc=len-1;
+    else if(act==="cjump")DBG.pc=Number(t.dataset.i)||0;
+    else return;
+    dbgRenderCount();
+  });
+  dbgWiredCount=true;
+}
 function dbgRender(){
   const b=$("dbgbox"); if(!b||!DBG)return;
+  if(DBG.mode==="count"){ dbgRenderCount(); return; }
   const ch=DBG.chains[DBG.sel], prog=dbgProgram(ch);
   if(DBG.pc>=prog.length)DBG.pc=prog.length-1;
   const cur=prog[DBG.pc];
