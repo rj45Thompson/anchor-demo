@@ -352,6 +352,30 @@ sharded graph and a Bloom filter, all running in your browser.
 
 <script src="three.min.js"></script>
 <script>
+/* FIRST CODE IN THE SCRIPT, ON PURPOSE. B26: a top-level throw anywhere below this point used
+   to leave the page in total silence - no error, no banner, nothing wired, including the Ask
+   button. This trap has zero dependencies (no $, no esc, no trace - none of those exist yet),
+   so it cannot itself be the thing that fails, and it is registered before any line that could
+   throw, so it is guaranteed to catch whatever the layered guards below do not. */
+(function(){
+  var shown=false;
+  function bang(msg){
+    if(shown)return; shown=true;
+    try{
+      var b=document.createElement("div");
+      b.style.cssText="position:fixed;left:0;right:0;top:0;z-index:9999;background:#3a0d14;"+
+        "color:#ffd7dc;font:13px ui-monospace,monospace;padding:10px 16px;border-bottom:"+
+        "2px solid #ff5566";
+      b.textContent="Something failed to load ("+msg+"). Try a hard refresh (Ctrl/Cmd+Shift+R). "+
+        "If the Ask button still does nothing after that, the page hit a real bug - not just a "+
+        "slow network.";
+      document.body.insertBefore(b,document.body.firstChild);
+    }catch(_){}
+  }
+  window.addEventListener("error",function(e){bang(e.message||"script error");});
+  window.addEventListener("unhandledrejection",function(e){
+    bang((e.reason&&e.reason.message)||String(e.reason));});
+})();
 /* ---------------------------------------------------------------- tabs */
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
@@ -676,7 +700,11 @@ const R={
   RELAX:2,              // physics substeps per animation frame
   STEP_MS:460,          // pause between replayed chain steps, slow enough to read
   SPATIAL:1,            // the vision loop: the engine reads its own settled map (order only)
-  COUNT_MAX:40          // members READ per counting question; the shortfall is reported
+  COUNT_MAX:40,         // members READ per counting question; the shortfall is reported
+  SPAN_MAX:12,          // longest span tried as one entity name. MEASURED: 99.83% of subject
+                        // names in this graph are 12 words or fewer (165,800 sampled)
+  WORD_MAX:60           // words of a question read as content; the remainder is reported, not
+                        // silently dropped - a bound stated is not a bound hidden
 };
 let G={nodes:[],edges:[],byId:new Map()};
 let gen=0;      // search generation: a newer question cancels an older one
@@ -763,8 +791,25 @@ const T=window.THREE;
 let sc,cam,ren,nodeGrp,edgeGrp,labGrp,stars,flowGrp,rackGrp;
 let camYaw=0,camPitch=0,drag3=null;
 const keys=Object.create(null);
-const camPos=new T.Vector3(0,0,900), camVel=new T.Vector3();
-let glowT=null, ray=null, mouseNDC=new T.Vector2(0,0), flyT=null;
+/* B26: THIS was the landmine. `new T.Vector3(...)` at top level meant a single failed request
+   for three.min.js - a flaky connection is not rare on the open internet - threw here and
+   silently killed every line after it in the whole script, including the Ask button's own
+   addEventListener call thousands of lines below. Guarded now: on failure the page runs with
+   THREE_OK=false, plain stand-ins take the place of the 3D objects (never read unless init3()
+   succeeds, which itself already checks THREE_OK), and EVERY OTHER LANE OF THE PAGE - search,
+   counting, the debugger, the Ask button - keeps working. Only the 3D view degrades, and it
+   says so on screen instead of staying a black box forever. */
+let THREE_OK=true, camPos, camVel, glowT=null, ray=null, mouseNDC, flyT=null;
+try{
+  camPos=new T.Vector3(0,0,900); camVel=new T.Vector3(); mouseNDC=new T.Vector2(0,0);
+}catch(e){
+  THREE_OK=false;
+  const stand=()=>({x:0,y:0,z:0,set(){return this;},copy(){return this;},lerp(){return this;},
+    addScaledVector(){return this;},multiplyScalar(){return this;},add(){return this;},
+    distanceTo(){return 0;}});
+  camPos=stand(); camVel=stand(); mouseNDC={x:0,y:0};
+  console.error("three.js did not load - the 3D stage is disabled, everything else still works:",e);
+}
 
 const ROLE={
   start :{c:0x6ee7b7,name:"start"},
@@ -1118,8 +1163,23 @@ async function inspectNode(n){
    drew - the scene built fine when called by hand, which is exactly why the failure looked like
    "three.js is broken" rather than "the loop is missing". */
 let built3=false, lastN3=-1, lastE3=-1, lastDirty3=0;
+let told3Fail=false;
 function loop(){
   if(!rafOn)return;
+  if(!THREE_OK){
+    if(!told3Fail){ told3Fail=true;
+      const cv=$("cv");
+      if(cv&&cv.parentNode)cv.parentNode.insertAdjacentHTML("beforeend",
+        '<div style="position:absolute;inset:0;display:flex;align-items:center;'+
+        'justify-content:center;text-align:center;padding:24px;color:#9fb4d0;font-size:13px">'+
+        '3D view unavailable — three.min.js did not load. Questions, counting and the step '+
+        'debugger below are unaffected.</div>');
+      if(typeof trace==="function")
+        trace("dead","3D STAGE DISABLED: three.min.js did not load. Every other lane of the "+
+          "page - search, counting, the debugger - is unaffected.");
+    }
+    return;
+  }
   if(!built3){ built3=(init3()!==false); if(built3)buildLegend(); }
   physics();
   // count changes rebuild at once; role-only changes coalesce to ~2/s - a burst of completing
@@ -1441,7 +1501,15 @@ async function findEntities(q){
   const raw=String(q).replace(/[?.!]+$/,"").trim();
   const caps=properNouns(raw);
   const asked=w=>ASK_ALIASES.some(([re])=>re.test(" "+w.toLowerCase()+" "));
-  const words=raw.split(/\s+/).filter(Boolean);
+  let words=raw.split(/\s+/).filter(Boolean);
+  // A question longer than WORD_MAX words is read up to the bound and SAYS SO. Truncating in
+  // silence would be the same dishonesty as an undisclosed slice().
+  if(words.length>R.WORD_MAX){
+    if(typeof trace==="function")
+      trace("dead","question is "+words.length+" words; reading the first "+R.WORD_MAX+
+        " as content and reporting the rest as unread - a bound, not an absence");
+    words=words.slice(0,R.WORD_MAX);
+  }
 
   // The RELATION being asked about is framing too. Without this, "what country is Nirauli in"
   // trimmed only "what" - the scan stops at the first non-framing word - leaving "country is"
@@ -1469,7 +1537,12 @@ async function findEntities(q){
 
   // longest contiguous span first; the first that resolves is the entity
   async function bestSpan(list){
-    for(let n=list.length;n>=1;n--){
+    // MEASURED BOUND. Enumerating every contiguous span is O(N^2) spans and each one can cost a
+    // shard fetch, so a long paste took 890 seconds - found by the stress zoo, not by a topic
+    // zoo. Across 165,800 sampled subjects 98.26% of names are <=8 words and 99.83% are <=12,
+    // so spans longer than R.SPAN_MAX cannot match a subject 99.83% of the time. Bounded, and
+    // the bound is disclosed rather than hidden.
+    for(let n=Math.min(list.length,R.SPAN_MAX);n>=1;n--){
       for(let st=0;st+n<=list.length;st++){
         const words2=list.slice(st,st+n);
         if(junkSpan(words2))continue;
@@ -1981,8 +2054,50 @@ async function reason(q,opts){
       const show=goal?rows.filter(r=>relMatches(r.rel,goal)):rows;
       // count disclosed in the header below, and the full set is one click away in the node grid
       const use=(show.length?show:rows).slice(0,8);
+      /* WHAT I UNDERSTOOD. Without this read-back, "why is France important", "what is the
+         qzzxwv of France" and "France zzzqx frobnitz" rendered byte-identical output: a true
+         fact list, presented as if it answered a question the engine never parsed. Every fact
+         being correct is what makes that the most misleading state the page can reach. So the
+         answer now opens by saying which subject it resolved, whether it matched the relation
+         you asked for, and which of your words it could not account for. */
+      {
+        const acct=new Set();
+        for(const e of ents)for(const w of String(e.name).toLowerCase().split(/\s+/))acct.add(w);
+        if(goal)for(const w of String(goal).toLowerCase().split(/\s+/))acct.add(w);
+        const qw=String(q).toLowerCase().replace(/[?.!,'"]+/g," ").split(/\s+/).filter(Boolean);
+        const ASKW=new Set(("what which who whom whose where when why how is are was were be am "+
+          "do does did the a an of in on at to from for with by and or not no it its this that "+
+          "these those there many much type types kind kinds sort sorts have has had can could "+
+          "would should i you we they he she as if than then about into over under between").split(" "));
+        const unread=[...new Set(qw.filter(w=>w.length>2&&!ASKW.has(w)&&!acct.has(w)&&
+          ![...acct].some(a=>a.includes(w)||w.includes(a))))].slice(0,6);
+        const matched=goal&&show.length;
+        out.insertAdjacentHTML("beforeend",
+          '<div class="card '+(matched?"k2":"k0")+'"><div class="claim"><b>What I understood.</b>'+
+          '</div><div class="row"><span class="lbl">subject</span><span><b>'+esc(start.name)+
+          '</b> — '+rows.length.toLocaleString()+' recorded facts'+
+          (target?', and a second entity <b>'+esc(target.name)+'</b> to reach':'')+
+          '</span></div><div class="row"><span class="lbl">asked for</span><span>'+
+          (matched?'the relation <code>'+esc(goal)+'</code>, and it is recorded — the matching '+
+                   'facts are first below'
+           :goal?'the relation <code>'+esc(goal)+'</code>, which <b>'+esc(start.name)+
+                 '</b> does not record. What follows is <b>what is on file, not an answer to '+
+                 'that question</b>.'
+           :'<b>no relation I recognise.</b> I matched a subject but not an ask, so what follows '+
+            'is <b>what is on file about it, not an answer to your question</b>.')+
+          '</span></div>'+
+          (unread.length?'<div class="row"><span class="lbl">could not place</span><span>'+
+            unread.map(w=>'<code>'+esc(w)+'</code>').join(" ")+
+            ' — these words of your question matched no subject and no relation I hold'+
+            '</span></div>':"")+'</div>');
+        trace(matched?"hit":"miss","READ-BACK: subject=\""+start.name+"\" goal="+
+          (goal?"`"+goal+"`"+(show.length?" (recorded)":" (NOT recorded by this subject)")
+              :"none recognised")+
+          (unread.length?"  unplaced words: "+unread.join(", "):""));
+      }
       out.insertAdjacentHTML("beforeend",
-        '<div class="livebar" style="margin-top:10px"><span>DIRECTLY RECORDED about '+
+        '<div class="livebar" style="margin-top:10px"><span>'+
+        (goal&&show.length?'DIRECTLY RECORDED about ':'ON FILE about ')+
         esc(start.name)+' — one hop, no search</span><span>'+rows.length+' facts</span></div>'+
         use.map(r=>{const q=pFor(r.k);
           return '<div class="lrow '+(r.k>=2?"k2":(r.k===1?"k1":"k0"))+'">'+

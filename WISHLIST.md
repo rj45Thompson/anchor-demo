@@ -42,13 +42,18 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | vision loop: engine reads its own map | 🟡 | settled-layout distance orders frontier ties (order only, can never change an answer); every re-rank traced + counted in __visionFlips; NOT yet benchmarked - O8 |
 | ergonomics pass on the geometry (RJ: natural to understand, elegant) | 🟡 | baseline + gridlines where one gridline = ONE IDEAL HOP (rulers read in natural units); two-way selection sync (debugger pick = bright ruler); one-click camera fly-to with instant manual override; winner labelled in place |
 | ⭐ COUNT questions ("how many types of bear have brown hair") | ✅ | needed an INVERSE membership index (7.9M pairs, 241K parents, 67MB) - membership is stored forward-only, so class enumeration was impossible, not hard. Lane enumerates + filters + counts + shows evidence per member; 3/3 in the suite; now the default question |
+| ⭐ stress zoo: 32 question SHAPES + 14 hostile inputs, permanent gate | ✅ | found B23 (890s hang), B24 (byte-identical wrong-question answers), B25 (harness capture bug hid its own results), B26 (THREE load failure silently killed the Ask button) - none reachable by topic-curated testing |
+| B26: THREE-load failure could never again kill the whole page | ✅ | guarded top-level construction + zero-dependency crash trap installed FIRST; reproduced (Ask unwired) and re-verified fixed (Ask wired) headless |
 | autorun REALLY removed (B19) | ✅ | a third autorun lived in the index-load .then(); it also aborted running searches by bumping gen - removing it took chain contrast 6/8 → 7/8 |
 | crash trap | ✅ | any uncaught error becomes a red CRASH line in trace + narration bar; scene-rebuild churn throttled (likeliest crash vector) |
 
 ## Open — in the priority order I set
 
-1. **Crash repro.** RJ reports a crash; the trap now prints a red CRASH line in the trace and
-   the narration bar. Reproduce (needs the preview popup closed or RJ's console), read the line, fix.
+1. **"Write a function" tab: English -> program, same rigor as the reasoning tab.** *(new
+   wish, captured)* Right now this tab only synthesizes code. RJ wants it to ALSO accept a plain-
+   English ask, and show its own understanding read-back (same B24 lesson: say what was parsed
+   before generating) plus the produced program, side by side - the same "watch it think"
+   contract this session just hardened for the reasoning tab, applied to the coding tab.
 2. **UI-in-motion pass (#132)** — now also covers the geometry rack, step debugger, self-check
    marks, resume-from-hop, save/load restore. One watched session collapses every 🟡.
 3. **O8: benchmark the vision loop headless** — run physics() in the harness, A/B SPATIAL on/off

@@ -183,7 +183,85 @@ curve as everything else.
 member's OWN NAME: evidence about what a thing is CALLED, not about what it IS. The bear count
 fell from 11 to **7 attested, 4 named-only**, reported as two separate numbers.
 
+---
+
+## The stress zoo - question SHAPES, not question topics
+
+Every bug above B18 was found by RJ typing one question and me fixing that question. That is not
+testing, it is inching. `stress_zoo.py` generates ~104 questions across **32 shapes** - lookup,
+who/where/when/why/how, yes-no, path, compare, count, superlative, negation, possessive,
+nonsense, absent-relation - with the NOUNS sampled at random from the shipped shards, so the
+topics cannot be curated to flatter the engine. Fourteen more are degenerate or hostile inputs:
+empty, whitespace, one character, 250 words, HTML, SQL-ish, unicode, emoji, two questions at once.
+
+The bar is deliberately NOT "answers everything" - a fact graph honestly cannot answer "why is X
+important". The bar is: **never throw, never render nothing, never route to the wrong lane, and
+say out loud when it has no answer.**
+
+### B23 - entity linking was quadratic in question length (890 seconds on one input)
+`bestSpan` enumerates every contiguous span of the question - O(N^2) of them - and each span can
+trigger a shard fetch. A 250-word question therefore spent **890 seconds** in the parser: a
+self-inflicted denial of service that any visitor could trigger with a paste, and that no
+topic-based zoo could ever have found.
+*Fixed* with a MEASURED bound, not an invented one: across 165,800 sampled subjects, 98.26% of
+subject names are 8 words or fewer and 99.83% are 12 or fewer, so spans longer than 12 words
+cannot match a subject 99.83% of the time. O(N^2) becomes O(N x 12). A question over 60 words is
+read to the bound and SAYS SO. **890s -> 46s**, and it now answers instead of hanging.
+
+### B24 - three completely different questions produced BYTE-IDENTICAL output
+The zoo put these in a row:
+```
+"why is France important"        -> a generic France fact dump
+"what is the qzzxwv of France"   -> the same dump, byte for byte
+"France zzzqx frobnitz"          -> the same dump, byte for byte
+```
+No crash, and every fact in the dump is TRUE - which is precisely what makes this the most
+misleading state the page could reach. The engine found a noun, failed to read the ask, and
+presented what it holds as though it were the answer, in silence. A reader cannot distinguish
+"I answered you" from "I ignored you".
+*Fixed:* every one-hop result now opens with a **read-back** - the subject it resolved, whether
+the asked-for relation was recognised AND recorded, and any words of the question it could not
+place. When the relation is unmatched the panel is headed **ON FILE** rather than DIRECTLY
+RECORDED and states plainly that what follows is not an answer to that question.
+
+### B25 - the harness's own capture made a whole stress run meaningless
+The memoised element stubs appended to a buffer that `innerHTML = ""` did not clear, so every
+question after the first was scored against the FIRST question's output. The run reported
+103/104 clean; it had in truth observed one question 104 times. Recorded because a green bar
+from a test that never looked at the thing is worse than no bar at all - it is the same class of
+error as B3, and it was caught only by reading the actual rendered text.
+
+### B26 - a THREE load hiccup silently killed the ENTIRE page, Ask button included
+RJ reported "I can't hit ask it does nothing" - and it reproduced exactly. `const
+camPos=new T.Vector3(0,0,900)...` ran at the TOP LEVEL of the script, two lines after
+`const T=window.THREE`. If `three.min.js` fails to load for ANY reason - a flaky connection, a
+blocked request, a CDN hiccup, none of them rare on the open internet - `T` is undefined, that
+line throws, and **every line after it never runs**. That includes the crash trap (installed
+later, so it could never catch this), the whole search/count/debugger wiring, and the Ask
+button's own `addEventListener` call thousands of lines below. Confirmed live: three.min.js was
+serving correctly at the time (200, correct bytes) - this was never a permanent break, it was a
+**landmine**: works until one request hiccups, then the entire page goes dark with nothing on
+screen to explain why, and even my own earlier crash trap (B15) could not save it, because that
+trap's registration line is itself downstream of the throw.
+*Fixed*, two layers:
+1. The two risky top-level lines are guarded. On failure the page runs with `THREE_OK=false`,
+   harmless stand-ins take the place of the 3D objects, and **every other lane keeps working** -
+   Ask, search, counting, the debugger. Only the 3D view degrades, with a plain on-page notice
+   instead of staying dark forever.
+2. A zero-dependency crash trap is now the literal FIRST code in the script, before anything
+   that could throw, using nothing but `document.getElementById`/`window.onerror` so it cannot
+   itself be the thing that fails - a safety net for whatever this did not anticipate.
+Reproduced and re-verified headless: with THREE deliberately broken, `tgo click handler
+wired: true` (was `false`), script completes (was: threw, halted).
+
+### The stress zoo is now a PERMANENT gate
+`stress_zoo.py` + harness STRESS mode (question SHAPES, not topics - see below) is wired into
+`suite.mjs` as bar 3 of 5, floor `stressHard: 0`. This is what found B23-B26; it stays in the
+gate so this class of bug - the ones no topic-curated test could ever see - cannot ship silently
+again.
+
 ## OPEN
+
 
 
 ### O-crash - RJ reports "it seems to crash"; not yet reproduced

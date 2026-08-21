@@ -1,0 +1,104 @@
+{"stress": true, "shape": "lookup", "expect": "answer", "question": "what is Q17344373"}
+{"stress": true, "shape": "lookup", "expect": "answer", "question": "what is Tōkai Gakki"}
+{"stress": true, "shape": "lookup", "expect": "answer", "question": "what is James D.Y. Collier"}
+{"stress": true, "shape": "lookup", "expect": "answer", "question": "what is Q17344373"}
+{"stress": true, "shape": "lookup", "expect": "answer", "question": "what is Porin"}
+{"stress": true, "shape": "relation", "expect": "answer", "question": "what is the capital of Scaphosepalum"}
+{"stress": true, "shape": "relation", "expect": "answer", "question": "what is the capital of Overton United F.C."}
+{"stress": true, "shape": "relation", "expect": "answer", "question": "what is the capital of Noel Peyton"}
+{"stress": true, "shape": "relation", "expect": "answer", "question": "what is the capital of Nicole Schafer"}
+{"stress": true, "shape": "relation", "expect": "answer", "question": "what is the capital of James D.Y. Collier"}
+{"stress": true, "shape": "who", "expect": "answer", "question": "who founded General Juan Madariaga"}
+{"stress": true, "shape": "who", "expect": "answer", "question": "who founded Scaphosepalum"}
+{"stress": true, "shape": "who", "expect": "answer", "question": "who founded Noel Peyton"}
+{"stress": true, "shape": "who", "expect": "answer", "question": "who founded Tōkai Gakki"}
+{"stress": true, "shape": "who", "expect": "answer", "question": "who founded CÃ¢rligele"}
+{"stress": true, "shape": "where", "expect": "answer", "question": "where is Scaphosepalum"}
+{"stress": true, "shape": "where", "expect": "answer", "question": "where is Norton Strange Townshend"}
+{"stress": true, "shape": "where", "expect": "answer", "question": "where is Chalatenango"}
+{"stress": true, "shape": "where", "expect": "answer", "question": "where is Porin"}
+{"stress": true, "shape": "where", "expect": "answer", "question": "where is Scaphosepalum"}
+{"stress": true, "shape": "when", "expect": "answer", "question": "when was Norton Strange Townshend founded"}
+{"stress": true, "shape": "when", "expect": "answer", "question": "when was James D.Y. Collier founded"}
+{"stress": true, "shape": "when", "expect": "answer", "question": "when was Filiz Akın founded"}
+{"stress": true, "shape": "when", "expect": "answer", "question": "when was James D.Y. Collier founded"}
+{"stress": true, "shape": "when", "expect": "answer", "question": "when was Noel Peyton founded"}
+{"stress": true, "shape": "why", "expect": "answer", "question": "why is Noel Peyton important"}
+{"stress": true, "shape": "why", "expect": "answer", "question": "why is Dayıpınarı important"}
+{"stress": true, "shape": "why", "expect": "answer", "question": "why is Overton United F.C. important"}
+{"stress": true, "shape": "why", "expect": "answer", "question": "why is Nicole Schafer important"}
+{"stress": true, "shape": "why", "expect": "answer", "question": "why is Norton Strange Townshend important"}
+{"stress": true, "shape": "how", "expect": "answer", "question": "how does Q17344373 work"}
+{"stress": true, "shape": "how", "expect": "answer", "question": "how does Midland County, Texas work"}
+{"stress": true, "shape": "how", "expect": "answer", "question": "how does Dmitri Savitski work"}
+{"stress": true, "shape": "how", "expect": "answer", "question": "how does Norton Strange Townshend work"}
+{"stress": true, "shape": "how", "expect": "answer", "question": "how does Nicole Schafer work"}
+{"stress": true, "shape": "yesno", "expect": "answer", "question": "is Dmitri Savitski a Porin"}
+{"stress": true, "shape": "yesno", "expect": "answer", "question": "is Filiz Akın a Midland County, Texas"}
+{"stress": true, "shape": "yesno", "expect": "answer", "question": "is CÃ¢rligele a Porin"}
+{"stress": true, "shape": "yesno", "expect": "answer", "question": "is Filiz Akın a CÃ¢rligele"}
+{"stress": true, "shape": "yesno", "expect": "answer", "question": "is Dayıpınarı a Dmitri Savitski"}
+{"stress": true, "shape": "path", "expect": "answer", "question": "is Juanita Reina connected to Midland County, Texas"}
+{"stress": true, "shape": "path", "expect": "answer", "question": "is James D.Y. Collier connected to Nicole Schafer"}
+{"stress": true, "shape": "path", "expect": "answer", "question": "is Midland County, Texas connected to Juanita Reina"}
+{"stress": true, "shape": "path", "expect": "answer", "question": "is Juanita Reina connected to Wallace Shaw"}
+{"stress": true, "shape": "path", "expect": "answer", "question": "is Norton Strange Townshend connected to Nicole Schafer"}
+{"stress": true, "shape": "compare", "expect": "answer", "question": "what is the difference between Filiz Akın and Noel Peyton"}
+{"stress": true, "shape": "compare", "expect": "answer", "question": "what is the difference between Wallace Shaw and Midland County, Texas"}
+{"stress": true, "shape": "compare", "expect": "answer", "question": "what is the difference between CÃ¢rligele and Porin"}
+{"stress": true, "shape": "compare", "expect": "answer", "question": "what is the difference between Dayıpınarı and Scaphosepalum"}
+{"stress": true, "shape": "compare", "expect": "answer", "question": "what is the difference between Midland County, Texas and General Juan Madariaga"}
+{"stress": true, "shape": "count", "expect": "count", "question": "how many types of Chalatenango are there"}
+{"stress": true, "shape": "count", "expect": "count", "question": "how many types of Porin are there"}
+{"stress": true, "shape": "count", "expect": "count", "question": "how many types of Dmitri Savitski are there"}
+{"stress": true, "shape": "count", "expect": "count", "question": "how many types of Dmitri Savitski are there"}
+{"stress": true, "shape": "count", "expect": "count", "question": "how many types of Norton Strange Townshend are there"}
+{"stress": true, "shape": "countprop", "expect": "count", "question": "how many types of Chalatenango have Q17344373"}
+{"stress": true, "shape": "countprop", "expect": "count", "question": "how many types of James D.Y. Collier have Q17344373"}
+{"stress": true, "shape": "countprop", "expect": "count", "question": "how many types of Overton United F.C. have Nicole Schafer"}
+{"stress": true, "shape": "countprop", "expect": "count", "question": "how many types of Tōkai Gakki have Scaphosepalum"}
+{"stress": true, "shape": "countprop", "expect": "count", "question": "how many types of Chalatenango have Tōkai Gakki"}
+{"stress": true, "shape": "superlativ", "expect": "answer", "question": "what is the largest Wallace Shaw"}
+{"stress": true, "shape": "superlativ", "expect": "answer", "question": "what is the largest Porin"}
+{"stress": true, "shape": "superlativ", "expect": "answer", "question": "what is the largest Dayıpınarı"}
+{"stress": true, "shape": "superlativ", "expect": "answer", "question": "what is the largest James D.Y. Collier"}
+{"stress": true, "shape": "superlativ", "expect": "answer", "question": "what is the largest Dmitri Savitski"}
+{"stress": true, "shape": "negation", "expect": "answer", "question": "what is not a Filiz Akın"}
+{"stress": true, "shape": "negation", "expect": "answer", "question": "what is not a Dayıpınarı"}
+{"stress": true, "shape": "negation", "expect": "answer", "question": "what is not a Tōkai Gakki"}
+{"stress": true, "shape": "negation", "expect": "answer", "question": "what is not a Norton Strange Townshend"}
+{"stress": true, "shape": "negation", "expect": "answer", "question": "what is not a Norton Strange Townshend"}
+{"stress": true, "shape": "chain2", "expect": "answer", "question": "the capital of the country Noel Peyton is in"}
+{"stress": true, "shape": "chain2", "expect": "answer", "question": "the capital of the country Midland County, Texas is in"}
+{"stress": true, "shape": "chain2", "expect": "answer", "question": "the capital of the country Scaphosepalum is in"}
+{"stress": true, "shape": "chain2", "expect": "answer", "question": "the capital of the country Norton Strange Townshend is in"}
+{"stress": true, "shape": "chain2", "expect": "answer", "question": "the capital of the country General Juan Madariaga is in"}
+{"stress": true, "shape": "possessive", "expect": "answer", "question": "Q17344373's founder"}
+{"stress": true, "shape": "possessive", "expect": "answer", "question": "Dayıpınarı's founder"}
+{"stress": true, "shape": "possessive", "expect": "answer", "question": "Porin's founder"}
+{"stress": true, "shape": "possessive", "expect": "answer", "question": "General Juan Madariaga's founder"}
+{"stress": true, "shape": "possessive", "expect": "answer", "question": "James D.Y. Collier's founder"}
+{"stress": true, "shape": "nonsense", "expect": "abstain", "question": "General Juan Madariaga zzzqx frobnitz"}
+{"stress": true, "shape": "nonsense", "expect": "abstain", "question": "Nicole Schafer zzzqx frobnitz"}
+{"stress": true, "shape": "nonsense", "expect": "abstain", "question": "Juanita Reina zzzqx frobnitz"}
+{"stress": true, "shape": "nonsense", "expect": "abstain", "question": "Porin zzzqx frobnitz"}
+{"stress": true, "shape": "nonsense", "expect": "abstain", "question": "Scaphosepalum zzzqx frobnitz"}
+{"stress": true, "shape": "absent", "expect": "abstain", "question": "what is the qzzxwv of Q17344373"}
+{"stress": true, "shape": "absent", "expect": "abstain", "question": "what is the qzzxwv of Dmitri Savitski"}
+{"stress": true, "shape": "absent", "expect": "abstain", "question": "what is the qzzxwv of Q17344373"}
+{"stress": true, "shape": "absent", "expect": "abstain", "question": "what is the qzzxwv of Norton Strange Townshend"}
+{"stress": true, "shape": "absent", "expect": "abstain", "question": "what is the qzzxwv of Wallace Shaw"}
+{"stress": true, "shape": "empty", "expect": "safe", "question": ""}
+{"stress": true, "shape": "space", "expect": "safe", "question": "   "}
+{"stress": true, "shape": "punct", "expect": "safe", "question": "???"}
+{"stress": true, "shape": "onechar", "expect": "safe", "question": "a"}
+{"stress": true, "shape": "verylong", "expect": "safe", "question": "what is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is the thing that is a car"}
+{"stress": true, "shape": "html", "expect": "safe", "question": "<script>alert(1)</script> what is a car"}
+{"stress": true, "shape": "regexbomb", "expect": "safe", "question": "what is a (((((((((car)))))))))"}
+{"stress": true, "shape": "unicode", "expect": "safe", "question": "什么是汽车"}
+{"stress": true, "shape": "emoji", "expect": "safe", "question": "what is 🐻"}
+{"stress": true, "shape": "numbers", "expect": "safe", "question": "12345 67890"}
+{"stress": true, "shape": "sqlish", "expect": "safe", "question": "what is a car'; DROP TABLE facts;--"}
+{"stress": true, "shape": "allcaps", "expect": "answer", "question": "WHAT IS THE CAPITAL OF FRANCE"}
+{"stress": true, "shape": "noquestion", "expect": "answer", "question": "cars"}
+{"stress": true, "shape": "twoq", "expect": "safe", "question": "what is a car and what is a dog"}
