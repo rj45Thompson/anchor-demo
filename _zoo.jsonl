@@ -1,0 +1,30 @@
+{"question": "what country is Tbilisi State Conservatoire in", "subject": "Tbilisi State Conservatoire", "relation": "country", "expected": "Georgia", "anchors": 2}
+{"question": "what country is Stary Cieszyn in", "subject": "Stary Cieszyn", "relation": "country", "expected": "Poland", "anchors": 3}
+{"question": "where was Han Ying born", "subject": "Han Ying", "relation": "place of birth", "expected": "Liaoning", "anchors": 2}
+{"question": "what country is Nirauli in", "subject": "Nirauli", "relation": "country", "expected": "Nepal", "anchors": 3}
+{"question": "what country is Uitgeest railway station in", "subject": "Uitgeest railway station", "relation": "country", "expected": "Netherlands", "anchors": 3}
+{"question": "what country is Mehrabad, Arak in", "subject": "Mehrabad, Arak", "relation": "country", "expected": "Iran", "anchors": 2}
+{"question": "what country is Ccotapampa in", "subject": "Ccotapampa", "relation": "country", "expected": "Peru", "anchors": 2}
+{"question": "what country is Podbrest in", "subject": "Podbrest", "relation": "country", "expected": "Croatia", "anchors": 4}
+{"question": "what country is Wintersingen in", "subject": "Wintersingen", "relation": "country", "expected": "Switzerland", "anchors": 4}
+{"question": "what country is Sylan in", "subject": "Sylan", "relation": "country", "expected": "Sweden", "anchors": 2}
+{"question": "where was J. J. Johnston born", "subject": "J. J. Johnston", "relation": "place of birth", "expected": "Chicago", "anchors": 2}
+{"question": "where was Romain Argyroudis born", "subject": "Romain Argyroudis", "relation": "place of birth", "expected": "Mulhouse", "anchors": 4}
+{"question": "where was Daniel Bohane born", "subject": "Daniel Bohane", "relation": "place of birth", "expected": "Tralee", "anchors": 2}
+{"question": "where was Jacek Bednarski born", "subject": "Jacek Bednarski", "relation": "place of birth", "expected": "Krak\u00f3w", "anchors": 2}
+{"question": "who performed Good to Go Lover", "subject": "Good to Go Lover", "relation": "performer", "expected": "Gwen Guthrie", "anchors": 3}
+{"question": "what country is Kurumandur in", "subject": "Kurumandur", "relation": "country", "expected": "India", "anchors": 4}
+{"question": "who wrote Anastasia at This Address", "subject": "Anastasia at This Address", "relation": "author", "expected": "Lois Lowry", "anchors": 4}
+{"question": "what genre is Let the Music Take Control", "subject": "Let the Music Take Control", "relation": "genre", "expected": "Chicago house", "anchors": 2}
+{"question": "where was Doug Beach born", "subject": "Doug Beach", "relation": "place of birth", "expected": "Watford", "anchors": 2}
+{"question": "what country is Pierre Auger Observatory in", "subject": "Pierre Auger Observatory", "relation": "country", "expected": "Argentina", "anchors": 2}
+{"question": "what country is Geleen in", "subject": "Geleen", "relation": "country", "expected": "Netherlands", "anchors": 4}
+{"question": "what country is Gornje Podoto\u010dje in", "subject": "Gornje Podoto\u010dje", "relation": "country", "expected": "Croatia", "anchors": 3}
+{"question": "where was Hartman Toromba born", "subject": "Hartman Toromba", "relation": "place of birth", "expected": "Windhoek", "anchors": 4}
+{"question": "who performed The 3rd Mini Album", "subject": "The 3rd Mini Album", "relation": "performer", "expected": "Taegoon", "anchors": 3}
+{"question": "who directed A Heart Beats for You", "subject": "A Heart Beats for You", "relation": "director", "expected": "Joe St\u00f6ckel", "anchors": 2}
+{"question": "what country is Chavei in", "subject": "Chavei", "relation": "country", "expected": "Bulgaria", "anchors": 3}
+{"question": "where was Toni Mihajlovski born", "subject": "Toni Mihajlovski", "relation": "place of birth", "expected": "Kumanovo", "anchors": 2}
+{"question": "where was Sandali Sinha born", "subject": "Sandali Sinha", "relation": "place of birth", "expected": "Muzaffarpur", "anchors": 2}
+{"question": "what country is Cordillera Pelada in", "subject": "Cordillera Pelada", "relation": "country", "expected": "Chile", "anchors": 3}
+{"question": "what country is Paloh in", "subject": "Paloh", "relation": "country", "expected": "Malaysia", "anchors": 4}

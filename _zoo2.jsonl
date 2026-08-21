@@ -1,0 +1,40 @@
+{"question": "who performed She Thinks That She'll Marry", "subject": "She Thinks That She'll Marry", "relation": "performer", "expected": "Judy Rodman", "anchors": 2}
+{"question": "what country is Greater Santo Domingo in", "subject": "Greater Santo Domingo", "relation": "country", "expected": "Dominican Republic", "anchors": 3}
+{"question": "what country is Verkhneye Dubrovo, Sverdlovsk Oblast in", "subject": "Verkhneye Dubrovo, Sverdlovsk Oblast", "relation": "country", "expected": "Russia", "anchors": 2}
+{"question": "what genre is Clef nite", "subject": "Clef nite", "relation": "genre", "expected": "Soul music", "anchors": 2}
+{"question": "what country is Syriac Catholic Archeparchy of Mosul in", "subject": "Syriac Catholic Archeparchy of Mosul", "relation": "country", "expected": "Iraq", "anchors": 2}
+{"question": "what country is Athletic Club Femenino in", "subject": "Athletic Club Femenino", "relation": "country", "expected": "Spain", "anchors": 2}
+{"question": "where was Anna Giordano Bruno born", "subject": "Anna Giordano Bruno", "relation": "place of birth", "expected": "San Vito al Tagliamento", "anchors": 2}
+{"question": "who performed Inhale Positivity", "subject": "Inhale Positivity", "relation": "performer", "expected": "Lazyboy", "anchors": 2}
+{"question": "what country is Teluk Rubiah in", "subject": "Teluk Rubiah", "relation": "country", "expected": "Malaysia", "anchors": 3}
+{"question": "what country is Selfkant in", "subject": "Selfkant", "relation": "country", "expected": "Germany", "anchors": 2}
+{"question": "what country is Rio Grande City Consolidated Independent School District in", "subject": "Rio Grande City Consolidated Independent School District", "relation": "country", "expected": "United States", "anchors": 2}
+{"question": "what country is Wilam\u00f3wka in", "subject": "Wilam\u00f3wka", "relation": "country", "expected": "Poland", "anchors": 2}
+{"question": "what country is Skrzeszewo \u017bukowskie in", "subject": "Skrzeszewo \u017bukowskie", "relation": "country", "expected": "Poland", "anchors": 2}
+{"question": "what is the capital of Bayankhongor Province", "subject": "Bayankhongor Province", "relation": "capital", "expected": "Bayankhongor", "anchors": 2}
+{"question": "where was Dieter Kindlmann born", "subject": "Dieter Kindlmann", "relation": "place of birth", "expected": "Sonthofen", "anchors": 2}
+{"question": "where was Elisabeth Berenberg born", "subject": "Elisabeth Berenberg", "relation": "place of birth", "expected": "Hamburg", "anchors": 3}
+{"question": "what country is M\u00e4rsta in", "subject": "M\u00e4rsta", "relation": "country", "expected": "Sweden", "anchors": 3}
+{"question": "where was Simon Ramo born", "subject": "Simon Ramo", "relation": "place of birth", "expected": "Salt Lake City", "anchors": 2}
+{"question": "what country is Neuville-Vitasse in", "subject": "Neuville-Vitasse", "relation": "country", "expected": "France", "anchors": 3}
+{"question": "what country is CJEB-FM in", "subject": "CJEB-FM", "relation": "country", "expected": "Canada", "anchors": 2}
+{"question": "what country is Guyim, Mamasani in", "subject": "Guyim, Mamasani", "relation": "country", "expected": "Iran", "anchors": 2}
+{"question": "what country is Wojs\u0142awice, Lower Silesian Voivodeship in", "subject": "Wojs\u0142awice, Lower Silesian Voivodeship", "relation": "country", "expected": "Poland", "anchors": 2}
+{"question": "what country is Chenar, Abadeh in", "subject": "Chenar, Abadeh", "relation": "country", "expected": "Iran", "anchors": 2}
+{"question": "where was Frida Nordstrand born", "subject": "Frida Nordstrand", "relation": "place of birth", "expected": "Sandviken", "anchors": 3}
+{"question": "where was Oumar Pouye born", "subject": "Oumar Pouye", "relation": "place of birth", "expected": "Senegal", "anchors": 3}
+{"question": "where was Maya MacGuineas born", "subject": "Maya MacGuineas", "relation": "place of birth", "expected": "Washington, D.C.", "anchors": 2}
+{"question": "what country is Punta de Lobos in", "subject": "Punta de Lobos", "relation": "country", "expected": "Chile", "anchors": 2}
+{"question": "where was Mohamed Ali Nafkha born", "subject": "Mohamed Ali Nafkha", "relation": "place of birth", "expected": "Sousse", "anchors": 4}
+{"question": "what country is Kongsvinger Line in", "subject": "Kongsvinger Line", "relation": "country", "expected": "Norway", "anchors": 3}
+{"question": "what country is Petrolia, Ontario in", "subject": "Petrolia, Ontario", "relation": "country", "expected": "Canada", "anchors": 2}
+{"question": "what country is Maisnil-l\u00e8s-Ruitz in", "subject": "Maisnil-l\u00e8s-Ruitz", "relation": "country", "expected": "France", "anchors": 3}
+{"question": "where was Pirkko H\u00e4m\u00e4l\u00e4inen born", "subject": "Pirkko H\u00e4m\u00e4l\u00e4inen", "relation": "place of birth", "expected": "Helsinki", "anchors": 2}
+{"question": "what country is Hortob\u00e1gy in", "subject": "Hortob\u00e1gy", "relation": "country", "expected": "Hungary", "anchors": 3}
+{"question": "what country is Heart Research UK in", "subject": "Heart Research UK", "relation": "country", "expected": "United Kingdom", "anchors": 2}
+{"question": "who wrote Owl Babies", "subject": "Owl Babies", "relation": "author", "expected": "Martin Waddell", "anchors": 3}
+{"question": "what genre is Kelly Garni", "subject": "Kelly Garni", "relation": "genre", "expected": "hard rock", "anchors": 2}
+{"question": "what country is Troup Independent School District in", "subject": "Troup Independent School District", "relation": "country", "expected": "United States", "anchors": 2}
+{"question": "where was Topex Robinson born", "subject": "Topex Robinson", "relation": "place of birth", "expected": "Olongapo", "anchors": 2}
+{"question": "who founded Stan Lee Media", "subject": "Stan Lee Media", "relation": "founded by", "expected": "Peter F. Paul", "anchors": 2}
+{"question": "what country is Hammelburg in", "subject": "Hammelburg", "relation": "country", "expected": "Germany", "anchors": 3}

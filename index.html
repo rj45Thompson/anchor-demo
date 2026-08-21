@@ -1085,51 +1085,66 @@ async function findStart(q,goal){
   }
   return null;
 }
-/* Find EVERY entity the question names, longest span first. "is a caliper used in a car" names
-   two of them, and asking "from caliper, find relation R" was never going to answer it - the
-   question is whether a PATH exists between two known nodes. Worse, the old single-subject reader
-   glued the leftover words into "Used car" and set off from an entity nobody asked about. */
+/* ENTITY LINKING, redesigned. The previous version stripped stop-words BEFORE forming spans and
+   then preferred whichever fragment was best-attested, which shredded ordinary names: "Tbilisi
+   State Conservatoire" became [Tbilisi | State | conservatoire], "Anastasia at This Address"
+   became [Anastasia | at | address], "J. J. Johnston" became [J. | J. | Johnston]. Measured on 30
+   uncurated questions sampled from the shipped shards, that was 16 of 18 failures.
+
+   The rule now is the standard one for entity linking, and it is a rule rather than a pile of
+   special cases: LONGEST CONTIGUOUS SPAN WINS. Internal function words are kept, because they are
+   part of the name; only the question's own framing is trimmed from the ends. A second entity is
+   sought in what is left over, so "is a caliper used in a car" still finds both. */
+const LEAD=new Set(("what whats which who whom whose why where when how is are was were am does do "+
+  "did a an the tell me about and or please can you know").split(" "));
+const TAIL=new Set(("in on at of from by is are was were located born the a an").split(" "));
+
 async function findEntities(q){
-  const ql=String(q).toLowerCase().trim().replace(/[?.!]+$/,"");
-  const caps=properNouns(q);
-  const asked=x=>ASK_ALIASES.some(([re])=>re.test(" "+x+" "));
-  const w=ql.split(/[\s',]+/).filter(x=>x&&!STOP.has(x)&&!asked(x));
-  const found=[],used=new Set();
-  for(let n=Math.min(w.length,4);n>=1;n--){
-    for(let i=0;i+n<=w.length;i++){
-      if([...Array(n).keys()].some(k=>used.has(i+k)))continue;   // no overlapping spans
-      const ph=w.slice(i,i+n).join(" ");
-      let best=null;
-      for(const v of variantsOf(ph)){
-        const vl=v.toLowerCase();
-        if(RELSET.has(vl)&&!vl.split(/\s+/).some(x=>caps.has(x)))continue;
-        const f=await factsOf(v);
-        if(f.length){const b=Math.max(...f.map(x=>x.k));
-          if(!best||b>best.best)best={name:v,facts:f,best:b};}
+  const raw=String(q).replace(/[?.!]+$/,"").trim();
+  const caps=properNouns(raw);
+  const asked=w=>ASK_ALIASES.some(([re])=>re.test(" "+w.toLowerCase()+" "));
+  const words=raw.split(/\s+/).filter(Boolean);
+
+  // The RELATION being asked about is framing too. Without this, "what country is Nirauli in"
+  // trimmed only "what" - the scan stops at the first non-framing word - leaving "country is"
+  // to win as a longer span than "Nirauli", and there really is a subject called "Country Is".
+  const goalRel=(readQuery(raw).goal||"").toLowerCase();
+  const frame=new Set([...LEAD,...goalRel.split(/\s+/).filter(Boolean)]);
+  const frameTail=new Set([...TAIL,...goalRel.split(/\s+/).filter(Boolean)]);
+  const isFrame=(w,set)=>set.has(w.toLowerCase())||asked(w);
+
+  // trim the question's framing off both ends, never out of the middle
+  let i=0,j=words.length;
+  while(i<j&&isFrame(words[i],frame))i++;
+  while(j>i&&isFrame(words[j-1],frameTail))j--;
+  const core=words.slice(i,j);
+  if(!core.length)return [];
+
+  // longest contiguous span first; the first that resolves is the entity
+  async function bestSpan(list){
+    for(let n=list.length;n>=1;n--){
+      for(let st=0;st+n<=list.length;st++){
+        const ph=list.slice(st,st+n).join(" ");
+        if(n===1&&(isFrame(ph,frame)||isFrame(ph,frameTail)))continue;
+        for(const v of variantsOf(ph)){
+          const vl=v.toLowerCase();
+          // a bare relation word is not a subject, unless it is capitalised in the question
+          if(RELSET.has(vl)&&!vl.split(/\s+/).some(x=>caps.has(x)))continue;
+          const f=await factsOf(v);
+          if(f.length)return {name:v,facts:f,best:Math.max(...f.map(x=>x.k)),st,n};
+        }
       }
-      if(best){found.push(best);for(let k=0;k<n;k++)used.add(i+k);}
     }
+    return null;
   }
-  // Longest-span-first can swallow a question whole: "does a car have a wheel" resolved to the
-  // single compound entity "car wheel" (6 facts) instead of car (401) and wheel, so there were
-  // never two endpoints to find a path between. When one multi-word entity is all we have, try
-  // the split and PREFER it when the parts are better attested than the compound - the same
-  // evidence-decides rule the rest of the page uses, applied to reading rather than to ranking.
-  if(found.length===1&&found[0].name.includes(" ")){
-    const parts=[];
-    for(const wd of found[0].name.split(/\s+/)){
-      let best=null;
-      for(const v of variantsOf(wd)){
-        const f=await factsOf(v);
-        if(f.length&&(!best||f.length>best.facts.length))
-          best={name:v,facts:f,best:Math.max(...f.map(x=>x.k))};
-      }
-      if(best)parts.push(best);
-    }
-    if(parts.length>1&&Math.max(...parts.map(p=>p.facts.length))>found[0].facts.length)return parts;
-  }
-  return found;
+  const first=await bestSpan(core);
+  if(!first)return [];
+  // a second entity, if the question named one, comes from the words the first did not consume
+  const rest=core.slice(0,first.st).concat(core.slice(first.st+first.n));
+  const second=rest.length?await bestSpan(rest):null;
+  return second?[first,second]:[first];
 }
+
 /* pull a node's neighbours into the graph (click-to-expand, and the search's own frontier step) */
 async function expand(node){
   badge("fetching shard "+String(shardOf(node.id)).padStart(3,"0")+" · "+node.id);
