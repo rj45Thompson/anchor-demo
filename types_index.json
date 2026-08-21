@@ -1,0 +1,15 @@
+{
+ "nshard": 512,
+ "parents": 241099,
+ "pairs": 7903120,
+ "bytes": 67298553,
+ "relations": [
+  "subclass of",
+  "instance of",
+  "parent taxon",
+  "cn:IsA",
+  "P31",
+  "P279"
+ ],
+ "note": "inverse membership index built from the shipped shards; adds no facts"
+}

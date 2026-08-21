@@ -240,7 +240,7 @@ it.</div>
 <strong>chains</strong> them, hop by hop, over 66 million facts — and when it cannot reach the
 target it abstains, goes and learns what else that thing is called, and tries again.</p>
 <div class="ask">
-  <input id="tq" placeholder="capital of the country Melbourne is in" autocomplete="off">
+  <input id="tq" placeholder="how many types of bear have brown hair" autocomplete="off">
   <button id="tgo" disabled>loading…</button>
 </div>
 
@@ -295,6 +295,13 @@ program, graph.</p></div>
 what the engine actually did for <em>that</em> question — how it read it, what it opened, what
 completed, and what the numbers mean. Nothing here is pre-written; it is generated from the same
 counters the trace shows.</p></div>
+<p class="small"><b>Counting questions</b> ("how many types of bear have brown hair") use a
+second shipped artifact: an <b>inverse membership index</b>, 7,903,120 parent&rarr;child pairs
+over 241,099 classes, built by re-reading the shipped shards. It adds <b>no facts</b> &mdash;
+membership is only stored one way (<code>grizzly bear &rarr;is a&rarr; bear</code>) and the
+shards are keyed by subject, so without it a class's members cannot be enumerated at all. A
+count states what the graph <em>records</em>, names the read bound, and keeps "named for it"
+separate from "attested by a fact".</p>
 <p class="small"><b>Hand-written:</b> a listed table of about fifteen question-word aliases, so
 "who founded X" reaches <code>founded by</code>. Nothing about any specific subject is
 special-cased and no answer is stored. A "no chain" result is <b>not proof there is none</b> —
@@ -613,13 +620,12 @@ try{
   $("factsWarn").insertAdjacentHTML("beforeend"," <em>Index loaded: "+
     d.subjects.toLocaleString()+" subjects, "+d.facts.toLocaleString()+" facts, "+
     d.nshard+" shards.</em>");
-  // A visitor who never types anything should still see the system actually work - answer the
-  // placeholder example itself, unprompted, as soon as the index is ready. Never overwrites
-  // something the visitor already typed (checked at call time, not at index-load time, since the
-  // index can finish loading while someone is mid-keystroke).
-  if($("tgo")&&!$("tq").value.trim()){          // landing tab: show it working immediately
-    $("tq").value="is a caliper used in a car"; reason($("tq").value);
-  }
+  // NO AUTORUN. This block used to answer a question of its own the moment the index loaded.
+  // It was removed once already from the boot tail and the tab handler, and survived HERE -
+  // which is why the page kept starting a search nobody asked for, and why the first counting
+  // run aborted (its reason() call bumped `gen` out from under the one in progress). The page
+  // now does nothing until it is asked. The button is simply enabled instead.
+  if($("tgo")){ $("tgo").textContent="Ask"; $("tgo").disabled=false; }
 }).catch(e=>{$("go").textContent="index failed";console.error(e)});
 }
 
@@ -669,7 +675,8 @@ const R={
   NODE_R:5.5, HIT_R:16, // node radius, and click-test radius in screen px
   RELAX:2,              // physics substeps per animation frame
   STEP_MS:460,          // pause between replayed chain steps, slow enough to read
-  SPATIAL:1             // the vision loop: the engine reads its own settled map (order only)
+  SPATIAL:1,            // the vision loop: the engine reads its own settled map (order only)
+  COUNT_MAX:40          // members READ per counting question; the shortfall is reported
 };
 let G={nodes:[],edges:[],byId:new Map()};
 let gen=0;      // search generation: a newer question cancels an older one
@@ -1140,6 +1147,38 @@ async function factsOf(name){
     return{rel:RELS[f[0]]||"?",obj:f[1],k:a.length,anchors:a,heldOut:!!(src&TRUTH_BIT)};
   });
 }
+/* ---- THE INVERSE MEMBERSHIP INDEX ------------------------------------------------------
+   The graph stores membership one way only - `grizzly bear -IsA-> bear` - and the shards are
+   keyed by SUBJECT, so "which things are bears" was not a hard query, it was an IMPOSSIBLE one:
+   the direction simply is not there. build_types_index.mjs inverts every membership fact into
+   parent -> [child, k], bucketed by the PARENT's name in the same 512-way scheme, so a class
+   lookup costs one fetch through the same cache path. No fact is added or invented here; a fact
+   already in the graph is merely made readable in the other direction. */
+const tcache=new Map();
+async function loadTypeShard(i){
+  if(tcache.has(i))return tcache.get(i);
+  const r=await fetch("types/"+String(i).padStart(3,"0")+".json.gz");
+  if(!r.ok)throw new Error("types http "+r.status);
+  let txt;
+  if(typeof DecompressionStream!=="undefined"){
+    txt=await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).text();
+  }else{ txt=await r.text(); }
+  const d=JSON.parse(txt);
+  if(tcache.size>24){tcache.delete(tcache.keys().next().value);}
+  tcache.set(i,d);return d;
+}
+async function typesOf(name){
+  let d;try{d=await loadTypeShard(shardOf(name));}catch(e){return[];}
+  const raw=d[name];if(!raw||!raw.length)return[];
+  // r[1] is the SOURCE BITMASK, not a count - the same encoding factsOf decodes. Reading it as
+  // a number made a single-source membership look like 128 independent sources, which is
+  // exactly the kind of confidently-wrong number this page exists to not produce.
+  return raw.map(r=>{
+    const src=r[1],a=[];
+    for(const b in SOURCES){const bit=+b;if((src&bit)&&bit!==TRUTH_BIT)a.push(SOURCES[bit]);}
+    return {name:r[0],k:a.length,anchors:a};
+  }).sort((x,y)=>y.k-x.k);
+}
 function variantsOf(s){
   const t=String(s).trim();
   const base=[t,t.replace(/\b\w/g,c=>c.toUpperCase()),
@@ -1304,6 +1343,35 @@ function readQuery(q){
     .sort((a,b)=>b.length-a.length);
   return {goal:cands[0]||null};
 }
+/* COUNTING QUESTIONS are a different shape from lookups and chains: they name a CLASS and a
+   PROPERTY and want the size of the subset. "how many types of bear have brown hair" is not a
+   path and not a relation lookup - it is set enumeration plus a filter, and answering it with
+   either of the other two lanes is how a system ends up confidently answering the wrong
+   question. Grammar handled, explicitly: "how many [types|kinds|sorts|species|breeds] of X
+   <have|has|are|is|with> P", and the bare "how many X <have|are> P". */
+const COUNTSTOP=new Set(("the a an of and or in on at to from with by its their any some "+
+  "that this these those").split(" "));
+function readCount(q){
+  // "are there" / "is there" / "exist" is the ABSENCE of a filter, not a property called
+  // "there". Stripped before matching, or the have|are branch wins and counts members
+  // carrying the word "there" - which is none of them, reported as a confident zero.
+  const raw=String(q).replace(/[?.!]+$/,"")
+    .replace(/\s+(?:are|is)\s+there$/i,"").replace(/\s+exists?$/i,"").trim();
+  let m=raw.match(/^how\s+many\s+(?:types?|kinds?|sorts?|species|breeds?|varieties)\s+of\s+(.+?)\s+(?:have|has|had|are|is|with|possess)\s+(.+)$/i);
+  if(!m)m=raw.match(/^how\s+many\s+(.+?)\s+(?:have|has|had|are|is|with|possess)\s+(.+)$/i);
+  if(!m){
+    // "how many types of bear are there" - the whole class, no filter
+    const m2=raw.match(/^how\s+many\s+(?:types?|kinds?|sorts?|species|breeds?|varieties)\s+of\s+(.+?)(?:\s+are\s+there)?$/i);
+    if(m2)return {cls:m2[1].trim(),prop:"",words:[]};
+    return null;
+  }
+  const prop=m[2].trim();
+  return {cls:m[1].trim(), prop,
+    // content words only: "brown hair" tests brown AND hair, and the answer reports which of
+    // them the graph actually attests - a partial match stated as partial, never as a whole
+    words:prop.toLowerCase().split(/\s+/).filter(w=>w.length>2&&!COUNTSTOP.has(w))};
+}
+
 /* A chained question decomposes into RELATIONS TO TRAVERSE plus THE ENTITY TO START FROM, so the
    subject is what remains once the relation words are removed. Reusing the facts lane's span
    generator here was a real bug: for "capital of the country Melbourne is in" it happily built the
@@ -1499,6 +1567,145 @@ function liveAdd(path,p){
   }
   if(!placed)e.appendChild(row);
   const c=$("lcount");if(c)c.textContent=liveN+(liveN===1?" chain":" chains");
+}
+
+/* ---- THE COUNT LANE ---------------------------------------------------------------------
+   Enumerate the class from the inverse index, test each member against the property, count the
+   ones that hold up, and show the evidence for every single one. Two disclosures are load
+   bearing: this counts what THIS GRAPH RECORDS (not what exists), and the per-member read is
+   bounded, with the bound stated in the result rather than in a comment. */
+async function countAnswer(q,cq,my){
+  const out=$("tout");
+  badge("counting");
+  nowSet("counting question - enumerating the class \""+cq.cls+"\"",null,true);
+  trace("beam","COUNT question: class=\""+cq.cls+"\" property=\""+(cq.prop||"(none)")+"\"");
+  // resolve the class name the same way any subject is resolved
+  let cls=null,members=[];
+  for(const v of variantsOf(cq.cls)){
+    const t=await typesOf(v);
+    if(t.length&&(!cls||t.length>members.length)){cls=v;members=t;}
+  }
+  if(!cls){
+    trace("dead","no recorded members for any reading of \""+cq.cls+"\" - the graph has no "+
+      "membership facts pointing at it, so there is nothing to count");
+    out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim">'+
+      '<b>I cannot count that.</b></div><div class="row"><span class="lbl">why</span><span>'+
+      'Nothing in this graph is recorded as a member of <b>'+esc(cq.cls)+'</b>. That is a '+
+      'statement about the graph, not about the world.</span></div></div>');
+    nowSet("nothing recorded as a member of \""+cq.cls+"\"",1,false);
+    return;
+  }
+  trace("done","class \""+cls+"\" has "+members.length+" recorded member"+
+    (members.length===1?"":"s")+" in the inverse membership index");
+  const cn=gNode(cls,cls,0); if(cn)cn.facts=members.length;
+  // BOUNDED read, and the bound is reported in the answer itself
+  const LIM=Math.min(members.length,R.COUNT_MAX);
+  const hits=[],misses=[],named=[];
+  for(let i=0;i<LIM;i++){
+    if(my!==gen||stopped)return;
+    const mem=members[i];
+    nowSet("checking member "+(i+1)+" of "+LIM+": \""+mem.name+"\"",(i+1)/LIM,false);
+    const f=await factsOf(mem.name);
+    const nd=gNode(mem.name,mem.name,1); if(nd){nd.facts=f.length;nd.role="opened";}
+    if(cn&&nd)gEdge(nd,cn,"member of",mem.k);
+    if(!cq.words.length){ hits.push({mem,ev:[],matched:[]}); continue; }
+    // A property holds if the member carries a fact whose relation or object attests it - but
+    // a fact whose object IS the member's own name attests only the NAME. "syrian brown bear
+    // --synonym--> syrian brown bear" is not evidence that the animal is brown; it is evidence
+    // that it is called brown. Both are real; conflating them is not.
+    const self=String(mem.name).toLowerCase();
+    const ev=[],matched=new Set();
+    let namedOnly=cq.words.filter(w=>self.includes(w));
+    for(const x of f){
+      const obj=String(x.obj).toLowerCase();
+      const hay=(relLabel(x.rel)+" "+obj);
+      const got=cq.words.filter(w=>hay.includes(w));
+      if(!got.length)continue;
+      // circular: the fact just restates the member's own name
+      if(obj===self||self.includes(obj)&&obj.length>3&&got.every(w=>self.includes(w)))continue;
+      ev.push({x,got}); got.forEach(w=>matched.add(w));
+    }
+    if(ev.length){
+      ev.sort((a,b)=>b.got.length-a.got.length||b.x.k-a.x.k);
+      // up to 3 qualifying facts SHOWN per member, best-attested first - a display cut, and
+      // the member's full record is one click away in the node grid. Every qualifying fact
+      // was READ; the count is over members, so showing fewer cannot change the number.
+      hits.push({mem,ev:ev.slice(0,3),matched:[...matched],evAll:ev.length});
+      if(nd)nd.on=true;
+      trace("hit",mem.name+" attests "+[...matched].join("+")+"   e.g. "+
+        relLabel(ev[0].x.rel)+" -> "+ev[0].x.obj+"  k="+ev[0].x.k);
+    }else if(namedOnly.length){
+      named.push({mem,words:namedOnly});
+      trace("miss",mem.name+" is NAMED for \""+namedOnly.join("+")+
+        "\" but carries no fact attesting it - counted separately, not as evidence");
+    }else{
+      misses.push(mem);
+      trace("miss",mem.name+" has no fact attesting \""+cq.prop+"\"");
+    }
+    traceFlush(); G.dirty=true;
+    await sleep(0);
+  }
+  if(my!==gen)return;
+  const full=cq.words.filter(w=>hits.some(h=>h.matched.includes(w)));
+  const all=hits.filter(h=>cq.words.every(w=>h.matched.includes(w)));
+  // the headline is the COUNT, and it says what it counted
+  out.insertAdjacentHTML("beforeend",
+    '<div class="verdict"><div class="big">'+
+    (cq.words.length?hits.length:members.length)+'</div><div style="margin-top:4px">'+
+    (cq.words.length
+      ?'of the <b>'+LIM+'</b> recorded '+esc(cls)+' types I read carry a fact attesting <b>'+
+        esc(cq.prop)+'</b>'+
+        (all.length!==hits.length&&cq.words.length>1
+          ?' — <b>'+all.length+'</b> attest every word of it':'')+
+        (named.length?'. A further <b>'+named.length+'</b> are NAMED for it without recording '+
+          'a fact that attests it — named is not attested, so they are not in the count.':'')
+      :'recorded types of <b>'+esc(cls)+'</b> in this graph'+
+        (LIM<members.length?' (I listed the '+LIM+' best-attested)':''))+
+    '</div></div>');
+  if(named.length){
+    out.insertAdjacentHTML("beforeend",'<div class="field-lbl">named for it, but not '+
+      'attested — the name says so, no fact does</div>');
+    out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="row">'+
+      '<span class="lbl">'+named.length+'</span><span>'+
+      named.map(n=>esc(n.mem.name)).join(", ")+'</span></div></div>');
+  }
+  if(hits.length){
+    out.insertAdjacentHTML("beforeend",'<div class="field-lbl">the members, with the fact '+
+      'that qualified each one</div>');
+    for(const h of hits){
+      out.insertAdjacentHTML("beforeend",'<div class="card '+
+        (h.mem.k>=2?"k2":"k1")+'"><div class="claim"><b>'+esc(h.mem.name)+'</b> · member of '+
+        esc(cls)+' ('+h.mem.k+' source'+(h.mem.k===1?"":"s")+', '+
+        (pctOf(h.mem.k)*100).toFixed(1)+'%)</div>'+
+        h.ev.map(e=>'<div class="row"><span class="lbl">'+esc(e.got.join("+"))+'</span><span>'+
+          esc(relLabel(e.x.rel))+' → '+esc(String(e.x.obj))+' · k='+e.x.k+'</span></div>').join("")+
+        (h.evAll>h.ev.length?'<div class="row"><span class="lbl">more</span><span>'+
+          (h.evAll-h.ev.length)+' further qualifying fact'+(h.evAll-h.ev.length===1?"":"s")+
+          ' read but not shown</span></div>':"")+
+        '</div>');
+    }
+  }
+  const left=members.length-LIM;
+  out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim">'+
+    '<b>What this number is.</b></div><div class="row"><span class="lbl">counted</span><span>'+
+    'members of <b>'+esc(cls)+'</b> recorded in this graph'+
+    (left>0?', of which I read the <b>'+LIM+'</b> best-attested and left <b>'+left+
+      '</b> unread — a bound, not an absence':'')+'.</span></div>'+
+    (cq.words.length?'<div class="row"><span class="lbl">tested</span><span>a member qualifies '+
+      'if it carries a fact whose relation or object attests '+
+      cq.words.map(w=>'<code>'+esc(w)+'</code>').join(" or ")+
+      (full.length<cq.words.length?'. The graph attests '+
+        (full.length?full.map(w=>'<code>'+esc(w)+'</code>').join(", "):'none')+
+        ' of those words for these members — a partial match, reported as partial':'')+
+      '.</span></div>':"")+
+    '<div class="row"><span class="lbl">not</span><span>This is a count of what the graph '+
+    'RECORDS, not a count of what exists.</span></div></div>');
+  nowSet("counted "+hits.length+" of "+LIM+" recorded "+cls+" types",1,false);
+  badge("count complete · "+hits.length);
+  trace("done","COUNT complete: "+hits.length+"/"+LIM+" members qualify"+
+    (named.length?", "+named.length+" named-only (not counted)":"")+
+    (left>0?" ("+left+" members left unread - a bound)":""));
+  traceFlush();
 }
 
 /* ---- THE STEP DEBUGGER ----------------------------------------------------------------
@@ -1739,6 +1946,9 @@ async function reason(q,opts){
     const {goal}=readQuery(q);
     badge("reading the question");
     trace("beam","question: \""+q+"\"");
+    // a counting question is neither a lookup nor a path; route it before either lane runs
+    const cq=readCount(q);
+    if(cq){ await countAnswer(q,cq,my); return; }
     const ents=await findEntities(q);
     trace("beam","entities found in the question: "+
       (ents.length?ents.map(e=>"\""+e.name+"\" ("+e.facts.length+" facts)").join(", "):"none"));

@@ -144,7 +144,47 @@ performer->genre and lands on "Rock and roll"; that row still strings-differs fr
 reference "rock", which is a normalization artifact, not a wrong answer). Zoo held at 97.5%.
 Suite floor raised: chainAgree 4 -> 6.
 
+### B18 - counting questions were structurally unanswerable, and it was not a parser bug
+"how many types of bear have brown hair" produced `entities=[brown hair, many]`. The real cause
+was deeper than the parse: membership is only ever stored FORWARD (`grizzly bear -IsA-> bear`)
+and the shards are keyed by SUBJECT, so enumerating a class's members was not hard, it was
+IMPOSSIBLE - the direction is not in the data. Measured before building: head-matching from
+bear's own neighbours verified **0** members.
+*Fixed:* `build_types_index.mjs` inverts every membership fact into parent -> [child, sources],
+bucketed by PARENT in the same 512-way scheme, so a class lookup is one fetch through the
+existing cache path. 7,903,120 pairs over 241,099 parents, 67MB gzipped. It adds no facts: each
+pair is a fact already in the graph, read in the other direction. A COUNT lane then enumerates,
+filters, counts and shows the evidence for every member.
+
+### B19 - THE AUTORUN WAS STILL THERE, and I said it was browser cache
+RJ reported the page starting a question by itself. I removed the boot-tail and tab-click
+autoruns, checked the deployed HTML, found none, and told him the rest was a cached copy. A
+THIRD autorun lived inside the index-load `.then()` and fired on every load. Worse, its
+`reason()` call bumped the search generation counter, so it silently aborted whatever was
+running: the first counting run died at its first ownership check, and the first question of
+every harness run was being corrupted too - removing it took the chain contrast from 6/8 to
+**7/8**, a bar I had attributed to a harness bound. Confidently misdiagnosing a user's correct
+report is the exact failure this project exists to refuse. *Fixed:* removed; the page now does
+nothing until asked.
+
+### B20 - "how many types of dog are there" counted members carrying the word "there"
+The have|are branch matched before the bare-class branch, so the property became "there" and the
+answer was a confident zero. *Fixed:* "are there"/"is there"/"exists" is stripped as the ABSENCE
+of a filter.
+
+### B21 - the types index read a source BITMASK as a source COUNT
+`row[2]` in a shard row is a bitmask over eight sources, decoded by `factsOf`. The new lane read
+it as a number, so a single-source membership (bit 128) was reported as 128 independent sources.
+*Fixed:* the same decode as `factsOf`, and membership confidence now comes off the same measured
+curve as everything else.
+
+### B22 - "named for it" was being counted as evidence
+`syrian brown bear --synonym--> syrian brown bear` was counted as attesting "brown". That is the
+member's OWN NAME: evidence about what a thing is CALLED, not about what it IS. The bear count
+fell from 11 to **7 attested, 4 named-only**, reported as two separate numbers.
+
 ## OPEN
+
 
 ### O-crash - RJ reports "it seems to crash"; not yet reproduced
 A crash trap now converts any uncaught error into a red CRASH line in the trace and the
