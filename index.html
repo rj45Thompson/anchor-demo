@@ -987,7 +987,13 @@ async function resolveSubject(s){
 }
 function relMatches(rel,goal){
   const a=relLabel(rel),g=goal.toLowerCase();
-  return a===g||a.split(/\s+/).includes(g)||a.includes(g);
+  if(a===g)return true;
+  // O7. "capital of" is the INVERSE of "capital": `Barcelona -capital of-> Catalonia` states
+  // that Barcelona IS a capital, so it can never answer "what is the capital of Barcelona's
+  // country" - yet substring matching accepted it, and the engine said Catalonia (and Bavaria
+  // for Munich) with total confidence. The one unforgivable failure class: confidently wrong.
+  if(a===g+" of"||g===a+" of")return false;
+  return a.split(/\s+/).includes(g)||a.includes(g);
 }
 function badge(t){const b=$("badge");if(b)b.textContent=t;}
 /* The narration bar's state. nowSet is called at every phase change inside reason(); nowPaint
@@ -1087,8 +1093,21 @@ function properNouns(raw){
 function readQuery(q){
   const raw=String(q).replace(/[?.!]+$/,"");
   const ql=" "+raw.toLowerCase()+" ";
-  for(const [re,rel] of ASK_ALIASES)
-    if(re.test(ql)&&RELS.some(r=>r&&r.toLowerCase()===rel))return {goal:rel};
+  // The relation the question ASKS FOR is the one it names FIRST. "genre of Abbey Road's
+  // performer" matches both `performer` and `genre`; table order picked `performer`, so the
+  // search stopped one hop short and answered a band to a genre question. Exception: `where`
+  // is a question WORD, not the asked-for noun - "where was X born" asks for the birthplace -
+  // so `location` only wins when nothing nounier matched at all.
+  let bestA=null;
+  for(const [re,rel] of ASK_ALIASES){
+    if(rel==="location")continue;
+    if(!RELS.some(r=>r&&r.toLowerCase()===rel))continue;
+    const m=ql.match(re);
+    if(m&&(bestA===null||m.index<bestA.i))bestA={i:m.index,rel};
+  }
+  if(!bestA)for(const [re,rel] of ASK_ALIASES)
+    if(re.test(ql)&&RELS.some(r=>r&&r.toLowerCase()===rel)){bestA={rel};break;}
+  if(bestA)return {goal:bestA.rel};
   // Fall back to literal relation names, longest first so "official language" beats "language".
   const caps=properNouns(raw);
   const cands=RELS

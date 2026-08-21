@@ -130,13 +130,21 @@ nothing else): **4/8 agree**, and the four differences are each informative:
 | capital of Munich's country | Berlin | Bavaria | O7 again |
 | genre of Abbey Road's performer | rock | The Beatles | stops one hop short of the asked relation |
 
-## OPEN
+### B14 - O7: inverse relations conflated; and the asked-for relation was table-ordered
+Two causes, one failure class (confidently wrong):
+(a) `relMatches` used substring matching, so `capital of` - the INVERSE of `capital` - satisfied
+the bare goal, and the engine answered Catalonia for the capital of Barcelona's country.
+*Fixed:* a bare goal never matches its own `<goal> of` form.
+(b) `readQuery` returned the FIRST alias in table order, so "the genre of the performer of
+Abbey Road" got goal `performer` and stopped one hop short, answering a band to a genre
+question. *Fixed:* the outermost ask wins - the relation the question names first is the one it
+asks for (`location`/"where" excepted: a question word, not the asked-for noun).
+Verified: contrast 4/8 -> 6/8 (Barcelona->Madrid, Munich->Berlin, Abbey Road walks
+performer->genre and lands on "Rock and roll"; that row still strings-differs from the
+reference "rock", which is a normalization artifact, not a wrong answer). Zoo held at 97.5%.
+Suite floor raised: chainAgree 4 -> 6.
 
-### O7 - "capital" and "capital of" are inverse relations, matched as one
-`relMatches("capital of","capital)` is true, so `Barcelona -capital of-> Catalonia` satisfies a
-question asking for the capital of Barcelona's COUNTRY. The relation matcher needs direction
-awareness, or "X of" forms need to be excluded when the goal is the bare form. Found by the
-Claude-contrast harness; invisible to the single-hop zoo.
+## OPEN
 
 
 ### O1 — `learn-on-abstain` has never fired *(shipping unproven)*
