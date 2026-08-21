@@ -218,20 +218,15 @@ target it abstains, goes and learns what else that thing is called, and tries ag
 <div class="live" id="live"></div>
 <div id="ndbox"></div>
 
-<h2>What you are watching</h2>
-<p>No source recorded “Melbourne → capital of its country → Canberra”. The engine has to
-<strong>find</strong> it, hop by hop, fetching each shard only when the search reaches it. Chain
-confidence is the <strong>product</strong> of each hop's measured probability — chaining costs
-certainty, and the number says so. That product assumes the hops are <b>independent</b>, which is
-an assumption, not a measurement.</p>
-<p>When it cannot reach the target it <strong>abstains, then goes and learns</strong>: it looks the
-unreachable word up externally and re-runs the same search with the wider vocabulary. A chain that
-only completes that way is labelled <em>learned</em> and never given a measured confidence —
-learning changes what it can find, not what it may claim.</p>
+<h2>What just happened</h2>
+<div id="whatbox"><p class="small">Ask something and this panel will explain, in plain English,
+what the engine actually did for <em>that</em> question — how it read it, what it opened, what
+completed, and what the numbers mean. Nothing here is pre-written; it is generated from the same
+counters the trace shows.</p></div>
 <p class="small"><b>Hand-written:</b> a listed table of about fifteen question-word aliases, so
-“who founded X” reaches <code>founded by</code>. Nothing about any specific subject is
-special-cased and no answer is stored. <b>Bounded:</b> the search reports its own limits, and a
-result of “no chain” is <b>not proof there is none</b> — the trace shows exactly what was opened.</p>
+"who founded X" reaches <code>founded by</code>. Nothing about any specific subject is
+special-cased and no answer is stored. A "no chain" result is <b>not proof there is none</b> —
+the trace shows exactly what was and was not opened.</p>
 </div>
 
 <!-- ================= CODE PANEL ================= -->
@@ -522,12 +517,9 @@ fetch("index.json").then(r=>r.json()).then(d=>{
   $("go").disabled=false;$("go").textContent="Ask";
   if($("tgo")){
     $("tgo").disabled=false;$("tgo").textContent="Reason";
-    // The search IS the demo, so the landing tab should already be working when you arrive
-    // rather than waiting behind a button nobody has pressed yet.
-    if(!$("tq").value.trim()&&document.getElementById("p-think").classList.contains("on")){
-      $("tq").value="is a caliper used in a car";
-      setTimeout(()=>reason("is a caliper used in a car"),250);
-    }
+    // No autorun: the person decides when it starts. The stage still boots (starfield) so the
+    // page is visibly alive, but no question fires until one is asked.
+    if(document.getElementById("p-think").classList.contains("on"))startLoop();
   }
   $("factsWarn").insertAdjacentHTML("beforeend"," <em>Index loaded: "+
     d.subjects.toLocaleString()+" subjects, "+d.facts.toLocaleString()+" facts, "+
@@ -978,7 +970,18 @@ function traceClear(){traceN=0;traceBuf=[];const e=$("tlog");if(e)e.innerHTML=""
    appending one DOM node per fact (with a sleep every 9) hung the tab outright - a real regression
    caused by the fix, not by the tracing idea. Every fact is still READ and still COUNTED; only the
    painting is batched, so the step total stays honest while the page stays responsive. */
-function trace(kind,msg){ traceN++; traceBuf.push([traceN,kind,msg]); }
+function trace(kind,msg){
+  traceN++; traceBuf.push([traceN,kind,msg]);
+  // debug mirror: structured, capped, and queryable from the console - window.anchorDump()
+  if(!window.__anchorLog)window.__anchorLog=[];
+  window.__anchorLog.push({n:traceN,kind,msg,t:Date.now()});
+  if(window.__anchorLog.length>6000)window.__anchorLog.splice(0,1000);
+}
+window.anchorDump=function(){
+  return { question:runningQ, gen, thinking, stopped,
+    graph:{nodes:G.nodes.length,edges:G.edges.length},
+    steps:traceN, lastEvents:(window.__anchorLog||[]).slice(-120) };
+};
 function traceFlush(){
   const e=$("tlog");if(!e||!traceBuf.length)return;
   const frag=document.createDocumentFragment();
@@ -1531,6 +1534,69 @@ async function reason(q){
     // "page does not refresh when the question changes" report.
     if(my!==gen){ traceBuf=[]; return; }
     done.sort((a,b)=>b.p-a.p);
+    // ---- the per-question explainer: the logs, explained. Every number comes from THIS run's
+    // own counters - if the engine did something different, this text is different.
+    (function(){
+      const wb=$("whatbox"); if(!wb)return;
+      const best=done[0];
+      let t='<p class="small">You asked <b>'+esc(q)+'</b>. I read that as '+
+        (target?('start at <b>'+esc(start.name)+'</b> and find a route to <b>'+esc(target.name)+
+                 '</b>'):('<b>'+esc(start.name)+'</b> with the relation <code>'+esc(goal||"?")+
+                 '</code>'))+'.</p>';
+      t+='<p class="small">I opened <b>'+fetches+'</b> subject'+(fetches===1?"":"s")+' (one shard '+
+        'fetch each), read <b>'+scanned.toLocaleString()+'</b> facts, and <b>'+done.length+
+        '</b> chain'+(done.length===1?"":"s")+' completed.'+
+        (budgetHit?' The fetch budget ended the search - a bound, not an absence.':
+         stopped?' You stopped it while it was still expanding.':
+         ' The search ran until its frontier was exhausted at this depth.')+'</p>';
+      if(best){
+        t+='<p class="small">The best chain is <b>'+best.path.map(h=>esc(h.to)).join(" → ")+
+          '</b> at <b>'+(best.p*100).toFixed(1)+'%</b> = '+
+          best.path.map(h=>(pctOf(h.k)*100).toFixed(1)+"%").join(" × ")+
+          '. Each factor is measured; the product assumes the hops are independent, which is an '+
+          'assumption, not a measurement.'+(done.length>1?' The other '+(done.length-1)+
+          ' chains are ranked live above.':'')+'</p>';
+      } else {
+        t+='<p class="small">No chain reached the goal within what was opened. That is a report '+
+          'on the SEARCH, not on the world - the trace above shows exactly which nodes were '+
+          'opened and which were left.</p>';
+      }
+      wb.innerHTML=t;
+    })();
+    // ---- ask back to CONFIRM, not just when stuck: distinct endpoints = a real question
+    if(done.length>1){
+      const seen=new Set(), opts=[];
+      for(const d of done){
+        const end=d.path[d.path.length-1].to;
+        if(seen.has(end.toLowerCase()))continue;
+        seen.add(end.toLowerCase());
+        opts.push({end, via:d.path[0].to, p:d.p, d});
+        if(opts.length>=4)break;
+      }
+      if(opts.length>1){
+        window.__askbackCount=(window.__askbackCount||0)+1;
+        trace("goal","ASKING YOU BACK: "+opts.length+" distinct answers found - which reading "+
+          "of \""+start.name+"\" did you mean? "+opts.map(o=>o.end+" (via "+o.via+")").join(", "));
+        out.insertAdjacentHTML("beforeend",'<div class="card k1"><div class="claim">'+
+          '<b>A question back.</b></div><div class="row"><span class="lbl">why</span><span>'+
+          'these chains end at different answers because <b>'+esc(start.name)+'</b> has more '+
+          'than one reading. Which did you mean?</span></div><div class="row">'+
+          '<span class="lbl">pick</span><span>'+opts.map((o,i)=>
+            '<code class="pickc" data-i="'+i+'" style="cursor:pointer">'+esc(o.end)+
+            ' <span style="opacity:.6">via '+esc(o.via)+' · '+(o.p*100).toFixed(1)+'%</span></code>'
+          ).join(" ")+'</span></div><div class="row" id="pickNote" style="display:none">'+
+          '<span class="lbl">chosen</span><span id="pickText"></span></div></div>');
+        const OP=opts;
+        document.querySelectorAll("#tout .pickc").forEach(el=>el.addEventListener("click",()=>{
+          const o=OP[+el.dataset.i];
+          trace("goal","YOU CHOSE: "+o.end+" (via "+o.via+") - pinned as the intended reading");
+          const n=$("pickNote"),tx=$("pickText");
+          if(n&&tx){n.style.display="";tx.innerHTML="<b>"+esc(o.end)+"</b> via "+esc(o.via)+
+            " at "+(o.p*100).toFixed(1)+"% - your choice is recorded in the trace, not learned "+
+            "into the graph; the evidence is unchanged.";}
+        }));
+      }
+    }
     const found=done[0]||null;
 
     if(!found){
@@ -1650,10 +1716,7 @@ $("tgo").addEventListener("click",()=>{
 }
 // the render loop is per-tab: an invisible canvas spinning an n-body sim is pure battery burn.
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
-  if(t.dataset.p==="think"){
-    startLoop();
-    if(!G.nodes.length&&!thinking&&$("tgo")&&!$("tgo").disabled)$("tgo").click();
-  } else stopLoop();
+  if(t.dataset.p==="think"){ startLoop(); } else stopLoop();
 }));
 
 /* ---------------------------------------------------------------- code lane
