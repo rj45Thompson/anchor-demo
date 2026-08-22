@@ -35,9 +35,9 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | loading bar + live step-by-step narration at the bottom | ✅ | fixed bottom bar: current-step sentence, honest progress fill, pulse while downloading; 300ms liveness flush kills the "updates stop after a few seconds" freeze (B13) |
 | 3D view shows the chains AS they complete | ✅ | liveAdd marks every completed chain's nodes+edges live (B12); was end-of-search, best-chain-only |
 | visible build stamp (cache diagnosis) | ✅ | footer says `build 2026-08-21`; Pages caches HTML ~10 min, so "still auto-starts" = stale copy, provable on sight |
-| O7 inverse relations + one-hop-short (the confident-WRONG class) | ✅ | B14: contrast 4/8 → 6/8, zoo held 97.5%, suite floor raised to 6 |
-| ⭐ GEOMETRY debugger (RJ priority-one) | 🟡 | chains as floating rulers: segment length = -log(p_hop), so best chain = SHORTEST ruler (Viterbi duality, exact); hover segment = its fact; click = jump the step debugger there. Built + suite-green, motion unwatched |
-| step debugger (conclusion as a program) | 🟡 | execution pointer, measured variables pane, divergence points = chains really completed; time-travel rule: replay the record, never re-run |
+| O7 inverse relations + one-hop-short (the confident-WRONG class) | ✅ | B14 caught the bare "GOAL of" case; REOPENED by parallel verification which measured the real 3,357-relation vocabulary and found Barcelona/Munich still resolving the inverse chain, just losing rank by source-count luck - B32 closes negation + substring + broadened inverse-of, golden-verified, contrast held 7/8 |
+| ⭐ GEOMETRY debugger (RJ priority-one) | ✅ | chains as floating rulers: segment length = -log(p_hop), so best chain = SHORTEST ruler (Viterbi duality, exact); hover segment = its fact; click = jump the step debugger there. Divergence-point click-select CONFIRMED LIVE via anchorDump()+DOM events 2026-08-21 (list→program direction; program→ruler still unwatched, no compositing available) |
+| step debugger (conclusion as a program) | ✅ | execution pointer, measured variables pane, divergence points = chains really completed; time-travel rule: replay the record, never re-run. Forward/back stepping CONFIRMED LIVE 2026-08-21: composed confidence arithmetically correct (94.7%×94.7%=89.7%), clamps at last hop instead of erroring |
 | the SYSTEM uses the debugger (self-check/repair, save/load, rewind) | 🟡 | dbgVerify re-steps its own record vs shards (CHECK/REPAIR lines, k re-measured + recomposed); record persists + restores (no autorun); ⟲ resume-from-hop re-runs the real engine with the rejected edge excluded |
 | vision loop: engine reads its own map | 🟡 | settled-layout distance orders frontier ties (order only, can never change an answer); every re-rank traced + counted in __visionFlips; NOT yet benchmarked - O8 |
 | ergonomics pass on the geometry (RJ: natural to understand, elegant) | 🟡 | baseline + gridlines where one gridline = ONE IDEAL HOP (rulers read in natural units); two-way selection sync (debugger pick = bright ruler); one-click camera fly-to with instant manual override; winner labelled in place |
@@ -45,6 +45,10 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | ⭐ stress zoo: 32 question SHAPES + 14 hostile inputs, permanent gate | ✅ | found B23 (890s hang), B24 (byte-identical wrong-question answers), B25 (harness capture bug hid its own results), B26 (THREE load failure silently killed the Ask button) - none reachable by topic-curated testing |
 | ⭐⭐ B28: Ask-on-empty-box was a silent permanent no-op (the ACTUAL reported bug) | ✅ | reproduced LIVE by driving the real deployed page as a stranger would - clicked Ask without typing, exactly what the placeholder invites; `if(v){...}` had no else. Placeholder now runs when clicked empty, visibly filled first |
 | B31: step debugger never loaded for counting questions (live-reported: "debugger fails to load") | ✅ | countAnswer never called dbgLoad - default question + B28 fallback both left an eternal fake-spinner; built a real count-mode program (LOAD/CHECK/RET) reusing the existing debugger UI |
+
+| B32: O7 reopened - negation + substring + broadened inverse-of | ✅ | found by parallel `anchor-verifier` measuring the real vocabulary, not just the 8-question contrast set; 7/7 false-accepts closed, golden-verified exact-predicted churn only |
+| B33: verylong (B23) tightened - probe COUNT was still unbounded | ✅ | SPAN_PROBE_MAX:120 (a counter, not a clock); h-verylong golden: 34,249ms → 1,216ms, ANSWERED → ABSTAINED |
+| ⭐⭐ golden-trace regression harness | ✅ | `golden_trace.mjs`: 20 canonical questions frozen via anchorDump(), first-divergence-only reporting, fault-injection self-tested (not just assumed to work), byte-stable across 5+ runs spanning two sessions' edits; wired into suite.mjs as bar #6 - what makes the still-open module-split refactor safe |
 | B29/B30: "how many wheels does a car have" (do/does-cardinality + "many" mis-link) | ✅ | live-reported by RJ, reproduced immediately; do/does now routes to relation-lookup instead of the count lane's dead end; quantifiers excluded from entity-linking; now finds the real wheel-part of-car edge |
 | ⭐⭐ "Write a function": English input + human-confirm loop | ✅ | ENGLISH_UNARY/BINARY disclosed phrase table (ASK_ALIASES pattern) ranks candidates; no expected value -> runs top candidate for real, asks Yes/No, cycles honestly; Yes labelled human-confirmed (not execution-verified) with one-click upgrade; live-verified 6 paths, 0 console errors |
 | B27: index-load failure never touched the reasoning tab's button | ✅ | .catch only updated the facts-tab button; both now report failure + a stall detector for a hung fetch |
@@ -54,22 +58,31 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 
 ## Open — in the priority order I set
 
-1. **UI-in-motion pass (#132)** — covers the geometry rack, step debugger, self-check marks,
-   resume-from-hop, save/load restore, the new code-lane confirm loop, WASD flight, node
-   gridview. One watched session collapses every 🟡 to ✅ or to a real bug.
-2. **O8: benchmark the vision loop headless** — run physics() in the harness, A/B SPATIAL on/off
+1. **UI-in-motion pass (#132)** — geometry-debugger click-select and step-debugger stepping
+   confirmed live 2026-08-21 (see Done table). Still unwatched: self-check marks, resume-from-hop,
+   save/load restore, the new code-lane confirm loop, WASD flight, node gridview, the geometry
+   rack's actual pixel rendering (program→ruler direction) and camera fly-to. Needs a session
+   where the Browser pane actually composites — two sessions in a row hit "pane not displayed."
+2. **Confident-wrong floor** *(new wish, captured — from the O7 verification pass)*: no floor
+   anywhere currently fails a confident-wrong answer any harder than a plain abstention
+   (`WRONG_OBJECT` is computed in `zoo_harness.mjs` but never separately gated). Add
+   `WRONG_OBJECT === 0` to `suite.mjs` once the one known non-O7 wrong-object case is resolved
+   ("who founded Stan Lee Media" wants Peter F. Paul, gets Stan Lee — a data/entity issue,
+   unrelated to O7, not yet investigated). This is the same principle as `feedback_economy_over_lift`
+   (abstention is investment) expressed somewhere it can actually fail a commit.
+3. **O8: benchmark the vision loop headless** — run physics() in the harness, A/B SPATIAL on/off
    over the chain set (fetches-to-first-chain, agreement). Prove the counted flips help, or demote
    the feature to off-by-default. No third state.
-3. **Live "top 3 questions for you"** *(new wish, captured)*: while searching, keep a live-updating
+4. **Live "top 3 questions for you"** *(new wish, captured)*: while searching, keep a live-updating
    panel of the three questions whose answers would most move the search (ambiguous readings,
    endpoint disagreements, unopened high-fact frontier nodes) — updating in real time as it figures
    things out, each clickable to act. The ask-back-on-ambiguity (7/8) is the seed of this.
-4. **Learn-on-abstain (#135)** — still never fired. Prove or delete; no third state.
-5. **Liars Game, human-in-the-loop** *(new wish, re-scoped)*: a tab where the engine presents
+5. **Learn-on-abstain (#135)** — still never fired. Prove or delete; no third state.
+6. **Liars Game, human-in-the-loop** *(new wish, re-scoped)*: a tab where the engine presents
    facts/chains and the HUMAN adjudicates in real time. RJ's framing solves the old provenance
    objection: the human judge IS the independent second anchor, so adjudications can honestly
    carry anchor semantics. Design before build.
-6. **Spacegame in the demo** *(new wish, large — needs its own arc)*:
+7. **Spacegame in the demo** *(new wish, large — needs its own arc)*:
    - a tab hosting the three.js spacegame, restored to its ORIGINAL intent: the chat/arena where
      AIs battle to improve;
    - a fork `SpaceGame-simple` cut down to a verified end-to-end core (the main game has hundreds
@@ -77,14 +90,14 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
    - removed features preserved as DATA in a front-end dashboard menu, so anything can be added
      back deliberately instead of rotting half-on.
    This is a project, not a task — schedule as its own session(s) with its own zoo-equivalent.
-7. **Research tab: all the whitepapers** *(new wish, captured)*: a final tab collecting RJ's
+8. **Research tab: all the whitepapers** *(new wish, captured)*: a final tab collecting RJ's
    research artifacts in one place — the Anchor whitepaper (already ships), the Hadamard/KG work
    (`kg_hadamard.py` line), and the spacegame research corpus (PILLARS.md, the emergent-signaling /
    theory-of-mind / iron-law results). Execution note: these live in the PRIVATE fleet repo today;
    inventory first and confirm each is meant for public before copying — publishing is
    irreversible, and a paper's claims must pass the same trace-to-artifact audit the Anchor
    whitepaper passes before it ships on the public tab.
-8. **"The story behind Anchor" tab** *(new wish, captured 2026-08-21)*: a sci-fi thought-experiment
+9. **"The story behind Anchor" tab** *(new wish, captured 2026-08-21)*: a sci-fi thought-experiment
    piece — Asimov-style, in the spirit of RJ's INCANTATION novel (`D:/code/priority-book`) — asking
    whether AGI could be *prompted* into existing, and how, tied to RJ's own origin story (early
    work lost when a laptop was stolen; an OpenGL graph built in high school with the same shape as
@@ -94,8 +107,8 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
    `novel-agent` session via `agent_mail` (topic `story-of-anchor`, msg `0557e773`) offering the
    crossover in case that session is listening — no agent by that name has ever used the Tami
    mailbox before, so treat this as posted, not as confirmed received.
-9. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
-10. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 5).
+10. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
+11. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 5).
 
 ## Standing rules that got us here
 

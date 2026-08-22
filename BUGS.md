@@ -357,6 +357,69 @@ Live-verified end to end: default-load confirm flow, Yes-confirm, add-to-example
 execution-verified, No-cycling, no-phrase-matched honesty, and the pre-existing arity-1/arity-2/
 "impossible on purpose" hint buttons all still pass unchanged. Zero console errors.
 
+### B32 - O7 reopened: the original guard caught only the bare two-word inverse
+A parallel verification pass (`anchor-verifier` session, see `VERIFICATION_2026-08-21.md`)
+measured `relMatches` against the REAL 3,357-relation vocabulary rather than the 8-question
+contrast set B14 was checked against, and found B14's fix incomplete: Barcelona and Munich still
+resolved the INVERSE relation `[city] is the capital of [country]` as satisfying goal `capital` -
+it only lost the rank-1 slot to the correct chain by source-count luck (82.7% vs 89.7%), not
+because the matcher rejected it. Confirmed independently before fixing: `relMatches("[city] is
+the capital of [country]", "capital")` returned `true`.
+
+The same permissive line had two MORE false-accept classes, also confirmed directly: **negation**
+read as affirmation (`"does not have part"` satisfied goal `part`) and **raw substring** collision
+with no word boundary (`"uses capitalization for"` satisfied `capital`; `"member of political
+party"` satisfied `part`, matching inside the word "party").
+
+*Fixed:* `relMatches` now rejects in order: (1) any label containing a negation token: **not**/
+**n't**/**never**/**without**/**excluding**/**lack(s)**; (2) the goal must occur as a WORD
+(regex-bounded), not merely as characters inside a longer one; (3) INVERSE shape - the goal word
+near the front of the label followed within 0-3 filler words by "of" (covers `"capital of"`,
+`"capital town of"`, `"part of"`, `"member of ... party"` alike) is rejected as naming the
+subject an INSTANCE of the goal, the reverse of what "the GOAL of X" asks for.
+
+Verified: all 7 known false-accepts now correctly rejected; 10 of 11 legitimate goal/relation
+pairs unaffected (the one flip, `"part of speech"` vs goal `part`, is an unrelated linguistics
+relation, not a regression). Golden traces confirm the EXACT predicted, and only the predicted,
+churn: `c-barcelona` and `c-munich`'s one-hop read-back correctly flips to "not recorded"
+(forcing the honest multi-hop path), while the multi-hop chain contrast holds Madrid/Berlin at
+89.7% - contrast stays 7/8, zoo stays 39/40. Re-recorded deliberately, not silently.
+
+### B33 - verylong (B23) tightened: probe COUNT, not span length, was still unbounded
+Same parallel verification pass measured, read-only, that B23's `SPAN_MAX` (word-length-per-span
+cap) reduced the degenerate repeated-clause case from 890s to the tens-of-seconds range but did
+not fix its root cause: `bestSpan` still ran 3,618 `factsOf` name-resolution probes for ONE
+question (96% of its own runtime, 376 shard-cache misses, ~1.5GB gunzipped), because SPAN_MAX
+bounds each span's WORD count but not how many spans+variants get tried across a long question.
+Measured: worst LEGITIMATE question in the golden set spends 46 probes; median 6.
+*Fixed:* `R.SPAN_PROBE_MAX:120` (2.6x the worst legitimate case) - a per-question counter shared
+across both entity-resolution calls, checked before every `factsOf` probe; exhausting it aborts
+name resolution with a disclosed BUDGET trace line rather than continuing to grind. A counter,
+not a clock, so golden traces stay deterministic and comparable.
+Verified: `h-verylong` golden trace: **34,249ms -> 1,216ms**, verdict ANSWERED -> ABSTAINED (the
+one and only predicted flip - a nonsense repeated-clause paste correctly gets no answer instead
+of grinding for 34 seconds to reach one at 44.9% composed confidence). All other 19 goldens
+unchanged.
+
+### New infrastructure - golden-trace regression harness
+Same parallel pass built `golden_trace.mjs`: freezes `window.anchorDump()` for 20 canonical
+questions (chain/hostile/lookup/nonsense/count shapes), diffs on every run, reports the FIRST
+divergence only (question, hop, old value -> new value - not forty downstream consequences of
+one upstream cause). Its own diff logic is fault-injection tested (`--selftest` injects three
+known differences and requires exactly one reported finding, the earliest) rather than merely
+assumed to work. Byte-stable across 20 questions, confirmed on 5+ independent runs spanning two
+other sessions' edits to `index.html`. Wired into `suite.mjs` as a sixth permanent bar - this is
+what makes the still-open module-split refactor (`DESIGN_REVIEW.md`) safe to attempt: B9 and B10
+both shipped because a large slice of behavior moved with nothing watching.
+
+Also live-verified in the same pass (promoted 🟡 -> ✅ in `WISHLIST.md`, see
+`WATCHED_SESSION_2026-08-21_1719.md`): the geometry debugger's divergence-point click-select
+(`.dbg-alt` rows toggle correctly, including a near-miss where two rows shared a text prefix) and
+the step debugger's forward/back stepping (composed confidence arithmetically correct live,
+clamps at the last hop instead of erroring) - both via `anchorDump()` + DOM/event inspection
+since the Browser pane was not compositing that session either, working around the same
+limitation noted elsewhere in this file.
+
 ## OPEN
 
 

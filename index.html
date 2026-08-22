@@ -737,6 +737,13 @@ const R={
   COUNT_MAX:40,         // members READ per counting question; the shortfall is reported
   SPAN_MAX:12,          // longest span tried as one entity name. MEASURED: 99.83% of subject
                         // names in this graph are 12 words or fewer (165,800 sampled)
+  SPAN_PROBE_MAX:120,   // name-resolution probes (factsOf calls) allowed while reading ONE
+                        // question. MEASURED: worst legitimate question = 46 probes, median = 6,
+                        // a degenerate repeated-clause paste = 3,618 (96% of its own runtime,
+                        // none of it in the search loop - SPAN_MAX bounds each span's WORD
+                        // count but not how many spans+variants get tried across a long
+                        // question). 120 is 2.6x the worst legitimate case. A COUNTER, not a
+                        // clock: deterministic, so golden traces stay comparable.
   WORD_MAX:60           // words of a question read as content; the remainder is reported, not
                         // silently dropped - a bound stated is not a bound hidden
 };
@@ -1293,12 +1300,32 @@ async function resolveSubject(s){
 function relMatches(rel,goal){
   const a=relLabel(rel),g=goal.toLowerCase();
   if(a===g)return true;
-  // O7. "capital of" is the INVERSE of "capital": `Barcelona -capital of-> Catalonia` states
-  // that Barcelona IS a capital, so it can never answer "what is the capital of Barcelona's
-  // country" - yet substring matching accepted it, and the engine said Catalonia (and Bavaria
-  // for Munich) with total confidence. The one unforgivable failure class: confidently wrong.
-  if(a===g+" of"||g===a+" of")return false;
-  return a.split(/\s+/).includes(g)||a.includes(g);
+  // O7, re-opened. The original guard only caught the bare two-word "GOAL of" label. Verified
+  // against the real 3,357-relation vocabulary: Barcelona/Munich still resolved the INVERSE
+  // relation "[city] is the capital of [country]" as satisfying "capital" - it only lost the
+  // rank-1 slot to the correct chain by source-count luck (82.7% vs 89.7%), not because the
+  // matcher rejected it. Same substring rule also accepted "does not have part" for goal
+  // "part" (a NEGATION read as an affirmation) and "uses capitalization for" / "member of
+  // political party" for goals "capital" / "part" (raw substring, not even the same word -
+  // "capital" inside "capitalization", "part" inside "party"). Three independent false-accept
+  // classes, all through one permissive line. Closed here, in the order that matters most:
+  //
+  // 1) NEGATION - a relation that negates itself can never satisfy an affirmative goal.
+  if(/\b(not|n't|never|without|excluding|lacks?)\b/.test(a))return false;
+  // 2) WORD BOUNDARY, not raw substring - "capital" must occur as a WORD, not merely as
+  // characters inside a longer one. Goal captured in its own group so its exact position in
+  // `a` can be recovered without manual boundary-length arithmetic.
+  const esc=g.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  const m=a.match(new RegExp("(?:^|[^a-z])("+esc+")(?:$|[^a-z])","i"));
+  if(!m)return false;
+  // 3) INVERSE - the defining shape of "X is a GOAL of Y" (or "GOAL town of", "GOAL of
+  // political party", etc - 0-3 filler words) is the goal-word close to the front with "of"
+  // introducing what it belongs to: that names X as an INSTANCE of the goal, the reverse of
+  // what "the GOAL of X" asks for. Checked only in the text AFTER the goal word, so a longer,
+  // unrelated label is not caught by an incidental later "of".
+  const after=a.slice(m.index+m[0].indexOf(m[1])+m[1].length);
+  if(/^[^a-z]*(\w+[^a-z]+){0,3}of\b/i.test(after))return false;
+  return true;
 }
 function badge(t){const b=$("badge");if(!b)return;
   // innerHTML, not textContent: a spinner rides along while a search is running, so a long
@@ -1546,6 +1573,7 @@ const TAIL=new Set(("in on at of from by is are was were located born the a an")
 
 async function findEntities(q){
   const raw=String(q).replace(/[?.!]+$/,"").trim();
+  let spanProbes=0;   // shared bound across both bestSpan calls - see SPAN_PROBE_MAX
   const caps=properNouns(raw);
   const asked=w=>ASK_ALIASES.some(([re])=>re.test(" "+w.toLowerCase()+" "));
   let words=raw.split(/\s+/).filter(Boolean);
@@ -1592,6 +1620,12 @@ async function findEntities(q){
     // zoo. Across 165,800 sampled subjects 98.26% of names are <=8 words and 99.83% are <=12,
     // so spans longer than R.SPAN_MAX cannot match a subject 99.83% of the time. Bounded, and
     // the bound is disclosed rather than hidden.
+    //
+    // SPAN_MAX bounds each SPAN's word count but not how many spans+variants get tried across a
+    // long question, so a degenerate repeated-clause paste still ran 3,618 name-resolution
+    // probes (96% of its own runtime, none of it in the search loop) even under that cap.
+    // spanProbes is a PER-QUESTION counter, shared across both calls to bestSpan (start entity
+    // and target entity), because the cost is the same either way.
     for(let n=Math.min(list.length,R.SPAN_MAX);n>=1;n--){
       for(let st=0;st+n<=list.length;st++){
         const words2=list.slice(st,st+n);
@@ -1602,6 +1636,14 @@ async function findEntities(q){
           const vl=v.toLowerCase();
           // a bare relation word is not a subject, unless it is capitalised in the question
           if(RELSET.has(vl)&&!vl.split(/\s+/).some(x=>caps.has(x)))continue;
+          if(spanProbes>=R.SPAN_PROBE_MAX){
+            if(typeof trace==="function")
+              trace("dead","SPAN BUDGET reached ("+R.SPAN_PROBE_MAX+" name probes) while reading "+
+                "the question. It names more candidate spans than this engine will resolve, so "+
+                "it is refusing rather than grinding. This is a BOUND, not an absence.");
+            return null;
+          }
+          spanProbes++;
           const f=await factsOf(v);
           // best-attested WITHIN the span: "worms"(22, malware) loses to "worm" the animal.
           // (Across DIFFERENT spans this arbitration was the B1 disaster; within one span the
