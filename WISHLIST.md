@@ -46,6 +46,8 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | ⭐⭐ B28: Ask-on-empty-box was a silent permanent no-op (the ACTUAL reported bug) | ✅ | reproduced LIVE by driving the real deployed page as a stranger would - clicked Ask without typing, exactly what the placeholder invites; `if(v){...}` had no else. Placeholder now runs when clicked empty, visibly filled first |
 | B31: step debugger never loaded for counting questions (live-reported: "debugger fails to load") | ✅ | countAnswer never called dbgLoad - default question + B28 fallback both left an eternal fake-spinner; built a real count-mode program (LOAD/CHECK/RET) reusing the existing debugger UI |
 
+| B35: count lane accepted k=0 (zero-source) facts as evidence ("debugger looks fake") | ✅ | "Brown Bear" PASSED via a k=0 coincidence (prey animal named "Brown Hare"); now requires a real anchor source, count 7→6 (all genuine); debugger was honestly reporting a real upstream bug, not fabricating |
+| ⭐⭐ B36: stale, already-superseded question could silently win a race and overwrite a newer one | ✅ | found ONLY via sustained natural-session testing (18 Qs, no reloads) — no isolated test or automated suite simulates a real click, so none could ever have found it; `askNow`/`askSoon` + a shared `clickSeq` counter make a delayed supersede check it is still current before firing; verified at the mechanism level (`repro_clickseq.mjs`, both interleavings) and live via anchorDump() on the real 3-question rapid sequence |
 | ⭐⭐ B34: "what is my name" (pronoun questions, 4 confident-wrong outcomes) | ✅ | live-reported by RJ; INTERACTIVE block routed before entity linking - real title offered as one click, never assumed; caught + fixed a properNouns word-1 blind spot live via the click itself |
 | B32: O7 reopened - negation + substring + broadened inverse-of | ✅ | found by parallel `anchor-verifier` measuring the real vocabulary, not just the 8-question contrast set; 7/7 false-accepts closed, golden-verified exact-predicted churn only |
 | B33: verylong (B23) tightened - probe COUNT was still unbounded | ✅ | SPAN_PROBE_MAX:120 (a counter, not a clock); h-verylong golden: 34,249ms → 1,216ms, ANSWERED → ABSTAINED |
@@ -108,11 +110,42 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
    `novel-agent` session via `agent_mail` (topic `story-of-anchor`, msg `0557e773`) offering the
    crossover in case that session is listening — no agent by that name has ever used the Tami
    mailbox before, so treat this as posted, not as confirmed received.
-10. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
-11. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 5).
+10. **"RJ's House Warmer" tab** *(new wish, captured 2026-08-21; full spec at
+    `D:/code/priority-book/HOUSE_WARMER_SPEC.md`)*: an interactive physics simulator built on the
+    same discipline as the reasoning tab — **show the chain, and refuse rather than mislead** —
+    applied to optics instead of facts. Panels: cavity buildup, steam (bulk-boil vs nanobubble),
+    Kerr self-focusing into filamentation, DIY fusion, and "your actual house."
+    - **The one feature nothing else has: a REGIME GUARD.** Every simulator on Earth hands you a
+      wrong number when a slider leaves the range its formulas hold in, and none of them say so.
+      Drag the absorber fraction up and the badge flips `VALID` → `OUT OF REGIME`, red, with the
+      reason written out: *`B=R/(1-R)` assumes mirror loss dominates; your `a=0.25` is 2,500× larger
+      than `(1-R)=1e-4`; use `B=1/((1-R)+a)`; buildup is 4, not 10,000.* That is the abstention
+      principle as a UI element.
+    - **Live invariant, always on screen:** `P_abs/P_in`. It cannot exceed 1.0 under the honest
+      formula, and that is the lesson.
+    - Every number is real and sourced (LIGO-class finesse, Halas nanobubble steam, `P_cr` for
+      self-focusing, ICF drive intensity vs NIF's 2 MJ / 192 beams, amateur fusor at ~102 W in and
+      ~1e-8 W out — a ratio of 1e-10). Fusion mode's sliders go all the way up and **the gap never
+      closes**, because the numbers are honest.
+    - **Why it belongs on this site:** it is the same argument as the reasoning engine, made in a
+      second domain, and it is honest about a real failure — which is rarer and more credible than
+      any success claim. Also: it is checkable by a stranger in under a minute, which is the only
+      thing that has ever closed the gap between having something and anyone caring.
+    - Build as a **web tab first** (all equations are closed-form, zero install, phone-friendly).
+      Unreal only for the filament visualiser, exported as video. Do not let the engine gate it.
+11. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
+12. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 5).
 
 ## Standing rules that got us here
 
 Measure before defending. A bound is not an absence. A path is not an assertion. Disclosure rots —
 gate it. The test set must be un-curatable. And every one of the 11 fixed bugs was found by
 RUNNING the thing, never by reading it.
+
+A single isolated question, fresh-reloaded every time, cannot find a bug that only exists in the
+timing BETWEEN questions (B36). RJ's correction: stop hand-picking "odd testcases" and instead run
+long, sustained, no-reload sessions of natural back-to-back questions — ideally sourced from a real
+book, not invented — the way an actual visitor would click through the page. This is now a standing
+supplement to the zoo/stress/contrast suites, not a replacement for them: the suites catch answer
+regressions across known shapes; sustained natural sessions catch state that bleeds between
+questions, which no single-question test, curated or random, can ever exercise.

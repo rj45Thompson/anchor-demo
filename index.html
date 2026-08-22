@@ -749,6 +749,12 @@ const R={
 };
 let G={nodes:[],edges:[],byId:new Map()};
 let gen=0;      // search generation: a newer question cancels an older one
+let clickSeq=0; // B36: every path that will eventually call reason() - direct or via a delayed
+                // setTimeout - claims a click number here. A delayed call checks its number is
+                // still the latest before firing. Needed because `gen` only advances INSIDE
+                // reason() itself, so two supersedes queued close together (e.g. three questions
+                // asked in quick succession) raced: the older, already-abandoned delayed call could
+                // fire after a newer click and silently win, so the newer question never ran at all.
 let stopped=false;   // the PERSON decides when the search has run long enough, not a constant
 let blockedNow=null;   // set by an early-exit lane (pronounBlock) so the generic "search ended"
                        // message in reason()'s finally does not stomp a more specific one
@@ -1808,6 +1814,14 @@ async function countAnswer(q,cq,my){
     const ev=[],matched=new Set();
     let namedOnly=cq.words.filter(w=>self.includes(w));
     for(const x of f){
+      // k=0 means ZERO independent anchor sources - the held-out/ground-truth marker alone,
+      // with nothing measured corroborating it (the same k the confidence curve treats as a
+      // base rate everywhere else on this page). "Brown Bear attests brown hair" via
+      // "main food source -> Brown Hare" at k=0 is not evidence of the animal's colour; it is
+      // an unmeasured fact whose PREY happens to share four letters with the word being
+      // searched for. Requiring a real source is the same discipline the rest of the page
+      // already applies to every other claim it makes.
+      if(!x.k)continue;
       const obj=String(x.obj).toLowerCase();
       const hay=(relLabel(x.rel)+" "+obj);
       const got=cq.words.filter(w=>hay.includes(w));
@@ -1949,7 +1963,7 @@ async function pronounBlock(q,pb,my){
     '</div>');
   document.querySelectorAll("#tout .pb-alt").forEach(el=>el.addEventListener("click",()=>{
     stopped=true; $("tq").value=el.dataset.v;
-    setTimeout(()=>reason($("tq").value,{asEntity:true}),150);
+    askSoon($("tq").value,{asEntity:true},150);
   }));
   // "What just happened" must never sit on its start-of-run "Working on..." placeholder - this
   // run ended before the normal completion writer ever ran, so it gets its own explanation here.
@@ -2149,7 +2163,7 @@ function dbgWire(){
     else if(act==="resume"){
       const prog2=dbgProgram(DBG.chains[DBG.sel]),row=prog2[DBG.pc];
       if(row&&row.h){ const h=row.h,qq=DBG.q; stopped=true;
-        setTimeout(()=>reason(qq,{startName:h.from,exclude:h}),180); return; }
+        askSoon(qq,{startName:h.from,exclude:h},180); return; }
     }
     dbgRender();
   });
@@ -2252,6 +2266,14 @@ async function learnAliases(term){
     return [];
   }
 }
+
+// B36: the only two ways anything on the page is allowed to start a search. askNow claims the
+// click immediately (any older pending askSoon becomes stale). askSoon claims it now but waits
+// `ms` before actually calling reason(), and bails if a newer click claimed the number first -
+// so a stale, already-superseded question can never win a race against a newer one.
+function askNow(qv,opts){ clickSeq++; runningQ=qv; reason(qv,opts); }
+function askSoon(qv,opts,ms){ const my=++clickSeq;
+  setTimeout(()=>{ if(my!==clickSeq)return; runningQ=qv; reason(qv,opts); },ms); }
 
 async function reason(q,opts){
   // Do NOT swallow the click. The landing search runs for ~30s, and a visitor who arrives and
@@ -2647,7 +2669,7 @@ async function reason(q,opts){
           '</code>').join(" ")+'</span></div></div>');
         document.querySelectorAll("#tout .reask").forEach(el=>el.addEventListener("click",()=>{
           stopped=true; $("tq").value=start.name+" "+el.textContent;
-          setTimeout(()=>reason($("tq").value),150);
+          askSoon($("tq").value,undefined,150);
         }));
       }
     }
@@ -2831,7 +2853,7 @@ $("tgo").addEventListener("click",()=>{
     if(v&&v!==runningQ){
       badge("switching question");
       trace("dead","SUPERSEDED: you asked something else. Abandoning this search.");
-      setTimeout(()=>{ runningQ=v; reason(v); },180);
+      askSoon(v,undefined,180);
     } else {
       badge("stopped by you");
       trace("dead","STOPPED BY THE USER. The search had not run out of graph - it was still "+
@@ -2839,7 +2861,7 @@ $("tgo").addEventListener("click",()=>{
     }
     return;
   }
-  if(v){ runningQ=v; reason(v); return; }
+  if(v){ askNow(v); return; }
   // B28: REPRODUCED LIVE. A visitor sees the placeholder text sitting in the box and reasonably
   // expects Ask to run it - `if(v){...}` with no else meant clicking with an empty box was a
   // PERMANENT, SILENT no-op: no error, no message, nothing. The placeholder now does what it
@@ -2847,7 +2869,7 @@ $("tgo").addEventListener("click",()=>{
   // the same disclosure rule as everywhere else on this page. If there is ever no placeholder
   // either, an inline message appears; there is no longer an input state where Ask does nothing.
   const ph=($("tq").placeholder||"").trim();
-  if(ph){ $("tq").value=ph; runningQ=ph; reason(ph); }
+  if(ph){ $("tq").value=ph; askNow(ph); }
   else{ badge("type a question first"); }
 });
   document.querySelectorAll("#p-think .hint code").forEach(c=>c.addEventListener("click",()=>{

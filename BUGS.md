@@ -459,6 +459,59 @@ Added to the permanent stress set as the "pronoun" shape (5 rows). Suite: zoo 39
 7/8, stress 111/111, count 3/3, gate 21/0, golden traces 20/20 byte-stable (the shared
 `finally`-block change this touched runs on every question, not just pronoun ones).
 
+### B35 - the count lane accepted k=0 (zero-source) facts as real evidence
+RJ read the step debugger closely and said it "looks fake and is fake" - a fair reaction to what
+he had found: row 07 of "how many types of bear have brown hair" showed **"Brown Bear attests
+brown - e.g. main food source -> Brown Hare, k=0"**, counted as a PASS. k=0 means ZERO
+independent anchor sources - the held-out/ground-truth marker alone, the exact thing the
+confidence curve everywhere else on this page treats as an unmeasured base rate, not evidence.
+The "attestation" was a coincidence: a bear's prey happens to be an animal literally named
+"Brown Hare", so the word "brown" matched inside an unrelated object's NAME, on a fact with no
+real source behind it at all.
+*Fixed:* the count lane's evidence test now requires `x.k` truthy (at least one real anchor
+source) before a fact can attest anything - one line, the same discipline the rest of the page
+already applies everywhere else. Verified: "Brown Bear" now correctly falls through to
+NAMED-ONLY (it IS named "Brown Bear", but no measured fact backs it) instead of PASS; the count
+for "how many types of bear have brown hair" drops from 7 (one of them fake) to 6 (all k>=1,
+all real). The debugger was never fabricating anything - it was accurately reporting a real
+upstream bug in what the count lane accepted as evidence. Suite: zoo 39/40, contrast 7/8,
+stress 111/111, count 3/3, gate 21/0, golden traces 20/20 byte-stable (fix is scoped entirely to
+the count lane, confirmed by zero unexpected golden drift).
+
+### B36 - a stale, already-superseded question could silently win a race and overwrite a newer one
+Found by changing HOW this page gets tested, directly on RJ's instruction: isolated, single-
+question, fresh-reload tests were "SUPER sketchy... I notice when you test this you tend to ask
+odd testcases." The replacement was an 18-question sustained session, no reloads, questions asked
+back-to-back the way a real curious visitor actually clicks, sourced from a real book (*Sapiens*)
+instead of hand-picked edge cases. "how many types of empire are there" rendered Egypt's capital
+lookup instead of its own answer - a real count question, confirmed to route correctly via
+`readCount()` in isolation, that had simply never run. No isolated single-question test, and
+nothing in the automated suite (none of it simulates a DOM click, all of it calls `reason()`
+directly), could ever have found this - it only exists in the timing between clicks.
+
+Root cause: superseding a running search does not cancel it outright - it sets `stopped=true` and
+schedules the new question via `setTimeout(...,180)` so the old search's own loop notices `stopped`
+and exits cleanly first. Nothing tracked whether a scheduled call was still the LATEST one. Ask
+three questions in quick succession and either (a) two independent 180ms timers end up live at
+once, or (b) the old search's own exit flips `thinking` back to `false` before its supersede timer
+fires, so a third click takes the immediate path while the earlier timer is still pending. Either
+way the OLDER, already-abandoned call could fire *after* the newer one and overwrite it - the newer
+question never actually ran, and nothing on screen said so.
+
+*Fixed:* every path that can start a search - the main click handler, the pronoun-block "read as a
+title" button, the debugger's "resume from this hop," the "did you mean" reask chips - now goes
+through two small helpers, `askNow`/`askSoon`, sharing one monotonic `clickSeq` counter. A delayed
+call captures its own number when scheduled and checks it is still current right before ever
+calling `reason()`; an immediate call bumps the counter first, so any older pending delayed call
+recognizes itself as stale and silently no-ops instead of firing. Verified at the exact mechanism
+level (`repro_clickseq.mjs`, stubbing `reason` and driving both interleavings above directly - in
+both, the stale call never reaches `reason()` and the newest question always wins), and live
+in-browser with the real 3-question rapid sequence via `window.anchorDump()`: `stopped` correctly
+flips true on the interrupted Egypt search, and the page settles on Empire's genuine count answer
+("66 recorded types of empire... 40 best-attested", badge "count complete · 40") - not Egypt's
+stale content. Suite: zoo 39/40, contrast 7/8, stress 111/111, count 3/3, gate 21/0, golden traces
+20/20 byte-stable.
+
 ## OPEN
 
 
