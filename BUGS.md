@@ -512,6 +512,30 @@ flips true on the interrupted Egypt search, and the page settles on Empire's gen
 stale content. Suite: zoo 39/40, contrast 7/8, stress 111/111, count 3/3, gate 21/0, golden traces
 20/20 byte-stable.
 
+### B37 - the examples box's format hint was mistakable for a real, ignored example
+RJ looked at the "Write a function" panel and said it "looks broken": English said "reverse a
+string", the examples box showed `[3, 1, 2] -> [1, 2, 3]` / `[9, 4, 7] -> [4, 7, 9]` (sorted, not
+reversed), and the result was `list(reversed(x))` - a program that satisfies neither line shown. It
+looked like real, given ground truth was being silently ignored, exactly the kind of thing this
+page exists to never do.
+
+It wasn't. Those two lines are the `<textarea>`'s **placeholder** - a format example, not typed
+content (`ex.value` was confirmed empty). `renderCode()` correctly saw zero real examples and fell
+back to CASE B (English-only, human-confirm), which is the intended, honest behavior for an empty
+box. The bug was real anyway: `input,textarea{color:var(--fg)}` had no `::placeholder` rule, so the
+ghost hint inherited close to full text color and read as real content on sight - on the dark
+palette, computed placeholder color (`rgb(236,234,222)`, i.e. `--fg`) was nearly indistinguishable
+from real typed text at a glance. A hint that reads as data is a disclosure bug on a page whose
+entire claim is that it never lets something look like more than it is.
+
+*Fixed:* one rule, `input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}` -
+reusing the page's own existing secondary-text token (already used for tab labels and hints)
+instead of inventing a new one. Verified by computed style, not eyeballing: placeholder now
+resolves to `--muted` (`rgb(107,107,102)` light / `rgb(156,154,142)` dark) against real text's
+`--fg` (`rgb(26,26,25)` light / `rgb(236,234,222)` dark) in both palettes - a real, measured
+separation, not an assumed one. Suite unaffected (CSS-only change): zoo 39/40, contrast 7/8, stress
+111/111, count 3/3, gate 21/0, golden traces 20/20 byte-stable.
+
 ## OPEN
 
 
