@@ -750,6 +750,8 @@ const R={
 let G={nodes:[],edges:[],byId:new Map()};
 let gen=0;      // search generation: a newer question cancels an older one
 let stopped=false;   // the PERSON decides when the search has run long enough, not a constant
+let blockedNow=null;   // set by an early-exit lane (pronounBlock) so the generic "search ended"
+                       // message in reason()'s finally does not stomp a more specific one
 let runningQ="";     // set by reason() itself: the autorun and re-ask call reason() directly, so
                      // the click handler's private copy stayed "" and Stop RESTARTED the autorun
 let rotY=0.55,rotX=-0.22,autoSpin=true,dragging=null,thinking=false,rafOn=false;
@@ -1436,6 +1438,30 @@ function properNouns(raw){
   return new Set(String(raw).split(/\s+/).slice(1)
     .filter(w=>/^[A-Z][a-z]/.test(w)).map(w=>w.toLowerCase().replace(/[^a-z]/g,"")));
 }
+
+/* PRONOUN BLOCK. "what is my name" resolved "my name" as the graph's own entity "My Name" - a
+   real Wikidata SONG - and answered a Sweden-released single's genre to a question about the
+   person asking. "how old am I" and "where do I live" did the same with the bare word "I" (a
+   real company abbreviation), one of them presenting London/Kensington as an ask-back-confirmed
+   ANSWER to "where do I live". Four confidently-wrong results from one root cause: this graph
+   holds facts about the WORLD, not about the person asking or the system answering - "my",
+   "your", "I", "me" name conversational participants it has no representation of at all, and no
+   amount of search can ever find one honestly.
+   The exact same signal RELSET arbitration already uses ("a bare relation word is not a
+   subject, unless it is capitalised") applies here without change: "Your Name" the Makoto
+   Shinkai film is a real, legitimately capitalised graph entity someone might really ask about -
+   only the LOWERCASE, ordinary-English form is the unanswerable personal question. */
+const PRONOUN1=new Set("my mine myself i me".split(" "));
+const PRONOUN2=new Set("your yours yourself you".split(" "));
+function readPronounBlock(raw,caps){
+  const words=raw.replace(/[?.!]+$/,"").split(/\s+/).filter(Boolean);
+  const hit=words.find(w=>{const l=w.toLowerCase().replace(/[^a-z]/g,"");
+    return (PRONOUN1.has(l)||PRONOUN2.has(l))&&!caps.has(l);});
+  if(!hit)return null;
+  const who=PRONOUN1.has(hit.toLowerCase().replace(/[^a-z]/g,""))?"you, the person asking":
+    "me, this system";
+  return {who};
+}
 /* Read the question into (start subject, goal relation). ALWAYS shown back to the reader: a parser
    that silently guesses wrong is worse than one you can watch being wrong. */
 function readQuery(q){
@@ -1874,6 +1900,70 @@ async function countAnswer(q,cq,my){
   traceFlush();
 }
 
+/* ---- THE PRONOUN BLOCK --------------------------------------------------------------------
+   "what is my name" answered a Sweden-released SONG's genre to a question about the person
+   asking - "my name" happens to be the real title of a real Wikidata entity, and ordinary
+   entity-linking had no way to know the difference between a title and a first-person question.
+   Real, interactive, never a dead end: if the literal words ALSO name something real in this
+   graph, that is offered as one click - reusing the exact evidence the rest of the page already
+   trusts (real facts, found by real execution), never a guess dressed up as an option. */
+async function pronounBlock(q,pb,my){
+  const out=$("tout");
+  badge("that question is about "+pb.who);
+  blockedNow="\""+q+"\" asks about "+pb.who+" - this graph has no representation of either of "+
+    "us, so nothing ran";
+  nowSet(blockedNow,1,false);
+  trace("dead","PRONOUN BLOCK: \""+q+"\" is about "+pb.who+
+    " - this graph holds facts about the world, not about conversation participants. No search "+
+    "was run; there is nothing an honest search could find under that reading.");
+  // try the SAME words as a literal TITLE - "My Name" and "Your Name" are both real graph
+  // entities. Real execution decides, never an assumption: only offered if factsOf finds it.
+  const stripped=q.replace(/[?.!]+$/,"").split(/\s+/)
+    .filter(w=>!LEAD.has(w.toLowerCase())&&!TAIL.has(w.toLowerCase()));
+  let alt=null, triedAlt=false;
+  if(stripped.join(" ").replace(/[^a-zA-Z]/g,"").length>2){
+    triedAlt=true;
+    for(const v of variantsOf(stripped.join(" "))){
+      if(!/^[A-Z]/.test(v))continue;   // only the TITLE-CASE reading counts as "a real title"
+      const f=await factsOf(v);
+      if(f.length){ alt={name:v,facts:f}; break; }
+    }
+  }
+  if(my!==gen)return;
+  out.insertAdjacentHTML("beforeend",'<div class="card k1"><div class="claim">'+
+    '<b>That question is about '+esc(pb.who)+'.</b></div>'+
+    '<div class="row"><span class="lbl">why</span><span>This graph holds facts about the '+
+    'world, not about '+esc(pb.who)+' - "my"/"your"/"I"/"me" name a participant in this '+
+    'conversation, and there is no representation of that here, under any reading. No amount '+
+    'of search could ever find an honest answer to this one.</span></div>'+
+    (alt?'<div class="row"><span class="lbl">maybe</span><span>Read as a TITLE instead, <b>"'+
+      esc(alt.name)+'"</b> is a real entity here ('+alt.facts.length+' fact'+
+      (alt.facts.length===1?"":"s")+') - <code class="pb-alt" style="cursor:pointer" '+
+      'data-v="'+esc(alt.name)+'">try it as "'+esc(alt.name)+'"</code></span></div>':
+      triedAlt?'<div class="row"><span class="lbl">also</span><span>Taken literally as a '+
+      'title, "'+esc(stripped.join(" ")||q)+'" is not recorded here either - so there is no '+
+      'reading of this question this graph can answer.</span></div>':
+      '<div class="row"><span class="lbl">also</span><span>What is left after removing the '+
+      'question words ("'+esc(stripped.join(" ")||q)+'") is too short to search meaningfully '+
+      'as a title - not checked, not claimed.</span></div>')+
+    '</div>');
+  document.querySelectorAll("#tout .pb-alt").forEach(el=>el.addEventListener("click",()=>{
+    stopped=true; $("tq").value=el.dataset.v;
+    setTimeout(()=>reason($("tq").value,{asEntity:true}),150);
+  }));
+  // "What just happened" must never sit on its start-of-run "Working on..." placeholder - this
+  // run ended before the normal completion writer ever ran, so it gets its own explanation here.
+  {const wb=$("whatbox"); if(wb)wb.innerHTML='<p class="small">You asked <b>'+esc(q)+
+    '</b>. No search ran: this question names '+esc(pb.who)+', a participant in this '+
+    'conversation, not anything in the graph - "my"/"your"/"I"/"me" have no representation '+
+    'here under any reading, so searching would only ever have produced a guess dressed up as '+
+    'an answer. '+(alt?'The literal words also happen to name a real, different thing here ("'+
+      esc(alt.name)+'"), offered above as one click.':triedAlt?
+      'The literal words do not name anything else here either.':
+      'What is left of the literal words is too short to have been worth checking.')+'</p>';}
+  traceFlush();
+}
+
 /* ---- THE STEP DEBUGGER ----------------------------------------------------------------
    The conclusion as a program. Every value shown is a value the finished run RECORDED (k
    counts, curve points, shard ids); stepping replays the record and never re-runs the search -
@@ -2198,6 +2288,18 @@ async function reason(q,opts){
     // a counting question is neither a lookup nor a path; route it before either lane runs
     const cq=readCount(q);
     if(cq){ await countAnswer(q,cq,my); return; }
+    // PRONOUN BLOCK, routed before entity linking ever runs - "my"/"I"/"your"/"me" refer to
+    // conversation participants this graph has no representation of, so no search could ever
+    // find an honest answer. Checked and rendered before the pronoun word gets a chance to be
+    // matched against an unrelated, identically-spelled entity.
+    // Skipped when opts.asEntity is set: properNouns() always exempts word 1 (ordinary
+    // sentence-initial capitalisation, e.g. "What is the capital..."), so a 2-word re-ask like
+    // "My Name" - where the pronoun word IS word 1 - could never satisfy the caps check and
+    // would re-trigger this same block forever. The "try it as ..." click already KNOWS its own
+    // text is a literal title, not a natural-language question - that certainty is real
+    // information the caps heuristic cannot see, so it is passed explicitly instead of guessed.
+    const pb=opts&&opts.asEntity?null:readPronounBlock(q,properNouns(q));
+    if(pb){ await pronounBlock(q,pb,my); return; }
     const ents=await findEntities(q);
     trace("beam","entities found in the question: "+
       (ents.length?ents.map(e=>"\""+e.name+"\" ("+e.facts.length+" facts)").join(", "):"none"));
@@ -2708,9 +2810,12 @@ async function reason(q,opts){
   }finally{
     clearInterval(nowTimer);
     if(my===gen){ traceFlush(); thinking=false; $("tgo").textContent="Ask";
-      nowSet((stopped?"stopped by you":"search ended")+" — "+liveN+
+      // blockedNow: an early-exit lane (pronounBlock) already left a more specific, correct
+      // account of what happened than the generic message below would give - don't stomp it.
+      nowSet(blockedNow||((stopped?"stopped by you":"search ended")+" — "+liveN+
         (liveN===1?" chain":" chains")+" completed; the plain-English account is in \"What "+
-        "just happened\" below",1,false); }
+        "just happened\" below"),1,false);
+      blockedNow=null; }
     else traceBuf=[];   // a superseded search's unpainted lines belong to a dead question
   }
 }

@@ -104,3 +104,8 @@
 {"stress": true, "shape": "twoq", "expect": "safe", "question": "what is a car and what is a dog"}
 {"stress":true,"shape":"cardinality","expect":"answer","question":"how many wheels does a car have usually"}
 {"stress":true,"shape":"cardinality","expect":"answer","question":"how many legs does a spider have"}
+{"stress":true,"shape":"pronoun","expect":"abstain","question":"what is my name"}
+{"stress":true,"shape":"pronoun","expect":"abstain","question":"how old am I"}
+{"stress":true,"shape":"pronoun","expect":"abstain","question":"where do I live"}
+{"stress":true,"shape":"pronoun","expect":"abstain","question":"what is your name"}
+{"stress":true,"shape":"pronoun","expect":"abstain","question":"who am I"}

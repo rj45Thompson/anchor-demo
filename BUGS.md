@@ -420,6 +420,45 @@ clamps at the last hop instead of erroring) - both via `anchorDump()` + DOM/even
 since the Browser pane was not compositing that session either, working around the same
 limitation noted elsewhere in this file.
 
+### B34 - "what is my name" answered a Sweden-released SONG's genre to a personal question
+RJ reported it live. Reproduced immediately, and it was worse than one bad answer - FOUR
+confidently-wrong outcomes from one root cause: "my"/"I"/"your"/"me" name conversation
+participants this graph has no representation of, but happen to collide with real, unrelated
+graph entities under their literal spelling.
+```
+"what is my name"    -> "My Name", a real Wikidata SONG (Sweden, 2009) - genre answered as fact
+"how old am I"        -> subject "old", target the bare letter "i" (a real company) - path search
+"where do I live"     -> "i" resolved to a real org; ask-back UI presented London/Kensington as
+                         if it were answering the personal question, with full composed confidence
+"what is your name"   -> "Your Name", the real Makoto Shinkai FILM - director answered as fact
+```
+*Fixed:* a PRONOUN BLOCK routed before entity linking ever runs. Reuses, unchanged, the exact
+signal RELSET arbitration already trusts elsewhere on this page ("a bare relation word is not a
+subject, unless it is capitalised in the question") - lowercase my/mine/myself/i/me and
+your/yours/yourself/you trigger the block; genuinely capitalised titles ("Your Name" the film)
+do not, verified directly against a control case ("who directed Your Name" still answers Makoto
+Shinkai correctly).
+
+Made INTERACTIVE per RJ's explicit ask, not just a static refusal: the literal words are tried
+as a real TITLE (never assumed - only offered if `factsOf` actually finds it), and if real facts
+exist, a single click re-runs the search on that title. Caught and fixed one more real bug
+building this: `properNouns()` always exempts word 1 (ordinary sentence-initial capitalisation),
+so the 2-word re-ask "My Name" - where the pronoun word IS word 1 - could never satisfy the caps
+check and clicking the button just re-triggered the same block forever. Fixed with an explicit
+`{asEntity:true}` flag on the re-ask call: the click already KNOWS its own text is a literal
+title, so that certainty is passed directly instead of re-guessed from capitalisation. Caught
+live, by actually clicking the button rather than trusting the rendered text - the "verify the
+click, not just the function" lesson, again.
+
+Also fixed a smaller honesty gap building this: when the stripped phrase is too short to search
+meaningfully (e.g. "who am I" -> bare "I"), the fallback copy originally claimed "is not
+recorded here either" for a check that was never run. Now distinguishes "checked, found
+nothing" from "too short to check" - never claims a test that did not happen.
+
+Added to the permanent stress set as the "pronoun" shape (5 rows). Suite: zoo 39/40, contrast
+7/8, stress 111/111, count 3/3, gate 21/0, golden traces 20/20 byte-stable (the shared
+`finally`-block change this touched runs on every question, not just pronoun ones).
+
 ## OPEN
 
 
