@@ -536,15 +536,267 @@ resolves to `--muted` (`rgb(107,107,102)` light / `rgb(156,154,142)` dark) again
 separation, not an assumed one. Suite unaffected (CSS-only change): zoo 39/40, contrast 7/8, stress
 111/111, count 3/3, gate 21/0, golden traces 20/20 byte-stable.
 
+### B38 - five early-return lanes left the step debugger on an eternal fake spinner (same shape as B31, never generalised)
+
+RJ: "the debugger never quite works. ask any question, it shows many clear errors." Reproduced live,
+three independent ways: an isolated, seeded-stale-DBG test on all five of B34's own pronoun questions
+("what is my name", "how old am I", "where do I live", "what is your name", "who am I"); a real,
+click-driven Node/vm harness against the actual page script; and a real, isolated headless-Chromium
+browser via CDP (screenshot: a correctly-rendered pronoun-block answer sitting directly above a step
+debugger frozen on "Searching. The moment the first chain completes..." forever).
+
+Root cause: `reason()` unconditionally repaints `#dbgbox` to that spinner at the top of every call,
+and FIVE separate early-return lanes exit before ever reaching the one place that used to replace it
+(`dbgLoad(q,done)`, near the end of `reason()`):
+1. the pronoun block (`pronounBlock()`) - the originally-reported case
+2. `countAnswer()`'s "no members recorded for this class" dead end
+3. `reason()`'s "no subject in this question resolved to anything" (coverage-checked absence)
+4. `reason()`'s "no relation or second entity named" (nothing to search for)
+5. `reason()`'s "no chain reached the goal" (the search ran, opened real shards, and abstained) -
+   the highest-traffic of the five: any everyday question that never resolves to a recorded
+   relation hits it, and a fresh, non-adversarial 100-question sample (50 "how does a rainbow
+   form"-register basics + 50 structural, see the new debugger gate below) hits this constantly.
+
+B31 already fixed this exact SHAPE once, for the count lane's success path only (`countAnswer` ->
+`dbgLoadCount`); it was never generalised, and lane 1 (written in B34, after B31 shipped) carried the
+identical gap forward untouched.
+
+*Fixed:* a shared, small, honest, disclosed program - `dbgLoadNote(q,op,txt,det)` / `dbgRenderNote()`
+- reusing the existing dbg-code visual grammar instead of a blank clear or a stale leftover. Nothing
+invented: every field is a value the calling lane already computed for its own #tout answer (the
+abstain lane reports the real `fetches`/`scanned`/`depth`/furthest-node-reached it already had).
+Wired into all 5 lanes. Verified: full suite unaffected (zoo 39/40, contrast 7/8, stress 111/111,
+count 3/3, gate 21/0, golden traces 20/20 byte-stable) - unaffected BY CONSTRUCTION, which is itself
+a finding: `window.anchorDump()` never captured `DBG`/`#dbgbox` at all, so this whole class of bug is
+invisible to every existing automated gate (see the new debugger gate, built specifically to close
+that hole).
+
+### B39 - the debugger's own vars pane and WALK rows claimed "measured curve" for an unmeasured (k=0) base rate
+
+Independent, multi-method finding (real click-driven harness + a real isolated headless-Chromium
+screenshot via CDP): for any hop with k=0 (zero independent anchor sources - only the held-out
+truth-bit marker), the step debugger's WALK row and vars pane both showed the number `pFor(0)`
+returns - the UNMEASURED base rate, 51.2% - labelled "p_hop (measured curve)", identical treatment to
+a genuinely measured k>=1 hop, even though `pFor(k)` itself already flags `measured:false` for k=0
+(`CURVE={1:...,2:...,3:...}` has no entry for 0; it falls through to `BASE`). Worse: **51.2%
+(unmeasured) is numerically higher than 44.9% (a real, measured, single-source hop)** - a
+zero-evidence hop outranks real evidence on the raw number while looking equally confident, and reads
+exactly as "fake" as the k=0 coincidence RJ already flagged once in B35 - just in the lane B35 never
+touched (the general chain/lookup search, not counting). Measured on a fresh, independently-generated
+(seed 20260822, not hand-picked) 120-question sample: **8 of 134 displayed hops (6.0%)** were k=0, all
+8 independently confirmed present in the raw shards with the exact k shown (`debugger_audit.mjs`) -
+the debugger was not fabricating data, it was mislabelling real data's confidence, the same
+conclusion B35 reached for the count lane.
+
+The main answer panel (`hopHTML()`, `#tout`) already disclosed this correctly ("0 independent sources
+- base rate 51.2%") for the identical number; the debugger never reused that disclosure and desynced
+from the panel showing the very same fact.
+
+*Fixed:* every debugger display path now reuses `pFor(k).measured` and `hopHTML`'s own exact
+vocabulary ("measured" / "base rate") - the chain debugger's WALK row detail string, the chain vars
+pane's `p_hop` label, and the identical latent mislabelling in the count lane's vars pane (fixed on
+the same principle even though no live k=0 PASS row was observed in testing - same bug shape,
+same fix). Verified: suite unaffected (zoo 39/40, contrast 7/8, stress 111/111, count 3/3, gate 21/0,
+golden traces 20/20 byte-stable).
+
+### B40 - fail-fast: the evidence check now runs, and is shown, at the hop - not only in a separate audit run afterward
+
+RJ, live: "each step should catch the error at the first occurrence rather than untangle a mess at
+the end." B39's own k=0 mislabelling - like the still-open type-constraint bug
+(`FINDING_type_constraint_dropped.md`) - was only ever caught by a SEPARATE audit script
+(`debugger_audit.mjs`) re-reading the shards after the fact; the live engine itself never ran that
+check on itself, and the step debugger played back a finished answer's arithmetic, never a decision
+being made.
+
+*Built:* `hopEvidenceCheck(h)` runs the same k>0 evidence test B35 already applies in the count lane,
+but now at the moment a hop is actually accepted into a candidate chain - attached to the hop object
+itself inside the completion loop (not just recomputed lazily for display), `trace()`d live with its
+own PASS/FAIL verdict the instant it is decided. `dbgProgram()` now renders a CHECK row immediately
+before every WALK row it gates, mirroring the count lane's own existing CHECK/PASS/FAIL vocabulary -
+the step-through literally shows the verdict at the point it was decided, not a conclusion inferred
+afterward from the final percentage.
+
+*Ranking decision - measured, not guessed.* A chain that only completes through a FAILED check is not
+deleted (that would hide the exact failure the CHECK row exists to surface) - it is **demoted** below
+any chain whose every hop passed, regardless of raw composed probability (`chainAllPass`/`byRank`,
+wired into all three places chains get ranked: the live-updating debugger, the self-check repair
+re-rank, and the final answer). This is the same "rank by constraint satisfaction, not just source
+count" principle already recommended - and, until now, unimplemented anywhere - for the
+type-constraint class of bug.
+
+Measured before shipping, on the SAME captured chain set (never re-run, to keep the comparison
+apples-to-apples): re-derived what `done[0]` would be under the OLD sort (pure probability) vs the
+NEW `byRank` sort for all 9 golden questions whose trace shape changed. **The final answer is
+identical in all 9** (e.g. c-kyoto: "Japan -> Tokyo" 89.7% either way; the one k=0 chain present,
+"Nakagyō-ku" at 51.2%, was never top-ranked by raw probability either, since 51.2% < 89.7%). The
+ranking change is a real behaviour change with zero observed impact on the current
+golden/contrast/stress/zoo sets, and starts mattering the moment a question's best available evidence
+really is unmeasured. Golden traces re-recorded deliberately (not silently) for the new, predicted,
+and ONLY the predicted, CHECK-line narration; re-verified byte-stable across 2 independent `--check`
+runs before moving on. Suite: zoo 39/40, contrast 7/8, stress 111/111, count 3/3, gate 21/0, golden
+traces 20/20 byte-stable (new baseline).
+
+### B41 - stopping a still-current search (not superseding it) also left the debugger untouched
+
+Found auditing B38's own fix for completeness, not live-reported. `reason()`'s frontier loop (and
+`countAnswer()`'s member loop) guard every internal checkpoint with `if(my!==gen||stopped)return;` -
+one condition standing in for two different situations. `my!==gen` (a NEWER question truly
+superseded this one) is correctly silent - the newer question owns the debugger now. But `stopped`
+alone (the person clicked Stop, or a harness's own timeout did, on the SAME still-current question)
+hit the identical hard return with no cleanup, leaving `#dbgbox` on whatever it last showed - the
+eternal spinner, on a fresh page load. This is not an edge case: a fresh, non-adversarial
+120-question sample measured **44.2% of realistic questions never completing within an 8s budget**
+without being stopped, and a live diagnostic on a genuinely hard path question ("is there a
+connection between chess and mathematics") showed it still honestly searching - zero completed
+chains - past 500 shard fetches and 70 seconds; a person is the one who stops a run like that.
+
+*Fixed:* the compound condition is split at all 4 internal checkpoints - a true supersede
+(`my!==gen`) still returns in silence; a plain stop on the current question now calls
+`dbgLoadNoteIfIdle()` first, an idempotent, non-destructive variant of B38's `dbgLoadNote` that only
+fills the gap if nothing has been shown for this exact question yet, so it never overwrites real,
+live chain data `dbgLive()` already published. Verified: suite unaffected (zoo 39/40, contrast 7/8,
+stress 111/111, count 3/3, gate 21/0, golden traces 20/20 byte-stable); re-screened the same
+realistic questions that surfaced the gap and confirmed `DBG` is no longer left `null` after a stop
+on a previously-idle debugger - the still-genuinely-searching case (nobody stopped it) correctly
+keeps showing "please wait", which is honest, not a bug.
+
+### B42 - O-crash CLOSED: two real defects on the wide-search path, one of them the actual cause
+RJ: "it seems to crash." Patient, per-second CDP polling against a real, isolated headless browser
+(never a shared session) reproduced it for the first time with timestamped evidence: "why do we
+dream" and "is there a connection between chess and mathematics" - both wide, poorly-anchored
+questions with no clear target - ran for 60-130+ seconds and then stopped responding to any input,
+confirmed NOT a regression (reproduced on a byte-verified pre-session backup too).
+
+**Defect 1 (real, but NOT the cause of this symptom - measured, not assumed).** `gNode()` caps
+drawn nodes at `R.MAX_NODES` with an O(1) `G.byId` Map lookup; its neighbour `gEdge()` had no cap
+at all and deduped with `G.edges.some(e=>...)` - an O(E) scan on every insert, O(E²) total. Fixed:
+`R.MAX_EDGES:1200` plus an O(1) `G.edgeKeys` Set, same shape as `gNode()`. Genuine and worth
+keeping - but measured in isolation (profiling instrumented `gNode`/`gEdge` call counts over time)
+this fix ALONE left "why do we dream" still running past 61s with zero sign of terminating. It was
+not the explanation.
+
+**Defect 2 (the actual cause - found by profiling, not guessing).** Once `R.MAX_NODES` (190) is
+reached, `gNode()` correctly starts returning `null` for any brand-new candidate - but the frontier
+loop kept calling `nx.facts=await factsOf(nx._pending)` for every queued candidate regardless,
+fetching real shards for entries that `frontier=next.filter(n=>n.node&&...)` was going to throw
+away immediately afterward, since a `null`-node entry can never pass that filter. Proven with a
+stack-sampling probe on a live run: `factsOf` was still firing hundreds of calls deep into a search
+whose `G.nodes`/`G.edges` counts had been frozen for 50+ seconds. Fixed: skip the fetch entirely
+when `!nx.node`, with `continue` (not `break` - other queued entries may still be valid, already-
+tracked nodes worth revisiting). Does not touch chain correctness: `done.push()` (where an answer
+is recorded) fires while scanning `cur.facts`, which only requires `cur` itself to already be a
+valid, previously-opened node - it never depended on the NEXT hop's node succeeding.
+
+**Verified, not asserted:**
+- "why do we dream": did not terminate within 61s pre-fix (profiling run) -> 21.8s post-fix.
+- "is there a connection between chess and mathematics" (O-crash's other named repro): 34.6s.
+- Both stay well inside a realistic patience budget, down from "no recovery inside a 130+ second
+  observation window."
+- Suite: zoo 39/40, contrast 7/8, stress 111/111, count 3/3, gate 21/0, golden traces 20/20
+  byte-stable - a search-loop change this central changing NOTHING on the golden/zoo surfaces,
+  which exercise `reason()` the same way real usage does, is real evidence it is safe, not the
+  reasoning alone. The debugger gate's 100-question run separately surfaced an UNRELATED finding
+  (`DBG.q` drifting from the asked question on a growing number of "why/how" questions) - this
+  touches none of the code this fix changed (gNode/gEdge/the frontier loop, not DBG/dbgLoad/
+  dbgLoadNote), so it is not attributed to this fix; see B43 below for what is actually known
+  about it so far.
+
+### B43 - debugger gate's NO_STALE_BLEED finding is a bug in the GATE, not the page
+The 100-question real-browser debugger gate (built this session) reported 31 questions where
+`DBG.q` did not match the question just asked - on first read this looked like B36's stale-click
+class recurring in the debugger specifically. It is not.
+
+**The evidence that closes this, not a guess.** Every mismatch's "stale" text was NOT the previous
+question - it was a question from FURTHER ALONG the same fixed 100-question list, and the gap grew
+in a clean step function: offset 6 for questions 7-28, jumps to 7, holds, jumps to 8, holds, jumps
+to 9. That is not the shape of a browser-timing race (which would be noisy/random); it is the
+signature of a measurement or request/response correlation bug that occasionally falls one step
+further behind. Confirmed directly: `_scratch_bleed_sustained.mjs` replayed the exact same
+questions 1-20, in the exact same order, one continuous session, real clicks dispatched through
+`minidom.mjs` (the same real-DOM harness `ui_session.mjs` uses) - headlessly, no real browser, no
+CDP. Zero mismatches, including at positions 7, 9, and 18, which the real-browser gate had flagged.
+The product's own `DBG.q` assignment is correct every single time it was tested directly.
+
+The remaining suspect is `debugger_gate_runner.mjs`'s CDP WebSocket layer (`Session.send`/
+`evalJS`, `Runtime.evaluate` with `returnByValue:true`) or the `recoverFreshSession()` reconnect
+path after a hang - something in that real-browser round-trip occasionally hands back a result
+that lags the actual page state by a growing amount. Not yet root-caused to a specific line - that
+needs its own pass with the CDP traffic itself instrumented, not more guessing at the product code
+that has now been directly cleared.
+
+*Not fixed this pass* (the gate is new infrastructure, not the shipped page - a guess-fix on
+unfamiliar CDP plumbing is exactly what the "no guessing" rule exists to prevent). `suite.mjs` and
+`debugger_gate_runner.mjs` now exclude `NO_STALE_BLEED` from the gate's pass/fail floor, the same
+way `HANG_SUSPECTED` already was, with the reasoning and this bug number in the comment - reported
+every run, never hidden, but no longer blocking a ship on a bug the harness has, not the product.
+
+**Update, found by a second, concurrent session working this same file:** `CDP_PORT` (9555) and
+`PROFILE_DIR` were process-wide constants, not unique per run. This repo is worked by multiple
+Claude sessions on one machine at once (documented project convention, see CLAUDE.md's shared-
+workspace notes) - two independent gate invocations on the same machine would launch onto the SAME
+port/profile, and each one's hang-recovery path kills "the" browser on that port before relaunching
+its own, so one run's recovery could yank the browser out from under a completely different run.
+That would produce exactly the observed signature: a "stale" question that is actually real content
+from a DIFFERENT run further along (or behind) in the same shared, reused `debugger_test_100.json`
+list - not proof the headless repro was wrong (it still correctly shows zero mismatches for one
+isolated run), but a more concrete candidate for WHY the real-browser gate specifically drifted.
+Fixed there: `CDP_PORT`/`PROFILE_DIR` are now derived from `process.pid`, unique per invocation.
+Not independently re-verified by this session before shipping alongside B44 - noted here rather
+than claimed as confirmed, per the same rule that opened this bug in the first place.
+
+### B44 - "how many fingers do people have" got a confident, nonsense answer
+RJ: "I asked it how many fingers do people have. it should ask back with what it knows? it fails
+to answer correctly." Reproduced directly, not guessed: `readCount()` correctly detects the
+do/does-cardinality shape (B29) and returns `null` on purpose, routing it to the ordinary
+two-entity chain search - but that search answers "are these two things connected", not "how
+many", and nothing downstream disclosed the mismatch. For "wheels does a car have" the search
+happens to land on a real, direct, correct edge (`wheel -part of-> car`) so the old flat "verdict"
+card read as passable, purely by coincidence. For "fingers do people have" there is no such direct
+edge, so it landed on a weak two-hop association (`finger -part of-> hand -related to-> people`,
+20.2%) and presented it with the exact same confident styling - a big percentage, no disclosure
+that a count was asked for and none exists. Same lane, same honesty, wildly different-looking
+output, because the FRAMING never said what kind of question this actually was.
+
+RJ's correction, direct quote: "the facts are in the reasoning and asking back when lost. the
+debugger. it's never going to be just a lookup." Read plainly: don't gate or special-case the
+search itself, and don't invent a second, static "honest fallback" text block either - that would
+just be a different lookup. Extend the reasoning's OWN existing ask-back mechanism (the one
+already used for "Melbourne has more than one country reading, which did you mean") to also cover
+"I found a connection, not a count" - so the disclosure comes from what the search actually found,
+not from a canned message layered on top.
+
+*Fixed:* `isDoesCardinality(q)` (B29's regex, now named and reusable) gates a NEW branch that fires
+right after the chain search completes, for ANY do/does-cardinality question that found at least
+one chain - deliberately independent of hop count or confidence, because the graph never has a
+number for ANY of these regardless of how clean the found relation looks; hop-count-based
+special-casing would have been exactly the kind of threshold-tuned patch RJ's correction rules
+out. Replaces the flat "verdict" card with an ask-back card: states plainly that a count was
+asked for and none is stored, shows up to 4 of the chains reasoning actually found (ranked, same
+as before), and invites stepping through the top one in the debugger - which still gets the exact
+same `dbgLoad(q,done)` call as every other completed search, so the step debugger, CHECK rows, and
+`dbgVerify` self-check all work identically for this class of question; nothing about the
+REASONING or the DEBUGGER changed, only how the top-level answer disclosed what it found.
+Verified: "fingers/people" now badges "12 connections found · not a count" (was "chain complete ·
+20.2%"); "wheels/car" now badges "30 connections found · not a count" and still surfaces the real
+`wheel -part of-> car` fact first, honestly labelled as a connection instead of disguised as an
+answer. None of the 20 golden-trace questions are do/does-shaped, so this is untouched there by
+construction; confirmed byte-stable anyway. Suite: zoo 39/40, contrast 7/8, stress 111/111, count
+3/3, confident-wrong 1/1, audit_demo 22/0, audit_ui 2/0, golden traces 20/20 byte-stable.
+
+**Separately observed while building the 100-question cardinality zoo this fix was verified
+against**: many natural "how many X does Y have" questions on richly-connected generic nouns
+("basketball team", "Jupiter", "crab") take 20-30+ real seconds - but `time` on one of them showed
+`user 0.1s / sys 0.1s` against `real 29s`, meaning the process is almost entirely IDLE, not
+computing. This is the deliberate UI-pacing sleeps (`await sleep(20)` per shard fetch, `await
+sleep(R.STEP_MS)` per hop-replay - real comments: "let a frame render between fetches so the graph
+visibly grows") adding up over a wide search, which makes sense for a person watching the page and
+is pure waste in a headless test harness with nothing to render. Not a product bug, not touched
+this pass - worth a wishlist item for whoever next wants faster headless test cycles (stub `sleep`
+to resolve immediately outside a real browser), separate from anything this bug fixes.
+
 ## OPEN
 
 
-
-### O-crash - RJ reports "it seems to crash"; not yet reproduced
-A crash trap now converts any uncaught error into a red CRASH line in the trace and the
-narration bar, and the likeliest vector (a full scene dispose+rebuild for EVERY completing
-chain - 74 rebuilds in one Abbey Road run) is throttled to ~2/s. Awaiting a repro with the
-trap's line in hand; do not close on a guess.
 
 ### O8 - the vision loop is counted, not benchmarked
 The engine reads its own settled layout to order frontier ties (landmark-heuristic style;

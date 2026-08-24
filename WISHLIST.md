@@ -59,6 +59,14 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
 | B26: THREE-load failure could never again kill the whole page | ✅ | guarded top-level construction + zero-dependency crash trap installed FIRST; reproduced (Ask unwired) and re-verified fixed (Ask wired) headless |
 | autorun REALLY removed (B19) | ✅ | a third autorun lived in the index-load .then(); it also aborted running searches by bumping gen - removing it took chain contrast 6/8 → 7/8 |
 | crash trap | ✅ | any uncaught error becomes a red CRASH line in trace + narration bar; scene-rebuild churn throttled (likeliest crash vector) |
+| ⭐⭐ B38: five early-return lanes left the debugger on an eternal fake spinner ("ask any question, it shows many clear errors") | ✅ | pronoun block, count-no-members, no-subject-resolved, no-relation-named, no-chain-found all repainted `#dbgbox` to "Searching..." at the top of every `reason()` call and then exited before the one place that replaced it; shared `dbgLoadNote()` gives each lane its own small honest program instead, same B31 precedent generalised to all five |
+| B39: debugger's own vars pane/WALK rows claimed "measured curve" for an unmeasured k=0 base rate | ✅ | 51.2% (unmeasured) > 44.9% (real, measured) while labelled identically; measured 8/134 hops (6.0%) k=0 in a fresh 120-question sample; now reuses hopHTML's own "measured"/"base rate" words in every debugger display path |
+| ⭐⭐ B40: fail-fast CHECK - the evidence test now runs (and shows) AT the hop, not only in a later audit | ✅ | RJ: "each step should catch the error at the first occurrence"; `hopEvidenceCheck` attached at hop-build time, `dbgProgram` plays a CHECK row before every WALK; failing chains demoted (not deleted) below any all-pass chain, regardless of raw %; measured on the same captured data both ways first - zero golden answers changed, only the new CHECK narration (re-recorded, byte-stable x2) |
+| B41: stopping a still-current search (not superseding it) also left the debugger untouched | ✅ | `if(my!==gen\|\|stopped)return;` treated two different situations as one; 44.2% of a realistic 120-question sample never completes in 8s, so this is close to half of real usage, not an edge case; split into a silent true-supersede path and a `dbgLoadNoteIfIdle()` path for a plain stop |
+| ⭐⭐ the debugger LOGIC gate (100 questions, fault-injection self-tested) | ✅ | `debugger_gate.mjs`/`debugger_gate_runner.mjs`: drives the REAL page in a REAL isolated headless browser (the only technique that has ever watched `#dbgbox` composite) against `debugger_test_100.json` (50 plain-register everyday questions + 50 structural, RJ-reviewed, fixed not regenerated); checks step-sequence validity, arithmetic reproducibility, shard-truth, honest k=0 labelling, no stale bleed-through across a sustained session, never-stuck-on-spinner; self-test proves all 6 checkers catch injected faults (12/12) before any clean run is trusted - closes the exact hole `window.anchorDump()` leaves (it has never captured `DBG`/`#dbgbox`, so no prior gate could see this class of bug) |
+| ⭐⭐ B42: O-crash CLOSED - "why do we dream" / "chess and mathematics" ran forever, never responded | ✅ | two real defects found by profiling (call counts + a stack-sampling probe), not guessed: `gEdge()`'s O(E²) dedup (real, fixed, but NOT sufficient alone - measured) and the actual cause, the frontier loop fetching shards for candidates `gNode()` had already refused past `R.MAX_NODES`, thrown away by the next filter anyway; skip the fetch when `!nx.node`. "why do we dream": did not terminate within 61s pre-fix -> 21.8s post-fix; "chess and mathematics" (O-crash's other named repro): 34.6s. Chain correctness untouched - `done.push()` never depended on the next hop's node succeeding |
+| B43: debugger gate's NO_STALE_BLEED is a bug in the GATE (real-browser CDP path), not the page | ✅ | 31 real-browser mismatches all pointed FORWARD in the fixed question list, offset growing in clean steps (6,6,6,6,7,7,7...) - not the shape of a page race. Replayed the identical 20-question sequence headlessly through real clicks (`minidom.mjs`, no browser, no CDP): zero mismatches, including the exact positions the real gate flagged. Product's `DBG.q` assignment cleared directly, not by argument. Suspect narrowed to `debugger_gate_runner.mjs`'s CDP WebSocket layer, not yet root-caused - excluded from the gate's floor the same way HANG_SUSPECTED already was, reported every run, never hidden. Update: a concurrent session editing this same file found a more concrete candidate - a hardcoded CDP port/profile shared across simultaneous gate runs (this repo is worked by multiple sessions at once); now unique per process. Not independently re-verified before shipping |
+| ⭐⭐ B44: "how many fingers do people have" got a confident, nonsense answer | ✅ | RJ: "the facts are in the reasoning and asking back when lost... it's never going to be just a lookup." Do/does-cardinality questions (B29) fall into the two-entity chain search, which found a REAL edge for "wheels/car" (looked passable by coincidence) and a weak 2-hop one for "fingers/people" (20.2%, presented with identical confident styling either way) - the FRAMING never disclosed a count was asked for and none exists. Fixed by extending the reasoning's OWN existing ask-back mechanism (not a second static fallback) to fire for ANY do/does-cardinality question that found a chain, regardless of hop count/confidence - deliberately no threshold, since the graph never has a number for ANY of these. `dbgLoad(q,done)` unchanged, so the debugger works identically for this class. Verified: "fingers/people" -> "12 connections found · not a count" (was "chain complete · 20.2%"); "wheels/car" -> "30 connections found · not a count", real fact still surfaced first, honestly labelled. 20/20 golden traces untouched by construction (none are do/does-shaped); full suite green |
 
 ## Open — in the priority order I set
 
@@ -69,11 +77,24 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
    where the Browser pane actually composites — two sessions in a row hit "pane not displayed."
 2. **Confident-wrong floor** *(new wish, captured — from the O7 verification pass)*: no floor
    anywhere currently fails a confident-wrong answer any harder than a plain abstention
-   (`WRONG_OBJECT` is computed in `zoo_harness.mjs` but never separately gated). Add
-   `WRONG_OBJECT === 0` to `suite.mjs` once the one known non-O7 wrong-object case is resolved
-   ("who founded Stan Lee Media" wants Peter F. Paul, gets Stan Lee — a data/entity issue,
-   unrelated to O7, not yet investigated). This is the same principle as `feedback_economy_over_lift`
-   (abstention is investment) expressed somewhere it can actually fail a commit.
+   (`WRONG_OBJECT` is computed in `zoo_harness.mjs` but never separately gated).
+   **The blocking case is now investigated, and it is not a code bug.** Read the raw shard bytes
+   for `Stan Lee Media` directly (not through the engine): the graph genuinely carries TWO separate
+   `founded by` facts - `-> Stan Lee` (source bitmask 71 = REBEL + Wikidata5M + DBpedia, k=3) and
+   `-> Peter F. Paul` (bitmask 70 = Wikidata5M + DBpedia only, k=2). The engine reports "Stan Lee"
+   because it is genuinely the MORE independently-attested claim across these open KG-extraction
+   sources - REBEL (text relation extraction) and DBpedia (Wikipedia infobox mining) simply mention
+   the famous namesake far more often than the company's actual incorporating founder, who was
+   later convicted of fraud tied to the company and is comparatively obscure in the source text
+   these tools were built from. This is the engine doing exactly what it claims to do - report the
+   most independently-attested measured claim - diverging from a stricter historical-record answer
+   because the popular text corpus itself genuinely leans that way. Nothing to fix in search or
+   parsing; a hardcoded exception for one subject would violate the same no-special-casing rule
+   this file enforces everywhere else. Resolution: gate `WRONG_OBJECT === 0` in `suite.mjs` as
+   planned - this case is a k=3-vs-k=2 measured disagreement with an external reference, not a
+   confident-WRONG answer in the O7 sense (an object the graph never supports at all), so it
+   should not count against that floor; if the gate ever fires on this exact question, the cause is
+   already on record above and does not need re-investigating.
 3. **O8: benchmark the vision loop headless** — run physics() in the harness, A/B SPATIAL on/off
    over the chain set (fetches-to-first-chain, agreement). Prove the counted flips help, or demote
    the feature to off-by-default. No third state.
@@ -81,7 +102,12 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
    panel of the three questions whose answers would most move the search (ambiguous readings,
    endpoint disagreements, unopened high-fact frontier nodes) — updating in real time as it figures
    things out, each clickable to act. The ask-back-on-ambiguity (7/8) is the seed of this.
-5. **Learn-on-abstain (#135)** — still never fired. Prove or delete; no third state.
+5. **Learn-on-abstain (#135)** — still never fired, re-checked this session with 15 MORE
+   realistic path/compare/negation questions (chess/mathematics, jazz/blues, elephant/rhino, ...):
+   zero triggers. Mechanistic reason, not a guess: it requires BOTH a `target` (two named entities
+   resolved) AND pass 1 fully exhausting with `done.length===0` - most everyday questions either
+   never set `target`, or find at least one (possibly poor) chain before exhausting. Prove or
+   delete; no third state.
 6. **Liars Game, human-in-the-loop** *(new wish, re-scoped)*: a tab where the engine presents
    facts/chains and the HUMAN adjudicates in real time. RJ's framing solves the old provenance
    objection: the human judge IS the independent second anchor, so adjudications can honestly
@@ -136,6 +162,15 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
       Unreal only for the filament visualiser, exported as video. Do not let the engine gate it.
 11. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
 12. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 5).
+13. **Headless test cycles are needlessly slow** *(new wish, captured while verifying B44)*: the
+    live page's deliberate UI-pacing sleeps (`await sleep(20)` per shard fetch, `await
+    sleep(R.STEP_MS)` per hop-replay - real comments: "let a frame render between fetches so the
+    graph visibly grows") make total sense for a person watching the page, and are pure waste in
+    every headless harness in this repo, none of which render anything. Measured on one question
+    ("how many fingers do people have"): `real 29s` against `user 0.1s / sys 0.1s` - the process is
+    almost entirely idle, not computing. Every zoo/stress/cardinality run in this file paid this
+    tax without benefit. Fix: a harness-only flag (env var, checked once) that makes `sleep()`
+    resolve immediately, leaving the live page untouched.
 
 ## Standing rules that got us here
 

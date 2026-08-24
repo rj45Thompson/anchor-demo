@@ -244,6 +244,11 @@ target it abstains, goes and learns what else that thing is called, and tries ag
   <input id="tq" placeholder="how many types of bear have brown hair" autocomplete="off">
   <button id="tgo" disabled>loading…</button>
 </div>
+<p class="hint">Try
+  <code>who was Julius Caesar</code>
+  <code>capital of the country Melbourne is in</code>
+  <code>how many types of empire are there</code>
+</p>
 
 
 <div class="stage">
@@ -723,6 +728,11 @@ const R={
   LEARN_URL:"https://api.conceptnet.io/related/c/en/",  // ConceptNet: already one of the eight
                         // sources behind this graph, and its API allows cross-origin reads
   MAX_NODES:190,        // drawn-node ceiling; legibility backstop, not a search limit
+  MAX_EDGES:1200,       // O-crash: gEdge() dedup was an O(E) scan per insert (O(E^2) total) with
+                        // no ceiling at all, unlike gNode(). A dense subgraph among <=190 nodes
+                        // can still carry thousands of distinct (a,b,rel) edges, so node capping
+                        // alone never bounded this. Same kind of backstop as MAX_NODES, not a
+                        // search limit - the SEARCH still walks every real fact either way.
   DRAW_PER_NODE:8,      // neighbours DRAWN per expanded node (all facts are still SEARCHED)
   REPULSE:1000,         // n-body repulsion between every node pair (O(n^2), fine at this ceiling)
   SPRING:0.045,         // edge spring constant pulling linked nodes to REST
@@ -748,7 +758,7 @@ const R={
   WORD_MAX:60           // words of a question read as content; the remainder is reported, not
                         // silently dropped - a bound stated is not a bound hidden
 };
-let G={nodes:[],edges:[],byId:new Map()};
+let G={nodes:[],edges:[],byId:new Map(),edgeKeys:new Set()};
 let gen=0;      // search generation: a newer question cancels an older one
 let clickSeq=0; // B36: every path that will eventually call reason() - direct or via a delayed
                 // setTimeout - claims a click number here. A delayed call checks its number is
@@ -773,7 +783,7 @@ let rotY=0.55,rotX=-0.22,autoSpin=true,dragging=null,thinking=false,rafOn=false;
 let fitCur=1;
 let tick=0;   // frame counter: gNode stamps it as a node's birth time for the arrival flash
 function gClear(){
-  G={nodes:[],edges:[],byId:new Map()}; fitCur=1;
+  G={nodes:[],edges:[],byId:new Map(),edgeKeys:new Set()}; fitCur=1;
   // Force the scene to rebuild even if the next graph happens to have the same node count -
   // comparing counts alone meant a new question could leave the previous cloud on screen.
   lastN3=-1; lastE3=-1;
@@ -791,7 +801,15 @@ function gNode(id,label,hop){
 }
 function gEdge(a,b,rel,k){
   if(!a||!b)return;
-  if(G.edges.some(e=>e.a===a&&e.b===b&&e.rel===rel))return;
+  // O-crash: this was `G.edges.some(e=>e.a===a&&e.b===b&&e.rel===rel)`, an O(E) scan on every
+  // insert with no ceiling - O(E^2) total, and unlike gNode() nothing bounded E even when nodes
+  // were capped, because a dense subgraph among <=190 nodes can still carry thousands of edges.
+  // Reproduced as a genuine multi-minute unresponsive hang on wide searches. Same fix shape as
+  // gNode(): an O(1) key lookup plus a ceiling.
+  const key=a.id+"|"+rel+"|"+b.id;
+  if(G.edgeKeys.has(key))return;
+  if(G.edges.length>=R.MAX_EDGES)return;
+  G.edgeKeys.add(key);
   G.edges.push({a,b,rel,k,on:false});
 }
 let physicsSteps=0;   // the vision loop reads the map only after the layout has SETTLED
@@ -1505,20 +1523,22 @@ function readQuery(q){
    <have|has|are|is|with> P", and the bare "how many X <have|are> P". */
 const COUNTSTOP=new Set(("the a an of and or in on at to from with by its their any some "+
   "that this these those").split(" "));
+// B29/B44: "how many wheels DOES a car have" is a question about ONE entity's own parts, not an
+// enumeration of a class - "how many types of bear have brown hair" never has do/does between the
+// noun and "have". This graph records RELATIONS, not numeric cardinalities - it has no "4" to
+// report for wheels on a car - so B29 routed it OUT of the class-count lane (which produced a dead
+// "I cannot count that"). Named and exported here (not just inlined in readCount) because B44
+// needs the SAME signal later, after the chain search runs: a question shaped like this can never
+// be answered with a number by ANY lane, so whatever the search finds must be presented as a
+// finding to confirm, never as a flat verdict - see the isDoesCardinality(q) check near `found`.
+function isDoesCardinality(raw){return /\bhow\s+many\s+.+?\b(?:do|does)\b.+?\bhave\b/i.test(raw);}
 function readCount(q){
   // "are there" / "is there" / "exist" is the ABSENCE of a filter, not a property called
   // "there". Stripped before matching, or the have|are branch wins and counts members
   // carrying the word "there" - which is none of them, reported as a confident zero.
   const raw=String(q).replace(/[?.!]+$/,"")
     .replace(/\s+(?:are|is)\s+there$/i,"").replace(/\s+exists?$/i,"").trim();
-  // B29: "how many wheels DOES a car have" is a question about ONE entity's own parts, not an
-  // enumeration of a class - "how many types of bear have brown hair" never has do/does between
-  // the noun and "have". Routing this into the class-count lane produced a dead "I cannot count
-  // that" (the "class" it tried to resolve was the garbage span "wheels does a car"). This
-  // graph records RELATIONS, not numeric cardinalities - it has no "4" to report for wheels on
-  // a car - so the honest answer lives in the ordinary relation-lookup lane, which can surface
-  // the real fact (car -has part-> ..., wheel -part of-> car) instead of a dead end.
-  if(/\bhow\s+many\s+.+?\b(?:do|does)\b.+?\bhave\b/i.test(raw))return null;
+  if(isDoesCardinality(raw))return null;
   let m=raw.match(/^how\s+many\s+(?:types?|kinds?|sorts?|species|breeds?|varieties)\s+of\s+(.+?)\s+(?:have|has|had|are|is|with|possess)\s+(.+)$/i);
   if(!m)m=raw.match(/^how\s+many\s+(.+?)\s+(?:have|has|had|are|is|with|possess)\s+(.+)$/i);
   if(!m){
@@ -1791,6 +1811,9 @@ async function countAnswer(q,cq,my){
       'Nothing in this graph is recorded as a member of <b>'+esc(cq.cls)+'</b>. That is a '+
       'statement about the graph, not about the world.</span></div></div>');
     nowSet("nothing recorded as a member of \""+cq.cls+"\"",1,false);
+    // B38: same eternal-spinner gap as the pronoun lane - see dbgLoadNote's own comment.
+    dbgLoadNote(q,"NOTE",'no members recorded for class "'+cq.cls+'"',
+      'nothing to enumerate - the graph has no membership facts pointing at this class, under any reading tried');
     return;
   }
   trace("done","class \""+cls+"\" has "+members.length+" recorded member"+
@@ -1800,7 +1823,10 @@ async function countAnswer(q,cq,my){
   const LIM=Math.min(members.length,R.COUNT_MAX);
   const hits=[],misses=[],named=[];
   for(let i=0;i<LIM;i++){
-    if(my!==gen||stopped)return;
+    if(my!==gen)return;   // superseded - a newer question owns the debugger now
+    if(stopped){ dbgLoadNoteIfIdle(q,"NOTE",'stopped before the count finished',
+      'checked '+i+' of '+LIM+' members before you stopped it - a partial read, not a count.');
+      return; }
     const mem=members[i];
     nowSet("checking member "+(i+1)+" of "+LIM+": \""+mem.name+"\"",(i+1)/LIM,false);
     const f=await factsOf(mem.name);
@@ -1976,6 +2002,14 @@ async function pronounBlock(q,pb,my){
       esc(alt.name)+'"), offered above as one click.':triedAlt?
       'The literal words do not name anything else here either.':
       'What is left of the literal words is too short to have been worth checking.')+'</p>';}
+  // B38: this lane never touched the debugger, leaving it stuck on the "Searching..." spinner
+  // reason() paints at the top of every call, and DBG silently holding whatever chain the
+  // PREVIOUS question left there - live-reported, reproduced. See dbgLoadNote's own comment.
+  dbgLoadNote(q,"NOTE",'no search ran — question is about '+pb.who,
+    'this graph has no representation of conversation participants, under any reading'+
+    (alt?'; the literal words also happen to name a real, different entity ("'+alt.name+
+      '"), offered above as one click':
+     triedAlt?'; the literal words do not name anything else here either':''));
   traceFlush();
 }
 
@@ -1996,7 +2030,7 @@ function dbgLive(){
   dbgLiveT=now;
   // top 12 by composed confidence - the same DISCLOSED cut the finished run uses (stated in
   // the debugger panel); the ranked ANSWERS list beside it is never truncated.
-  const chains=LIVECH.slice().sort((a,b)=>b.p-a.p).slice(0,12);
+  const chains=LIVECH.slice().sort(byRank).slice(0,12);
   const keepSel=(DBG&&DBG.live)?Math.min(DBG.sel,chains.length-1):0;
   DBG={q:runningQ,chains,sel:keepSel<0?0:keepSel,pc:(DBG&&DBG.live)?DBG.pc:0,live:true};
   G.dirty=true;
@@ -2030,16 +2064,56 @@ function countProgram(cd){
       (cd.total>cd.read?" ("+(cd.total-cd.read)+" left unread - a bound)":"")});
   return rows;
 }
+// B40: FAIL-FAST. RJ's own words: "each step should catch the error at the first occurrence
+// rather than untangle a mess at the end." Before this, the evidence check that decides whether
+// a hop is real (k>0, not just the held-out marker) ran nowhere in the live engine at all - it
+// was only ever re-derived afterward, by a separate audit script reading the shards a second
+// time (debugger_audit.mjs). That is auditing a receipt, not debugging a program: a real debugger
+// shows you the assertion result AT the line it runs, not in a report generated later. So the
+// check now runs HERE, at hop-build time (see the completion loop below), and its own CHECK
+// row is what dbgProgram plays back -
+// the step-through literally shows the verdict at the point it was decided, never reconstructed
+// after the fact from the final number alone.
+function hopEvidenceCheck(h){ return { pass:!!h.k, why: h.k
+  ? h.k+" independent source"+(h.k===1?"":"s")+" - real evidence"
+  : "k=0 - only the held-out marker, no independent source corroborates this" }; }
+// B40 ranking: "demoted, not deleted." A chain that only completes through an unmeasured (k=0)
+// hop is still recorded and shown - its own CHECK row names exactly where it failed - but it
+// cannot outrank an honestly-evidenced chain by sitting on a numerically higher composed percent.
+// This matters BECAUSE pctOf(0) is the unmeasured BASE RATE (51.2%), which is higher than a real,
+// measured single-source hop (44.9%, see CURVE/BASE) - without this, weaker-but-real evidence
+// loses to stronger-looking-but-fake evidence on the raw number alone. Same "rank by
+// constraint satisfaction, not just source count" principle already recommended (unimplemented)
+// for the type-constraint class of bug in FINDING_type_constraint_dropped.md.
+function chainAllPass(path){ return path.every(h=>!!h.k); }
+function byRank(a,b){
+  const pa=chainAllPass(a.path)?1:0, pb=chainAllPass(b.path)?1:0;
+  return pb-pa || b.p-a.p;
+}
 function dbgProgram(ch){
   const rows=[]; let run=1;
   rows.push({op:"LOAD",txt:'subject := "'+ch.path[0].from+'"',
     det:"shard "+String(shardOf(ch.path[0].from)).padStart(3,"0")});
-  ch.path.forEach((h,i)=>{ run*=pctOf(h.k);
+  ch.path.forEach((h,i)=>{
+    // the CHECK step runs, and is shown, BEFORE the WALK it gates - the verdict a real debugger
+    // would show at an assertion line, not a conclusion inferred from the answer at the bottom.
+    const chk=h.check||hopEvidenceCheck(h);
+    rows.push({op:"CHECK",txt:h.from+' --'+relLabel(h.rel)+'--> "'+h.to+'"  -- real evidence?',
+      det:"k="+h.k+"  "+(chk.pass?"PASS":"FAIL")+"  ("+chk.why+")",h,i,isCheck:true,chk});
+    run*=pctOf(h.k);
     rows.push({op:"WALK",txt:h.from+" --"+relLabel(h.rel)+'--> "'+h.to+'"',
-      det:"k="+h.k+"  p_hop="+(pctOf(h.k)*100).toFixed(1)+"%  p_chain="+
-          (run*100).toFixed(1)+"%",h,i}); });
+      // B39: this used to say "k=0 ... p_hop=51.2%" with no hint that 51.2% is the UNMEASURED
+      // base rate (pFor(0).measured===false), not a curve point - k=0 outranking a real,
+      // measured k=1 hop (44.9%) while looking exactly as confident. Same disclosure hopHTML
+      // already gives the identical number in the main answer panel, reused verbatim here.
+      det:"p_hop="+(pctOf(h.k)*100).toFixed(1)+"% ("+
+          (pFor(h.k).measured?"measured":"base rate")+")  p_chain="+
+          (run*100).toFixed(1)+"%"+(chk.pass?"":"  [chain demoted - see RET]"),h,i}); });
+  const allPass=ch.path.every(h=>!!h.k);
   rows.push({op:"RET",txt:'return "'+ch.path[ch.path.length-1].to+'"',
-    det:"composed "+(ch.p*100).toFixed(1)+"% (assumes hop independence)"});
+    det:"composed "+(ch.p*100).toFixed(1)+"% (assumes hop independence)"+
+        (allPass?"":" -- at least one hop FAILED its evidence check (CHECK rows above); ranked "+
+          "below any chain whose every hop passed, regardless of this percentage")});
   return rows;
 }
 function dbgRenderCount(){
@@ -2049,7 +2123,9 @@ function dbgRenderCount(){
   const cur=prog[DBG.pc];
   const vars=cur.mem?
     [["member",cur.mem.name],["k (independent sources)",cur.mem.k],
-     ["p (measured curve)",(pctOf(cur.mem.k)*100).toFixed(1)+"%"],
+     // B39: same hardcoded-label bug as the chain debugger's vars pane, fixed the same way.
+     ["p ("+(pFor(cur.mem.k).measured?"measured":"base rate")+")",
+       (pctOf(cur.mem.k)*100).toFixed(1)+"%"],
      ["verdict",cur.verdict],
      ["tally so far",prog.slice(0,DBG.pc+1).filter(r=>r.verdict==="PASS").length+" / "+
        cd.hits.length+" total"]]
@@ -2099,20 +2175,76 @@ function dbgWireCount(){
   });
   dbgWiredCount=true;
 }
+/* NOTE MODE. Several lanes in reason() legitimately never run a search: a pronoun question, a
+ * counting class with zero recorded members, a question whose subject never resolved, a subject
+ * that resolved but named no relation, and a search that opened real shards but reached no goal.
+ * Before this, EVERY one of those lanes returned out of reason() without ever replacing the
+ * "Searching. The moment the first chain completes..." spinner reason() itself paints at the top
+ * of every call (see below) - a promise these lanes can never keep, because no search was ever
+ * attempted. That is the exact "eternal fake spinner" shape B31 already fixed once, for the count
+ * lane only (countAnswer -> dbgLoadCount); it was never generalised to the other lanes, and a
+ * pronoun question additionally left DBG holding whatever the PREVIOUS question's chain was,
+ * live-reported and reproduced (see BUGS.md).
+ * Same discipline as B31: give each lane its own small, honest, disclosed program instead of a
+ * blank clear or a stale leftover. Nothing invented - every field passed in is a value the
+ * caller already computed for its own #tout answer. */
+function dbgLoadNote(q,op,txt,det){
+  DBG={q,mode:"note",sel:0,pc:0,note:{op,txt,det}};
+  dbgWire();
+  dbgRenderNote();
+  if(window.showGeoChip){ const vg=$("viewgeo"); if(vg)vg.style.display="none"; }
+}
+// B41: a STOP (the person clicked it, or a harness's own budget clock did) is not a supersede -
+// the SAME question is still the one on screen, `gen` never changed - but every mid-iteration
+// guard in the search loop reads "my!==gen||stopped" as one condition and hard-returns either
+// way. A genuinely superseded call is right to return in total silence (a newer question owns
+// the debugger now); a plain stop on the CURRENT question is not, and before this fix it left
+// the debugger on whatever it last showed - the "Searching..." spinner if this was the first
+// search since page load, exactly the eternal-spinner shape B31/B38 already fixed elsewhere.
+// Idempotent and non-destructive: if dbgLive() already gave the debugger real, live chain data
+// (or the count lane already has a partial-safe program), this does not stomp it - only fills
+// the gap when nothing has been shown for THIS question yet.
+function dbgLoadNoteIfIdle(q,op,txt,det){
+  if(DBG&&DBG.q===q&&((DBG.chains&&DBG.chains.length)||DBG.mode==="count"))return;
+  dbgLoadNote(q,op,txt,det);
+}
+function dbgRenderNote(){
+  const b=$("dbgbox"); if(!b||!DBG||DBG.mode!=="note")return;
+  const n=DBG.note;
+  b.innerHTML=
+    '<p class="small">No program for this question — nothing was searched, so there is nothing '+
+    'to step through. This is not a stall: the reason is stated below, built from the same '+
+    'values the answer above was built from.</p>'+
+    '<div class="dbg-code"><div class="dbg-ln pc"><span class="dbg-n">00</span>'+
+    '<span class="dbg-op">'+esc(n.op)+'</span><span>'+esc(n.txt)+'</span>'+
+    '<span class="dbg-det">'+esc(n.det)+'</span></div></div>';
+}
 function dbgRender(){
   const b=$("dbgbox"); if(!b||!DBG)return;
   if(DBG.mode==="count"){ dbgRenderCount(); return; }
+  if(DBG.mode==="note"){ dbgRenderNote(); return; }
   const ch=DBG.chains[DBG.sel], prog=dbgProgram(ch);
   if(DBG.pc>=prog.length)DBG.pc=prog.length-1;
   const cur=prog[DBG.pc];
   if(cur.h){ const a=G.byId.get(cur.h.from),bb=G.byId.get(cur.h.to);
     if(a)a.active=tick; if(bb)bb.active=tick; }   // light this hop in the 3D view
   let vars;
-  if(cur.h){
+  if(cur.isCheck){
+    // B40: the CHECK row's own vars pane - the verdict as a first-class, inspectable value,
+    // not just text baked into the det string.
+    vars=[["subject",cur.h.from],["relation",relLabel(cur.h.rel)],["object",cur.h.to],
+      ["k (independent sources)",cur.h.k],
+      ["verdict",cur.chk.pass?"PASS":"FAIL"],
+      ["why",cur.chk.why],
+      ["hop",(cur.i+1)+" / "+ch.path.length]];
+  } else if(cur.h){
     let run=1; for(let j=0;j<=cur.i;j++)run*=pctOf(ch.path[j].k);
     vars=[["subject",cur.h.from],["relation",relLabel(cur.h.rel)],["object",cur.h.to],
       ["k (independent sources)",cur.h.k],
-      ["p_hop (measured curve)",(pctOf(cur.h.k)*100).toFixed(1)+"%"],
+      // B39: hardcoded "measured curve" regardless of k - false for k=0 (pFor(0).measured is
+      // false). Same disclosure word hopHTML already uses correctly, reused verbatim.
+      ["p_hop ("+(pFor(cur.h.k).measured?"measured":"base rate")+")",
+        (pctOf(cur.h.k)*100).toFixed(1)+"%"],
       ["p_chain so far",(run*100).toFixed(1)+"%"],
       ["shard",String(shardOf(cur.h.from)).padStart(3,"0")],
       ["hop",(cur.i+1)+" / "+ch.path.length]];
@@ -2215,7 +2347,7 @@ async function dbgVerify(){
     }
     if(changed){
       ch.p=ch.path.reduce((a,h)=>a*pctOf(h.k),1);
-      myDBG.chains.sort((a,b)=>b.p-a.p);
+      myDBG.chains.sort(byRank);
       G.dirty=true;
       trace("done","REPAIR: chain recomposed from re-measured hops and re-ranked");
     }
@@ -2324,6 +2456,15 @@ async function reason(q,opts){
     const pb=opts&&opts.asEntity?null:readPronounBlock(q,properNouns(q));
     if(pb){ await pronounBlock(q,pb,my); return; }
     const ents=await findEntities(q);
+    // same class of gap as learnAliases/definitelyAbsent below, but the highest-impact one: this
+    // await runs on EVERY question (not just abstain/learn cases), and everything downstream -
+    // start/target, every note lane, the whole search, dbgLoad - is built from its result. A
+    // stale, superseded call resuming here would go on to write a newer question's debugger
+    // record with an old subject. Measured impact of fixing the two narrower gaps below alone
+    // (learnAliases, definitelyAbsent): stale-bleed dropped 58->17 over the full 100-question
+    // gate, but did not reach zero - this is almost certainly why, since it is the one await
+    // every question, of every lane, actually goes through.
+    if(my!==gen){ traceBuf=[]; return; }
     trace("beam","entities found in the question: "+
       (ents.length?ents.map(e=>"\""+e.name+"\" ("+e.facts.length+" facts)").join(", "):"none"));
     trace("beam","target relation read as `"+(goal||"none found")+"`");
@@ -2422,6 +2563,9 @@ async function reason(q,opts){
         '<span>fetching the coverage index to see whether “'+esc(raw)+'” is genuinely absent…'+
         '</span></div>');
       const absent=await definitelyAbsent(raw);
+      // same class of gap as learnAliases below: a real await with no staleness re-check on the
+      // other side of it, before writing to #tout/the debugger.
+      if(my!==gen){ traceBuf=[]; return; }
       trace("dead","coverage check on \""+raw+"\": "+
         (absent===true?"DEFINITELY absent from all 12.2M subjects":
          absent===false?"present as a subject, but nothing here parsed to it":
@@ -2434,6 +2578,11 @@ async function reason(q,opts){
           "subject — a parsing miss on our side, not a gap in the data":
          "nothing resolved, and the coverage index could not be loaded to say why")+
         '</span></div></div>');
+      // B38: same eternal-spinner gap as the pronoun lane - see dbgLoadNote's own comment.
+      dbgLoadNote(q,"NOTE",'no subject in this question resolved to anything in the graph',
+        absent===true?'"'+raw+'" is definitely absent from all 12.2M subjects (Bloom filter, zero false negatives)':
+        absent===false?'"'+raw+'" is present as a subject, but nothing in this question parsed to it - a reading miss, not a data gap':
+        'the coverage index could not be loaded to say why');
       badge("idle");return;
     }
     // One line, not a paragraph: what it is looking for and where it starts.
@@ -2455,6 +2604,10 @@ async function reason(q,opts){
         'named, so there is no target. <b>'+esc(start.name)+'</b> has '+start.facts.length+
         ' recorded facts; its best-anchored '+Math.min(R.DRAW_PER_NODE,start.facts.length)+
         ' are drawn — click any node to walk it by hand.</span></div></div>');
+      // B38: same eternal-spinner gap as the pronoun lane - see dbgLoadNote's own comment.
+      dbgLoadNote(q,"NOTE",'no relation or second entity named in this question',
+        '"'+start.name+'" resolved with '+start.facts.length+
+        ' recorded facts, but nothing asked for one of them by name - shown as a neighbourhood instead of a chain');
       badge("idle");return;
     }
 
@@ -2494,7 +2647,14 @@ async function reason(q,opts){
       const next=[];
       let fi=0;
       for(const cur of frontier){
-        if(my!==gen||stopped)return;   // superseded: stop BEFORE touching the new question's graph
+        // B41: a plain STOP on the CURRENT question (gen unchanged) is not a supersede - it
+        // must not fall through in total silence, or the debugger is left on whatever it
+        // showed before this question ran (the eternal spinner, on a fresh page load).
+        if(my!==gen)return;   // superseded - a newer question owns the debugger now
+        if(stopped){ dbgLoadNoteIfIdle(q,"NOTE",'stopped while still expanding the search',
+          'opened '+fetches+' subject'+(fetches===1?"":"s")+', read '+scanned.toLocaleString()+
+          ' facts, '+depth+' hop'+(depth===1?"":"s")+' deep before you stopped it.');
+          return; }
         // the rewound-away edge is excluded at ITS node only - one edge, not a subject ban
         if(opts&&opts.exclude&&cur.node.id===opts.exclude.from)
           cur.facts=cur.facts.filter(f=>!(f.rel===opts.exclude.rel&&f.obj===opts.exclude.to));
@@ -2518,7 +2678,11 @@ async function reason(q,opts){
                              : relMatches(f.rel,goal);
         let lastY=performance.now();
         for(const f of cur.facts){
-          if(my!==gen||stopped)return;   // superseded or stopped by the person
+          if(my!==gen)return;   // superseded - a newer question owns the debugger now
+          if(stopped){ dbgLoadNoteIfIdle(q,"NOTE",'stopped while still expanding the search',
+            'opened '+fetches+' subject'+(fetches===1?"":"s")+', read '+scanned.toLocaleString()+
+            ' facts, '+depth+' hop'+(depth===1?"":"s")+' deep before you stopped it.');
+            return; }
           scanned++;
           const hit=sat(f);
           trace(hit?"hit":"miss", cur.node.id+" --"+relLabel(f.rel)+"--> "+f.obj+
@@ -2527,15 +2691,39 @@ async function reason(q,opts){
           if(performance.now()-lastY>R.FRAME_MS){ traceFlush(); await sleep(0); lastY=performance.now(); }
         }
         traceFlush();
+        // O-crash, second root cause (the gEdge() cap alone did not fix it - measured, not
+        // guessed: a fresh 100-question run after that fix alone still hung 16/100 times).
+        // This loop has NO await inside it at all, and a hub subject (e.g. "Person", 6383 facts)
+        // can satisfy a permissive goal thousands of times over - profiled via V8 --prof against
+        // a wide search: a single unyielding synchronous stretch here is the actual multi-minute
+        // stall, not graph size. CORRECTNESS is unchanged - every real completion is still
+        // recorded, nothing is capped or dropped - this only gives the thread somewhere to
+        // breathe while it does that work, same FRAME_MS pacing already used above.
+        let lastYc=performance.now();
         for(const w of cur.facts.filter(sat).sort((a,b)=>b.k-a.k)){
-          const path=cur.path.concat([{from:cur.node.id,rel:w.rel,to:w.obj,k:w.k}]);
+          if(my!==gen)return;
+          if(stopped){ dbgLoadNoteIfIdle(q,"NOTE",'stopped while still expanding the search',
+            'opened '+fetches+' subject'+(fetches===1?"":"s")+', read '+scanned.toLocaleString()+
+            ' facts, '+depth+' hop'+(depth===1?"":"s")+' deep before you stopped it.');
+            return; }
+          // B40: the evidence CHECK runs HERE, the moment this hop is actually accepted into a
+          // candidate chain - not later, not in a separate audit. Attached to the hop itself so
+          // it travels with it into the debugger's own CHECK row (dbgProgram), and narrated in
+          // the trace immediately, at the point it was decided.
+          const newHop={from:cur.node.id,rel:w.rel,to:w.obj,k:w.k};
+          newHop.check=hopEvidenceCheck(newHop);
+          trace(newHop.check.pass?"hit":"dead","CHECK "+newHop.from+" --"+relLabel(newHop.rel)+
+            "--> \""+newHop.to+"\": "+(newHop.check.pass?"PASS":"FAIL")+" - "+newHop.check.why);
+          const path=cur.path.concat([newHop]);
           const p=path.reduce((acc,h)=>acc*pctOf(h.k),1);
           done.push({path,p});
           liveAdd(path,p);   // published immediately, not hoarded until the end
           trace("done","complete chain, "+path.length+" hop"+(path.length===1?"":"s")+
-            ", composed "+(p*100).toFixed(1)+"%  ->  "+path.map(h=>h.to).join(" / "));
+            ", composed "+(p*100).toFixed(1)+"%  ->  "+path.map(h=>h.to).join(" / ")+
+            (chainAllPass(path)?"":"  [DEMOTED: at least one hop failed its evidence check]"));
           const t=gNode(w.obj,w.obj,depth);   // the winning hop is always drawn, cap or no cap
           if(t)gEdge(cur.node,t,w.rel,w.k);
+          if(performance.now()-lastYc>R.FRAME_MS){ traceFlush(); await sleep(0); lastYc=performance.now(); }
         }
         for(const f of cur.facts.slice().sort((a,b)=>b.k-a.k).slice(0,R.DRAW_PER_NODE)){
           const t=gNode(f.obj,f.obj,depth);
@@ -2607,13 +2795,30 @@ async function reason(q,opts){
         break;
       }
       for(const nx of next){
-        if(my!==gen||stopped)return;   // superseded or stopped by the person
+        if(my!==gen)return;   // superseded - a newer question owns the debugger now
+        if(stopped){ dbgLoadNoteIfIdle(q,"NOTE",'stopped while still expanding the search',
+          'opened '+fetches+' subject'+(fetches===1?"":"s")+', read '+scanned.toLocaleString()+
+          ' facts, '+depth+' hop'+(depth===1?"":"s")+' deep before you stopped it.');
+          return; }
         if(fetches>=R.MAX_FETCH){
           budgetHit=true;
           trace("dead","FETCH BUDGET reached ("+R.MAX_FETCH+" shards). "+
             (next.length-next.indexOf(nx))+" node(s) left unopened, including \""+nx._pending+
             "\". This is a BOUND, not an absence - the answer may exist beyond it.");
           break;
+        }
+        if(!nx.node){
+          // O-crash: gNode() already refused this candidate (R.MAX_NODES reached) at push time,
+          // and nothing releases room later, so it can NEVER pass the `n.node&&...` filter below
+          // no matter what its facts turn out to be. Fetching it anyway was pure waste - on a
+          // wide, poorly-anchored question (no target, no clear relation - "why do we dream")
+          // this queued hundreds of these in a row, each a real shard fetch plus a 20ms render
+          // sleep, for a result thrown away on arrival. That is what "runs healthily, then never
+          // finishes" looked like: not an infinite loop, a frontier that kept being OPENED after
+          // it had already stopped being able to WIN anything.
+          trace("dead","\""+nx._pending+"\" skipped - the drawn-node cap ("+R.MAX_NODES+
+            ") is already full, so this candidate could never be added regardless of its facts.");
+          continue;
         }
         badge("depth "+depth+" · fetching shard "+
               String(shardOf(nx._pending)).padStart(3,"0")+" · "+nx._pending);
@@ -2642,6 +2847,13 @@ async function reason(q,opts){
     nowSet("no chain reached the target — looking up other names for \""+target.name+
       "\" before retrying",null,true);
     learned=await learnAliases(target.name);
+    // O-crash follow-on: learnAliases() is a real network await, and nothing here re-checked
+    // staleness on the other side of it - a newer question could start and finish WHILE this one
+    // was waiting on ConceptNet, and this call would resume anyway, using the OLD target/subject
+    // and eventually overwriting the NEWER question's debugger record with its own stale one.
+    // Reproduced live once searches stopped hanging often enough for two questions to genuinely
+    // overlap in real time (previously masked - a hung search left no room for this to matter).
+    if(my!==gen){ traceBuf=[]; return; }
     if(!learned.length){trace("dead","nothing learned; the abstain stands.");break;}
     for(const l of learned)accept.add(l.name.toLowerCase());
     trace("beam","RE-RUNNING the same search, now accepting "+accept.size+" names for the target: "+
@@ -2678,7 +2890,7 @@ async function reason(q,opts){
     // superseded search rendered its verdict into the NEW question's cleared panel - the exact
     // "page does not refresh when the question changes" report.
     if(my!==gen){ traceBuf=[]; return; }
-    done.sort((a,b)=>b.p-a.p);
+    done.sort(byRank);
     // ---- the per-question explainer: the logs, explained. Every number comes from THIS run's
     // own counters - if the engine did something different, this text is different.
     (function(){
@@ -2761,6 +2973,14 @@ async function reason(q,opts){
         'the full trace above shows exactly what was and was not opened.</span></div>'+
         '<div class="row"><span class="lbl">note</span><span>Naming the hop that broke is the '+
         'result. Inventing the rest would not be.</span></div></div>');
+      // B38: same eternal-spinner gap as the pronoun lane - see dbgLoadNote's own comment. This
+      // is the highest-traffic of the five: any everyday question that abstains hits it.
+      dbgLoadNote(q,"NOTE",'no chain reached the goal',
+        'opened '+fetches+' subject'+(fetches===1?"":"s")+', read '+scanned.toLocaleString()+
+        ' facts, '+depth+' hop'+(depth===1?"":"s")+' deep; furthest reached was "'+dead+'". '+
+        (budgetHit?'the fetch budget ended the search - a bound, not an absence.':
+         stopped?'you stopped it while it was still expanding.':
+         'the frontier was exhausted at this depth - a bound, not a proof of absence.'));
       badge("no chain found");return;
     }
 
@@ -2780,6 +3000,42 @@ async function reason(q,opts){
       traceEl.insertAdjacentHTML("beforeend",hopHTML(i,h.from,h.rel,h.to,h.k,running));
       badge("walking hop "+(i+1)+" of "+found.path.length);
       await sleep(R.STEP_MS);
+    }
+    // B44: RJ - "the facts are in the reasoning and asking back when lost... it's never going to
+    // be just a lookup." A do/does-cardinality question ("how many wheels does a car have", "how
+    // many fingers do people have") can NEVER be answered by this lane, for any chain it finds,
+    // good or bad - the graph stores relations, not numeric cardinalities, so there is no "4"
+    // or "10" to compose a percentage FOR. B29 already routes it out of the count lane and into
+    // this exact search; the bug was presenting whatever it found as a confident "verdict" card
+    // (a big % number) regardless. That read as a real answer for "wheel/car" purely by
+    // coincidence (a real, direct, correct edge happened to exist) and as nonsense for
+    // "finger/people" (no direct edge, so the search settled for a weak multi-hop association) -
+    // same lane, same honesty, wildly different-looking output, because the FRAMING never
+    // disclosed that a count was asked for and none exists. Fixed by asking back instead: the
+    // reasoning still runs exactly as before (nothing here changes what is searched or found),
+    // but the result is offered as something to confirm, not asserted as an answer - reusing the
+    // page's existing ask-back visual language rather than inventing a second, static fallback.
+    if(isDoesCardinality(q)){
+      const chainRow=d=>'<span class="row"><span class="lbl">'+(d.p*100).toFixed(1)+'%</span><span>'+
+        esc(start.name)+d.path.map(h=>' <span style="color:var(--muted)">—'+esc(relLabel(h.rel))+
+        '→</span> '+esc(h.to)).join("")+'</span></span>';
+      out.insertAdjacentHTML("beforeend",'<div class="card k1"><div class="claim">'+
+        '<b>A count, not a claim.</b></div><div class="row"><span class="lbl">why</span><span>'+
+        'You asked <b>how many</b> - this graph records relations between named things, not '+
+        'numeric cardinalities. There is no stored count here for this, on any subject, ever. '+
+        'Reasoning searched for a CONNECTION instead of a count, since that is the nearest real '+
+        'thing it can measure, and found '+done.length+':</span></div>'+
+        '<div class="row" style="flex-direction:column;align-items:flex-start;gap:6px">'+
+        '<span class="lbl">found</span>'+done.slice(0,4).map(chainRow).join("")+'</div>'+
+        '<div class="row"><span class="lbl">use it?</span><span>Step through the top one in the '+
+        'debugger below - it is a real, measured route, just not a number. If none of this is '+
+        'what you meant, try asking without "how many" (e.g. what is X part of, what does X '+
+        'connect to) to search on purpose instead of by coincidence.</span></div></div>');
+      trace("goal","B44: \""+q+"\" asks for a count this graph does not store - presented "+
+        done.length+" found connection(s) to confirm, not asserted as an answer");
+      dbgLoad(q,done);
+      badge(done.length+" connection"+(done.length===1?"":"s")+" found · not a count");
+      return;
     }
     const last=found.path[found.path.length-1];
     out.insertAdjacentHTML("beforeend",
