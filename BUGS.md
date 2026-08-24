@@ -798,14 +798,45 @@ construction; confirmed byte-stable anyway. Suite: zoo 39/40, contrast 7/8, stre
 
 **Separately observed while building the 100-question cardinality zoo this fix was verified
 against**: many natural "how many X does Y have" questions on richly-connected generic nouns
-("basketball team", "Jupiter", "crab") take 20-30+ real seconds - but `time` on one of them showed
-`user 0.1s / sys 0.1s` against `real 29s`, meaning the process is almost entirely IDLE, not
-computing. This is the deliberate UI-pacing sleeps (`await sleep(20)` per shard fetch, `await
-sleep(R.STEP_MS)` per hop-replay - real comments: "let a frame render between fetches so the graph
-visibly grows") adding up over a wide search, which makes sense for a person watching the page and
-is pure waste in a headless test harness with nothing to render. Not a product bug, not touched
-this pass - worth a wishlist item for whoever next wants faster headless test cycles (stub `sleep`
-to resolve immediately outside a real browser), separate from anything this bug fixes.
+("basketball team", "Jupiter", "crab") take 20-30+ real seconds. First read was wrong and later
+corrected (see the `let sleep=...` comment in index.html and WISHLIST item 13): `time` on Git
+Bash/Windows showed `user 0.1s / sys 0.1s` against `real 29s` and looked like idle waiting; direct
+instrumentation found the true cost is real `JSON.parse()` on the decompressed shards (up to ~4MB
+of JSON each, ~250-270 shards for one wide question) - genuine, necessary computation the live
+page pays too, not something a test harness can skip. `sleep` was still made overridable
+(`const`->`let`), a real if modest ~17% saving, kept for that reason alone.
+
+### B45 - "how many moons does Jupiter have" answered about a children's book instead
+Found running the full 100-question cardinality zoo B44 was verified against, not by hand: "how
+many moons does Jupiter/Saturn/Neptune have" and "how many moons does the Earth have" all resolved
+their subject as **"Many Moons"** - a real graph entity (a James Thurber picture book, also a
+Janelle Monáe song, 23 unrelated facts) - not the astronomical concept "moon". "how many rings does
+Saturn have" had the identical failure onto "Many Rings". Reproduced directly: `findEntities("how
+many moons does Jupiter have")` returned `['Many Moons(23 facts)', 'Jupiter(212 facts)']`.
+
+Root cause, read in the code, not guessed: B30 added `QUANT` (a quantifier set including "many") so
+a quantifier could never be linked as an ENTIRE span (`junkSpan`) - but the LEADING/TRAILING TRIM
+loop that decides where the question's "core" begins never checked `QUANT` at all, only `isFrame`'s
+narrower `LEAD`/`FUNC`/`asked()` checks. For "how many moons does Jupiter have", the trim stopped
+after "how" (`LEAD` has "how", not "many"), leaving "many" as the first word of the core span -
+where it happened to complete a real, longer entity name via the same "longest contiguous span
+wins" rule B1 established. Exact same shape as B2 ("Country Is") and B29 itself ("wheels does a car
+have" needed its OWN, separate fix from the count lane's): a filter closed for one position left
+the identical word free to poison a different one - closing it in `junkSpan` did not close it in
+the trim loop, because they are two different checks over the same text.
+
+*Fixed:* `isFrame` (the trim loop's own gate) now also checks `QUANT`, so a leading or trailing
+quantifier is stripped the same way "what"/"how"/"does" already are, before spans are ever formed -
+one line, same shape as the existing fix, no new special case. Verified: `findEntities` now returns
+`['moon(269 facts)', 'Jupiter(212 facts)']`; re-ran every previously-affected question (Jupiter,
+Saturn, Neptune, Earth, Saturn's rings) - all five now resolve the real astronomical concept, and
+still correctly get B44's ask-back framing afterward (this graph has no count for moons either,
+honestly disclosed, showing real moon-Jupiter connections instead of "Many Moons" trivia). `QUANT`
+covers "much/few/several/a lot/lots/plenty" too, not just "many" - fixed for the whole set at the
+shared check, not the one repro case. Suite: zoo 39/40, contrast 7/8, stress 111/111, count 3/3,
+confident-wrong 1/1, audit_demo 22/0, audit_ui 2/0, golden traces 20/20 byte-stable - `findEntities`
+is shared by every lane, so the unchanged goldens are the real evidence this did not shift anything
+it should not have.
 
 ## OPEN
 
