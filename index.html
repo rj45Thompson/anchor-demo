@@ -1740,7 +1740,23 @@ function hopHTML(i,from,rel,to,k,running){
       :' · base rate '+(q.p*100).toFixed(1)+'%')+
     ' · chain so far <b>'+(running*100).toFixed(1)+'%</b></div></div>';
 }
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// `let`, not `const`: every headless harness in this repo (zoo_harness.mjs, ui_session.mjs,
+// zoo_cardinality_harness.mjs) exists to test what the search FINDS, not how the live page paces
+// revealing it - the `await sleep(20)`/`await sleep(R.STEP_MS)` calls scattered through the
+// search loop are pure UI pacing ("let a frame render between fetches so the graph visibly
+// grows"), and a headless run has no frame to render. A harness overrides this ONE binding after
+// loading the script (`sleep=()=>Promise.resolve()`) to skip the wait without touching a single
+// line of search logic; the live page never does this, so nothing about what a real visitor sees
+// changes. Measured, not assumed to be the whole story, and the first measurement was WRONG: `time`
+// initially showed one wide question at `real 29s` against `user 0.1s/sys 0.1s`, read as "mostly
+// idle" - misleading, because Git Bash's `time` on Windows does not reliably report a child
+// process's real CPU use. Direct instrumentation (Date.now() around the actual calls) found the
+// truth: sleep totalled 4.8s of that 28s (a real ~17% saving, kept), and the dominant cost is
+// JSON.parse on the decompressed shards themselves - up to ~4MB of JSON per shard, 269 shards for
+// this one question, ~24s of genuine parse time. That is real, necessary computation (the live
+// page pays the identical cost in a real browser), not idle waiting - see WISHLIST for what that
+// does and does not imply about a fix.
+let sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 /* A ten-minute search that reports ONE line at the end throws away everything it paid for: the
    last run found 26 complete chains across 3,503 facts and showed four. If speed is not the

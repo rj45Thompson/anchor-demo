@@ -162,15 +162,21 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
       Unreal only for the filament visualiser, exported as video. Do not let the engine gate it.
 11. **Synonym layer (O4)**, then **latency (O5)** — exporter-side alias pass; IndexedDB or server.
 12. ⛔ **Book ingest** — still deferred on provenance grounds (superseded in spirit by wish 5).
-13. **Headless test cycles are needlessly slow** *(new wish, captured while verifying B44)*: the
-    live page's deliberate UI-pacing sleeps (`await sleep(20)` per shard fetch, `await
-    sleep(R.STEP_MS)` per hop-replay - real comments: "let a frame render between fetches so the
-    graph visibly grows") make total sense for a person watching the page, and are pure waste in
-    every headless harness in this repo, none of which render anything. Measured on one question
-    ("how many fingers do people have"): `real 29s` against `user 0.1s / sys 0.1s` - the process is
-    almost entirely idle, not computing. Every zoo/stress/cardinality run in this file paid this
-    tax without benefit. Fix: a harness-only flag (env var, checked once) that makes `sleep()`
-    resolve immediately, leaving the live page untouched.
+13. **Headless test cycles are slow - now fully measured, mostly not fixable.** `sleep` changed
+    `const`->`let` so a harness can override it to skip the live page's UI-pacing delays; real,
+    kept, worth ~17% (198 sleep calls totalled 4.8s of a 28s run on "how many fingers do people
+    have"). The first read on the REST of that 28s was wrong: `time` showed `user 0.1s/sys 0.1s`
+    against `real 28s` and looked like idle waiting - Git Bash's `time` on Windows does not
+    reliably report a child process's CPU use, and direct `Date.now()` instrumentation around the
+    actual calls disproved it. The true breakdown: ~24s of that 28s is `JSON.parse()` on the
+    decompressed shards (269 shards for this one question, individually up to ~4MB of JSON each).
+    Confirmed this is not a `vm`/sandbox artifact either - timed the identical parse in the host
+    Node realm vs. a fresh `vm.Context`, 778ms vs. 714ms for 20 parses of the same 4MB shard,
+    no meaningful difference. This is real, necessary computation the live page pays too, in a
+    real browser, every time - not something a harness can skip without losing correctness. A
+    genuine fix would mean smaller shards, streaming/incremental parsing, or restructuring the
+    export format, which is a data-pipeline project, not a test-speed tweak - out of scope here,
+    captured for whoever next wants faster wide-search iteration.
 
 ## Standing rules that got us here
 
