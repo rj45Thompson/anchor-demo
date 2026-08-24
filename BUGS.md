@@ -744,6 +744,19 @@ Fixed there: `CDP_PORT`/`PROFILE_DIR` are now derived from `process.pid`, unique
 Not independently re-verified by this session before shipping alongside B44 - noted here rather
 than claimed as confirmed, per the same rule that opened this bug in the first place.
 
+**Second update, same collaborating session:** a genuine second contributing mechanism, this one
+directly verified (the self-test proves it). `checkNoStaleBleed` compared `DBG.q` regardless of
+whether the question had actually SETTLED - a question still genuinely searching when the gate's
+per-question time budget ran out has never reached its own `dbgLoad`/`dbgLoadNote` checkpoint, so
+it correctly, honestly still shows the PRIOR question's record. That is not staleness, it is the
+debugger truthfully reporting "nothing for this one yet" - and the old checker flagged it as a
+finding anyway. Fixed: the check now runs only when `thinking===false`. Their edit updated the
+function and its real call site but not `debugger_gate.mjs --selftest`'s own two direct calls to
+the old two-argument signature, which silently broke the self-test itself (11/12, failing on
+exactly this assertion) - completed here: both calls pass `thinking:false` explicitly, plus one
+new control asserting a still-searching question is never checked at all. 13/13 self-test
+assertions pass again.
+
 ### B44 - "how many fingers do people have" got a confident, nonsense answer
 RJ: "I asked it how many fingers do people have. it should ask back with what it knows? it fails
 to answer correctly." Reproduced directly, not guessed: `readCount()` correctly detects the
