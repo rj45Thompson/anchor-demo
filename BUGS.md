@@ -692,6 +692,17 @@ valid, previously-opened node - it never depended on the NEXT hop's node succeed
 - "is there a connection between chess and mathematics" (O-crash's other named repro): 34.6s.
 - Both stay well inside a realistic patience budget, down from "no recovery inside a 130+ second
   observation window."
+
+**What this does NOT claim to have fixed.** The debugger gate's own real-browser HANG_SUSPECTED
+count (a strict, single 6s no-response probe, different from "the search took a while") still
+shows ~15/100 on unrelated questions. Not investigated as a new mystery - almost certainly the
+same cost identified while chasing headless test speed (B44's writeup): a single large shard's
+`JSON.parse()` genuinely blocks the JS thread for up to ~230ms, synchronously, and a burst of
+several in a row without an intervening `await sleep()` yield point can exceed a strict 6s probe
+window. That is a different, narrower thing than this bug (a search that runs forever and never
+terminates, which IS fixed and verified above) - a brief, bounded block during otherwise-normal,
+terminating computation. A real fix would mean smaller shards or incremental parsing, the same
+data-pipeline project already deferred in WISHLIST item 13, not a search-loop change.
 - Suite: zoo 39/40, contrast 7/8, stress 111/111, count 3/3, gate 21/0, golden traces 20/20
   byte-stable - a search-loop change this central changing NOTHING on the golden/zoo surfaces,
   which exercise `reason()` the same way real usage does, is real evidence it is safe, not the
