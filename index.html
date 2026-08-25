@@ -405,11 +405,27 @@ const BASE=[0.512,992953];
 // "have" - which is why it went hunting through highway synonyms instead of answering.
 const STOP=new Set(("what whats who which why how is are was were the a an of for in to s does do "+
 "did tell me about and or please can you know have has had having be been being am were will "+
-"would could should shall may might must there here it its this that these those").split(" "));
+"would could should shall may might must there here it its this that these those not no never "+
+"n't don't dont doesn't doesnt didn't didnt won't wont wouldn't wouldnt couldn't couldnt "+
+"shouldn't shouldnt isn't isnt aren't arent wasn't wasnt weren't werent can't cant").split(" "));
   // question VERBS: real graph nodes ("eat" carries 334 facts) that are never the subject of
-  // the question naming them - unless capitalised, as in a title
-  const QVERBS=new Set(("eat eats eating drink drinks live lives grow grows make makes made go "+
-    "goes come comes look looks work works mean means called").split(" "));
+  // the question naming them - unless capitalised, as in a title. B46 (RJ: "as your fixing these
+  // bugs your fixing all similar ones, not just one offs right?"): widened for common tenses
+  // ("came" was missing though "come/comes" were here) and other common verbs that broke the
+  // same way ("need"(145 facts)). Still a bounded LIST, not a grammar parser - this engine has
+  // neither. It will not catch every English verb; a new question with one not listed here can
+  // still fail this exact way, and that is disclosed, not hidden.
+  const QVERBS=new Set(("eat eats eating ate eaten drink drinks drinking drank drunk live lives "+
+    "living lived grow grows growing grew grown make makes making made go goes going went gone "+
+    "come comes coming came look looks looking looked work works working worked mean means "+
+    "meaning meant call calls calling called need needs needing needed want wants wanting "+
+    "wanted like likes liking liked use uses using used help helps helping helped cause causes "+
+    "causing caused require requires requiring required contain contains containing contained "+
+    "produce produces producing produced hunt hunts hunting hunted attack attacks attacking "+
+    "attacked hide hides hiding hid sleep sleeps sleeping slept swim swims swimming swam run "+
+    "runs running ran walk walks walking walked jump jumps jumping jumped breathe breathes "+
+    "breathing breathed bite bites biting bit sting stings stinging stung fly flies flying flew "+
+    "flown build builds building built change changes changing changed move moves moving moved").split(" "));
 let RELS=null,NSHARD=512,RELSET=null;
 const cache=new Map();
 const $=id=>document.getElementById(id);
@@ -1625,10 +1641,33 @@ const LEAD=new Set(("what whats which who whom whose why where when how is are w
 // "how many wheels does a car have", returning trivia about the WORD "many" instead of
 // anything about cars. A quantifier is never the thing a question is about.
 const QUANT=new Set("many much few several a lot lots plenty".split(" "));
+// COMPARATIVES/SUPERLATIVES. Same failure as QUANT, same fix shape: "which is bigger, a cheetah
+// or a lion" linked "Faster"(55 facts, a real ConceptNet node) as the second entity, replacing
+// "lion" outright - not a rare miss, found running a 61-question natural comparison/superlative
+// zoo where the pattern was systematic. A comparative or superlative adjective is never the thing
+// a question is about, same reasoning as "many" for QUANT. Closed word class, listed rather than
+// pattern-matched (a "-er"/"-est" suffix rule would also catch real entities like "Copper" or
+// "Everest" that merely end that way).
+const COMPARE=new Set((
+  "bigger biggest taller tallest faster fastest heavier heaviest older oldest longer longest "+
+  "smaller smallest deeper deepest richer richest poorer poorest hotter hottest colder coldest "+
+  "wetter wettest drier driest larger largest higher highest lower lowest closer closest "+
+  "farther farthest further furthest better best worse worst stronger strongest weaker weakest "+
+  "younger youngest shorter shortest slower slowest lighter lightest harder hardest softer "+
+  "softest brighter brightest darker darkest earlier earliest later latest more most less least"
+).split(" "));
 const TAIL=new Set(("in on at of from by is are was were located born the a an").split(" "));
 
 async function findEntities(q){
-  const raw=String(q).replace(/[?.!]+$/,"").trim();
+  // B46: "what is the tallest mountain IN THE WORLD" correctly found "mountain" but then linked
+  // "World"(327 facts) as a spurious SECOND entity from the generic scope phrase. "world"/"earth"
+  // cannot simply join QUANT/COMPARE/STOP - "how many moons does Earth have" (B45) needs Earth to
+  // resolve as a real subject there. The difference is the SPECIFIC trailing phrase, not the
+  // word - stripped the same way readCount() already strips "are/is there", anchored so it can
+  // never match "...does Earth have" (no "in"/"on" immediately before Earth there).
+  const raw=String(q).replace(/[?.!]+$/,"").trim()
+    .replace(/\s+(?:in|on)\s+the\s+world$/i,"").replace(/\s+on\s+(?:the\s+)?earth$/i,"")
+    .replace(/\s+in\s+(?:the\s+)?(?:universe|existence)$/i,"");
   let spanProbes=0;   // shared bound across both bestSpan calls - see SPAN_PROBE_MAX
   const caps=properNouns(raw);
   const asked=w=>ASK_ALIASES.some(([re])=>re.test(" "+w.toLowerCase()+" "));
@@ -1649,8 +1688,8 @@ async function findEntities(q){
   // ("of the -time period-> Roman Empire"), so without this guard the chain question "capital of
   // the country Melbourne is in" started its search from the entity "of the". A span may CONTAIN
   // function words ("Anastasia at This Address") but may not consist of nothing else.
-  const FUNC=new Set(("of the a an and or for in on at to from with by is are was were be been "+
-    "it its this that these those").split(" "));
+  const FUNC=new Set(("of the a an and or nor than for in on at to from with by is are was were "+
+    "be been it its this that these those").split(" "));
   const goalRel=(readQuery(raw).goal||"").toLowerCase();
   const frame=new Set([...LEAD,...QVERBS,...goalRel.split(/\s+/).filter(Boolean)]);
   const frameTail=new Set([...TAIL,...QVERBS,...goalRel.split(/\s+/).filter(Boolean)]);
@@ -1662,13 +1701,20 @@ async function findEntities(q){
   // "Country Is" and B29's own "wheels does a car have" - a filter closed for one position
   // (whole-span) left the same word free to poison a different one (leading/trailing trim).
   const isFrame=(w,set)=>set.has(w.toLowerCase())||FUNC.has(w.toLowerCase())||
-    QUANT.has(w.toLowerCase())||asked(w);
+    QUANT.has(w.toLowerCase())||COMPARE.has(w.toLowerCase())||STOP.has(w.toLowerCase())||asked(w);
   // a span is junk if EVERY word is framing, a connective, or an uncapitalised relation word
   // B30: "many" carries 59 real ConceptNet facts and would otherwise survive every other
   // filter and get linked as if it were the question's own subject - a quantifier never is.
   const junkSpan=list=>list.every(w=>{const l=w.toLowerCase();
-    return QUANT.has(l)||FUNC.has(l)||frame.has(l)||frameTail.has(l)||
-      ((RELSET.has(l)||QVERBS.has(l))&&!caps.has(l));});
+    return QUANT.has(l)||COMPARE.has(l)||STOP.has(l)||FUNC.has(l)||frame.has(l)||frameTail.has(l)||
+      ((RELSET.has(l)||QVERBS.has(l))&&!caps.has(l));})||
+    // B46 follow-on: the check above only rejects a span if it is ENTIRELY junk - "have legs"
+    // survived it because "legs" is real. FUNC words are deliberately allowed to survive MIXED
+    // into a span ("of"/"a"/"the" are legitimately part of real names). QUANT/COMPARE/STOP never
+    // are - extending the exact "poisons the span unless capitalised" rule RELSET/QVERBS already
+    // use just below, instead of only rejecting when EVERY word in the span happens to be one.
+    list.some(w=>{const l=w.toLowerCase();
+      return (QUANT.has(l)||COMPARE.has(l)||STOP.has(l))&&!caps.has(l);});
 
   // trim the question's framing off both ends, never out of the middle
   let i=0,j=words.length;
