@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Anchor — a knowledge engine that tells you how sure it is</title>
-<meta name="description" content="A knowledge engine with no neural weights. Every answer carries a measured, held-out-calibrated confidence and its independent sources — over a 66.4M-fact graph, live in your browser.">
+<title>Anchor - a knowledge engine that tells you how sure it is</title>
+<meta name="description" content="A knowledge engine with no neural weights. Every answer carries a measured, held-out-calibrated confidence and its independent sources - over a 66.4M-fact graph, live in your browser.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Anchor — a knowledge engine that tells you how sure it is">
+<meta property="og:title" content="Anchor - a knowledge engine that tells you how sure it is">
 <meta property="og:description" content="No neural weights. Every answer carries a measured confidence, calibrated against held-out data (ECE 0.20pp), plus a zero-weight code synthesizer verified by real execution.">
 <meta property="og:url" content="https://rj45thompson.github.io/anchor-demo/">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Anchor — a knowledge engine that tells you how sure it is">
-<meta name="twitter:description" content="No neural weights. Measured confidence, independent sources, honest refusals — over a 66.4M-fact graph, live in your browser.">
+<meta name="twitter:title" content="Anchor - a knowledge engine that tells you how sure it is">
+<meta name="twitter:description" content="No neural weights. Measured confidence, independent sources, honest refusals - over a 66.4M-fact graph, live in your browser.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231f3b57'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Georgia,serif' font-weight='700' fill='%23fbfaf8' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <style>
 :root{--bg:#fbfaf8;--fg:#1a1a19;--muted:#6b6b66;--line:#e3e0da;--card:#fff;
@@ -182,15 +182,16 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 </style></head><body><div class="wrap">
 
 <h1>How sure is it, and why?</h1>
-<p class="sub">A system with <strong>no neural weights</strong>. Every answer — a fact or a program —
-carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
+<p class="sub">A system with <strong>no neural weights</strong>. Every answer - a fact or a program - carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
 doesn't have enough.</p>
 
 <div class="tabs">
   <div class="tab on" data-p="think">Ask anything · watch it think</div>
-  <div class="tab" data-p="code">Write a function</div>
+  <div class="tab" data-p="code">Write a function <span class="beta">BETA</span></div>
   <div class="tab" data-p="resume">R&eacute;sum&eacute; Breakout</div>
   <div class="tab" data-p="space">Star Fighter</div>
+  <div class="tab" data-p="inv">Inventions</div>
+  <div class="tab" data-p="views">Views</div>
   <div class="tab" data-p="papers">White papers</div>
 </div>
 
@@ -230,6 +231,50 @@ doesn't have enough.</p>
   .paperbody table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:12px}
   .paperbody th,.paperbody td{border:1px solid #1d2c3a;padding:5px 8px;text-align:left}
   .paperbody th{background:#0f1a24;color:#a9c6dc}
+  .tab .beta{font-size:9px;font-weight:700;letter-spacing:.6px;vertical-align:super;
+    color:#ffcf6b;border:1px solid #6b5320;border-radius:3px;padding:0 3px;margin-left:3px}
+  .broken-note{margin:0 0 12px;padding:10px 13px;border:1px solid #6b3a20;border-left-width:3px;
+    border-radius:6px;background:#1d1109;color:#ffcda6;font-size:12.5px;line-height:1.6}
+  .broken-note strong{color:#ffb877}
+  .subtabs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 14px}
+  .subtab{background:#101a24;border:1px solid #1d2c3a;color:#9fb6c9;border-radius:999px;
+    padding:5px 13px;font-size:12px;cursor:pointer;font-family:inherit}
+  .subtab:hover{border-color:#2b4c66;color:#cfe3f2}
+  .subtab.on{background:#14304a;border-color:#2f6d99;color:#eaf5ff}
+  .sub{display:none}
+  .sub.on{display:block}
+  .sub h4{margin:0 0 6px;font-size:15px;color:#eaf3fb}
+  .sub .lede{margin:0 0 10px;font-size:14px;color:#bcd6ea;font-weight:600;line-height:1.5}
+  .sub p{font-size:13px;line-height:1.68;color:#c2d3e2;margin:0 0 10px}
+  .sub .why{border-left:3px solid #2f6d99;background:#0e1a24;padding:9px 12px;border-radius:0 6px 6px 0}
+  .sub .small{color:#8fa3b5}
+  table.mini{border-collapse:collapse;margin:0 0 10px;font-size:12.5px}
+  table.mini th,table.mini td{border:1px solid #1d2c3a;padding:5px 12px;text-align:left}
+  table.mini th{background:#0f1a24;color:#a9c6dc}
+  .sub .beta{font-size:9px;font-weight:700;letter-spacing:.6px;vertical-align:super;
+    color:#ffcf6b;border:1px solid #6b5320;border-radius:3px;padding:0 3px;margin-left:3px}
+  .hire{margin-top:20px;padding:13px 15px;border:1px solid #23516b;border-radius:8px;
+    background:#0d1c28;font-size:13px;color:#cfe3f2;line-height:1.7}
+  .vwrap{border:1px solid #1d2c3a;border-radius:8px;background:#0a1119;overflow:auto;
+    padding:6px;margin-top:4px}
+  .vwrap svg{display:block;width:100%;height:auto}
+  .vnote{margin:6px 0 12px;padding:9px 12px;border:1px solid #24384a;border-radius:6px;
+    background:#0e1720;color:#9fb6c9;font-size:12.5px}
+  .vbar{margin-top:12px}
+  .lnk{background:none;border:none;color:#7fd4ff;cursor:pointer;font:inherit;font-size:12.5px;
+    text-decoration:underline;padding:0}
+  .lnk:hover{color:#b9e8ff}
+  #chatWrap{margin-top:14px;border:1px solid #1d2c3a;border-radius:8px;background:#0b1219}
+  #chatLog{max-height:230px;overflow:auto;padding:10px 12px;font-size:13px;line-height:1.6}
+  .cmsg{margin:0 0 9px}
+  .cmsg .who{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:#7d8fa1}
+  .cmsg.q .bub{color:#eaf3fb}
+  .cmsg.a .bub{color:#bcd6ea}
+  .cmsg .bub{margin-top:2px}
+  #chatRow{display:flex;gap:8px;border-top:1px solid #16222e;padding:9px 10px}
+  #chatIn{flex:1;background:#0e1720;border:1px solid #24384a;border-radius:6px;color:#e8eef4;
+    padding:8px 10px;font:inherit;font-size:13px}
+  #chatIn:focus{outline:none;border-color:#2f6d99}
 </style>
 
 <div id="p-resume" class="panel">
@@ -237,23 +282,176 @@ doesn't have enough.</p>
     <iframe data-src="./games/resume-arkanoid.html" title="Resume Breakout" loading="lazy"></iframe>
   </div>
   <div class="gamenote">Thirty years of shipped software, descending. Every block is a real line
-    from the CV &mdash; shoot one to read it. Arrow keys or mouse to move, space or click to fire.</div>
+    from the CV - shoot one to read it. Arrow keys or mouse to move, space or click to fire.</div>
 </div>
 
 <div id="p-space" class="panel">
   <div class="gamewrap">
     <iframe data-src="./games/starfighter.html" title="Star Fighter" loading="lazy"></iframe>
   </div>
-  <div class="gamenote">The starfighter environment from the no-LLM research fleet &mdash; the
+  <div class="gamenote">The starfighter environment from the no-LLM research fleet - the
     same agent-training sandbox the anchor work is measured in, running here in the browser.</div>
 </div>
 
+<!-- rj-views:start -->
+<div id="p-views" class="panel">
+  <p class="small" style="margin-top:0">The 3D cloud on the first tab looks good but hides the
+  things that actually matter: how deep the search went, which path became the answer, and what got
+  thrown away. These are the same run, drawn three ways that each answer one of those.</p>
+
+  <div class="subtabs" id="viewTabs">
+    <button class="subtab on" data-s="v-chain">Answer chain</button>
+    <button class="subtab" data-s="v-layers">Hop layers</button>
+    <button class="subtab" data-s="v-src">Evidence</button>
+  </div>
+
+  <div class="vnote" id="vEmpty">No search loaded yet. Ask something on the
+    <b>Ask anything</b> tab, then come back - or
+    <button class="lnk" id="vDemo">run one now</button>.</div>
+
+  <div class="sub on" id="v-chain">
+    <p class="lede">The path that survived, and nothing else.</p>
+    <p class="small">Every hop the engine committed to, in order, with the relation it followed and
+    how many independent sources back that step. This is the proof, minus the search noise.</p>
+    <div class="vwrap"><svg id="svgChain"></svg></div>
+  </div>
+
+  <div class="sub" id="v-layers">
+    <p class="lede">How wide it had to look to get there.</p>
+    <p class="small">One column per hop. Green is the answer path, grey was opened and rejected,
+    faint was reached but never opened. The width of a column is the branching factor at that depth -
+    this is the picture the 3D ball cannot show.</p>
+    <div class="vwrap"><svg id="svgLayers"></svg></div>
+  </div>
+
+  <div class="sub" id="v-src">
+    <p class="lede">The anchor law, in the run you just did.</p>
+    <p class="small">Every edge the search touched, bucketed by how many independent sources attest
+    it. More sources is the whole basis for the confidence number the engine reports.</p>
+    <div class="vwrap"><svg id="svgSrc"></svg></div>
+    <p class="small" id="srcNote"></p>
+  </div>
+
+  <div class="vbar"><button class="lnk" id="vRedraw">Redraw from last search</button></div>
+</div>
+<!-- rj-views:end -->
+<!-- rj-inventions:start -->
+<div id="p-inv" class="panel">
+  <p class="small" style="margin-top:0">Things I built that did not exist before, and what each one
+  is actually for. Every claim here links to the artifact, so none of it has to be taken on trust.</p>
+
+  <div class="subtabs" id="invTabs">
+    <button class="subtab on" data-s="s-engine">Knowledge engine</button>
+    <button class="subtab" data-s="s-law">The anchor law</button>
+    <button class="subtab" data-s="s-bench">BossBench</button>
+    <button class="subtab" data-s="s-tdre">TDRE</button>
+    <button class="subtab" data-s="s-warship">WarShip</button>
+    <button class="subtab" data-s="s-synth">Program search</button>
+    <button class="subtab" data-s="s-cart">CART</button>
+  </div>
+
+  <div class="sub on" id="s-engine">
+    <h4>A knowledge engine that abstains instead of guessing</h4>
+    <p class="lede">It answers from a graph it can show you, and when it does not know, it says so.</p>
+    <p>66.4 million facts across 512 shards, running in this browser tab with <strong>zero neural
+    weights</strong>. Every answer carries a calibrated confidence and a trace you can step through.
+    A Bloom filter is used the unusual way round: its job is to <em>prove absence</em>, so "not in
+    the graph" is a real answer rather than a shrug.</p>
+    <p class="why"><strong>Why an employer might care:</strong> this is eval and calibration
+    discipline in a shipped artifact - abstention, measured confidence, golden-trace regression
+    tests, and a debugger that replays a recorded run instead of recomputing it.</p>
+    <p class="small">Try it on the <b>Ask</b> tab. The whole thing is the page you are reading.</p>
+  </div>
+
+  <div class="sub" id="s-law">
+    <h4>The anchor law</h4>
+    <p class="lede">How much more should you believe a fact when a second, unrelated source says it too?</p>
+    <p>Measured on 66,404,117 facts whose provenance is an explicit bitmask over 8 independently
+    collected sources, holding Wikidata-truthy out as external truth and never counting it as an
+    anchor:</p>
+    <table class="mini">
+      <tr><th>Independent sources</th><th>n</th><th>Agrees with held-out truth</th></tr>
+      <tr><td>1</td><td>847,267</td><td>44.9%</td></tr>
+      <tr><td>2</td><td>125,074</td><td>87.3%</td></tr>
+      <tr><td>3</td><td>20,611</td><td>94.7%</td></tr>
+    </table>
+    <p class="why"><strong>The part I would want a hiring manager to read:</strong> I first published
+    this with better-looking numbers - 88.3% at one anchor, 100% at two. Those counted distinct
+    shared objects rather than distinct provenance, on n=214 internal labels. I withdrew them and
+    re-measured on four orders of magnitude more evidence. The shape held; the levels were
+    optimistic. The retraction is written into the whitepaper rather than quietly dropped.</p>
+    <p class="small">Full method and controls in the <b>White papers</b> tab.</p>
+  </div>
+
+  <div class="sub" id="s-bench">
+    <h4>BossBench</h4>
+    <p class="lede">A test set built so a model cannot pass it by being well-read.</p>
+    <p>100 adversarial problems for fabricated-relation hallucination: <em>real</em> entities joined
+    by <em>invented</em> relations. The entities are all familiar, so recall does not help - the only
+    way through is to check whether the relation actually exists. Released CC0 with a Croissant 1.0
+    record.</p>
+    <p class="why"><strong>Why an employer might care:</strong> writing a bench that resists being
+    gamed is the hard half of evaluation work. Un-curatable test sets, and "confident and wrong"
+    treated as its own severity rather than folded into ordinary error.</p>
+    <p class="small"><a href="https://huggingface.co/datasets/RJ45Thompson/bossbench-v1" target="_blank" rel="noopener">Dataset on Hugging Face</a></p>
+  </div>
+
+  <div class="sub" id="s-tdre">
+    <h4>TDRE - Truth-Directed Reasoning Engine</h4>
+    <p class="lede">A reasoning layer that has to show its working before it is allowed to answer.</p>
+    <p>Graph-controlled reasoning: claims are assembled along inspectable chains and checked before
+    emission, rather than produced fluently and audited afterwards. Patent pending.</p>
+    <p class="why"><strong>Why an employer might care:</strong> it is the same discipline as the
+    knowledge engine, generalised - make the intermediate steps first-class objects so they can be
+    tested, replayed and rejected.</p>
+  </div>
+
+  <div class="sub" id="s-warship">
+    <h4>WarShip</h4>
+    <p class="lede">8,124 conversations, kept with their full reasoning traces.</p>
+    <p>A reasoning-trace dataset released under Apache-2.0. The traces are the point: what was tried,
+    what was rejected, and why, rather than only the final answer.</p>
+    <p class="why"><strong>Why an employer might care:</strong> building and releasing a clean,
+    licensed dataset is unglamorous infrastructure work that most people skip.</p>
+    <p class="small"><a href="https://huggingface.co/datasets/RJ45Thompson/WarShip" target="_blank" rel="noopener">Dataset on Hugging Face</a></p>
+  </div>
+
+  <div class="sub" id="s-synth">
+    <h4>Program search <span class="beta">BETA</span></h4>
+    <p class="lede">Write the examples; let a search find the function that satisfies all of them.</p>
+    <p class="broken-note" style="margin-top:10px"><strong>Currently broken.</strong> The in-page
+    demo on the <b>Write a function</b> tab does not work right now. It is left visible on purpose
+    rather than hidden, so the page shows what is actually running.</p>
+    <p>The idea: instead of predicting code, <strong>search</strong> a fixed set of primitives for a
+    program that satisfies <em>every</em> supplied example, verified by real execution. The measured
+    system behind it is roughly 2,600 lines, tested against 224 MBPP+ tasks.</p>
+    <p class="why"><strong>Why an employer might care:</strong> same principle as everything else
+    here - verify by running it, do not trust a plausible-looking output.</p>
+  </div>
+
+  <div class="sub" id="s-cart">
+    <h4>CART - Correlation Anchor Theory</h4>
+    <p class="lede">A physics thought experiment, kept deliberately separate from the engineering.</p>
+    <p>Written up as its own repository. It is speculative by construction and is not offered as a
+    result - it is here because it is mine and it is honest about what it is.</p>
+    <p class="small"><a href="https://github.com/rj45Thompson/correlation-anchor-theory" target="_blank" rel="noopener">correlation-anchor-theory on GitHub</a></p>
+  </div>
+
+  <div class="hire">
+    <strong>R.J. Thompson</strong> - senior C++ / C# engineer, 30 years shipping. Open to work.
+    <a href="mailto:RJ45Thompson@gmail.com?subject=Role%20enquiry">Email</a> &nbsp;·&nbsp;
+    <a href="./games/RJ_Thompson_Resume.pdf" target="_blank" rel="noopener">PDF résumé</a> &nbsp;·&nbsp;
+    <a href="https://www.linkedin.com/in/r-j-thompson-9531588/" target="_blank" rel="noopener">LinkedIn</a> &nbsp;·&nbsp;
+    <a href="https://github.com/rj45Thompson" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</div>
+<!-- rj-inventions:end -->
 <div id="p-papers" class="panel">
   <div class="paperdoc">
     <div class="paperdoc-h">
       <div>
         <h3>Verified Knowledge Extraction from Language Models</h3>
-        <div class="sub">The whitepaper behind this page &mdash; including the part where we
+        <div class="sub">The whitepaper behind this page - including the part where we
           withdrew our own headline number and re-measured it.</div>
       </div>
       <a class="rawlink" href="./WHITEPAPER.md" target="_blank" rel="noopener">raw .md &rarr;</a>
@@ -280,7 +478,7 @@ doesn't have enough.</p>
       <div class="tagrow"><span class="tag">reasoning traces</span><span class="tag">Apache-2.0</span></div>
     </div>
     <div class="paper">
-      <h4>Sober AI &mdash; verification wrapper</h4>
+      <h4>Sober AI - verification wrapper</h4>
       <p>Reference implementation of the propose &rarr; verify &rarr; report-confidence &rarr; refuse
          discipline this whole page is built on.</p>
       <a href="https://github.com/rj45Thompson/sober-ai-complete" target="_blank"
@@ -325,25 +523,25 @@ consults when answering.</p>
 </tbody></table>
 <p class="small">Fitted on one half of the entities and tested on the other, split by subject so no
 entity appears on both sides. <strong>Expected calibration error: 0.20 percentage points</strong>
-across 496,464 held-out facts. The curve predicts — it is not describing its own training data.</p>
+across 496,464 held-out facts. The curve predicts - it is not describing its own training data.</p>
 
 <h2>The law</h2>
 <p><strong>An anchor is a second source, not a second opinion.</strong> One source is close to a
 coin flip. A second <em>independently collected</em> source takes it to 87%. That lift survives
 controls for popularity, for shared lineage between sources, and for gaps in the reference set.</p>
 
-<div class="warn" id="factsWarn"><strong>What this is.</strong> The whole graph — 66,404,117 facts
-over 12.2 million subjects — sharded so your browser fetches only the piece it needs. It is a
+<div class="warn" id="factsWarn"><strong>What this is.</strong> The whole graph - 66,404,117 facts
+over 12.2 million subjects - sharded so your browser fetches only the piece it needs. It is a
 <em>lookup over recorded relations</em>, not a chatbot: it reports what sources asserted, and when
 nothing asserts anything it says so instead of inventing.
 <br><br><strong>Two limits, stated rather than hidden.</strong> (1) Subjects are matched by
 surface text, not a disambiguated entity id, so a name shared by more than one real thing (many
 towns are named "Berlin") can appear merged under one heading. Every fact shown is still real and
-independently sourced — it may just belong to more than one thing with that name.
+independently sourced - it may just belong to more than one thing with that name.
 (2) There is <strong>no per-subject cap</strong>: every one of the 66,404,117 facts is here, and a
 well-documented subject keeps all of its edges (Australia carries 975). An earlier build capped
 each subject at 80 facts and, by doing so, silently deleted <code>Australia&nbsp;→&nbsp;capital
-&nbsp;→&nbsp;Canberra</code> — the answer to this page's own headline example. Measuring the cap
+&nbsp;→&nbsp;Canberra</code> - the answer to this page's own headline example. Measuring the cap
 rather than defending it is what removed it: it was discarding 1.58% of the graph, and 99.9% of
 subjects never came near it. "Not recorded here" now genuinely means the sources did not record
 it.</div>
@@ -352,7 +550,7 @@ it.</div>
 <!-- ================= REASON PANEL ================= -->
 <div id="p-think" class="panel on">
 <p class="small" id="thinkIntro" style="margin-top:0">A lookup answers one hop. This
-<strong>chains</strong> them, hop by hop, over 66 million facts — and when it cannot reach the
+<strong>chains</strong> them, hop by hop, over 66 million facts - and when it cannot reach the
 target it abstains, goes and learns what else that thing is called, and tries again.</p>
 <div class="ask">
   <input id="tq" placeholder="how many types of bear have brown hair" autocomplete="off">
@@ -374,38 +572,37 @@ target it abstains, goes and learns what else that thing is called, and tries ag
   <div class="hover" id="hover" style="display:none"></div>
 </div>
 
-<div class="tbar"><span>SEARCH TRACE — every fact the engine actually reads</span>
+<div class="tbar"><span>SEARCH TRACE - every fact the engine actually reads</span>
   <span id="tcount">0 steps</span></div>
 <div class="tlog" id="tlog"></div>
 
 <div id="tout"></div>
-<div class="livebar"><span>ANSWERS SO FAR — every completed chain, ranked live as it is found</span><span id="lcount">0</span></div>
+<div class="livebar"><span>ANSWERS SO FAR - every completed chain, ranked live as it is found</span><span id="lcount">0</span></div>
 <div class="live" id="live"></div>
 <div id="ndbox"></div>
 
-<h2>Step debugger — the conclusion as a program</h2>
+<h2>Step debugger - the conclusion as a program</h2>
 <div id="dbgbox"><p class="small">When a search completes, its best chain compiles here into
 stepped pseudo-code: move the execution pointer back and forth and watch the variables the
-engine actually measured — sources, curve points, composed confidence, shard ids. Nothing is
+engine actually measured - sources, curve points, composed confidence, shard ids. Nothing is
 recomputed while you step (the time-travel-debugger rule: replay the record). The other listed
-chains are real divergence points — routes this search <em>also</em>
-completed (top 12 by composed confidence here, top 8 in the geometry rack — disclosed cuts; the
-ANSWERS list above is never truncated) — click one to debug that route instead. <b>The engine
+chains are real divergence points - routes this search <em>also</em>
+completed (top 12 by composed confidence here, top 8 in the geometry rack - disclosed cuts; the
+ANSWERS list above is never truncated) - click one to debug that route instead. <b>The engine
 uses this debugger itself:</b> after every run it self-checks by re-stepping its own record
-against the shards (CHECK lines in the trace) and repairs any hop whose measurement drifted —
-re-measured, recomposed, re-ranked, out loud. The record save/loads across visits (a replay of
+against the shards (CHECK lines in the trace) and repairs any hop whose measurement drifted - re-measured, recomposed, re-ranked, out loud. The record save/loads across visits (a replay of
 stored values, never a hidden re-run), and <b>⟲ resume from here</b> re-runs the real search
-from any hop with that edge excluded — rewind-and-branch on the live engine. The picture is not only for you: once the layout settles, the engine
+from any hop with that edge excluded - rewind-and-branch on the live engine. The picture is not only for you: once the layout settles, the engine
 reads its own map to order the frontier (every re-rank is a VISION line in the trace, counted
-in <code>window.__visionFlips</code>; ordering only, it can never change an answer — and its
+in <code>window.__visionFlips</code>; ordering only, it can never change an answer - and its
 benefit is counted, not yet benchmarked).</p>
 <p class="small"><b>The same conclusion, as geometry.</b> Above the graph, each completed chain
 is a floating ruler: one segment per hop, segment length = −log(p_hop), so multiplying hop
 probabilities becomes adding lengths and <b>the most probable chain is literally the shortest
-ruler</b> — the weak hop is the long segment, a single-source hop is amber, and no number needs
+ruler</b> - the weak hop is the long segment, a single-source hop is amber, and no number needs
 reading. A faint gridline marks the length of <b>one ideal hop</b> (94.7%), so a ruler reads
 in ideal-hop units the way a lane reads in metres. The chain selected here is the bright ruler
-there — pick either side and the other follows. The ⤴ chip on the stage frames the geometry
+there - pick either side and the other follows. The ⤴ chip on the stage frames the geometry
 with one click (any movement of yours takes the camera back). Hover a segment for the fact it
 stands for; click it and this debugger jumps to that hop. One record, three views: geometry,
 program, graph. <b>Counting questions get their own program</b> too - LOAD the class, CHECK each
@@ -414,35 +611,34 @@ stays hidden for a counting run rather than being forced into a shape that does 
 
 <h2>What just happened</h2>
 <div id="whatbox"><p class="small">Ask something and this panel will explain, in plain English,
-what the engine actually did for <em>that</em> question — how it read it, what it opened, what
+what the engine actually did for <em>that</em> question - how it read it, what it opened, what
 completed, and what the numbers mean. Nothing here is pre-written; it is generated from the same
 counters the trace shows.</p></div>
 <p class="small"><b>Counting questions</b> ("how many types of bear have brown hair") use a
 second shipped artifact: an <b>inverse membership index</b>, 7,903,120 parent&rarr;child pairs
-over 241,099 classes, built by re-reading the shipped shards. It adds <b>no facts</b> &mdash;
-membership is only stored one way (<code>grizzly bear &rarr;is a&rarr; bear</code>) and the
+over 241,099 classes, built by re-reading the shipped shards. It adds <b>no facts</b> - membership is only stored one way (<code>grizzly bear &rarr;is a&rarr; bear</code>) and the
 shards are keyed by subject, so without it a class's members cannot be enumerated at all. A
 count states what the graph <em>records</em>, names the read bound, and keeps "named for it"
 separate from "attested by a fact".</p>
 <p class="small"><b>Hand-written:</b> a listed table of about fifteen question-word aliases, so
 "who founded X" reaches <code>founded by</code>. Nothing about any specific subject is
-special-cased and no answer is stored. A "no chain" result is <b>not proof there is none</b> —
-the trace shows exactly what was and was not opened.</p>
+special-cased and no answer is stored. A "no chain" result is <b>not proof there is none</b> - the trace shows exactly what was and was not opened.</p>
 </div>
 
 <!-- ================= CODE PANEL ================= -->
 <div id="p-code" class="panel">
+<div class="broken-note"><strong>BETA - currently broken.</strong> This panel does not work right now. It is left up on purpose rather than hidden, so what is here is what is actually running. The description below is what it is meant to do once it is fixed.</div>
 <p class="small" style="margin-top:0">The other half of the same idea, in a different domain: given
 input→output examples, <strong>search</strong> a fixed set of primitives for one that satisfies
-<em>every</em> example — verified by real execution, not predicted by a model. This box
+<em>every</em> example - verified by real execution, not predicted by a model. This box
 re-implements a small slice of it entirely in this page; the measured system is a ~2,600-line
 search engine tested against 224 MBPP+ programming tasks.</p>
 
 <div class="field-lbl">Describe it in English (optional if you give examples below)</div>
 <input id="eng" value="reverse a list" placeholder="reverse a list" autocomplete="off">
-<div class="field-lbl" style="margin-top:10px">Examples — one per line, <code>args -&gt; expected</code>
+<div class="field-lbl" style="margin-top:10px">Examples - one per line, <code>args -&gt; expected</code>
 (JSON). Leave off <code>-&gt; expected</code> on a line and the engine will compute it and ask
-you to confirm — optional if English is enough to run a demo on.</div>
+you to confirm - optional if English is enough to run a demo on.</div>
 <textarea id="ex" spellcheck="false" placeholder="[3, 1, 2] -> [1, 2, 3]
 [9, 4, 7] -> [4, 7, 9]"></textarea>
 <div class="ask" style="margin-top:8px">
@@ -466,7 +662,7 @@ Facts data derived from REBEL, Wikidata5M, Wikidata-truthy, ConceptNet&nbsp;5, Y
 DBpedia and KELM, released under
 <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:var(--hi)">CC&nbsp;BY-SA&nbsp;4.0</a>
 per their ShareAlike terms. Site code MIT.<br><br>
-Built by <strong>RJ Thompson</strong> — no frameworks, no server, no model: one HTML file, a 512-way
+Built by <strong>RJ Thompson</strong> - no frameworks, no server, no model: one HTML file, a 512-way
 sharded graph and a Bloom filter, all running in your browser.
 <a href="https://github.com/rj45Thompson/anchor-demo" style="color:var(--hi)">Source on GitHub</a> ·
 <a href="WHITEPAPER.md" style="color:var(--hi)">whitepaper</a> ·
@@ -667,7 +863,7 @@ async function answer(q){
     if(hits.length)break;   // this length produced hits - do not fall back to shorter/vaguer spans
   }
   if(!hits.length){
-    render([],null,"nothing matched — checking whether that subject is genuinely absent…");
+    render([],null,"nothing matched - checking whether that subject is genuinely absent…");
     const allSpans=groups.flat();
     const mainSubj=allSpans.sort((a,b)=>b.length-a.length)[0]||q;
     let lastPaint=0;
@@ -676,15 +872,15 @@ async function answer(q){
       if(now-lastPaint<180)return;              // repainting per chunk is its own kind of broken
       lastPaint=now;
       const mb=x=>(x/1048576).toFixed(1);
-      render([],null,"checking whether that subject is genuinely absent — fetching the coverage "+
+      render([],null,"checking whether that subject is genuinely absent - fetching the coverage "+
         "index, "+mb(got)+(total?" / "+mb(total):"")+" MB. This downloads once per visit.");
     });
     let why;
     if(absent===true) why="“"+esc(mainSubj)+"” is definitively not one of the graph's "+
-      "12.2 million subjects (checked against a Bloom filter with zero false negatives) — a real "+
+      "12.2 million subjects (checked against a Bloom filter with zero false negatives) - a real "+
       "coverage gap, not a parsing failure.";
     else if(absent===false) why="“"+esc(mainSubj)+"” IS a subject in the graph, but none "+
-      "of its recorded relations matched this question — try rephrasing, e.g. “X country”.";
+      "of its recorded relations matched this question - try rephrasing, e.g. “X country”.";
     else why="no shard held a match for “"+esc(q)+"”.";
     return render([],why);
   }
@@ -735,13 +931,13 @@ function render(rows,note,busy,filterNote){
     const q=pFor(r.k),cls=r.k>=2?"k2":(r.k===1?"k1":"k0");
     out.insertAdjacentHTML("beforeend",
      '<div class="card '+cls+'"><div class="claim">'+esc(r.subj)+
-     ' <span style="color:var(--muted)" title="'+esc(r.rel)+'">—'+esc(relLabel(r.rel))+
+     ' <span style="color:var(--muted)" title="'+esc(r.rel)+'"> - '+esc(relLabel(r.rel))+
      '→</span> <b>'+esc(r.obj)+'</b></div>'+
      '<div class="bar"><i style="width:'+(q.p*100).toFixed(1)+'%"></i></div>'+
      '<div class="row"><span class="lbl">confidence</span><span><span class="pct">'+
-       (q.p*100).toFixed(1)+'%</span> — '+r.k+' independent source'+(r.k===1?"":"s")+' '+
+       (q.p*100).toFixed(1)+'%</span> - '+r.k+' independent source'+(r.k===1?"":"s")+' '+
        (q.measured?"(measured on n="+q.n.toLocaleString()+(q.clamped?", clamped at 3+":"")+")"
-                  :"(no anchor — base rate)")+'</span></div>'+
+                  :"(no anchor - base rate)")+'</span></div>'+
      (r.anchors.length?'<div class="row"><span class="lbl">because</span><span class="src">'+
        r.anchors.map(esc).join(", ")+'</span></div>':"")+
      '<div class="row"><span class="lbl">held-out</span><span>'+(r.heldOut
@@ -1296,7 +1492,7 @@ function draw3(){
     if(el&&hit&&hit.object.userData.rackHop){
       const rh=hit.object.userData.rackHop;
       el.style.display="block";
-      el.innerHTML="<b>"+esc(rh.h.from)+"</b> —"+esc(relLabel(rh.h.rel))+"→ <b>"+esc(rh.h.to)+
+      el.innerHTML="<b>"+esc(rh.h.from)+"</b> - "+esc(relLabel(rh.h.rel))+"→ <b>"+esc(rh.h.to)+
         "</b><br>k="+rh.h.k+" · p_hop "+(pctOf(rh.h.k)*100).toFixed(1)+
         "% · length = -log p · click: open this hop in the step debugger";
       return;
@@ -1324,7 +1520,7 @@ function buildLegend(){
    confidence and the sources behind it. The 3D view shows structure; this shows evidence. */
 async function inspectNode(n){
   const box=$("ndbox"); if(!box)return;
-  box.innerHTML='<div class="livebar"><span>NODE — '+esc(n.label)+'</span><span>reading…</span></div>';
+  box.innerHTML='<div class="livebar"><span>NODE - '+esc(n.label)+'</span><span>reading…</span></div>';
   const f=await factsOf(n.id);
   n.facts=f.length; if(!n.role)n.role=f.length?"opened":"dead";
   // group by relation so the grid reads as "what KIND of thing do we know about this"
@@ -1336,7 +1532,7 @@ async function inspectNode(n){
   const srcAll=new Set(); f.forEach(r=>(r.anchors||[]).forEach(a=>srcAll.add(a)));
   const best=f.length?Math.max(...f.map(r=>r.k)):0;
   box.innerHTML=
-    '<div class="livebar"><span>NODE — <b>'+esc(n.label)+'</b></span>'+
+    '<div class="livebar"><span>NODE - <b>'+esc(n.label)+'</b></span>'+
     '<span>'+f.length+' facts · '+groups.length+' relations</span></div>'+
     '<div class="ndstats">'+
       '<div><b>'+ROLE[roleOf(n)].name+'</b><span>role in this search</span></div>'+
@@ -1353,7 +1549,7 @@ async function inspectNode(n){
         return '<div class="ndrow '+(r.k>=2?"k2":(r.k===1?"k1":"k0"))+'">'+
           '<span class="ndp">'+(q.p*100).toFixed(1)+'%</span>'+
           '<span class="ndo">'+esc(r.obj)+'</span>'+
-          '<span class="ndsrc">'+(r.anchors&&r.anchors.length?esc(r.anchors.join(", ")):"—")+
+          '<span class="ndsrc">'+(r.anchors&&r.anchors.length?esc(r.anchors.join(", ")):" - ")+
           '</span></div>';}).join("")+'</div>').join("")
       :'<div class="small">no facts recorded for this subject</div>');
   box.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -1373,7 +1569,7 @@ function loop(){
       if(cv&&cv.parentNode)cv.parentNode.insertAdjacentHTML("beforeend",
         '<div style="position:absolute;inset:0;display:flex;align-items:center;'+
         'justify-content:center;text-align:center;padding:24px;color:#9fb4d0;font-size:13px">'+
-        '3D view unavailable — three.min.js did not load. Questions, counting and the step '+
+        '3D view unavailable - three.min.js did not load. Questions, counting and the step '+
         'debugger below are unaffected.</div>');
       if(typeof trace==="function")
         trace("dead","3D STAGE DISABLED: three.min.js did not load. Every other lane of the "+
@@ -1905,7 +2101,7 @@ function hopHTML(i,from,rel,to,k,running){
   const q=pFor(k);
   return '<div class="hop live"><div class="lead">'+
     '<span style="color:var(--muted)">'+(i+1)+'.</span> '+esc(from)+
-    ' <span style="color:var(--hi)">—'+esc(relLabel(rel))+'→</span> <b>'+esc(to)+'</b></div>'+
+    ' <span style="color:var(--hi)"> - '+esc(relLabel(rel))+'→</span> <b>'+esc(to)+'</b></div>'+
     '<div class="meta">'+k+' independent source'+(k===1?"":"s")+
     (k?' ('+esc(pFor(k).measured?"measured":"base rate")+') · this hop '+(q.p*100).toFixed(1)+'%'
       :' · base rate '+(q.p*100).toFixed(1)+'%')+
@@ -1968,7 +2164,7 @@ function liveAdd(path,p){
   row.dataset.p=p;
   row.innerHTML='<span class="lp">'+(p*100).toFixed(1)+'%</span>'+
     '<span class="lc">'+esc(path[0].from)+path.map(h=>
-      ' <span style="color:var(--muted)">—'+esc(relLabel(h.rel))+'→</span> '+esc(h.to)).join("")+
+      ' <span style="color:var(--muted)"> - '+esc(relLabel(h.rel))+'→</span> '+esc(h.to)).join("")+
     '</span><span class="lh">'+path.length+' hop'+(path.length===1?"":"s")+
     ' · min '+minK+' src</span>';
   // insert in rank order so the best answer is always the top line, even mid-search
@@ -2081,15 +2277,15 @@ async function countAnswer(q,cq,my){
       ?'of the <b>'+LIM+'</b> recorded '+esc(cls)+' types I read carry a fact attesting <b>'+
         esc(cq.prop)+'</b>'+
         (all.length!==hits.length&&cq.words.length>1
-          ?' — <b>'+all.length+'</b> attest every word of it':'')+
+          ?' - <b>'+all.length+'</b> attest every word of it':'')+
         (named.length?'. A further <b>'+named.length+'</b> are NAMED for it without recording '+
-          'a fact that attests it — named is not attested, so they are not in the count.':'')
+          'a fact that attests it - named is not attested, so they are not in the count.':'')
       :'recorded types of <b>'+esc(cls)+'</b> in this graph'+
         (LIM<members.length?' (I listed the '+LIM+' best-attested)':''))+
     '</div></div>');
   if(named.length){
     out.insertAdjacentHTML("beforeend",'<div class="field-lbl">named for it, but not '+
-      'attested — the name says so, no fact does</div>');
+      'attested - the name says so, no fact does</div>');
     out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="row">'+
       '<span class="lbl">'+named.length+'</span><span>'+
       named.map(n=>esc(n.mem.name)).join(", ")+'</span></div></div>');
@@ -2115,13 +2311,13 @@ async function countAnswer(q,cq,my){
     '<b>What this number is.</b></div><div class="row"><span class="lbl">counted</span><span>'+
     'members of <b>'+esc(cls)+'</b> recorded in this graph'+
     (left>0?', of which I read the <b>'+LIM+'</b> best-attested and left <b>'+left+
-      '</b> unread — a bound, not an absence':'')+'.</span></div>'+
+      '</b> unread - a bound, not an absence':'')+'.</span></div>'+
     (cq.words.length?'<div class="row"><span class="lbl">tested</span><span>a member qualifies '+
       'if it carries a fact whose relation or object attests '+
       cq.words.map(w=>'<code>'+esc(w)+'</code>').join(" or ")+
       (full.length<cq.words.length?'. The graph attests '+
         (full.length?full.map(w=>'<code>'+esc(w)+'</code>').join(", "):'none')+
-        ' of those words for these members — a partial match, reported as partial':'')+
+        ' of those words for these members - a partial match, reported as partial':'')+
       '.</span></div>':"")+
     '<div class="row"><span class="lbl">not</span><span>This is a count of what the graph '+
     'RECORDS, not a count of what exists.</span></div></div>');
@@ -2198,7 +2394,7 @@ async function pronounBlock(q,pb,my){
   // B38: this lane never touched the debugger, leaving it stuck on the "Searching..." spinner
   // reason() paints at the top of every call, and DBG silently holding whatever chain the
   // PREVIOUS question left there - live-reported, reproduced. See dbgLoadNote's own comment.
-  dbgLoadNote(q,"NOTE",'no search ran — question is about '+pb.who,
+  dbgLoadNote(q,"NOTE",'no search ran - question is about '+pb.who,
     'this graph has no representation of conversation participants, under any reading'+
     (alt?'; the literal words also happen to name a real, different entity ("'+alt.name+
       '"), offered above as one click':
@@ -2338,7 +2534,7 @@ function dbgRenderCount(){
       "</span></div>").join("")+"</div>"+
     '<table class="dbg-vars">'+vars.map(v=>"<tr><td>"+esc(String(v[0]))+"</td><td>"+
       esc(String(v[1]))+"</td></tr>").join("")+"</table>"+
-    '<div class="field-lbl" style="margin-top:8px">jump to a member — click any row above, or '+
+    '<div class="field-lbl" style="margin-top:8px">jump to a member - click any row above, or '+
     "here</div><div>"+
     cd.hits.map((h,i)=>'<div class="dbg-alt'+(cur.mem===h.mem?" on":"")+
       '" data-act="cjump" data-i="'+(1+i)+'">✓ '+esc(h.mem.name)+"</div>").join("")+"</div>";
@@ -2405,7 +2601,7 @@ function dbgRenderNote(){
   const b=$("dbgbox"); if(!b||!DBG||DBG.mode!=="note")return;
   const n=DBG.note;
   b.innerHTML=
-    '<p class="small">No program for this question — nothing was searched, so there is nothing '+
+    '<p class="small">No program for this question - nothing was searched, so there is nothing '+
     'to step through. This is not a stall: the reason is stated below, built from the same '+
     'values the answer above was built from.</p>'+
     '<div class="dbg-code"><div class="dbg-ln pc"><span class="dbg-n">00</span>'+
@@ -2467,7 +2663,7 @@ function dbgRender(){
       "</span></div>").join("")+"</div>"+
     '<table class="dbg-vars">'+vars.map(v=>"<tr><td>"+esc(String(v[0]))+"</td><td>"+
       esc(String(v[1]))+"</td></tr>").join("")+"</table>"+
-    '<div class="field-lbl" style="margin-top:8px">divergence points — chains this search '+
+    '<div class="field-lbl" style="margin-top:8px">divergence points - chains this search '+
     "really completed</div>"+
     DBG.chains.map((c,i)=>'<div class="dbg-alt'+(i===DBG.sel?" on":"")+
       '" data-act="sel" data-i="'+i+'">'+(c.p*100).toFixed(1)+"% · "+esc(c.path[0].from)+
@@ -2613,10 +2809,10 @@ async function reason(q,opts){
   nowSet("reading the question…",null,true);
   {const db=$("dbgbox"); if(db)db.innerHTML='<p class="small"><span class="spin"></span>'+
     'Searching. The moment the first chain completes, its program appears here and its ruler '+
-    'appears in the 3D view above — both keep updating while the search runs. Please wait; the '+
+    'appears in the 3D view above - both keep updating while the search runs. Please wait; the '+
     'bar at the bottom of the page narrates every step meanwhile.</p>';}
   {const wb=$("whatbox"); if(wb)wb.innerHTML='<p class="small">Working on <b>'+esc(q)+
-    '</b> — the bar at the very bottom of the page narrates each step as it happens; the full '+
+    '</b> - the bar at the very bottom of the page narrates each step as it happens; the full '+
     'plain-English explanation of what was done lands here when the search ends.</p>';}
   // Deliberately NOT disabled. A disabled button fires no click event at all, so the whole
   // preempt path was unreachable and the visitor's question vanished in silence. The label
@@ -2714,10 +2910,10 @@ async function reason(q,opts){
         out.insertAdjacentHTML("beforeend",
           '<div class="card '+(matched?"k2":"k0")+'"><div class="claim"><b>What I understood.</b>'+
           '</div><div class="row"><span class="lbl">subject</span><span><b>'+esc(start.name)+
-          '</b> — '+rows.length.toLocaleString()+' recorded facts'+
+          '</b> - '+rows.length.toLocaleString()+' recorded facts'+
           (target?', and a second entity <b>'+esc(target.name)+'</b> to reach':'')+
           '</span></div><div class="row"><span class="lbl">asked for</span><span>'+
-          (matched?'the relation <code>'+esc(goal)+'</code>, and it is recorded — the matching '+
+          (matched?'the relation <code>'+esc(goal)+'</code>, and it is recorded - the matching '+
                    'facts are first below'
            :goal?'the relation <code>'+esc(goal)+'</code>, which <b>'+esc(start.name)+
                  '</b> does not record. What follows is <b>what is on file, not an answer to '+
@@ -2727,7 +2923,7 @@ async function reason(q,opts){
           '</span></div>'+
           (unread.length?'<div class="row"><span class="lbl">could not place</span><span>'+
             unread.map(w=>'<code>'+esc(w)+'</code>').join(" ")+
-            ' — these words of your question matched no subject and no relation I hold'+
+            ' - these words of your question matched no subject and no relation I hold'+
             '</span></div>':"")+'</div>');
         trace(matched?"hit":"miss","READ-BACK: subject=\""+start.name+"\" goal="+
           (goal?"`"+goal+"`"+(show.length?" (recorded)":" (NOT recorded by this subject)")
@@ -2737,16 +2933,16 @@ async function reason(q,opts){
       out.insertAdjacentHTML("beforeend",
         '<div class="livebar" style="margin-top:10px"><span>'+
         (goal&&show.length?'DIRECTLY RECORDED about ':'ON FILE about ')+
-        esc(start.name)+' — one hop, no search</span><span>'+rows.length+' facts</span></div>'+
+        esc(start.name)+' - one hop, no search</span><span>'+rows.length+' facts</span></div>'+
         use.map(r=>{const q=pFor(r.k);
           return '<div class="lrow '+(r.k>=2?"k2":(r.k===1?"k1":"k0"))+'">'+
             '<span class="lp">'+(q.p*100).toFixed(1)+'%</span>'+
-            '<span class="lc">'+esc(start.name)+' <span style="color:var(--muted)">—'+
+            '<span class="lc">'+esc(start.name)+' <span style="color:var(--muted)"> - '+
             esc(relLabel(r.rel))+'→</span> <b>'+esc(r.obj)+'</b></span>'+
             '<span class="lh">'+r.k+' src'+(r.anchors&&r.anchors.length?' · '+
             esc(r.anchors.join(", ")):'')+'</span></div>';}).join("")+
         (rows.length>use.length?'<div class="small" style="margin:2px 0 0">showing '+use.length+
-          ' of '+rows.length+' — the rest are in the graph above, click any node</div>':''));
+          ' of '+rows.length+' - the rest are in the graph above, click any node</div>':''));
     }
     if(!start){
       // The coverage check lived only on the facts tab, so this lane used to give up with no idea
@@ -2770,9 +2966,9 @@ async function reason(q,opts){
       out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim"><b>No answer.'+
         '</b></div><div class="row"><span class="lbl">why</span><span>'+
         (absent===true?"nothing in that question is one of the graph's 12.2 million subjects "+
-          "(checked against a Bloom filter with zero false negatives) — a real coverage gap":
+          "(checked against a Bloom filter with zero false negatives) - a real coverage gap":
          absent===false?"those words ARE in the graph, but no span of the question resolved to a "+
-          "subject — a parsing miss on our side, not a gap in the data":
+          "subject - a parsing miss on our side, not a gap in the data":
          "nothing resolved, and the coverage index could not be loaded to say why")+
         '</span></div></div>');
       // B38: same eternal-spinner gap as the pronoun lane - see dbgLoadNote's own comment.
@@ -2786,8 +2982,8 @@ async function reason(q,opts){
     // PREPEND, do not assign: `innerHTML=` here silently wiped the instant one-hop answer that
     // had just been written above it, so the merged fast lane rendered and vanished in one frame.
     out.insertAdjacentHTML("afterbegin",'<div class="row"><span class="lbl">reading as</span><span>'+
-      esc(start.name)+(target?' <span style="color:var(--muted)">— find a route to —</span> '+
-      esc(target.name) : (goal?' <span style="color:var(--muted)">—'+esc(goal)+'→</span> ?'
+      esc(start.name)+(target?' <span style="color:var(--muted)"> - find a route to - </span> '+
+      esc(target.name) : (goal?' <span style="color:var(--muted)"> - '+esc(goal)+'→</span> ?'
                               :' <span class="chip">no relation named; showing its neighbourhood</span>'))+
       '</span></div>');
     if(!goal&&!target){
@@ -2800,7 +2996,7 @@ async function reason(q,opts){
         'no word in that question names a relation this graph records, and only one entity was '+
         'named, so there is no target. <b>'+esc(start.name)+'</b> has '+start.facts.length+
         ' recorded facts; its best-anchored '+Math.min(R.DRAW_PER_NODE,start.facts.length)+
-        ' are drawn — click any node to walk it by hand.</span></div></div>');
+        ' are drawn - click any node to walk it by hand.</span></div></div>');
       // B38: same eternal-spinner gap as the pronoun lane - see dbgLoadNote's own comment.
       dbgLoadNote(q,"NOTE",'no relation or second entity named in this question',
         '"'+start.name+'" resolved with '+start.facts.length+
@@ -2831,7 +3027,7 @@ async function reason(q,opts){
     for(let pass=1; pass<=2; pass++){
     trace("fetch","shard "+String(shardOf(start.name)).padStart(3,"0")+" <- \""+start.name+
       "\"  ("+start.facts.length+" facts)  [resolved subject]");
-    nowSet("resolved the subject \""+start.name+"\" — "+start.facts.length+
+    nowSet("resolved the subject \""+start.name+"\" - "+start.facts.length+
       " facts loaded; scanning them for the goal",null,true);
     // Search to the BUDGET, not to the first completion. Stopping at the first depth that
     // completed was hidden by the old 80-fact cap and surfaced the moment it was removed:
@@ -2857,8 +3053,8 @@ async function reason(q,opts){
           cur.facts=cur.facts.filter(f=>!(f.rel===opts.exclude.rel&&f.obj===opts.exclude.to));
         fi++;
         badge("depth "+depth+" · reading "+cur.node.id);
-        nowSet("hop "+depth+" — examining lead "+fi+" of "+frontier.length+": \""+cur.node.id+
-          "\" ("+cur.facts.length+" facts to read)"+(done.length?" — best chain so far "+
+        nowSet("hop "+depth+" - examining lead "+fi+" of "+frontier.length+": \""+cur.node.id+
+          "\" ("+cur.facts.length+" facts to read)"+(done.length?" - best chain so far "+
           (Math.max(...done.map(d=>d.p))*100).toFixed(1)+"%":""),fi/frontier.length,false);
         trace("goal","HYPOTHESIS: "+(cur.path.length?cur.path.map(h=>h.to).join(" -> ")+" -> ?"
           :"start from \""+cur.node.id+"\"")+"   (opening "+cur.node.id+", "+cur.facts.length+" facts)");
@@ -3019,7 +3215,7 @@ async function reason(q,opts){
         }
         badge("depth "+depth+" · fetching shard "+
               String(shardOf(nx._pending)).padStart(3,"0")+" · "+nx._pending);
-        nowSet("hop "+(depth+1)+" — downloading facts for \""+nx._pending+"\" (lead "+
+        nowSet("hop "+(depth+1)+" - downloading facts for \""+nx._pending+"\" (lead "+
           (next.indexOf(nx)+1)+" of "+next.length+" queued; "+fetches+
           " shards fetched so far)",(next.indexOf(nx)+1)/next.length,true);
         nx.facts=await factsOf(nx._pending);
@@ -3043,7 +3239,7 @@ async function reason(q,opts){
     // walk the SAME graph again with the wider vocabulary. Nothing about the graph changed -
     // only the engine's idea of what it is looking for.
     badge("abstained - going to learn");
-    nowSet("no chain reached the target — looking up other names for \""+target.name+
+    nowSet("no chain reached the target - looking up other names for \""+target.name+
       "\" before retrying",null,true);
     learned=await learnAliases(target.name);
     // O-crash follow-on: learnAliases() is a real network await, and nothing here re-checked
@@ -3168,7 +3364,7 @@ async function reason(q,opts){
         '. The furthest node it could not get out of was <b>'+esc(dead)+'</b>.</span></div>'+
         '<div class="row"><span class="lbl">bound</span><span>This was a <b>bounded</b> search, '+
         'not an exhaustive one: at most '+R.BEAM+' branches per hop, '+R.MAX_DEPTH+' hops deep, '+
-        R.MAX_FETCH+' shard fetches. <b>Absence of a chain here is not proof there is none</b> — '+
+        R.MAX_FETCH+' shard fetches. <b>Absence of a chain here is not proof there is none</b> - '+
         'the full trace above shows exactly what was and was not opened.</span></div>'+
         '<div class="row"><span class="lbl">note</span><span>Naming the hop that broke is the '+
         'result. Inventing the rest would not be.</span></div></div>');
@@ -3216,7 +3412,7 @@ async function reason(q,opts){
     // page's existing ask-back visual language rather than inventing a second, static fallback.
     if(isDoesCardinality(q)){
       const chainRow=d=>'<span class="row"><span class="lbl">'+(d.p*100).toFixed(1)+'%</span><span>'+
-        esc(start.name)+d.path.map(h=>' <span style="color:var(--muted)">—'+esc(relLabel(h.rel))+
+        esc(start.name)+d.path.map(h=>' <span style="color:var(--muted)"> - '+esc(relLabel(h.rel))+
         '→</span> '+esc(h.to)).join("")+'</span></span>';
       out.insertAdjacentHTML("beforeend",'<div class="card k1"><div class="claim">'+
         '<b>A count, not a claim.</b></div><div class="row"><span class="lbl">why</span><span>'+
@@ -3240,11 +3436,11 @@ async function reason(q,opts){
     out.insertAdjacentHTML("beforeend",
       '<div class="verdict"><div class="big">'+(running*100).toFixed(1)+'%</div>'+
       '<div style="margin-top:4px"><b>'+esc(start.name)+'</b>'+
-      found.path.map(h=>' <span style="color:var(--muted)">—'+esc(relLabel(h.rel))+'→</span> '+
+      found.path.map(h=>' <span style="color:var(--muted)"> - '+esc(relLabel(h.rel))+'→</span> '+
         (h===last?'<b>'+esc(h.to)+'</b>':esc(h.to))).join("")+'</div>'+
       (target?'<div class="warn" style="margin:8px 0 0;font-size:.85rem">'+
         '<b>This is a connection, not a claim.</b> A path from <b>'+esc(start.name)+'</b> to <b>'+
-        esc(target.name)+'</b> shows they are RELATED through the relations shown — it does not '+
+        esc(target.name)+'</b> shows they are RELATED through the relations shown - it does not '+
         'assert that any particular relation holds between them. In a graph this dense most pairs '+
         'connect within a few hops, so treat the route as evidence of association, and read the '+
         'individual relations above for what was actually recorded.</div>':'')+
@@ -3257,7 +3453,7 @@ async function reason(q,opts){
         '<b>This chain only completed after the engine learned a word.</b> It abstained, looked '+
         '“'+esc(target?target.name:"")+'” up externally, and accepted '+learned.length+
         ' related term'+(learned.length===1?'':'s')+
-        (learned.length>4?' (showing the top 4 of '+learned.length+' — count disclosed, list not '+
+        (learned.length>4?' (showing the top 4 of '+learned.length+' - count disclosed, list not '+
          'silently trimmed): ':': ')+
         learned.slice(0,4).map(l=>esc(l.name)).join(", ")+'. Those terms have NOT been through '+
         'the anchor measurement, so treat the number above as the confidence of the GRAPH hops '+
@@ -3267,9 +3463,9 @@ async function reason(q,opts){
     // edge). Showing the rivals, ranked, is the honest reading of the evidence.
     if(done.length>1){
       out.insertAdjacentHTML("beforeend",'<div class="field-lbl">other chains that also '+
-        'completed</div><div class="small">More than one route satisfied the question — either a '+
+        'completed</div><div class="small">More than one route satisfied the question - either a '+
         'name shared by several real things, or several recorded edges of the same relation. '+
-        'Ranked by the same composed confidence — <b>'+(done.length-1)+'</b> rival'+
+        'Ranked by the same composed confidence - <b>'+(done.length-1)+'</b> rival'+
         (done.length===2?'':'s')+' found'+
         (done.length>4?', showing the top 3 (count is disclosed, not the list truncated silently)':'')+
         ':<ul style="margin:7px 0 0;padding-left:20px">'+
@@ -3290,7 +3486,7 @@ async function reason(q,opts){
     if(my===gen){ traceFlush(); thinking=false; $("tgo").textContent="Ask";
       // blockedNow: an early-exit lane (pronounBlock) already left a more specific, correct
       // account of what happened than the generic message below would give - don't stomp it.
-      nowSet(blockedNow||((stopped?"stopped by you":"search ended")+" — "+liveN+
+      nowSet(blockedNow||((stopped?"stopped by you":"search ended")+" - "+liveN+
         (liveN===1?" chain":" chains")+" completed; the plain-English account is in \"What "+
         "just happened\" below"),1,false);
       blockedNow=null; }
@@ -3707,7 +3903,7 @@ document.querySelectorAll("#p-code .hint code").forEach(c=>c.addEventListener("c
 renderCode();
 </script>
 <div id="nowbar"><div id="nowtrack"><div id="nowfill"></div></div>
-<div id="nowrow"><span id="nowtext"><span class="spin" id="nowspin" style="display:none"></span>idle — ask a question above and every step will be narrated here, live</span><span id="nowstats"></span></div></div>
+<div id="nowrow"><span id="nowtext"><span class="spin" id="nowspin" style="display:none"></span>idle - ask a question above and every step will be narrated here, live</span><span id="nowstats"></span></div></div>
 
 <script>
 /* ===== rj-extra-tabs: lazy game loader + whitepaper reader =====
@@ -3771,6 +3967,187 @@ renderCode();
     t.addEventListener("click", function(){ setTimeout(hydrate, 0); });
   });
   hydrate();
+})();
+</script>
+
+<script>
+/* rj-inventions: sub-tab switching inside the Inventions panel */
+(function(){
+  var wrap=document.getElementById("invTabs"); if(!wrap) return;
+  wrap.addEventListener("click", function(e){
+    var b=e.target.closest(".subtab"); if(!b) return;
+    wrap.querySelectorAll(".subtab").forEach(function(x){ x.classList.toggle("on", x===b); });
+    document.querySelectorAll("#p-inv .sub").forEach(function(s){
+      s.classList.toggle("on", s.id===b.dataset.s);
+    });
+  });
+})();
+</script>
+
+<script>
+/* rj-views: three honest re-renderings of the last search, read off the live graph model G. */
+(function(){
+  var NS="http://www.w3.org/2000/svg";
+  function el(n,a){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); return e; }
+  function clear(s){ while(s.firstChild) s.removeChild(s.firstChild); }
+  function has(){ return typeof G!=="undefined" && G && G.nodes && G.nodes.length>0; }
+  function txt(s,x,y,t,cls,anchor){
+    var e=el("text",{x:x,y:y,fill:cls||"#c2d3e2","font-size":11,
+      "font-family":"ui-monospace,Menlo,Consolas,monospace"});
+    if(anchor) e.setAttribute("text-anchor",anchor);
+    e.textContent=t; s.appendChild(e); return e;
+  }
+  function short(t,n){ t=String(t==null?"":t); return t.length>n? t.slice(0,n-1)+"\u2026" : t; }
+
+  /* ---- 1. answer chain: the committed path, left to right ---- */
+  function drawChain(){
+    var s=document.getElementById("svgChain"); clear(s);
+    if(!has()){ return; }
+    var path=G.nodes.filter(function(n){return n.on;}).sort(function(a,b){return a.hop-b.hop;});
+    if(!path.length){
+      s.setAttribute("viewBox","0 0 640 60");
+      txt(s,12,34,"No chain completed - the engine abstained on this one.","#ffcda6");
+      return;
+    }
+    var BW=150, GAP=46, H=120, W=path.length*BW+(path.length-1)*GAP+24;
+    s.setAttribute("viewBox","0 0 "+W+" "+H);
+    path.forEach(function(n,i){
+      var x=12+i*(BW+GAP), y=34;
+      var fill = i===0? "#14304a" : (i===path.length-1? "#153a2a" : "#101a24");
+      var stroke = i===0? "#2f6d99" : (i===path.length-1? "#3a8f5f" : "#24384a");
+      s.appendChild(el("rect",{x:x,y:y,width:BW,height:44,rx:7,fill:fill,stroke:stroke}));
+      txt(s,x+BW/2,y+20,short(n.label,20),"#eaf3fb","middle");
+      txt(s,x+BW/2,y+35,"hop "+n.hop,"#7d8fa1","middle");
+      if(i===0) txt(s,x+BW/2,y-8,"START","#7fd4ff","middle");
+      if(i===path.length-1 && i>0) txt(s,x+BW/2,y-8,"ANSWER","#6fe0a0","middle");
+      if(i<path.length-1){
+        var ex=x+BW, ex2=x+BW+GAP;
+        s.appendChild(el("line",{x1:ex,y1:y+22,x2:ex2,y2:y+22,stroke:"#3a5f7d","stroke-width":2}));
+        s.appendChild(el("polygon",{points:(ex2)+","+(y+22)+" "+(ex2-7)+","+(y+18)+" "+(ex2-7)+","+(y+26),fill:"#3a5f7d"}));
+        var e=G.edges.filter(function(g){return g.a===path[i]&&g.b===path[i+1];})[0];
+        if(e){
+          txt(s,(ex+ex2)/2,y+14,short(e.rel,14),"#9fb6c9","middle");
+          txt(s,(ex+ex2)/2,y+38,(e.k||1)+" src","#6fe0a0","middle");
+        }
+      }
+    });
+  }
+
+  /* ---- 2. hop layers: one column per depth, so branching is visible ---- */
+  function drawLayers(){
+    var s=document.getElementById("svgLayers"); clear(s);
+    if(!has()) return;
+    var byHop={}, maxH=0;
+    G.nodes.forEach(function(n){ (byHop[n.hop]=byHop[n.hop]||[]).push(n); if(n.hop>maxH)maxH=n.hop; });
+    var COLW=132, ROWH=26, PADT=30;
+    var tallest=0; for(var h=0;h<=maxH;h++) tallest=Math.max(tallest,(byHop[h]||[]).length);
+    var W=(maxH+1)*COLW+20, H=PADT+tallest*ROWH+20;
+    s.setAttribute("viewBox","0 0 "+W+" "+H);
+    for(var h=0;h<=maxH;h++){
+      var col=byHop[h]||[], x=12+h*COLW;
+      txt(s,x+COLW/2-10,18,"hop "+h+"  ("+col.length+")","#7d8fa1","middle");
+      col.sort(function(a,b){ return (b.on?1:0)-(a.on?1:0); });
+      col.forEach(function(n,i){
+        var y=PADT+i*ROWH;
+        var onChain=n.on, opened=n.facts!=null;
+        var fill = onChain? "#153a2a" : (opened? "#101a24" : "#0d141c");
+        var stroke= onChain? "#3a8f5f" : (opened? "#24384a" : "#18232e");
+        var col2 = onChain? "#c9f0da" : (opened? "#b3c6d6" : "#5d6f80");
+        s.appendChild(el("rect",{x:x,y:y,width:COLW-16,height:20,rx:4,fill:fill,stroke:stroke}));
+        txt(s,x+6,y+14,short(n.label,15),col2);
+      });
+    }
+  }
+
+  /* ---- 3. evidence: edges bucketed by independent-source count ---- */
+  function drawSrc(){
+    var s=document.getElementById("svgSrc"); clear(s);
+    var note=document.getElementById("srcNote"); note.textContent="";
+    if(!has()) return;
+    var b={}, tot=0;
+    G.edges.forEach(function(e){ var k=Math.max(1,Math.min(4,e.k||1)); b[k]=(b[k]||0)+1; tot++; });
+    if(!tot){ s.setAttribute("viewBox","0 0 640 50"); txt(s,12,30,"No edges in this run.","#9fb6c9"); return; }
+    var keys=[1,2,3,4], BARH=30, W=640, H=keys.length*(BARH+14)+34;
+    s.setAttribute("viewBox","0 0 "+W+" "+H);
+    var max=Math.max.apply(null,keys.map(function(k){return b[k]||0;}));
+    keys.forEach(function(k,i){
+      var v=b[k]||0, y=14+i*(BARH+14);
+      var w=max? Math.round((v/max)*(W-190)) : 0;
+      txt(s,12,y+20,(k===4?"4+":k)+" source"+(k===1?"":"s"),"#a9c6dc");
+      s.appendChild(el("rect",{x:104,y:y,width:Math.max(w,2),height:BARH,rx:4,
+        fill:k===1?"#3a4a5a":(k===2?"#2f6d99":"#3a8f5f")}));
+      txt(s,110+Math.max(w,2),y+20,v+"  ("+Math.round(v/tot*100)+"%)","#c2d3e2");
+    });
+    note.textContent="Across the whole 66.4M-fact graph, a fact with one source agrees with held-out "
+      + "truth 44.9% of the time; two sources 87.3%; three 94.7%. That is why the engine weights "
+      + "multi-source steps more heavily than single-source ones.";
+  }
+
+  function redraw(){
+    var empty=document.getElementById("vEmpty");
+    empty.style.display = has()? "none" : "block";
+    drawChain(); drawLayers(); drawSrc();
+  }
+
+  var wrap=document.getElementById("viewTabs");
+  wrap.addEventListener("click", function(e){
+    var b=e.target.closest(".subtab"); if(!b) return;
+    wrap.querySelectorAll(".subtab").forEach(function(x){ x.classList.toggle("on", x===b); });
+    document.querySelectorAll("#p-views .sub").forEach(function(v){
+      v.classList.toggle("on", v.id===b.dataset.s);
+    });
+    redraw();
+  });
+  document.getElementById("vRedraw").addEventListener("click", redraw);
+  document.getElementById("vDemo").addEventListener("click", function(){
+    var q="capital of the country Melbourne is in";
+    var box=document.getElementById("q"); if(box) box.value=q;
+    if(typeof askNow==="function") askNow(q);
+    setTimeout(redraw, 2600);
+  });
+  document.querySelectorAll(".tab").forEach(function(t){
+    t.addEventListener("click", function(){
+      if(t.dataset.p==="views") setTimeout(redraw,60);
+    });
+  });
+})();
+
+/* rj-chat: a running transcript on the Ask tab. Reuses askNow() - same engine, same trace. */
+(function(){
+  var host=document.getElementById("p-think"); if(!host||document.getElementById("chatWrap")) return;
+  var box=document.createElement("div");
+  box.id="chatWrap";
+  box.innerHTML='<div id="chatLog"></div>'
+    + '<div id="chatRow"><input id="chatIn" placeholder="Ask another - this keeps the thread"'
+    + ' autocomplete="off"><button class="lnk" id="chatGo">Send</button></div>';
+  host.appendChild(box);
+  var log=document.getElementById("chatLog");
+
+  function add(who,text,cls){
+    var d=document.createElement("div"); d.className="cmsg "+cls;
+    var w=document.createElement("div"); w.className="who"; w.textContent=who;
+    var b=document.createElement("div"); b.className="bub"; b.textContent=text;
+    d.appendChild(w); d.appendChild(b); log.appendChild(d); log.scrollTop=log.scrollHeight;
+    return b;
+  }
+  function answerText(){
+    var a=document.querySelector("#p-think .answer, #ans, #answer");
+    var t=a? a.innerText.trim() : "";
+    return t || "(see the trace above - the engine abstained or is still working)";
+  }
+  function send(){
+    var i=document.getElementById("chatIn"), q=i.value.trim(); if(!q) return;
+    i.value="";
+    add("you",q,"q");
+    var slot=add("anchor","thinking\u2026","a");
+    var qb=document.getElementById("q"); if(qb) qb.value=q;
+    if(typeof askNow==="function") askNow(q);
+    setTimeout(function(){ slot.textContent=answerText(); log.scrollTop=log.scrollHeight; }, 2800);
+  }
+  document.getElementById("chatGo").addEventListener("click", send);
+  document.getElementById("chatIn").addEventListener("keydown", function(e){
+    if(e.key==="Enter") send();
+  });
 })();
 </script>
 </body></html>

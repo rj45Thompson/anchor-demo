@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>Résumé Breakout — R.J. Thompson</title>
+<title>Résumé Breakout - R.J. Thompson</title>
 <style>
   :root{
     --ink:#e8eef4; --bg:#070b10; --accent:#4fc3f7; --accent2:#7c4dff;
@@ -49,6 +49,7 @@
   .btn:hover{filter:brightness(1.12)}
   .muted{font-size:11px;color:#6d8093;margin-top:14px}
   a{color:var(--accent)}
+  .card .lead{font-size:16px;color:#eaf3fb;font-weight:600;margin:0 0 8px;line-height:1.45}
 </style>
 
 <div id="wrap">
@@ -56,7 +57,7 @@
 
   <div class="hud" id="top">
     <div id="title">RÉSUMÉ BREAKOUT
-      <small>R.J. Thompson · 30 years of shipped software, descending</small></div>
+      <small>R.J. Thompson &nbsp;·&nbsp; senior C++ / C# engineer &nbsp;·&nbsp; open to work</small></div>
     <div id="stats">CLEARED <b id="score">0</b>/<span id="total">0</span><br><span id="lives">♦♦♦</span></div>
   </div>
 
@@ -69,10 +70,13 @@
   <div class="screen" id="start">
     <div class="card">
       <h1>RÉSUMÉ <span>BREAKOUT</span></h1>
-      <p>Thirty years of shipped software is coming down at you — fifteen roles,
-         real dates, real credits. Shoot a block to read it. Clear the board to read the whole CV.</p>
+      <p class="lead">My CV is falling toward you. Shoot a block to read that job.</p>
+      <p>I am R.J. Thompson, a senior C++/C# engineer, and I am looking for my next role.
+         Every block below is one real position with its real dates. Clear all sixteen and
+         you have read the whole résumé.</p>
       <button class="btn" id="go">START</button>
-      <div class="muted">Every block is a real line from the résumé. Nothing here is filler.</div>
+      <div class="muted">Would rather just read it? The PDF is one click away when the round ends,
+         or any time from the résumé tab.</div>
     </div>
   </div>
 
@@ -92,27 +96,27 @@
 // Every entry is a real line from the actual CV.
 const ROWS = [
   { tone:0, items:[
-    ["Utherverse","2024–25","Asst. to Director of Development — live virtual-world platform ops"],
-    ["BioWare","2023–24","Shipped the dialog & narrative system for Dragon Age 4 (Frostbite)"],
-    ["Activision","2022–23","CoD live-ops; ported netcode + real-time voice to Switch"],
-    ["Sega / Relic","2021–22","Company of Heroes 3 — measured 7% performance gain"],
+    ["Utherverse","2024-25","Asst. to Director of Development - live virtual-world platform ops"],
+    ["BioWare","2023-24","Shipped the dialog & narrative system for Dragon Age 4 (Frostbite)"],
+    ["Activision","2022-23","CoD live-ops; ported netcode + real-time voice to Switch"],
+    ["Sega / Relic","2021-22","Company of Heroes 3 - measured 7% performance gain"],
   ]},
   { tone:1, items:[
-    ["Electronic Arts","2016–21","Five years on FrostEd: editor frameworks, cinematics, lighting"],
-    ["Finger Food","2014–16","Dev Team Lead — Skylanders, Star Wars BB-8, Call of Duty"],
-    ["Industrial Alliance","2013–14","Architected Unification in .NET — WPF, WCF, MVVM"],
-    ["Microsoft BigPark","2012–13","Real-time Lua UI for NFL, ESPN, UFC on Xbox"],
+    ["Electronic Arts","2016-21","Five years on FrostEd: editor frameworks, cinematics, lighting"],
+    ["Finger Food","2014-16","Dev Team Lead - Skylanders, Star Wars BB-8, Call of Duty"],
+    ["Industrial Alliance","2013-14","Architected Unification in .NET - WPF, WCF, MVVM"],
+    ["Microsoft BigPark","2012-13","Real-time Lua UI for NFL, ESPN, UFC on Xbox"],
   ]},
   { tone:2, items:[
-    ["Novadaq","2012–13","Lead architect, SPY ELITE — surgical fluorescence imaging"],
-    ["FinancialCAD","2010–12","Lead architect, Silverlight/XNA presentation layer"],
-    ["Neoteric","2004–10","Win32/C++ UI libraries; led a team of four"],
-    ["Max Integration","2004","Project lead — Look Out, Win32 CRM flagship"],
+    ["Novadaq","2012-13","Lead architect, SPY ELITE - surgical fluorescence imaging"],
+    ["FinancialCAD","2010-12","Lead architect, Silverlight/XNA presentation layer"],
+    ["Neoteric","2004-10","Win32/C++ UI libraries; led a team of four"],
+    ["Max Integration","2004","Project lead - Look Out, Win32 CRM flagship"],
   ]},
   { tone:3, items:[
-    ["RedHawk Gaming","2001–03","Gaming subsystems & low-level device drivers"],
-    ["Infowave","1997–01","QA Lead — managed a team of five, automated suites"],
-    ["Electronic Arts","1996–97","QA — NHL 98, Need for Speed, Warcraft II, PGA Tour"],
+    ["RedHawk Gaming","2001-03","Gaming subsystems & low-level device drivers"],
+    ["Infowave","1997-01","QA Lead - managed a team of five, automated suites"],
+    ["Electronic Arts","1996-97","QA - NHL 98, Need for Speed, Warcraft II, PGA Tour"],
     ["200% faster","Skylanders","Asset-bundle loading, and a Havok-compatible scaling system"],
   ]},
 ];
@@ -177,30 +181,84 @@ function buildBoard(){
   ROWS.forEach((row, r)=>{
     row.items.forEach(([co, date, detail], i)=>{
       const geo = new THREE.BoxGeometry(BW, BH, 1.1);
-      const mat = new THREE.MeshStandardMaterial({
+      // only the face pointing at the camera carries the text; the other five get plain
+      // tinted metal. mapping the label to all six made the top/bottom edges show a
+      // ghosted copy of the company name at this camera angle.
+      const tone = new THREE.Color(TONES[row.tone]);
+      const side = new THREE.MeshStandardMaterial({
+        color: tone.clone().multiplyScalar(.34),
+        emissive: tone.clone().multiplyScalar(.06),
+        roughness:.6, metalness:.35
+      });
+      const face = new THREE.MeshStandardMaterial({
         map: labelTexture(co, date, row.tone),
-        emissive: new THREE.Color(TONES[row.tone]).multiplyScalar(.13),
+        emissive: tone.clone().multiplyScalar(.13),
         roughness:.55, metalness:.25
       });
+      // BoxGeometry face order: +x, -x, +y, -y, +z(front), -z
+      const mat = [side, side, side, side, face, side];
       const m = new THREE.Mesh(geo, mat);
-      m.position.set(-totalW/2 + BW/2 + i*(BW+GAPX), 12.5 - r*(BH+GAPY), 0);
-      m.userData = {co, date, detail, tone:row.tone, alive:true, seed:Math.random()*6.28};
+      const homeX = -totalW/2 + BW/2 + i*(BW+GAPX);
+      m.position.set(homeX, 12.5 - r*(BH+GAPY), 0);
+      // each block sways on its own phase; neighbours are offset so a row ripples
+      // instead of sliding as one slab. amp is capped to just under half the gap
+      // so blocks never overlap their neighbour at full swing.
+      m.userData = {co, date, detail, tone:row.tone, alive:true,
+        seed: Math.random()*6.28,
+        homeX,
+        swayAmp: GAPX*0.42 + (r%2)*0.10,
+        swayFreq: 0.55 + ((i*7+r*3)%5)*0.06,
+        swayPhase: (i*0.7 + r*1.9)};
       scene.add(m); blocks.push(m);
     });
   });
   document.getElementById('total').textContent = blocks.length;
 }
 
+// ---- ported from starfighter.html so both games share one ship language ----
+const TAU = Math.PI*2;
+function glowTex(){ const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d');
+  const gr=g.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'rgba(255,255,255,1)');
+  gr.addColorStop(.22,'rgba(255,255,255,.85)'); gr.addColorStop(.55,'rgba(255,255,255,.25)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr; g.fillRect(0,0,64,64); const t=new THREE.Texture(c); t.needsUpdate=true; return t; }
+function hullTex(){ const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d');
+  g.fillStyle='#9aa2ad'; g.fillRect(0,0,128,128);
+  for(let i=0;i<12;i++){ const s=(i*53)%128, u=(i*61)%128; g.fillStyle=`rgba(${70+((i*37)%80)},${74+((i*23)%80)},${84+((i*41)%70)},0.16)`; g.fillRect(s,u,26+((i*17)%44),20+((i*13)%40)); }
+  g.strokeStyle='rgba(38,44,52,0.55)'; g.lineWidth=2;
+  for(let x=0;x<=128;x+=32){ g.beginPath(); g.moveTo(x,0); g.lineTo(x,128); g.stroke(); }
+  for(let y=0;y<=128;y+=26){ g.beginPath(); g.moveTo(0,y); g.lineTo(128,y); g.stroke(); }
+  g.fillStyle='rgba(28,32,38,0.6)'; for(let x=16;x<128;x+=32) for(let y=13;y<128;y+=26){ g.beginPath(); g.arc(x,y,1.5,0,TAU); g.fill(); }
+  g.strokeStyle='rgba(240,246,255,0.45)'; g.lineWidth=5; g.beginPath(); g.moveTo(0,44); g.lineTo(128,60); g.stroke();
+  const t=new THREE.Texture(c); t.needsUpdate=true; t.anisotropy=4; return t; }
+const GLOW = glowTex(), HULL = hullTex();
+
+// the exact dart hull from starfighter.html
+function fighterMesh(hue){
+  const S=1.55;
+  const v=[ 0,0,-2.6, 0,0.55,0, 0,-0.5,0.2, -2,0,1, 2,0,1, 0,0,1.5, 0,1.05,1.2 ].map(x=>x*S);
+  const f=[ 0,1,3, 0,4,1, 3,1,5, 5,1,4,  0,3,2, 0,2,4, 3,5,2, 2,5,4,  1,6,5 ];
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(v,3)); g.setIndex(f); g.computeVertexNormals();
+  const uv=[]; for(let k=0;k<v.length;k+=3){ uv.push(0.5+v[k]/(4*S*1.25), 0.5+v[k+2]/(4*S*1.25)); }
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv,2));
+  const col=new THREE.Color().setHSL(hue,0.75,0.56);
+  const body=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:col,map:HULL,emissive:col.clone().multiplyScalar(0.14),roughness:0.5,metalness:0.6,flatShading:true,side:THREE.DoubleSide}));
+  const grp=new THREE.Group(); grp.add(body);
+  const cock=new THREE.Mesh(new THREE.SphereGeometry(0.4,10,10),new THREE.MeshStandardMaterial({color:0xbfefff,emissive:0x66ccff,emissiveIntensity:0.8,roughness:0.2}));
+  cock.position.set(0,0.28,-0.9*S); grp.add(cock);
+  const eng=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:new THREE.Color().setHSL(hue,0.9,0.62),blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));
+  eng.scale.set(1.7,1.7,1); eng.position.set(0,0,2.0*S); grp.add(eng); grp.userData.eng=eng;
+  return grp;
+}
+
 function buildShip(){
+
   const g = new THREE.Group();
-  const body = new THREE.Mesh(
-    new THREE.ConeGeometry(.85, 2.4, 4),
-    new THREE.MeshStandardMaterial({color:0xdfefff, emissive:0x2b6c99, roughness:.3, metalness:.6}));
-  body.rotation.x = Math.PI/2; g.add(body);
-  const wing = new THREE.Mesh(
-    new THREE.BoxGeometry(3.6,.5,.4),
-    new THREE.MeshStandardMaterial({color:0x9fc4de, emissive:0x1d4e70, roughness:.4, metalness:.5}));
-  wing.position.y = -.55; g.add(wing);
+  // same hull the fleet flies in Star Fighter, nose pointed up-screen at the CV
+  const dart = fighterMesh(0.55);
+  dart.rotation.x = -Math.PI/2;
+  dart.scale.setScalar(0.62);
+  g.add(dart);
+  g.userData.eng = dart.userData.eng;
   shipGlow = new THREE.PointLight(0x4fc3f7, 1.6, 12); shipGlow.position.z = 1.5; g.add(shipGlow);
   g.position.set(0, -12.5, 0); scene.add(g); return g;
 }
@@ -224,7 +282,7 @@ const readout = document.getElementById('readout');
 let readTimer = 0;
 
 function show(co, date, detail){
-  readout.innerHTML = `<span class="co">${co}</span> &nbsp;·&nbsp; ${date} &nbsp;—&nbsp; ${detail}`;
+  readout.innerHTML = `<span class="co">${co}</span> &nbsp;·&nbsp; ${date} &nbsp; - &nbsp; ${detail}`;
   readout.classList.add('on'); readTimer = 3.2;
 }
 
@@ -256,10 +314,14 @@ function endGame(win){
     ? 'RÉSUMÉ <span>CLEARED</span>'
     : 'THE RÉSUMÉ <span>WON</span>';
   document.getElementById('endMsg').textContent = win
-    ? `All ${blocks.length} blocks read. That is thirty years of shipped software, start to finish.`
-    : `You read ${score} of ${blocks.length}. It is a long CV — that is rather the point.`;
+    ? `That is the whole CV - all ${blocks.length} roles, thirty years, every date real. `
+      + `If any of it fits what you are hiring for, I would like to talk.`
+    : `You read ${score} of ${blocks.length} roles before it reached you. `
+      + `The rest are in the PDF, and I would still like to talk.`;
   document.getElementById('endLink').innerHTML =
-    'Prefer it flat? <a href="./RJ_Thompson_Resume.pdf" target="_blank" rel="noopener">Download the PDF résumé</a>.';
+    '<a href="mailto:RJ45Thompson@gmail.com?subject=Your%20r%C3%A9sum%C3%A9%20breakout">Email me</a>'
+    + ' &nbsp;·&nbsp; <a href="./RJ_Thompson_Resume.pdf" target="_blank" rel="noopener">PDF résumé</a>'
+    + ' &nbsp;·&nbsp; <a href="https://www.linkedin.com/in/r-j-thompson-9531588/" target="_blank" rel="noopener">LinkedIn</a>';
 }
 
 // ---------------------------------------------------------------- loop
@@ -282,6 +344,10 @@ function tick(now){
     descend += dt * (0.30 + pressure*0.85);
 
     blocks.forEach(b=>{
+      if(b.userData.alive && b.userData.homeX !== undefined){
+        const u = b.userData;
+        b.position.x = u.homeX + Math.sin(t*u.swayFreq + u.swayPhase) * u.swayAmp;
+      }
       if(!b.userData.alive) return;
       b.position.y = b.userData.baseY ?? (b.userData.baseY = b.position.y);
       b.position.y -= descend;
@@ -297,7 +363,7 @@ function tick(now){
       descend = Math.max(0, descend - 5.5);
       shake = .8;
       spark(new THREE.Vector3(ship.position.x, ship.position.y + 1, 0), 0xff5470, 26);
-      document.getElementById('lives').textContent = lives > 0 ? '♦'.repeat(lives) : '—';
+      document.getElementById('lives').textContent = lives > 0 ? '♦'.repeat(lives) : ' - ';
     }
 
     // bullets
