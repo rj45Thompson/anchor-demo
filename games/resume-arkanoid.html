@@ -170,49 +170,79 @@ function labelTexture(company, date, tone){
 }
 
 // ---------------------------------------------------------------- game objects
-let blocks = [], bullets = [], bits = [];
+let blocks = [], words = [], bullets = [], bits = [];
 let ship, shipGlow;
 const BW = 5.4, BH = 1.9, GAPX = .55, GAPY = .75;
+const LW = 1.05, LH = 1.35, WORDGAP = 1.5;   // letter cell + gap between words
+const TONES_HEX = ['#8fd7ff','#c9b6ff','#9ff0c8','#ffd79a'];
 
+// one small canvas texture per distinct character, cached - 16 words share maybe 30 glyphs,
+// so this is ~30 textures rather than one per letter instance.
+const glyphCache = new Map();
+function glyphTexture(ch, toneIdx){
+  const key = ch + '|' + toneIdx;
+  if(glyphCache.has(key)) return glyphCache.get(key);
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d');
+  g.fillStyle = '#0b1017'; g.fillRect(0,0,64,64);
+  g.fillStyle = TONES_HEX[toneIdx] || '#cfe6ff';
+  g.font = 'bold 44px ui-monospace, Menlo, Consolas, monospace';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(ch, 32, 34);
+  const t = new THREE.Texture(c); t.needsUpdate = true;
+  glyphCache.set(key, t); return t;
+}
+
+// A "word" is one CV entry. It is built from individual letter cubes so the name is spelled out
+// and each glyph can ride its own phase of the wave. Shooting ANY letter takes the whole word,
+// because the unit of meaning is the job, not the character.
 function buildBoard(){
-  blocks.forEach(b=>scene.remove(b)); blocks = [];
-  const cols = ROWS[0].items.length;
-  const totalW = cols*BW + (cols-1)*GAPX;
+  words.forEach(w=>w.letters.forEach(l=>scene.remove(l)));
+  words = []; blocks = [];
+  const rowsN = ROWS.length;
   ROWS.forEach((row, r)=>{
+    // lay the row out centred, measured in letters so long names get the room they need
+    const spans = row.items.map(it => it[0].length);
+    const totalLetters = spans.reduce((a,b)=>a+b, 0);
+    const rowW = totalLetters*LW + (row.items.length-1)*WORDGAP;
+    let cursor = -rowW/2;
     row.items.forEach(([co, date, detail], i)=>{
-      const geo = new THREE.BoxGeometry(BW, BH, 1.1);
-      // only the face pointing at the camera carries the text; the other five get plain
-      // tinted metal. mapping the label to all six made the top/bottom edges show a
-      // ghosted copy of the company name at this camera angle.
-      const tone = new THREE.Color(TONES[row.tone]);
-      const side = new THREE.MeshStandardMaterial({
-        color: tone.clone().multiplyScalar(.34),
-        emissive: tone.clone().multiplyScalar(.06),
-        roughness:.6, metalness:.35
-      });
-      const face = new THREE.MeshStandardMaterial({
-        map: labelTexture(co, date, row.tone),
-        emissive: tone.clone().multiplyScalar(.13),
-        roughness:.55, metalness:.25
-      });
-      // BoxGeometry face order: +x, -x, +y, -y, +z(front), -z
-      const mat = [side, side, side, side, face, side];
-      const m = new THREE.Mesh(geo, mat);
-      const homeX = -totalW/2 + BW/2 + i*(BW+GAPX);
-      m.position.set(homeX, 12.5 - r*(BH+GAPY), 0);
-      // each block sways on its own phase; neighbours are offset so a row ripples
-      // instead of sliding as one slab. amp is capped to just under half the gap
-      // so blocks never overlap their neighbour at full swing.
-      m.userData = {co, date, detail, tone:row.tone, alive:true,
-        seed: Math.random()*6.28,
-        homeX,
-        swayAmp: GAPX*0.42 + (r%2)*0.10,
-        swayFreq: 0.55 + ((i*7+r*3)%5)*0.06,
-        swayPhase: (i*0.7 + r*1.9)};
-      scene.add(m); blocks.push(m);
+      const letters = [];
+      const wordStart = cursor;
+      for(let ci=0; ci<co.length; ci++){
+        const ch = co[ci];
+        const geo = new THREE.BoxGeometry(LW*0.88, LH, 0.9);
+        const tone = new THREE.Color(TONES[row.tone]);
+        const side = new THREE.MeshStandardMaterial({
+          color: tone.clone().multiplyScalar(.30),
+          emissive: tone.clone().multiplyScalar(.05), roughness:.6, metalness:.35 });
+        const face = new THREE.MeshStandardMaterial({
+          map: glyphTexture(ch === ' ' ? '·' : ch, row.tone),
+          emissive: tone.clone().multiplyScalar(.16), roughness:.5, metalness:.25 });
+        const m = new THREE.Mesh(geo, [side,side,side,side,face,side]);
+        const homeX = cursor + LW/2;
+        const homeY = 12.5 - r*(LH+GAPY);
+        m.position.set(homeX, homeY, 0);
+        // the wave travels ALONG the word: each letter is a little later than the one before it,
+        // so a name ripples left to right instead of every glyph bobbing in unison.
+        m.userData = {
+          homeX, homeY, wordIndex: words.length,
+          swayAmp: LW*0.30,
+          swayFreq: 0.9 + (r%3)*0.08,
+          swayPhase: ci*0.55 + r*1.3 + i*0.9,
+          bobAmp: 0.10 + (ci%3)*0.03
+        };
+        scene.add(m); letters.push(m);
+        cursor += LW;
+      }
+      cursor += WORDGAP;
+      const word = {co, date, detail, tone:row.tone, alive:true, letters,
+                    centerX:(wordStart + cursor - WORDGAP)/2};
+      words.push(word);
+      blocks.push(word);   // score/total still count JOBS, not glyphs
     });
   });
-  document.getElementById('total').textContent = blocks.length;
+  document.getElementById('total').textContent = words.length;
 }
 
 // ---- ported from starfighter.html so both games share one ship language ----
@@ -314,9 +344,9 @@ function endGame(win){
     ? 'RÉSUMÉ <span>CLEARED</span>'
     : 'THE RÉSUMÉ <span>WON</span>';
   document.getElementById('endMsg').textContent = win
-    ? `That is the whole CV - all ${blocks.length} roles, thirty years, every date real. `
+    ? `That is the whole CV - all ${words.length} roles, thirty years, every date real. `
       + `If any of it fits what you are hiring for, I would like to talk.`
-    : `You read ${score} of ${blocks.length} roles before it reached you. `
+    : `You read ${score} of ${words.length} roles before it reached you. `
       + `The rest are in the PDF, and I would still like to talk.`;
   document.getElementById('endLink').innerHTML =
     '<a href="mailto:RJ45Thompson@gmail.com?subject=Your%20r%C3%A9sum%C3%A9%20breakout">Email me</a>'
@@ -340,20 +370,22 @@ function tick(now){
     shipGlow.intensity = 1.4 + Math.sin(t*9)*.3;
 
     // board descends, faster as it empties
-    const pressure = 1 - (blocks.filter(b=>b.userData.alive).length / blocks.length);
+    const pressure = 1 - (words.filter(w=>w.alive).length / words.length);
     descend += dt * (0.30 + pressure*0.85);
 
-    blocks.forEach(b=>{
-      if(b.userData.alive && b.userData.homeX !== undefined){
-        const u = b.userData;
-        b.position.x = u.homeX + Math.sin(t*u.swayFreq + u.swayPhase) * u.swayAmp;
-      }
-      if(!b.userData.alive) return;
-      b.position.y = b.userData.baseY ?? (b.userData.baseY = b.position.y);
-      b.position.y -= descend;
-      b.rotation.z = Math.sin(t*1.2 + b.userData.seed)*.03;
-      b.position.z = Math.sin(t*.9 + b.userData.seed)*.35;
-      if(b.position.y < -11.2) breached = true;
+    words.forEach(w=>{
+      if(!w.alive) return;
+      w.letters.forEach(l=>{
+        const u = l.userData;
+        l.position.x = u.homeX + Math.sin(t*u.swayFreq + u.swayPhase) * u.swayAmp;
+        l.position.y = u.homeY - descend + Math.sin(t*u.swayFreq*0.7 + u.swayPhase) * u.bobAmp;
+        l.rotation.z = Math.sin(t*u.swayFreq + u.swayPhase) * 0.12;
+      });
+    });
+    // a word has reached the ship if any of its letters has
+    words.forEach(w=>{
+      if(!w.alive) return;
+      for(const l of w.letters){ if(l.position.y < -11.2){ breached = true; break; } }
     });
 
     // a block reaching the ship costs a life and shoves the board back up
@@ -368,25 +400,46 @@ function tick(now){
 
     // bullets
     for(let i=bullets.length-1;i>=0;i--){
-      const bl = bullets[i]; bl.position.y += 34*dt;
-      if(bl.position.y > 18){ scene.remove(bl); bullets.splice(i,1); continue; }
-      for(const b of blocks){
-        if(!b.userData.alive) continue;
-        if(Math.abs(bl.position.x - b.position.x) < BW/2 &&
-           Math.abs(bl.position.y - b.position.y) < BH/2){
-          b.userData.alive = false; b.visible = false;
-          spark(b.position, TONES[b.userData.tone], 14);
-          show(b.userData.co, b.userData.date, b.userData.detail);
-          score++; shake = .35;
-          document.getElementById('score').textContent = score;
-          scene.remove(bl); bullets.splice(i,1);
-          break;
+      const bl = bullets[i];
+      // SWEPT collision. dt is capped at .05, so on a dropped frame a bullet advances 34*.05 =
+      // 1.7 units while a letter's hit window is only LH*1.2 = 1.62 tall. Testing the endpoint
+      // alone let bullets tunnel clean through a letter and the shot silently missed. Remember
+      // where it was and test the whole segment it covered this frame.
+      const prevY = bl.position.y;
+      bl.position.y += 34*dt;
+      const loY = Math.min(prevY, bl.position.y), hiY = Math.max(prevY, bl.position.y);
+      // NOTE: the off-screen despawn used to run here, BEFORE the hit test. A fast bullet whose
+      // swept segment crossed a letter but whose endpoint landed past the ceiling was thrown away
+      // without ever being tested, so shots at the top row silently missed. Despawn moved to
+      // after the collision test.
+      let hitWord = null;
+      for(const w of words){
+        if(!w.alive) continue;
+        for(const l of w.letters){
+          // segment test: did the letter's band overlap anywhere the bullet passed through
+          if(Math.abs(bl.position.x - l.position.x) < LW*0.55 &&
+             loY <= l.position.y + LH*0.60 && hiY >= l.position.y - LH*0.60){ hitWord = w; break; }
         }
+        if(hitWord) break;
+      }
+      if(hitWord){
+        hitWord.alive = false;
+        // blow the word apart letter by letter rather than just hiding it
+        hitWord.letters.forEach((l, li)=>{
+          spark(l.position, TONES[hitWord.tone], 4);
+          setTimeout(()=>{ l.visible = false; }, li*22);
+        });
+        show(hitWord.co, hitWord.date, hitWord.detail);
+        score++; shake = .35;
+        document.getElementById('score').textContent = score;
+        scene.remove(bl); bullets.splice(i,1);
+      } else if(bl.position.y > 18){
+        scene.remove(bl); bullets.splice(i,1);
       }
     }
 
     if(lives<=0) endGame(false);
-    else if(score >= blocks.length) endGame(true);
+    else if(score >= words.length) endGame(true);
   }
 
   // particles
@@ -436,12 +489,12 @@ resize();
 
 document.getElementById('go').onclick = ()=>{
   document.getElementById('start').classList.add('hide');
-  blocks.forEach(b=>{ b.userData.baseY = undefined; });
+  words.forEach(w=>{ w.alive = true; w.letters.forEach(l=>{ l.visible = true; }); });
   reset(); state='play';
 };
 document.getElementById('again').onclick = ()=>{
   document.getElementById('end').classList.add('hide');
-  blocks.forEach(b=>{ b.userData.baseY = undefined; });
+  words.forEach(w=>{ w.alive = true; w.letters.forEach(l=>{ l.visible = true; }); });
   reset(); state='play';
 };
 
