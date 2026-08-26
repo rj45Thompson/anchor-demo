@@ -176,73 +176,144 @@ const BW = 5.4, BH = 1.9, GAPX = .55, GAPY = .75;
 const LW = 1.05, LH = 1.35, WORDGAP = 1.5;   // letter cell + gap between words
 const TONES_HEX = ['#8fd7ff','#c9b6ff','#9ff0c8','#ffd79a'];
 
-// one small canvas texture per distinct character, cached - 16 words share maybe 30 glyphs,
-// so this is ~30 textures rather than one per letter instance.
+// ---------------------------------------------------------------- the CV, as text
+// Every line is real. Companies and dates come first, the detail is indented under them, so the
+// crawl reads like the document rather than a word cloud.
+const CV = (function(){
+  const L = [];
+  L.push({t:"R.J. THOMPSON", k:"head"});
+  L.push({t:"senior C++ / C# engineer  -  30 years shipping  -  open to work", k:"sub"});
+  L.push({t:"", k:"gap"});
+  ROWS.forEach(row=>{
+    row.items.forEach(([co,date,detail])=>{
+      L.push({t: co + "   " + date, k:"role", tone:row.tone, co, date, detail});
+      L.push({t: "   " + detail,    k:"detail", tone:row.tone, co, date, detail});
+      L.push({t:"", k:"gap"});
+    });
+  });
+  L.push({t:"RJ45Thompson@gmail.com   -   236-518-2711", k:"sub"});
+  L.push({t:"that is the whole CV. thanks for reading it the hard way.", k:"sub"});
+  return L;
+})();
+
+// ---------------------------------------------------------------- glyph atlas
+// One texture per (char, tone). ~40 distinct glyphs across the whole CV instead of ~1150.
 const glyphCache = new Map();
-function glyphTexture(ch, toneIdx){
-  const key = ch + '|' + toneIdx;
+function glyphTexture(ch, tone, kind){
+  const key = ch + "|" + tone + "|" + kind;
   if(glyphCache.has(key)) return glyphCache.get(key);
-  const c = document.createElement('canvas'); c.width = c.height = 64;
-  const g = c.getContext('2d');
-  g.fillStyle = '#0b1017'; g.fillRect(0,0,64,64);
-  g.fillStyle = TONES_HEX[toneIdx] || '#cfe6ff';
-  g.font = 'bold 44px ui-monospace, Menlo, Consolas, monospace';
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(ch, 32, 34);
+  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const g = c.getContext("2d");
+  g.clearRect(0,0,64,64);
+  const col = kind==="head" ? "#ffffff" : (kind==="detail" ? "#9fc4de" : (TONES_HEX[tone]||"#cfe6ff"));
+  g.font = (kind==="head" ? "bold 46px" : "bold 40px") + " ui-monospace, Menlo, Consolas, monospace";
+  g.textAlign="center"; g.textBaseline="middle";
+  g.shadowColor = col; g.shadowBlur = 14;
+  g.fillStyle = col; g.fillText(ch, 32, 34);
+  g.shadowBlur = 0; g.fillText(ch, 32, 34);
   const t = new THREE.Texture(c); t.needsUpdate = true;
   glyphCache.set(key, t); return t;
 }
 
-// A "word" is one CV entry. It is built from individual letter cubes so the name is spelled out
-// and each glyph can ride its own phase of the wave. Shooting ANY letter takes the whole word,
-// because the unit of meaning is the job, not the character.
+// ---------------------------------------------------------------- letter shader
+// Cheap but characterful: additive glyph, a scanline roll, a rim brighten near the crosshair row,
+// and a dissolve the break animation drives. No post-processing - r128 here has no EffectComposer,
+// so the look is done per-material.
+const LETTER_VERT = `
+  varying vec2 vUv;
+  void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
+`;
+const LETTER_FRAG = `
+  uniform sampler2D map;
+  uniform vec3  tint;
+  uniform float uTime;
+  uniform float uDissolve;   // 0 = intact, 1 = gone
+  uniform float uHot;        // 0..1 proximity to the firing line
+  varying vec2 vUv;
+  float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }
+  void main(){
+    vec4 tex = texture2D(map, vUv);
+    if(tex.a < 0.02) discard;
+
+    // burn away from a noise field so the letter crumbles rather than fading flat
+    float n = hash(floor(vUv*14.0));
+    if(n < uDissolve) discard;
+    float edge = smoothstep(uDissolve, uDissolve+0.22, n);
+
+    float scan = 0.90 + 0.10*sin((vUv.y*46.0) + uTime*2.4);
+    vec3  col  = tint * tex.rgb * scan;
+    col += tint * uHot * 0.55;                       // brighten as it nears the ship
+    col += vec3(1.0,0.72,0.35) * (1.0-edge) * 1.6;   // hot ember at the dissolve front
+    gl_FragColor = vec4(col, tex.a);
+  }
+`;
+
+// ---------------------------------------------------------------- layout + pooling
+const CH_W = 0.62, LINE_H = 1.5;      // glyph pitch, line pitch
+const VIEW_TOP = 15.0, VIEW_BOT = -13.5;
+const letterGeo = new THREE.PlaneGeometry(CH_W*1.55, CH_W*1.95);
+
+let lines = [];        // {i, kind, tone, text, meta, letters:[], y}
+let pool  = [];        // recycled meshes
+let crawl = 0;         // how far the CV has scrolled
+let brokenCount = 0, totalGlyphs = 0, linesRead = new Set();
+
+function makeLetterMesh(){
+  const m = new THREE.Mesh(letterGeo, new THREE.ShaderMaterial({
+    uniforms:{ map:{value:null}, tint:{value:new THREE.Color(0xffffff)},
+               uTime:{value:0}, uDissolve:{value:0}, uHot:{value:0} },
+    vertexShader: LETTER_VERT, fragmentShader: LETTER_FRAG,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
+  }));
+  m.visible = false; scene.add(m); return m;
+}
+function takeMesh(){ return pool.length ? pool.pop() : makeLetterMesh(); }
+function giveMesh(m){ m.visible=false; pool.push(m); }
+
 function buildBoard(){
-  words.forEach(w=>w.letters.forEach(l=>scene.remove(l)));
-  words = []; blocks = [];
-  const rowsN = ROWS.length;
-  ROWS.forEach((row, r)=>{
-    // lay the row out centred, measured in letters so long names get the room they need
-    const spans = row.items.map(it => it[0].length);
-    const totalLetters = spans.reduce((a,b)=>a+b, 0);
-    const rowW = totalLetters*LW + (row.items.length-1)*WORDGAP;
-    let cursor = -rowW/2;
-    row.items.forEach(([co, date, detail], i)=>{
-      const letters = [];
-      const wordStart = cursor;
-      for(let ci=0; ci<co.length; ci++){
-        const ch = co[ci];
-        const geo = new THREE.BoxGeometry(LW*0.88, LH, 0.9);
-        const tone = new THREE.Color(TONES[row.tone]);
-        const side = new THREE.MeshStandardMaterial({
-          color: tone.clone().multiplyScalar(.30),
-          emissive: tone.clone().multiplyScalar(.05), roughness:.6, metalness:.35 });
-        const face = new THREE.MeshStandardMaterial({
-          map: glyphTexture(ch === ' ' ? '·' : ch, row.tone),
-          emissive: tone.clone().multiplyScalar(.16), roughness:.5, metalness:.25 });
-        const m = new THREE.Mesh(geo, [side,side,side,side,face,side]);
-        const homeX = cursor + LW/2;
-        const homeY = 12.5 - r*(LH+GAPY);
-        m.position.set(homeX, homeY, 0);
-        // the wave travels ALONG the word: each letter is a little later than the one before it,
-        // so a name ripples left to right instead of every glyph bobbing in unison.
-        m.userData = {
-          homeX, homeY, wordIndex: words.length,
-          swayAmp: LW*0.30,
-          swayFreq: 0.9 + (r%3)*0.08,
-          swayPhase: ci*0.55 + r*1.3 + i*0.9,
-          bobAmp: 0.10 + (ci%3)*0.03
-        };
-        scene.add(m); letters.push(m);
-        cursor += LW;
+  lines.forEach(l=>l.letters.forEach(L=>{ if(L.mesh) giveMesh(L.mesh); }));
+  lines = []; crawl = 0; brokenCount = 0; linesRead = new Set(); totalGlyphs = 0;
+
+  CV.forEach((row, i)=>{
+    const chars = [];
+    const w = row.t.length * CH_W;
+    for(let ci=0; ci<row.t.length; ci++){
+      const ch = row.t[ci];
+      if(ch === " ") continue;                       // spaces are not targets
+      chars.push({ ch, ci, broken:false, dissolve:0, mesh:null,
+                   x: -w/2 + ci*CH_W + CH_W/2 });
+      totalGlyphs++;
+    }
+    lines.push({ i, kind:row.k, tone:row.tone|0, text:row.t, meta:row, letters:chars,
+                 y: 12 + i*LINE_H });
+  });
+  document.getElementById("total").textContent = totalGlyphs;
+}
+
+// only rows near the viewport hold meshes
+function syncMeshes(){
+  lines.forEach(line=>{
+    const y = line.y - crawl;
+    const near = y < VIEW_TOP+2 && y > VIEW_BOT-2;
+    line.letters.forEach(L=>{
+      if(L.broken){ if(L.mesh){ giveMesh(L.mesh); L.mesh=null; } return; }
+      if(near && !L.mesh){
+        const m = takeMesh();
+        m.material.uniforms.map.value = glyphTexture(L.ch, line.tone, line.kind);
+        m.material.uniforms.tint.value.set(
+          line.kind==="head" ? 0xffffff : (line.kind==="detail" ? 0x8fb8d6 : (TONES[line.tone]||0xcfe6ff)));
+        m.material.uniforms.uDissolve.value = L.dissolve;
+        m.visible = true; L.mesh = m;
+      } else if(!near && L.mesh){ giveMesh(L.mesh); L.mesh = null; }
+      if(L.mesh){
+        L.mesh.position.set(L.x, y, 0);
+        L.mesh.material.uniforms.uTime.value = t;
+        L.mesh.material.uniforms.uDissolve.value = L.dissolve;
+        L.mesh.material.uniforms.uHot.value =
+          Math.max(0, 1 - Math.abs(y - (ship.position.y+7)) / 9);
       }
-      cursor += WORDGAP;
-      const word = {co, date, detail, tone:row.tone, alive:true, letters,
-                    centerX:(wordStart + cursor - WORDGAP)/2};
-      words.push(word);
-      blocks.push(word);   // score/total still count JOBS, not glyphs
     });
   });
-  document.getElementById('total').textContent = words.length;
 }
 
 // ---- ported from starfighter.html so both games share one ship language ----
@@ -262,7 +333,6 @@ function hullTex(){ const c=document.createElement('canvas'); c.width=c.height=1
   const t=new THREE.Texture(c); t.needsUpdate=true; t.anisotropy=4; return t; }
 const GLOW = glowTex(), HULL = hullTex();
 
-// the exact dart hull from starfighter.html
 function fighterMesh(hue){
   const S=1.55;
   const v=[ 0,0,-2.6, 0,0.55,0, 0,-0.5,0.2, -2,0,1, 2,0,1, 0,0,1.5, 0,1.05,1.2 ].map(x=>x*S);
@@ -289,6 +359,49 @@ function buildShip(){
   dart.scale.setScalar(0.62);
   g.add(dart);
   g.userData.eng = dart.userData.eng;
+
+  // --- shader bits that make it read as a ship rather than a triangle ---
+  // engine plume: a cone whose alpha falls off along its length and flickers on a noise term
+  const plume = new THREE.Mesh(
+    new THREE.ConeGeometry(0.55, 2.6, 14, 1, true),
+    new THREE.ShaderMaterial({
+      uniforms:{ uTime:{value:0}, uThrust:{value:0} },
+      vertexShader:`varying vec2 vUv; varying float vY;
+        void main(){ vUv=uv; vY=position.y;
+          gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+      fragmentShader:`
+        uniform float uTime, uThrust; varying vec2 vUv; varying float vY;
+        float h(vec2 p){ return fract(sin(dot(p,vec2(23.1,41.7)))*3571.19); }
+        void main(){
+          float along = clamp((vY+1.3)/2.6, 0.0, 1.0);      // 0 at nozzle, 1 at tail
+          float flick = 0.75 + 0.25*h(vec2(floor(uTime*34.0), floor(vUv.x*7.0)));
+          float a = pow(1.0-along, 1.7) * flick * (0.35 + uThrust*0.85);
+          vec3 hot  = vec3(0.62,0.90,1.00);
+          vec3 cool = vec3(0.16,0.42,0.95);
+          gl_FragColor = vec4(mix(hot, cool, along), a);
+        }`,
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide
+    }));
+  plume.rotation.x = Math.PI;          // point it backwards, down-screen
+  plume.position.y = -1.5;
+  g.add(plume); g.userData.plume = plume;
+
+  // shield: a thin ring that pulses, so the player has a visible footprint
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(1.5, 1.72, 48),
+    new THREE.ShaderMaterial({
+      uniforms:{ uTime:{value:0} },
+      vertexShader:`varying vec2 vUv; void main(){ vUv=uv;
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+      fragmentShader:`uniform float uTime; varying vec2 vUv;
+        void main(){
+          float pulse = 0.45 + 0.55*sin(uTime*2.2);
+          float band  = smoothstep(0.0,0.5,vUv.y)*smoothstep(1.0,0.5,vUv.y);
+          gl_FragColor = vec4(vec3(0.36,0.80,1.0), band*0.30*pulse);
+        }`,
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide
+    }));
+  g.add(ring); g.userData.ring = ring;
   shipGlow = new THREE.PointLight(0x4fc3f7, 1.6, 12); shipGlow.position.z = 1.5; g.add(shipGlow);
   g.position.set(0, -12.5, 0); scene.add(g); return g;
 }
@@ -306,7 +419,7 @@ function spark(pos, colorHex, n){
 }
 
 // ---------------------------------------------------------------- state
-let state='menu', score=0, lives=3, descend=0, t=0, shake=0, breached=false;
+let state='menu', score=0, lives=3, t=0, shake=0;
 const keys = {};
 const readout = document.getElementById('readout');
 let readTimer = 0;
@@ -320,9 +433,10 @@ function reset(){
   buildBoard();
   bullets.forEach(b=>scene.remove(b)); bullets=[];
   bits.forEach(b=>scene.remove(b)); bits=[];
-  score=0; lives=3; descend=0; shake=0; breached=false;
+  score=0; lives=3; shake=0;
   ship.position.x = 0;
   document.getElementById('score').textContent = 0;
+  document.getElementById('lives').textContent = 'READING';
   document.getElementById('lives').textContent = '♦♦♦';
   readout.classList.remove('on');
 }
@@ -344,9 +458,10 @@ function endGame(win){
     ? 'RÉSUMÉ <span>CLEARED</span>'
     : 'THE RÉSUMÉ <span>WON</span>';
   document.getElementById('endMsg').textContent = win
-    ? `That is the whole CV - all ${words.length} roles, thirty years, every date real. `
+    ? `The whole CV went past. You broke ${brokenCount} of ${totalGlyphs} characters and `
+      + `read ${linesRead.size} of the roles along the way. `
       + `If any of it fits what you are hiring for, I would like to talk.`
-    : `You read ${score} of ${words.length} roles before it reached you. `
+    : `You broke ${brokenCount} of ${totalGlyphs} characters. `
       + `The rest are in the PDF, and I would still like to talk.`;
   document.getElementById('endLink').innerHTML =
     '<a href="mailto:RJ45Thompson@gmail.com?subject=Your%20r%C3%A9sum%C3%A9%20breakout">Email me</a>'
@@ -368,70 +483,63 @@ function tick(now){
     ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*22*dt, -W/2+2, W/2-2);
     ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -dir*.35, .12);
     shipGlow.intensity = 1.4 + Math.sin(t*9)*.3;
-
-    // board descends, faster as it empties
-    const pressure = 1 - (words.filter(w=>w.alive).length / words.length);
-    descend += dt * (0.30 + pressure*0.85);
-
-    words.forEach(w=>{
-      if(!w.alive) return;
-      w.letters.forEach(l=>{
-        const u = l.userData;
-        l.position.x = u.homeX + Math.sin(t*u.swayFreq + u.swayPhase) * u.swayAmp;
-        l.position.y = u.homeY - descend + Math.sin(t*u.swayFreq*0.7 + u.swayPhase) * u.bobAmp;
-        l.rotation.z = Math.sin(t*u.swayFreq + u.swayPhase) * 0.12;
-      });
-    });
-    // a word has reached the ship if any of its letters has
-    words.forEach(w=>{
-      if(!w.alive) return;
-      for(const l of w.letters){ if(l.position.y < -11.2){ breached = true; break; } }
-    });
-
-    // a block reaching the ship costs a life and shoves the board back up
-    if(breached){
-      breached = false;
-      lives--;
-      descend = Math.max(0, descend - 5.5);
-      shake = .8;
-      spark(new THREE.Vector3(ship.position.x, ship.position.y + 1, 0), 0xff5470, 26);
-      document.getElementById('lives').textContent = lives > 0 ? '♦'.repeat(lives) : ' - ';
+    if(ship.userData.plume){
+      ship.userData.plume.material.uniforms.uTime.value = t;
+      ship.userData.plume.material.uniforms.uThrust.value =
+        THREE.MathUtils.lerp(ship.userData.plume.material.uniforms.uThrust.value, dir?1:0.25, .18);
     }
+    if(ship.userData.ring) ship.userData.ring.material.uniforms.uTime.value = t;
+
+    // the CV crawls past at a steady rate, easing up a touch as more of it is broken
+    const cleared = totalGlyphs ? brokenCount/totalGlyphs : 0;
+    crawl += dt * (2.05 + cleared*0.5);
+    syncMeshes();
+
+    // advance any letter mid-dissolve, and retire it once burnt through
+    lines.forEach(line=>line.letters.forEach(L=>{
+      if(L.dissolve > 0 && !L.broken){
+        L.dissolve = Math.min(1, L.dissolve + dt*3.4);
+        if(L.dissolve >= 1){
+          L.broken = true;
+          if(L.mesh){ giveMesh(L.mesh); L.mesh = null; }
+        }
+      }
+    }));
+
+    // the whole CV has gone by
+    if(lines.length && (lines[lines.length-1].y - crawl) < VIEW_BOT - 1){ endGame(true); }
 
     // bullets
     for(let i=bullets.length-1;i>=0;i--){
       const bl = bullets[i];
       // SWEPT collision. dt is capped at .05, so on a dropped frame a bullet advances 34*.05 =
-      // 1.7 units while a letter's hit window is only LH*1.2 = 1.62 tall. Testing the endpoint
-      // alone let bullets tunnel clean through a letter and the shot silently missed. Remember
-      // where it was and test the whole segment it covered this frame.
+      // 1.7 units, further than a glyph is tall - testing only the endpoint let shots tunnel
+      // straight through. Test the whole segment covered this frame.
       const prevY = bl.position.y;
       bl.position.y += 34*dt;
       const loY = Math.min(prevY, bl.position.y), hiY = Math.max(prevY, bl.position.y);
-      // NOTE: the off-screen despawn used to run here, BEFORE the hit test. A fast bullet whose
-      // swept segment crossed a letter but whose endpoint landed past the ceiling was thrown away
-      // without ever being tested, so shots at the top row silently missed. Despawn moved to
-      // after the collision test.
-      let hitWord = null;
-      for(const w of words){
-        if(!w.alive) continue;
-        for(const l of w.letters){
-          // segment test: did the letter's band overlap anywhere the bullet passed through
-          if(Math.abs(bl.position.x - l.position.x) < LW*0.55 &&
-             loY <= l.position.y + LH*0.60 && hiY >= l.position.y - LH*0.60){ hitWord = w; break; }
+      // despawn runs AFTER the hit test, further down: doing it here threw away bullets whose
+      // segment had already crossed a glyph near the ceiling.
+      let hit = null, hitLine = null;
+      for(const line of lines){
+        const ly = line.y - crawl;
+        if(ly > VIEW_TOP+2 || ly < VIEW_BOT-2) continue;
+        if(!(loY <= ly + LINE_H*0.42 && hiY >= ly - LINE_H*0.42)) continue;
+        for(const L of line.letters){
+          if(L.broken || L.dissolve > 0) continue;
+          if(Math.abs(bl.position.x - L.x) < CH_W*0.85){ hit = L; hitLine = line; break; }
         }
-        if(hitWord) break;
+        if(hit) break;
       }
-      if(hitWord){
-        hitWord.alive = false;
-        // blow the word apart letter by letter rather than just hiding it
-        hitWord.letters.forEach((l, li)=>{
-          spark(l.position, TONES[hitWord.tone], 4);
-          setTimeout(()=>{ l.visible = false; }, li*22);
-        });
-        show(hitWord.co, hitWord.date, hitWord.detail);
-        score++; shake = .35;
-        document.getElementById('score').textContent = score;
+      if(hit){
+        hit.dissolve = 0.01;                     // shader burns it away over the next few frames
+        spark(new THREE.Vector3(hit.x, hitLine.y - crawl, 0), TONES[hitLine.tone] || 0x9fd8ff, 7);
+        brokenCount++; shake = .18;
+        document.getElementById('score').textContent = brokenCount;
+        if(hitLine.meta && hitLine.meta.co && !linesRead.has(hitLine.i)){
+          linesRead.add(hitLine.i);
+          show(hitLine.meta.co, hitLine.meta.date, hitLine.meta.detail);
+        }
         scene.remove(bl); bullets.splice(i,1);
       } else if(bl.position.y > 18){
         scene.remove(bl); bullets.splice(i,1);
@@ -439,7 +547,6 @@ function tick(now){
     }
 
     if(lives<=0) endGame(false);
-    else if(score >= words.length) endGame(true);
   }
 
   // particles
@@ -489,12 +596,10 @@ resize();
 
 document.getElementById('go').onclick = ()=>{
   document.getElementById('start').classList.add('hide');
-  words.forEach(w=>{ w.alive = true; w.letters.forEach(l=>{ l.visible = true; }); });
   reset(); state='play';
 };
 document.getElementById('again').onclick = ()=>{
   document.getElementById('end').classList.add('hide');
-  words.forEach(w=>{ w.alive = true; w.letters.forEach(l=>{ l.visible = true; }); });
   reset(); state='play';
 };
 

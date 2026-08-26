@@ -188,7 +188,9 @@ doesn't have enough.</p>
 
 <div class="tabs">
   <div class="tab on" data-p="think">Ask anything · watch it think</div>
+  <!-- hidden while the English front end is finished - see spec_en.js
   <div class="tab" data-p="code">Write a function <span class="beta">BETA</span></div>
+  -->
   <div class="tab" data-p="resume">R&eacute;sum&eacute; Breakout</div>
   <div class="tab" data-p="space">Star Fighter</div>
   <div class="tab" data-p="inv">Inventions</div>
@@ -653,7 +655,7 @@ special-cased and no answer is stored. A "no chain" result is <b>not proof there
 </div>
 
 <!-- ================= CODE PANEL ================= -->
-<div id="p-code" class="panel">
+<div id="p-code" class="panel" hidden>
 <div class="broken-note"><strong>BETA - the front door is wrong, and it shows.</strong> Ask for bubble sort and the search returns a correct one-line sort, because the examples pin down <em>what comes out</em>, never <em>how</em>. Any sort satisfies them. On top of that, asking a person to hand-write <code>args -&gt; expected</code> is not how anyone wants to request code. The fix is an English front end that shows you the spec it derived before searching - and it has to stay a translator, not a code generator, or this page would be claiming a search result it did not actually earn. Left visible rather than hidden, because what is here is what is running.</div>
 <p class="small" style="margin-top:0">The other half of the same idea, in a different domain: given
 input→output examples, <strong>search</strong> a fixed set of primitives for one that satisfies
