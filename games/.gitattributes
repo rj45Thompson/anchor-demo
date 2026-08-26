@@ -1,0 +1,5 @@
+# Binary assets - never apply text/EOL conversion (would corrupt them)
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary

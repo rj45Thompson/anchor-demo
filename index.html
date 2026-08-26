@@ -189,6 +189,120 @@ doesn't have enough.</p>
 <div class="tabs">
   <div class="tab on" data-p="think">Ask anything · watch it think</div>
   <div class="tab" data-p="code">Write a function</div>
+  <div class="tab" data-p="resume">R&eacute;sum&eacute; Breakout</div>
+  <div class="tab" data-p="space">Star Fighter</div>
+  <div class="tab" data-p="papers">White papers</div>
+</div>
+
+<!-- ===== rj-extra-tabs ===== -->
+<style>
+  .gamewrap{position:relative;width:100%;height:min(72vh,680px);border:1px solid #1d2c3a;
+    border-radius:10px;overflow:hidden;background:#070b10}
+  .gamewrap iframe{width:100%;height:100%;border:0;display:block}
+  .gamenote{font-size:12px;color:#7d8fa1;margin:8px 2px 0;line-height:1.6}
+  .papers{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .paper{border:1px solid #1d2c3a;border-radius:10px;padding:14px 16px;background:#0b1219}
+  .paper h4{margin:0 0 6px;font-size:14px;color:#e8eef4}
+  .paper p{margin:0 0 10px;font-size:12.5px;color:#93a7b8;line-height:1.55}
+  .paper a{font-size:12.5px}
+  .paper .tagrow{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+  .paper .tag{font-size:10.5px;color:#7fd4ff;border:1px solid #23516b;border-radius:999px;
+    padding:2px 9px}
+  .papers-sub{margin:22px 2px 10px;font-size:12px;letter-spacing:1px;text-transform:uppercase;
+    color:#7d8fa1;font-weight:600}
+  .paperdoc{border:1px solid #1d2c3a;border-radius:10px;background:#0b1219;overflow:hidden}
+  .paperdoc-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+    padding:14px 16px;border-bottom:1px solid #16222e;background:#0d1620}
+  .paperdoc-h h3{margin:0;font-size:15px;color:#e8eef4}
+  .paperdoc-h .sub{margin-top:4px;font-size:12px;color:#8fa3b5;line-height:1.5}
+  .rawlink{font-size:11.5px;white-space:nowrap}
+  .paperbody{max-height:min(58vh,560px);overflow:auto;padding:16px 20px;font-size:13px;
+    line-height:1.72;color:#c9d8e5}
+  .paperbody h1{font-size:17px;color:#fff;margin:0 0 10px}
+  .paperbody h2{font-size:14.5px;color:#7fd4ff;margin:22px 0 8px;
+    border-bottom:1px solid #16222e;padding-bottom:5px}
+  .paperbody h3{font-size:13px;color:#a9c6dc;margin:16px 0 6px}
+  .paperbody p{margin:0 0 11px}
+  .paperbody li{margin:0 0 5px}
+  .paperbody code{background:#111c26;border:1px solid #1d2c3a;border-radius:4px;padding:1px 5px;
+    font-size:12px;color:#8fe8ff}
+  .paperbody strong{color:#eef5fb}
+  .paperbody table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:12px}
+  .paperbody th,.paperbody td{border:1px solid #1d2c3a;padding:5px 8px;text-align:left}
+  .paperbody th{background:#0f1a24;color:#a9c6dc}
+</style>
+
+<div id="p-resume" class="panel">
+  <div class="gamewrap">
+    <iframe data-src="./games/resume-arkanoid.html" title="Resume Breakout" loading="lazy"></iframe>
+  </div>
+  <div class="gamenote">Thirty years of shipped software, descending. Every block is a real line
+    from the CV &mdash; shoot one to read it. Arrow keys or mouse to move, space or click to fire.</div>
+</div>
+
+<div id="p-space" class="panel">
+  <div class="gamewrap">
+    <iframe data-src="./games/starfighter.html" title="Star Fighter" loading="lazy"></iframe>
+  </div>
+  <div class="gamenote">The starfighter environment from the no-LLM research fleet &mdash; the
+    same agent-training sandbox the anchor work is measured in, running here in the browser.</div>
+</div>
+
+<div id="p-papers" class="panel">
+  <div class="paperdoc">
+    <div class="paperdoc-h">
+      <div>
+        <h3>Verified Knowledge Extraction from Language Models</h3>
+        <div class="sub">The whitepaper behind this page &mdash; including the part where we
+          withdrew our own headline number and re-measured it.</div>
+      </div>
+      <a class="rawlink" href="./WHITEPAPER.md" target="_blank" rel="noopener">raw .md &rarr;</a>
+    </div>
+    <div id="paperBody" class="paperbody">loading&hellip;</div>
+  </div>
+
+  <h4 class="papers-sub">Artifacts</h4>
+  <div class="papers">
+    <div class="paper">
+      <h4>BossBench v1</h4>
+      <p>A 100-problem adversarial benchmark for fabricated-relation hallucination: real entities
+         joined by invented relations. CC0, Croissant 1.0.</p>
+      <a href="https://huggingface.co/datasets/RJ45Thompson/bossbench-v1" target="_blank"
+         rel="noopener">Dataset on Hugging Face &rarr;</a>
+      <div class="tagrow"><span class="tag">benchmark</span><span class="tag">hallucination</span>
+        <span class="tag">CC0</span></div>
+    </div>
+    <div class="paper">
+      <h4>WarShip</h4>
+      <p>An 8,124-conversation reasoning-trace dataset, released Apache-2.0.</p>
+      <a href="https://huggingface.co/datasets/RJ45Thompson/WarShip" target="_blank"
+         rel="noopener">Dataset on Hugging Face &rarr;</a>
+      <div class="tagrow"><span class="tag">reasoning traces</span><span class="tag">Apache-2.0</span></div>
+    </div>
+    <div class="paper">
+      <h4>Sober AI &mdash; verification wrapper</h4>
+      <p>Reference implementation of the propose &rarr; verify &rarr; report-confidence &rarr; refuse
+         discipline this whole page is built on.</p>
+      <a href="https://github.com/rj45Thompson/sober-ai-complete" target="_blank"
+         rel="noopener">Source on GitHub &rarr;</a>
+      <div class="tagrow"><span class="tag">MIT</span><span class="tag">verification</span></div>
+    </div>
+    <div class="paper">
+      <h4>Archived record</h4>
+      <p>Zenodo deposit for the benchmark and wrapper release.</p>
+      <a href="https://zenodo.org/records/20221916" target="_blank" rel="noopener">Zenodo &rarr;</a>
+      <div class="tagrow"><span class="tag">archived</span><span class="tag">citable</span></div>
+    </div>
+    <div class="paper">
+      <h4>Correlation Anchor Theory</h4>
+      <p>A physics thought-experiment written up in the open, separate from the AI work.</p>
+      <a href="https://github.com/rj45Thompson/correlation-anchor-theory" target="_blank"
+         rel="noopener">Repository &rarr;</a>
+      <div class="tagrow"><span class="tag">physics</span><span class="tag">thought-experiment</span></div>
+    </div>
+  </div>
+  <div class="gamenote">These link to the primary artifacts rather than re-hosting copies, so what
+    you read here is whatever the canonical record currently says.</div>
 </div>
 
 <!-- ================= FACTS PANEL ================= -->
@@ -3594,4 +3708,69 @@ renderCode();
 </script>
 <div id="nowbar"><div id="nowtrack"><div id="nowfill"></div></div>
 <div id="nowrow"><span id="nowtext"><span class="spin" id="nowspin" style="display:none"></span>idle — ask a question above and every step will be narrated here, live</span><span id="nowstats"></span></div></div>
+
+<script>
+/* ===== rj-extra-tabs: lazy game loader + whitepaper reader =====
+   The page's own tab handler already toggles .on. This only fills in an iframe's src the first
+   time its panel is opened, so three.js is never fetched for visitors who never open a game. */
+(function(){
+  function hydrate(){
+    document.querySelectorAll(".panel.on iframe[data-src]").forEach(function(f){
+      if(!f.getAttribute("src")) f.setAttribute("src", f.getAttribute("data-src"));
+    });
+    if(document.getElementById("p-papers").classList.contains("on")) loadPaper();
+  }
+
+  /* Minimal markdown -> HTML. Escapes first, so nothing in the .md can inject markup. */
+  function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function inline(s){
+    return s
+      .replace(/`([^`]+)`/g, function(_,c){ return "<code>"+c+"</code>"; })
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  }
+  function md(src){
+    var out=[], lines=esc(src).split(/\r?\n/), i=0, inList=false, inCode=false;
+    function closeList(){ if(inList){ out.push("</ul>"); inList=false; } }
+    for(; i<lines.length; i++){
+      var L=lines[i];
+      if(/^```/.test(L)){ closeList(); inCode=!inCode; out.push(inCode?"<pre><code>":"</code></pre>"); continue; }
+      if(inCode){ out.push(L); continue; }
+      if(/^\s*$/.test(L)){ closeList(); continue; }
+      var h=L.match(/^(#{1,4})\s+(.*)$/);
+      if(h){ closeList(); var n=h[1].length; out.push("<h"+n+">"+inline(h[2])+"</h"+n+">"); continue; }
+      if(/^\s*[-*]\s+/.test(L)){
+        if(!inList){ out.push("<ul>"); inList=true; }
+        out.push("<li>"+inline(L.replace(/^\s*[-*]\s+/,""))+"</li>"); continue;
+      }
+      if(/^\s*\|/.test(L)){ closeList(); out.push("<p>"+inline(L)+"</p>"); continue; }
+      closeList(); out.push("<p>"+inline(L)+"</p>");
+    }
+    closeList(); if(inCode) out.push("</code></pre>");
+    return out.join("\n");
+  }
+
+  var paperLoaded=false;
+  function loadPaper(){
+    if(paperLoaded) return; paperLoaded=true;
+    var box=document.getElementById("paperBody");
+    fetch("./WHITEPAPER.md").then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.text();
+    }).then(function(t){ box.innerHTML = md(t); })
+      .catch(function(e){
+        paperLoaded=false;
+        box.innerHTML = '<p>Could not load the whitepaper here ('+esc(String(e.message))+
+          '). Read it directly: <a href="./WHITEPAPER.md" target="_blank" rel="noopener">WHITEPAPER.md</a>.</p>';
+      });
+  }
+
+  document.querySelectorAll(".tab").forEach(function(t){
+    t.addEventListener("click", function(){ setTimeout(hydrate, 0); });
+  });
+  hydrate();
+})();
+</script>
 </body></html>

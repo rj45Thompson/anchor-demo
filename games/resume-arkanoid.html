@@ -1,0 +1,383 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Résumé Breakout — R.J. Thompson</title>
+<style>
+  :root{
+    --ink:#e8eef4; --bg:#070b10; --accent:#4fc3f7; --accent2:#7c4dff;
+    --good:#5ee6a8; --warn:#ffb74d;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+  #wrap{position:relative;width:100%;height:100%}
+  canvas{display:block;width:100%;height:100%}
+
+  .hud{position:absolute;pointer-events:none;user-select:none}
+  #top{top:0;left:0;right:0;padding:14px 18px;display:flex;justify-content:space-between;
+    align-items:flex-start;gap:16px;
+    background:linear-gradient(180deg,rgba(7,11,16,.92),rgba(7,11,16,0))}
+  #title{font-weight:700;letter-spacing:.5px;font-size:15px}
+  #title small{display:block;font-weight:400;font-size:11px;color:#8fa3b5;letter-spacing:.3px}
+  #stats{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:#8fa3b5}
+  #stats b{color:var(--accent);font-size:16px}
+
+  #readout{position:absolute;left:50%;transform:translateX(-50%);bottom:74px;
+    max-width:min(720px,92vw);text-align:center;font-size:13px;color:#cfe3f2;
+    background:rgba(10,16,24,.82);border:1px solid rgba(79,195,247,.25);
+    border-radius:10px;padding:9px 16px;opacity:0;transition:opacity .25s;
+    backdrop-filter:blur(6px);pointer-events:none}
+  #readout.on{opacity:1}
+  #readout .co{color:var(--accent);font-weight:600}
+
+  #bottom{bottom:0;left:0;right:0;padding:12px 18px 14px;text-align:center;font-size:11px;
+    color:#7d8fa1;background:linear-gradient(0deg,rgba(7,11,16,.92),rgba(7,11,16,0))}
+  kbd{background:#16202c;border:1px solid #2a3a4a;border-bottom-width:2px;border-radius:4px;
+    padding:1px 6px;font:inherit;font-size:10px;color:#b9cbdb}
+
+  .screen{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+    background:rgba(4,7,11,.86);backdrop-filter:blur(8px);z-index:5}
+  .screen.hide{display:none}
+  .card{max-width:min(560px,90vw);padding:30px 34px}
+  .card h1{margin:0 0 6px;font-size:26px;letter-spacing:.4px}
+  .card h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .card p{margin:10px 0 0;color:#9fb3c6;font-size:13px}
+  .btn{margin-top:20px;display:inline-block;cursor:pointer;pointer-events:auto;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));color:#04070b;
+    font-weight:700;font-size:13px;letter-spacing:.4px;border:0;border-radius:8px;
+    padding:11px 26px}
+  .btn:hover{filter:brightness(1.12)}
+  .muted{font-size:11px;color:#6d8093;margin-top:14px}
+  a{color:var(--accent)}
+</style>
+
+<div id="wrap">
+  <canvas id="c"></canvas>
+
+  <div class="hud" id="top">
+    <div id="title">RÉSUMÉ BREAKOUT
+      <small>R.J. Thompson · 30 years of shipped software, descending</small></div>
+    <div id="stats">CLEARED <b id="score">0</b>/<span id="total">0</span><br><span id="lives">♦♦♦</span></div>
+  </div>
+
+  <div class="hud" id="readout"></div>
+
+  <div class="hud" id="bottom">
+    <kbd>←</kbd> <kbd>→</kbd> or move mouse to aim &nbsp;·&nbsp; <kbd>space</kbd> / click to fire
+  </div>
+
+  <div class="screen" id="start">
+    <div class="card">
+      <h1>RÉSUMÉ <span>BREAKOUT</span></h1>
+      <p>Thirty years of shipped software is coming down at you — fifteen roles,
+         real dates, real credits. Shoot a block to read it. Clear the board to read the whole CV.</p>
+      <button class="btn" id="go">START</button>
+      <div class="muted">Every block is a real line from the résumé. Nothing here is filler.</div>
+    </div>
+  </div>
+
+  <div class="screen hide" id="end">
+    <div class="card">
+      <h1 id="endTitle"></h1>
+      <p id="endMsg"></p>
+      <button class="btn" id="again">PLAY AGAIN</button>
+      <div class="muted" id="endLink"></div>
+    </div>
+  </div>
+</div>
+
+<script src="./three.min.js"></script>
+<script>
+// ---------------------------------------------------------------- resume data
+// Every entry is a real line from the actual CV.
+const ROWS = [
+  { tone:0, items:[
+    ["Utherverse","2024–25","Asst. to Director of Development — live virtual-world platform ops"],
+    ["BioWare","2023–24","Shipped the dialog & narrative system for Dragon Age 4 (Frostbite)"],
+    ["Activision","2022–23","CoD live-ops; ported netcode + real-time voice to Switch"],
+    ["Sega / Relic","2021–22","Company of Heroes 3 — measured 7% performance gain"],
+  ]},
+  { tone:1, items:[
+    ["Electronic Arts","2016–21","Five years on FrostEd: editor frameworks, cinematics, lighting"],
+    ["Finger Food","2014–16","Dev Team Lead — Skylanders, Star Wars BB-8, Call of Duty"],
+    ["Industrial Alliance","2013–14","Architected Unification in .NET — WPF, WCF, MVVM"],
+    ["Microsoft BigPark","2012–13","Real-time Lua UI for NFL, ESPN, UFC on Xbox"],
+  ]},
+  { tone:2, items:[
+    ["Novadaq","2012–13","Lead architect, SPY ELITE — surgical fluorescence imaging"],
+    ["FinancialCAD","2010–12","Lead architect, Silverlight/XNA presentation layer"],
+    ["Neoteric","2004–10","Win32/C++ UI libraries; led a team of four"],
+    ["Max Integration","2004","Project lead — Look Out, Win32 CRM flagship"],
+  ]},
+  { tone:3, items:[
+    ["RedHawk Gaming","2001–03","Gaming subsystems & low-level device drivers"],
+    ["Infowave","1997–01","QA Lead — managed a team of five, automated suites"],
+    ["Electronic Arts","1996–97","QA — NHL 98, Need for Speed, Warcraft II, PGA Tour"],
+    ["200% faster","Skylanders","Asset-bundle loading, and a Havok-compatible scaling system"],
+  ]},
+];
+const TONES = [0x4fc3f7, 0x7c4dff, 0x5ee6a8, 0xffb74d];
+
+// ---------------------------------------------------------------- three setup
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x070b10, 0.028);
+
+const W = 26, H = 30;                       // world units
+const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 200);
+camera.position.set(0, -20, 26);
+camera.lookAt(0, 2, 0);
+
+scene.add(new THREE.AmbientLight(0x4a6a8a, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(6,-4,14); scene.add(key);
+const rim = new THREE.PointLight(0x7c4dff, 1.1, 60); rim.position.set(-10, 12, 10); scene.add(rim);
+
+// starfield
+(function stars(){
+  const g = new THREE.BufferGeometry(), n = 900, p = new Float32Array(n*3);
+  for(let i=0;i<n;i++){ p[i*3]=(Math.random()-.5)*120; p[i*3+1]=(Math.random()-.5)*120; p[i*3+2]=-20-Math.random()*50; }
+  g.setAttribute('position', new THREE.BufferAttribute(p,3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({color:0x9ec7e8, size:.16, transparent:true, opacity:.55})));
+})();
+
+// grid floor for depth cue
+(function floor(){
+  const grid = new THREE.GridHelper(90, 45, 0x14324a, 0x0e2233);
+  grid.rotation.x = Math.PI/2; grid.position.z = -6; scene.add(grid);
+})();
+
+function labelTexture(company, date, tone){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 160;
+  const x = c.getContext('2d');
+  const col = '#' + new THREE.Color(TONES[tone]).getHexString();
+  const g = x.createLinearGradient(0,0,0,160);
+  g.addColorStop(0,'rgba(12,20,30,.96)'); g.addColorStop(1,'rgba(8,14,22,.99)');
+  x.fillStyle = g; x.fillRect(0,0,512,160);
+  x.strokeStyle = col; x.lineWidth = 6; x.strokeRect(3,3,506,154);
+  x.fillStyle = col; x.fillRect(3,3,506,7);
+  x.textAlign='center';
+  x.fillStyle = '#eef5fb'; x.font = 'bold 46px ui-sans-serif,system-ui,sans-serif';
+  x.fillText(company, 256, 78, 470);
+  x.fillStyle = col; x.font = '30px ui-sans-serif,system-ui,sans-serif';
+  x.fillText(date, 256, 124, 470);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+
+// ---------------------------------------------------------------- game objects
+let blocks = [], bullets = [], bits = [];
+let ship, shipGlow;
+const BW = 5.4, BH = 1.9, GAPX = .55, GAPY = .75;
+
+function buildBoard(){
+  blocks.forEach(b=>scene.remove(b)); blocks = [];
+  const cols = ROWS[0].items.length;
+  const totalW = cols*BW + (cols-1)*GAPX;
+  ROWS.forEach((row, r)=>{
+    row.items.forEach(([co, date, detail], i)=>{
+      const geo = new THREE.BoxGeometry(BW, BH, 1.1);
+      const mat = new THREE.MeshStandardMaterial({
+        map: labelTexture(co, date, row.tone),
+        emissive: new THREE.Color(TONES[row.tone]).multiplyScalar(.13),
+        roughness:.55, metalness:.25
+      });
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(-totalW/2 + BW/2 + i*(BW+GAPX), 12.5 - r*(BH+GAPY), 0);
+      m.userData = {co, date, detail, tone:row.tone, alive:true, seed:Math.random()*6.28};
+      scene.add(m); blocks.push(m);
+    });
+  });
+  document.getElementById('total').textContent = blocks.length;
+}
+
+function buildShip(){
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.ConeGeometry(.85, 2.4, 4),
+    new THREE.MeshStandardMaterial({color:0xdfefff, emissive:0x2b6c99, roughness:.3, metalness:.6}));
+  body.rotation.x = Math.PI/2; g.add(body);
+  const wing = new THREE.Mesh(
+    new THREE.BoxGeometry(3.6,.5,.4),
+    new THREE.MeshStandardMaterial({color:0x9fc4de, emissive:0x1d4e70, roughness:.4, metalness:.5}));
+  wing.position.y = -.55; g.add(wing);
+  shipGlow = new THREE.PointLight(0x4fc3f7, 1.6, 12); shipGlow.position.z = 1.5; g.add(shipGlow);
+  g.position.set(0, -12.5, 0); scene.add(g); return g;
+}
+
+function spark(pos, colorHex, n){
+  for(let i=0;i<n;i++){
+    const m = new THREE.Mesh(
+      new THREE.TetrahedronGeometry(.16 + Math.random()*.2),
+      new THREE.MeshBasicMaterial({color:colorHex}));
+    m.position.copy(pos);
+    m.userData.v = new THREE.Vector3((Math.random()-.5)*.5,(Math.random()-.5)*.5,(Math.random()-.5)*.4);
+    m.userData.life = 1;
+    scene.add(m); bits.push(m);
+  }
+}
+
+// ---------------------------------------------------------------- state
+let state='menu', score=0, lives=3, descend=0, t=0, shake=0, breached=false;
+const keys = {};
+const readout = document.getElementById('readout');
+let readTimer = 0;
+
+function show(co, date, detail){
+  readout.innerHTML = `<span class="co">${co}</span> &nbsp;·&nbsp; ${date} &nbsp;—&nbsp; ${detail}`;
+  readout.classList.add('on'); readTimer = 3.2;
+}
+
+function reset(){
+  buildBoard();
+  bullets.forEach(b=>scene.remove(b)); bullets=[];
+  bits.forEach(b=>scene.remove(b)); bits=[];
+  score=0; lives=3; descend=0; shake=0; breached=false;
+  ship.position.x = 0;
+  document.getElementById('score').textContent = 0;
+  document.getElementById('lives').textContent = '♦♦♦';
+  readout.classList.remove('on');
+}
+
+function fire(){
+  if(state!=='play') return;
+  if(bullets.length > 4) return;
+  const m = new THREE.Mesh(
+    new THREE.CylinderGeometry(.14,.14,1.0,8),
+    new THREE.MeshBasicMaterial({color:0x8fe8ff}));
+  m.position.copy(ship.position); m.position.y += 1.4;
+  scene.add(m); bullets.push(m);
+}
+
+function endGame(win){
+  state = 'over';
+  document.getElementById('end').classList.remove('hide');
+  document.getElementById('endTitle').innerHTML = win
+    ? 'RÉSUMÉ <span>CLEARED</span>'
+    : 'THE RÉSUMÉ <span>WON</span>';
+  document.getElementById('endMsg').textContent = win
+    ? `All ${blocks.length} blocks read. That is thirty years of shipped software, start to finish.`
+    : `You read ${score} of ${blocks.length}. It is a long CV — that is rather the point.`;
+  document.getElementById('endLink').innerHTML =
+    'Prefer it flat? <a href="./RJ_Thompson_Resume.pdf" target="_blank" rel="noopener">Download the PDF résumé</a>.';
+}
+
+// ---------------------------------------------------------------- loop
+let last = performance.now();
+function tick(now){
+  const dt = Math.min((now-last)/1000, .05); last = now; t += dt;
+  requestAnimationFrame(tick);
+
+  if(state==='play'){
+    // ship
+    let dir = 0;
+    if(keys['ArrowLeft']||keys['a']) dir -= 1;
+    if(keys['ArrowRight']||keys['d']) dir += 1;
+    ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*22*dt, -W/2+2, W/2-2);
+    ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -dir*.35, .12);
+    shipGlow.intensity = 1.4 + Math.sin(t*9)*.3;
+
+    // board descends, faster as it empties
+    const pressure = 1 - (blocks.filter(b=>b.userData.alive).length / blocks.length);
+    descend += dt * (0.30 + pressure*0.85);
+
+    blocks.forEach(b=>{
+      if(!b.userData.alive) return;
+      b.position.y = b.userData.baseY ?? (b.userData.baseY = b.position.y);
+      b.position.y -= descend;
+      b.rotation.z = Math.sin(t*1.2 + b.userData.seed)*.03;
+      b.position.z = Math.sin(t*.9 + b.userData.seed)*.35;
+      if(b.position.y < -11.2) breached = true;
+    });
+
+    // a block reaching the ship costs a life and shoves the board back up
+    if(breached){
+      breached = false;
+      lives--;
+      descend = Math.max(0, descend - 5.5);
+      shake = .8;
+      spark(new THREE.Vector3(ship.position.x, ship.position.y + 1, 0), 0xff5470, 26);
+      document.getElementById('lives').textContent = lives > 0 ? '♦'.repeat(lives) : '—';
+    }
+
+    // bullets
+    for(let i=bullets.length-1;i>=0;i--){
+      const bl = bullets[i]; bl.position.y += 34*dt;
+      if(bl.position.y > 18){ scene.remove(bl); bullets.splice(i,1); continue; }
+      for(const b of blocks){
+        if(!b.userData.alive) continue;
+        if(Math.abs(bl.position.x - b.position.x) < BW/2 &&
+           Math.abs(bl.position.y - b.position.y) < BH/2){
+          b.userData.alive = false; b.visible = false;
+          spark(b.position, TONES[b.userData.tone], 14);
+          show(b.userData.co, b.userData.date, b.userData.detail);
+          score++; shake = .35;
+          document.getElementById('score').textContent = score;
+          scene.remove(bl); bullets.splice(i,1);
+          break;
+        }
+      }
+    }
+
+    if(lives<=0) endGame(false);
+    else if(score >= blocks.length) endGame(true);
+  }
+
+  // particles
+  for(let i=bits.length-1;i>=0;i--){
+    const p = bits[i];
+    p.position.add(p.userData.v);
+    p.userData.v.multiplyScalar(.94);
+    p.userData.life -= dt*1.7;
+    p.scale.setScalar(Math.max(p.userData.life,0));
+    if(p.userData.life<=0){ scene.remove(p); bits.splice(i,1); }
+  }
+
+  if(readTimer>0){ readTimer-=dt; if(readTimer<=0) readout.classList.remove('on'); }
+
+  // camera shake
+  if(shake>0){ shake-=dt; }
+  camera.position.x = (shake>0? (Math.random()-.5)*shake*2 : 0);
+  camera.position.y = -20 + (shake>0? (Math.random()-.5)*shake : 0);
+  camera.lookAt(0,2,0);
+
+  renderer.render(scene, camera);
+}
+
+// ---------------------------------------------------------------- input / boot
+addEventListener('keydown', e=>{
+  keys[e.key]=true;
+  if(e.key===' '){ e.preventDefault(); fire(); }
+});
+addEventListener('keyup', e=>keys[e.key]=false);
+addEventListener('pointermove', e=>{
+  if(state!=='play') return;
+  const nx = (e.clientX/innerWidth - .5) * (W-4);
+  ship.position.x = THREE.MathUtils.clamp(nx, -W/2+2, W/2-2);
+});
+addEventListener('pointerdown', ()=>fire());
+
+function resize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w,h,false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+ship = buildShip();
+buildBoard();
+resize();
+
+document.getElementById('go').onclick = ()=>{
+  document.getElementById('start').classList.add('hide');
+  blocks.forEach(b=>{ b.userData.baseY = undefined; });
+  reset(); state='play';
+};
+document.getElementById('again').onclick = ()=>{
+  document.getElementById('end').classList.add('hide');
+  blocks.forEach(b=>{ b.userData.baseY = undefined; });
+  reset(); state='play';
+};
+
+requestAnimationFrame(tick);
+</script>
