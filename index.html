@@ -277,6 +277,17 @@ doesn't have enough.</p>
   #chatIn:focus{outline:none;border-color:#2f6d99}
   .paper.feat{border-color:#2f6d99;background:#0d1c28}
   .paper.feat h4{color:#eaf5ff;font-size:14.5px;line-height:1.4}
+  .specbox{margin:10px 0 4px;padding:11px 13px;border:1px solid #24384a;border-radius:7px;
+    background:#0c141d;font-size:12.5px;line-height:1.6;color:#c2d3e2}
+  .specbox .k{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:#7d8fa1;
+    display:block;margin-bottom:3px}
+  .specbox .said{color:#eaf3fb;font-weight:600}
+  .specbox .warn{margin-top:9px;padding:9px 11px;border-left:3px solid #b5701f;background:#1d1408;
+    border-radius:0 5px 5px 0;color:#ffcda6}
+  .specbox .miss{color:#ffcda6}
+  .specbox ul{margin:5px 0 0;padding-left:18px}
+  .specbox code{background:#111c26;border:1px solid #1d2c3a;border-radius:4px;padding:1px 5px;
+    font-size:11.5px;color:#8fe8ff}
 </style>
 
 <div id="p-resume" class="panel">
@@ -421,9 +432,7 @@ doesn't have enough.</p>
   <div class="sub" id="s-synth">
     <h4>Program search <span class="beta">BETA</span></h4>
     <p class="lede">Write the examples; let a search find the function that satisfies all of them.</p>
-    <p class="broken-note" style="margin-top:10px"><strong>Currently broken.</strong> The in-page
-    demo on the <b>Write a function</b> tab does not work right now. It is left visible on purpose
-    rather than hidden, so the page shows what is actually running.</p>
+    <p class="broken-note" style="margin-top:10px"><strong>Currently broken, and worth being precise about why.</strong> Ask it for bubble sort and it hands back a correct one-line sort. That is the search doing its job: the examples constrain the output, not the algorithm. The deeper problem is the interface - nobody wants to type input/output pairs. It needs an English front end that shows the spec it derived, without quietly letting a language model write the answer.</p>
     <p>The idea: instead of predicting code, <strong>search</strong> a fixed set of primitives for a
     program that satisfies <em>every</em> supplied example, verified by real execution. The measured
     system behind it is roughly 2,600 lines, tested against 224 MBPP+ tasks.</p>
@@ -629,13 +638,21 @@ special-cased and no answer is stored. A "no chain" result is <b>not proof there
 
 <!-- ================= CODE PANEL ================= -->
 <div id="p-code" class="panel">
-<div class="broken-note"><strong>BETA - currently broken.</strong> This panel does not work right now. It is left up on purpose rather than hidden, so what is here is what is actually running. The description below is what it is meant to do once it is fixed.</div>
+<div class="broken-note"><strong>BETA - the front door is wrong, and it shows.</strong> Ask for bubble sort and the search returns a correct one-line sort, because the examples pin down <em>what comes out</em>, never <em>how</em>. Any sort satisfies them. On top of that, asking a person to hand-write <code>args -&gt; expected</code> is not how anyone wants to request code. The fix is an English front end that shows you the spec it derived before searching - and it has to stay a translator, not a code generator, or this page would be claiming a search result it did not actually earn. Left visible rather than hidden, because what is here is what is running.</div>
 <p class="small" style="margin-top:0">The other half of the same idea, in a different domain: given
 input→output examples, <strong>search</strong> a fixed set of primitives for one that satisfies
 <em>every</em> example - verified by real execution, not predicted by a model. This box
 re-implements a small slice of it entirely in this page; the measured system is a ~2,600-line
 search engine tested against 224 MBPP+ programming tasks.</p>
 
+<!-- rj-spec:start -->
+<div class="field-lbl" style="margin-top:2px">Ask in English</div>
+<div class="ask" style="gap:8px">
+  <input id="engAsk" placeholder="write bubble sort" autocomplete="off" style="flex:1">
+  <button id="engGo">Interpret</button>
+</div>
+<div id="engOut" class="specbox" style="display:none"></div>
+<!-- rj-spec:end -->
 <div class="field-lbl">Describe it in English (optional if you give examples below)</div>
 <input id="eng" value="reverse a list" placeholder="reverse a list" autocomplete="off">
 <div class="field-lbl" style="margin-top:10px">Examples - one per line, <code>args -&gt; expected</code>
@@ -4104,6 +4121,49 @@ renderCode();
   document.getElementById("chatIn").addEventListener("keydown", function(e){
     if(e.key==="Enter") send();
   });
+})();
+</script>
+
+<script src="./spec_en.js"></script>
+<script>
+/* rj-spec: English -> visible spec -> the existing example box. Translator only; the search
+   engine still has to find the program by running it. */
+(function(){
+  var go=document.getElementById("engGo"), inp=document.getElementById("engAsk"),
+      out=document.getElementById("engOut");
+  if(!go||!inp||!out||!window.SpecEN) return;
+
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function run(){
+    var spec=SpecEN.interpret(inp.value);
+    out.style.display="block";
+
+    if(!spec.ok){
+      out.innerHTML='<span class="k">could not interpret</span>'
+        + '<div class="miss">'+esc(SpecEN.restate(spec))+'</div>';
+      return;
+    }
+
+    var lines=SpecEN.exampleLines(spec);
+    var html='<span class="k">what I understood</span>'
+      + '<div class="said">'+esc(SpecEN.restate(spec))+'</div>'
+      + '<span class="k" style="margin-top:9px">the examples I derived, which the search must satisfy</span>'
+      + '<ul>'+lines.split("\n").map(function(l){ return "<li><code>"+esc(l)+"</code></li>"; }).join("")+'</ul>';
+
+    if(spec.underdetermined){
+      html += '<div class="warn"><strong>These examples cannot pin down the algorithm.</strong> '
+            + esc(spec.why) + '</div>';
+    }
+    out.innerHTML = html;
+
+    // hand the derived examples to the existing panel - it does the real work from here
+    var box=document.getElementById("ex"); if(box) box.value=lines;
+    var eng=document.getElementById("eng"); if(eng) eng.value=spec.desc;
+  }
+
+  go.addEventListener("click", run);
+  inp.addEventListener("keydown", function(e){ if(e.key==="Enter") run(); });
 })();
 </script>
 </body></html>
