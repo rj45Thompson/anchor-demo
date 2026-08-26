@@ -275,6 +275,8 @@ doesn't have enough.</p>
   #chatIn{flex:1;background:#0e1720;border:1px solid #24384a;border-radius:6px;color:#e8eef4;
     padding:8px 10px;font:inherit;font-size:13px}
   #chatIn:focus{outline:none;border-color:#2f6d99}
+  .paper.feat{border-color:#2f6d99;background:#0d1c28}
+  .paper.feat h4{color:#eaf5ff;font-size:14.5px;line-height:1.4}
 </style>
 
 <div id="p-resume" class="panel">
@@ -447,19 +449,33 @@ doesn't have enough.</p>
 </div>
 <!-- rj-inventions:end -->
 <div id="p-papers" class="panel">
-  <div class="paperdoc">
-    <div class="paperdoc-h">
-      <div>
-        <h3>Verified Knowledge Extraction from Language Models</h3>
-        <div class="sub">The whitepaper behind this page - including the part where we
-          withdrew our own headline number and re-measured it.</div>
-      </div>
-      <a class="rawlink" href="./WHITEPAPER.md" target="_blank" rel="noopener">raw .md &rarr;</a>
-    </div>
-    <div id="paperBody" class="paperbody">loading&hellip;</div>
+  <p class="small" style="margin-top:0">The written record. The paper is typeset and citable with a
+  DOI; the rest are the datasets and source it refers to. Nothing here is a summary of something
+  else - each link is the canonical copy.</p>
+
+  <div class="paper feat">
+    <h4>BossBench v1 and a Substrate-Grounded Wrapper for LLM Refusal Discipline
+      and Self-Extending Capabilities</h4>
+    <p>The paper, as submitted: the benchmark, the wrapper, the measurements and the controls.
+      Includes the correction where the earlier headline figures were withdrawn and re-measured on
+      four orders of magnitude more evidence.</p>
+    <a href="https://zenodo.org/api/records/20221916/files/main.pdf/content" target="_blank"
+       rel="noopener">Read the PDF &rarr;</a>
+    <a href="https://doi.org/10.5281/zenodo.20221916" target="_blank" rel="noopener"
+       style="margin-left:14px">DOI: 10.5281/zenodo.20221916 &rarr;</a>
+    <div class="tagrow"><span class="tag">peer-citable</span><span class="tag">typeset</span>
+      <span class="tag">archived</span></div>
   </div>
 
-  <h4 class="papers-sub">Artifacts</h4>
+  <div class="paper">
+    <h4>Verified Knowledge Extraction from Language Models</h4>
+    <p>The working document behind this page, kept in the repository in plain text so the diffs are
+      readable. This is the source the paper above was built from.</p>
+    <a href="./WHITEPAPER.md" target="_blank" rel="noopener">WHITEPAPER.md &rarr;</a>
+    <div class="tagrow"><span class="tag">source</span><span class="tag">markdown</span></div>
+  </div>
+
+  <h4 class="papers-sub">Datasets and code</h4>
   <div class="papers">
     <div class="paper">
       <h4>BossBench v1</h4>
@@ -476,20 +492,6 @@ doesn't have enough.</p>
       <a href="https://huggingface.co/datasets/RJ45Thompson/WarShip" target="_blank"
          rel="noopener">Dataset on Hugging Face &rarr;</a>
       <div class="tagrow"><span class="tag">reasoning traces</span><span class="tag">Apache-2.0</span></div>
-    </div>
-    <div class="paper">
-      <h4>Sober AI - verification wrapper</h4>
-      <p>Reference implementation of the propose &rarr; verify &rarr; report-confidence &rarr; refuse
-         discipline this whole page is built on.</p>
-      <a href="https://github.com/rj45Thompson/sober-ai-complete" target="_blank"
-         rel="noopener">Source on GitHub &rarr;</a>
-      <div class="tagrow"><span class="tag">MIT</span><span class="tag">verification</span></div>
-    </div>
-    <div class="paper">
-      <h4>Archived record</h4>
-      <p>Zenodo deposit for the benchmark and wrapper release.</p>
-      <a href="https://zenodo.org/records/20221916" target="_blank" rel="noopener">Zenodo &rarr;</a>
-      <div class="tagrow"><span class="tag">archived</span><span class="tag">citable</span></div>
     </div>
     <div class="paper">
       <h4>Correlation Anchor Theory</h4>
@@ -3914,54 +3916,8 @@ renderCode();
     document.querySelectorAll(".panel.on iframe[data-src]").forEach(function(f){
       if(!f.getAttribute("src")) f.setAttribute("src", f.getAttribute("data-src"));
     });
-    if(document.getElementById("p-papers").classList.contains("on")) loadPaper();
   }
 
-  /* Minimal markdown -> HTML. Escapes first, so nothing in the .md can inject markup. */
-  function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-  function inline(s){
-    return s
-      .replace(/`([^`]+)`/g, function(_,c){ return "<code>"+c+"</code>"; })
-      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
-      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  }
-  function md(src){
-    var out=[], lines=esc(src).split(/\r?\n/), i=0, inList=false, inCode=false;
-    function closeList(){ if(inList){ out.push("</ul>"); inList=false; } }
-    for(; i<lines.length; i++){
-      var L=lines[i];
-      if(/^```/.test(L)){ closeList(); inCode=!inCode; out.push(inCode?"<pre><code>":"</code></pre>"); continue; }
-      if(inCode){ out.push(L); continue; }
-      if(/^\s*$/.test(L)){ closeList(); continue; }
-      var h=L.match(/^(#{1,4})\s+(.*)$/);
-      if(h){ closeList(); var n=h[1].length; out.push("<h"+n+">"+inline(h[2])+"</h"+n+">"); continue; }
-      if(/^\s*[-*]\s+/.test(L)){
-        if(!inList){ out.push("<ul>"); inList=true; }
-        out.push("<li>"+inline(L.replace(/^\s*[-*]\s+/,""))+"</li>"); continue;
-      }
-      if(/^\s*\|/.test(L)){ closeList(); out.push("<p>"+inline(L)+"</p>"); continue; }
-      closeList(); out.push("<p>"+inline(L)+"</p>");
-    }
-    closeList(); if(inCode) out.push("</code></pre>");
-    return out.join("\n");
-  }
-
-  var paperLoaded=false;
-  function loadPaper(){
-    if(paperLoaded) return; paperLoaded=true;
-    var box=document.getElementById("paperBody");
-    fetch("./WHITEPAPER.md").then(function(r){
-      if(!r.ok) throw new Error("HTTP "+r.status);
-      return r.text();
-    }).then(function(t){ box.innerHTML = md(t); })
-      .catch(function(e){
-        paperLoaded=false;
-        box.innerHTML = '<p>Could not load the whitepaper here ('+esc(String(e.message))+
-          '). Read it directly: <a href="./WHITEPAPER.md" target="_blank" rel="noopener">WHITEPAPER.md</a>.</p>';
-      });
-  }
 
   document.querySelectorAll(".tab").forEach(function(t){
     t.addEventListener("click", function(){ setTimeout(hydrate, 0); });
