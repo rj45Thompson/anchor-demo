@@ -817,6 +817,50 @@ of JSON each, ~250-270 shards for one wide question) - genuine, necessary comput
 page pays too, not something a test harness can skip. `sleep` was still made overridable
 (`const`->`let`), a real if modest ~17% saving, kept for that reason alone.
 
+### B46 - "is there a favorite color" answers "black and white" via three association hops
+
+Found by predicting the outcome in writing first, then running it, so the surprises are recorded
+rather than rationalised. Predictions and results: `FAVORITE_COLOR_TEST.md`. I predicted a clean
+abstention in under 60 nodes. What actually happened:
+
+    00 LOAD   subject := "favorite"                          shard 461
+    01 CHECK  favorite --related to--> "website"    k=1 PASS (1 independent source - real evidence)
+    02 WALK   favorite --related to--> "website"    p_hop=44.9%  p_chain=44.9%
+    03 CHECK  website --part of--> "The Web"        k=1 PASS
+    04 WALK   website --part of--> "The Web"        p_hop=44.9%  p_chain=20.2%
+    05 CHECK  The Web --color--> "black and white"  k=1 PASS
+
+It hit the 190-node cap, ran past 5,000 trace steps and 30 seconds, and answered **"black and
+white"**.
+
+**This is B44's sibling, not a new mechanism.** B44 was `finger -part of-> hand -related to->
+people` at 20.2%; this chain passes through the identical 20.2% at hop 2. Both are association
+walks presented as answers. The difference is that B44 was a count question and this is an
+existence/preference question, so the ask-back branch added for B44 does not catch it.
+
+**Two things are true and should not be collapsed.** The confidence maths is honest: `p_hop=44.9%`
+is the measured one-source figure from our own anchor law, and `p_chain` decays 44.9 -> 20.2 -> ~9%.
+The engine is openly saying this chain is about nine percent likely. The defect is upstream of the
+maths - `related to` (ConceptNet RelatedTo) is an *association*, not a fact. "favorite" is related
+to "website" because of bookmarks. Once RelatedTo is chainable, the search can walk from any word
+to any other word, and the gate still prints "PASS (1 independent source - real evidence)" three
+times in a row while doing it.
+
+Also worth separating: taking `p_hop = 44.9%` for a RelatedTo edge is a category error. The 44.9%
+was measured over provenance-bearing factual triples, not over word associations, so the number is
+being applied to a kind of object it was never measured on.
+
+*Not fixed.* Per RJ on B44 - "the facts are in the reasoning and asking back when lost. the
+debugger. it's never going to be just a lookup" - the fix should extend the existing ask-back
+rather than hard-blocking RelatedTo or bolting on a canned message. The shape that follows from
+B44's precedent: when every hop in a completed chain is k=1 *and* the chain leans on association
+edges, the reasoning should say what it actually found ("I found an association, not a fact about
+favourite colours") instead of presenting it as an answer.
+
+*Status of the question as the default:* added to the Try list as requested, currently first. It is
+a genuinely good debugger demo and a good bug report. It is a poor shop window while it still
+grinds to the node cap and answers "black and white".
+
 ### B45 - "how many moons does Jupiter have" answered about a children's book instead
 Found running the full 100-question cardinality zoo B44 was verified against, not by hand: "how
 many moons does Jupiter/Saturn/Neptune have" and "how many moons does the Earth have" all resolved
