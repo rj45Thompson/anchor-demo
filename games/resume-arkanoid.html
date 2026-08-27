@@ -62,6 +62,7 @@
   </div>
 
   <div class="hud" id="readout"></div>
+  <div class="hud" id="banner" style="left:0;right:0;top:38%;text-align:center;font-size:26px;font-weight:800;letter-spacing:3px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
   <div class="hud" id="power" style="left:14px;bottom:44px;font-weight:700;letter-spacing:.5px"></div>
   <div class="hud" id="bottom">
     <kbd>←</kbd> <kbd>→</kbd> or move mouse to aim &nbsp;·&nbsp; <kbd>space</kbd> / click to fire
@@ -179,7 +180,7 @@ const TONES_HEX = ['#8fd7ff','#c9b6ff','#9ff0c8','#ffd79a'];
 // ---------------------------------------------------------------- the CV, as text
 // Every line is real. Companies and dates come first, the detail is indented under them, so the
 // crawl reads like the document rather than a word cloud.
-const WRAP = 40;                      // max characters per rendered line
+const WRAP = 32;                      // max characters per rendered line
 function wrapWords(text, indent){
   const words = text.split(/\s+/), out = [], pre = indent || "";
   let cur = pre;
@@ -236,8 +237,12 @@ function glyphTexture(ch, tone, kind){
 // and a dissolve the break animation drives. No post-processing - r128 here has no EffectComposer,
 // so the look is done per-material.
 const LETTER_VERT = `
-  varying vec2 vUv;
-  void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
+  varying vec2 vUv; varying vec3 vN;
+  void main(){
+    vUv = uv;
+    vN = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+  }
 `;
 const LETTER_FRAG = `
   uniform sampler2D map;
@@ -245,9 +250,20 @@ const LETTER_FRAG = `
   uniform float uTime;
   uniform float uDissolve;   // 0 = intact, 1 = gone
   uniform float uHot;        // 0..1 proximity to the firing line
-  varying vec2 vUv;
+  uniform float uReveal;     // 0 = flat morning, 1 = full colour
+  varying vec2 vUv; varying vec3 vN;
   float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }
   void main(){
+    // BoxGeometry: the +z face points at the camera and carries the glyph. The other five are
+    // the extrusion, drawn as a solid bevel so the letter reads as a 3D block rather than a decal
+    // floating in space. Without this the box just showed the glyph on all six faces.
+    float facing = vN.z;
+    if(facing < 0.55){
+      float shade = 0.16 + 0.24 * max(0.0, vN.y) + 0.10 * abs(vN.x);
+      vec3 bevel = tint * shade * (0.55 + 0.45*uReveal);
+      gl_FragColor = vec4(bevel, 0.92);
+      return;
+    }
     vec4 tex = texture2D(map, vUv);
     if(tex.a < 0.02) discard;
 
@@ -258,6 +274,8 @@ const LETTER_FRAG = `
 
     float scan = 0.90 + 0.10*sin((vUv.y*46.0) + uTime*2.4);
     vec3  col  = tint * tex.rgb * scan;
+    float g = dot(col, vec3(0.299,0.587,0.114));
+    col = mix(vec3(g)*0.85, col, 0.25 + 0.75*uReveal);
     col += tint * uHot * 0.55;                       // brighten as it nears the ship
     col += vec3(1.0,0.72,0.35) * (1.0-edge) * 1.6;   // hot ember at the dissolve front
     gl_FragColor = vec4(col, tex.a);
@@ -265,9 +283,9 @@ const LETTER_FRAG = `
 `;
 
 // ---------------------------------------------------------------- layout + pooling
-const CH_W = 0.86, LINE_H = 2.0;      // glyph pitch, line pitch
+const CH_W = 1.12, LINE_H = 2.5;      // glyph pitch, line pitch
 const VIEW_TOP = 15.0, VIEW_BOT = -13.5;
-const letterGeo = new THREE.PlaneGeometry(CH_W*1.05, CH_W*1.35);
+const letterGeo = new THREE.BoxGeometry(CH_W*0.94, CH_W*1.24, CH_W*0.46);
 
 const board = new THREE.Group(); scene.add(board);
 let textHalfW = 12;    // widest rendered line, drives ship reach and camera fit
@@ -279,9 +297,9 @@ let brokenCount = 0, totalGlyphs = 0, linesRead = new Set();
 function makeLetterMesh(){
   const m = new THREE.Mesh(letterGeo, new THREE.ShaderMaterial({
     uniforms:{ map:{value:null}, tint:{value:new THREE.Color(0xffffff)},
-               uTime:{value:0}, uDissolve:{value:0}, uHot:{value:0} },
+               uTime:{value:0}, uDissolve:{value:0}, uHot:{value:0}, uReveal:{value:0} },
     vertexShader: LETTER_VERT, fragmentShader: LETTER_FRAG,
-    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
+    transparent:true, depthWrite:true, side:THREE.FrontSide
   }));
   m.visible = false; board.add(m); return m;
 }
@@ -327,9 +345,10 @@ function buildBoard(){
 // and from then on every broken letter buys a little more richness: saturation, glow, engine
 // heat, starfield. Nothing here is a discrete mode switch, it is one number driving everything,
 // so it never pops - which was the complaint about the manual camera cycler this replaces.
-const CAM_FLAT = { pos:[0,-4,30],  look:[0,3,0],  tilt:0.00 };
-const CAM_COOL = { pos:[0,-15,23], look:[0,6,0],  tilt:0.58 };
+const CAM_FLAT = { pos:[0,-7.5,29], look:[0,3.5,0], tilt:0.16 };
+const CAM_COOL = { pos:[-4.5,-16,21], look:[1.5,6.5,0], tilt:0.62 };
 
+let mushroomDone = false, panBoost = 0;   // panBoost is a one-off camera swing, eased like reveal
 let reveal = 0;        // 0 = flat morning, 1 = full colour. eased toward revealTarget
 let revealTarget = 0;
 let firstHitDone = false;
@@ -342,8 +361,48 @@ function bumpReveal(){
   revealTarget = Math.min(1, Math.max(revealTarget, 0.55 + prog*4.5));
 }
 
+// The five-second beat. The game opens simple and static on purpose; this is the moment it
+// announces itself - a powerup drops in and the camera swings to a new angle to show it off.
+function mushroomBeat(){
+  if(mushroomDone || state!=="play" || t < 5) return;
+  mushroomDone = true;
+  const m = makeMushroom();
+  m.position.set((Math.random()*2-1)*Math.min(6, textHalfW*0.4), VIEW_TOP-1.5, 0);
+  m.userData = {key:"laser", mushroom:true};
+  board.add(m); drops.push(m);
+  panBoost = 1;                       // swing the camera, then ease back
+  revealTarget = Math.max(revealTarget, 0.42);
+  banner("POWER UP INBOUND");
+}
+
+function banner(txt){
+  const el=document.getElementById("banner"); if(!el) return;
+  el.textContent=txt; el.style.opacity="1";
+  clearTimeout(el._t); el._t=setTimeout(()=>{ el.style.opacity="0"; }, 1900);
+}
+
+function makeMushroom(){
+  const g = new THREE.Group();
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 16, 12, 0, Math.PI*2, 0, Math.PI/2),
+    new THREE.MeshStandardMaterial({color:0xff3b5c, emissive:0x8c1226, emissiveIntensity:0.8,
+      roughness:0.35, metalness:0.15, flatShading:true}));
+  cap.rotation.x = Math.PI; cap.position.y = 0.16; g.add(cap);
+  // spots, so it reads as a mushroom at a glance and not just a dome
+  for(let i=0;i<6;i++){
+    const a = i/6*Math.PI*2, r = 0.34;
+    const sp = new THREE.Mesh(new THREE.SphereGeometry(0.115, 8, 6),
+      new THREE.MeshBasicMaterial({color:0xfff2f4}));
+    sp.position.set(Math.cos(a)*r, 0.22, Math.sin(a)*r); sp.scale.y = 0.45; g.add(sp);
+  }
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.26, 0.52, 10),
+    new THREE.MeshStandardMaterial({color:0xf3e6cf, roughness:0.75}));
+  stem.position.y = -0.28; g.add(stem);
+  return g;
+}
+
 function applyCam(){
-  const e = reveal<=0 ? 0 : (reveal>=1 ? 1 : reveal*reveal*(3-2*reveal));   // smoothstep
+  const e0 = reveal<=0 ? 0 : (reveal>=1 ? 1 : reveal*reveal*(3-2*reveal));   // smoothstep
+  const e = Math.min(1, e0 + panBoost*0.55);   // the 5s beat swings further, then eases back
   const lerp=(a,b)=>a+(b-a)*e;
   const asp = (isFinite(camera.aspect) && camera.aspect>0) ? camera.aspect : (innerWidth/innerHeight||1.6);
   const need = (textHalfW + 2.5) / Math.tan((camera.fov*Math.PI/180)/2) / asp;
@@ -353,6 +412,7 @@ function applyCam(){
                       lerp(CAM_FLAT.pos[1],CAM_COOL.pos[1]), dist);
   camera.lookAt(lerp(CAM_FLAT.look[0],CAM_COOL.look[0]),
                 lerp(CAM_FLAT.look[1],CAM_COOL.look[1]), 0);
+  camera.rotation.z += panBoost*0.06;
   board.rotation.x = lerp(CAM_FLAT.tilt, CAM_COOL.tilt);
 }
 
@@ -361,18 +421,46 @@ function applyCam(){
 // company names, so drops track the meaningful bits of the CV), and never more than one live drop
 // at a time.
 const POWERS = {
-  flame: { n:"FLAMETHROWER", col:0xff7a2a, dur:7.0 },
-  spread:{ n:"SPREAD SHOT",  col:0x8fe8ff, dur:8.0 }
+  laser:  { n:"LASER",        col:0x8fe8ff, dur:9.0,  icon:"bar"   },
+  flame:  { n:"FLAMETHROWER", col:0xff7a2a, dur:7.0,  icon:"cone"  },
+  spread: { n:"SPREAD SHOT",  col:0xa6ff8f, dur:8.0,  icon:"fan"   },
+  pierce: { n:"RAIL PIERCE",  col:0xd08fff, dur:7.5,  icon:"spike" },
+  rapid:  { n:"RAPID FIRE",   col:0xffd24a, dur:8.5,  icon:"dots"  }
 };
+const POWER_KEYS = Object.keys(POWERS);
+
+// Icons are built geometry rather than a coloured blob, so a drop is identifiable in the air.
+function powerIcon(key){
+  const P = POWERS[key], g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({color:P.col, emissive:P.col,
+    emissiveIntensity:0.75, roughness:0.3, metalness:0.35, flatShading:true});
+  if(P.icon==="bar"){
+    const m=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.95,0.16),mat); g.add(m);
+  } else if(P.icon==="cone"){
+    const m=new THREE.Mesh(new THREE.ConeGeometry(0.42,0.85,10),mat); m.rotation.x=Math.PI; g.add(m);
+  } else if(P.icon==="fan"){
+    [-0.45,0,0.45].forEach(a=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(0.11,0.78,0.11),mat);
+      m.rotation.z=a; m.position.x=a*0.5; g.add(m); });
+  } else if(P.icon==="spike"){
+    const m=new THREE.Mesh(new THREE.OctahedronGeometry(0.46,0),mat); m.scale.y=1.9; g.add(m);
+  } else {
+    for(let i=0;i<3;i++){ const m=new THREE.Mesh(new THREE.SphereGeometry(0.20,10,8),mat);
+      m.position.y=(i-1)*0.42; g.add(m); }
+  }
+  // shared halo so every drop reads as "pick me up"
+  const halo=new THREE.Mesh(new THREE.RingGeometry(0.62,0.74,20),
+    new THREE.MeshBasicMaterial({color:P.col,transparent:true,opacity:0.55,side:THREE.DoubleSide}));
+  g.add(halo); g.userData.halo=halo;
+  return g;
+}
 let drops = [], power = null, powerT = 0, flameCone = null;
 
 function maybeDrop(x, y, kind){
   if(drops.length) return;                        // one at a time
   if(kind !== "role") return;                     // only the company lines drop
   if(Math.random() > 0.5) return;
-  const key = Math.random() < 0.6 ? "flame" : "spread";
-  const m = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42, 0),
-    new THREE.MeshBasicMaterial({color:POWERS[key].col}));
+  const key = POWER_KEYS[(Math.random()*POWER_KEYS.length)|0];
+  const m = powerIcon(key);
   m.position.set(x, y, 0); m.userData = {key};
   board.add(m); drops.push(m);
 }
@@ -446,6 +534,7 @@ function syncMeshes(){
         L.mesh.position.set(L.x, y, 0);
         L.mesh.material.uniforms.uTime.value = t;
         L.mesh.material.uniforms.uDissolve.value = L.dissolve;
+        L.mesh.material.uniforms.uReveal.value = reveal;
         L.mesh.material.uniforms.uHot.value =
           Math.max(0, 1 - Math.abs(y - (ship.position.y+7)) / 9);
       }
@@ -485,6 +574,42 @@ function fighterMesh(hue){
   const eng=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:new THREE.Color().setHSL(hue,0.9,0.62),blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));
   eng.scale.set(1.7,1.7,1); eng.position.set(0,0,2.0*S); grp.add(eng); grp.userData.eng=eng;
   return grp;
+}
+
+// Mouse is the weapon, keys are the legs. Mouse position is projected onto the play plane so the
+// beam points where the pointer actually is, not where the ship happens to be.
+const aim = new THREE.Vector2(0, 1);
+let firing = false, laserBeam = null, fireCool = 0;
+
+function updateAim(ev){
+  const r = renderer.domElement.getBoundingClientRect();
+  const ndc = new THREE.Vector2(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1);
+  const v = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(camera);
+  const dir = v.sub(camera.position).normalize();
+  const dist = -camera.position.z / dir.z;                 // intersect the z=0 play plane
+  const hit = camera.position.clone().add(dir.multiplyScalar(dist));
+  const local = board.worldToLocal(hit.clone());
+  aim.set(local.x - ship.position.x, Math.max(0.6, local.y - ship.position.y)).normalize();
+}
+addEventListener("mousemove", e=>{ if(ship) updateAim(e); });
+addEventListener("mousedown", e=>{ if(e.button===0){ firing=true; if(ship) updateAim(e); } });
+addEventListener("mouseup",   ()=>{ firing=false; });
+
+function makeLaser(){
+  const g=new THREE.PlaneGeometry(0.34, 40);
+  const m=new THREE.ShaderMaterial({
+    uniforms:{uTime:{value:0},uCol:{value:new THREE.Color(0x8fe8ff)}},
+    vertexShader:`varying vec2 vUv; void main(){ vUv=uv;
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`uniform float uTime; uniform vec3 uCol; varying vec2 vUv;
+      void main(){
+        float core = smoothstep(0.5,0.0,abs(vUv.x-0.5)*2.0);
+        float pulse = 0.75+0.25*sin(uTime*30.0 - vUv.y*24.0);
+        float fade = smoothstep(1.0,0.15,vUv.y);
+        gl_FragColor = vec4(uCol*(0.6+core*1.6), core*pulse*fade*0.95);
+      }`,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide});
+  const mesh=new THREE.Mesh(g,m); mesh.visible=false; return mesh;
 }
 
 function buildShip(){
@@ -557,6 +682,7 @@ function buildShip(){
     g.add(pl); g.userData.plumes.push(pl);
   });
 
+  laserBeam = makeLaser(); laserBeam.position.y = 20; g.add(laserBeam);
   shipGlow = new THREE.PointLight(0x4fc3f7, 1.6, 14); shipGlow.position.z = 1.5; g.add(shipGlow);
   g.position.set(0, -12.5, 0); board.add(g);
   return g;
@@ -592,7 +718,7 @@ function reset(){
   score=0; lives=3; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
-  reveal=0; revealTarget=0; firstHitDone=false;
+  reveal=0; revealTarget=0; firstHitDone=false; mushroomDone=false; panBoost=0;
   ship.position.x = 0;
   document.getElementById('score').textContent = 0;
   document.getElementById('lives').textContent = 'READING';
@@ -658,6 +784,8 @@ function tick(now){
     const cleared = totalGlyphs ? brokenCount/totalGlyphs : 0;
     crawl += dt * (2.05 + cleared*0.5);
     // ease toward the earned reveal, then let everything read off that one number
+    mushroomBeat();
+    panBoost += (0 - panBoost) * Math.min(1, dt*0.55);   // swings out, settles back
     reveal += (revealTarget - reveal) * Math.min(1, dt*1.6);
     applyCam();
     gradeScene();
@@ -667,7 +795,8 @@ function tick(now){
       d.position.y -= 7.5*dt; d.rotation.y += dt*2.4; d.rotation.x += dt*1.7;
       if(Math.abs(d.position.x-ship.position.x)<1.5 &&
          Math.abs(d.position.y-ship.position.y)<1.5){
-        givePower(d.userData.key); spark(d.position, POWERS[d.userData.key].col, 16);
+        givePower(d.userData.key); spark(d.position, POWERS[d.userData.key].col, 20);
+        banner(POWERS[d.userData.key].n);
         board.remove(d); drops.splice(i,1); continue;
       }
       if(d.position.y < VIEW_BOT-2){ board.remove(d); drops.splice(i,1); }
@@ -680,6 +809,48 @@ function tick(now){
       if(powerT<=0){ power=null; if(flameCone) flameCone.visible=false; }
       badgePower();
     }
+
+    // aim the ship and the beam at the pointer
+    const ang = Math.atan2(aim.x, aim.y);
+    ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -ang*0.55, 0.18);
+    if(laserBeam){
+      laserBeam.rotation.z = -ang;
+      laserBeam.position.set(Math.sin(ang)*20, Math.cos(ang)*20, 0);
+      laserBeam.visible = firing;
+      laserBeam.material.uniforms.uTime.value = t;
+      laserBeam.material.uniforms.uCol.value.set(POWERS[power||"laser"].col);
+    }
+
+    // LASER: a continuous cut along the aim ray. Every letter whose centre lies within the beam
+    // half-width of the ray, and in front of the ship, burns. This is the default weapon.
+    if(firing){
+      const ox = ship.position.x, oy = ship.position.y;
+      lines.forEach(line=>{
+        const ly = line.y - crawl;
+        if(ly < oy) return;
+        line.letters.forEach(L=>{
+          if(L.broken || L.dissolve>0) return;
+          const dx = L.x - ox, dy = ly - oy;
+          const proj = dx*aim.x + dy*aim.y;               // distance along the ray
+          if(proj <= 0) return;
+          const perp = Math.abs(dx*aim.y - dy*aim.x);     // distance from the ray
+          const width = power==='pierce' ? CH_W*1.35 : (power==='spread' ? CH_W*1.9 : CH_W*0.62);
+          if(perp > width) return;
+          if(power!=='pierce' && power!=='spread' && proj > 26) return;   // plain laser has range
+          L.dissolve = 0.01;
+          brokenCount++; bumpReveal();
+          maybeDrop(L.x, ly, line.kind);
+          if(line.meta && line.meta.co && !linesRead.has(line.i)){
+            linesRead.add(line.i);
+            show(line.meta.co, line.meta.date, line.meta.detail);
+          }
+        });
+      });
+      document.getElementById("score").textContent = brokenCount;
+    }
+
+    // spin the drops so the icons read in the air
+    drops.forEach(d=>{ if(d.userData.halo) d.userData.halo.rotation.z += dt*1.8; });
 
     // FLAMETHROWER burns everything inside the cone, continuously
     if(power==="flame"){
