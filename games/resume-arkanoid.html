@@ -62,6 +62,7 @@
   </div>
 
   <div class="hud" id="readout"></div>
+  <div class="hud" id="power" style="left:14px;bottom:44px;font-weight:700;letter-spacing:.5px"></div>
   <div class="hud" id="bottom">
     <kbd>←</kbd> <kbd>→</kbd> or move mouse to aim &nbsp;·&nbsp; <kbd>space</kbd> / click to fire
   </div>
@@ -355,6 +356,66 @@ function applyCam(){
   board.rotation.x = lerp(CAM_FLAT.tilt, CAM_COOL.tilt);
 }
 
+// ---------------------------------------------------------------- powerups
+// Drops come off broken letters. Two rules keep it from being noise: only ROLE lines drop (the
+// company names, so drops track the meaningful bits of the CV), and never more than one live drop
+// at a time.
+const POWERS = {
+  flame: { n:"FLAMETHROWER", col:0xff7a2a, dur:7.0 },
+  spread:{ n:"SPREAD SHOT",  col:0x8fe8ff, dur:8.0 }
+};
+let drops = [], power = null, powerT = 0, flameCone = null;
+
+function maybeDrop(x, y, kind){
+  if(drops.length) return;                        // one at a time
+  if(kind !== "role") return;                     // only the company lines drop
+  if(Math.random() > 0.5) return;
+  const key = Math.random() < 0.6 ? "flame" : "spread";
+  const m = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42, 0),
+    new THREE.MeshBasicMaterial({color:POWERS[key].col}));
+  m.position.set(x, y, 0); m.userData = {key};
+  board.add(m); drops.push(m);
+}
+
+function makeFlameCone(){
+  const geo = new THREE.ConeGeometry(3.1, 7.0, 18, 1, true);
+  const mat = new THREE.ShaderMaterial({
+    uniforms:{ uTime:{value:0} },
+    vertexShader:`varying vec2 vUv; varying float vY;
+      void main(){ vUv=uv; vY=position.y;
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`
+      uniform float uTime; varying vec2 vUv; varying float vY;
+      float h(vec2 p){ return fract(sin(dot(p,vec2(31.7,57.3)))*421.13); }
+      void main(){
+        float along = clamp((vY+3.5)/7.0, 0.0, 1.0);
+        float n = h(vec2(floor(vUv.x*22.0), floor(uTime*26.0)));
+        float a = pow(along, 1.25) * (0.55 + 0.45*n) * 0.80;
+        vec3 c = mix(vec3(1.0,0.95,0.55), vec3(1.0,0.28,0.05), 1.0-along);
+        gl_FragColor = vec4(c, a);
+      }`,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide });
+  const m = new THREE.Mesh(geo, mat);
+  m.rotation.x = Math.PI;    // opens upward, toward the CV
+  m.position.y = 3.6;
+  return m;
+}
+
+function givePower(key){
+  power = key; powerT = POWERS[key].dur;
+  if(key === "flame"){
+    if(!flameCone){ flameCone = makeFlameCone(); ship.add(flameCone); }
+    flameCone.visible = true;
+  }
+  badgePower();
+}
+function badgePower(){
+  const el = document.getElementById("power");
+  if(!el) return;
+  el.textContent = power ? POWERS[power].n + "  " + powerT.toFixed(1) + "s" : "";
+  el.style.color = power ? "#" + POWERS[power].col.toString(16).padStart(6,"0") : "";
+}
+
 function gradeScene(){
   const e = reveal;
   // lights come up like a morning
@@ -362,9 +423,6 @@ function gradeScene(){
   if(typeof rim!=="undefined" && rim)  rim.intensity  = 0.20 + e*1.35;
   if(shipGlow) shipGlow.intensity = (0.5 + e*1.4) + Math.sin(t*9)*.3*e;
   // ship heat and shield only really switch on once the world has opened up
-  if(ship && ship.userData.ring)
-    ship.userData.ring.material.uniforms.uTime.value = t;
-  if(ship && ship.userData.plumeBase !== undefined) ship.userData.plumeBase = e;
   // starfield brightens
   if(typeof starPoints!=="undefined" && starPoints && starPoints.material)
     starPoints.material.opacity = 0.25 + e*0.55;
@@ -430,59 +488,78 @@ function fighterMesh(hue){
 }
 
 function buildShip(){
-
   const g = new THREE.Group();
-  // same hull the fleet flies in Star Fighter, nose pointed up-screen at the CV
-  const dart = fighterMesh(0.55);
-  dart.rotation.x = -Math.PI/2;
-  dart.scale.setScalar(0.62);
-  g.add(dart);
-  g.userData.eng = dart.userData.eng;
 
-  // --- shader bits that make it read as a ship rather than a triangle ---
-  // engine plume: a cone whose alpha falls off along its length and flickers on a noise term
-  const plume = new THREE.Mesh(
-    new THREE.ConeGeometry(0.55, 2.6, 14, 1, true),
-    new THREE.ShaderMaterial({
-      uniforms:{ uTime:{value:0}, uThrust:{value:0} },
-      vertexShader:`varying vec2 vUv; varying float vY;
-        void main(){ vUv=uv; vY=position.y;
-          gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-      fragmentShader:`
-        uniform float uTime, uThrust; varying vec2 vUv; varying float vY;
-        float h(vec2 p){ return fract(sin(dot(p,vec2(23.1,41.7)))*3571.19); }
-        void main(){
-          float along = clamp((vY+1.3)/2.6, 0.0, 1.0);      // 0 at nozzle, 1 at tail
-          float flick = 0.75 + 0.25*h(vec2(floor(uTime*34.0), floor(vUv.x*7.0)));
-          float a = pow(1.0-along, 1.7) * flick * (0.35 + uThrust*0.85);
-          vec3 hot  = vec3(0.62,0.90,1.00);
-          vec3 cool = vec3(0.16,0.42,0.95);
-          gl_FragColor = vec4(mix(hot, cool, along), a);
-        }`,
-      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide
-    }));
-  plume.rotation.x = Math.PI;          // point it backwards, down-screen
-  plume.position.y = -1.5;
-  g.add(plume); g.userData.plume = plume;
+  // Starblast-style hull, built here rather than ported: starfighter.html only ships ONE mesh
+  // (fighterMesh) and its HULLS table is stat blocks, not models, so there was no cooler model to
+  // take. Chunky faceted fuselage, swept wings, twin engine pods, glowing core.
+  const HULL_MAT = new THREE.MeshStandardMaterial({
+    color:0x9fb4c6, map:HULL, metalness:0.72, roughness:0.34, flatShading:true });
+  const TRIM_MAT = new THREE.MeshStandardMaterial({
+    color:0x2f6d99, emissive:0x14405e, emissiveIntensity:0.9, metalness:0.6, roughness:0.35,
+    flatShading:true });
 
-  // shield: a thin ring that pulses, so the player has a visible footprint
-  const ring = new THREE.Mesh(
-    new THREE.RingGeometry(1.5, 1.72, 48),
-    new THREE.ShaderMaterial({
-      uniforms:{ uTime:{value:0} },
-      vertexShader:`varying vec2 vUv; void main(){ vUv=uv;
+  // fuselage: a stretched octahedron reads chunky and faceted from any angle
+  const fus = new THREE.Mesh(new THREE.OctahedronGeometry(0.95, 0), HULL_MAT);
+  fus.scale.set(0.62, 1.55, 0.52); g.add(fus);
+
+  // nose
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.34, 1.15, 6), TRIM_MAT);
+  nose.position.y = 1.45; g.add(nose);
+
+  // swept wings
+  const wingGeo = new THREE.BufferGeometry();
+  wingGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+     0,0.35,0,  2.15,-0.75,0,  0.30,-0.55,0,
+     0,0.35,0,  0.30,-0.55,0,  0.10,0.10,0
+  ],3));
+  wingGeo.computeVertexNormals();
+  const wL = new THREE.Mesh(wingGeo, HULL_MAT); g.add(wL);
+  const wR = new THREE.Mesh(wingGeo, HULL_MAT); wR.scale.x = -1; g.add(wR);
+
+  // twin engine pods
+  const podGeo = new THREE.CylinderGeometry(0.24, 0.30, 0.95, 8);
+  [-0.78, 0.78].forEach(x=>{
+    const pod = new THREE.Mesh(podGeo, HULL_MAT);
+    pod.position.set(x, -0.85, 0); g.add(pod);
+  });
+
+  // glowing core, sits between the pods
+  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.30, 0),
+    new THREE.MeshBasicMaterial({color:0x8fe8ff}));
+  core.position.y = -0.30; g.add(core); g.userData.core = core;
+
+  const cock = new THREE.Mesh(new THREE.SphereGeometry(0.30, 12, 10),
+    new THREE.MeshStandardMaterial({color:0xbfefff, emissive:0x66ccff,
+      emissiveIntensity:0.85, roughness:0.18, metalness:0.2}));
+  cock.position.set(0, 0.55, 0.22); g.add(cock);
+
+  // two plumes, one per pod, alpha falling off along their length
+  const plumeMat = ()=> new THREE.ShaderMaterial({
+    uniforms:{ uTime:{value:0}, uThrust:{value:0} },
+    vertexShader:`varying vec2 vUv; varying float vY;
+      void main(){ vUv=uv; vY=position.y;
         gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-      fragmentShader:`uniform float uTime; varying vec2 vUv;
-        void main(){
-          float pulse = 0.45 + 0.55*sin(uTime*2.2);
-          float band  = smoothstep(0.0,0.5,vUv.y)*smoothstep(1.0,0.5,vUv.y);
-          gl_FragColor = vec4(vec3(0.36,0.80,1.0), band*0.30*pulse);
-        }`,
-      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide
-    }));
-  g.add(ring); g.userData.ring = ring;
-  shipGlow = new THREE.PointLight(0x4fc3f7, 1.6, 12); shipGlow.position.z = 1.5; g.add(shipGlow);
-  g.position.set(0, -12.5, 0); scene.add(g); return g;
+    fragmentShader:`
+      uniform float uTime, uThrust; varying vec2 vUv; varying float vY;
+      float h(vec2 p){ return fract(sin(dot(p,vec2(23.1,41.7)))*3571.19); }
+      void main(){
+        float along = clamp((vY+1.1)/2.2, 0.0, 1.0);
+        float flick = 0.78 + 0.22*h(vec2(floor(uTime*30.0), floor(vUv.x*6.0)));
+        float a = pow(1.0-along, 1.6) * flick * (0.20 + uThrust*0.95);
+        gl_FragColor = vec4(mix(vec3(0.70,0.94,1.0), vec3(0.15,0.40,0.95), along), a);
+      }`,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide });
+  g.userData.plumes = [];
+  [-0.78, 0.78].forEach(x=>{
+    const pl = new THREE.Mesh(new THREE.ConeGeometry(0.30, 2.2, 10, 1, true), plumeMat());
+    pl.rotation.x = Math.PI; pl.position.set(x, -2.0, 0);
+    g.add(pl); g.userData.plumes.push(pl);
+  });
+
+  shipGlow = new THREE.PointLight(0x4fc3f7, 1.6, 14); shipGlow.position.z = 1.5; g.add(shipGlow);
+  g.position.set(0, -12.5, 0); board.add(g);
+  return g;
 }
 
 function spark(pos, colorHex, n){
@@ -513,6 +590,9 @@ function reset(){
   bullets.forEach(b=>scene.remove(b)); bullets=[];
   bits.forEach(b=>scene.remove(b)); bits=[];
   score=0; lives=3; shake=0;
+  drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
+  if(flameCone) flameCone.visible=false;
+  reveal=0; revealTarget=0; firstHitDone=false;
   ship.position.x = 0;
   document.getElementById('score').textContent = 0;
   document.getElementById('lives').textContent = 'READING';
@@ -563,12 +643,16 @@ function tick(now){
     ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*26*dt, -reach, reach);
     ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -dir*.35, .12);
     shipGlow.intensity = 1.4 + Math.sin(t*9)*.3;
-    if(ship.userData.plume){
-      ship.userData.plume.material.uniforms.uTime.value = t;
-      ship.userData.plume.material.uniforms.uThrust.value =
-        THREE.MathUtils.lerp(ship.userData.plume.material.uniforms.uThrust.value, dir?1:0.25, .18);
+    if(ship.userData.plumes){
+      ship.userData.plumes.forEach(pl=>{
+        pl.material.uniforms.uTime.value = t;
+        pl.material.uniforms.uThrust.value =
+          THREE.MathUtils.lerp(pl.material.uniforms.uThrust.value, dir?1:0.28, .18);
+      });
     }
-    if(ship.userData.ring) ship.userData.ring.material.uniforms.uTime.value = t;
+    if(ship.userData.core){
+      ship.userData.core.scale.setScalar(1 + Math.sin(t*6)*0.10);
+    }
 
     // the CV crawls past at a steady rate, easing up a touch as more of it is broken
     const cleared = totalGlyphs ? brokenCount/totalGlyphs : 0;
@@ -577,6 +661,67 @@ function tick(now){
     reveal += (revealTarget - reveal) * Math.min(1, dt*1.6);
     applyCam();
     gradeScene();
+    // drops fall toward the ship and are collected by touching them
+    for(let i=drops.length-1;i>=0;i--){
+      const d=drops[i];
+      d.position.y -= 7.5*dt; d.rotation.y += dt*2.4; d.rotation.x += dt*1.7;
+      if(Math.abs(d.position.x-ship.position.x)<1.5 &&
+         Math.abs(d.position.y-ship.position.y)<1.5){
+        givePower(d.userData.key); spark(d.position, POWERS[d.userData.key].col, 16);
+        board.remove(d); drops.splice(i,1); continue;
+      }
+      if(d.position.y < VIEW_BOT-2){ board.remove(d); drops.splice(i,1); }
+    }
+
+    // power timer
+    if(power){
+      powerT -= dt;
+      if(flameCone && power==="flame"){ flameCone.material.uniforms.uTime.value = t; }
+      if(powerT<=0){ power=null; if(flameCone) flameCone.visible=false; }
+      badgePower();
+    }
+
+    // FLAMETHROWER burns everything inside the cone, continuously
+    if(power==="flame"){
+      lines.forEach(line=>{
+        const ly = line.y - crawl;
+        const dy = ly - ship.position.y;
+        if(dy < 0.5 || dy > 7.4) return;
+        const halfW = 0.42 + (dy/7.4)*3.0;          // cone widens with distance
+        line.letters.forEach(L=>{
+          if(L.broken || L.dissolve>0) return;
+          if(Math.abs(L.x - ship.position.x) > halfW) return;
+          L.dissolve = 0.01;
+          brokenCount++; bumpReveal();
+          if(line.meta && line.meta.co && !linesRead.has(line.i)){
+            linesRead.add(line.i);
+            show(line.meta.co, line.meta.date, line.meta.detail);
+          }
+        });
+      });
+      document.getElementById("score").textContent = brokenCount;
+    }
+
+    // COLLISION: a letter that reaches the ship costs a life and clears its line
+    lines.forEach(line=>{
+      if(line.hitShip) return;
+      const ly = line.y - crawl;
+      if(ly > ship.position.y + 1.1 || ly < ship.position.y - 1.6) return;
+      for(const L of line.letters){
+        if(L.broken || L.dissolve>0) continue;
+        if(Math.abs(L.x - ship.position.x) < 1.25){
+          line.hitShip = true;
+          lives--;
+          spark(new THREE.Vector3(ship.position.x, ship.position.y+0.6, 0), 0xff5470, 30);
+          document.getElementById("lives").textContent = lives>0 ? "♦".repeat(lives) : " - ";
+          // burn the line that hit you, so you are not struck repeatedly by the same one
+          line.letters.forEach(x=>{ if(!x.broken && x.dissolve===0) x.dissolve=0.01; });
+          if(lives<=0) endGame(false);
+          break;
+        }
+      }
+    });
+
     syncMeshes();
 
     // advance any letter mid-dissolve, and retire it once burnt through
@@ -620,6 +765,7 @@ function tick(now){
         spark(new THREE.Vector3(hit.x, hitLine.y - crawl, 0), TONES[hitLine.tone] || 0x9fd8ff, 7);
         brokenCount++;
         bumpReveal();
+        maybeDrop(hit.x, hitLine.y-crawl, hitLine.kind);
         document.getElementById('score').textContent = brokenCount;
         if(hitLine.meta && hitLine.meta.co && !linesRead.has(hitLine.i)){
           linesRead.add(hitLine.i);
