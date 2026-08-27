@@ -62,7 +62,9 @@
   </div>
 
   <div class="hud" id="readout"></div>
+  <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
   <div class="hud" id="banner" style="left:0;right:0;top:38%;text-align:center;font-size:26px;font-weight:800;letter-spacing:3px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
+  <div class="hud" id="era" style="right:14px;bottom:44px;opacity:.45;transition:opacity .5s;font-weight:700;letter-spacing:1.5px">1980 · vector</div>
   <div class="hud" id="power" style="left:14px;bottom:44px;font-weight:700;letter-spacing:.5px"></div>
   <div class="hud" id="bottom">
     <kbd>←</kbd> <kbd>→</kbd> or move mouse to aim &nbsp;·&nbsp; <kbd>space</kbd> / click to fire
@@ -139,18 +141,24 @@ scene.add(new THREE.AmbientLight(0x4a6a8a, 0.9));
 const key = new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(6,-4,14); scene.add(key);
 const rim = new THREE.PointLight(0x7c4dff, 1.1, 60); rim.position.set(-10, 12, 10); scene.add(rim);
 
-// starfield
+// starfield and grid. These used to be built inside IIFEs and thrown away, so nothing could ever
+// reference them again - which meant the "stars" and "grid" reveal tracks were silently no-ops and
+// the starfield opacity ramp never ran. Kept as real bindings now.
+let starPoints = null, grid = null;
 (function stars(){
   const g = new THREE.BufferGeometry(), n = 900, p = new Float32Array(n*3);
   for(let i=0;i<n;i++){ p[i*3]=(Math.random()-.5)*120; p[i*3+1]=(Math.random()-.5)*120; p[i*3+2]=-20-Math.random()*50; }
   g.setAttribute('position', new THREE.BufferAttribute(p,3));
-  scene.add(new THREE.Points(g, new THREE.PointsMaterial({color:0x9ec7e8, size:.16, transparent:true, opacity:.55})));
+  starPoints = new THREE.Points(g, new THREE.PointsMaterial({
+    color:0x9ec7e8, size:.16, transparent:true, opacity:.55 }));
+  starPoints.visible = false;                 // arrives as the first track
+  scene.add(starPoints);
 })();
-
-// grid floor for depth cue
 (function floor(){
-  const grid = new THREE.GridHelper(90, 45, 0x14324a, 0x0e2233);
-  grid.rotation.x = Math.PI/2; grid.position.z = -6; scene.add(grid);
+  grid = new THREE.GridHelper(90, 45, 0x14324a, 0x0e2233);
+  grid.rotation.x = Math.PI/2; grid.position.z = -6;
+  grid.visible = false;                       // second track
+  scene.add(grid);
 })();
 
 function labelTexture(company, date, tone){
@@ -251,13 +259,33 @@ const LETTER_FRAG = `
   uniform float uDissolve;   // 0 = intact, 1 = gone
   uniform float uHot;        // 0..1 proximity to the firing line
   uniform float uReveal;     // 0 = flat morning, 1 = full colour
+  uniform float uEra;        // 0=1980 wireframe .. 5=2025 full shader
   varying vec2 vUv; varying vec3 vN;
   float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }
   void main(){
     // BoxGeometry: the +z face points at the camera and carries the glyph. The other five are
     // the extrusion, drawn as a solid bevel so the letter reads as a 3D block rather than a decal
     // floating in space. Without this the box just showed the glyph on all six faces.
+    // ---- ERA LADDER. Each reveal track advances the rendering era, 1980 -> 2025, so the
+    // opening does not merely look worse, it looks like 1980 on purpose.
+    // 0 vector wireframe  1 flat 8-bit fill  2 flat-shaded polys  3 textured+lit  4 +glow  5 full
+    if(uEra < 0.5){
+      // 1980: monochrome vector. Outline only - no fill, like a CRT vector display.
+      float e = min(min(vUv.x, 1.0-vUv.x), min(vUv.y, 1.0-vUv.y));
+      float line = smoothstep(0.075, 0.0, e);
+      if(line < 0.04) discard;
+      gl_FragColor = vec4(vec3(0.25,1.0,0.42) * line * 0.95, line);
+      return;
+    }
     float facing = vN.z;
+    if(uEra < 1.5){
+      // 1988: flat fill from a small palette, no shading, no texture detail
+      vec4 t8 = texture2D(map, vUv);
+      if(t8.a < 0.35) discard;
+      vec3 pal = floor(tint * 5.0) / 5.0;
+      gl_FragColor = vec4(pal, 1.0);
+      return;
+    }
     if(facing < 0.55){
       float shade = 0.16 + 0.24 * max(0.0, vN.y) + 0.10 * abs(vN.x);
       vec3 bevel = tint * shade * (0.55 + 0.45*uReveal);
@@ -272,11 +300,12 @@ const LETTER_FRAG = `
     if(n < uDissolve) discard;
     float edge = smoothstep(uDissolve, uDissolve+0.22, n);
 
-    float scan = 0.90 + 0.10*sin((vUv.y*46.0) + uTime*2.4);
+    // 1995 flat-shaded polys get no scanline and no texture nuance
+    float scan = uEra < 2.5 ? 1.0 : (0.90 + 0.10*sin((vUv.y*46.0) + uTime*2.4));
     vec3  col  = tint * tex.rgb * scan;
     float g = dot(col, vec3(0.299,0.587,0.114));
     col = mix(vec3(g)*0.85, col, 0.25 + 0.75*uReveal);
-    col += tint * uHot * 0.55;                       // brighten as it nears the ship
+    if(uEra >= 3.5) col += tint * uHot * 0.55;       // per-pixel glow arrives in 2012
     col += vec3(1.0,0.72,0.35) * (1.0-edge) * 1.6;   // hot ember at the dissolve front
     gl_FragColor = vec4(col, tex.a);
   }
@@ -297,7 +326,7 @@ let brokenCount = 0, totalGlyphs = 0, linesRead = new Set();
 function makeLetterMesh(){
   const m = new THREE.Mesh(letterGeo, new THREE.ShaderMaterial({
     uniforms:{ map:{value:null}, tint:{value:new THREE.Color(0xffffff)},
-               uTime:{value:0}, uDissolve:{value:0}, uHot:{value:0}, uReveal:{value:0} },
+               uTime:{value:0}, uDissolve:{value:0}, uHot:{value:0}, uReveal:{value:0}, uEra:{value:0} },
     vertexShader: LETTER_VERT, fragmentShader: LETTER_FRAG,
     transparent:true, depthWrite:true, side:THREE.FrontSide
   }));
@@ -336,6 +365,138 @@ function buildBoard(){
 }
 
 // only rows near the viewport hold meshes
+
+// ---------------------------------------------------------------- layered score (WebAudio)
+// RJ wanted Tami's music in here. I did not copy it: those files are named stg_theme###_88pro,
+// there is no licence or credit file anywhere in that tree, and this repo is public. Shipping
+// unlicensed commercial asset-pack audio to a public GitHub Pages site is not a risk worth taking
+// for background music, so this is synthesised instead - nothing to license, and it can be layered
+// exactly the way he asked.
+//
+// The brief was Stairway: "acoustic guitar -> recorder -> electric guitar -> full band. The tempo
+// stays constant; only texture increases." That is the structure copied here, NOT the tune - the
+// melody is an original descending minor figure. Each visual track brings in an instrument.
+const Snd = (function(){
+  let ctx=null, master=null, started=false, step=0, timer=null, era=0, tone=null;
+  // The score never changes - the SYNTHESIS does. 1980 is a square-wave beeper with no filter and
+  // hard envelopes; by 2025 it is detuned saws through a moving filter. Same tune, better hardware,
+  // which is the audio half of the graphics ladder.
+  const VOICE = [
+    { arp:"square",   mel:"square",   bass:"square",   pad:"square",   cut:2200, q:0.4, atk:0.001, rel:0.28 },
+    { arp:"square",   mel:"square",   bass:"triangle", pad:"square",   cut:3200, q:0.6, atk:0.002, rel:0.36 },
+    { arp:"triangle", mel:"triangle", bass:"triangle", pad:"sawtooth", cut:4800, q:0.8, atk:0.004, rel:0.55 },
+    { arp:"triangle", mel:"sine",     bass:"triangle", pad:"sawtooth", cut:8000, q:1.0, atk:0.008, rel:0.8  },
+    { arp:"triangle", mel:"sine",     bass:"sine",     pad:"sawtooth", cut:12000,q:1.2, atk:0.012, rel:1.0  },
+    { arp:"triangle", mel:"sine",     bass:"sine",     pad:"sawtooth", cut:18000,q:1.4, atk:0.014, rel:1.2  }
+  ];
+  const V = ()=> VOICE[Math.max(0, Math.min(VOICE.length-1, era))];
+  const L = {};                       // layer name -> GainNode
+  const BPM = 84, SPB = 60/BPM/2;     // eighth notes, constant for the whole piece
+  // Am - G - F - E, the descending minor shape the brief implies
+  const CHORDS = [[57,60,64],[55,59,62],[53,57,60],[52,56,59]];
+  const ARP    = [57,60,64,67,64,60];
+  const MEL    = [76,74,72,69,72,74,72,69,67,69,72,69];
+  const mtof = m => 440*Math.pow(2,(m-69)/12);
+
+  function layer(name, gain){
+    const g = ctx.createGain(); g.gain.value = 0; g.connect(master); L[name] = {g, target:gain};
+    return g;
+  }
+  function env(dest, t, dur, peak, type, freq, detune){
+    const v = V();
+    const o = ctx.createOscillator(), a = ctx.createGain();
+    o.type = type || "sine"; o.frequency.value = freq;
+    if(detune && era >= 2) o.detune.value = detune;      // detuning is a later-era luxury
+    // early eras get a hard on/off gate, like a beeper with no amplitude envelope
+    a.gain.setValueAtTime(0, t);
+    if(era <= 1){
+      a.gain.setValueAtTime(peak, t + 0.001);
+      a.gain.setValueAtTime(0.0001, t + Math.min(dur, v.rel));
+    } else {
+      a.gain.linearRampToValueAtTime(peak, t + v.atk);
+      a.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    }
+    o.connect(a); a.connect(dest); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noiseHit(dest, t, dur, peak, hp){
+    const n = Math.floor(ctx.sampleRate*dur), buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/n, 2.2);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
+    const a = ctx.createGain(); a.gain.value = peak;
+    src.connect(f); f.connect(a); a.connect(dest); src.start(t);
+  }
+
+  function schedule(){
+    const now = ctx.currentTime;
+    while(step * SPB < now - startedAt + 0.35){
+      const t = startedAt + step * SPB;
+      const bar = Math.floor(step/8) % 4, ch = CHORDS[bar];
+
+      // 1. acoustic-ish arpeggio - the opening texture, always present
+      env(L.arp.g, t, 0.55, 0.30, V().arp, mtof(ARP[step % ARP.length]));
+
+      // 2. recorder - soft sine counter-melody, every other eighth
+      if(step % 2 === 0) env(L.rec.g, t, 0.85, 0.22, V().mel, mtof(MEL[(step>>1) % MEL.length]));
+
+      // 3. bass - root of the bar
+      if(step % 4 === 0) env(L.bass.g, t, 1.1, 0.34, V().bass, mtof(ch[0]-24));
+
+      // 4. pad - detuned chord, once per bar
+      if(step % 8 === 0) ch.forEach((m,i)=>{
+        env(L.pad.g, t, 2.1, 0.10, V().pad, mtof(m-12), i===1?7:-6); });
+
+      // 5. drums
+      if(era >= 2 && step % 8 === 0) noiseHit(L.drum.g, t, 0.16, 0.42, 60);
+      if(era >= 3 && step % 2 === 1) noiseHit(L.drum.g, t, 0.05, 0.13, 5200);
+
+      // 6. electric lead - the full-band arrival
+      if(step % 2 === 0) env(L.lead.g, t, 0.42, 0.16, era>=4?"sawtooth":V().mel, mtof(MEL[(step>>1) % MEL.length] + 12));
+
+      step++;
+    }
+  }
+
+  let startedAt = 0;
+  function start(){
+    if(started) return; started = true;
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0.0;
+    tone = ctx.createBiquadFilter(); tone.type = "lowpass";
+    tone.frequency.value = VOICE[0].cut; tone.Q.value = VOICE[0].q;
+    master.connect(tone); tone.connect(ctx.destination);
+    layer("arp",0.9); layer("rec",0.0); layer("bass",0.0);
+    layer("pad",0.0); layer("drum",0.0); layer("lead",0.0);
+    startedAt = ctx.currentTime + 0.08;
+    master.gain.linearRampToValueAtTime(0.32, startedAt + 1.2);
+    timer = setInterval(schedule, 90);
+    schedule();
+  }
+  // bring an instrument in over a couple of seconds - texture increases, tempo never changes
+  function bring(name, secs){
+    if(!ctx || !L[name]) return;
+    L[name].g.gain.cancelScheduledValues(ctx.currentTime);
+    L[name].g.gain.setValueAtTime(L[name].g.gain.value, ctx.currentTime);
+    L[name].g.gain.linearRampToValueAtTime(L[name].target || 0.8, ctx.currentTime + (secs||2.2));
+  }
+  function setEra(n){
+    era = Math.max(0, Math.min(VOICE.length-1, n|0));
+    if(!ctx || !tone) return;
+    const v = V();
+    tone.frequency.cancelScheduledValues(ctx.currentTime);
+    tone.frequency.setValueAtTime(tone.frequency.value, ctx.currentTime);
+    tone.frequency.linearRampToValueAtTime(v.cut, ctx.currentTime + 1.6);
+    tone.Q.linearRampToValueAtTime(v.q, ctx.currentTime + 1.6);
+  }
+  function stop(){ if(timer) clearInterval(timer);
+    if(ctx){ master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime+0.6); } }
+  function setLayerTargets(){ L.rec.target=0.85; L.bass.target=0.9; L.pad.target=0.75;
+                              L.drum.target=0.8; L.lead.target=0.7; }
+  return { start, bring, stop, setLayerTargets, setEra, get on(){ return started; } };
+})();
+
 // ---------------------------------------------------------------- progressive reveal
 // RJ: "make it go straight till you hit a letter then go to a better camera angle that is cool.
 // The idea is to make it look morning then slowly bring in more color... color as in cool stuff."
@@ -353,12 +514,47 @@ let reveal = 0;        // 0 = flat morning, 1 = full colour. eased toward reveal
 let revealTarget = 0;
 let firstHitDone = false;
 
+// The arc is deliberately a bait. It opens flat, grey and head on, with a stubby range-limited
+// laser - it is meant to read as underwhelming, so the player thinks this is all there is. The
+// FIRST POWERUP is the payoff: the world rakes over into the 3D view, colour floods in and the
+// weapon stops being a peashooter. That is why the mushroom is scripted to arrive at five
+// seconds rather than left to chance - we want everyone to reach the turn.
+let poweredOnce = false;
+// RJ: "start it off looking like crap then ramping it up like adding tracks to a music... you know
+// those music intros". So the look is not one continuous fade - it arrives in DISCRETE TRACKS,
+// each with its own moment, the way an intro layers drums, then bass, then synth. reveal is still
+// the clock, but these fire as events so the player feels each one land.
+const TRACKS = [
+  { at:0.05, name:"stars",   note:"",             on(){ starPoints.visible = true; Snd.bring("rec"); } },
+  { at:0.20, name:"grid",    note:"",             on(){ grid.visible = true; Snd.bring("bass"); } },
+  { at:0.45, name:"sky",     note:"DEEP FIELD",        on(){ scene.background = sky; Snd.bring("pad"); } },
+  { at:0.62, name:"debris",  note:"",                  on(){ debris.forEach(d=>d.visible = true); Snd.bring("drum"); } },
+  { at:0.78, name:"depth",   note:"",                  on(){ /* camera rake is already eased by reveal */ } },
+  { at:0.92, name:"colour",  note:"FULL SPECTRUM",     on(){ Snd.bring("lead"); } }
+];
+let trackIdx = 0, eraIdx = 0;
+const ERAS = ["1980 · vector", "1988 · 8-bit", "1995 · flat 3D",
+              "2004 · textured", "2012 · lit + particles", "2025 · full shader"];
+function runTracks(){
+  while(trackIdx < TRACKS.length && reveal >= TRACKS[trackIdx].at){
+    const T = TRACKS[trackIdx++];
+    try{ T.on(); }catch(e){}
+    // every track is also a jump forward in rendering technology
+    eraIdx = Math.min(ERAS.length-1, trackIdx);
+    Snd.setEra(eraIdx);
+    const el = document.getElementById("era");
+    if(el){ el.textContent = ERAS[eraIdx]; el.style.opacity="1";
+            clearTimeout(el._t); el._t=setTimeout(()=>{ el.style.opacity=".45"; }, 2200); }
+    banner(T.note || ERAS[eraIdx].toUpperCase());
+  }
+}
+
 function bumpReveal(){
-  // the first hit is a real event - jump most of the way immediately so the change is felt,
-  // then let the rest accrue gradually as more of the CV is broken
-  if(!firstHitDone){ firstHitDone = true; revealTarget = Math.max(revealTarget, 0.55); }
+  // breaking letters before the turn buys almost nothing on purpose
+  if(!firstHitDone) firstHitDone = true;
+  if(!poweredOnce){ revealTarget = Math.min(0.14, revealTarget + 0.02); return; }
   const prog = totalGlyphs ? brokenCount/totalGlyphs : 0;
-  revealTarget = Math.min(1, Math.max(revealTarget, 0.55 + prog*4.5));
+  revealTarget = Math.min(1, Math.max(0.80, 0.80 + prog*2.2));
 }
 
 // The five-second beat. The game opens simple and static on purpose; this is the moment it
@@ -371,9 +567,16 @@ function mushroomBeat(){
   m.userData = {key:"laser", mushroom:true};
   board.add(m); drops.push(m);
   panBoost = 1;                       // swing the camera, then ease back
-  revealTarget = Math.max(revealTarget, 0.42);
-  banner("POWER UP INBOUND");
+  banner("POWER UP INBOUND");   // telegraph it, hard to miss
 }
+
+function goFullscreen(){
+  const el = document.documentElement;
+  if(document.fullscreenElement){ document.exitFullscreen && document.exitFullscreen(); return; }
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if(req) req.call(el).then(()=>setTimeout(resize,60)).catch(()=>{});
+}
+addEventListener("fullscreenchange", ()=>setTimeout(resize,60));
 
 function banner(txt){
   const el=document.getElementById("banner"); if(!el) return;
@@ -491,6 +694,14 @@ function makeFlameCone(){
 
 function givePower(key){
   power = key; powerT = POWERS[key].dur;
+  if(!poweredOnce){
+    // THE TURN. Everything the opening withheld arrives at once, and loudly.
+    poweredOnce = true;
+    revealTarget = 1;
+    panBoost = 1;
+    banner("SYSTEMS ONLINE");
+    for(let i=0;i<3;i++) setTimeout(()=>spark(ship.position.clone(), POWERS[key].col, 26), i*110);
+  }
   if(key === "flame"){
     if(!flameCone){ flameCone = makeFlameCone(); ship.add(flameCone); }
     flameCone.visible = true;
@@ -512,8 +723,7 @@ function gradeScene(){
   if(shipGlow) shipGlow.intensity = (0.5 + e*1.4) + Math.sin(t*9)*.3*e;
   // ship heat and shield only really switch on once the world has opened up
   // starfield brightens
-  if(typeof starPoints!=="undefined" && starPoints && starPoints.material)
-    starPoints.material.opacity = 0.25 + e*0.55;
+  if(starPoints) starPoints.material.opacity = 0.22 + e*0.60;
 }
 
 function syncMeshes(){
@@ -535,6 +745,7 @@ function syncMeshes(){
         L.mesh.material.uniforms.uTime.value = t;
         L.mesh.material.uniforms.uDissolve.value = L.dissolve;
         L.mesh.material.uniforms.uReveal.value = reveal;
+        L.mesh.material.uniforms.uEra.value = eraIdx;
         L.mesh.material.uniforms.uHot.value =
           Math.max(0, 1 - Math.abs(y - (ship.position.y+7)) / 9);
       }
@@ -558,6 +769,52 @@ function hullTex(){ const c=document.createElement('canvas'); c.width=c.height=1
   g.strokeStyle='rgba(240,246,255,0.45)'; g.lineWidth=5; g.beginPath(); g.moveTo(0,44); g.lineTo(128,60); g.stroke();
   const t=new THREE.Texture(c); t.needsUpdate=true; t.anisotropy=4; return t; }
 const GLOW = glowTex(), HULL = hullTex();
+
+// ---- real art ported from starfighter.html, not reimplemented ----
+// The flat black void was the single biggest reason this looked cheap. Star Fighter already ships
+// a proper cubemap and asteroid textures; using them costs nothing and changes the whole feel.
+const sky = new THREE.CubeTextureLoader().setPath('assets/').load(
+  ['sky_px.jpg','sky_nx.jpg','sky_py.jpg','sky_ny.jpg','sky_pz.jpg','sky_nz.jpg']);
+if(sky.encoding !== undefined) sky.encoding = THREE.sRGBEncoding;
+// starts BLACK on purpose - the skybox is a track that gets added later, not the opening state
+scene.background = null;
+
+const texLoader = new THREE.TextureLoader();
+const rockTex = [ texLoader.load('assets/asteroid_dark.png'),
+                  texLoader.load('assets/asteroid_light.png') ];
+rockTex.forEach(t=>{ t.wrapS = t.wrapT = THREE.RepeatWrapping;
+                     if(t.encoding !== undefined) t.encoding = THREE.sRGBEncoding; });
+
+// Star Fighter's asteroid: an icosahedron pushed around by a cheap 3-axis noise so no two rocks
+// are the same shape. Same function, same look.
+function rockMesh(scale, light){
+  const g = new THREE.IcosahedronGeometry(1,1), pos = g.attributes.position,
+        v = new THREE.Vector3(), sd = Math.random()*100;
+  for(let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos,i);
+    const n = 0.78 + 0.30*Math.abs(Math.sin(v.x*9.7+sd)+Math.cos(v.y*7.3-sd)+Math.sin(v.z*8.1+sd))/2.2;
+    v.multiplyScalar(n); pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
+    map: rockTex[light?1:0], color:0x9a9489, roughness:0.96, metalness:0.04, flatShading:true }));
+  m.scale.setScalar(scale); return m;
+}
+
+// A slow debris field well behind the text. It never interacts - its whole job is parallax, so
+// the crawl has something to move against instead of hanging in a void.
+const debris = [];
+function buildDebris(){
+  for(let i=0;i<26;i++){
+    const m = rockMesh(0.5 + Math.random()*2.4, Math.random()<0.5);
+    m.position.set((Math.random()*2-1)*46, (Math.random()*2-1)*34, -26 - Math.random()*46);
+    m.userData = { spin:new THREE.Vector3((Math.random()-.5)*.22,(Math.random()-.5)*.22,(Math.random()-.5)*.22),
+                   drift:0.5 + Math.random()*1.5 };
+    m.visible = false;                 // arrives with its own layer
+    scene.add(m); debris.push(m);
+  }
+}
+buildDebris();
 
 function fighterMesh(hue){
   const S=1.55;
@@ -711,6 +968,8 @@ function show(co, date, detail){
   readout.classList.add('on'); readTimer = 3.2;
 }
 
+function startAudio(){ Snd.start(); Snd.setLayerTargets(); }
+
 function reset(){
   buildBoard();
   bullets.forEach(b=>scene.remove(b)); bullets=[];
@@ -718,7 +977,10 @@ function reset(){
   score=0; lives=3; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
-  reveal=0; revealTarget=0; firstHitDone=false; mushroomDone=false; panBoost=0;
+  reveal=0; revealTarget=0; firstHitDone=false; mushroomDone=false; panBoost=0; poweredOnce=false;
+  trackIdx=0; eraIdx=0; scene.background=null; debris.forEach(d=>d.visible=false);
+  if(starPoints) starPoints.visible=false;
+  if(grid) grid.visible=false;
   ship.position.x = 0;
   document.getElementById('score').textContent = 0;
   document.getElementById('lives').textContent = 'READING';
@@ -784,9 +1046,15 @@ function tick(now){
     const cleared = totalGlyphs ? brokenCount/totalGlyphs : 0;
     crawl += dt * (2.05 + cleared*0.5);
     // ease toward the earned reveal, then let everything read off that one number
+    debris.forEach(d=>{
+      d.rotation.x += d.userData.spin.x*dt; d.rotation.y += d.userData.spin.y*dt;
+      d.position.y -= d.userData.drift*dt*(0.6 + reveal*1.1);
+      if(d.position.y < -40){ d.position.y = 40; d.position.x = (Math.random()*2-1)*46; }
+    });
     mushroomBeat();
     panBoost += (0 - panBoost) * Math.min(1, dt*0.55);   // swings out, settles back
     reveal += (revealTarget - reveal) * Math.min(1, dt*1.6);
+    runTracks();
     applyCam();
     gradeScene();
     // drops fall toward the ship and are collected by touching them
@@ -836,7 +1104,12 @@ function tick(now){
           const perp = Math.abs(dx*aim.y - dy*aim.x);     // distance from the ray
           const width = power==='pierce' ? CH_W*1.35 : (power==='spread' ? CH_W*1.9 : CH_W*0.62);
           if(perp > width) return;
-          if(power!=='pierce' && power!=='spread' && proj > 26) return;   // plain laser has range
+          // The opening weapon is deliberately weak, but it must still REACH. At range 9 it
+          // could not touch anything before the 5s powerup, so the player got no shots off at all
+          // and it read as broken rather than underwhelming. 17 lets them plink the nearest line
+          // and feel the limit, which is the point.
+          const range = poweredOnce ? 40 : 17;
+          if(power!=='pierce' && power!=='spread' && proj > range) return;
           L.dissolve = 0.01;
           brokenCount++; bumpReveal();
           maybeDrop(L.x, ly, line.kind);
@@ -967,7 +1240,9 @@ function tick(now){
 }
 
 // ---------------------------------------------------------------- input / boot
+document.addEventListener('click', e=>{ if(e.target && e.target.id==='fsBtn') goFullscreen(); });
 addEventListener('keydown', e=>{
+  if(e.key==='f'||e.key==='F'){ goFullscreen(); return; }
   keys[e.key]=true;
   if(e.key===' '){ e.preventDefault(); fire(); }
 });
@@ -982,6 +1257,10 @@ addEventListener('pointerdown', ()=>fire());
 function resize(){
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w,h,false);
+  // re-fit after any size change. Without this, entering fullscreen changed the aspect but left
+  // the camera framed for the old one, so the text sat in a narrow band with dead space either
+  // side - which is most of why it felt cramped in the tab.
+  setTimeout(()=>{ if(typeof applyCam==="function" && lines.length) applyCam(); }, 0);
   camera.aspect = w/h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
@@ -992,10 +1271,13 @@ resize();
 
 document.getElementById('go').onclick = ()=>{
   document.getElementById('start').classList.add('hide');
+  // audio must be created from a user gesture or the browser suspends the context
+  startAudio();
   reset(); state='play';
 };
 document.getElementById('again').onclick = ()=>{
   document.getElementById('end').classList.add('hide');
+  startAudio();
   reset(); state='play';
 };
 

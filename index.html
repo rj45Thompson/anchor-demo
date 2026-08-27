@@ -182,6 +182,13 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 </style></head><body><div class="wrap">
 
 <h1>R.J. Thompson</h1>
+<div class="audbar">
+  <span class="audlbl">show for</span>
+  <button class="audbtn on" data-aud-set="all">All</button>
+  <button class="audbtn" data-aud-set="ai">AI / ML roles</button>
+  <button class="audbtn" data-aud-set="games">Game studios</button>
+  <span class="audnote" id="audNote"></span>
+</div>
 <p class="tagline">Senior C++ / C# engineer, 30 years shipping. Everything below runs in this page - the engine, the games, the research. Open to work.</p>
 <p class="sub">A system with <strong>no neural weights</strong>. Every answer - a fact or a program - carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
 doesn't have enough.</p>
@@ -191,11 +198,11 @@ doesn't have enough.</p>
   <!-- hidden while the English front end is finished - see spec_en.js
   <div class="tab" data-p="code">Write a function <span class="beta">BETA</span></div>
   -->
-  <div class="tab" data-p="resume">R&eacute;sum&eacute; Breakout</div>
-  <div class="tab" data-p="space">Star Fighter</div>
-  <div class="tab" data-p="inv">Inventions</div>
-  <div class="tab" data-p="views">Views</div>
-  <div class="tab" data-p="papers">White papers</div>
+  <div class="tab" data-p="resume" data-aud="ai,games">R&eacute;sum&eacute; Breakout</div>
+  <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
+  <div class="tab" data-p="inv" data-aud="ai,games">Inventions</div>
+  <div class="tab" data-p="views" data-aud="ai">Views</div>
+  <div class="tab" data-p="papers" data-aud="ai">White papers</div>
 </div>
 
 <!-- ===== rj-extra-tabs ===== -->
@@ -296,32 +303,49 @@ doesn't have enough.</p>
   .intro h3{margin:0 0 5px;font-size:15px;color:#eaf3fb}
   .intro p{margin:0 0 5px;font-size:13px;line-height:1.62;color:#bcd6ea}
   .intro .how{font-size:11.5px;color:#7d8fa1}
+  .launch{border:1px solid #23516b;border-radius:10px;background:linear-gradient(160deg,#0e1c28,#0a131b);
+    padding:22px 24px}
+  .launch h3{margin:0 0 8px;font-size:19px;color:#eaf5ff}
+  .launch p{margin:0 0 10px;font-size:13.5px;line-height:1.68;color:#bcd6ea;max-width:62ch}
+  .launch .how{font-size:12px;color:#8fa3b5}
+  .playbtn{display:inline-block;margin-top:8px;background:#2f6d99;color:#fff;text-decoration:none;
+    border-radius:8px;padding:10px 20px;font-weight:600;font-size:14px}
+  .playbtn:hover{background:#3d86b8}
+  .inlinebtn{margin-left:12px;background:none;border:none;color:#7fd4ff;cursor:pointer;
+    font:inherit;font-size:12.5px;text-decoration:underline}
+  .audbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:2px 0 10px}
+  .audlbl{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#7d8fa1;margin-right:2px}
+  .audbtn{background:#101a24;border:1px solid #1d2c3a;color:#9fb6c9;border-radius:999px;
+    padding:4px 12px;font:inherit;font-size:12px;cursor:pointer}
+  .audbtn:hover{border-color:#2b4c66;color:#cfe3f2}
+  .audbtn.on{background:#14304a;border-color:#2f6d99;color:#eaf5ff}
+  .audnote{font-size:11.5px;color:#7d8fa1;margin-left:4px}
 </style>
 
 <div id="p-resume" class="panel">
-  <div class="intro">
-    <h3>Résumé Breakout</h3>
-    <p>My CV, spelled out letter by letter and falling toward you. Shoot a word to read that job.
-      Clear all sixteen and you have read the whole thing.</p>
-    <p class="how">Arrow keys or mouse to move &nbsp;·&nbsp; space or click to fire &nbsp;·&nbsp;
-      built with three.js, flying the same hull as Star Fighter</p>
+  <div class="launch">
+    <div class="launch-body">
+      <h3>Résumé Breakout</h3>
+      <p>My whole CV crawls past and every character can be shot out of it. Break a company name and that job prints in full. It opens deliberately plain - stick with it until the first powerup.</p>
+      <p class="how">Keys move &nbsp;·&nbsp; mouse aims &nbsp;·&nbsp; hold to fire &nbsp;·&nbsp; F for fullscreen</p>
+      <a class="playbtn" href="./games/resume-arkanoid.html" target="_blank" rel="noopener">Play fullscreen &rarr;</a>
+      <button class="inlinebtn" data-embed="./games/resume-arkanoid.html">or embed it here</button>
+    </div>
   </div>
-  <div class="gamewrap">
-    <iframe data-src="./games/resume-arkanoid.html" title="Resume Breakout" loading="lazy"></iframe>
-  </div>
+  <div class="gamewrap" hidden></div>
 </div>
 
 <div id="p-space" class="panel">
-  <div class="intro">
-    <h3>Star Fighter</h3>
-    <p>Not a game so much as a training environment. This is the sandbox the no-LLM fleet research
-      runs in: ships, economy and physics as separate vector systems an agent has to learn to fly.</p>
-    <p class="how">WASD to fly &nbsp;·&nbsp; Q/E up and down &nbsp;·&nbsp; shift to boost
-      &nbsp;·&nbsp; drag to look</p>
+  <div class="launch">
+    <div class="launch-body">
+      <h3>Star Fighter</h3>
+      <p>The training environment the no-LLM fleet research runs in: ships, economy and physics as separate vector systems an agent has to learn to fly.</p>
+      <p class="how">WASD to fly &nbsp;·&nbsp; Q/E up and down &nbsp;·&nbsp; shift to boost &nbsp;·&nbsp; drag to look</p>
+      <a class="playbtn" href="./games/starfighter.html" target="_blank" rel="noopener">Play fullscreen &rarr;</a>
+      <button class="inlinebtn" data-embed="./games/starfighter.html">or embed it here</button>
+    </div>
   </div>
-  <div class="gamewrap">
-    <iframe data-src="./games/starfighter.html" title="Star Fighter" loading="lazy"></iframe>
-  </div>
+  <div class="gamewrap" hidden></div>
 </div>
 
 <!-- rj-views:start -->
@@ -372,13 +396,13 @@ doesn't have enough.</p>
   is actually for. Every claim here links to the artifact, so none of it has to be taken on trust.</p>
 
   <div class="subtabs" id="invTabs">
-    <button class="subtab on" data-s="s-engine">Knowledge engine</button>
-    <button class="subtab" data-s="s-law">The anchor law</button>
-    <button class="subtab" data-s="s-bench">BossBench</button>
-    <button class="subtab" data-s="s-tdre">TDRE</button>
-    <button class="subtab" data-s="s-warship">WarShip</button>
-    <button class="subtab" data-s="s-synth">Program search</button>
-    <button class="subtab" data-s="s-cart">CART</button>
+    <button class="subtab on" data-s="s-engine" data-aud="ai,games">Knowledge engine</button>
+    <button class="subtab" data-s="s-law" data-aud="ai">The anchor law</button>
+    <button class="subtab" data-s="s-bench" data-aud="ai">BossBench</button>
+    <button class="subtab" data-s="s-tdre" data-aud="ai">TDRE</button>
+    <button class="subtab" data-s="s-warship" data-aud="ai">WarShip</button>
+    <button class="subtab" data-s="s-synth" data-aud="ai,games">Program search</button>
+    <button class="subtab" data-s="s-cart" data-aud="">CART</button>
   </div>
 
   <div class="sub on" id="s-engine">
@@ -4183,6 +4207,76 @@ renderCode();
 
   go.addEventListener("click", run);
   inp.addEventListener("keydown", function(e){ if(e.key==="Enter") run(); });
+})();
+</script>
+
+<script>
+/* rj-launch: games open full-window by default. The embedded iframe was the real problem - a
+   game letterboxed into a tab column has no room for a raked 3D view, and the player could not
+   see the edges of the text. Embedding is still available, just no longer the default. */
+(function(){
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("[data-embed]"); if(!b) return;
+    var panel = b.closest(".panel"), wrap = panel.querySelector(".gamewrap");
+    wrap.hidden = false;
+    if(!wrap.querySelector("iframe")){
+      var f = document.createElement("iframe");
+      f.src = b.dataset.embed; f.title = panel.querySelector("h3").textContent;
+      wrap.appendChild(f);
+    }
+    b.textContent = "embedded below - fullscreen still recommended";
+    b.disabled = true;
+  });
+})();
+</script>
+
+<script>
+/* rj-audience: three views of the same site. A game studio and an AI lab are hiring for different
+   things, and material that helps with one can actively hurt with the other - speculative physics
+   reads as range to a studio and as a warning sign to a research team. Rather than water the page
+   down to the intersection, it filters. Defaults to All. */
+(function(){
+  var NOTE = {
+    all:   "everything, including material I would not lead with for either audience",
+    ai:    "evaluation, calibration and verification work. Speculative physics hidden.",
+    games: "engine, tools and real-time work. Research record and physics hidden."
+  };
+  function match(el, mode){
+    if(mode === "all") return true;
+    var a = el.getAttribute("data-aud");
+    if(a === null) return true;          // untagged content is common ground
+    return a.split(",").indexOf(mode) !== -1;
+  }
+  function apply(mode){
+    document.querySelectorAll(".tab[data-aud]").forEach(function(t){
+      t.style.display = match(t, mode) ? "" : "none";
+    });
+    document.querySelectorAll("#p-inv .subtab[data-aud]").forEach(function(b){
+      var ok = match(b, mode);
+      b.style.display = ok ? "" : "none";
+      if(!ok && b.classList.contains("on")){
+        var first = [].slice.call(document.querySelectorAll("#p-inv .subtab"))
+          .filter(function(x){ return x.style.display !== "none"; })[0];
+        if(first) first.click();
+      }
+    });
+    // if the open tab just got hidden, fall back to the first visible one
+    var cur = document.querySelector(".tab.on");
+    if(cur && cur.style.display === "none"){
+      var vis = [].slice.call(document.querySelectorAll(".tab"))
+        .filter(function(t){ return t.style.display !== "none"; })[0];
+      if(vis) vis.click();
+    }
+    var n = document.getElementById("audNote"); if(n) n.textContent = NOTE[mode] || "";
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("[data-aud-set]"); if(!b) return;
+    document.querySelectorAll("[data-aud-set]").forEach(function(x){
+      x.classList.toggle("on", x === b);
+    });
+    apply(b.dataset.audSet);
+  });
+  apply("all");
 })();
 </script>
 </body></html>
