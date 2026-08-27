@@ -62,10 +62,8 @@
   </div>
 
   <div class="hud" id="readout"></div>
-
-  <div class="hud" id="camTag" style="left:14px;bottom:44px;opacity:.72">camera</div>
   <div class="hud" id="bottom">
-    <kbd>←</kbd> <kbd>→</kbd> or move mouse to aim &nbsp;·&nbsp; <kbd>space</kbd> / click to fire &nbsp;·&nbsp; <kbd>C</kbd> camera
+    <kbd>←</kbd> <kbd>→</kbd> or move mouse to aim &nbsp;·&nbsp; <kbd>space</kbd> / click to fire
   </div>
 
   <div class="screen" id="start">
@@ -319,37 +317,58 @@ function buildBoard(){
 }
 
 // only rows near the viewport hold meshes
-// ---------------------------------------------------------------- camera zoo
-// RJ: "it looks flat straight on ortho then all of a sudden it pops to different camera angles".
-// It was flat because the crawl sat on the z=0 plane facing a head-on camera, so perspective had
-// nothing to bite on. Each preset tilts the BOARD as well as moving the camera, which is what
-// actually creates depth: a tilted plane recedes, so far letters are genuinely smaller and the
-// text reads as 3D rather than as a flat sheet.
-const CAMS = [
-  { name:"head on",  pos:[0,-4,30],  look:[0,3,0],  tilt:0.00, roll:0 },
-  { name:"crawl",    pos:[0,-16,22], look:[0,6,0],  tilt:0.62, roll:0 },
-  { name:"chase",    pos:[0,-13,12], look:[0,9,0],  tilt:0.42, roll:0 },
-  { name:"low bank", pos:[-13,-10,20],look:[2,5,0], tilt:0.34, roll:0.10 },
-  { name:"overhead", pos:[0,6,26],   look:[0,0,0],  tilt:0.85, roll:0 }
-];
-let camIdx = 1;
-function applyCam(){
-  const c = CAMS[camIdx];
-  // fit the widest line into view, with margin, so no letter is ever off-screen or unreachable
-  // applyCam() can run before the first resize, when camera.aspect is still unset. Math.max with
-  // a NaN returns NaN, which put camera.position.z at null and blanked the view. Guard the aspect
-  // and refuse any non-finite result.
-  const asp = (isFinite(camera.aspect) && camera.aspect > 0) ? camera.aspect : (innerWidth/innerHeight || 1.6);
-  const need = (textHalfW + 2.5) / Math.tan((camera.fov*Math.PI/180)/2) / asp;
-  const dist = isFinite(need) ? Math.max(c.pos[2], need) : c.pos[2];
-  camera.position.set(c.pos[0], c.pos[1], dist);
-  camera.lookAt(c.look[0], c.look[1], c.look[2]);
-  camera.rotation.z += c.roll;
-  board.rotation.x = c.tilt;
-  const tag = document.getElementById("camTag");
-  if(tag) tag.textContent = "camera: " + c.name + "  (C to change)";
+// ---------------------------------------------------------------- progressive reveal
+// RJ: "make it go straight till you hit a letter then go to a better camera angle that is cool.
+// The idea is to make it look morning then slowly bring in more color... color as in cool stuff."
+//
+// So the look is a reward curve, not a setting. It opens dead flat and almost monochrome - a
+// plain document, head on, nothing showing off. The FIRST hit tips the world into a raked angle,
+// and from then on every broken letter buys a little more richness: saturation, glow, engine
+// heat, starfield. Nothing here is a discrete mode switch, it is one number driving everything,
+// so it never pops - which was the complaint about the manual camera cycler this replaces.
+const CAM_FLAT = { pos:[0,-4,30],  look:[0,3,0],  tilt:0.00 };
+const CAM_COOL = { pos:[0,-15,23], look:[0,6,0],  tilt:0.58 };
+
+let reveal = 0;        // 0 = flat morning, 1 = full colour. eased toward revealTarget
+let revealTarget = 0;
+let firstHitDone = false;
+
+function bumpReveal(){
+  // the first hit is a real event - jump most of the way immediately so the change is felt,
+  // then let the rest accrue gradually as more of the CV is broken
+  if(!firstHitDone){ firstHitDone = true; revealTarget = Math.max(revealTarget, 0.55); }
+  const prog = totalGlyphs ? brokenCount/totalGlyphs : 0;
+  revealTarget = Math.min(1, Math.max(revealTarget, 0.55 + prog*4.5));
 }
-function cycleCam(){ camIdx = (camIdx+1) % CAMS.length; applyCam(); }
+
+function applyCam(){
+  const e = reveal<=0 ? 0 : (reveal>=1 ? 1 : reveal*reveal*(3-2*reveal));   // smoothstep
+  const lerp=(a,b)=>a+(b-a)*e;
+  const asp = (isFinite(camera.aspect) && camera.aspect>0) ? camera.aspect : (innerWidth/innerHeight||1.6);
+  const need = (textHalfW + 2.5) / Math.tan((camera.fov*Math.PI/180)/2) / asp;
+  const baseZ = lerp(CAM_FLAT.pos[2], CAM_COOL.pos[2]);
+  const dist = isFinite(need) ? Math.max(baseZ, need) : baseZ;
+  camera.position.set(lerp(CAM_FLAT.pos[0],CAM_COOL.pos[0]),
+                      lerp(CAM_FLAT.pos[1],CAM_COOL.pos[1]), dist);
+  camera.lookAt(lerp(CAM_FLAT.look[0],CAM_COOL.look[0]),
+                lerp(CAM_FLAT.look[1],CAM_COOL.look[1]), 0);
+  board.rotation.x = lerp(CAM_FLAT.tilt, CAM_COOL.tilt);
+}
+
+function gradeScene(){
+  const e = reveal;
+  // lights come up like a morning
+  if(typeof key!=="undefined" && key)  key.intensity  = 0.35 + e*0.75;
+  if(typeof rim!=="undefined" && rim)  rim.intensity  = 0.20 + e*1.35;
+  if(shipGlow) shipGlow.intensity = (0.5 + e*1.4) + Math.sin(t*9)*.3*e;
+  // ship heat and shield only really switch on once the world has opened up
+  if(ship && ship.userData.ring)
+    ship.userData.ring.material.uniforms.uTime.value = t;
+  if(ship && ship.userData.plumeBase !== undefined) ship.userData.plumeBase = e;
+  // starfield brightens
+  if(typeof starPoints!=="undefined" && starPoints && starPoints.material)
+    starPoints.material.opacity = 0.25 + e*0.55;
+}
 
 function syncMeshes(){
   lines.forEach(line=>{
@@ -554,6 +573,10 @@ function tick(now){
     // the CV crawls past at a steady rate, easing up a touch as more of it is broken
     const cleared = totalGlyphs ? brokenCount/totalGlyphs : 0;
     crawl += dt * (2.05 + cleared*0.5);
+    // ease toward the earned reveal, then let everything read off that one number
+    reveal += (revealTarget - reveal) * Math.min(1, dt*1.6);
+    applyCam();
+    gradeScene();
     syncMeshes();
 
     // advance any letter mid-dissolve, and retire it once burnt through
@@ -595,7 +618,8 @@ function tick(now){
       if(hit){
         hit.dissolve = 0.01;                     // shader burns it away over the next few frames
         spark(new THREE.Vector3(hit.x, hitLine.y - crawl, 0), TONES[hitLine.tone] || 0x9fd8ff, 7);
-        brokenCount++; shake = .18;
+        brokenCount++;
+        bumpReveal();
         document.getElementById('score').textContent = brokenCount;
         if(hitLine.meta && hitLine.meta.co && !linesRead.has(hitLine.i)){
           linesRead.add(hitLine.i);
@@ -621,19 +645,12 @@ function tick(now){
   }
 
   if(readTimer>0){ readTimer-=dt; if(readTimer<=0) readout.classList.remove('on'); }
-    // camera shake rides ON TOP of the active preset rather than overwriting it - the old code
-    // hardcoded position/lookAt every frame, which silently undid any camera change.
-    if(shake>0){
-      camera.position.x += (Math.random()-.5)*shake*2;
-      camera.position.y += (Math.random()-.5)*shake;
-    }
 
   renderer.render(scene, camera);
 }
 
 // ---------------------------------------------------------------- input / boot
 addEventListener('keydown', e=>{
-  if(e.key==='c'||e.key==='C'){ cycleCam(); return; }
   keys[e.key]=true;
   if(e.key===' '){ e.preventDefault(); fire(); }
 });
