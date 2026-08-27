@@ -2030,7 +2030,11 @@ const COMPARE=new Set((
 ).split(" "));
 const TAIL=new Set(("in on at of from by is are was were located born the a an").split(" "));
 
+// B48: set by findEntities when the WORD_MAX bound truncates the question. Read by the
+// one-hop lane, which must not present facts as an answer to a question it only sampled.
+let qTruncated=false;
 async function findEntities(q){
+  qTruncated=false;
   // B46: "what is the tallest mountain IN THE WORLD" correctly found "mountain" but then linked
   // "World"(327 facts) as a spurious SECOND entity from the generic scope phrase. "world"/"earth"
   // cannot simply join QUANT/COMPARE/STOP - "how many moons does Earth have" (B45) needs Earth to
@@ -2051,6 +2055,7 @@ async function findEntities(q){
       trace("dead","question is "+words.length+" words; reading the first "+R.WORD_MAX+
         " as content and reporting the rest as unread - a bound, not an absence");
     words=words.slice(0,R.WORD_MAX);
+    qTruncated=true;
   }
 
   // The RELATION being asked about is framing too. Without this, "what country is Nirauli in"
@@ -2920,8 +2925,19 @@ async function reason(q,opts){
       (ents.length?ents.map(e=>"\""+e.name+"\" ("+e.facts.length+" facts)").join(", "):"none"));
     trace("beam","target relation read as `"+(goal||"none found")+"`");
     // Two named entities = "is A connected to B", which is a PATH question, not a relation lookup.
-    const target=ents.length>1?ents[1]:null;
+    // B48: the target must be a DIFFERENT entity from the start. A repetitive question ("what is
+    // the thing that is the thing that is ...") links the same subject twice, and taking ents[1]
+    // blindly asked for a path from "thing" TO "thing" - a path from a thing to itself, which is
+    // degenerate and trivially satisfiable. That turned a clean 6-step abstention into a 203-step
+    // confident ANSWER built from 3 self-chains, and it is exactly the confident-wrong class this
+    // page exists to not do. Skip any candidate that IS the start; if nothing else was named this
+    // is a single-subject question and falls through to the relation lane, which is the behaviour
+    // the h-verylong golden froze before the regression.
     let start=ents.length?ents[0]:null;
+    const target=(start?ents.slice(1).find(e=>e.name!==start.name):null)||null;
+    if(start&&ents.length>1&&!target)
+      trace("dead","the only other entity named is \""+start.name+"\" again - a path from a "+
+        "thing to itself is not a question; reading this as a single-subject question instead");
     // REWIND-AND-BRANCH (the debugger's set-next-statement, run by the system): a resume
     // request forces the search to restart from the rewound hop's node, and the rejected edge
     // is excluded below, so the engine must find a DIFFERENT route onward. Real search, no
@@ -2992,6 +3008,25 @@ async function reason(q,opts){
               :"none recognised")+
           (unread.length?"  unplaced words: "+unread.join(", "):""));
       }
+      // B48: a question the engine had to TRUNCATE, and in which it then recognised NO
+      // relation, has not been understood - it has been sampled. A subject can still survive
+      // that truncation ("what is the thing that is the thing that ... that is a car" resolves
+      // "thing"), and listing what is on file about it answers a question nobody asked. Worse,
+      // those fact rows are exactly what the verdict classifier reads as ANSWERED, so hostile
+      // input scored as a confident reply. The read-back card above still prints, because
+      // saying which subject was resolved is honest; what stops here is presenting facts as
+      // the reply. Both conditions are already disclosed in the trace above.
+      if(qTruncated&&!goal){
+        out.insertAdjacentHTML("beforeend",'<div class="card k0"><div class="claim">'+
+          '<b>I cannot answer that.</b></div><div class="row"><span class="lbl">why</span>'+
+          '<span>That question is longer than this engine reads ('+R.WORD_MAX+' words), so it '+
+          'was cut short, <b>and</b> nothing in the part it did read named a relation it holds. '+
+          'A subject survived the cut, but showing what is on file about it would be answering '+
+          'a question you did not ask. Ask about one thing, and name what you want to know '+
+          'about it.</span></div></div>');
+        trace("dead","B48: question truncated at "+R.WORD_MAX+" words AND no relation "+
+          "recognised - refusing to present one-hop facts as an answer");
+      } else {
       out.insertAdjacentHTML("beforeend",
         '<div class="livebar" style="margin-top:10px"><span>'+
         (goal&&show.length?'DIRECTLY RECORDED about ':'ON FILE about ')+
@@ -3005,6 +3040,7 @@ async function reason(q,opts){
             esc(r.anchors.join(", ")):'')+'</span></div>';}).join("")+
         (rows.length>use.length?'<div class="small" style="margin:2px 0 0">showing '+use.length+
           ' of '+rows.length+' - the rest are in the graph above, click any node</div>':''));
+      }
     }
     if(!start){
       // The coverage check lived only on the facts tab, so this lane used to give up with no idea
@@ -3053,6 +3089,14 @@ async function reason(q,opts){
       // count disclosed, list not silently trimmed
       for(const f of start.facts.slice().sort((a,b)=>b.k-a.k).slice(0,R.DRAW_PER_NODE)){
         const t=gNode(f.obj,f.obj,1);gEdge(s0,t,f.rel,f.k);}
+      // B48: for a question that was TRUNCATED and named no relation, the refusal card above
+      // has already said "I cannot answer that" - rendering "Nothing to search for" under it
+      // as well is two cards contradicting each other, and this one carries k1, which the
+      // suite's verdict classifier reads as ANSWERED. So a hostile 164-word input scored as a
+      // confident reply. It stays k1 in the normal case ON PURPOSE: for "what is an apple",
+      // drawing apple's real, sourced facts IS an answer, and l-apple/l-cows/l-cars/h-absent
+      // all depend on that. What is wrong is showing it when nothing was understood.
+      if(!(qTruncated&&!goal))
       out.insertAdjacentHTML("beforeend",'<div class="card k1"><div class="claim">'+
         'Nothing to search <b>for</b>.</div><div class="row"><span class="lbl">why</span><span>'+
         'no word in that question names a relation this graph records, and only one entity was '+

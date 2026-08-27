@@ -817,6 +817,60 @@ of JSON each, ~250-270 shards for one wide question) - genuine, necessary comput
 page pays too, not something a test harness can skip. `sleep` was still made overridable
 (`const`->`let`), a real if modest ~17% saving, kept for that reason alone.
 
+### B48 - the golden-trace gate had been running against a two-day-stale copy, and was hiding a real regression
+
+**The gate itself was broken, which is why this is one entry and not four.** `golden_trace.mjs`
+(and five sibling harnesses) bootstrap the engine by pulling the LAST `<script>` block out of
+`index.html`. That held until 2026-08-26, when the audience-mode filter, the Views tab and the chat
+box appended their own scripts after the engine. Every harness then silently bootstrapped the wrong
+block and bailed on its banner check. Worse, the harnesses read `site/index.html` - a *copy* under
+`.opus-tools/agi_proto/starfighter/` - which was 44KB and two days behind the repo. So the gate that
+WISHLIST.md calls "what makes the still-open module-split refactor safe" had been guarding nothing.
+Fixed by selecting the block that CONTAINS the engine marker instead of the one at the end, in all
+six harnesses. Selection by content cannot drift that way. `--selftest` passes: all 20 report
+exactly one finding and it is the earliest injected difference.
+
+With the gate working again, `--check` found two divergences. One was an improvement (`p-caliper`
+now links `car`, 401 facts, instead of `used`, 19 facts - the B45 entity-linking work). The other
+was real:
+
+**`h-verylong` went ABSTAINED -> ANSWERED.** The input is 733 characters of `what is the thing that
+is the thing that ... that is a car`. Golden behaviour was 6 steps, 0 nodes, 0 chains, refuse. New
+behaviour was 203 steps, 36 nodes, 12 shard fetches, 3 chains completed, and a confident answer.
+
+Three separate defects stacked up to produce it, each found by reading the run rather than guessing:
+
+1. **A path from a thing to itself.** Entity linking returned `"thing"` TWICE (correctly - the word
+   really does appear twice), and `const target = ents.length>1 ? ents[1] : null` took the second
+   one blindly. The engine was asked for a path from `thing` to `thing`, which is degenerate and
+   trivially satisfiable, and it duly "completed" 3 chains. Target now skips any candidate equal to
+   the start; if nothing else was named it falls through to the single-subject lane. **203 steps ->
+   6, chains 3 -> 0, shard fetches 12 -> 0.**
+
+2. **Facts presented as an answer to a question that was only sampled.** The `WORD_MAX` bound
+   truncated 164 words down to 60 and said so. A subject survived that truncation, so the one-hop
+   lane listed what is on file about `thing`. Truncated input *plus* no recognised relation means
+   the question was not understood, and answering it anyway is the confident-wrong class this page
+   exists to avoid. Both conditions were already disclosed in the trace; they are now acted on.
+
+3. **An abstention card wearing an evidence class.** The card that says *"Nothing to search **for**.
+   ... there is no target"* was tagged `class="card k1"`. `k1`/`k2` mean "1 source" / "2+ sources",
+   and the suite's verdict classifier reads `class="card k[12]"` as ANSWERED - so a card whose own
+   text is a refusal scored as a confident reply. Found only by dumping the rendered HTML the
+   verdict was classified from (`DUMP_TOUT=<path>`, kept, documented); the trace log cannot show
+   this, because the disagreement is between a card's class and its own words.
+   - ⚠ **The obvious fix was wrong and the goldens caught it.** Retagging it `k0` flipped
+     `l-apple`, `l-cows`, `l-cars` and `h-absent` from ANSWERED to ABSTAINED. For "what is an
+     apple", drawing apple's real sourced facts genuinely IS an answer, so `k1` is correct there.
+     The card is only wrong when nothing was understood, and it is now suppressed in exactly that
+     case - where the refusal card from (2) has already spoken, so the page shows one refusal
+     instead of two cards contradicting each other.
+
+**Verified:** 20/20 golden traces byte-stable after re-recording the two understood divergences.
+`h-verylong` abstains again, and for a better reason than before - it now abstains because it
+understood that it had not understood, where the golden abstained because it ran out of name-probe
+budget.
+
 ### B47 - "is there a favorite color" answers "black and white" via three association hops
 
 Found by predicting the outcome in writing first, then running it, so the surprises are recorded
