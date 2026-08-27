@@ -63,8 +63,9 @@
 
   <div class="hud" id="readout"></div>
 
+  <div class="hud" id="camTag" style="left:14px;bottom:44px;opacity:.72">camera</div>
   <div class="hud" id="bottom">
-    <kbd>←</kbd> <kbd>→</kbd> or move mouse to aim &nbsp;·&nbsp; <kbd>space</kbd> / click to fire
+    <kbd>←</kbd> <kbd>→</kbd> or move mouse to aim &nbsp;·&nbsp; <kbd>space</kbd> / click to fire &nbsp;·&nbsp; <kbd>C</kbd> camera
   </div>
 
   <div class="screen" id="start">
@@ -179,20 +180,36 @@ const TONES_HEX = ['#8fd7ff','#c9b6ff','#9ff0c8','#ffd79a'];
 // ---------------------------------------------------------------- the CV, as text
 // Every line is real. Companies and dates come first, the detail is indented under them, so the
 // crawl reads like the document rather than a word cloud.
+const WRAP = 40;                      // max characters per rendered line
+function wrapWords(text, indent){
+  const words = text.split(/\s+/), out = [], pre = indent || "";
+  let cur = pre;
+  for(const w of words){
+    if(cur.trim().length && (cur + " " + w).length > WRAP){ out.push(cur); cur = pre + w; }
+    else cur = cur.trim().length ? cur + " " + w : pre + w;
+  }
+  if(cur.trim().length) out.push(cur);
+  return out;
+}
 const CV = (function(){
   const L = [];
   L.push({t:"R.J. THOMPSON", k:"head"});
-  L.push({t:"senior C++ / C# engineer  -  30 years shipping  -  open to work", k:"sub"});
+  L.push({t:"senior C++ / C# engineer", k:"sub"});
+  L.push({t:"30 years shipping - open to work", k:"sub"});
   L.push({t:"", k:"gap"});
   ROWS.forEach(row=>{
     row.items.forEach(([co,date,detail])=>{
-      L.push({t: co + "   " + date, k:"role", tone:row.tone, co, date, detail});
-      L.push({t: "   " + detail,    k:"detail", tone:row.tone, co, date, detail});
+      L.push({t: co + "  " + date, k:"role", tone:row.tone, co, date, detail});
+      // long detail lines are wrapped rather than run off the reachable area - a line the ship
+      // cannot fly to is a line the player can never break
+      wrapWords(detail, "  ").forEach(seg=>{
+        L.push({t: seg, k:"detail", tone:row.tone, co, date, detail});
+      });
       L.push({t:"", k:"gap"});
     });
   });
-  L.push({t:"RJ45Thompson@gmail.com   -   236-518-2711", k:"sub"});
-  L.push({t:"that is the whole CV. thanks for reading it the hard way.", k:"sub"});
+  L.push({t:"RJ45Thompson@gmail.com", k:"sub"});
+  L.push({t:"236-518-2711", k:"sub"});
   return L;
 })();
 
@@ -249,10 +266,12 @@ const LETTER_FRAG = `
 `;
 
 // ---------------------------------------------------------------- layout + pooling
-const CH_W = 0.62, LINE_H = 1.5;      // glyph pitch, line pitch
+const CH_W = 0.86, LINE_H = 2.0;      // glyph pitch, line pitch
 const VIEW_TOP = 15.0, VIEW_BOT = -13.5;
-const letterGeo = new THREE.PlaneGeometry(CH_W*1.55, CH_W*1.95);
+const letterGeo = new THREE.PlaneGeometry(CH_W*1.05, CH_W*1.35);
 
+const board = new THREE.Group(); scene.add(board);
+let textHalfW = 12;    // widest rendered line, drives ship reach and camera fit
 let lines = [];        // {i, kind, tone, text, meta, letters:[], y}
 let pool  = [];        // recycled meshes
 let crawl = 0;         // how far the CV has scrolled
@@ -265,7 +284,7 @@ function makeLetterMesh(){
     vertexShader: LETTER_VERT, fragmentShader: LETTER_FRAG,
     transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
   }));
-  m.visible = false; scene.add(m); return m;
+  m.visible = false; board.add(m); return m;
 }
 function takeMesh(){ return pool.length ? pool.pop() : makeLetterMesh(); }
 function giveMesh(m){ m.visible=false; pool.push(m); }
@@ -287,10 +306,51 @@ function buildBoard(){
     lines.push({ i, kind:row.k, tone:row.tone|0, text:row.t, meta:row, letters:chars,
                  y: 12 + i*LINE_H });
   });
+  // the widest RENDERED line decides how far the ship must be able to fly and how wide the
+  // camera has to see. Hardcoding +/-11 while text ran to +/-21 meant half the CV could never
+  // be hit - reported by RJ as "your dude can't get to the edges".
+  textHalfW = 0;
+  lines.forEach(l=>{ if(l.letters.length){
+    const w = Math.max(...l.letters.map(L=>Math.abs(L.x))) + CH_W;
+    if(w > textHalfW) textHalfW = w;
+  }});
+  applyCam();
   document.getElementById("total").textContent = totalGlyphs;
 }
 
 // only rows near the viewport hold meshes
+// ---------------------------------------------------------------- camera zoo
+// RJ: "it looks flat straight on ortho then all of a sudden it pops to different camera angles".
+// It was flat because the crawl sat on the z=0 plane facing a head-on camera, so perspective had
+// nothing to bite on. Each preset tilts the BOARD as well as moving the camera, which is what
+// actually creates depth: a tilted plane recedes, so far letters are genuinely smaller and the
+// text reads as 3D rather than as a flat sheet.
+const CAMS = [
+  { name:"head on",  pos:[0,-4,30],  look:[0,3,0],  tilt:0.00, roll:0 },
+  { name:"crawl",    pos:[0,-16,22], look:[0,6,0],  tilt:0.62, roll:0 },
+  { name:"chase",    pos:[0,-13,12], look:[0,9,0],  tilt:0.42, roll:0 },
+  { name:"low bank", pos:[-13,-10,20],look:[2,5,0], tilt:0.34, roll:0.10 },
+  { name:"overhead", pos:[0,6,26],   look:[0,0,0],  tilt:0.85, roll:0 }
+];
+let camIdx = 1;
+function applyCam(){
+  const c = CAMS[camIdx];
+  // fit the widest line into view, with margin, so no letter is ever off-screen or unreachable
+  // applyCam() can run before the first resize, when camera.aspect is still unset. Math.max with
+  // a NaN returns NaN, which put camera.position.z at null and blanked the view. Guard the aspect
+  // and refuse any non-finite result.
+  const asp = (isFinite(camera.aspect) && camera.aspect > 0) ? camera.aspect : (innerWidth/innerHeight || 1.6);
+  const need = (textHalfW + 2.5) / Math.tan((camera.fov*Math.PI/180)/2) / asp;
+  const dist = isFinite(need) ? Math.max(c.pos[2], need) : c.pos[2];
+  camera.position.set(c.pos[0], c.pos[1], dist);
+  camera.lookAt(c.look[0], c.look[1], c.look[2]);
+  camera.rotation.z += c.roll;
+  board.rotation.x = c.tilt;
+  const tag = document.getElementById("camTag");
+  if(tag) tag.textContent = "camera: " + c.name + "  (C to change)";
+}
+function cycleCam(){ camIdx = (camIdx+1) % CAMS.length; applyCam(); }
+
 function syncMeshes(){
   lines.forEach(line=>{
     const y = line.y - crawl;
@@ -480,7 +540,8 @@ function tick(now){
     let dir = 0;
     if(keys['ArrowLeft']||keys['a']) dir -= 1;
     if(keys['ArrowRight']||keys['d']) dir += 1;
-    ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*22*dt, -W/2+2, W/2-2);
+    const reach = textHalfW + 1.0;   // must exceed the widest line or edge letters are unhittable
+    ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*26*dt, -reach, reach);
     ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -dir*.35, .12);
     shipGlow.intensity = 1.4 + Math.sin(t*9)*.3;
     if(ship.userData.plume){
@@ -560,18 +621,19 @@ function tick(now){
   }
 
   if(readTimer>0){ readTimer-=dt; if(readTimer<=0) readout.classList.remove('on'); }
-
-  // camera shake
-  if(shake>0){ shake-=dt; }
-  camera.position.x = (shake>0? (Math.random()-.5)*shake*2 : 0);
-  camera.position.y = -20 + (shake>0? (Math.random()-.5)*shake : 0);
-  camera.lookAt(0,2,0);
+    // camera shake rides ON TOP of the active preset rather than overwriting it - the old code
+    // hardcoded position/lookAt every frame, which silently undid any camera change.
+    if(shake>0){
+      camera.position.x += (Math.random()-.5)*shake*2;
+      camera.position.y += (Math.random()-.5)*shake;
+    }
 
   renderer.render(scene, camera);
 }
 
 // ---------------------------------------------------------------- input / boot
 addEventListener('keydown', e=>{
+  if(e.key==='c'||e.key==='C'){ cycleCam(); return; }
   keys[e.key]=true;
   if(e.key===' '){ e.preventDefault(); fire(); }
 });

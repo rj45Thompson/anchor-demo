@@ -817,7 +817,7 @@ of JSON each, ~250-270 shards for one wide question) - genuine, necessary comput
 page pays too, not something a test harness can skip. `sleep` was still made overridable
 (`const`->`let`), a real if modest ~17% saving, kept for that reason alone.
 
-### B46 - "is there a favorite color" answers "black and white" via three association hops
+### B47 - "is there a favorite color" answers "black and white" via three association hops
 
 Found by predicting the outcome in writing first, then running it, so the surprises are recorded
 rather than rationalised. Predictions and results: `FAVORITE_COLOR_TEST.md`. I predicted a clean

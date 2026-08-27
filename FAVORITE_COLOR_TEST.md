@@ -1,4 +1,4 @@
-# Predictions for "is there a favorite color" - written BEFORE running it
+# B47 - predictions for "is there a favorite color", written BEFORE running it
 
 Rule for this exercise: nothing below gets edited after the test. Wrong predictions stay wrong and
 get marked wrong.
