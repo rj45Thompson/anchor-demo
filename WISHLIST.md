@@ -179,6 +179,65 @@ Status codes: ✅ done+verified · 🟡 built, not watched in a browser · 🔴 
     export format, which is a data-pipeline project, not a test-speed tweak - out of scope here,
     captured for whoever next wants faster wide-search iteration.
 
+14. **CART: "Quantum Physics for a C# Developer" section, plus the experience and the whitepaper**
+    *(new wish, captured 2026-08-26; target repo `D:/code/correlation-anchor-theory`)*.
+    Hook: **"How to lag reality itself."**
+
+    **RJ's framing, recorded as his claim, not as verified physics.** He built a steam engine. He
+    thought it might be for fusion. It turned out to be a **measurement device**. The question
+    driving it: *observation must have a cost, or why would a wave mode exist at all? What is it
+    for?* Trapped light in a cavity is "infinite boxing" - the same photon re-observed over and
+    over. What he thinks the device actually checks: **overlap of higher dimensions upon lower**.
+    He is explicit that not all the threads connect yet, and the section must say so rather than
+    paper over it.
+    - ⚠ Do NOT repeat my earlier error: I opened `RJ_CAVITY_ANALYSIS.md`, found the verified
+      black-diamond (PLAL nanodiamond) passage, and led with it. That is a real result in that
+      file but it is NOT what this section is about. The subject is the cavity as an *instrument*.
+
+    **The four things that are established, published, and measured** - so the section never has to
+    invent a number, and so "lag reality" is literal rather than a slogan:
+    - **Quantum Zeno effect.** Repeated measurement demonstrably slows a system's evolution.
+      Observed at NIST in trapped ions (Itano et al., 1990). This is the hook, already real: watch
+      it hard enough and it stops moving.
+    - **Landauer's principle.** Erasing one bit costs at least `kT ln 2`, dissipated as heat.
+      Measured (Bérut et al., *Nature*, 2012). So "observation has a cost" is thermodynamics, not
+      metaphor, and it is the bridge from the steam engine to the measurement device.
+    - **Decoherence answers RJ's actual question.** The wave mode is the *un-recorded* mode.
+      Interference survives exactly as long as nothing has taken down which-path information. So
+      "what is the wave mode for" has a real answer: it is the cheap, uncommitted state, and
+      collapse is where the bill lands.
+    - **Cavity as amplifier.** Finesse `B = R/(1-R)` means roughly 10^4 passes, so an effect far
+      too small to see in one pass gets integrated 10^4 times. That is the shape of every real
+      precision search (LIGO, axion haloscopes, short-range gravity tests hunting extra
+      dimensions). Whatever survives of the specific claim, *cavity as instrument for a tiny
+      per-pass anomaly* is a legitimate experimental design, and that is worth saying plainly.
+
+    **The C# teaching spine** - this is what makes it a section for developers rather than a physics
+    essay, and the mapping is honest rather than cute:
+    - wave mode = **deferred execution** (`IEnumerable`, `yield return`): nothing is computed, and
+      nothing is committed, until somebody enumerates
+    - observation = **`.ToList()`**: forcing enumeration, which is where the cost actually lands
+    - **boxing** = value type to `object`, a real heap allocation with a real measurable cost. RJ's
+      "infinite boxing" is the cavity re-boxing the same photon 10^4 times
+    - decoherence = the moment state **escapes to the heap** where anything can see it
+    - Landauer = **you cannot free a bit for free**
+    - Zeno = a **hot polling loop** that reads a value so often it never gets a chance to change
+    - higher-dimensional overlap = a **projection**: the lower-dimensional slice you can actually
+      index into, of an object that is bigger than the slice
+
+    **Deliverables, in order:** (a) the CART section itself, (b) the *experience* - interactive, in
+    the same discipline as the reasoning tab, where the Zeno lag and the Landauer cost are things
+    you drag a slider and watch, not things you are told, (c) the whitepaper.
+
+    **Gates.** Every claim tagged HIS-CLAIM / ESTABLISHED / UNVERIFIED, with the unverified ones
+    left visibly unverified. No invented constants. A regime guard wherever a closed form has a
+    range, exactly as in wish 10. The section is stronger, not weaker, for stating which threads do
+    not yet connect.
+
+    **Relationship to wish 10 (House Warmer).** Same cavity, different question. Wish 10 asks what
+    the cavity *does* (boil water, and honestly fail to fuse). Wish 14 asks what the cavity
+    *measures*. Energy versus information. Keep them separate tabs; let them share the cavity math.
+
 ## Standing rules that got us here
 
 Measure before defending. A bound is not an absence. A path is not an assertion. Disclosure rots —
