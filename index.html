@@ -49,8 +49,14 @@ border-radius:8px;padding:14px 16px;margin:0 0 10px}
 .row{display:flex;gap:9px;font-size:.89rem;color:var(--muted);margin:3px 0}
 .row .lbl{min-width:92px;flex:none;opacity:.8}
 .src{color:var(--fg)}
-.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin:8px 0 10px}
-.bar i{display:block;height:100%;background:var(--hi)}
+.ev{display:flex;align-items:center;gap:7px;margin:8px 0 9px}
+.ev .pips{display:flex;gap:3px}
+.ev .pip{width:26px;height:6px;border-radius:2px;background:var(--line)}
+.ev .pip.on{background:var(--hi)}
+.ev .pip.base{background:repeating-linear-gradient(90deg,var(--line) 0 3px,transparent 3px 6px)}
+.ev .evl{font:10.5px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.5px;
+  text-transform:uppercase;color:var(--muted)}
+.ev.noanchor .evl{color:var(--low)}
 h2{font-size:1.02rem;margin:36px 0 9px;letter-spacing:.02em;text-transform:uppercase;
 color:var(--muted);font-family:ui-sans-serif,system-ui,sans-serif}
 table{border-collapse:collapse;width:100%;font-size:.92rem;margin:0 0 8px}
@@ -320,6 +326,29 @@ doesn't have enough.</p>
   .audbtn:hover{border-color:#2b4c66;color:#cfe3f2}
   .audbtn.on{background:#14304a;border-color:#2f6d99;color:#eaf5ff}
   .audnote{font-size:11.5px;color:#7d8fa1;margin-left:4px}
+
+/* ---- side-by-side: the same question to a frontier assistant and to this engine ------------
+   RJ ran "how many bears have brown hair" through Copilot and pasted the whole transcript. It is
+   a better argument for this page than any claim I could write, so it is quoted verbatim rather
+   than paraphrased, and our own column is the literal trace from the n-bear golden. */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 6px}
+@media(max-width:820px){.vs{grid-template-columns:1fr}}
+.vs>div{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card)}
+.vs .vsh{padding:9px 12px;font:11px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.6px;
+  text-transform:uppercase;border-bottom:1px solid var(--line)}
+.vs .them .vsh{background:#2a1512;color:#ffb4a2}
+.vs .us   .vsh{background:#0e2418;color:#8fe0b0}
+.vs .vsb{padding:11px 13px;font-size:.88rem;line-height:1.55}
+.vs q{font-style:italic;color:var(--fg)}
+.vs .turn{margin:0 0 9px;padding-left:10px;border-left:2px solid var(--line)}
+.vs .turn b{display:block;font:11px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);
+  letter-spacing:.5px;margin-bottom:2px}
+.vs .flag{margin-top:9px;padding:8px 10px;border-radius:6px;background:#1d1408;
+  border-left:3px solid #b5701f;color:#ffcda6;font-size:.85rem}
+.vs pre{margin:0;padding:9px 10px;background:#0b1219;border-radius:6px;overflow-x:auto;
+  font:11.5px/1.65 ui-monospace,Menlo,Consolas,monospace;color:#c9dcea}
+.vs pre .hit{color:#8fe0b0}.vs pre .miss{color:#7d8fa1}.vs pre .bound{color:#ffcda6}
+.vsnote{font-size:.9rem;color:var(--muted);margin:4px 0 0}
 </style>
 
 <div id="p-resume" class="panel">
@@ -617,6 +646,60 @@ target it abstains, goes and learns what else that thing is called, and tries ag
 </p>
 
 
+
+<h2 id="vs">The same question, twice</h2>
+<p>RJ asked a frontier assistant <code>how many bears have brown hair</code>, then asked this
+engine. Both transcripts are real. The left column is quoted verbatim; the right column is the
+engine's own trace, which you can reproduce by typing the question above.</p>
+
+<div class="vs">
+  <div class="them">
+    <div class="vsh">a frontier assistant</div>
+    <div class="vsb">
+      <div class="turn"><b>asked to count</b>
+        <q>Estimated total bears with brown fur worldwide: ≈ 270,000-300,000 bears. This is the
+        closest scientifically grounded estimate possible.</q></div>
+      <div class="turn"><b>asked again, terse</b><q>2</q></div>
+      <div class="turn"><b>then: "My ai says 5 why"</b><q>5</q></div>
+      <div class="turn"><b>then: "I wanted could"</b><q>5</q></div>
+      <div class="flag"><strong>Three different answers to one question</strong> - 1, then 2,
+      then 5 - and the final change came from being told another system said 5, with no new
+      evidence offered or asked for. The 270,000 figure was assembled from invented percentages
+      and labelled <q>scientifically grounded</q>. It also quoted a sentence back to RJ that he
+      never wrote, attributing its own reasoning to him.</div>
+    </div>
+  </div>
+
+  <div class="us">
+    <div class="vsh">this engine</div>
+    <div class="vsb">
+<pre><span class="miss">COUNT question: class="bear" property="brown hair"</span>
+class "bear" has <b>36</b> recorded members
+<span class="miss">cave bear        no fact attesting "brown hair"</span>
+<span class="miss">sun bear         no fact attesting "brown hair"</span>
+<span class="bound">syrian brown bear  NAMED for "brown" but carries no fact
+                 attesting it - counted separately, not as evidence</span>
+<span class="hit">bruin            attests brown   synonym -&gt; brown bear   k=1</span>
+<span class="hit">grizzly bear     attests brown   is a    -&gt; brown bear   k=1</span>
+
+COUNT complete: <b>2 of 8</b> members qualify, 1 named-only
+(not counted), <span class="bound">28 members left unread - a bound</span></pre>
+      <div class="flag" style="background:#0e2418;border-left-color:#2f7d52;color:#9fe0b8">
+      <strong>It answers 2, and tells you what it did not read.</strong> The 28 unread members are
+      stated as a bound, not silently dropped, so the answer cannot be mistaken for a census.
+      <q>Syrian brown bear</q> has brown in its name and no fact attesting it, so it is reported
+      separately - naming is not evidence. Every hit shows the edge it rests on and how many
+      independent sources back it.</div>
+    </div>
+  </div>
+</div>
+
+<p class="vsnote">Neither column is the smarter one. The engine knows far less: it holds 36 bear
+types where the assistant has read the whole internet, and it read only 8 of them before hitting
+its bound. The difference is that <strong>every number it gives you is one it can show you the
+receipt for, and it never changed its answer because someone pushed back</strong>. The assistant's
+<q>2</q> was arguably the better zoological answer. It abandoned it anyway.</p>
+
 <div class="stage">
   <canvas id="cv"></canvas>
   <div class="badge" id="badge">idle</div>
@@ -885,6 +968,30 @@ async function definitelyAbsent(name,onProg){
   }catch(e){ return null; }   // bloom unavailable - cannot claim certainty either way
 }
 
+/* EVIDENCE LADDER - replaces the old continuous confidence bar.
+   The bar was drawn as a continuum, `width: p%`, which implied a measured position on a smooth
+   scale. It is not one. p comes from pFor(k) and k is clamped at 3+, so the bar had exactly FOUR
+   possible widths and ten rows would render two distinct lengths - it read as broken.
+   Worse, it was NON-MONOTONIC: k=0 has no anchor at all and falls back to the population base
+   rate of 51.2%, which is HIGHER than the 44.9% measured for k=1. So "no sources" drew a LONGER
+   bar than "one real source", and more evidence made the bar shorter. That is the part that made
+   no sense, and it was a genuine finding hiding inside a presentation bug: one source really does
+   under-perform the base rate in this graph. Hiding it behind a bar was the error, not the number.
+   So: draw what is actually ordinal - the SOURCE COUNT, 0..3+ - as discrete pips, and keep the
+   calibrated probability as a number next to its n. The k=0 case is drawn hatched and labelled
+   rather than filled, because a prior is not evidence and must not look like a short measurement. */
+function evidenceHTML(k, q){
+  const n = Math.max(0, Math.min(3, k|0));
+  if(n === 0){
+    return '<div class="ev noanchor"><div class="pips">' +
+      '<span class="pip base"></span><span class="pip"></span><span class="pip"></span>' +
+      '</div><span class="evl">no anchor - prior only</span></div>';
+  }
+  let pips = "";
+  for(let i=1;i<=3;i++) pips += '<span class="pip'+(i<=n?" on":"")+'"></span>';
+  return '<div class="ev"><div class="pips">'+pips+'</div><span class="evl">'+
+    k+' source'+(k===1?"":"s")+(q.clamped?" (3+)":"")+'</span></div>';
+}
 function pFor(k){
   if(CURVE[k])return{p:CURVE[k][0],n:CURVE[k][1],measured:true};
   if(k>3)return{p:CURVE[3][0],n:CURVE[3][1],measured:true,clamped:true};
@@ -995,11 +1102,12 @@ function render(rows,note,busy,filterNote){
      '<div class="card '+cls+'"><div class="claim">'+esc(r.subj)+
      ' <span style="color:var(--muted)" title="'+esc(r.rel)+'"> - '+esc(relLabel(r.rel))+
      '→</span> <b>'+esc(r.obj)+'</b></div>'+
-     '<div class="bar"><i style="width:'+(q.p*100).toFixed(1)+'%"></i></div>'+
+     evidenceHTML(r.k,q)+
      '<div class="row"><span class="lbl">confidence</span><span><span class="pct">'+
        (q.p*100).toFixed(1)+'%</span> - '+r.k+' independent source'+(r.k===1?"":"s")+' '+
        (q.measured?"(measured on n="+q.n.toLocaleString()+(q.clamped?", clamped at 3+":"")+")"
-                  :"(no anchor - base rate)")+'</span></div>'+
+                  :"(no anchor - this is the POPULATION BASE RATE, not evidence about this fact)")+
+       '</span></div>'+
      (r.anchors.length?'<div class="row"><span class="lbl">because</span><span class="src">'+
        r.anchors.map(esc).join(", ")+'</span></div>':"")+
      '<div class="row"><span class="lbl">held-out</span><span>'+(r.heldOut
