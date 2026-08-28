@@ -195,6 +195,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <button class="audbtn" data-aud-set="games">Game studios</button>
   <span class="audnote" id="audNote"></span>
 </div>
+<div id="chatbox"></div>
 <p class="tagline">Senior C++ / C# engineer, 30 years shipping. Everything below runs in this page - the engine, the games, the research. Open to work.</p>
 <p class="sub">A system with <strong>no neural weights</strong>. Every answer - a fact or a program - carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
 doesn't have enough.</p>
@@ -390,6 +391,40 @@ doesn't have enough.</p>
 .gv-k2{background:#123c53;color:#9dd4f0}.gv-k3{background:#12472c;color:#96e0b4}
 .gv-more{padding:8px 10px;font-size:.85rem;color:var(--muted)}
 .gv-detail{display:none}
+
+/* ---- ChatBox --------------------------------------------------------------------------------
+   Wired to agentbox/server.py on RJ's own machine, where the agent runs with every tool denied.
+   It probes /health first and says "offline" plainly when the desktop is not up, rather than
+   spinning or - worse - answering from a canned script dressed as a live reply. */
+.cb{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:11px 13px;
+  margin:0 0 16px}
+.cb-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cb-title{font:11px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.7px;
+  text-transform:uppercase;color:var(--muted)}
+.cb-dot{width:7px;height:7px;border-radius:50%;flex:none}
+.cb-checking{background:#7d8fa1}.cb-live{background:#51c07a}.cb-off{background:#8a5a3a}
+.cb-state{font:10.5px ui-monospace,Menlo,Consolas,monospace;color:var(--muted)}
+.cb-log{max-height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;margin-bottom:9px}
+.cb-log:empty{display:none}
+.cb-msg{padding:8px 11px;border-radius:8px;font-size:.9rem;line-height:1.55;max-width:92%}
+.cb-you{align-self:flex-end;background:#173049;color:#dcecfa}
+.cb-bot{align-self:flex-start;background:#101a24;border:1px solid var(--line);white-space:pre-wrap}
+.cb-sys{align-self:stretch;background:#1a1408;border-left:3px solid #8a6a2a;color:#e8d5b0;
+  max-width:100%}
+.cb-wait{opacity:.6;font-style:italic}
+.cb-row{display:flex;gap:7px}
+.cb-in{flex:1;background:#0b1219;border:1px solid var(--line);color:var(--fg);border-radius:7px;
+  padding:8px 11px;font:inherit;font-size:.92rem}
+.cb-in:focus{outline:none;border-color:var(--hi)}
+.cb-in:disabled{opacity:.5}
+.cb-send{background:var(--hi);border:0;color:#04121e;font-weight:700;border-radius:7px;
+  padding:8px 16px;cursor:pointer}
+.cb-send:disabled{opacity:.45;cursor:default}
+.cb-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cb-chip{background:transparent;border:1px solid var(--line);color:var(--muted);cursor:pointer;
+  border-radius:20px;padding:3px 11px;font-size:.82rem}
+.cb-chip:hover{color:var(--fg);border-color:var(--hi)}
+.cb-foot{margin-top:9px;font-size:.8rem;color:var(--muted);line-height:1.5}
 </style>
 
 <div id="p-resume" class="panel">
@@ -864,6 +899,7 @@ sharded graph and a Bloom filter, all running in your browser.
 
 <script src="three.min.js"></script>
 <script src="graphview.js"></script>
+<script src="chatbox.js"></script>
 <script>
 /* FIRST CODE IN THE SCRIPT, ON PURPOSE. B26: a top-level throw anywhere below this point used
    to leave the page in total silence - no error, no banner, nothing wired, including the Ask
@@ -4518,6 +4554,17 @@ renderCode();
     apply(b.dataset.audSet);
   });
   apply("all");
+})();
+</script>
+<script>
+/* The endpoint is the operator's own loopback address on purpose. A visitor's browser resolves
+   127.0.0.1 to THEIR machine, not RJ's, so this answers for someone at RJ's desk and reports
+   itself offline for everyone else. Making it reachable by a recruiter means putting a tunnel in
+   front of agentbox, which is a deliberate decision and not something the page does on its own. */
+(function(){
+  if(typeof ChatBox!=="function") return;
+  var host=document.getElementById("chatbox"); if(!host) return;
+  try{ new ChatBox(host,{endpoint:"http://127.0.0.1:8778"}); }catch(e){ host.style.display="none"; }
 })();
 </script>
 </body></html>
