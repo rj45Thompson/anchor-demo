@@ -852,18 +852,7 @@ from any hop with that edge excluded - rewind-and-branch on the live engine. The
 reads its own map to order the frontier (every re-rank is a VISION line in the trace, counted
 in <code>window.__visionFlips</code>; ordering only, it can never change an answer - and its
 benefit is counted, not yet benchmarked).</p>
-<p class="small"><b>The same conclusion, as geometry.</b> Above the graph, each completed chain
-is a floating ruler: one segment per hop, segment length = -log(p_hop), so multiplying hop
-probabilities becomes adding lengths and <b>the most probable chain is literally the shortest
-ruler</b> - the weak hop is the long segment, a single-source hop is amber, and no number needs
-reading. A faint gridline marks the length of <b>one ideal hop</b> (94.7%), so a ruler reads
-in ideal-hop units the way a lane reads in metres. The chain selected here is the bright ruler
-there - pick either side and the other follows. The ^ chip on the stage frames the geometry
-with one click (any movement of yours takes the camera back). Hover a segment for the fact it
-stands for; click it and this debugger jumps to that hop. One record, three views: geometry,
-program, graph. <b>Counting questions get their own program</b> too - LOAD the class, CHECK each
-member in the order it was actually read, RET the count; the geometry rack is chain-specific and
-stays hidden for a counting run rather than being forced into a shape that does not fit it.</p></div>
+<p class="small"><b>The same conclusion, as geometry - currently offline.</b> Each completed chain used to be drawn above the graph as a floating ruler: one segment per hop, segment length = -log(p_hop), so multiplying hop probabilities becomes adding lengths and <b>the most probable chain is literally the shortest ruler</b>. It is <b>not reachable right now</b>: the graph panel was rebuilt as a tabbed control on 2026-08-28 and the geometry rack has not been ported onto it yet. It is on the burn-down list rather than quietly deleted, and this paragraph says so instead of describing a view you cannot open. <b>Counting questions get their own program</b> - LOAD the class, CHECK each member in the order it was actually read, RET the count.</p></div>
 
 <h2>What just happened</h2>
 <div id="whatbox"><p class="small">Ask something and this panel will explain, in plain English,
@@ -1271,7 +1260,9 @@ fetch("index.json").then(r=>r.json()).then(d=>{
     if(document.getElementById("p-think").classList.contains("on"))startLoop();
     if(!window.__firstRunDone && clickSeq===0){
       window.__firstRunDone=true;
-      const seed=$("q") && $("q").placeholder;
+      // #tq, not #q: this autorun drives the REASON tab, and seeding it from the Facts tab's
+      // box only works while both placeholders happen to be the same string.
+      const seed=($("tq") && $("tq").placeholder) || ($("q") && $("q").placeholder);
       if(seed) setTimeout(()=>{ if(clickSeq===0) askNow(seed); }, 400);
     }
 // LOAD: the last run's RECORD restores into the debugger and the geometry rack. A record
@@ -1954,12 +1945,20 @@ function stopLoop(){ rafOn=false;
     if(nd._n && typeof inspectNode==="function") inspectNode(nd._n);
   });
 
-  // Refresh when the graph actually changes rather than every frame - the search adds nodes in
-  // bursts, and re-running the layout on an unchanged graph is pure waste.
-  let lastN=-1,lastE=-1;
+  // Refresh on any change that the VIEW can show, not just on growth. Watching node/edge counts
+  // alone was wrong in the one case that matters: a search stops adding nodes at the exact moment
+  // it marks the winning chain (liveAdd and the final walk only flip .on) and fills DBG.chains via
+  // dbgLoad. Counts are identical across that step, so the old guard returned early and the Chains
+  // tab never received the chains at all - it could only ever be empty. G.dirty is the flag the
+  // search already sets for precisely this ("roles changed with no count change"); the old renderer
+  // read it and nothing did after that loop was retired. Signature covers all four.
+  let sig="";
   setInterval(()=>{
-    if(G.nodes.length===lastN && G.edges.length===lastE) return;
-    lastN=G.nodes.length; lastE=G.edges.length;
+    const onCount=G.nodes.reduce((a,n)=>a+(n.on?1:0),0);
+    const chainCount=(typeof DBG!=="undefined"&&DBG&&Array.isArray(DBG.chains))?DBG.chains.length:0;
+    const now=G.nodes.length+"/"+G.edges.length+"/"+onCount+"/"+chainCount+"/"+(G.dirty?1:0);
+    if(now===sig) return;
+    sig=now; G.dirty=false;
     gv.setData(adapt());
   }, 500);
 })();
@@ -2567,6 +2566,12 @@ async function countAnswer(q,cq,my){
     const t=await typesOf(v);
     if(t.length&&(!cls||t.length>members.length)){cls=v;members=t;}
   }
+  // The one gap in this file's staleness discipline. variantsOf() probes up to ~8 casing and
+  // singular readings, each a real shard fetch, so this loop can easily outlive its question -
+  // and everything below it WRITES: an "I cannot count that" card, a node into the live graph, and
+  // the narration bar. Without this, a superseded count question could paint all three over a
+  // newer question's answer. Same guard, same reason, as every other await site here.
+  if(my!==gen){ traceBuf=[]; return; }
   if(!cls){
     trace("dead","no recorded members for any reading of \""+cq.cls+"\" - the graph has no "+
       "membership facts pointing at it, so there is nothing to count");
@@ -2800,8 +2805,11 @@ function dbgLive(){
   G.dirty=true;
   dbgWire(); dbgRender();
   if(window.showGeoChip)window.showGeoChip();
-  if(first)trace("done","the step debugger and the confidence geometry are now LIVE below - "+
-    "they update as each chain completes");
+  // The geometry rack is unreachable while the new graph control owns the view (see the
+  // note under the debugger). Claiming it is LIVE on every search was the page telling
+  // the reader to look for something that cannot appear.
+  if(first)trace("done","the step debugger is now LIVE below - it updates as each "+
+    "chain completes");
 }
 /* COUNT-MODE PROGRAM. B31: countAnswer never populated the debugger, so the default question
    (and the B28 empty-click fallback) left it on an eternal "Searching..." spinner that a
@@ -4506,19 +4514,39 @@ renderCode();
     d.appendChild(w); d.appendChild(b); log.appendChild(d); log.scrollTop=log.scrollHeight;
     return b;
   }
+  /* Three bugs lived in these two functions, and together they meant this box could NEVER show a
+     real answer - it replied with its own fallback string every time, including for the flagship
+     question that answers cleanly everywhere else on the page.
+       1. the selector "#p-think .answer, #ans, #answer" matches nothing: no element on this page
+          carries any of those. Answers render into #tout as .verdict (chains) or .card (counts
+          and read-backs).
+       2. send() wrote the question into #q, the FACTS tab's input, while asking on the Reason
+          tab - so the other tab's box silently changed under the reader.
+       3. it read the answer after a FIXED 2800ms. A real search regularly runs longer, so even
+          with a correct selector it would usually read an empty panel and then sit on that stale
+          text forever. It now polls until an answer appears, and gives up out loud. */
   function answerText(){
-    var a=document.querySelector("#p-think .answer, #ans, #answer");
-    var t=a? a.innerText.trim() : "";
-    return t || "(see the trace above - the engine abstained or is still working)";
+    var a=document.querySelector("#tout .verdict, #tout .card");
+    return a ? a.innerText.trim().replace(/\s*\n\s*/g, " ") : "";
   }
   function send(){
     var i=document.getElementById("chatIn"), q=i.value.trim(); if(!q) return;
     i.value="";
     add("you",q,"q");
-    var slot=add("anchor","thinking\u2026","a");
-    var qb=document.getElementById("q"); if(qb) qb.value=q;
-    if(typeof askNow==="function") askNow(q);
-    setTimeout(function(){ slot.textContent=answerText(); log.scrollTop=log.scrollHeight; }, 2800);
+    var slot=add("anchor","thinking...","a");
+    var qb=document.getElementById("tq"); if(qb) qb.value=q;
+    if(typeof askNow!=="function"){ slot.textContent="the engine is not loaded yet"; return; }
+    askNow(q);
+    var waited=0, POLL=400, LIMIT=45000;
+    var timer=setInterval(function(){
+      waited+=POLL;
+      var t=answerText();
+      if(t){ clearInterval(timer); slot.textContent=t; log.scrollTop=log.scrollHeight; return; }
+      if(waited>=LIMIT){
+        clearInterval(timer);
+        slot.textContent="still working after "+(LIMIT/1000)+"s - the full trace is above.";
+      }
+    }, POLL);
   }
   document.getElementById("chatGo").addEventListener("click", send);
   document.getElementById("chatIn").addEventListener("keydown", function(e){

@@ -51,7 +51,13 @@
 
   function ChatBox(host, opts) {
     if (!host) throw new Error("ChatBox: no host element");
-    this.opts = Object.assign({}, CFG, opts || {});
+    opts = opts || {};
+    // Accept `endpoint` as well as `ENDPOINT`. Object.assign merges by exact key, so the
+    // lowercase option every caller actually passes was landing as a SIBLING key and being
+    // ignored by _probe/_ask. It only looked fine because the default and the passed URL
+    // were the same string; changing the endpoint at a call site would have done nothing.
+    this.opts = Object.assign({}, CFG, opts);
+    if (opts.endpoint) this.opts.ENDPOINT = opts.endpoint;
     this.host = host;
     this.busy = false;
     this._build();
