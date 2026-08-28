@@ -349,6 +349,47 @@ doesn't have enough.</p>
   font:11.5px/1.65 ui-monospace,Menlo,Consolas,monospace;color:#c9dcea}
 .vs pre .hit{color:#8fe0b0}.vs pre .miss{color:#7d8fa1}.vs pre .bound{color:#ffcda6}
 .vsnote{font-size:.9rem;color:var(--muted);margin:4px 0 0}
+
+/* ---- GraphView control ---------------------------------------------------------------------
+   The old view was one 3D blob with WASD fly, which showed structure and nothing else - you
+   could not see what the engine was SURE about, how far it had drifted, or which routes actually
+   completed. graphview.js renders the same graph through several aspects plus a grid. */
+.gv-host{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.gv-tabs{display:flex;align-items:center;gap:4px;padding:7px 9px;border-bottom:1px solid var(--line);
+  flex-wrap:wrap}
+.gv-tab{background:transparent;border:1px solid var(--line);color:var(--muted);cursor:pointer;
+  border-radius:6px;padding:4px 11px;font:11px ui-monospace,Menlo,Consolas,monospace;
+  letter-spacing:.5px;text-transform:uppercase}
+.gv-tab:hover{color:var(--fg);border-color:var(--hi)}
+.gv-tab.on{background:var(--hi);border-color:var(--hi);color:#04121e;font-weight:700}
+.gv-hint{font-size:.82rem;color:var(--muted);margin-left:6px}
+.gv-stage{position:relative;height:460px}
+.gv-canvas{position:absolute;inset:0}
+.gv-canvas canvas{display:block;width:100%;height:100%;cursor:grab}
+.gv-canvas canvas:active{cursor:grabbing}
+.gv-grid{display:none;height:100%;overflow:auto}
+.gv-legend{position:absolute;left:10px;bottom:10px;display:flex;gap:12px;flex-wrap:wrap;
+  font:11px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);pointer-events:none;
+  background:rgba(11,18,25,.82);padding:6px 9px;border-radius:6px;max-width:calc(100% - 20px)}
+.gv-lg{display:flex;align-items:center;gap:5px}
+.gv-lg i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.gv-lgnote{opacity:.8}
+.gv-tbl{width:100%;border-collapse:collapse;font-size:.87rem}
+.gv-tbl th{position:sticky;top:0;background:var(--card);text-align:left;padding:7px 10px;
+  border-bottom:1px solid var(--line);cursor:pointer;font:11px ui-monospace,Menlo,Consolas,monospace;
+  letter-spacing:.5px;text-transform:uppercase;color:var(--muted);user-select:none}
+.gv-tbl th.sorted{color:var(--hi)}
+.gv-tbl td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.gv-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.gv-tbl tbody tr{cursor:pointer}
+.gv-tbl tbody tr:hover{background:rgba(255,255,255,.04)}
+.gv-tbl tbody tr.on{background:rgba(90,190,255,.14)}
+.gv-k{display:inline-block;min-width:17px;text-align:center;border-radius:3px;padding:1px 5px;
+  font:11px ui-monospace,Menlo,Consolas,monospace;font-weight:700}
+.gv-k0{background:#33414d;color:#aab8c4}.gv-k1{background:#5a4a12;color:#f0d585}
+.gv-k2{background:#123c53;color:#9dd4f0}.gv-k3{background:#12472c;color:#96e0b4}
+.gv-more{padding:8px 10px;font-size:.85rem;color:var(--muted)}
+.gv-detail{display:none}
 </style>
 
 <div id="p-resume" class="panel">
@@ -700,7 +741,12 @@ its bound. The difference is that <strong>every number it gives you is one it ca
 receipt for, and it never changed its answer because someone pushed back</strong>. The assistant's
 <q>2</q> was arguably the better zoological answer. It abandoned it anyway.</p>
 
-<div class="stage">
+<div id="gvhost"></div>
+<!-- The previous single-canvas view is retained, hidden, because a good deal of the search code
+     still writes to #badge/#legend/#hover and drives its loop; removing those hooks is a separate
+     surgery from replacing what the reader looks at. startLoop() is short-circuited below so the
+     old renderer costs nothing. -->
+<div class="stage" id="oldstage" style="display:none">
   <canvas id="cv"></canvas>
   <div class="badge" id="badge">idle</div>
   <div class="tip">WASD fly · Q/E up-down · shift boost · drag to look</div>
@@ -817,6 +863,7 @@ sharded graph and a Bloom filter, all running in your browser.
 </div>
 
 <script src="three.min.js"></script>
+<script src="graphview.js"></script>
 <script>
 /* FIRST CODE IN THE SCRIPT, ON PURPOSE. B26: a top-level throw anywhere below this point used
    to leave the page in total silence - no error, no banner, nothing wired, including the Ask
@@ -1759,10 +1806,52 @@ function loop(){
   draw3();
   requestAnimationFrame(loop);
 }
-function startLoop(){ if(!rafOn){ rafOn=true; requestAnimationFrame(loop); }
+function startLoop(){ if(window.__gv) return;   // GraphView owns the view now
+  if(!rafOn){ rafOn=true; requestAnimationFrame(loop); }
   const nb=$("nowbar"); if(nb)nb.style.display="block"; }
 function stopLoop(){ rafOn=false;
   const nb=$("nowbar"); if(nb)nb.style.display="none"; }
+
+/* ---- GraphView wiring ----------------------------------------------------------------------
+   The control is deliberately host-agnostic, so everything project-specific lives here: the
+   adapter from G, the source count per node, and the detail callback. Nothing in graphview.js
+   knows what an anchor is, which is what makes it reusable rather than a piece of this page. */
+(function(){
+  if(typeof GraphView!=="function"||!THREE_OK) return;   // no control, no page change
+  const host=$("gvhost"); if(!host) return;
+  const gv=new GraphView(host,{THREE:THREE});
+  window.__gv=gv;
+
+  // Nodes carry no k of their own - the source count lives on the FACTS and on incident edges.
+  // Best incident k is the honest per-node reading of "how well corroborated is this thing",
+  // and it is what the evidence shells sort on.
+  function nodeK(n){
+    let best=0;
+    for(const e of G.edges) if(e.a===n||e.b===n) best=Math.max(best,e.k|0);
+    return best;
+  }
+  function adapt(){
+    return {
+      nodes: G.nodes.map(n=>({id:n.id,label:n.label,hop:n.hop|0,k:nodeK(n),role:roleOf(n),_n:n})),
+      edges: G.edges.map(e=>({a:e.a.id,b:e.b.id,rel:e.rel,k:e.k|0})),
+      // A completed chain is the on-flagged path; DBG.chains holds them once a search finishes.
+      chains: (typeof DBG!=="undefined"&&DBG&&Array.isArray(DBG.chains)?DBG.chains:[])
+        .map(c=>{ const ids=[]; if(c&&c.start)ids.push(c.start.id||c.start.name);
+          (c.path||[]).forEach(h=>ids.push(h.to)); return ids; })
+        .filter(c=>c.length>1)
+    };
+  }
+  gv.on("select", nd => { if(nd&&nd._n&&typeof inspectNode==="function") inspectNode(nd._n); });
+
+  // Refresh when the graph actually changes rather than every frame - the search adds nodes in
+  // bursts, and re-running the layout on an unchanged graph is pure waste.
+  let lastN=-1,lastE=-1;
+  setInterval(()=>{
+    if(G.nodes.length===lastN && G.edges.length===lastE) return;
+    lastN=G.nodes.length; lastE=G.edges.length;
+    gv.setData(adapt());
+  }, 500);
+})();
 
 /* ---- graph access: one subject's real facts, decoded from the shard's packed rows ---- */
 async function factsOf(name){

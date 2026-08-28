@@ -219,11 +219,6 @@
       var sq = Math.sqrt(Math.max(0, 1 - u * u));
       P.set(nd.id, { x: r * sq * Math.cos(th), y: r * u, z: r * sq * Math.sin(th) });
     });
-    var adj = new Map();
-    edges.forEach(function (e) {
-      (adj.get(e.a) || adj.set(e.a, []).get(e.a)).push(e.b);
-      (adj.get(e.b) || adj.set(e.b, []).get(e.b)).push(e.a);
-    });
     for (i = 0; i < CFG.LAYOUT_ITERS; i++) {
       var k = 1 - i / CFG.LAYOUT_ITERS;                       // cooling
       for (j = 0; j < edges.length; j++) {
