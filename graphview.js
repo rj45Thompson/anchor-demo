@@ -141,15 +141,18 @@
     this.canvasWrap = el("div", "gv-canvas");
     this.gridWrap = el("div", "gv-grid");
     this.legend = el("div", "gv-legend");
-    this.detail = el("div", "gv-detail", '<div class="gv-empty">Pick a node to see what is recorded about it.</div>');
+    this.detail = el("div", "gv-detail", "");
 
     this.stage.appendChild(this.canvasWrap);
     this.stage.appendChild(this.gridWrap);
     this.canvasWrap.appendChild(this.legend);
+    // The detail panel overlays the canvas rather than sitting under the whole control. Clicking
+    // a node used to scroll the page away to a panel far below, which moves the thing you were
+    // looking at off screen at the exact moment you asked about it.
+    this.stage.appendChild(this.detail);
 
     this.host.appendChild(this.tabs);
     this.host.appendChild(this.stage);
-    this.host.appendChild(this.detail);
   };
 
   /* ---- scene ------------------------------------------------------------------------------- */
@@ -476,6 +479,11 @@
       el0.setPointerCapture(e.pointerId);
     });
     el0.addEventListener("pointermove", function (e) {
+      // Remember where the pointer is even when not dragging, so the render loop can resolve a
+      // hover once per frame instead of raycasting on every mouse event.
+      var r = el0.getBoundingClientRect();
+      self._hoverAt = { x: ((e.clientX - r.left) / r.width) * 2 - 1,
+                        y: -((e.clientY - r.top) / r.height) * 2 + 1 };
       if (!drag) return;
       var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       drag.moved += Math.abs(dx) + Math.abs(dy);
@@ -494,6 +502,10 @@
       drag = null;
     });
     el0.addEventListener("pointercancel", function () { drag = null; });
+    el0.addEventListener("pointerleave", function () {
+      self._hoverAt = null;
+      if (self.hovered) { self.hovered = null; self._emit("hover", null); }
+    });
     el0.addEventListener("contextmenu", function (e) { e.preventDefault(); });
     el0.addEventListener("wheel", function (e) {
       e.preventDefault();
@@ -544,8 +556,8 @@
       p.x += (t.x - p.x) * CFG.EASE;
       p.y += (t.y - p.y) * CFG.EASE;
       p.z += (t.z - p.z) * CFG.EASE;
-      var sel = self.selected === n.id;
-      var s = sel ? 2.1 : (1 + kOf(n) * 0.16);
+      var sel = self.selected === n.id, hov = self.hovered === n.id;
+      var s = sel ? 2.1 : (hov ? 1.7 : (1 + kOf(n) * 0.16));
       self._dummy.position.set(p.x, p.y, p.z);
       self._dummy.scale.setScalar(s);
       self._dummy.updateMatrix();
@@ -571,6 +583,18 @@
     });
     this.lines.geometry.attributes.position.needsUpdate = true;
     this.lines.geometry.attributes.color.needsUpdate = true;
+
+    if (this._hoverAt) {
+      this.mouse.set(this._hoverAt.x, this._hoverAt.y);
+      this.ray.setFromCamera(this.mouse, this.camera);
+      var h = this.ray.intersectObject(this.inst, false);
+      var id = (h.length && h[0].instanceId != null && this.data.nodes[h[0].instanceId])
+        ? this.data.nodes[h[0].instanceId].id : null;
+      if (id !== this.hovered) {
+        this.hovered = id;
+        this._emit("hover", id ? this.byId.get(id) : null);
+      }
+    }
 
     var o = this.orbit;
     var cp = Math.cos(o.pitch), sp = Math.sin(o.pitch);
