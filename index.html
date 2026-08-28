@@ -749,6 +749,38 @@ target it abstains, goes and learns what else that thing is called, and tries ag
 
 
 
+<h2>Watch it think</h2>
+<p>Ask something above and this fills in as the search runs. It is the same graph read five ways,
+because one picture of it answers almost nothing. <b>Structure</b> is what connects to what.
+<b>Evidence</b> sorts nodes into shells by how many independent sources back them, best at the
+core, so how much of an answer rests on a single source is visible as a shape. <b>Hops</b> puts one
+plane per step away from your question, so depth is drift. <b>Chains</b> shows only the routes that
+actually completed. <b>Grid</b> is the same nodes as sortable rows. Click any node, in any of them,
+for every fact on file about it.</p>
+<div id="gvhost"></div>
+<!-- The previous single-canvas view is retained, hidden, because a good deal of the search code
+     still writes to #badge/#legend/#hover and drives its loop; removing those hooks is a separate
+     surgery from replacing what the reader looks at. startLoop() is short-circuited below so the
+     old renderer costs nothing. -->
+<div class="stage" id="oldstage" style="display:none">
+  <canvas id="cv"></canvas>
+  <div class="badge" id="badge">idle</div>
+  <div class="tip">WASD fly · Q/E up-down · shift boost · drag to look</div>
+  <div class="legend" id="legend"></div>
+  <div class="viewchip" id="viewgeo" style="display:none">^ see the confidence geometry</div>
+  <div class="hover" id="hover" style="display:none"></div>
+</div>
+
+<div class="tbar"><span>SEARCH TRACE - every fact the engine actually reads</span>
+  <span id="tcount">0 steps</span></div>
+<div class="tlog" id="tlog"></div>
+
+<div id="tout"></div>
+<div class="livebar"><span>ANSWERS SO FAR - every completed chain, ranked live as it is found</span><span id="lcount">0</span></div>
+<div class="live" id="live"></div>
+<div id="ndbox"></div>
+
+<div id="vswrap" style="display:none">
 <h2 id="vs">The same question, twice</h2>
 <p>RJ asked Copilot <code>how many bears have brown hair</code>, then asked this
 engine. Both transcripts are real. The left column is quoted verbatim; the right column is the
@@ -803,37 +835,7 @@ named-only types are all real brown-bear subspecies. The difference that matters
 it looks: <strong>every number on the right can show you the fact it rests on, and none of them
 moved when someone pushed back</strong>. Copilot's <q>2</q> was a defensible answer. It abandoned
 it anyway.</p>
-
-<h2>Watch it think</h2>
-<p>Ask something above and this fills in as the search runs. It is the same graph read five ways,
-because one picture of it answers almost nothing. <b>Structure</b> is what connects to what.
-<b>Evidence</b> sorts nodes into shells by how many independent sources back them, best at the
-core, so how much of an answer rests on a single source is visible as a shape. <b>Hops</b> puts one
-plane per step away from your question, so depth is drift. <b>Chains</b> shows only the routes that
-actually completed. <b>Grid</b> is the same nodes as sortable rows. Click any node, in any of them,
-for every fact on file about it.</p>
-<div id="gvhost"></div>
-<!-- The previous single-canvas view is retained, hidden, because a good deal of the search code
-     still writes to #badge/#legend/#hover and drives its loop; removing those hooks is a separate
-     surgery from replacing what the reader looks at. startLoop() is short-circuited below so the
-     old renderer costs nothing. -->
-<div class="stage" id="oldstage" style="display:none">
-  <canvas id="cv"></canvas>
-  <div class="badge" id="badge">idle</div>
-  <div class="tip">WASD fly · Q/E up-down · shift boost · drag to look</div>
-  <div class="legend" id="legend"></div>
-  <div class="viewchip" id="viewgeo" style="display:none">^ see the confidence geometry</div>
-  <div class="hover" id="hover" style="display:none"></div>
 </div>
-
-<div class="tbar"><span>SEARCH TRACE - every fact the engine actually reads</span>
-  <span id="tcount">0 steps</span></div>
-<div class="tlog" id="tlog"></div>
-
-<div id="tout"></div>
-<div class="livebar"><span>ANSWERS SO FAR - every completed chain, ranked live as it is found</span><span id="lcount">0</span></div>
-<div class="live" id="live"></div>
-<div id="ndbox"></div>
 
 <h2>Step debugger - the conclusion as a program</h2>
 <div id="dbgbox"><p class="small">When a search completes, its best chain compiles here into
@@ -3166,9 +3168,17 @@ async function learnAliases(term){
 // click immediately (any older pending askSoon becomes stale). askSoon claims it now but waits
 // `ms` before actually calling reason(), and bails if a newer click claimed the number first -
 // so a stale, already-superseded question can never win a race against a newer one.
-function askNow(qv,opts){ clickSeq++; runningQ=qv; reason(qv,opts); }
+/* The Copilot comparison documents ONE question. Left on screen under someone else's answer
+   it presents a bear count as commentary on whatever they actually asked, so it shows only
+   when the question that ran is the one it documents. Both ask paths go through here. */
+function vsToggle(qv){
+  const w=$("vswrap"); if(!w)return;
+  const q=String(qv||"").toLowerCase();
+  w.style.display = (q.indexOf("bear")>=0 && q.indexOf("brown")>=0) ? "block" : "none";
+}
+function askNow(qv,opts){ clickSeq++; runningQ=qv; vsToggle(qv); reason(qv,opts); }
 function askSoon(qv,opts,ms){ const my=++clickSeq;
-  setTimeout(()=>{ if(my!==clickSeq)return; runningQ=qv; reason(qv,opts); },ms); }
+  setTimeout(()=>{ if(my!==clickSeq)return; runningQ=qv; vsToggle(qv); reason(qv,opts); },ms); }
 
 async function reason(q,opts){
   // Do NOT swallow the click. The landing search runs for ~30s, and a visitor who arrives and
