@@ -405,7 +405,7 @@
 
     var html = '<table class="gv-tbl"><thead><tr>' + cols.map(function (c) {
       return '<th data-k="' + c.k + '" class="' + (s.key === c.k ? "sorted" : "") + '">' +
-        esc(c.t) + (s.key === c.k ? (s.dir < 0 ? " ▾" : " ▴") : "") + "</th>";
+        esc(c.t) + (s.key === c.k ? (s.dir < 0 ? " v" : " ^") : "") + "</th>";
     }).join("") + "</tr></thead><tbody>" + shown.map(function (r) {
       return '<tr data-id="' + esc(r.n.id) + '"' + (self.selected === r.n.id ? ' class="on"' : "") + ">" +
         "<td>" + esc(r.label) + "</td>" +

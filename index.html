@@ -348,7 +348,6 @@ doesn't have enough.</p>
 .vs .vsh::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
 .vs .vsb{padding:12px 13px;font-size:.88rem;line-height:1.55;color:var(--fg)}
 .vs q{font-style:italic;color:var(--fg)}
-.vs q::before{content:"C"}.vs q::after{content:"D"}
 .vs .turn{margin:0 0 10px;padding-left:11px;border-left:2px solid var(--line)}
 .vs .turn b{display:block;font:10.5px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);
   letter-spacing:.4px;margin-bottom:3px;font-weight:600;text-transform:none}
@@ -692,7 +691,7 @@ doesn't have enough.</p>
        half a minute and answers "black and white" off three association hops - a fine bug
        report and a poor thing to fire at a stranger on load. -->
   <input id="q" placeholder="how many types of bear have brown hair" autocomplete="off">
-  <button id="go" disabled>loading…</button>
+  <button id="go" disabled>loading...</button>
 </div>
 <div id="out"></div>
 
@@ -725,8 +724,8 @@ towns are named "Berlin") can appear merged under one heading. Every fact shown 
 independently sourced - it may just belong to more than one thing with that name.
 (2) There is <strong>no per-subject cap</strong>: every one of the 66,404,117 facts is here, and a
 well-documented subject keeps all of its edges (Australia carries 975). An earlier build capped
-each subject at 80 facts and, by doing so, silently deleted <code>Australia&nbsp;→&nbsp;capital
-&nbsp;→&nbsp;Canberra</code> - the answer to this page's own headline example. Measuring the cap
+each subject at 80 facts and, by doing so, silently deleted <code>Australia&nbsp;-&gt;&nbsp;capital
+&nbsp;-&gt;&nbsp;Canberra</code> - the answer to this page's own headline example. Measuring the cap
 rather than defending it is what removed it: it was discarding 1.58% of the graph, and 99.9% of
 subjects never came near it. "Not recorded here" now genuinely means the sources did not record
 it.</div>
@@ -739,7 +738,7 @@ it.</div>
 target it abstains, goes and learns what else that thing is called, and tries again.</p>
 <div class="ask">
   <input id="tq" placeholder="how many types of bear have brown hair" autocomplete="off">
-  <button id="tgo" disabled>loading…</button>
+  <button id="tgo" disabled>loading...</button>
 </div>
 <p class="hint">Try
   <code>is there a favorite color</code>
@@ -760,7 +759,7 @@ engine's own trace, which you can reproduce by typing the question above.</p>
     <div class="vsh">Copilot</div>
     <div class="vsb">
       <div class="turn"><b>"can you count it" - how many individual bears have brown fur</b>
-        <q>Estimated total bears with brown fur worldwide: ≈ 270,000-300,000 bears. This is the
+        <q>Estimated total bears with brown fur worldwide: ~ 270,000-300,000 bears. This is the
         closest scientifically grounded estimate possible.</q></div>
       <div class="turn"><b>"of all 36?"</b><q>Only 1 of the 36 bear types has attested brown hair.</q></div>
       <div class="turn"><b>"how many bear types could have brown hair .. terse answer in a number"</b>
@@ -781,31 +780,29 @@ engine's own trace, which you can reproduce by typing the question above.</p>
     <div class="vsb">
 <pre><span class="miss">COUNT question: class="bear" property="brown hair"</span>
 class "bear" has <b>36</b> recorded members
-<span class="miss">cave bear        no fact attesting "brown hair"</span>
-<span class="miss">sun bear         no fact attesting "brown hair"</span>
-<span class="bound">syrian brown bear  NAMED for "brown" but carries no fact
-                 attesting it - counted separately, not as evidence</span>
-<span class="hit">bruin            attests brown   synonym -&gt; brown bear   k=1</span>
-<span class="hit">grizzly bear     attests brown   is a    -&gt; brown bear   k=1</span>
 
-COUNT complete: <b>2 of 8</b> members qualify, 1 named-only
-(not counted), <span class="bound">28 members left unread - a bound</span></pre>
-      <div class="flag">
-      <strong>It answers 2, and tells you what it did not read.</strong> The 28 unread members are
-      stated as a bound, not silently dropped, so the answer cannot be mistaken for a census.
-      <q>Syrian brown bear</q> has brown in its name and no fact attesting it, so it is reported
-      separately - naming is not evidence. Every hit shows the edge it rests on and how many
-      independent sources back it.</div>
+<span class="hit">6</span> of the 36 recorded bear types I read carry a fact
+attesting brown hair - <span class="hit">1</span> attest every word of it.
+A further <span class="bound">5</span> are NAMED for it without recording a
+fact that attests it - <span class="bound">named is not attested, so they
+are not in the count.</span></pre>
+      <div class="flag"><strong>It answers 6, and it keeps the ones that only sound right out of
+      the count.</strong> Five bear types have <q>brown</q> in the name and no fact attesting it,
+      so they are reported separately rather than folded in. Each of the six shows the edge it
+      rests on and how many independent sources back it, and the number did not move when it was
+      pushed on.</div>
     </div>
   </div>
-</div>
 
 <p class="vsnote">Neither column is the smarter one, and the questions were not identical -
-one asks about individual animals, the others about types. Copilot knows vastly more zoology; this
-engine holds 36 bear types and read only 8 of them before hitting its own bound. The difference is
-narrower than it looks and it is the whole point: <strong>every number on the right can show you
-the fact it rests on, and none of them moved when someone pushed back</strong>. Copilot's
-<q>2</q> was arguably the better zoological answer. It abandoned it anyway.</p>
+one asks about individual animals, the others about types. Copilot knows vastly more zoology than
+this engine, which holds 36 bear types and little else about bears. Two honest caveats on the
+right: <q>grizzly</q> and <q>grizzly bear</q> are the same animal counted twice, and for
+<q>could</q> rather than <q>is attested</q> the true figure is higher than 6, since the five
+named-only types are all real brown-bear subspecies. The difference that matters is narrower than
+it looks: <strong>every number on the right can show you the fact it rests on, and none of them
+moved when someone pushed back</strong>. Copilot's <q>2</q> was a defensible answer. It abandoned
+it anyway.</p>
 
 <h2>Watch it think</h2>
 <p>Ask something above and this fills in as the search runs. It is the same graph read five ways,
@@ -825,7 +822,7 @@ for every fact on file about it.</p>
   <div class="badge" id="badge">idle</div>
   <div class="tip">WASD fly · Q/E up-down · shift boost · drag to look</div>
   <div class="legend" id="legend"></div>
-  <div class="viewchip" id="viewgeo" style="display:none">⤴ see the confidence geometry</div>
+  <div class="viewchip" id="viewgeo" style="display:none">^ see the confidence geometry</div>
   <div class="hover" id="hover" style="display:none"></div>
 </div>
 
@@ -848,18 +845,18 @@ completed (top 12 by composed confidence here, top 8 in the geometry rack - disc
 ANSWERS list above is never truncated) - click one to debug that route instead. <b>The engine
 uses this debugger itself:</b> after every run it self-checks by re-stepping its own record
 against the shards (CHECK lines in the trace) and repairs any hop whose measurement drifted - re-measured, recomposed, re-ranked, out loud. The record save/loads across visits (a replay of
-stored values, never a hidden re-run), and <b>⟲ resume from here</b> re-runs the real search
+stored values, never a hidden re-run), and <b>re-run resume from here</b> re-runs the real search
 from any hop with that edge excluded - rewind-and-branch on the live engine. The picture is not only for you: once the layout settles, the engine
 reads its own map to order the frontier (every re-rank is a VISION line in the trace, counted
 in <code>window.__visionFlips</code>; ordering only, it can never change an answer - and its
 benefit is counted, not yet benchmarked).</p>
 <p class="small"><b>The same conclusion, as geometry.</b> Above the graph, each completed chain
-is a floating ruler: one segment per hop, segment length = −log(p_hop), so multiplying hop
+is a floating ruler: one segment per hop, segment length = -log(p_hop), so multiplying hop
 probabilities becomes adding lengths and <b>the most probable chain is literally the shortest
 ruler</b> - the weak hop is the long segment, a single-source hop is amber, and no number needs
 reading. A faint gridline marks the length of <b>one ideal hop</b> (94.7%), so a ruler reads
 in ideal-hop units the way a lane reads in metres. The chain selected here is the bright ruler
-there - pick either side and the other follows. The ⤴ chip on the stage frames the geometry
+there - pick either side and the other follows. The ^ chip on the stage frames the geometry
 with one click (any movement of yours takes the camera back). Hover a segment for the fact it
 stands for; click it and this debugger jumps to that hop. One record, three views: geometry,
 program, graph. <b>Counting questions get their own program</b> too - LOAD the class, CHECK each
@@ -886,7 +883,7 @@ special-cased and no answer is stored. A "no chain" result is <b>not proof there
 <div id="p-code" class="panel" hidden>
 <div class="broken-note"><strong>BETA - the front door is wrong, and it shows.</strong> Ask for bubble sort and the search returns a correct one-line sort, because the examples pin down <em>what comes out</em>, never <em>how</em>. Any sort satisfies them. On top of that, asking a person to hand-write <code>args -&gt; expected</code> is not how anyone wants to request code. The fix is an English front end that shows you the spec it derived before searching - and it has to stay a translator, not a code generator, or this page would be claiming a search result it did not actually earn. Left visible rather than hidden, because what is here is what is running.</div>
 <p class="small" style="margin-top:0">The other half of the same idea, in a different domain: given
-input→output examples, <strong>search</strong> a fixed set of primitives for one that satisfies
+input-&gt;output examples, <strong>search</strong> a fixed set of primitives for one that satisfies
 <em>every</em> example - verified by real execution, not predicted by a model. This box
 re-implements a small slice of it entirely in this page; the measured system is a ~2,600-line
 search engine tested against 224 MBPP+ programming tasks.</p>
@@ -1143,7 +1140,7 @@ function candidateGroups(q){
   return groups;
 }
 async function answer(q){
-  render([],null,"searching the graph…");
+  render([],null,"searching the graph...");
   const groups=candidateGroups(q);
   let hits=[];   // [{name, facts}] - every reading that resolved, AT THE FIRST LENGTH with a hit
   for(const group of groups){
@@ -1154,7 +1151,7 @@ async function answer(q){
     if(hits.length)break;   // this length produced hits - do not fall back to shorter/vaguer spans
   }
   if(!hits.length){
-    render([],null,"nothing matched - checking whether that subject is genuinely absent…");
+    render([],null,"nothing matched - checking whether that subject is genuinely absent...");
     const allSpans=groups.flat();
     const mainSubj=allSpans.sort((a,b)=>b.length-a.length)[0]||q;
     let lastPaint=0;
@@ -1223,7 +1220,7 @@ function render(rows,note,busy,filterNote){
     out.insertAdjacentHTML("beforeend",
      '<div class="card '+cls+'"><div class="claim">'+esc(r.subj)+
      ' <span style="color:var(--muted)" title="'+esc(r.rel)+'"> - '+esc(relLabel(r.rel))+
-     '→</span> <b>'+esc(r.obj)+'</b></div>'+
+     '-&gt;</span> <b>'+esc(r.obj)+'</b></div>'+
      evidenceHTML(r.k,q)+
      '<div class="row"><span class="lbl">confidence</span><span><span class="pct">'+
        (q.p*100).toFixed(1)+'%</span> - '+r.k+' independent source'+(r.k===1?"":"s")+' '+
@@ -1625,7 +1622,7 @@ function init3(){
       flyT=atRack?{pos:new T.Vector3(0,0,900),yaw:0,pitch:0}
                  :{pos:new T.Vector3(210,330,640),yaw:0,pitch:0};
       vg.dataset.at=atRack?"graph":"rack";
-      vg.textContent=atRack?"⤴ see the confidence geometry":"⟲ back to the graph";
+      vg.textContent=atRack?"^ see the confidence geometry":"re-run back to the graph";
     });
     if(typeof DBG!=="undefined"&&DBG)vg.style.display="block";   // restored record: chip on
   }
@@ -1793,7 +1790,7 @@ function draw3(){
     if(el&&hit&&hit.object.userData.rackHop){
       const rh=hit.object.userData.rackHop;
       el.style.display="block";
-      el.innerHTML="<b>"+esc(rh.h.from)+"</b> - "+esc(relLabel(rh.h.rel))+"→ <b>"+esc(rh.h.to)+
+      el.innerHTML="<b>"+esc(rh.h.from)+"</b> - "+esc(relLabel(rh.h.rel))+"-&gt; <b>"+esc(rh.h.to)+
         "</b><br>k="+rh.h.k+" · p_hop "+(pctOf(rh.h.k)*100).toFixed(1)+
         "% · length = -log p · click: open this hop in the step debugger";
       return;
@@ -1821,7 +1818,7 @@ function buildLegend(){
    confidence and the sources behind it. The 3D view shows structure; this shows evidence. */
 async function inspectNode(n){
   const box=$("ndbox"); if(!box)return;
-  box.innerHTML='<div class="livebar"><span>NODE - '+esc(n.label)+'</span><span>reading…</span></div>';
+  box.innerHTML='<div class="livebar"><span>NODE - '+esc(n.label)+'</span><span>reading...</span></div>';
   const f=await factsOf(n.id);
   n.facts=f.length; if(!n.role)n.role=f.length?"opened":"dead";
   // group by relation so the grid reads as "what KIND of thing do we know about this"
@@ -2477,7 +2474,7 @@ function hopHTML(i,from,rel,to,k,running){
   const q=pFor(k);
   return '<div class="hop live"><div class="lead">'+
     '<span style="color:var(--muted)">'+(i+1)+'.</span> '+esc(from)+
-    ' <span style="color:var(--hi)"> - '+esc(relLabel(rel))+'→</span> <b>'+esc(to)+'</b></div>'+
+    ' <span style="color:var(--hi)"> - '+esc(relLabel(rel))+'-&gt;</span> <b>'+esc(to)+'</b></div>'+
     '<div class="meta">'+k+' independent source'+(k===1?"":"s")+
     (k?' ('+esc(pFor(k).measured?"measured":"base rate")+') · this hop '+(q.p*100).toFixed(1)+'%'
       :' · base rate '+(q.p*100).toFixed(1)+'%')+
@@ -2540,7 +2537,7 @@ function liveAdd(path,p){
   row.dataset.p=p;
   row.innerHTML='<span class="lp">'+(p*100).toFixed(1)+'%</span>'+
     '<span class="lc">'+esc(path[0].from)+path.map(h=>
-      ' <span style="color:var(--muted)"> - '+esc(relLabel(h.rel))+'→</span> '+esc(h.to)).join("")+
+      ' <span style="color:var(--muted)"> - '+esc(relLabel(h.rel))+'-&gt;</span> '+esc(h.to)).join("")+
     '</span><span class="lh">'+path.length+' hop'+(path.length===1?"":"s")+
     ' · min '+minK+' src</span>';
   // insert in rank order so the best answer is always the top line, even mid-search
@@ -2675,7 +2672,7 @@ async function countAnswer(q,cq,my){
         esc(cls)+' ('+h.mem.k+' source'+(h.mem.k===1?"":"s")+', '+
         (pctOf(h.mem.k)*100).toFixed(1)+'%)</div>'+
         h.ev.map(e=>'<div class="row"><span class="lbl">'+esc(e.got.join("+"))+'</span><span>'+
-          esc(relLabel(e.x.rel))+' → '+esc(String(e.x.obj))+' · k='+e.x.k+'</span></div>').join("")+
+          esc(relLabel(e.x.rel))+' -&gt; '+esc(String(e.x.obj))+' · k='+e.x.k+'</span></div>').join("")+
         (h.evAll>h.ev.length?'<div class="row"><span class="lbl">more</span><span>'+
           (h.evAll-h.ev.length)+' further qualifying fact'+(h.evAll-h.ev.length===1?"":"s")+
           ' read but not shown</span></div>':"")+
@@ -2899,9 +2896,9 @@ function dbgRenderCount(){
      ["shard",String(shardOf(cd.cls)).padStart(3,"0")]]
     :[["count",cd.hits.length],["read",cd.read],["recorded",cd.total]];
   b.innerHTML=
-    '<div class="dbg-head"><button data-act="cfirst">⏮</button>'+
-    '<button data-act="cback">◀ step</button><button data-act="cfwd">step ▶</button>'+
-    '<button data-act="clast">⏭</button>'+
+    '<div class="dbg-head"><button data-act="cfirst">|<</button>'+
+    '<button data-act="cback">< step</button><button data-act="cfwd">step ></button>'+
+    '<button data-act="clast">>|</button>'+
     '<span class="small" style="margin-left:8px">counting run · recorded values only, '+
     'nothing re-run</span></div>'+
     '<div class="dbg-code">'+prog.map((r,i)=>'<div class="dbg-ln'+(i===DBG.pc?" pc":"")+
@@ -2913,7 +2910,7 @@ function dbgRenderCount(){
     '<div class="field-lbl" style="margin-top:8px">jump to a member - click any row above, or '+
     "here</div><div>"+
     cd.hits.map((h,i)=>'<div class="dbg-alt'+(cur.mem===h.mem?" on":"")+
-      '" data-act="cjump" data-i="'+(1+i)+'">✓ '+esc(h.mem.name)+"</div>").join("")+"</div>";
+      '" data-act="cjump" data-i="'+(1+i)+'">[y] '+esc(h.mem.name)+"</div>").join("")+"</div>";
 }
 function dbgLoadCount(q,cls,hits,misses,named,read,total){
   DBG={q,mode:"count",sel:0,pc:0,count:{cls,hits,misses,named,read,total}};
@@ -3024,10 +3021,10 @@ function dbgRender(){
   b.innerHTML=
     (DBG.restored?'<p class="small">Restored from the last visit\'s saved RECORD - a replay '+
      'of stored values, nothing re-ran. Ask a new question any time.</p>':"")+
-    '<div class="dbg-head"><button data-act="first">⏮</button>'+
-    '<button data-act="back">◀ step</button><button data-act="fwd">step ▶</button>'+
-    '<button data-act="last">⏭</button>'+
-    (cur.h?'<button data-act="resume" title="re-run the real search from this hop, with this edge excluded">⟲ resume from here</button>':"")+
+    '<div class="dbg-head"><button data-act="first">|<</button>'+
+    '<button data-act="back">< step</button><button data-act="fwd">step ></button>'+
+    '<button data-act="last">>|</button>'+
+    (cur.h?'<button data-act="resume" title="re-run the real search from this hop, with this edge excluded">re-run resume from here</button>':"")+
     '<span class="small" style="margin-left:8px">'+
     (DBG.live?'<span class="spin"></span>still searching · ':"")+"chain "+
     (DBG.sel+1)+" of "+DBG.chains.length+
@@ -3043,7 +3040,7 @@ function dbgRender(){
     "really completed</div>"+
     DBG.chains.map((c,i)=>'<div class="dbg-alt'+(i===DBG.sel?" on":"")+
       '" data-act="sel" data-i="'+i+'">'+(c.p*100).toFixed(1)+"% · "+esc(c.path[0].from)+
-      " → "+c.path.map(h=>esc(h.to)).join(" → ")+"</div>").join("");
+      " -&gt; "+c.path.map(h=>esc(h.to)).join(" -&gt; ")+"</div>").join("");
 }
 function dbgWire(){
   if(dbgWired)return;
@@ -3122,8 +3119,8 @@ async function dbgVerify(){
 function dbgCk(r){
   if(r.i==null||!DBG||!DBG.check)return "";
   const c=DBG.check[DBG.sel]; if(!c||c[r.i]==null)return "";
-  return c[r.i]==="ok"?"  ✓ shard-verified":
-         c[r.i]==="fixed"?"  ⟲ re-measured":"  ✗ not found on re-read";
+  return c[r.i]==="ok"?"  [y] shard-verified":
+         c[r.i]==="fixed"?"  re-run re-measured":"  [n] not found on re-read";
 }
 
 /* ---- LEARNING ON ABSTAIN --------------------------------------------------------------------
@@ -3142,7 +3139,7 @@ function dbgCk(r){
    what it is allowed to CLAIM. */
 async function learnAliases(term){
   trace("beam","ABSTAIN on \""+term+"\" - the graph may simply file it under another word.");
-  trace("fetch","LEARNING: asking ConceptNet which terms relate to \""+term+"\"…");
+  trace("fetch","LEARNING: asking ConceptNet which terms relate to \""+term+"\"...");
   const slug=String(term).trim().toLowerCase().replace(/\s+/g,"_");
   try{
     const r=await fetch(R.LEARN_URL+encodeURIComponent(slug)+"?filter=/c/en&limit=40");
@@ -3155,7 +3152,7 @@ async function learnAliases(term){
         out.push({name:w,weight:+e.weight.toFixed(3)});
       if(out.length>=R.LEARN_MAX)break;
     }
-    for(const o of out)trace("hit","LEARNED: \""+term+"\" ≈ \""+o.name+"\"   (relatedness "+o.weight+")");
+    for(const o of out)trace("hit","LEARNED: \""+term+"\" ~ \""+o.name+"\"   (relatedness "+o.weight+")");
     if(!out.length)trace("dead","LEARNED nothing usable for \""+term+"\".");
     return out;
   }catch(e){
@@ -3182,7 +3179,7 @@ async function reason(q,opts){
   // 300ms even while the engine is deep in awaited shard fetches (where no scan-loop flush runs)
   const nowTimer=setInterval(()=>{ if(my!==gen){clearInterval(nowTimer);return;}
     traceFlush(); nowPaint(); },300);
-  nowSet("reading the question…",null,true);
+  nowSet("reading the question...",null,true);
   {const db=$("dbgbox"); if(db)db.innerHTML='<p class="small"><span class="spin"></span>'+
     'Searching. The moment the first chain completes, its program appears here and its ruler '+
     'appears in the 3D view above - both keep updating while the search runs. Please wait; the '+
@@ -3344,7 +3341,7 @@ async function reason(q,opts){
           return '<div class="lrow '+(r.k>=2?"k2":(r.k===1?"k1":"k0"))+'">'+
             '<span class="lp">'+(q.p*100).toFixed(1)+'%</span>'+
             '<span class="lc">'+esc(start.name)+' <span style="color:var(--muted)"> - '+
-            esc(relLabel(r.rel))+'→</span> <b>'+esc(r.obj)+'</b></span>'+
+            esc(relLabel(r.rel))+'-&gt;</span> <b>'+esc(r.obj)+'</b></span>'+
             '<span class="lh">'+r.k+' src'+(r.anchors&&r.anchors.length?' · '+
             esc(r.anchors.join(", ")):'')+'</span></div>';}).join("")+
         (rows.length>use.length?'<div class="small" style="margin:2px 0 0">showing '+use.length+
@@ -3360,7 +3357,7 @@ async function reason(q,opts){
         .split(/[\s',]+/).filter(x=>x&&!STOP.has(x)).sort((a,b)=>b.length-a.length)[0]||q;
       render([],null,null);
       out.insertAdjacentHTML("beforeend",'<div class="row"><span class="lbl">checking</span>'+
-        '<span>fetching the coverage index to see whether “'+esc(raw)+'” is genuinely absent…'+
+        '<span>fetching the coverage index to see whether “'+esc(raw)+'” is genuinely absent...'+
         '</span></div>');
       const absent=await definitelyAbsent(raw);
       // same class of gap as learnAliases below: a real await with no staleness re-check on the
@@ -3390,7 +3387,7 @@ async function reason(q,opts){
     // had just been written above it, so the merged fast lane rendered and vanished in one frame.
     out.insertAdjacentHTML("afterbegin",'<div class="row"><span class="lbl">reading as</span><span>'+
       esc(start.name)+(target?' <span style="color:var(--muted)"> - find a route to - </span> '+
-      esc(target.name) : (goal?' <span style="color:var(--muted)"> - '+esc(goal)+'→</span> ?'
+      esc(target.name) : (goal?' <span style="color:var(--muted)"> - '+esc(goal)+'-&gt;</span> ?'
                               :' <span class="chip">no relation named; showing its neighbourhood</span>'))+
       '</span></div>');
     if(!goal&&!target){
@@ -3717,9 +3714,9 @@ async function reason(q,opts){
          stopped?' You stopped it while it was still expanding.':
          ' The search ran until its frontier was exhausted at this depth.')+'</p>';
       if(best){
-        t+='<p class="small">The best chain is <b>'+best.path.map(h=>esc(h.to)).join(" → ")+
+        t+='<p class="small">The best chain is <b>'+best.path.map(h=>esc(h.to)).join(" -&gt; ")+
           '</b> at <b>'+(best.p*100).toFixed(1)+'%</b> = '+
-          best.path.map(h=>(pctOf(h.k)*100).toFixed(1)+"%").join(" × ")+
+          best.path.map(h=>(pctOf(h.k)*100).toFixed(1)+"%").join(" x ")+
           '. Each factor is measured; the product assumes the hops are independent, which is an '+
           'assumption, not a measurement.'+(done.length>1?' The other '+(done.length-1)+
           ' chains are ranked live above.':'')+'</p>';
@@ -3828,7 +3825,7 @@ async function reason(q,opts){
     if(isDoesCardinality(q)){
       const chainRow=d=>'<span class="row"><span class="lbl">'+(d.p*100).toFixed(1)+'%</span><span>'+
         esc(start.name)+d.path.map(h=>' <span style="color:var(--muted)"> - '+esc(relLabel(h.rel))+
-        '→</span> '+esc(h.to)).join("")+'</span></span>';
+        '-&gt;</span> '+esc(h.to)).join("")+'</span></span>';
       out.insertAdjacentHTML("beforeend",'<div class="card k1"><div class="claim">'+
         '<b>A count, not a claim.</b></div><div class="row"><span class="lbl">why</span><span>'+
         'You asked <b>how many</b> - this graph records relations between named things, not '+
@@ -3851,7 +3848,7 @@ async function reason(q,opts){
     out.insertAdjacentHTML("beforeend",
       '<div class="verdict"><div class="big">'+(running*100).toFixed(1)+'%</div>'+
       '<div style="margin-top:4px"><b>'+esc(start.name)+'</b>'+
-      found.path.map(h=>' <span style="color:var(--muted)"> - '+esc(relLabel(h.rel))+'→</span> '+
+      found.path.map(h=>' <span style="color:var(--muted)"> - '+esc(relLabel(h.rel))+'-&gt;</span> '+
         (h===last?'<b>'+esc(h.to)+'</b>':esc(h.to))).join("")+'</div>'+
       (target?'<div class="warn" style="margin:8px 0 0;font-size:.85rem">'+
         '<b>This is a connection, not a claim.</b> A path from <b>'+esc(start.name)+'</b> to <b>'+
@@ -3860,7 +3857,7 @@ async function reason(q,opts){
         'connect within a few hops, so treat the route as evidence of association, and read the '+
         'individual relations above for what was actually recorded.</div>':'')+
       '<div class="small" style="margin-top:8px">'+
-      found.path.map(h=>(pctOf(h.k)*100).toFixed(1)+"%").join(" × ")+' = '+
+      found.path.map(h=>(pctOf(h.k)*100).toFixed(1)+"%").join(" x ")+' = '+
       (running*100).toFixed(1)+'% over '+found.path.length+' hop'+
       (found.path.length===1?"":"s")+'. Each factor is measured; the product assumes the hops are '+
       '<b>independent</b>, which is an assumption and not a measurement.</div>'+
@@ -3884,7 +3881,7 @@ async function reason(q,opts){
         (done.length===2?'':'s')+' found'+
         (done.length>4?', showing the top 3 (count is disclosed, not the list truncated silently)':'')+
         ':<ul style="margin:7px 0 0;padding-left:20px">'+
-        done.slice(1,4).map(d=>'<li>'+d.path.map(h=>esc(h.to)).join(" → ")+
+        done.slice(1,4).map(d=>'<li>'+d.path.map(h=>esc(h.to)).join(" -&gt; ")+
           ' <span class="chip">'+(d.p*100).toFixed(1)+'%</span></li>').join("")+
         '</ul></div>');
     }
@@ -4220,14 +4217,14 @@ function renderCode(){
     }
     let steps="";
     for(const t of found.tested){
-      steps+='<div class="step"><span class="'+(t.pass?"ok":"no")+'">'+(t.pass?"✓":"✗")+
+      steps+='<div class="step"><span class="'+(t.pass?"ok":"no")+'">'+(t.pass?"[y]":"[n]")+
         '</span><span>f('+esc(fmtArgs(t.ex.args))+') = '+esc(fmtVal(t.got))+
-        (t.pass?"":" ≠ "+esc(fmtVal(t.ex.expected)))+'</span></div>';
+        (t.pass?"":" != "+esc(fmtVal(t.ex.expected)))+'</span></div>';
     }
     for(const pr of probes){   // any bare-args lines ride along, run for free once verified
       let got; try{ got=arity===1?fnByName(pool,found.name)(pr.args[0]):
                      fnByName(pool,found.name)(pr.args[0],pr.args[1]); }catch(e){ got="(error)"; }
-      steps+='<div class="step"><span class="ok">▸</span><span>f('+esc(fmtArgs(pr.args))+
+      steps+='<div class="step"><span class="ok">></span><span>f('+esc(fmtArgs(pr.args))+
         ') = '+esc(fmtVal(got))+' <span class="dbg-det" style="display:inline">(no expected '+
         'value given for this one)</span></span></div>';
     }
@@ -4283,8 +4280,8 @@ function renderConfirm(){
     esc(fmtArgs(C.args))+') = '+(err?"(error - this candidate cannot run on this input)":
       esc(fmtVal(got)))+'</b></span></div>'+
     '<div class="ask" style="margin-top:8px">'+
-    '<button data-act="yes" style="flex:1">✓ yes, that’s right</button>'+
-    '<button data-act="no" style="flex:1">✗ no, try the next one</button></div></div>';
+    '<button data-act="yes" style="flex:1">[y] yes, that’s right</button>'+
+    '<button data-act="no" style="flex:1">[n] no, try the next one</button></div></div>';
 }
 document.getElementById("codeOut").addEventListener("click",ev=>{
   if(!CONFIRM)return;
