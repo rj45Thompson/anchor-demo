@@ -99,9 +99,12 @@
     });
     this.host.appendChild(this.chips);
 
+    // Deliberately does NOT name the model. It is Claude Code today and may be a local Qwen via
+    // Ollama later; a hardcoded model name is a claim that silently goes stale. "An LLM on RJ's
+    // own machine" stays true across that swap.
     this.foot = el("div", "cb-foot",
-      "The helper runs on RJ's own machine with every tool switched off: no shell, no files, " +
-      "no connectors, no internet. It can only read the CV and reply in text.");
+      "Runs an LLM on RJ's own machine with every tool switched off: no shell, no files, no " +
+      "connectors, no internet. It reads the CV and replies in text, nothing else.");
     this.host.appendChild(this.foot);
 
     this.send.addEventListener("click", function () { self._ask(); });
@@ -131,6 +134,16 @@
       .catch(function () {
         clearTimeout(t);
         self.live = false;
+        // THIS IS A RESUME SITE. The agent runs on RJ's own desktop, so for every visitor who is
+        // not sitting at it the probe fails - which is the normal case, not an error. Leaving a
+        // greyed-out "offline" chat box at the top of the page makes a hiring manager's first
+        // impression a broken control, so the whole thing removes itself instead. Everything it
+        // would have said is already on the page: the CV tab, the PDF, and the email in the
+        // footer. A control that cannot work should not occupy the best space on the page.
+        if (self.opts.hideWhenOffline !== false) {
+          if (self.host && self.host.parentNode) self.host.style.display = "none";
+          return;
+        }
         self._setState("off", "offline");
         self.chips.style.display = "none";
         // Say what is actually true rather than leaving a dead box on the page. This is the whole
