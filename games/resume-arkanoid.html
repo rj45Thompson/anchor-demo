@@ -73,10 +73,12 @@
   <div class="screen" id="start">
     <div class="card">
       <h1>RÉSUMÉ <span>BREAKOUT</span></h1>
-      <p class="lead">My CV is falling toward you. Shoot a block to read that job.</p>
+      <p class="lead">My CV is falling toward you. Cut a line to read that job.</p>
       <p>I am R.J. Thompson, a senior C++/C# engineer, and I am looking for my next role.
-         Every block below is one real position with its real dates. Clear all sixteen and
-         you have read the whole résumé.</p>
+         The whole résumé is up there, every role with its real dates, and every letter of it
+         breaks. Shoot your way down and you will have read the lot.</p>
+      <p class="muted">WASD to move &middot; right mouse to shoot &middot; left mouse for shields
+         &middot; mouse wheel for flame &middot; F for fullscreen</p>
       <button class="btn" id="go">START</button>
       <div class="muted">Would rather just read it? The PDF is one click away when the round ends,
          or any time from the résumé tab.</div>
@@ -551,9 +553,15 @@ const POWERS = {
   ballistic: { n:"AUTOCANNON",     col:0xffc24a, dur:8.0,  icon:"dots",  cd:0.26, twin:true,  homing:0,   splash:0 },
   missile:   { n:"SEEKER MISSILE", col:0xff5a6e, dur:8.5,  icon:"spike", cd:0.46, twin:false, homing:2.4, splash:2.6 },
   flame:     { n:"FLAMETHROWER",   col:0xff7a2a, dur:7.0,  icon:"cone",  cd:0.10, twin:false, homing:0,   splash:0 },
-  laser:     { n:"BEAM CUTTER",    col:0x8fe8ff, dur:7.5,  icon:"fan",   cd:0.00, twin:false, homing:0,   splash:0 }
+  laser:     { n:"BEAM CUTTER",    col:0x8fe8ff, dur:7.5,  icon:"fan",   cd:0.06, twin:false, homing:0,   splash:0 }
 };
 const POWER_KEYS = Object.keys(POWERS);
+// BEAM CUTTER tuning. It used to reach 40 units (near the whole board) and delete every
+// letter in the column in ONE frame, with no trigger and no cooldown - it fired by merely
+// existing. These bound it to a saw you have to hold on target.
+const BEAM_RANGE = 20;              // was an always-40 range; the ': 17' branch was dead code
+const BEAM_HALF_WIDTH = CH_W*0.62;  // unchanged - the width ternary only ever picked this
+let beamCool = 0;
 
 // Icons are built geometry rather than a coloured blob, so a drop is identifiable in the air.
 function powerIcon(key){
@@ -968,6 +976,7 @@ function reset(){
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
   reveal=0; revealTarget=0; firstHitDone=false; mushroomDone=false; panBoost=0; poweredOnce=false;
+  beamCool=0;
   trackIdx=0; eraIdx=1; scene.background=null; debris.forEach(d=>d.visible=false);
   if(starPoints) starPoints.visible=false;
   if(grid) grid.visible=false;
@@ -1065,7 +1074,10 @@ function tick(now){
     gradeScene();
     // held right button auto-fires on a cadence
     fireCool -= dt;
-    if(shootHeld && fireCool <= 0){ fire(); fireCool = (power==="rapid") ? 0.07 : 0.16; }
+    // Each weapon's `cd` finally drives its cadence. This read `power==="rapid"`, which is not
+    // a POWERS key, so every gun fired at a flat 0.16 and the whole cd column was dead - part
+    // of why BEAM CUTTER felt overwhelming next to them.
+    if(shootHeld && fireCool <= 0){ fire(); fireCool = (power && POWERS[power].cd) || 0.16; }
 
     // wheel-driven flame burst, independent of the flame powerup
     if(flameBurst > 0){
@@ -1115,42 +1127,46 @@ function tick(now){
     if(laserBeam){
       laserBeam.rotation.z = -ang;
       laserBeam.position.set(Math.sin(ang)*20, Math.cos(ang)*20, 0);
-      laserBeam.visible = (power === 'laser');
+      laserBeam.visible = (power === 'laser') && shootHeld;   // you see it when you fire it
       laserBeam.material.uniforms.uTime.value = t;
       laserBeam.material.uniforms.uCol.value.set(POWERS[power||"laser"].col);
     }
 
-    // LASER: a continuous cut along the aim ray. Every letter whose centre lies within the beam
-    // half-width of the ray, and in front of the ship, burns. This is the default weapon.
-    if(power === 'laser'){
-      const ox = ship.position.x, oy = ship.position.y;
-      lines.forEach(line=>{
-        const ly = line.y - crawl;
-        if(ly < oy) return;
-        line.letters.forEach(L=>{
-          if(L.broken || L.dissolve>0) return;
-          const dx = L.x - ox, dy = ly - oy;
-          const proj = dx*aim.x + dy*aim.y;               // distance along the ray
-          if(proj <= 0) return;
-          const perp = Math.abs(dx*aim.y - dy*aim.x);     // distance from the ray
-          const width = power==='pierce' ? CH_W*1.35 : (power==='spread' ? CH_W*1.9 : CH_W*0.62);
-          if(perp > width) return;
-          // The opening weapon is deliberately weak, but it must still REACH. At range 9 it
-          // could not touch anything before the 5s powerup, so the player got no shots off at all
-          // and it read as broken rather than underwhelming. 17 lets them plink the nearest line
-          // and feel the limit, which is the point.
-          const range = poweredOnce ? 40 : 17;
-          if(power!=='pierce' && power!=='spread' && proj > range) return;
-          L.dissolve = 0.01;
-          brokenCount++; bumpReveal();
-          maybeDrop(L.x, ly, line.kind);
-          if(line.meta && line.meta.co && !linesRead.has(line.i)){
-            linesRead.add(line.i);
-            show(line.meta.co, line.meta.date, line.meta.detail);
-          }
+    // BEAM CUTTER: a saw, not a delete key. Three things were wrong at once. It was never gated
+    // on shootHeld, so it fired by merely being equipped; cd was 0, so there was no rate limit at
+    // all; and it burned EVERY letter on the ray in a single frame, which vaporised a whole column
+    // of the CV instantly. Now it must be held like every other weapon, and it cuts the NEAREST
+    // intact letter per dwell, so you watch it eat through a line and can feel the range limit.
+    if(power === 'laser' && shootHeld){
+      beamCool -= dt;
+      if(beamCool <= 0){
+        const ox = ship.position.x, oy = ship.position.y;
+        let best = null, bestProj = Infinity, bestLine = null, bestY = 0;
+        lines.forEach(line=>{
+          const ly = line.y - crawl;
+          if(ly < oy) return;
+          line.letters.forEach(L=>{
+            if(L.broken || L.dissolve>0) return;
+            const dx = L.x - ox, dy = ly - oy;
+            const proj = dx*aim.x + dy*aim.y;               // distance along the ray
+            if(proj <= 0 || proj > BEAM_RANGE) return;
+            const perp = Math.abs(dx*aim.y - dy*aim.x);     // distance from the ray
+            if(perp > BEAM_HALF_WIDTH) return;
+            if(proj < bestProj){ bestProj = proj; best = L; bestLine = line; bestY = ly; }
+          });
         });
-      });
-      document.getElementById("score").textContent = brokenCount;
+        if(best){
+          beamCool = POWERS.laser.cd;
+          best.dissolve = 0.01;
+          brokenCount++; bumpReveal();
+          maybeDrop(best.x, bestY, bestLine.kind);
+          if(bestLine.meta && bestLine.meta.co && !linesRead.has(bestLine.i)){
+            linesRead.add(bestLine.i);
+            show(bestLine.meta.co, bestLine.meta.date, bestLine.meta.detail);
+          }
+          document.getElementById("score").textContent = brokenCount;
+        }
+      }
     }
 
     // spin the drops so the icons read in the air
