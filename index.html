@@ -370,8 +370,9 @@ doesn't have enough.</p>
 .gv-canvas canvas:active{cursor:grabbing}
 .gv-grid{display:none;height:100%;overflow:auto}
 .gv-legend{position:absolute;left:10px;bottom:10px;display:flex;gap:12px;flex-wrap:wrap;
-  font:11px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);pointer-events:none;
-  background:rgba(11,18,25,.82);padding:6px 9px;border-radius:6px;max-width:calc(100% - 20px)}
+  font:11px ui-monospace,Menlo,Consolas,monospace;color:var(--fg);pointer-events:none;
+  background:var(--card);border:1px solid var(--line);opacity:.94;
+  padding:6px 9px;border-radius:6px;max-width:calc(100% - 20px)}
 .gv-lg{display:flex;align-items:center;gap:5px}
 .gv-lg i{width:10px;height:10px;border-radius:2px;display:inline-block}
 .gv-lgnote{opacity:.8}
@@ -407,13 +408,14 @@ doesn't have enough.</p>
 .cb-log{max-height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;margin-bottom:9px}
 .cb-log:empty{display:none}
 .cb-msg{padding:8px 11px;border-radius:8px;font-size:.9rem;line-height:1.55;max-width:92%}
-.cb-you{align-self:flex-end;background:#173049;color:#dcecfa}
-.cb-bot{align-self:flex-start;background:#101a24;border:1px solid var(--line);white-space:pre-wrap}
-.cb-sys{align-self:stretch;background:#1a1408;border-left:3px solid #8a6a2a;color:#e8d5b0;
+.cb-you{align-self:flex-end;background:var(--hi);color:var(--bg)}
+.cb-bot{align-self:flex-start;background:var(--code);color:var(--fg);border:1px solid var(--line);
+  white-space:pre-wrap}
+.cb-sys{align-self:stretch;background:var(--code);border-left:3px solid var(--mid);color:var(--fg);
   max-width:100%}
 .cb-wait{opacity:.6;font-style:italic}
 .cb-row{display:flex;gap:7px}
-.cb-in{flex:1;background:#0b1219;border:1px solid var(--line);color:var(--fg);border-radius:7px;
+.cb-in{flex:1;background:var(--card);border:1px solid var(--line);color:var(--fg);border-radius:7px;
   padding:8px 11px;font:inherit;font-size:.92rem}
 .cb-in:focus{outline:none;border-color:var(--hi)}
 .cb-in:disabled{opacity:.5}
@@ -776,6 +778,14 @@ its bound. The difference is that <strong>every number it gives you is one it ca
 receipt for, and it never changed its answer because someone pushed back</strong>. The assistant's
 <q>2</q> was arguably the better zoological answer. It abandoned it anyway.</p>
 
+<h2>Watch it think</h2>
+<p>Ask something above and this fills in as the search runs. It is the same graph read five ways,
+because one picture of it answers almost nothing. <b>Structure</b> is what connects to what.
+<b>Evidence</b> sorts nodes into shells by how many independent sources back them, best at the
+core, so how much of an answer rests on a single source is visible as a shape. <b>Hops</b> puts one
+plane per step away from your question, so depth is drift. <b>Chains</b> shows only the routes that
+actually completed. <b>Grid</b> is the same nodes as sortable rows. Click any node, in any of them,
+for every fact on file about it.</p>
 <div id="gvhost"></div>
 <!-- The previous single-canvas view is retained, hidden, because a good deal of the search code
      still writes to #badge/#legend/#hover and drives its loop; removing those hooks is a separate
