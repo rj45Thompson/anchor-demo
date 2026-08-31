@@ -947,6 +947,35 @@ confident-wrong 1/1, audit_demo 22/0, audit_ui 2/0, golden traces 20/20 byte-sta
 is shared by every lane, so the unchanged goldens are the real evidence this did not shift anything
 it should not have.
 
+### B49 - Star Fighter's flight view went negative-width on any narrow screen
+
+RJ, live: "I want the full space game to run in anchor demo right now it seems broken.. screen
+size is an issue." Reproduced on the deployed site: the "or embed it here" button under the Star
+Fighter panel puts the game in an iframe whose measured width on a phone-sized viewport is 329px.
+`resize()` computed the right-hand HUD column as `clamp(W*0.4, RIGHT_MIN=340, RIGHT_MAX=600)` and
+gave everything left over to the flight view: `mw = W - rw`. RIGHT_MIN was a fixed floor tuned by
+eye on desktop and never checked against how much width was actually left - at W=329 that's
+`329 - 340 = -11`, handed straight to `renderer.setViewport`/`setScissor`. The primary chase-cam
+view (the one thing the player is actually there to see) silently broke while a fixed 340px sidebar
+still claimed its share. Exact same formula breaks "Play fullscreen" on any phone held in portrait,
+no iframe involved - not an embed-specific bug, a `resize()` bug.
+
+*Fixed:* below the width where `W - RIGHT_MIN` can no longer guarantee a usable flight view
+(`RIGHT_MIN + MAIN_MIN` = 640px, derived not guessed - MAIN_MIN=300 is the same floor the desktop
+branch was implicitly relying on and never stated), `resize()` now stacks the HUD strip under the
+flight view instead of beside it: main view keeps the majority of the screen at full width, the
+top-down and reasoning panes split the remaining strip side by side. Above 640px, the arithmetic
+is untouched - verified byte-identical `VIEW` rects at the desktop embed width (745px) before and
+after. Verified at 329/375/620px (all now stack, all `VIEW.main` positive, `chaseCam.aspect`
+finite) and 745/1280px (side-by-side unchanged) via direct WebGL-viewport introspection - both by
+navigating straight to `games/starfighter.html` and through the real tab-click → embed-click →
+iframe path, on a local static server serving this same `site/` tree, then re-confirmed against
+the deployed page after push. Pixel screenshots were not available this session (the Browser pane
+did not composite), so this is verified numerically - every `VIEW`/`chaseCam` value read directly
+out of the live page's own script scope - not visually; worth a human eyeball pass on a real phone.
+(Commit message says B47 - BUGS.md numbering had already moved on to B48 by the time this landed;
+noted here so the mismatch doesn't read as a second bug.)
+
 ## OPEN
 
 
