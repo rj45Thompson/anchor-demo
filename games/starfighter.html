@@ -140,7 +140,9 @@ const CFG = {
   MAX_ENCOUNTERS:4, ENCOUNTER_CD:13, ENCOUNTER_R:17, ENCOUNTER_LIFE:70, NEWS_CD:22,   // M11: roaming derelicts/caches/distress + galaxy news that shocks prices
   CAM_BACK:18, CAM_UP:7.5, CAM_AHEAD:20, CAM_LAG:3.0, CAM_UP_LERP:2.4,
   SPEAK_SHOW:2.4, SPEECH_WS:0.03,                  // 3D speech bubble: only for meaningful events now, smaller
-  RIGHT_FRAC:0.4, RIGHT_MIN:340, RIGHT_MAX:600,    // right column width
+  RIGHT_FRAC:0.4, RIGHT_MIN:340, RIGHT_MAX:600,    // right column width (side-by-side, wide screens)
+  MAIN_MIN:300,                                    // flight view's min dimension - guards both layouts below
+  RIGHT_MIN_H:200, RIGHT_MAX_H:320,                // HUD strip height (stacked layout, narrow screens)
   TOP_ZOOM:1.08,                                   // top-down ortho margin past the arena
 };
 const FWD=new T.Vector3(0,0,-1), UPL=new T.Vector3(0,1,0), RGT=new T.Vector3(1,0,0), WUP=new T.Vector3(0,1,0);
@@ -1312,15 +1314,33 @@ function sizeBrainCam(vw,vh){ vw=vw||VIEW.brain.w||1; vh=vh||VIEW.brain.h||1; co
   if(va>ca){ hh=235*brainZoom; hw=hh*va; } else { hw=300*brainZoom; hh=hw/va; }
   brainCam.left=-hw; brainCam.right=hw; brainCam.top=hh; brainCam.bottom=-hh; brainCam.position.set(brainCenter.x,brainCenter.y,50); brainCam.lookAt(brainCenter.x,brainCenter.y,0); brainCam.updateProjectionMatrix(); }
 function resize(){ const W=innerW(), H=innerH(); renderer.setSize(W,H);
+  const lt=document.getElementById('lblTop'), lb=document.getElementById('lblBrain'),
+        vd=document.getElementById('vdiv'), hd=document.getElementById('hdiv'),
+        chatEl=document.getElementById('chat'), marketEl=document.getElementById('market');
+  if(W < CFG.RIGHT_MIN + CFG.MAIN_MIN){
+    // narrow screen (phone, or the anchor-demo's embedded iframe): RIGHT_MIN is a fixed floor tuned
+    // for desktop, and below this width it was eating the flight view entirely (W-RIGHT_MIN went
+    // negative, B47) - stack the HUD strip under the flight view instead of beside it.
+    let rh=Math.round(clamp(H*CFG.RIGHT_FRAC,CFG.RIGHT_MIN_H,CFG.RIGHT_MAX_H));
+    rh=Math.min(rh,Math.max(0,H-CFG.MAIN_MIN));
+    const mh=H-rh, hw=Math.round(W/2);
+    VIEW.main={x:0,y:rh,w:W,h:mh}; VIEW.top={x:0,y:0,w:hw,h:rh}; VIEW.brain={x:hw,y:0,w:W-hw,h:rh};
+    chaseCam.aspect=W/mh; chaseCam.updateProjectionMatrix(); sizeTopCam(); sizeBrainCam(W-hw,rh);
+    lt.style.left='8px'; lt.style.top=(mh+8)+'px'; lb.style.left=(hw+8)+'px'; lb.style.top=(mh+8)+'px';
+    vd.style.left=hw+'px'; vd.style.top=mh+'px'; vd.style.width='1px'; vd.style.height=rh+'px';
+    hd.style.left='0'; hd.style.top=mh+'px'; hd.style.width=W+'px'; hd.style.height='1px';
+    chatEl.style.width=Math.max(200,W-28)+'px';
+    marketEl.style.left=(W*0.5)+'px';
+    return;
+  }
   const rw=Math.round(clamp(W*CFG.RIGHT_FRAC,CFG.RIGHT_MIN,CFG.RIGHT_MAX)), mw=W-rw, hh=Math.round(H/2);
   VIEW.main={x:0,y:0,w:mw,h:H}; VIEW.top={x:mw,y:hh,w:rw,h:H-hh}; VIEW.brain={x:mw,y:0,w:rw,h:hh};
   chaseCam.aspect=mw/H; chaseCam.updateProjectionMatrix(); sizeTopCam(rw,H-hh); sizeBrainCam(rw,hh);
-  const lt=document.getElementById('lblTop'), lb=document.getElementById('lblBrain'), vd=document.getElementById('vdiv'), hd=document.getElementById('hdiv');
   lt.style.left=(mw+12)+'px'; lt.style.top='10px'; lb.style.left=(mw+12)+'px'; lb.style.top=(hh+10)+'px';
   vd.style.left=mw+'px'; vd.style.top='0'; vd.style.width='1px'; vd.style.height=H+'px';
   hd.style.left=mw+'px'; hd.style.top=hh+'px'; hd.style.width=rw+'px'; hd.style.height='1px';
-  document.getElementById('chat').style.width=Math.max(240,mw-28)+'px';
-  document.getElementById('market').style.left=(mw*0.5)+'px'; }
+  chatEl.style.width=Math.max(240,mw-28)+'px';
+  marketEl.style.left=(mw*0.5)+'px'; }
 function renderView(r,sc,cam){ renderer.setViewport(r.x,r.y,r.w,r.h); renderer.setScissor(r.x,r.y,r.w,r.h); renderer.render(sc,cam); }
 function renderAll(){ renderer.setScissorTest(true); renderView(VIEW.main,scene,chaseCam); renderView(VIEW.top,scene,topCam); renderView(VIEW.brain,brainScene,brainCam); renderer.setScissorTest(false); }
 
