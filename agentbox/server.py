@@ -262,6 +262,11 @@ def log(rec: dict) -> None:
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "agentbox"
+    # Without this the socket blocks forever. A raw client that sends a Content-Length and then
+    # simply stops writing (a slow-body / Slowloris) pins a thread for good, and
+    # ThreadingHTTPServer spawns one per connection - so a handful of open sockets is a denial of
+    # service against the owner's own desktop, no malformed input required.
+    timeout = 15
 
     def log_message(self, *_a):          # the JSONL is the log; stderr noise is not useful here
         pass
@@ -310,14 +315,27 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {"error": "not found"}, origin)
             return
 
-        n = int(self.headers.get("Content-Length") or 0)
-        if n > 8192:
-            self._send(413, {"error": "too large"}, origin)
+        # A NEGATIVE Content-Length passed the `> 8192` check and then reached
+        # BufferedReader.read(-1), which means "read to EOF" - on a socket the client never
+        # closes, that is an unbounded block. Parse defensively and require a sane range.
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            self._send(400, {"error": "bad content-length"}, origin)
+            return
+        if n < 0 or n > 8192:
+            self._send(413, {"error": "bad or oversized body"}, origin)
             return
         try:
-            body = json.loads(self.rfile.read(n) or b"{}")
-        except json.JSONDecodeError:
+            raw = self.rfile.read(n) or b"{}"
+            body = json.loads(raw)
+        except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
             self._send(400, {"error": "bad json"}, origin)
+            return
+        except OSError:
+            return                       # client vanished mid-body; nothing to reply to
+        if not isinstance(body, dict):
+            self._send(400, {"error": "body must be a json object"}, origin)
             return
 
         q = str(body.get("q") or "").strip()
@@ -345,7 +363,9 @@ class Handler(BaseHTTPRequestHandler):
 
         if err:
             # Report the failure rather than inventing a friendly answer over it.
-            self._send(503, {"error": "The help agent is not reachable right now.", "detail": err}, origin)
+            # `err` is the CLI's raw stdout/stderr and can carry a local filesystem path with the
+            # operator's username in it. It belongs in the log, not in an HTTP body a stranger reads.
+            self._send(503, {"error": "The help agent is not reachable right now."}, origin)
             return
         self._send(200, {"answer": answer, "flags": flags}, origin)
 
