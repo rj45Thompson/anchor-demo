@@ -817,6 +817,46 @@ of JSON each, ~250-270 shards for one wide question) - genuine, necessary comput
 page pays too, not something a test harness can skip. `sleep` was still made overridable
 (`const`->`let`), a real if modest ~17% saving, kept for that reason alone.
 
+### B49 - a missing `</div>` hid the step debugger for every question but one
+
+Found by a text/structure audit, then confirmed two ways: a manual tag trace and parsing the
+shipped file with Python's `html.parser` using browser-style recovery, which reported
+`dbgbox.parent = div#vswrap`.
+
+Wrapping the Copilot comparison in `<div id="vswrap" style="display:none">` (so it only shows for
+the question it documents) exposed a pre-existing imbalance: the `.vs` grid was never closed. The
+`</div>` meant for `#vswrap` therefore closed `.vs` instead, and `#vswrap` stayed open across the
+**step debugger** and the **"What just happened"** panel, swallowing both into a block that
+`vsToggle()` sets to `display:none` for anything that is not the bear question.
+
+So the page's flagship feature - the one WISHLIST calls RJ's priority-one - was invisible for
+**3 of the page's own 4 clickable Try examples**. The JS kept computing and writing real content
+into both boxes the whole time; only the rendering was gone, which is why nothing threw and no
+harness caught it. It was masked further because both the first-load autorun and the empty-input
+fallback ask the bear question, which happens to satisfy the toggle.
+
+*Fixed:* closed `.vs` where it belongs. Verified live: with the bear question the comparison and
+the debugger are both visible; with "who was Julius Caesar", "capital of the country Melbourne is
+in" and "how many types of empire are there" the comparison hides and the debugger stays visible.
+
+### O9 - abstract connectives can be linked as SUBJECTS (open, and the obvious fix is wrong)
+
+`findEntities`/`bestSpan` takes the leftmost span that resolves at a given length. Measured against
+real shard data: `"is there a connection between chess and mathematics"` links `connection`(58) and
+`between`(69), and never probes `chess`(79) or `mathematics`(167) - the subject of the question is
+discarded before the search starts. This is a plausible root cause of the 60-130s wide searches in
+B41/B42 that was never identified there.
+
+An audit proposed arbitrating same-length spans by fact count. **That was tried and reverted.**
+Against the goldens it flipped `p-caliper` to start from `car`(401) instead of `caliper`(12),
+because fact count is not a proxy for which word is the SUBJECT. Leftmost is quietly encoding a
+real regularity - the first entity named in an English question is usually its subject - and
+evidence count does not know that. B1 is not the reason (that was a shorter fragment beating a
+longer span; length still wins outright), but the outcome would have been the same class of harm.
+
+The real defect is upstream: `connection` and `between` should not be candidate SUBJECTS at all.
+That is a `junkSpan`/stop-list problem. Left open rather than guessed at.
+
 ### B48 - the golden-trace gate had been running against a two-day-stale copy, and was hiding a real regression
 
 **The gate itself was broken, which is why this is one entry and not four.** `golden_trace.mjs`

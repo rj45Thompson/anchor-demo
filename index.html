@@ -825,6 +825,9 @@ are not in the count.</span></pre>
       pushed on.</div>
     </div>
   </div>
+</div>   <!-- closes .vs - its absence let the NEXT </div> close .vs instead of #vswrap,
+              which swallowed the step debugger and the explanation panel into a block that
+              is display:none for every question except the bear one -->
 
 <p class="vsnote">Neither column is the smarter one, and the questions were not identical -
 one asks about individual animals, the others about types. Copilot knows vastly more zoology than
@@ -2176,13 +2179,20 @@ function properNouns(raw){
    only the LOWERCASE, ordinary-English form is the unanswerable personal question. */
 const PRONOUN1=new Set("my mine myself i me".split(" "));
 const PRONOUN2=new Set("your yours yourself you".split(" "));
+// B34 closed the singular pronouns but left the PLURAL free in the same position. "we" is a real
+// ConceptNet entity with 297 facts, so "why do we dream" linked it as the SUBJECT and answered
+// from whatever the graph records about the word "we". Same confidently-wrong mechanism, one word
+// class the original list did not enumerate.
+const PRONOUN3=new Set("we us our ours ourselves".split(" "));
 function readPronounBlock(raw,caps){
   const words=raw.replace(/[?.!]+$/,"").split(/\s+/).filter(Boolean);
   const hit=words.find(w=>{const l=w.toLowerCase().replace(/[^a-z]/g,"");
-    return (PRONOUN1.has(l)||PRONOUN2.has(l))&&!caps.has(l);});
+    return (PRONOUN1.has(l)||PRONOUN2.has(l)||PRONOUN3.has(l))&&!caps.has(l);});
   if(!hit)return null;
-  const who=PRONOUN1.has(hit.toLowerCase().replace(/[^a-z]/g,""))?"you, the person asking":
-    "me, this system";
+  const l=hit.toLowerCase().replace(/[^a-z]/g,"");
+  const who=PRONOUN1.has(l)?"you, the person asking"
+           :PRONOUN3.has(l)?"people in general, which this graph does not hold a subject for"
+           :"me, this system";
   return {who};
 }
 /* Read the question into (start subject, goal relation). ALWAYS shown back to the reader: a parser
@@ -2445,6 +2455,17 @@ async function findEntities(q){
           if(f.length&&(!bestV||f.length>bestV.facts.length))
             bestV={name:v,facts:f,best:Math.max(...f.map(x=>x.k)),st,n};
         }
+        // LEFTMOST WINS at a given length, and that is deliberate. An audit proposed arbitrating
+        // same-length spans by fact count instead, because "is there a connection between chess
+        // and mathematics" links `connection`(58) and `between`(69) and never probes `chess`(79)
+        // or `mathematics`(167). The bad case is real. The proposed fix is worse: measured against
+        // the goldens it flipped "is a caliper used in a car" to start from `car`(401) instead of
+        // `caliper`(12), because fact count is not a proxy for WHICH WORD IS THE SUBJECT. Leftmost
+        // is quietly encoding a real regularity of English questions - the first entity mentioned
+        // is usually the subject - and evidence count does not know that.
+        // The actual defect is upstream: abstract connectives like "connection" and "between"
+        // should not resolve as SUBJECTS at all. That is a junkSpan/stop-list problem, not an
+        // arbitration one, and it is filed rather than guessed at here. See O9 in BUGS.md.
         if(bestV)return bestV;
       }
     }
