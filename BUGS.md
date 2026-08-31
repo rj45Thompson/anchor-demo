@@ -817,7 +817,11 @@ of JSON each, ~250-270 shards for one wide question) - genuine, necessary comput
 page pays too, not something a test harness can skip. `sleep` was still made overridable
 (`const`->`let`), a real if modest ~17% saving, kept for that reason alone.
 
-### B49 - a missing `</div>` hid the step debugger for every question but one
+### B50 - a missing `</div>` hid the step debugger for every question but one
+
+*(Renumbered from B49: a parallel session landed its own B49 for the Star Fighter
+negative-width fix while this was in flight. Same collision as the earlier B46 one -
+two sessions picking the next number independently.)*
 
 Found by a text/structure audit, then confirmed two ways: a manual tag trace and parsing the
 shipped file with Python's `html.parser` using browser-style recovery, which reported
