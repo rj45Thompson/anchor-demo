@@ -2407,8 +2407,19 @@ async function findEntities(q){
     // into a span ("of"/"a"/"the" are legitimately part of real names). QUANT/COMPARE/STOP never
     // are - extending the exact "poisons the span unless capitalised" rule RELSET/QVERBS already
     // use just below, instead of only rejecting when EVERY word in the span happens to be one.
-    list.some(w=>{const l=w.toLowerCase();
-      return (QUANT.has(l)||COMPARE.has(l)||STOP.has(l))&&!caps.has(l);});
+    list.some((w,ix)=>{const l=w.toLowerCase();
+      if((QUANT.has(l)||COMPARE.has(l))&&!caps.has(l))return true;
+      // A STOP word poisons a span only at an EDGE. B46 fixed a TRAILING scope phrase - "in
+      // the world" - where the function word leads or trails the span it spoils. Applying the
+      // same poison to an INTERNAL function word broke every real multi-word TITLE, because
+      // titles legitimately contain lowercase connectives.
+      //
+      // MEASURED 2026-09-01: this cost 4 of the 5 zoo failures, and in every one the subject
+      // IS a key in the graph and in the correct shard - so the fact was reachable and the
+      // parser refused to look. "Good to Go Lover" (to), "Let the Music Take Control" (the),
+      // "A Heart Beats for You" (for). A leading capitalised "The"/"A" already survived via
+      // caps, which is why only the internal words were fatal.
+      return STOP.has(l)&&!caps.has(l)&&(ix===0||ix===list.length-1);});
 
   // trim the question's framing off both ends, never out of the middle
   let i=0,j=words.length;
