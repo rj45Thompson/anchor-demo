@@ -20,6 +20,15 @@
   #title small{display:block;font-weight:400;font-size:11px;color:#8fa3b5;letter-spacing:.3px}
   #stats{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:#8fa3b5}
   #stats b{color:var(--accent);font-size:16px}
+  #lifewrap{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:6px}
+  #lifelbl{font:10px ui-monospace,Menlo,Consolas,monospace;letter-spacing:1.5px;color:#7d8fa1}
+  #lives{display:flex;gap:5px}
+  #lives i{width:15px;height:15px;border-radius:3px;background:#ff4d5e;display:block;
+    box-shadow:0 0 10px rgba(255,77,94,.85);transition:background .2s,box-shadow .2s}
+  #lives i.gone{background:#2b3440;box-shadow:none}
+  #shieldbar{width:92px;height:5px;border-radius:3px;background:#22303c;overflow:hidden;
+    margin-top:5px;margin-left:auto}
+  #shieldfill{height:100%;width:100%;background:#8fe8ff;box-shadow:0 0 8px rgba(143,232,255,.8)}
 
   #readout{position:absolute;left:50%;transform:translateX(-50%);bottom:74px;
     max-width:min(720px,92vw);text-align:center;font-size:13px;color:#cfe3f2;
@@ -58,7 +67,9 @@
   <div class="hud" id="top">
     <div id="title">RÉSUMÉ BREAKOUT
       <small>R.J. Thompson &nbsp;·&nbsp; senior C++ / C# engineer &nbsp;·&nbsp; open to work</small></div>
-    <div id="stats">CLEARED <b id="score">0</b>/<span id="total">0</span><br><span id="lives">♦♦♦</span></div>
+    <div id="stats">CLEARED <b id="score">0</b>/<span id="total">0</span>
+      <div id="lifewrap"><span id="lifelbl">HULL</span><span id="lives"></span></div>
+      <div id="shieldbar"><div id="shieldfill"></div></div></div>
   </div>
 
   <div class="hud" id="readout"></div>
@@ -77,7 +88,7 @@
       <p>I am R.J. Thompson, a senior C++/C# engineer, and I am looking for my next role.
          The whole résumé is up there, every role with its real dates, and every letter of it
          breaks. Shoot your way down and you will have read the lot.</p>
-      <p class="muted">WASD to move &middot; right mouse to shoot &middot; left mouse for shields
+      <p class="muted">WASD to move &middot; left mouse to shoot &middot; right mouse for shields
          &middot; mouse wheel for flame &middot; F for fullscreen</p>
       <button class="btn" id="go">START</button>
       <div class="muted">Would rather just read it? The PDF is one click away when the round ends,
@@ -536,6 +547,24 @@ function goFullscreen(){
   if(req) req.call(el).then(()=>setTimeout(resize,60)).catch(()=>{});
 }
 
+/* The life bar was three diamonds of text at 12px in the same muted grey as the score, over a
+   gradient, in a corner - invisible exactly when it matters. One renderer now owns it, so a
+   `lives--` anywhere cannot leave the HUD stale, and the shield charge gets its own gauge because
+   right-mouse is now a real resource against the turrets. */
+const LIVES_MAX = 3;
+function drawLives(){
+  const box = document.getElementById("lives");
+  if(box){
+    let h = "";
+    for(let i = 0; i < LIVES_MAX; i++) h += '<i class="' + (i < lives ? "" : "gone") + '"></i>';
+    box.innerHTML = h;
+  }
+}
+function drawShield(){
+  const f = document.getElementById("shieldfill");
+  if(f) f.style.width = Math.max(0, Math.min(1, shieldEnergy)) * 100 + "%";
+}
+
 /* TURRETS - letters that shoot back, so the shield has a reason to exist.
 
    The shield was a button with nothing to block: raids dive at you and can be dodged by moving,
@@ -629,7 +658,7 @@ function runTurrets(dt){
       spark(m.position.clone(), 0xff5470, 24);
       board.remove(m); bolts.splice(i, 1);
       lives--;
-      document.getElementById("lives").textContent = lives > 0 ? "♦".repeat(lives) : " - ";
+      drawLives();
       if(lives <= 0) endGame(false);
       continue;
     }
@@ -722,7 +751,7 @@ function runAttackers(dt){
       spark(m.position.clone(), 0xff5470, 30);
       board.remove(m); attackers.splice(i, 1);
       lives--;
-      document.getElementById("lives").textContent = lives > 0 ? "♦".repeat(lives) : " - ";
+      drawLives();
       shake = Math.max(shake, 0.6);
       if(lives <= 0) endGame(false);
       continue;
@@ -1208,8 +1237,7 @@ function reset(){
   { const e=document.getElementById('era'); if(e){ e.textContent=''; }
     const pw=document.getElementById('power'); if(pw) pw.textContent=''; }
   document.getElementById('score').textContent = 0;
-  document.getElementById('lives').textContent = 'READING';
-  document.getElementById('lives').textContent = '♦♦♦';
+  drawLives(); drawShield();
   readout.classList.remove('on');
 }
 
@@ -1295,6 +1323,7 @@ function tick(now){
     mushroomBeat();
     runAttackers(dt);
     runTurrets(dt);
+    drawShield();
     applyCam(dt);
     gradeScene();
     // held right button auto-fires on a cadence
@@ -1524,17 +1553,18 @@ addEventListener('keydown', e=>{
   if(e.key===' '){ e.preventDefault(); fire(); }
 });
 addEventListener('keyup', e=>keys[e.key]=false);
-// LEFT = shield, RIGHT = shoot, WHEEL = flame burst. Right-click needs the context menu
-// suppressed or the browser eats the input.
+// LEFT = shoot, RIGHT = shield, WHEEL = flame burst. Shooting is what you do constantly, so it
+// belongs on the primary button. Right-click still needs the context menu suppressed or the
+// browser eats the input.
 addEventListener("contextmenu", e=>{ if(state==="play") e.preventDefault(); });
 addEventListener("mousedown", e=>{
   if(state!=="play") return;
-  if(e.button===0){ shieldHeld = true; }
-  if(e.button===2){ e.preventDefault(); shootHeld = true; fire(); }
+  if(e.button===0){ shootHeld = true; fire(); }
+  if(e.button===2){ e.preventDefault(); shieldHeld = true; }
 });
 addEventListener("mouseup", e=>{
-  if(e.button===0) shieldHeld = false;
-  if(e.button===2) shootHeld = false;
+  if(e.button===0) shootHeld = false;
+  if(e.button===2) shieldHeld = false;
 });
 addEventListener("wheel", e=>{
   if(state!=="play") return;
