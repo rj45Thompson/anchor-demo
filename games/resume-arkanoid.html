@@ -145,7 +145,7 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x070b10, 0.028);
 
 const W = 26, H = 30;                       // world units
-const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 200);
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
 camera.position.set(0, -20, 26);
 camera.lookAt(0, 2, 0);
 
@@ -451,10 +451,21 @@ const eraIdx = 5;
    So: full graphics from the first frame, one rig, and motion that is continuous by construction.
    The camera drifts on a slow sine and damps toward the ship's x, so it is always moving a little
    and never jumps. Nothing here is stepped, so there is nothing left to skip. */
+/* STAR WARS CRAWL. The old rig sat at 0.34 rad of board tilt, which is nearly face-on - and
+   face-on is exactly why the letters read as flat: the extrusion is all in the sides, and at that
+   angle you cannot see any of it. Raking the board back to ~1.0 rad puts the CV on a plane
+   receding to a vanishing point, so every glyph shows its depth and the whole thing reads as the
+   opening crawl. The camera drops low to look UP the plane, which is the shot that sells it. */
 const CAM = {
-  pos:  [-4.5, -15.5, 25.0],
-  look: [ 0.8,   1.0,  0.0],
-  tilt: 0.34,
+  // Solved rather than eyeballed. A search over tilt/fov/position, projecting the play band
+  // (board y -14..+16) and the widest CV line into NDC, found 85 rigs that fit; this is the
+  // STEEPEST of them, because rake is the whole point - it is what shows the extruded sides.
+  // The first attempt used tilt 1.00 and put board y=8 at NDC 1.21, i.e. the top third of the
+  // crawl was off screen and letters popped into view instead of receding.
+  // Measured here: y=-14 -> -0.48, y=+16 -> 0.96, widest line edge -> 0.48.
+  pos:  [ 0.0, -22.0, 32.0],
+  look: [ 0.0,   2.0, -6.0],
+  tilt: 0.85,
   DRIFT_X: 1.6,        // slow lateral sway, in units
   DRIFT_Y: 0.7,
   DRIFT_HZ: 0.055,     // very slow: a full sway takes ~18s, so it reads as parallax not motion
@@ -482,10 +493,14 @@ function applyCam(dt){
   const asp  = (isFinite(camera.aspect) && camera.aspect > 0) ? camera.aspect
              : (innerWidth / innerHeight || 1.6);
   const need = (textHalfW + 2.5) / Math.tan((camera.fov * Math.PI / 180) / 2) / asp;
-  const dist = isFinite(need) ? Math.max(CAM.pos[2], need) : CAM.pos[2];
+  // On a raked plane the widest line is foreshortened, so the face-on clamp over-corrects and
+  // shoves the camera miles back. Scale it by the cosine of the tilt, which is how much of that
+  // width actually still faces the lens.
+  const need2 = need * Math.cos(CAM.tilt);
+  const dist = isFinite(need2) ? Math.max(CAM.pos[2], need2) : CAM.pos[2];
 
-  camera.position.set(CAM.pos[0] + dx + camFollowX, CAM.pos[1] + dy, dist);
-  camera.lookAt(CAM.look[0] + camFollowX * 0.5, CAM.look[1], CAM.look[2]);
+  camera.position.set(CAM.pos[0] + dx + camFollowX * 0.6, CAM.pos[1] + dy, dist);
+  camera.lookAt(CAM.look[0] + camFollowX * 0.35, CAM.look[1], CAM.look[2]);
   board.rotation.x = CAM.tilt;
 }
 
@@ -502,15 +517,25 @@ function fullGraphics(){
    already gone, so this is precisely "what you did not read". Runs once per line, latched on
    line.sunk, because a line sits below the floor for many frames. */
 function sinkLines(){
+  // Trigger at the PLAYER, not at the bottom of the board. A letter that has slipped past your
+  // ship has already beaten you; making it fall another three units first only delayed the
+  // feedback and made the cause unclear.
+  const line0 = ship.position.y - 1.2;
   for(const line of lines){
     if(line.sunk) continue;
-    if((line.y - crawl) > VIEW_BOT) continue;
+    if((line.y - crawl) > line0) continue;
     line.sunk = true;
     for(const L of line.letters){
       if(L.broken || L.dissolve > 0) continue;
       L.broken = true;
+      // Hand the letter's OWN model to the flight, rather than recycling it and building a
+      // replacement inside the ball. RJ: "they should join together in a ball, the models that
+      // is" - previously the glyph vanished at the floor and an unrelated one appeared in the
+      // mass, so nothing was ever seen to join anything.
+      const from = L.mesh ? L.mesh.position.clone()
+                          : new THREE.Vector3(L.x, line.y - crawl, 0);
       if(L.mesh){ giveMesh(L.mesh); L.mesh = null; }
-      bossAbsorb(L.ch, L.x);
+      bossJoin(L.ch, from);
     }
   }
 }
@@ -541,6 +566,8 @@ const BOSS_PACK       = 0.62;    // radius per glyph^(1/3) - tight, so it packs 
 const BOSS_MAX_MESH   = 140;     // draw cap: beyond this it grows in stats only, disclosed below
 
 let boss = null;
+let joiners = [];          // letters in flight toward the mass
+const JOIN_SEC = 0.75;     // how long that flight takes
 
 function bossInit(){
   boss = { n:0, hp:0, group:new THREE.Group(), fireCool:BOSS_FIRE_BASE, awake:false, flash:0 };
@@ -549,6 +576,42 @@ function bossInit(){
 }
 
 /* Called for every intact letter on a line that has fallen past the floor. */
+function bossJoin(ch, from){
+  if(!boss) bossInit();
+  // its own model, flying to the mass. It is a real mesh on a real path, so you watch the word
+  // you failed to shoot travel across the board and weld itself on.
+  const m = new THREE.Mesh(glyphGeometry(ch), new THREE.MeshStandardMaterial({
+    color:0xff9ec0, emissive:0x5a1024, emissiveIntensity:1.1,
+    roughness:0.4, metalness:0.35, flatShading:true }));
+  m.position.copy(from);
+  m.scale.setScalar(1.0);
+  board.add(m);
+  joiners.push({ m, ch, tt:0, from:from.clone(),
+                 spin:new THREE.Vector3(Math.random()*3, Math.random()*3, Math.random()*3) });
+}
+
+function runJoiners(dt){
+  if(!boss) return;
+  const target = boss.group.position;
+  for(let i = joiners.length - 1; i >= 0; i--){
+    const J = joiners[i];
+    J.tt += dt / JOIN_SEC;
+    const k = Math.min(1, J.tt);
+    const e = k * k * (3 - 2 * k);                       // smoothstep, so it eases in
+    // arc it rather than sliding straight, and lift as it goes so the path reads as deliberate
+    J.m.position.lerpVectors(J.from, target, e);
+    J.m.position.x += Math.sin(e * Math.PI) * (J.from.x < target.x ? -3.2 : 3.2);
+    J.m.rotation.x += J.spin.x * dt; J.m.rotation.y += J.spin.y * dt;
+    J.m.scale.setScalar(1.0 - 0.2 * e);
+    if(k >= 1){
+      board.remove(J.m);
+      joiners.splice(i, 1);
+      bossAbsorb(J.ch);                                  // NOW it is part of the mass
+      spark(target.clone(), 0xff9ec0, 6);
+    }
+  }
+}
+
 function bossAbsorb(ch, x){
   if(!boss) bossInit();
   boss.n++;
@@ -622,17 +685,22 @@ function runBoss(dt){
 
   // a salvo, widening with size. Reuses the turret bolt pool so there is one projectile system
   // to reason about rather than two that can disagree.
-  const arms = Math.min(5, 1 + Math.floor((boss.n - BOSS_WAKE) / 45));
+  // A SPREAD, aimed at you and fanned around that aim, so it has to be dodged rather than
+  // strafed past. Wider and denser the fatter it is; heavy, bright rounds so a boss salvo is
+  // unmistakably not a turret pellet.
+  const arms  = Math.min(7, 3 + Math.floor((boss.n - BOSS_WAKE) / 30));
+  const fan   = 0.30;                                   // radians between adjacent rounds
+  const ox = g.position.x, oy = g.position.y - 2.0;     // it is above you: fire from underneath
+  const base = Math.atan2(ship.position.y - oy, ship.position.x - ox);
   for(let a = 0; a < arms; a++){
     if(bolts.length >= TURRET_MAX) break;
-    const ox = g.position.x + (a - (arms - 1) / 2) * 2.4;
-    const oy = g.position.y - 2.0;   // it is above you now: fire from underneath the ball
-    const dx = ship.position.x - ox, dy = ship.position.y - oy;
-    const d = Math.hypot(dx, dy) || 1;
-    const m = boltMesh();
+    const ang = base + (a - (arms - 1) / 2) * fan;
+    const m = boltMesh(true);
     m.position.set(ox, oy, 0);
-    bolts.push({ m, vx: dx / d * TURRET_SPEED * 0.85, vy: dy / d * TURRET_SPEED * 0.85 });
+    bolts.push({ m, vx: Math.cos(ang) * TURRET_SPEED * 1.05,
+                    vy: Math.sin(ang) * TURRET_SPEED * 1.05, heavy: true });
   }
+  spark(new THREE.Vector3(ox, oy, 0), 0xffb14d, 14);
 }
 
 /* A bullet that reaches the mass chips it. Returns true if it connected, so the bullet loop can
@@ -665,6 +733,8 @@ function hitBossAt(px, py){
 }
 
 function bossClear(){
+  joiners.forEach(J=>board.remove(J.m));
+  joiners = [];
   if(boss && boss.group) board.remove(boss.group);
   boss = null;
 }
@@ -761,14 +831,18 @@ const TURRET_WARMUP = 9;      // seconds before any turret opens fire. Measured:
 let bolts = [];
 
 let boltGeo = null, boltMat = null;
-function boltMesh(){
-  // One shared geometry and material. Allocating per bolt in the hot loop is how a bullet-hell
-  // ends up leaking GPU objects - the exact bug the plain bullets already had.
+let heavyGeo = null, heavyMat = null;
+function boltMesh(heavy){
+  // Shared geometry and material per kind. Allocating per bolt in the hot loop is how a
+  // bullet-hell leaks GPU objects - the exact bug the plain bullets already had.
   if(!boltGeo){
     boltGeo = new THREE.SphereGeometry(0.20, 8, 6);
     boltMat = new THREE.MeshBasicMaterial({ color:0xff4d5e });
+    heavyGeo = new THREE.SphereGeometry(0.52, 12, 9);
+    heavyMat = new THREE.MeshBasicMaterial({ color:0xffb14d });
   }
-  const m = new THREE.Mesh(boltGeo, boltMat);
+  // The boss shot must not look like a turret pellet, or a serious attack reads as chip damage.
+  const m = new THREE.Mesh(heavy ? heavyGeo : boltGeo, heavy ? heavyMat : boltMat);
   board.add(m); return m;
 }
 
@@ -1535,6 +1609,7 @@ function tick(now){
     });
     mushroomBeat();
     sinkLines();
+    runJoiners(dt);
     runAttackers(dt);
     runTurrets(dt);
     runBoss(dt);
