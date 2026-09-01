@@ -424,59 +424,82 @@ function buildBoard(){
 // and from then on every broken letter buys a little more richness: saturation, glow, engine
 // heat, starfield. Nothing here is a discrete mode switch, it is one number driving everything,
 // so it never pops - which was the complaint about the manual camera cycler this replaces.
-let mushroomDone = false, panBoost = 0;   // panBoost is a one-off camera swing, eased like reveal
-let reveal = 0;   // 0 = flat opening, 1 = full colour. DERIVED from phase progress in runPhases
-let eraIdx = 1;   // 1..5, the glyph shader tier; tracks phaseIdx+1
+let mushroomDone = false;
+// One mode: full colour and the top shader tier from the first frame. Constants now rather than
+// a ramp, and everything that already reads them keeps working unchanged.
+const reveal = 1;
+const eraIdx = 5;
 
-/* PHASES - the graphics-era ladder, on a CLOCK.
+/* ONE MODE. The graphics-era ladder is gone.
 
-   Two things were wrong before. The ladder was driven by `reveal`, and picking up the very first
-   powerup set revealTarget=1, which fired every track and slammed the camera from its only other
-   preset straight to its final one - the entire 1980-to-now arc collapsed into a single pickup.
-   And there were exactly TWO camera presets, CAM_FLAT and CAM_COOL, lerped by that same number, so
-   however long you played there was one camera move in the whole game.
+   It was a nice idea and it cost more than it earned: five timed phases, five camera rigs, a
+   derived `reveal`, a shader tier, and a `panBoost = 1` slammed in on every phase change - which
+   is what made the camera feel skippy, because it added a step to the interpolation weight the
+   moment the rig swapped. Every phase boundary was a visible jolt.
 
-   Now each era is a timed phase with its OWN camera, and the camera eases from this phase's rig to
-   the next one across the phase, so it is always moving somewhere and every phase looks different
-   from the one before. Each rig sits lower and rakes harder than the last, so "cooler" is a
-   direction rather than a single destination. */
-const PHASE_SEC = 8;                    // one era per 8s; five eras is a ~32s climb to full
-const PHASES = [
-  { era:"1988 - 8-bit",           note:"8-BIT",
-    cam:{ pos:[   0, -9.5, 30.0], look:[0.0,-0.5,0], tilt:0.10 },
-    on(){ /* opening state: flat, legible, deliberately plain */ } },
+   So: full graphics from the first frame, one rig, and motion that is continuous by construction.
+   The camera drifts on a slow sine and damps toward the ship's x, so it is always moving a little
+   and never jumps. Nothing here is stepped, so there is nothing left to skip. */
+const CAM = {
+  pos:  [-4.5, -15.5, 25.0],
+  look: [ 0.8,   1.0,  0.0],
+  tilt: 0.34,
+  DRIFT_X: 1.6,        // slow lateral sway, in units
+  DRIFT_Y: 0.7,
+  DRIFT_HZ: 0.055,     // very slow: a full sway takes ~18s, so it reads as parallax not motion
+  FOLLOW: 0.35,        // how much of the ship's x the camera adopts
+  FOLLOW_EASE: 1.8     // per-second damping toward that target - the smoothing
+};
+let camFollowX = 0;    // damped, never assigned directly from ship.x
 
-  { era:"1995 - flat 3D",         note:"FLAT 3D",
-    cam:{ pos:[-2.5,-11.5, 27.0], look:[0.4, 0.3,0], tilt:0.22 },
-    on(){ if(starPoints) starPoints.visible = true;
-          if(grid) grid.visible = true; } },
+function applyCam(dt){
+  // Default dt: applyCam is called from three places, one a resize path with no frame delta.
+  // Argless, dt is undefined and camFollowX becomes NaN, which puts the camera at NaN and
+  // blanks the view - a failure mode this file has hit before.
+  dt = (typeof dt === "number" && isFinite(dt)) ? dt : 0;
+  // Damp toward the ship rather than tracking it exactly. A camera pinned to the player reads as
+  // the world sliding under a fixed ship; a lagged one reads as a camera operator following.
+  const wantX = ship.position.x * CAM.FOLLOW;
+  camFollowX += (wantX - camFollowX) * Math.min(1, dt * CAM.FOLLOW_EASE);
 
-  { era:"2004 - textured",        note:"DEEP FIELD",
-    cam:{ pos:[-5.0,-14.0, 24.0], look:[0.9, 1.0,0], tilt:0.34 },
-    on(){ if(sky) scene.background = sky; } },
+  const ph = t * CAM.DRIFT_HZ * Math.PI * 2;
+  const dx = Math.sin(ph) * CAM.DRIFT_X;
+  const dy = Math.sin(ph * 0.6 + 1.1) * CAM.DRIFT_Y;
 
-  { era:"2012 - lit + particles", note:"PARTICLES",
-    cam:{ pos:[-6.5,-17.0, 21.5], look:[1.3, 1.7,0], tilt:0.46 },
-    on(){ debris.forEach(d=>d.visible = true); } },
+  // Readability clamp, kept: however the rig is posed, never sit closer than the distance that
+  // fits the widest line of the CV. A resume you cannot read is not a game.
+  const asp  = (isFinite(camera.aspect) && camera.aspect > 0) ? camera.aspect
+             : (innerWidth / innerHeight || 1.6);
+  const need = (textHalfW + 2.5) / Math.tan((camera.fov * Math.PI / 180) / 2) / asp;
+  const dist = isFinite(need) ? Math.max(CAM.pos[2], need) : CAM.pos[2];
 
-  { era:"2025 - full shader",     note:"FULL SPECTRUM",
-    cam:{ pos:[-8.0,-20.0, 19.0], look:[1.7, 2.4,0], tilt:0.58 },
-    on(){ /* the shader tier itself is eraIdx, set below */ } }
-];
-let phaseIdx = 0, phaseT = 0;
+  camera.position.set(CAM.pos[0] + dx + camFollowX, CAM.pos[1] + dy, dist);
+  camera.lookAt(CAM.look[0] + camFollowX * 0.5, CAM.look[1], CAM.look[2]);
+  board.rotation.x = CAM.tilt;
+}
 
-/* Advance on the clock, and derive `reveal` from phase progress so everything already reading that
-   one number (letter emissive, debris drift, glyph shader tier) still ramps exactly as before. */
-/* Called on every letter broken. It no longer moves `reveal` - that is the phase clock's job
-   now - but it still latches the first hit, which other beats key off. */
+/* Everything the old ladder used to switch on now starts on. Called once per round from reset(),
+   so a replay opens looking exactly like the first one did. */
+function fullGraphics(){
+  if(starPoints) starPoints.visible = true;
+  if(grid) grid.visible = true;
+  if(sky) scene.background = sky;
+  debris.forEach(d => d.visible = true);
+}
+
+/* Helpers that keep getting caught in splices of the phase system, because they sit
+   between it and the raid module. Anchored here deliberately. */
 function bumpReveal(){ if(!firstHitDone) firstHitDone = true; }
 
-/* The #banner div exists in the markup and is called from three places, but the function that
-   drives it did not exist - so the FIRST phase change threw a ReferenceError inside the
-   animation loop and took the whole game down with it. Fades the word in, then out. */
-/* Restored: my phase-system splice took a wider span than intended and removed these three
-   along with the code it meant to replace. mushroomBeat() is called EVERY FRAME, so losing
-   it threw a ReferenceError on frame one and froze the game outright. */
+function banner(text){
+  const el = document.getElementById("banner");
+  if(!el || !text) return;
+  el.textContent = text;
+  el.style.opacity = "1";
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.opacity = "0"; }, 1400);
+}
+
 function makeMushroom(){
   const g = new THREE.Group();
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 16, 12, 0, Math.PI*2, 0, Math.PI/2),
@@ -503,7 +526,6 @@ function mushroomBeat(){
   m.position.set((Math.random()*2-1)*Math.min(6, textHalfW*0.4), VIEW_TOP-1.5, 0);
   m.userData = {key:"laser", mushroom:true};
   board.add(m); drops.push(m);
-  panBoost = 1;                       // swing the camera, then ease back
   banner("POWER UP INBOUND");   // telegraph it, hard to miss
 }
 
@@ -514,13 +536,113 @@ function goFullscreen(){
   if(req) req.call(el).then(()=>setTimeout(resize,60)).catch(()=>{});
 }
 
-function banner(text){
-  const el = document.getElementById("banner");
-  if(!el || !text) return;
-  el.textContent = text;
-  el.style.opacity = "1";
-  clearTimeout(el._t);
-  el._t = setTimeout(()=>{ el.style.opacity = "0"; }, 1400);
+/* TURRETS - letters that shoot back, so the shield has a reason to exist.
+
+   The shield was a button with nothing to block: raids dive at you and can be dodged by moving,
+   so holding shield was never the right answer to anything. Turret letters fire aimed bolts down
+   the board, which you cannot outrun sideways - you either raise the shield or eat it. That makes
+   right-mouse a real decision against a real threat instead of a panic button.
+
+   A turret is an ordinary letter with `L.turret` set, so shooting it removes the gun the same way
+   shooting any letter removes it. Nothing special-cases them in the collision code. */
+const TURRET_RATE   = 0.014;  // fraction of eligible letters that carry a gun. Measured: 0.055
+                              // armed 76 of 1068 glyphs and killed a motionless player in 8s,
+                              // which is the same unwinnable-by-default trap the old
+                              // every-letter-hurts-you rule was.
+const TURRET_COOL   = 5.0;    // seconds between shots from one turret
+const TURRET_SPEED  = 11.0;
+const TURRET_RANGE  = 17;     // only turrets this close to the ship bother firing
+const TURRET_MAX    = 40;     // hard cap on live bolts
+const TURRET_WARMUP = 9;      // seconds before any turret opens fire. Measured: with guns live
+                              // from frame one a player who has not yet found the shield is
+                              // dead at 8s, which is not difficulty, it is not being told the
+                              // rules. Shield-held survives indefinitely, so the mechanic is
+                              // sound - it just needs a moment to be discovered.
+let bolts = [];
+
+let boltGeo = null, boltMat = null;
+function boltMesh(){
+  // One shared geometry and material. Allocating per bolt in the hot loop is how a bullet-hell
+  // ends up leaking GPU objects - the exact bug the plain bullets already had.
+  if(!boltGeo){
+    boltGeo = new THREE.SphereGeometry(0.20, 8, 6);
+    boltMat = new THREE.MeshBasicMaterial({ color:0xff4d5e });
+  }
+  const m = new THREE.Mesh(boltGeo, boltMat);
+  board.add(m); return m;
+}
+
+/* Deterministic: a letter's gun status is a hash of its own identity, so the same CV always arms
+   the same letters and a run is reproducible. Math.random() here would make every playthrough a
+   different difficulty and any bug report unrepeatable. */
+function armTurrets(){
+  let armed = 0;
+  lines.forEach(line=>{
+    if(line.kind === "gap") return;
+    line.letters.forEach(L=>{
+      const h = ((line.i * 2654435761) ^ (L.ci * 40503)) >>> 0;
+      if((h % 1000) / 1000 < TURRET_RATE){ L.turret = { cool: (h % 100) / 100 * TURRET_COOL }; armed++; }
+    });
+  });
+  return armed;
+}
+
+function runTurrets(dt){
+  if(t < TURRET_WARMUP){
+    if(!runTurrets._warned && t > TURRET_WARMUP - 2.2){
+      runTurrets._warned = true;
+      banner("TURRETS ARMING - RIGHT MOUSE FOR SHIELD");
+    }
+    return;
+  }
+  // fire
+  lines.forEach(line=>{
+    const ly = line.y - crawl;
+    if(ly < ship.position.y || ly > ship.position.y + TURRET_RANGE) return;
+    line.letters.forEach(L=>{
+      if(!L.turret || L.broken || L.dissolve > 0) return;
+      L.turret.cool -= dt;
+      if(L.turret.cool > 0 || bolts.length >= TURRET_MAX) return;
+      L.turret.cool = TURRET_COOL;
+      const m = boltMesh();
+      m.position.set(L.x, ly, 0);
+      // aimed at where the ship is NOW, so strafing genuinely dodges it
+      const dx = ship.position.x - L.x, dy = ship.position.y - ly;
+      const d = Math.hypot(dx, dy) || 1;
+      bolts.push({ m, vx: dx / d * TURRET_SPEED, vy: dy / d * TURRET_SPEED });
+    });
+  });
+
+  // travel, and resolve against the shield or the hull
+  for(let i = bolts.length - 1; i >= 0; i--){
+    const B = bolts[i], m = B.m;
+    m.position.x += B.vx * dt;
+    m.position.y += B.vy * dt;
+    const near = Math.hypot(m.position.x - ship.position.x, m.position.y - ship.position.y);
+
+    if(shieldHeld && shieldEnergy > 0 && near < 2.6){
+      spark(m.position.clone(), 0x8fe8ff, 10);
+      board.remove(m); bolts.splice(i, 1);
+      continue;
+    }
+    if(near < 1.15){
+      spark(m.position.clone(), 0xff5470, 24);
+      board.remove(m); bolts.splice(i, 1);
+      lives--;
+      document.getElementById("lives").textContent = lives > 0 ? "♦".repeat(lives) : " - ";
+      if(lives <= 0) endGame(false);
+      continue;
+    }
+    if(m.position.y < VIEW_BOT - 3 || Math.abs(m.position.x) > 60){
+      board.remove(m); bolts.splice(i, 1);
+    }
+  }
+}
+
+function clearBolts(){
+  bolts.forEach(B=>board.remove(B.m));
+  bolts = [];
+  runTurrets._warned = false;   // the warning must fire again on a replay
 }
 
 /* RAIDS - the letters that actually attack you.
@@ -540,6 +662,7 @@ const RAID_PER_ERA = 1;      // one more per era, so later phases bite harder
 const RAID_SPEED   = 7.5;
 const RAID_CURVE   = 3.2;    // lateral "english" on the dive
 const RAID_MAX     = 14;     // hard cap on live attackers
+const RAID_RAMP_SEC = 25;    // one more attacker per raid every this many seconds
 let raidT = 0, attackers = [];
 
 function spawnRaid(){
@@ -552,7 +675,8 @@ function spawnRaid(){
     line.letters.forEach(L=>{ if(!L.broken && L.dissolve === 0) pool.push({L, line, ly}); });
   });
   if(!pool.length) return;
-  const want = Math.min(RAID_BASE + (phaseIdx * RAID_PER_ERA), RAID_MAX - attackers.length);
+  // Raids grow with elapsed time now that there are no phases to count.
+  const want = Math.min(RAID_BASE + Math.floor(t / RAID_RAMP_SEC), RAID_MAX - attackers.length);
   for(let i = 0; i < want && pool.length; i++){
     const pick = pool.splice((i * 37 + brokenCount) % pool.length, 1)[0];
     const L = pick.L;
@@ -628,46 +752,9 @@ function clearAttackers(){
   attackers = []; raidT = 0;
 }
 
-function runPhases(dt){
-  phaseT += dt;
-  while(phaseT >= PHASE_SEC && phaseIdx < PHASES.length - 1){
-    phaseT -= PHASE_SEC;
-    phaseIdx++;
-    const P = PHASES[phaseIdx];
-    try{ P.on(); }catch(e){}
-    eraIdx = phaseIdx + 1;                       // 1..5, the glyph shader tier
-    const el = document.getElementById("era");
-    if(el){
-      el.textContent = P.era; el.style.opacity = "1";
-      clearTimeout(el._t); el._t = setTimeout(()=>{ el.style.opacity = ".45"; }, 2200);
-    }
-    banner(P.note);
-    panBoost = 1;                                // a swing on every phase change, not just once
-  }
-  if(phaseIdx >= PHASES.length - 1) phaseT = Math.min(phaseT, PHASE_SEC);
-  const within = Math.min(1, phaseT / PHASE_SEC);
-  reveal = Math.min(1, (phaseIdx + within) / (PHASES.length - 1));
-}
 
-function applyCam(){
-  const cur = PHASES[Math.min(phaseIdx, PHASES.length - 1)].cam;
-  const nxt = PHASES[Math.min(phaseIdx + 1, PHASES.length - 1)].cam;
-  const w0 = Math.min(1, phaseT / PHASE_SEC);
-  const w  = w0*w0*(3 - 2*w0);                                   // smoothstep within the phase
-  const k  = Math.min(1, w + panBoost*0.30);
-  const L  = (a,b)=>a + (b - a)*k;
-  // Keep the readability clamp: however raked the rig, never sit closer than the distance that
-  // fits the widest line of the CV, or the resume stops being readable and the game loses its
-  // point. This is why the phase rigs specify a z they may not get.
-  const asp  = (isFinite(camera.aspect) && camera.aspect > 0) ? camera.aspect : (innerWidth/innerHeight || 1.6);
-  const need = (textHalfW + 2.5) / Math.tan((camera.fov*Math.PI/180)/2) / asp;
-  const baseZ = L(cur.pos[2], nxt.pos[2]);
-  const dist  = isFinite(need) ? Math.max(baseZ, need) : baseZ;
-  camera.position.set(L(cur.pos[0], nxt.pos[0]), L(cur.pos[1], nxt.pos[1]), dist);
-  camera.lookAt(L(cur.look[0], nxt.look[0]), L(cur.look[1], nxt.look[1]), 0);
-  camera.rotation.z += panBoost*0.06;
-  board.rotation.x = L(cur.tilt, nxt.tilt);
-}
+
+
 
 // ---------------------------------------------------------------- powerups
 // Drops come off broken letters. Two rules keep it from being noise: only ROLE lines drop (the
@@ -794,7 +881,6 @@ function givePower(key){
   if(!poweredOnce){
     // THE TURN. Everything the opening withheld arrives at once, and loudly.
     poweredOnce = true;
-    panBoost = 1;   // a swing, but NOT the whole era ladder: that is on the phase clock now
     banner("SYSTEMS ONLINE");
     for(let i=0;i<3;i++) setTimeout(()=>spark(ship.position.clone(), POWERS[key].col, 26), i*110);
   }
@@ -833,8 +919,14 @@ function syncMeshes(){
         m.geometry = glyphGeometry(L.ch);
         const base = new THREE.Color(
           line.kind==="head" ? 0xffffff : (line.kind==="detail" ? 0x9fc4de : (TONES[line.tone]||0xcfe6ff)));
-        m.material.color.copy(base);
-        m.material.emissive.copy(base).multiplyScalar(0.10);
+        // an armed letter is tinted hot and glows: you must be able to see which ones shoot back
+        if(L.turret){
+          m.material.color.set(0xff8a7a);
+          m.material.emissive.set(0x5a1410);
+        } else {
+          m.material.color.copy(base);
+          m.material.emissive.copy(base).multiplyScalar(0.10);
+        }
         m.rotation.set(0,0,0);
         m.visible = true; L.mesh = m;
       } else if(!near && L.mesh){ giveMesh(L.mesh); L.mesh = null; }
@@ -1102,8 +1194,8 @@ function reset(){
   score=0; lives=3; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
-  reveal=0; phaseIdx=0; phaseT=0; eraIdx=1;
-  firstHitDone=false; mushroomDone=false; panBoost=0; poweredOnce=false;
+  camFollowX=0; fullGraphics(); clearBolts(); armTurrets();
+  firstHitDone=false; mushroomDone=false; poweredOnce=false;
   beamCool=0; t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0;
   clearAttackers();
   scene.background=null; debris.forEach(d=>d.visible=false);
@@ -1113,7 +1205,7 @@ function reset(){
   if(shieldMesh) shieldMesh.visible = false;
   // the HUD badges are not driven by reset() otherwise, so a replay used to open showing the
   // PREVIOUS round's final era and a stale weapon name with a frozen countdown
-  { const e=document.getElementById('era'); if(e){ e.textContent=PHASES[0].era; e.style.opacity='.45'; }
+  { const e=document.getElementById('era'); if(e){ e.textContent=''; }
     const pw=document.getElementById('power'); if(pw) pw.textContent=''; }
   document.getElementById('score').textContent = 0;
   document.getElementById('lives').textContent = 'READING';
@@ -1201,10 +1293,9 @@ function tick(now){
       if(d.position.y < -40){ d.position.y = 40; d.position.x = (Math.random()*2-1)*46; }
     });
     mushroomBeat();
-    panBoost += (0 - panBoost) * Math.min(1, dt*0.55);   // swings out, settles back
-    runPhases(dt);
     runAttackers(dt);
-    applyCam();
+    runTurrets(dt);
+    applyCam(dt);
     gradeScene();
     // held right button auto-fires on a cadence
     fireCool -= dt;
