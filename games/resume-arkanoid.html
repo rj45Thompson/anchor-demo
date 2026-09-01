@@ -408,7 +408,7 @@ function buildBoard(){
                    x: -w/2 + ci*CH_W + CH_W/2 });
       totalGlyphs++;
     }
-    lines.push({ i, kind:row.k, tone:row.tone|0, text:row.t, meta:row, letters:chars,
+    lines.push({ i, kind:row.k, tone:row.tone|0, text:row.t, meta:row, letters:chars, sunk:false,
                  y: 12 + i*LINE_H });
   });
   // the widest RENDERED line decides how far the ship must be able to fly and how wide the
@@ -496,6 +496,150 @@ function fullGraphics(){
   if(grid) grid.visible = true;
   if(sky) scene.background = sky;
   debris.forEach(d => d.visible = true);
+}
+
+/* Every line that reaches the floor hands its SURVIVING letters to the mass. A letter you shot is
+   already gone, so this is precisely "what you did not read". Runs once per line, latched on
+   line.sunk, because a line sits below the floor for many frames. */
+function sinkLines(){
+  for(const line of lines){
+    if(line.sunk) continue;
+    if((line.y - crawl) > VIEW_BOT) continue;
+    line.sunk = true;
+    for(const L of line.letters){
+      if(L.broken || L.dissolve > 0) continue;
+      L.broken = true;
+      if(L.mesh){ giveMesh(L.mesh); L.mesh = null; }
+      bossAbsorb(L.ch, L.x);
+    }
+  }
+}
+
+/* THE BOSS - every letter you let past builds it.
+
+   Until now, a line that scrolled off the bottom simply left. That made ignoring the CV free, and
+   this game's whole conceit is that the CV is the thing worth engaging with. So the letters you
+   fail to shoot do not disappear: they sink to the floor and STICK TOGETHER, and the mass gets a
+   stat upgrade for every glyph it absorbs. Read the resume and it stays small; ignore it and it
+   assembles a boss out of exactly the words you skipped.
+
+   Stats scale off one number - the letter count - so there is no separate difficulty dial to drift
+   out of sync with what the player can see. The thing on screen IS the health bar. */
+const BOSS_Y          = -12.0;   // where the mass gathers, below the ship's band
+const BOSS_PER_HIT    = 1;       // damage one bullet does
+const BOSS_HP_PER_LTR = 1;       // hp added per absorbed letter
+const BOSS_WAKE       = 16;      // letters absorbed before it starts fighting back. Measured:
+                                 // a 38s run fed it only 14, so a threshold of 40 meant the
+                                 // boss could never wake in a real round and the whole
+                                 // mechanic was decorative.
+const BOSS_FIRE_BASE  = 2.6;     // seconds between salvos at BOSS_WAKE
+const BOSS_FIRE_MIN   = 0.7;     // floor, however fat it gets
+const BOSS_RISE_PER   = 0.012;   // how much closer it creeps per letter
+const BOSS_PACK       = 1.05;    // spacing of the packed glyphs
+const BOSS_MAX_MESH   = 140;     // draw cap: beyond this it grows in stats only, disclosed below
+
+let boss = null;
+
+function bossInit(){
+  boss = { n:0, hp:0, group:new THREE.Group(), fireCool:BOSS_FIRE_BASE, awake:false, flash:0 };
+  boss.group.position.set(0, BOSS_Y, 0);
+  board.add(boss.group);
+}
+
+/* Called for every intact letter on a line that has fallen past the floor. */
+function bossAbsorb(ch, x){
+  if(!boss) bossInit();
+  boss.n++;
+  boss.hp += BOSS_HP_PER_LTR;
+
+  if(boss.group.children.length < BOSS_MAX_MESH){
+    // pack the glyph into a slab: it visibly IS the letters you skipped, not a generic blob
+    const i = boss.group.children.length;
+    const cols = 22, cx = (i % cols) - cols / 2, cy = Math.floor(i / cols);
+    const m = new THREE.Mesh(glyphGeometry(ch), new THREE.MeshStandardMaterial({
+      color:0xc2506a, emissive:0x3a0d1c, emissiveIntensity:0.7,
+      roughness:0.45, metalness:0.4, flatShading:true }));
+    m.position.set(cx * BOSS_PACK + (x % 1) * 0.2, cy * BOSS_PACK * 0.8, (i % 3) * 0.25);
+    m.scale.setScalar(0.95);
+    boss.group.add(m);
+  }
+  if(!boss.awake && boss.n >= BOSS_WAKE){
+    boss.awake = true;
+    banner("IT IS ASSEMBLING FROM WHAT YOU SKIPPED");
+  }
+}
+
+function bossFireRate(){
+  // faster the bigger it is, floored so it never becomes unplayable
+  const over = Math.max(0, boss.n - BOSS_WAKE);
+  return Math.max(BOSS_FIRE_MIN, BOSS_FIRE_BASE - over * 0.012);
+}
+
+function runBoss(dt){
+  if(!boss || !boss.n) return;
+  const g = boss.group;
+
+  // it creeps upward as it grows, so a fat boss is also a closer one
+  g.position.y = BOSS_Y + Math.min(6.5, boss.n * BOSS_RISE_PER);
+  g.rotation.z = Math.sin(t * 0.7) * 0.04;
+  g.position.x = Math.sin(t * 0.45) * 2.2;
+  if(boss.flash > 0){
+    boss.flash -= dt;
+    g.children.forEach(c => c.material.emissiveIntensity = 1.8);
+  } else {
+    g.children.forEach(c => c.material.emissiveIntensity = 0.7);
+  }
+
+  if(!boss.awake) return;
+  boss.fireCool -= dt;
+  if(boss.fireCool > 0) return;
+  boss.fireCool = bossFireRate();
+
+  // a salvo, widening with size. Reuses the turret bolt pool so there is one projectile system
+  // to reason about rather than two that can disagree.
+  const arms = Math.min(5, 1 + Math.floor((boss.n - BOSS_WAKE) / 45));
+  for(let a = 0; a < arms; a++){
+    if(bolts.length >= TURRET_MAX) break;
+    const ox = g.position.x + (a - (arms - 1) / 2) * 2.4;
+    const oy = g.position.y + 2.0;
+    const dx = ship.position.x - ox, dy = ship.position.y - oy;
+    const d = Math.hypot(dx, dy) || 1;
+    const m = boltMesh();
+    m.position.set(ox, oy, 0);
+    bolts.push({ m, vx: dx / d * TURRET_SPEED * 0.85, vy: dy / d * TURRET_SPEED * 0.85 });
+  }
+}
+
+/* A bullet that reaches the mass chips it. Returns true if it connected, so the bullet loop can
+   consume the shot exactly as it does for a letter or a raider. */
+function hitBossAt(px, py){
+  if(!boss || !boss.n) return false;
+  const g = boss.group;
+  const halfW = Math.min(13, 2 + boss.n * 0.06);
+  const halfH = 2.2 + Math.min(5, boss.n * 0.02);
+  if(Math.abs(px - g.position.x) > halfW || Math.abs(py - g.position.y) > halfH) return false;
+
+  boss.hp -= BOSS_PER_HIT;
+  boss.flash = 0.08;
+  spark(new THREE.Vector3(px, py, 0), 0xff9ec0, 12);
+  if(boss.hp <= 0){
+    // shot to pieces: it gives back everything it took, as score
+    spark(g.position.clone(), 0xffd7a8, 60);
+    banner("MASS BROKEN");
+    brokenCount += boss.n;
+    document.getElementById("score").textContent = brokenCount;
+    bossClear();
+    return true;
+  }
+  // shrink as it loses hp so the damage is legible without a health bar
+  const keep = Math.max(0, Math.ceil(boss.hp / BOSS_HP_PER_LTR));
+  while(g.children.length > Math.min(keep, BOSS_MAX_MESH)) g.remove(g.children[g.children.length - 1]);
+  return true;
+}
+
+function bossClear(){
+  if(boss && boss.group) board.remove(boss.group);
+  boss = null;
 }
 
 /* Helpers that keep getting caught in splices of the phase system, because they sit
@@ -659,7 +803,7 @@ function runTurrets(dt){
       board.remove(m); bolts.splice(i, 1);
       lives--;
       drawLives();
-      if(lives <= 0) endGame(false);
+      if(lives <= 0) killShip();
       continue;
     }
     if(m.position.y < VIEW_BOT - 3 || Math.abs(m.position.x) > 60){
@@ -784,7 +928,7 @@ function runAttackers(dt){
       lives--;
       drawLives();
       shake = Math.max(shake, 0.6);
-      if(lives <= 0) endGame(false);
+      if(lives <= 0) killShip();
       continue;
     }
     if(m.position.y < VIEW_BOT - 3){ board.remove(m); attackers.splice(i, 1); }
@@ -1247,7 +1391,7 @@ function reset(){
   score=0; lives=3; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
-  camFollowX=0; fullGraphics(); clearBolts(); armTurrets();
+  camFollowX=0; fullGraphics(); clearBolts(); armTurrets(); bossClear(); bossInit();
   firstHitDone=false; mushroomDone=false; poweredOnce=false;
   t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0;
   clearAttackers();
@@ -1284,6 +1428,24 @@ function fire(){
     // drifts out of alignment the moment the board tilts.
     board.add(m); bullets.push(m);
   });
+}
+
+/* RJ: "when you die explode and take a second before end screen". Losing used to cut straight to
+   the end card on the same frame the last life went, which read as the game crashing rather than
+   the player being killed. The ship now blows up, the wreck flies, and the card comes a beat
+   later. state goes to "dying" so the loop keeps rendering the explosion but stops scoring. */
+function killShip(){
+  if(state !== "play") return;
+  state = "dying";
+  for(let i = 0; i < 5; i++){
+    setTimeout(()=>spark(ship.position.clone(),
+      [0xffd7a8, 0xff7a2a, 0xff4d5e][i % 3], 34), i * 70);
+  }
+  if(ship) ship.visible = false;
+  if(shieldMesh) shieldMesh.visible = false;
+  shake = 1.0;
+  banner("HULL BREACH");
+  setTimeout(()=>endGame(false), 1400);
 }
 
 function endGame(win){
@@ -1345,8 +1507,10 @@ function tick(now){
       if(d.position.y < -40){ d.position.y = 40; d.position.x = (Math.random()*2-1)*46; }
     });
     mushroomBeat();
+    sinkLines();
     runAttackers(dt);
     runTurrets(dt);
+    runBoss(dt);
     drawShield();
     applyCam(dt);
     gradeScene();
@@ -1513,12 +1677,14 @@ function tick(now){
         board.remove(bl); bullets.splice(i,1);
       } else if(hitAttackerAt(bl.position.x, bl.position.y, 1.1)){
         board.remove(bl); bullets.splice(i,1);
+      } else if(hitBossAt(bl.position.x, bl.position.y)){
+        board.remove(bl); bullets.splice(i,1);
       } else if(bl.position.y > 18){
         board.remove(bl); bullets.splice(i,1);   // was scene.remove - a no-op that leaked every miss
       }
     }
 
-    if(lives<=0) endGame(false);
+    if(lives<=0) killShip();
   }
 
   // particles
@@ -1532,6 +1698,16 @@ function tick(now){
   }
 
   if(readTimer>0){ readTimer-=dt; if(readTimer<=0) readout.classList.remove('on'); }
+
+  // SCREEN SHAKE. `shake` was assigned in three places and read in none - a dead variable named
+  // after an effect that did not exist. It is applied here, outside the play gate, so the death
+  // explosion still shakes while the game is in its "dying" beat and the camera is otherwise held.
+  if(shake > 0){
+    shake = Math.max(0, shake - dt * 2.2);
+    const k = shake * shake * 0.9;
+    camera.position.x += (Math.random() * 2 - 1) * k;
+    camera.position.y += (Math.random() * 2 - 1) * k;
+  }
 
   renderer.render(scene, camera);
 }
