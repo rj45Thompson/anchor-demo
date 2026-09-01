@@ -74,7 +74,7 @@
 
   <div class="hud" id="readout"></div>
   <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
-  <div class="hud" id="banner" style="left:0;right:0;top:38%;text-align:center;font-size:26px;font-weight:800;letter-spacing:3px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
+  <div class="hud" id="banner" style="left:0;right:0;top:88px;text-align:center;font-size:13px;font-weight:700;letter-spacing:2px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
   <div class="hud" id="era" style="right:14px;bottom:44px;opacity:.45;transition:opacity .5s;font-weight:700;letter-spacing:1.5px">1988 · 8-bit</div>
   <div class="hud" id="power" style="left:14px;bottom:44px;font-weight:700;letter-spacing:.5px"></div>
   <div class="hud" id="bottom">
@@ -535,7 +535,7 @@ function mushroomBeat(){
   mushroomDone = true;
   const m = makeMushroom();
   m.position.set((Math.random()*2-1)*Math.min(6, textHalfW*0.4), VIEW_TOP-1.5, 0);
-  m.userData = {key:"laser", mushroom:true};
+  m.userData = {key:"energy", mushroom:true};
   board.add(m); drops.push(m);
   banner("POWER UP INBOUND");   // telegraph it, hard to miss
 }
@@ -692,6 +692,10 @@ const RAID_SPEED   = 7.5;
 const RAID_CURVE   = 3.2;    // lateral "english" on the dive
 const RAID_MAX     = 14;     // hard cap on live attackers
 const RAID_RAMP_SEC = 25;    // one more attacker per raid every this many seconds
+const RAID_SLOT_W   = 3.0;   // spacing of the formation row
+const RAID_FORM_Y   = 12.0;  // how far above the ship the row assembles
+const RAID_HOLD     = 1.1;   // seconds the row holds before the first one peels off
+const RAID_STAGGER  = 0.55;  // gap between successive dives, so a wave arrives in sequence
 let raidT = 0, attackers = [];
 
 function spawnRaid(){
@@ -706,10 +710,15 @@ function spawnRaid(){
   if(!pool.length) return;
   // Raids grow with elapsed time now that there are no phases to count.
   const want = Math.min(RAID_BASE + Math.floor(t / RAID_RAMP_SEC), RAID_MAX - attackers.length);
+  // GALAGA SHAPE. They do not just fall. A wave lifts off the page, forms a row above the ship,
+  // holds there bobbing, then peels off ONE AT A TIME and dives in an arc. The hold is what makes
+  // it read as an arcade wave rather than falling debris, and the stagger is what makes a wave
+  // survivable: you deal with them in sequence instead of all at once.
+  const slot0 = -(want - 1) / 2;
   for(let i = 0; i < want && pool.length; i++){
     const pick = pool.splice((i * 37 + brokenCount) % pool.length, 1)[0];
     const L = pick.L;
-    L.broken = true;                                  // it has left the page
+    L.broken = true;
     if(L.mesh){ giveMesh(L.mesh); L.mesh = null; }
     const m = new THREE.Mesh(glyphGeometry(L.ch), new THREE.MeshStandardMaterial({
       color:0xff8a7a, emissive:0x5a1410, emissiveIntensity:0.9,
@@ -717,8 +726,13 @@ function spawnRaid(){
     m.position.set(L.x, pick.ly, 0);
     m.scale.setScalar(1.25);
     board.add(m);
-    attackers.push({ m, phase: Math.random()*Math.PI*2,
-                     vx: (ship.position.x - L.x) * 0.35, born: t });
+    attackers.push({
+      m, mode:"form",
+      fx: (slot0 + i) * RAID_SLOT_W,          // slot in the formation row
+      fy: ship.position.y + RAID_FORM_Y,
+      wait: RAID_HOLD + i * RAID_STAGGER,     // this one's turn to dive
+      phase: i * 0.7, born: t, dirX: 0
+    });
   }
   if(want > 0) banner("INCOMING");
 }
@@ -730,11 +744,28 @@ function runAttackers(dt){
   for(let i = attackers.length - 1; i >= 0; i--){
     const A = attackers[i], m = A.m;
     const age = t - A.born;
-    // dive, with a sine curve across it - the "english" that makes them worth dodging
-    m.position.y -= RAID_SPEED * dt;
-    m.position.x += (A.vx * 0.5 + Math.sin(age*2.2 + A.phase) * RAID_CURVE) * dt;
-    m.rotation.z += dt * 3.4;
-    m.rotation.x += dt * 1.7;
+
+    if(A.mode === "form"){
+      // slide into the formation slot and bob there until this one's turn comes
+      m.position.x += (A.fx - m.position.x) * Math.min(1, dt * 3.0);
+      m.position.y += (A.fy + Math.sin(t * 2.0 + A.phase) * 0.5 - m.position.y) * Math.min(1, dt * 2.4);
+      m.rotation.z = Math.sin(t * 3 + A.phase) * 0.25;
+      A.wait -= dt;
+      if(A.wait <= 0){
+        A.mode = "dive";
+        A.diveT = 0;
+        A.dirX = ship.position.x > m.position.x ? 1 : -1;   // arc toward the player, then past
+      }
+    } else {
+      // the dive: a quarter-turn arc, not a straight drop. x swings out and back across the
+      // descent, which is the shape that makes Galaga divers hard to stand still under.
+      A.diveT += dt;
+      const swing = Math.sin(Math.min(Math.PI, A.diveT * 1.9));
+      m.position.y -= RAID_SPEED * dt;
+      m.position.x += A.dirX * swing * RAID_CURVE * dt * 2.4;
+      m.rotation.z += dt * 4.2 * A.dirX;
+      m.rotation.x += dt * 1.7;
+    }
 
     const dx = m.position.x - ship.position.x, dy = m.position.y - ship.position.y;
     const near = Math.hypot(dx, dy);
@@ -796,16 +827,9 @@ const POWERS = {
   energy:    { n:"PULSE LASER",    col:0x66ccff, dur:9.0,  icon:"bar",   cd:0.14, twin:true,  homing:0,   splash:0 },
   ballistic: { n:"AUTOCANNON",     col:0xffc24a, dur:8.0,  icon:"dots",  cd:0.26, twin:true,  homing:0,   splash:0 },
   missile:   { n:"SEEKER MISSILE", col:0xff5a6e, dur:8.5,  icon:"spike", cd:0.46, twin:false, homing:2.4, splash:2.6 },
-  flame:     { n:"FLAMETHROWER",   col:0xff7a2a, dur:7.0,  icon:"cone",  cd:0.10, twin:false, homing:0,   splash:0 },
-  laser:     { n:"BEAM CUTTER",    col:0x8fe8ff, dur:7.5,  icon:"fan",   cd:0.06, twin:false, homing:0,   splash:0 }
+  flame:     { n:"FLAMETHROWER",   col:0xff7a2a, dur:7.0,  icon:"cone",  cd:0.10, twin:false, homing:0,   splash:0 }
 };
 const POWER_KEYS = Object.keys(POWERS);
-// BEAM CUTTER tuning. It used to reach 40 units (near the whole board) and delete every
-// letter in the column in ONE frame, with no trigger and no cooldown - it fired by merely
-// existing. These bound it to a saw you have to hold on target.
-const BEAM_RANGE = 20;              // was an always-40 range; the ': 17' branch was dead code
-const BEAM_HALF_WIDTH = CH_W*0.62;  // unchanged - the width ternary only ever picked this
-let beamCool = 0;
 
 // Icons are built geometry rather than a coloured blob, so a drop is identifiable in the air.
 function powerIcon(key){
@@ -1225,7 +1249,7 @@ function reset(){
   if(flameCone) flameCone.visible=false;
   camFollowX=0; fullGraphics(); clearBolts(); armTurrets();
   firstHitDone=false; mushroomDone=false; poweredOnce=false;
-  beamCool=0; t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0;
+  t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0;
   clearAttackers();
   scene.background=null; debris.forEach(d=>d.visible=false);
   if(starPoints) starPoints.visible=false;
@@ -1381,47 +1405,14 @@ function tick(now){
     if(laserBeam){
       laserBeam.rotation.z = -ang;
       laserBeam.position.set(Math.sin(ang)*20, Math.cos(ang)*20, 0);
-      laserBeam.visible = (power === 'laser') && shootHeld;   // you see it when you fire it
+      laserBeam.visible = false;   // BEAM CUTTER is gone; the mesh stays only so the
+                                   // shader/uniform plumbing below keeps its shape
       laserBeam.material.uniforms.uTime.value = t;
-      laserBeam.material.uniforms.uCol.value.set(POWERS[power||"laser"].col);
+      laserBeam.material.uniforms.uCol.value.set(POWERS[power||"energy"].col);
     }
 
-    // BEAM CUTTER: a saw, not a delete key. Three things were wrong at once. It was never gated
-    // on shootHeld, so it fired by merely being equipped; cd was 0, so there was no rate limit at
-    // all; and it burned EVERY letter on the ray in a single frame, which vaporised a whole column
-    // of the CV instantly. Now it must be held like every other weapon, and it cuts the NEAREST
-    // intact letter per dwell, so you watch it eat through a line and can feel the range limit.
-    if(power === 'laser' && shootHeld){
-      beamCool -= dt;
-      if(beamCool <= 0){
-        const ox = ship.position.x, oy = ship.position.y;
-        let best = null, bestProj = Infinity, bestLine = null, bestY = 0;
-        lines.forEach(line=>{
-          const ly = line.y - crawl;
-          if(ly < oy) return;
-          line.letters.forEach(L=>{
-            if(L.broken || L.dissolve>0) return;
-            const dx = L.x - ox, dy = ly - oy;
-            const proj = dx*aim.x + dy*aim.y;               // distance along the ray
-            if(proj <= 0 || proj > BEAM_RANGE) return;
-            const perp = Math.abs(dx*aim.y - dy*aim.x);     // distance from the ray
-            if(perp > BEAM_HALF_WIDTH) return;
-            if(proj < bestProj){ bestProj = proj; best = L; bestLine = line; bestY = ly; }
-          });
-        });
-        if(best){
-          beamCool = POWERS.laser.cd;
-          best.dissolve = 0.01;
-          brokenCount++; bumpReveal();
-          maybeDrop(best.x, bestY, bestLine.kind);
-          if(bestLine.meta && bestLine.meta.co && !linesRead.has(bestLine.i)){
-            linesRead.add(bestLine.i);
-            show(bestLine.meta.co, bestLine.meta.date, bestLine.meta.detail);
-          }
-          document.getElementById("score").textContent = brokenCount;
-        }
-      }
-    }
+    // BEAM CUTTER removed - RJ. It was the odd one out among four projectile weapons: a hitscan
+    // saw that read as a delete key on the CV rather than a gun.
 
     // spin the drops so the icons read in the air
     drops.forEach(d=>{
