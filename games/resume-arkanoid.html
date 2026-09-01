@@ -525,7 +525,10 @@ function sinkLines(){
 
    Stats scale off one number - the letter count - so there is no separate difficulty dial to drift
    out of sync with what the player can see. The thing on screen IS the health bar. */
-const BOSS_Y          = -12.0;   // where the mass gathers, below the ship's band
+const BOSS_Y          = -12.0;   // where the mass GATHERS, on the floor, before it lifts
+const BOSS_TOP_Y      = 9.5;     // where it fights from once it wakes, near the top of the board
+const BOSS_RISE_SPEED = 7.0;     // units per second on the way up
+const BOSS_SPIN       = 0.5;     // rad/s - a packed ball needs to tumble or it reads as a blob
 const BOSS_PER_HIT    = 1;       // damage one bullet does
 const BOSS_HP_PER_LTR = 1;       // hp added per absorbed letter
 const BOSS_WAKE       = 16;      // letters absorbed before it starts fighting back. Measured:
@@ -534,8 +537,7 @@ const BOSS_WAKE       = 16;      // letters absorbed before it starts fighting b
                                  // mechanic was decorative.
 const BOSS_FIRE_BASE  = 2.6;     // seconds between salvos at BOSS_WAKE
 const BOSS_FIRE_MIN   = 0.7;     // floor, however fat it gets
-const BOSS_RISE_PER   = 0.012;   // how much closer it creeps per letter
-const BOSS_PACK       = 1.05;    // spacing of the packed glyphs
+const BOSS_PACK       = 0.62;    // radius per glyph^(1/3) - tight, so it packs as a BALL
 const BOSS_MAX_MESH   = 140;     // draw cap: beyond this it grows in stats only, disclosed below
 
 let boss = null;
@@ -553,19 +555,36 @@ function bossAbsorb(ch, x){
   boss.hp += BOSS_HP_PER_LTR;
 
   if(boss.group.children.length < BOSS_MAX_MESH){
-    // pack the glyph into a slab: it visibly IS the letters you skipped, not a generic blob
-    const i = boss.group.children.length;
-    const cols = 22, cx = (i % cols) - cols / 2, cy = Math.floor(i / cols);
+    // TIGHTLY PACKED BALL - see bossRepack(), which lays out every glyph for the CURRENT count.
     const m = new THREE.Mesh(glyphGeometry(ch), new THREE.MeshStandardMaterial({
       color:0xc2506a, emissive:0x3a0d1c, emissiveIntensity:0.7,
       roughness:0.45, metalness:0.4, flatShading:true }));
-    m.position.set(cx * BOSS_PACK + (x % 1) * 0.2, cy * BOSS_PACK * 0.8, (i % 3) * 0.25);
-    m.scale.setScalar(0.95);
+    m.scale.setScalar(0.8);
     boss.group.add(m);
+    bossRepack();
   }
   if(!boss.awake && boss.n >= BOSS_WAKE){
     boss.awake = true;
     banner("IT IS ASSEMBLING FROM WHAT YOU SKIPPED");
+  }
+}
+
+/* Lay every glyph on a Fibonacci sphere for the CURRENT count. The golden angle spreads points
+   evenly over a sphere without banding them into rows, which a plain grid does; radius grows as
+   the cube root of the count so it stays a BALL as it fattens rather than spreading into a disc.
+   This runs on every absorb rather than placing each glyph once, because a position computed when
+   the ball held 10 glyphs is wrong once it holds 60 - the sphere would come out lumpy and hollow
+   at the poles. */
+function bossRepack(){
+  const kids = boss.group.children, N = kids.length;
+  if(!N) return;
+  const R = BOSS_PACK * Math.cbrt(N) * 1.9;
+  for(let i = 0; i < N; i++){
+    const yy = N === 1 ? 0 : 1 - (i / (N - 1)) * 2;      // 1 .. -1
+    const rr = Math.sqrt(Math.max(0, 1 - yy * yy));
+    const th = i * 2.399963;                              // golden angle
+    kids[i].position.set(Math.cos(th) * rr * R, yy * R, Math.sin(th) * rr * R);
+    kids[i].lookAt(0, 0, 0);
   }
 }
 
@@ -579,10 +598,16 @@ function runBoss(dt){
   if(!boss || !boss.n) return;
   const g = boss.group;
 
-  // it creeps upward as it grows, so a fat boss is also a closer one
-  g.position.y = BOSS_Y + Math.min(6.5, boss.n * BOSS_RISE_PER);
-  g.rotation.z = Math.sin(t * 0.7) * 0.04;
-  g.position.x = Math.sin(t * 0.45) * 2.2;
+  // It gathers on the floor, and the moment it wakes it CLIMBS to the top of the board and
+  // fights from up there - so the fight reads as "the thing you ignored is now above you",
+  // and it stops sharing the bottom of the screen with your own ship.
+  const wantY = boss.awake ? BOSS_TOP_Y : BOSS_Y;
+  g.position.y += Math.sign(wantY - g.position.y) *
+                  Math.min(Math.abs(wantY - g.position.y), BOSS_RISE_SPEED * dt);
+  g.position.x = Math.sin(t * 0.45) * (boss.awake ? 6.0 : 2.2);
+  // a packed ball has to tumble or it reads as a static lump
+  g.rotation.y += BOSS_SPIN * dt;
+  g.rotation.x += BOSS_SPIN * 0.4 * dt;
   if(boss.flash > 0){
     boss.flash -= dt;
     g.children.forEach(c => c.material.emissiveIntensity = 1.8);
@@ -601,7 +626,7 @@ function runBoss(dt){
   for(let a = 0; a < arms; a++){
     if(bolts.length >= TURRET_MAX) break;
     const ox = g.position.x + (a - (arms - 1) / 2) * 2.4;
-    const oy = g.position.y + 2.0;
+    const oy = g.position.y - 2.0;   // it is above you now: fire from underneath the ball
     const dx = ship.position.x - ox, dy = ship.position.y - oy;
     const d = Math.hypot(dx, dy) || 1;
     const m = boltMesh();
@@ -615,9 +640,10 @@ function runBoss(dt){
 function hitBossAt(px, py){
   if(!boss || !boss.n) return false;
   const g = boss.group;
-  const halfW = Math.min(13, 2 + boss.n * 0.06);
-  const halfH = 2.2 + Math.min(5, boss.n * 0.02);
-  if(Math.abs(px - g.position.x) > halfW || Math.abs(py - g.position.y) > halfH) return false;
+  // spherical, matching what is drawn - a slab-shaped hit box on a ball is the kind of
+  // mismatch that makes shots feel like they missed when they visibly connected
+  const rad = BOSS_PACK * Math.cbrt(Math.max(1, boss.n)) * 1.9 + 1.0;
+  if(Math.hypot(px - g.position.x, py - g.position.y) > rad) return false;
 
   boss.hp -= BOSS_PER_HIT;
   boss.flash = 0.08;
@@ -634,6 +660,7 @@ function hitBossAt(px, py){
   // shrink as it loses hp so the damage is legible without a health bar
   const keep = Math.max(0, Math.ceil(boss.hp / BOSS_HP_PER_LTR));
   while(g.children.length > Math.min(keep, BOSS_MAX_MESH)) g.remove(g.children[g.children.length - 1]);
+  bossRepack();   // re-tighten, or damage eats it from one side instead of shrinking it
   return true;
 }
 
