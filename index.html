@@ -208,7 +208,6 @@ doesn't have enough.</p>
   <div class="tab" data-p="resume" data-aud="ai,games">R&eacute;sum&eacute; Breakout</div>
   <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
   <div class="tab" data-p="inv" data-aud="ai,games">Inventions</div>
-  <div class="tab" data-p="views" data-aud="ai">Views</div>
   <div class="tab" data-p="papers" data-aud="ai">White papers</div>
 </div>
 
@@ -272,9 +271,6 @@ doesn't have enough.</p>
     color:#ffcf6b;border:1px solid #6b5320;border-radius:3px;padding:0 3px;margin-left:3px}
   .hire{margin-top:20px;padding:13px 15px;border:1px solid #23516b;border-radius:8px;
     background:#0d1c28;font-size:13px;color:#cfe3f2;line-height:1.7}
-  .vwrap{border:1px solid #1d2c3a;border-radius:8px;background:#0a1119;overflow:auto;
-    padding:6px;margin-top:4px}
-  .vwrap svg{display:block;width:100%;height:auto}
   .vnote{margin:6px 0 12px;padding:9px 12px;border:1px solid #24384a;border-radius:6px;
     background:#0e1720;color:#9fb6c9;font-size:12.5px}
   .vbar{margin-top:12px}
@@ -475,48 +471,6 @@ doesn't have enough.</p>
   <div class="gamewrap" hidden></div>
 </div>
 
-<!-- rj-views:start -->
-<div id="p-views" class="panel">
-  <p class="small" style="margin-top:0">The 3D cloud on the first tab looks good but hides the
-  things that actually matter: how deep the search went, which path became the answer, and what got
-  thrown away. These are the same run, drawn three ways that each answer one of those.</p>
-
-  <div class="subtabs" id="viewTabs">
-    <button class="subtab on" data-s="v-chain">Answer chain</button>
-    <button class="subtab" data-s="v-layers">Hop layers</button>
-    <button class="subtab" data-s="v-src">Evidence</button>
-  </div>
-
-  <div class="vnote" id="vEmpty">No search loaded yet. Ask something on the
-    <b>Ask anything</b> tab, then come back - or
-    <button class="lnk" id="vDemo">run one now</button>.</div>
-
-  <div class="sub on" id="v-chain">
-    <p class="lede">The path that survived, and nothing else.</p>
-    <p class="small">Every hop the engine committed to, in order, with the relation it followed and
-    how many independent sources back that step. This is the proof, minus the search noise.</p>
-    <div class="vwrap"><svg id="svgChain"></svg></div>
-  </div>
-
-  <div class="sub" id="v-layers">
-    <p class="lede">How wide it had to look to get there.</p>
-    <p class="small">One column per hop. Green is the answer path, grey was opened and rejected,
-    faint was reached but never opened. The width of a column is the branching factor at that depth -
-    this is the picture the 3D ball cannot show.</p>
-    <div class="vwrap"><svg id="svgLayers"></svg></div>
-  </div>
-
-  <div class="sub" id="v-src">
-    <p class="lede">The anchor law, in the run you just did.</p>
-    <p class="small">Every edge the search touched, bucketed by how many independent sources attest
-    it. More sources is the whole basis for the confidence number the engine reports.</p>
-    <div class="vwrap"><svg id="svgSrc"></svg></div>
-    <p class="small" id="srcNote"></p>
-  </div>
-
-  <div class="vbar"><button class="lnk" id="vRedraw">Redraw from last search</button></div>
-</div>
-<!-- rj-views:end -->
 <!-- rj-inventions:start -->
 <div id="p-inv" class="panel">
   <p class="small" style="margin-top:0">Things I built that did not exist before, and what each one
@@ -4400,133 +4354,6 @@ renderCode();
 })();
 </script>
 
-<script>
-/* rj-views: three honest re-renderings of the last search, read off the live graph model G. */
-(function(){
-  var NS="http://www.w3.org/2000/svg";
-  function el(n,a){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); return e; }
-  function clear(s){ while(s.firstChild) s.removeChild(s.firstChild); }
-  function has(){ return typeof G!=="undefined" && G && G.nodes && G.nodes.length>0; }
-  function txt(s,x,y,t,cls,anchor){
-    var e=el("text",{x:x,y:y,fill:cls||"#c2d3e2","font-size":11,
-      "font-family":"ui-monospace,Menlo,Consolas,monospace"});
-    if(anchor) e.setAttribute("text-anchor",anchor);
-    e.textContent=t; s.appendChild(e); return e;
-  }
-  function short(t,n){ t=String(t==null?"":t); return t.length>n? t.slice(0,n-1)+"\u2026" : t; }
-
-  /* ---- 1. answer chain: the committed path, left to right ---- */
-  function drawChain(){
-    var s=document.getElementById("svgChain"); clear(s);
-    if(!has()){ return; }
-    var path=G.nodes.filter(function(n){return n.on;}).sort(function(a,b){return a.hop-b.hop;});
-    if(!path.length){
-      s.setAttribute("viewBox","0 0 640 60");
-      txt(s,12,34,"No chain completed - the engine abstained on this one.","#ffcda6");
-      return;
-    }
-    var BW=150, GAP=46, H=120, W=path.length*BW+(path.length-1)*GAP+24;
-    s.setAttribute("viewBox","0 0 "+W+" "+H);
-    path.forEach(function(n,i){
-      var x=12+i*(BW+GAP), y=34;
-      var fill = i===0? "#14304a" : (i===path.length-1? "#153a2a" : "#101a24");
-      var stroke = i===0? "#2f6d99" : (i===path.length-1? "#3a8f5f" : "#24384a");
-      s.appendChild(el("rect",{x:x,y:y,width:BW,height:44,rx:7,fill:fill,stroke:stroke}));
-      txt(s,x+BW/2,y+20,short(n.label,20),"#eaf3fb","middle");
-      txt(s,x+BW/2,y+35,"hop "+n.hop,"#7d8fa1","middle");
-      if(i===0) txt(s,x+BW/2,y-8,"START","#7fd4ff","middle");
-      if(i===path.length-1 && i>0) txt(s,x+BW/2,y-8,"ANSWER","#6fe0a0","middle");
-      if(i<path.length-1){
-        var ex=x+BW, ex2=x+BW+GAP;
-        s.appendChild(el("line",{x1:ex,y1:y+22,x2:ex2,y2:y+22,stroke:"#3a5f7d","stroke-width":2}));
-        s.appendChild(el("polygon",{points:(ex2)+","+(y+22)+" "+(ex2-7)+","+(y+18)+" "+(ex2-7)+","+(y+26),fill:"#3a5f7d"}));
-        var e=G.edges.filter(function(g){return g.a===path[i]&&g.b===path[i+1];})[0];
-        if(e){
-          txt(s,(ex+ex2)/2,y+14,short(e.rel,14),"#9fb6c9","middle");
-          txt(s,(ex+ex2)/2,y+38,(e.k||1)+" src","#6fe0a0","middle");
-        }
-      }
-    });
-  }
-
-  /* ---- 2. hop layers: one column per depth, so branching is visible ---- */
-  function drawLayers(){
-    var s=document.getElementById("svgLayers"); clear(s);
-    if(!has()) return;
-    var byHop={}, maxH=0;
-    G.nodes.forEach(function(n){ (byHop[n.hop]=byHop[n.hop]||[]).push(n); if(n.hop>maxH)maxH=n.hop; });
-    var COLW=132, ROWH=26, PADT=30;
-    var tallest=0; for(var h=0;h<=maxH;h++) tallest=Math.max(tallest,(byHop[h]||[]).length);
-    var W=(maxH+1)*COLW+20, H=PADT+tallest*ROWH+20;
-    s.setAttribute("viewBox","0 0 "+W+" "+H);
-    for(var h=0;h<=maxH;h++){
-      var col=byHop[h]||[], x=12+h*COLW;
-      txt(s,x+COLW/2-10,18,"hop "+h+"  ("+col.length+")","#7d8fa1","middle");
-      col.sort(function(a,b){ return (b.on?1:0)-(a.on?1:0); });
-      col.forEach(function(n,i){
-        var y=PADT+i*ROWH;
-        var onChain=n.on, opened=n.facts!=null;
-        var fill = onChain? "#153a2a" : (opened? "#101a24" : "#0d141c");
-        var stroke= onChain? "#3a8f5f" : (opened? "#24384a" : "#18232e");
-        var col2 = onChain? "#c9f0da" : (opened? "#b3c6d6" : "#5d6f80");
-        s.appendChild(el("rect",{x:x,y:y,width:COLW-16,height:20,rx:4,fill:fill,stroke:stroke}));
-        txt(s,x+6,y+14,short(n.label,15),col2);
-      });
-    }
-  }
-
-  /* ---- 3. evidence: edges bucketed by independent-source count ---- */
-  function drawSrc(){
-    var s=document.getElementById("svgSrc"); clear(s);
-    var note=document.getElementById("srcNote"); note.textContent="";
-    if(!has()) return;
-    var b={}, tot=0;
-    G.edges.forEach(function(e){ var k=Math.max(1,Math.min(4,e.k||1)); b[k]=(b[k]||0)+1; tot++; });
-    if(!tot){ s.setAttribute("viewBox","0 0 640 50"); txt(s,12,30,"No edges in this run.","#9fb6c9"); return; }
-    var keys=[1,2,3,4], BARH=30, W=640, H=keys.length*(BARH+14)+34;
-    s.setAttribute("viewBox","0 0 "+W+" "+H);
-    var max=Math.max.apply(null,keys.map(function(k){return b[k]||0;}));
-    keys.forEach(function(k,i){
-      var v=b[k]||0, y=14+i*(BARH+14);
-      var w=max? Math.round((v/max)*(W-190)) : 0;
-      txt(s,12,y+20,(k===4?"4+":k)+" source"+(k===1?"":"s"),"#a9c6dc");
-      s.appendChild(el("rect",{x:104,y:y,width:Math.max(w,2),height:BARH,rx:4,
-        fill:k===1?"#3a4a5a":(k===2?"#2f6d99":"#3a8f5f")}));
-      txt(s,110+Math.max(w,2),y+20,v+"  ("+Math.round(v/tot*100)+"%)","#c2d3e2");
-    });
-    note.textContent="Across the whole 66.4M-fact graph, a fact with one source agrees with held-out "
-      + "truth 44.9% of the time; two sources 87.3%; three 94.7%. That is why the engine weights "
-      + "multi-source steps more heavily than single-source ones.";
-  }
-
-  function redraw(){
-    var empty=document.getElementById("vEmpty");
-    empty.style.display = has()? "none" : "block";
-    drawChain(); drawLayers(); drawSrc();
-  }
-
-  var wrap=document.getElementById("viewTabs");
-  wrap.addEventListener("click", function(e){
-    var b=e.target.closest(".subtab"); if(!b) return;
-    wrap.querySelectorAll(".subtab").forEach(function(x){ x.classList.toggle("on", x===b); });
-    document.querySelectorAll("#p-views .sub").forEach(function(v){
-      v.classList.toggle("on", v.id===b.dataset.s);
-    });
-    redraw();
-  });
-  document.getElementById("vRedraw").addEventListener("click", redraw);
-  document.getElementById("vDemo").addEventListener("click", function(){
-    var q="capital of the country Melbourne is in";
-    var box=document.getElementById("q"); if(box) box.value=q;
-    if(typeof askNow==="function") askNow(q);
-    setTimeout(redraw, 2600);
-  });
-  document.querySelectorAll(".tab").forEach(function(t){
-    t.addEventListener("click", function(){
-      if(t.dataset.p==="views") setTimeout(redraw,60);
-    });
-  });
-})();
 
 /* rj-chat: a running transcript on the Ask tab. Reuses askNow() - same engine, same trace. */
 (function(){
