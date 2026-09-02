@@ -151,20 +151,20 @@ const scene = new THREE.Scene();
    the board it was replacing roughly 70% of every pixel with near-black #070b10 - including the
    skybox, which is why the background read as empty. Density down to 0.009 and the colour lifted
    so distance still reads as depth instead of as a black curtain. */
-scene.fog = new THREE.FogExp2(0x16233a, 0.009);
+scene.fog = new THREE.FogExp2(0x1b2c47, 0.005);
 
 const W = 26, H = 30;                       // world units
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
 camera.position.set(0, -20, 26);
 camera.lookAt(0, 2, 0);
 
-scene.add(new THREE.AmbientLight(0x6d8fb4, 1.25));   // was 0x4a6a8a @ 0.9 - letters read as grey
-const key = new THREE.DirectionalLight(0xffffff, 1.30); key.position.set(6,-4,14); scene.add(key);
+scene.add(new THREE.AmbientLight(0x8fb0d4, 1.75));   // was 0x4a6a8a @ 0.9 - letters read as grey
+const key = new THREE.DirectionalLight(0xffffff, 1.85); key.position.set(6,-4,14); scene.add(key);
 const rim = new THREE.PointLight(0x7c4dff, 1.9, 90); rim.position.set(-10, 12, 10); scene.add(rim);
 // A warm fill from below so glyph faces are not lit from one side only. Extruded letterforms
 // with a single key light lose their whole shadowed half, which is most of why they looked flat
 // AND dim at the same time.
-const fill = new THREE.DirectionalLight(0xffd9a8, 0.55); fill.position.set(-5, -9, 8); scene.add(fill);
+const fill = new THREE.DirectionalLight(0xffd9a8, 0.95); fill.position.set(-5, -9, 8); scene.add(fill);
 
 // starfield and grid. These used to be built inside IIFEs and thrown away, so nothing could ever
 // reference them again - which meant the "stars" and "grid" reveal tracks were silently no-ops and
@@ -213,7 +213,7 @@ const TONES_HEX = ['#8fd7ff','#c9b6ff','#9ff0c8','#ffd79a'];
 // ---------------------------------------------------------------- the CV, as text
 // Every line is real. Companies and dates come first, the detail is indented under them, so the
 // crawl reads like the document rather than a word cloud.
-const WRAP = 32;                      // max characters per rendered line
+const WRAP = 26;                      // fewer chars per line now the glyphs are bigger
 function wrapWords(text, indent){
   const words = text.split(/\s+/), out = [], pre = indent || "";
   let cur = pre;
@@ -384,7 +384,7 @@ function glyphGeometry(ch){
 }
 
 // ---------------------------------------------------------------- layout + pooling
-const CH_W = 1.12, LINE_H = 2.5;
+const CH_W = 1.62, LINE_H = 3.4;   // bigger blocks - RJ
 const SHIP_Y_MIN = -10.2, SHIP_Y_MAX = -3.6;   // narrow station-keeping band      // glyph pitch, line pitch
 const VIEW_TOP = 15.0, VIEW_BOT = -13.5;
 const letterGeo = new THREE.BoxGeometry(CH_W*0.94, CH_W*1.24, CH_W*0.46);
@@ -422,7 +422,7 @@ function buildBoard(){
       totalGlyphs++;
     }
     lines.push({ i, kind:row.k, tone:row.tone|0, text:row.t, meta:row, letters:chars, sunk:false,
-                 y: 12 + i*LINE_H });
+                 y: 3 + i*LINE_H });   // was 12 - text took ~10s to reach the ship, longer than you survived
   });
   // the widest RENDERED line decides how far the ship must be able to fly and how wide the
   // camera has to see. Hardcoding +/-11 while text ran to +/-21 meant half the CV could never
@@ -519,7 +519,26 @@ function applyCam(dt){
 
 /* Everything the old ladder used to switch on now starts on. Called once per round from reset(),
    so a replay opens looking exactly like the first one did. */
+let backdrop = null;
+function makeBackdrop(){
+  const c = document.createElement("canvas"); c.width = 8; c.height = 256;
+  const g = c.getContext("2d");
+  const grd = g.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0.00, "#1d3a63");
+  grd.addColorStop(0.45, "#16294a");
+  grd.addColorStop(1.00, "#0d1526");
+  g.fillStyle = grd; g.fillRect(0, 0, 8, 256);
+  const tex = new THREE.CanvasTexture(c);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(220, 140),
+    new THREE.MeshBasicMaterial({ map: tex, depthWrite: false, fog: false }));
+  m.position.set(0, 0, -60);
+  scene.add(m);
+  return m;
+}
+
 function fullGraphics(){
+  if(!backdrop) backdrop = makeBackdrop();
+  backdrop.visible = true;
   if(starPoints) starPoints.visible = true;
   if(grid) grid.visible = true;
   if(sky) scene.background = sky;
@@ -533,7 +552,7 @@ function sinkLines(){
   // Trigger at the PLAYER, not at the bottom of the board. A letter that has slipped past your
   // ship has already beaten you; making it fall another three units first only delayed the
   // feedback and made the cause unclear.
-  const line0 = ship.position.y - 1.2;
+  const line0 = ship.position.y - 2.4;   // was -1.2, which killed the line before it reached you
   for(const line of lines){
     if(line.sunk) continue;
     if((line.y - crawl) > line0) continue;
@@ -838,7 +857,8 @@ function drawShield(){
 const DROP_CHANCE     = 0.06;  // was 0.5 - a powerup on half of all company lines
 const SHIELD_DRAIN    = 0.22;  // was 0.42 - a full charge lasted 2.4s
 const SHIELD_RECHARGE = 0.30;  // was 0.22
-const HULL_R          = 0.85;  // ship hitbox for letter contact - deliberately smaller than the
+const HULL_R          = 1.45;  // measured: closest approach in real play was 1.1, so 0.85 was a
+                               // permanent near-miss - the collision existed and could never fire  // ship hitbox for letter contact - deliberately smaller than the
                                // 1.15 used for bolts, so grazing text is survivable
 const HULL_IFRAME     = 1.30;  // seconds of invulnerability after a hull hit
 let   hullSafe        = 0;     // shared i-frame across ALL damage sources; >0 means recent hit
@@ -1703,7 +1723,7 @@ function tick(now){
 
     // the CV crawls past at a steady rate, easing up a touch as more of it is broken
     const cleared = totalGlyphs ? brokenCount/totalGlyphs : 0;
-    crawl += dt * (2.05 + cleared*0.5);
+    crawl += dt * (2.6 + cleared*0.5);
     // ease toward the earned reveal, then let everything read off that one number
     debris.forEach(d=>{
       d.rotation.x += d.userData.spin.x*dt; d.rotation.y += d.userData.spin.y*dt;
