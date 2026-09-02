@@ -146,16 +146,25 @@ const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x070b10, 0.028);
+/* LIGHTING. RJ, twice: "a little dark", "it's very dim". The cause was this fog. FogExp2 falls
+   off with the SQUARE of distance, and at density 0.028 over the ~40 units between the camera and
+   the board it was replacing roughly 70% of every pixel with near-black #070b10 - including the
+   skybox, which is why the background read as empty. Density down to 0.009 and the colour lifted
+   so distance still reads as depth instead of as a black curtain. */
+scene.fog = new THREE.FogExp2(0x16233a, 0.009);
 
 const W = 26, H = 30;                       // world units
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
 camera.position.set(0, -20, 26);
 camera.lookAt(0, 2, 0);
 
-scene.add(new THREE.AmbientLight(0x4a6a8a, 0.9));
-const key = new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(6,-4,14); scene.add(key);
-const rim = new THREE.PointLight(0x7c4dff, 1.1, 60); rim.position.set(-10, 12, 10); scene.add(rim);
+scene.add(new THREE.AmbientLight(0x6d8fb4, 1.25));   // was 0x4a6a8a @ 0.9 - letters read as grey
+const key = new THREE.DirectionalLight(0xffffff, 1.30); key.position.set(6,-4,14); scene.add(key);
+const rim = new THREE.PointLight(0x7c4dff, 1.9, 90); rim.position.set(-10, 12, 10); scene.add(rim);
+// A warm fill from below so glyph faces are not lit from one side only. Extruded letterforms
+// with a single key light lose their whole shadowed half, which is most of why they looked flat
+// AND dim at the same time.
+const fill = new THREE.DirectionalLight(0xffd9a8, 0.55); fill.position.set(-5, -9, 8); scene.add(fill);
 
 // starfield and grid. These used to be built inside IIFEs and thrown away, so nothing could ever
 // reference them again - which meant the "stars" and "grid" reveal tracks were silently no-ops and
@@ -839,9 +848,13 @@ let   hullSafe        = 0;     // shared i-frame across ALL damage sources; >0 m
    - measured - no matter how well you were playing. That is the same unwinnable shape as the old
    every-letter rule, just delivered by a different object. One gate, one i-frame, so a bad moment
    costs one life and gives you a beat to recover. Returns true if the hit landed. */
+let shieldHintShown = false;
 function takeDamage(pos, colour, shakeAmt){
   if(hullSafe > 0) return false;
   hullSafe = HULL_IFRAME;
+  // RJ: tell them the shield exists the FIRST time something hurts them. A defence nobody knows
+  // about is the same as no defence, and the right button is not a guessable control.
+  if(!shieldHintShown){ shieldHintShown = true; banner("HOLD RIGHT CLICK FOR SHIELD"); }
   if(pos) spark(pos, colour || 0xff5470, 24);
   lives--; drawLives();
   shake = Math.max(shake, shakeAmt || 0.6);
@@ -872,11 +885,11 @@ function runHull(dt){
   }
 }
 
-const TURRET_RATE   = 0.022;   // harder: more armed letters (0.055 measured unwinnable)  // fraction of eligible letters that carry a gun. Measured: 0.055
+const TURRET_RATE   = 0.028;   // harder: more armed letters (0.055 measured unwinnable)  // fraction of eligible letters that carry a gun. Measured: 0.055
                               // armed 76 of 1068 glyphs and killed a motionless player in 8s,
                               // which is the same unwinnable-by-default trap the old
                               // every-letter-hurts-you rule was.
-const TURRET_COOL   = 5.0;    // seconds between shots from one turret
+const TURRET_COOL   = 3.6;    // seconds between shots from one turret
 const TURRET_SPEED  = 11.0;
 const TURRET_RANGE  = 17;     // only turrets this close to the ship bother firing
 const TURRET_MAX    = 40;     // hard cap on live bolts
@@ -984,12 +997,14 @@ function clearBolts(){
    you read it. The threat is a RAID - every few seconds a handful of letters tear themselves off
    the page and dive at you, with lateral curve so they cannot be dodged by standing still. Only
    those can hurt you, and the shield stops them. */
-const RAID_EVERY   = 4.5;   // harder: raids more often    // seconds between raids
-const RAID_BASE    = 3;   // harder: bigger first raid      // letters in the first raid
+const RAID_EVERY   = 3.6;   // harder: raids more often    // seconds between raids
+const RAID_BASE    = 4;   // harder: bigger first raid      // letters in the first raid
 const RAID_PER_ERA = 1;      // one more per era, so later phases bite harder
 const RAID_SPEED   = 7.5;
 const RAID_CURVE   = 3.2;    // lateral "english" on the dive
-const RAID_MAX     = 14;     // hard cap on live attackers
+const RAID_SHOOT_COOL  = 2.2;   // seconds between shots from one diver
+const RAID_SHOOT_SPEED = 13.0;  // faster than a turret bolt - a diver is the close-range threat
+const RAID_MAX     = 18;        // harder: was 14     // hard cap on live attackers
 const RAID_RAMP_SEC = 18;   // harder: ramps faster    // one more attacker per raid every this many seconds
 const RAID_SLOT_W   = 3.0;   // spacing of the formation row
 const RAID_FORM_Y   = 12.0;  // how far above the ship the row assembles
@@ -1030,10 +1045,32 @@ function spawnRaid(){
       fx: (slot0 + i) * RAID_SLOT_W,          // slot in the formation row
       fy: ship.position.y + RAID_FORM_Y,
       wait: RAID_HOLD + i * RAID_STAGGER,     // this one's turn to dive
-      phase: i * 0.7, born: t, dirX: 0
+      phase: i * 0.7, born: t, dirX: 0,
+      shootCool: RAID_SHOOT_COOL * (0.4 + (i % 3) * 0.3)   // staggered, so a wave is a barrage
+                                                           // rather than one simultaneous volley
     });
   }
   if(want > 0) banner("INCOMING");
+}
+
+/* SITUATIONAL BACKGROUND. Not generated audio and not a video - the scene's own light and fog
+   shift with what is actually happening, so a raid FEELS different from reading the CV. Calm is
+   cool and open; a raid pulls the fog in and pushes it red; the boss goes further. This is the
+   "backgrounds that go with the moment" ask, driven by game state rather than by a soundtrack. */
+const MOOD = {
+  calm:  { fog: 0x16233a, dens: 0.009, rim: 0x7c4dff, rimI: 1.9 },
+  raid:  { fog: 0x2a1626, dens: 0.013, rim: 0xff5a6e, rimI: 2.6 },
+  boss:  { fog: 0x3a1414, dens: 0.016, rim: 0xff3020, rimI: 3.2 }
+};
+const _fogC = new THREE.Color(), _rimC = new THREE.Color();
+function runMood(dt){
+  const want = (typeof boss !== "undefined" && boss && boss.alive) ? MOOD.boss
+             : (attackers.length ? MOOD.raid : MOOD.calm);
+  const k = Math.min(1, dt * 1.8);                    // ease, so it breathes rather than cuts
+  _fogC.setHex(want.fog); scene.fog.color.lerp(_fogC, k);
+  scene.fog.density += (want.dens - scene.fog.density) * k;
+  _rimC.setHex(want.rim); rim.color.lerp(_rimC, k);
+  rim.intensity += (want.rimI - rim.intensity) * k;
 }
 
 function runAttackers(dt){
@@ -1043,6 +1080,20 @@ function runAttackers(dt){
   for(let i = attackers.length - 1; i >= 0; i--){
     const A = attackers[i], m = A.m;
     const age = t - A.born;
+
+    /* RJ: "the enemies should shoot back at you." Only the static turrets fired before, so a raid
+       was purely a ramming threat you could out-strafe. Divers now shoot too, which is what makes
+       the shield worth holding instead of just dodging. */
+    A.shootCool -= dt;
+    if(A.shootCool <= 0 && bolts.length < TURRET_MAX){
+      A.shootCool = RAID_SHOOT_COOL;
+      const bm = boltMesh();
+      bm.position.copy(m.position);
+      const dx = ship.position.x - m.position.x, dy = ship.position.y - m.position.y;
+      const d = Math.hypot(dx, dy) || 1;
+      bolts.push({ m: bm, vx: dx / d * RAID_SHOOT_SPEED, vy: dy / d * RAID_SHOOT_SPEED });
+      board.add(bm);
+    }
 
     if(A.mode === "form"){
       // slide into the formation slot and bob there until this one's turn comes
@@ -1544,11 +1595,13 @@ function reset(){
   if(flameCone) flameCone.visible=false;
   camFollowX=0; fullGraphics(); clearBolts(); armTurrets(); bossClear(); bossInit();
   firstHitDone=false; mushroomDone=false; poweredOnce=false;
-  t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0; hullSafe=0;
+  t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0; hullSafe=0; shieldHintShown=false;
   clearAttackers();
-  scene.background=null; debris.forEach(d=>d.visible=false);
-  if(starPoints) starPoints.visible=false;
-  if(grid) grid.visible=false;
+  // These three lines used to run FOUR LINES AFTER fullGraphics() and undid all of it: skybox
+  // nulled, stars hidden, debris hidden, grid hidden. Left over from the retired era-ladder,
+  // where graphics started off and ramped up; fullGraphics() replaced that and this was never
+  // deleted. The game has been starting with no background at all ever since, which is most of
+  // why it looked dark. fullGraphics() above now actually holds.
   ship.position.x = 0; ship.position.y = SHIP_Y_MIN + 1.2;
   if(shieldMesh) shieldMesh.visible = false;
   // the HUD badges are not driven by reset() otherwise, so a replay used to open showing the
@@ -1663,6 +1716,7 @@ function tick(now){
     runAttackers(dt);
     runTurrets(dt);
     runHull(dt);
+    runMood(dt);
     runBoss(dt);
     drawShield();
     applyCam(dt);
