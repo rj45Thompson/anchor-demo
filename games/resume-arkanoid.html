@@ -819,7 +819,60 @@ function drawShield(){
 
    A turret is an ordinary letter with `L.turret` set, so shooting it removes the gun the same way
    shooting any letter removes it. Nothing special-cases them in the collision code. */
-const TURRET_RATE   = 0.014;  // fraction of eligible letters that carry a gun. Measured: 0.055
+/* ---- DIFFICULTY -----------------------------------------------------------------------------
+   RJ: powerups very rare, enemies much tougher, shield must actually protect, and letters that
+   reach the ship must hurt. The last one has a history: an earlier build made EVERY passing
+   letter cost a life, and an idle player died in about twelve seconds - before era 2 - which is
+   why the graphics ladder looked like it only ever changed once. So the rule is back, but with
+   the three things that were missing: a hull-sized hitbox rather than the whole row, i-frames so
+   one dense line cannot eat every life in a frame, and the shield stopping it. */
+const DROP_CHANCE     = 0.06;  // was 0.5 - a powerup on half of all company lines
+const SHIELD_DRAIN    = 0.22;  // was 0.42 - a full charge lasted 2.4s
+const SHIELD_RECHARGE = 0.30;  // was 0.22
+const HULL_R          = 0.85;  // ship hitbox for letter contact - deliberately smaller than the
+                               // 1.15 used for bolts, so grazing text is survivable
+const HULL_IFRAME     = 1.30;  // seconds of invulnerability after a hull hit
+let   hullSafe        = 0;     // shared i-frame across ALL damage sources; >0 means recent hit
+
+/* EVERY source of damage goes through here. Bolts and raids each decremented lives directly with
+   no invulnerability at all, so a cluster of three turret bolts took the whole run in 0.9 seconds
+   - measured - no matter how well you were playing. That is the same unwinnable shape as the old
+   every-letter rule, just delivered by a different object. One gate, one i-frame, so a bad moment
+   costs one life and gives you a beat to recover. Returns true if the hit landed. */
+function takeDamage(pos, colour, shakeAmt){
+  if(hullSafe > 0) return false;
+  hullSafe = HULL_IFRAME;
+  if(pos) spark(pos, colour || 0xff5470, 24);
+  lives--; drawLives();
+  shake = Math.max(shake, shakeAmt || 0.6);
+  if(lives <= 0) killShip();
+  return true;
+}
+
+/* Letters that physically reach the hull now do damage. Passing text is no longer free: sitting
+   inside the CV stream costs you, which is what makes keeping a lane clear worth doing. */
+function runHull(dt){
+  if(hullSafe > 0){ hullSafe -= dt; return; }   // the ONE place the shared i-frame counts down
+  const ox = ship.position.x, oy = ship.position.y;
+  for(const line of lines){
+    const ly = line.y - crawl;
+    if(Math.abs(ly - oy) > 1.6) continue;          // wrong row, cheap reject before the inner loop
+    for(const L of line.letters){
+      if(L.broken || L.dissolve > 0) continue;
+      if(Math.hypot(L.x - ox, ly - oy) > HULL_R) continue;
+      if(shieldHeld && shieldEnergy > 0){          // shield burns the letter instead of the hull
+        L.dissolve = 0.01; brokenCount++;
+        spark(new THREE.Vector3(L.x, ly, 0), 0x8fe8ff, 8);
+        continue;
+      }
+      L.dissolve = 0.01; brokenCount++;
+      takeDamage(new THREE.Vector3(L.x, ly, 0), 0xff5470, 0.7);
+      return;                                      // one hit per frame, never a whole line at once
+    }
+  }
+}
+
+const TURRET_RATE   = 0.022;   // harder: more armed letters (0.055 measured unwinnable)  // fraction of eligible letters that carry a gun. Measured: 0.055
                               // armed 76 of 1068 glyphs and killed a motionless player in 8s,
                               // which is the same unwinnable-by-default trap the old
                               // every-letter-hurts-you rule was.
@@ -827,7 +880,7 @@ const TURRET_COOL   = 5.0;    // seconds between shots from one turret
 const TURRET_SPEED  = 11.0;
 const TURRET_RANGE  = 17;     // only turrets this close to the ship bother firing
 const TURRET_MAX    = 40;     // hard cap on live bolts
-const TURRET_WARMUP = 9;      // seconds before any turret opens fire. Measured: with guns live
+const TURRET_WARMUP = 7;   // harder: guns open fire sooner      // seconds before any turret opens fire. Measured: with guns live
                               // from frame one a player who has not yet found the shield is
                               // dead at 8s, which is not difficulty, it is not being told the
                               // rules. Shield-held survives indefinitely, so the mechanic is
@@ -904,11 +957,8 @@ function runTurrets(dt){
       continue;
     }
     if(near < 1.15){
-      spark(m.position.clone(), 0xff5470, 24);
       board.remove(m); bolts.splice(i, 1);
-      lives--;
-      drawLives();
-      if(lives <= 0) killShip();
+      takeDamage(m.position.clone(), 0xff5470, 0.6);   // shared i-frame, see takeDamage
       continue;
     }
     if(m.position.y < VIEW_BOT - 3 || Math.abs(m.position.x) > 60){
@@ -934,13 +984,13 @@ function clearBolts(){
    you read it. The threat is a RAID - every few seconds a handful of letters tear themselves off
    the page and dive at you, with lateral curve so they cannot be dodged by standing still. Only
    those can hurt you, and the shield stops them. */
-const RAID_EVERY   = 7.0;    // seconds between raids
-const RAID_BASE    = 2;      // letters in the first raid
+const RAID_EVERY   = 4.5;   // harder: raids more often    // seconds between raids
+const RAID_BASE    = 3;   // harder: bigger first raid      // letters in the first raid
 const RAID_PER_ERA = 1;      // one more per era, so later phases bite harder
 const RAID_SPEED   = 7.5;
 const RAID_CURVE   = 3.2;    // lateral "english" on the dive
 const RAID_MAX     = 14;     // hard cap on live attackers
-const RAID_RAMP_SEC = 25;    // one more attacker per raid every this many seconds
+const RAID_RAMP_SEC = 18;   // harder: ramps faster    // one more attacker per raid every this many seconds
 const RAID_SLOT_W   = 3.0;   // spacing of the formation row
 const RAID_FORM_Y   = 12.0;  // how far above the ship the row assembles
 const RAID_HOLD     = 1.1;   // seconds the row holds before the first one peels off
@@ -1028,12 +1078,8 @@ function runAttackers(dt){
       continue;
     }
     if(near < 1.35){
-      spark(m.position.clone(), 0xff5470, 30);
       board.remove(m); attackers.splice(i, 1);
-      lives--;
-      drawLives();
-      shake = Math.max(shake, 0.6);
-      if(lives <= 0) killShip();
+      takeDamage(m.position.clone(), 0xff5470, 0.6);   // shared i-frame, see takeDamage
       continue;
     }
     if(m.position.y < VIEW_BOT - 3){ board.remove(m); attackers.splice(i, 1); }
@@ -1124,7 +1170,7 @@ let shieldHeld = false, shootHeld = false, flameBurst = 0, shieldMesh = null, sh
 function maybeDrop(x, y, kind){
   if(drops.length) return;                        // one at a time
   if(kind !== "role") return;                     // only the company lines drop
-  if(Math.random() > 0.5) return;
+  if(Math.random() > DROP_CHANCE) return;
   const key = POWER_KEYS[(Math.random()*POWER_KEYS.length)|0];
   const m = powerIcon(key);
   m.position.set(x, y, 0); m.userData = {key};
@@ -1498,7 +1544,7 @@ function reset(){
   if(flameCone) flameCone.visible=false;
   camFollowX=0; fullGraphics(); clearBolts(); armTurrets(); bossClear(); bossInit();
   firstHitDone=false; mushroomDone=false; poweredOnce=false;
-  t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0;
+  t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0; hullSafe=0;
   clearAttackers();
   scene.background=null; debris.forEach(d=>d.visible=false);
   if(starPoints) starPoints.visible=false;
@@ -1616,6 +1662,7 @@ function tick(now){
     runJoiners(dt);
     runAttackers(dt);
     runTurrets(dt);
+    runHull(dt);
     runBoss(dt);
     drawShield();
     applyCam(dt);
@@ -1634,16 +1681,20 @@ function tick(now){
       burnCone(1.0 + flameBurst*2.2);
     } else if(flameCone && power !== "flame"){ flameCone.visible = false; }
 
-    // SHIELD: left button, drains while held, recharges when released
+    // SHIELD: RIGHT button (the comment said "left" long after the buttons were swapped),
+    // drains while held, recharges when released. It drained at 0.42/s, so a full charge lasted
+    // 2.4 SECONDS and then silently stopped stopping anything - which is why it read as "the
+    // shield might not work". Now SHIELD_DRAIN/SHIELD_RECHARGE, ~4.5s of cover and a faster
+    // refill, so holding it is a real defence rather than a blink.
     if(shieldMesh){
       if(shieldHeld && shieldEnergy > 0){
-        shieldEnergy = Math.max(0, shieldEnergy - dt*0.42);
+        shieldEnergy = Math.max(0, shieldEnergy - dt*SHIELD_DRAIN);
         shieldMesh.visible = true;
         shieldMesh.material.uniforms.uTime.value = t;
         shieldMesh.material.uniforms.uPower.value = shieldEnergy;
         shieldMesh.scale.setScalar(1 + Math.sin(t*9)*0.03);
       } else {
-        shieldEnergy = Math.min(1, shieldEnergy + dt*0.22);
+        shieldEnergy = Math.min(1, shieldEnergy + dt*SHIELD_RECHARGE);
         shieldMesh.visible = false;
       }
     }
