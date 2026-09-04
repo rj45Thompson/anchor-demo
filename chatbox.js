@@ -23,7 +23,7 @@
   "use strict";
 
   var CFG = {
-    ENDPOINT:   "https://ear-location-senator-times.trycloudflare.com",
+    ENDPOINT:   "https://rj-desk.tail0a7471.ts.net",
     // NOTE: a token in public page source is a speed bump, not authentication - anyone can read
     // it. It keeps drive-by scanners off the endpoint. The real protections are that the agent
     // has no tools at all, plus the per-IP and global rate caps on the server.
