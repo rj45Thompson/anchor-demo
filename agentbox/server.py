@@ -79,6 +79,9 @@ CFG = {
     "TIMEOUT_S": 120,
     "LOG": HERE / "chatlog.jsonl",
     "RESUME": HERE / "resume_context.txt",
+    # Required once this is reachable from outside. Loopback-only it was fine open; behind a
+    # tunnel anything on the internet can POST to it, so /ask now demands this header.
+    "TOKEN": os.environ.get("AGENTBOX_TOKEN", "ylAGE2xhVsH7oTOMkE38Q7pz44wS8KfG"),
 }
 
 # The agent is given NOTHING. Read/Write/Edit/Glob/Grep are denied by name on top of --restricted,
@@ -211,6 +214,54 @@ def build_argv(sys_file: Path, mcp_file: Path) -> list[str]:
     ]
 
 
+AGENT_MAIL = Path(r"D:/code/Tami/.opus-tools/agent_mail.py")
+DESK_AGENT = os.environ.get("DESK_AGENT", "desk-claude")
+
+
+def ask_desktop(question: str) -> tuple[str, str]:
+    """Route the question to the Claude Code session running on RJ's DESKTOP.
+
+    This is the architecture RJ asked for: the web chat should reach the session he already has
+    open, not spawn a second throwaway agent and not fall back to a local model. agent_mail is the
+    project's existing cross-session channel and already has exactly the two verbs needed - `ask`
+    blocks for a reply, `watch` is what the desktop side runs.
+
+    The desktop side has to be listening for this to answer:
+        py D:/code/Tami/.opus-tools/agent_mail.py watch --as desk-claude
+    If nobody is watching, `ask` times out and we say so rather than inventing a reply.
+    """
+    if not AGENT_MAIL.exists():
+        return "", f"agent_mail.py not found at {AGENT_MAIL}"
+    try:
+        proc = subprocess.run(
+            ["py", str(AGENT_MAIL), "ask", "--to", DESK_AGENT, "--from", "webchat",
+             "--subject", "resume question", "--body", question,
+             "--timeout", str(CFG["TIMEOUT_S"]), "--poll", "2"],
+            capture_output=True, text=True, timeout=CFG["TIMEOUT_S"] + 20,
+            encoding="utf-8", errors="replace")
+    except subprocess.TimeoutExpired:
+        return "", "no answer from the desktop session (nobody watching?)"
+    except Exception as exc:                       # noqa: BLE001
+        return "", f"agent_mail failed: {exc}"
+    out = (proc.stdout or "").strip()
+    if proc.returncode != 0 or not out:
+        detail = (proc.stderr or "").strip() or out or f"exit {proc.returncode}"
+        return "", detail[:300]
+
+    # `ask` prints its own progress ("asked <id>...", "waiting up to Ns...") and a
+    # "=== REPLY <id> <ts> <from> -> <to> ===" banner with a "subject:" line before the body.
+    # Returning that verbatim put CLI chatter in front of the visitor, so take only what the
+    # desktop actually wrote: everything after the banner, minus the subject line.
+    marker = out.find("=== REPLY")
+    if marker < 0:
+        return "", "no reply came back from " + DESK_AGENT
+    nl = chr(10)
+    tail = out[marker:]
+    body = tail.split(nl, 1)[1] if nl in tail else ""
+    lines = [ln for ln in body.split(nl) if not ln.lower().startswith("subject:")]
+    return nl.join(lines).strip(), ""
+
+
 def ask_agent(question: str) -> tuple[str, str]:
     """Run the crippled agent. Returns (answer, error). Never raises to the caller."""
     resume = ""
@@ -318,6 +369,10 @@ class Handler(BaseHTTPRequestHandler):
         # A NEGATIVE Content-Length passed the `> 8192` check and then reached
         # BufferedReader.read(-1), which means "read to EOF" - on a socket the client never
         # closes, that is an unbounded block. Parse defensively and require a sane range.
+        if CFG["TOKEN"] and self.headers.get("X-Agentbox-Token") != CFG["TOKEN"]:
+            self._send(401, {"error": "missing or bad token"}, origin)
+            return
+
         try:
             n = int(self.headers.get("Content-Length") or 0)
         except ValueError:
@@ -356,7 +411,8 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         flags = screen(q)
-        answer, err = ask_agent(q)
+        # Route to the desktop session RJ already has open, not to a throwaway subprocess.
+        answer, err = ask_desktop(q)
         answer = scrub(answer)
         log({"ip": iph, "q": q[:400], "flags": flags,
              "answered": bool(answer), "err": err or None, "chars": len(answer)})

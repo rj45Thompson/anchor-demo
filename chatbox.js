@@ -23,7 +23,11 @@
   "use strict";
 
   var CFG = {
-    ENDPOINT:   "http://127.0.0.1:8778",
+    ENDPOINT:   "https://ear-location-senator-times.trycloudflare.com",
+    // NOTE: a token in public page source is a speed bump, not authentication - anyone can read
+    // it. It keeps drive-by scanners off the endpoint. The real protections are that the agent
+    // has no tools at all, plus the per-IP and global rate caps on the server.
+    TOKEN:      "ylAGE2xhVsH7oTOMkE38Q7pz44wS8KfG",
     MAX_CHARS:  600,          // must match MAX_QUESTION_CHARS on the server
     PROBE_MS:   2500,
     ASK_MS:     125000,       // a little over the server's own timeout
@@ -191,7 +195,8 @@
 
     fetch(this.opts.ENDPOINT + "/ask", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json",
+                 "X-Agentbox-Token": this.opts.TOKEN },
       body: JSON.stringify({ q: q }),
       signal: ctl.signal
     })
