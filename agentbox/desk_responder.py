@@ -49,6 +49,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 TASK_NAME = "DeskResponder"
 
+# Every child process this file starts must be windowless.
+# The logon task runs us under pythonw.exe, which has NO console of its own - so on Windows
+# each subprocess.run() gets a BRAND NEW console window instead of inheriting one. The mail
+# poll runs every poll_s seconds, which turned a quiet background service into a console
+# window flashing on RJ's desktop every three seconds, forever. It is invisible when you
+# start the responder from a terminal, because then there is a console to inherit; it only
+# appears once it is installed the way it is meant to run.
+NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
 # Tools denied BY NAME on top of --restricted, which removes the code runners and WebFetch but
 # leaves the file tools. Every name is verified against the CLI: an unknown name is not ignored,
 # it makes the CLI reject the whole invocation, so one typo disables the agent rather than
@@ -118,7 +127,8 @@ class Mail:
 
     def _run(self, *args: str, timeout: int = 45):
         return subprocess.run(["py", str(self.script), *args], capture_output=True, text=True,
-                              timeout=timeout, encoding="utf-8", errors="replace")
+                              timeout=timeout, encoding="utf-8", errors="replace",
+                              creationflags=NO_WINDOW)
 
     def unread(self) -> list:
         """Unread messages from our peer, as (id, subject, age_seconds)."""
@@ -218,7 +228,7 @@ class Responder:
         try:
             proc = subprocess.run(self.argv(sysf, mcp), input=question, capture_output=True,
                                   text=True, timeout=self.p.timeout_s, cwd=str(neutral),
-                                  encoding="utf-8", errors="replace")
+                                  encoding="utf-8", errors="replace", creationflags=NO_WINDOW)
         except subprocess.TimeoutExpired:
             return "", f"timed out after {self.p.timeout_s}s"
         except Exception as exc:                       # noqa: BLE001
@@ -309,21 +319,24 @@ def install(profile_arg: str | None) -> int:
         "Register-ScheduledTask -TaskName '{task}' -Action $a -Trigger $t -Settings $s -Force"
     ).format(py=py, script=Path(__file__).resolve(), cwd=HERE, task=TASK_NAME)
     r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+                       capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       creationflags=NO_WINDOW)
     print((r.stdout or r.stderr).strip()[:400])
     return r.returncode
 
 
 def uninstall() -> int:
     r = subprocess.run(["schtasks", "/Delete", "/TN", TASK_NAME, "/F"],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+                       capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       creationflags=NO_WINDOW)
     print((r.stdout or r.stderr).strip())
     return r.returncode
 
 
 def status(prof: Profile) -> int:
     r = subprocess.run(["schtasks", "/Query", "/TN", TASK_NAME],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+                       capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       creationflags=NO_WINDOW)
     print("logon task :", "REGISTERED" if r.returncode == 0 else "not registered")
     print("claude CLI :", shutil.which("claude") or "NOT ON PATH")
     ctx = prof.resolve(prof.context_file)
@@ -343,6 +356,19 @@ def selftest(prof: Profile) -> int:
             fails.append(name)
 
     print("\ndesk_responder selftest\n")
+    # Guard the windowless rule. A missing creationflags is invisible from a terminal - there is
+    # a console to inherit, so nothing flashes - and only shows up once installed, as a console
+    # window appearing every poll_s seconds on someone's desktop. It must be caught here instead.
+    import ast as _ast
+    _tree = _ast.parse(Path(__file__).read_text(encoding="utf-8"))
+    _spawns = [n for n in _ast.walk(_tree)
+               if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Attribute)
+               and n.func.attr in ("run", "Popen")
+               and getattr(n.func.value, "id", "") == "subprocess"]
+    _naked = [n.lineno for n in _spawns if not any(k.arg == "creationflags" for k in n.keywords)]
+    ok(f"all {len(_spawns)} subprocess calls are windowless", not _naked,
+       f"no creationflags at line(s) {_naked}")
+
     r = Responder(prof)
     try:
         argv = r.argv(Path("s.txt"), Path("m.json"))
@@ -368,7 +394,7 @@ def selftest(prof: Profile) -> int:
             probe = subprocess.run([exe, "-p", "--disallowed-tools", *prof.deny_tools,
                                     "--output-format", "text"],
                                    input="x", capture_output=True, text=True, timeout=45,
-                                   encoding="utf-8", errors="replace")
+                                   encoding="utf-8", errors="replace", creationflags=NO_WINDOW)
             blob = (probe.stdout or "") + (probe.stderr or "")
             ok("every denied tool name is known to the CLI", "matches no known tool" not in blob,
                blob[:120])

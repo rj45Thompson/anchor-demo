@@ -4527,14 +4527,21 @@ renderCode();
 })();
 </script>
 <script>
-/* The endpoint is the operator's own loopback address on purpose. A visitor's browser resolves
-   127.0.0.1 to THEIR machine, not RJ's, so this answers for someone at RJ's desk and reports
-   itself offline for everyone else. Making it reachable by a recruiter means putting a tunnel in
-   front of agentbox, which is a deliberate decision and not something the page does on its own. */
+/* No endpoint override here on purpose - chatbox.js owns the address.
+
+   This used to pin endpoint:"http://127.0.0.1:8778", from before there was a tunnel: a visitor's
+   browser resolves 127.0.0.1 to THEIR machine, so the box answered at RJ's desk and reported
+   itself offline to everyone else. That tunnel decision has since been made and the default in
+   chatbox.js is the public Funnel URL, so the pin was left naming a dead address.
+
+   It went unnoticed because ChatBox ignored the lowercase `endpoint` key entirely, and the two
+   URLs happened to agree until they didn't. Fixing the key made this stale line start winning,
+   which is how it surfaced: a live page probing loopback, which a browser blocks outright from an
+   https origin under Private Network Access. One address, in one file. */
 (function(){
   if(typeof ChatBox!=="function") return;
   var host=document.getElementById("chatbox"); if(!host) return;
-  try{ new ChatBox(host,{endpoint:"http://127.0.0.1:8778"}); }catch(e){ host.style.display="none"; }
+  try{ new ChatBox(host); }catch(e){ host.style.display="none"; }
 })();
 </script>
 </body></html>

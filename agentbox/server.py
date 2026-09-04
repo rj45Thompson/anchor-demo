@@ -411,9 +411,17 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(204 if origin else 403)
         if origin:
             self.send_header("Access-Control-Allow-Origin", origin)
-            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Agentbox-Token")
             self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
             self.send_header("Access-Control-Max-Age", "600")
+            # Anyone on the tailnet resolves the Funnel name to its 100.x CGNAT address, and a
+            # browser refuses to let an https page reach a "local" address without permission -
+            # so the chat looks dead to RJ while working perfectly for the visitors it is for.
+            # This answers the Private Network Access preflight. Newer Chrome asks the user
+            # instead of reading this header, so it is a partial fix and only for that case; it
+            # changes nothing for an off-tailnet visitor, who never takes this path.
+            if self.headers.get("Access-Control-Request-Private-Network") == "true":
+                self.send_header("Access-Control-Allow-Private-Network", "true")
         self.end_headers()
 
     def _responder_age(self):
