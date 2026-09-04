@@ -79,6 +79,12 @@ CFG = {
     "TIMEOUT_S": 120,
     "LOG": HERE / "chatlog.jsonl",
     "RESUME": HERE / "resume_context.txt",
+    # Written by desk_responder.py every few seconds. This server can accept a question all
+    # by itself, but it cannot ANSWER one - the responder does that. Reporting "ok" on the
+    # strength of the web half alone is a check that proves nothing: the box would show
+    # "live", the visitor would ask, and it would hang for the full timeout.
+    "BEAT": HERE / "responder_alive.json",
+    "BEAT_STALE_S": 30,
     # Required once this is reachable from outside. Loopback-only it was fine open; behind a
     # tunnel anything on the internet can POST to it, so /ask now demands this header.
     "TOKEN": os.environ.get("AGENTBOX_TOKEN", "ylAGE2xhVsH7oTOMkE38Q7pz44wS8KfG"),
@@ -311,6 +317,54 @@ def log(rec: dict) -> None:
         fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
+def _status_page(up: bool, age) -> str:
+    """The bare URL, rendered for a person rather than for a script.
+
+    Deliberately says nothing a stranger should not have: no token, no paths, no host names, no
+    log contents, and no count of who has asked what. It answers exactly one question - is the
+    helper able to answer right now - because that is the only reason anyone opens this URL.
+    """
+    if up:
+        dot, state, detail = "#51c07a", "live", (
+            "A question asked right now would be answered by a Claude session on RJ's desktop, "
+            "with every tool switched off.")
+    else:
+        seen = "it has never checked in" if age is None else f"last checked in {int(age)}s ago"
+        dot, state, detail = "#c9553d", "not answering", (
+            "The web endpoint is up but the desktop responder is not running, so questions would "
+            f"go unanswered ({seen}). It comes back on its own when RJ's machine is."
+        )
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>agentbox</title><style>
+ :root {{ color-scheme: light dark; --fg:#1a1d21; --dim:#5a6470; --bg:#fbfaf8; --card:#fff;
+          --line:#e3e0da; }}
+ @media (prefers-color-scheme: dark) {{
+   :root {{ --fg:#e8e6e3; --dim:#a4aab3; --bg:#16181c; --card:#1e2126; --line:#2c3138; }} }}
+ body {{ margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+         background:var(--bg); color:var(--fg);
+         font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; padding:24px; }}
+ .card {{ background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:26px 28px; max-width:34em; }}
+ h1 {{ font-size:1.05rem; margin:0 0 2px; letter-spacing:.01em; }}
+ .st {{ display:flex; align-items:center; gap:8px; margin:14px 0 10px; font-weight:600; }}
+ .dot {{ width:9px; height:9px; border-radius:50%; background:{dot}; flex:none; }}
+ p {{ margin:10px 0; color:var(--dim); }}
+ a {{ color:inherit; }}
+ code {{ background:rgba(128,128,128,.14); padding:1px 5px; border-radius:4px; font-size:.9em; }}
+</style></head><body><div class="card">
+ <h1>agentbox</h1>
+ <p>The question endpoint behind the chat on RJ Thompson's CV page. It is an API, not a site,
+    so there is nothing to use here directly.</p>
+ <div class="st"><span class="dot"></span>{state}</div>
+ <p>{detail}</p>
+ <p>To actually ask something, use the chat box on
+    <a href="https://rj45thompson.github.io/anchor-demo/">the CV page</a>.
+    Machine-readable status is at <code>/health</code>.</p>
+</div></body></html>"""
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "agentbox"
     # Without this the socket blocks forever. A raw client that sends a Content-Length and then
@@ -340,6 +394,18 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_html(self, code: int, html: str, origin: str | None) -> None:
+        body = html.encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_OPTIONS(self):                # noqa: N802
         origin = self._origin_ok()
         self.send_response(204 if origin else 403)
@@ -350,11 +416,36 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Max-Age", "600")
         self.end_headers()
 
+    def _responder_age(self):
+        """Seconds since the responder last checked in, or None if it never has."""
+        try:
+            beat = json.loads(Path(CFG["BEAT"]).read_text(encoding="utf-8"))
+            return max(0.0, time.time() - float(beat.get("ts", 0)))
+        except (OSError, ValueError, TypeError):
+            return None
+
     def do_GET(self):                    # noqa: N802
         origin = self._origin_ok()
-        if self.path.split("?")[0] == "/health":
-            self._send(200, {"ok": True, "service": "agentbox", "toolsDenied": len(DENY_TOOLS)}, origin)
+        path = self.path.split("?")[0]
+
+        if path == "/health":
+            age = self._responder_age()
+            up = age is not None and age < CFG["BEAT_STALE_S"]
+            # ok means "a question asked right now would get an answer", which needs BOTH halves.
+            self._send(200, {"ok": up, "service": "agentbox", "toolsDenied": len(DENY_TOOLS),
+                             "responder": up,
+                             "responderAge": None if age is None else round(age, 1)}, origin)
             return
+
+        if path == "/":
+            # Opening the bare URL in a browser used to return {"error": "not found"}, which reads
+            # as a broken deployment when the service is in fact healthy. A person who lands here
+            # deserves to be told what this is and whether it is working.
+            age = self._responder_age()
+            up = age is not None and age < CFG["BEAT_STALE_S"]
+            self._send_html(200, _status_page(up, age), origin)
+            return
+
         self._send(404, {"error": "not found"}, origin)
 
     def do_POST(self):                   # noqa: N802

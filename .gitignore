@@ -1,3 +1,13 @@
 agentbox/chatlog.jsonl
 token.txt
 chatlog.jsonl
+
+# agentbox runtime state - written by the running processes, meaningless in a checkout and
+# noisy in every diff. responder_seen.json exists to stop double-answers on THIS machine;
+# responder_alive.json is a heartbeat that changes every few seconds.
+__pycache__/
+*.pyc
+agentbox/responder_seen.json
+agentbox/responder_alive.json
+agentbox/.srv.log
+agentbox/.srv.err

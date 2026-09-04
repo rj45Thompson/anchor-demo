@@ -136,6 +136,11 @@
       .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("http " + r.status)); })
       .then(function (d) {
         clearTimeout(t);
+        // HTTP 200 only proves the endpoint answered. The endpoint can take a question without
+        // being able to ANSWER one - that half is a separate process on the same desktop - so it
+        // reports both and we require both. Trusting the status code alone showed a "live" box
+        // that accepted a question and hung for the full two minutes.
+        if (!d || d.ok === false) return Promise.reject(new Error("responder down"));
         self.live = true;
         self._setState("live", "live - " + (d.toolsDenied || 0) + " tools denied");
         self.input.disabled = false;

@@ -40,6 +40,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -88,6 +89,8 @@ class Profile:
     stale_after_s: int = 150                       # older than this and nobody is still waiting
     max_answer_chars: int = 2400
     state_file: str = "responder_seen.json"
+    heartbeat_file: str = "responder_alive.json"   # proof the ANSWERING half is up
+    heartbeat_s: int = 5
     deny_tools: list = field(default_factory=lambda: list(DENY_TOOLS))
 
     @classmethod
@@ -166,6 +169,7 @@ class Responder:
         self.p = prof
         self.mail = Mail(prof)
         self.state = prof.resolve(prof.state_file)
+        self.beat = prof.resolve(prof.heartbeat_file)
         self.seen = self._load_seen()
 
     # ---- de-duplication ----------------------------------------------------------------------
@@ -255,12 +259,30 @@ class Responder:
             self._save_seen()
         return handled
 
+    def _heartbeat(self) -> None:
+        """Touch a file on a fixed cadence so the web half can tell whether ANSWERING is possible.
+
+        It runs on its own thread rather than at the top of each tick, and that is the whole
+        point: a tick that is busy answering blocks for up to timeout_s, so a tick-driven
+        heartbeat would go stale during exactly the work that proves the process is healthy, and
+        /health would report the responder dead while it was mid-answer.
+        """
+        while True:
+            try:
+                self.beat.write_text(json.dumps(
+                    {"ts": time.time(), "name": self.p.name, "pid": os.getpid()}),
+                    encoding="utf-8")
+            except OSError:
+                pass          # a heartbeat that cannot be written must not kill the responder
+            time.sleep(self.p.heartbeat_s)
+
     def run(self, once: bool = False) -> int:
         print(f"desk_responder: answering as {self.p.name} "
               f"(tools denied: {len(self.p.deny_tools)})", flush=True)
         if once:
             self.tick()
             return 0
+        threading.Thread(target=self._heartbeat, daemon=True).start()
         while True:
             try:
                 self.tick()
