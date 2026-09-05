@@ -190,8 +190,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 <h1>R.J. Thompson</h1>
 <div class="audbar">
   <span class="audlbl">show for</span>
-  <button class="audbtn on" data-aud-set="all">All</button>
-  <button class="audbtn" data-aud-set="ai">AI / ML roles</button>
+  <button class="audbtn on" data-aud-set="ai">AI / ML roles</button>
   <button class="audbtn" data-aud-set="games">Game studios</button>
   <span class="audnote" id="audNote"></span>
 </div>
@@ -4491,18 +4490,18 @@ renderCode();
 </script>
 
 <script>
-/* rj-audience: three views of the same site. A game studio and an AI lab are hiring for different
+/* rj-audience: two views of the same site. A game studio and an AI lab are hiring for different
    things, and material that helps with one can actively hurt with the other - speculative physics
    reads as range to a studio and as a warning sign to a research team. Rather than water the page
-   down to the intersection, it filters. Defaults to All. */
+   down to the intersection, it filters. Defaults to the AI view: this is the anchor demo's address.
+   (An "All" view used to exist and was the default; it put the résumé in front of every visitor
+   of the anchor demo, so it went - RJ 2026-09-05: "it's game or AI demos".) */
 (function(){
   var NOTE = {
-    all:   "everything, including material I would not lead with for either audience",
     ai:    "the knowledge engine and the research record only - no games here. Speculative physics hidden.",
     games: "the games, the knowledge engine and the engine work - the research record and physics hidden."
   };
   function match(el, mode){
-    if(mode === "all") return true;
     var a = el.getAttribute("data-aud");
     if(a === null) return true;          // untagged content is common ground
     return a.split(",").indexOf(mode) !== -1;
@@ -4536,7 +4535,7 @@ renderCode();
     });
     apply(b.dataset.audSet);
   });
-  apply("all");
+  apply("ai");
 })();
 </script>
 <script>

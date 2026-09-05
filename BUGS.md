@@ -1057,3 +1057,16 @@ wrong transport for search this wide; a server-side index or a one-time IndexedD
 ### O6 — Harness prints a `startLoop is not defined` tail
 Cosmetic: the harness strips the renderer, and the page's autorun then calls into it. Results above
 the trace are unaffected, but it should be silenced so a real failure is not mistaken for noise.
+
+### O9 - the audience notes say what is hidden, not what the view is for
+RJ 2026-09-05, reading the line under the view buttons: *"Review the text.. how is this helpful?
+'the knowledge engine and the research record only - no games here. Speculative physics hidden.'"*
+Both notes (AI / ML roles, Game studios) are written from the author's side - what was filtered
+out - when a visitor needs the other direction: what this view is and what to click first.
+Proposed replacement, not yet applied (RJ to approve or rewrite):
+- AI / ML roles: "A knowledge engine with no neural weights: ask it a question and watch every
+  reasoning step, then the research record behind it."
+- Game studios: "Playable demos - Résumé Breakout and Star Fighter - plus the engine work that
+  runs them, all in this page."
+The "All" view was removed the same day (it put the résumé in front of every visitor of the
+anchor demo); the page now opens on the AI view.
