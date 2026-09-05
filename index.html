@@ -201,7 +201,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 doesn't have enough.</p>
 
 <div class="tabs">
-  <div class="tab on" data-p="think" data-aud="ai,games">Ask anything · watch it think</div>
+  <div class="tab on" data-p="think" data-aud="ai,games">Ask anything · watch it think <span class="beta">BETA</span></div>
   <!-- hidden while the English front end is finished - see spec_en.js
   <div class="tab" data-p="code">Write a function <span class="beta">BETA</span></div>
   -->
@@ -656,7 +656,7 @@ doesn't have enough.</p>
        agree. It was "is there a favorite color" (B47): that one grinds to the 190-node cap for
        half a minute and answers "black and white" off three association hops - a fine bug
        report and a poor thing to fire at a stranger on load. -->
-  <input id="q" placeholder="how many types of bear have brown hair" autocomplete="off">
+  <input id="q" placeholder="capital of the country Melbourne is in" autocomplete="off">
   <button id="go" disabled>loading...</button>
 </div>
 <div id="out"></div>
@@ -699,11 +699,12 @@ it.</div>
 
 <!-- ================= REASON PANEL ================= -->
 <div id="p-think" class="panel on">
+  <p class="small" style="color:#8a5a1d;margin:0 0 10px"><b>BETA - under construction.</b> This engine is being replaced by a rebuild with real entity identity (a store of things, not strings); what works and what is wrong changes as I work on it, up and down. The question below runs on a string-keyed graph and can merge namesakes; the rebuild fixes that.</p>
 <p class="small" id="thinkIntro" style="margin-top:0">A lookup answers one hop. This
 <strong>chains</strong> them, hop by hop, over 66 million facts - and when it cannot reach the
 target it abstains, goes and learns what else that thing is called, and tries again.</p>
 <div class="ask">
-  <input id="tq" placeholder="how many types of bear have brown hair" autocomplete="off">
+  <input id="tq" placeholder="capital of the country Melbourne is in" autocomplete="off">
   <button id="tgo" disabled>loading...</button>
 </div>
 <p class="hint">Try
