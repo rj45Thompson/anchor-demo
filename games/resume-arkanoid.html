@@ -1,5 +1,9 @@
 <!doctype html>
 <meta charset="utf-8">
+<!-- Without this a phone lays the page out at desktop width and shrinks it: measured on an
+     emulated Pixel 8, innerWidth came back 785 on a 375-wide screen and every control was
+     unreadable. This is half of "does not work on Android"; the other half is touch input. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Résumé Breakout - R.J. Thompson</title>
 <style>
   :root{
@@ -8,8 +12,12 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
-    font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+    font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;
+    overscroll-behavior:none}
   #wrap{position:relative;width:100%;height:100%}
+  /* the canvas is the touch surface: no scroll, no pinch-zoom, no long-press callout */
+  #c{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent}
   canvas{display:block;width:100%;height:100%}
 
   .hud{position:absolute;pointer-events:none;user-select:none}
@@ -114,7 +122,7 @@ const ROWS = [
   { tone:0, items:[
     // Current work leads, and matches games/build_resume.py - the game crawl and the downloadable
     // PDF are the same CV, so they must not drift apart.
-    ["Tami","2025-now","Unity tactics RPG solo: tile editor, VFX authoring, 1,039-test suite"],
+    ["Tami","2025-now","HD-2D tactics RPG solo; Block Painter replaces Unity's level tools"],
     ["AI verification","2025-now","66.4M-fact engine, no neural weights; published its own retraction"],
     ["Utherverse","2024-25","Asst. to Director of Development - live virtual-world platform ops"],
     ["BioWare","2023-24","Shipped the dialog & narrative system for Dragon Age 4 (Frostbite)"],
@@ -144,7 +152,10 @@ const TONES = [0x4fc3f7, 0x7c4dff, 0x5ee6a8, 0xffb74d];
 // ---------------------------------------------------------------- three setup
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// A phone is a touch screen with a 3x display: cap the pixel ratio lower there, or a 375-wide
+// screen renders 1125 columns of a full 3D scene and the frame rate is what suffers.
+const COARSE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+renderer.setPixelRatio(Math.min(devicePixelRatio, COARSE ? 1.5 : 2));
 const scene = new THREE.Scene();
 /* LIGHTING. RJ, twice: "a little dark", "it's very dim". The cause was this fog. FogExp2 falls
    off with the SQUARE of distance, and at density 0.028 over the ~40 units between the camera and
@@ -1718,17 +1729,27 @@ function tick(now){
     if(keys['ArrowUp']   ||keys['w']||keys['W']) vdir += 1;
     if(keys['ArrowDown'] ||keys['s']||keys['S']) vdir -= 1;
     const reach = textHalfW + 1.0;
-    ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*SHIP_SPEED_X*dt, -reach, reach);
+    // Touch: the finger's movement since last frame moves the ship directly, scaled so a drag
+    // across 60% of the screen width covers the whole reach. Relative, not absolute, so the
+    // thumb never has to sit on top of the ship it is steering.
+    let tdx = 0, tdy = 0, bank = dir;
+    if(touch.on && (touch.dx || touch.dy)){
+      tdx = touch.dx * (2*reach) / (innerWidth * 0.6);
+      tdy = -touch.dy * (SHIP_Y_MAX - SHIP_Y_MIN) / (innerHeight * 0.25);
+      bank = THREE.MathUtils.clamp(touch.dx / 12, -1, 1);
+      touch.dx = 0; touch.dy = 0;
+    }
+    ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*SHIP_SPEED_X*dt + tdx, -reach, reach);
     // vertical travel is deliberately a narrow band - this is a scrolling shooter, the ship
     // holds station near the bottom and only nudges up to meet the text or back off from it
-    ship.position.y = THREE.MathUtils.clamp(ship.position.y + vdir*SHIP_SPEED_Y*dt, SHIP_Y_MIN, SHIP_Y_MAX);
-    ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -dir*.38, .14);
+    ship.position.y = THREE.MathUtils.clamp(ship.position.y + vdir*SHIP_SPEED_Y*dt + tdy, SHIP_Y_MIN, SHIP_Y_MAX);
+    ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -bank*.38, .14);
     shipGlow.intensity = 1.4 + Math.sin(t*9)*.3;
     if(ship.userData.plumes){
       ship.userData.plumes.forEach(pl=>{
         pl.material.uniforms.uTime.value = t;
         pl.material.uniforms.uThrust.value =
-          THREE.MathUtils.lerp(pl.material.uniforms.uThrust.value, dir?1:0.28, .18);
+          THREE.MathUtils.lerp(pl.material.uniforms.uThrust.value, bank?1:0.28, .18);
       });
     }
     if(ship.userData.core){
@@ -1983,6 +2004,62 @@ addEventListener("wheel", e=>{
   e.preventDefault();
   flameBurst = Math.min(1.4, flameBurst + 0.45);     // spin the wheel to gout flame
 }, {passive:false});
+
+// ---------------------------------------------------------------- touch
+// Android had no way in at all: every control above is a key, a mouse button or a wheel.
+// One finger on the canvas flies the ship (relative drag, consumed by tick) and holds fire,
+// a second finger raises the shield, a double-tap gouts flame. Listeners sit on the canvas
+// only, so taps on the START / PLAY AGAIN / fullscreen buttons stay ordinary clicks.
+const touch = { on:false, id:null, x:0, y:0, dx:0, dy:0, lastTap:0, tapX:0, tapY:0, moved:0 };
+function touchPoint(e, id){
+  for(const p of e.touches) if(p.identifier===id) return p;
+  return e.touches[0] || null;
+}
+canvas.addEventListener("touchstart", e=>{
+  if(state!=="play") return;
+  e.preventDefault();
+  if(!touch.on){
+    const p = e.changedTouches[0];
+    touch.on = true; touch.id = p.identifier; touch.x = p.clientX; touch.y = p.clientY;
+    touch.dx = touch.dy = 0; touch.moved = 0; touch.tapX = p.clientX; touch.tapY = p.clientY;
+    shootHeld = true; fire();
+  }
+  if(e.touches.length >= 2) shieldHeld = true;
+}, {passive:false});
+canvas.addEventListener("touchmove", e=>{
+  if(!touch.on) return;
+  e.preventDefault();
+  const p = touchPoint(e, touch.id); if(!p) return;
+  touch.dx += p.clientX - touch.x; touch.dy += p.clientY - touch.y;
+  touch.moved += Math.abs(p.clientX - touch.x) + Math.abs(p.clientY - touch.y);
+  touch.x = p.clientX; touch.y = p.clientY;
+}, {passive:false});
+function touchEnd(e){
+  if(e.cancelable) e.preventDefault();
+  if(e.touches.length < 2) shieldHeld = false;
+  if(e.touches.length === 0){
+    if(touch.on && touch.moved < 12){                  // a tap, not a drag
+      const now = performance.now();
+      if(now - touch.lastTap < 320) flameBurst = Math.min(1.4, flameBurst + 0.6);
+      touch.lastTap = now;
+    }
+    touch.on = false; touch.id = null; touch.dx = touch.dy = 0; shootHeld = false;
+  } else if(touch.on){
+    // the steering finger lifted but another stays: hand steering to the one that remains
+    const p = e.touches[0]; touch.id = p.identifier; touch.x = p.clientX; touch.y = p.clientY;
+  }
+}
+canvas.addEventListener("touchend", touchEnd, {passive:false});
+canvas.addEventListener("touchcancel", touchEnd, {passive:false});
+
+// Say what the controls actually are on the device in hand. The keyboard line is wrong on a
+// phone, and a wrong instruction reads as a broken game.
+if(COARSE){
+  const line = "Drag to fly &middot; hold to shoot &middot; second finger for shields &middot; double-tap for flame";
+  const m = document.querySelector('#start .muted'); if(m) m.innerHTML = line;
+  const b = document.getElementById('bottom'); if(b) b.innerHTML = "drag to fly &nbsp;&middot;&nbsp; hold to shoot &nbsp;&middot;&nbsp; grab the <b>P</b> pickups";
+  const f = document.getElementById('fsBtn'); if(f) f.textContent = "⛶ Fullscreen";
+}
 
 function resize(){
   const w = innerWidth, h = innerHeight;

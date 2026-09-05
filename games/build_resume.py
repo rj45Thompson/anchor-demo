@@ -78,15 +78,18 @@ EARLIER = ("<b>Earlier:</b> Max Integration, project lead on a Win32 CRM (2004) 
            "Electronic Arts, QA on NHL 98, Need for Speed, Warcraft II (1996-97)")
 
 CURRENT = [
-    ("Tami - Unity tactics RPG, engine and tooling", "2025 - present",
-     "A full tactics RPG built solo in Unity, and more tools than game: a terrain and tile editor "
-     "with one runtime engine behind two front-ends, a type-driven UI catalogue with an HTTP "
-     "bridge so panels can be inspected and screenshotted headlessly, an authoring tool for "
-     "ability and item VFX, and a <b>1,039-test</b> EditMode suite run against an isolated clone "
-     "rather than the live editor. Also wrote a Unity Shuriken to Unreal Niagara VFX converter "
-     "when no off-the-shelf one existed: <b>65 of 65</b> emitters port structurally, and the "
-     "honest finding is that the LOOK does not, because blend mode is a number in the source "
-     "material rather than anything a shader name reveals."),
+    ("Tami - HD-2D tactics RPG in Unity, engine and tooling", "2025 - present",
+     "A solo-built tactics RPG in the vein of <b>Wandering Sword</b> and <b>Octopath Traveler 2</b>: "
+     "pixel-art units in a lit 3D world with real shadows, tilt-shift and bloom, fighting on a grid "
+     "with an 18-element synergy system driven from the design spreadsheet. The standout is "
+     "<b>Block Painter</b>, a rewrite of the Unity level workflow: one runtime engine behind an "
+     "editor window and an in-game painter, brushes as config files a registry discovers, live "
+     "preview before bake, four biomes and <b>326</b> ready prefabs, palettes that withhold broken "
+     "assets and say so. A designer prototypes and duplicates maps without touching the raw Unity "
+     "editor. Around it: a VFX authoring tool fed from the same sheets, an HTTP bridge of <b>132</b> "
+     "routes so scripts and AI agents drive the editor and screenshot any panel headlessly, a "
+     "<b>1,694-test</b> EditMode suite, and a Shuriken to Niagara converter (<b>65 of 65</b> emitters "
+     "port structurally; the look does not, and the write-up says why)."),
     ("Verification and calibration for AI systems", "2025 - present",
      "A knowledge engine with <b>no neural weights</b> over <b>66.4M facts</b>, running entirely "
      "in the browser: it reports a measured confidence per inference chain and abstains rather "
