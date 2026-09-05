@@ -603,12 +603,12 @@ const BOSS_RISE_SPEED = 7.0;     // units per second on the way up
 const BOSS_SPIN       = 0.5;     // rad/s - a packed ball needs to tumble or it reads as a blob
 const BOSS_PER_HIT    = 1;       // damage one bullet does
 const BOSS_HP_PER_LTR = 1;       // hp added per absorbed letter
-const BOSS_WAKE       = 16;      // letters absorbed before it starts fighting back. Measured:
+const BOSS_WAKE       = 30;      // was 16 - letters absorbed before it starts fighting back. Measured:
                                  // a 38s run fed it only 14, so a threshold of 40 meant the
                                  // boss could never wake in a real round and the whole
                                  // mechanic was decorative.
-const BOSS_FIRE_BASE  = 2.6;     // seconds between salvos at BOSS_WAKE
-const BOSS_FIRE_MIN   = 0.7;     // floor, however fat it gets
+const BOSS_FIRE_BASE  = 3.6;     // was 2.6 - seconds between salvos at BOSS_WAKE
+const BOSS_FIRE_MIN   = 1.0;     // was 0.7 - floor, however fat it gets
 const BOSS_PACK       = 0.62;    // radius per glyph^(1/3) - tight, so it packs as a BALL
 const BOSS_MAX_MESH   = 140;     // draw cap: beyond this it grows in stats only, disclosed below
 
@@ -839,7 +839,11 @@ function goFullscreen(){
    gradient, in a corner - invisible exactly when it matters. One renderer now owns it, so a
    `lives--` anywhere cannot leave the HUD stale, and the shield charge gets its own gauge because
    right-mouse is now a real resource against the turrets. */
-const LIVES_MAX = 3;
+// RJ 2026-09-05: "kind of impossible". Measured with a scripted run before tuning: a motionless
+// player was dead at 6.8 s and a competent bot (shoots, hunts, dodges, shields) at 22.7 s, first
+// life gone at 4.1 s / 6.6 s. Five lives, a slower opening crawl, later and smaller raids, fewer
+// turrets and a longer hull i-frame are the dials; the numbers after each are what they were.
+const LIVES_MAX = 5;   // was 3
 function drawLives(){
   const box = document.getElementById("lives");
   if(box){
@@ -870,12 +874,13 @@ function drawShield(){
    the three things that were missing: a hull-sized hitbox rather than the whole row, i-frames so
    one dense line cannot eat every life in a frame, and the shield stopping it. */
 const DROP_CHANCE     = 0.06;  // was 0.5 - a powerup on half of all company lines
-const SHIELD_DRAIN    = 0.22;  // was 0.42 - a full charge lasted 2.4s
-const SHIELD_RECHARGE = 0.30;  // was 0.22
-const HULL_R          = 1.45;  // measured: closest approach in real play was 1.1, so 0.85 was a
+const SHIELD_DRAIN    = 0.16;  // was 0.22, before that 0.42 - a full charge lasted 2.4s
+const SHIELD_RECHARGE = 0.40;  // was 0.30
+const HULL_R          = 1.20;  // was 1.45 -  // measured: closest approach in real play was 1.1, so 0.85 was a
                                // permanent near-miss - the collision existed and could never fire  // ship hitbox for letter contact - deliberately smaller than the
                                // 1.15 used for bolts, so grazing text is survivable
-const HULL_IFRAME     = 1.30;  // seconds of invulnerability after a hull hit
+const HULL_GRACE      = 14;    // seconds at the start when a letter on the hull breaks but costs nothing
+const HULL_IFRAME     = 1.80;  // was 1.30 -  // seconds of invulnerability after a hull hit
 let   hullSafe        = 0;     // shared i-frame across ALL damage sources; >0 means recent hit
 
 /* EVERY source of damage goes through here. Bolts and raids each decremented lives directly with
@@ -889,7 +894,7 @@ function takeDamage(pos, colour, shakeAmt){
   hullSafe = HULL_IFRAME;
   // RJ: tell them the shield exists the FIRST time something hurts them. A defence nobody knows
   // about is the same as no defence, and the right button is not a guessable control.
-  if(!shieldHintShown){ shieldHintShown = true; banner("HOLD RIGHT CLICK FOR SHIELD"); }
+  if(!shieldHintShown){ shieldHintShown = true; banner(COARSE ? "SECOND FINGER FOR SHIELD" : "HOLD RIGHT CLICK FOR SHIELD"); }
   if(pos) spark(pos, colour || 0xff5470, 24);
   lives--; drawLives();
   shake = Math.max(shake, shakeAmt || 0.6);
@@ -914,21 +919,31 @@ function runHull(dt){
         continue;
       }
       L.dissolve = 0.01; brokenCount++;
+      // Opening grace. Measured: every scripted run, bot or motionless, lost a life at 5.6 s and
+      // another at 12.5 s - the first two lines of text arriving at the hull, before any raid or
+      // turret exists. That is the rule being taught by death. For the first HULL_GRACE seconds a
+      // letter on the hull still breaks and still sparks, the banner says why, and it costs nothing.
+      if(t < HULL_GRACE){
+        spark(new THREE.Vector3(L.x, ly, 0), 0xffb74d, 14);
+        hullSafe = 0.6;
+        if(!runHull._taught){ runHull._taught = true; banner("LETTERS HIT YOUR HULL - SHOOT A LANE THROUGH"); }
+        return;
+      }
       takeDamage(new THREE.Vector3(L.x, ly, 0), 0xff5470, 0.7);
       return;                                      // one hit per frame, never a whole line at once
     }
   }
 }
 
-const TURRET_RATE   = 0.028;   // harder: more armed letters (0.055 measured unwinnable)  // fraction of eligible letters that carry a gun. Measured: 0.055
+const TURRET_RATE   = 0.016;   // was 0.028 (0.055 measured unwinnable)  // fraction of eligible letters that carry a gun. Measured: 0.055
                               // armed 76 of 1068 glyphs and killed a motionless player in 8s,
                               // which is the same unwinnable-by-default trap the old
                               // every-letter-hurts-you rule was.
-const TURRET_COOL   = 3.6;    // seconds between shots from one turret
-const TURRET_SPEED  = 11.0;
+const TURRET_COOL   = 5.0;    // was 3.6   // seconds between shots from one turret
+const TURRET_SPEED  = 9.5;    // was 11.0
 const TURRET_RANGE  = 17;     // only turrets this close to the ship bother firing
 const TURRET_MAX    = 40;     // hard cap on live bolts
-const TURRET_WARMUP = 7;   // harder: guns open fire sooner      // seconds before any turret opens fire. Measured: with guns live
+const TURRET_WARMUP = 14;  // was 7      // seconds before any turret opens fire. Measured: with guns live
                               // from frame one a player who has not yet found the shield is
                               // dead at 8s, which is not difficulty, it is not being told the
                               // rules. Shield-held survives indefinitely, so the mechanic is
@@ -970,7 +985,7 @@ function runTurrets(dt){
   if(t < TURRET_WARMUP){
     if(!runTurrets._warned && t > TURRET_WARMUP - 2.2){
       runTurrets._warned = true;
-      banner("TURRETS ARMING - RIGHT MOUSE FOR SHIELD");
+      banner(COARSE ? "TURRETS ARMING - SECOND FINGER FOR SHIELD" : "TURRETS ARMING - RIGHT MOUSE FOR SHIELD");
     }
     return;
   }
@@ -1032,15 +1047,16 @@ function clearBolts(){
    you read it. The threat is a RAID - every few seconds a handful of letters tear themselves off
    the page and dive at you, with lateral curve so they cannot be dodged by standing still. Only
    those can hurt you, and the shield stops them. */
-const RAID_EVERY   = 3.6;   // harder: raids more often    // seconds between raids
-const RAID_BASE    = 4;   // harder: bigger first raid      // letters in the first raid
+const RAID_EVERY   = 6.0;   // was 3.6    // seconds between raids
+const RAID_FIRST   = 10;    // seconds before the FIRST raid - time to find the controls
+const RAID_BASE    = 2;     // was 4      // letters in the first raid
 const RAID_PER_ERA = 1;      // one more per era, so later phases bite harder
-const RAID_SPEED   = 7.5;
+const RAID_SPEED   = 6.5;   // was 7.5
 const RAID_CURVE   = 3.2;    // lateral "english" on the dive
-const RAID_SHOOT_COOL  = 2.2;   // seconds between shots from one diver
+const RAID_SHOOT_COOL  = 3.4;   // was 2.2   // seconds between shots from one diver
 const RAID_SHOOT_SPEED = 13.0;  // faster than a turret bolt - a diver is the close-range threat
-const RAID_MAX     = 18;        // harder: was 14     // hard cap on live attackers
-const RAID_RAMP_SEC = 18;   // harder: ramps faster    // one more attacker per raid every this many seconds
+const RAID_MAX     = 10;        // was 18     // hard cap on live attackers
+const RAID_RAMP_SEC = 40;   // was 18    // one more attacker per raid every this many seconds
 const RAID_SLOT_W   = 3.0;   // spacing of the formation row
 const RAID_FORM_Y   = 12.0;  // how far above the ship the row assembles
 const RAID_HOLD     = 1.1;   // seconds the row holds before the first one peels off
@@ -1208,8 +1224,8 @@ function clearAttackers(){
 // pickups keep their ORDER (a pickup must never fire slower than the gun it replaces, which
 // PULSE LASER at 0.14 would have) and the live-bullet cap rises so the cadence is reachable:
 // a bullet lives ~0.8 s (34 units/s over the board), so 10/s twin needs ~16 in flight.
-const FIRE_CD_BASE = 0.10;
-const BULLET_MAX   = 24;
+const FIRE_CD_BASE = 0.085;   // was 0.10 - a little more base gun
+const BULLET_MAX   = 30;      // was 24
 const POWERS = {
   energy:    { n:"PULSE LASER",    col:0x66ccff, dur:9.0,  icon:"bar",   cd:0.08, twin:true,  homing:0,   splash:0 },
   ballistic: { n:"AUTOCANNON",     col:0xffc24a, dur:8.0,  icon:"dots",  cd:0.18, twin:true,  homing:0,   splash:0 },
@@ -1617,7 +1633,7 @@ function spark(pos, colorHex, n){
 }
 
 // ---------------------------------------------------------------- state
-let state='menu', score=0, lives=3, t=0, shake=0;
+let state='menu', score=0, lives=LIVES_MAX, t=0, shake=0;
 const keys = {};
 const readout = document.getElementById('readout');
 let readTimer = 0;
@@ -1631,10 +1647,12 @@ function reset(){
   buildBoard();
   bullets.forEach(b=>board.remove(b)); bullets=[];   // board, not scene: that is their parent
   bits.forEach(b=>scene.remove(b)); bits=[];
-  score=0; lives=3; shake=0;
+  score=0; lives=LIVES_MAX; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
   camFollowX=0; fullGraphics(); clearBolts(); armTurrets(); bossClear(); bossInit();
+  raidT = RAID_EVERY - RAID_FIRST;   // the first raid waits RAID_FIRST seconds, not RAID_EVERY
+  runHull._taught = false;           // the hull lesson shows again on a replay
   firstHitDone=false; mushroomDone=false; poweredOnce=false;
   t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0; hullSafe=0; shieldHintShown=false;
   clearAttackers();
@@ -1758,7 +1776,7 @@ function tick(now){
 
     // the CV crawls past at a steady rate, easing up a touch as more of it is broken
     const cleared = totalGlyphs ? brokenCount/totalGlyphs : 0;
-    crawl += dt * (2.6 + cleared*0.5);
+    crawl += dt * (2.0 + cleared*0.5);   // was 2.6 - a quarter slower opening, same ramp
     // ease toward the earned reveal, then let everything read off that one number
     debris.forEach(d=>{
       d.rotation.x += d.userData.spin.x*dt; d.rotation.y += d.userData.spin.y*dt;
