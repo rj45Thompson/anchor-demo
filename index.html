@@ -201,11 +201,11 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 doesn't have enough.</p>
 
 <div class="tabs">
-  <div class="tab on" data-p="think">Ask anything · watch it think</div>
+  <div class="tab on" data-p="think" data-aud="ai,games">Ask anything · watch it think</div>
   <!-- hidden while the English front end is finished - see spec_en.js
   <div class="tab" data-p="code">Write a function <span class="beta">BETA</span></div>
   -->
-  <div class="tab" data-p="resume" data-aud="ai,games">R&eacute;sum&eacute; Breakout</div>
+  <div class="tab" data-p="resume" data-aud="games">R&eacute;sum&eacute; Breakout</div>
   <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
   <div class="tab" data-p="inv" data-aud="ai,games">Inventions</div>
   <div class="tab" data-p="papers" data-aud="ai">White papers</div>
@@ -494,7 +494,7 @@ doesn't have enough.</p>
     <button class="subtab" data-s="s-bench" data-aud="ai">BossBench</button>
     <button class="subtab" data-s="s-tdre" data-aud="ai">TDRE</button>
     <button class="subtab" data-s="s-warship" data-aud="ai">WarShip</button>
-    <button class="subtab" data-s="s-synth" data-aud="ai,games">Program search</button>
+    <button class="subtab" data-s="s-synth" data-aud="ai">Program search</button>
     <button class="subtab" data-s="s-cart" data-aud="">CART</button>
   </div>
 
@@ -4497,8 +4497,8 @@ renderCode();
 (function(){
   var NOTE = {
     all:   "everything, including material I would not lead with for either audience",
-    ai:    "evaluation, calibration and verification work. Speculative physics hidden.",
-    games: "engine, tools and real-time work. Research record and physics hidden."
+    ai:    "the knowledge engine and the research record only - no games here. Speculative physics hidden.",
+    games: "the games, the knowledge engine and the engine work - the research record and physics hidden."
   };
   function match(el, mode){
     if(mode === "all") return true;
