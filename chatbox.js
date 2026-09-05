@@ -22,8 +22,30 @@
 (function (root) {
   "use strict";
 
+  /* Where the agent lives depends on where the PAGE came from, and the difference is not
+     cosmetic - one of the two addresses cannot work from the other context.
+
+       page on loopback  ->  talk to loopback. The agent is on this very machine, so the tunnel
+                             is a pointless round trip, and more importantly the browser applies
+                             no local-network restriction to a loopback page.
+       page anywhere else ->  the tunnel is the only route that exists for a visitor.
+
+     This is what makes the site testable by its owner. From RJ's own machine the published
+     https page CANNOT reach the tunnel: on the tailnet that hostname resolves to its 100.x
+     CGNAT address, and a browser refuses to let an https page reach a "local" address, so the
+     box correctly reports itself offline for the one person who wants to check it. Opening the
+     same page over http://localhost sidesteps that entirely - and it is the same page, not a
+     mock. */
+  function defaultEndpoint() {
+    var h = (typeof location !== "undefined" && location.hostname) || "";
+    if (h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "[::1]") {
+      return "http://127.0.0.1:8778";
+    }
+    return "https://rj-desk.tail0a7471.ts.net";
+  }
+
   var CFG = {
-    ENDPOINT:   "https://rj-desk.tail0a7471.ts.net",
+    ENDPOINT:   defaultEndpoint(),
     // NOTE: a token in public page source is a speed bump, not authentication - anyone can read
     // it. It keeps drive-by scanners off the endpoint. The real protections are that the agent
     // has no tools at all, plus the per-IP and global rate caps on the server.

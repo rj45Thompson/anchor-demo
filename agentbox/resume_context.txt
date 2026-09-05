@@ -16,15 +16,15 @@ UI/UX: WPF, XAML, Custom UI libraries, Electron, Web UI frameworks
 Platforms: Windows, Mobile (iOS/Android), Embedded Systems
 Specialties: Threading/debugging, low-level networking (Sockets, TCP/IP), graphics and animation optimization, real-time systems
 Notable Achievements:
-• Performance Enhancement: Led optimization initiatives within the live ops team, resulting in a notable 7% boost in Company of Heroes' performance.
-• Strategic Transition: Orchestrated Unity (Finger Food studio dept)' comprehensive shift to Unity, enhancing project efficiency and collaboration.
-• Innovative Solutions: Developed Star Wars BB8's innovative feature, enabling real-time video overlays on low-spec devices at a steady 30fps.
-• Animation Advancement: Designed and implemented a dynamic character scaling mechanism, optimizing animations for Skylanders.
-• Efficiency Enhancement: Significantly accelerated the loading speed of Skylanders' character animation Asset Bundles by 200%.
-• Project Delivery: Successfully launched the Call of Duty Ghost App under stringent deadlines, consistently dedicating 60 to 100-hour workweeks over three months.
-• Game Development: Conceptualized and launched "Zombie Crossing," a distinctive game experience available on Xbox 360
-Utherverse – MetaVerse
-Assistant to the Director of Development 2024 – 2025 (six-month contract)
+- Performance Enhancement: Led optimization initiatives within the live ops team, resulting in a notable 7% boost in Company of Heroes' performance.
+- Strategic Transition: Orchestrated Unity (Finger Food studio dept)' comprehensive shift to Unity, enhancing project efficiency and collaboration.
+- Innovative Solutions: Developed Star Wars BB8's innovative feature, enabling real-time video overlays on low-spec devices at a steady 30fps.
+- Animation Advancement: Designed and implemented a dynamic character scaling mechanism, optimizing animations for Skylanders.
+- Efficiency Enhancement: Significantly accelerated the loading speed of Skylanders' character animation Asset Bundles by 200%.
+- Project Delivery: Successfully launched the Call of Duty Ghost App under stringent deadlines, consistently dedicating 60 to 100-hour workweeks over three months.
+- Game Development: Conceptualized and launched "Zombie Crossing," a distinctive game experience available on Xbox 360
+Utherverse - MetaVerse
+Assistant to the Director of Development 2024 - 2025 (six-month contract)
 (Note:  please request an attached T4 for further date info / wages / references / proof)
 Collaborated with the Director to develop and implement departmental plans and goals, ensuring alignment with company objectives.
 Oversaw daily operations within the virtual world platform, coordinating cross-functional teams to maintain seamless user experiences.
@@ -34,16 +34,16 @@ Assisted in budgeting processes and monitored departmental expenses to ensure fi
 Maintained scheduling of events and represented the company in various capacities, enhancing brand presence.
 Created comprehensive reports for executive leadership, providing insights into departmental performance and areas for improvement.
 Fulfilled additional duties as assigned by the Director, demonstrating flexibility and commitment to organizational success.
-BIOWARE – Dragon Age
-Senior Software Developer 2023 – 2024 (seven-month contract)
+BIOWARE - Dragon Age
+Senior Software Developer 2023 - 2024 (seven-month contract)
 HIGHLIGHTS
 Tech Stack: C++, Frostbite, Frosted,
 Platforms: Switch, Android, IOS,
 Shipped the dialog and narrative system for Dragon Age 4
 KEY PROJECTS
 Mentored developers on the frosted cinematic/narrative system. Previously, worked on the cinematics team at EA and therefore was a great asset during final).
-Activision – Call of Duty
-Senior Software Developer 2022 – 2023 (six-month contract)
+Activision - Call of Duty
+Senior Software Developer 2022 - 2023 (six-month contract)
 HIGHLIGHTS
 Tech Stack: C++, Unity,
 Platforms: Switch, Android, IOS,
@@ -51,10 +51,10 @@ Shipped new Live ops system for Call of Duty
 Ported low level networking and real time voice chat for Tango to run on switch.
 KEY PROJECTS
 Mentored younger developers at Activision and helped architect better interop com bridges for android and IOS.
-Helped debug/fix difficult low-level threading / networking issues on Disney’s Mirrorverse.
+Helped debug/fix difficult low-level threading / networking issues on Disney's Mirrorverse.
 Fixed real time chat networking issues and photon networking issues for operation Tango.
 Specialized at integrating third party libraries i.e.: Vivox, Photon, OpenCV (computer vision, Chat and video tools)
-Sega (Relic) 2021 – 2022
+Sega (Relic) 2021 - 2022
 Senior Software Developer
 HIGHLIGHTS
 Worked for the shipping Company of Heroes 3. Specifically, I was brought on to optimize the workflow of WPFG which is a port of WPF which runs on C++ rather than c#.
@@ -67,7 +67,7 @@ Identified and fixed major process issues which improved our team's velocity by 
 Decompiled .NET framework in order to adjust the C++ WPFG relic framework and keep them roughly working similar.
 Wrote build tools for perforce and their pipelines hot reload functionality.
 Implemented the user interface for the HUD for the terrain and unit indicators.
-Electronic Arts Oct 2016–Sept 2021
+Electronic Arts Oct 2016-Sept 2021
 Software Developer
 Highlights
 Played an integral part in the Frosted Game Engine from within the Editor Frameworks team, Cinematics, Schematics and Lighting workflows teams.
@@ -81,7 +81,7 @@ Added Many Cinematic features such grouping, video controls and keyframe control
 Wrote crash control and recovery application.
 Wrote cinematic controls for artists such as the main playback rewind controls and the preview window HUD for frosted editor.
 Helped architect their keyframe editor.
-UNITY Apr 2014 – Oct 2016
+UNITY Apr 2014 - Oct 2016
 Development Team Lead
 Highlights
 Tech Stack: C#, C++, Unity, JavaScript
@@ -98,26 +98,26 @@ Achieved 30fps on low end mobile devices.
 XAML and WPF UI using MVVM design patterns.
 Implemented 3d Math library in JavaScript utilizing node.js and electron.
 Windows 10 UI framework development for NFL utilizing XAML and unity
-Industrial Alliance Insurance Aug 2013—Feb 2014
+Industrial Alliance Insurance Aug 2013 - Feb 2014
 Software Engineer
 Architected business project called Unification using WPF, WCF and MVVM in .Net
-Wrote all the client-side connections for WCF interface.
+Wrote all the client-side connections for WCF interface.
 Profiled web service performance and optimized scalability and error handling.
-Microsoft Big Park Apr 2012 – Aug 2013
+Microsoft Big Park Apr 2012 - Aug 2013
 Development Team Load
 Big Park focuses on apps for Xbox one such as ESPN, UFC, NFL as well as Kinect enabled games. They specialize in all gaming related technology such as Lua, Unity, C++, XAML.
 Worked on complex real-time UI systems utilizing Lua for NFL, Bonnaroo, ESPN & UFC.
 Implemented a system to visualize actual NFL players position using helmet telemetry and GPS.
-Novadaq Technologies Inc 2012 – Apr 2013
+Novadaq Technologies Inc 2012 - Apr 2013
 Software Developer
-Novadaq’s global mission is enabling surgeons with clinically relevant, innovative fluorescence imaging solutions to enhance the lives of patients and their surgeons, while reducing health care costs.
+Novadaq's global mission is enabling surgeons with clinically relevant, innovative fluorescence imaging solutions to enhance the lives of patients and their surgeons, while reducing health care costs.
 Lead developer and Architect of Cinevaq 2.0 (SPY ELITE) product line. The main technology used is C# with some C++ video libraries
-FinancialCad 2010 – Apr 2012
+FinancialCad 2010 - Apr 2012
 Software Developer
 Lead architect on the Silverlight/XNA presentation layer.
 Architect of their Fair Value insight reporting project.
 Optimized N-Tier scalable architecture by developing a faster .Net XML parser.
-Neoteric Technology July 2004 –June 2010
+Neoteric Technology July 2004 -June 2010
 Software Developer
 Build user interfaces libraries from the ground up with Win32 API. Utilized Visual Studio, C++
 Designed the backend using a N-Tier architecture
@@ -125,37 +125,37 @@ Lead a team of four developers and was responsible for hiring and training
 Designed blood management process and architecture.
 Designed and managed Auto Fate Web utilizing ASP.NET 2.0
 Responsible for meeting a tight schedule as well as finalizing all design documents in UML (use case, class, sequence diagrams), test plans, automated test suites.
-Max Integration Jan 2004– July 2004
+Max Integration Jan 2004- July 2004
 Software Developer
 HIGHLIGHTS
-Designer and Project Lead of Max Integration’s Look Out Win32, a flag ship CRM product.
+Designer and Project Lead of Max Integration's Look Out Win32, a flag ship CRM product.
 Designed backend using a N-Tier architecture with SQL 2000
 Built a highly motivated team of six developers.
 Converted Look Out CRM to being mobile device capable: utilized Microsoft Mobile ASP.NET
 Finalized all test plans, automated test suites & UML Class / Sequence diagrams. Environment was Visual Studio .Net 1.0 , SQL 2000, C#, ASP.NET 1.0
-RedHawk Gaming Software Inc. 2001 – 2003
+RedHawk Gaming Software Inc. 2001 - 2003
 Software Developer
 HIGHLIGHTS
 Designed and supported gaming subsystems, low level device drivers for barcode readers, maintained legacy code and provided QA
-Infowave Technologies1997 – 2001
+Infowave Technologies1997 - 2001
 Quality Assurance
 HIGHLIGHTS
 Managed QA test team of five junior developers / testers
 Maintained client and server features including automated testing.
 suites, glib compression, optimization, developed test suites.
-Electronic Arts 1996 – 1997
+Electronic Arts 1996 - 1997
 Quality Assurance
 HIGHLIGHTS
 Created test suites on the following projects: NBA 97 (Sega Saturn), NFS1-NFS2 (PC), Warcraft2, Diablo2 (PSX), NHL 98 (PSX & Saturn), PGA tour 97-98 (PSX), PGA Wentworth
 EDUCATION AND TRAINING
 BCIT
 .NET High Tech Professional Software Systems Development
-2003 – 2004
+2003 - 2004
 Advanced C++
-1999 –2001
+1999 -2001
 WSA Consulting
 U.M.L. Unified Modeling Language
 2000
 OO Techniques, Building large scale applications
 Development Testing and Automation Tools
-1998 – 2001
+1998 - 2001
