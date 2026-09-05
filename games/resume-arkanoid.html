@@ -385,6 +385,10 @@ function glyphGeometry(ch){
 
 // ---------------------------------------------------------------- layout + pooling
 const CH_W = 1.62, LINE_H = 3.4;   // bigger blocks - RJ
+// RJ 2026-09-05: "the ship moves way too slow and now it's impossible". The blocks grew 45%
+// (CH_W 1.12 -> 1.62, cs d6bae7f) so the text band the ship has to cover grew with them, but
+// the ship kept its 26 units/s. 40 restores the old cover time with a margin; vertical up with it.
+const SHIP_SPEED_X = 40, SHIP_SPEED_Y = 20;   // world units per second
 const SHIP_Y_MIN = -10.2, SHIP_Y_MAX = -3.6;   // narrow station-keeping band      // glyph pitch, line pitch
 const VIEW_TOP = 15.0, VIEW_BOT = -13.5;
 const letterGeo = new THREE.BoxGeometry(CH_W*0.94, CH_W*1.24, CH_W*0.46);
@@ -1189,10 +1193,16 @@ function clearAttackers(){
 // Weapons ported from starfighter.html's WEAPONS table - same names, same colours, same relative
 // cadence and behaviour (twin barrels, homing, splash), retuned from its 3D space combat to this
 // 2D board. Held as temporary powerups rather than permanent loadout.
+// RJ 2026-09-05: "make its shooting faster too". Base gun 0.16 -> 0.10 s between shots; the
+// pickups keep their ORDER (a pickup must never fire slower than the gun it replaces, which
+// PULSE LASER at 0.14 would have) and the live-bullet cap rises so the cadence is reachable:
+// a bullet lives ~0.8 s (34 units/s over the board), so 10/s twin needs ~16 in flight.
+const FIRE_CD_BASE = 0.10;
+const BULLET_MAX   = 24;
 const POWERS = {
-  energy:    { n:"PULSE LASER",    col:0x66ccff, dur:9.0,  icon:"bar",   cd:0.14, twin:true,  homing:0,   splash:0 },
-  ballistic: { n:"AUTOCANNON",     col:0xffc24a, dur:8.0,  icon:"dots",  cd:0.26, twin:true,  homing:0,   splash:0 },
-  missile:   { n:"SEEKER MISSILE", col:0xff5a6e, dur:8.5,  icon:"spike", cd:0.46, twin:false, homing:2.4, splash:2.6 },
+  energy:    { n:"PULSE LASER",    col:0x66ccff, dur:9.0,  icon:"bar",   cd:0.08, twin:true,  homing:0,   splash:0 },
+  ballistic: { n:"AUTOCANNON",     col:0xffc24a, dur:8.0,  icon:"dots",  cd:0.18, twin:true,  homing:0,   splash:0 },
+  missile:   { n:"SEEKER MISSILE", col:0xff5a6e, dur:8.5,  icon:"spike", cd:0.36, twin:false, homing:2.4, splash:2.6 },
   flame:     { n:"FLAMETHROWER",   col:0xff7a2a, dur:7.0,  icon:"cone",  cd:0.10, twin:false, homing:0,   splash:0 }
 };
 const POWER_KEYS = Object.keys(POWERS);
@@ -1623,6 +1633,10 @@ function reset(){
   // deleted. The game has been starting with no background at all ever since, which is most of
   // why it looked dark. fullGraphics() above now actually holds.
   ship.position.x = 0; ship.position.y = SHIP_Y_MIN + 1.2;
+  // RJ 2026-09-05: "the ship disappears after the restart of the game", "the shield is also
+  // gone". killShip() hides the ship group for the explosion and nothing ever showed it again;
+  // the shield bubble is a CHILD of that group, so it vanished with it. Both were the same bug.
+  ship.visible = true;
   if(shieldMesh) shieldMesh.visible = false;
   // the HUD badges are not driven by reset() otherwise, so a replay used to open showing the
   // PREVIOUS round's final era and a stale weapon name with a frozen countdown
@@ -1635,7 +1649,7 @@ function reset(){
 
 function fire(){
   if(state!=='play') return;
-  if(bullets.length > 14) return;
+  if(bullets.length >= BULLET_MAX) return;
   const W = POWERS[power] || null;
   const col = W ? W.col : 0x8fe8ff;
   const twin = W ? W.twin : false;
@@ -1704,10 +1718,10 @@ function tick(now){
     if(keys['ArrowUp']   ||keys['w']||keys['W']) vdir += 1;
     if(keys['ArrowDown'] ||keys['s']||keys['S']) vdir -= 1;
     const reach = textHalfW + 1.0;
-    ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*26*dt, -reach, reach);
+    ship.position.x = THREE.MathUtils.clamp(ship.position.x + dir*SHIP_SPEED_X*dt, -reach, reach);
     // vertical travel is deliberately a narrow band - this is a scrolling shooter, the ship
     // holds station near the bottom and only nudges up to meet the text or back off from it
-    ship.position.y = THREE.MathUtils.clamp(ship.position.y + vdir*15*dt, SHIP_Y_MIN, SHIP_Y_MAX);
+    ship.position.y = THREE.MathUtils.clamp(ship.position.y + vdir*SHIP_SPEED_Y*dt, SHIP_Y_MIN, SHIP_Y_MAX);
     ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -dir*.38, .14);
     shipGlow.intensity = 1.4 + Math.sin(t*9)*.3;
     if(ship.userData.plumes){
@@ -1746,7 +1760,7 @@ function tick(now){
     // Each weapon's `cd` finally drives its cadence. This read `power==="rapid"`, which is not
     // a POWERS key, so every gun fired at a flat 0.16 and the whole cd column was dead - part
     // of why BEAM CUTTER felt overwhelming next to them.
-    if(shootHeld && fireCool <= 0){ fire(); fireCool = (power && POWERS[power].cd) || 0.16; }
+    if(shootHeld && fireCool <= 0){ fire(); fireCool = (power && POWERS[power].cd) || FIRE_CD_BASE; }
 
     // wheel-driven flame burst, independent of the flame powerup
     if(flameBurst > 0){
