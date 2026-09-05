@@ -462,14 +462,26 @@ doesn't have enough.</p>
   <div class="launch">
     <div class="launch-body">
       <h3>Star Fighter</h3>
-      <p>The training environment the no-LLM fleet research runs in: ships, economy and physics as separate vector systems an agent has to learn to fly.</p>
-      <p class="how">WASD to fly &nbsp;·&nbsp; Q/E up and down &nbsp;·&nbsp; shift to boost &nbsp;·&nbsp; drag to look</p>
-      <a class="playbtn" href="./games/starfighter.html" target="_blank" rel="noopener">Play fullscreen &rarr;</a>
-      <button class="inlinebtn" data-embed="./games/starfighter.html">or embed it here</button>
+      <p>The AI squadron: pilots that fly, trade, fight and talk, over a knowledge store you can watch reason. This tab opens the one canonical build of the game - the same files as <a href="https://rj45thompson.github.io/starfighter/" target="_blank" rel="noopener">rj45thompson.github.io/starfighter</a> - so nothing here can drift behind it again.</p>
+      <p class="how">WASD to fly &nbsp;·&nbsp; space to fire &nbsp;·&nbsp; 1/2/3 upgrade &nbsp;·&nbsp; type in the terminal: <code>help</code>, <code>ask ORION whats your story</code>, <code>voices on</code> &nbsp;·&nbsp; every panel drags, pins and resizes from its corner grip</p>
+      <a class="playbtn" id="sf-play" href="https://rj45thompson.github.io/starfighter/" target="_blank" rel="noopener">Play fullscreen &rarr;</a>
+      <button class="inlinebtn" id="sf-embed" data-embed="https://rj45thompson.github.io/starfighter/">or embed it here</button>
     </div>
   </div>
   <div class="gamewrap" hidden></div>
 </div>
+<script>
+/* sf-source: the game is never copied into this repo again (the August copy was a 163 KB cut of a
+   794 KB game and lost its speech, its windows and its data). On the hosted page the tab points at
+   the sibling Pages site; on a local server it points at the game's own local server. */
+(function(){
+  var local = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+  var src = local ? "http://localhost:8782/" : "https://rj45thompson.github.io/starfighter/";
+  var a = document.getElementById("sf-play"), b = document.getElementById("sf-embed");
+  if(a) a.href = src;
+  if(b) b.dataset.embed = src;
+})();
+</script>
 
 <!-- rj-inventions:start -->
 <div id="p-inv" class="panel">
