@@ -95,7 +95,8 @@
       <p class="lead">My CV is falling toward you. Cut a line to read that job.</p>
       <p>I am R.J. Thompson, a senior C++/C# engineer, and I am looking for my next role.
          The whole résumé is up there, every role with its real dates, and every letter of it
-         breaks. Shoot your way down and you will have read the lot.</p>
+         breaks. Shoot your way down and you will have read the lot. What you let past flies back
+         up and comes for you, and only its shots can hurt you.</p>
       <p class="muted">WASD to move &middot; left mouse to shoot &middot; right mouse for shields
          &middot; mouse wheel for flame &middot; F for fullscreen</p>
       <button class="btn" id="go">START</button>
@@ -567,7 +568,7 @@ function sinkLines(){
   // Trigger at the PLAYER, not at the bottom of the board. A letter that has slipped past your
   // ship has already beaten you; making it fall another three units first only delayed the
   // feedback and made the cause unclear.
-  const line0 = ship.position.y - 2.4;   // was -1.2, which killed the line before it reached you
+  const line0 = ship.position.y - 2.4;
   for(const line of lines){
     if(line.sunk) continue;
     if((line.y - crawl) > line0) continue;
@@ -575,219 +576,16 @@ function sinkLines(){
     for(const L of line.letters){
       if(L.broken || L.dissolve > 0) continue;
       L.broken = true;
-      // Hand the letter's OWN model to the flight, rather than recycling it and building a
-      // replacement inside the ball. RJ: "they should join together in a ball, the models that
-      // is" - previously the glyph vanished at the floor and an unrelated one appeared in the
-      // mass, so nothing was ever seen to join anything.
+      // The letter's OWN model makes the climb, so you watch the word you skipped leave the
+      // page and go up to join the row that is about to come for you.
       const from = L.mesh ? L.mesh.position.clone()
                           : new THREE.Vector3(L.x, line.y - crawl, 0);
       if(L.mesh){ giveMesh(L.mesh); L.mesh = null; }
-      bossJoin(L.ch, from);
+      launchRaider(L.ch, from);
     }
   }
 }
 
-/* THE BOSS - every letter you let past builds it.
-
-   Until now, a line that scrolled off the bottom simply left. That made ignoring the CV free, and
-   this game's whole conceit is that the CV is the thing worth engaging with. So the letters you
-   fail to shoot do not disappear: they sink to the floor and STICK TOGETHER, and the mass gets a
-   stat upgrade for every glyph it absorbs. Read the resume and it stays small; ignore it and it
-   assembles a boss out of exactly the words you skipped.
-
-   Stats scale off one number - the letter count - so there is no separate difficulty dial to drift
-   out of sync with what the player can see. The thing on screen IS the health bar. */
-const BOSS_Y          = -12.0;   // where the mass GATHERS, on the floor, before it lifts
-const BOSS_TOP_Y      = 9.5;     // where it fights from once it wakes, near the top of the board
-const BOSS_RISE_SPEED = 7.0;     // units per second on the way up
-const BOSS_SPIN       = 0.5;     // rad/s - a packed ball needs to tumble or it reads as a blob
-const BOSS_PER_HIT    = 1;       // damage one bullet does
-const BOSS_HP_PER_LTR = 1;       // hp added per absorbed letter
-const BOSS_WAKE       = 30;      // was 16 - letters absorbed before it starts fighting back. Measured:
-                                 // a 38s run fed it only 14, so a threshold of 40 meant the
-                                 // boss could never wake in a real round and the whole
-                                 // mechanic was decorative.
-const BOSS_FIRE_BASE  = 3.6;     // was 2.6 - seconds between salvos at BOSS_WAKE
-const BOSS_FIRE_MIN   = 1.0;     // was 0.7 - floor, however fat it gets
-const BOSS_PACK       = 0.62;    // radius per glyph^(1/3) - tight, so it packs as a BALL
-const BOSS_MAX_MESH   = 140;     // draw cap: beyond this it grows in stats only, disclosed below
-
-let boss = null;
-let joiners = [];          // letters in flight toward the mass
-const JOIN_SEC = 0.75;     // how long that flight takes
-
-function bossInit(){
-  boss = { n:0, hp:0, group:new THREE.Group(), fireCool:BOSS_FIRE_BASE, awake:false, flash:0 };
-  boss.group.position.set(0, BOSS_Y, 0);
-  board.add(boss.group);
-}
-
-/* Called for every intact letter on a line that has fallen past the floor. */
-function bossJoin(ch, from){
-  if(!boss) bossInit();
-  // its own model, flying to the mass. It is a real mesh on a real path, so you watch the word
-  // you failed to shoot travel across the board and weld itself on.
-  const m = new THREE.Mesh(glyphGeometry(ch), new THREE.MeshStandardMaterial({
-    color:0xff9ec0, emissive:0x5a1024, emissiveIntensity:1.1,
-    roughness:0.4, metalness:0.35, flatShading:true }));
-  m.position.copy(from);
-  m.scale.setScalar(1.0);
-  board.add(m);
-  joiners.push({ m, ch, tt:0, from:from.clone(),
-                 spin:new THREE.Vector3(Math.random()*3, Math.random()*3, Math.random()*3) });
-}
-
-function runJoiners(dt){
-  if(!boss) return;
-  const target = boss.group.position;
-  for(let i = joiners.length - 1; i >= 0; i--){
-    const J = joiners[i];
-    J.tt += dt / JOIN_SEC;
-    const k = Math.min(1, J.tt);
-    const e = k * k * (3 - 2 * k);                       // smoothstep, so it eases in
-    // arc it rather than sliding straight, and lift as it goes so the path reads as deliberate
-    J.m.position.lerpVectors(J.from, target, e);
-    J.m.position.x += Math.sin(e * Math.PI) * (J.from.x < target.x ? -3.2 : 3.2);
-    J.m.rotation.x += J.spin.x * dt; J.m.rotation.y += J.spin.y * dt;
-    J.m.scale.setScalar(1.0 - 0.2 * e);
-    if(k >= 1){
-      board.remove(J.m);
-      joiners.splice(i, 1);
-      bossAbsorb(J.ch);                                  // NOW it is part of the mass
-      spark(target.clone(), 0xff9ec0, 6);
-    }
-  }
-}
-
-function bossAbsorb(ch, x){
-  if(!boss) bossInit();
-  boss.n++;
-  boss.hp += BOSS_HP_PER_LTR;
-
-  if(boss.group.children.length < BOSS_MAX_MESH){
-    // TIGHTLY PACKED BALL - see bossRepack(), which lays out every glyph for the CURRENT count.
-    const m = new THREE.Mesh(glyphGeometry(ch), new THREE.MeshStandardMaterial({
-      color:0xc2506a, emissive:0x3a0d1c, emissiveIntensity:0.7,
-      roughness:0.45, metalness:0.4, flatShading:true }));
-    m.scale.setScalar(0.8);
-    boss.group.add(m);
-    bossRepack();
-  }
-  if(!boss.awake && boss.n >= BOSS_WAKE){
-    boss.awake = true;
-    banner("IT IS ASSEMBLING FROM WHAT YOU SKIPPED");
-  }
-}
-
-/* Lay every glyph on a Fibonacci sphere for the CURRENT count. The golden angle spreads points
-   evenly over a sphere without banding them into rows, which a plain grid does; radius grows as
-   the cube root of the count so it stays a BALL as it fattens rather than spreading into a disc.
-   This runs on every absorb rather than placing each glyph once, because a position computed when
-   the ball held 10 glyphs is wrong once it holds 60 - the sphere would come out lumpy and hollow
-   at the poles. */
-function bossRepack(){
-  const kids = boss.group.children, N = kids.length;
-  if(!N) return;
-  const R = BOSS_PACK * Math.cbrt(N) * 1.9;
-  for(let i = 0; i < N; i++){
-    const yy = N === 1 ? 0 : 1 - (i / (N - 1)) * 2;      // 1 .. -1
-    const rr = Math.sqrt(Math.max(0, 1 - yy * yy));
-    const th = i * 2.399963;                              // golden angle
-    kids[i].position.set(Math.cos(th) * rr * R, yy * R, Math.sin(th) * rr * R);
-    kids[i].lookAt(0, 0, 0);
-  }
-}
-
-function bossFireRate(){
-  // faster the bigger it is, floored so it never becomes unplayable
-  const over = Math.max(0, boss.n - BOSS_WAKE);
-  return Math.max(BOSS_FIRE_MIN, BOSS_FIRE_BASE - over * 0.012);
-}
-
-function runBoss(dt){
-  if(!boss || !boss.n) return;
-  const g = boss.group;
-
-  // It gathers on the floor, and the moment it wakes it CLIMBS to the top of the board and
-  // fights from up there - so the fight reads as "the thing you ignored is now above you",
-  // and it stops sharing the bottom of the screen with your own ship.
-  const wantY = boss.awake ? BOSS_TOP_Y : BOSS_Y;
-  g.position.y += Math.sign(wantY - g.position.y) *
-                  Math.min(Math.abs(wantY - g.position.y), BOSS_RISE_SPEED * dt);
-  g.position.x = Math.sin(t * 0.45) * (boss.awake ? 6.0 : 2.2);
-  // a packed ball has to tumble or it reads as a static lump
-  g.rotation.y += BOSS_SPIN * dt;
-  g.rotation.x += BOSS_SPIN * 0.4 * dt;
-  if(boss.flash > 0){
-    boss.flash -= dt;
-    g.children.forEach(c => c.material.emissiveIntensity = 1.8);
-  } else {
-    g.children.forEach(c => c.material.emissiveIntensity = 0.7);
-  }
-
-  if(!boss.awake) return;
-  boss.fireCool -= dt;
-  if(boss.fireCool > 0) return;
-  boss.fireCool = bossFireRate();
-
-  // a salvo, widening with size. Reuses the turret bolt pool so there is one projectile system
-  // to reason about rather than two that can disagree.
-  // A SPREAD, aimed at you and fanned around that aim, so it has to be dodged rather than
-  // strafed past. Wider and denser the fatter it is; heavy, bright rounds so a boss salvo is
-  // unmistakably not a turret pellet.
-  const arms  = Math.min(7, 3 + Math.floor((boss.n - BOSS_WAKE) / 30));
-  const fan   = 0.30;                                   // radians between adjacent rounds
-  const ox = g.position.x, oy = g.position.y - 2.0;     // it is above you: fire from underneath
-  const base = Math.atan2(ship.position.y - oy, ship.position.x - ox);
-  for(let a = 0; a < arms; a++){
-    if(bolts.length >= TURRET_MAX) break;
-    const ang = base + (a - (arms - 1) / 2) * fan;
-    const m = boltMesh(true);
-    m.position.set(ox, oy, 0);
-    bolts.push({ m, vx: Math.cos(ang) * TURRET_SPEED * 1.05,
-                    vy: Math.sin(ang) * TURRET_SPEED * 1.05, heavy: true });
-  }
-  spark(new THREE.Vector3(ox, oy, 0), 0xffb14d, 14);
-}
-
-/* A bullet that reaches the mass chips it. Returns true if it connected, so the bullet loop can
-   consume the shot exactly as it does for a letter or a raider. */
-function hitBossAt(px, py){
-  if(!boss || !boss.n) return false;
-  const g = boss.group;
-  // spherical, matching what is drawn - a slab-shaped hit box on a ball is the kind of
-  // mismatch that makes shots feel like they missed when they visibly connected
-  const rad = BOSS_PACK * Math.cbrt(Math.max(1, boss.n)) * 1.9 + 1.0;
-  if(Math.hypot(px - g.position.x, py - g.position.y) > rad) return false;
-
-  boss.hp -= BOSS_PER_HIT;
-  boss.flash = 0.08;
-  spark(new THREE.Vector3(px, py, 0), 0xff9ec0, 12);
-  if(boss.hp <= 0){
-    // shot to pieces: it gives back everything it took, as score
-    spark(g.position.clone(), 0xffd7a8, 60);
-    banner("MASS BROKEN");
-    brokenCount += boss.n;
-    document.getElementById("score").textContent = brokenCount;
-    bossClear();
-    return true;
-  }
-  // shrink as it loses hp so the damage is legible without a health bar
-  const keep = Math.max(0, Math.ceil(boss.hp / BOSS_HP_PER_LTR));
-  while(g.children.length > Math.min(keep, BOSS_MAX_MESH)) g.remove(g.children[g.children.length - 1]);
-  bossRepack();   // re-tighten, or damage eats it from one side instead of shrinking it
-  return true;
-}
-
-function bossClear(){
-  joiners.forEach(J=>board.remove(J.m));
-  joiners = [];
-  if(boss && boss.group) board.remove(boss.group);
-  boss = null;
-}
-
-/* Helpers that keep getting caught in splices of the phase system, because they sit
-   between it and the raid module. Anchored here deliberately. */
 function bumpReveal(){ if(!firstHitDone) firstHitDone = true; }
 
 function banner(text){
@@ -879,7 +677,6 @@ const SHIELD_RECHARGE = 0.40;  // was 0.30
 const HULL_R          = 1.20;  // was 1.45 -  // measured: closest approach in real play was 1.1, so 0.85 was a
                                // permanent near-miss - the collision existed and could never fire  // ship hitbox for letter contact - deliberately smaller than the
                                // 1.15 used for bolts, so grazing text is survivable
-const HULL_GRACE      = 14;    // seconds at the start when a letter on the hull breaks but costs nothing
 const HULL_IFRAME     = 1.80;  // was 1.30 -  // seconds of invulnerability after a hull hit
 let   hullSafe        = 0;     // shared i-frame across ALL damage sources; >0 means recent hit
 
@@ -902,10 +699,11 @@ function takeDamage(pos, colour, shakeAmt){
   return true;
 }
 
-/* Letters that physically reach the hull now do damage. Passing text is no longer free: sitting
-   inside the CV stream costs you, which is what makes keeping a lane clear worth doing. */
+/* Touching the text never hurts - RJ 2026-09-06: only shots do. The hull breaks what it touches,
+   the same as a bullet would, so flying through a word is another way of reading it. The one
+   thing that still lives here is the i-frame countdown for the hits that DO land (bolts). */
 function runHull(dt){
-  if(hullSafe > 0){ hullSafe -= dt; return; }   // the ONE place the shared i-frame counts down
+  if(hullSafe > 0) hullSafe -= dt;               // the ONE place the shared i-frame counts down
   const ox = ship.position.x, oy = ship.position.y;
   for(const line of lines){
     const ly = line.y - crawl;
@@ -913,24 +711,9 @@ function runHull(dt){
     for(const L of line.letters){
       if(L.broken || L.dissolve > 0) continue;
       if(Math.hypot(L.x - ox, ly - oy) > HULL_R) continue;
-      if(shieldHeld && shieldEnergy > 0){          // shield burns the letter instead of the hull
-        L.dissolve = 0.01; brokenCount++;
-        spark(new THREE.Vector3(L.x, ly, 0), 0x8fe8ff, 8);
-        continue;
-      }
-      L.dissolve = 0.01; brokenCount++;
-      // Opening grace. Measured: every scripted run, bot or motionless, lost a life at 5.6 s and
-      // another at 12.5 s - the first two lines of text arriving at the hull, before any raid or
-      // turret exists. That is the rule being taught by death. For the first HULL_GRACE seconds a
-      // letter on the hull still breaks and still sparks, the banner says why, and it costs nothing.
-      if(t < HULL_GRACE){
-        spark(new THREE.Vector3(L.x, ly, 0), 0xffb74d, 14);
-        hullSafe = 0.6;
-        if(!runHull._taught){ runHull._taught = true; banner("LETTERS HIT YOUR HULL - SHOOT A LANE THROUGH"); }
-        return;
-      }
-      takeDamage(new THREE.Vector3(L.x, ly, 0), 0xff5470, 0.7);
-      return;                                      // one hit per frame, never a whole line at once
+      L.dissolve = 0.01; brokenCount++; bumpReveal();
+      spark(new THREE.Vector3(L.x, ly, 0), 0x8fe8ff, 8);
+      document.getElementById("score").textContent = brokenCount;
     }
   }
 }
@@ -961,7 +744,7 @@ function boltMesh(heavy){
     heavyGeo = new THREE.SphereGeometry(0.52, 12, 9);
     heavyMat = new THREE.MeshBasicMaterial({ color:0xffb14d });
   }
-  // The boss shot must not look like a turret pellet, or a serious attack reads as chip damage.
+  // A heavy round must not look like a turret pellet, or a serious attack reads as chip damage.
   const m = new THREE.Mesh(heavy ? heavyGeo : boltGeo, heavy ? heavyMat : boltMat);
   board.add(m); return m;
 }
@@ -1036,87 +819,96 @@ function clearBolts(){
   runTurrets._warned = false;   // the warning must fire again on a replay
 }
 
-/* RAIDS - the letters that actually attack you.
+/* THE LETTERS YOU LET PAST COME BACK FOR YOU.
 
-   The old rule was that ANY letter reaching the ship's row cost a life. The CV is dense text
-   scrolling continuously, so with no input at all you lost all three lives in about twelve
-   seconds - before the second era had even started. That is why the graphics ladder looked like it
-   "only changed once": nobody ever survived long enough to see phases 2 to 5.
+   RJ 2026-09-06: "when they reach the bottom they quickly fly up to the top and become enemies
+   that drop down and shoot. Only when they shoot can it do damage."
 
-   So passing letters are now scenery, which is what the conceit wants: it is a resume, it scrolls,
-   you read it. The threat is a RAID - every few seconds a handful of letters tear themselves off
-   the page and dive at you, with lateral curve so they cannot be dodged by standing still. Only
-   those can hurt you, and the shield stops them. */
-const RAID_EVERY   = 6.0;   // was 3.6    // seconds between raids
-const RAID_FIRST   = 10;    // seconds before the FIRST raid - time to find the controls
-const RAID_BASE    = 2;     // was 4      // letters in the first raid
-const RAID_PER_ERA = 1;      // one more per era, so later phases bite harder
-const RAID_SPEED   = 6.5;   // was 7.5
-const RAID_CURVE   = 3.2;    // lateral "english" on the dive
-const RAID_SHOOT_COOL  = 3.4;   // was 2.2   // seconds between shots from one diver
+   A line that scrolls past the ship is not gone. Every intact letter on it tears off, climbs
+   fast to a formation row above you, holds a beat, then dives in an arc, shooting as it comes.
+   A diver that misses climbs back and comes again; a bullet or the shield is what ends one.
+   Touching a letter or a diver never hurts - the hull simply breaks the letter, the same as a
+   bullet would. Damage comes from shots alone: a diver's bolt or a turret letter's bolt.
+
+   So the enemy is exactly the reading you did not do, and the way to make it stop is to shoot
+   what you skipped. This replaced the boss ball (letters welding into a mass on the floor) and
+   the timed raids that tore letters off the page - both gone, same commit. */
+const RAID_MAX      = 8;      // live divers at once; the rest wait their turn where they fell
+const RAID_SPEED    = 6.5;    // dive speed
+const RAID_CURVE    = 3.2;    // lateral "english" on the dive
+const RAID_SHOOT_COOL  = 3.8;   // seconds between shots from one diver
 const RAID_SHOOT_SPEED = 13.0;  // faster than a turret bolt - a diver is the close-range threat
-const RAID_MAX     = 10;        // was 18     // hard cap on live attackers
-const RAID_RAMP_SEC = 40;   // was 18    // one more attacker per raid every this many seconds
-const RAID_SLOT_W   = 3.0;   // spacing of the formation row
-const RAID_FORM_Y   = 12.0;  // how far above the ship the row assembles
-const RAID_HOLD     = 1.1;   // seconds the row holds before the first one peels off
-const RAID_STAGGER  = 0.55;  // gap between successive dives, so a wave arrives in sequence
-let raidT = 0, attackers = [];
+const RAID_SLOT_W   = 3.0;    // spacing of the formation row
+const RAID_FORM_Y   = 12.0;   // how far above the ship the row assembles
+const RAID_HOLD     = 1.1;    // seconds the row holds before a diver peels off
+const RAID_STAGGER  = 0.55;   // gap between successive dives, so a wave arrives in sequence
+const RISE_SEC      = 0.55;   // the climb from the floor to the row - quick, so it reads as a launch
+const RETURN_SPEED  = 34;     // a diver that missed climbs back at this rate
+let attackers = [], risers = [], pending = [];
+let slotSeq = 0;
 
-function spawnRaid(){
-  // Candidates: intact letters currently above the ship and on screen. Taken from the real CV, so
-  // what attacks you is always a piece of the document you are reading.
-  const pool = [];
-  lines.forEach(line=>{
-    const ly = line.y - crawl;
-    if(ly < ship.position.y + 4 || ly > VIEW_TOP) return;
-    line.letters.forEach(L=>{ if(!L.broken && L.dissolve === 0) pool.push({L, line, ly}); });
-  });
-  if(!pool.length) return;
-  // Raids grow with elapsed time now that there are no phases to count.
-  const want = Math.min(RAID_BASE + Math.floor(t / RAID_RAMP_SEC), RAID_MAX - attackers.length);
-  // GALAGA SHAPE. They do not just fall. A wave lifts off the page, forms a row above the ship,
-  // holds there bobbing, then peels off ONE AT A TIME and dives in an arc. The hold is what makes
-  // it read as an arcade wave rather than falling debris, and the stagger is what makes a wave
-  // survivable: you deal with them in sequence instead of all at once.
-  const slot0 = -(want - 1) / 2;
-  for(let i = 0; i < want && pool.length; i++){
-    const pick = pool.splice((i * 37 + brokenCount) % pool.length, 1)[0];
-    const L = pick.L;
-    L.broken = true;
-    if(L.mesh){ giveMesh(L.mesh); L.mesh = null; }
-    const m = new THREE.Mesh(glyphGeometry(L.ch), new THREE.MeshStandardMaterial({
-      color:0xff8a7a, emissive:0x5a1410, emissiveIntensity:0.9,
-      roughness:0.35, metalness:0.35, flatShading:true }));
-    m.position.set(L.x, pick.ly, 0);
-    m.scale.setScalar(1.25);
-    board.add(m);
-    attackers.push({
-      m, mode:"form",
-      fx: (slot0 + i) * RAID_SLOT_W,          // slot in the formation row
-      fy: ship.position.y + RAID_FORM_Y,
-      wait: RAID_HOLD + i * RAID_STAGGER,     // this one's turn to dive
-      phase: i * 0.7, born: t, dirX: 0,
-      shootCool: RAID_SHOOT_COOL * (0.4 + (i % 3) * 0.3)   // staggered, so a wave is a barrage
-                                                           // rather than one simultaneous volley
-    });
+function formSlot(){                 // cycle across the row so it fills evenly, never one pile
+  const i = slotSeq++ % RAID_MAX;
+  return (i - (RAID_MAX - 1) / 2) * RAID_SLOT_W;
+}
+
+function raiderMesh(ch){
+  return new THREE.Mesh(glyphGeometry(ch), new THREE.MeshStandardMaterial({
+    color:0xff8a7a, emissive:0x5a1410, emissiveIntensity:0.9,
+    roughness:0.35, metalness:0.35, flatShading:true }));
+}
+
+/* Called for every intact letter on a line that has fallen past the ship. */
+function launchRaider(ch, from){
+  if(attackers.length + risers.length >= RAID_MAX){ pending.push({ ch, from: from.clone() }); return; }
+  const m = raiderMesh(ch);
+  m.position.copy(from);
+  m.scale.setScalar(1.25);
+  board.add(m);
+  risers.push({ m, ch, tt: 0, from: from.clone(), fx: formSlot(),
+                spin: new THREE.Vector3(Math.random() * 3, Math.random() * 3, Math.random() * 3) });
+}
+
+function runRisers(dt){
+  for(let i = risers.length - 1; i >= 0; i--){
+    const R = risers[i];
+    R.tt += dt / RISE_SEC;
+    const k = Math.min(1, R.tt);
+    const e = k * k * (3 - 2 * k);                     // smoothstep: leaves fast, arrives softly
+    const ty = ship.position.y + RAID_FORM_Y;
+    R.m.position.x = R.from.x + (R.fx - R.from.x) * e;
+    R.m.position.y = R.from.y + (ty - R.from.y) * e;
+    R.m.rotation.x += R.spin.x * dt; R.m.rotation.y += R.spin.y * dt;
+    if(k >= 1){
+      risers.splice(i, 1);
+      attackers.push({
+        m: R.m, mode: "form", fx: R.fx, fy: ty,
+        wait: RAID_HOLD + (attackers.length % 4) * RAID_STAGGER,
+        phase: Math.random() * 6.28, born: t, dirX: 0,
+        shootCool: RAID_SHOOT_COOL * (0.5 + Math.random() * 0.5)
+      });
+      spark(R.m.position.clone(), 0xff8a7a, 8);
+      if(!runRisers._warned){ runRisers._warned = true; banner("WHAT YOU LET PAST IS COMING BACK"); }
+    }
   }
-  if(want > 0) banner("INCOMING");
+  // a slot came free: the next waiting letter launches from where it fell
+  while(pending.length && attackers.length + risers.length < RAID_MAX){
+    const Q = pending.shift();
+    launchRaider(Q.ch, Q.from);
+  }
 }
 
 /* SITUATIONAL BACKGROUND. Not generated audio and not a video - the scene's own light and fog
    shift with what is actually happening, so a raid FEELS different from reading the CV. Calm is
-   cool and open; a raid pulls the fog in and pushes it red; the boss goes further. This is the
+   cool and open; divers pull the fog in and push it red. This is the
    "backgrounds that go with the moment" ask, driven by game state rather than by a soundtrack. */
 const MOOD = {
   calm:  { fog: 0x16233a, dens: 0.009, rim: 0x7c4dff, rimI: 1.9 },
-  raid:  { fog: 0x2a1626, dens: 0.013, rim: 0xff5a6e, rimI: 2.6 },
-  boss:  { fog: 0x3a1414, dens: 0.016, rim: 0xff3020, rimI: 3.2 }
+  raid:  { fog: 0x2a1626, dens: 0.013, rim: 0xff5a6e, rimI: 2.6 }
 };
 const _fogC = new THREE.Color(), _rimC = new THREE.Color();
 function runMood(dt){
-  const want = (typeof boss !== "undefined" && boss && boss.alive) ? MOOD.boss
-             : (attackers.length ? MOOD.raid : MOOD.calm);
+  const want = attackers.length ? MOOD.raid : MOOD.calm;
   const k = Math.min(1, dt * 1.8);                    // ease, so it breathes rather than cuts
   _fogC.setHex(want.fog); scene.fog.color.lerp(_fogC, k);
   scene.fog.density += (want.dens - scene.fog.density) * k;
@@ -1125,18 +917,12 @@ function runMood(dt){
 }
 
 function runAttackers(dt){
-  raidT += dt;
-  if(raidT >= RAID_EVERY){ raidT = 0; spawnRaid(); }
-
   for(let i = attackers.length - 1; i >= 0; i--){
     const A = attackers[i], m = A.m;
-    const age = t - A.born;
 
-    /* RJ: "the enemies should shoot back at you." Only the static turrets fired before, so a raid
-       was purely a ramming threat you could out-strafe. Divers now shoot too, which is what makes
-       the shield worth holding instead of just dodging. */
+    // Shooting is the only thing a diver does that can hurt you. Not while climbing back.
     A.shootCool -= dt;
-    if(A.shootCool <= 0 && bolts.length < TURRET_MAX){
+    if(A.mode !== "return" && A.shootCool <= 0 && bolts.length < TURRET_MAX){
       A.shootCool = RAID_SHOOT_COOL;
       const bm = boltMesh();
       bm.position.copy(m.position);
@@ -1157,7 +943,7 @@ function runAttackers(dt){
         A.diveT = 0;
         A.dirX = ship.position.x > m.position.x ? 1 : -1;   // arc toward the player, then past
       }
-    } else {
+    } else if(A.mode === "dive"){
       // the dive: a quarter-turn arc, not a straight drop. x swings out and back across the
       // descent, which is the shape that makes Galaga divers hard to stand still under.
       A.diveT += dt;
@@ -1166,25 +952,31 @@ function runAttackers(dt){
       m.position.x += A.dirX * swing * RAID_CURVE * dt * 2.4;
       m.rotation.z += dt * 4.2 * A.dirX;
       m.rotation.x += dt * 1.7;
+      if(m.position.y < VIEW_BOT - 3){      // missed you: climb back and come again
+        A.mode = "return";
+        A.fx = formSlot();
+        A.fy = ship.position.y + RAID_FORM_Y;
+      }
+    } else {                                // "return": straight back up to the row, fast
+      m.position.y += RETURN_SPEED * dt;
+      m.position.x += (A.fx - m.position.x) * Math.min(1, dt * 2.0);
+      m.rotation.z += dt * 6;
+      if(m.position.y >= A.fy){
+        m.position.y = A.fy;
+        A.mode = "form";
+        A.wait = RAID_HOLD + Math.random() * RAID_STAGGER * 2;
+      }
     }
 
-    const dx = m.position.x - ship.position.x, dy = m.position.y - ship.position.y;
-    const near = Math.hypot(dx, dy);
-
-    // the shield is the counterplay: hold it and a raid is survivable, but it drains
+    // The shield burns a diver it touches - the one way to end one without a bullet. Touching
+    // one without the shield costs nothing: only its shots do.
+    const near = Math.hypot(m.position.x - ship.position.x, m.position.y - ship.position.y);
     if(shieldHeld && shieldEnergy > 0 && near < 2.6){
       spark(m.position.clone(), 0x8fe8ff, 16);
       board.remove(m); attackers.splice(i, 1);
       brokenCount++; bumpReveal();
       document.getElementById("score").textContent = brokenCount;
-      continue;
     }
-    if(near < 1.35){
-      board.remove(m); attackers.splice(i, 1);
-      takeDamage(m.position.clone(), 0xff5470, 0.6);   // shared i-frame, see takeDamage
-      continue;
-    }
-    if(m.position.y < VIEW_BOT - 3){ board.remove(m); attackers.splice(i, 1); }
   }
 }
 
@@ -1205,8 +997,10 @@ function hitAttackerAt(px, py, radius){
 }
 
 function clearAttackers(){
-  attackers.forEach(A=>board.remove(A.m));
-  attackers = []; raidT = 0;
+  attackers.forEach(A => board.remove(A.m));
+  risers.forEach(R => board.remove(R.m));
+  attackers = []; risers = []; pending = []; slotSeq = 0;
+  runRisers._warned = false;      // the warning fires again on a replay
 }
 
 
@@ -1650,9 +1444,7 @@ function reset(){
   score=0; lives=LIVES_MAX; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
-  camFollowX=0; fullGraphics(); clearBolts(); armTurrets(); bossClear(); bossInit();
-  raidT = RAID_EVERY - RAID_FIRST;   // the first raid waits RAID_FIRST seconds, not RAID_EVERY
-  runHull._taught = false;           // the hull lesson shows again on a replay
+  camFollowX=0; fullGraphics(); clearBolts(); armTurrets();
   firstHitDone=false; mushroomDone=false; poweredOnce=false;
   t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0; hullSafe=0; shieldHintShown=false;
   clearAttackers();
@@ -1785,12 +1577,11 @@ function tick(now){
     });
     mushroomBeat();
     sinkLines();
-    runJoiners(dt);
+    runRisers(dt);
     runAttackers(dt);
     runTurrets(dt);
     runHull(dt);
     runMood(dt);
-    runBoss(dt);
     drawShield();
     applyCam(dt);
     gradeScene();
@@ -1960,8 +1751,6 @@ function tick(now){
         }
         board.remove(bl); bullets.splice(i,1);
       } else if(hitAttackerAt(bl.position.x, bl.position.y, 1.1)){
-        board.remove(bl); bullets.splice(i,1);
-      } else if(hitBossAt(bl.position.x, bl.position.y)){
         board.remove(bl); bullets.splice(i,1);
       } else if(bl.position.y > 18){
         board.remove(bl); bullets.splice(i,1);   // was scene.remove - a no-op that leaked every miss
