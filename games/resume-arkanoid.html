@@ -92,7 +92,7 @@
   <div class="screen" id="start">
     <div class="card">
       <h1>RÉSUMÉ <span>BREAKOUT</span></h1>
-      <p class="lead">My CV is falling toward you. Cut a line to read that job.</p>
+      <p class="lead">My CV is being printed at you, a line at a time. Cut a line to read that job.</p>
       <p>I am R.J. Thompson, a senior C++/C# engineer, and I am looking for my next role.
          The whole résumé is up there, every role with its real dates, and every letter of it
          breaks. Shoot your way down and you will have read the lot. What you let past flies back
@@ -434,7 +434,9 @@ function buildBoard(){
       if(ch === " ") continue;                       // spaces are not targets
       chars.push({ ch, ci, broken:false, dissolve:0, mesh:null,
                    spinX:(Math.random()<0.5?-1:1), spinY:(Math.random()<0.5?-1:1),
-                   x: -w/2 + ci*CH_W + CH_W/2 });
+                   x: -w/2 + ci*CH_W + CH_W/2,
+                   // flight in from the press: 1 = in its slot; see launchLetter()
+                   arrive:1, flyT:0, from:null, via:null, prev:null, trail:null, flash:0 });
       totalGlyphs++;
     }
     lines.push({ i, kind:row.k, tone:row.tone|0, text:row.t, meta:row, letters:chars, sunk:false,
@@ -449,6 +451,7 @@ function buildBoard(){
     if(w > textHalfW) textHalfW = w;
   }});
   applyCam();
+  placePress();                   // the camera distance may have changed with the text width
   document.getElementById("total").textContent = totalGlyphs;
 }
 
@@ -574,7 +577,7 @@ function sinkLines(){
     if((line.y - crawl) > line0) continue;
     line.sunk = true;
     for(const L of line.letters){
-      if(L.broken || L.dissolve > 0) continue;
+      if(L.broken || L.dissolve > 0 || L.arrive < 1) continue;
       L.broken = true;
       // The letter's OWN model makes the climb, so you watch the word you skipped leave the
       // page and go up to join the row that is about to come for you.
@@ -709,7 +712,7 @@ function runHull(dt){
     const ly = line.y - crawl;
     if(Math.abs(ly - oy) > 1.6) continue;          // wrong row, cheap reject before the inner loop
     for(const L of line.letters){
-      if(L.broken || L.dissolve > 0) continue;
+      if(L.broken || L.dissolve > 0 || L.arrive < 1) continue;
       if(Math.hypot(L.x - ox, ly - oy) > HULL_R) continue;
       L.dissolve = 0.01; brokenCount++; bumpReveal();
       spark(new THREE.Vector3(L.x, ly, 0), 0x8fe8ff, 8);
@@ -777,7 +780,7 @@ function runTurrets(dt){
     const ly = line.y - crawl;
     if(ly < ship.position.y || ly > ship.position.y + TURRET_RANGE) return;
     line.letters.forEach(L=>{
-      if(!L.turret || L.broken || L.dissolve > 0) return;
+      if(!L.turret || L.broken || L.dissolve > 0 || L.arrive < 1) return;
       L.turret.cool -= dt;
       if(L.turret.cool > 0 || bolts.length >= TURRET_MAX) return;
       L.turret.cool = TURRET_COOL;
@@ -1112,7 +1115,7 @@ function burnCone(scale){
     if(dy < 0.5 || dy > reach) return;
     const halfW = (0.42 + (dy/reach)*3.0) * (scale || 1);
     line.letters.forEach(L=>{
-      if(L.broken || L.dissolve>0) return;
+      if(L.broken || L.dissolve>0 || L.arrive < 1) return;
       if(Math.abs(L.x - ship.position.x) > halfW) return;
       L.dissolve = 0.01;
       brokenCount++; bumpReveal();
@@ -1159,9 +1162,12 @@ function gradeScene(){
 }
 
 function syncMeshes(){
+  let rowsLaunched = 0;          // rows that got their first mesh this frame
+  viewEnterY = enterY();
   lines.forEach(line=>{
+    let rowSlot = -1;
     const y = line.y - crawl;
-    const near = y < VIEW_TOP+2 && y > VIEW_BOT-2;
+    const near = y < viewEnterY && y > VIEW_BOT-2;
     line.letters.forEach(L=>{
       if(L.broken){ if(L.mesh){ giveMesh(L.mesh); L.mesh=null; } return; }
       if(near && !L.mesh){
@@ -1178,16 +1184,21 @@ function syncMeshes(){
           m.material.emissive.copy(base).multiplyScalar(0.10);
         }
         m.rotation.set(0,0,0);
-        m.visible = true; L.mesh = m;
-      } else if(!near && L.mesh){ giveMesh(L.mesh); L.mesh = null; }
+        m.visible = false; L.mesh = m;
+        // born off screen, streams in past the press; the line types itself left to right
+        if(rowSlot < 0) rowSlot = rowsLaunched++;
+        launchLetter(L, line.letters.indexOf(L) * ARRIVE_STAGGER + rowSlot * ARRIVE_ROWGAP);
+      } else if(!near && L.mesh){ releaseTrail(L); giveMesh(L.mesh); L.mesh = null; }
       if(L.mesh){
         const M = L.mesh, e = Math.max(1, eraIdx);
+        if(L.arrive < 1){ if(flyLetter(L, M, y)) return; }
         M.position.set(L.x, y, 0);
         // era grade on a lit material: flat and matte early, metallic and glowing late
         M.material.flatShading = e < 4;
         M.material.metalness = e >= 3 ? 0.34 : 0.0;
         M.material.roughness = e >= 3 ? 0.40 : 0.95;
-        M.material.emissiveIntensity = e >= 4 ? (0.25 + reveal*0.6) : 0.05;
+        if(L.flash > 0) L.flash = Math.max(0, L.flash - frameDt * 2.2);   // the landing glow cools
+        M.material.emissiveIntensity = (e >= 4 ? (0.25 + reveal*0.6) : 0.05) + L.flash * 1.4;
         const S = CH_W*0.92, SY = CH_W*1.22;
         if(L.dissolve > 0){
           // struck letters SPIN OUT: tumble, drift and shrink, rather than fading where they sat
@@ -1220,6 +1231,163 @@ function hullTex(){ const c=document.createElement('canvas'); c.width=c.height=1
   g.strokeStyle='rgba(240,246,255,0.45)'; g.lineWidth=5; g.beginPath(); g.moveTo(0,44); g.lineTo(128,60); g.stroke();
   const t=new THREE.Texture(c); t.needsUpdate=true; t.anisotropy=4; return t; }
 const GLOW = glowTex(), HULL = hullTex();
+
+// ---------------------------------------------------------------- the press: where the words come from
+/* RJ 2026-09-06: "the letters shouldn't flash appear - they should spawn off screen and come in
+   to assemble the words from a ship below (still on screen but from the background angle)";
+   "they are streaming out from a far away view up to the top of the screen"; "make it cool when
+   the letters assemble into sentences."
+
+   So there is a carrier - the press - deep in the background below the player, small with
+   distance. Every letter of a line that is about to enter the view is born below the bottom edge
+   of the screen, streams up past the press as a glowing streak, and lands in its slot at the top
+   of the screen with a spark and a settle. A line assembles left to right, as if typed. Letters
+   in flight are not targets and cannot sink, shoot or be shot. */
+const PRESS_NDC_Y    = -0.62;   // where on the screen the press sits: below the player, background
+const PRESS_DIST     = 90;      // how far from the camera - a distant ship, not a prop
+const SPAWN_NDC_Y    = -1.35;   // letters are born below the bottom edge of the screen
+const SPAWN_DIST     = 112;
+const ARRIVE_SEC     = 1.15;    // one letter's flight
+const ARRIVE_STAGGER = 0.035;   // per letter along the line, so a sentence types itself
+const ARRIVE_ROWGAP  = 0.30;    // per row when several rows launch in one frame (the opening)
+let frameDt = 1/60;
+let press = null;
+const trailPool = [];
+const _slot = new THREE.Vector3(), _p = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3();
+
+// The board-local point `dist` units down the camera ray through screen position (nx, ny).
+function rayPoint(nx, ny, dist){
+  camera.updateMatrixWorld();
+  const v = new THREE.Vector3(nx, ny, 0.5).unproject(camera);
+  const dir = v.sub(camera.position).normalize();
+  return board.worldToLocal(camera.position.clone().add(dir.multiplyScalar(dist)));
+}
+
+// The board y at which a row is at the top edge of THIS screen. The old fixed window
+// (VIEW_TOP + 2) was solved for a wide screen; in portrait the camera sits further back and that
+// y is the middle of the picture, so rows assembled mid-screen instead of at the top.
+let viewEnterY = VIEW_TOP + 2;
+function enterY(){
+  camera.updateMatrixWorld();
+  const camL = board.worldToLocal(camera.position.clone());
+  const dirL = board.worldToLocal(new THREE.Vector3(0, 0.92, 0.5).unproject(camera)).sub(camL);
+  if(Math.abs(dirL.z) < 1e-6) return VIEW_TOP + 2;
+  const s = -camL.z / dirL.z;                          // where that ray meets the board plane
+  const y = camL.y + s * dirL.y;
+  return (s > 0 && isFinite(y)) ? THREE.MathUtils.clamp(y, VIEW_TOP + 2, VIEW_TOP + 30) : VIEW_TOP + 2;
+}
+
+function buildPress(){
+  const g = new THREE.Group();
+  const hullMat = new THREE.MeshStandardMaterial({ color:0x2a3d55, map:HULL, emissive:0x101a28,
+    roughness:0.55, metalness:0.65, flatShading:true });
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(30, 3.2, 8), hullMat));
+  const prow = new THREE.Mesh(new THREE.ConeGeometry(4.2, 9, 6), hullMat);
+  prow.rotation.z = -Math.PI / 2; prow.position.x = 19.5; g.add(prow);
+  const stern = prow.clone(); stern.rotation.z = Math.PI / 2; stern.position.x = -19.5; g.add(stern);
+  const bridge = new THREE.Mesh(new THREE.BoxGeometry(7, 3.2, 4), hullMat);
+  bridge.position.set(-4, 3.0, 0); g.add(bridge);
+  // the slot the letters come out of: a long lit bar along the top edge, and its bloom
+  const slot = new THREE.Mesh(new THREE.BoxGeometry(24, 0.5, 1.2), new THREE.MeshBasicMaterial({ color:0x4fc3f7 }));
+  slot.position.set(2, 1.9, 3.2); g.add(slot);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0x4fc3f7,
+    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.35 }));
+  glow.scale.set(30, 8, 1); glow.position.set(2, 2.4, 3.4); g.add(glow);
+  for(const sz of [-2.6, 2.6]){
+    const eng = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0xff9a4d,
+      blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.8 }));
+    eng.scale.set(5, 5, 1); eng.position.set(-24, 0, sz); g.add(eng);
+  }
+  g.userData = { home: new THREE.Vector3(), pulse: 0, glow };
+  g.scale.setScalar(0.6);      // a distant ship: at PRESS_DIST it spans about a fifth of a wide screen
+  board.add(g);
+  press = g;
+  placePress();
+  return g;
+}
+
+// Where the press sits is a screen position, not a world one - it has to read as "that ship
+// down there in the distance" on a phone in portrait as much as on a wide monitor.
+function placePress(){
+  if(!press) return;
+  press.userData.home.copy(rayPoint(0, PRESS_NDC_Y, PRESS_DIST));
+  press.position.copy(press.userData.home);
+}
+
+function runPress(dt){
+  if(!press) return;
+  const h = press.userData.home;
+  press.position.set(h.x + Math.sin(t * 0.21) * 6, h.y + Math.sin(t * 0.5) * 0.8, h.z + Math.cos(t * 0.17) * 2);
+  press.rotation.z = Math.sin(t * 0.21) * 0.05;
+  press.userData.pulse = Math.max(0, press.userData.pulse - dt * 2.5);
+  press.userData.glow.material.opacity = 0.35 + press.userData.pulse * 0.65;
+  press.userData.glow.scale.set(30 + press.userData.pulse * 10, 8 + press.userData.pulse * 4, 1);
+}
+
+// A letter's flight: born off screen below the press, past the press, into its slot.
+function launchLetter(L, stagger){
+  L.arrive = 0; L.flyT = -stagger; L.flash = 0;
+  const nx = THREE.MathUtils.clamp(L.x / (textHalfW || 12), -1, 1) * 0.85;
+  L.from = rayPoint(nx + (Math.random() - 0.5) * 0.15, SPAWN_NDC_Y - Math.random() * 0.3, SPAWN_DIST);
+  L.via  = press ? press.position.clone().add(new THREE.Vector3(nx * 10, 4, 3))
+                 : L.from.clone().lerp(new THREE.Vector3(L.x, 0, 0), 0.5);
+  L.prev = L.from.clone();
+  if(press) press.userData.pulse = 1;
+}
+
+function takeTrail(){
+  if(trailPool.length) return trailPool.pop();
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0x8fd7ff,
+    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.85 }));
+  board.add(s);
+  return s;
+}
+function releaseTrail(L){
+  if(L.trail){ L.trail.visible = false; trailPool.push(L.trail); L.trail = null; }
+}
+// The streak behind a letter in flight: a glow sprite stretched along the direction it is
+// moving ON SCREEN, which is what a streak is - a world-space direction would foreshorten
+// to nothing on the way up the raked board.
+function updateTrail(L, M){
+  if(!L.trail){ L.trail = takeTrail(); L.trail.visible = true; }
+  const s = L.trail;
+  _a.copy(M.position); board.localToWorld(_a); _a.project(camera);
+  _b.copy(L.prev);     board.localToWorld(_b); _b.project(camera);
+  s.material.rotation = Math.atan2(_a.y - _b.y, (_a.x - _b.x) * camera.aspect);
+  s.position.copy(M.position).lerp(L.prev, 0.5);
+  const len = M.position.distanceTo(L.prev) * 5.5 + 0.8;
+  s.scale.set(len, 0.7, 1);
+  s.material.color.setHex(L.turret ? 0xff8a7a : 0x8fd7ff);
+}
+
+// One letter's frame in flight. Returns true while it is still flying.
+function flyLetter(L, M, y){
+  L.flyT += frameDt;
+  if(L.flyT < 0){ M.visible = false; return true; }           // its turn has not come
+  M.visible = true;
+  const k = Math.min(1, L.flyT / ARRIVE_SEC);
+  const e = k * k * (3 - 2 * k);   // smoothstep: time enough near the press to be seen leaving it, soft landing
+  _slot.set(L.x, y, 0);
+  const u = 1 - e;
+  L.prev.copy(L.flyT <= frameDt + 1e-6 ? L.from : M.position);   // first frame: no stale pool position
+  _p.set(0, 0, 0).addScaledVector(L.from, u * u).addScaledVector(L.via, 2 * u * e).addScaledVector(_slot, e * e);
+  M.position.copy(_p);
+  const S = CH_W * 0.92, SY = CH_W * 1.22;
+  const bump = k > 0.86 ? 1 + 0.22 * Math.sin((k - 0.86) / 0.14 * Math.PI) : 1;   // the settle
+  const sc = (0.4 + 0.6 * e) * bump;
+  M.scale.set(S * sc, SY * sc, S * sc);
+  M.rotation.set((1 - e) * L.spinX * 2.2, (1 - e) * L.spinY * 3.1, (1 - e) * 0.6);
+  M.material.emissiveIntensity = 1.5;
+  updateTrail(L, M);
+  if(k >= 1){
+    L.arrive = 1; L.flash = 1;
+    spark(board.localToWorld(_slot.clone()), L.turret ? 0xff8a7a : 0x9fd8ff, 6);
+    releaseTrail(L);
+    return false;
+  }
+  return true;
+}
+
 
 // ---- real art ported from starfighter.html, not reimplemented ----
 // The flat black void was the single biggest reason this looked cheap. Star Fighter already ships
@@ -1528,7 +1696,8 @@ function endGame(win){
 // ---------------------------------------------------------------- loop
 let last = performance.now();
 function tick(now){
-  const dt = Math.min((now-last)/1000, .05); last = now; t += dt;
+  const dt = Math.max(0, Math.min((now-last)/1000, .05)); last = now; t += dt;
+  frameDt = dt;
   requestAnimationFrame(tick);
 
   if(state==='play'){
@@ -1676,11 +1845,11 @@ function tick(now){
       const ly = line.y - crawl;
       if(ly > ship.position.y + 1.1 || ly < ship.position.y - 1.6) return;
       for(const L of line.letters){
-        if(L.broken || L.dissolve>0) continue;
+        if(L.broken || L.dissolve>0 || L.arrive < 1) continue;
         if(Math.abs(L.x - ship.position.x) < 1.25){
           line.hitShip = true;
           spark(new THREE.Vector3(ship.position.x, ship.position.y+0.6, 0), 0x66ccff, 12);
-          line.letters.forEach(x=>{ if(!x.broken && x.dissolve===0) x.dissolve=0.01; });
+          line.letters.forEach(x=>{ if(!x.broken && x.dissolve===0 && x.arrive >= 1) x.dissolve=0.01; });
           break;
         }
       }
@@ -1730,10 +1899,10 @@ function tick(now){
       let hit = null, hitLine = null;
       for(const line of lines){
         const ly = line.y - crawl;
-        if(ly > VIEW_TOP+2 || ly < VIEW_BOT-2) continue;
+        if(ly > viewEnterY + 2 || ly < VIEW_BOT-2) continue;
         if(!(loY <= ly + LINE_H*0.42 && hiY >= ly - LINE_H*0.42)) continue;
         for(const L of line.letters){
-          if(L.broken || L.dissolve > 0) continue;
+          if(L.broken || L.dissolve > 0 || L.arrive < 1) continue;
           if(Math.abs(bl.position.x - L.x) < CH_W*0.85){ hit = L; hitLine = line; break; }
         }
         if(hit) break;
@@ -1752,13 +1921,15 @@ function tick(now){
         board.remove(bl); bullets.splice(i,1);
       } else if(hitAttackerAt(bl.position.x, bl.position.y, 1.1)){
         board.remove(bl); bullets.splice(i,1);
-      } else if(bl.position.y > 18){
+      } else if(bl.position.y > viewEnterY + 3){
         board.remove(bl); bullets.splice(i,1);   // was scene.remove - a no-op that leaked every miss
       }
     }
 
     if(lives<=0) killShip();
   }
+
+  runPress(dt);
 
   // particles
   for(let i=bits.length-1;i>=0;i--){
@@ -1874,13 +2045,14 @@ function resize(){
   // re-fit after any size change. Without this, entering fullscreen changed the aspect but left
   // the camera framed for the old one, so the text sat in a narrow band with dead space either
   // side - which is most of why it felt cramped in the tab.
-  setTimeout(()=>{ if(typeof applyCam==="function" && lines.length) applyCam(); }, 0);
+  setTimeout(()=>{ if(typeof applyCam==="function" && lines.length) applyCam(); placePress(); }, 0);
   camera.aspect = w/h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
 
 ship = buildShip();
 buildBoard();
+buildPress();
 resize();
 
 document.getElementById('go').onclick = ()=>{
