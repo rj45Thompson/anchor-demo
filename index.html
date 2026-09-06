@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+/* rj-view: which of the two views this address opens on. Read here, before the body parses, so a
+   games link never flashes the AI panel first. ?view=games is the shareable games address;
+   games/ redirects to it. */
+(function(){var v=new URLSearchParams(location.search).get("view"),r=document.documentElement;
+r.setAttribute("data-view",v==="games"?"games":"ai");
+if(v==="games")r.setAttribute("data-view-boot","");})();
+</script>
 <title>R.J. Thompson - GitHub page</title>
 <meta name="description" content="A knowledge engine with no neural weights. Every answer carries a measured, held-out-calibrated confidence and its independent sources - over a 66.4M-fact graph, live in your browser.">
 <meta property="og:type" content="website">
@@ -12,11 +20,24 @@
 <meta name="twitter:description" content="No neural weights. Measured confidence, independent sources, honest refusals - over a 66.4M-fact graph, live in your browser.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231f3b57'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Georgia,serif' font-weight='700' fill='%23fbfaf8' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <style>
-:root{--bg:#fbfaf8;--fg:#1a1a19;--muted:#6b6b66;--line:#e3e0da;--card:#fff;
---hi:#1f3b57;--good:#1a6b4a;--mid:#8a6a1f;--low:#8a3a2f;--code:#f2efe9}
+:root{--bg:#fbfaf8;--fg:#1a1a19;--muted:#62625d;--line:#e3e0da;--card:#fff;
+--hi:#1f3b57;--good:#1a6b4a;--mid:#8a6a1f;--low:#8a3a2f;--code:#f2efe9;
+/* the panel palette (header, games, inventions, papers). Light values here, dark below; every
+   text/background pair used is measured >= 4.5:1 in both themes (contrast.py, 2026-09-06). */
+--x-strong:#12202c;--x-text:#26384a;--x-text2:#45586b;--x-text3:#54677a;--x-link:#155a8a;
+--x-card:#fff;--x-card2:#eef3f7;--x-chip:#e9eef3;--x-chipon:#d6e4f0;--x-line:#d3dce4;
+--x-line2:#e2e8ee;--x-accent:#2f6d99;--x-code:#e9eef3;--x-codefg:#0b4f6c;
+--x-beta:#6b4600;--x-betaline:#c49a3c;--x-warnbg:#fdf0e4;--x-warnline:#d9863a;
+--x-warnfg:#7a3b10;--x-warnstrong:#5e2a05}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
 --bg:#14150f;--fg:#eceade;--muted:#9c9a8e;--line:#2e2f27;--card:#1b1c15;
---hi:#8fb4d9;--good:#6fc79b;--mid:#d6b25f;--low:#e08b7a;--code:#22231b}}
+--hi:#8fb4d9;--good:#6fc79b;--mid:#d6b25f;--low:#e08b7a;--code:#22231b;
+--x-strong:#eaf3fb;--x-text:#c2d3e2;--x-text2:#9fb6c9;--x-text3:#7d8fa1;--x-link:#7fd4ff;
+--x-card:#0b1219;--x-card2:#0d1c28;--x-chip:#101a24;--x-chipon:#14304a;--x-line:#1d2c3a;
+--x-line2:#16222e;--x-accent:#2f6d99;--x-code:#111c26;--x-codefg:#8fe8ff;
+--x-beta:#ffcf6b;--x-betaline:#6b5320;--x-warnbg:#1d1109;--x-warnline:#6b3a20;
+--x-warnfg:#ffcda6;--x-warnstrong:#ffb877}}
+a{color:var(--hi)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 ui-serif,Georgia,serif}
 .wrap{max-width:790px;margin:0 auto;padding:44px 22px 90px}
@@ -47,7 +68,7 @@ border-radius:8px;padding:14px 16px;margin:0 0 10px}
 .claim{font-size:1.04rem;margin:0 0 8px}
 .pct{font-variant-numeric:tabular-nums;font-weight:700}
 .row{display:flex;gap:9px;font-size:.89rem;color:var(--muted);margin:3px 0}
-.row .lbl{min-width:92px;flex:none;opacity:.8}
+.row .lbl{min-width:92px;flex:none}
 .src{color:var(--fg)}
 .ev{display:flex;align-items:center;gap:7px;margin:8px 0 9px}
 .ev .pips{display:flex;gap:3px}
@@ -88,12 +109,12 @@ margin:0 0 10px}
 color:#8ea3c0;background:rgba(6,8,13,.72);border:1px solid #1c2534;border-radius:5px;
 padding:3px 8px;pointer-events:none}
 .stage .tip{position:absolute;right:11px;bottom:10px;font:11px ui-sans-serif,system-ui,sans-serif;
-color:#64748b;pointer-events:none}
+color:#8a9ab0;pointer-events:none}
 @media (max-width:620px){.stage canvas{height:300px}}
 /* The search console. The engine really does examine every fact on every node it opens; showing
    only the winning 2 lines made a few hundred real operations look like a lookup. */
 .tbar{display:flex;justify-content:space-between;align-items:center;font:11px ui-monospace,
-Menlo,monospace;color:#64748b;padding:0 2px 5px}
+Menlo,monospace;color:var(--muted);padding:0 2px 5px}
 .legend{position:absolute;left:11px;bottom:10px;display:flex;flex-wrap:wrap;gap:9px;
 max-width:70%;font:10.5px ui-monospace,Menlo,monospace;color:#8ea3c0;pointer-events:none}
 .legend span{display:flex;align-items:center;gap:4px}
@@ -119,7 +140,7 @@ font-size:.9rem;background:var(--card)}
 .tlog{border:1px solid #1c2534;border-radius:8px;background:#06080d;height:250px;overflow-y:auto;
 padding:8px 11px;margin:0 0 16px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#7e93b0}
 .tlog div{white-space:pre-wrap;word-break:break-word}
-.tlog .t-hit{color:#6ee7b7}.tlog .t-miss{color:#46566e}.tlog .t-fetch{color:#67d8ff}
+.tlog .t-hit{color:#6ee7b7}.tlog .t-miss{color:#71829a}.tlog .t-fetch{color:#67d8ff}
 .tlog .t-beam{color:#fbbf24}.tlog .t-goal{color:#e2e8f0;font-weight:600}.tlog .t-dead{color:#f87171}.tlog .t-done{color:#fff;font-weight:600}
 .livebar{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px;
 font:11px ui-monospace,Menlo,monospace;color:var(--muted)}
@@ -163,17 +184,17 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px}
 #dbgbox .dbg-head button:hover{background:#14273f}
 .dbg-code{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#0a0f1a;
-  border:1px solid #22314a;border-radius:6px;padding:6px 0;margin:6px 0;overflow-x:auto}
+  border:1px solid #22314a;border-radius:6px;padding:6px 0;margin:6px 0;overflow-x:auto;color:#cfe3ff}
 .dbg-ln{display:grid;grid-template-columns:30px 46px minmax(200px,1fr) auto;gap:10px;
   padding:3px 10px;white-space:nowrap}
 .dbg-ln.pc{background:#14273f;outline:1px solid #2f7fd8}
-.dbg-n{color:#4c5a72}.dbg-op{color:#67d8ff}.dbg-det{color:#7d93b8}
+.dbg-n{color:#8b9bb4}.dbg-op{color:#67d8ff}.dbg-det{color:#7d93b8}
 .dbg-vars{font-family:ui-monospace,Consolas,monospace;font-size:12px;border-collapse:collapse;
-  margin:6px 0;width:100%}
+  margin:6px 0;width:100%;background:#0a0f1a;color:#cfe3ff}
 .dbg-vars td{border:1px solid #22314a;padding:4px 10px}
 .dbg-vars td:first-child{color:#7d93b8;width:220px}
 .dbg-alt{cursor:pointer;padding:4px 10px;border:1px solid #22314a;margin:3px 0;
-  border-radius:4px;font-size:12px}
+  border-radius:4px;font-size:12px;background:#0a0f1a;color:#cfe3ff}
 .dbg-alt:hover{background:#101c30}
 .dbg-alt.on{border-color:#2f7fd8;background:#101c30}
 .viewchip{position:absolute;right:10px;bottom:10px;background:rgba(16,28,48,.92);
@@ -195,133 +216,151 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <span class="audnote" id="audNote"></span>
 </div>
 <div id="chatbox"></div>
-<p class="tagline">Senior C++ / C# engineer, 30 years shipping. Everything below runs in this page - the engine, the games, the research. Open to work.</p>
-<p class="sub">A system with <strong>no neural weights</strong>. Every answer - a fact or a program - carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
+<p class="tagline" data-aud="ai">Senior C++ / C# engineer, 30 years shipping. Everything below runs in this page - the engine and the research behind it. Open to work.</p>
+<p class="tagline" data-aud="games">Senior C++ / C# engineer, 30 years shipping. Two playable demos below, both running in this page. Open to work.</p>
+<p class="sub" data-aud="ai">A system with <strong>no neural weights</strong>. Every answer - a fact or a program - carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
 doesn't have enough.</p>
 
 <div class="tabs">
-  <div class="tab on" data-p="think" data-aud="ai,games">Ask anything · watch it think <span class="beta">BETA</span></div>
+  <div class="tab on" data-p="think" data-aud="ai">Ask anything · watch it think <span class="beta">BETA</span></div>
   <!-- hidden while the English front end is finished - see spec_en.js
   <div class="tab" data-p="code">Write a function <span class="beta">BETA</span></div>
   -->
   <div class="tab" data-p="resume" data-aud="games">R&eacute;sum&eacute; Breakout</div>
   <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
-  <div class="tab" data-p="inv" data-aud="ai,games">Inventions</div>
+  <div class="tab" data-p="inv" data-aud="ai">Inventions</div>
   <div class="tab" data-p="papers" data-aud="ai">White papers</div>
 </div>
 
 <!-- ===== rj-extra-tabs ===== -->
 <style>
-  .gamewrap{position:relative;width:100%;height:min(72vh,680px);border:1px solid #1d2c3a;
+  /* This block used to carry its own dark hex palette. It was authored against the dark theme
+     and then sat on the cream page in light mode - #9fb6c9 on #fbfaf8 is 2:1. It now reads the
+     --x-* tokens from :root, so light mode gets dark text on light panels and dark mode keeps
+     exactly the colours it had. */
+  .gamewrap{position:relative;width:100%;height:min(72vh,680px);border:1px solid var(--x-line);
     border-radius:10px;overflow:hidden;background:#070b10}
   .gamewrap iframe{width:100%;height:100%;border:0;display:block}
-  .gamenote{font-size:12px;color:#7d8fa1;margin:8px 2px 0;line-height:1.6}
+  .gamenote{font-size:12.5px;color:var(--x-text3);margin:8px 2px 0;line-height:1.6}
   .papers{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-  .paper{border:1px solid #1d2c3a;border-radius:10px;padding:14px 16px;background:#0b1219}
-  .paper h4{margin:0 0 6px;font-size:14px;color:#e8eef4}
-  .paper p{margin:0 0 10px;font-size:12.5px;color:#93a7b8;line-height:1.55}
+  .paper{border:1px solid var(--x-line);border-radius:10px;padding:14px 16px;background:var(--x-card)}
+  .paper h4{margin:0 0 6px;font-size:14px;color:var(--x-strong)}
+  .paper p{margin:0 0 10px;font-size:12.5px;color:var(--x-text2);line-height:1.55}
   .paper a{font-size:12.5px}
   .paper .tagrow{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
-  .paper .tag{font-size:10.5px;color:#7fd4ff;border:1px solid #23516b;border-radius:999px;
+  .paper .tag{font-size:10.5px;color:var(--x-link);border:1px solid var(--x-accent);border-radius:999px;
     padding:2px 9px}
   .papers-sub{margin:22px 2px 10px;font-size:12px;letter-spacing:1px;text-transform:uppercase;
-    color:#7d8fa1;font-weight:600}
-  .paperdoc{border:1px solid #1d2c3a;border-radius:10px;background:#0b1219;overflow:hidden}
+    color:var(--x-text3);font-weight:600}
+  .paperdoc{border:1px solid var(--x-line);border-radius:10px;background:var(--x-card);overflow:hidden}
   .paperdoc-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
-    padding:14px 16px;border-bottom:1px solid #16222e;background:#0d1620}
-  .paperdoc-h h3{margin:0;font-size:15px;color:#e8eef4}
-  .paperdoc-h .sub{margin-top:4px;font-size:12px;color:#8fa3b5;line-height:1.5}
+    padding:14px 16px;border-bottom:1px solid var(--x-line2);background:var(--x-card2)}
+  .paperdoc-h h3{margin:0;font-size:15px;color:var(--x-strong)}
+  .paperdoc-h .sub{margin-top:4px;font-size:12px;color:var(--x-text2);line-height:1.5}
   .rawlink{font-size:11.5px;white-space:nowrap}
   .paperbody{max-height:min(58vh,560px);overflow:auto;padding:16px 20px;font-size:13px;
-    line-height:1.72;color:#c9d8e5}
-  .paperbody h1{font-size:17px;color:#fff;margin:0 0 10px}
-  .paperbody h2{font-size:14.5px;color:#7fd4ff;margin:22px 0 8px;
-    border-bottom:1px solid #16222e;padding-bottom:5px}
-  .paperbody h3{font-size:13px;color:#a9c6dc;margin:16px 0 6px}
+    line-height:1.72;color:var(--x-text)}
+  .paperbody h1{font-size:17px;color:var(--x-strong);margin:0 0 10px}
+  .paperbody h2{font-size:14.5px;color:var(--x-link);margin:22px 0 8px;
+    border-bottom:1px solid var(--x-line2);padding-bottom:5px}
+  .paperbody h3{font-size:13px;color:var(--x-text2);margin:16px 0 6px}
   .paperbody p{margin:0 0 11px}
   .paperbody li{margin:0 0 5px}
-  .paperbody code{background:#111c26;border:1px solid #1d2c3a;border-radius:4px;padding:1px 5px;
-    font-size:12px;color:#8fe8ff}
-  .paperbody strong{color:#eef5fb}
+  .paperbody code{background:var(--x-code);border:1px solid var(--x-line);border-radius:4px;padding:1px 5px;
+    font-size:12px;color:var(--x-codefg)}
+  .paperbody strong{color:var(--x-strong)}
   .paperbody table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:12px}
-  .paperbody th,.paperbody td{border:1px solid #1d2c3a;padding:5px 8px;text-align:left}
-  .paperbody th{background:#0f1a24;color:#a9c6dc}
+  .paperbody th,.paperbody td{border:1px solid var(--x-line);padding:5px 8px;text-align:left}
+  .paperbody th{background:var(--x-card2);color:var(--x-text2)}
   .tab .beta{font-size:9px;font-weight:700;letter-spacing:.6px;vertical-align:super;
-    color:#ffcf6b;border:1px solid #6b5320;border-radius:3px;padding:0 3px;margin-left:3px}
-  .broken-note{margin:0 0 12px;padding:10px 13px;border:1px solid #6b3a20;border-left-width:3px;
-    border-radius:6px;background:#1d1109;color:#ffcda6;font-size:12.5px;line-height:1.6}
-  .broken-note strong{color:#ffb877}
+    color:var(--x-beta);border:1px solid var(--x-betaline);border-radius:3px;padding:0 3px;margin-left:3px}
+  .broken-note{margin:0 0 12px;padding:10px 13px;border:1px solid var(--x-warnline);border-left-width:3px;
+    border-radius:6px;background:var(--x-warnbg);color:var(--x-warnfg);font-size:12.5px;line-height:1.6}
+  .broken-note strong{color:var(--x-warnstrong)}
   .subtabs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 14px}
-  .subtab{background:#101a24;border:1px solid #1d2c3a;color:#9fb6c9;border-radius:999px;
+  .subtab{background:var(--x-chip);border:1px solid var(--x-line);color:var(--x-text2);border-radius:999px;
     padding:5px 13px;font-size:12px;cursor:pointer;font-family:inherit}
-  .subtab:hover{border-color:#2b4c66;color:#cfe3f2}
-  .subtab.on{background:#14304a;border-color:#2f6d99;color:#eaf5ff}
-  .sub{display:none}
-  .sub.on{display:block}
-  .sub h4{margin:0 0 6px;font-size:15px;color:#eaf3fb}
-  .sub .lede{margin:0 0 10px;font-size:14px;color:#bcd6ea;font-weight:600;line-height:1.5}
-  .sub p{font-size:13px;line-height:1.68;color:#c2d3e2;margin:0 0 10px}
-  .sub .why{border-left:3px solid #2f6d99;background:#0e1a24;padding:9px 12px;border-radius:0 6px 6px 0}
-  .sub .small{color:#8fa3b5}
+  .subtab:hover{border-color:var(--x-accent);color:var(--x-strong)}
+  .subtab.on{background:var(--x-chipon);border-color:var(--x-accent);color:var(--x-strong)}
+  /* scoped to the Inventions panel. As a bare `.sub` this rule also hid the header paragraph
+     (<p class="sub"> under the tagline), which had been invisible since the sub-tabs landed. */
+  #p-inv .sub{display:none}
+  #p-inv .sub.on{display:block}
+  .sub h4{margin:0 0 6px;font-size:15px;color:var(--x-strong)}
+  .sub .lede{margin:0 0 10px;font-size:14px;color:var(--x-text);font-weight:600;line-height:1.5}
+  .sub p{font-size:13px;line-height:1.68;color:var(--x-text);margin:0 0 10px}
+  .sub .why{border-left:3px solid var(--x-accent);background:var(--x-card2);padding:9px 12px;border-radius:0 6px 6px 0}
+  .sub .small{color:var(--x-text2)}
   table.mini{border-collapse:collapse;margin:0 0 10px;font-size:12.5px}
-  table.mini th,table.mini td{border:1px solid #1d2c3a;padding:5px 12px;text-align:left}
-  table.mini th{background:#0f1a24;color:#a9c6dc}
+  table.mini th,table.mini td{border:1px solid var(--x-line);padding:5px 12px;text-align:left}
+  table.mini th{background:var(--x-card2);color:var(--x-text2)}
   .sub .beta{font-size:9px;font-weight:700;letter-spacing:.6px;vertical-align:super;
-    color:#ffcf6b;border:1px solid #6b5320;border-radius:3px;padding:0 3px;margin-left:3px}
-  .hire{margin-top:20px;padding:13px 15px;border:1px solid #23516b;border-radius:8px;
-    background:#0d1c28;font-size:13px;color:#cfe3f2;line-height:1.7}
-  .vnote{margin:6px 0 12px;padding:9px 12px;border:1px solid #24384a;border-radius:6px;
-    background:#0e1720;color:#9fb6c9;font-size:12.5px}
+    color:var(--x-beta);border:1px solid var(--x-betaline);border-radius:3px;padding:0 3px;margin-left:3px}
+  .hire{margin-top:20px;padding:13px 15px;border:1px solid var(--x-accent);border-radius:8px;
+    background:var(--x-card2);font-size:13px;color:var(--x-text);line-height:1.7}
+  .vnote{margin:6px 0 12px;padding:9px 12px;border:1px solid var(--x-line);border-radius:6px;
+    background:var(--x-card2);color:var(--x-text2);font-size:12.5px}
   .vbar{margin-top:12px}
-  .lnk{background:none;border:none;color:#7fd4ff;cursor:pointer;font:inherit;font-size:12.5px;
+  .lnk{background:none;border:none;color:var(--x-link);cursor:pointer;font:inherit;font-size:12.5px;
     text-decoration:underline;padding:0}
-  .lnk:hover{color:#b9e8ff}
-  #chatWrap{margin-top:14px;border:1px solid #1d2c3a;border-radius:8px;background:#0b1219}
+  .lnk:hover{color:var(--x-strong)}
+  .launch a:not(.playbtn),.paper a,.hire a,.sub a,.paperbody a,.specbox a,.vnote a{color:var(--x-link)}
+  /* the Play button is a filled button, not a link - it keeps white on the accent fill */
+  #chatWrap{margin-top:14px;border:1px solid var(--x-line);border-radius:8px;background:var(--x-card)}
   #chatLog{max-height:230px;overflow:auto;padding:10px 12px;font-size:13px;line-height:1.6}
   .cmsg{margin:0 0 9px}
-  .cmsg .who{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:#7d8fa1}
-  .cmsg.q .bub{color:#eaf3fb}
-  .cmsg.a .bub{color:#bcd6ea}
+  .cmsg .who{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--x-text3)}
+  .cmsg.q .bub{color:var(--x-strong)}
+  .cmsg.a .bub{color:var(--x-text)}
   .cmsg .bub{margin-top:2px}
-  #chatRow{display:flex;gap:8px;border-top:1px solid #16222e;padding:9px 10px}
-  #chatIn{flex:1;background:#0e1720;border:1px solid #24384a;border-radius:6px;color:#e8eef4;
+  #chatRow{display:flex;gap:8px;border-top:1px solid var(--x-line2);padding:9px 10px}
+  #chatIn{flex:1;background:var(--x-card2);border:1px solid var(--x-line);border-radius:6px;color:var(--x-strong);
     padding:8px 10px;font:inherit;font-size:13px}
-  #chatIn:focus{outline:none;border-color:#2f6d99}
-  .paper.feat{border-color:#2f6d99;background:#0d1c28}
-  .paper.feat h4{color:#eaf5ff;font-size:14.5px;line-height:1.4}
-  .specbox{margin:10px 0 4px;padding:11px 13px;border:1px solid #24384a;border-radius:7px;
-    background:#0c141d;font-size:12.5px;line-height:1.6;color:#c2d3e2}
-  .specbox .k{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:#7d8fa1;
+  #chatIn:focus{outline:none;border-color:var(--x-accent)}
+  .paper.feat{border-color:var(--x-accent);background:var(--x-card2)}
+  .paper.feat h4{color:var(--x-strong);font-size:14.5px;line-height:1.4}
+  .specbox{margin:10px 0 4px;padding:11px 13px;border:1px solid var(--x-line);border-radius:7px;
+    background:var(--x-card);font-size:12.5px;line-height:1.6;color:var(--x-text)}
+  .specbox .k{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--x-text3);
     display:block;margin-bottom:3px}
-  .specbox .said{color:#eaf3fb;font-weight:600}
-  .specbox .warn{margin-top:9px;padding:9px 11px;border-left:3px solid #b5701f;background:#1d1408;
-    border-radius:0 5px 5px 0;color:#ffcda6}
-  .specbox .miss{color:#ffcda6}
+  .specbox .said{color:var(--x-strong);font-weight:600}
+  .specbox .warn{margin-top:9px;padding:9px 11px;border-left:3px solid var(--x-warnline);background:var(--x-warnbg);
+    border-radius:0 5px 5px 0;color:var(--x-warnfg)}
+  .specbox .miss{color:var(--x-warnfg)}
   .specbox ul{margin:5px 0 0;padding-left:18px}
-  .specbox code{background:#111c26;border:1px solid #1d2c3a;border-radius:4px;padding:1px 5px;
-    font-size:11.5px;color:#8fe8ff}
-  .tagline{margin:2px 0 0;font-size:13.5px;color:#9fb6c9;line-height:1.6}
+  .specbox code{background:var(--x-code);border:1px solid var(--x-line);border-radius:4px;padding:1px 5px;
+    font-size:11.5px;color:var(--x-codefg)}
+  .tagline{margin:2px 0 0;font-size:14px;color:var(--x-text2);line-height:1.6}
   .intro{margin:0 0 12px}
-  .intro h3{margin:0 0 5px;font-size:15px;color:#eaf3fb}
-  .intro p{margin:0 0 5px;font-size:13px;line-height:1.62;color:#bcd6ea}
-  .intro .how{font-size:11.5px;color:#7d8fa1}
-  .launch{border:1px solid #23516b;border-radius:10px;background:linear-gradient(160deg,#0e1c28,#0a131b);
+  .intro h3{margin:0 0 5px;font-size:15px;color:var(--x-strong)}
+  .intro p{margin:0 0 5px;font-size:13px;line-height:1.62;color:var(--x-text)}
+  .intro .how{font-size:11.5px;color:var(--x-text3)}
+  .launch{border:1px solid var(--x-accent);border-radius:10px;background:linear-gradient(160deg,var(--x-card2),var(--x-card));
     padding:22px 24px}
-  .launch h3{margin:0 0 8px;font-size:19px;color:#eaf5ff}
-  .launch p{margin:0 0 10px;font-size:13.5px;line-height:1.68;color:#bcd6ea;max-width:62ch}
-  .launch .how{font-size:12px;color:#8fa3b5}
+  .launch h3{margin:0 0 8px;font-size:19px;color:var(--x-strong)}
+  .launch p{margin:0 0 10px;font-size:13.5px;line-height:1.68;color:var(--x-text);max-width:62ch}
+  .launch .how{font-size:12px;color:var(--x-text2)}
   .playbtn{display:inline-block;margin-top:8px;background:#2f6d99;color:#fff;text-decoration:none;
     border-radius:8px;padding:10px 20px;font-weight:600;font-size:14px}
-  .playbtn:hover{background:#3d86b8}
-  .inlinebtn{margin-left:12px;background:none;border:none;color:#7fd4ff;cursor:pointer;
+  .playbtn:hover{background:#265d87}
+  .inlinebtn{margin-left:12px;background:none;border:none;color:var(--x-link);cursor:pointer;
     font:inherit;font-size:12.5px;text-decoration:underline}
   .audbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:2px 0 10px}
-  .audlbl{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#7d8fa1;margin-right:2px}
-  .audbtn{background:#101a24;border:1px solid #1d2c3a;color:#9fb6c9;border-radius:999px;
+  .audlbl{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--x-text3);margin-right:2px}
+  .audbtn{background:var(--x-chip);border:1px solid var(--x-line);color:var(--x-text2);border-radius:999px;
     padding:4px 12px;font:inherit;font-size:12px;cursor:pointer}
-  .audbtn:hover{border-color:#2b4c66;color:#cfe3f2}
-  .audbtn.on{background:#14304a;border-color:#2f6d99;color:#eaf5ff}
-  .audnote{font-size:11.5px;color:#7d8fa1;margin-left:4px}
+  .audbtn:hover{border-color:var(--x-accent);color:var(--x-strong)}
+  .audbtn.on{background:var(--x-chipon);border-color:var(--x-accent);color:var(--x-strong)}
+  .audnote{font-size:12px;color:var(--x-text3);margin-left:4px}
+  /* The two views. Anything tagged data-aud shows only in the views it names. The html attribute
+     is set in <head> from ?view=, so the games address opens on the games and never on the AI
+     panel first; data-view-boot keeps every panel down until the games tab has been chosen. */
+  [data-aud=""]{display:none!important}
+  html[data-view=ai] [data-aud="games"]{display:none!important}
+  html[data-view=games] [data-aud="ai"]{display:none!important}
+  html[data-view=games] .tab[data-p=resume]{order:-2}
+  html[data-view=games] .tab[data-p=space]{order:-1}
+  html[data-view-boot] .panel{display:none}
 
 /* ---- side-by-side: the same question to a frontier assistant and to this engine ------------
    RJ ran "how many bears have brown hair" through Copilot and pasted the whole transcript. It is
@@ -366,7 +405,7 @@ doesn't have enough.</p>
   border-radius:6px;padding:4px 11px;font:11px ui-monospace,Menlo,Consolas,monospace;
   letter-spacing:.5px;text-transform:uppercase}
 .gv-tab:hover{color:var(--fg);border-color:var(--hi)}
-.gv-tab.on{background:var(--hi);border-color:var(--hi);color:#04121e;font-weight:700}
+.gv-tab.on{background:var(--hi);border-color:var(--hi);color:var(--bg);font-weight:700}
 .gv-hint{font-size:.82rem;color:var(--muted);margin-left:6px}
 .gv-stage{position:relative;height:460px}
 .gv-canvas{position:absolute;inset:0}
@@ -434,7 +473,7 @@ doesn't have enough.</p>
   padding:8px 11px;font:inherit;font-size:.92rem}
 .cb-in:focus{outline:none;border-color:var(--hi)}
 .cb-in:disabled{opacity:.5}
-.cb-send{background:var(--hi);border:0;color:#04121e;font-weight:700;border-radius:7px;
+.cb-send{background:var(--hi);border:0;color:var(--bg);font-weight:700;border-radius:7px;
   padding:8px 16px;cursor:pointer}
 .cb-send:disabled{opacity:.45;cursor:default}
 .cb-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
@@ -698,7 +737,7 @@ it.</div>
 
 <!-- ================= REASON PANEL ================= -->
 <div id="p-think" class="panel on">
-  <p class="small" style="color:#8a5a1d;margin:0 0 10px"><b>BETA - under construction.</b> This engine is being replaced by a rebuild with real entity identity (a store of things, not strings); what works and what is wrong changes as I work on it, up and down. The question below runs on a string-keyed graph and can merge namesakes; the rebuild fixes that.</p>
+  <p class="small" style="color:var(--mid);margin:0 0 10px"><b>BETA - under construction.</b> This engine is being replaced by a rebuild with real entity identity (a store of things, not strings); what works and what is wrong changes as I work on it, up and down. The question below runs on a string-keyed graph and can merge namesakes; the rebuild fixes that.</p>
 <p class="small" id="thinkIntro" style="margin-top:0">A lookup answers one hop. This
 <strong>chains</strong> them, hop by hop, over 66 million facts - and when it cannot reach the
 target it abstains, goes and learns what else that thing is called, and tries again.</p>
@@ -876,10 +915,12 @@ you to confirm - optional if English is enough to run a demo on.</div>
 <div id="codeOut"></div>
 </div>
 
-<footer>No model runs here. The facts panel hashes your subject, fetches one shard, and counts
-sources in your browser. The code panel searches a fixed primitive set and checks each candidate by
-real execution. Both are the identical idea: <strong>propose from a fixed space, verify by
-execution, report a measured confidence, refuse rather than invent.</strong><br><br>
+<footer><span data-aud="ai">No model runs here. Ask a question and the page hashes your subject,
+fetches one shard of the graph, and counts the independent sources in your browser. Every answer is
+the same idea: <strong>propose from a fixed space, verify by execution, report a measured
+confidence, refuse rather than invent.</strong></span><span data-aud="games">Both games run entirely
+in this page - no server, no engine, no build step. R&eacute;sum&eacute; Breakout is hand-written
+three.js; Star Fighter is its own build, opened here from its own address.</span><br><br>
 Facts data derived from REBEL, Wikidata5M, Wikidata-truthy, ConceptNet&nbsp;5, YAGO&nbsp;3, T-REx,
 DBpedia and KELM, released under
 <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:var(--hi)">CC&nbsp;BY-SA&nbsp;4.0</a>
@@ -3763,7 +3804,7 @@ async function reason(q,opts){
           'than one reading. Which did you mean?</span></div><div class="row">'+
           '<span class="lbl">pick</span><span>'+opts.map((o,i)=>
             '<code class="pickc" data-i="'+i+'" style="cursor:pointer">'+esc(o.end)+
-            ' <span style="opacity:.6">via '+esc(o.via)+' · '+(o.p*100).toFixed(1)+'%</span></code>'
+            ' <span style="color:var(--muted)">via '+esc(o.via)+' · '+(o.p*100).toFixed(1)+'%</span></code>'
           ).join(" ")+'</span></div><div class="row" id="pickNote" style="display:none">'+
           '<span class="lbl">chosen</span><span id="pickText"></span></div></div>');
         const OP=opts;
@@ -4495,47 +4536,51 @@ renderCode();
    reads as range to a studio and as a warning sign to a research team. Rather than water the page
    down to the intersection, it filters. Defaults to the AI view: this is the anchor demo's address.
    (An "All" view used to exist and was the default; it put the résumé in front of every visitor
-   of the anchor demo, so it went - RJ 2026-09-05: "it's game or AI demos".) */
+   of the anchor demo, so it went - RJ 2026-09-05: "it's game or AI demos".)
+   2026-09-06: the games view is games ONLY and has its own address, ?view=games (games/ redirects
+   there). People given the main link never pressed "Game studios" and never saw a demo - RJ. The
+   games address opens straight on Résumé Breakout. Which content each view shows is CSS
+   (html[data-view] + data-aud, in the style block above); this script only keeps the buttons,
+   the open tab, the note, the title and the address in step. */
 (function(){
   var NOTE = {
-    ai:    "the knowledge engine and the research record only - no games here. Speculative physics hidden.",
-    games: "the games, the knowledge engine and the engine work - the research record and physics hidden."
+    ai:    "The knowledge engine, with no neural weights: ask it a question and watch every step, then the research behind it.",
+    games: "Two playable demos, R\u00e9sum\u00e9 Breakout and Star Fighter, both running in this page."
   };
-  function match(el, mode){
-    var a = el.getAttribute("data-aud");
-    if(a === null) return true;          // untagged content is common ground
-    return a.split(",").indexOf(mode) !== -1;
-  }
-  function apply(mode){
-    document.querySelectorAll(".tab[data-aud]").forEach(function(t){
-      t.style.display = match(t, mode) ? "" : "none";
+  var TITLE = { ai: document.title, games: "R.J. Thompson - playable demos" };
+  var root = document.documentElement;
+  function shown(el){ return getComputedStyle(el).display !== "none"; }
+  function apply(mode, onLoad){
+    root.setAttribute("data-view", mode);
+    document.querySelectorAll("[data-aud-set]").forEach(function(x){
+      x.classList.toggle("on", x.dataset.audSet === mode);
     });
-    document.querySelectorAll("#p-inv .subtab[data-aud]").forEach(function(b){
-      var ok = match(b, mode);
-      b.style.display = ok ? "" : "none";
-      if(!ok && b.classList.contains("on")){
-        var first = [].slice.call(document.querySelectorAll("#p-inv .subtab"))
-          .filter(function(x){ return x.style.display !== "none"; })[0];
-        if(first) first.click();
-      }
-    });
-    // if the open tab just got hidden, fall back to the first visible one
+    // a sub-tab that the view just hid hands over to the first one still showing
+    var sb = document.querySelector("#p-inv .subtab.on");
+    if(sb && !shown(sb)){
+      var firstSb = [].slice.call(document.querySelectorAll("#p-inv .subtab")).filter(shown)[0];
+      if(firstSb) firstSb.click();
+    }
+    // same for the open tab; the games address lands on Résumé Breakout by design
     var cur = document.querySelector(".tab.on");
-    if(cur && cur.style.display === "none"){
-      var vis = [].slice.call(document.querySelectorAll(".tab"))
-        .filter(function(t){ return t.style.display !== "none"; })[0];
-      if(vis) vis.click();
+    if(!cur || !shown(cur) || (onLoad && mode === "games")){
+      var tabs = [].slice.call(document.querySelectorAll(".tab")).filter(shown);
+      var want = tabs.filter(function(t){ return mode === "games" && t.dataset.p === "resume"; })[0] || tabs[0];
+      if(want) want.click();
     }
     var n = document.getElementById("audNote"); if(n) n.textContent = NOTE[mode] || "";
+    document.title = TITLE[mode] || TITLE.ai;
+    // the address bar always holds the link for the view on screen, so it can be copied as is
+    if(!onLoad){
+      try{ history.replaceState(null, "", mode === "games" ? "?view=games" : location.pathname); }catch(e){}
+    }
   }
   document.addEventListener("click", function(e){
     var b = e.target.closest("[data-aud-set]"); if(!b) return;
-    document.querySelectorAll("[data-aud-set]").forEach(function(x){
-      x.classList.toggle("on", x === b);
-    });
-    apply(b.dataset.audSet);
+    apply(b.dataset.audSet, false);
   });
-  apply("ai");
+  apply(root.getAttribute("data-view") === "games" ? "games" : "ai", true);
+  root.removeAttribute("data-view-boot");
 })();
 </script>
 <script>

@@ -1058,7 +1058,15 @@ wrong transport for search this wide; a server-side index or a one-time IndexedD
 Cosmetic: the harness strips the renderer, and the page's autorun then calls into it. Results above
 the trace are unaffected, but it should be silenced so a real failure is not mistaken for noise.
 
-### O9 - the audience notes say what is hidden, not what the view is for
+### O9 - the audience notes say what is hidden, not what the view is for  [FIXED 2026-09-06]
+Fixed with more than the note. RJ 2026-09-06: *"make the game tab cold for games and make it a
+separate link so I can share just that - right now the people didn't click the game tab button so
+never saw the demo"*. The games view is now games ONLY (Ask anything, Inventions and White papers
+are AI-view content), it has its own address `?view=games` with `games/` redirecting to it and its
+own og: title and description, and it opens straight on Résumé Breakout instead of on a tab the
+visitor has to find. The view is read in <head> before the body parses, so a games link never
+flashes the AI panel first. Both notes rewritten to say what the view IS. Original entry:
+
 RJ 2026-09-05, reading the line under the view buttons: *"Review the text.. how is this helpful?
 'the knowledge engine and the research record only - no games here. Speculative physics hidden.'"*
 Both notes (AI / ML roles, Game studios) are written from the author's side - what was filtered
