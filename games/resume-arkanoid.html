@@ -18,6 +18,14 @@
   /* the canvas is the touch surface: no scroll, no pinch-zoom, no long-press callout */
   #c{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
     -webkit-tap-highlight-color:transparent}
+  /* RJ: "in big text: right click to bomb" */
+  .bighint{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    pointer-events:none;z-index:35;opacity:0;transition:opacity .45s;text-align:center;padding:0 4vw}
+  .bighint b{font-size:clamp(40px,9vw,112px);font-weight:900;letter-spacing:.06em;line-height:1;color:#fff;
+    text-shadow:0 0 18px rgba(255,120,90,.9),0 0 60px rgba(255,80,60,.6)}
+  .bighint small{font-size:clamp(14px,2.4vw,26px);font-weight:700;letter-spacing:.3em;margin-top:.6em;color:#ffd7a8;
+    text-shadow:0 0 14px rgba(255,150,100,.8)}
+  .bighint.on{opacity:1}
   canvas{display:block;width:100%;height:100%}
 
   .hud{position:absolute;pointer-events:none;user-select:none}
@@ -83,6 +91,7 @@
   <div class="hud" id="readout"></div>
   <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
   <button id="camBtn" style="position:fixed;right:14px;top:50px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#10227; Camera (C)</button>
+  <div id="bigHint" class="bighint"><b></b><small></small></div>
   <div class="hud" id="banner" style="left:0;right:0;top:88px;text-align:center;font-size:13px;font-weight:700;letter-spacing:2px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
   <div class="hud" id="era" style="right:14px;bottom:44px;opacity:.45;transition:opacity .5s;font-weight:700;letter-spacing:1.5px">1988 · 8-bit</div>
   <div class="hud" id="power" style="left:14px;bottom:44px;font-weight:700;letter-spacing:.5px"></div>
@@ -635,6 +644,18 @@ function sinkLines(){
 
 function bumpReveal(){ if(!firstHitDone) firstHitDone = true; }
 
+let bigHintT = 0;
+function showBigHint(main, sub, secs){
+  const el = document.getElementById('bigHint'); if(!el) return;
+  el.querySelector('b').textContent = main; el.querySelector('small').textContent = sub || '';
+  el.classList.add('on'); bigHintT = secs || 3.5;
+}
+function runBigHint(dt){
+  if(bigHintT <= 0) return;
+  bigHintT -= dt;
+  if(bigHintT <= 0){ const el = document.getElementById('bigHint'); if(el) el.classList.remove('on'); }
+}
+const BOMB_HINT = () => COARSE ? ["TAP A SECOND FINGER", "TO BOMB THE PLANET"] : ["RIGHT CLICK", "TO BOMB THE PLANET"];
 function banner(text){
   const el = document.getElementById("banner");
   if(!el || !text) return;
@@ -741,7 +762,9 @@ function takeDamage(pos, colour, shakeAmt){
   if(!shieldHintShown){ shieldHintShown = true; banner(COARSE ? "HOLD A SECOND FINGER FOR SHIELD" : "HOLD SHIFT FOR SHIELD"); }
   if(pos) spark(pos, colour || 0xff5470, 24);
   lives--; drawLives();
-  shake = Math.max(shake, shakeAmt || 0.6);
+  // RJ: "if the user gets hit it forces a camera change and screen shake as well"
+  shake = Math.max(shake, 1.0);
+  nextCamera();
   if(lives <= 0) killShip();
   return true;
 }
@@ -906,9 +929,14 @@ function formSlot(){                 // cycle across the row so it fills evenly,
 }
 
 function raiderMesh(ch){
-  return new THREE.Mesh(glyphGeometry(ch), new THREE.MeshStandardMaterial({
+  // a diver is a drone for good: the letter inside a chassis that spins as it flies
+  const g = new THREE.Group();
+  const letter = new THREE.Mesh(glyphGeometry(ch), new THREE.MeshStandardMaterial({
     color:0xff8a7a, emissive:0x5a1410, emissiveIntensity:0.9,
     roughness:0.35, metalness:0.35, flatShading:true }));
+  g.add(letter);
+  const ch2 = droneChassis(); ch2.scale.setScalar(0.85); g.add(ch2); g.userData.chassis = ch2;
+  return g;
 }
 
 /* Called for every intact letter on a line that has fallen past the ship. */
@@ -1415,8 +1443,27 @@ function takeTrail(){
 function releaseTrail(L){
   if(L.trail){ L.trail.visible = false; trailPool.push(L.trail); L.trail = null; }
   if(L.halo){ L.halo.visible = false; haloPool.push(L.halo); L.halo = null; }
+  releaseDrone(L);
 }
-const haloPool = [];
+const haloPool = [], dronePool = [];
+// RJ: "upgrade the look of the letters to be cooler and more like flying drones." A chassis: a
+// dark ring round the letter, two engine glows, a running light. Pooled; a letter wears one
+// while it flies and sheds it as it locks into its slot. A diver keeps its own for good.
+let RING_GEO_D = null, RING_MAT_D = null;
+function droneChassis(){
+  if(!RING_GEO_D){ RING_GEO_D = new THREE.TorusGeometry(1.15, 0.09, 8, 28);
+    RING_MAT_D = new THREE.MeshStandardMaterial({ color:0x2a3440, emissive:0x101820, roughness:0.4, metalness:0.8, flatShading:true }); }
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(RING_GEO_D, RING_MAT_D); g.add(ring); g.userData.ring = ring;
+  for(const sx of [-1.25, 1.25]){
+    const eng = sprite(0x7fe0ff, 0.9); eng.scale.set(0.9, 0.9, 1); eng.position.set(sx, -0.2, 0); g.add(eng);
+  }
+  const light = sprite(0xff5a4d, 0.9); light.scale.set(0.5, 0.5, 1); light.position.set(0, 1.35, 0.2); g.add(light);
+  g.userData.light = light;
+  return g;
+}
+function takeDrone(){ if(dronePool.length){ const d = dronePool.pop(); d.visible = true; return d; } const d = droneChassis(); board.add(d); return d; }
+function releaseDrone(L){ if(L.drone){ L.drone.visible = false; dronePool.push(L.drone); L.drone = null; } }
 function takeHalo(){
   if(haloPool.length) return haloPool.pop();
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0xbfe8ff,
@@ -1442,6 +1489,12 @@ function updateTrail(L, M){
   const h = 2.4 + Math.sin(t * 22 + L.ci) * 0.5;
   L.halo.scale.set(h, h, 1);
   L.halo.material.color.setHex(L.turret ? 0xff8a7a : 0xbfe8ff);
+  if(!L.drone) L.drone = takeDrone();
+  L.drone.position.copy(M.position);
+  L.drone.rotation.set(M.rotation.x * 0.5, t * 4 + L.ci, M.rotation.z * 0.5);
+  const ds = M.scale.x / (CH_W * 0.92);
+  L.drone.scale.setScalar(Math.max(0.35, ds));
+  L.drone.userData.light.material.opacity = 0.5 + 0.5 * Math.sin(t * 18 + L.ci);
 }
 
 // One letter's frame in flight. Returns true while it is still flying.
@@ -1501,9 +1554,8 @@ const texLoader = new THREE.TextureLoader();
    the surface under you: a red impact ring on the ground that tightens as it falls, then a
    flash, a shockwave ring, a fireball that rises off the surface, a scorch that turns away with
    the planet, a flare of light, and a chain of secondary blasts. Only shots hurt, on both planes. */
-const PLANET_PITCH  = 35 * Math.PI / 180;   // the sphere's centre sits this far below the camera's forward axis
-const PLANET_LIMB   = 38 * Math.PI / 180;   // its angular radius from the camera: limb top at +3 deg, sides at +-38
-const PLANET_REACH  = 2.65;                 // centre distance = this x the ship's distance (surface ~11 u under the ship)
+const PLANET_GAP      = 8;                    // the surface is this far under the ship, and parallel to the flight plane
+const PLANET_LIMB_TOP = 3 * Math.PI / 180;    // where the limb crosses the picture, seen from rig 0: just above centre
 const PLANET_SPIN   = 0.03;                 // rad/s - about 3 units/s of surface under the ship
 const GROUND_Z      = -11;                  // typical depth of the surface under the ship, for the shell climb scale
 const BOMB_COOL     = 1.0;     // seconds between bombs
@@ -1527,42 +1579,40 @@ const ARMY_SLOTS = [           // surface offsets (right, forward) from the poin
 let planet = null, army = [], bombs = [], fx = [], groundKills = 0, bombCool = 0, reinforceT = 0;
 let blastLight = null;
 const RING_GEO = new THREE.RingGeometry(0.86, 1.0, 48), DISC_GEO = new THREE.CircleGeometry(1, 32);
+/* THE ROLLER - RJ: "an enemy that rolls on the surface always out of your reach, dropping down
+   planetary structures that shoot drones." A great armoured wheel that holds station ahead of
+   you on the surface, beyond where a bomb can land, rolling against the planet's turn and
+   weaving side to side. Every ROLLER_DROP_SEC it leaves a HIVE on the ground where it stands;
+   the hive rides the planet's turn back toward you - into bomb range - launching letter drones
+   at you the whole way. The roller itself is never in reach. */
+const ROLLER_AHEAD    = 24;     // surface units ahead of the ship - a bomb lands at ~8 and reaches 11 more
+const ROLLER_WEAVE    = 20;     // side to side
+const ROLLER_DROP_SEC = 9;      // a hive this often
+const ROLLER_FROM     = 6;      // seconds before it first appears
+const HIVE_COOL       = 5;      // seconds between drones from one hive
+let roller = null, rollerDropT = 0;
 const ARMY_MAT = new THREE.MeshStandardMaterial({ color:0x3b4f69, map:HULL, emissive:0x0e1622,
   roughness:0.6, metalness:0.55, flatShading:true, fog:false });
 const _w = new THREE.Vector3(), _w2 = new THREE.Vector3(), _q = new THREE.Quaternion(), Z_AXIS = new THREE.Vector3(0, 0, 1);
 
-function planetTexture(){
-  const c = document.createElement("canvas"); c.width = 1024; c.height = 512;
-  const g = c.getContext("2d");
-  g.fillStyle = "#1a2536"; g.fillRect(0, 0, 1024, 512);
-  // continents of slightly lighter ground, then craters, then a faint survey grid
-  for(let i = 0; i < 260; i++){
-    const x = Math.random() * 1024, y = Math.random() * 512, r = 12 + Math.random() * 70;
-    const h = 205 + Math.random() * 20, l = 22 + Math.random() * 10;
-    g.fillStyle = `hsla(${h},32%,${l}%,0.55)`;
-    g.beginPath(); g.ellipse(x, y, r, r * (0.5 + Math.random() * 0.6), Math.random() * 3, 0, 6.3); g.fill();
-  }
-  for(let i = 0; i < 140; i++){
-    const x = Math.random() * 1024, y = Math.random() * 512, r = 3 + Math.random() * 14;
-    g.strokeStyle = "rgba(120,160,200,0.35)"; g.lineWidth = 1.2;
-    g.beginPath(); g.arc(x, y, r, 0, 6.3); g.stroke();
-    g.fillStyle = "rgba(8,12,20,0.5)"; g.beginPath(); g.arc(x, y, r * 0.7, 0, 6.3); g.fill();
-  }
-  g.strokeStyle = "rgba(90,150,210,0.16)"; g.lineWidth = 1;
-  for(let x = 0; x <= 1024; x += 64){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 512); g.stroke(); }
-  for(let y = 0; y <= 512; y += 64){ g.beginPath(); g.moveTo(0, y); g.lineTo(1024, y); g.stroke(); }
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 1.5);
-  return t;
-}
-
 function buildPlanet(){
   planet = new THREE.Group();
+  // The surface: a straight-down tile generated with the starfighter art pipeline (FLUX via
+  // Pollinations, mirror-blended seamless, normal map derived from luminance), tiled round the
+  // sphere so the detail is at the scale a ship eight units up actually sees.
+  const pmap = texLoader.load('assets/planet.jpg'), pnorm = texLoader.load('assets/planet_n.jpg');
+  pmap.wrapS = pmap.wrapT = pnorm.wrapS = pnorm.wrapT = THREE.RepeatWrapping;
+  pmap.repeat.set(2, 1); pnorm.repeat.set(2, 1); pmap.anisotropy = 4;   // a 2:1 map, twice round
   const ground = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({
-    map: planetTexture(), color:0xcfd8e6, emissive:0x0a1220, roughness:0.92, metalness:0.05, fog:false }));
+    // NOT tinted up and NOT lifted by emissive: the key light already puts the lit face near
+    // white, and a 0xe8eef6 tint over that washed the whole surface out to pale blue.
+    map: pmap, normalMap: pnorm, normalScale: new THREE.Vector2(1.1, 1.1), color:0x6a7382,
+    emissive:0x000000, roughness:0.95, metalness:0.03, fog:false }));
+  ground.rotation.z = Math.PI / 2;   // texture poles onto the spin axis, so the map streams past like a globe
   planet.add(ground);
   // the atmosphere: a bigger shell seen from inside, so the limb glows and the sky-side fades
   const air = new THREE.Mesh(new THREE.SphereGeometry(1.035, 64, 48), new THREE.MeshBasicMaterial({
-    color:0x2f6da8, transparent:true, opacity:0.22, side:THREE.BackSide, depthWrite:false, fog:false }));
+    color:0x2f6da8, transparent:true, opacity:0.10, side:THREE.BackSide, depthWrite:false, fog:false }));
   planet.add(air);
   planet.userData = { R: 100, ground, air };
   scene.add(planet);
@@ -1570,21 +1620,34 @@ function buildPlanet(){
   placePlanet();
 }
 
-// Placed by the picture, not by a world coordinate: the centre sits PLANET_PITCH below the camera's
-// forward axis at PLANET_REACH times the ship's distance, and the radius is what puts the limb at
-// PLANET_LIMB. That holds on a phone in portrait and on a wide monitor alike; the surface ends up
-// about eleven units under the ship either way.
 function placePlanet(){
   if(!planet) return;
+  // RJ: "the ship should be flying parallel to the ground more." So the sphere's centre sits
+  // straight DOWN from the ship along the board's normal, which makes the surface under the ship
+  // parallel to the plane you fly in by construction. The radius is then solved so that the
+  // limb crosses the picture just above centre, as seen from rig 0, by bisection - the sum of
+  // the centre's elevation and the sphere's angular radius is monotone in R over this range.
   const cam = baseCamera();
   const E = cam.position.clone();
+  freshMatrices();
   const shipW = board.localToWorld(ship.position.clone());
-  const L = E.distanceTo(shipW) * PLANET_REACH;
-  const R = L * Math.sin(PLANET_LIMB);
+  const n = board.localToWorld(new THREE.Vector3(0, 0, 1)).sub(board.localToWorld(new THREE.Vector3(0, 0, 0))).normalize();
   const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
   const up  = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.quaternion);
-  const dir = fwd.multiplyScalar(Math.cos(PLANET_PITCH)).addScaledVector(up, -Math.sin(PLANET_PITCH)).normalize();
-  planet.position.copy(E).addScaledVector(dir, L);
+  const limbTop = (R) => {
+    const C = shipW.clone().addScaledVector(n, -(R + PLANET_GAP));
+    const v = C.clone().sub(E); const d = v.length();
+    const elev = Math.atan2(v.dot(up), v.dot(fwd));
+    return elev + Math.asin(Math.min(1, R / d));
+  };
+  let lo = 20, hi = 600;
+  if(limbTop(lo) > PLANET_LIMB_TOP || limbTop(hi) < PLANET_LIMB_TOP){ lo = 60; hi = 60; }  // no bracket: a sane default
+  for(let i = 0; i < 40 && hi - lo > 0.05; i++){
+    const mid = (lo + hi) / 2;
+    if(limbTop(mid) < PLANET_LIMB_TOP) lo = mid; else hi = mid;
+  }
+  const R = (lo + hi) / 2;
+  planet.position.copy(shipW).addScaledVector(n, -(R + PLANET_GAP));
   planet.userData.R = R;
   planet.userData.ground.scale.setScalar(R);
   planet.userData.air.scale.setScalar(R);
@@ -1652,12 +1715,31 @@ function flakMesh(){
   return g;
 }
 
+function hiveMesh(){
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.8, 2.2, 8), ARMY_MAT); base.rotation.x = Math.PI / 2; base.position.z = 1.1; g.add(base);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.28, 8, 24), new THREE.MeshBasicMaterial({ color:0xff5a4d, fog:false }));
+  ring.position.z = 2.5; g.add(ring);
+  const glow = sprite(0xff5a4d, 0.55); glow.scale.set(5, 5, 1); glow.position.z = 3.2; g.add(glow); g.userData.glow = glow;
+  return g;
+}
+function rollerMesh(){
+  const g = new THREE.Group();                       // +z out of the surface, +y forward
+  const axle = new THREE.Group(); g.add(axle); g.userData.axle = axle;
+  const wheel = new THREE.Mesh(new THREE.TorusGeometry(2.6, 1.0, 10, 28), ARMY_MAT); wheel.rotation.y = Math.PI / 2; axle.add(wheel);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 2.6, 10), ARMY_MAT); hub.rotation.z = Math.PI / 2; axle.add(hub);
+  for(let i = 0; i < 8; i++){ const s = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.4, 5), ARMY_MAT);
+    const a = i / 8 * Math.PI * 2; s.position.set(0, Math.cos(a) * 3.5, Math.sin(a) * 3.5); s.lookAt(0, Math.cos(a) * 9, Math.sin(a) * 9); s.rotateX(Math.PI / 2); axle.add(s); }
+  axle.position.z = 3.6;                           // the wheel stands on the surface
+  const eye = sprite(0xff5a4d, 0.9); eye.scale.set(2.6, 2.6, 1); eye.position.set(0, 0, 3.6); g.add(eye); g.userData.eye = eye;
+  return g;
+}
 function makeUnit(slot, i, dir){
-  const m = slot.kind === "flak" ? flakMesh() : launcherMesh();
+  const m = slot.kind === "flak" ? flakMesh() : slot.kind === "hive" ? hiveMesh() : launcherMesh();
   m.scale.setScalar(0.8);      // the surface is eight units under the ship; at 1.35 they towered over it
   planet.add(m);
   const u = { kind: slot.kind, slot, m, alive: true, pulse: 0, phase: i * 1.3,
-              cool: FLAK_COOL * (0.4 + (i % 4) * 0.25), dir };
+              cool: slot.kind === "hive" ? HIVE_COOL * 0.5 : FLAK_COOL * (0.4 + (i % 4) * 0.25), dir };
   placeUnit(u);
   return u;
 }
@@ -1672,6 +1754,8 @@ function buildArmy(){
   const fr = planetFrame();
   army = ARMY_SLOTS.map((s, i) => makeUnit(s, i, surfaceDir(s.dx, s.dy, fr)));
   reinforceT = 0; groundKills = 0; runArmy._warned = false;
+  if(roller && roller.m.parent) roller.m.parent.remove(roller.m);
+  roller = null; rollerDropT = 0;
   const gEl = document.getElementById("ground"); if(gEl) gEl.textContent = 0;
 }
 function clearBombs(){
@@ -1698,25 +1782,38 @@ function runArmy(dt){
   if(!planet) return;
   if(!runArmy._warned && t > FLAK_WARMUP - 2.5){
     runArmy._warned = true;
-    banner(COARSE ? "GROUND BATTERIES ARMING - TAP A SECOND FINGER TO BOMB"
-                  : "GROUND BATTERIES ARMING - RIGHT CLICK TO BOMB");
+    banner("GROUND BATTERIES ARMING");
+    showBigHint(...BOMB_HINT(), 3.0);
   }
   const fr = planetFrame();
   reinforceT += dt;
   if(reinforceT >= REINFORCE_SEC){
     reinforceT = 0;
-    const dead = army.findIndex(u => !u.alive);
+    const dead = army.findIndex(u => !u.alive && u.kind !== "hive");
     if(dead >= 0){
       const s = army[dead].slot;
       army[dead] = makeUnit(s, dead, surfaceDir(s.dx, AHEAD, fr));   // over the horizon, riding in
       banner("REINFORCEMENTS OVER THE HORIZON");
     }
   }
-  for(const u of army){
-    if(!u.alive) continue;
+  runRoller(dt, fr);
+  for(let i = army.length - 1; i >= 0; i--){
+    const u = army[i];
+    if(!u.alive){ if(u.kind === "hive") army.splice(i, 1); continue; }
     const ang = unitAngle(u, fr);
-    // carried round behind you and out of sight: come round again from ahead
-    if(ang > GONE_ANGLE && u.dir.dot(fr.ey) < 0){ u.dir = surfaceDir(u.slot.dx, AHEAD, fr); placeUnit(u); }
+    // carried round behind you and out of sight: the standing army comes round again from
+    // ahead; a hive that got past you is simply gone
+    if(ang > GONE_ANGLE && u.dir.dot(fr.ey) < 0){
+      if(u.kind === "hive"){ planet.remove(u.m); army.splice(i, 1); continue; }
+      u.dir = surfaceDir(u.slot.dx, AHEAD, fr); placeUnit(u);
+    }
+    if(u.kind === "hive" && ang < VIEW_ANGLE){
+      u.cool -= dt;
+      if(u.cool <= 0 && attackers.length + risers.length < RAID_MAX){
+        u.cool = HIVE_COOL; u.pulse = 1;
+        launchRaider(cvChar(), unitBoardPos(u, 3));     // a drone up out of the hive
+      }
+    }
     u.pulse = Math.max(0, u.pulse - dt * 2);
     u.m.userData.glow.material.opacity = (u.kind === "flak" ? 0.45 : 0.5) + u.pulse * 0.5;
     if(u.kind === "flak" && t > FLAK_WARMUP && ang < VIEW_ANGLE){
@@ -1727,6 +1824,39 @@ function runArmy(dt){
 }
 // A shell climbs from the surface to the air plane over FLAK_RISE_SEC, aimed at where the ship
 // is NOW - so it arrives where you were, and moving is what dodges it.
+function cvChar(){
+  const line = lines[Math.floor(Math.random() * lines.length)];
+  const L = line && line.letters.length ? line.letters[Math.floor(Math.random() * line.letters.length)] : null;
+  return L ? L.ch : "X";
+}
+function runRoller(dt, fr){
+  if(!planet || t < ROLLER_FROM) return;
+  if(!roller){
+    roller = { m: rollerMesh(), dir: surfaceDir(0, ROLLER_AHEAD + 40, fr), roll: 0, x: 0 };
+    planet.add(roller.m); rollerDropT = ROLLER_DROP_SEC * 0.6;
+    banner("SOMETHING IS ROLLING IN");
+  }
+  // holds station ahead of you whatever the planet does, and weaves
+  const wantX = Math.sin(t * 0.35) * ROLLER_WEAVE;
+  const want = surfaceDir(wantX, ROLLER_AHEAD, fr);
+  const R = planet.userData.R;
+  const moved = roller.dir.distanceTo(want) * R;
+  roller.dir.lerp(want, Math.min(1, dt * 1.5)).normalize();
+  roller.m.position.copy(roller.dir).multiplyScalar(R);
+  // stand on the surface with +y along the direction of travel: the frame's basis, not a guess
+  const ex = new THREE.Vector3().crossVectors(fr.ey, roller.dir).normalize();
+  const ey = new THREE.Vector3().crossVectors(roller.dir, ex).normalize();
+  roller.m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(ex, ey, roller.dir));
+  roller.m.userData.axle.rotation.x -= (PLANET_SPIN * R + moved * 0.5) * dt / 2.6;   // rolling against the turn
+  roller.m.userData.eye.material.opacity = 0.6 + 0.4 * Math.sin(t * 6);
+  rollerDropT -= dt;
+  if(rollerDropT <= 0){
+    rollerDropT = ROLLER_DROP_SEC;
+    const u = makeUnit({ kind:"hive", dx: 0, dy: 0 }, army.length, roller.dir.clone());
+    army.push(u);
+    banner("HIVE DROPPED");
+  }
+}
 function fireFlak(u){
   const m = boltMesh(true);
   m.position.copy(unitBoardPos(u, 4));
@@ -1871,6 +2001,222 @@ function runFX(dt){
       f.m.material.opacity = 0.6 * (1 - k);
     }
   }
+}
+
+// ---------------------------------------------------------------- the boss: your resume, on a rig
+/* RJ 2026-09-06: "make the letters connect to a skeleton of an actual rig that would transform
+   into human mode or robot to be a boss. Let's start off with a boss fight fairly early."
+
+   A jointed rig - pelvis, spine, chest, neck, head, shoulders, elbows, hands, hips, knees, feet -
+   with letter slots along every bone. When a boss is due, letters of the resume fly up off the
+   planet as drones and lock into the slots, bone by bone, and the thing stands up in the crawl in
+   front of the rows, facing you. HUMAN form: it drifts, walks on air and fires aimed bolts from
+   its hands. Every so often it folds - legs up, arms across, chest forward - into a GUNSHIP and
+   fires a fanned salvo from its core, then unfolds. It is only ever hurt one letter at a time:
+   your bullets knock letters off; a limb with no letters left drops away; when the chest is
+   empty it comes apart. The next one comes bigger. */
+const BOSS_AT       = 30;      // seconds into a round before the first boss
+const BOSS_AGAIN    = 80;      // seconds after one dies before the next
+const BOSS_Y        = 8.5;     // where it stands in the crawl, in front of the rows
+const BOSS_Z        = 2.5;
+const BOSS_ASSEMBLE = 2.6;     // seconds of letters flying in before it fights
+const BOSS_FORM_SEC = 1.3;     // the fold, either way
+const BOSS_HUMAN_SEC = 11, BOSS_ROBOT_SEC = 6;
+const BOSS_HAND_COOL = 1.4, BOSS_CORE_COOL = 2.2;
+const BOSS_SHOT_SPEED = 12.5;
+// bone: [name, parent, x, y, slots:[[x,y],...]] - in the parent's space; the rig is 2.5D, upright
+// in the plane of the crawl, joints swing about z. Spacing is one letter (CH_W).
+const S = CH_W * 0.86;
+const RIG = [
+  ["pelvis",   null,       0,      0,   [[-0.5*S, 0], [0.5*S, 0]]],
+  ["spine",    "pelvis",   0,  1.0*S,   [[0, 0]]],
+  ["chest",    "spine",    0,  1.0*S,   [[-1*S, 0], [0, 0], [1*S, 0], [-1*S, S], [0, S], [1*S, S], [-0.5*S, 2*S], [0.5*S, 2*S]]],
+  ["neck",     "chest",    0,  2.9*S,   [[0, 0]]],
+  ["head",     "neck",     0,  1.0*S,   [[-0.5*S, 0], [0.5*S, 0], [-0.5*S, S], [0.5*S, S]]],
+  ["armL",     "chest", -1.9*S, 1.9*S,  [[-1*S, 0], [-2*S, 0], [-3*S, 0]]],
+  ["foreL",    "armL",  -3.6*S, 0,      [[-1*S, 0], [-2*S, 0], [-3*S, 0]]],
+  ["handL",    "foreL", -3.6*S, 0,      [[-0.6*S, 0.5*S], [-0.6*S, -0.5*S]]],
+  ["armR",     "chest",  1.9*S, 1.9*S,  [[1*S, 0], [2*S, 0], [3*S, 0]]],
+  ["foreR",    "armR",   3.6*S, 0,      [[1*S, 0], [2*S, 0], [3*S, 0]]],
+  ["handR",    "foreR",  3.6*S, 0,      [[0.6*S, 0.5*S], [0.6*S, -0.5*S]]],
+  ["legL",     "pelvis", -0.8*S, -0.4*S, [[0, -1*S], [0, -2*S], [0, -3*S]]],
+  ["shinL",    "legL",    0,  -3.6*S,   [[0, -1*S], [0, -2*S], [0, -3*S]]],
+  ["footL",    "shinL",   0,  -3.6*S,   [[-0.5*S, -0.5*S], [0.5*S, -0.5*S]]],
+  ["legR",     "pelvis",  0.8*S, -0.4*S, [[0, -1*S], [0, -2*S], [0, -3*S]]],
+  ["shinR",    "legR",    0,  -3.6*S,   [[0, -1*S], [0, -2*S], [0, -3*S]]],
+  ["footR",    "shinR",   0,  -3.6*S,   [[-0.5*S, -0.5*S], [0.5*S, -0.5*S]]],
+];
+// joint rotations about z for each form, as a function of time
+function poseHuman(tt){
+  const w = Math.sin(tt * 2.2), w2 = Math.sin(tt * 2.2 + Math.PI);
+  return { chest: 0.03 * w, neck: 0, head: 0.08 * Math.sin(tt * 1.1),
+           armL: 0.55 + 0.18 * w, foreL: 0.45 + 0.2 * w,  handL: 0.1,
+           armR: -0.55 - 0.18 * w2, foreR: -0.45 - 0.2 * w2, handR: -0.1,
+           legL: 0.35 * w, shinL: -0.35 - 0.3 * Math.max(0, w), footL: 0.1,
+           legR: 0.35 * w2, shinR: -0.35 - 0.3 * Math.max(0, w2), footR: 0.1, spine: 0, pelvis: 0 };
+}
+function poseRobot(tt){
+  return { chest: -0.35, neck: -0.4, head: -0.5,
+           armL: 1.55, foreL: 1.75, handL: 0.5, armR: -1.55, foreR: -1.75, handR: -0.5,
+           legL: 1.35, shinL: -2.3, footL: 0.4, legR: -1.35, shinR: 2.3, footR: -0.4,
+           spine: 0.08 * Math.sin(tt * 4), pelvis: 0 };
+}
+let boss = null, bossNext = BOSS_AT, bossCount = 0;
+let bossMat = null;
+const TORSO = new Set(["pelvis", "spine", "chest", "neck"]);   // never falls away; the chest is the core
+
+function buildBoss(scale){
+  const g = new THREE.Group();
+  g.position.set(0, BOSS_Y, BOSS_Z);
+  g.scale.setScalar(scale);
+  board.add(g);
+  const bones = {};
+  for(const [name, parent, x, y] of RIG){
+    const b = new THREE.Group(); b.position.set(x, y, 0);
+    (parent ? bones[parent] : g).add(b);
+    bones[name] = b;
+  }
+  if(!bossMat) bossMat = new THREE.MeshStandardMaterial({ color:0xff6a5a, emissive:0x6a1a10, emissiveIntensity:1.0,
+    roughness:0.35, metalness:0.4, flatShading:true });
+  const letters = [];
+  let k = 0;
+  const fr = planet ? planetFrame() : null;
+  for(const [name, , , , slots] of RIG){
+    for(const [sx, sy] of slots){
+      const ch = cvChar();
+      const m = new THREE.Mesh(glyphGeometry(ch), bossMat);
+      const sc = CH_W * 0.92; m.scale.set(sc, CH_W * 1.22, sc);
+      board.add(m);
+      const from = fr ? surfaceToBoard(surfaceDir((Math.random() - 0.5) * 56, -6 + Math.random() * 50, fr), -3)
+                      : new THREE.Vector3(sx, -20, 0);
+      letters.push({ ch, bone: name, local: new THREE.Vector3(sx, sy, 0), m, from, tt: -k * 0.04, on: false, prev: from.clone() });
+      k++;
+    }
+  }
+  return { g, bones, letters, scale, form: 0, formTarget: 0, formT: 0, phaseT: 0, handCool: BOSS_HAND_COOL,
+           coreCool: BOSS_CORE_COOL, born: t, alive: true, hp: letters.length, x: 0, shake: 0 };
+}
+function bossSlotBoard(L){                        // where a slot is right now, on the board
+  const b = boss.bones[L.bone];
+  _w.copy(L.local); b.localToWorld(_w);
+  return board.worldToLocal(_w.clone());
+}
+function runBoss(dt){
+  if(!boss){
+    if(t >= bossNext){
+      bossCount++;
+      boss = buildBoss(1 + (bossCount - 1) * 0.18);
+      banner("YOUR RESUME IS ASSEMBLING");
+      showBigHint("BOSS", "SHOOT THE LETTERS OFF IT", 3.0);
+    }
+    return;
+  }
+  const B = boss, age = t - B.born;
+  // where it stands: drifts, and leans into the drift
+  B.x += ((Math.sin(t * 0.35) * 7) - B.x) * Math.min(1, dt * 1.2);
+  B.g.position.set(B.x, BOSS_Y + Math.sin(t * 1.3) * 0.4, BOSS_Z);
+  B.g.rotation.z = -Math.sin(t * 0.35) * 0.05;
+  // the fold between forms, and its timing
+  if(age > BOSS_ASSEMBLE){
+    B.phaseT += dt;
+    const span = B.formTarget ? BOSS_ROBOT_SEC : BOSS_HUMAN_SEC;
+    if(B.phaseT > span){ B.phaseT = 0; B.formTarget = B.formTarget ? 0 : 1; banner(B.formTarget ? "IT FOLDS INTO A GUNSHIP" : "IT STANDS UP"); }
+  }
+  B.form += (B.formTarget - B.form) * Math.min(1, dt / BOSS_FORM_SEC * 2.2);
+  const h = poseHuman(t), r = poseRobot(t);
+  for(const name in B.bones){ const b = B.bones[name]; b.rotation.z = THREE.MathUtils.lerp(h[name] || 0, r[name] || 0, B.form); }
+  freshMatrices(); B.g.updateMatrixWorld(true);
+  // letters: flying in, or seated
+  let seated = 0;
+  for(const L of B.letters){
+    if(!L.on){
+      L.tt += dt;
+      if(L.tt < 0){ L.m.visible = false; continue; }
+      L.m.visible = true;
+      const k = Math.min(1, L.tt / 1.3), e = k * k * (3 - 2 * k);
+      const slot = bossSlotBoard(L);
+      const via = L.from.clone().lerp(slot, 0.5); via.z += 6; via.x += (L.local.x > 0 ? 4 : -4);
+      const u = 1 - e;
+      _p.set(0, 0, 0).addScaledVector(L.from, u * u).addScaledVector(via, 2 * u * e).addScaledVector(slot, e * e);
+      L.m.position.copy(_p);
+      L.m.rotation.set((1 - e) * 5, (1 - e) * 7, (1 - e) * 3);
+      if(k >= 1){
+        L.on = true; board.remove(L.m);
+        B.bones[L.bone].add(L.m); L.m.position.copy(L.local); L.m.rotation.set(0, 0, 0);
+        spark(B.bones[L.bone].localToWorld(L.local.clone()), 0xff9a7a, 5);
+      }
+    } else seated++;
+  }
+  if(age <= BOSS_ASSEMBLE) return;
+  // it fights: hands in human form, the core in gunship form
+  B.handCool -= dt; B.coreCool -= dt;
+  if(B.form < 0.5 && B.handCool <= 0 && bolts.length < TURRET_MAX){
+    B.handCool = BOSS_HAND_COOL;
+    const hand = (B.handCool > 0 && Math.random() < 0.5) ? "handL" : "handR";
+    const hb = B.bones[hand];
+    if(hb.visible && hb.parent.visible){
+      _w.set(0, 0, 0); hb.localToWorld(_w); const p = board.worldToLocal(_w.clone());
+      const m = boltMesh(true); m.position.copy(p);
+      const dx = ship.position.x - p.x, dy = ship.position.y - p.y, d = Math.hypot(dx, dy) || 1;
+      bolts.push({ m, vx: dx / d * BOSS_SHOT_SPEED, vy: dy / d * BOSS_SHOT_SPEED, heavy: true });
+      spark(_w.clone(), 0xffb14d, 6);
+    }
+  }
+  if(B.form >= 0.5 && B.coreCool <= 0 && bolts.length + 5 < TURRET_MAX){
+    B.coreCool = BOSS_CORE_COOL;
+    _w.set(0, S, 0); B.bones.chest.localToWorld(_w); const p = board.worldToLocal(_w.clone());
+    const base = Math.atan2(ship.position.y - p.y, ship.position.x - p.x);
+    for(let a = -2; a <= 2; a++){
+      const ang = base + a * 0.22;
+      const m = boltMesh(true); m.position.copy(p);
+      bolts.push({ m, vx: Math.cos(ang) * BOSS_SHOT_SPEED, vy: Math.sin(ang) * BOSS_SHOT_SPEED, heavy: true });
+    }
+    spark(_w.clone(), 0xffb14d, 16); shake = Math.max(shake, 0.35);
+  }
+}
+// A bullet against the boss: knocks one letter off. Returns true if it connected.
+function hitBossAt(px, py){
+  if(!boss || t - boss.born <= BOSS_ASSEMBLE) return false;
+  const B = boss;
+  for(let i = 0; i < B.letters.length; i++){
+    const L = B.letters[i];
+    if(!L.on) continue;
+    const b = B.bones[L.bone];
+    if(!b.visible) continue;
+    _w.copy(L.local); b.localToWorld(_w); const p = board.worldToLocal(_w.clone());
+    if(Math.hypot(p.x - px, p.y - py) > 1.0 * B.scale) continue;
+    // torso letters take two: the first hit only flashes it. Measured before this: a bot put
+    // two shots into the pelvis - the ROOT bone - and the whole rig fell away with it, boss
+    // dead in four seconds.
+    if(TORSO.has(L.bone) && !L.hurt){ L.hurt = true; spark(_w.clone(), 0xffd7a8, 5); return true; }
+    // off it comes
+    b.remove(L.m); B.letters.splice(i, 1);
+    spark(_w.clone(), 0xff9a7a, 12); brokenCount++; bumpReveal();
+    document.getElementById("score").textContent = brokenCount;
+    // a LIMB with nothing left on it falls away, with everything hanging off it; the torso holds
+    if(!TORSO.has(L.bone) && !B.letters.some(x => x.bone === L.bone)){
+      b.visible = false;
+      B.letters = B.letters.filter(x => { let q = B.bones[x.bone]; while(q && q !== B.g){ if(!q.visible) return false; q = q.parent; } return true; });
+      banner(L.bone.replace(/[LR]$/, m => m === "L" ? " LEFT" : " RIGHT").toUpperCase() + " GONE");
+    }
+    if(!B.letters.some(x => x.bone === "chest")) killBoss();     // the core is what kills it
+    return true;
+  }
+  return false;
+}
+function killBoss(){
+  if(!boss) return;
+  const B = boss;
+  for(const L of B.letters){ _w.copy(L.local); B.bones[L.bone].localToWorld(_w); spark(_w.clone(), 0xffd7a8, 8); brokenCount += 1; }
+  _w.set(0, 0, 0); B.g.localToWorld(_w); spark(_w.clone(), 0xfff1d0, 80);
+  board.remove(B.g);
+  boss = null; bossNext = t + BOSS_AGAIN; shake = Math.max(shake, 1.0);
+  document.getElementById("score").textContent = brokenCount;
+  banner("BOSS DOWN"); showBigHint("BOSS DOWN", "THE NEXT ONE COMES BIGGER", 3.0);
+}
+function clearBoss(){
+  if(boss){ board.remove(boss.g); boss.letters.forEach(L => { if(!L.on) board.remove(L.m); }); }
+  boss = null; bossNext = BOSS_AT; bossCount = 0;
 }
 
 const rockTex = [ texLoader.load('assets/asteroid_dark.png'),
@@ -2086,7 +2432,7 @@ function reset(){
   score=0; lives=LIVES_MAX; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
-  camFollowX=0; fullGraphics(); clearBolts(); armTurrets(); clearBombs(); buildArmy();
+  camFollowX=0; fullGraphics(); clearBolts(); armTurrets(); clearBombs(); buildArmy(); clearBoss();
   firstHitDone=false; mushroomDone=false; poweredOnce=false;
   t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0; hullSafe=0; shieldHintShown=false;
   clearAttackers();
@@ -2225,6 +2571,7 @@ function tick(now){
     runRisers(dt);
     runArmy(dt);
     runBombs(dt);
+    runBoss(dt);
     runAttackers(dt);
     runTurrets(dt);
     runHull(dt);
@@ -2399,6 +2746,8 @@ function tick(now){
         board.remove(bl); bullets.splice(i,1);
       } else if(hitAttackerAt(bl.position.x, bl.position.y, 1.1)){
         board.remove(bl); bullets.splice(i,1);
+      } else if(hitBossAt(bl.position.x, bl.position.y)){
+        board.remove(bl); bullets.splice(i,1);
       } else if(bl.position.y > viewEnterY + 3){
         board.remove(bl); bullets.splice(i,1);   // was scene.remove - a no-op that leaked every miss
       }
@@ -2410,6 +2759,7 @@ function tick(now){
   runPress(dt);
   runPlanet(dt);
   runFX(dt);
+  runBigHint(dt);
 
   // particles
   for(let i=bits.length-1;i>=0;i--){
@@ -2552,10 +2902,12 @@ resize();
 document.getElementById('go').onclick = ()=>{
   document.getElementById('start').classList.add('hide');
   reset(); state='play';
+  showBigHint(...BOMB_HINT(), 4.0);
 };
 document.getElementById('again').onclick = ()=>{
   document.getElementById('end').classList.add('hide');
   reset(); state='play';
+  showBigHint(...BOMB_HINT(), 3.0);
 };
 
 requestAnimationFrame(tick);
