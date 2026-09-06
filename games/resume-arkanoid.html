@@ -75,7 +75,7 @@
   <div class="hud" id="top">
     <div id="title">RÉSUMÉ BREAKOUT
       <small>R.J. Thompson &nbsp;·&nbsp; senior C++ / C# engineer &nbsp;·&nbsp; open to work</small></div>
-    <div id="stats">CLEARED <b id="score">0</b>/<span id="total">0</span>
+    <div id="stats">CLEARED <b id="score">0</b>/<span id="total">0</span> &nbsp;·&nbsp; GROUND <b id="ground">0</b>
       <div id="lifewrap"><span id="lifelbl">HULL</span><span id="lives"></span></div>
       <div id="shieldbar"><div id="shieldfill"></div></div></div>
   </div>
@@ -86,7 +86,7 @@
   <div class="hud" id="era" style="right:14px;bottom:44px;opacity:.45;transition:opacity .5s;font-weight:700;letter-spacing:1.5px">1988 · 8-bit</div>
   <div class="hud" id="power" style="left:14px;bottom:44px;font-weight:700;letter-spacing:.5px"></div>
   <div class="hud" id="bottom">
-    <kbd>←</kbd> <kbd>→</kbd> move &nbsp;·&nbsp; <kbd>space</kbd> fire &nbsp;·&nbsp; <kbd>F</kbd> fullscreen &nbsp;·&nbsp; grab the <b>P</b> pickups
+    <kbd>←</kbd> <kbd>→</kbd> move &nbsp;·&nbsp; <kbd>space</kbd> fire &nbsp;·&nbsp; <kbd>right-click</kbd> bomb &nbsp;·&nbsp; <kbd>shift</kbd> shield &nbsp;·&nbsp; <kbd>F</kbd> fullscreen &nbsp;·&nbsp; grab the <b>P</b> pickups
   </div>
 
   <div class="screen" id="start">
@@ -96,9 +96,10 @@
       <p>I am R.J. Thompson, a senior C++/C# engineer, and I am looking for my next role.
          The whole résumé is up there, every role with its real dates, and every letter of it
          breaks. Shoot your way down and you will have read the lot. What you let past flies back
-         up and comes for you, and only its shots can hurt you.</p>
-      <p class="muted">WASD to move &middot; left mouse to shoot &middot; right mouse for shields
-         &middot; mouse wheel for flame &middot; F for fullscreen</p>
+         up and comes for you. The army printing it at you is on the ground below: bomb it.
+         Only shots can hurt you, from either plane.</p>
+      <p class="muted">WASD to move &middot; left mouse to shoot &middot; right mouse to bomb the ground
+         &middot; Shift for shields &middot; mouse wheel for flame &middot; F for fullscreen</p>
       <button class="btn" id="go">START</button>
       <div class="muted">Would rather just read it? The PDF is one click away when the round ends,
          or any time from the résumé tab.</div>
@@ -694,7 +695,7 @@ function takeDamage(pos, colour, shakeAmt){
   hullSafe = HULL_IFRAME;
   // RJ: tell them the shield exists the FIRST time something hurts them. A defence nobody knows
   // about is the same as no defence, and the right button is not a guessable control.
-  if(!shieldHintShown){ shieldHintShown = true; banner(COARSE ? "SECOND FINGER FOR SHIELD" : "HOLD RIGHT CLICK FOR SHIELD"); }
+  if(!shieldHintShown){ shieldHintShown = true; banner(COARSE ? "HOLD A SECOND FINGER FOR SHIELD" : "HOLD SHIFT FOR SHIELD"); }
   if(pos) spark(pos, colour || 0xff5470, 24);
   lives--; drawLives();
   shake = Math.max(shake, shakeAmt || 0.6);
@@ -771,7 +772,7 @@ function runTurrets(dt){
   if(t < TURRET_WARMUP){
     if(!runTurrets._warned && t > TURRET_WARMUP - 2.2){
       runTurrets._warned = true;
-      banner(COARSE ? "TURRETS ARMING - SECOND FINGER FOR SHIELD" : "TURRETS ARMING - RIGHT MOUSE FOR SHIELD");
+      banner(COARSE ? "TURRETS ARMING - HOLD A SECOND FINGER FOR SHIELD" : "TURRETS ARMING - HOLD SHIFT FOR SHIELD");
     }
     return;
   }
@@ -798,6 +799,12 @@ function runTurrets(dt){
     const B = bolts[i], m = B.m;
     m.position.x += B.vx * dt;
     m.position.y += B.vy * dt;
+    if(B.vz !== undefined){                                    // a flak shell, climbing
+      m.position.z += B.vz * dt;
+      m.scale.setScalar(0.5 + 0.5 * Math.min(1, 1 - m.position.z / GROUND_Z));
+      if(m.position.z > 2.5){ board.remove(m); bolts.splice(i, 1); continue; }
+      if(m.position.z < -1.3) continue;                        // not yet in the air
+    }
     const near = Math.hypot(m.position.x - ship.position.x, m.position.y - ship.position.y);
 
     if(shieldHeld && shieldEnergy > 0 && near < 2.6){
@@ -1186,8 +1193,8 @@ function syncMeshes(){
         m.rotation.set(0,0,0);
         m.visible = false; L.mesh = m;
         // born off screen, streams in past the press; the line types itself left to right
-        if(rowSlot < 0) rowSlot = rowsLaunched++;
-        launchLetter(L, line.letters.indexOf(L) * ARRIVE_STAGGER + rowSlot * ARRIVE_ROWGAP);
+        if(rowSlot < 0){ rowSlot = rowsLaunched++; line.launcher = pickLauncher(); }
+        launchLetter(L, line.letters.indexOf(L) * ARRIVE_STAGGER + rowSlot * ARRIVE_ROWGAP, line.launcher);
       } else if(!near && L.mesh){ releaseTrail(L); giveMesh(L.mesh); L.mesh = null; }
       if(L.mesh){
         const M = L.mesh, e = Math.max(1, eraIdx);
@@ -1298,7 +1305,7 @@ function buildPress(){
       blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.8 }));
     eng.scale.set(5, 5, 1); eng.position.set(-24, 0, sz); g.add(eng);
   }
-  g.userData = { home: new THREE.Vector3(), pulse: 0, glow };
+  g.userData = { home: new THREE.Vector3(), pulse: 0, glow, hullMat, rise: 0, flash: 0 };
   g.scale.setScalar(0.6);      // a distant ship: at PRESS_DIST it spans about a fifth of a wide screen
   board.add(g);
   press = g;
@@ -1312,6 +1319,7 @@ function placePress(){
   if(!press) return;
   press.userData.home.copy(rayPoint(0, PRESS_NDC_Y, PRESS_DIST));
   press.position.copy(press.userData.home);
+  placeGround();
 }
 
 function runPress(dt){
@@ -1319,20 +1327,26 @@ function runPress(dt){
   const h = press.userData.home;
   press.position.set(h.x + Math.sin(t * 0.21) * 6, h.y + Math.sin(t * 0.5) * 0.8, h.z + Math.cos(t * 0.17) * 2);
   press.rotation.z = Math.sin(t * 0.21) * 0.05;
+  if(press.userData.rise > 0){                       // back from the deep after going down
+    press.userData.rise = Math.max(0, press.userData.rise - dt / 4);
+    press.position.z -= 30 * press.userData.rise;
+  }
+  if(press.userData.flash > 0){ press.userData.flash -= dt; press.userData.hullMat.emissive.setHex(0x7a2a10); }
+  else press.userData.hullMat.emissive.setHex(0x101a28);
   press.userData.pulse = Math.max(0, press.userData.pulse - dt * 2.5);
   press.userData.glow.material.opacity = 0.35 + press.userData.pulse * 0.65;
   press.userData.glow.scale.set(30 + press.userData.pulse * 10, 8 + press.userData.pulse * 4, 1);
 }
 
 // A letter's flight: born off screen below the press, past the press, into its slot.
-function launchLetter(L, stagger){
+function launchLetter(L, stagger, launcher){
   L.arrive = 0; L.flyT = -stagger; L.flash = 0;
   const nx = THREE.MathUtils.clamp(L.x / (textHalfW || 12), -1, 1) * 0.85;
   L.from = rayPoint(nx + (Math.random() - 0.5) * 0.15, SPAWN_NDC_Y - Math.random() * 0.3, SPAWN_DIST);
-  L.via  = press ? press.position.clone().add(new THREE.Vector3(nx * 10, 4, 3))
-                 : L.from.clone().lerp(new THREE.Vector3(L.x, 0, 0), 0.5);
+  L.via  = launcher ? launcher.m.position.clone().add(new THREE.Vector3(nx * 4, 6, 6))
+                    : L.from.clone().lerp(new THREE.Vector3(L.x, 0, 0), 0.5);
   L.prev = L.from.clone();
-  if(press) press.userData.pulse = 1;
+  if(launcher){ if(launcher.kind === "press") press.userData.pulse = 1; else launcher.pulse = 1; }
 }
 
 function takeTrail(){
@@ -1399,6 +1413,318 @@ if(sky.encoding !== undefined) sky.encoding = THREE.sRGBEncoding;
 scene.background = null;
 
 const texLoader = new THREE.TextureLoader();
+// ---------------------------------------------------------------- the ground: the army that prints at you
+/* RJ 2026-09-06: "there are two planes, one is a ground, one is air, and the right click drops
+   bombs with fabulous destruction power and coolness to destroy the army below which is launching
+   letter drones up to attack in the formation of my resume."
+
+   The air plane is the board: your ship, the rows, the divers, the bolts. The ground is the band
+   of the same board behind you and a little beneath it - on screen, the strip under your ship -
+   where the press keeps its army: LAUNCHERS that print the rows (every row is fired up from one
+   of them), FLAK that lobs shells up at you, and the press itself. Right-click drops a bomb on
+   the ground under you: a telegraphed impact ring, then a flash, a shockwave, a fireball, a
+   scorch, a flare of light, and a chain of secondary blasts through anything nearby. Only the
+   flak's shells can hurt you - the rule that only shots do damage holds on both planes. Reinforce-
+   ments roll in from the sides, so the ground never stays quiet for long. */
+const GROUND_Z      = -8;      // the ground sits this far under the air plane
+const BOMB_COOL     = 1.0;     // seconds between bombs
+const BOMB_MAX      = 3;       // in the air at once
+const BOMB_SEC      = 0.85;    // the fall
+const BOMB_RADIUS   = 11;      // fabulous
+const FLAK_WARMUP   = 10;      // seconds before the ground opens fire
+const FLAK_COOL     = 5.0;     // per battery
+const FLAK_RISE_SEC = 1.5;     // a shell's climb to the air plane - aimed at where you WERE
+const PRESS_HP      = 5;       // bombs to put the press down
+const REINFORCE_SEC = 14;      // a dead slot is refilled this often
+const PRESS_RETURN  = 30;      // the press rises again this long after it goes down
+// Offsets from the press's home, on the ground. Measured in portrait: a point on the ground
+// plane projects HIGHER on screen than the same y on the air plane, so the strip has to sit
+// further back (more negative dy) than instinct says, or "under the ship" lands beside it; and
+// dx beyond about +-18 is off the edge of a phone.
+const ARMY_SLOTS = [
+  { kind:"launcher", dx:-15, dy:  4 }, { kind:"launcher", dx: 15, dy:  4 },
+  { kind:"launcher", dx: -6, dy: -6 }, { kind:"launcher", dx:  6, dy: -6 }, { kind:"launcher", dx: 0, dy: 10 },
+  { kind:"flak",     dx:-11, dy:  0 }, { kind:"flak",     dx: 11, dy:  0 },
+  { kind:"flak",     dx:-18, dy:-10 }, { kind:"flak",     dx: 18, dy:-10 },
+];
+let army = [], bombs = [], fx = [], groundKills = 0, bombCool = 0, reinforceT = 0, pressHp = PRESS_HP, pressDown = 0;
+let groundMesh = null, groundEdge = null, blastLight = null;
+const RING_GEO = new THREE.RingGeometry(0.86, 1.0, 48), DISC_GEO = new THREE.CircleGeometry(1, 32);
+const ARMY_MAT = new THREE.MeshStandardMaterial({ color:0x33465e, map:HULL, emissive:0x0e1622,
+  roughness:0.6, metalness:0.55, flatShading:true });
+
+function groundOrigin(){ return press ? press.userData.home : new THREE.Vector3(0, -35, GROUND_Z); }
+
+function buildGround(){
+  if(groundMesh){ board.remove(groundMesh); board.remove(groundEdge); }
+  const c = document.createElement("canvas"); c.width = 512; c.height = 256;
+  const g = c.getContext("2d");
+  g.fillStyle = "rgba(6,10,18,0.55)"; g.fillRect(0, 0, 512, 256);
+  g.strokeStyle = "rgba(60,120,170,0.35)"; g.lineWidth = 1.5;
+  for(let x = 0; x <= 512; x += 32){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 256); g.stroke(); }
+  for(let y = 0; y <= 256; y += 32){ g.beginPath(); g.moveTo(0, y); g.lineTo(512, y); g.stroke(); }
+  const tex = new THREE.CanvasTexture(c);
+  groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(120, 36),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+  board.add(groundMesh);
+  // the shoreline between air and ground: a lit edge where the strip meets the play band
+  groundEdge = new THREE.Mesh(new THREE.BoxGeometry(120, 0.28, 0.1),
+    new THREE.MeshBasicMaterial({ color: 0x4fc3f7, transparent: true, opacity: 0.55 }));
+  board.add(groundEdge);
+  if(!blastLight){ blastLight = new THREE.PointLight(0xffa040, 0, 70); board.add(blastLight); }
+  placeGround();
+}
+function placeGround(){
+  if(!groundMesh) return;
+  const o = groundOrigin();
+  groundMesh.position.set(0, o.y - 2, GROUND_Z - 0.3);
+  groundEdge.position.set(0, o.y + 8, GROUND_Z);
+}
+
+function launcherMesh(){
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(4.2, 4.2, 1.2), ARMY_MAT); base.position.z = 0.6; g.add(base);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.85, 5.5, 8), ARMY_MAT);
+  barrel.rotation.x = Math.PI / 2; barrel.position.z = 3.6; g.add(barrel);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0x4fc3f7,
+    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.5 }));
+  glow.scale.set(3.5, 3.5, 1); glow.position.z = 6.6; g.add(glow); g.userData.glow = glow;
+  return g;
+}
+function flakMesh(){
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 3.0, 1.4, 10), ARMY_MAT);
+  base.rotation.x = Math.PI / 2; base.position.z = 0.7; g.add(base);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 1.6), ARMY_MAT); head.position.z = 2.2; g.add(head);
+  for(const sx of [-0.6, 0.6]){
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 3.4, 6), ARMY_MAT);
+    b.position.set(sx, 0.9, 3.4); b.rotation.x = Math.PI / 2 - 0.5; g.add(b);
+  }
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0xff5a4d,
+    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.45 }));
+  glow.scale.set(3, 3, 1); glow.position.set(0, 1.4, 4.8); g.add(glow); g.userData.glow = glow;
+  return g;
+}
+
+function makeUnit(slot, i, rollIn){
+  const m = slot.kind === "flak" ? flakMesh() : launcherMesh();
+  board.add(m);
+  const u = { kind: slot.kind, slot, m, alive: true, pulse: 0, phase: i * 1.3,
+              cool: FLAK_COOL * (0.4 + (i % 4) * 0.25),
+              arriveX: rollIn ? (i % 2 ? 70 : -70) : 0 };      // reinforcements roll in from a side
+  placeUnit(u);
+  return u;
+}
+function placeUnit(u){
+  const o = groundOrigin();
+  u.m.position.set(o.x + u.slot.dx + u.arriveX, o.y + u.slot.dy, GROUND_Z);
+}
+function buildArmy(){
+  army.forEach(u => { if(u.m.parent) board.remove(u.m); });
+  army = ARMY_SLOTS.map((s, i) => makeUnit(s, i, false));
+  reinforceT = 0; groundKills = 0; pressHp = PRESS_HP; pressDown = 0; runArmy._warned = false;
+  if(press){ press.visible = true; press.userData.rise = 0; press.userData.flash = 0; }
+  const gEl = document.getElementById("ground"); if(gEl) gEl.textContent = 0;
+}
+function clearBombs(){
+  bombs.forEach(b => { board.remove(b.m); board.remove(b.ring); });
+  bombs = []; bombCool = 0;
+  fx.forEach(f => { if(f.m) board.remove(f.m); });
+  fx = [];
+  if(blastLight) blastLight.intensity = 0;
+}
+function livingLaunchers(){ return army.filter(u => u.alive && u.arriveX === 0 && u.kind === "launcher"); }
+function pickLauncher(){
+  const L = livingLaunchers();
+  if(L.length) return L[Math.floor(Math.random() * L.length)];
+  return (press && press.visible) ? { kind:"press", m: press } : null;
+}
+
+function runArmy(dt){
+  if(!runArmy._warned && t > FLAK_WARMUP - 2.5){
+    runArmy._warned = true;
+    banner(COARSE ? "GROUND BATTERIES ARMING - TAP A SECOND FINGER TO BOMB"
+                  : "GROUND BATTERIES ARMING - RIGHT CLICK TO BOMB");
+  }
+  reinforceT += dt;
+  if(reinforceT >= REINFORCE_SEC){
+    reinforceT = 0;
+    const dead = army.findIndex(u => !u.alive);
+    if(dead >= 0){ army[dead] = makeUnit(army[dead].slot, dead, true); banner("REINFORCEMENTS"); }
+  }
+  if(pressDown > 0){
+    pressDown -= dt;
+    if(pressDown <= 0){ press.visible = true; pressHp = PRESS_HP; press.userData.rise = 1; banner("THE PRESS RETURNS"); }
+  }
+  for(const u of army){
+    if(!u.alive) continue;
+    if(u.arriveX !== 0){
+      u.arriveX += (0 - u.arriveX) * Math.min(1, dt * 1.6);
+      if(Math.abs(u.arriveX) < 0.3) u.arriveX = 0;
+    }
+    placeUnit(u);
+    u.m.position.y += Math.sin(t * 1.3 + u.phase) * 0.15;
+    u.pulse = Math.max(0, u.pulse - dt * 2);
+    u.m.userData.glow.material.opacity = (u.kind === "flak" ? 0.45 : 0.5) + u.pulse * 0.5;
+    if(u.kind === "flak" && t > FLAK_WARMUP && u.arriveX === 0){
+      u.cool -= dt;
+      if(u.cool <= 0 && bolts.length < TURRET_MAX){ u.cool = FLAK_COOL; fireFlak(u); }
+    }
+  }
+}
+// A shell climbs from the ground to the air plane over FLAK_RISE_SEC, aimed at where the ship
+// is NOW - so it arrives where you were, and moving is what dodges it.
+function fireFlak(u){
+  const m = boltMesh(true);
+  m.position.copy(u.m.position); m.position.z += 3;
+  const dx = ship.position.x - m.position.x, dy = ship.position.y - m.position.y, dz = 0 - m.position.z;
+  bolts.push({ m, vx: dx / FLAK_RISE_SEC, vy: dy / FLAK_RISE_SEC, vz: dz / FLAK_RISE_SEC, heavy: true });
+  u.pulse = 1;
+  spark(board.localToWorld(m.position.clone()), 0xffb14d, 6);
+}
+
+function dropBomb(){
+  if(state !== "play" || bombCool > 0 || bombs.length >= BOMB_MAX) return;
+  bombCool = BOMB_COOL;
+  const o = groundOrigin();
+  // under the ship: the ship's narrow band maps onto the strip, so flying up reaches further in
+  const tx = ship.position.x, ty = o.y + 2 + (ship.position.y - SHIP_Y_MIN) * 1.2;
+  const m = new THREE.Group();
+  m.add(new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.6, 8),
+    new THREE.MeshStandardMaterial({ color:0x2a2f38, emissive:0x331a08, roughness:0.5, metalness:0.7 })));
+  const tail = sprite(0xffb14d, 0.8); tail.scale.set(1.6, 1.6, 1); tail.position.y = 1.1; m.add(tail);
+  m.position.copy(ship.position);
+  board.add(m);
+  const ring = new THREE.Mesh(RING_GEO, new THREE.MeshBasicMaterial({ color:0xff5a4d, transparent:true,
+    opacity:0.8, depthWrite:false, side:THREE.DoubleSide }));
+  ring.position.set(tx, ty, GROUND_Z + 0.08); ring.scale.setScalar(2.4);
+  board.add(ring);
+  bombs.push({ m, ring, from: ship.position.clone(), to: new THREE.Vector3(tx, ty, GROUND_Z), tt: 0 });
+}
+function runBombs(dt){
+  bombCool = Math.max(0, bombCool - dt);
+  for(let i = bombs.length - 1; i >= 0; i--){
+    const b = bombs[i];
+    b.tt += dt / BOMB_SEC;
+    const k = Math.min(1, b.tt), e = k * k;                    // falls faster as it goes
+    b.m.position.lerpVectors(b.from, b.to, e);
+    b.m.position.z += Math.sin(k * Math.PI) * 3;               // a little loft before the drop
+    b.m.rotation.x += dt * 6; b.m.rotation.z += dt * 2.5;
+    const rs = 2.4 + Math.sin(t * 14) * 0.5 + (1 - k) * 4;    // the marker tightens as it falls
+    b.ring.scale.setScalar(rs); b.ring.material.opacity = 0.35 + k * 0.5;
+    if(k >= 1){
+      board.remove(b.m); board.remove(b.ring); bombs.splice(i, 1);
+      explode(b.to.x, b.to.y, BOMB_RADIUS, true);
+    }
+  }
+}
+
+function sprite(color, opacity){
+  return new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color, blending:THREE.AdditiveBlending,
+    transparent:true, depthWrite:false, opacity }));
+}
+// The look of a blast, ground-side: flash, shockwave, fireball, scorch, light. Everything it makes
+// is owned by fx[] and retired by runFX(), so a hundred bombs leak nothing.
+function blast(at, radius, big){
+  spark(board.localToWorld(at.clone()), 0xffd7a8, big ? 40 : 16);
+  const flash = sprite(0xfff1d0, 1); flash.position.copy(at).setZ(GROUND_Z + 1); board.add(flash);
+  fx.push({ kind:"flash", m: flash, tt: 0, life: big ? 0.28 : 0.18, size: radius * (big ? 2.2 : 1.6) });
+  const ring = new THREE.Mesh(RING_GEO, new THREE.MeshBasicMaterial({ color:0xffc27a, transparent:true,
+    opacity:0.9, depthWrite:false, side:THREE.DoubleSide }));
+  ring.position.copy(at).setZ(GROUND_Z + 0.1); board.add(ring);
+  fx.push({ kind:"ring", m: ring, tt: 0, life: big ? 0.75 : 0.45, size: radius * 1.7 });
+  const n = big ? 9 : 4;
+  for(let i = 0; i < n; i++){
+    const s = sprite(0xffa040, 0.95);
+    s.position.copy(at).setZ(GROUND_Z + 0.5 + Math.random() * 2);
+    s.position.x += (Math.random() - 0.5) * radius * 0.5; s.position.y += (Math.random() - 0.5) * radius * 0.5;
+    board.add(s);
+    fx.push({ kind:"fire", m: s, tt: -i * 0.03, life: (big ? 1.5 : 1.0) + Math.random() * 0.4,
+              vz: 5 + Math.random() * 5, size: radius * (big ? 0.7 : 0.55) * (0.7 + Math.random() * 0.6) });
+  }
+  const sc = new THREE.Mesh(DISC_GEO, new THREE.MeshBasicMaterial({ color:0x05070c, transparent:true,
+    opacity:0.6, depthWrite:false }));
+  sc.position.copy(at).setZ(GROUND_Z + 0.04); sc.scale.setScalar(radius * (big ? 0.8 : 0.5)); board.add(sc);
+  fx.push({ kind:"scorch", m: sc, tt: 0, life: 9 });
+  if(blastLight){ blastLight.position.copy(at).setZ(GROUND_Z + 6); blastLight.intensity = big ? 9 : 4; }
+}
+function explode(x, y, radius, big){
+  blast(new THREE.Vector3(x, y, GROUND_Z), radius, big);
+  // the army under it, in a chain that spreads outward from the impact
+  for(const u of army){
+    if(!u.alive) continue;
+    const d = Math.hypot(u.m.position.x - x, u.m.position.y - y);
+    if(d < radius) killUnit(u, d * 0.035);
+  }
+  if(press && press.visible && Math.hypot(press.position.x - x, press.position.y - y) < radius + 8){
+    pressHp--; press.userData.pulse = 1; press.userData.flash = 0.35;
+    if(pressHp <= 0){
+      pressDown = PRESS_RETURN; press.visible = false; groundKills += 5;
+      fx.push({ kind:"chain", at: press.position.clone(), n: 6, every: 0.12, tt: 0, radius: 6 });
+      banner("THE PRESS IS DOWN");
+    } else banner("PRESS HIT " + (PRESS_HP - pressHp) + "/" + PRESS_HP);
+    const gEl = document.getElementById("ground"); if(gEl) gEl.textContent = groundKills;
+  }
+  // divers caught in the plume, and any shell in the air over it
+  for(let i = attackers.length - 1; i >= 0; i--){
+    const p = attackers[i].m.position;
+    if(Math.hypot(p.x - x, p.y - y) < radius * 0.6){
+      spark(board.localToWorld(p.clone()), 0xffc24a, 14);
+      board.remove(attackers[i].m); attackers.splice(i, 1); brokenCount++; bumpReveal();
+    }
+  }
+  for(let i = bolts.length - 1; i >= 0; i--){
+    const p = bolts[i].m.position;
+    if(Math.hypot(p.x - x, p.y - y) < radius * 0.7){ board.remove(bolts[i].m); bolts.splice(i, 1); }
+  }
+  document.getElementById("score").textContent = brokenCount;
+  shake = Math.max(shake, big ? 0.95 : 0.5);
+}
+function killUnit(u, delay){
+  u.alive = false;
+  fx.push({ kind:"kill", u, tt: -delay });
+}
+function runFX(dt){
+  if(blastLight && blastLight.intensity > 0) blastLight.intensity = Math.max(0, blastLight.intensity - dt * 14);
+  for(let i = fx.length - 1; i >= 0; i--){
+    const f = fx[i];
+    f.tt += dt;
+    if(f.tt < 0) continue;
+    if(f.kind === "kill"){
+      const u = f.u;
+      if(u.m.parent) board.remove(u.m);
+      blast(u.m.position.clone(), 4.5, false);
+      groundKills++;
+      banner(u.kind === "flak" ? "FLAK DOWN" : "LAUNCHER DOWN");
+      const gEl = document.getElementById("ground"); if(gEl) gEl.textContent = groundKills;
+      fx.splice(i, 1); continue;
+    }
+    if(f.kind === "chain"){
+      if(f.tt >= f.every){
+        f.tt = 0; f.n--;
+        const p = f.at.clone(); p.x += (Math.random() - 0.5) * 8; p.y += (Math.random() - 0.5) * 5;
+        blast(p, f.radius, f.n === 0);
+        if(f.n <= 0) fx.splice(i, 1);
+      }
+      continue;
+    }
+    const k = f.tt / f.life;
+    if(k >= 1){ board.remove(f.m); f.m.material.dispose(); fx.splice(i, 1); continue; }
+    if(f.kind === "flash"){
+      const s = f.size * (0.4 + 0.6 * Math.sin(k * Math.PI)); f.m.scale.set(s, s, 1); f.m.material.opacity = 1 - k;
+    } else if(f.kind === "ring"){
+      f.m.scale.setScalar(0.5 + f.size * (1 - Math.pow(1 - k, 2))); f.m.material.opacity = 0.9 * (1 - k);
+    } else if(f.kind === "fire"){
+      f.m.position.z += f.vz * dt; f.m.position.y += dt * 1.5;
+      const s = f.size * (0.3 + 1.2 * k); f.m.scale.set(s, s, 1);
+      f.m.material.opacity = 0.95 * (1 - k * k);
+      f.m.material.color.setRGB(1, 0.62 * (1 - k) + 0.25 * k, 0.25).multiplyScalar(1 - 0.6 * k);
+    } else if(f.kind === "scorch"){
+      f.m.material.opacity = 0.6 * (1 - k);
+    }
+  }
+}
+
 const rockTex = [ texLoader.load('assets/asteroid_dark.png'),
                   texLoader.load('assets/asteroid_light.png') ];
 rockTex.forEach(t=>{ t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -1612,7 +1938,7 @@ function reset(){
   score=0; lives=LIVES_MAX; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
-  camFollowX=0; fullGraphics(); clearBolts(); armTurrets();
+  camFollowX=0; fullGraphics(); clearBolts(); armTurrets(); clearBombs(); buildArmy();
   firstHitDone=false; mushroomDone=false; poweredOnce=false;
   t=0; shieldEnergy=1; shieldHeld=false; shootHeld=false; flameBurst=0; fireCool=0; hullSafe=0; shieldHintShown=false;
   clearAttackers();
@@ -1684,8 +2010,10 @@ function endGame(win){
   document.getElementById('endMsg').textContent = win
     ? `The whole CV went past. You broke ${brokenCount} of ${totalGlyphs} characters and `
       + `read ${linesRead.size} of the roles along the way. `
+      + `You bombed ${groundKills} of the ground army. `
       + `If any of it fits what you are hiring for, I would like to talk.`
     : `You broke ${brokenCount} of ${totalGlyphs} characters. `
+      + `You bombed ${groundKills} of the ground army. `
       + `The rest are in the PDF, and I would still like to talk.`;
   document.getElementById('endLink').innerHTML =
     '<a href="mailto:RJ45Thompson@gmail.com?subject=Your%20r%C3%A9sum%C3%A9%20breakout">Email me</a>'
@@ -1747,6 +2075,8 @@ function tick(now){
     mushroomBeat();
     sinkLines();
     runRisers(dt);
+    runArmy(dt);
+    runBombs(dt);
     runAttackers(dt);
     runTurrets(dt);
     runHull(dt);
@@ -1930,6 +2260,7 @@ function tick(now){
   }
 
   runPress(dt);
+  runFX(dt);
 
   // particles
   for(let i=bits.length-1;i>=0;i--){
@@ -1962,8 +2293,10 @@ addEventListener('keydown', e=>{
   if(e.key==='f'||e.key==='F'){ goFullscreen(); return; }
   keys[e.key]=true;
   if(e.key===' '){ e.preventDefault(); fire(); }
+  if(e.key==='Shift') shieldHeld = true;
+  if(e.key==='b'||e.key==='B') dropBomb();
 });
-addEventListener('keyup', e=>keys[e.key]=false);
+addEventListener('keyup', e=>{ keys[e.key]=false; if(e.key==='Shift') shieldHeld = false; });
 // LEFT = shoot, RIGHT = shield, WHEEL = flame burst. Shooting is what you do constantly, so it
 // belongs on the primary button. Right-click still needs the context menu suppressed or the
 // browser eats the input.
@@ -1971,11 +2304,12 @@ addEventListener("contextmenu", e=>{ if(state==="play") e.preventDefault(); });
 addEventListener("mousedown", e=>{
   if(state!=="play") return;
   if(e.button===0){ shootHeld = true; fire(); }
-  if(e.button===2){ e.preventDefault(); shieldHeld = true; }
+  if(e.button===2){ e.preventDefault(); dropBomb(); }        // RIGHT = bomb the ground
+  if(e.button===1){ e.preventDefault(); shieldHeld = true; }  // MIDDLE (or Shift) = shield
 });
 addEventListener("mouseup", e=>{
   if(e.button===0) shootHeld = false;
-  if(e.button===2) shieldHeld = false;
+  if(e.button===1) shieldHeld = false;
 });
 addEventListener("wheel", e=>{
   if(state!=="play") return;
@@ -2002,7 +2336,7 @@ canvas.addEventListener("touchstart", e=>{
     touch.dx = touch.dy = 0; touch.moved = 0; touch.tapX = p.clientX; touch.tapY = p.clientY;
     shootHeld = true; fire();
   }
-  if(e.touches.length >= 2) shieldHeld = true;
+  if(e.touches.length >= 2){ shieldHeld = true; touch.secondAt = performance.now(); }   // hold = shield
 }, {passive:false});
 canvas.addEventListener("touchmove", e=>{
   if(!touch.on) return;
@@ -2014,7 +2348,11 @@ canvas.addEventListener("touchmove", e=>{
 }, {passive:false});
 function touchEnd(e){
   if(e.cancelable) e.preventDefault();
-  if(e.touches.length < 2) shieldHeld = false;
+  if(e.touches.length < 2){
+    // a QUICK second finger is a bomb; a held one was the shield
+    if(shieldHeld && touch.secondAt && performance.now() - touch.secondAt < 230) dropBomb();
+    shieldHeld = false; touch.secondAt = 0;
+  }
   if(e.touches.length === 0){
     if(touch.on && touch.moved < 12){                  // a tap, not a drag
       const now = performance.now();
@@ -2033,9 +2371,9 @@ canvas.addEventListener("touchcancel", touchEnd, {passive:false});
 // Say what the controls actually are on the device in hand. The keyboard line is wrong on a
 // phone, and a wrong instruction reads as a broken game.
 if(COARSE){
-  const line = "Drag to fly &middot; hold to shoot &middot; second finger for shields &middot; double-tap for flame";
+  const line = "Drag to fly &middot; hold to shoot &middot; tap a second finger to bomb, hold it for shields &middot; double-tap for flame";
   const m = document.querySelector('#start .muted'); if(m) m.innerHTML = line;
-  const b = document.getElementById('bottom'); if(b) b.innerHTML = "drag to fly &nbsp;&middot;&nbsp; hold to shoot &nbsp;&middot;&nbsp; grab the <b>P</b> pickups";
+  const b = document.getElementById('bottom'); if(b) b.innerHTML = "drag to fly &nbsp;&middot;&nbsp; hold to shoot &nbsp;&middot;&nbsp; second finger bombs &nbsp;&middot;&nbsp; grab the <b>P</b> pickups";
   const f = document.getElementById('fsBtn'); if(f) f.textContent = "⛶ Fullscreen";
 }
 
@@ -2053,6 +2391,8 @@ addEventListener('resize', resize);
 ship = buildShip();
 buildBoard();
 buildPress();
+buildGround();
+buildArmy();
 resize();
 
 document.getElementById('go').onclick = ()=>{
