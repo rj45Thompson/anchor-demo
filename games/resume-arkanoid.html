@@ -82,6 +82,7 @@
 
   <div class="hud" id="readout"></div>
   <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
+  <button id="camBtn" style="position:fixed;right:14px;top:50px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#10227; Camera (C)</button>
   <div class="hud" id="banner" style="left:0;right:0;top:88px;text-align:center;font-size:13px;font-weight:700;letter-spacing:2px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
   <div class="hud" id="era" style="right:14px;bottom:44px;opacity:.45;transition:opacity .5s;font-weight:700;letter-spacing:1.5px">1988 · 8-bit</div>
   <div class="hud" id="power" style="left:14px;bottom:44px;font-weight:700;letter-spacing:.5px"></div>
@@ -99,7 +100,7 @@
          up and comes for you. The army printing it at you is on the ground below: bomb it.
          Only shots can hurt you, from either plane.</p>
       <p class="muted">WASD to move &middot; left mouse to shoot &middot; right mouse to bomb the ground
-         &middot; Shift for shields &middot; mouse wheel for flame &middot; F for fullscreen</p>
+         &middot; Shift for shields &middot; mouse wheel for flame &middot; C for camera &middot; F for fullscreen</p>
       <button class="btn" id="go">START</button>
       <div class="muted">Would rather just read it? The PDF is one click away when the round ends,
          or any time from the résumé tab.</div>
@@ -489,6 +490,22 @@ const eraIdx = 5;
    angle you cannot see any of it. Raking the board back to ~1.0 rad puts the CV on a plane
    receding to a vanishing point, so every glyph shows its depth and the whole thing reads as the
    opening crawl. The camera drops low to look UP the plane, which is the shot that sells it. */
+/* CAMERA MODES - RJ 2026-09-06: "have the camera angle do theatrical modes and an arrow or
+   button to switch them." Four rigs. The board's rake is the same in all of them (the planet and
+   the press are placed against rig 0, so the world must not move when the camera does); only the
+   eye moves, and a change is a sweep rather than a cut. C, or the Camera button, cycles. */
+const CAM_MODES = [
+  { name:"CRAWL",    pos:[ 0.0, -22.0, 32.0], look:[0.0,  2.0, -6.0] },   // the opening-crawl shot, solved below
+  { name:"CHASE",    pos:[ 0.0, -38.0, 13.0], look:[0.0, 14.0, -8.0] },   // low behind the ship, horizon ahead
+  { name:"OVERHEAD", pos:[ 0.0, -10.0, 56.0], look:[0.0,  6.0, -4.0] },   // looking down on the run
+  { name:"WING",     pos:[18.0, -30.0, 26.0], look:[0.0,  4.0, -5.0] },   // off the starboard wing, three-quarter, text still reads
+];
+let camMode = 0, camBlend = 1;
+const camLook = new THREE.Vector3(0, 2, -6), _camTarget = new THREE.Vector3(), _lookTarget = new THREE.Vector3();
+function nextCamera(){
+  camMode = (camMode + 1) % CAM_MODES.length; camBlend = 0;
+  banner("CAMERA: " + CAM_MODES[camMode].name);
+}
 const CAM = {
   // Solved rather than eyeballed. A search over tilt/fov/position, projecting the play band
   // (board y -14..+16) and the widest CV line into NDC, found 85 rigs that fit; this is the
@@ -530,11 +547,36 @@ function applyCam(dt){
   // shoves the camera miles back. Scale it by the cosine of the tilt, which is how much of that
   // width actually still faces the lens.
   const need2 = need * Math.cos(CAM.tilt);
-  const dist = isFinite(need2) ? Math.max(CAM.pos[2], need2) : CAM.pos[2];
-
-  camera.position.set(CAM.pos[0] + dx + camFollowX * 0.6, CAM.pos[1] + dy, dist);
-  camera.lookAt(CAM.look[0] + camFollowX * 0.35, CAM.look[1], CAM.look[2]);
+  const rig = CAM_MODES[camMode];
+  if(camMode === 0){                                  // rig 0 keeps its solved framing: only z pulls back
+    const dist = isFinite(need2) ? Math.max(rig.pos[2], need2) : rig.pos[2];
+    _camTarget.set(rig.pos[0] + dx + camFollowX * 0.6, rig.pos[1] + dy, dist);
+  } else {                                             // the others pull back along their own line, keeping the angle
+    const s = (isFinite(need2) && rig.pos[2] > 0) ? Math.max(1, need2 / rig.pos[2]) : 1;
+    _camTarget.set(rig.pos[0] * s + dx + camFollowX * 0.6, rig.pos[1] * s + dy, rig.pos[2] * s);
+  }
+  _lookTarget.set(rig.look[0] + camFollowX * 0.35, rig.look[1], rig.look[2]);
+  if(camBlend < 1){                                    // a change of rig is a sweep, not a cut
+    camBlend = Math.min(1, camBlend + dt * 0.8);
+    const k = Math.min(1, dt * 2.4);
+    camera.position.lerp(_camTarget, k); camLook.lerp(_lookTarget, k);
+  } else { camera.position.copy(_camTarget); camLook.copy(_lookTarget); }
+  camera.lookAt(camLook);
   board.rotation.x = CAM.tilt;
+}
+
+// Rig 0 as a camera of its own, drift and follow left out: what the planet and the press are
+// placed against, so switching rigs moves the eye and nothing else.
+const _baseCam = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
+function baseCamera(){
+  _baseCam.aspect = camera.aspect; _baseCam.fov = camera.fov; _baseCam.updateProjectionMatrix();
+  const rig = CAM_MODES[0];
+  const asp = (isFinite(camera.aspect) && camera.aspect > 0) ? camera.aspect : (innerWidth / innerHeight || 1.6);
+  const need2 = (textHalfW + 2.5) / Math.tan((camera.fov * Math.PI / 180) / 2) / asp * Math.cos(CAM.tilt);
+  _baseCam.position.set(rig.pos[0], rig.pos[1], isFinite(need2) ? Math.max(rig.pos[2], need2) : rig.pos[2]);
+  _baseCam.lookAt(rig.look[0], rig.look[1], rig.look[2]);
+  _baseCam.updateMatrixWorld();
+  return _baseCam;
 }
 
 /* Everything the old ladder used to switch on now starts on. Called once per round from reset(),
@@ -560,7 +602,7 @@ function fullGraphics(){
   if(!backdrop) backdrop = makeBackdrop();
   backdrop.visible = true;
   if(starPoints) starPoints.visible = true;
-  if(grid) grid.visible = true;
+  if(grid) grid.visible = false;   // the planet is the ground now; a flat grid would slice through it
   if(sky) scene.background = sky;
   debris.forEach(d => d.visible = true);
 }
@@ -1250,11 +1292,11 @@ const GLOW = glowTex(), HULL = hullTex();
    of the screen, streams up past the press as a glowing streak, and lands in its slot at the top
    of the screen with a spark and a settle. A line assembles left to right, as if typed. Letters
    in flight are not targets and cannot sink, shoot or be shot. */
-const PRESS_NDC_Y    = -0.62;   // where on the screen the press sits: below the player, background
-const PRESS_DIST     = 90;      // how far from the camera - a distant ship, not a prop
+const PRESS_NDC_Y    = 0.22;    // where on the screen the press sits: just above the planet's limb
+const PRESS_DIST     = 130;     // how far from the camera - a distant ship on the horizon, outside the sphere
 const SPAWN_NDC_Y    = -1.35;   // letters are born below the bottom edge of the screen
 const SPAWN_DIST     = 112;
-const ARRIVE_SEC     = 1.15;    // one letter's flight
+const ARRIVE_SEC     = 1.4;     // one letter's flight - long enough to watch it come
 const ARRIVE_STAGGER = 0.035;   // per letter along the line, so a sentence types itself
 const ARRIVE_ROWGAP  = 0.30;    // per row when several rows launch in one frame (the opening)
 let frameDt = 1/60;
@@ -1263,11 +1305,12 @@ const trailPool = [];
 const _slot = new THREE.Vector3(), _p = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3();
 
 // The board-local point `dist` units down the camera ray through screen position (nx, ny).
-function rayPoint(nx, ny, dist){
-  camera.updateMatrixWorld();
-  const v = new THREE.Vector3(nx, ny, 0.5).unproject(camera);
-  const dir = v.sub(camera.position).normalize();
-  return board.worldToLocal(camera.position.clone().add(dir.multiplyScalar(dist)));
+function rayPoint(nx, ny, dist, cam){
+  cam = cam || camera;
+  cam.updateMatrixWorld();
+  const v = new THREE.Vector3(nx, ny, 0.5).unproject(cam);
+  const dir = v.sub(cam.position).normalize();
+  return board.worldToLocal(cam.position.clone().add(dir.multiplyScalar(dist)));
 }
 
 // The board y at which a row is at the top edge of THIS screen. The old fixed window
@@ -1317,9 +1360,9 @@ function buildPress(){
 // down there in the distance" on a phone in portrait as much as on a wide monitor.
 function placePress(){
   if(!press) return;
-  press.userData.home.copy(rayPoint(0, PRESS_NDC_Y, PRESS_DIST));
+  press.userData.home.copy(rayPoint(0, PRESS_NDC_Y, PRESS_DIST, baseCamera()));
   press.position.copy(press.userData.home);
-  placeGround();
+  placePlanet();
 }
 
 function runPress(dt){
@@ -1342,9 +1385,21 @@ function runPress(dt){
 function launchLetter(L, stagger, launcher){
   L.arrive = 0; L.flyT = -stagger; L.flash = 0;
   const nx = THREE.MathUtils.clamp(L.x / (textHalfW || 12), -1, 1) * 0.85;
-  L.from = rayPoint(nx + (Math.random() - 0.5) * 0.15, SPAWN_NDC_Y - Math.random() * 0.3, SPAWN_DIST);
-  L.via  = launcher ? launcher.m.position.clone().add(new THREE.Vector3(nx * 4, 6, 6))
-                    : L.from.clone().lerp(new THREE.Vector3(L.x, 0, 0), 0.5);
+  if(planet){
+    // RJ: "the letters that get shot up should come from that planet all over. They are drones -
+    // they should come spinning in." Born a little inside the surface at a random spot on the
+    // visible face, so each one EMERGES, then swoops sideways on its way up to the row.
+    const fr = planetFrame();
+    const sd = surfaceDir((Math.random() - 0.5) * 56, -6 + Math.random() * 50, fr);
+    L.from = surfaceToBoard(sd, -3);
+    L.via  = surfaceToBoard(sd, 18).add(new THREE.Vector3((Math.random() - 0.5) * 16, 6, 4));
+  } else if(launcher){
+    L.from = press.position.clone();
+    L.via  = press.position.clone().add(new THREE.Vector3(nx * 4, 6, 6));
+  } else {
+    L.from = rayPoint(nx + (Math.random() - 0.5) * 0.15, SPAWN_NDC_Y - Math.random() * 0.3, SPAWN_DIST);
+    L.via  = L.from.clone().lerp(new THREE.Vector3(L.x, 0, 0), 0.5);
+  }
   L.prev = L.from.clone();
   if(launcher){ if(launcher.kind === "press") press.userData.pulse = 1; else launcher.pulse = 1; }
 }
@@ -1358,6 +1413,15 @@ function takeTrail(){
 }
 function releaseTrail(L){
   if(L.trail){ L.trail.visible = false; trailPool.push(L.trail); L.trail = null; }
+  if(L.halo){ L.halo.visible = false; haloPool.push(L.halo); L.halo = null; }
+}
+const haloPool = [];
+function takeHalo(){
+  if(haloPool.length) return haloPool.pop();
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0xbfe8ff,
+    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.75 }));
+  board.add(s);
+  return s;
 }
 // The streak behind a letter in flight: a glow sprite stretched along the direction it is
 // moving ON SCREEN, which is what a streak is - a world-space direction would foreshorten
@@ -1372,6 +1436,11 @@ function updateTrail(L, M){
   const len = M.position.distanceTo(L.prev) * 5.5 + 0.8;
   s.scale.set(len, 0.7, 1);
   s.material.color.setHex(L.turret ? 0xff8a7a : 0x8fd7ff);
+  if(!L.halo){ L.halo = takeHalo(); L.halo.visible = true; }
+  L.halo.position.copy(M.position);
+  const h = 2.4 + Math.sin(t * 22 + L.ci) * 0.5;
+  L.halo.scale.set(h, h, 1);
+  L.halo.material.color.setHex(L.turret ? 0xff8a7a : 0xbfe8ff);
 }
 
 // One letter's frame in flight. Returns true while it is still flying.
@@ -1390,7 +1459,7 @@ function flyLetter(L, M, y){
   const bump = k > 0.86 ? 1 + 0.22 * Math.sin((k - 0.86) / 0.14 * Math.PI) : 1;   // the settle
   const sc = (0.4 + 0.6 * e) * bump;
   M.scale.set(S * sc, SY * sc, S * sc);
-  M.rotation.set((1 - e) * L.spinX * 2.2, (1 - e) * L.spinY * 3.1, (1 - e) * 0.6);
+  M.rotation.set((1 - e) * L.spinX * 6.5, (1 - e) * L.spinY * 9.0, (1 - e) * 4.0);   // a drone tumbling in, settling as it lands
   M.material.emissiveIntensity = 1.5;
   updateTrail(L, M);
   if(k >= 1){
@@ -1413,72 +1482,146 @@ if(sky.encoding !== undefined) sky.encoding = THREE.sRGBEncoding;
 scene.background = null;
 
 const texLoader = new THREE.TextureLoader();
-// ---------------------------------------------------------------- the ground: the army that prints at you
-/* RJ 2026-09-06: "there are two planes, one is a ground, one is air, and the right click drops
-   bombs with fabulous destruction power and coolness to destroy the army below which is launching
-   letter drones up to attack in the formation of my resume."
+// ---------------------------------------------------------------- the planet: the army that prints at you
+/* RJ 2026-09-06: "two planes, one is a ground, one is air, and the right click drops bombs with
+   fabulous destruction power and coolness to destroy the army below which is launching letter
+   drones up to attack in the formation of my resume." Then: "it's more like we are flying over a
+   planet surface - make it a huge round ball that turns and we are just bombing down on that. So
+   we are flying parallel to the ground."
 
-   The air plane is the board: your ship, the rows, the divers, the bolts. The ground is the band
-   of the same board behind you and a little beneath it - on screen, the strip under your ship -
-   where the press keeps its army: LAUNCHERS that print the rows (every row is fired up from one
-   of them), FLAK that lobs shells up at you, and the press itself. Right-click drops a bomb on
-   the ground under you: a telegraphed impact ring, then a flash, a shockwave, a fireball, a
-   scorch, a flare of light, and a chain of secondary blasts through anything nearby. Only the
-   flak's shells can hurt you - the rule that only shots do damage holds on both planes. Reinforce-
-   ments roll in from the sides, so the ground never stays quiet for long. */
-const GROUND_Z      = -8;      // the ground sits this far under the air plane
+   So: a planet. A huge sphere below the ship, placed by what the camera sees (its limb crosses
+   the picture a little above centre, its surface fills the bottom), turning slowly about the
+   ship's wingline so the ground slides back under you as you fly. The army lives ON the sphere
+   and turns with it: LAUNCHERS that fire the rows up (every row is born at one of their muzzles
+   and streams up to its slot), FLAK batteries that lob shells up at you, and reinforcements that
+   come over the horizon ahead and ride into view. Right-click drops a bomb straight down onto
+   the surface under you: a red impact ring on the ground that tightens as it falls, then a
+   flash, a shockwave ring, a fireball that rises off the surface, a scorch that turns away with
+   the planet, a flare of light, and a chain of secondary blasts. Only shots hurt, on both planes. */
+const PLANET_PITCH  = 35 * Math.PI / 180;   // the sphere's centre sits this far below the camera's forward axis
+const PLANET_LIMB   = 38 * Math.PI / 180;   // its angular radius from the camera: limb top at +3 deg, sides at +-38
+const PLANET_REACH  = 2.65;                 // centre distance = this x the ship's distance (surface ~11 u under the ship)
+const PLANET_SPIN   = 0.03;                 // rad/s - about 3 units/s of surface under the ship
+const GROUND_Z      = -11;                  // typical depth of the surface under the ship, for the shell climb scale
 const BOMB_COOL     = 1.0;     // seconds between bombs
 const BOMB_MAX      = 3;       // in the air at once
 const BOMB_SEC      = 0.85;    // the fall
 const BOMB_RADIUS   = 11;      // fabulous
 const FLAK_WARMUP   = 10;      // seconds before the ground opens fire
 const FLAK_COOL     = 5.0;     // per battery
-const FLAK_RISE_SEC = 1.5;     // a shell's climb to the air plane - aimed at where you WERE
-const PRESS_HP      = 5;       // bombs to put the press down
-const REINFORCE_SEC = 14;      // a dead slot is refilled this often
-const PRESS_RETURN  = 30;      // the press rises again this long after it goes down
-// Offsets from the press's home, on the ground. Measured in portrait: a point on the ground
-// plane projects HIGHER on screen than the same y on the air plane, so the strip has to sit
-// further back (more negative dy) than instinct says, or "under the ship" lands beside it; and
-// dx beyond about +-18 is off the edge of a phone.
-const ARMY_SLOTS = [
-  { kind:"launcher", dx:-15, dy:  4 }, { kind:"launcher", dx: 15, dy:  4 },
-  { kind:"launcher", dx: -6, dy: -6 }, { kind:"launcher", dx:  6, dy: -6 }, { kind:"launcher", dx: 0, dy: 10 },
-  { kind:"flak",     dx:-11, dy:  0 }, { kind:"flak",     dx: 11, dy:  0 },
-  { kind:"flak",     dx:-18, dy:-10 }, { kind:"flak",     dx: 18, dy:-10 },
+const FLAK_RISE_SEC = 2.4;     // a shell's climb to the air plane - aimed at where you WERE. Was 1.5 on the
+                               // flat strip; the surface is closer now and a bot took 3 hits in 60 s at 1.5
+const REINFORCE_SEC = 12;      // a dead unit is replaced this often, over the horizon ahead
+const VIEW_ANGLE    = 42 * Math.PI / 180;   // a unit within this angle of the point under the ship is "in view"
+const GONE_ANGLE    = 62 * Math.PI / 180;   // past this, behind you, it is recycled to come round again
+const AHEAD         = 58;      // surface units ahead of the ship where reinforcements appear
+const ARMY_SLOTS = [           // surface offsets (right, forward) from the point under the ship, at the start
+  { kind:"launcher", dx:-16, dy: 22 }, { kind:"launcher", dx: 16, dy: 22 },
+  { kind:"launcher", dx: -7, dy:  4 }, { kind:"launcher", dx:  7, dy:  4 }, { kind:"launcher", dx: 0, dy: 40 },
+  { kind:"flak",     dx:-12, dy: 12 }, { kind:"flak",     dx: 12, dy: 12 },
+  { kind:"flak",     dx:-19, dy: -4 }, { kind:"flak",     dx: 19, dy: -4 },
 ];
-let army = [], bombs = [], fx = [], groundKills = 0, bombCool = 0, reinforceT = 0, pressHp = PRESS_HP, pressDown = 0;
-let groundMesh = null, groundEdge = null, blastLight = null;
+let planet = null, army = [], bombs = [], fx = [], groundKills = 0, bombCool = 0, reinforceT = 0;
+let blastLight = null;
 const RING_GEO = new THREE.RingGeometry(0.86, 1.0, 48), DISC_GEO = new THREE.CircleGeometry(1, 32);
-const ARMY_MAT = new THREE.MeshStandardMaterial({ color:0x33465e, map:HULL, emissive:0x0e1622,
-  roughness:0.6, metalness:0.55, flatShading:true });
+const ARMY_MAT = new THREE.MeshStandardMaterial({ color:0x3b4f69, map:HULL, emissive:0x0e1622,
+  roughness:0.6, metalness:0.55, flatShading:true, fog:false });
+const _w = new THREE.Vector3(), _w2 = new THREE.Vector3(), _q = new THREE.Quaternion(), Z_AXIS = new THREE.Vector3(0, 0, 1);
 
-function groundOrigin(){ return press ? press.userData.home : new THREE.Vector3(0, -35, GROUND_Z); }
-
-function buildGround(){
-  if(groundMesh){ board.remove(groundMesh); board.remove(groundEdge); }
-  const c = document.createElement("canvas"); c.width = 512; c.height = 256;
+function planetTexture(){
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 512;
   const g = c.getContext("2d");
-  g.fillStyle = "rgba(6,10,18,0.55)"; g.fillRect(0, 0, 512, 256);
-  g.strokeStyle = "rgba(60,120,170,0.35)"; g.lineWidth = 1.5;
-  for(let x = 0; x <= 512; x += 32){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 256); g.stroke(); }
-  for(let y = 0; y <= 256; y += 32){ g.beginPath(); g.moveTo(0, y); g.lineTo(512, y); g.stroke(); }
-  const tex = new THREE.CanvasTexture(c);
-  groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(120, 36),
-    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
-  board.add(groundMesh);
-  // the shoreline between air and ground: a lit edge where the strip meets the play band
-  groundEdge = new THREE.Mesh(new THREE.BoxGeometry(120, 0.28, 0.1),
-    new THREE.MeshBasicMaterial({ color: 0x4fc3f7, transparent: true, opacity: 0.55 }));
-  board.add(groundEdge);
-  if(!blastLight){ blastLight = new THREE.PointLight(0xffa040, 0, 70); board.add(blastLight); }
-  placeGround();
+  g.fillStyle = "#1a2536"; g.fillRect(0, 0, 1024, 512);
+  // continents of slightly lighter ground, then craters, then a faint survey grid
+  for(let i = 0; i < 260; i++){
+    const x = Math.random() * 1024, y = Math.random() * 512, r = 12 + Math.random() * 70;
+    const h = 205 + Math.random() * 20, l = 22 + Math.random() * 10;
+    g.fillStyle = `hsla(${h},32%,${l}%,0.55)`;
+    g.beginPath(); g.ellipse(x, y, r, r * (0.5 + Math.random() * 0.6), Math.random() * 3, 0, 6.3); g.fill();
+  }
+  for(let i = 0; i < 140; i++){
+    const x = Math.random() * 1024, y = Math.random() * 512, r = 3 + Math.random() * 14;
+    g.strokeStyle = "rgba(120,160,200,0.35)"; g.lineWidth = 1.2;
+    g.beginPath(); g.arc(x, y, r, 0, 6.3); g.stroke();
+    g.fillStyle = "rgba(8,12,20,0.5)"; g.beginPath(); g.arc(x, y, r * 0.7, 0, 6.3); g.fill();
+  }
+  g.strokeStyle = "rgba(90,150,210,0.16)"; g.lineWidth = 1;
+  for(let x = 0; x <= 1024; x += 64){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 512); g.stroke(); }
+  for(let y = 0; y <= 512; y += 64){ g.beginPath(); g.moveTo(0, y); g.lineTo(1024, y); g.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 1.5);
+  return t;
 }
-function placeGround(){
-  if(!groundMesh) return;
-  const o = groundOrigin();
-  groundMesh.position.set(0, o.y - 2, GROUND_Z - 0.3);
-  groundEdge.position.set(0, o.y + 8, GROUND_Z);
+
+function buildPlanet(){
+  planet = new THREE.Group();
+  const ground = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({
+    map: planetTexture(), color:0xcfd8e6, emissive:0x0a1220, roughness:0.92, metalness:0.05, fog:false }));
+  planet.add(ground);
+  // the atmosphere: a bigger shell seen from inside, so the limb glows and the sky-side fades
+  const air = new THREE.Mesh(new THREE.SphereGeometry(1.035, 64, 48), new THREE.MeshBasicMaterial({
+    color:0x2f6da8, transparent:true, opacity:0.22, side:THREE.BackSide, depthWrite:false, fog:false }));
+  planet.add(air);
+  planet.userData = { R: 100, ground, air };
+  scene.add(planet);
+  if(!blastLight){ blastLight = new THREE.PointLight(0xffa040, 0, 80); scene.add(blastLight); }
+  placePlanet();
+}
+
+// Placed by the picture, not by a world coordinate: the centre sits PLANET_PITCH below the camera's
+// forward axis at PLANET_REACH times the ship's distance, and the radius is what puts the limb at
+// PLANET_LIMB. That holds on a phone in portrait and on a wide monitor alike; the surface ends up
+// about eleven units under the ship either way.
+function placePlanet(){
+  if(!planet) return;
+  const cam = baseCamera();
+  const E = cam.position.clone();
+  const shipW = board.localToWorld(ship.position.clone());
+  const L = E.distanceTo(shipW) * PLANET_REACH;
+  const R = L * Math.sin(PLANET_LIMB);
+  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
+  const up  = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.quaternion);
+  const dir = fwd.multiplyScalar(Math.cos(PLANET_PITCH)).addScaledVector(up, -Math.sin(PLANET_PITCH)).normalize();
+  planet.position.copy(E).addScaledVector(dir, L);
+  planet.userData.R = R;
+  planet.userData.ground.scale.setScalar(R);
+  planet.userData.air.scale.setScalar(R);
+  freshMatrices();
+  army.forEach(placeUnit);
+}
+function runPlanet(dt){
+  if(planet) planet.rotation.x += PLANET_SPIN * dt;
+}
+
+// three.js refreshes world matrices during render. Everything below converts between the board
+// and the planet between renders - at boot, in reset(), on resize, in a scripted run - so the
+// two matrices that matter are brought up to date by hand first. Both are roots of the scene,
+// so this is two matrix multiplies, not a walk of every letter.
+function freshMatrices(){
+  board.updateMatrix(); board.matrixWorld.copy(board.matrix);
+  planet.updateMatrix(); planet.matrixWorld.copy(planet.matrix);
+}
+// The local frame on the surface under the ship: top = up through the ship, ey = forward along
+// the surface (the way we fly), ex = right. Recomputed each call because the planet is turning.
+function planetFrame(){
+  freshMatrices();
+  const top = planet.worldToLocal(board.localToWorld(ship.position.clone())).normalize();
+  const o = planet.worldToLocal(board.localToWorld(new THREE.Vector3(0, 0, 0)));
+  const f = planet.worldToLocal(board.localToWorld(new THREE.Vector3(0, 1, 0))).sub(o).normalize();
+  const ex = new THREE.Vector3().crossVectors(f, top).normalize();
+  const ey = new THREE.Vector3().crossVectors(top, ex).normalize();
+  return { top, ex, ey };
+}
+function surfaceDir(dx, dy, fr){
+  const R = planet.userData.R;
+  return fr.top.clone().addScaledVector(fr.ex, dx / R).addScaledVector(fr.ey, dy / R).normalize();
+}
+// A surface point (planet-local unit direction) as a board-local position - what the bolts,
+// the letters and the bombs, which all live on the board, need.
+function surfaceToBoard(dir, lift){
+  freshMatrices();
+  _w.copy(dir).multiplyScalar(planet.userData.R + (lift || 0));
+  planet.localToWorld(_w);
+  return board.worldToLocal(_w.clone());
 }
 
 function launcherMesh(){
@@ -1487,7 +1630,7 @@ function launcherMesh(){
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.85, 5.5, 8), ARMY_MAT);
   barrel.rotation.x = Math.PI / 2; barrel.position.z = 3.6; g.add(barrel);
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0x4fc3f7,
-    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.5 }));
+    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.5, fog:false }));
   glow.scale.set(3.5, 3.5, 1); glow.position.z = 6.6; g.add(glow); g.userData.glow = glow;
   return g;
 }
@@ -1501,82 +1644,89 @@ function flakMesh(){
     b.position.set(sx, 0.9, 3.4); b.rotation.x = Math.PI / 2 - 0.5; g.add(b);
   }
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color:0xff5a4d,
-    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.45 }));
+    blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0.45, fog:false }));
   glow.scale.set(3, 3, 1); glow.position.set(0, 1.4, 4.8); g.add(glow); g.userData.glow = glow;
   return g;
 }
 
-function makeUnit(slot, i, rollIn){
+function makeUnit(slot, i, dir){
   const m = slot.kind === "flak" ? flakMesh() : launcherMesh();
-  board.add(m);
+  m.scale.setScalar(0.8);      // the surface is eight units under the ship; at 1.35 they towered over it
+  planet.add(m);
   const u = { kind: slot.kind, slot, m, alive: true, pulse: 0, phase: i * 1.3,
-              cool: FLAK_COOL * (0.4 + (i % 4) * 0.25),
-              arriveX: rollIn ? (i % 2 ? 70 : -70) : 0 };      // reinforcements roll in from a side
+              cool: FLAK_COOL * (0.4 + (i % 4) * 0.25), dir };
   placeUnit(u);
   return u;
 }
+// A unit stands on its own patch of surface, pointing straight out from the centre.
 function placeUnit(u){
-  const o = groundOrigin();
-  u.m.position.set(o.x + u.slot.dx + u.arriveX, o.y + u.slot.dy, GROUND_Z);
+  if(!planet) return;
+  u.m.position.copy(u.dir).multiplyScalar(planet.userData.R);
+  u.m.quaternion.setFromUnitVectors(Z_AXIS, u.dir);
 }
 function buildArmy(){
-  army.forEach(u => { if(u.m.parent) board.remove(u.m); });
-  army = ARMY_SLOTS.map((s, i) => makeUnit(s, i, false));
-  reinforceT = 0; groundKills = 0; pressHp = PRESS_HP; pressDown = 0; runArmy._warned = false;
-  if(press){ press.visible = true; press.userData.rise = 0; press.userData.flash = 0; }
+  army.forEach(u => { if(u.m.parent) u.m.parent.remove(u.m); });
+  const fr = planetFrame();
+  army = ARMY_SLOTS.map((s, i) => makeUnit(s, i, surfaceDir(s.dx, s.dy, fr)));
+  reinforceT = 0; groundKills = 0; runArmy._warned = false;
   const gEl = document.getElementById("ground"); if(gEl) gEl.textContent = 0;
 }
 function clearBombs(){
-  bombs.forEach(b => { board.remove(b.m); board.remove(b.ring); });
+  bombs.forEach(b => { board.remove(b.m); if(b.ring.parent) b.ring.parent.remove(b.ring); });
   bombs = []; bombCool = 0;
-  fx.forEach(f => { if(f.m) board.remove(f.m); });
+  fx.forEach(f => { if(f.m && f.m.parent) f.m.parent.remove(f.m); });
   fx = [];
   if(blastLight) blastLight.intensity = 0;
 }
-function livingLaunchers(){ return army.filter(u => u.alive && u.arriveX === 0 && u.kind === "launcher"); }
-function pickLauncher(){
-  const L = livingLaunchers();
-  if(L.length) return L[Math.floor(Math.random() * L.length)];
-  return (press && press.visible) ? { kind:"press", m: press } : null;
+function unitAngle(u, fr){ return Math.acos(THREE.MathUtils.clamp(u.dir.dot(fr.top), -1, 1)); }
+function livingLaunchers(fr){
+  return army.filter(u => u.alive && u.kind === "launcher" && unitAngle(u, fr) < VIEW_ANGLE);
 }
+function pickLauncher(){
+  if(!planet) return null;
+  const L = livingLaunchers(planetFrame());
+  if(L.length) return L[Math.floor(Math.random() * L.length)];
+  return press ? { kind:"press", m: press } : null;
+}
+// Where a unit is, on the board: for a launcher firing a row, for a flak battery firing a shell.
+function unitBoardPos(u, lift){ return surfaceToBoard(u.dir, lift); }
 
 function runArmy(dt){
+  if(!planet) return;
   if(!runArmy._warned && t > FLAK_WARMUP - 2.5){
     runArmy._warned = true;
     banner(COARSE ? "GROUND BATTERIES ARMING - TAP A SECOND FINGER TO BOMB"
                   : "GROUND BATTERIES ARMING - RIGHT CLICK TO BOMB");
   }
+  const fr = planetFrame();
   reinforceT += dt;
   if(reinforceT >= REINFORCE_SEC){
     reinforceT = 0;
     const dead = army.findIndex(u => !u.alive);
-    if(dead >= 0){ army[dead] = makeUnit(army[dead].slot, dead, true); banner("REINFORCEMENTS"); }
-  }
-  if(pressDown > 0){
-    pressDown -= dt;
-    if(pressDown <= 0){ press.visible = true; pressHp = PRESS_HP; press.userData.rise = 1; banner("THE PRESS RETURNS"); }
+    if(dead >= 0){
+      const s = army[dead].slot;
+      army[dead] = makeUnit(s, dead, surfaceDir(s.dx, AHEAD, fr));   // over the horizon, riding in
+      banner("REINFORCEMENTS OVER THE HORIZON");
+    }
   }
   for(const u of army){
     if(!u.alive) continue;
-    if(u.arriveX !== 0){
-      u.arriveX += (0 - u.arriveX) * Math.min(1, dt * 1.6);
-      if(Math.abs(u.arriveX) < 0.3) u.arriveX = 0;
-    }
-    placeUnit(u);
-    u.m.position.y += Math.sin(t * 1.3 + u.phase) * 0.15;
+    const ang = unitAngle(u, fr);
+    // carried round behind you and out of sight: come round again from ahead
+    if(ang > GONE_ANGLE && u.dir.dot(fr.ey) < 0){ u.dir = surfaceDir(u.slot.dx, AHEAD, fr); placeUnit(u); }
     u.pulse = Math.max(0, u.pulse - dt * 2);
     u.m.userData.glow.material.opacity = (u.kind === "flak" ? 0.45 : 0.5) + u.pulse * 0.5;
-    if(u.kind === "flak" && t > FLAK_WARMUP && u.arriveX === 0){
+    if(u.kind === "flak" && t > FLAK_WARMUP && ang < VIEW_ANGLE){
       u.cool -= dt;
       if(u.cool <= 0 && bolts.length < TURRET_MAX){ u.cool = FLAK_COOL; fireFlak(u); }
     }
   }
 }
-// A shell climbs from the ground to the air plane over FLAK_RISE_SEC, aimed at where the ship
+// A shell climbs from the surface to the air plane over FLAK_RISE_SEC, aimed at where the ship
 // is NOW - so it arrives where you were, and moving is what dodges it.
 function fireFlak(u){
   const m = boltMesh(true);
-  m.position.copy(u.m.position); m.position.z += 3;
+  m.position.copy(unitBoardPos(u, 4));
   const dx = ship.position.x - m.position.x, dy = ship.position.y - m.position.y, dz = 0 - m.position.z;
   bolts.push({ m, vx: dx / FLAK_RISE_SEC, vy: dy / FLAK_RISE_SEC, vz: dz / FLAK_RISE_SEC, heavy: true });
   u.pulse = 1;
@@ -1584,11 +1734,11 @@ function fireFlak(u){
 }
 
 function dropBomb(){
-  if(state !== "play" || bombCool > 0 || bombs.length >= BOMB_MAX) return;
+  if(state !== "play" || !planet || bombCool > 0 || bombs.length >= BOMB_MAX) return;
   bombCool = BOMB_COOL;
-  const o = groundOrigin();
-  // under the ship: the ship's narrow band maps onto the strip, so flying up reaches further in
-  const tx = ship.position.x, ty = o.y + 2 + (ship.position.y - SHIP_Y_MIN) * 1.2;
+  // straight down onto the surface under the ship; flying up the band reaches a little ahead
+  const fr = planetFrame();
+  const dir = surfaceDir(0, (ship.position.y - SHIP_Y_MIN) * 1.2, fr);
   const m = new THREE.Group();
   m.add(new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.6, 8),
     new THREE.MeshStandardMaterial({ color:0x2a2f38, emissive:0x331a08, roughness:0.5, metalness:0.7 })));
@@ -1596,10 +1746,15 @@ function dropBomb(){
   m.position.copy(ship.position);
   board.add(m);
   const ring = new THREE.Mesh(RING_GEO, new THREE.MeshBasicMaterial({ color:0xff5a4d, transparent:true,
-    opacity:0.8, depthWrite:false, side:THREE.DoubleSide }));
-  ring.position.set(tx, ty, GROUND_Z + 0.08); ring.scale.setScalar(2.4);
-  board.add(ring);
-  bombs.push({ m, ring, from: ship.position.clone(), to: new THREE.Vector3(tx, ty, GROUND_Z), tt: 0 });
+    opacity:0.8, depthWrite:false, side:THREE.DoubleSide, fog:false }));
+  onSurface(ring, dir, 0.12); ring.scale.setScalar(2.4);
+  planet.add(ring);
+  bombs.push({ m, ring, from: ship.position.clone(), dir, tt: 0 });
+}
+// Put a flat thing (ring, scorch) on the surface at a direction, facing out.
+function onSurface(obj, dir, lift){
+  obj.position.copy(dir).multiplyScalar(planet.userData.R + (lift || 0));
+  obj.quaternion.setFromUnitVectors(Z_AXIS, dir);
 }
 function runBombs(dt){
   bombCool = Math.max(0, bombCool - dt);
@@ -1607,75 +1762,73 @@ function runBombs(dt){
     const b = bombs[i];
     b.tt += dt / BOMB_SEC;
     const k = Math.min(1, b.tt), e = k * k;                    // falls faster as it goes
-    b.m.position.lerpVectors(b.from, b.to, e);
+    const to = surfaceToBoard(b.dir, 0);                       // the target turns with the planet
+    b.m.position.lerpVectors(b.from, to, e);
     b.m.position.z += Math.sin(k * Math.PI) * 3;               // a little loft before the drop
     b.m.rotation.x += dt * 6; b.m.rotation.z += dt * 2.5;
     const rs = 2.4 + Math.sin(t * 14) * 0.5 + (1 - k) * 4;    // the marker tightens as it falls
     b.ring.scale.setScalar(rs); b.ring.material.opacity = 0.35 + k * 0.5;
     if(k >= 1){
-      board.remove(b.m); board.remove(b.ring); bombs.splice(i, 1);
-      explode(b.to.x, b.to.y, BOMB_RADIUS, true);
+      board.remove(b.m); planet.remove(b.ring); bombs.splice(i, 1);
+      explode(b.dir, BOMB_RADIUS, true);
     }
   }
 }
 
 function sprite(color, opacity){
   return new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, color, blending:THREE.AdditiveBlending,
-    transparent:true, depthWrite:false, opacity }));
+    transparent:true, depthWrite:false, opacity, fog:false }));
 }
-// The look of a blast, ground-side: flash, shockwave, fireball, scorch, light. Everything it makes
-// is owned by fx[] and retired by runFX(), so a hundred bombs leak nothing.
-function blast(at, radius, big){
-  spark(board.localToWorld(at.clone()), 0xffd7a8, big ? 40 : 16);
-  const flash = sprite(0xfff1d0, 1); flash.position.copy(at).setZ(GROUND_Z + 1); board.add(flash);
+// The look of a blast on the surface: flash, shockwave, fireball rising off the ground, scorch,
+// light. Everything it makes lives on the planet (so it turns away with the ground) and is owned
+// by fx[], retired by runFX(), so a hundred bombs leak nothing.
+function blast(dir, radius, big){
+  const R = planet.userData.R;
+  freshMatrices();
+  _w.copy(dir).multiplyScalar(R); planet.localToWorld(_w);
+  spark(_w.clone(), 0xffd7a8, big ? 40 : 16);
+  const flash = sprite(0xfff1d0, 1); onSurface(flash, dir, 1.5); planet.add(flash);
   fx.push({ kind:"flash", m: flash, tt: 0, life: big ? 0.28 : 0.18, size: radius * (big ? 2.2 : 1.6) });
   const ring = new THREE.Mesh(RING_GEO, new THREE.MeshBasicMaterial({ color:0xffc27a, transparent:true,
-    opacity:0.9, depthWrite:false, side:THREE.DoubleSide }));
-  ring.position.copy(at).setZ(GROUND_Z + 0.1); board.add(ring);
+    opacity:0.9, depthWrite:false, side:THREE.DoubleSide, fog:false }));
+  onSurface(ring, dir, 0.15); planet.add(ring);
   fx.push({ kind:"ring", m: ring, tt: 0, life: big ? 0.75 : 0.45, size: radius * 1.7 });
   const n = big ? 9 : 4;
   for(let i = 0; i < n; i++){
     const s = sprite(0xffa040, 0.95);
-    s.position.copy(at).setZ(GROUND_Z + 0.5 + Math.random() * 2);
-    s.position.x += (Math.random() - 0.5) * radius * 0.5; s.position.y += (Math.random() - 0.5) * radius * 0.5;
-    board.add(s);
-    fx.push({ kind:"fire", m: s, tt: -i * 0.03, life: (big ? 1.5 : 1.0) + Math.random() * 0.4,
-              vz: 5 + Math.random() * 5, size: radius * (big ? 0.7 : 0.55) * (0.7 + Math.random() * 0.6) });
+    const jitter = dir.clone().addScaledVector(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5), radius * 0.5 / R).normalize();
+    onSurface(s, jitter, 0.5 + Math.random() * 2); planet.add(s);
+    fx.push({ kind:"fire", m: s, dir: jitter, lift: 0.5 + Math.random() * 2, tt: -i * 0.03,
+              life: (big ? 1.5 : 1.0) + Math.random() * 0.4, vz: 5 + Math.random() * 5,
+              size: radius * (big ? 0.7 : 0.55) * (0.7 + Math.random() * 0.6) });
   }
   const sc = new THREE.Mesh(DISC_GEO, new THREE.MeshBasicMaterial({ color:0x05070c, transparent:true,
-    opacity:0.6, depthWrite:false }));
-  sc.position.copy(at).setZ(GROUND_Z + 0.04); sc.scale.setScalar(radius * (big ? 0.8 : 0.5)); board.add(sc);
+    opacity:0.6, depthWrite:false, fog:false }));
+  onSurface(sc, dir, 0.06); sc.scale.setScalar(radius * (big ? 0.8 : 0.5)); planet.add(sc);
   fx.push({ kind:"scorch", m: sc, tt: 0, life: 9 });
-  if(blastLight){ blastLight.position.copy(at).setZ(GROUND_Z + 6); blastLight.intensity = big ? 9 : 4; }
+  if(blastLight){ _w2.copy(dir).multiplyScalar(R + 6); planet.localToWorld(_w2); blastLight.position.copy(_w2); blastLight.intensity = big ? 9 : 4; }
 }
-function explode(x, y, radius, big){
-  blast(new THREE.Vector3(x, y, GROUND_Z), radius, big);
+function explode(dir, radius, big){
+  blast(dir, radius, big);
+  const R = planet.userData.R;
   // the army under it, in a chain that spreads outward from the impact
   for(const u of army){
     if(!u.alive) continue;
-    const d = Math.hypot(u.m.position.x - x, u.m.position.y - y);
+    const d = u.dir.distanceTo(dir) * R;
     if(d < radius) killUnit(u, d * 0.035);
   }
-  if(press && press.visible && Math.hypot(press.position.x - x, press.position.y - y) < radius + 8){
-    pressHp--; press.userData.pulse = 1; press.userData.flash = 0.35;
-    if(pressHp <= 0){
-      pressDown = PRESS_RETURN; press.visible = false; groundKills += 5;
-      fx.push({ kind:"chain", at: press.position.clone(), n: 6, every: 0.12, tt: 0, radius: 6 });
-      banner("THE PRESS IS DOWN");
-    } else banner("PRESS HIT " + (PRESS_HP - pressHp) + "/" + PRESS_HP);
-    const gEl = document.getElementById("ground"); if(gEl) gEl.textContent = groundKills;
-  }
   // divers caught in the plume, and any shell in the air over it
+  const at = surfaceToBoard(dir, 0);
   for(let i = attackers.length - 1; i >= 0; i--){
     const p = attackers[i].m.position;
-    if(Math.hypot(p.x - x, p.y - y) < radius * 0.6){
+    if(Math.hypot(p.x - at.x, p.y - at.y) < radius * 0.6){
       spark(board.localToWorld(p.clone()), 0xffc24a, 14);
       board.remove(attackers[i].m); attackers.splice(i, 1); brokenCount++; bumpReveal();
     }
   }
   for(let i = bolts.length - 1; i >= 0; i--){
     const p = bolts[i].m.position;
-    if(Math.hypot(p.x - x, p.y - y) < radius * 0.7){ board.remove(bolts[i].m); bolts.splice(i, 1); }
+    if(Math.hypot(p.x - at.x, p.y - at.y) < radius * 0.7){ board.remove(bolts[i].m); bolts.splice(i, 1); }
   }
   document.getElementById("score").textContent = brokenCount;
   shake = Math.max(shake, big ? 0.95 : 0.5);
@@ -1692,30 +1845,22 @@ function runFX(dt){
     if(f.tt < 0) continue;
     if(f.kind === "kill"){
       const u = f.u;
-      if(u.m.parent) board.remove(u.m);
-      blast(u.m.position.clone(), 4.5, false);
+      if(u.m.parent) u.m.parent.remove(u.m);
+      blast(u.dir, 4.5, false);
       groundKills++;
       banner(u.kind === "flak" ? "FLAK DOWN" : "LAUNCHER DOWN");
       const gEl = document.getElementById("ground"); if(gEl) gEl.textContent = groundKills;
       fx.splice(i, 1); continue;
     }
-    if(f.kind === "chain"){
-      if(f.tt >= f.every){
-        f.tt = 0; f.n--;
-        const p = f.at.clone(); p.x += (Math.random() - 0.5) * 8; p.y += (Math.random() - 0.5) * 5;
-        blast(p, f.radius, f.n === 0);
-        if(f.n <= 0) fx.splice(i, 1);
-      }
-      continue;
-    }
     const k = f.tt / f.life;
-    if(k >= 1){ board.remove(f.m); f.m.material.dispose(); fx.splice(i, 1); continue; }
+    if(k >= 1){ if(f.m.parent) f.m.parent.remove(f.m); f.m.material.dispose(); fx.splice(i, 1); continue; }
     if(f.kind === "flash"){
       const s = f.size * (0.4 + 0.6 * Math.sin(k * Math.PI)); f.m.scale.set(s, s, 1); f.m.material.opacity = 1 - k;
     } else if(f.kind === "ring"){
       f.m.scale.setScalar(0.5 + f.size * (1 - Math.pow(1 - k, 2))); f.m.material.opacity = 0.9 * (1 - k);
     } else if(f.kind === "fire"){
-      f.m.position.z += f.vz * dt; f.m.position.y += dt * 1.5;
+      f.lift += f.vz * dt;                                    // rises straight off the surface
+      onSurface(f.m, f.dir, f.lift);
       const s = f.size * (0.3 + 1.2 * k); f.m.scale.set(s, s, 1);
       f.m.material.opacity = 0.95 * (1 - k * k);
       f.m.material.color.setRGB(1, 0.62 * (1 - k) + 0.25 * k, 0.25).multiplyScalar(1 - 0.6 * k);
@@ -2260,6 +2405,7 @@ function tick(now){
   }
 
   runPress(dt);
+  runPlanet(dt);
   runFX(dt);
 
   // particles
@@ -2288,13 +2434,17 @@ function tick(now){
 }
 
 // ---------------------------------------------------------------- input / boot
-document.addEventListener('click', e=>{ if(e.target && e.target.id==='fsBtn') goFullscreen(); });
+document.addEventListener('click', e=>{
+  if(e.target && e.target.id==='fsBtn') goFullscreen();
+  if(e.target && e.target.id==='camBtn') nextCamera();
+});
 addEventListener('keydown', e=>{
   if(e.key==='f'||e.key==='F'){ goFullscreen(); return; }
   keys[e.key]=true;
   if(e.key===' '){ e.preventDefault(); fire(); }
   if(e.key==='Shift') shieldHeld = true;
   if(e.key==='b'||e.key==='B') dropBomb();
+  if(e.key==='c'||e.key==='C') nextCamera();
 });
 addEventListener('keyup', e=>{ keys[e.key]=false; if(e.key==='Shift') shieldHeld = false; });
 // LEFT = shoot, RIGHT = shield, WHEEL = flame burst. Shooting is what you do constantly, so it
@@ -2371,10 +2521,11 @@ canvas.addEventListener("touchcancel", touchEnd, {passive:false});
 // Say what the controls actually are on the device in hand. The keyboard line is wrong on a
 // phone, and a wrong instruction reads as a broken game.
 if(COARSE){
-  const line = "Drag to fly &middot; hold to shoot &middot; tap a second finger to bomb, hold it for shields &middot; double-tap for flame";
+  const line = "Drag to fly &middot; hold to shoot &middot; tap a second finger to bomb, hold it for shields &middot; double-tap for flame &middot; the Camera button changes the view";
   const m = document.querySelector('#start .muted'); if(m) m.innerHTML = line;
   const b = document.getElementById('bottom'); if(b) b.innerHTML = "drag to fly &nbsp;&middot;&nbsp; hold to shoot &nbsp;&middot;&nbsp; second finger bombs &nbsp;&middot;&nbsp; grab the <b>P</b> pickups";
   const f = document.getElementById('fsBtn'); if(f) f.textContent = "⛶ Fullscreen";
+  const cb = document.getElementById('camBtn'); if(cb) cb.textContent = "\u27F3 Camera";
 }
 
 function resize(){
@@ -2391,7 +2542,7 @@ addEventListener('resize', resize);
 ship = buildShip();
 buildBoard();
 buildPress();
-buildGround();
+buildPlanet();
 buildArmy();
 resize();
 
