@@ -106,7 +106,7 @@
       <p>I am R.J. Thompson, a senior C++/C# engineer, and I am looking for my next role.
          The whole résumé is up there, every role with its real dates, and every letter of it
          breaks. Shoot your way down and you will have read the lot. What you let past flies back
-         up and comes for you. The army printing it at you is on the ground below: bomb it.
+         up and comes for you. The army printing it at you is on the ground below: line the sight up and bomb it.
          Only shots can hurt you, from either plane.</p>
       <p class="muted">WASD to move &middot; left mouse to shoot &middot; right mouse to bomb the ground
          &middot; Shift for shields &middot; mouse wheel for flame &middot; C for camera &middot; F for fullscreen</p>
@@ -634,10 +634,9 @@ function sinkLines(){
       L.broken = true;
       // The letter's OWN model makes the climb, so you watch the word you skipped leave the
       // page and go up to join the row that is about to come for you.
-      const from = L.mesh ? L.mesh.position.clone()
-                          : new THREE.Vector3(L.x, line.y - crawl, 0);
+      // Gone, not launched: since 2026-09-06 the ground structures are the only source of
+      // drones, so a line you failed to read simply leaves.
       if(L.mesh){ giveMesh(L.mesh); L.mesh = null; }
-      launchRaider(L.ch, from);
     }
   }
 }
@@ -1563,34 +1562,36 @@ const BOMB_MAX      = 3;       // in the air at once
 const BOMB_SEC      = 0.85;    // the fall
 const BOMB_RADIUS   = 11;      // fabulous
 const FLAK_WARMUP   = 10;      // seconds before the ground opens fire
+const LAUNCH_FROM   = 5;       // seconds before the launchers start putting drones up
 const FLAK_COOL     = 5.0;     // per battery
 const FLAK_RISE_SEC = 2.4;     // a shell's climb to the air plane - aimed at where you WERE. Was 1.5 on the
                                // flat strip; the surface is closer now and a bot took 3 hits in 60 s at 1.5
-const REINFORCE_SEC = 12;      // a dead unit is replaced this often, over the horizon ahead
+const REINFORCE_SEC = 26;      // a dead unit is replaced this often - slow, so killing one counts
 const VIEW_ANGLE    = 42 * Math.PI / 180;   // a unit within this angle of the point under the ship is "in view"
 const GONE_ANGLE    = 62 * Math.PI / 180;   // past this, behind you, it is recycled to come round again
 const AHEAD         = 58;      // surface units ahead of the ship where reinforcements appear
-const ARMY_SLOTS = [           // surface offsets (right, forward) from the point under the ship, at the start
-  { kind:"launcher", dx:-16, dy: 22 }, { kind:"launcher", dx: 16, dy: 22 },
-  { kind:"launcher", dx: -7, dy:  4 }, { kind:"launcher", dx:  7, dy:  4 }, { kind:"launcher", dx: 0, dy: 40 },
-  { kind:"flak",     dx:-12, dy: 12 }, { kind:"flak",     dx: 12, dy: 12 },
-  { kind:"flak",     dx:-19, dy: -4 }, { kind:"flak",     dx: 19, dy: -4 },
+// RJ 2026-09-06: "the letters should ONLY come from the ground structures, so there needs to be
+// more, and as the user kills they can't shoot." Nothing spawns drones except a living launcher,
+// so the board quietens exactly as fast as you flatten the ground. Fourteen structures.
+const ARMY_SLOTS = [
+  { kind:"launcher", dx:-22, dy: 10 }, { kind:"launcher", dx: 22, dy: 10 },
+  { kind:"launcher", dx:-15, dy:  4 }, { kind:"launcher", dx: 15, dy:  4 },
+  { kind:"launcher", dx: -6, dy: -6 }, { kind:"launcher", dx:  6, dy: -6 },
+  { kind:"launcher", dx:  0, dy: 10 }, { kind:"launcher", dx:  0, dy: 26 },
+  { kind:"launcher", dx:-26, dy: 22 }, { kind:"launcher", dx: 26, dy: 22 },
+  { kind:"flak",     dx:-11, dy:  0 }, { kind:"flak",     dx: 11, dy:  0 },
+  { kind:"flak",     dx:-18, dy:-10 }, { kind:"flak",     dx: 18, dy:-10 },
 ];
+const LAUNCH_COOL = 3.4;    // seconds between drones from one launcher
 let planet = null, army = [], bombs = [], fx = [], groundKills = 0, bombCool = 0, reinforceT = 0;
 let blastLight = null;
+let ghost = null, ghostDir = null, ghostT = 0;
 const RING_GEO = new THREE.RingGeometry(0.86, 1.0, 48), DISC_GEO = new THREE.CircleGeometry(1, 32);
-/* THE ROLLER - RJ: "an enemy that rolls on the surface always out of your reach, dropping down
-   planetary structures that shoot drones." A great armoured wheel that holds station ahead of
-   you on the surface, beyond where a bomb can land, rolling against the planet's turn and
-   weaving side to side. Every ROLLER_DROP_SEC it leaves a HIVE on the ground where it stands;
-   the hive rides the planet's turn back toward you - into bomb range - launching letter drones
-   at you the whole way. The roller itself is never in reach. */
-const ROLLER_AHEAD    = 24;     // surface units ahead of the ship - a bomb lands at ~8 and reaches 11 more
-const ROLLER_WEAVE    = 20;     // side to side
-const ROLLER_DROP_SEC = 9;      // a hive this often
-const ROLLER_FROM     = 6;      // seconds before it first appears
+/* THE ROLLER - DEPRECATED 2026-09-06 at RJ's word ("remove the enemy that walks on the planet
+   for now, deprecate that"). It was a wheel that held station ahead of you, out of bomb reach,
+   dropping hives. The hives it dropped survive it as a kind of ground structure - `makeUnit`
+   still builds them - but nothing creates them any more, and its mesh and driver are gone. */
 const HIVE_COOL       = 5;      // seconds between drones from one hive
-let roller = null, rollerDropT = 0;
 const ARMY_MAT = new THREE.MeshStandardMaterial({ color:0x3b4f69, map:HULL, emissive:0x0e1622,
   roughness:0.6, metalness:0.55, flatShading:true, fog:false });
 const _w = new THREE.Vector3(), _w2 = new THREE.Vector3(), _q = new THREE.Quaternion(), Z_AXIS = new THREE.Vector3(0, 0, 1);
@@ -1602,12 +1603,17 @@ function buildPlanet(){
   // sphere so the detail is at the scale a ship eight units up actually sees.
   const pmap = texLoader.load('assets/planet.jpg'), pnorm = texLoader.load('assets/planet_n.jpg');
   pmap.wrapS = pmap.wrapT = pnorm.wrapS = pnorm.wrapT = THREE.RepeatWrapping;
-  pmap.repeat.set(2, 1); pnorm.repeat.set(2, 1); pmap.anisotropy = 4;   // a 2:1 map, twice round
+  // A 2:1 machine-world map, twice round the equator and once pole to pole, so a plate is about
+  // a ship-length at the scale you fly. anisotropy keeps the plating readable at the limb.
+  pmap.repeat.set(2, 1); pnorm.repeat.set(2, 1);
+  pmap.anisotropy = pnorm.anisotropy = renderer.capabilities.getMaxAnisotropy();
   const ground = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({
     // NOT tinted up and NOT lifted by emissive: the key light already puts the lit face near
     // white, and a 0xe8eef6 tint over that washed the whole surface out to pale blue.
-    map: pmap, normalMap: pnorm, normalScale: new THREE.Vector2(1.1, 1.1), color:0x6a7382,
-    emissive:0x000000, roughness:0.95, metalness:0.03, fog:false }));
+    // the map is machinery now, dark and its own colour: a near-white tint and a matte finish
+    // both fought it. Metal, lit, not tinted.
+    map: pmap, normalMap: pnorm, normalScale: new THREE.Vector2(1.4, 1.4), color:0xb8c2cf,
+    emissive:0x0a0f16, roughness:0.62, metalness:0.55, fog:false }));
   ground.rotation.z = Math.PI / 2;   // texture poles onto the spin axis, so the map streams past like a globe
   planet.add(ground);
   // the atmosphere: a bigger shell seen from inside, so the limb glows and the sky-side fades
@@ -1723,23 +1729,13 @@ function hiveMesh(){
   const glow = sprite(0xff5a4d, 0.55); glow.scale.set(5, 5, 1); glow.position.z = 3.2; g.add(glow); g.userData.glow = glow;
   return g;
 }
-function rollerMesh(){
-  const g = new THREE.Group();                       // +z out of the surface, +y forward
-  const axle = new THREE.Group(); g.add(axle); g.userData.axle = axle;
-  const wheel = new THREE.Mesh(new THREE.TorusGeometry(2.6, 1.0, 10, 28), ARMY_MAT); wheel.rotation.y = Math.PI / 2; axle.add(wheel);
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 2.6, 10), ARMY_MAT); hub.rotation.z = Math.PI / 2; axle.add(hub);
-  for(let i = 0; i < 8; i++){ const s = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.4, 5), ARMY_MAT);
-    const a = i / 8 * Math.PI * 2; s.position.set(0, Math.cos(a) * 3.5, Math.sin(a) * 3.5); s.lookAt(0, Math.cos(a) * 9, Math.sin(a) * 9); s.rotateX(Math.PI / 2); axle.add(s); }
-  axle.position.z = 3.6;                           // the wheel stands on the surface
-  const eye = sprite(0xff5a4d, 0.9); eye.scale.set(2.6, 2.6, 1); eye.position.set(0, 0, 3.6); g.add(eye); g.userData.eye = eye;
-  return g;
-}
 function makeUnit(slot, i, dir){
   const m = slot.kind === "flak" ? flakMesh() : slot.kind === "hive" ? hiveMesh() : launcherMesh();
   m.scale.setScalar(0.8);      // the surface is eight units under the ship; at 1.35 they towered over it
   planet.add(m);
   const u = { kind: slot.kind, slot, m, alive: true, pulse: 0, phase: i * 1.3,
-              cool: slot.kind === "hive" ? HIVE_COOL * 0.5 : FLAK_COOL * (0.4 + (i % 4) * 0.25), dir };
+              cool: slot.kind === "flak" ? FLAK_COOL * (0.4 + (i % 4) * 0.25)
+                  : (slot.kind === "hive" ? HIVE_COOL : LAUNCH_COOL) * (0.3 + (i % 5) * 0.2), dir };
   placeUnit(u);
   return u;
 }
@@ -1754,13 +1750,12 @@ function buildArmy(){
   const fr = planetFrame();
   army = ARMY_SLOTS.map((s, i) => makeUnit(s, i, surfaceDir(s.dx, s.dy, fr)));
   reinforceT = 0; groundKills = 0; runArmy._warned = false;
-  if(roller && roller.m.parent) roller.m.parent.remove(roller.m);
-  roller = null; rollerDropT = 0;
   const gEl = document.getElementById("ground"); if(gEl) gEl.textContent = 0;
 }
 function clearBombs(){
   bombs.forEach(b => { board.remove(b.m); if(b.ring.parent) b.ring.parent.remove(b.ring); });
   bombs = []; bombCool = 0;
+  if(ghost){ planet.remove(ghost); ghost = null; ghostDir = null; ghostT = 0; }
   fx.forEach(f => { if(f.m && f.m.parent) f.m.parent.remove(f.m); });
   fx = [];
   if(blastLight) blastLight.intensity = 0;
@@ -1796,7 +1791,6 @@ function runArmy(dt){
       banner("REINFORCEMENTS OVER THE HORIZON");
     }
   }
-  runRoller(dt, fr);
   for(let i = army.length - 1; i >= 0; i--){
     const u = army[i];
     if(!u.alive){ if(u.kind === "hive") army.splice(i, 1); continue; }
@@ -1807,11 +1801,12 @@ function runArmy(dt){
       if(u.kind === "hive"){ planet.remove(u.m); army.splice(i, 1); continue; }
       u.dir = surfaceDir(u.slot.dx, AHEAD, fr); placeUnit(u);
     }
-    if(u.kind === "hive" && ang < VIEW_ANGLE){
+    // A LIVING launcher (or a leftover hive) is the only thing that puts a drone in the air.
+    if((u.kind === "launcher" || u.kind === "hive") && ang < VIEW_ANGLE && t > LAUNCH_FROM){
       u.cool -= dt;
       if(u.cool <= 0 && attackers.length + risers.length < RAID_MAX){
-        u.cool = HIVE_COOL; u.pulse = 1;
-        launchRaider(cvChar(), unitBoardPos(u, 3));     // a drone up out of the hive
+        u.cool = u.kind === "hive" ? HIVE_COOL : LAUNCH_COOL; u.pulse = 1;
+        launchRaider(cvChar(), unitBoardPos(u, 4));     // a drone, straight up out of the muzzle
       }
     }
     u.pulse = Math.max(0, u.pulse - dt * 2);
@@ -1829,34 +1824,6 @@ function cvChar(){
   const L = line && line.letters.length ? line.letters[Math.floor(Math.random() * line.letters.length)] : null;
   return L ? L.ch : "X";
 }
-function runRoller(dt, fr){
-  if(!planet || t < ROLLER_FROM) return;
-  if(!roller){
-    roller = { m: rollerMesh(), dir: surfaceDir(0, ROLLER_AHEAD + 40, fr), roll: 0, x: 0 };
-    planet.add(roller.m); rollerDropT = ROLLER_DROP_SEC * 0.6;
-    banner("SOMETHING IS ROLLING IN");
-  }
-  // holds station ahead of you whatever the planet does, and weaves
-  const wantX = Math.sin(t * 0.35) * ROLLER_WEAVE;
-  const want = surfaceDir(wantX, ROLLER_AHEAD, fr);
-  const R = planet.userData.R;
-  const moved = roller.dir.distanceTo(want) * R;
-  roller.dir.lerp(want, Math.min(1, dt * 1.5)).normalize();
-  roller.m.position.copy(roller.dir).multiplyScalar(R);
-  // stand on the surface with +y along the direction of travel: the frame's basis, not a guess
-  const ex = new THREE.Vector3().crossVectors(fr.ey, roller.dir).normalize();
-  const ey = new THREE.Vector3().crossVectors(roller.dir, ex).normalize();
-  roller.m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(ex, ey, roller.dir));
-  roller.m.userData.axle.rotation.x -= (PLANET_SPIN * R + moved * 0.5) * dt / 2.6;   // rolling against the turn
-  roller.m.userData.eye.material.opacity = 0.6 + 0.4 * Math.sin(t * 6);
-  rollerDropT -= dt;
-  if(rollerDropT <= 0){
-    rollerDropT = ROLLER_DROP_SEC;
-    const u = makeUnit({ kind:"hive", dx: 0, dy: 0 }, army.length, roller.dir.clone());
-    army.push(u);
-    banner("HIVE DROPPED");
-  }
-}
 function fireFlak(u){
   const m = boltMesh(true);
   m.position.copy(unitBoardPos(u, 4));
@@ -1866,12 +1833,55 @@ function fireFlak(u){
   spark(board.localToWorld(m.position.clone()), 0xffb14d, 6);
 }
 
+/* THE TARGETING GHOST - RJ: "have a ghost for where the bomb is targeting, and have it seek
+   around in close proximity to beneath the ship." A ring on the surface that wanders in a slow
+   figure about the point under you, always within GHOST_REACH. It is where the bomb WILL land,
+   so bombing is a matter of waiting for it to drift over something worth hitting. It turns red
+   and tightens when a structure is inside the blast. */
+const GHOST_REACH = 13;     // how far from beneath the ship it can wander, in surface units
+function buildGhost(){
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(RING_GEO, new THREE.MeshBasicMaterial({ color:0x8fe8ff, transparent:true,
+    opacity:0.7, depthWrite:false, side:THREE.DoubleSide, fog:false }));
+  ring.scale.setScalar(BOMB_RADIUS * 0.5); g.add(ring); g.userData.ring = ring;
+  const inner = new THREE.Mesh(RING_GEO, new THREE.MeshBasicMaterial({ color:0x8fe8ff, transparent:true,
+    opacity:0.5, depthWrite:false, side:THREE.DoubleSide, fog:false }));
+  inner.scale.setScalar(1.6); g.add(inner); g.userData.inner = inner;
+  for(let i = 0; i < 4; i++){                       // cross-hairs, so it reads as a sight
+    const a = i * Math.PI / 2;
+    const t2 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 0.1), new THREE.MeshBasicMaterial({ color:0x8fe8ff, fog:false }));
+    t2.position.set(Math.cos(a) * BOMB_RADIUS * 0.5, Math.sin(a) * BOMB_RADIUS * 0.5, 0);
+    t2.rotation.z = a; g.add(t2);
+  }
+  planet.add(g);
+  return g;
+}
+function runGhost(dt){
+  if(!planet) return;
+  if(!ghost) ghost = buildGhost();
+  ghostT += dt;
+  const fr = planetFrame();
+  // a slow Lissajous about the point under the ship: it seeks, but never leaves your reach
+  const dx = Math.sin(ghostT * 0.7) * GHOST_REACH * 0.85 + Math.sin(ghostT * 1.9) * GHOST_REACH * 0.15;
+  const dy = Math.cos(ghostT * 0.53) * GHOST_REACH * 0.7 + (ship.position.y - SHIP_Y_MIN) * 1.2;
+  ghostDir = surfaceDir(dx, dy, fr);
+  onSurface(ghost, ghostDir, 0.2);
+  ghost.rotation.z += dt * 0.6;
+  // hot when something is under it
+  const R = planet.userData.R;
+  const armed = army.some(u => u.alive && u.dir.distanceTo(ghostDir) * R < BOMB_RADIUS);
+  const col = armed ? 0xff5a4d : 0x8fe8ff;
+  ghost.traverse(o => { if(o.material && o.material.color) o.material.color.setHex(col); });
+  const k = armed ? 1 + Math.sin(t * 9) * 0.06 : 1;
+  ghost.userData.ring.scale.setScalar(BOMB_RADIUS * 0.5 * k);
+  ghost.userData.inner.scale.setScalar((armed ? 2.4 : 1.6) * k);
+  ghost.visible = bombCool <= 0.35;                 // it blinks out while the bomb is on cooldown
+}
 function dropBomb(){
   if(state !== "play" || !planet || bombCool > 0 || bombs.length >= BOMB_MAX) return;
   bombCool = BOMB_COOL;
-  // straight down onto the surface under the ship; flying up the band reaches a little ahead
-  const fr = planetFrame();
-  const dir = surfaceDir(0, (ship.position.y - SHIP_Y_MIN) * 1.2, fr);
+  // where the ghost is: the bomb goes to the sight, not to a point you cannot see
+  const dir = (ghostDir || surfaceDir(0, (ship.position.y - SHIP_Y_MIN) * 1.2, planetFrame())).clone();
   const m = new THREE.Group();
   m.add(new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.6, 8),
     new THREE.MeshStandardMaterial({ color:0x2a2f38, emissive:0x331a08, roughness:0.5, metalness:0.7 })));
@@ -1880,7 +1890,7 @@ function dropBomb(){
   board.add(m);
   const ring = new THREE.Mesh(RING_GEO, new THREE.MeshBasicMaterial({ color:0xff5a4d, transparent:true,
     opacity:0.8, depthWrite:false, side:THREE.DoubleSide, fog:false }));
-  onSurface(ring, dir, 0.12); ring.scale.setScalar(2.4);
+  onSurface(ring, dir, 0.12); ring.scale.setScalar(BOMB_RADIUS * 0.5);
   planet.add(ring);
   bombs.push({ m, ring, from: ship.position.clone(), dir, tt: 0 });
 }
@@ -2570,6 +2580,7 @@ function tick(now){
     sinkLines();
     runRisers(dt);
     runArmy(dt);
+    runGhost(dt);
     runBombs(dt);
     runBoss(dt);
     runAttackers(dt);
