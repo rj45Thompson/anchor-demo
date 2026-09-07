@@ -968,7 +968,7 @@ const TURRET_RATE   = 0.016;   // was 0.028 (0.055 measured unwinnable)  // frac
                               // which is the same unwinnable-by-default trap the old
                               // every-letter-hurts-you rule was.
 const TURRET_COOL   = 5.0;    // was 3.6   // seconds between shots from one turret
-const TURRET_SPEED  = 9.5;    // was 11.0
+const TURRET_SPEED  = 16.0;   // was 9.5 (was 11.0) - RJ R14: nothing crawls. 9.5 crossed TURRET_RANGE in ~1.8s; 16 in ~1.1s
 const TURRET_RANGE  = 17;     // only turrets this close to the ship bother firing
 const TURRET_MAX    = 40;     // hard cap on live bolts
 const TURRET_WARMUP = 14;  // was 7      // seconds before any turret opens fire. Measured: with guns live
@@ -1084,7 +1084,7 @@ const RAID_MAX      = 8;      // live divers at once; the rest wait their turn w
 const RAID_SPEED    = 6.5;    // dive speed
 const RAID_CURVE    = 3.2;    // lateral "english" on the dive
 const RAID_SHOOT_COOL  = 3.8;   // seconds between shots from one diver
-const RAID_SHOOT_SPEED = 13.0;  // faster than a turret bolt - a diver is the close-range threat
+const RAID_SHOOT_SPEED = 18.0;  // was 13.0 - RJ R14: still faster than a turret bolt, a diver is the close-range threat
 const RAID_SLOT_W   = 3.0;    // spacing of the formation row
 const RAID_FORM_Y   = 12.0;   // how far above the ship the row assembles
 const RAID_HOLD     = 1.1;    // seconds the row holds before a diver peels off
@@ -1276,7 +1276,7 @@ const FIRE_CD_BASE = 0.085;   // was 0.10 - a little more base gun
 const BULLET_MAX   = 30;      // was 24
 const POWERS = {
   energy:    { n:"PULSE LASER",    col:0x66ccff, dur:9.0,  icon:"bar",   cd:0.08, twin:true,  homing:0,   splash:0 },
-  ballistic: { n:"AUTOCANNON",     col:0xffc24a, dur:8.0,  icon:"dots",  cd:0.18, twin:true,  homing:0,   splash:0 },
+  ballistic: { n:"AUTOCANNON",     col:0xffc24a, dur:8.0,  icon:"dots",  cd:0.12, twin:true,  homing:0,   splash:0 },  // cd was 0.18 - RJ R14: tighten, it crawled
   missile:   { n:"SEEKER MISSILE", col:0xff5a6e, dur:8.5,  icon:"spike", cd:0.36, twin:false, homing:2.4, splash:2.6 },
   flame:     { n:"FLAMETHROWER",   col:0xff7a2a, dur:7.0,  icon:"cone",  cd:0.10, twin:false, homing:0,   splash:0 }
 };
@@ -2535,7 +2535,7 @@ const BOSS_ASSEMBLE = 2.6;     // seconds of letters flying in before it fights
 const BOSS_FORM_SEC = 1.3;     // the fold, either way
 const BOSS_HUMAN_SEC = 11, BOSS_ROBOT_SEC = 6;
 const BOSS_HAND_COOL = 1.4, BOSS_CORE_COOL = 2.2;
-const BOSS_SHOT_SPEED = 12.5;
+const BOSS_SHOT_SPEED = 17.0;   // was 12.5 - RJ R14: nothing crawls
 // bone: [name, parent, x, y, slots:[[x,y],...]] - in the parent's space; the rig is 2.5D, upright
 // in the plane of the crawl, joints swing about z. Spacing is one letter (CH_W).
 const S = CH_W * 0.86;
