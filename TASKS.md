@@ -69,6 +69,15 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
 
 ## Other renderer items seen but not pursued
 
+- **`scene.environment` (IBL)** — investigated, correct but visually negligible here, NOT shipped.
+  The letters (`:453`, `:965`) are MeshStandard metalness 0.32/0.35 with no envMap, and
+  `scene.environment` is unset — so in PBR their metallic component reflects nothing (a real gap the
+  file's own `:1689` comment cares about: "envMap makes a metal look polished not painted"). Runtime
+  A/B (PMREM(sky) → `scene.environment`, 156 mats / 130 metallic updated) is **free** (16.6 ms, no
+  change) but same-moment off/on shots are **barely distinguishable** — the environment is the DARK
+  nebula cubemap (`:1595`), so the IBL contribution is tiny. Not a visible upgrade in this dark-space
+  scene, and it shifts RJ's tuned letters. *For RJ:* worthwhile only with a brighter env source or a
+  raised `envMapIntensity` — an aesthetic call. Graph: `BX-scene.environment IBL = no`.
 - **`renderer.physicallyCorrectLights`** (graph: `BX-physically correct lights = no`) — changes light
   falloff to inverse-square; every existing light intensity/distance was tuned WITHOUT it, so turning
   it on would need all of RJ's light numbers retuned. Disruptive, art-adjacent — leave for RJ.
