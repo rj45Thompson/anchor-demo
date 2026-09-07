@@ -22,6 +22,15 @@ Current values READ from `games/resume-arkanoid.html`, so each item changes a kn
 
 Order: **R10-R14 first** (fast, visible, self-contained), then R1, R2, R3, R4, R5, then R6-R9. Bloom and the AAA list stay queued behind these.
 
+**R1-R14 all resolved (2026-09-07, this lane).** 12 shipped, R2/R3 investigated & deferred to RJ. So the AAA backlog below — the directive's own "AAA quality" list, which was explicitly *"queued behind R1-R14"* — is now **unblocked and active**. This is renderer-fidelity (the autobot lane's domain), so it proceeds without waiting on RJ. Bloom (rung 1) already shipped.
+
+## Open — AAA backlog (unblocked now R1-R14 are done)
+
+- [ ] A1  Anti-aliasing -> DONE WHEN: checked whether the game visibly aliases at pixel-ratio 1 after bloom (the composer renders to a plain `WebGLRenderTarget`, so the constructor's `antialias:true` MSAA is inert — graph `BX-antialias`); if it aliases, restore AA through the composer via a `THREE.WebGLMultisampleRenderTarget` (WebGL2, no new files) **or** a vendored SMAA/FXAA pass, and **ms/frame measured before AND after** (the directive flags this as the pass most likely to cost). Note pr-3 supersampling already masks it, so the win is for pr-1/2 viewers.
+- [ ] A2  Ambient occlusion (SSAO) -> DONE WHEN: SSAO tried (contact darkening is what most reads as "AAA" on this shadow-less scene), ms/frame measured before/after, and it **only ships if it stays under the ~40 ms (25 fps) floor at the tuned pixel ratio** — it's the most expensive thing here, so it lives or dies on the budget. Screenshot before/after; if it costs too much, gate it behind the quality tier (COARSE off) and say what each tier renders.
+- [ ] A3  Colour grading / vignette / film grain -> DONE WHEN: a subtle grade + vignette (+ optional fine grain) added as a cheap final pass, screenshotted before/after, ms/frame reported. **Subtle** — a vignette that announces itself is worse than none. Keep it a renderer pass, not an art-direction recolour.
+- [ ] A4  Material response (emissive) -> DONE WHEN: the things that *should* glow carry a true emissive so bloom catches something real rather than being turned up until everything glows; screenshotted before/after, ms/frame reported. ⚠ letters/ship are RJ-tuned — additive emissive only where it's unambiguously a light source (engine, reactor, pickups), and put any colour/intensity taste call on the list for RJ rather than shipping it.
+
 Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
 `games/resume-arkanoid.html` (three.js, vendored **r128** at `../three.min.js`).
 
