@@ -1,0 +1,4 @@
+# Rendered frames written by tools/shotserver.py. Regenerate them, do not commit them.
+*.png
+*.jpg
+!machine_worlds.jpg

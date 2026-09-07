@@ -144,6 +144,8 @@
 <script src="./postprocessing/DepthLimitedBlurShader.js"></script>
 <script src="./postprocessing/UnpackDepthRGBAShader.js"></script>
 <script src="./postprocessing/SSAOPass.js"></script>
+<!-- the machine world's surface: shared with _planetlab.html, never copied -->
+<script src="./planet_surface.js"></script>
 <script>
 // ---------------------------------------------------------------- resume data
 // Every entry is a real line from the actual CV.
@@ -296,7 +298,11 @@ if(!COARSE && typeof THREE.EffectComposer === 'function' && THREE.RenderPass &&
   }
 }
 
-scene.add(new THREE.AmbientLight(0x8fb0d4, 1.75));   // was 0x4a6a8a @ 0.9 - letters read as grey
+/* 1.05, down from 1.75. The 1.75 was set when the LETTERS were lit by the scene and read as
+   grey; they now carry their own light in the plate shader and do not need it, while everything
+   this ambient does still reach - the surface structures, the army, the ship - was staying pale
+   against a deliberately dark planet. RJ: "make the planet darker". */
+scene.add(new THREE.AmbientLight(0x8fb0d4, 1.05));
 const key = new THREE.DirectionalLight(0xffffff, 1.85); key.position.set(6,-4,14); scene.add(key);
 const rim = new THREE.PointLight(0x9ec8ff, 2.2, 90); rim.position.set(-10, 12, 10); scene.add(rim);
 // A warm fill from below so glyph faces are not lit from one side only. Extruded letterforms
@@ -638,14 +644,153 @@ const AUDIO = (function(){
 })();
 window.AUDIO = AUDIO;
 
+/* ---------------------------------------------------------------- letter plates
+   RJ 2026-09-07: "the letters are kind of important to read since it's a resume ... put a texture
+   on top of the letter ... the block is just kind of turning, so on the flat side is where the
+   letter is drawn ... they're blocked letters and they're never going to have the contrast."
+
+   The contrast problem was structural, not a colour choice. Every earlier letter was GEOMETRY - a
+   voxel extrusion of a 9x12 bitmap - so whatever sat behind each stroke was the planet. Green neon
+   over a bright glacier plate loses, and making the glyph brighter cannot win: the planet is lit by
+   the same key light and rises with it.
+
+   An opaque plate wins by construction. Dark face, bright glyph, ratio fixed in the texture, no
+   longer a function of what is behind. */
+const plateCache = new Map();
+/* 0.73, which is the slab's FINAL on-screen aspect: the geometry is 0.88 x 0.92 of a cell and
+   syncMeshes scales a cell by CH_W*1.02 wide and CH_W*1.34 tall. Getting this wrong stretches
+   every glyph, and a stretched monospace letter is the exact thing that reads as "cheap". */
+const PLATE_W = 240, PLATE_H = 328;
+function letterPlate(ch, kind, turret){
+  const key = ch + "|" + kind + "|" + (turret ? 1 : 0);
+  if(plateCache.has(key)) return plateCache.get(key);
+  const c = document.createElement("canvas"); c.width = PLATE_W; c.height = PLATE_H;
+  const g = c.getContext("2d");
+
+  // ---- the plate: dark machined steel. Dark is the whole point - it is the contrast floor.
+  const grd = g.createLinearGradient(0, 0, 0, PLATE_H);
+  grd.addColorStop(0, turret ? "#241012" : "#131a24");
+  grd.addColorStop(1, turret ? "#150809" : "#080c13");
+  g.fillStyle = grd; g.fillRect(0, 0, PLATE_W, PLATE_H);
+  // brushed lines, very low contrast: enough that the face is not a flat fill up close
+  g.globalAlpha = 0.055; g.strokeStyle = "#9fc0e0"; g.lineWidth = 1;
+  for(let y = 4; y < PLATE_H; y += 7){ g.beginPath(); g.moveTo(0, y + .5); g.lineTo(PLATE_W, y + .5); g.stroke(); }
+  g.globalAlpha = 1;
+  /* A lit UNDERLINE, not a box. A full inset rectangle on every character turned a line of text
+     into a grid of boxed tiles - legible, but the grid is what your eye read first instead of the
+     words. One bar along the bottom in the line's own tone keeps the "machined key cap" read and
+     lets the row of them draw a baseline, which is what actually helps you follow a line. */
+  const tone = turret ? "#ff9a72" : (kind === "head" ? "#dceaff" : (kind === "detail" ? "#7fa6c8" : "#8fd7ff"));
+  g.fillStyle = tone; g.globalAlpha = 0.55;
+  g.fillRect(14, PLATE_H - 20, PLATE_W - 28, 7);
+  g.globalAlpha = 0.16;
+  g.fillRect(0, 0, PLATE_W, 3);                     // a faint top lip, so the slab has a near edge
+  g.globalAlpha = 1;
+
+  // ---- the glyph. Big enough to fill the plate: RJ asked for "slightly larger" letters, and on a
+  // plate that costs nothing, because the plate is the letter's own space.
+  const face = turret ? "#ffd0b4" : (kind === "detail" ? "#cfe4f6" : "#ffffff");
+  g.font = "bold " + Math.round(PLATE_H * 0.70) + "px ui-monospace, Menlo, Consolas, monospace";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  /* The hard outline is the single biggest legibility win on a lit 3D object: without it the
+     letter's edge dissolves into the plate wherever the key light lands. Stroked first, filled
+     over, so the outline sits entirely outside the glyph's own shape. */
+  g.lineJoin = "round"; g.lineWidth = 14; g.strokeStyle = "#03060b";
+  g.strokeText(ch, PLATE_W / 2, PLATE_H * 0.47);
+  g.fillStyle = face;
+  g.fillText(ch, PLATE_W / 2, PLATE_H * 0.47);
+
+  const t = new THREE.CanvasTexture(c);
+  t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
+  t.anisotropy = 8;                       // the letters ride a 0.85 rad tilt; this genuinely helps
+  plateCache.set(key, t);
+  return t;
+}
+
+const PLATE_VERT = `
+  varying vec2 vUv; varying vec3 vN; varying vec3 vNv;
+  void main(){
+    vUv = uv;
+    vN = normal;                                  // object space: which FACE of the slab this is
+    vNv = normalize(normalMatrix * normal);       // view space: for the shading
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const PLATE_FRAG = `
+  uniform sampler2D map;
+  uniform vec3 uEdge;        // the slab's own metal, and the colour its bevels catch
+  uniform float uHot;        // 0..1 proximity to the firing line
+  uniform float uDissolve;   // 0 intact .. 1 gone
+  uniform float uGlow;       // how hard the glyph burns. This is the "letters well lit" knob.
+  varying vec2 vUv; varying vec3 vN; varying vec3 vNv;
+  float hash(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
+  void main(){
+    /* One material, one draw call, branching on the face. A BoxGeometry material array would put
+       the plate on the +z group and metal on the other five - correct, and twice the draw calls
+       with about two hundred letters on screen. */
+    if(vN.z < 0.5){
+      // the extrusion: dark metal, shaded by facing so the slab has real form as it turns
+      float sh = 0.20 + 0.34 * max(0.0, vNv.y) + 0.16 * abs(vNv.x);
+      vec3 side = uEdge * sh;
+      // a bright lip where a side meets the front, which is what makes it read as machined
+      side += uEdge * pow(max(0.0, vN.z + 0.5), 4.0) * 0.5;
+      gl_FragColor = vec4(side, 1.0);
+      return;
+    }
+    vec4 p = texture2D(map, vUv);
+    /* sRGB -> linear on read. Every texture here is authored in sRGB - a canvas, a jpeg - and a
+       custom ShaderMaterial gets NO automatic decode: three.js only injects one for the material
+       chunks it owns, so texture2D returns the sRGB bytes as if they were linear light. The
+       renderer then applies its own linear->sRGB on output, and the result is everything washed
+       one full gamma step pale. This is why a #0d1420 plate rendered as mid grey and why the
+       planet looked bleached however far its tint was pulled down. */
+    p.rgb = pow(p.rgb, vec3(2.2));
+    // burn away from a noise field, so a broken letter crumbles rather than fading flat
+    float n = hash(floor(vUv * 14.0));
+    if(n < uDissolve) discard;
+    float edge = smoothstep(uDissolve, uDissolve + 0.22, n);
+
+    /* The glyph mask is DERIVED, not stored: the plate is dark and the glyph is bright by design,
+       so luminance separates them for free - no second texture and no second sampler across ~40
+       cached characters. */
+    float luma = dot(p.rgb, vec3(0.299, 0.587, 0.114));
+    float glyph = smoothstep(0.34, 0.72, luma);
+
+    // The plate is lit only gently: it is the letter's BACKGROUND and its job is to stay dark.
+    float lam = 0.62 + 0.38 * max(0.0, vNv.z);
+    vec3 col = p.rgb * lam;
+    col += p.rgb * glyph * uGlow;                    // the glyph itself burns, the plate does not
+    col += vec3(1.0, 0.42, 0.22) * uHot * glyph * 0.5;
+    col += vec3(1.0, 0.72, 0.35) * (1.0 - edge) * 1.6;   // hot ember at the dissolve front
+    gl_FragColor = vec4(col, 1.0);
+  }
+`;
+/* The slab, built at UNIT size on purpose. glyphGeometry produced letterforms spanning -0.5..0.5
+   and every call site scales them by CH_W - syncMeshes uses CH_W*1.02, flyLetter CH_W*0.92 - so a
+   plate built at CH_W would be scaled by CH_W a second time. It was: letters came out 1.8x too
+   wide, overlapped into a solid mass, and the résumé was less readable than before the change, not
+   more. Unit in, existing scales unchanged. Depth is 0.42 of a cell so the turn still reads. */
+/* 0.88 x 0.92 of a cell, not a full cell. At 1.0 the plates butted edge to edge and a line of
+   text became one unbroken strip - readable, but the words stopped being words. The gap is what
+   separates characters. */
+const plateGeo = new THREE.BoxGeometry(0.88, 0.92, 0.40);
+function plateMaterial(){
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      map: { value: null },
+      uEdge: { value: new THREE.Color(0x37506b) },
+      uHot: { value: 0 }, uDissolve: { value: 0 },
+      uGlow: { value: 0.85 },
+    },
+    vertexShader: PLATE_VERT, fragmentShader: PLATE_FRAG,
+  });
+}
+
 function makeLetterMesh(){
-  // geometry is swapped per character in syncMeshes; the material is LIT rather than a flat
-  // shader quad so the extrusion catches the key light and reads as a solid block letter.
-  const m = new THREE.Mesh(glyphGeometry("A"), new THREE.MeshStandardMaterial({
-    color:0xffffff, emissive:0x111111, roughness:0.42, metalness:0.32, flatShading:true,
-    emissiveMap: SPEED.clone() }));   // its own clone so each letter's streaks can run at its own phase
-  m.material.emissiveMap.wrapS = m.material.emissiveMap.wrapT = THREE.RepeatWrapping;
-  m.material.emissiveMap.repeat.set(1.6, 1);
+  /* One slab, one material, one draw call. The character is set per letter in syncMeshes by
+     swapping the plate TEXTURE, not the geometry - so the pool really is a pool now: recycling a
+     mesh no longer means rebuilding or re-uploading anything. */
+  const m = new THREE.Mesh(plateGeo, plateMaterial());
   m.visible = false; board.add(m); return m;
 }
 function takeMesh(){ return pool.length ? pool.pop() : makeLetterMesh(); }
@@ -1527,13 +1672,13 @@ function syncMeshes(){
       if(L.broken){ if(L.mesh){ giveMesh(L.mesh); L.mesh=null; } return; }
       if(near && !L.mesh){
         const m = takeMesh();
-        m.geometry = glyphGeometry(L.ch);
         const base = new THREE.Color(
           line.kind==="head" ? 0xffffff : (line.kind==="detail" ? 0x9fc4de : (TONES[line.tone]||0xcfe6ff)));
+        m.material.uniforms.map.value = letterPlate(L.ch, line.kind, !!L.turret);
         // an armed letter is tinted hot and glows: you must be able to see which ones shoot back
         if(L.turret){
-          m.material.color.set(0xff8a7a);
-          m.material.emissive.set(0x5a1410);
+          m.material.uniforms.uEdge.value.set(0x8a3a2c);
+          m.material.uniforms.uGlow.value = 1.15;
         } else {
           /* RJ: "make the text cooler." A glyph is not a painted block any more: it is a lit
              sign. Near-white face so it stays legible over any plating, its own tone carried in
@@ -1547,10 +1692,12 @@ function syncMeshes(){
              green - a sign reads because it is ONE colour at high intensity, not because each line has its own
              tint. The line's own tone survives as a faint wash in the body, so head/detail/tone lines still
              differ, but what your eye gets is green neon. */
-          m.material.color.copy(base).multiplyScalar(0.10).lerp(new THREE.Color(0x06180d), 0.5);
-          m.material.emissive.copy(NEON);
-          m.material.map = CYBER;   // the body is plated metal, not a painted slab
-          m.material.needsUpdate = true;
+          /* The slab's EDGES take the line's own tone - that is where the colour lives now, on
+             the bevels, where it cannot compete with the glyph for the reader's eye. The face
+             stays dark and the character stays near-white, which is what makes a résumé line
+             legible over a bright plate and a dark trench alike. */
+          m.material.uniforms.uEdge.value.copy(base).multiplyScalar(0.42);
+          m.material.uniforms.uGlow.value = line.kind === "head" ? 1.05 : 0.85;
         }
         m.rotation.set(0,0,0);
         m.visible = false; L.mesh = m;
@@ -1563,23 +1710,22 @@ function syncMeshes(){
         if(L.arrive < 1){ if(flyLetter(L, M, y)) return; }
         M.position.set(L.x, y, cylZ(L.x));      // R4: ride the cylinder in depth, x kept for collision
         M.rotation.set(0, -L.x / CYL_R, 0);     // yaw so the glyph faces the camera, not its flat side
-        // era grade on a lit material: flat and matte early, metallic and glowing late
-        M.material.flatShading = e < 4;
-        M.material.metalness = e >= 3 ? 0.30 : 0.0;   // enough to catch a highlight, not a mirror
-        M.material.roughness = e >= 3 ? 0.28 : 0.95;
+        /* The era grade used to drive flatShading / metalness / roughness on a standard material.
+           The plate has its own shader and none of those exist on it - and flatShading in
+           particular is a program-cache key, so writing it every frame on a ShaderMaterial buys a
+           per-frame parameter rebuild for no visible result. The grade now lands where it actually
+           shows: how hard the glyph burns. */
         if(L.flash > 0) L.flash = Math.max(0, L.flash - frameDt * 2.2);   // the landing glow cools
         // neon: the emissive IS the letter, so it runs well above 1 and the lit body barely matters
         /* The early eras used to run the emissive at 0.05, which is off - the glyph was a white block lit only
            by the scene, and RJ's reading of it was exactly that: "just a block that's white is kind of hard to
            read and not that cool". The letter now carries its own light in EVERY era; the late eras still go
            further into neon, so the era grade still means something. */
-        M.material.emissiveIntensity = (e >= 4 ? (2.6 + reveal*0.6) : 1.5 + e*0.10) + L.flash * 1.4;
-        // the streaks run: offset scrolls with the clock, each letter at its own phase so a line does not pulse
-        // as one block. Faster the further down the crawl it is, which reads as the text accelerating past you.
-        if(M.material.emissiveMap){
-          if(L.phase === undefined) L.phase = Math.random();
-          M.material.emissiveMap.offset.x = (L.phase + performance.now()*0.001 * (0.55 + 0.25 * L.phase)) % 1;
-        }
+        /* uGlow is the "letters well lit" knob RJ asked for, and it is bounded on purpose: the
+           glyph burns, the PLATE does not, so pushing it does not wash the letter's own edge away
+           the way raising a whole material's emissive did. */
+        M.material.uniforms.uGlow.value =
+          (e >= 4 ? (1.05 + reveal * 0.25) : 0.72 + e * 0.06) + L.flash * 0.9;
         const S = CH_W*1.02, SY = CH_W*1.34;   // RJ: "it can be like a little bit larger letters"
         if(L.dissolve > 0){
           // struck letters SPIN OUT: tumble, drift and shrink, rather than fading where they sat
@@ -1871,7 +2017,7 @@ function flyLetter(L, M, y){
   const sc = (0.4 + 0.6 * e) * bump;
   M.scale.set(S * sc, SY * sc, S * sc);
   M.rotation.set((1 - e) * L.spinX * 6.5, (1 - e) * L.spinY * 9.0, (1 - e) * 4.0);   // a drone tumbling in, settling as it lands
-  M.material.emissiveIntensity = 1.5;
+  if(M.material.uniforms) M.material.uniforms.uGlow.value = 1.0;
   updateTrail(L, M);
   if(k >= 1){
     L.arrive = 1; L.flash = 1;
@@ -1960,7 +2106,9 @@ const RING_GEO = new THREE.RingGeometry(0.86, 1.0, 48), DISC_GEO = new THREE.Cir
    dropping hives. The hives it dropped survive it as a kind of ground structure - `makeUnit`
    still builds them - but nothing creates them any more, and its mesh and driver are gone. */
 const HIVE_COOL       = 5;      // seconds between drones from one hive
-const ARMY_MAT = new THREE.MeshStandardMaterial({ color:0x3b4f69, map:HULL, emissive:0x0e1622,
+// darkened with the ground and the surface structures (RJ: "make the planet darker") - the
+// army sits ON the world, so leaving it pale made the units read as pasted-on rather than built.
+const ARMY_MAT = new THREE.MeshStandardMaterial({ color:0x22303f, map:HULL, emissive:0x0e1622,
   roughness:0.6, metalness:0.55, flatShading:true, fog:false });
 const _w = new THREE.Vector3(), _w2 = new THREE.Vector3(), _q = new THREE.Quaternion(), Z_AXIS = new THREE.Vector3(0, 0, 1);
 
@@ -1991,9 +2139,12 @@ function buildPlanetDetail(){
   const g = new THREE.Group();
   const rnd = seeded(20260906);
   // envMap is what makes a metal look polished rather than painted; the nebula sky is already loaded
-  const hull = new THREE.MeshStandardMaterial({ color:0x59626f, metalness:0.95, roughness:0.3, flatShading:true,
+  // darkened with the ground (RJ: "make the planet darker") - at 0x59626f these instanced blocks
+  // stayed pale grey while the surface behind them went dark, so they read as floating debris
+  // rather than as structures standing ON the world.
+  const hull = new THREE.MeshStandardMaterial({ color:0x2b323c, metalness:0.95, roughness:0.3, flatShading:true,
     fog:false, envMap: sky, envMapIntensity: 0.75 });
-  const dark = new THREE.MeshStandardMaterial({ color:0x424a57, metalness:0.9, roughness:0.38, flatShading:true,
+  const dark = new THREE.MeshStandardMaterial({ color:0x1e242e, metalness:0.9, roughness:0.38, flatShading:true,
     fog:false, envMap: sky, envMapIntensity: 0.9 });
   const lit  = new THREE.MeshBasicMaterial({ color:0x8fdcff, fog:false });
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
@@ -2074,6 +2225,12 @@ function buildPlanetDetail(){
   return g;
 }
 
+/* The plated sphere, the planet shader and the six worlds' metals all live in
+   planet_surface.js, loaded above - see the header there for why they are shared
+   rather than copied. Pulled into this scope by name so the code below reads the
+   same as when they were declared here. */
+const { WORLDS, PLANET_VERT, PLANET_FRAG, plateSphere } = window.PLANET_SURFACE;
+
 function buildPlanet(){
   planet = new THREE.Group();
   // The surface: a straight-down tile generated with the starfighter art pipeline (FLUX via
@@ -2093,14 +2250,6 @@ function buildPlanet(){
      surfaces that bring their own palette - forge really is molten orange, glacier really is pale steel - so a
      saturated tint only multiplies that down and throws away the detail it was generated for. Each world keeps a
      slight bias and nothing more. */
-  const WORLDS = {
-    forge:    0xd8c8b8,
-    circuit:  0xc2d2d8,
-    reactor:  0xc6d4d8,
-    derelict: 0xd6c4b4,
-    citadel:  0xcac2d8,
-    glacier:  0xd2dae2,
-  };
   const WORLD_NAMES = Object.keys(WORLDS);
   const WORLD = WORLD_NAMES[(Math.random()*WORLD_NAMES.length)|0];
   const pmap = texLoader.load('assets/planet_' + WORLD + '.jpg'),
@@ -2111,90 +2260,35 @@ function buildPlanet(){
   // a ship-length at the scale you fly. anisotropy keeps the plating readable at the limb.
   pmap.repeat.set(2, 1); pnorm.repeat.set(2, 1);
   pmap.anisotropy = pnorm.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  /* THE PLANET SHADER - RJ 2026-09-06: "make it shiny and a cool shader for the planet, make it
-     dark with lights that twinkle emissive."
-
-     A standard material could not do the last part: the twinkle has to come from the surface
-     itself, per pixel, in the dark parts of the plating and strongest on the night side. So the
-     ground gets its own program:
-       * dark steel base from the drawn map, with the normal map folded in through the sphere's
-         own tangent frame (no tangent attribute needed on a sphere - the frame is derivable);
-       * a hard specular lobe, so the plating catches the key light as a moving highlight;
-       * a reflection of the nebula cubemap, weighted by fresnel - this is what actually makes it
-         read as polished metal rather than painted metal;
-       * CITY LIGHTS: a hash per cell decides which cells are lit and how fast they blink, the
-         mask is gated to the DARK parts of the map (the canyons between plates, never the plate
-         faces), and the whole thing brightens as the surface turns away from the light. */
-  const PLANET_VERT = `
-    varying vec2 vUv; varying vec3 vN; varying vec3 vW;
-    void main(){
-      vUv = uv;
-      vN = normalize(mat3(modelMatrix) * normal);
-      vec4 wp = modelMatrix * vec4(position, 1.0);
-      vW = wp.xyz;
-      gl_Position = projectionMatrix * viewMatrix * wp;
-    }`;
-  const PLANET_FRAG = `
-    uniform sampler2D uMap; uniform sampler2D uNorm; uniform samplerCube uEnv;
-    uniform vec3 uLight; uniform vec3 uCam; uniform vec3 uTint;
-    uniform float uTime; uniform float uBump;
-    varying vec2 vUv; varying vec3 vN; varying vec3 vW;
-    float hash21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-    void main(){
-      vec3 N = normalize(vN);
-      vec3 V = normalize(uCam - vW);
-      vec3 L = normalize(uLight);
-      vec3 alb = texture2D(uMap, vUv).rgb;
-
-      // the sphere's own tangent frame: no tangent attribute, no BufferGeometryUtils
-      vec3 nm = texture2D(uNorm, vUv).xyz * 2.0 - 1.0;
-      vec3 T = normalize(cross(vec3(0.0, 1.0, 0.0), N) + vec3(1e-5));
-      vec3 B = cross(N, T);
-      N = normalize(N + (T * nm.x + B * nm.y) * uBump);
-
-      float ndl = max(dot(N, L), 0.0);
-      float lam = ndl * 0.88 + 0.12;                 // a little wrap, so the terminator is not tar
-
-      /* RJ 2026-09-06: "the white shine of the planet makes text contrast too hard." The
-         highlight was white and strong, so the lit face went to paper under white glyphs. It is
-         weaker now and TINTED COLD - a blue-steel sheen carries "polished metal" without ever
-         reaching the white the text needs to own. */
-      vec3 H = normalize(L + V);
-      vec3 specTint = vec3(0.62, 0.78, 1.0);
-      float spec = pow(max(dot(N, H), 0.0), 110.0) * 0.55;
-      float sheen = pow(max(dot(N, H), 0.0), 16.0) * 0.10;
-
-      vec3 R = reflect(-V, N);
-      vec3 env = textureCube(uEnv, R).rgb;
-      float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-
-      // ---- twinkling city lights
-      float lum = dot(alb, vec3(0.299, 0.587, 0.114));
-      float inDark = smoothstep(0.26, 0.06, lum);     // only down in the canyons
-      vec2 cell = floor(vUv * vec2(520.0, 260.0));
-      float h = hash21(cell);
-      float on = step(0.955, h);                      // about one cell in twenty
-      float blink = 0.40 + 0.60 * sin(uTime * (1.2 + h * 7.0) + h * 62.0);
-      vec3 lampCol = mix(vec3(0.52, 0.84, 1.0), vec3(1.0, 0.70, 0.32), step(0.5, fract(h * 17.0)));
-      float night = 1.0 - ndl;
-      vec3 lamps = lampCol * on * inDark * blink * (0.30 + 1.35 * night) * 2.6;
-
-      vec3 base = alb * uTint * lam;
-      // the reflection is held to the LIMB (fresnel-weighted) so the face you read over stays dark
-      vec3 col = base + env * (0.05 + 0.42 * fres) + specTint * spec + specTint * sheen + lamps;
-      gl_FragColor = vec4(col, 1.0);
-    }`;
   const groundMat = new THREE.ShaderMaterial({
     uniforms: {
       uMap: { value: null }, uNorm: { value: null }, uEnv: { value: sky },
       uLight: { value: new THREE.Vector3(6, -4, 14).normalize() },   // the key light, world space
       uCam: { value: new THREE.Vector3() },
       uTint: { value: new THREE.Color(WORLDS[WORLD]) },   // the chosen world's own metal (was one steel for all six)
-      uTime: { value: 0 }, uBump: { value: 0.55 },
+      uTime: { value: 0 }, uBump: { value: 0.30 },
+      // sub-panels per cube face: 4x the geometry's PLATE_GRID, so every displaced plate
+      // carries a 4x4 field of shaded sub-plates instead of being one flat facet.
+      // sub-panels per cube face. 4.5x the geometry's grid puts a sub-plate at about a ship
+      // length at the altitude you fly, which is where the old single map turned to mush.
+      // 13x the geometry's grid. Found in _planetlab at the altitude the game actually flies
+      // (about 1.1 radii): 4.5x put one lit panel across a quarter of the screen, 13x lands a
+      // conduit at roughly a ship length, which is the Cybertron read.
+      uGrid: { value: window.PLANET_SURFACE.PLATE_GRID * 13 },
+      // 0.34: the planet is the BACKDROP. Measured by looking - at 1.0 the glacier world
+      // rendered near-white and a white glyph in front of it had no edge at all.
+      /* 0.42. RJ, on the corrected-gamma build: "looks good but make the planet darker."
+         With the sRGB decode in place this darkens the SURFACE only - the strip lights and city
+         lights are added after the lighting term, so they hold their brightness and the world
+         reads as lit machinery in the dark rather than as a dimmed photograph. */
+      uGround: { value: 0.28 },
     },
     vertexShader: PLANET_VERT, fragmentShader: PLANET_FRAG, fog: false,
+    vertexColors: true,          // the per-panel metal tint baked by plateSphere
   });
-  const ground = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({
+  // 192 x 120 segments -> 46,080 triangles once the quads are split. Enough that a plate edge on
+  // the limb is a few pixels wide at the distance you fly, which is the point of the whole thing.
+  const ground = new THREE.Mesh(plateSphere(192, 120), new THREE.MeshStandardMaterial({
     // NOT tinted up and NOT lifted by emissive: the key light already puts the lit face near
     // white, and a 0xe8eef6 tint over that washed the whole surface out to pale blue.
     // the map is machinery now, dark and its own colour: a near-white tint and a matte finish
@@ -3164,6 +3258,7 @@ let last = performance.now();
 function tick(now){
   const dt = Math.max(0, Math.min((now-last)/1000, .05)); last = now; t += dt;
   frameDt = dt;
+  if(window.__bx && window.__bx._hold){ const h = window.__bx._hold; window.__bx.pose(h.az, h.el, h.dist); }
   requestAnimationFrame(tick);
 
   if(state==='play'){
@@ -3584,6 +3679,73 @@ document.getElementById('again').onclick = ()=>{
   document.getElementById('end').classList.add('hide');
   reset(); state='play';
   showBigHint(...BOMB_HINT(), 3.0);
+};
+
+/* ---- debug hook. See the comment in scratchpad/debug_hook.py: a look at the LIMB is the only
+   view that can tell a displaced sphere from a painted ball, and the game never poses that way on
+   its own. `pose(az, el, dist, look)` parks the camera for exactly one frame; `stats()` reads the
+   renderer's own counters. Nothing here runs unless something calls it. */
+window.__bx = {
+  THREE, renderer, scene, camera, get planet(){ return planet; }, board,
+  // the crawl's own state, which is what decides whether any résumé text is on screen at all
+  get lines(){ return lines; }, get crawl(){ return crawl; },
+  get enterY(){ return viewEnterY; }, get state(){ return state; },
+  crawlReport(){
+    const on = lines.filter(L => { const y = L.y - crawl; return y < viewEnterY && y > VIEW_BOT - 2; });
+    return { lines: lines.length, crawl: +crawl.toFixed(2), viewEnterY: +viewEnterY.toFixed(2),
+             VIEW_TOP, VIEW_BOT, state,
+             linesInBand: on.length,
+             firstY: lines.length ? +(lines[0].y - crawl).toFixed(2) : null,
+             lastY: lines.length ? +(lines[lines.length-1].y - crawl).toFixed(2) : null,
+             withMesh: lines.reduce((n,L) => n + L.letters.filter(x => x.mesh).length, 0),
+             arrived: lines.reduce((n,L) => n + L.letters.filter(x => x.mesh && x.arrive >= 1).length, 0) };
+  },
+  get ship(){ return ship; }, get composer(){ return composer; }, get world(){ return window.__world; },
+  stats(){
+    const r = renderer.info;
+    return { calls:r.render.calls, tris:r.render.triangles, points:r.render.points,
+             geometries:r.memory.geometries, textures:r.memory.textures,
+             programs:r.programs && r.programs.length, composer: !!composer,
+             pixelRatio: renderer.getPixelRatio(), world: window.__world };
+  },
+  // Park the camera relative to the planet centre and render one frame. az/el in degrees,
+  // dist as a multiple of R, so the same numbers frame any world.
+  pose(az, el, dist){
+    if(!planet) return 'no planet';
+    const R = planet.userData.R, C = planet.position;
+    const a = az * Math.PI / 180, e = el * Math.PI / 180, d = R * (dist || 2.2);
+    camera.position.set(C.x + d * Math.cos(e) * Math.sin(a),
+                        C.y + d * Math.sin(e),
+                        C.z + d * Math.cos(e) * Math.cos(a));
+    camera.lookAt(C);
+    camera.updateMatrixWorld(true);
+    if(composer) composer.render(); else renderer.render(scene, camera);
+    return { R:+R.toFixed(1), tris: renderer.info.render.triangles, calls: renderer.info.render.calls };
+  },
+  // Hold that pose across frames, so a screenshot taken a moment later still shows it.
+  hold(az, el, dist){ this._hold = {az, el, dist}; return this.pose(az, el, dist); },
+  release(){ this._hold = null; },
+  /* Drive the loop by hand. A browser pane that is not being PAINTED suspends
+     requestAnimationFrame, so the game sits frozen on frame 1 while every screenshot still comes
+     back looking plausible - a still frame of a stopped game is indistinguishable from a running
+     one. Measured here: 0 frames in 1.5 s with state 'play' and crawl stuck at 0, which read
+     exactly like "the résumé letters never spawn" and was nothing of the kind.
+     step(n, dtMs) advances n frames of simulation regardless. */
+  /* Write the current frame to disk through tools/shotserver.py. The WebGL context is created
+     without preserveDrawingBuffer, so toDataURL only returns pixels if it is called in the SAME
+     task as the render - hence the step() immediately before it, never a setTimeout. */
+  async save(name, n){
+    this.step(n || 1, 16.7);
+    const url = canvas.toDataURL('image/png');
+    const r = await fetch('/_shot/' + name + '.png', { method:'PUT', body:url });
+    return r.ok ? (await r.text()).trim() : ('FAILED ' + r.status + ' ' + await r.text());
+  },
+  step(n, dtMs){
+    const d = dtMs || 16.7;
+    let now = performance.now();
+    for(let i = 0; i < (n || 1); i++){ now += d; tick(now); }
+    return this.crawlReport();
+  },
 };
 
 requestAnimationFrame(tick);

@@ -1,0 +1,169 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Planet lab - machine worlds</title>
+<!--
+  A bench for the machine world's SURFACE, nothing else. It exists because the game only ever looks
+  straight down at the planet, and from directly overhead a displaced sphere and a painted ball are
+  indistinguishable - the whole difference is in the SILHOUETTE. Several passes of "make the planet
+  look like Cybertron" went by without anyone posing the one view that could tell them apart.
+
+  It loads games/planet_surface.js, the SAME file the game loads. Not a copy: a copy would drift,
+  and a stale copy of this game already cost a session (port 8791 was serving a 1,479-line
+  resume-arkanoid.html while the file on disk had 3,590).
+
+  URL parameters, all optional - every knob the surface has, so a look can be found here in seconds
+  instead of by editing the game and reloading it:
+     ?world=forge|circuit|reactor|derelict|citadel|glacier
+     &az=0&el=6&dist=2.3      camera: degrees around, degrees up, distance in radii
+     &grid=26&amp=0.022&steps=6&trench=0.13    the plating
+     &bump=0.30&exposure=0.85&key=1.85&amb=1.75
+     &sheet=1                 render all six worlds into one contact sheet instead
+-->
+<style>
+  html,body{margin:0;height:100%;background:#05070c;overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+  #hud{position:fixed;left:10px;top:10px;font:12px ui-monospace,Consolas,monospace;color:#9fd4ff;
+       background:rgba(4,8,14,.72);padding:8px 10px;border:1px solid #1d3busy;border-radius:6px;
+       white-space:pre;pointer-events:none;line-height:1.45}
+  #sheet{position:fixed;inset:0;display:none;grid-template-columns:repeat(3,1fr);gap:2px;background:#05070c}
+  #sheet figure{margin:0;position:relative}
+  #sheet img{width:100%;display:block}
+  #sheet figcaption{position:absolute;left:8px;top:6px;font:700 13px ui-monospace,Consolas,monospace;
+       color:#7dffb0;text-shadow:0 1px 3px #000}
+</style>
+<canvas id="c"></canvas>
+<div id="hud">booting</div>
+<div id="sheet"></div>
+
+<script src="./three.min.js"></script>
+<script src="./planet_surface.js"></script>
+<script>
+const Q = new URLSearchParams(location.search);
+const num = (k, d) => Q.has(k) ? parseFloat(Q.get(k)) : d;
+const S = window.PLANET_SURFACE;
+
+// the plating knobs, straight from the query string, so a sweep is a list of URLs
+if(Q.has('grid'))   S.PLATE_GRID  = num('grid', 11);
+if(Q.has('steps'))  S.PLATE_STEPS = num('steps', 6);
+if(Q.has('amp'))    S.PLATE_AMP   = num('amp', 0.055);
+if(Q.has('trench')) S.TRENCH_W    = num('trench', 0.13);
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = num('exposure', 0.85);
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 4000);
+const sky = new THREE.CubeTextureLoader().setPath('assets/')
+  .load(['sky_px.jpg','sky_nx.jpg','sky_py.jpg','sky_ny.jpg','sky_pz.jpg','sky_nz.jpg']);
+scene.background = sky;
+scene.add(new THREE.AmbientLight(0x8fb0d4, num('amb', 1.75)));
+// the same key direction the game uses, so a look found here is the look that ships
+const KEY_DIR = new THREE.Vector3(6, -4, 14).normalize();
+const key = new THREE.DirectionalLight(0xffffff, num('key', 1.85));
+key.position.copy(KEY_DIR).multiplyScalar(100); scene.add(key);
+
+const R = 100;
+const tex = new THREE.TextureLoader();
+let ground = null, mat = null;
+
+function build(world){
+  if(ground){ scene.remove(ground); ground.geometry.dispose(); ground.material.dispose(); }
+  const pmap  = tex.load('assets/planet_' + world + '.jpg');
+  const pnorm = tex.load('assets/planet_' + world + '_n.jpg');
+  pmap.wrapS = pmap.wrapT = pnorm.wrapS = pnorm.wrapT = THREE.RepeatWrapping;
+  pmap.repeat.set(2, 1); pnorm.repeat.set(2, 1);
+  pmap.anisotropy = pnorm.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uMap:{value:pmap}, uNorm:{value:pnorm}, uEnv:{value:sky},
+      uLight:{value:KEY_DIR.clone()}, uCam:{value:new THREE.Vector3()},
+      uTint:{value:new THREE.Color(S.WORLDS[world])},
+      uTime:{value:0}, uBump:{value:num('bump', 0.30)},
+      uGrid:{value: num('sub', S.PLATE_GRID * 13)},
+      uGround:{value: num('ground', 0.80)},
+    },
+    vertexShader: S.PLANET_VERT, fragmentShader: S.PLANET_FRAG, fog:false, vertexColors:true,
+  });
+  const t0 = performance.now();
+  const geo = S.plateSphere(192, 120);
+  window.__buildMs = Math.round(performance.now() - t0);
+  window.__tris = geo.attributes.position.count / 3;
+  ground = new THREE.Mesh(geo, mat);
+  ground.scale.setScalar(R);
+  ground.rotation.z = Math.PI / 2;
+  scene.add(ground);
+  return ground;
+}
+
+function pose(az, el, dist){
+  const a = az * Math.PI/180, e = el * Math.PI/180, d = R * dist;
+  camera.position.set(d*Math.cos(e)*Math.sin(a), d*Math.sin(e), d*Math.cos(e)*Math.cos(a));
+  camera.lookAt(0,0,0);
+}
+
+function resize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+const world = Q.get('world') || 'forge';
+build(world);
+resize();
+pose(num('az', 0), num('el', 6), num('dist', 2.3));
+
+function frame(t){
+  if(mat){ mat.uniforms.uTime.value = t/1000; mat.uniforms.uCam.value.copy(camera.position); }
+  renderer.render(scene, camera);
+  document.getElementById('hud').textContent =
+    world.toUpperCase() + '   grid ' + S.PLATE_GRID + '  amp ' + S.PLATE_AMP +
+    '  steps ' + S.PLATE_STEPS + '  trench ' + S.TRENCH_W +
+    '\nbump ' + mat.uniforms.uBump.value + '  exposure ' + renderer.toneMappingExposure +
+    '\n' + window.__tris.toLocaleString() + ' tris   built in ' + window.__buildMs + ' ms' +
+    '   ' + renderer.info.render.calls + ' calls';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* Render every world at one pose into a single contact sheet - RJ: "show me all of the cybertrons
+   and show me all the lighter variations you have". Offscreen at a fixed size so the six panels are
+   comparable; the page then swaps to a grid of the resulting images. */
+/* Save the current frame through tools/shotserver.py - see its header for why a page saving its
+   own pixels beats screenshotting a pane that may not be painting. */
+window.save = async function(name){
+  renderer.render(scene, camera);
+  const r = await fetch('/_shot/' + name + '.png', { method:'PUT', body: canvas.toDataURL('image/png') });
+  return r.ok ? (await r.text()).trim() : ('FAILED ' + r.status);
+};
+
+window.contactSheet = async function(opts){
+  opts = opts || {};
+  const names = opts.worlds || Object.keys(S.WORLDS);
+  const w = opts.w || 640, h = opts.h || 400;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+  pose(opts.az || 0, opts.el === undefined ? 6 : opts.el, opts.dist || 2.3);
+  const host = document.getElementById('sheet');
+  host.innerHTML = ''; host.style.display = 'grid';
+  document.getElementById('hud').style.display = 'none';
+  for(const n of names){
+    build(n);
+    mat.uniforms.uCam.value.copy(camera.position);
+    mat.uniforms.uTime.value = 3.2;
+    await new Promise(r => setTimeout(r, 260));   // let the two jpegs decode before the shot
+    renderer.render(scene, camera);
+    const fig = document.createElement('figure');
+    const img = new Image(); img.src = canvas.toDataURL('image/png');
+    const cap = document.createElement('figcaption'); cap.textContent = n.toUpperCase();
+    fig.appendChild(img); fig.appendChild(cap); host.appendChild(fig);
+  }
+  canvas.style.display = 'none';
+  return names.length + ' worlds';
+};
+if(Q.get('sheet')) addEventListener('load', () => setTimeout(() => window.contactSheet({}), 900));
+</script>
