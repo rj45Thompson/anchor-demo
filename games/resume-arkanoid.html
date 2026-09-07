@@ -342,16 +342,18 @@ const glyphCache = new Map();
 function glyphTexture(ch, tone, kind){
   const key = ch + "|" + tone + "|" + kind;
   if(glyphCache.has(key)) return glyphCache.get(key);
-  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const S = 256;                                   // was 64 - R1: 4x texel density kills the up-close glyph blur (cached ~few-hundred combos, cheap)
+  const c = document.createElement("canvas"); c.width = c.height = S;
   const g = c.getContext("2d");
-  g.clearRect(0,0,64,64);
+  g.clearRect(0,0,S,S);
   const col = kind==="head" ? "#ffffff" : (kind==="detail" ? "#9fc4de" : (TONES_HEX[tone]||"#cfe6ff"));
-  g.font = (kind==="head" ? "bold 46px" : "bold 40px") + " ui-monospace, Menlo, Consolas, monospace";
+  g.font = (kind==="head" ? "bold 184px" : "bold 160px") + " ui-monospace, Menlo, Consolas, monospace";  // 46/40 x4
   g.textAlign="center"; g.textBaseline="middle";
-  g.shadowColor = col; g.shadowBlur = 14;
-  g.fillStyle = col; g.fillText(ch, 32, 34);
-  g.shadowBlur = 0; g.fillText(ch, 32, 34);
+  g.shadowColor = col; g.shadowBlur = 56;          // 14 x4, so the glow reads the same at the higher res
+  g.fillStyle = col; g.fillText(ch, S/2, S*0.53);
+  g.shadowBlur = 0; g.fillText(ch, S/2, S*0.53);
   const t = new THREE.Texture(c); t.needsUpdate = true;
+  t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.anisotropy = 8;  // letters ride a 0.85 rad tilt - anisotropy genuinely helps
   glyphCache.set(key, t); return t;
 }
 
