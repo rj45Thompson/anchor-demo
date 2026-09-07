@@ -78,18 +78,20 @@ EARLIER = ("<b>Earlier:</b> Max Integration, project lead on a Win32 CRM (2004) 
            "Electronic Arts, QA on NHL 98, Need for Speed, Warcraft II (1996-97)")
 
 CURRENT = [
-    ("Tami - HD-2D tactics RPG in Unity, engine and tooling", "2025 - present",
-     "A solo-built tactics RPG in the vein of <b>Wandering Sword</b> and <b>Octopath Traveler 2</b>: "
-     "pixel-art units in a lit 3D world with real shadows, tilt-shift and bloom, fighting on a grid "
-     "with an 18-element synergy system driven from the design spreadsheet. The standout is "
-     "<b>Block Painter</b>, a rewrite of the Unity level workflow: one runtime engine behind an "
-     "editor window and an in-game painter, brushes as config files a registry discovers, live "
-     "preview before bake, four biomes and <b>326</b> ready prefabs, palettes that withhold broken "
-     "assets and say so. A designer prototypes and duplicates maps without touching the raw Unity "
-     "editor. Around it: a VFX authoring tool fed from the same sheets, an HTTP bridge of <b>132</b> "
-     "routes so scripts and AI agents drive the editor and screenshot any panel headlessly, a "
-     "<b>1,694-test</b> EditMode suite, and a Shuriken to Niagara converter (<b>65 of 65</b> emitters "
-     "port structurally; the look does not, and the write-up says why)."),
+    # Rewritten 2026-09-06 (RJ: "it's odd as fuck"). The old entry was a devlog paragraph - it
+    # led with genre comparisons, and spent its words on asides a hiring manager cannot use.
+    # This one leads with the role, names the tools built, and keeps only checkable numbers.
+    ("Tami - Unity tactics RPG: gameplay, editor tooling, pipeline", "2025 - present",
+     "Solo design and development in Unity: grid-based tactical combat, an <b>18-element</b> type "
+     "and synergy system generated from the design spreadsheet, and pixel-art units rendered in a "
+     "lit 3D world. Built <b>Block Painter</b>, a level-authoring toolset replacing Unity's terrain "
+     "and tile workflow - one runtime engine driving both an editor window and an in-game painter, "
+     "extensible brushes discovered from config assets, live preview before bake, and <b>326</b> "
+     "prefabs across four biomes - so designers build and iterate maps without opening the raw "
+     "Unity editor. Also built a VFX authoring tool driven from the same spreadsheets, a "
+     "<b>132-route</b> HTTP bridge that lets scripts and AI agents drive the editor and capture UI "
+     "headlessly, a <b>1,694-test</b> automated suite, and a Shuriken-to-Niagara converter that "
+     "ports all <b>65</b> emitters into Unreal."),
     ("Verification and calibration for AI systems", "2025 - present",
      "A knowledge engine with <b>no neural weights</b> over <b>66.4M facts</b>, running entirely "
      "in the browser: it reports a measured confidence per inference chain and abstains rather "
