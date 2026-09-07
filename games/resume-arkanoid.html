@@ -767,6 +767,46 @@ function baseCamera(){
   return _baseCam;
 }
 
+// ---- THEATRICAL INTRO (RJ R6-R9: "the fly-in intro to the planet and the whole resume, then the
+// plane flies back and attacks the flank"). A camera-ONLY pre-roll: reset() has already built the
+// exact play state, so the intro just flies the eye along a keyframed path that ENDS at rig 0
+// (CRAWL); then state='play' hands off with no jump (camMode 0, camBlend 1, camLook already there).
+// Skippable by any key or click; shown once per browser (localStorage). If anything here fails, the
+// worst case is state never leaves 'intro' - so the skip path (any key) is the guaranteed escape,
+// and endIntro() reaches the SAME state a cold start reaches.
+let introFrames = null, introT = 0;
+const _iiP = new THREE.Vector3(), _iiP2 = new THREE.Vector3(), _iiL = new THREE.Vector3(), _iiL2 = new THREE.Vector3();
+function introSeen(){ try { return localStorage.getItem('bx_intro_seen') === '1'; } catch(e){ return false; } }
+function buildIntroFrames(){
+  const base = baseCamera(); const p = base.position, L = CAM_MODES[0].look;
+  // R6 fly-in: start far out and high so the planet and the whole resume sit in one frame, then
+  // ease down into the CRAWL pose. (R7 reveal and R8 attack add keyframes in between later.)
+  return [
+    { t: 0.0, pos: [p.x, p.y - 18, p.z + 118], look: [0, -10, -24] },
+    { t: 3.4, pos: [p.x, p.y,      p.z       ], look: [L[0], L[1], L[2]] },
+  ];
+}
+function startIntro(){ introFrames = buildIntroFrames(); introT = 0; camMode = 0; camBlend = 1; state = 'intro'; }
+function runIntro(dt){
+  if(!introFrames){ endIntro(); return; }
+  introT += dt;
+  const F = introFrames, endF = F[F.length - 1];
+  if(introT >= endF.t){ endIntro(); return; }
+  let a = F[0], b = F[1];
+  for(let i = 0; i < F.length - 1; i++){ if(introT <= F[i+1].t){ a = F[i]; b = F[i+1]; break; } }
+  const u = (introT - a.t) / Math.max(1e-6, b.t - a.t), e = u*u*(3 - 2*u);   // smoothstep
+  _iiP.set(a.pos[0], a.pos[1], a.pos[2]); _iiP2.set(b.pos[0], b.pos[1], b.pos[2]);
+  camera.position.lerpVectors(_iiP, _iiP2, e);
+  _iiL.set(a.look[0], a.look[1], a.look[2]); _iiL2.set(b.look[0], b.look[1], b.look[2]); _iiL.lerp(_iiL2, e);
+  camera.lookAt(_iiL); camLook.copy(_iiL);
+}
+function endIntro(){
+  try { localStorage.setItem('bx_intro_seen', '1'); } catch(e){}
+  introFrames = null; camMode = 0; camBlend = 1; state = 'play';
+  showBigHint(...BOMB_HINT(), 3.0);
+}
+function skipIntro(){ if(state === 'intro') endIntro(); }
+
 /* Everything the old ladder used to switch on now starts on. Called once per round from reset(),
    so a replay opens looking exactly like the first one did. */
 let backdrop = null;
@@ -3298,7 +3338,7 @@ function tick(now){
     }
 
     if(lives<=0) killShip();
-  }
+  } else if(state==='intro'){ runIntro(dt); }
 
   runPress(dt);
   runPlanet(dt);
@@ -3336,6 +3376,7 @@ document.addEventListener('click', e=>{
   if(e.target && e.target.id==='camBtn') nextCamera();
 });
 addEventListener('keydown', e=>{
+  if(state==='intro'){ skipIntro(); return; }   // any key skips the cutscene
   if(e.key==='f'||e.key==='F'){ goFullscreen(); return; }
   keys[e.key]=true;
   if(e.key===' '){ e.preventDefault(); fire(); }
@@ -3349,6 +3390,7 @@ addEventListener('keyup', e=>{ keys[e.key]=false; if(e.key==='Shift') shieldHeld
 // browser eats the input.
 addEventListener("contextmenu", e=>{ if(state==="play") e.preventDefault(); });
 addEventListener("mousedown", e=>{
+  if(state==='intro'){ skipIntro(); return; }   // a click skips the cutscene
   if(state!=="play") return;
   if(e.button===0){ shootHeld = true; fire(); }
   if(e.button===2){ e.preventDefault(); dropBomb(); }        // RIGHT = bomb the ground
@@ -3471,8 +3513,9 @@ document.getElementById('go').onclick = ()=>{
   document.getElementById('start').classList.add('hide');
   // START is a real click, so the audio policy is satisfied here and nowhere earlier
   if(window.AUDIO){ AUDIO.init(); AUDIO.startMusic(); }
-  reset(); state='play';
-  showBigHint(...BOMB_HINT(), 4.0);
+  reset();
+  if(introSeen()){ state='play'; showBigHint(...BOMB_HINT(), 4.0); }
+  else { startIntro(); showBigHint("A RÉSUMÉ IN ORBIT", "ANY KEY TO SKIP", 2.6); }
 };
 document.getElementById('again').onclick = ()=>{
   document.getElementById('end').classList.add('hide');
