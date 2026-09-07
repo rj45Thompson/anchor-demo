@@ -571,295 +571,269 @@ const AUDIO = (function(){
 })();
 window.AUDIO = AUDIO;
 
-/* ---------------------------------------------------------------- letter plates
-   RJ 2026-09-07: "the letters are kind of important to read since it's a resume ... put a texture
-   on top of the letter ... the block is just kind of turning, so on the flat side is where the
-   letter is drawn ... they're blocked letters and they're never going to have the contrast."
+/* ================================================================ THE LETTERS
+   RJ 2026-09-07: "for each letter there seems to be a little backdrop with little lights on it and
+   that makes it hard to see against the planet. Let's just start from scratch. I just want a
+   readable resume, that's it. We seem to be going in circles ... maybe a button I can cycle
+   through the letters."
 
-   The contrast problem was structural, not a colour choice. Every earlier letter was GEOMETRY - a
-   voxel extrusion of a 9x12 bitmap - so whatever sat behind each stroke was the planet. Green neon
-   over a bright glacier plate loses, and making the glyph brighter cannot win: the planet is lit by
-   the same key light and rises with it.
+   The circling was real and it was one mistake repeated: every previous pass was the same idea
+   tuned - a dark backing behind each character - and no amount of tuning fixes the idea. The
+   per-letter backing IS the thing being complained about.
 
-   An opaque plate wins by construction. Dark face, bright glyph, ratio fixed in the texture, no
-   longer a function of what is behind. */
-const plateCache = new Map();
-/* 0.73, which is the slab's FINAL on-screen aspect: the geometry is 0.88 x 0.92 of a cell and
-   syncMeshes scales a cell by CH_W*1.02 wide and CH_W*1.34 tall. Getting this wrong stretches
-   every glyph, and a stretched monospace letter is the exact thing that reads as "cheap". */
-const PLATE_W = 240, PLATE_H = 328;
-function letterPlate(ch, kind, turret){
-  const key = ch + "|" + kind + "|" + (turret ? 1 : 0);
-  if(plateCache.has(key)) return plateCache.get(key);
-  const c = document.createElement("canvas"); c.width = PLATE_W; c.height = PLATE_H;
-  const g = c.getContext("2d");
+   So: three treatments that differ in KIND, and a key to switch between them. Press L in game.
 
-  // ---- the plate: dark machined steel. Dark is the whole point - it is the contrast floor.
-  /* FLAT, and the same near-black as the scrim body. Not a gradient and not a lighter tile: the
-     tile is now supposed to DISAPPEAR into the strip behind it, so what you read is a row of lit
-     glyphs on one dark readout, not forty little keycaps in a tray. The gradient and the brushed
-     lines were both there to make a single character read as its own object, which is precisely
-     the thing RJ was calling out - "these letters don't work". The contrast lives in the scrim
-     now; the tile's only remaining job is to be dark and get out of the way. */
-  g.fillStyle = turret ? "#170a0c" : "#040a12";
-  g.fillRect(0, 0, PLATE_W, PLATE_H);
-  /* No border and no underline any more. Both were there to make a single character read as a
-     machined tile, and together they turned a line of text into a grid of keycaps - RJ: "these
-     letters don't work". The scrim draws the one rule the line needs, top and bottom, once. */
-  const tone = turret ? "#ff9a72" : (kind === "head" ? "#dceaff" : (kind === "detail" ? "#7fa6c8" : "#8fd7ff"));
+     PAGE     one plane per LINE. The whole line is drawn as real proportional text on one canvas,
+              white on a solid dark card. There is no per-letter object at all, so there is no
+              per-letter backdrop for the planet to shine around, and the text gets real kerning and
+              word spacing instead of a monospace grid. This is simply a readable resume.
+     OUTLINE  no backing at all. A bright glyph with a heavy dark outline that hugs its own shape -
+              what every subtitle does. It works because the darkening follows the LETTER instead of
+              sitting in a rectangle around it.
+     NEON     the glyph wins on luminance: very bright, into the bloom, over a soft dark halo the
+              shape of the letter. Holds over anything without a card.
 
-  /* ---- the glyph, and it is now the ONLY bright thing on the tile. A faint bloom of the line's
-     own tone is laid down first and the solid glyph goes over it, so the character reads as lit
-     rather than painted - that is the "cool" half, and it costs one extra fill because the shadow
-     is the canvas's own. */
-  const face = turret ? "#ffd8c4" : (kind === "detail" ? "#dcecff" : "#ffffff");
-  g.font = "bold " + Math.round(PLATE_H * 0.70) + "px ui-monospace, Menlo, Consolas, monospace";
-  g.textAlign = "center"; g.textBaseline = "middle";
-  /* The hard outline is the single biggest legibility win on a lit 3D object: without it the
-     letter's edge dissolves into the plate wherever the key light lands. Stroked first, filled
-     over, so the outline sits entirely outside the glyph's own shape. */
-  g.lineJoin = "round"; g.lineWidth = 16; g.strokeStyle = "#010306";
-  g.strokeText(ch, PLATE_W / 2, PLATE_H * 0.47);
-  // the lit halo: the glyph's own tone, blurred, hugging the letter's SHAPE rather than a box
-  g.shadowColor = tone; g.shadowBlur = 26;
-  g.fillStyle = tone; g.fillText(ch, PLATE_W / 2, PLATE_H * 0.47);
-  g.shadowBlur = 0;
-  g.fillStyle = face;
-  g.fillText(ch, PLATE_W / 2, PLATE_H * 0.47);
+   Hit detection never looks at a mesh - runBullets works on L.x / line.y / L.arrive - so PAGE can
+   hide every per-letter mesh and shooting is unaffected. Checked before this was written. */
+const LETTER_STYLES = [
+  { key:'page',    label:'PAGE - one printed line' },
+  { key:'outline', label:'OUTLINE - dark outline, no card' },
+  { key:'neon',    label:'NEON - self-lit glyph' },
+];
+let letterStyle = 0;
+try { const v = localStorage.getItem('bx_letter_style'); if(v !== null) letterStyle = Math.max(0, Math.min(LETTER_STYLES.length-1, +v)); } catch(e){}
+function styleKey(){ return LETTER_STYLES[letterStyle].key; }
+function cycleLetterStyle(){
+  letterStyle = (letterStyle + 1) % LETTER_STYLES.length;
+  try { localStorage.setItem('bx_letter_style', String(letterStyle)); } catch(e){}
+  resetLetterVisuals();
+  banner('LETTERS: ' + LETTER_STYLES[letterStyle].label);
+}
 
+/* ---- the type. One place, so all three styles share a face and only differ in TREATMENT. A
+   proportional face, not monospace: monospace is what made every previous version read as a grid
+   of tiles rather than as words. */
+const FACE = '700 {SIZE}px "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif';
+const face = px => FACE.replace('{SIZE}', px);
+function toneOf(kind, tone, turret){
+  if(turret) return '#ff9a72';
+  return kind === 'head' ? '#ffffff' : (kind === 'detail' ? '#bcd6ea' : (TONES_HEX[tone] || '#cfe6ff'));
+}
+
+/* ---------------------------------------------------------------- PAGE: one card per line */
+const PAGE_H = 128;                      // canvas pixels per line; width follows the cell count
+function pageTexture(line){
+  /* Drawn per CELL, not as a run of text. Every letter is a target at x = -w/2 + ci*CH_W + CH_W/2
+     (see buildBoard), so text laid out by the canvas's own metrics would drift away from the
+     hitboxes you are shooting at - it did on the first attempt, and it also silently dropped every
+     space, because spaces are not targets and never enter line.letters at all. Reading the row's
+     own text and masking broken characters by their cell index fixes both.
+
+     Redrawn only when a character is shot, never per frame. */
+  const n = Math.max(1, line.text.length);
+  // 1.55, not 1.30: at 1.30 the card was shorter than the glyphs it carried, so the planet showed
+  // above and below every line and the strip stopped reading as a continuous ground.
+  const H = PAGE_H, cell = H / 1.55;
+  const W = Math.max(8, Math.round(cell * n));
+  const broken = new Set(line.letters.filter(L => L.broken).map(L => L.ci));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+
+  /* The card: one continuous dark strip for the WHOLE line, fading out at each end. This is the
+     whole point of this style - there is no per-character backdrop for the planet's lights to
+     shine around, because there are no per-character objects. */
+  const fade = Math.min(0.10, 28 / W);
+  const grd = g.createLinearGradient(0, 0, W, 0);
+  grd.addColorStop(0, 'rgba(3,6,11,0)');
+  grd.addColorStop(fade, 'rgba(3,6,11,0.995)');
+  grd.addColorStop(1 - fade, 'rgba(3,6,11,0.995)');
+  grd.addColorStop(1, 'rgba(3,6,11,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, W, H);
+
+  // one baseline rule for the line, in its own tone - not one box per letter
+  const tone = toneOf(line.kind, line.tone, false);
+  // quiet. At 0.5 the rule was brighter than some of the text and read as the main event.
+  g.globalAlpha = 0.26; g.fillStyle = tone;
+  g.fillRect(W * fade, H - 7, W * (1 - fade * 2), 2);
+  g.globalAlpha = 1;
+
+  const size = Math.round(H * 0.52);
+  g.font = face(size);
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = line.kind === 'head' ? '#ffffff' : (line.kind === 'detail' ? '#cfe0ee' : '#f0f7ff');
+  for(let ci = 0; ci < n; ci++){
+    const ch = line.text[ci];
+    if(ch === ' ' || broken.has(ci)) continue;
+    g.fillText(ch, (ci + 0.5) * cell, H * 0.45);
+  }
   const t = new THREE.CanvasTexture(c);
+  /* NO MIPMAPS. This texture is about 2600x128 - twenty to one - and it is seen at a ~49 degree
+     tilt, so the vertical minification is what picks the mip level: level 3 is 16 pixels tall and
+     the whole line of text has collapsed into horizontal bands. That is what those bright streaks
+     across every card were. Isolated by hiding the planet (they stayed) and then dumping the
+     canvas itself (it was clean) - the texture was never the problem, the sampling was.
+     Anisotropy raises the bar but cannot fix a 20:1 texture at a grazing angle; dropping the mip
+     chain does, and the text is large on screen so what it costs in aliasing the composer's MSAA
+     absorbs. */
+  t.generateMipmaps = false;
+  t.minFilter = THREE.LinearFilter; t.magFilter = THREE.LinearFilter;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return { tex: t, cells: n };
+}
+
+/* ---------------------------------------------------------------- OUTLINE and NEON: per glyph */
+const glyphCache = new Map();
+const GW = 192, GH = 232;
+function glyphTexture(ch, kind, tone, turret, style){
+  const key = ch + '|' + kind + '|' + tone + '|' + (turret?1:0) + '|' + style;
+  if(glyphCache.has(key)) return glyphCache.get(key);
+  const c = document.createElement('canvas'); c.width = GW; c.height = GH;
+  const g = c.getContext('2d');
+  const col = toneOf(kind, tone, turret);
+  const size = Math.round(GH * 0.70);
+  g.font = face(size); g.textAlign = 'center'; g.textBaseline = 'middle';
+  const cx = GW / 2, cy = GH * 0.48;
+  if(style === 'outline'){
+    /* The subtitle solution. A heavy dark stroke around the glyph, then the fill over it: the
+       darkening follows the letter's OWN SHAPE, so there is no rectangle for the planet's lights
+       to sit beside. Stroked before filling so the outline stays entirely outside the letterform. */
+    g.lineJoin = 'round'; g.lineWidth = Math.round(size * 0.30); g.strokeStyle = 'rgba(2,4,8,0.96)';
+    g.strokeText(ch, cx, cy);
+    g.lineWidth = Math.round(size * 0.13); g.strokeStyle = 'rgba(2,4,8,1)';
+    g.strokeText(ch, cx, cy);
+    g.fillStyle = turret ? '#ffd0b4' : '#ffffff';
+    g.fillText(ch, cx, cy);
+  } else {
+    /* NEON. A soft dark halo the shape of the letter goes down first (a black shadow, blurred),
+       which buys local contrast without a card; then the glyph is drawn twice - once as a coloured
+       bloom, once solid and near-white - so it is genuinely brighter than anything behind it. */
+    g.shadowColor = 'rgba(0,0,0,0.95)'; g.shadowBlur = 26;
+    g.fillStyle = 'rgba(0,0,0,0.95)'; g.fillText(ch, cx, cy);
+    g.fillText(ch, cx, cy);
+    g.shadowColor = col; g.shadowBlur = 22;
+    g.fillStyle = col; g.fillText(ch, cx, cy);
+    g.shadowBlur = 0;
+    g.fillStyle = turret ? '#ffe2d4' : '#ffffff';
+    g.fillText(ch, cx, cy);
+  }
+  const t = new THREE.CanvasTexture(c);
+  // glyphs KEEP their mip chain: 192x232 is nearly square, so it minifies evenly and mipmaps are
+  // doing their job rather than collapsing one axis (unlike the page cards above).
   t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
-  t.anisotropy = 8;                       // the letters ride a 0.85 rad tilt; this genuinely helps
-  plateCache.set(key, t);
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  glyphCache.set(key, t);
   return t;
 }
 
-const PLATE_VERT = `
-  varying vec2 vUv; varying vec3 vN; varying vec3 vNv;
-  void main(){
-    vUv = uv;
-    vN = normal;                                  // object space: which FACE of the slab this is
-    vNv = normalize(normalMatrix * normal);       // view space: for the shading
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
+/* One material for all of it: a camera-facing card with an alpha texture. No box, no bevel, no
+   sides - a slab was only ever there to carry a backdrop, and the backdrop is what was wrong. */
+const CARD_VERT = `
+  varying vec2 vUv;
+  void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
 `;
-const PLATE_FRAG = `
+const CARD_FRAG = `
   uniform sampler2D map;
-  uniform vec3 uEdge;        // the slab's own metal, and the colour its bevels catch
-  uniform float uHot;        // 0..1 proximity to the firing line
+  uniform float uGlow;       // how hard the bright part burns
   uniform float uDissolve;   // 0 intact .. 1 gone
-  uniform float uGlow;       // how hard the glyph burns. This is the "letters well lit" knob.
-  varying vec2 vUv; varying vec3 vN; varying vec3 vNv;
+  uniform float uFade;       // arrival / departure
+  varying vec2 vUv;
   float hash(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
   void main(){
-    /* One material, one draw call, branching on the face. A BoxGeometry material array would put
-       the plate on the +z group and metal on the other five - correct, and twice the draw calls
-       with about two hundred letters on screen. */
-    if(vN.z < 0.5){
-      // the extrusion: dark metal, shaded by facing so the slab has real form as it turns
-      float sh = 0.20 + 0.34 * max(0.0, vNv.y) + 0.16 * abs(vNv.x);
-      vec3 side = uEdge * sh;
-      // a bright lip where a side meets the front, which is what makes it read as machined
-      side += uEdge * pow(max(0.0, vN.z + 0.5), 4.0) * 0.5;
-      gl_FragColor = vec4(side, 1.0);
-      return;
-    }
     vec4 p = texture2D(map, vUv);
-    /* sRGB -> linear on read. Every texture here is authored in sRGB - a canvas, a jpeg - and a
-       custom ShaderMaterial gets NO automatic decode: three.js only injects one for the material
-       chunks it owns, so texture2D returns the sRGB bytes as if they were linear light. The
-       renderer then applies its own linear->sRGB on output, and the result is everything washed
-       one full gamma step pale. This is why a #0d1420 plate rendered as mid grey and why the
-       planet looked bleached however far its tint was pulled down. */
+    if(p.a < 0.01) discard;
+    // sRGB -> linear. A ShaderMaterial gets no automatic decode; without this every canvas
+    // texture renders a full gamma step pale (see tools/shader_audit.py).
     p.rgb = pow(p.rgb, vec3(2.2));
-    // burn away from a noise field, so a broken letter crumbles rather than fading flat
-    float n = hash(floor(vUv * 14.0));
-    if(n < uDissolve) discard;
-    float edge = smoothstep(uDissolve, uDissolve + 0.22, n);
-
-    /* The glyph mask is DERIVED, not stored: the plate is dark and the glyph is bright by design,
-       so luminance separates them for free - no second texture and no second sampler across ~40
-       cached characters. */
     float luma = dot(p.rgb, vec3(0.299, 0.587, 0.114));
-    float glyph = smoothstep(0.34, 0.72, luma);
-
-    /* The plate takes NO lighting variation any more - it is the same flat dark as the strip it
-       sits on, and any shading gradient across it would draw the tile's own edges back out of the
-       scrim. Only the glyph responds to anything. */
-    vec3 col = p.rgb;
-    /* The glyph burns, and only the glyph. Lit slightly by facing, so a letter turning through
-       the crawl still catches a highlight and reads as a solid object rather than a decal. */
-    col += p.rgb * glyph * uGlow * (0.82 + 0.30 * max(0.0, vNv.z));
-    col += vec3(1.0, 0.42, 0.22) * uHot * glyph * 0.5;
-    col += vec3(1.0, 0.72, 0.35) * (1.0 - edge) * 1.6;   // hot ember at the dissolve front
-    gl_FragColor = vec4(col, 1.0);
+    float bright = smoothstep(0.10, 0.55, luma);          // the ink, not the dark part
+    vec3 col = p.rgb + p.rgb * bright * uGlow;
+    /* THE EMBER ONLY BURNS WHILE SOMETHING IS ACTUALLY DISSOLVING. Ungated, this was the bug that
+       has been on screen the whole time and that RJ kept describing as "a little backdrop with
+       little lights on it": at uDissolve = 0, smoothstep(0.0, 0.22, n) is still LESS THAN ONE for
+       every hash cell with n < 0.22 - about a fifth of them - so (1.0 - edge) stayed positive and
+       painted an orange band there, on every intact letter, forever. On the wide line cards those
+       cells are stretched into long horizontal strips, which is exactly the golden streaks across
+       the text. Isolated by hiding the planet, then the sprites, then everything but the cards
+       (the streaks survived all three), and by dumping the card's own canvas, which was clean. */
+    if(uDissolve > 0.001){
+      float n = hash(floor(vUv * 14.0));
+      if(n < uDissolve) discard;
+      float edge = smoothstep(uDissolve, uDissolve + 0.22, n);
+      col += vec3(1.0, 0.72, 0.35) * (1.0 - edge) * 1.6;
+    }
+    gl_FragColor = vec4(col, p.a * uFade);
   }
 `;
-/* The slab, built at UNIT size on purpose. glyphGeometry produced letterforms spanning -0.5..0.5
-   and every call site scales them by CH_W - syncMeshes uses CH_W*1.02, flyLetter CH_W*0.92 - so a
-   plate built at CH_W would be scaled by CH_W a second time. It was: letters came out 1.8x too
-   wide, overlapped into a solid mass, and the résumé was less readable than before the change, not
-   more. Unit in, existing scales unchanged. Depth is 0.42 of a cell so the turn still reads. */
-/* 0.88 x 0.92 of a cell, not a full cell. At 1.0 the plates butted edge to edge and a line of
-   text became one unbroken strip - readable, but the words stopped being words. The gap is what
-   separates characters. */
-const plateGeo = new THREE.BoxGeometry(0.88, 0.92, 0.40);
-function plateMaterial(){
+const cardGeo = new THREE.PlaneGeometry(1, 1);
+function cardMaterial(){
   return new THREE.ShaderMaterial({
-    uniforms: {
-      map: { value: null },
-      uEdge: { value: new THREE.Color(0x37506b) },
-      uHot: { value: 0 }, uDissolve: { value: 0 },
-      uGlow: { value: 0.85 },
-    },
-    vertexShader: PLATE_VERT, fragmentShader: PLATE_FRAG,
-    name: 'letter.plate',
+    uniforms: { map:{value:null}, uGlow:{value:0.8}, uDissolve:{value:0}, uFade:{value:1} },
+    vertexShader: CARD_VERT, fragmentShader: CARD_FRAG,
+    transparent: true, depthWrite: false, name: 'letter.card',
   });
 }
 
-/* ---------------------------------------------------------------- the line scrim
-   RJ 2026-09-07: "the text has a background with lights which makes it hard to see."
-
-   The per-letter plate fixed the wrong half of that. Every character was individually legible - a
-   white glyph on a dark tile always is - and the LINE still was not, because the surface under it
-   is a dense field of small bright rectangles at the same scale as the glyphs. An eye cannot pull
-   a band of text out of a field of noise when both are built from the same-sized bright shapes; it
-   ends up hunting letter by letter. More per-character contrast cannot fix that, which is exactly
-   why the previous pass read as no change at all.
-
-   So: one dark panel per LINE, behind the letters. What subtitles have always done. It is also the
-   cool part rather than a compromise - a dark readout strip with a lit rule top and bottom, corner
-   notches and a scan sweep travelling along it is a HUD, and it looks deliberate in a way that a
-   row of little keycaps never did. */
-/* The strip has to RIDE THE CYLINDER. Every letter sits at cylZ(x) = x*x/(2*CYL_R), and over a
-   line spanning +/-14 units that is 2.45 units of depth - a flat quad behind a curved row of
-   letters pokes through in the middle and sinks away at the ends, which is exactly what the first
-   two passes looked like: a bar that never lined up with its own text. The same curve is applied
-   here in the vertex shader, so the strip is the surface the letters are standing on. */
-const SCRIM_VERT = `
-  uniform float uW;      // the strip's world width
-  uniform float uCx;     // its centre in board x
-  uniform float uR;      // CYL_R, handed in so the curve cannot drift from the letters'
-  varying vec2 vUv;
-  void main(){
-    vUv = uv;
-    vec3 p = position;
-    float x = uCx + p.x * uW;                  // p.x is -0.5..0.5 on a unit plane, scaled by uW
-    /* NO division by uW here. The first version divided, reasoning that the mesh is scaled in x -
-       but the displacement is in Z, and the mesh's z scale is 1, so dividing made the curve about
-       sixty times too shallow and the strip stayed flat. Measured: a letter at the end of a line
-       sits at local z +10.39 while the strip's own vertices were reaching about +0.17. */
-    p.z += (x * x - uCx * uCx) / (2.0 * uR);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
-  }
-`;
-const SCRIM_FRAG = `
-  uniform float uTime;      // for the sweep
-  uniform float uAspect;    // width / height in world units, so notches stay square on any line
-  uniform float uAlpha;     // the line fades out as it is cleared
-  uniform vec3  uTone;      // the line's own colour, on the rules only
-  varying vec2 vUv;
-  void main(){
-    vec2 p = vUv;
-    // the body: darkest in the middle of the strip, easing off at the very ends so a line does
-    // not stop with a hard vertical edge in mid-air
-    float endFade = smoothstep(0.0, 0.035, p.x) * smoothstep(1.0, 0.965, p.x);
-    float body = 0.86 * endFade;
-
-    // the rules: a bright hairline top and bottom. This is what makes it read as an instrument
-    // panel instead of a grey box behind some text.
-    /* A strong BASELINE and a faint top edge, rather than two equal rules. Two matching bright
-       lines boxed every line of text and put the eye on the box; a baseline sits under the words
-       the way a rule under a heading does, and reads as typography instead of as a container. */
-    float rule = smoothstep(0.045, 0.0, abs(p.y - 0.035)) * 1.0
-               + smoothstep(0.030, 0.0, abs(p.y - 0.975)) * 0.32;
-    rule *= endFade;
-
-    // corner notches: the strip is cut back at its four corners, the cheapest possible "this is a
-    // designed element" signal
-    float nx = min(p.x, 1.0 - p.x) * uAspect;
-    float ny = min(p.y, 1.0 - p.y);
-    float notch = step(nx + ny * 0.9, 0.055);
-    body *= 1.0 - notch;
-    rule *= 1.0 - notch;
-
-    // a scan sweep, slow and narrow, travelling left to right along the strip
-    float sw = fract(uTime * 0.22 + p.y * 0.05);
-    float sweep = smoothstep(0.055, 0.0, abs(p.x - sw)) * 0.5 * endFade;
-
-    vec3 col = vec3(0.008, 0.013, 0.022) * body
-             + uTone * rule * 0.75
-             + uTone * sweep * 0.45;
-    /* NEARLY OPAQUE. At 0.90 the planet's lights read straight through the strip and the scrim
-       did the job by half - the text was better and still sat in the field. A scrim that you can
-       see the noise through is not a scrim. */
-    float a = (body * 0.985 + rule * 0.95 + sweep * 0.45) * uAlpha;
-    gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
-  }
-`;
-// 32 segments across, so the cylinder curve above is smooth rather than a chord
-const scrimGeo = new THREE.PlaneGeometry(1, 1, 32, 1);
-const scrimPool = [];
-function takeScrim(){
-  if(scrimPool.length){ const s = scrimPool.pop(); s.visible = true; return s; }
-  const m = new THREE.Mesh(scrimGeo, new THREE.ShaderMaterial({
-    uniforms: { uTime:{value:0}, uAspect:{value:8}, uAlpha:{value:1},
-                uW:{value:8}, uCx:{value:0}, uR:{value:CYL_R},
-                uTone:{value:new THREE.Color(0x8fd7ff)} },
-    vertexShader: SCRIM_VERT, fragmentShader: SCRIM_FRAG,
-    transparent: true, depthWrite: false, name: 'text.scrim',
-  }));
-  board.add(m);
-  return m;
+/* ---- PAGE mode's per-line meshes, pooled the same way the letters are */
+const pagePool = [];
+function takePage(){
+  if(pagePool.length){ const m = pagePool.pop(); m.visible = true; return m; }
+  const m = new THREE.Mesh(cardGeo, cardMaterial());
+  board.add(m); return m;
 }
-function giveScrim(s){ s.visible = false; scrimPool.push(s); }
-/* Size and place one line's scrim from the letters that are still standing. It shrinks as the line
-   is shot away, which means the strip is always exactly as long as the text left on it - a fixed
-   bar would sit there empty at the end of a line and look like a bug. */
-// tight to the text. The first pass used 1.15 / 0.62 and the strips read as wide empty trays
-// with some letters lying in them.
-// 0.26 in y left the glyphs poking out of the bottom of the strip by ~0.02 NDC on every line -
-// measured, not eyeballed. 0.62 covers the slab with a margin at the scale the camera flies.
-const SCRIM_PAD_X = 0.55, SCRIM_PAD_Y = 0.62;
-function placeScrim(line, y){
-  /* Only letters that have LANDED. Sizing the strip from a letter's target slot draws a full-width
-     bar under a line that is still flying in from the press - the top of the screen filled with
-     empty trays, which is exactly what the first pass looked like. The strip now grows with the
-     line as it types itself in. */
-  const live = line.letters.filter(L => !L.broken && L.ch !== " " && (L.arrive || 0) >= 1);
-  if(!live.length){ if(line.scrim){ giveScrim(line.scrim); line.scrim = null; } return; }
-  const s = line.scrim || (line.scrim = takeScrim());
-  let lo = Infinity, hi = -Infinity;
-  for(const L of live){ if(L.x < lo) lo = L.x; if(L.x > hi) hi = L.x; }
-  const w = (hi - lo) + CH_W + SCRIM_PAD_X * 2;
-  const h = CH_W * 1.34 + SCRIM_PAD_Y;
-  const cx = (lo + hi) / 2;
-  s.scale.set(w, h, 1);
-  /* EXACTLY the letters' own depth - no z offset at all. Any offset is a mistake here, and it
-     was measured as one: the board is tilted about 49 degrees, so pushing the strip 0.10 back in
-     board z lifted it ~0.02 NDC on screen and it sat consistently high of its own text. It does
-     not need an offset either. The letter slabs are 0.40 of a cell deep, so their front faces are
-     already ~0.37 nearer than this plane; they are opaque and drawn first, so they occlude the
-     strip exactly where they stand and it fills in behind them. */
-  s.position.set(cx, y, cylZ(cx));
-  s.rotation.set(0, 0, 0);      // the curve is in the shader now, not in a yaw of the whole strip
-  const u = s.material.uniforms;
-  u.uAspect.value = w / h;
-  u.uW.value = w; u.uCx.value = cx;
-  u.uTime.value = t;
-  // full strength once a couple of characters have landed - the strip should not be a ghost while
-  // the line types itself in, only while it is being shot away
-  const total = Math.max(1, line.letters.filter(L => L.ch !== " ").length);
-  u.uAlpha.value = Math.min(1, live.length / total * 2.2);
-  u.uTone.value.set(line.kind === "head" ? 0xdceaff
-                  : (line.kind === "detail" ? 0x7fa6c8 : (TONES[line.tone] || 0x8fd7ff)));
+function givePage(line){
+  if(!line.page) return;
+  line.page.visible = false;
+  if(line.page.material.uniforms.map.value) line.page.material.uniforms.map.value.dispose();
+  line.page.material.uniforms.map.value = null;
+  pagePool.push(line.page); line.page = null;
+  line.pageStamp = -1;
 }
+/* Place (and if the text changed, redraw) one line's card. Sized from the LINE's own extent so it
+   sits exactly where the characters would have been, and curved by riding cylZ at its centre - the
+   card is narrow enough in depth that the row's curve does not need to be modelled across it. */
+function placePage(line, y){
+  const live = line.letters.filter(L => !L.broken && L.ch !== ' ' && (L.arrive || 0) >= 1);
+  if(!live.length){ givePage(line); return; }
+  const stamp = line.letters.reduce((n, L) => n * 2 + (L.broken ? 0 : 1), 1);
+  const m = line.page || (line.page = takePage());
+  if(line.pageStamp !== stamp){
+    if(m.material.uniforms.map.value) m.material.uniforms.map.value.dispose();
+    const made = pageTexture(line);
+    m.material.uniforms.map.value = made.tex;
+    m.userData.cells = made.cells;
+    line.pageStamp = stamp;
+  }
+  /* Sized from the LINE's cell count and centred on the line, exactly as buildBoard lays the
+     targets out - not from the letters' measured extent. The card then sits over its own hitboxes
+     whatever has already been shot away, instead of sliding along as the ends are cleared. */
+  const cells = m.userData.cells || line.text.length;
+  const h = CH_W * 1.55;
+  const w = cells * CH_W;
+  const cx = 0;
+  m.scale.set(w, h, 1);
+  m.position.set(cx, y, cylZ(cx) + 0.02);
+  m.rotation.set(0, -cx / CYL_R, 0);
+  m.material.uniforms.uGlow.value = line.kind === 'head' ? 0.55 : 0.35;
+  m.material.uniforms.uFade.value = 1;
+}
+
+/* Switching style at runtime has to drop everything both systems built, or the old meshes stay in
+   the scene wearing the old textures and it looks like the button did nothing. */
+function resetLetterVisuals(){
+  lines.forEach(line => {
+    givePage(line);
+    line.letters.forEach(L => { if(L.mesh){ giveMesh(L.mesh); L.mesh = null; } });
+  });
+  glyphCache.forEach(t => t.dispose());
+  glyphCache.clear();
+}
+
 
 function makeLetterMesh(){
-  /* One slab, one material, one draw call. The character is set per letter in syncMeshes by
-     swapping the plate TEXTURE, not the geometry - so the pool really is a pool now: recycling a
-     mesh no longer means rebuilding or re-uploading anything. */
-  const m = new THREE.Mesh(plateGeo, plateMaterial());
+  /* A camera-facing CARD, not a slab. The box existed only to carry a backdrop on its front face,
+     and the backdrop is exactly what RJ has been objecting to; a plane with an alpha texture has
+     no face to catch the planet and no bevel to catch a highlight. */
+  const m = new THREE.Mesh(cardGeo, cardMaterial());
   m.visible = false; board.add(m); return m;
 }
 function takeMesh(){ return pool.length ? pool.pop() : makeLetterMesh(); }
@@ -1738,38 +1712,24 @@ function syncMeshes(){
     let rowSlot = -1;
     const y = line.y - crawl;
     const near = y < viewEnterY && y > VIEW_BOT-2;
-    if(near) placeScrim(line, y);
-    else if(line.scrim){ giveScrim(line.scrim); line.scrim = null; }
+    /* PAGE draws the whole line as one card and keeps NO per-letter mesh; the other two draw a
+       card per glyph and no line card. The per-letter loop below still runs in page mode, because
+       it is what launches a letter from the press and advances its arrival - the mesh is simply
+       kept invisible. */
+    const style = styleKey();
+    if(style === 'page' && near) placePage(line, y);
+    else if(line.page) givePage(line);
     line.letters.forEach(L=>{
       if(L.broken){ if(L.mesh){ giveMesh(L.mesh); L.mesh=null; } return; }
       if(near && !L.mesh){
         const m = takeMesh();
-        const base = new THREE.Color(
-          line.kind==="head" ? 0xffffff : (line.kind==="detail" ? 0x9fc4de : (TONES[line.tone]||0xcfe6ff)));
-        m.material.uniforms.map.value = letterPlate(L.ch, line.kind, !!L.turret);
-        // an armed letter is tinted hot and glows: you must be able to see which ones shoot back
+        m.material.uniforms.map.value =
+          glyphTexture(L.ch, line.kind, line.tone, !!L.turret, style === 'neon' ? 'neon' : 'outline');
+        // an armed letter burns hotter: you must be able to see which ones shoot back
         if(L.turret){
-          m.material.uniforms.uEdge.value.set(0x8a3a2c);
-          m.material.uniforms.uGlow.value = 1.15;
+          m.material.uniforms.uGlow.value = 1.2;
         } else {
-          /* RJ: "make the text cooler." A glyph is not a painted block any more: it is a lit
-             sign. Near-white face so it stays legible over any plating, its own tone carried in
-             the emissive so the colour survives the dark side, and a hard low-roughness sheen so
-             the key light draws a moving edge highlight down the extrusion as the crawl moves.
-             RJ then asked for NEON, so it went further: a dark body carrying a saturated emissive
-             in the glyph's own tone, which is how a lit tube reads - the colour comes from the
-             letter itself rather than from whatever light reaches it, so it holds against dark
-             plating and never washes out against a bright highlight. */
-          /* RJ: "glowing green and highly visible neon emmison". Every non-turret glyph now burns the same
-             green - a sign reads because it is ONE colour at high intensity, not because each line has its own
-             tint. The line's own tone survives as a faint wash in the body, so head/detail/tone lines still
-             differ, but what your eye gets is green neon. */
-          /* The slab's EDGES take the line's own tone - that is where the colour lives now, on
-             the bevels, where it cannot compete with the glyph for the reader's eye. The face
-             stays dark and the character stays near-white, which is what makes a résumé line
-             legible over a bright plate and a dark trench alike. */
-          m.material.uniforms.uEdge.value.copy(base).multiplyScalar(0.42);
-          m.material.uniforms.uGlow.value = line.kind === "head" ? 1.05 : 0.85;
+          m.material.uniforms.uGlow.value = line.kind === "head" ? 0.95 : 0.75;
         }
         m.rotation.set(0,0,0);
         m.visible = false; L.mesh = m;
@@ -1798,16 +1758,21 @@ function syncMeshes(){
            the way raising a whole material's emissive did. */
         M.material.uniforms.uGlow.value =
           (e >= 4 ? (1.05 + reveal * 0.25) : 0.72 + e * 0.06) + L.flash * 0.9;
+        /* PAGE renders the line as one card, so the per-letter mesh must stay invisible - but it
+           still exists and still flies in from the press, because that is what advances L.arrive,
+           and placePage only counts characters that have ARRIVED. Hiding it here rather than
+           skipping the whole branch keeps one code path for the flight. */
+        if(style === 'page' && L.arrive >= 1){ M.visible = false; return; }
         const S = CH_W*1.02, SY = CH_W*1.34;   // RJ: "it can be like a little bit larger letters"
         if(L.dissolve > 0){
           // struck letters SPIN OUT: tumble, drift and shrink, rather than fading where they sat
           const k = L.dissolve, sc = Math.max(0.001, 1-k);
           M.rotation.set(k*7.5*L.spinX, k*6.0*L.spinY, k*4.2);
-          M.scale.set(S*sc, SY*sc, S*sc);
+          M.scale.set(S*sc, SY*sc, 1);
           M.position.set(L.x + L.spinX*k*2.2, y + k*2.6, k*3.0);
         } else {
-          M.rotation.set(0,0,0);
-          M.scale.set(S, SY, S);
+          M.rotation.set(0, -L.x / CYL_R, 0);   // face the camera across the cylinder
+          M.scale.set(S, SY, 1);
         }
       }
     });
@@ -3619,6 +3584,11 @@ document.addEventListener('click', e=>{
   if(e.target && e.target.id==='camBtn') nextCamera();
 });
 addEventListener('keydown', e=>{
+  /* L cycles the letter treatment. RJ: "maybe I have a button that I can cycle through the letters,
+     since I keep asking for letters and they're absolute AI slop." Three that differ in kind, not
+     in degree; the choice is kept in localStorage so it survives a reload and so saying which one
+     won does not depend on remembering an index. */
+  if(e.key === 'l' || e.key === 'L'){ cycleLetterStyle(); return; }
   if(state==='intro'){ skipIntro(); return; }   // any key skips the cutscene
   if(e.key==='f'||e.key==='F'){ goFullscreen(); return; }
   keys[e.key]=true;
