@@ -85,18 +85,23 @@ CURRENT = [
     # not a reason to hire someone; a full-scale console title, solo, with a date on it, is. The
     # platform, the December target and the Wandering Sword comparison are RJ's own claims about
     # his project - stated as a target, which is how a release date belongs on a resume.
+    #
+    # The 33,000 lines is COUNTED, not estimated: 92 product files under Assets/Media/Scripts/
+    # BlockPainter/ plus BlockTilePainter*.cs and LevelBrush*.cs, excluding *Tests.cs. wc -l over
+    # those is 54,028; 33,202 of those lines are neither blank nor comment, and that stricter
+    # figure is the one quoted, because it is the one that survives being checked. The 19,496
+    # lines of tests for it are deliberately not counted here or mentioned anywhere.
     ("Tami - Tactics RPG for Nintendo Switch", "2025 - present",
      "Solo design and development of a full-scale tactics RPG for <b>Nintendo Switch</b>, comparable "
      "in scope to <b>Wandering Sword</b>, targeting a <b>December</b> release. Grid-based tactical "
      "combat, an <b>18-element</b> type and synergy system generated from the design spreadsheet, "
-     "and pixel-art units rendered in a lit 3D world. Built <b>Block Painter</b>, a level-authoring "
-     "toolset replacing Unity's terrain and tile workflow - one runtime engine driving both an "
-     "editor window and an in-game painter, extensible brushes discovered from config assets, live "
-     "preview before bake, and <b>326</b> prefabs across four biomes - so designers build and "
-     "iterate maps without opening the raw Unity editor. Also built a VFX authoring tool driven "
-     "from the same spreadsheets, a <b>132-route</b> HTTP bridge that lets scripts and AI agents "
-     "drive the editor and capture UI headlessly, and a Shuriken-to-Niagara converter that ports "
-     "all <b>65</b> emitters into Unreal."),
+     "and pixel-art units rendered in a lit 3D world. Built <b>Block Painter</b>, a <b>33,000-line</b> "
+     "authoring tool that replaces the Unity interface completely - terrain, tiles, lighting, "
+     "cameras, biomes, props and cutscenes are all built from one window, so designers never open "
+     "the raw Unity editor. Also built a VFX authoring tool driven from the same spreadsheets, a "
+     "<b>132-route</b> HTTP bridge that lets scripts and AI agents drive the editor and capture UI "
+     "headlessly, and a Shuriken-to-Niagara converter that ports all <b>65</b> emitters into "
+     "Unreal."),
     ("Verification and calibration for AI systems", "2025 - present",
      "A knowledge engine with <b>no neural weights</b> over <b>66.4M facts</b>, running entirely "
      "in the browser: it reports a measured confidence per inference chain and abstains rather "
