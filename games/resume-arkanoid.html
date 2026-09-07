@@ -2934,12 +2934,21 @@ function glowSprite(colorHex){
 function freeGlow(s){ if(s.parent) s.parent.remove(s); s.visible = false; _glowPool.push(s); }
 
 function spark(pos, colorHex, n){
+  // R13 (RJ: "make all effects cooler"): a bright white central POP, then the coloured shower. The
+  // flash is what makes an impact read as an impact - it blooms for a frame or two and is gone. Its
+  // size scales with the burst so a letter-break pops small and a bomb pops big. Pooled like the rest.
+  const flash = glowSprite(0xffffff);
+  flash.position.copy(pos);
+  flash.userData.v = new THREE.Vector3(0, 0, 0);
+  flash.userData.life = 1;
+  flash.userData.size = 1.1 + n * 0.035;
+  scene.add(flash); bits.push(flash);
   for(let i=0;i<n;i++){
     const s = glowSprite(colorHex);
     s.position.copy(pos);
-    s.userData.v = new THREE.Vector3((Math.random()-.5)*.5,(Math.random()-.5)*.5,(Math.random()-.5)*.4);
+    s.userData.v = new THREE.Vector3((Math.random()-.5)*.75,(Math.random()-.5)*.75,(Math.random()-.5)*.5);  // snappier spread than R11's .5/.4
     s.userData.life = 1;
-    s.userData.size = 0.55 + Math.random()*0.55;   // a retro glow reads bigger than the old tetra; keep it small
+    s.userData.size = 0.5 + Math.random()*0.6;
     scene.add(s); bits.push(s);
   }
 }
