@@ -90,6 +90,7 @@
 
   <div class="hud" id="readout"></div>
   <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
+  <button id="shieldBtn" hidden style="position:fixed;left:14px;bottom:54px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:9px;padding:12px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;touch-action:none">&#128737; SHIELD</button>
   <button id="camBtn" style="position:fixed;right:14px;top:50px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#10227; Camera (C)</button>
   <div id="bigHint" class="bighint"><b></b><small></small></div>
   <div class="hud" id="banner" style="left:0;right:0;top:88px;text-align:center;font-size:13px;font-weight:700;letter-spacing:2px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
@@ -236,7 +237,7 @@ const TONES_HEX = ['#8fd7ff','#c9b6ff','#9ff0c8','#ffd79a'];
 // ---------------------------------------------------------------- the CV, as text
 // Every line is real. Companies and dates come first, the detail is indented under them, so the
 // crawl reads like the document rather than a word cloud.
-const WRAP = 26;                      // fewer chars per line now the glyphs are bigger
+const WRAP = 23;                      // fewer chars per line now the glyphs are bigger
 function wrapWords(text, indent){
   const words = text.split(/\s+/), out = [], pre = indent || "";
   let cur = pre;
@@ -407,7 +408,12 @@ function glyphGeometry(ch){
 }
 
 // ---------------------------------------------------------------- layout + pooling
-const CH_W = 1.62, LINE_H = 3.4;   // bigger blocks - RJ
+// RJ 2026-09-06: "make sure her letters contrast to it so you can see it, letters well lit,
+// maybe slightly larger." Bigger glyphs alone do nothing: applyCam() pulls the camera back far
+// enough to fit the widest line, so wider text just moves the camera and the letters land the
+// same size on screen. WRAP comes down with the size, so the widest line stays about as wide
+// and the camera holds its distance - which is what actually makes them bigger in the picture.
+const CH_W = 1.86, LINE_H = 3.9;   // bigger blocks - RJ
 // RJ 2026-09-05: "the ship moves way too slow and now it's impossible". The blocks grew 45%
 // (CH_W 1.12 -> 1.62, cs d6bae7f) so the text band the ship has to cover grew with them, but
 // the ship kept its 26 units/s. 40 restores the old cover time with a margin; vertical up with it.
@@ -654,7 +660,7 @@ function runBigHint(dt){
   bigHintT -= dt;
   if(bigHintT <= 0){ const el = document.getElementById('bigHint'); if(el) el.classList.remove('on'); }
 }
-const BOMB_HINT = () => COARSE ? ["TAP A SECOND FINGER", "TO BOMB THE PLANET"] : ["RIGHT CLICK", "TO BOMB THE PLANET"];
+const BOMB_HINT = () => COARSE ? ["SECOND FINGER", "AIMS THE BOMB - LIFT TO DROP"] : ["RIGHT CLICK", "TO BOMB THE PLANET"];
 function banner(text){
   const el = document.getElementById("banner");
   if(!el || !text) return;
@@ -1259,8 +1265,16 @@ function syncMeshes(){
           m.material.color.set(0xff8a7a);
           m.material.emissive.set(0x5a1410);
         } else {
-          m.material.color.copy(base);
-          m.material.emissive.copy(base).multiplyScalar(0.10);
+          /* RJ: "make the text cooler." A glyph is not a painted block any more: it is a lit
+             sign. Near-white face so it stays legible over any plating, its own tone carried in
+             the emissive so the colour survives the dark side, and a hard low-roughness sheen so
+             the key light draws a moving edge highlight down the extrusion as the crawl moves.
+             RJ then asked for NEON, so it went further: a dark body carrying a saturated emissive
+             in the glyph's own tone, which is how a lit tube reads - the colour comes from the
+             letter itself rather than from whatever light reaches it, so it holds against dark
+             plating and never washes out against a bright highlight. */
+          m.material.color.copy(base).multiplyScalar(0.20);
+          m.material.emissive.copy(base).lerp(new THREE.Color(0xffffff), 0.16);
         }
         m.rotation.set(0,0,0);
         m.visible = false; L.mesh = m;
@@ -1274,10 +1288,11 @@ function syncMeshes(){
         M.position.set(L.x, y, 0);
         // era grade on a lit material: flat and matte early, metallic and glowing late
         M.material.flatShading = e < 4;
-        M.material.metalness = e >= 3 ? 0.34 : 0.0;
-        M.material.roughness = e >= 3 ? 0.40 : 0.95;
+        M.material.metalness = e >= 3 ? 0.30 : 0.0;   // enough to catch a highlight, not a mirror
+        M.material.roughness = e >= 3 ? 0.28 : 0.95;
         if(L.flash > 0) L.flash = Math.max(0, L.flash - frameDt * 2.2);   // the landing glow cools
-        M.material.emissiveIntensity = (e >= 4 ? (0.25 + reveal*0.6) : 0.05) + L.flash * 1.4;
+        // neon: the emissive IS the letter, so it runs well above 1 and the lit body barely matters
+        M.material.emissiveIntensity = (e >= 4 ? (1.7 + reveal*0.5) : 0.05) + L.flash * 1.4;
         const S = CH_W*0.92, SY = CH_W*1.22;
         if(L.dissolve > 0){
           // struck letters SPIN OUT: tumble, drift and shrink, rather than fading where they sat
@@ -1623,8 +1638,11 @@ function fibDirs(n){
 function buildPlanetDetail(){
   const g = new THREE.Group();
   const rnd = seeded(20260906);
-  const hull = new THREE.MeshStandardMaterial({ color:0x5d6675, metalness:0.92, roughness:0.34, flatShading:true, fog:false });
-  const dark = new THREE.MeshStandardMaterial({ color:0x39404b, metalness:0.88, roughness:0.5,  flatShading:true, fog:false });
+  // envMap is what makes a metal look polished rather than painted; the nebula sky is already loaded
+  const hull = new THREE.MeshStandardMaterial({ color:0x59626f, metalness:0.95, roughness:0.3, flatShading:true,
+    fog:false, envMap: sky, envMapIntensity: 0.75 });
+  const dark = new THREE.MeshStandardMaterial({ color:0x424a57, metalness:0.9, roughness:0.38, flatShading:true,
+    fog:false, envMap: sky, envMapIntensity: 0.9 });
   const lit  = new THREE.MeshBasicMaterial({ color:0x8fdcff, fog:false });
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
   const place = (mesh, i, d, w, dpt, h, lift) => {
@@ -1715,6 +1733,89 @@ function buildPlanet(){
   // a ship-length at the scale you fly. anisotropy keeps the plating readable at the limb.
   pmap.repeat.set(2, 1); pnorm.repeat.set(2, 1);
   pmap.anisotropy = pnorm.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  /* THE PLANET SHADER - RJ 2026-09-06: "make it shiny and a cool shader for the planet, make it
+     dark with lights that twinkle emissive."
+
+     A standard material could not do the last part: the twinkle has to come from the surface
+     itself, per pixel, in the dark parts of the plating and strongest on the night side. So the
+     ground gets its own program:
+       * dark steel base from the drawn map, with the normal map folded in through the sphere's
+         own tangent frame (no tangent attribute needed on a sphere - the frame is derivable);
+       * a hard specular lobe, so the plating catches the key light as a moving highlight;
+       * a reflection of the nebula cubemap, weighted by fresnel - this is what actually makes it
+         read as polished metal rather than painted metal;
+       * CITY LIGHTS: a hash per cell decides which cells are lit and how fast they blink, the
+         mask is gated to the DARK parts of the map (the canyons between plates, never the plate
+         faces), and the whole thing brightens as the surface turns away from the light. */
+  const PLANET_VERT = `
+    varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+    void main(){
+      vUv = uv;
+      vN = normalize(mat3(modelMatrix) * normal);
+      vec4 wp = modelMatrix * vec4(position, 1.0);
+      vW = wp.xyz;
+      gl_Position = projectionMatrix * viewMatrix * wp;
+    }`;
+  const PLANET_FRAG = `
+    uniform sampler2D uMap; uniform sampler2D uNorm; uniform samplerCube uEnv;
+    uniform vec3 uLight; uniform vec3 uCam; uniform vec3 uTint;
+    uniform float uTime; uniform float uBump;
+    varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+    float hash21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    void main(){
+      vec3 N = normalize(vN);
+      vec3 V = normalize(uCam - vW);
+      vec3 L = normalize(uLight);
+      vec3 alb = texture2D(uMap, vUv).rgb;
+
+      // the sphere's own tangent frame: no tangent attribute, no BufferGeometryUtils
+      vec3 nm = texture2D(uNorm, vUv).xyz * 2.0 - 1.0;
+      vec3 T = normalize(cross(vec3(0.0, 1.0, 0.0), N) + vec3(1e-5));
+      vec3 B = cross(N, T);
+      N = normalize(N + (T * nm.x + B * nm.y) * uBump);
+
+      float ndl = max(dot(N, L), 0.0);
+      float lam = ndl * 0.88 + 0.12;                 // a little wrap, so the terminator is not tar
+
+      /* RJ 2026-09-06: "the white shine of the planet makes text contrast too hard." The
+         highlight was white and strong, so the lit face went to paper under white glyphs. It is
+         weaker now and TINTED COLD - a blue-steel sheen carries "polished metal" without ever
+         reaching the white the text needs to own. */
+      vec3 H = normalize(L + V);
+      vec3 specTint = vec3(0.62, 0.78, 1.0);
+      float spec = pow(max(dot(N, H), 0.0), 110.0) * 0.55;
+      float sheen = pow(max(dot(N, H), 0.0), 16.0) * 0.10;
+
+      vec3 R = reflect(-V, N);
+      vec3 env = textureCube(uEnv, R).rgb;
+      float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+
+      // ---- twinkling city lights
+      float lum = dot(alb, vec3(0.299, 0.587, 0.114));
+      float inDark = smoothstep(0.26, 0.06, lum);     // only down in the canyons
+      vec2 cell = floor(vUv * vec2(520.0, 260.0));
+      float h = hash21(cell);
+      float on = step(0.955, h);                      // about one cell in twenty
+      float blink = 0.40 + 0.60 * sin(uTime * (1.2 + h * 7.0) + h * 62.0);
+      vec3 lampCol = mix(vec3(0.52, 0.84, 1.0), vec3(1.0, 0.70, 0.32), step(0.5, fract(h * 17.0)));
+      float night = 1.0 - ndl;
+      vec3 lamps = lampCol * on * inDark * blink * (0.30 + 1.35 * night) * 2.6;
+
+      vec3 base = alb * uTint * lam;
+      // the reflection is held to the LIMB (fresnel-weighted) so the face you read over stays dark
+      vec3 col = base + env * (0.05 + 0.42 * fres) + specTint * spec + specTint * sheen + lamps;
+      gl_FragColor = vec4(col, 1.0);
+    }`;
+  const groundMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uMap: { value: null }, uNorm: { value: null }, uEnv: { value: sky },
+      uLight: { value: new THREE.Vector3(6, -4, 14).normalize() },   // the key light, world space
+      uCam: { value: new THREE.Vector3() },
+      uTint: { value: new THREE.Color(0x63707f) },   // darker: the letters are the bright thing
+      uTime: { value: 0 }, uBump: { value: 0.55 },
+    },
+    vertexShader: PLANET_VERT, fragmentShader: PLANET_FRAG, fog: false,
+  });
   const ground = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({
     // NOT tinted up and NOT lifted by emissive: the key light already puts the lit face near
     // white, and a 0xe8eef6 tint over that washed the whole surface out to pale blue.
@@ -1722,6 +1823,9 @@ function buildPlanet(){
     // both fought it. Metal, lit, not tinted.
     map: pmap, normalMap: pnorm, normalScale: new THREE.Vector2(1.5, 1.5), color:0x9aa6b6,
     emissive:0x070b12, roughness:0.45, metalness:0.8, fog:false }));
+  groundMat.uniforms.uMap.value = pmap;
+  groundMat.uniforms.uNorm.value = pnorm;
+  ground.material = groundMat;       // the standard material above is kept only for its map setup
   ground.rotation.z = Math.PI / 2;   // texture poles onto the spin axis, so the map streams past like a globe
   planet.add(ground);
   // the atmosphere: a bigger shell seen from inside, so the limb glows and the sky-side fades
@@ -1772,7 +1876,10 @@ function placePlanet(){
   army.forEach(placeUnit);
 }
 function runPlanet(dt){
-  if(planet) planet.rotation.x += PLANET_SPIN * dt;
+  if(!planet) return;
+  planet.rotation.x += PLANET_SPIN * dt;
+  const u = planet.userData.ground.material.uniforms;
+  if(u){ u.uTime.value = t; u.uCam.value.copy(camera.position); }
 }
 
 // three.js refreshes world matrices during render. Everything below converts between the board
@@ -1949,7 +2056,8 @@ function fireFlak(u){
    figure about the point under you, always within GHOST_REACH. It is where the bomb WILL land,
    so bombing is a matter of waiting for it to drift over something worth hitting. It turns red
    and tightens when a structure is inside the blast. */
-const GHOST_REACH = 13;     // how far from beneath the ship it can wander, in surface units
+const GHOST_REACH = 13;     // how far from beneath the ship a finger can drag the sight
+const ghostAim = { x: 0, y: 0 };   // the touch offset, in surface units
 function buildGhost(){
   const g = new THREE.Group();
   const ring = new THREE.Mesh(RING_GEO, new THREE.MeshBasicMaterial({ color:0x8fe8ff, transparent:true,
@@ -1972,9 +2080,13 @@ function runGhost(dt){
   if(!ghost) ghost = buildGhost();
   ghostT += dt;
   const fr = planetFrame();
-  // a slow Lissajous about the point under the ship: it seeks, but never leaves your reach
-  const dx = Math.sin(ghostT * 0.7) * GHOST_REACH * 0.85 + Math.sin(ghostT * 1.9) * GHOST_REACH * 0.15;
-  const dy = Math.cos(ghostT * 0.53) * GHOST_REACH * 0.7 + (ship.position.y - SHIP_Y_MIN) * 1.2;
+  /* RJ 2026-09-06: "on Android the second finger controls bomb targeting; on PC just make the
+     bomb fall flat below the ship." So there is no wandering any more. With a mouse the sight is
+     pinned to the point straight under you and right-click drops there - the ship IS the aim.
+     On a touch screen a second finger steers it, relative to where that finger landed, clamped
+     into a circle of GHOST_REACH; lifting that finger drops the bomb where the sight sits. */
+  let dx = 0, dy = (ship.position.y - SHIP_Y_MIN) * 1.2;
+  if(COARSE && touch.aiming){ dx = ghostAim.x; dy += ghostAim.y; }
   ghostDir = surfaceDir(dx, dy, fr);
   onSurface(ghost, ghostDir, 0.2);
   ghost.rotation.z += dt * 0.6;
@@ -1986,7 +2098,8 @@ function runGhost(dt){
   const k = armed ? 1 + Math.sin(t * 9) * 0.06 : 1;
   ghost.userData.ring.scale.setScalar(BOMB_RADIUS * 0.5 * k);
   ghost.userData.inner.scale.setScalar((armed ? 2.4 : 1.6) * k);
-  ghost.visible = bombCool <= 0.35;                 // it blinks out while the bomb is on cooldown
+  // on a mouse it only shows while it can actually be used; on touch it shows while aiming
+  ghost.visible = bombCool <= 0.35 && (!COARSE || touch.aiming);
 }
 function dropBomb(){
   if(state !== "play" || !planet || bombCool > 0 || bombs.length >= BOMB_MAX) return;
@@ -2947,7 +3060,8 @@ addEventListener("wheel", e=>{
 // One finger on the canvas flies the ship (relative drag, consumed by tick) and holds fire,
 // a second finger raises the shield, a double-tap gouts flame. Listeners sit on the canvas
 // only, so taps on the START / PLAY AGAIN / fullscreen buttons stay ordinary clicks.
-const touch = { on:false, id:null, x:0, y:0, dx:0, dy:0, lastTap:0, tapX:0, tapY:0, moved:0 };
+const touch = { on:false, id:null, x:0, y:0, dx:0, dy:0, lastTap:0, tapX:0, tapY:0, moved:0,
+                aiming:false, aimId:null, aimX:0, aimY:0 };
 function touchPoint(e, id){
   for(const p of e.touches) if(p.identifier===id) return p;
   return e.touches[0] || null;
@@ -2961,11 +3075,24 @@ canvas.addEventListener("touchstart", e=>{
     touch.dx = touch.dy = 0; touch.moved = 0; touch.tapX = p.clientX; touch.tapY = p.clientY;
     shootHeld = true; fire();
   }
-  if(e.touches.length >= 2){ shieldHeld = true; touch.secondAt = performance.now(); }   // hold = shield
+  if(e.touches.length >= 2 && !touch.aiming){
+    // the second finger is the bomb sight: where it lands is the centre, and dragging steers
+    const p2 = e.changedTouches[0];
+    touch.aiming = true; touch.aimId = p2.identifier; touch.aimX = p2.clientX; touch.aimY = p2.clientY;
+    ghostAim.x = 0; ghostAim.y = 0;
+  }
 }, {passive:false});
 canvas.addEventListener("touchmove", e=>{
   if(!touch.on) return;
   e.preventDefault();
+  if(touch.aiming){
+    // steer the sight, and do NOT let the aiming finger fly the ship as well
+    for(const q of e.touches) if(q.identifier === touch.aimId){
+      const sc = GHOST_REACH / (Math.min(innerWidth, innerHeight) * 0.28);
+      ghostAim.x = THREE.MathUtils.clamp((q.clientX - touch.aimX) * sc, -GHOST_REACH, GHOST_REACH);
+      ghostAim.y = THREE.MathUtils.clamp(-(q.clientY - touch.aimY) * sc, -GHOST_REACH, GHOST_REACH);
+    }
+  }
   const p = touchPoint(e, touch.id); if(!p) return;
   touch.dx += p.clientX - touch.x; touch.dy += p.clientY - touch.y;
   touch.moved += Math.abs(p.clientX - touch.x) + Math.abs(p.clientY - touch.y);
@@ -2973,10 +3100,10 @@ canvas.addEventListener("touchmove", e=>{
 }, {passive:false});
 function touchEnd(e){
   if(e.cancelable) e.preventDefault();
-  if(e.touches.length < 2){
-    // a QUICK second finger is a bomb; a held one was the shield
-    if(shieldHeld && touch.secondAt && performance.now() - touch.secondAt < 230) dropBomb();
-    shieldHeld = false; touch.secondAt = 0;
+  // the aiming finger lifting is the trigger: the bomb goes where the sight sits
+  if(touch.aiming && !Array.prototype.some.call(e.touches, q => q.identifier === touch.aimId)){
+    dropBomb();
+    touch.aiming = false; touch.aimId = null; ghostAim.x = 0; ghostAim.y = 0;
   }
   if(e.touches.length === 0){
     if(touch.on && touch.moved < 12){                  // a tap, not a drag
@@ -2996,10 +3123,19 @@ canvas.addEventListener("touchcancel", touchEnd, {passive:false});
 // Say what the controls actually are on the device in hand. The keyboard line is wrong on a
 // phone, and a wrong instruction reads as a broken game.
 if(COARSE){
-  const line = "Drag to fly &middot; hold to shoot &middot; tap a second finger to bomb, hold it for shields &middot; double-tap for flame &middot; the Camera button changes the view";
+  const line = "Drag to fly &middot; hold to shoot &middot; a second finger aims the bomb, lift it to drop &middot; SHIELD button &middot; double-tap for flame";
   const m = document.querySelector('#start .muted'); if(m) m.innerHTML = line;
-  const b = document.getElementById('bottom'); if(b) b.innerHTML = "drag to fly &nbsp;&middot;&nbsp; hold to shoot &nbsp;&middot;&nbsp; second finger bombs &nbsp;&middot;&nbsp; grab the <b>P</b> pickups";
+  const b = document.getElementById('bottom'); if(b) b.innerHTML = "drag to fly &nbsp;&middot;&nbsp; hold to shoot &nbsp;&middot;&nbsp; second finger aims the bomb &nbsp;&middot;&nbsp; grab the <b>P</b> pickups";
   const f = document.getElementById('fsBtn'); if(f) f.textContent = "⛶ Fullscreen";
+  // the shield lost its finger to the bomb sight, so on touch it gets a thumb button
+  const sb = document.getElementById('shieldBtn');
+  if(sb){
+    sb.hidden = false;
+    sb.addEventListener("touchstart", e => { e.preventDefault(); shieldHeld = true; }, { passive:false });
+    const up = e => { e.preventDefault(); shieldHeld = false; };
+    sb.addEventListener("touchend", up, { passive:false });
+    sb.addEventListener("touchcancel", up, { passive:false });
+  }
   const cb = document.getElementById('camBtn'); if(cb) cb.textContent = "\u27F3 Camera";
 }
 
