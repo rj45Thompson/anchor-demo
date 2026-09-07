@@ -102,5 +102,8 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
 - **Shipped features read as `contested`** in the graph (baseline measured them absent, then they
   were shipped). That is a state transition, not a real conflict — do not re-investigate; follow this
   list's priority order.
-- Pre-existing: one console 404 on load (a missing resource, not from this work).
+- The load-time console 404 is **the favicon** (no `<link rel="icon">` in `<head>`), NOT a missing
+  renderer asset — verified: all 10 referenced textures exist on disk, and a Playwright response
+  listener over full load+play saw 0 requests with status ≥ 400. Benign; a favicon is tab branding =
+  RJ's call, out of the renderer-fidelity lane. (`ship.png` is on disk but unreferenced — leftover.)
 - Push with `env -u GIT_EXEC_PATH git push` (plain `git push` fails: `remote-https is not a git command`).
