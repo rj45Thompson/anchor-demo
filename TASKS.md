@@ -13,8 +13,13 @@ Current values READ from `games/resume-arkanoid.html`, so each item changes a kn
 - [ ] R7  Cutscene beat 2: reveal the whole resume in one shot -> DONE WHEN: the full letter field is readable in frame (this is what the cylinder buys) and screenshotted.
 - [ ] R8  Cutscene beat 3: the ship pulls back and attacks the flank -> DONE WHEN: it hands off into normal play in the SAME state a cold start reaches, verified by playing on from it.
 - [ ] R9  Cutscene plumbing -> DONE WHEN: it does not replay for a returning player unless asked, and it reuses `CAM_MODES` + `camBlend` (:687) rather than a second camera system.
+- [ ] R10 Bullets become retro FX, not 3D solids -> DONE WHEN: the player shot (`CylinderGeometry` :2942), homing shot (`ConeGeometry` :2942), enemy bolt (`SphereGeometry(0.20,8,6)` :941) and heavy bolt (`SphereGeometry(1.04,18,14)` :943) are additive camera-facing sprites with a bright core and a travel-direction streak, POOLED not `new`-ed per shot; screenshotted before/after and ms/frame reported both ways.
+- [ ] R11 `spark()` stops allocating a mesh per particle -> DONE WHEN: :2876 no longer builds a `TetrahedronGeometry` + material per particle (a geometry, a material and a draw call for something on screen under a second); particle count on screen and ms/frame measured before and after.
+- [ ] R12 Raise `glowTex` resolution -> DONE WHEN: :1456 renders above 64x64 and a close effect is screenshotted before/after.
+- [ ] R13 Make every effect cooler -> DONE WHEN: `blast` (:2389), `explode` (:2415), `spark` (:2876), trails, pickups and hit flashes are each reworked and screenshotted before/after. Taste is delegated here - RJ asked for cooler. Ship the safe version and list the bold one.
+- [ ] R14 Nothing crawls except the homing shot -> DONE WHEN: `TURRET_SPEED` 9.5 (:925, was 11.0 - it was slowed), `RAID_SHOOT_SPEED` 13.0 (:1047) and `BOSS_SHOT_SPEED` 12.5 (:2497) are raised toward the player's 34 u/s reference, AUTOCANNON `cd` 0.18 is tightened, and **SEEKER MISSILE cd 0.36 / homing 2.4 is LEFT ALONE** (RJ's explicit exemption). ⚠ Faster enemy shots = harder game: re-run the motionless + bot harness and report seconds-to-first-loss before and after; if it swings brutal, drop the fire RATE, not the speed.
 
-Order: R1, R2, R3, R4, R5, then R6-R9. Bloom and the AAA list stay queued behind these.
+Order: **R10-R14 first** (fast, visible, self-contained), then R1, R2, R3, R4, R5, then R6-R9. Bloom and the AAA list stay queued behind these.
 
 Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
 `games/resume-arkanoid.html` (three.js, vendored **r128** at `../three.min.js`).
