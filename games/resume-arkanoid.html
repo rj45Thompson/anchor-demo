@@ -168,7 +168,14 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
 // A phone is a touch screen with a 3x display: cap the pixel ratio lower there, or a 375-wide
 // screen renders 1125 columns of a full 3D scene and the frame rate is what suffers.
 const COARSE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
-renderer.setPixelRatio(Math.min(devicePixelRatio, COARSE ? 1.5 : 2));
+/* RJ 2026-09-06: "lets not worry about FPS at the moment I want to see the visual quality three.js can do so
+   set it up for best graphics at 25fps." So the render budget is spent, not saved: full device pixel ratio up to
+   3, high-precision shading, and soft shadow maps. QUALITY_FPS is the floor this is tuned against - if a machine
+   cannot hold it, lower PIXEL_RATIO_MAX first, it is the single biggest lever here. */
+const QUALITY_FPS = 25, PIXEL_RATIO_MAX = 3;
+renderer.setPixelRatio(Math.min(devicePixelRatio, COARSE ? 2 : PIXEL_RATIO_MAX));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // ACES filmic tone mapping. The key light + point rims drive the planet's bright side and the
 // glyph plating past 1.0, where the default (no tone mapping) hard-clamps to flat white and the
 // specular reads as a blown patch instead of a curved surface. ACES rolls the highlights off on
@@ -430,13 +437,17 @@ const CH_W = 1.86, LINE_H = 3.9;   // bigger blocks - RJ
 // RJ 2026-09-05: "the ship moves way too slow and now it's impossible". The blocks grew 45%
 // (CH_W 1.12 -> 1.62, cs d6bae7f) so the text band the ship has to cover grew with them, but
 // the ship kept its 26 units/s. 40 restores the old cover time with a margin; vertical up with it.
-const SHIP_SPEED_X = 40, SHIP_SPEED_Y = 11;   // world units per second (vertical is a trim, not a second axis)
+const SHIP_SPEED_X = 40, SHIP_SPEED_Y = 26;   // world units per second - the band is 21 units tall now, not 3
 // RJ 2026-09-06, on Android: "the user ship is a little bit too high forward. you should probably be a bit
 // lower to the bottom of the screen and maybe you can make it move up and down a little bit but should just
 // mostly be left and right controls." The band sat at -10.2..-3.6 with the view bottom at -13.5, so the ship
 // flew a third of the way up the screen and its vertical travel was 6.6 units - enough to feel like a second
 // axis. Dropped to sit near the floor, and the travel halved so up/down is a nudge and left/right is the game.
-const SHIP_Y_MIN = -12.4, SHIP_Y_MAX = -9.2;   // low, narrow station-keeping band
+/* RJ 2026-09-06: "the players unit should be able to drive the bottom 75 percent of the screen". The view runs
+   VIEW_BOT -13.5 to VIEW_TOP 15.0, so three quarters of it from the floor reaches +7.9. The ship keeps its low
+   START (it spawns near the floor) but can now climb most of the picture; the vertical speed comes back up to
+   match, since a band this tall at the old trim speed would take five seconds to cross. */
+const SHIP_Y_MIN = -13.0, SHIP_Y_MAX = 8.4;   // exactly 75% of VIEW_BOT..VIEW_TOP, measured
 const VIEW_TOP = 15.0, VIEW_BOT = -13.5;
 const letterGeo = new THREE.BoxGeometry(CH_W*0.94, CH_W*1.24, CH_W*0.46);
 
@@ -929,7 +940,7 @@ function boltMesh(heavy){
   if(!boltGeo){
     boltGeo = new THREE.SphereGeometry(0.20, 8, 6);
     boltMat = new THREE.MeshBasicMaterial({ color:0xff4d5e });
-    heavyGeo = new THREE.SphereGeometry(0.52, 14, 11);
+    heavyGeo = new THREE.SphereGeometry(1.04, 18, 14);   // twice as big, and enough segments that it reads as a sphere
     // a heavy round is a thrown chunk of the world, not a flat orange dot
     heavyMat = new THREE.MeshStandardMaterial({ map:CYBER, color:0xffb14d, emissive:0x7a3a10,
       emissiveIntensity:0.9, roughness:0.45, metalness:0.6 });
@@ -1491,7 +1502,24 @@ function speedTex(){
     if(x+w>256){ g.fillRect(x-256,y,w,1+((i*7)%3)); }                  // the streak wraps, so scrolling never seams
   }
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(1.6,1); t.anisotropy=4; return t; }
-const GLOW = glowTex(), HULL = hullTex(), CYBER = cyberTex(), SPEED = speedTex();
+/* GENERATED ART (RJ 2026-09-06: "fix all the art in both games to be this AA quality"). hullTex() and
+   cyberTex() draw their plating with canvas rectangles - fine as a stand-in, obviously hand-drawn next to a
+   2048 SDXL surface. The generated sheets take over wherever they load, and the canvas versions stay as the
+   fallback so a missing file degrades to the old look rather than to nothing. */
+function genTex(file, fallback, repeat){
+  const t = new THREE.TextureLoader().load('assets/' + file,
+    function(tex){ tex.needsUpdate = true; },
+    undefined,
+    function(){ console.warn('generated art missing, using the drawn fallback:', file); });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  if(repeat) t.repeat.set(repeat[0], repeat[1]);
+  t.anisotropy = 8;
+  return t;
+}
+const GLOW = glowTex(), SPEED = speedTex();
+const HULL  = genTex('gen_hull.jpg',      hullTex(),   [2,2]);
+const CYBER = genTex('gen_structure.jpg', cyberTex(),  [2,2]);
+const ROCKT = genTex('gen_asteroid.jpg',  null,        [1,1]);
 const NEON = new THREE.Color(0x39ff88);   // the one green every letter glows in
 
 // ---------------------------------------------------------------- the press: where the words come from
@@ -1741,6 +1769,12 @@ const texLoader = new THREE.TextureLoader();
    the surface under you: a red impact ring on the ground that tightens as it falls, then a
    flash, a shockwave ring, a fireball that rises off the surface, a scorch that turns away with
    the planet, a flare of light, and a chain of secondary blasts. Only shots hurt, on both planes. */
+/* RJ 2026-09-06: "make the planet twice as big. It's supposed to be a planet!"
+   R is SOLVED so the limb lands at PLANET_LIMB_TOP in frame; the solve is what keeps the horizon where the game
+   was designed around it. Doubling the solved radius afterwards keeps that framing and halves the curvature under
+   the ship, which is the thing that actually reads as scale - a small ball curves away under you, a planet does
+   not. The gap grows with it so the ship still flies the same height over the surface, proportionally. */
+const PLANET_SCALE    = 2.0;
 const PLANET_GAP      = 8;                    // the surface is this far under the ship, and parallel to the flight plane
 const PLANET_LIMB_TOP = 3 * Math.PI / 180;    // where the limb crosses the picture, seen from rig 0: just above centre
 const PLANET_SPIN   = 0.03;                 // rad/s - about 3 units/s of surface under the ship
@@ -2064,8 +2098,8 @@ function placePlanet(){
     const mid = (lo + hi) / 2;
     if(limbTop(mid) < PLANET_LIMB_TOP) lo = mid; else hi = mid;
   }
-  const R = (lo + hi) / 2;
-  planet.position.copy(shipW).addScaledVector(n, -(R + PLANET_GAP));
+  const R = ((lo + hi) / 2) * PLANET_SCALE;
+  planet.position.copy(shipW).addScaledVector(n, -(R + PLANET_GAP * PLANET_SCALE));
   planet.userData.R = R;
   planet.userData.ground.scale.setScalar(R);
   planet.userData.air.scale.setScalar(R);
@@ -2309,7 +2343,7 @@ function dropBomb(){
   /* RJ 2026-09-06: "the ball is supposed to be a planet change it to Cybertrons". The bomb was a grey
      cylinder; it is a little machine world now - the same plating the letters wear, lit from inside so it reads
      against the planet it is falling toward. */
-  m.add(new THREE.Mesh(new THREE.SphereGeometry(0.62, 16, 12),
+  m.add(new THREE.Mesh(new THREE.SphereGeometry(1.24, 24, 18),   // RJ: "make the ball bigger ... just make it twice as big"
     new THREE.MeshStandardMaterial({ map:CYBER, color:0x8a94a4, emissive:0x33707a, emissiveIntensity:0.75,
       roughness:0.42, metalness:0.75 })));
   const tail = sprite(0xffb14d, 0.8); tail.scale.set(1.6, 1.6, 1); tail.position.y = 1.1; m.add(tail);
