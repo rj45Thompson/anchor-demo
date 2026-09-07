@@ -128,6 +128,17 @@
 </div>
 
 <script src="./three.min.js"></script>
+<!-- Post-processing, vendored from three.js r128 examples/js (pinned; no CDN on a live portfolio).
+     Load order matters: shaders, then EffectComposer (it defines THREE.Pass), then the Pass
+     subclasses. Powers the bloom composer in the three-setup block below; MaskPass is optional and
+     unused. If these fail to load the game still runs - the composer guard falls back to no post. -->
+<script src="./postprocessing/CopyShader.js"></script>
+<script src="./postprocessing/LuminosityHighPassShader.js"></script>
+<script src="./postprocessing/GammaCorrectionShader.js"></script>
+<script src="./postprocessing/EffectComposer.js"></script>
+<script src="./postprocessing/RenderPass.js"></script>
+<script src="./postprocessing/ShaderPass.js"></script>
+<script src="./postprocessing/UnrealBloomPass.js"></script>
 <script>
 // ---------------------------------------------------------------- resume data
 // Every entry is a real line from the actual CV.
@@ -201,6 +212,41 @@ const W = 26, H = 30;                       // world units
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
 camera.position.set(0, -20, 26);
 camera.lookAt(0, 2, 0);
+
+// ---------------------------------------------------------------- post-processing (bloom)
+// AAA post chain, vendored r128 examples/js (the <script>s after three.min.js; no CDN on a public
+// site). RJ 2026-09-06 green-lit "best graphics"; bloom lays selective glow on the brightest points -
+// the dome/city-light hotspots, ship-engine flares, the burning letter edges - without washing the
+// planet. Tuned strength 0.5 / radius 0.3 / threshold 0.9 (0.8 milked the planet's midtones).
+//
+// It reproduces the shipped image and adds glow: RenderPass renders the ACES-tonemapped scene into a
+// LINEAR target, UnrealBloomPass adds the halo where luma>threshold, and GammaCorrectionShader does the
+// final linear->sRGB via three.js's exact LinearTosRGB() - the same curve as outputEncoding =
+// sRGBEncoding (:191), so every non-glowing pixel is the shipped image untouched. The gamma pass now
+// owns that encode, so outputEncoding drops to Linear ONLY while the composer is live; if any addon
+// fails to load, or on COARSE, composer stays null, outputEncoding keeps its sRGB value from :191, and
+// the game renders exactly as before - a safe degrade for the live site.
+//
+// COARSE (touch/phone) skips it: bloom's multi-mip blur is the one pass with real per-pixel cost and
+// this desktop can't measure a phone (:176 already trims their pixel ratio). Desktop, measured, gets
+// it; flip the !COARSE guard to hand it to phones once measured on a real device.
+let composer = null;
+if(!COARSE && typeof THREE.EffectComposer === 'function' && THREE.RenderPass &&
+   THREE.UnrealBloomPass && THREE.ShaderPass && THREE.GammaCorrectionShader){
+  try {
+    renderer.outputEncoding = THREE.LinearEncoding;   // the gamma pass re-applies the exact sRGB curve
+    composer = new THREE.EffectComposer(renderer);
+    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.setSize(innerWidth, innerHeight);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+    composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.3, 0.9));
+    composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
+  } catch(e){
+    composer = null;
+    renderer.outputEncoding = THREE.sRGBEncoding;      // fall back to the shipped direct sRGB encode
+    console.warn('bloom composer init failed; rendering without post-processing', e);
+  }
+}
 
 scene.add(new THREE.AmbientLight(0x8fb0d4, 1.75));   // was 0x4a6a8a @ 0.9 - letters read as grey
 const key = new THREE.DirectionalLight(0xffffff, 1.85); key.position.set(6,-4,14); scene.add(key);
@@ -3257,7 +3303,7 @@ function tick(now){
     camera.position.y += (Math.random() * 2 - 1) * k;
   }
 
-  renderer.render(scene, camera);
+  if(composer) composer.render(); else renderer.render(scene, camera);
 }
 
 // ---------------------------------------------------------------- input / boot
@@ -3381,6 +3427,7 @@ if(COARSE){
 function resize(){
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w,h,false);
+  if(composer) composer.setSize(w,h);
   // re-fit after any size change. Without this, entering fullscreen changed the aspect but left
   // the camera framed for the old one, so the text sat in a narrow band with dead space either
   // side - which is most of why it felt cramped in the tab.
