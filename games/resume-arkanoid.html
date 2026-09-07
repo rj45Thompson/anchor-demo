@@ -1460,6 +1460,14 @@ function gradeScene(){
   if(starPoints) starPoints.material.opacity = 0.22 + e*0.60;
 }
 
+// R4 (RJ: "the letters are riding down a cylinder not flat... a curve facing you"). The letter field
+// rides a shallow vertical-axis cylinder instead of a flat plane. Each glyph keeps its board x - so
+// ALL gameplay (bullet / turret / hull collision, which is flat-x) stays aligned - but is pushed back
+// in depth by cylZ(x) and yawed by x/CYL_R, so the edges bow toward the viewer and every glyph turns
+// to face the camera instead of showing its flat side. The ship rides the same surface (its z = cylZ).
+const CYL_R = 40;                          // cylinder radius: larger = gentler bow
+function cylZ(x){ return (x*x) / (2*CYL_R); }
+
 function syncMeshes(){
   let rowsLaunched = 0;          // rows that got their first mesh this frame
   viewEnterY = enterY();
@@ -1505,7 +1513,8 @@ function syncMeshes(){
       if(L.mesh){
         const M = L.mesh, e = Math.max(1, eraIdx);
         if(L.arrive < 1){ if(flyLetter(L, M, y)) return; }
-        M.position.set(L.x, y, 0);
+        M.position.set(L.x, y, cylZ(L.x));      // R4: ride the cylinder in depth, x kept for collision
+        M.rotation.set(0, -L.x / CYL_R, 0);     // yaw so the glyph faces the camera, not its flat side
         // era grade on a lit material: flat and matte early, metallic and glowing late
         M.material.flatShading = e < 4;
         M.material.metalness = e >= 3 ? 0.30 : 0.0;   // enough to catch a highlight, not a mirror
@@ -3131,6 +3140,7 @@ function tick(now){
     // vertical travel is deliberately a narrow band - this is a scrolling shooter, the ship
     // holds station near the bottom and only nudges up to meet the text or back off from it
     ship.position.y = THREE.MathUtils.clamp(ship.position.y + vdir*SHIP_SPEED_Y*dt + tdy, SHIP_Y_MIN, SHIP_Y_MAX);
+    ship.position.z = cylZ(ship.position.x);   // R4: the ship rides the curved letter surface
     ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -bank*.38, .14);
     shipGlow.intensity = 1.4 + Math.sin(t*9)*.3;
     if(ship.userData.plumes){
