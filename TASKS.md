@@ -45,6 +45,16 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   z-fighting or artifacts. **No regression from the global renderer changes.** Graph: `BX-shipped
   pipeline holds in gameplay = yes`.
 
+- [x] **Re-verified against RJ's `d3ea5ee`** ("Full-quality worlds and real audio, both off a GPU
+  that was never being used" — 6 planet skins swapped to ~4× higher-res, 3 `.ogg` files added, GPU
+  enablement). My renderer lines survived intact (`:178` ACES, `:179` exposure 0.85, `:184` sRGB).
+  Live read across 2 random full-quality worlds: `tm=4/oe=3001/exp=0.85`; frame cost stable
+  **17.7 ms / 56.5 fps** (no regression from the higher-res textures or GPU work). Cache-disabled
+  (CDP) network capture over full load+play: **0 responses status ≥ 400** — all audio
+  (arcade/combat/starfield.ogg) and full-quality skins load 200; the only console 404 is
+  `/favicon.ico` (benign, unchanged from before). `scratchpad/fq_a.png`,`fq_b.png`: full-quality
+  worlds render cleanly under ACES+sRGB. **RJ introduced no broken asset; the pipeline holds.**
+
 ## Investigated — NOT shipped, deferred to RJ (design/architecture calls, not renderer toggles)
 
 - [x] **Shadows (rung 3) — investigated, decided against; no visible receiver in this scene.**
