@@ -1714,9 +1714,13 @@ function flyLetter(L, M, y){
 // a proper cubemap and asteroid textures; using them costs nothing and changes the whole feel.
 const sky = new THREE.CubeTextureLoader().setPath('assets/').load(
   ['sky_px.jpg','sky_nx.jpg','sky_py.jpg','sky_ny.jpg','sky_pz.jpg','sky_nz.jpg']);
-// NOT tagged sRGB. The renderer has no output encoding set, so it writes linear colour; a texture
-// tagged sRGB is decoded darker in the shader and written out without re-encoding, and the whole
-// nebula sky came out near-black. RJ 2026-09-06: "put a skybox around it" - it was there all along.
+// Tagged sRGB to match renderer.outputEncoding = sRGBEncoding (renderer setup block): these cubemap
+// JPGs are authored in sRGB, so they must be decoded to linear on sample and re-encoded by the
+// output pass - exactly as the asteroid textures below are tagged. Left untagged under an sRGB
+// output pass the nebula double-brightens and its lit haze washes out to milky white. (Under the
+// OLD LinearEncoding output this tag made the sky near-black, which is why it had been removed;
+// RJ 2026-09-06: "put a skybox around it". Adding sRGB output flipped which tagging is correct.)
+if(sky.encoding !== undefined) sky.encoding = THREE.sRGBEncoding;
 // starts BLACK on purpose - the skybox is a track that gets added later, not the opening state
 scene.background = null;
 

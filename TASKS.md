@@ -55,6 +55,21 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   `/favicon.ico` (benign, unchanged from before). `scratchpad/fq_a.png`,`fq_b.png`: full-quality
   worlds render cleanly under ACES+sRGB. **RJ introduced no broken asset; the pipeline holds.**
 
+- [x] **Sky cubemap sRGB tag — colour-space fix downstream of my own sRGB output change.**
+  When I shipped `outputEncoding = sRGBEncoding`, the nebula `CubeTexture` (`sky`, `:1715`) was still at
+  the default `LinearEncoding`, so its sRGB-authored JPGs were sampled as linear and then re-encoded by
+  the output pass — **double-brightening** the sky: the lit haze washed out to milky white. The tag had
+  actually existed (`60bb8c4`) and was deliberately removed (`b3f2a69`) **because at that time the
+  renderer had no output encoding** — the exact precondition my sRGB change removed, which flips which
+  tagging is correct. Restored `sky.encoding = THREE.sRGBEncoding` at `:1723`, now matching the asteroid
+  textures already sRGB-tagged at `:2658`. Measured on the **isolated cube** (probe scene whose only
+  content is `background = sky`, fixed camera; `scratchpad/sky_ab.mjs`): mean luma **115.31 → 66.21**,
+  mean RGB **[97,117,153] → [51,67,101]** — milky washout gone, replaced by a rich saturated nebula with
+  deep blacks and star contrast (`scratchpad/sky_before_iso.png` vs `sky_after_iso.png`). In-game the sky
+  around the planet limb reads deeper (`scratchpad/skyfix.png`); planet (custom shader), letters and
+  asteroids unaffected, no artifacts. Frame cost **17.7 → 17.8 ms** (free — an encoding decode flag).
+  No new 404 (only favicon). Graph: `BX-sky cubemap sRGB tag = yes`.
+
 ## Investigated — NOT shipped, deferred to RJ (design/architecture calls, not renderer toggles)
 
 - [x] **Shadows (rung 3) — investigated, decided against; no visible receiver in this scene.**
@@ -112,8 +127,20 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   fill 0.95) were tuned for the legacy model; inverse-square falloff makes the same numbers far
   dimmer = a regression toward RJ's "too dark". Planet unchanged (custom shader). Free (16.6 ms) but
   needs RJ to retune every light intensity + point-light distance = art direction. Left for RJ.
-- **sRGB texture tagging** — the letter/block canvas textures aren't tagged `sRGBEncoding`; strictly
-  correct decoding would touch the material/texture code near the letter lane. Cosmetically fine now.
+- **`antialias`** (graph: `BX-antialias = yes`) — already enabled: `WebGLRenderer({canvas, antialias:true,
+  alpha:false})` at `:167`. MSAA is on; nothing to do.
+- **`powerPreference`** (graph: `BX-powerPreference = no`) — absent from the renderer constructor (`:167`).
+  Real-GPU probe (`scratchpad/gpu_probe.mjs`, installed Chrome): `default` / `high-performance` /
+  `low-power` **all** select the NVIDIA RTX 2080 — this is a single-discrete-GPU desktop, so the hint is
+  **provably inert here** (identical output, no measurable frame delta), which is why it's not shipped.
+  It would help viewers on **dual-GPU laptops** (forces the discrete GPU), but it's a portability hint,
+  not a fidelity change, and can't be verified on this box. *For RJ, if desired:* add
+  `powerPreference:'high-performance'` to the constructor — zero risk, byte-identical output where there's
+  one GPU. (RJ's "GPU that was never being used" commit is the **Kaggle art-gen** pipeline, unrelated.)
+- **sRGB texture tagging** — the nebula sky cube is now correctly `sRGBEncoding` (see the Done item), and
+  the asteroids already were (`:2658`). Remaining: the letter/block **canvas** textures aren't tagged;
+  strictly correct decoding would touch the material/texture code near the letter lane (collision risk).
+  Cosmetically fine now — canvas-authored art is less sensitive than a real sRGB JPG. Separate item.
 
 ## Notes / traps for the next iteration
 
