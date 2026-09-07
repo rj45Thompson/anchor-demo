@@ -2960,7 +2960,7 @@ function show(co, date, detail){
 
 function reset(){
   buildBoard();
-  bullets.forEach(b=>board.remove(b)); bullets=[];   // board, not scene: that is their parent
+  bullets.forEach(b=>freeGlow(b)); bullets=[];   // board, not scene: that is their parent
   bits.forEach(b=>freeGlow(b)); bits=[];
   score=0; lives=LIVES_MAX; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
@@ -3000,9 +3000,11 @@ function fire(){
   const splash = W ? W.splash : 0;
   const offsets = twin ? [-0.55, 0.55] : [0];
   offsets.forEach(ox=>{
-    const m = new THREE.Mesh(
-      homing ? new THREE.ConeGeometry(.20,.85,7) : new THREE.CylinderGeometry(.15,.15,1.0,8),
-      new THREE.MeshBasicMaterial({color:col}));
+    // Retro tracer: a pooled additive GLOW sprite, not a lathe-turned solid. The straight shot is
+    // stretched into a vertical streak of light (bright core from GLOW's hot centre, fading tail);
+    // the seeker reads as a rounder plasma bolt so its different behaviour is legible at a glance.
+    const m = glowSprite(col);
+    m.scale.set(homing ? 0.85 : 0.5, homing ? 1.05 : 1.7, 1);
     m.position.copy(ship.position); m.position.x += ox; m.position.y += 1.4;
     m.userData = { homing, splash, col };
     // board, not scene: letter positions are board-local, and a bullet in scene space silently
@@ -3279,13 +3281,13 @@ function tick(now){
           linesRead.add(hitLine.i);
           show(hitLine.meta.co, hitLine.meta.date, hitLine.meta.detail);
         }
-        board.remove(bl); bullets.splice(i,1);
+        freeGlow(bl); bullets.splice(i,1);
       } else if(hitAttackerAt(bl.position.x, bl.position.y, 1.1)){
-        board.remove(bl); bullets.splice(i,1);
+        freeGlow(bl); bullets.splice(i,1);
       } else if(hitBossAt(bl.position.x, bl.position.y)){
-        board.remove(bl); bullets.splice(i,1);
+        freeGlow(bl); bullets.splice(i,1);
       } else if(bl.position.y > viewEnterY + 3){
-        board.remove(bl); bullets.splice(i,1);   // was scene.remove - a no-op that leaked every miss
+        freeGlow(bl); bullets.splice(i,1);   // was scene.remove - a no-op that leaked every miss
       }
     }
 
