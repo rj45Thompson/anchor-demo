@@ -1,5 +1,24 @@
 # Résumé Breakout — graphics upgrade backlog
 
+## Open - RJ rejected the letter plates (2026-09-07)
+
+RJ, looking at the shipped plates: **"I don't like these letters, try again."**
+
+The CONSTRAINT still holds - it is why plates were built in the first place. RJ's earlier words:
+*"the letters are kind of important to read since it's a resume ... they're blocked letters and
+they're never going to have the contrast."* So whatever replaces them must stay readable over a
+BRIGHT planet, in every era of the reveal ladder, at the back of the field as well as the front.
+Plates solved that by brute force - an opaque dark rectangle per glyph - and the cure is worse than
+the disease. Do not simply restyle the plate; the rectangle itself is what he is rejecting.
+
+Also load-bearing, from the same review: *"it looks like you just mapped the texture and didn't take
+any of the mesh at all."* He notices and dislikes flat texture-on-a-quad where geometry belongs.
+That is a strong hint that real extruded letterforms are worth trying.
+
+- [ ] L1  Build FIVE distinct letter treatments, each solving contrast WITHOUT an opaque plate -> DONE WHEN: all five render in the live game and are screenshotted from an IDENTICAL camera, moment and era, over the SAME bright planet region, so they can be compared honestly. Suggested directions, take them as starting points not a menu: (a) **extruded 3D letterforms** with real geometry and material response - the thing he keeps asking for; (b) **stroked glyphs** - bright fill, dark outline, the subtitle solution, no rectangle; (c) **self-lit emissive glyphs** tuned so bloom catches them and they beat the planet on luminance rather than on a backing; (d) **a soft dark halo** that follows the glyph shape rather than a box; (e) your own - if you find something better while building the others, ship that as the fifth.
+- [ ] L2  Measure each one, do not just look -> DONE WHEN: for each treatment, the glyph-to-background luminance ratio is sampled over the BRIGHTEST planet region (that is the worst case and the only one that matters) and reported as a number beside its screenshot, plus ms/frame for each.
+- [ ] L3  Publish the five as a contact sheet for RJ to pick -> DONE WHEN: an artifact URL shows all five side by side at the same scale with their contrast numbers and frame costs, and TASKS records the URL. Do not ship a winner - RJ picks. Recommend one and say why in a sentence.
+
 ## Open - RJ's direction 2026-09-07 (outranks the AAA backlog)
 
 Current values READ from `games/resume-arkanoid.html`, so each item changes a known number.
