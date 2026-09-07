@@ -595,35 +595,35 @@ function letterPlate(ch, kind, turret){
   const g = c.getContext("2d");
 
   // ---- the plate: dark machined steel. Dark is the whole point - it is the contrast floor.
-  const grd = g.createLinearGradient(0, 0, 0, PLATE_H);
-  grd.addColorStop(0, turret ? "#241012" : "#131a24");
-  grd.addColorStop(1, turret ? "#150809" : "#080c13");
-  g.fillStyle = grd; g.fillRect(0, 0, PLATE_W, PLATE_H);
-  // brushed lines, very low contrast: enough that the face is not a flat fill up close
-  g.globalAlpha = 0.055; g.strokeStyle = "#9fc0e0"; g.lineWidth = 1;
-  for(let y = 4; y < PLATE_H; y += 7){ g.beginPath(); g.moveTo(0, y + .5); g.lineTo(PLATE_W, y + .5); g.stroke(); }
-  g.globalAlpha = 1;
-  /* A lit UNDERLINE, not a box. A full inset rectangle on every character turned a line of text
-     into a grid of boxed tiles - legible, but the grid is what your eye read first instead of the
-     words. One bar along the bottom in the line's own tone keeps the "machined key cap" read and
-     lets the row of them draw a baseline, which is what actually helps you follow a line. */
+  /* FLAT, and the same near-black as the scrim body. Not a gradient and not a lighter tile: the
+     tile is now supposed to DISAPPEAR into the strip behind it, so what you read is a row of lit
+     glyphs on one dark readout, not forty little keycaps in a tray. The gradient and the brushed
+     lines were both there to make a single character read as its own object, which is precisely
+     the thing RJ was calling out - "these letters don't work". The contrast lives in the scrim
+     now; the tile's only remaining job is to be dark and get out of the way. */
+  g.fillStyle = turret ? "#170a0c" : "#040a12";
+  g.fillRect(0, 0, PLATE_W, PLATE_H);
+  /* No border and no underline any more. Both were there to make a single character read as a
+     machined tile, and together they turned a line of text into a grid of keycaps - RJ: "these
+     letters don't work". The scrim draws the one rule the line needs, top and bottom, once. */
   const tone = turret ? "#ff9a72" : (kind === "head" ? "#dceaff" : (kind === "detail" ? "#7fa6c8" : "#8fd7ff"));
-  g.fillStyle = tone; g.globalAlpha = 0.55;
-  g.fillRect(14, PLATE_H - 20, PLATE_W - 28, 7);
-  g.globalAlpha = 0.16;
-  g.fillRect(0, 0, PLATE_W, 3);                     // a faint top lip, so the slab has a near edge
-  g.globalAlpha = 1;
 
-  // ---- the glyph. Big enough to fill the plate: RJ asked for "slightly larger" letters, and on a
-  // plate that costs nothing, because the plate is the letter's own space.
-  const face = turret ? "#ffd0b4" : (kind === "detail" ? "#cfe4f6" : "#ffffff");
+  /* ---- the glyph, and it is now the ONLY bright thing on the tile. A faint bloom of the line's
+     own tone is laid down first and the solid glyph goes over it, so the character reads as lit
+     rather than painted - that is the "cool" half, and it costs one extra fill because the shadow
+     is the canvas's own. */
+  const face = turret ? "#ffd8c4" : (kind === "detail" ? "#dcecff" : "#ffffff");
   g.font = "bold " + Math.round(PLATE_H * 0.70) + "px ui-monospace, Menlo, Consolas, monospace";
   g.textAlign = "center"; g.textBaseline = "middle";
   /* The hard outline is the single biggest legibility win on a lit 3D object: without it the
      letter's edge dissolves into the plate wherever the key light lands. Stroked first, filled
      over, so the outline sits entirely outside the glyph's own shape. */
-  g.lineJoin = "round"; g.lineWidth = 14; g.strokeStyle = "#03060b";
+  g.lineJoin = "round"; g.lineWidth = 16; g.strokeStyle = "#010306";
   g.strokeText(ch, PLATE_W / 2, PLATE_H * 0.47);
+  // the lit halo: the glyph's own tone, blurred, hugging the letter's SHAPE rather than a box
+  g.shadowColor = tone; g.shadowBlur = 26;
+  g.fillStyle = tone; g.fillText(ch, PLATE_W / 2, PLATE_H * 0.47);
+  g.shadowBlur = 0;
   g.fillStyle = face;
   g.fillText(ch, PLATE_W / 2, PLATE_H * 0.47);
 
@@ -683,10 +683,13 @@ const PLATE_FRAG = `
     float luma = dot(p.rgb, vec3(0.299, 0.587, 0.114));
     float glyph = smoothstep(0.34, 0.72, luma);
 
-    // The plate is lit only gently: it is the letter's BACKGROUND and its job is to stay dark.
-    float lam = 0.62 + 0.38 * max(0.0, vNv.z);
-    vec3 col = p.rgb * lam;
-    col += p.rgb * glyph * uGlow;                    // the glyph itself burns, the plate does not
+    /* The plate takes NO lighting variation any more - it is the same flat dark as the strip it
+       sits on, and any shading gradient across it would draw the tile's own edges back out of the
+       scrim. Only the glyph responds to anything. */
+    vec3 col = p.rgb;
+    /* The glyph burns, and only the glyph. Lit slightly by facing, so a letter turning through
+       the crawl still catches a highlight and reads as a solid object rather than a decal. */
+    col += p.rgb * glyph * uGlow * (0.82 + 0.30 * max(0.0, vNv.z));
     col += vec3(1.0, 0.42, 0.22) * uHot * glyph * 0.5;
     col += vec3(1.0, 0.72, 0.35) * (1.0 - edge) * 1.6;   // hot ember at the dissolve front
     gl_FragColor = vec4(col, 1.0);
@@ -712,6 +715,144 @@ function plateMaterial(){
     vertexShader: PLATE_VERT, fragmentShader: PLATE_FRAG,
     name: 'letter.plate',
   });
+}
+
+/* ---------------------------------------------------------------- the line scrim
+   RJ 2026-09-07: "the text has a background with lights which makes it hard to see."
+
+   The per-letter plate fixed the wrong half of that. Every character was individually legible - a
+   white glyph on a dark tile always is - and the LINE still was not, because the surface under it
+   is a dense field of small bright rectangles at the same scale as the glyphs. An eye cannot pull
+   a band of text out of a field of noise when both are built from the same-sized bright shapes; it
+   ends up hunting letter by letter. More per-character contrast cannot fix that, which is exactly
+   why the previous pass read as no change at all.
+
+   So: one dark panel per LINE, behind the letters. What subtitles have always done. It is also the
+   cool part rather than a compromise - a dark readout strip with a lit rule top and bottom, corner
+   notches and a scan sweep travelling along it is a HUD, and it looks deliberate in a way that a
+   row of little keycaps never did. */
+/* The strip has to RIDE THE CYLINDER. Every letter sits at cylZ(x) = x*x/(2*CYL_R), and over a
+   line spanning +/-14 units that is 2.45 units of depth - a flat quad behind a curved row of
+   letters pokes through in the middle and sinks away at the ends, which is exactly what the first
+   two passes looked like: a bar that never lined up with its own text. The same curve is applied
+   here in the vertex shader, so the strip is the surface the letters are standing on. */
+const SCRIM_VERT = `
+  uniform float uW;      // the strip's world width
+  uniform float uCx;     // its centre in board x
+  uniform float uR;      // CYL_R, handed in so the curve cannot drift from the letters'
+  varying vec2 vUv;
+  void main(){
+    vUv = uv;
+    vec3 p = position;
+    float x = uCx + p.x * uW;                  // p.x is -0.5..0.5 on a unit plane, scaled by uW
+    /* NO division by uW here. The first version divided, reasoning that the mesh is scaled in x -
+       but the displacement is in Z, and the mesh's z scale is 1, so dividing made the curve about
+       sixty times too shallow and the strip stayed flat. Measured: a letter at the end of a line
+       sits at local z +10.39 while the strip's own vertices were reaching about +0.17. */
+    p.z += (x * x - uCx * uCx) / (2.0 * uR);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  }
+`;
+const SCRIM_FRAG = `
+  uniform float uTime;      // for the sweep
+  uniform float uAspect;    // width / height in world units, so notches stay square on any line
+  uniform float uAlpha;     // the line fades out as it is cleared
+  uniform vec3  uTone;      // the line's own colour, on the rules only
+  varying vec2 vUv;
+  void main(){
+    vec2 p = vUv;
+    // the body: darkest in the middle of the strip, easing off at the very ends so a line does
+    // not stop with a hard vertical edge in mid-air
+    float endFade = smoothstep(0.0, 0.035, p.x) * smoothstep(1.0, 0.965, p.x);
+    float body = 0.86 * endFade;
+
+    // the rules: a bright hairline top and bottom. This is what makes it read as an instrument
+    // panel instead of a grey box behind some text.
+    /* A strong BASELINE and a faint top edge, rather than two equal rules. Two matching bright
+       lines boxed every line of text and put the eye on the box; a baseline sits under the words
+       the way a rule under a heading does, and reads as typography instead of as a container. */
+    float rule = smoothstep(0.045, 0.0, abs(p.y - 0.035)) * 1.0
+               + smoothstep(0.030, 0.0, abs(p.y - 0.975)) * 0.32;
+    rule *= endFade;
+
+    // corner notches: the strip is cut back at its four corners, the cheapest possible "this is a
+    // designed element" signal
+    float nx = min(p.x, 1.0 - p.x) * uAspect;
+    float ny = min(p.y, 1.0 - p.y);
+    float notch = step(nx + ny * 0.9, 0.055);
+    body *= 1.0 - notch;
+    rule *= 1.0 - notch;
+
+    // a scan sweep, slow and narrow, travelling left to right along the strip
+    float sw = fract(uTime * 0.22 + p.y * 0.05);
+    float sweep = smoothstep(0.055, 0.0, abs(p.x - sw)) * 0.5 * endFade;
+
+    vec3 col = vec3(0.008, 0.013, 0.022) * body
+             + uTone * rule * 0.75
+             + uTone * sweep * 0.45;
+    /* NEARLY OPAQUE. At 0.90 the planet's lights read straight through the strip and the scrim
+       did the job by half - the text was better and still sat in the field. A scrim that you can
+       see the noise through is not a scrim. */
+    float a = (body * 0.985 + rule * 0.95 + sweep * 0.45) * uAlpha;
+    gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
+  }
+`;
+// 32 segments across, so the cylinder curve above is smooth rather than a chord
+const scrimGeo = new THREE.PlaneGeometry(1, 1, 32, 1);
+const scrimPool = [];
+function takeScrim(){
+  if(scrimPool.length){ const s = scrimPool.pop(); s.visible = true; return s; }
+  const m = new THREE.Mesh(scrimGeo, new THREE.ShaderMaterial({
+    uniforms: { uTime:{value:0}, uAspect:{value:8}, uAlpha:{value:1},
+                uW:{value:8}, uCx:{value:0}, uR:{value:CYL_R},
+                uTone:{value:new THREE.Color(0x8fd7ff)} },
+    vertexShader: SCRIM_VERT, fragmentShader: SCRIM_FRAG,
+    transparent: true, depthWrite: false, name: 'text.scrim',
+  }));
+  board.add(m);
+  return m;
+}
+function giveScrim(s){ s.visible = false; scrimPool.push(s); }
+/* Size and place one line's scrim from the letters that are still standing. It shrinks as the line
+   is shot away, which means the strip is always exactly as long as the text left on it - a fixed
+   bar would sit there empty at the end of a line and look like a bug. */
+// tight to the text. The first pass used 1.15 / 0.62 and the strips read as wide empty trays
+// with some letters lying in them.
+// 0.26 in y left the glyphs poking out of the bottom of the strip by ~0.02 NDC on every line -
+// measured, not eyeballed. 0.62 covers the slab with a margin at the scale the camera flies.
+const SCRIM_PAD_X = 0.55, SCRIM_PAD_Y = 0.62;
+function placeScrim(line, y){
+  /* Only letters that have LANDED. Sizing the strip from a letter's target slot draws a full-width
+     bar under a line that is still flying in from the press - the top of the screen filled with
+     empty trays, which is exactly what the first pass looked like. The strip now grows with the
+     line as it types itself in. */
+  const live = line.letters.filter(L => !L.broken && L.ch !== " " && (L.arrive || 0) >= 1);
+  if(!live.length){ if(line.scrim){ giveScrim(line.scrim); line.scrim = null; } return; }
+  const s = line.scrim || (line.scrim = takeScrim());
+  let lo = Infinity, hi = -Infinity;
+  for(const L of live){ if(L.x < lo) lo = L.x; if(L.x > hi) hi = L.x; }
+  const w = (hi - lo) + CH_W + SCRIM_PAD_X * 2;
+  const h = CH_W * 1.34 + SCRIM_PAD_Y;
+  const cx = (lo + hi) / 2;
+  s.scale.set(w, h, 1);
+  /* EXACTLY the letters' own depth - no z offset at all. Any offset is a mistake here, and it
+     was measured as one: the board is tilted about 49 degrees, so pushing the strip 0.10 back in
+     board z lifted it ~0.02 NDC on screen and it sat consistently high of its own text. It does
+     not need an offset either. The letter slabs are 0.40 of a cell deep, so their front faces are
+     already ~0.37 nearer than this plane; they are opaque and drawn first, so they occlude the
+     strip exactly where they stand and it fills in behind them. */
+  s.position.set(cx, y, cylZ(cx));
+  s.rotation.set(0, 0, 0);      // the curve is in the shader now, not in a yaw of the whole strip
+  const u = s.material.uniforms;
+  u.uAspect.value = w / h;
+  u.uW.value = w; u.uCx.value = cx;
+  u.uTime.value = t;
+  // full strength once a couple of characters have landed - the strip should not be a ghost while
+  // the line types itself in, only while it is being shot away
+  const total = Math.max(1, line.letters.filter(L => L.ch !== " ").length);
+  u.uAlpha.value = Math.min(1, live.length / total * 2.2);
+  u.uTone.value.set(line.kind === "head" ? 0xdceaff
+                  : (line.kind === "detail" ? 0x7fa6c8 : (TONES[line.tone] || 0x8fd7ff)));
 }
 
 function makeLetterMesh(){
@@ -1597,6 +1738,8 @@ function syncMeshes(){
     let rowSlot = -1;
     const y = line.y - crawl;
     const near = y < viewEnterY && y > VIEW_BOT-2;
+    if(near) placeScrim(line, y);
+    else if(line.scrim){ giveScrim(line.scrim); line.scrim = null; }
     line.letters.forEach(L=>{
       if(L.broken){ if(L.mesh){ giveMesh(L.mesh); L.mesh=null; } return; }
       if(near && !L.mesh){
