@@ -1,5 +1,21 @@
 # Résumé Breakout — graphics upgrade backlog
 
+## Open - RJ's direction 2026-09-07 (outranks the AAA backlog)
+
+Current values READ from `games/resume-arkanoid.html`, so each item changes a known number.
+
+- [ ] R1  Raise the glyph resolution -> DONE WHEN: `glyphTexture` (:289) renders above 64x64 (try 256, fall back to 128 if it costs), anisotropy set, and a close-up screenshot before/after shows the difference. ~40 cached glyphs, so the memory cost is small. ⚠ RJ's own lane already reworked the letters - check `git status` first.
+- [ ] R2  A 10x planet spinning 10x slower -> DONE WHEN: `PLANET_SCALE` 2.0 -> 20.0 and `PLANET_SPIN` 0.03 -> **0.003** rad/s (surface speed = R x spin, so a 10x radius needs a 10x slower spin to keep the same feel - a derivation, not a taste call), the horizon still lands sanely, and ms/frame is reported before AND after. ⚠ R is SOLVED at :2079-2084 so the limb hits `PLANET_LIMB_TOP` 3 deg - say whether you re-solved or bypassed it.
+- [ ] R3  Zoom in a little -> DONE WHEN: the camera sits closer, less of the scene is drawn, and the ms/frame change is measured. RJ expects this to be *cheaper*; report it honestly if it is not.
+- [ ] R4  Letters ride a CYLINDER, not a flat board -> DONE WHEN: the letter field curves toward the viewer (`board` is a flat Group at :443, tilted 0.85 rad at :693), every glyph faces the camera rather than just the middle ones, `WRAP` (:253, currently 23) can go up because the edges no longer run out of width, and the slot/formation logic still works.
+- [ ] R5  Add a true SIDE angle and judge the four existing rigs -> DONE WHEN: a near-profile rig exists (all four current rigs at :625 sit behind-and-above; WING is three-quarter, none is profile), every rig is screenshotted, and any that does not read is re-solved or removed.
+- [ ] R6  Cutscene beat 1: fly in to the planet -> DONE WHEN: it plays from a cold start, is skippable by any key/click/Esc, and is screenshotted.
+- [ ] R7  Cutscene beat 2: reveal the whole resume in one shot -> DONE WHEN: the full letter field is readable in frame (this is what the cylinder buys) and screenshotted.
+- [ ] R8  Cutscene beat 3: the ship pulls back and attacks the flank -> DONE WHEN: it hands off into normal play in the SAME state a cold start reaches, verified by playing on from it.
+- [ ] R9  Cutscene plumbing -> DONE WHEN: it does not replay for a returning player unless asked, and it reuses `CAM_MODES` + `camBlend` (:687) rather than a second camera system.
+
+Order: R1, R2, R3, R4, R5, then R6-R9. Bloom and the AAA list stay queued behind these.
+
 Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
 `games/resume-arkanoid.html` (three.js, vendored **r128** at `../three.min.js`).
 
