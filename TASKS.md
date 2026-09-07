@@ -184,8 +184,14 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   fill 0.95) were tuned for the legacy model; inverse-square falloff makes the same numbers far
   dimmer = a regression toward RJ's "too dark". Planet unchanged (custom shader). Free (16.6 ms) but
   needs RJ to retune every light intensity + point-light distance = art direction. Left for RJ.
-- **`antialias`** (graph: `BX-antialias = yes`) — already enabled: `WebGLRenderer({canvas, antialias:true,
-  alpha:false})` at `:167`. MSAA is on; nothing to do.
+- **`antialias`** (graph: `BX-antialias = partial`, was `yes`) — `antialias:true` at `:167` drives MSAA on
+  the DEFAULT framebuffer only; **now that bloom renders through the composer, MSAA is inert** (the passes
+  work on plain `WebGLRenderTarget`s). Visible impact is **subtle**, though: `bpre_play.png` (MSAA on) vs
+  `bafter_play.png` (composer) at pixel ratio 1 show comparable hard edges — organic textures + bloom blur
+  mask it — and on RJ's `PIXEL_RATIO_MAX=3` supersampling masks it further. **Deferred** (behind R1–R14,
+  hot file, and the incoming cylinder letters R4 which will change what aliases). *Fix when wanted:* pass a
+  `THREE.WebGLMultisampleRenderTarget` (WebGL2) to `EffectComposer` to restore true MSAA through it, or add
+  an SMAA/FXAA pass. This is rung 2 of the AAA list — the first thing to do if the autobot lane resumes AAA.
 - **`powerPreference`** (graph: `BX-powerPreference = no`) — absent from the renderer constructor (`:167`).
   Real-GPU probe (`scratchpad/gpu_probe.mjs`, installed Chrome): `default` / `high-performance` /
   `low-power` **all** select the NVIDIA RTX 2080 — this is a single-discrete-GPU desktop, so the hint is
