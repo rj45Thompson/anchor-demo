@@ -447,6 +447,90 @@ let pool  = [];        // recycled meshes
 let crawl = 0;         // how far the CV has scrolled
 let brokenCount = 0, totalGlyphs = 0, linesRead = new Set();
 
+
+/* ================= AUDIO - RJ 2026-09-06: "fix music and effects in resume breakout" ==================
+   There was NONE. Not thin, not harsh: the game ran in total silence, so every "the audio is terrible"
+   judgement about it was really about an absence. This is the whole layer, in one place.
+
+   Two rules it is built on, both of which are what usually goes wrong:
+     * EFFECTS ARE ENVELOPED, never raw oscillators. A square wave switched on and off clicks and fatigues;
+       every voice here has an attack and an exponential tail, and lives on its own gain node.
+     * THE MUSIC DUCKS. A bed and a burst of effects at the same level simply add up and turn to mud. Anything
+       loud pulls the bed down for a moment and lets it back.
+   The bed itself is generated (MusicGen, assets/audio/arcade.ogg) rather than synthesised, because a chiptune
+   loop from oscillators is exactly the thing that gets called terrible. */
+const AUDIO = (function(){
+  const CFG = { MUSIC_VOL:0.30, SFX_VOL:0.42, MUSIC:'assets/audio/arcade.ogg' };
+  let ctx=null, master=null, musicGain=null, sfxGain=null, el=null, src=null, on=false;
+
+  function init(){
+    if(ctx) return true;
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return false;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = 1; master.connect(ctx.destination);
+      musicGain = ctx.createGain(); musicGain.gain.value = CFG.MUSIC_VOL; musicGain.connect(master);
+      sfxGain = ctx.createGain(); sfxGain.gain.value = CFG.SFX_VOL; sfxGain.connect(master);
+      return true;
+    }catch(e){ ctx=null; return false; }
+  }
+  function startMusic(){
+    if(!init() || el) return;
+    try{
+      el = new Audio(CFG.MUSIC); el.loop = true; el.crossOrigin='anonymous';
+      src = ctx.createMediaElementSource(el); src.connect(musicGain);
+      const pr = el.play(); if(pr && pr.catch) pr.catch(function(){});
+      on = true;
+    }catch(e){ el=null; }
+  }
+  function duck(amount, secs){
+    if(!musicGain) return;
+    const a = Math.max(0, Math.min(1, amount==null?0.4:amount)), t = ctx.currentTime;
+    try{
+      musicGain.gain.cancelScheduledValues(t);
+      musicGain.gain.setTargetAtTime(CFG.MUSIC_VOL*(1-a), t, 0.03);
+      musicGain.gain.setTargetAtTime(CFG.MUSIC_VOL, t + (secs||0.45), 0.22);
+    }catch(e){}
+  }
+  // one enveloped voice: wave, start/end pitch, length, level, and an optional noise bed for impacts
+  function voice(o){
+    if(!init()) return;
+    const t = ctx.currentTime, dur = o.dur||0.18;
+    const g = ctx.createGain(); g.connect(sfxGain);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, o.vol==null?0.5:o.vol), t + (o.att||0.008));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    if(o.noise){
+      const n = ctx.createBufferSource();
+      const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+      n.buffer = buf;
+      const f = ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value = o.f0||600; f.Q.value = o.q||1.2;
+      n.connect(f); f.connect(g); n.start(t); n.stop(t+dur);
+    } else {
+      const osc = ctx.createOscillator(); osc.type = o.wave||'triangle';
+      osc.frequency.setValueAtTime(o.f0||440, t);
+      if(o.f1) osc.frequency.exponentialRampToValueAtTime(Math.max(20,o.f1), t+dur);
+      osc.connect(g); osc.start(t); osc.stop(t+dur);
+    }
+  }
+  const BANK = {
+    shoot:   function(){ voice({wave:'square',   f0:880,  f1:340, dur:0.10, vol:0.30}); },
+    hit:     function(){ voice({noise:true, f0:1500, q:1.0, dur:0.09, vol:0.38}); },
+    breakL:  function(){ voice({noise:true, f0:520,  q:0.8, dur:0.26, vol:0.55}); duck(0.18,0.22); },
+    bomb:    function(){ voice({noise:true, f0:150,  q:0.6, dur:0.55, vol:0.85}); duck(0.55,0.7); },
+    hurt:    function(){ voice({wave:'sawtooth', f0:260, f1:70,  dur:0.42, vol:0.6}); duck(0.6,0.8); },
+    power:   function(){ voice({wave:'triangle', f0:520, f1:1320,dur:0.24, vol:0.4}); },
+  };
+  function play(n){ const f = BANK[n]; if(f){ try{ f(); }catch(e){} } }
+  return { init, startMusic, play, duck,
+           setMusicVolume(v){ CFG.MUSIC_VOL=v; if(musicGain) musicGain.gain.value=v; },
+           setSfxVolume(v){ CFG.SFX_VOL=v; if(sfxGain) sfxGain.gain.value=v; },
+           playing(){ return on; }, names(){ return Object.keys(BANK); } };
+})();
+window.AUDIO = AUDIO;
+
 function makeLetterMesh(){
   // geometry is swapped per character in syncMeshes; the material is LIT rather than a flat
   // shader quad so the extrusion catches the key light and reads as a solid block letter.
@@ -795,7 +879,7 @@ function takeDamage(pos, colour, shakeAmt){
   // about is the same as no defence, and the right button is not a guessable control.
   if(!shieldHintShown){ shieldHintShown = true; banner(COARSE ? "HOLD A SECOND FINGER FOR SHIELD" : "HOLD SHIFT FOR SHIELD"); }
   if(pos) spark(pos, colour || 0xff5470, 24);
-  lives--; drawLives();
+  lives--; drawLives(); if(window.AUDIO) AUDIO.play('hurt');
   // RJ: "if the user gets hit it forces a camera change and screen shake as well"
   shake = Math.max(shake, 1.0);
   nextCamera();
@@ -845,8 +929,10 @@ function boltMesh(heavy){
   if(!boltGeo){
     boltGeo = new THREE.SphereGeometry(0.20, 8, 6);
     boltMat = new THREE.MeshBasicMaterial({ color:0xff4d5e });
-    heavyGeo = new THREE.SphereGeometry(0.52, 12, 9);
-    heavyMat = new THREE.MeshBasicMaterial({ color:0xffb14d });
+    heavyGeo = new THREE.SphereGeometry(0.52, 14, 11);
+    // a heavy round is a thrown chunk of the world, not a flat orange dot
+    heavyMat = new THREE.MeshStandardMaterial({ map:CYBER, color:0xffb14d, emissive:0x7a3a10,
+      emissiveIntensity:0.9, roughness:0.45, metalness:0.6 });
   }
   // A heavy round must not look like a turret pellet, or a serious attack reads as chip damage.
   const m = new THREE.Mesh(heavy ? heavyGeo : boltGeo, heavy ? heavyMat : boltMat);
@@ -1818,13 +1904,18 @@ function buildPlanet(){
   // Each world gets its own tint, because the shader's single uTint (0x63707f steel) flattened six different
   // planets into one grey-green family - measured by swapping all six in the page and looking: the maps differ,
   // the render did not. The tint is the world's own metal, not a filter over it.
+  /* The tints are NEAR-NEUTRAL on purpose. The first pass used strong per-world colours, which made sense when the
+     maps were 1024x512 turbo tiles carrying little colour of their own. The maps are now 2048x1024 full-SDXL
+     surfaces that bring their own palette - forge really is molten orange, glacier really is pale steel - so a
+     saturated tint only multiplies that down and throws away the detail it was generated for. Each world keeps a
+     slight bias and nothing more. */
   const WORLDS = {
-    forge:    0x8a6a52,   // hot iron, furnace-lit
-    circuit:  0x4f7f8f,   // board green-blue
-    reactor:  0x5f7d86,   // cool shielded steel
-    derelict: 0x7a5a46,   // corroded rust
-    citadel:  0x6a5f86,   // violet fortress metal
-    glacier:  0x8894a2,   // pale ceramic
+    forge:    0xd8c8b8,
+    circuit:  0xc2d2d8,
+    reactor:  0xc6d4d8,
+    derelict: 0xd6c4b4,
+    citadel:  0xcac2d8,
+    glacier:  0xd2dae2,
   };
   const WORLD_NAMES = Object.keys(WORLDS);
   const WORLD = WORLD_NAMES[(Math.random()*WORLD_NAMES.length)|0];
@@ -2206,12 +2297,17 @@ function runGhost(dt){
 }
 function dropBomb(){
   if(state !== "play" || !planet || bombCool > 0 || bombs.length >= BOMB_MAX) return;
+  if(window.AUDIO) AUDIO.play('bomb');
   bombCool = BOMB_COOL;
   // where the ghost is: the bomb goes to the sight, not to a point you cannot see
   const dir = (ghostDir || surfaceDir(0, (ship.position.y - SHIP_Y_MIN) * 1.2, planetFrame())).clone();
   const m = new THREE.Group();
-  m.add(new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.6, 8),
-    new THREE.MeshStandardMaterial({ color:0x2a2f38, emissive:0x331a08, roughness:0.5, metalness:0.7 })));
+  /* RJ 2026-09-06: "the ball is supposed to be a planet change it to Cybertrons". The bomb was a grey
+     cylinder; it is a little machine world now - the same plating the letters wear, lit from inside so it reads
+     against the planet it is falling toward. */
+  m.add(new THREE.Mesh(new THREE.SphereGeometry(0.62, 16, 12),
+    new THREE.MeshStandardMaterial({ map:CYBER, color:0x8a94a4, emissive:0x33707a, emissiveIntensity:0.75,
+      roughness:0.42, metalness:0.75 })));
   const tail = sprite(0xffb14d, 0.8); tail.scale.set(1.6, 1.6, 1); tail.position.y = 1.1; m.add(tail);
   m.position.copy(ship.position);
   board.add(m);
@@ -2795,6 +2891,7 @@ function reset(){
 
 function fire(){
   if(state!=='play') return;
+  if(window.AUDIO) AUDIO.play('shoot');
   if(bullets.length >= BULLET_MAX) return;
   const W = POWERS[power] || null;
   const col = W ? W.col : 0x8fe8ff;
@@ -3026,6 +3123,7 @@ function tick(now){
         L.dissolve = Math.min(1, L.dissolve + dt*1.9);
         if(L.dissolve >= 1){
           L.broken = true;
+          if(window.AUDIO) AUDIO.play('breakL');
           if(L.mesh){ giveMesh(L.mesh); L.mesh = null; }
         }
       }
@@ -3262,6 +3360,8 @@ resize();
 
 document.getElementById('go').onclick = ()=>{
   document.getElementById('start').classList.add('hide');
+  // START is a real click, so the audio policy is satisfied here and nowhere earlier
+  if(window.AUDIO){ AUDIO.init(); AUDIO.startMusic(); }
   reset(); state='play';
   showBigHint(...BOMB_HINT(), 4.0);
 };
