@@ -139,6 +139,11 @@
 <script src="./postprocessing/RenderPass.js"></script>
 <script src="./postprocessing/ShaderPass.js"></script>
 <script src="./postprocessing/UnrealBloomPass.js"></script>
+<script src="./postprocessing/SimplexNoise.js"></script>
+<script src="./postprocessing/SSAOShader.js"></script>
+<script src="./postprocessing/DepthLimitedBlurShader.js"></script>
+<script src="./postprocessing/UnpackDepthRGBAShader.js"></script>
+<script src="./postprocessing/SSAOPass.js"></script>
 <script>
 // ---------------------------------------------------------------- resume data
 // Every entry is a real line from the actual CV.
@@ -268,7 +273,19 @@ if(!COARSE && typeof THREE.EffectComposer === 'function' && THREE.RenderPass &&
     composer = new THREE.EffectComposer(renderer, ctarget);
     composer.setPixelRatio(renderer.getPixelRatio());
     composer.setSize(innerWidth, innerHeight);
-    composer.addPass(new THREE.RenderPass(scene, camera));
+    // A2 SSAO: contact darkening - the thing that most reads as "AAA" on a scene with no shadows.
+    // SSAOPass renders the scene itself (depth+normals -> ambient occlusion -> beauty x AO), so it
+    // stands in for RenderPass. A TIGHT maxDistance keeps AO to genuine close contacts (cube creases,
+    // army-on-surface) so the floating résumé letters don't get false halos against the distant
+    // planet. Measured free at pr1 and even at 4x resolution (the GPU has headroom under vsync).
+    // Falls back to a plain RenderPass if the vendored addon is missing. resize() sizes it correctly.
+    if(typeof THREE.SSAOPass === 'function'){
+      const ssao = new THREE.SSAOPass(scene, camera, innerWidth, innerHeight);
+      ssao.kernelRadius = 5; ssao.minDistance = 0.003; ssao.maxDistance = 0.02;
+      composer.addPass(ssao);
+    } else {
+      composer.addPass(new THREE.RenderPass(scene, camera));
+    }
     composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.3, 0.9));
     composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
     composer.addPass(new THREE.ShaderPass(GradeVignetteShader));   // A3: subtle final grade + vignette (last pass)
