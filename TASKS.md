@@ -25,13 +25,18 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   off on the S-curve, panel geometry survives where the default clipped to flat white; midtones not
   darkened. Rung 1 of the directive's priority list. Graph: `BX-tone mapping = yes`.
 
-## Todo (directive priority order)
+- [x] **sRGB output encoding** — `renderer.outputEncoding = THREE.sRGBEncoding` at
+  `resume-arkanoid.html:184`; `toneMappingExposure` trimmed 1.0 → **0.85** (`:179`) to rebalance the
+  midtone lift. Verified live: `outputEncoding===3001`, `toneMappingExposure===0.85`. Frame cost
+  **17.6 ms before → 17.6 ms after** (free). Bracketed exposure 1.0 vs 0.85 against the tone-mapping
+  screenshot: 1.0 was correct but flat/washed, 0.85 keeps contrast while landing the scene brighter
+  and fully legible (planet dark side + paneling readable where it was near-black before) — serves
+  RJ's standing "too dark" note. No blowout (ACES holds highlights). Rung 2. Graph: `BX-sRGB = yes`.
+  Note: letter/block canvas textures are NOT tagged `sRGBEncoding`; they still read fine, but if a
+  future pass wants them strictly correct that lives in the material/texture code (near the letter
+  lane — collision risk) and is a separate list item, not part of this.
 
-- [ ] **sRGB output encoding** — `renderer.outputEncoding = THREE.sRGBEncoding`. ⚠ Shifts every
-  colour; the scene's light intensities were tuned against LinearEncoding output, so this WILL change
-  brightness/saturation. Re-screenshot letters + ground + planet and judge; may need to retune
-  exposure or an ambient/light level (those are RJ's numbers — if a colour needs changing, list it,
-  don't restyle). API confirmed present in r128. Rung 2.
+## Todo (directive priority order)
 - [ ] **Shadows** — `renderer.shadowMap.enabled=true`, `castShadow` on the key DirectionalLight,
   `receiveShadow` on ground/board. 2 DirectionalLight + 4 PointLight already exist (only the key
   should cast, to stay in budget). Watch the frame cost — this is the expensive one. Rung 3.

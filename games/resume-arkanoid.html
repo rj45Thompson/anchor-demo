@@ -172,9 +172,16 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, COARSE ? 1.5 : 2));
 // ACES filmic tone mapping. The key light + point rims drive the planet's bright side and the
 // glyph plating past 1.0, where the default (no tone mapping) hard-clamps to flat white and the
 // specular reads as a blown patch instead of a curved surface. ACES rolls the highlights off on
-// an S-curve so shape survives into the bright end. Exposure 1.0 = neutral starting point.
+// an S-curve so shape survives into the bright end. Exposure 0.85 trims the overall level a touch,
+// because the sRGB encode below lifts the midtones noticeably; 0.85 lands the scene brighter and
+// fully legible (RJ's standing "too dark" note) without going flat the way exposure 1.0 did here.
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 0.85;
+// sRGB output. Default (LinearEncoding) writes linear light straight to a framebuffer the display
+// reads through the sRGB curve, so the midtones get gamma-crushed - a chunk of why the scene read
+// dark. sRGBEncoding applies the linear->sRGB transfer on the way out so mid values land where the
+// eye expects. This is also the encode ACES tone mapping is designed to be followed by.
+renderer.outputEncoding = THREE.sRGBEncoding;
 const scene = new THREE.Scene();
 /* LIGHTING. RJ, twice: "a little dark", "it's very dim". The cause was this fog. FogExp2 falls
    off with the SQUARE of distance, and at density 0.028 over the ~40 units between the camera and
