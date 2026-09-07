@@ -779,11 +779,16 @@ const _iiP = new THREE.Vector3(), _iiP2 = new THREE.Vector3(), _iiL = new THREE.
 function introSeen(){ try { return localStorage.getItem('bx_intro_seen') === '1'; } catch(e){ return false; } }
 function buildIntroFrames(){
   const base = baseCamera(); const p = base.position, L = CAM_MODES[0].look;
-  // R6 fly-in: start far out and high so the planet and the whole resume sit in one frame, then
-  // ease down into the CRAWL pose. (R7 reveal and R8 attack add keyframes in between later.)
+  // The three beats RJ asked for, as one camera path that ENDS at the CRAWL play pose:
+  //  R6 fly-in   - far establishing shot, the whole planet in orbit, then approach
+  //  R7 reveal   - pull up and back to frame the résumé field in one readable sweep
+  //  R8 attack   - swing off the starboard flank (the "flies back and attacks" beat), then settle
   return [
-    { t: 0.0, pos: [p.x, p.y - 18, p.z + 118], look: [0, -10, -24] },
-    { t: 3.4, pos: [p.x, p.y,      p.z       ], look: [L[0], L[1], L[2]] },
+    { t: 0.0, pos: [p.x,      p.y - 18, p.z + 118], look: [0,  -10, -24] },  // R6 far
+    { t: 2.4, pos: [p.x,      p.y - 20, p.z + 46 ], look: [0,   -2, -14] },  // R6 approach
+    { t: 4.3, pos: [p.x,      p.y - 8,  p.z + 20 ], look: [0,    3,  -6] },  // R7 reveal (frame the résumé band)
+    { t: 6.1, pos: [p.x + 34, p.y - 4,  p.z + 12 ], look: [L[0], L[1], L[2]] },  // R8 flank swing
+    { t: 7.4, pos: [p.x,      p.y,      p.z       ], look: [L[0], L[1], L[2]] },  // settle into CRAWL play pose
   ];
 }
 function startIntro(){ introFrames = buildIntroFrames(); introT = 0; camMode = 0; camBlend = 1; state = 'intro'; }
@@ -3338,7 +3343,7 @@ function tick(now){
     }
 
     if(lives<=0) killShip();
-  } else if(state==='intro'){ runIntro(dt); }
+  } else if(state==='intro'){ runIntro(dt); syncMeshes(); }   // syncMeshes so the résumé is visible during the reveal beat (it is play-gated otherwise)
 
   runPress(dt);
   runPlanet(dt);
