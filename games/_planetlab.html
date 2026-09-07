@@ -87,6 +87,7 @@ function build(world){
       uGround:{value: num('ground', 0.80)},
     },
     vertexShader: S.PLANET_VERT, fragmentShader: S.PLANET_FRAG, fog:false, vertexColors:true,
+    extensions: { derivatives: true },   // PLANET_FRAG uses fwidth; see the game's copy for why
   });
   const t0 = performance.now();
   const geo = S.plateSphere(192, 120);

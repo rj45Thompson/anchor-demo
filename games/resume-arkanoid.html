@@ -242,6 +242,7 @@ camera.lookAt(0, 2, 0);
 // vignette that announces itself is worse than none. Inline shader (no vendored file); runs as the
 // LAST composer pass (EffectComposer sets its renderToScreen automatically), grading the sRGB image.
 const GradeVignetteShader = {
+  name: 'post.gradeVignette',
   uniforms: { tDiffuse: { value: null }, uVig: { value: 0.26 }, uContrast: { value: 1.05 }, uSat: { value: 1.06 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   fragmentShader: [
@@ -290,7 +291,11 @@ if(!COARSE && typeof THREE.EffectComposer === 'function' && THREE.RenderPass &&
     }
     composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.3, 0.9));
     composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
-    composer.addPass(new THREE.ShaderPass(GradeVignetteShader));   // A3: subtle final grade + vignette (last pass)
+    const gradePass = new THREE.ShaderPass(GradeVignetteShader);
+    // ShaderPass copies a definition's uniforms and shader source but NOT its name, so naming the
+    // GradeVignetteShader object above achieves nothing; the material has to be named here.
+    gradePass.material.name = 'post.gradeVignette';
+    composer.addPass(gradePass);                                   // A3: subtle final grade + vignette (last pass)
   } catch(e){
     composer = null;
     renderer.outputEncoding = THREE.sRGBEncoding;      // fall back to the shipped direct sRGB encode
@@ -390,90 +395,13 @@ const CV = (function(){
   return L;
 })();
 
-// ---------------------------------------------------------------- glyph atlas
-// One texture per (char, tone). ~40 distinct glyphs across the whole CV instead of ~1150.
-const glyphCache = new Map();
-function glyphTexture(ch, tone, kind){
-  const key = ch + "|" + tone + "|" + kind;
-  if(glyphCache.has(key)) return glyphCache.get(key);
-  const S = 256;                                   // was 64 - R1: 4x texel density kills the up-close glyph blur (cached ~few-hundred combos, cheap)
-  const c = document.createElement("canvas"); c.width = c.height = S;
-  const g = c.getContext("2d");
-  g.clearRect(0,0,S,S);
-  const col = kind==="head" ? "#ffffff" : (kind==="detail" ? "#9fc4de" : (TONES_HEX[tone]||"#cfe6ff"));
-  g.font = (kind==="head" ? "bold 184px" : "bold 160px") + " ui-monospace, Menlo, Consolas, monospace";  // 46/40 x4
-  g.textAlign="center"; g.textBaseline="middle";
-  g.shadowColor = col; g.shadowBlur = 56;          // 14 x4, so the glow reads the same at the higher res
-  g.fillStyle = col; g.fillText(ch, S/2, S*0.53);
-  g.shadowBlur = 0; g.fillText(ch, S/2, S*0.53);
-  const t = new THREE.Texture(c); t.needsUpdate = true;
-  t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.anisotropy = 8;  // letters ride a 0.85 rad tilt - anisotropy genuinely helps
-  glyphCache.set(key, t); return t;
-}
-
-// ---------------------------------------------------------------- letter shader
-// Cheap but characterful: additive glyph, a scanline roll, a rim brighten near the crosshair row,
-// and a dissolve the break animation drives. No post-processing - r128 here has no EffectComposer,
-// so the look is done per-material.
-const LETTER_VERT = `
-  varying vec2 vUv; varying vec3 vN;
-  void main(){
-    vUv = uv;
-    vN = normalize(normalMatrix * normal);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-  }
-`;
-const LETTER_FRAG = `
-  uniform sampler2D map;
-  uniform vec3  tint;
-  uniform float uTime;
-  uniform float uDissolve;   // 0 = intact, 1 = gone
-  uniform float uHot;        // 0..1 proximity to the firing line
-  uniform float uReveal;     // 0 = flat morning, 1 = full colour
-  uniform float uEra;        // 1=1988 8-bit .. 5=2025 full shader
-  varying vec2 vUv; varying vec3 vN;
-  float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }
-  void main(){
-    // BoxGeometry: the +z face points at the camera and carries the glyph. The other five are
-    // the extrusion, drawn as a solid bevel so the letter reads as a 3D block rather than a decal
-    // floating in space. Without this the box just showed the glyph on all six faces.
-    // ---- ERA LADDER. Each reveal track advances the rendering era, so the opening does not
-    // merely look worse, it looks like 1988 on purpose. Starts at 8-bit rather than vector
-    // because outline-only glyphs were unreadable and the whole point is that the CV can be read.
-    // 1 flat 8-bit fill  2 flat-shaded polys  3 textured+lit  4 +glow  5 full shader
-    float facing = vN.z;
-    if(uEra < 1.5){
-      // 1988: flat fill from a small palette, no shading, no texture detail
-      vec4 t8 = texture2D(map, vUv);
-      if(t8.a < 0.35) discard;
-      vec3 pal = floor(tint * 5.0) / 5.0;
-      gl_FragColor = vec4(pal, 1.0);
-      return;
-    }
-    if(facing < 0.55){
-      float shade = 0.16 + 0.24 * max(0.0, vN.y) + 0.10 * abs(vN.x);
-      vec3 bevel = tint * shade * (0.55 + 0.45*uReveal);
-      gl_FragColor = vec4(bevel, 0.92);
-      return;
-    }
-    vec4 tex = texture2D(map, vUv);
-    if(tex.a < 0.02) discard;
-
-    // burn away from a noise field so the letter crumbles rather than fading flat
-    float n = hash(floor(vUv*14.0));
-    if(n < uDissolve) discard;
-    float edge = smoothstep(uDissolve, uDissolve+0.22, n);
-
-    // 1995 flat-shaded polys get no scanline and no texture nuance
-    float scan = uEra < 2.5 ? 1.0 : (0.90 + 0.10*sin((vUv.y*46.0) + uTime*2.4));
-    vec3  col  = tint * tex.rgb * scan;
-    float g = dot(col, vec3(0.299,0.587,0.114));
-    col = mix(vec3(g)*0.85, col, 0.25 + 0.75*uReveal);
-    if(uEra >= 3.5) col += tint * uHot * 0.55;       // per-pixel glow arrives in 2012
-    col += vec3(1.0,0.72,0.35) * (1.0-edge) * 1.6;   // hot ember at the dissolve front
-    gl_FragColor = vec4(col, tex.a);
-  }
-`;
+/* The previous letter system - glyphTexture(), LETTER_VERT and LETTER_FRAG - was deleted here
+   on 2026-09-07 when the plates landed (see letterPlate / PLATE_FRAG below). It had been dead
+   for a while: nothing called glyphTexture and neither shader was ever compiled. It is worth
+   deleting rather than leaving, because a dead shader still produces audit findings that cost
+   time and teach nothing, and because two letter shaders in one file give the next reader no way
+   to tell which one is live. `py tools/shader_audit.py` was flagging LETTER_FRAG for a missing
+   sRGB decode - true, and about code that never ran. */
 
 
 // ---------------------------------------------------------------- real 3D letterforms
@@ -551,7 +479,6 @@ const SHIP_SPEED_X = 40, SHIP_SPEED_Y = 26;   // world units per second - the ba
    match, since a band this tall at the old trim speed would take five seconds to cross. */
 const SHIP_Y_MIN = -13.0, SHIP_Y_MAX = 8.4;   // exactly 75% of VIEW_BOT..VIEW_TOP, measured
 const VIEW_TOP = 15.0, VIEW_BOT = -13.5;
-const letterGeo = new THREE.BoxGeometry(CH_W*0.94, CH_W*1.24, CH_W*0.46);
 
 const board = new THREE.Group(); scene.add(board);
 let textHalfW = 12;    // widest rendered line, drives ship reach and camera fit
@@ -783,6 +710,7 @@ function plateMaterial(){
       uGlow: { value: 0.85 },
     },
     vertexShader: PLATE_VERT, fragmentShader: PLATE_FRAG,
+    name: 'letter.plate',
   });
 }
 
@@ -1591,7 +1519,8 @@ function makeFlameCone(){
         vec3 c = mix(vec3(1.0,0.95,0.55), vec3(1.0,0.28,0.05), 1.0-along);
         gl_FragColor = vec4(c, a);
       }`,
-    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide });
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide,
+    name:'ship.flameCone' });
   const m = new THREE.Mesh(geo, mat);
   m.rotation.x = Math.PI;    // opens upward, toward the CV
   m.position.y = 3.6;
@@ -1812,7 +1741,8 @@ const GLOW = glowTex(), SPEED = speedTex();
 const HULL  = genTex('gen_hull.jpg',      hullTex(),   [2,2]);
 const CYBER = genTex('gen_structure.jpg', cyberTex(),  [2,2]);
 const ROCKT = genTex('gen_asteroid.jpg',  null,        [1,1]);
-const NEON = new THREE.Color(0x39ff88);   // the one green every letter glows in
+// (the NEON green every letter used to emit was removed with the old letter material -
+// the plates carry their colour in the texture and on their bevels now)
 
 // ---------------------------------------------------------------- the press: where the words come from
 /* RJ 2026-09-06: "the letters shouldn't flash appear - they should spawn off screen and come in
@@ -2285,6 +2215,15 @@ function buildPlanet(){
     },
     vertexShader: PLANET_VERT, fragmentShader: PLANET_FRAG, fog: false,
     vertexColors: true,          // the per-panel metal tint baked by plateSphere
+    /* PLANET_FRAG calls fwidth() to keep a plate seam one pixel wide at any altitude. That is CORE
+       in WebGL2 - which is what this machine hands us, so it renders here - and an EXTENSION in
+       WebGL1. three.js turns derivatives on automatically only for a material using flatShading, a
+       bump/normal map, or envMapCubeUV; a hand-written shader that simply calls fwidth gets
+       nothing. On any WebGL1 fallback the ground would fail to compile and the planet's surface
+       would VANISH - the same silent failure as the duplicate-attribute bug, and it renders
+       correctly here, which is exactly why it would have shipped broken. */
+    extensions: { derivatives: true },
+    name: 'planet.ground',
   });
   // 192 x 120 segments -> 46,080 triangles once the quads are split. Enough that a plate edge on
   // the limb is a few pixels wide at the distance you fly, which is the point of the whole thing.
@@ -3015,7 +2954,8 @@ function makeLaser(){
         float fade = smoothstep(1.0,0.15,vUv.y);
         gl_FragColor = vec4(uCol*(0.6+core*1.6), core*pulse*fade*0.95);
       }`,
-    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide});
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide,
+    name:'ship.laser'});
   const mesh=new THREE.Mesh(g,m); mesh.visible=false; return mesh;
 }
 
@@ -3081,7 +3021,8 @@ function buildShip(){
         float a = pow(1.0-along, 1.6) * flick * (0.20 + uThrust*0.95);
         gl_FragColor = vec4(mix(vec3(0.70,0.94,1.0), vec3(0.15,0.40,0.95), along), a);
       }`,
-    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide });
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide,
+    name:'ship.plume' });
   g.userData.plumes = [];
   [-0.78, 0.78].forEach(x=>{
     const pl = new THREE.Mesh(new THREE.ConeGeometry(0.30, 2.2, 10, 1, true), plumeMat());
@@ -3104,7 +3045,8 @@ function buildShip(){
         float a = (rim*0.85 + max(0.0,hexes)*0.16) * band * uPower;
         gl_FragColor = vec4(c, a);
       }`,
-    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide,
+    name:'ship.shield' }));
   shieldMesh.visible = false; g.add(shieldMesh);
 
   laserBeam = makeLaser(); laserBeam.position.y = 20; g.add(laserBeam);
@@ -3739,6 +3681,85 @@ window.__bx = {
     const url = canvas.toDataURL('image/png');
     const r = await fetch('/_shot/' + name + '.png', { method:'PUT', body:url });
     return r.ok ? (await r.text()).trim() : ('FAILED ' + r.status + ' ' + await r.text());
+  },
+  /* Prove every shader in the page actually LINKS. The static pass (tools/shader_audit.py) reads
+     GLSL and cannot know what the driver will accept; this compiles the real thing and asks the
+     context. It exists because a failed program is completely silent on screen - the material just
+     draws nothing - and the duplicate `attribute vec3 color` that erased the planet's whole surface
+     was visible only as one console line nobody was reading.
+
+     It forces the LAZY materials into the scene first (the flame cone is built on a powerup, the
+     letter plates as letters spawn), because compiling only what happens to be on screen is the
+     kind of check that passes without examining anything. */
+  auditShaders(){
+    if(!flameCone){ flameCone = makeFlameCone(); ship.add(flameCone); }
+    if(state === 'menu'){ document.getElementById('go').click(); }
+    this.step(240, 16.7);                       // letters spawn, so their plates get compiled
+    const gl = renderer.getContext();
+    const errs = [];
+    const orig = console.error;
+    console.error = function(){ errs.push(String(arguments[0]).slice(0, 200)); orig.apply(console, arguments); };
+    try {
+      renderer.compile(scene, camera);
+      if(composer) composer.render(); else renderer.render(scene, camera);
+    } finally { console.error = orig; }
+    const progs = (renderer.info.programs || []).map(function(p){
+      return { name: p.name, used: p.usedTimes,
+               linked: !!gl.getProgramParameter(p.program, gl.LINK_STATUS) };
+    });
+    const failed = progs.filter(function(p){ return !p.linked; });
+    /* Match by walking the SCENE, not by program.name: r128 fills program.name from
+       material.TYPE ('ShaderMaterial' nineteen times over), never from material.name. Reading
+       material.program back off each named material is the only way to say which of our own
+       shaders linked - and naming them is what turns this from a count into a check. */
+    const own = [];
+    const seen = new Set();
+    const note = function(m){
+      if(!m || !m.name || m.name.indexOf('.') < 0 || seen.has(m.name)) return;
+      seen.add(m.name);
+      /* The compiled program is NOT on the material in r128, and it is not `props.program`
+         either - both read undefined and every shader then reports "NOT COMPILED" while all of
+         them are in fact linked and drawing. It is `props.currentProgram` (the keys on that
+         object are: environment, fog, envMap, programs, uniforms, outputEncoding, instancing,
+         numClippingPlanes, numIntersection, vertexAlphas, needsLights, lightsStateVersion,
+         currentProgram, uniformsList). Read, not guessed. */
+      const props = renderer.properties.get(m);
+      const prog = props && props.currentProgram;
+      own.push(m.name + (prog ? (gl.getProgramParameter(prog.program, gl.LINK_STATUS)
+                                 ? ' OK' : ' FAILED') : ' NOT COMPILED'));
+    };
+    scene.traverse(function(o){
+      if(!o.material) return;
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach(note);
+    });
+    if(composer) composer.passes.forEach(function(p){ note(p.material); });
+    return { programs: progs.length, failed: failed, errors: errs,
+             handWritten: own.sort(), others: progs.length - own.length };
+  },
+  /* What a frame actually costs. renderer.info.autoReset is TRUE by default, so info.reset() is
+     called at the START of every render and reading the counters after a composer.render() gives
+     the LAST pass only - a fullscreen quad, which is why this reported "1 call, 1 triangle" and
+     looked like the scene was empty. Turn autoReset off, then the counters accumulate honestly. */
+  perf(frames){
+    const n = frames || 30, R = renderer, auto = R.info.autoReset;
+    R.info.autoReset = false;
+    R.info.reset(); R.render(scene, camera);
+    const sceneOnly = { calls: R.info.render.calls, triangles: R.info.render.triangles };
+    let withPost = null;
+    if(composer){ R.info.reset(); composer.render();
+                  withPost = { calls: R.info.render.calls, triangles: R.info.render.triangles }; }
+    R.info.autoReset = auto;
+    const t0 = performance.now();
+    for(let i = 0; i < n; i++) R.render(scene, camera);
+    const scenePassMs = (performance.now() - t0) / n;
+    const t1 = performance.now();
+    for(let i = 0; i < n; i++) this.step(1, 16.7);
+    const fullFrameMs = (performance.now() - t1) / n;
+    return { sceneOnly, withPost, scenePassMs: +scenePassMs.toFixed(2),
+             fullFrameMs: +fullFrameMs.toFixed(2), postMs: +(fullFrameMs - scenePassMs).toFixed(2),
+             fpsEquivalent: Math.round(1000 / fullFrameMs),
+             geometries: R.info.memory.geometries, textures: R.info.memory.textures,
+             programs: R.info.programs.length, world: window.__world };
   },
   step(n, dtMs){
     const d = dtMs || 16.7;
