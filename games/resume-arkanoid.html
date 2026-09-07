@@ -230,6 +230,27 @@ camera.lookAt(0, 2, 0);
 // COARSE (touch/phone) skips it: bloom's multi-mip blur is the one pass with real per-pixel cost and
 // this desktop can't measure a phone (:176 already trims their pixel ratio). Desktop, measured, gets
 // it; flip the !COARSE guard to hand it to phones once measured on a real device.
+// A3 (AAA rung 4): a subtle final grade + vignette - "cheap, and they finish a look" (the directive).
+// A gentle contrast lift, a touch of saturation, and soft corner darkening. Deliberately quiet - a
+// vignette that announces itself is worse than none. Inline shader (no vendored file); runs as the
+// LAST composer pass (EffectComposer sets its renderToScreen automatically), grading the sRGB image.
+const GradeVignetteShader = {
+  uniforms: { tDiffuse: { value: null }, uVig: { value: 0.26 }, uContrast: { value: 1.05 }, uSat: { value: 1.06 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader: [
+    'uniform sampler2D tDiffuse; uniform float uVig, uContrast, uSat; varying vec2 vUv;',
+    'void main(){',
+    '  vec3 c = texture2D(tDiffuse, vUv).rgb;',
+    '  c = (c - 0.5) * uContrast + 0.5;',                 // subtle contrast around mid grey
+    '  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));',
+    '  c = mix(vec3(l), c, uSat);',                       // subtle saturation
+    '  float d = distance(vUv, vec2(0.5));',
+    '  c *= 1.0 - uVig * smoothstep(0.35, 0.9, d);',      // soft corner vignette
+    '  gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n')
+};
+
 let composer = null;
 if(!COARSE && typeof THREE.EffectComposer === 'function' && THREE.RenderPass &&
    THREE.UnrealBloomPass && THREE.ShaderPass && THREE.GammaCorrectionShader){
@@ -250,6 +271,7 @@ if(!COARSE && typeof THREE.EffectComposer === 'function' && THREE.RenderPass &&
     composer.addPass(new THREE.RenderPass(scene, camera));
     composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.3, 0.9));
     composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
+    composer.addPass(new THREE.ShaderPass(GradeVignetteShader));   // A3: subtle final grade + vignette (last pass)
   } catch(e){
     composer = null;
     renderer.outputEncoding = THREE.sRGBEncoding;      // fall back to the shipped direct sRGB encode
