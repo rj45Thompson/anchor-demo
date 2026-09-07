@@ -59,13 +59,21 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   Cost: **17.6–17.7 ms — no measurable budget hit** vs 17.6 baseline. Look: `strength 0.5 / radius
   0.3 / threshold 0.9` gives lovely selective glow on the city-lights / floating blocks / letter
   edges (`scratchpad/bloom_s05_r03_t09.png`); `threshold 0.8` washes the planet milky
-  (`scratchpad/bloom_s07_r04_t08.png`). *For RJ, if you want it:* (a) vendor those 6 addon files
-  (they attach to `THREE.*`), (b) build the composer in the renderer block, (c) swap `renderer.render`
-  at `:3056` for `composer.render()`, (d) drive `composer.setSize` from the resize handler, (e) add a
-  final sRGB **output pass** — the composer's intermediate targets are Linear, so `outputEncoding`
-  is not applied through it (the prototype shows a slight brightness lift from this). It overrides the
-  `:307` per-material-glow decision, and the glow amount is your aesthetic call. Graph: `BX-bloom = no`
-  (anchors 2, feasibility recorded).
+  (`scratchpad/bloom_s07_r04_t08.png`). **Why it's RJ's call and not shipped:** unlike tone mapping
+  (fixes clipping) and sRGB (fixes gamma) — unambiguous fidelity fixes — bloom is a **style choice**:
+  the same-session off/on test (`scratchpad/b2_off.png` vs `b2_on.png`) shows it trades the crisp
+  contrast for a hazy glow-lift. That's an aesthetic decision + it overrides the `:307` per-material
+  choice + it adds files & rewires the render loop = too big and too design-y for the autobot lane.
+
+  ***Proven turn-key recipe (free, 16.6 ms/60 fps)*** if RJ wants it: (a) vendor the r128 `examples/js`
+  addons — CopyShader, LuminosityHighPassShader, **GammaCorrectionShader**, EffectComposer, RenderPass,
+  ShaderPass, UnrealBloomPass (they attach to `THREE.*`, no second three); (b) `renderer.outputEncoding
+  = THREE.LinearEncoding` (the gamma pass re-applies it); (c) `composer = EffectComposer(renderer)` →
+  `RenderPass(scene,camera)` → `UnrealBloomPass(res, 0.5, 0.3, 0.9)` → `ShaderPass(GammaCorrectionShader)`;
+  (d) swap `renderer.render` at `:3056` for `composer.render()`; (e) `composer.setSize` in the resize
+  handler. **Caveat:** GammaCorrectionShader is 2.2-gamma, not the exact sRGB curve — for an exact
+  colour match write a tiny sRGB-encode pass instead; threshold/strength are aesthetic knobs.
+  Graph: `BX-bloom = no` (anchors 3, recipe recorded).
 
 ## Other renderer items seen but not pursued
 
