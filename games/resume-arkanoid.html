@@ -978,21 +978,15 @@ const TURRET_WARMUP = 14;  // was 7      // seconds before any turret opens fire
                               // sound - it just needs a moment to be discovered.
 let bolts = [];
 
-let boltGeo = null, boltMat = null;
-let heavyGeo = null, heavyMat = null;
 function boltMesh(heavy){
-  // Shared geometry and material per kind. Allocating per bolt in the hot loop is how a
-  // bullet-hell leaks GPU objects - the exact bug the plain bullets already had.
-  if(!boltGeo){
-    boltGeo = new THREE.SphereGeometry(0.20, 8, 6);
-    boltMat = new THREE.MeshBasicMaterial({ color:0xff4d5e });
-    heavyGeo = new THREE.SphereGeometry(1.04, 18, 14);   // twice as big, and enough segments that it reads as a sphere
-    // a heavy round is a thrown chunk of the world, not a flat orange dot
-    heavyMat = new THREE.MeshStandardMaterial({ map:CYBER, color:0xffb14d, emissive:0x7a3a10,
-      emissiveIntensity:0.9, roughness:0.45, metalness:0.6 });
-  }
-  // A heavy round must not look like a turret pellet, or a serious attack reads as chip damage.
-  const m = new THREE.Mesh(heavy ? heavyGeo : boltGeo, heavy ? heavyMat : boltMat);
+  // Retro enemy fire: a pooled additive GLOW sprite, not a lathe-turned sphere (RJ: "cool retro
+  // effects", not "weird high-res 3D objects"). The old normal bolt was an unlit red SphereGeometry
+  // and the heavy an 18x14 lit MeshStandard "chunk of the world" - vertex + draw-call cost for a
+  // dot in a bullet-hell. A heavy round must still not read as a turret pellet, so it stays big and
+  // hot-orange: a plasma cannonball, distinct from the small red pellet at a glance. Pooled via
+  // _glowPool (shared with sparks + tracers), so a screen full of fire allocates nothing.
+  const m = glowSprite(heavy ? 0xffa23a : 0xff4d5e);
+  m.scale.setScalar(heavy ? 2.1 : 0.62);
   board.add(m); return m;
 }
 
@@ -1044,30 +1038,30 @@ function runTurrets(dt){
     m.position.y += B.vy * dt;
     if(B.vz !== undefined){                                    // a flak shell, climbing
       m.position.z += B.vz * dt;
-      m.scale.setScalar(0.5 + 0.5 * Math.min(1, 1 - m.position.z / GROUND_Z));
-      if(m.position.z > 2.5){ board.remove(m); bolts.splice(i, 1); continue; }
+      m.scale.setScalar(2.1 * (0.5 + 0.5 * Math.min(1, 1 - m.position.z / GROUND_Z)));  // heavy-sprite base, was a 1.04 mesh
+      if(m.position.z > 2.5){ freeGlow(m); bolts.splice(i, 1); continue; }
       if(m.position.z < -1.3) continue;                        // not yet in the air
     }
     const near = Math.hypot(m.position.x - ship.position.x, m.position.y - ship.position.y);
 
     if(shieldHeld && shieldEnergy > 0 && near < 2.6){
       spark(m.position.clone(), 0x8fe8ff, 10);
-      board.remove(m); bolts.splice(i, 1);
+      freeGlow(m); bolts.splice(i, 1);
       continue;
     }
     if(near < 1.15){
-      board.remove(m); bolts.splice(i, 1);
+      freeGlow(m); bolts.splice(i, 1);
       takeDamage(m.position.clone(), 0xff5470, 0.6);   // shared i-frame, see takeDamage
       continue;
     }
     if(m.position.y < VIEW_BOT - 3 || Math.abs(m.position.x) > 60){
-      board.remove(m); bolts.splice(i, 1);
+      freeGlow(m); bolts.splice(i, 1);
     }
   }
 }
 
 function clearBolts(){
-  bolts.forEach(B=>board.remove(B.m));
+  bolts.forEach(B=>freeGlow(B.m));
   bolts = [];
   runTurrets._warned = false;   // the warning must fire again on a replay
 }
@@ -2479,7 +2473,7 @@ function explode(dir, radius, big){
   }
   for(let i = bolts.length - 1; i >= 0; i--){
     const p = bolts[i].m.position;
-    if(Math.hypot(p.x - at.x, p.y - at.y) < radius * 0.7){ board.remove(bolts[i].m); bolts.splice(i, 1); }
+    if(Math.hypot(p.x - at.x, p.y - at.y) < radius * 0.7){ freeGlow(bolts[i].m); bolts.splice(i, 1); }
   }
   document.getElementById("score").textContent = brokenCount;
   shake = Math.max(shake, big ? 0.95 : 0.5);
