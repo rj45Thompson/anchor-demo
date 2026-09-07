@@ -36,14 +36,44 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   future pass wants them strictly correct that lives in the material/texture code (near the letter
   lane — collision risk) and is a separate list item, not part of this.
 
-## Todo (directive priority order)
-- [ ] **Shadows** — `renderer.shadowMap.enabled=true`, `castShadow` on the key DirectionalLight,
-  `receiveShadow` on ground/board. 2 DirectionalLight + 4 PointLight already exist (only the key
-  should cast, to stay in budget). Watch the frame cost — this is the expensive one. Rung 3.
-- [ ] **Bloom** — only if 1–3 land and budget survives. r128 has no post-processing wired
-  (`renderer.render` at :3056 is a single bare call, no composer). Needs EffectComposer +
-  UnrealBloomPass; **verify those exist in the vendored `../three.min.js` before planning** (they are
-  in separate example files, not guaranteed vendored). Rung 4.
+## Investigated — NOT shipped, deferred to RJ (design/architecture calls, not renderer toggles)
+
+- [x] **Shadows (rung 3) — investigated, decided against; no visible receiver in this scene.**
+  The dominant surface, the planet, is a custom `ShaderMaterial` (`groundMat` assigned at `:1876`;
+  `PLANET_FRAG` at `:1807` does its own `uLight` lighting) and **cannot receive three.js shadows**
+  without rewriting that bespoke shader. The `air` shell (`:1880`) and the backdrop (`:635`) are
+  MeshBasic (no receive); the letters are MeshStandard but float in space with nothing standard
+  behind them. Empirical proof (runtime inject, no file edit: `shadowMap` on, `key.castShadow`, 2048
+  map, ±60 ortho frustum, all 489 meshes cast+receive → screenshot `scratchpad/shadow_test.png`):
+  **no visible shadow anywhere**; frame cost ~unchanged (17.3 ms — the scene is bound on the planet
+  shader, not shadow depth). Graph: `BX-shadows = no` (anchors 2). *For RJ:* shadows only become
+  worthwhile if the planet shader is extended to sample the shadow map — that's your shader/art call.
+
+- [x] **Bloom (rung 4) — investigated, feasible + affordable + looks good, but it's a design change.**
+  Vendored `three.min.js` has **no** EffectComposer/UnrealBloomPass (grep = ABSENT), and a comment at
+  `:307-308` records a deliberate choice: *"No post-processing - r128 here has no EffectComposer, so
+  the look is done per-material."* Prototype (runtime, no file edit): the r128 `examples/js`
+  post-processing addons load cleanly onto the **existing** THREE global (no second copy of three) —
+  CopyShader, LuminosityHighPassShader, EffectComposer, RenderPass, ShaderPass, UnrealBloomPass from
+  `jsdelivr@0.128.0`. Wired a composer + bloom with a reentrancy-guarded `renderer.render` patch.
+  Cost: **17.6–17.7 ms — no measurable budget hit** vs 17.6 baseline. Look: `strength 0.5 / radius
+  0.3 / threshold 0.9` gives lovely selective glow on the city-lights / floating blocks / letter
+  edges (`scratchpad/bloom_s05_r03_t09.png`); `threshold 0.8` washes the planet milky
+  (`scratchpad/bloom_s07_r04_t08.png`). *For RJ, if you want it:* (a) vendor those 6 addon files
+  (they attach to `THREE.*`), (b) build the composer in the renderer block, (c) swap `renderer.render`
+  at `:3056` for `composer.render()`, (d) drive `composer.setSize` from the resize handler, (e) add a
+  final sRGB **output pass** — the composer's intermediate targets are Linear, so `outputEncoding`
+  is not applied through it (the prototype shows a slight brightness lift from this). It overrides the
+  `:307` per-material-glow decision, and the glow amount is your aesthetic call. Graph: `BX-bloom = no`
+  (anchors 2, feasibility recorded).
+
+## Other renderer items seen but not pursued
+
+- **`renderer.physicallyCorrectLights`** (graph: `BX-physically correct lights = no`) — changes light
+  falloff to inverse-square; every existing light intensity/distance was tuned WITHOUT it, so turning
+  it on would need all of RJ's light numbers retuned. Disruptive, art-adjacent — leave for RJ.
+- **sRGB texture tagging** — the letter/block canvas textures aren't tagged `sRGBEncoding`; strictly
+  correct decoding would touch the material/texture code near the letter lane. Cosmetically fine now.
 
 ## Notes / traps for the next iteration
 
