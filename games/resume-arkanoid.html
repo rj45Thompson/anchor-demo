@@ -183,7 +183,7 @@ camera.lookAt(0, 2, 0);
 
 scene.add(new THREE.AmbientLight(0x8fb0d4, 1.75));   // was 0x4a6a8a @ 0.9 - letters read as grey
 const key = new THREE.DirectionalLight(0xffffff, 1.85); key.position.set(6,-4,14); scene.add(key);
-const rim = new THREE.PointLight(0x7c4dff, 1.9, 90); rim.position.set(-10, 12, 10); scene.add(rim);
+const rim = new THREE.PointLight(0x9ec8ff, 2.2, 90); rim.position.set(-10, 12, 10); scene.add(rim);
 // A warm fill from below so glyph faces are not lit from one side only. Extruded letterforms
 // with a single key light lose their whole shadowed half, which is most of why they looked flat
 // AND dim at the same time.
@@ -934,7 +934,7 @@ function raiderMesh(ch){
     color:0xff8a7a, emissive:0x5a1410, emissiveIntensity:0.9,
     roughness:0.35, metalness:0.35, flatShading:true }));
   g.add(letter);
-  const ch2 = droneChassis(); ch2.scale.setScalar(0.85); g.add(ch2); g.userData.chassis = ch2;
+  const ch2 = droneChassis(); ch2.scale.setScalar(0.9); g.add(ch2); g.userData.chassis = ch2;
   return g;
 }
 
@@ -983,7 +983,9 @@ function runRisers(dt){
    cool and open; divers pull the fog in and push it red. This is the
    "backgrounds that go with the moment" ask, driven by game state rather than by a soundtrack. */
 const MOOD = {
-  calm:  { fog: 0x16233a, dens: 0.009, rim: 0x7c4dff, rimI: 1.9 },
+  // The rim was violet, and violet on bare steel reads as plastic - it was what made the machine
+  // world look purple. Cold steel-blue, the light in the Cybertron reference. RJ 2026-09-06.
+  calm:  { fog: 0x16233a, dens: 0.009, rim: 0x9ec8ff, rimI: 2.2 },
   raid:  { fog: 0x2a1626, dens: 0.013, rim: 0xff5a6e, rimI: 2.6 }
 };
 const _fogC = new THREE.Color(), _rimC = new THREE.Color();
@@ -1448,17 +1450,13 @@ const haloPool = [], dronePool = [];
 // RJ: "upgrade the look of the letters to be cooler and more like flying drones." A chassis: a
 // dark ring round the letter, two engine glows, a running light. Pooled; a letter wears one
 // while it flies and sheds it as it locks into its slot. A diver keeps its own for good.
-let RING_GEO_D = null, RING_MAT_D = null;
+/* RJ 2026-09-06: "I don't like the rings around the letters - go back to the letters how they
+   just had a thruster." So: no chassis ring, no running light. One engine flame behind the
+   letter, stretched along its travel and flickering. */
 function droneChassis(){
-  if(!RING_GEO_D){ RING_GEO_D = new THREE.TorusGeometry(1.15, 0.09, 8, 28);
-    RING_MAT_D = new THREE.MeshStandardMaterial({ color:0x2a3440, emissive:0x101820, roughness:0.4, metalness:0.8, flatShading:true }); }
   const g = new THREE.Group();
-  const ring = new THREE.Mesh(RING_GEO_D, RING_MAT_D); g.add(ring); g.userData.ring = ring;
-  for(const sx of [-1.25, 1.25]){
-    const eng = sprite(0x7fe0ff, 0.9); eng.scale.set(0.9, 0.9, 1); eng.position.set(sx, -0.2, 0); g.add(eng);
-  }
-  const light = sprite(0xff5a4d, 0.9); light.scale.set(0.5, 0.5, 1); light.position.set(0, 1.35, 0.2); g.add(light);
-  g.userData.light = light;
+  const flame = sprite(0x8fd7ff, 0.95); flame.scale.set(1.0, 2.0, 1); flame.position.set(0, -1.15, 0);
+  g.add(flame); g.userData.flame = flame;
   return g;
 }
 function takeDrone(){ if(dronePool.length){ const d = dronePool.pop(); d.visible = true; return d; } const d = droneChassis(); board.add(d); return d; }
@@ -1493,7 +1491,10 @@ function updateTrail(L, M){
   L.drone.rotation.set(M.rotation.x * 0.5, t * 4 + L.ci, M.rotation.z * 0.5);
   const ds = M.scale.x / (CH_W * 0.92);
   L.drone.scale.setScalar(Math.max(0.35, ds));
-  L.drone.userData.light.material.opacity = 0.5 + 0.5 * Math.sin(t * 18 + L.ci);
+  const fl = L.drone.userData.flame;
+  fl.material.opacity = 0.7 + 0.3 * Math.sin(t * 24 + L.ci);
+  fl.scale.set(1.0, 1.7 + 0.6 * Math.sin(t * 19 + L.ci), 1);
+  fl.material.color.setHex(L.turret ? 0xffb08a : 0x8fd7ff);
 }
 
 // One letter's frame in flight. Returns true while it is still flying.
@@ -1596,6 +1597,113 @@ const ARMY_MAT = new THREE.MeshStandardMaterial({ color:0x3b4f69, map:HULL, emis
   roughness:0.6, metalness:0.55, flatShading:true, fog:false });
 const _w = new THREE.Vector3(), _w2 = new THREE.Vector3(), _q = new THREE.Quaternion(), Z_AXIS = new THREE.Vector3(0, 0, 1);
 
+/* CYBERTRON, IN GEOMETRY - RJ 2026-09-06, with the reference picture: "Cybertron is a super
+   advanced planet, mechanised."
+
+   A texture cannot do this. What makes that reference read as a machine world is SILHOUETTE:
+   domes and ring terraces and spires standing proud of the sphere, catching a cold light and
+   throwing shadow, so the limb is a jagged skyline rather than a smooth ball. So the surface
+   carries real geometry - about fourteen hundred structures - and the drawn map underneath is
+   demoted to the plating between them.
+
+   Everything is built at UNIT radius and scaled with the sphere, so it survives the radius
+   solve in placePlanet() and a resize. Three InstancedMesh calls carry the thousand small
+   pieces; the hubs and bands are a handful of real meshes. Placement is a Fibonacci sphere
+   (even coverage, no clumps at the poles) jittered by a SEEDED generator, so the same world
+   comes back every run and a screenshot is reproducible. */
+function seeded(n){ let s = n >>> 0; return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; }
+function fibDirs(n){
+  const out = [], off = 2 / n, inc = Math.PI * (3 - Math.sqrt(5));
+  for(let i = 0; i < n; i++){
+    const y = i * off - 1 + off / 2, r = Math.sqrt(Math.max(0, 1 - y * y)), phi = i * inc;
+    out.push(new THREE.Vector3(Math.cos(phi) * r, y, Math.sin(phi) * r));
+  }
+  return out;
+}
+function buildPlanetDetail(){
+  const g = new THREE.Group();
+  const rnd = seeded(20260906);
+  const hull = new THREE.MeshStandardMaterial({ color:0x5d6675, metalness:0.92, roughness:0.34, flatShading:true, fog:false });
+  const dark = new THREE.MeshStandardMaterial({ color:0x39404b, metalness:0.88, roughness:0.5,  flatShading:true, fog:false });
+  const lit  = new THREE.MeshBasicMaterial({ color:0x8fdcff, fog:false });
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  const place = (mesh, i, d, w, dpt, h, lift) => {
+    q.setFromUnitVectors(Z_AXIS, d);
+    v.copy(d).multiplyScalar(1 + (lift || 0) + h / 2);
+    sc.set(w, dpt, h);
+    m4.compose(v, q, sc);
+    mesh.setMatrixAt(i, m4);
+  };
+
+  // ---- the mass of it: blocks, in two sizes, all over
+  const dirs = fibDirs(4200);
+  const BLOCKS = 1000;
+  const blocks = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), hull, BLOCKS);
+  for(let i = 0; i < BLOCKS; i++){
+    const d = dirs[Math.floor(rnd() * dirs.length)];
+    const w = 0.010 + rnd() * 0.030;
+    place(blocks, i, d, w, w * (0.45 + rnd() * 0.9), 0.005 + rnd() * rnd() * 0.045, 0);
+  }
+  blocks.instanceMatrix.needsUpdate = true; g.add(blocks);
+
+  // ---- spires and stacks: the things that break the horizon
+  const TOWERS = 260;
+  const tg = new THREE.CylinderGeometry(0.34, 0.5, 1, 6); tg.rotateX(Math.PI / 2);
+  const towers = new THREE.InstancedMesh(tg, dark, TOWERS);
+  for(let i = 0; i < TOWERS; i++){
+    const d = dirs[Math.floor(rnd() * dirs.length)];
+    const w = 0.008 + rnd() * 0.016;
+    place(towers, i, d, w, w, 0.022 + rnd() * 0.042, 0);   // shorter: they were reading as antennae
+  }
+  towers.instanceMatrix.needsUpdate = true; g.add(towers);
+
+  // ---- lights in the works: tiny emissive plates, the "advanced" read at distance
+  const LAMPS = 900;
+  const lamps = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), lit, LAMPS);
+  for(let i = 0; i < LAMPS; i++){
+    const d = dirs[Math.floor(rnd() * dirs.length)];
+    const w = 0.0016 + rnd() * 0.004;
+    place(lamps, i, d, w, w * (1 + rnd() * 6), 0.001, 0.004 + rnd() * 0.02);
+  }
+  lamps.instanceMatrix.needsUpdate = true; g.add(lamps);
+
+  // ---- the hubs: stepped ring terraces round a spire, the shape the reference is built from
+  const hubDirs = fibDirs(11);
+  for(let k = 0; k < hubDirs.length; k++){
+    const d = hubDirs[k], hub = new THREE.Group();
+    const R0 = 0.075 + rnd() * 0.075;
+    let z = 0;
+    for(let r = 0; r < 4; r++){                        // terraces, each smaller and higher
+      const rr = R0 * (1 - r * 0.21), hh = 0.006 + r * 0.004;
+      const cg = new THREE.CylinderGeometry(rr, rr * 1.04, hh, 36); cg.rotateX(Math.PI / 2);
+      const m = new THREE.Mesh(cg, r % 2 ? dark : hull); m.position.z = 1 + z + hh / 2; hub.add(m);
+      // a lit rim on the step, so the terracing reads at a distance
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, 0.0016, 6, 44), lit);
+      ring.position.z = 1 + z + hh; hub.add(ring);
+      z += hh;
+    }
+    // a stack, not a needle: the reference's hubs are chunky towers, and thin spires read as
+    // radio masts stuck on a ball
+    const sh = 0.05 + rnd() * 0.05;
+    const spire = new THREE.CylinderGeometry(0.022, 0.05, sh, 8); spire.rotateX(Math.PI / 2);
+    const sp = new THREE.Mesh(spire, hull); sp.position.z = 1 + z + sh / 2; hub.add(sp);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.024, 14, 12), lit);
+    cap.position.z = 1 + z + sh; hub.add(cap);
+    hub.quaternion.setFromUnitVectors(Z_AXIS, d);
+    g.add(hub);
+  }
+
+  // ---- structural bands: great rings round the whole world
+  for(let b = 0; b < 4; b++){
+    const band = new THREE.Mesh(new THREE.TorusGeometry(1.004, 0.005 + rnd() * 0.004, 8, 220), hull);
+    band.rotation.set(rnd() * Math.PI, rnd() * Math.PI, rnd() * Math.PI);
+    g.add(band);
+    const glow = new THREE.Mesh(new THREE.TorusGeometry(1.012, 0.0016, 6, 220), lit);
+    glow.rotation.copy(band.rotation); g.add(glow);
+  }
+  return g;
+}
+
 function buildPlanet(){
   planet = new THREE.Group();
   // The surface: a straight-down tile generated with the starfighter art pipeline (FLUX via
@@ -1612,15 +1720,17 @@ function buildPlanet(){
     // white, and a 0xe8eef6 tint over that washed the whole surface out to pale blue.
     // the map is machinery now, dark and its own colour: a near-white tint and a matte finish
     // both fought it. Metal, lit, not tinted.
-    map: pmap, normalMap: pnorm, normalScale: new THREE.Vector2(1.4, 1.4), color:0xb8c2cf,
-    emissive:0x0a0f16, roughness:0.62, metalness:0.55, fog:false }));
+    map: pmap, normalMap: pnorm, normalScale: new THREE.Vector2(1.5, 1.5), color:0x9aa6b6,
+    emissive:0x070b12, roughness:0.45, metalness:0.8, fog:false }));
   ground.rotation.z = Math.PI / 2;   // texture poles onto the spin axis, so the map streams past like a globe
   planet.add(ground);
   // the atmosphere: a bigger shell seen from inside, so the limb glows and the sky-side fades
   const air = new THREE.Mesh(new THREE.SphereGeometry(1.035, 64, 48), new THREE.MeshBasicMaterial({
-    color:0x2f6da8, transparent:true, opacity:0.10, side:THREE.BackSide, depthWrite:false, fog:false }));
+    color:0x8fc4f0, transparent:true, opacity:0.13, side:THREE.BackSide, depthWrite:false, fog:false }));
   planet.add(air);
-  planet.userData = { R: 100, ground, air };
+  const detail = buildPlanetDetail();
+  planet.add(detail);
+  planet.userData = { R: 100, ground, air, detail };
   scene.add(planet);
   if(!blastLight){ blastLight = new THREE.PointLight(0xffa040, 0, 80); scene.add(blastLight); }
   placePlanet();
@@ -1657,6 +1767,7 @@ function placePlanet(){
   planet.userData.R = R;
   planet.userData.ground.scale.setScalar(R);
   planet.userData.air.scale.setScalar(R);
+  planet.userData.detail.scale.setScalar(R);
   freshMatrices();
   army.forEach(placeUnit);
 }
