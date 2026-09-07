@@ -141,6 +141,15 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   the asteroids already were (`:2658`). Remaining: the letter/block **canvas** textures aren't tagged;
   strictly correct decoding would touch the material/texture code near the letter lane (collision risk).
   Cosmetically fine now — canvas-authored art is less sensitive than a real sRGB JPG. Separate item.
+- **Planet albedo linearization** (graph: `BX-planet albedo linearize = no`) — investigated as the
+  colour-space follow-on to the sky fix; **decided against, not a bug.** `PLANET_FRAG` (`:1957`) samples
+  albedo raw (`vec3 alb = texture2D(uMap, vUv).rgb`, `:1967`) with no sRGB→linear decode. But unlike the
+  sky (a lighting-free background passthrough where the untagged double-encode was unambiguously wrong),
+  the planet runs its **own custom lighting model** that RJ authored and tuned against this raw-albedo
+  path — and RJ shipped the full-quality worlds (`d3ea5ee`) **after** my ACES+sRGB pipeline was already
+  live, so the planet is calibrated to the current pipeline and renders rich/correct (`skyfix.png`).
+  Linearizing would darken the albedo pre-lighting and change RJ's tuned look = an art change inside the
+  custom shader + collision risk. Recorded so no future pass "fixes" a self-consistent shader.
 
 ## Notes / traps for the next iteration
 
