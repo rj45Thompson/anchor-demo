@@ -36,6 +36,15 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   future pass wants them strictly correct that lives in the material/texture code (near the letter
   lane — collision risk) and is a separate list item, not part of this.
 
+- [x] **Gameplay QA of the shipped pipeline** — drove the built game through the full effect range
+  (fire, bomb-the-planet explosion, breaking/dissolving 12 letters, camera cycle, ~15 s era/text
+  progression), not just the opening. Live renderer read in the play state confirms `toneMapping===4`,
+  `outputEncoding===3001`, `exposure===0.85` active throughout; **0 new console errors** (only the
+  favicon 404). Screenshots `scratchpad/qa1_play..qa6_later`: bright additive glows (ship fire, bomb)
+  roll off via ACES with no blowout, breaks/crawl/reworked-camera all render legibly under sRGB, no
+  z-fighting or artifacts. **No regression from the global renderer changes.** Graph: `BX-shipped
+  pipeline holds in gameplay = yes`.
+
 ## Investigated — NOT shipped, deferred to RJ (design/architecture calls, not renderer toggles)
 
 - [x] **Shadows (rung 3) — investigated, decided against; no visible receiver in this scene.**
