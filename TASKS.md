@@ -158,9 +158,12 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   the intended change here and take a different item. Stage the file by name, never `git add -A`.
 - **Graph tool bug:** re-`claim`ing a subject with the *same* `--source` string crashes on a UNIQUE
   edge constraint and rolls back. Use a distinct source string (e.g. `file:line`) when updating.
-- **Shipped features read as `contested`** in the graph (baseline measured them absent, then they
-  were shipped). That is a state transition, not a real conflict — do not re-investigate; follow this
-  list's priority order.
+- **Shipped-feature "contested" flags — now RESOLVED.** Baseline measured tone mapping and sRGB output
+  absent, then they were shipped, so the graph flagged both `contested (verdicts=['no','yes'])`. That was
+  a state transition, not a real conflict. Resolved with `claim --subject <s> --verdict yes --supersedes
+  no --reason built` (progression, not contradiction): both are now `contested=False`, anchors 2, WELL
+  SUPPORTED, and the graph's CONTESTED section is **empty**. Use this same `--supersedes` mechanism for
+  any future built-feature transition rather than leaving a stale disagreement at the top of the rank.
 - The load-time console 404 is **the favicon** (no `<link rel="icon">` in `<head>`), NOT a missing
   renderer asset — verified: all 10 referenced textures exist on disk, and a Playwright response
   listener over full load+play saw 0 requests with status ≥ 400. Benign; a favicon is tab branding =
