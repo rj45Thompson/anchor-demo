@@ -1499,10 +1499,11 @@ function syncMeshes(){
 
 // ---- ported from starfighter.html so both games share one ship language ----
 const TAU = Math.PI*2;
-function glowTex(){ const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d');
-  const gr=g.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'rgba(255,255,255,1)');
+function glowTex(){ const S=256, h=S/2; const c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d');
+  const gr=g.createRadialGradient(h,h,0,h,h,h); gr.addColorStop(0,'rgba(255,255,255,1)');
   gr.addColorStop(.22,'rgba(255,255,255,.85)'); gr.addColorStop(.55,'rgba(255,255,255,.25)'); gr.addColorStop(1,'rgba(255,255,255,0)');
-  g.fillStyle=gr; g.fillRect(0,0,64,64); const t=new THREE.Texture(c); t.needsUpdate=true; return t; }
+  g.fillStyle=gr; g.fillRect(0,0,S,S); const t=new THREE.Texture(c); t.needsUpdate=true;
+  t.minFilter=THREE.LinearMipmapLinearFilter; t.magFilter=THREE.LinearFilter; t.anisotropy=8; return t; }
 function hullTex(){ const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d');
   g.fillStyle='#9aa2ad'; g.fillRect(0,0,128,128);
   for(let i=0;i<12;i++){ const s=(i*53)%128, u=(i*61)%128; g.fillStyle=`rgba(${70+((i*37)%80)},${74+((i*23)%80)},${84+((i*41)%70)},0.16)`; g.fillRect(s,u,26+((i*17)%44),20+((i*13)%40)); }
