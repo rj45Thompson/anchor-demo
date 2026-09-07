@@ -235,7 +235,16 @@ if(!COARSE && typeof THREE.EffectComposer === 'function' && THREE.RenderPass &&
    THREE.UnrealBloomPass && THREE.ShaderPass && THREE.GammaCorrectionShader){
   try {
     renderer.outputEncoding = THREE.LinearEncoding;   // the gamma pass re-applies the exact sRGB curve
-    composer = new THREE.EffectComposer(renderer);
+    // A1 anti-aliasing: the composer renders the scene to an offscreen target, so the renderer's own
+    // antialias:true MSAA is inert. On WebGL2, hand EffectComposer a WebGLMultisampleRenderTarget so
+    // the scene RenderPass gets true 4x MSAA (resolved before bloom); on WebGL1 or if the type is
+    // missing, ctarget stays undefined and EffectComposer builds its default single-sample target.
+    let ctarget;
+    if(renderer.capabilities.isWebGL2 && typeof THREE.WebGLMultisampleRenderTarget === 'function'){
+      const dbs = renderer.getDrawingBufferSize(new THREE.Vector2());
+      ctarget = new THREE.WebGLMultisampleRenderTarget(dbs.x, dbs.y, { format: THREE.RGBAFormat });
+    }
+    composer = new THREE.EffectComposer(renderer, ctarget);
     composer.setPixelRatio(renderer.getPixelRatio());
     composer.setSize(innerWidth, innerHeight);
     composer.addPass(new THREE.RenderPass(scene, camera));
