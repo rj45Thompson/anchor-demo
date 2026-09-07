@@ -1275,6 +1275,8 @@ function syncMeshes(){
              plating and never washes out against a bright highlight. */
           m.material.color.copy(base).multiplyScalar(0.20);
           m.material.emissive.copy(base).lerp(new THREE.Color(0xffffff), 0.16);
+          m.material.map = CYBER;   // the body is plated metal, not a painted slab
+          m.material.needsUpdate = true;
         }
         m.rotation.set(0,0,0);
         m.visible = false; L.mesh = m;
@@ -1292,8 +1294,12 @@ function syncMeshes(){
         M.material.roughness = e >= 3 ? 0.28 : 0.95;
         if(L.flash > 0) L.flash = Math.max(0, L.flash - frameDt * 2.2);   // the landing glow cools
         // neon: the emissive IS the letter, so it runs well above 1 and the lit body barely matters
-        M.material.emissiveIntensity = (e >= 4 ? (1.7 + reveal*0.5) : 0.05) + L.flash * 1.4;
-        const S = CH_W*0.92, SY = CH_W*1.22;
+        /* The early eras used to run the emissive at 0.05, which is off - the glyph was a white block lit only
+           by the scene, and RJ's reading of it was exactly that: "just a block that's white is kind of hard to
+           read and not that cool". The letter now carries its own light in EVERY era; the late eras still go
+           further into neon, so the era grade still means something. */
+        M.material.emissiveIntensity = (e >= 4 ? (1.7 + reveal*0.5) : 0.72 + e*0.06) + L.flash * 1.4;
+        const S = CH_W*1.02, SY = CH_W*1.34;   // RJ: "it can be like a little bit larger letters"
         if(L.dissolve > 0){
           // struck letters SPIN OUT: tumble, drift and shrink, rather than fading where they sat
           const k = L.dissolve, sc = Math.max(0.001, 1-k);
@@ -1324,7 +1330,23 @@ function hullTex(){ const c=document.createElement('canvas'); c.width=c.height=1
   g.fillStyle='rgba(28,32,38,0.6)'; for(let x=16;x<128;x+=32) for(let y=13;y<128;y+=26){ g.beginPath(); g.arc(x,y,1.5,0,TAU); g.fill(); }
   g.strokeStyle='rgba(240,246,255,0.45)'; g.lineWidth=5; g.beginPath(); g.moveTo(0,44); g.lineTo(128,60); g.stroke();
   const t=new THREE.Texture(c); t.needsUpdate=true; t.anisotropy=4; return t; }
-const GLOW = glowTex(), HULL = hullTex();
+function cyberTex(){
+  const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d');
+  g.fillStyle='#20262e'; g.fillRect(0,0,128,128);
+  // plates at two scales, each its own shade of gunmetal
+  for(let i=0;i<26;i++){ const x=(i*37)%128, y=(i*53)%128, w=14+((i*19)%34), h=10+((i*13)%26);
+    g.fillStyle=`rgba(${52+((i*29)%46)},${58+((i*31)%46)},${68+((i*37)%46)},0.92)`; g.fillRect(x,y,w,h);
+    g.strokeStyle='rgba(12,16,22,0.85)'; g.lineWidth=1.5; g.strokeRect(x+0.5,y+0.5,w,h); }
+  // the trench grid between them
+  g.strokeStyle='rgba(10,14,20,0.7)'; g.lineWidth=2;
+  for(let x=0;x<=128;x+=32){ g.beginPath(); g.moveTo(x,0); g.lineTo(x,128); g.stroke(); }
+  for(let y=0;y<=128;y+=32){ g.beginPath(); g.moveTo(0,y); g.lineTo(128,y); g.stroke(); }
+  // rivets, then two hot vents so the plating has somewhere the light comes from
+  g.fillStyle='rgba(150,166,186,0.55)';
+  for(let x=8;x<128;x+=32) for(let y=8;y<128;y+=32){ g.beginPath(); g.arc(x,y,1.6,0,TAU); g.fill(); }
+  g.fillStyle='rgba(255,150,60,0.55)'; g.fillRect(38,74,22,4); g.fillRect(84,20,18,4);
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(2,2); t.anisotropy=4; return t; }
+const GLOW = glowTex(), HULL = hullTex(), CYBER = cyberTex();
 
 // ---------------------------------------------------------------- the press: where the words come from
 /* RJ 2026-09-06: "the letters shouldn't flash appear - they should spawn off screen and come in
