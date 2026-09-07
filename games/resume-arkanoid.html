@@ -451,7 +451,10 @@ function makeLetterMesh(){
   // geometry is swapped per character in syncMeshes; the material is LIT rather than a flat
   // shader quad so the extrusion catches the key light and reads as a solid block letter.
   const m = new THREE.Mesh(glyphGeometry("A"), new THREE.MeshStandardMaterial({
-    color:0xffffff, emissive:0x111111, roughness:0.42, metalness:0.32, flatShading:true }));
+    color:0xffffff, emissive:0x111111, roughness:0.42, metalness:0.32, flatShading:true,
+    emissiveMap: SPEED.clone() }));   // its own clone so each letter's streaks can run at its own phase
+  m.material.emissiveMap.wrapS = m.material.emissiveMap.wrapT = THREE.RepeatWrapping;
+  m.material.emissiveMap.repeat.set(1.6, 1);
   m.visible = false; board.add(m); return m;
 }
 function takeMesh(){ return pool.length ? pool.pop() : makeLetterMesh(); }
@@ -1299,8 +1302,12 @@ function syncMeshes(){
              in the glyph's own tone, which is how a lit tube reads - the colour comes from the
              letter itself rather than from whatever light reaches it, so it holds against dark
              plating and never washes out against a bright highlight. */
-          m.material.color.copy(base).multiplyScalar(0.20);
-          m.material.emissive.copy(base).lerp(new THREE.Color(0xffffff), 0.16);
+          /* RJ: "glowing green and highly visible neon emmison". Every non-turret glyph now burns the same
+             green - a sign reads because it is ONE colour at high intensity, not because each line has its own
+             tint. The line's own tone survives as a faint wash in the body, so head/detail/tone lines still
+             differ, but what your eye gets is green neon. */
+          m.material.color.copy(base).multiplyScalar(0.10).lerp(new THREE.Color(0x06180d), 0.5);
+          m.material.emissive.copy(NEON);
           m.material.map = CYBER;   // the body is plated metal, not a painted slab
           m.material.needsUpdate = true;
         }
@@ -1324,7 +1331,13 @@ function syncMeshes(){
            by the scene, and RJ's reading of it was exactly that: "just a block that's white is kind of hard to
            read and not that cool". The letter now carries its own light in EVERY era; the late eras still go
            further into neon, so the era grade still means something. */
-        M.material.emissiveIntensity = (e >= 4 ? (1.7 + reveal*0.5) : 0.72 + e*0.06) + L.flash * 1.4;
+        M.material.emissiveIntensity = (e >= 4 ? (2.6 + reveal*0.6) : 1.5 + e*0.10) + L.flash * 1.4;
+        // the streaks run: offset scrolls with the clock, each letter at its own phase so a line does not pulse
+        // as one block. Faster the further down the crawl it is, which reads as the text accelerating past you.
+        if(M.material.emissiveMap){
+          if(L.phase === undefined) L.phase = Math.random();
+          M.material.emissiveMap.offset.x = (L.phase + performance.now()*0.001 * (0.55 + 0.25 * L.phase)) % 1;
+        }
         const S = CH_W*1.02, SY = CH_W*1.34;   // RJ: "it can be like a little bit larger letters"
         if(L.dissolve > 0){
           // struck letters SPIN OUT: tumble, drift and shrink, rather than fading where they sat
@@ -1372,7 +1385,28 @@ function cyberTex(){
   for(let x=8;x<128;x+=32) for(let y=8;y<128;y+=32){ g.beginPath(); g.arc(x,y,1.6,0,TAU); g.fill(); }
   g.fillStyle='rgba(255,150,60,0.55)'; g.fillRect(38,74,22,4); g.fillRect(84,20,18,4);
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(2,2); t.anisotropy=4; return t; }
-const GLOW = glowTex(), HULL = hullTex(), CYBER = cyberTex();
+/* SPEED LINES - RJ 2026-09-06: "make the text glowing blocks glowing green and highly visible neon emmison
+   with speed lines shaders."
+   The streaks are a TEXTURE on the emissive channel, not a post effect: horizontal lines of varying weight and
+   brightness, drawn once, scrolled every frame by nudging the map's offset. On the glyph faces that reads as the
+   letter itself moving fast - and because it is the EMISSIVE map, the lines glow rather than being lit, which is
+   what makes a neon sign look like a neon sign. Cheap: one 256x64 canvas shared by every letter. */
+function speedTex(){
+  const c=document.createElement('canvas'); c.width=256; c.height=64; const g=c.getContext('2d');
+  g.fillStyle='#0d3a1c'; g.fillRect(0,0,256,64);                       // the tube's own dim green, never black
+  for(let i=0;i<34;i++){
+    const y=(i*17+((i*53)%11))%64, w=26+((i*37)%150), x=((i*61)%256);
+    const a=0.30+((i*29)%60)/100;
+    const grd=g.createLinearGradient(x,0,x+w,0);
+    grd.addColorStop(0,'rgba(120,255,170,0)');
+    grd.addColorStop(0.5,'rgba(190,255,210,'+a.toFixed(2)+')');
+    grd.addColorStop(1,'rgba(120,255,170,0)');
+    g.fillStyle=grd; g.fillRect(x,y,w,1+((i*7)%3));
+    if(x+w>256){ g.fillRect(x-256,y,w,1+((i*7)%3)); }                  // the streak wraps, so scrolling never seams
+  }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(1.6,1); t.anisotropy=4; return t; }
+const GLOW = glowTex(), HULL = hullTex(), CYBER = cyberTex(), SPEED = speedTex();
+const NEON = new THREE.Color(0x39ff88);   // the one green every letter glows in
 
 // ---------------------------------------------------------------- the press: where the words come from
 /* RJ 2026-09-06: "the letters shouldn't flash appear - they should spawn off screen and come in
@@ -1775,7 +1809,28 @@ function buildPlanet(){
   // The surface: a straight-down tile generated with the starfighter art pipeline (FLUX via
   // Pollinations, mirror-blended seamless, normal map derived from luminance), tiled round the
   // sphere so the detail is at the scale a ship eight units up actually sees.
-  const pmap = texLoader.load('assets/planet.jpg'), pnorm = texLoader.load('assets/planet_n.jpg');
+  /* RANDOM WORLD EACH RUN - RJ 2026-09-06: "make it random level when you start the game?" / "all six" /
+     "put them in resume breakout."
+     Six machine worlds, generated with the starfighter art pipeline (SDXL-turbo with every Conv2d switched to
+     circular padding, which is what makes them wrap; measured centre/edge 0.87-1.23, seam 5.9-10.5 - textures
+     rather than compositions). One is drawn at random per run, so the planet you fly over is a different world
+     each time you press START. The shader below is untouched: it reads whichever pair it is handed. */
+  // Each world gets its own tint, because the shader's single uTint (0x63707f steel) flattened six different
+  // planets into one grey-green family - measured by swapping all six in the page and looking: the maps differ,
+  // the render did not. The tint is the world's own metal, not a filter over it.
+  const WORLDS = {
+    forge:    0x8a6a52,   // hot iron, furnace-lit
+    circuit:  0x4f7f8f,   // board green-blue
+    reactor:  0x5f7d86,   // cool shielded steel
+    derelict: 0x7a5a46,   // corroded rust
+    citadel:  0x6a5f86,   // violet fortress metal
+    glacier:  0x8894a2,   // pale ceramic
+  };
+  const WORLD_NAMES = Object.keys(WORLDS);
+  const WORLD = WORLD_NAMES[(Math.random()*WORLD_NAMES.length)|0];
+  const pmap = texLoader.load('assets/planet_' + WORLD + '.jpg'),
+        pnorm = texLoader.load('assets/planet_' + WORLD + '_n.jpg');
+  window.__world = WORLD; window.__worldTint = WORLDS[WORLD];
   pmap.wrapS = pmap.wrapT = pnorm.wrapS = pnorm.wrapT = THREE.RepeatWrapping;
   // A 2:1 machine-world map, twice round the equator and once pole to pole, so a plate is about
   // a ship-length at the scale you fly. anisotropy keeps the plating readable at the limb.
@@ -1859,7 +1914,7 @@ function buildPlanet(){
       uMap: { value: null }, uNorm: { value: null }, uEnv: { value: sky },
       uLight: { value: new THREE.Vector3(6, -4, 14).normalize() },   // the key light, world space
       uCam: { value: new THREE.Vector3() },
-      uTint: { value: new THREE.Color(0x63707f) },   // darker: the letters are the bright thing
+      uTint: { value: new THREE.Color(WORLDS[WORLD]) },   // the chosen world's own metal (was one steel for all six)
       uTime: { value: 0 }, uBump: { value: 0.55 },
     },
     vertexShader: PLANET_VERT, fragmentShader: PLANET_FRAG, fog: false,
