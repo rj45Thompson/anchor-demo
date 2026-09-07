@@ -2920,15 +2920,30 @@ function buildShip(){
   return g;
 }
 
+/* Pooled additive glow sprites - the retro-FX primitive (R10-R13). A camera-facing quad drawn
+   with GLOW + AdditiveBlending, reused from a free-list. The old spark() built a
+   TetrahedronGeometry + a MeshBasicMaterial + a Mesh for EVERY dot on screen for under a second -
+   a geometry, a material and an allocation per particle, garbage-collected in a spike (the p90
+   the frame trace showed). A sprite carries no geometry of its own, and the pool means a burst of
+   sparks or a stream of tracers allocates nothing after warm-up. */
+const _glowPool = [];
+function glowSprite(colorHex){
+  let s = _glowPool.pop();
+  if(!s){ s = new THREE.Sprite(new THREE.SpriteMaterial({ map:GLOW, blending:THREE.AdditiveBlending,
+            transparent:true, depthWrite:false, fog:false })); }
+  s.material.color.setHex(colorHex); s.material.opacity = 1; s.scale.set(1,1,1); s.visible = true;
+  return s;
+}
+function freeGlow(s){ if(s.parent) s.parent.remove(s); s.visible = false; _glowPool.push(s); }
+
 function spark(pos, colorHex, n){
   for(let i=0;i<n;i++){
-    const m = new THREE.Mesh(
-      new THREE.TetrahedronGeometry(.16 + Math.random()*.2),
-      new THREE.MeshBasicMaterial({color:colorHex}));
-    m.position.copy(pos);
-    m.userData.v = new THREE.Vector3((Math.random()-.5)*.5,(Math.random()-.5)*.5,(Math.random()-.5)*.4);
-    m.userData.life = 1;
-    scene.add(m); bits.push(m);
+    const s = glowSprite(colorHex);
+    s.position.copy(pos);
+    s.userData.v = new THREE.Vector3((Math.random()-.5)*.5,(Math.random()-.5)*.5,(Math.random()-.5)*.4);
+    s.userData.life = 1;
+    s.userData.size = 0.55 + Math.random()*0.55;   // a retro glow reads bigger than the old tetra; keep it small
+    scene.add(s); bits.push(s);
   }
 }
 
@@ -2946,7 +2961,7 @@ function show(co, date, detail){
 function reset(){
   buildBoard();
   bullets.forEach(b=>board.remove(b)); bullets=[];   // board, not scene: that is their parent
-  bits.forEach(b=>scene.remove(b)); bits=[];
+  bits.forEach(b=>freeGlow(b)); bits=[];
   score=0; lives=LIVES_MAX; shake=0;
   drops.forEach(d=>board.remove(d)); drops=[]; power=null; powerT=0;
   if(flameCone) flameCone.visible=false;
@@ -3288,8 +3303,8 @@ function tick(now){
     p.position.add(p.userData.v);
     p.userData.v.multiplyScalar(.94);
     p.userData.life -= dt*1.7;
-    p.scale.setScalar(Math.max(p.userData.life,0));
-    if(p.userData.life<=0){ scene.remove(p); bits.splice(i,1); }
+    p.scale.setScalar((p.userData.size||1) * Math.max(p.userData.life,0));
+    if(p.userData.life<=0){ freeGlow(p); bits.splice(i,1); }
   }
 
   if(readTimer>0){ readTimer-=dt; if(readTimer<=0) readout.classList.remove('on'); }
