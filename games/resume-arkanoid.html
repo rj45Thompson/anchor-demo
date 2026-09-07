@@ -169,6 +169,12 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
 // screen renders 1125 columns of a full 3D scene and the frame rate is what suffers.
 const COARSE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 renderer.setPixelRatio(Math.min(devicePixelRatio, COARSE ? 1.5 : 2));
+// ACES filmic tone mapping. The key light + point rims drive the planet's bright side and the
+// glyph plating past 1.0, where the default (no tone mapping) hard-clamps to flat white and the
+// specular reads as a blown patch instead of a curved surface. ACES rolls the highlights off on
+// an S-curve so shape survives into the bright end. Exposure 1.0 = neutral starting point.
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
 const scene = new THREE.Scene();
 /* LIGHTING. RJ, twice: "a little dark", "it's very dim". The cause was this fog. FogExp2 falls
    off with the SQUARE of distance, and at density 0.028 over the ~40 units between the camera and
