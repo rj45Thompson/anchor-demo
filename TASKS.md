@@ -86,9 +86,13 @@ Autobot lane (renderer-level fidelity only; art direction is RJ's). Target file:
   nebula cubemap (`:1595`), so the IBL contribution is tiny. Not a visible upgrade in this dark-space
   scene, and it shifts RJ's tuned letters. *For RJ:* worthwhile only with a brighter env source or a
   raised `envMapIntensity` — an aesthetic call. Graph: `BX-scene.environment IBL = no`.
-- **`renderer.physicallyCorrectLights`** (graph: `BX-physically correct lights = no`) — changes light
-  falloff to inverse-square; every existing light intensity/distance was tuned WITHOUT it, so turning
-  it on would need all of RJ's light numbers retuned. Disruptive, art-adjacent — leave for RJ.
+- **`renderer.physicallyCorrectLights`** (graph: `BX-physically correct lights = no`, now anchors 2)
+  — **empirically tested** (runtime A/B, `scratchpad/pcl_off.png` vs `pcl_on.png`): enabling it makes
+  every analytic-lit object (printing letters, debris, ship, army — 217 MeshStandard mats) noticeably
+  **dimmer and bluer**, because the light intensities at `:185-191` (ambient 1.75, key 1.85, rim 2.2,
+  fill 0.95) were tuned for the legacy model; inverse-square falloff makes the same numbers far
+  dimmer = a regression toward RJ's "too dark". Planet unchanged (custom shader). Free (16.6 ms) but
+  needs RJ to retune every light intensity + point-light distance = art direction. Left for RJ.
 - **sRGB texture tagging** — the letter/block canvas textures aren't tagged `sRGBEncoding`; strictly
   correct decoding would touch the material/texture code near the letter lane. Cosmetically fine now.
 
