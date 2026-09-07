@@ -82,9 +82,17 @@ CURRENT = [
     # led with genre comparisons, and spent its words on asides a hiring manager cannot use.
     # This one leads with the role, names the tools built, and keeps only checkable numbers.
     # RJ 2026-09-06: lead with the SHIPPING PRODUCT, not the engineering hygiene. A test count is
-    # not a reason to hire someone; a full-scale console title, solo, with a date on it, is. The
-    # platform, the December target and the Wandering Sword comparison are RJ's own claims about
-    # his project - stated as a target, which is how a release date belongs on a resume.
+    # not a reason to hire someone; a console title with a date on it is.
+    #
+    # CORRECTED 2026-09-07, RJ: "tami work is not solo, it's a small indie team, full team." The
+    # entry had said "solo design and development", which was wrong and was going out to employers.
+    # It is an indie studio and his part in it is the engine and tooling - which is also the part
+    # that transfers to another job, so the shorter true version is the stronger one.
+    #
+    # Then, same day: "don't talk too much about it, make it super short - indie game for startup
+    # company, tactics game for Switch, should be done December." Cut from eleven lines to three.
+    # Dropped in that cut, recoverable if wanted: the Wandering Sword scope comparison, the
+    # 18-element synergy system, the VFX authoring tool, and the 65/65 Shuriken-to-Niagara port.
     #
     # The 33,000 lines is COUNTED, not estimated: 92 product files under Assets/Media/Scripts/
     # BlockPainter/ plus BlockTilePainter*.cs and LevelBrush*.cs, excluding *Tests.cs. wc -l over
@@ -92,16 +100,10 @@ CURRENT = [
     # figure is the one quoted, because it is the one that survives being checked. The 19,496
     # lines of tests for it are deliberately not counted here or mentioned anywhere.
     ("Tami - Tactics RPG for Nintendo Switch", "2025 - present",
-     "Solo design and development of a full-scale tactics RPG for <b>Nintendo Switch</b>, comparable "
-     "in scope to <b>Wandering Sword</b>, targeting a <b>December</b> release. Grid-based tactical "
-     "combat, an <b>18-element</b> type and synergy system generated from the design spreadsheet, "
-     "and pixel-art units rendered in a lit 3D world. Built <b>Block Painter</b>, a <b>33,000-line</b> "
-     "authoring tool that replaces the Unity interface completely - terrain, tiles, lighting, "
-     "cameras, biomes, props and cutscenes are all built from one window, so designers never open "
-     "the raw Unity editor. Also built a VFX authoring tool driven from the same spreadsheets, a "
-     "<b>132-route</b> HTTP bridge that lets scripts and AI agents drive the editor and capture UI "
-     "headlessly, and a Shuriken-to-Niagara converter that ports all <b>65</b> emitters into "
-     "Unreal."),
+     "Indie tactics RPG for <b>Nintendo Switch</b> at a startup studio, shipping <b>December</b>. "
+     "I build the engine and tooling: <b>Block Painter</b>, a <b>33,000-line</b> authoring tool "
+     "that replaces the Unity interface completely, and a <b>132-route</b> HTTP bridge that lets "
+     "scripts and AI agents drive the editor headlessly."),
     ("Verification and calibration for AI systems", "2025 - present",
      "A knowledge engine with <b>no neural weights</b> over <b>66.4M facts</b>, running entirely "
      "in the browser: it reports a measured confidence per inference chain and abstains rather "
