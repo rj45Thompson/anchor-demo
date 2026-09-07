@@ -417,8 +417,13 @@ const CH_W = 1.86, LINE_H = 3.9;   // bigger blocks - RJ
 // RJ 2026-09-05: "the ship moves way too slow and now it's impossible". The blocks grew 45%
 // (CH_W 1.12 -> 1.62, cs d6bae7f) so the text band the ship has to cover grew with them, but
 // the ship kept its 26 units/s. 40 restores the old cover time with a margin; vertical up with it.
-const SHIP_SPEED_X = 40, SHIP_SPEED_Y = 20;   // world units per second
-const SHIP_Y_MIN = -10.2, SHIP_Y_MAX = -3.6;   // narrow station-keeping band      // glyph pitch, line pitch
+const SHIP_SPEED_X = 40, SHIP_SPEED_Y = 11;   // world units per second (vertical is a trim, not a second axis)
+// RJ 2026-09-06, on Android: "the user ship is a little bit too high forward. you should probably be a bit
+// lower to the bottom of the screen and maybe you can make it move up and down a little bit but should just
+// mostly be left and right controls." The band sat at -10.2..-3.6 with the view bottom at -13.5, so the ship
+// flew a third of the way up the screen and its vertical travel was 6.6 units - enough to feel like a second
+// axis. Dropped to sit near the floor, and the travel halved so up/down is a nudge and left/right is the game.
+const SHIP_Y_MIN = -12.4, SHIP_Y_MAX = -9.2;   // low, narrow station-keeping band
 const VIEW_TOP = 15.0, VIEW_BOT = -13.5;
 const letterGeo = new THREE.BoxGeometry(CH_W*0.94, CH_W*1.24, CH_W*0.46);
 
@@ -509,11 +514,19 @@ const eraIdx = 5;
    button to switch them." Four rigs. The board's rake is the same in all of them (the planet and
    the press are placed against rig 0, so the world must not move when the camera does); only the
    eye moves, and a change is a sweep rather than a cut. C, or the Camera button, cycles. */
+/* RJ 2026-09-06: "some of the camera angles don't work. it [frames] the whole planet so we might need to adjust
+   that ... some of them are no longer valid anymore."
+   He is right, and the reason is measurable. Every rig was solved against the OLD planet; once it became real
+   geometry filling the sky, the two that sit furthest from their aim point started showing the whole ball with
+   the resume shrunk into the middle of it. Distance from eye to look point, before:
+       CRAWL 44.9   CHASE 56.1 (+25%)   OVERHEAD 62.1 (+38%)   WING 49.4 (+10%)
+   and CHASE/OVERHEAD aimed at y=14 and y=6, above the text band, which is the rest of it. All three are re-solved
+   to sit within CRAWL's distance and to look at the band the words are actually in. */
 const CAM_MODES = [
-  { name:"CRAWL",    pos:[ 0.0, -22.0, 32.0], look:[0.0,  2.0, -6.0] },   // the opening-crawl shot, solved below
-  { name:"CHASE",    pos:[ 0.0, -38.0, 13.0], look:[0.0, 14.0, -8.0] },   // low behind the ship, horizon ahead
-  { name:"OVERHEAD", pos:[ 0.0, -10.0, 56.0], look:[0.0,  6.0, -4.0] },   // looking down on the run
-  { name:"WING",     pos:[18.0, -30.0, 26.0], look:[0.0,  4.0, -5.0] },   // off the starboard wing, three-quarter, text still reads
+  { name:"CRAWL",    pos:[ 0.0, -22.0, 32.0], look:[0.0,  2.0, -6.0] },   // the opening-crawl shot, solved below - the one that always read
+  { name:"CHASE",    pos:[ 0.0, -30.0, 12.0], look:[0.0,  4.0, -6.0] },   // low behind the ship (38.5 out, was 56.1 looking over the text)
+  { name:"OVERHEAD", pos:[ 0.0, -14.0, 40.0], look:[0.0,  4.0, -5.0] },   // looking down on the run (48.5 out, was 62.1)
+  { name:"WING",     pos:[15.0, -26.0, 22.0], look:[0.0,  3.0, -5.0] },   // off the starboard wing, three-quarter (42.3 out)
 ];
 let camMode = 0, camBlend = 1;
 const camLook = new THREE.Vector3(0, 2, -6), _camTarget = new THREE.Vector3(), _lookTarget = new THREE.Vector3();
@@ -2697,7 +2710,7 @@ function reset(){
   // where graphics started off and ramped up; fullGraphics() replaced that and this was never
   // deleted. The game has been starting with no background at all ever since, which is most of
   // why it looked dark. fullGraphics() above now actually holds.
-  ship.position.x = 0; ship.position.y = SHIP_Y_MIN + 1.2;
+  ship.position.x = 0; ship.position.y = SHIP_Y_MIN + 0.8;
   // RJ 2026-09-05: "the ship disappears after the restart of the game", "the shield is also
   // gone". killShip() hides the ship group for the explosion and nothing ever showed it again;
   // the shield bubble is a CHILD of that group, so it vanished with it. Both were the same bug.
