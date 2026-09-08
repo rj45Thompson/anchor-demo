@@ -91,6 +91,7 @@
   <div class="hud" id="readout"></div>
   <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
   <button id="shieldBtn" hidden style="position:fixed;left:14px;bottom:54px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:9px;padding:12px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;touch-action:none">&#128737; SHIELD</button>
+  <button id="sndBtn" style="position:fixed;left:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#128263; Sound off</button>
   <button id="camBtn" style="position:fixed;right:14px;top:50px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#10227; Camera (C)</button>
   <div id="bigHint" class="bighint"><b></b><small></small></div>
   <div class="hud" id="banner" style="left:0;right:0;top:88px;text-align:center;font-size:13px;font-weight:700;letter-spacing:2px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
@@ -502,6 +503,20 @@ let brokenCount = 0, totalGlyphs = 0, linesRead = new Set();
 const AUDIO = (function(){
   const CFG = { MUSIC_VOL:0.30, SFX_VOL:0.42, MUSIC:'assets/audio/arcade.ogg' };
   let ctx=null, master=null, musicGain=null, sfxGain=null, el=null, src=null, on=false;
+  // SOUND OFF BY DEFAULT (RJ 2026-09-07). A portfolio page that starts making noise at a visitor
+  // is a page they close. The gate is at the TOP of play() and startMusic() rather than a zeroed
+  // gain, so a muted game does no audio work at all - no oscillators built, no music element
+  // fetched. The choice is remembered per visitor; a browser that refuses storage just stays off,
+  // which is the safe direction to fail in.
+  let muted = true;
+  try{ const v = localStorage.getItem('BX_SOUND'); if(v === 'on') muted = false; }catch(e){}
+  function setMuted(m){
+    muted = !!m;
+    try{ localStorage.setItem('BX_SOUND', muted ? 'off' : 'on'); }catch(e){}
+    if(muted){ if(el){ try{ el.pause(); }catch(e){} } on = false; }
+    else { init(); startMusic(); }
+    return muted;
+  }
 
   function init(){
     if(ctx) return true;
@@ -515,6 +530,7 @@ const AUDIO = (function(){
     }catch(e){ ctx=null; return false; }
   }
   function startMusic(){
+    if(muted) return;                       // no fetch, no decode, no element while muted
     if(!init() || el) return;
     try{
       el = new Audio(CFG.MUSIC); el.loop = true; el.crossOrigin='anonymous';
@@ -563,13 +579,27 @@ const AUDIO = (function(){
     hurt:    function(){ voice({wave:'sawtooth', f0:260, f1:70,  dur:0.42, vol:0.6}); duck(0.6,0.8); },
     power:   function(){ voice({wave:'triangle', f0:520, f1:1320,dur:0.24, vol:0.4}); },
   };
-  function play(n){ const f = BANK[n]; if(f){ try{ f(); }catch(e){} } }
+  function play(n){ if(muted) return; const f = BANK[n]; if(f){ try{ f(); }catch(e){} } }   // gated here, so a muted game builds no oscillators at all
   return { init, startMusic, play, duck,
            setMusicVolume(v){ CFG.MUSIC_VOL=v; if(musicGain) musicGain.gain.value=v; },
            setSfxVolume(v){ CFG.SFX_VOL=v; if(sfxGain) sfxGain.gain.value=v; },
-           playing(){ return on; }, names(){ return Object.keys(BANK); } };
+           playing(){ return on; }, names(){ return Object.keys(BANK); },
+           muted(){ return muted; }, setMuted, toggle(){ return setMuted(!muted); } };
 })();
 window.AUDIO = AUDIO;
+// The sound switch. Top-left, opposite Fullscreen/Camera on the right, and it states the CURRENT
+// state rather than the action - a button that says 'Sound off' when sound is off is readable at a
+// glance; one that says 'Mute' makes you work out which way round it is.
+(function(){
+  const b = document.getElementById('sndBtn'); if(!b) return;
+  const paint = () => { const m = AUDIO.muted();
+    b.innerHTML = m ? '&#128263; Sound off' : '&#128266; Sound on';
+    b.setAttribute('aria-pressed', String(!m));
+    b.title = m ? 'Sound is off - click to turn it on' : 'Sound is on - click to turn it off'; };
+  b.addEventListener('click', e => { e.stopPropagation(); AUDIO.toggle(); paint(); });
+  addEventListener('keydown', e => { if(e.key === 'm' || e.key === 'M'){ AUDIO.toggle(); paint(); } });
+  paint();
+})();
 
 /* ================================================================ THE LETTERS
    RJ 2026-09-07: "for each letter there seems to be a little backdrop with little lights on it and
@@ -4004,7 +4034,7 @@ resize();
 document.getElementById('go').onclick = ()=>{
   document.getElementById('start').classList.add('hide');
   // START is a real click, so the audio policy is satisfied here and nowhere earlier
-  if(window.AUDIO){ AUDIO.init(); AUDIO.startMusic(); }
+  if(window.AUDIO && !AUDIO.muted()){ AUDIO.init(); AUDIO.startMusic(); }   // only when the visitor has opted in
   reset();
   if(introSeen()){ state='play'; showBigHint(...BOMB_HINT(), 4.0); }
   else { startIntro(); showBigHint("A RÉSUMÉ IN ORBIT", "ANY KEY TO SKIP", 2.6); }
