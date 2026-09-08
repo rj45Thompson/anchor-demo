@@ -602,6 +602,7 @@ const LETTER_STYLES = [
   { key:'extrude', label:'EXTRUDED - real 3D letterforms' },   // L1a: TextGeometry, not a texture on a quad
   { key:'emissive',label:'EMISSIVE - wins on light, no backing' },  // L1c: NEON minus the dark halo
   { key:'halo',    label:'HALO - soft dark aura, no box' },     // L1d: the halo alone, darkening does the work
+  { key:'inked',   label:'INKED - colour kept, dark contour' }, // L1e (mine): OUTLINE contrast + HALO colour
 ];
 let letterStyle = 0;
 try { const v = localStorage.getItem('bx_letter_style'); if(v !== null) letterStyle = Math.max(0, Math.min(LETTER_STYLES.length-1, +v)); } catch(e){}
@@ -733,6 +734,20 @@ function glyphTexture(ch, kind, tone, turret, style){
     g.fillText(ch, cx, cy);                       // a tighter inner darkening right at the edge
     g.shadowBlur = 0;
     g.fillStyle = col; g.fillText(ch, cx, cy);    // glyph at its OWN tone, normal brightness
+  } else if(style === 'inked'){
+    /* L1e (MINE): the best of OUTLINE and HALO for a RESUME. A crisp dark contour hugging the shape
+       gives the strongest separation over the brightest planet (OUTLINE's win); a subtle soft dark
+       halo behind it keeps a luma-255 city cell from eating the edge; and the glyph keeps its OWN
+       tone (HALO's win) so the resume's colour-coding - white heads, cyan detail, orange turrets -
+       survives, which every other high-contrast option throws away. Readability first, colour kept. */
+    g.shadowColor = 'rgba(0,0,0,0.9)'; g.shadowBlur = 18;       // subtle safety halo for the worst cells
+    g.fillStyle = 'rgba(0,0,0,0.9)'; g.fillText(ch, cx, cy);
+    g.shadowBlur = 0;
+    g.lineJoin = 'round'; g.lineWidth = Math.round(size * 0.28); g.strokeStyle = 'rgba(2,4,8,0.98)';
+    g.strokeText(ch, cx, cy);                                   // crisp dark contour, outside the form
+    g.lineWidth = Math.round(size * 0.12); g.strokeStyle = 'rgba(2,4,8,1)';
+    g.strokeText(ch, cx, cy);
+    g.fillStyle = col; g.fillText(ch, cx, cy);                  // glyph at its OWN tone - colour preserved
   } else {
     /* NEON. A soft dark halo the shape of the letter goes down first (a black shadow, blurred),
        which buys local contrast without a card; then the glyph is drawn twice - once as a coloured
@@ -1855,7 +1870,8 @@ function syncMeshes(){
            the way raising a whole material's emissive did. */
         // uGlow lives on the card ShaderMaterial only; the extrude mesh carries its brightness in
         // its own emissive material, so guard the write (its material is an array, no .uniforms).
-        if(M.material.uniforms) M.material.uniforms.uGlow.value = (style === 'halo' ? 0.35 :
+        if(M.material.uniforms) M.material.uniforms.uGlow.value =
+          (style === 'halo' ? 0.35 : style === 'inked' ? 0.55 :
           (e >= 4 ? (1.05 + reveal * 0.25) : 0.72 + e * 0.06)) + L.flash * 0.9;
         /* PAGE renders the line as one card, so the per-letter mesh must stay invisible - but it
            still exists and still flies in from the press, because that is what advances L.arrive,
