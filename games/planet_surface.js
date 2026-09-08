@@ -164,7 +164,13 @@ const PLANET_FRAG = `
   uniform float uTime;
 uniform float uLights;   // 1 = city lights + strip lights on, 0 = off (the bottom-left switch)
 uniform float uEnvAmt;   // the limb glow / environment reflection
-uniform float uSpec;     // specular highlight + sheen   // 1 = city lights + strip lights on, 0 = off (the bottom-left switch) uniform float uBump;
+uniform float uSpec;     // specular highlight + sheen
+  uniform float uBump;     // normal-map strength. Was SWALLOWED onto the tail of the uSpec comment
+                           // when uLights was inserted above (2026-09-07): the declaration ended up
+                           // after a //, so uBump was undeclared, the fragment shader failed to
+                           // compile with "'uBump' : undeclared identifier", and this material -
+                           // the planet's whole ground - rendered from a dead program. Never append
+                           // to a line that already carries a // comment.
   /* How brightly the SURFACE itself is lit, separate from its emissives. RJ asked for two things
      that are the same setting: "make it dark with lights that twinkle emissive", and "make sure
      her letters contrast to it - letters well lit". A planet lit to near-white leaves a white

@@ -75,6 +75,29 @@
   .muted{font-size:11px;color:#6d8093;margin-top:14px}
   a{color:var(--accent)}
   .card .lead{font-size:16px;color:#eaf3fb;font-weight:600;margin:0 0 8px;line-height:1.45}
+
+  /* THE KNOBS (RJ 2026-09-07: the left pane is "larger than required on a droid, a fair bit").
+     Measured before touching it: min-width:190px on a 375px phone = 50.7% of the screen width,
+     13.7% of the frame. The 190 was set by the longest single line, "Letters: INKED (L)".
+     Stacking the name over the value spends the vertical room the panel already had and buys
+     back more than half the width, without dropping the name - an icon-only knob is narrow and
+     unreadable, which is a different complaint. */
+  .knob{background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;
+    padding:4px 8px;font:inherit;cursor:pointer;text-align:left;min-width:86px;
+    display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;
+    column-gap:6px;align-items:center;line-height:1.15}
+  .knob:hover{border-color:#4d9ed0}
+  .knob .ic{grid-row:1/3;font-size:13px;line-height:1}
+  .knob .nm{font-size:8px;letter-spacing:.9px;opacity:.5;text-transform:uppercase}
+  .knob .vl{font-size:11px;font-weight:700;white-space:nowrap}
+  .knob .hint{font-weight:400;opacity:.5}
+  /* the gear is one row, so it opts out of the two-row grid */
+  #knobsBtn{grid-template-rows:auto;min-width:0;padding:5px 9px;font-size:12px}
+  #lookPanel.shut .knob:not(#knobsBtn){display:none}
+  @media (max-width:560px){
+    .knob{padding:3px 7px;min-width:80px}
+    .knob .vl{font-size:10px}
+  }
 </style>
 
 <div id="wrap">
@@ -92,13 +115,17 @@
   <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
   <button id="shieldBtn" hidden style="position:fixed;left:14px;bottom:54px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:9px;padding:12px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;touch-action:none">&#128737; SHIELD</button>
   <button id="sndBtn" style="position:fixed;left:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#128263; Sound off</button>
-  <div id="lookPanel" style="position:fixed;left:14px;bottom:86px;z-index:40;display:flex;flex-direction:column;gap:6px;align-items:flex-start">
-    <button id="worldBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#129680; World: &hellip;</button>
-    <button id="limbBtn"  style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#127761; Limb: &hellip;</button>
-    <button id="shineBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#128161; Shine: &hellip;</button>
-    <button id="bloomBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#127774; Bloom: &hellip;</button>
-    <button id="lightsBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#10024; Lights: &hellip;</button>
-    <button id="lettersBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#128196; Letters: &hellip;</button>
+  <!-- The gear is the LAST child on purpose: the panel is anchored at its bottom and grows
+       upward, so collapsing the stack leaves the gear exactly where it was. A toggle that moves
+       when you press it is a toggle you press twice. -->
+  <div id="lookPanel" style="position:fixed;left:14px;bottom:86px;z-index:40;display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+    <button id="worldBtn"   class="knob"></button>
+    <button id="limbBtn"    class="knob"></button>
+    <button id="shineBtn"   class="knob"></button>
+    <button id="bloomBtn"   class="knob"></button>
+    <button id="lightsBtn"  class="knob"></button>
+    <button id="lettersBtn" class="knob"></button>
+    <button id="knobsBtn"   class="knob" title="Show or hide the look knobs">&#9881;&#65039; Look</button>
   </div>
   <button id="camBtn" style="position:fixed;right:14px;top:50px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#10227; Camera (C)</button>
   <div id="bigHint" class="bighint"><b></b><small></small></div>
@@ -154,7 +181,7 @@
 <script src="./postprocessing/UnpackDepthRGBAShader.js"></script>
 <script src="./postprocessing/SSAOPass.js"></script>
 <!-- the machine world's surface: shared with _planetlab.html, never copied -->
-<script src="./planet_surface.js?v=20260907e"></script>
+<script src="./planet_surface.js?v=20260907f"></script>
 <script>
 // ---------------------------------------------------------------- resume data
 // Every entry is a real line from the actual CV.
@@ -605,18 +632,27 @@ window.AUDIO = AUDIO;
 (function(){
   const wb = document.getElementById('worldBtn'), lb = document.getElementById('lettersBtn');
   if(!wb || !lb) return;
+  // One formatter for all six knobs. Three call sites hand-writing the same two-row markup is
+  // three chances for one to drift into a different shape and re-widen the panel on its own.
+  const knobHtml = (icon, name, value, hint) =>
+    '<span class="ic">' + icon + '</span>' +
+    '<span class="nm">' + name + '</span>' +
+    '<span class="vl">' + value +
+      (hint ? ' <span class="hint">(' + hint + ')</span>' : '') + '</span>';
+
   const WORLDS_LIST = ['circuit','citadel','derelict','forge','glacier','reactor'];
   function currentWorld(){
     if(window.__world) return window.__world;
     try{ return localStorage.getItem('bx_world') || WORLDS_LIST[0]; }catch(e){ return WORLDS_LIST[0]; }
   }
   function paint(){
-    wb.innerHTML = '&#129680; World: ' + currentWorld().toUpperCase();
+    wb.innerHTML = knobHtml('&#129680;', 'World', currentWorld().toUpperCase());
     const st = (typeof LETTER_STYLES !== 'undefined' && typeof letterStyle !== 'undefined')
       ? LETTER_STYLES[letterStyle].label.split(' - ')[0] : '?';
-    lb.innerHTML = '&#128196; Letters: ' + st + '  <span style="opacity:.55">(L)</span>';
+    lb.innerHTML = knobHtml('&#128196;', 'Letters', st, 'L');
     const g2 = document.getElementById('lightsBtn');
-    if(g2) g2.innerHTML = (lightStep === 0 ? '&#9899;' : '&#10024;') + ' Lights: ' + LIGHT_STEPS[lightStep].label;
+    if(g2) g2.innerHTML = knobHtml(lightStep === 0 ? '&#9899;' : '&#10024;', 'Lights',
+                                   LIGHT_STEPS[lightStep].label);
     if(typeof paintWheels === 'function') paintWheels();
   }
   wb.addEventListener('click', e => {
@@ -695,11 +731,57 @@ window.AUDIO = AUDIO;
       if(!k.el) return;
       try {
         const step = k.steps[k.i] || k.steps[0];
-        k.el.innerHTML = (step[1] === 0 ? k.icon[0] : k.icon[1]) + ' ' + k.name + ': ' + step[0];
+        k.el.innerHTML = knobHtml(step[1] === 0 ? k.icon[0] : k.icon[1], k.name, step[0]);
       } catch(e){ /* one broken wheel must not blank the others - that is what just happened */ }
     });
   }
-  setTimeout(() => { applyLights(); WHEEL.forEach(k => k.apply()); paint(); }, 0);   // material + composer are built after this block
+  // COLLAPSE. On a phone these are six knobs you set once and then want out of the way, so below
+  // 560px they start shut - but only as a DEFAULT: once you have opened or closed them yourself
+  // that choice is what persists, on every screen size.
+  const panel = document.getElementById('lookPanel'), kb = document.getElementById('knobsBtn');
+  if(panel && kb){
+    let shut;
+    try { const v = localStorage.getItem('bx_knobs');
+          shut = (v === null) ? innerWidth < 560 : (v === 'shut'); }
+    catch(e){ shut = innerWidth < 560; }
+    const applyShut = () => {
+      panel.classList.toggle('shut', shut);
+      kb.innerHTML = (shut ? '&#9881;&#65039; Look' : '&#10005; Close');
+    };
+    kb.addEventListener('click', e => {
+      e.stopPropagation();
+      shut = !shut;
+      try{ localStorage.setItem('bx_knobs', shut ? 'shut' : 'open'); }catch(err){}
+      applyShut();
+    });
+    applyShut();
+  }
+
+  // A knob whose target does not exist is a placebo, and this file has already shipped two of
+  // them (Limb and Shine, both measured at 0 pixels changed). On COARSE the whole EffectComposer
+  // is skipped for performance (:299), so window.__bloomPass is never created and Bloom would
+  // cycle a label over nothing - on the exact phone this panel was just shrunk for. Measured
+  // 2026-09-07 at 375x812: bloomBefore/bloomAfter both "no pass". Hide what cannot act, rather
+  // than let the panel claim a control it does not have.
+  const NEEDS = [
+    { id:'bloomBtn',  live: () => !!window.__bloomPass },
+    { id:'lightsBtn', live: () => { const m = window.__groundMat;
+                                    return !!(m && m.uniforms && m.uniforms.uLights); } },
+    { id:'limbBtn',   live: () => !!(window.__air && window.__air.material) },
+    { id:'shineBtn',  live: () => { let found = false; const d = window.__planetDetail;
+                                    if(d) d.traverse(o => { if(o.userData && o.userData.isRing) found = true; });
+                                    return found; } },
+  ];
+  function hideDeadKnobs(){
+    NEEDS.forEach(k => {
+      const el = document.getElementById(k.id);
+      if(!el) return;
+      let ok = false; try { ok = !!k.live(); } catch(e){}
+      el.style.display = ok ? '' : 'none';   // '' falls back to .knob's grid; none beats .shut too
+    });
+  }
+
+  setTimeout(() => { applyLights(); WHEEL.forEach(k => k.apply()); paint(); hideDeadKnobs(); }, 0);   // material + composer are built after this block
   addEventListener('keydown', e => { if(e.key === 'l' || e.key === 'L') setTimeout(paint, 0); });
   // Deferred: this panel is wired next to AUDIO, which sits ABOVE the `const LETTER_STYLES`
   // declaration in the same script, so painting inline read a not-yet-initialised binding and the
@@ -4147,6 +4229,15 @@ if(COARSE){
   const sb = document.getElementById('shieldBtn');
   if(sb){
     sb.hidden = false;
+    // Revealing this drove it 13px INTO the Look chip: the knobs sit at bottom:86 and this button
+    // spans 54..97 (measured 2026-09-07 at 375x812, the case RJ hit). Lift the panel clear using
+    // the button's REAL height and offset rather than a constant, which drifts the moment its
+    // padding or font changes and puts the overlap straight back.
+    const lp = document.getElementById('lookPanel');
+    if(lp){
+      const off = parseFloat(getComputedStyle(sb).bottom) || 54;
+      lp.style.bottom = Math.round(off + sb.getBoundingClientRect().height + 10) + 'px';
+    }
     sb.addEventListener("touchstart", e => { e.preventDefault(); shieldHeld = true; }, { passive:false });
     const up = e => { e.preventDefault(); shieldHeld = false; };
     sb.addEventListener("touchend", up, { passive:false });
