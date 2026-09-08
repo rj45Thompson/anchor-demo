@@ -15,12 +15,48 @@ Also load-bearing, from the same review: *"it looks like you just mapped the tex
 any of the mesh at all."* He notices and dislikes flat texture-on-a-quad where geometry belongs.
 That is a strong hint that real extruded letterforms are worth trying.
 
+⚠ **Judge against the FIXED shader, not old screenshots.** RJ himself committed `511f42d` ("Letters
+from scratch: three styles, press L"), which (a) found and fixed a REAL bug — an ungated dissolve
+ember (`CARD_FRAG` :758) painted a warm glow on ~1/5 of every intact glyph, forever — and (b) built
+a **3-style cycler** already: `LETTER_STYLES` (:598), cycled by **L**, persisted to
+`localStorage.bx_letter_style`. His three styles map onto this backlog: **OUTLINE** (:696) = L1b
+STROKED; **NEON** (:706) = L1c EMISSIVE + L1d HALO; plus **PAGE** (a per-line card, the "just make
+it readable" baseline). So L1a-L1e extend RJ's cycler rather than fighting it (directive: "do not
+fight it"): the missing ones are **L1a EXTRUDED** (his three are all texture-on-a-card — the exact
+thing he says "didn't take any of the mesh") and **L1e** (mine).
+
+## Reference shot — PINNED (L1f, done 2026-09-07). All five treatment shots use EXACTLY this.
+
+The only variable across the five is the **letter style**; everything else below is fixed so the
+five are comparable rather than five different scenes.
+
+- **World / planet skin: `glacier`** — the palest & brightest of the 6 worlds (measured mean-frame
+  luma 77.9, the highest), i.e. the worst case for glyph contrast, which is the only case that
+  matters. Pinned by seeding `Math.random` (LCG, **seed 6**) via Playwright `addInitScript` BEFORE
+  page scripts run. This was the hidden reason old shots were never comparable: `resume-arkanoid.html:2292`
+  picks the world with **unseeded `Math.random()`** every load, so each load drew a different planet.
+- **Camera: rig 0 = CRAWL** (`CAM_MODES[0]`, the default gameplay shot), `camBlend=1` (fully settled).
+- **Moment: crawl ≈ 12.05** — from a fresh play start, freeze rAF and `__bx.step(4,16.7)` until
+  `crawl≥12`. At this moment **83 glyphs arrived**, ~6 résumé lines span the frame front-to-back
+  (back line small at top → "R.J. THOMPSON" large at bottom), all over the bright planet.
+- **Era: single/fixed** — the graphics-era ladder was removed in `511f42d` (`reveal=1`, `eraIdx=5`
+  are consts, :890-891). "Era" is no longer a variable and drops out of the comparison. (The HUD
+  still prints "1988 · 8-bit" but it is decorative/stale.)
+- **Viewport 1280×800, deviceScaleFactor 1** (pixel ratio 1). Intro bypassed via
+  `localStorage.bx_intro_seen='1'`. Sphere geometry uses the in-code `seeded(20260906)`.
+- **Determinism VERIFIED**: two independent runs → identical world (glacier), identical brightest
+  point (x0.52,y0.07), identical arrived count (83); meanLuma 77.7 vs 77.8; crawl 12.04 vs 12.06.
+- **Harness**: `…/feb9b3b5…/scratchpad/lettershot.mjs` — `node lettershot.mjs <styleIdx> 0 "12" <tag> 6`.
+  Paint-safe (canvas.toDataURL in the render task; no shotserver needed). Evidence → `D:/code/breakout-evidence/`.
+- **PAGE reference frame captured**: `breakout-evidence/sw6_s0_c0_cr12.png` (glacier). OUTLINE/NEON on
+  glacier follow in L1b/L1c.
+
 - [ ] L1a Letter treatment A: EXTRUDED 3D letterforms -> DONE WHEN: real extruded geometry (not a texture on a quad - RJ notices the difference and said so), rendered in the live game, screenshotted from the reference camera/moment/era over the bright planet region, with its glyph-to-background luminance ratio over the BRIGHTEST region and its ms/frame recorded. Commit and push before starting the next one.
 - [ ] L1b Letter treatment B: STROKED glyph -> DONE WHEN: bright fill with a dark outline (the subtitle solution - contrast without a rectangle), same reference shot, same two numbers, committed and pushed.
 - [ ] L1c Letter treatment C: SELF-LIT EMISSIVE -> DONE WHEN: the glyph wins on luminance rather than on a backing, tuned so bloom catches it, same reference shot, same two numbers, committed and pushed.
 - [ ] L1d Letter treatment D: SOFT DARK HALO -> DONE WHEN: the darkening follows the glyph SHAPE rather than a box, same reference shot, same two numbers, committed and pushed.
 - [ ] L1e Letter treatment E: your own -> DONE WHEN: whatever you found better while building A-D, same reference shot, same two numbers, committed and pushed. If nothing beat them, say so in one line and close this `[-]` rather than inventing a fifth.
-- [ ] L1f Pin the reference shot FIRST, before any treatment -> DONE WHEN: the exact camera, moment, era and planet region used for all five comparison screenshots is recorded in this file, so the five are actually comparable rather than five different scenes.
+- [x] L1f Pin the reference shot FIRST — **DONE 2026-09-07.** The exact camera/moment/era/world is recorded in the **"Reference shot — PINNED"** section above: glacier world (seed 6, the brightest of 6), CRAWL rig, crawl≈12.05, era fixed (ladder removed in 511f42d), 1280×800 pr1, intro bypassed. The hidden comparability-breaker was found and fixed: the world skin is chosen by **unseeded `Math.random()`** (:2292), so it's now pinned via a seeded `Math.random` in the harness. Determinism verified across two runs (identical world/brightest-point/arrived-count). Harness `lettershot.mjs`; PAGE reference frame `breakout-evidence/sw6_s0_c0_cr12.png`.
 - [ ] L2  Measure each one, do not just look -> DONE WHEN: for each treatment, the glyph-to-background luminance ratio is sampled over the BRIGHTEST planet region (that is the worst case and the only one that matters) and reported as a number beside its screenshot, plus ms/frame for each.
 - [ ] L4  A 6-SECOND fly-in before the sweeping cinematic -> DONE WHEN: from a cold start the fighter flies TOWARD the planet for **6 seconds**, then hands into the existing sweeping cutscene (R6-R9, already built), verified by timing it in the live game and reporting the actual measured duration, not the intended one. RJ: *"I want a 6 second intro where the fighter is flying toward the planet and then begins a sweeping cinematic."*
       Constraints, all of which the existing cutscene already satisfies and this must not break: skippable by any key/click/Esc **from the first frame** (6 seconds is a long time for someone who has seen it), no replay for a returning player, and it must hand off into the SAME state a cold start reaches. Reuse `CAM_MODES` + `camBlend`; do not build a second camera system beside the one that already works.
@@ -58,9 +94,13 @@ Order: **L1f first (pin the shot), then L1a-L1e one per iteration**, then R10-R1
 - [x] A3  Colour grading / vignette — **SHIPPED**. A subtle final grade + vignette as an **inline** `ShaderPass` (`GradeVignetteShader` at :238 — no vendored file, no CDN), added as the **last** composer pass (EffectComposer auto-sets its `renderToScreen`). Gentle contrast 1.05, saturation 1.06, soft corner vignette (`uVig 0.26`, `smoothstep(0.35,0.9)` ≈ 14–24% corner darkening). Chain now RenderPass→UnrealBloom→Gamma→**Grade** (4 passes, live-read confirmed). **Free** (17.7 ms attract / 18 ms play), 0 new errors. Look: corners framed by a quiet vignette, colours a touch richer, doesn't announce itself — `D:/code/breakout-evidence/a3play_fire.png` vs `a1on_fire.png`. Tunable via `uVig`/`uContrast`/`uSat`. (Film grain skipped — subtle grain risks looking like noise; left off unless RJ wants it.) Graph: `BX-grade-vignette = yes`.
 - [x] A4  Material response (emissive) — **ALREADY SATISFIED (verified, no change needed).** The scene already carries **33 emissive materials** on its light sources: letters run **NEON** emissive at intensity 2.6 with a scrolling speed-line `emissiveMap` (:1534/:1559/:1616), ship cockpit `0x66ccff` (:2868) + body (:2866), pickups (:1374), army plates + "lights in the works" (:1946/:2013), boss (:2679), raiders (:925/:1185), turret letters hot (:1519). Bloom (threshold 0.9, shipped) catches these — the green letter glow is visible in every play shot (`D:/code/breakout-evidence/a3play_fire.png`). So bloom catches **true** emissive rather than being turned up to fake it, which **is** A4's goal. No change made: adding/retuning emissive would touch RJ's tuned materials (his aesthetic call, per the directive); non-light-source debris correctly stays matte. Graph: `BX-emissive-lightsources = yes`.
 
-## ✅ LANE COMPLETE — 0 open (2026-09-07)
+## ⚠ SUPERSEDED — the R/A backlog is done, but the LETTER backlog reopened above (2026-09-07)
 
-Every backlog item is resolved: **R1–R14** (RJ's direction) and **A1–A4** (the AAA list). 19 shipped, R2/R3 investigated & deferred with measured evidence. The full AAA post chain is live: **bloom → SSAO → MSAA(4x) → gamma → grade/vignette**, all vendored (no CDN), all measured **free** at pr1. The only things left are RJ's own design/taste calls, listed once here so no re-derivation is needed:
+This "lane complete" was true for R1–R14 + A1–A4, but then **RJ rejected the letters** and the
+**L1a–L4** block at the TOP of this file was opened after it. Open-item count is tracked there, not
+here. R/A status below is still accurate history:
+
+Every R/A backlog item is resolved: **R1–R14** (RJ's direction) and **A1–A4** (the AAA list). 19 shipped, R2/R3 investigated & deferred with measured evidence. The full AAA post chain is live: **bloom → SSAO → MSAA(4x) → gamma → grade/vignette**, all vendored (no CDN), all measured **free** at pr1. The only things left are RJ's own design/taste calls, listed once here so no re-derivation is needed:
 
 ## For RJ — decisions waiting on you (NOT autobot work; art direction is yours)
 
