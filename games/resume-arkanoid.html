@@ -1116,16 +1116,22 @@ const _iiP = new THREE.Vector3(), _iiP2 = new THREE.Vector3(), _iiL = new THREE.
 function introSeen(){ try { return localStorage.getItem('bx_intro_seen') === '1'; } catch(e){ return false; } }
 function buildIntroFrames(){
   const base = baseCamera(); const p = base.position, L = CAM_MODES[0].look;
-  // The three beats RJ asked for, as one camera path that ENDS at the CRAWL play pose:
-  //  R6 fly-in   - far establishing shot, the whole planet in orbit, then approach
-  //  R7 reveal   - pull up and back to frame the résumé field in one readable sweep
-  //  R8 attack   - swing off the starboard flank (the "flies back and attacks" beat), then settle
+  // L4 (RJ): "a 6 second intro where the fighter is flying toward the planet and then begins a
+  // sweeping cinematic." So beat one is a dedicated SIX-SECOND fly-in - the eye (and the fighter
+  // ahead of it) closing on the planet, the limb swelling frame to frame so the approach reads as
+  // speed and not a static drift - and only AT t=6.0 does the existing sweeping cutscene begin:
+  //  0.0 - 6.0s  R6 FLY-IN   : from far orbit (planet a small curve) straight in, the limb growing
+  //  6.0 - 7.4s  R7 reveal   : tilt up to frame the résumé field in one readable sweep
+  //  7.4 - 8.4s  R8 attack   : swing off the starboard flank (the "flies back and attacks" beat)
+  //  8.4 - 8.9s  settle      : ENDS exactly at the CRAWL play pose, so play hands off with no jump
   return [
-    { t: 0.0, pos: [p.x,      p.y - 18, p.z + 118], look: [0,  -10, -24] },  // R6 far
-    { t: 2.4, pos: [p.x,      p.y - 20, p.z + 46 ], look: [0,   -2, -14] },  // R6 approach
-    { t: 4.3, pos: [p.x,      p.y - 8,  p.z + 20 ], look: [0,    3,  -6] },  // R7 reveal (frame the résumé band)
-    { t: 6.1, pos: [p.x + 34, p.y - 4,  p.z + 12 ], look: [L[0], L[1], L[2]] },  // R8 flank swing
-    { t: 7.4, pos: [p.x,      p.y,      p.z       ], look: [L[0], L[1], L[2]] },  // settle into CRAWL play pose
+    { t: 0.0, pos: [p.x,      p.y - 26, p.z + 152], look: [0,  -13, -46] },  // fly-in: far - planet small in orbit
+    { t: 2.0, pos: [p.x,      p.y - 26, p.z + 104], look: [0,  -10, -34] },  // fly-in: closing
+    { t: 4.0, pos: [p.x,      p.y - 24, p.z + 58 ], look: [0,   -5, -22] },  // fly-in: limb filling
+    { t: 6.0, pos: [p.x,      p.y - 21, p.z + 33 ], look: [0,    0, -13] },  // fly-in ENDS - planet large, 6.0s in
+    { t: 7.4, pos: [p.x,      p.y - 8,  p.z + 20 ], look: [0,    3,  -6] },  // R7 reveal (frame the résumé band)
+    { t: 8.4, pos: [p.x + 34, p.y - 4,  p.z + 12 ], look: [L[0], L[1], L[2]] },  // R8 flank swing
+    { t: 8.9, pos: [p.x,      p.y,      p.z       ], look: [L[0], L[1], L[2]] },  // settle into CRAWL play pose
   ];
 }
 function startIntro(){ introFrames = buildIntroFrames(); introT = 0; camMode = 0; camBlend = 1; state = 'intro'; }
