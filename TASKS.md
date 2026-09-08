@@ -32,9 +32,13 @@ five are comparable rather than five different scenes.
 
 - **World / planet skin: `glacier`** — the palest & brightest of the 6 worlds (measured mean-frame
   luma 77.9, the highest), i.e. the worst case for glyph contrast, which is the only case that
-  matters. Pinned by seeding `Math.random` (LCG, **seed 6**) via Playwright `addInitScript` BEFORE
-  page scripts run. This was the hidden reason old shots were never comparable: `resume-arkanoid.html:2292`
-  picks the world with **unseeded `Math.random()`** every load, so each load drew a different planet.
+  matters. Pinned BY NAME via `window.__forceWorld='glacier'` (or `?world=glacier`), a repro hook
+  added at the world-pick line (`resume-arkanoid.html` ~:2357; default behaviour = random, unchanged).
+  This was the hidden reason old shots were never comparable: the world is chosen by **unseeded
+  `Math.random()`** every load. ⚠ Seeding `Math.random` is NOT enough on its own — adding a material
+  before the pick shifts the draw and flips the world (seed 6 gave glacier, then derelict after L1a
+  added materials); the name hook is robust to that. The harness still seeds `Math.random` (seed 6)
+  for the other scene bits (debris, spins).
 - **Camera: rig 0 = CRAWL** (`CAM_MODES[0]`, the default gameplay shot), `camBlend=1` (fully settled).
 - **Moment: crawl ≈ 12.05** — from a fresh play start, freeze rAF and `__bx.step(4,16.7)` until
   `crawl≥12`. At this moment **83 glyphs arrived**, ~6 résumé lines span the frame front-to-back
@@ -51,7 +55,7 @@ five are comparable rather than five different scenes.
 - **PAGE reference frame captured**: `breakout-evidence/sw6_s0_c0_cr12.png` (glacier). OUTLINE/NEON on
   glacier follow in L1b/L1c.
 
-- [ ] L1a Letter treatment A: EXTRUDED 3D letterforms -> DONE WHEN: real extruded geometry (not a texture on a quad - RJ notices the difference and said so), rendered in the live game, screenshotted from the reference camera/moment/era over the bright planet region, with its glyph-to-background luminance ratio over the BRIGHTEST region and its ms/frame recorded. Commit and push before starting the next one.
+- [x] L1a Letter treatment A: EXTRUDED — **SHIPPED 2026-09-07.** Real `THREE.TextGeometry` per glyph (vendored `assets/helvetiker_regular.typeface.json`; TextGeometry/Font/FontLoader are in r128 core — proven at runtime before wiring) as a new `LETTER_STYLES` entry `extrude` (index 3, extends RJ's cycler, press L). NOT a texture on a quad — genuine extruded mesh with depth (height 0.46 + bevel). **The contrast comes from GEOMETRY, not a rectangle**: the extruded SIDES are an UNLIT dark material (`MeshBasicMaterial 0x06080e`) so every glyph carries a guaranteed-dark contour following its own shape (a lit dark side washed to grey under the 1.75 ambient — the first attempt's flaw); faces are self-lit `MeshStandardMaterial` (emissive 0.65) so they read + bloom catches them. Per-glyph uniform fit-scale keeps proportional widths in the monospace cells. Collision unaffected (hit test uses L.x/line.y, not the mesh); `giveMesh` guards extrude meshes out of the card pool. **Reference shot** (glacier/CRAWL/crawl12): `breakout-evidence/L1a2_s3_c0_cr12.png`. **Numbers** over the brightest 15% of the planet: glyphLuma 115.1 / bgLuma 164.6 → **ratio 0.70**, michelson 0.177 (readability is from the dark contour + bright faces; the mean blends them). **ms/frame 9.2** (109fps unthrottled compute; 3× PAGE's 2.97 — 83 real meshes vs 6 line-cards — but far under the 40ms/25fps budget). Committed and pushed before L1b. Graph: `BX-letter-extrude = yes`.
 - [ ] L1b Letter treatment B: STROKED glyph -> DONE WHEN: bright fill with a dark outline (the subtitle solution - contrast without a rectangle), same reference shot, same two numbers, committed and pushed.
 - [ ] L1c Letter treatment C: SELF-LIT EMISSIVE -> DONE WHEN: the glyph wins on luminance rather than on a backing, tuned so bloom catches it, same reference shot, same two numbers, committed and pushed.
 - [ ] L1d Letter treatment D: SOFT DARK HALO -> DONE WHEN: the darkening follows the glyph SHAPE rather than a box, same reference shot, same two numbers, committed and pushed.

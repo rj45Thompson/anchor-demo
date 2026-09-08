@@ -599,6 +599,7 @@ const LETTER_STYLES = [
   { key:'page',    label:'PAGE - one printed line' },
   { key:'outline', label:'OUTLINE - dark outline, no card' },
   { key:'neon',    label:'NEON - self-lit glyph' },
+  { key:'extrude', label:'EXTRUDED - real 3D letterforms' },   // L1a: TextGeometry, not a texture on a quad
 ];
 let letterStyle = 0;
 try { const v = localStorage.getItem('bx_letter_style'); if(v !== null) letterStyle = Math.max(0, Math.min(LETTER_STYLES.length-1, +v)); } catch(e){}
@@ -725,6 +726,56 @@ function glyphTexture(ch, kind, tone, turret, style){
   return t;
 }
 
+/* ---------------------------------------------------------------- EXTRUDE: real 3D letterforms (L1a)
+   RJ, rejecting the flat treatments: "it looks like you just mapped the texture and didn't take any
+   of the mesh at all." So this one is REAL geometry: a TextGeometry per glyph (vendored helvetiker,
+   in the r128 core - TextGeometry/Font/FontLoader are all still in three.min.js at r128, proven at
+   runtime before this was wired). The contrast that a card gave with a rectangle comes here from the
+   GEOMETRY instead: the extruded SIDES are a dark material, so every glyph carries its own dark
+   contour that follows its shape - no backdrop, and the depth is the point rather than a texture. */
+let LETTER_FONT = null;
+(function loadLetterFont(){
+  fetch('assets/helvetiker_regular.typeface.json').then(r => r.json())
+    .then(j => { try { LETTER_FONT = new THREE.FontLoader().parse(j); } catch(e){ console.warn('letter font parse', e); } })
+    .catch(e => console.warn('letter font load', e));
+})();
+const EXTRUDE_CAPH = 1.09;                 // helvetiker cap height at size 1 (measured) - ONE factor for all glyphs so caps match
+const extrudeGeoCache = new Map();         // char -> centered, cap-normalised TextGeometry (geometry is the costly part; ~40 distinct glyphs)
+// The dark contour is the contrast, so it must STAY dark. A lit material can't: the scene ambient is
+// 1.75, which lifts even near-black sides to grey (that was the washed contour on the first attempt).
+// An UNLIT MeshBasic side is a guaranteed-dark band around every glyph, following its shape - the
+// same job OUTLINE's stroke does, but carried by real geometry instead of a painted ring.
+const EXTRUDE_SIDE_MAT = new THREE.MeshBasicMaterial({ color:0x06080e, name:'letter.extrudeSide' });
+const extrudeFaceMats = new Map();         // tone hex -> face material (a handful of tones, so a handful of materials)
+function extrudeFaceMat(hex){
+  if(extrudeFaceMats.has(hex)) return extrudeFaceMats.get(hex);
+  // Self-lit so the face reads over the brightest planet regardless of where the key light points,
+  // and bright enough that the shipped bloom catches its top edge; the dark sides do the contrast.
+  const m = new THREE.MeshStandardMaterial({ color:hex, emissive:hex, emissiveIntensity:0.65,
+    metalness:0.15, roughness:0.5, name:'letter.extrudeFace' });
+  extrudeFaceMats.set(hex, m); return m;
+}
+function extrudeGeo(ch){
+  if(extrudeGeoCache.has(ch)) return extrudeGeoCache.get(ch);
+  const g = new THREE.TextGeometry(ch, { font:LETTER_FONT, size:1, height:0.46, curveSegments:4,
+    bevelEnabled:true, bevelThickness:0.06, bevelSize:0.045, bevelSegments:2 });
+  g.computeBoundingBox(); const bb = g.boundingBox;
+  const cx = (bb.max.x + bb.min.x)/2, cy = (bb.max.y + bb.min.y)/2, cz = (bb.max.z + bb.min.z)/2;
+  g.translate(-cx, -cy, -cz);              // centre on origin so it drops into its slot like a card does
+  g.userData.gw = bb.max.x - bb.min.x;     // native width, to fit the monospace cell without distorting the glyph
+  extrudeGeoCache.set(ch, g); return g;
+}
+function makeExtrudeMesh(ch, kind, tone, turret){
+  const geo = extrudeGeo(ch);
+  const m = new THREE.Mesh(geo, [ extrudeFaceMat(toneOf(kind, tone, turret)), EXTRUDE_SIDE_MAT ]);
+  m.userData.extrude = true;               // so giveMesh() removes it instead of pooling it as a card
+  m.userData.gw = geo.userData.gw || 1;
+  board.add(m); return m;
+}
+// One uniform scale per glyph: fill the cell height (caps all match via EXTRUDE_CAPH) but never spill
+// past the cell width, so a wide W stays proportional rather than overrunning its neighbours.
+function extrudeFit(M){ return Math.min((CH_W * 1.30) / EXTRUDE_CAPH, (CH_W * 1.04) / (M.userData.gw || 1)); }
+
 /* One material for all of it: a camera-facing card with an alpha texture. No box, no bevel, no
    sides - a slab was only ever there to carry a backdrop, and the backdrop is what was wrong. */
 const CARD_VERT = `
@@ -837,7 +888,13 @@ function makeLetterMesh(){
   m.visible = false; board.add(m); return m;
 }
 function takeMesh(){ return pool.length ? pool.pop() : makeLetterMesh(); }
-function giveMesh(m){ m.visible=false; pool.push(m); }
+function giveMesh(m){
+  m.visible=false;
+  // Extrude glyphs are a different Mesh kind (TextGeometry + material array); never let one back into
+  // the card pool or takeMesh() would hand a card user a geometry with no uniforms. Drop it instead.
+  if(m.userData && m.userData.extrude){ board.remove(m); return; }
+  pool.push(m);
+}
 
 function buildBoard(){
   lines.forEach(l=>l.letters.forEach(L=>{ if(L.mesh) giveMesh(L.mesh); }));
@@ -1722,14 +1779,23 @@ function syncMeshes(){
     line.letters.forEach(L=>{
       if(L.broken){ if(L.mesh){ giveMesh(L.mesh); L.mesh=null; } return; }
       if(near && !L.mesh){
-        const m = takeMesh();
-        m.material.uniforms.map.value =
-          glyphTexture(L.ch, line.kind, line.tone, !!L.turret, style === 'neon' ? 'neon' : 'outline');
-        // an armed letter burns hotter: you must be able to see which ones shoot back
-        if(L.turret){
-          m.material.uniforms.uGlow.value = 1.2;
+        // EXTRUDE (L1a): a real TextGeometry mesh instead of a textured card. Falls back to a card
+        // until the font has loaded (a couple of frames at most), so nothing is ever blank.
+        const wantExtrude = (style === 'extrude') && LETTER_FONT;
+        let m;
+        if(wantExtrude){
+          m = makeExtrudeMesh(L.ch, line.kind, line.tone, !!L.turret);
+          L.extruded = true;
         } else {
-          m.material.uniforms.uGlow.value = line.kind === "head" ? 0.95 : 0.75;
+          m = takeMesh(); L.extruded = false;
+          m.material.uniforms.map.value =
+            glyphTexture(L.ch, line.kind, line.tone, !!L.turret, style === 'neon' ? 'neon' : 'outline');
+          // an armed letter burns hotter: you must be able to see which ones shoot back
+          if(L.turret){
+            m.material.uniforms.uGlow.value = 1.2;
+          } else {
+            m.material.uniforms.uGlow.value = line.kind === "head" ? 0.95 : 0.75;
+          }
         }
         m.rotation.set(0,0,0);
         m.visible = false; L.mesh = m;
@@ -1756,7 +1822,9 @@ function syncMeshes(){
         /* uGlow is the "letters well lit" knob RJ asked for, and it is bounded on purpose: the
            glyph burns, the PLATE does not, so pushing it does not wash the letter's own edge away
            the way raising a whole material's emissive did. */
-        M.material.uniforms.uGlow.value =
+        // uGlow lives on the card ShaderMaterial only; the extrude mesh carries its brightness in
+        // its own emissive material, so guard the write (its material is an array, no .uniforms).
+        if(M.material.uniforms) M.material.uniforms.uGlow.value =
           (e >= 4 ? (1.05 + reveal * 0.25) : 0.72 + e * 0.06) + L.flash * 0.9;
         /* PAGE renders the line as one card, so the per-letter mesh must stay invisible - but it
            still exists and still flies in from the press, because that is what advances L.arrive,
@@ -1764,15 +1832,16 @@ function syncMeshes(){
            skipping the whole branch keeps one code path for the flight. */
         if(style === 'page' && L.arrive >= 1){ M.visible = false; return; }
         const S = CH_W*1.02, SY = CH_W*1.34;   // RJ: "it can be like a little bit larger letters"
+        const EB = L.extruded ? extrudeFit(M) : 0;   // extrude: one uniform per-glyph scale (fits the cell, keeps aspect)
         if(L.dissolve > 0){
           // struck letters SPIN OUT: tumble, drift and shrink, rather than fading where they sat
           const k = L.dissolve, sc = Math.max(0.001, 1-k);
           M.rotation.set(k*7.5*L.spinX, k*6.0*L.spinY, k*4.2);
-          M.scale.set(S*sc, SY*sc, 1);
+          if(L.extruded) M.scale.set(EB*sc, EB*sc, EB*sc); else M.scale.set(S*sc, SY*sc, 1);
           M.position.set(L.x + L.spinX*k*2.2, y + k*2.6, k*3.0);
         } else {
           M.rotation.set(0, -L.x / CYL_R, 0);   // face the camera across the cylinder
-          M.scale.set(S, SY, 1);
+          if(L.extruded) M.scale.set(EB, EB, EB); else M.scale.set(S, SY, 1);
         }
       }
     });
@@ -2289,7 +2358,12 @@ function buildPlanet(){
      saturated tint only multiplies that down and throws away the detail it was generated for. Each world keeps a
      slight bias and nothing more. */
   const WORLD_NAMES = Object.keys(WORLDS);
-  const WORLD = WORLD_NAMES[(Math.random()*WORLD_NAMES.length)|0];
+  // Default: a random world each run (RJ's ask). Repro hook: window.__forceWorld (or ?world=) pins one
+  // BY NAME so a screenshot harness gets the same planet every load - robust to code changes, unlike
+  // seeding Math.random (adding a material before this line shifts the draw and flips the world).
+  const forced = (typeof window !== 'undefined' && (window.__forceWorld ||
+                  new URLSearchParams(location.search).get('world')));
+  const WORLD = (forced && WORLDS[forced]) ? forced : WORLD_NAMES[(Math.random()*WORLD_NAMES.length)|0];
   const pmap = texLoader.load('assets/planet_' + WORLD + '.jpg'),
         pnorm = texLoader.load('assets/planet_' + WORLD + '_n.jpg');
   window.__world = WORLD; window.__worldTint = WORLDS[WORLD];
