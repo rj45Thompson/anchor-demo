@@ -2302,9 +2302,18 @@ function buildPlanetDetail(){
   // darkened with the ground (RJ: "make the planet darker") - at 0x59626f these instanced blocks
   // stayed pale grey while the surface behind them went dark, so they read as floating debris
   // rather than as structures standing ON the world.
-  const hull = new THREE.MeshStandardMaterial({ color:0x2b323c, metalness:0.95, roughness:0.3, flatShading:true,
+  /* The city carried NO map at all: 1000 blocks and 260 towers of flat colour on top of a 2048 shader-lit
+     ground. At the altitude this game flies, that mass of untextured facets is most of the frame, and flat
+     facets at that scale read as plastic no matter how good the surface under them is. They take the same
+     generated sheets the ship and the army already use.
+
+     The tint is DIVIDED by each sheet's mean so the city keeps exactly the brightness it was tuned to
+     ("make the planet darker") and gains only detail: gen_structure.jpg means 0.341, so 0x2b323c / 0.341
+     = 0x7e92b0; gen_hull.jpg means 0.412, so 0x1e242e / 0.412 = 0x49576f. Multiplied back through the map
+     both land on their original values. */
+  const hull = new THREE.MeshStandardMaterial({ color:0x7e92b0, map: CYBER, metalness:0.95, roughness:0.3, flatShading:true,
     fog:false, envMap: sky, envMapIntensity: 0.75 });
-  const dark = new THREE.MeshStandardMaterial({ color:0x1e242e, metalness:0.9, roughness:0.38, flatShading:true,
+  const dark = new THREE.MeshStandardMaterial({ color:0x49576f, map: HULL, metalness:0.9, roughness:0.38, flatShading:true,
     fog:false, envMap: sky, envMapIntensity: 0.9 });
   const lit  = new THREE.MeshBasicMaterial({ color:0x8fdcff, fog:false });
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
