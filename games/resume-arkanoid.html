@@ -94,6 +94,9 @@
   <button id="sndBtn" style="position:fixed;left:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#128263; Sound off</button>
   <div id="lookPanel" style="position:fixed;left:14px;bottom:86px;z-index:40;display:flex;flex-direction:column;gap:6px;align-items:flex-start">
     <button id="worldBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#129680; World: &hellip;</button>
+    <button id="limbBtn"  style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#127761; Limb: &hellip;</button>
+    <button id="shineBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#128161; Shine: &hellip;</button>
+    <button id="bloomBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#127774; Bloom: &hellip;</button>
     <button id="lightsBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#10024; Lights: &hellip;</button>
     <button id="lettersBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#128196; Letters: &hellip;</button>
   </div>
@@ -151,7 +154,7 @@
 <script src="./postprocessing/UnpackDepthRGBAShader.js"></script>
 <script src="./postprocessing/SSAOPass.js"></script>
 <!-- the machine world's surface: shared with _planetlab.html, never copied -->
-<script src="./planet_surface.js?v=20260907c"></script>
+<script src="./planet_surface.js?v=20260907e"></script>
 <script>
 // ---------------------------------------------------------------- resume data
 // Every entry is a real line from the actual CV.
@@ -295,7 +298,9 @@ if(!COARSE && typeof THREE.EffectComposer === 'function' && THREE.RenderPass &&
     } else {
       composer.addPass(new THREE.RenderPass(scene, camera));
     }
-    composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.3, 0.9));
+    const _bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.3, 0.9);
+    window.__bloomPass = _bloom;   // the bottom-left Bloom wheel drives .strength on this
+    composer.addPass(_bloom);
     composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
     const gradePass = new THREE.ShaderPass(GradeVignetteShader);
     // ShaderPass copies a definition's uniforms and shader source but NOT its name, so naming the
@@ -612,6 +617,7 @@ window.AUDIO = AUDIO;
     lb.innerHTML = '&#128196; Letters: ' + st + '  <span style="opacity:.55">(L)</span>';
     const g2 = document.getElementById('lightsBtn');
     if(g2) g2.innerHTML = (lightStep === 0 ? '&#9899;' : '&#10024;') + ' Lights: ' + LIGHT_STEPS[lightStep].label;
+    if(typeof paintWheels === 'function') paintWheels();
   }
   wb.addEventListener('click', e => {
     e.stopPropagation();
@@ -651,7 +657,49 @@ window.AUDIO = AUDIO;
     lightStep = (lightStep + 1) % LIGHT_STEPS.length;
     applyLights(); paint();
   });
-  setTimeout(applyLights, 0);   // the material is built after this block runs
+
+  // ---- one wheel, reused. Three knobs that differ only in what they write are three chances for
+  // them to drift apart; this keeps the cycling, the persistence and the label in one place.
+  // Steps are named rather than numeric because "OFF / SOFT / NORMAL / STRONG" is a thing you can
+  // ask for, and 0.35 is not.
+  const WHEEL = [
+    // Limb and Shine were tried here first and REMOVED: measured 0 pixels changed, because the
+    // planet's own shader is largely hidden behind the atmosphere shell and the ring bands. These
+    // two reach the things that are actually on top of it.
+    { id:'limbBtn',  icon:['&#9899;','&#127761;'], name:'Air',   store:'bx_air',
+      steps:[['OFF',0],['THIN',0.05],['NORMAL',0.13],['THICK',0.3]],
+      set:v => { const a=window.__air; if(a&&a.material){ a.material.opacity=v; a.visible = v>0; } } },
+    { id:'shineBtn', icon:['&#9899;','&#128736;'], name:'Rings', store:'bx_rings',
+      steps:[['OFF',0],['ON',1]],
+      set:v => { const d=window.__planetDetail; if(d) d.traverse(o=>{ if(o.userData&&o.userData.isRing) o.visible = v>0; }); } },
+    { id:'bloomBtn', icon:['&#9899;','&#127774;'], name:'Bloom', store:'bx_bloom',
+      steps:[['OFF',0],['SOFT',0.25],['NORMAL',0.5],['STRONG',1.0]],
+      set:v => { const b=window.__bloomPass; if(b) b.strength=v; } },
+  ];
+  WHEEL.forEach(k => {
+    // Default to the shipped look: index 2 where there are four steps, but CLAMPED - Rings has
+    // only two, and an out-of-range default threw inside paintWheels, which killed every wheel
+    // after it in the same loop. Two buttons sat showing their placeholder because of one index.
+    k.i = Math.min(2, k.steps.length - 1);
+    try { const v = localStorage.getItem(k.store);
+          const j = k.steps.findIndex(s => s[0] === v); if(j >= 0) k.i = j; } catch(e){}
+    k.el = document.getElementById(k.id);
+    k.apply = () => { k.set(k.steps[k.i][1]);
+                      try{ localStorage.setItem(k.store, k.steps[k.i][0]); }catch(e){} };
+    if(k.el) k.el.addEventListener('click', e => {
+      e.stopPropagation(); k.i = (k.i + 1) % k.steps.length; k.apply(); paint();
+    });
+  });
+  function paintWheels(){
+    WHEEL.forEach(k => {
+      if(!k.el) return;
+      try {
+        const step = k.steps[k.i] || k.steps[0];
+        k.el.innerHTML = (step[1] === 0 ? k.icon[0] : k.icon[1]) + ' ' + k.name + ': ' + step[0];
+      } catch(e){ /* one broken wheel must not blank the others - that is what just happened */ }
+    });
+  }
+  setTimeout(() => { applyLights(); WHEEL.forEach(k => k.apply()); paint(); }, 0);   // material + composer are built after this block
   addEventListener('keydown', e => { if(e.key === 'l' || e.key === 'L') setTimeout(paint, 0); });
   // Deferred: this panel is wired next to AUDIO, which sits ABOVE the `const LETTER_STYLES`
   // declaration in the same script, so painting inline read a not-yet-initialised binding and the
@@ -2626,9 +2674,10 @@ function buildPlanetDetail(){
   for(let b = 0; b < 4; b++){
     const band = new THREE.Mesh(new THREE.TorusGeometry(1.004, 0.005 + rnd() * 0.004, 8, 220), hull);
     band.rotation.set(rnd() * Math.PI, rnd() * Math.PI, rnd() * Math.PI);
+    band.userData.isRing = true;   // tagged so the Rings knob can hide the bands without the hubs
     g.add(band);
     const glow = new THREE.Mesh(new THREE.TorusGeometry(1.012, 0.0016, 6, 220), lit);
-    glow.rotation.copy(band.rotation); g.add(glow);
+    glow.rotation.copy(band.rotation); glow.userData.isRing = true; g.add(glow);
   }
   return g;
 }
@@ -2694,7 +2743,7 @@ function buildPlanet(){
       // THE LITTLE LIGHTS (RJ 2026-09-07). Twinkling city lights and the lit seam strips are added
       // AFTER the lighting term, so they read on the night side and feed bloom - which is also why
       // they dominate every world equally. This is the switch, live, no reload.
-      uLights: { value: 1 },   // the wheel sets this on the first tick; see the Lights button
+      uLights:  { value: 1 },   // the wheels set these on the first tick; see the bottom-left panel
       // sub-panels per cube face: 4x the geometry's PLATE_GRID, so every displaced plate
       // carries a 4x4 field of shaded sub-plates instead of being one flat facet.
       // sub-panels per cube face. 4.5x the geometry's grid puts a sub-plate at about a ship
@@ -2742,7 +2791,9 @@ function buildPlanet(){
   const air = new THREE.Mesh(new THREE.SphereGeometry(1.035, 64, 48), new THREE.MeshBasicMaterial({
     color:0x8fc4f0, transparent:true, opacity:0.13, side:THREE.BackSide, depthWrite:false, fog:false }));
   planet.add(air);
+  window.__air = air;            // the bottom-left Air knob drives its opacity
   const detail = buildPlanetDetail();
+  window.__planetDetail = detail;   // the Rings knob hides/shows the structural bands
   planet.add(detail);
   planet.userData = { R: 100, ground, air, detail };
   scene.add(planet);

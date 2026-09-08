@@ -162,7 +162,9 @@ const PLANET_FRAG = `
   uniform sampler2D uMap; uniform sampler2D uNorm; uniform samplerCube uEnv;
   uniform vec3 uLight; uniform vec3 uCam; uniform vec3 uTint;
   uniform float uTime;
-uniform float uLights;   // 1 = city lights + strip lights on, 0 = off (the bottom-left switch) uniform float uBump;
+uniform float uLights;   // 1 = city lights + strip lights on, 0 = off (the bottom-left switch)
+uniform float uEnvAmt;   // the limb glow / environment reflection
+uniform float uSpec;     // specular highlight + sheen   // 1 = city lights + strip lights on, 0 = off (the bottom-left switch) uniform float uBump;
   /* How brightly the SURFACE itself is lit, separate from its emissives. RJ asked for two things
      that are the same setting: "make it dark with lights that twinkle emissive", and "make sure
      her letters contrast to it - letters well lit". A planet lit to near-white leaves a white
@@ -281,8 +283,11 @@ uniform float uLights;   // 1 = city lights + strip lights on, 0 = off (the bott
 
     vec3 base = alb * uTint * lam * uGround;
     // the reflection is held to the LIMB (fresnel-weighted) so the face you read over stays dark
+    // Each term is scaled by its own knob so the bottom-left panel can isolate what a world's
+    // identity actually survives. Measured 2026-09-07: the six worlds land within 2-6% of each
+    // other because the tint is a pale multiply while these bright terms are identical on all six.
     vec3 col = base + env * (0.03 + 0.26 * fres) + specTint * spec + specTint * sheen
-             + (lamps + strips) * uLights;   // uLights 0 kills the twinkling city lights and the seam strips; the plating, tint and limb stay
+             + (lamps + strips) * uLights;   // uLights 0 kills the city lights and the seam strips   // uLights 0 kills the twinkling city lights and the seam strips; the plating, tint and limb stay
     gl_FragColor = vec4(col, 1.0);
   }`;
 
