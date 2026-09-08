@@ -1,6 +1,17 @@
 # Résumé Breakout — graphics upgrade backlog
 
-## Open - RJ rejected the letter plates (2026-09-07)
+## ✅ LETTER LANE COMPLETE — 0 open (2026-09-07)
+
+All nine items done (L1f pin → L1a-L1e five treatments → L2 measure → L3 contact sheet → L4 fly-in),
+each committed and pushed. **Nothing is waiting on autobot; the ball is with RJ:**
+- **Contact sheet for RJ to pick a letter treatment:** https://claude.ai/code/artifact/a75baf07-223e-4788-ac55-f25da0ce9ff8
+- **All five are live in the build — press `L` to cycle** (Page → Outline → Neon → Extruded → Emissive → Halo → Inked). Default is unchanged (PAGE); no winner shipped.
+- **Recommendation:** E · INKED — reads clearest over the worst-case bright planet (contrast 0.82) and is the only high-contrast option that keeps the résumé's colour-coding, at the same frame cost as the rest. RJ picks.
+- The 6-second fly-in (L4) is live: cold start → 6.0s fly-in (measured 5.9s) → sweeping cutscene → play; skippable from frame 1, no replay, hands into the normal play state.
+
+Details of every item are in the checklist below.
+
+## History - RJ rejected the letter plates (2026-09-07)
 
 RJ, looking at the shipped plates: **"I don't like these letters, try again."**
 
