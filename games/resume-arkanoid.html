@@ -678,7 +678,10 @@ const LETTER_STYLES = [
   { key:'halo',    label:'HALO - soft dark aura, no box' },     // L1d: the halo alone, darkening does the work
   { key:'inked',   label:'INKED - colour kept, dark contour' }, // L1e (mine): OUTLINE contrast + HALO colour
 ];
-let letterStyle = 0;
+// DEFAULT: OUTLINE (RJ 2026-09-07, picked after seeing the five treatments side by side).
+// Resolved by KEY, not by the index 1, so reordering or inserting a style cannot silently change
+// which one a new visitor gets - the list has already grown from 3 to 7 once.
+let letterStyle = Math.max(0, LETTER_STYLES.findIndex(s => s.key === 'outline'));
 try { const v = localStorage.getItem('bx_letter_style'); if(v !== null) letterStyle = Math.max(0, Math.min(LETTER_STYLES.length-1, +v)); } catch(e){}
 function styleKey(){ return LETTER_STYLES[letterStyle].key; }
 function cycleLetterStyle(){
