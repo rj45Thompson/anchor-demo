@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "anchor-demo",
+      "runtimeExecutable": "py",
+      "runtimeArgs": ["-m", "http.server", "8792", "--directory", "D:/code/anchor-demo"],
+      "port": 8792
+    }
+  ]
+}
