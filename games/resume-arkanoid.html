@@ -826,6 +826,43 @@ const CARD_VERT = `
   varying vec2 vUv;
   void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
 `;
+/* Every number the chewing uses, in one place.
+
+   CHUNK is the grid a glyph breaks along: 22x22 = 484 chunks per letter, so one chunk is about 4% of the card
+   in each axis - small enough to read as "pixels", coarse enough that the torn edge is visibly blocky rather
+   than a smooth bite. MAX must match MAXBITE in the shader.
+
+   R is the crater radius per weapon, in UV, and it is the whole "depending on the weapon" answer: the pulse
+   laser drills a small clean hole but fires twin barrels, the autocannon takes a bigger ragged one, the seeker
+   removes a third of the glyph at once, and the flamethrower nibbles.
+
+   KILL_FRAC is measured against the CARD, not against the glyph's ink. Counting ink would mean reading each
+   glyph canvas back with getImageData, and since the letter cards carry a dark backing plate behind the
+   letterform, nearly every cell reads as ink anyway - so the ink count would have been an expensive way to
+   arrive at the same number.
+
+   Tuned by playing it: at 0.20 a measured run took NINE shots to bring down one letter, which across 159 glyphs
+   is a slog. 0.14 puts the base gun at about four - the base crater is roughly 21 chunks - while leaving the
+   seeker's 0.32 radius (about 118 chunks, an ellipse because of the aspect correction) a clean one-shot kill,
+   which is what makes the weapons feel different rather than just faster. */
+const BITE = {
+  CHUNK: 22, MAX: 14, ASPECT: 1.34/1.02,      // ASPECT = SY/S, the card's own height over its width
+  KILL_FRAC: 0.14,
+  R: { base:0.135, energy:0.115, ballistic:0.165, missile:0.32, flame:0.10 },
+  SPARKS: 5
+};
+
+/* DESTRUCTIBLE GLYPHS (RJ 2026-09-07: "when I hit them it should break tiny chunks of pixels off almost one
+   at a time, depending on the weapon. like worms the game").
+
+   A hit no longer deletes a letter. It takes a BITE out of it, and the letter only falls once enough of its
+   ink is gone. Each bite is a disc in the glyph's own UV space; the shader quantises vUv to a coarse grid
+   BEFORE testing, so the eaten edge follows chunky cell boundaries instead of a smooth curve - that blockiness
+   is the Worms read, and it is why the grid is coarse on purpose.
+
+   Craters ride as a uniform array rather than a per-letter mask texture: there are up to 159 live glyphs, and
+   an array of 14 vec3 costs nothing to update while a texture per letter would mean an upload per shot.
+   uAspect corrects for the card being taller than it is wide, so a bite is round on screen and not an ellipse. */
 const CARD_FRAG = `
   uniform sampler2D map;
   uniform float uGlow;       // how hard the bright part burns
@@ -868,6 +905,97 @@ function cardMaterial(){
   });
 }
 
+// Which chunk cells a crater removes. Mirrors the shader's test exactly - same quantisation, same aspect
+// correction - so the count driving "is this letter dead" matches what the player can actually see missing.
+function markChunks(L, u, v, r){
+  const N = BITE.CHUNK, ry = r / BITE.ASPECT;
+  const i0 = Math.max(0, Math.floor((u-r)*N)),  i1 = Math.min(N-1, Math.ceil((u+r)*N));
+  const j0 = Math.max(0, Math.floor((v-ry)*N)), j1 = Math.min(N-1, Math.ceil((v+ry)*N));
+  for(let i=i0;i<=i1;i++) for(let j=j0;j<=j1;j++){
+    const dx = (i+0.5)/N - u, dy = ((j+0.5)/N - v) * BITE.ASPECT;
+    if(dx*dx + dy*dy <= r*r) L.eaten.add(j*N + i);
+  }
+}
+
+/* HOW THE CHEWING IS DRAWN. The craters are erased straight out of the card's own canvas with a
+   destination-out fill, one grid chunk at a time, rather than discarded in the shader.
+
+   The shader route was built first and thrown away, for a reason worth keeping written down: this game draws
+   its text in PAGE style, where the per-letter meshes are hidden and each whole LINE is one card. Craters on a
+   per-letter material therefore landed on invisible meshes - the uniform was set correctly and nothing changed
+   on screen. Erasing the bitmap works in either style, has no fixed crater limit (a uniform array capped at 14
+   is nothing across a thirty-letter line), and needs no second code path in the fragment shader, which this
+   file has been bitten by before.
+
+   Chunks are erased as RECTANGLES on the grid, never as circles. That is the Worms read: the hole has stepped
+   edges because the material came away in blocks. */
+function chunkWorldRect(L, i, j){
+  const S = CH_W*1.02, SY = CH_W*1.34, N = BITE.CHUNK;
+  return { x0: L.x - S/2 + (i/N)*S, x1: L.x - S/2 + ((i+1)/N)*S,
+           dy0: -SY/2 + (j/N)*SY,  dy1: -SY/2 + ((j+1)/N)*SY };   // dy is relative to the line's centre line
+}
+
+/* Re-erase every chewed chunk on a line into its page card. Cheap to call after a hit; must ALSO run after the
+   card's texture is rebuilt, because placePage regenerates it from scratch whenever a letter finally breaks
+   and a fresh canvas comes back whole. */
+function erodeLineCanvas(line){
+  const m = line.page; if(!m) return;
+  const tex = m.material.uniforms.map.value, cv = tex && tex.image;
+  const g = cv && cv.getContext && cv.getContext('2d'); if(!g) return;
+  const cells = m.userData.cells || line.text.length;
+  const w = cells * CH_W, h = CH_W * 1.55, W = cv.width, H = cv.height, N = BITE.CHUNK;
+  g.save(); g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000';
+  let n = 0;
+  for(const L of line.letters){
+    if(!L.eaten || !L.eaten.size) continue;
+    for(const key of L.eaten){
+      const i = key % N, j = (key - i) / N;
+      const r = chunkWorldRect(L, i, j);
+      const u0 = (r.x0 + w/2)/w, u1 = (r.x1 + w/2)/w;
+      const v0 = 0.5 + r.dy0/h,  v1 = 0.5 + r.dy1/h;
+      // canvas rows run the other way from v: the texture is uploaded flipped
+      const x = u0*W, y = (1 - v1)*H;
+      g.fillRect(Math.floor(x), Math.floor(y),
+                 Math.ceil((u1-u0)*W) + 1, Math.ceil((v1-v0)*H) + 1);
+      n++;
+    }
+  }
+  g.restore();
+  if(n) tex.needsUpdate = true;
+  return n;
+}
+
+/* Has this letter already been chewed away at the point a shot is crossing it? Then the shot goes THROUGH.
+   Without this, firing at a stationary target re-cratered the same chunks forever: measured a second shot on
+   the same spot eating 0 new chunks. Letting the hole be a hole is what makes the player spread fire across a
+   glyph to bring it down, and it is the behaviour the Worms comparison is actually about. */
+function chewedThrough(L, ly, wx, wy){
+  if(!L.eaten || !L.eaten.size) return false;
+  const N = BITE.CHUNK, S = CH_W*1.02, SY = CH_W*1.34;
+  const u = 0.5 + (wx - L.x) / S, v = 0.5 + (wy - ly) / SY;   // same convention as biteLetter
+  if(u < 0 || u > 1 || v < 0 || v > 1) return false;
+  const i = Math.min(N-1, Math.max(0, Math.floor(u*N)));
+  const j = Math.min(N-1, Math.max(0, Math.floor(v*N)));
+  return L.eaten.has(j*N + i);
+}
+
+/* Take one bite out of a letter. Returns true when that bite finished it off.
+   wx/wy are the impact point in BOARD space; the card is S wide and SY tall centred on the glyph, which is
+   what turns a world hit into the UV the shader wants. */
+function biteLetter(L, ly, wx, wy, r){
+  if(!L.bites){ L.bites = []; L.eaten = new Set(); }
+  const S = CH_W*1.02, SY = CH_W*1.34;
+  const u = Math.max(0, Math.min(1, 0.5 + (wx - L.x) / S));
+  /* v INCREASES with world height. PlaneGeometry puts v=1 at the top in local space and the card is not
+     tilted, so world-up is +v; the texture's flipY affects how the glyph is SAMPLED, not the geometry's own
+     UVs, which is what the crater test runs in. Subtracting here mirrored every crater vertically - a shot
+     to the head of a letter chewed its feet. */
+  const v = Math.max(0, Math.min(1, 0.5 + (wy - ly) / SY));
+  L.bites.push({u, v, r});
+  markChunks(L, u, v, r);
+  return L.eaten.size >= BITE.KILL_FRAC * BITE.CHUNK * BITE.CHUNK;
+}
+
 /* ---- PAGE mode's per-line meshes, pooled the same way the letters are */
 const pagePool = [];
 function takePage(){
@@ -897,7 +1025,12 @@ function placePage(line, y){
     m.material.uniforms.map.value = made.tex;
     m.userData.cells = made.cells;
     line.pageStamp = stamp;
+    line.erodeMark = -1;              // a fresh canvas comes back whole; force the craters back on
   }
+  // only redraw when something has actually changed - erasing every chunk every frame would be thousands of
+  // fillRects a frame across the board
+  const chewed = line.letters.reduce((n, L) => n + (L.eaten ? L.eaten.size : 0), 0);
+  if(line.erodeMark !== chewed){ erodeLineCanvas(line); line.erodeMark = chewed; }
   /* Sized from the LINE's cell count and centred on the line, exactly as buildBoard lays the
      targets out - not from the letters' measured extent. The card then sits over its own hitboxes
      whatever has already been shot away, instead of sliding along as the ends are cleared. */
@@ -950,7 +1083,7 @@ function buildBoard(){
     for(let ci=0; ci<row.t.length; ci++){
       const ch = row.t[ci];
       if(ch === " ") continue;                       // spaces are not targets
-      chars.push({ ch, ci, broken:false, dissolve:0, mesh:null,
+      chars.push({ ch, ci, broken:false, dissolve:0, mesh:null, bites:[], eaten:new Set(),
                    spinX:(Math.random()<0.5?-1:1), spinY:(Math.random()<0.5?-1:1),
                    x: -w/2 + ci*CH_W + CH_W/2,
                    // flight in from the press: 1 = in its slot; see launchLetter()
@@ -3394,7 +3527,7 @@ function fire(){
     const m = glowSprite(col);
     m.scale.set(homing ? 0.85 : 0.5, homing ? 1.05 : 1.7, 1);
     m.position.copy(ship.position); m.position.x += ox; m.position.y += 1.4;
-    m.userData = { homing, splash, col };
+    m.userData = { homing, splash, col, bite: (BITE.R[power] != null ? BITE.R[power] : BITE.R.base) };
     // board, not scene: letter positions are board-local, and a bullet in scene space silently
     // drifts out of alignment the moment the board tilts.
     board.add(m); bullets.push(m);
@@ -3656,20 +3789,30 @@ function tick(now){
         if(!(loY <= ly + LINE_H*0.42 && hiY >= ly - LINE_H*0.42)) continue;
         for(const L of line.letters){
           if(L.broken || L.dissolve > 0 || L.arrive < 1) continue;
-          if(Math.abs(bl.position.x - L.x) < CH_W*0.85){ hit = L; hitLine = line; break; }
+          if(Math.abs(bl.position.x - L.x) < CH_W*0.85){
+            if(chewedThrough(L, ly, bl.position.x, bl.position.y)) continue;   // straight through the hole
+            hit = L; hitLine = line; break; }
         }
         if(hit) break;
       }
       if(hit){
-        hit.dissolve = 0.01;                     // shader burns it away over the next few frames
-        spark(new THREE.Vector3(hit.x, hitLine.y - crawl, 0), TONES[hitLine.tone] || 0x9fd8ff, 7);
-        brokenCount++;
-        bumpReveal();
-        maybeDrop(hit.x, hitLine.y-crawl, hitLine.kind);
-        document.getElementById('score').textContent = brokenCount;
-        if(hitLine.meta && hitLine.meta.co && !linesRead.has(hitLine.i)){
-          linesRead.add(hitLine.i);
-          show(hitLine.meta.co, hitLine.meta.date, hitLine.meta.detail);
+        /* RJ: "break tiny chunks of pixels off almost one at a time, depending on the weapon." A shot takes a
+           crater out of the glyph at the point it struck; the letter only breaks once enough chunks are gone.
+           The spark burst is thrown from the IMPACT rather than the letter's centre, so the debris comes off
+           the bit that just broke. */
+        const ly = hitLine.y - crawl;
+        const dead = biteLetter(hit, ly, bl.position.x, bl.position.y, bl.userData.bite || BITE.R.base);
+        spark(new THREE.Vector3(bl.position.x, bl.position.y, 0), TONES[hitLine.tone] || 0x9fd8ff, BITE.SPARKS);
+        if(dead){
+          hit.dissolve = 0.01;                   // finished: the shader spins what is left of it away
+          brokenCount++;
+          bumpReveal();
+          maybeDrop(hit.x, ly, hitLine.kind);
+          document.getElementById('score').textContent = brokenCount;
+          if(hitLine.meta && hitLine.meta.co && !linesRead.has(hitLine.i)){
+            linesRead.add(hitLine.i);
+            show(hitLine.meta.co, hitLine.meta.date, hitLine.meta.detail);
+          }
         }
         freeGlow(bl); bullets.splice(i,1);
       } else if(hitAttackerAt(bl.position.x, bl.position.y, 1.1)){
