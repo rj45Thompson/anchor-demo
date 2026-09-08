@@ -112,7 +112,6 @@
   </div>
 
   <div class="hud" id="readout"></div>
-  <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
   <button id="shieldBtn" hidden style="position:fixed;left:14px;bottom:54px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:9px;padding:12px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;touch-action:none">&#128737; SHIELD</button>
   <button id="sndBtn" style="position:fixed;left:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#128263; Sound off</button>
   <!-- The gear is the LAST child on purpose: the panel is anchored at its bottom and grows
@@ -125,9 +124,15 @@
     <button id="bloomBtn"   class="knob"></button>
     <button id="lightsBtn"  class="knob"></button>
     <button id="lettersBtn" class="knob"></button>
+    <!-- RJ 2026-09-08: "fullscreen button seems overlapping camera. move camera and fullscreen to the left bar."
+         They were two loose fixed buttons at right:14px, top 12 and top 50 - 38px apart, which is less than
+         their own height once the label wraps on a narrow window, so they sat on top of each other. In the knob
+         column they cannot collide with anything: it is a flex column that lays itself out. Ids are unchanged,
+         so the existing delegated handlers still find them. -->
+    <button id="camBtn"     class="knob" title="Cycle the camera"></button>
+    <button id="fsBtn"      class="knob" title="Fullscreen"></button>
     <button id="knobsBtn"   class="knob" title="Show or hide the look knobs">&#9881;&#65039; Look</button>
   </div>
-  <button id="camBtn" style="position:fixed;right:14px;top:50px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#10227; Camera (C)</button>
   <div id="bigHint" class="bighint"><b></b><small></small></div>
   <div class="hud" id="banner" style="left:0;right:0;top:88px;text-align:center;font-size:13px;font-weight:700;letter-spacing:2px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
   <div class="hud" id="era" style="right:14px;bottom:44px;opacity:.45;transition:opacity .5s;font-weight:700;letter-spacing:1.5px">1988 · 8-bit</div>
@@ -653,8 +658,15 @@ window.AUDIO = AUDIO;
     const g2 = document.getElementById('lightsBtn');
     if(g2) g2.innerHTML = knobHtml(lightStep === 0 ? '&#9899;' : '&#10024;', 'Lights',
                                    LIGHT_STEPS[lightStep].label);
+    const cb = document.getElementById('camBtn');
+    if(cb) cb.innerHTML = knobHtml('&#10227;', 'Camera', 'CYCLE', 'C');
+    const fb = document.getElementById('fsBtn');
+    if(fb) fb.innerHTML = knobHtml('&#9214;', 'Screen',
+                                   document.fullscreenElement ? 'FULL' : 'WINDOW', 'F');
     if(typeof paintWheels === 'function') paintWheels();
   }
+  // the screen knob has to restate itself when fullscreen changes by any route, including Esc and F
+  document.addEventListener('fullscreenchange', () => paint());
   wb.addEventListener('click', e => {
     e.stopPropagation();
     const i = WORLDS_LIST.indexOf(currentWorld());
@@ -672,20 +684,25 @@ window.AUDIO = AUDIO;
   // no reload, unlike the world. The scale multiplies the city lights and the seam strips together;
   // they are added after the lighting term, which is why they read at night and why they were
   // drowning every world equally at 1.0.
+  /* RJ 2026-09-08: "make lights off by default" and "there is a grid for lights, make that an on off option".
+     Five brightness steps were a dial for something that reads as on or off, and the middle settings only ever
+     got cycled past. OFF now also HIDES the lamp grid itself - the 900 unlit boxes scattered over the surface -
+     rather than only zeroing the shader's light term, because those boxes are the grid you can see. */
   const LIGHT_STEPS = [
-    { key:'off',    label:'OFF',    v:0    },
-    { key:'ember',  label:'EMBER',  v:0.35 },
-    { key:'dim',    label:'DIM',    v:0.6  },
-    { key:'normal', label:'NORMAL', v:1    },
-    { key:'blaze',  label:'BLAZE',  v:1.8  },
+    { key:'off', label:'OFF', v:0 },
+    { key:'on',  label:'ON',  v:1 },
   ];
-  let lightStep = 3;
+  let lightStep = 0;
   try { const v = localStorage.getItem('bx_lights');
         const i = LIGHT_STEPS.findIndex(s => s.key === v); if(i >= 0) lightStep = i; } catch(e){}
   const gb = document.getElementById('lightsBtn');
   function applyLights(){
+    const v = LIGHT_STEPS[lightStep].v;
     const m = window.__groundMat;
-    if(m && m.uniforms && m.uniforms.uLights) m.uniforms.uLights.value = LIGHT_STEPS[lightStep].v;
+    if(m && m.uniforms && m.uniforms.uLights) m.uniforms.uLights.value = v;
+    // and the grid of lamp boxes standing on the surface, which the uniform cannot reach
+    const d = window.__planetDetail;
+    if(d) d.traverse(o => { if(o.userData && o.userData.isLamp) o.visible = v > 0; });
     try{ localStorage.setItem('bx_lights', LIGHT_STEPS[lightStep].key); }catch(e){}
   }
   if(gb) gb.addEventListener('click', e => {
@@ -709,14 +726,16 @@ window.AUDIO = AUDIO;
       steps:[['OFF',0],['ON',1]],
       set:v => { const d=window.__planetDetail; if(d) d.traverse(o=>{ if(o.userData&&o.userData.isRing) o.visible = v>0; }); } },
     { id:'bloomBtn', icon:['&#9899;','&#127774;'], name:'Bloom', store:'bx_bloom',
-      steps:[['OFF',0],['SOFT',0.25],['NORMAL',0.5],['STRONG',1.0]],
+      steps:[['OFF',0],['SOFT',0.25],['NORMAL',0.5],['STRONG',1.0]], def:3,   // RJ 2026-09-08: "bloom strong by default"
       set:v => { const b=window.__bloomPass; if(b) b.strength=v; } },
   ];
   WHEEL.forEach(k => {
     // Default to the shipped look: index 2 where there are four steps, but CLAMPED - Rings has
     // only two, and an out-of-range default threw inside paintWheels, which killed every wheel
     // after it in the same loop. Two buttons sat showing their placeholder because of one index.
-    k.i = Math.min(2, k.steps.length - 1);
+    // `def` lets a knob ship on something other than the third step; still clamped, because an
+    // out-of-range default used to throw inside paintWheels and kill every wheel after it.
+    k.i = Math.min(k.def != null ? k.def : 2, k.steps.length - 1);
     try { const v = localStorage.getItem(k.store);
           const j = k.steps.findIndex(s => s[0] === v); if(j >= 0) k.i = j; } catch(e){}
     k.el = document.getElementById(k.id);
@@ -1084,7 +1103,11 @@ const CARD_VERT = `
 const BITE = {
   CHUNK: 22, MAX: 14, ASPECT: 1.34/1.02,      // ASPECT = SY/S, the card's own height over its width
   KILL_FRAC: 0.14,
-  R: { base:0.135, energy:0.115, ballistic:0.165, missile:0.32, flame:0.10 },
+  /* Measured per bolt against the 68-chunk kill: base 20 (4 triggers), energy 16 x2 barrels = 32 (3),
+     ballistic 27 x2 = 54 (2), missile 116 (1), flame 12 (6, but it fires three times as fast). Ballistic
+     was 0.165, which put it at 72 a trigger - a ONE-shot kill, indistinguishable from the seeker. The
+     autocannon should out-hit the base gun without becoming the missile. */
+  R: { base:0.135, energy:0.115, ballistic:0.145, missile:0.32, flame:0.10 },
   SPARKS: 5
 };
 
@@ -1201,18 +1224,31 @@ function erodeLineCanvas(line){
   return n;
 }
 
-/* Has this letter already been chewed away at the point a shot is crossing it? Then the shot goes THROUGH.
-   Without this, firing at a stationary target re-cratered the same chunks forever: measured a second shot on
-   the same spot eating 0 new chunks. Letting the hole be a hole is what makes the player spread fire across a
-   glyph to bring it down, and it is the behaviour the Worms comparison is actually about. */
-function chewedThrough(L, ly, wx, wy){
-  if(!L.eaten || !L.eaten.size) return false;
+/* Where does a shot first meet material that is still there?
+
+   RJ 2026-09-08: "the letters can't be destroyed with lasers, make them die - just hard to kill." The first
+   version simply passed a shot through any chunk already eaten, which is right for a wide crater and wrong for
+   a precise weapon: the pulse laser puts every bolt in the same place, so after its first hit every following
+   bolt re-entered the same hole and ate NOTHING. Measured: a second shot on an identical impact point eats 0
+   new chunks. The letter became immortal precisely because the weapon was accurate.
+
+   A real projectile does not stop at the hole's mouth, and it does not stop at nothing either - it carries on
+   until it strikes material. Bullets travel up the board, so this walks up the impacted COLUMN from the entry
+   point and returns the first chunk still standing. A laser therefore drills a channel up through the glyph,
+   taking a fresh bite every shot, and only passes clean through once that column really is empty. Hard to kill,
+   not unkillable. */
+function firstIntactY(L, ly, wx, wy){
   const N = BITE.CHUNK, S = CH_W*1.02, SY = CH_W*1.34;
-  const u = 0.5 + (wx - L.x) / S, v = 0.5 + (wy - ly) / SY;   // same convention as biteLetter
-  if(u < 0 || u > 1 || v < 0 || v > 1) return false;
+  const u = 0.5 + (wx - L.x) / S;
+  if(u < 0 || u > 1) return null;
   const i = Math.min(N-1, Math.max(0, Math.floor(u*N)));
-  const j = Math.min(N-1, Math.max(0, Math.floor(v*N)));
-  return L.eaten.has(j*N + i);
+  const v = 0.5 + (wy - ly) / SY;
+  const j0 = Math.min(N-1, Math.max(0, Math.floor(v*N)));
+  for(let j = j0; j < N; j++){
+    if(!L.eaten || !L.eaten.has(j*N + i))
+      return ly + ((j + 0.5)/N - 0.5) * SY;      // centre of the first chunk still standing
+  }
+  return null;                                    // this column is gone: the shot goes through
 }
 
 /* Take one bite out of a letter. Returns true when that bite finished it off.
@@ -2724,6 +2760,7 @@ function buildPlanetDetail(){
     const w = 0.0016 + rnd() * 0.004;
     place(lamps, i, d, w, w * (1 + rnd() * 6), 0.001, 0.004 + rnd() * 0.02);
   }
+  lamps.userData.isLamp = true;   // tagged so the Lights knob can hide the grid itself, not just dim the shader
   lamps.instanceMatrix.needsUpdate = true; g.add(lamps);
 
   // ---- the hubs: stepped ring terraces round a spire, the shape the reference is built from
@@ -2840,7 +2877,24 @@ function buildPlanet(){
          With the sRGB decode in place this darkens the SURFACE only - the strip lights and city
          lights are added after the lighting term, so they hold their brightness and the world
          reads as lit machinery in the dark rather than as a dimmed photograph. */
-      uGround: { value: 0.28 },
+      /* RJ 2026-09-08: "the world in breakout button doesn't work. no worlds render." The button was fine -
+         it stored the pick, reloaded, and bound the right 2048 maps every time. THIS number was the bug.
+
+         Measured by swapping the ground map live and diffing the rendered frame (control: 0.00 with nothing
+         swapped, so the numbers mean something). At 0.28 a glacier/forge swap moved the picture 5.22 levels
+         out of 255 - about 1%, which is invisible, so all six worlds looked identical. Hiding the whole city
+         and the atmosphere changed that to 5.99, ruling both out as the cause; the ground term itself was
+         crushing the map.
+
+         uGround   world swing   frame brightness
+           0.28       5.22            13.0
+           0.50       9.32            14.3
+           0.75      13.97            15.7
+           1.00      18.63            17.2
+
+         0.75 buys 2.7x the world difference for a 20% brightness rise that is barely visible, so the planet
+         stays as dark as RJ asked for while the world he picked actually shows. */
+      uGround: { value: 0.75 },
     },
     vertexShader: PLANET_VERT, fragmentShader: PLANET_FRAG, fog: false,
     vertexColors: true,          // the per-panel metal tint baked by plateSphere
@@ -4037,7 +4091,7 @@ function tick(now){
       const loY = Math.min(prevY, bl.position.y), hiY = Math.max(prevY, bl.position.y);
       // despawn runs AFTER the hit test, further down: doing it here threw away bullets whose
       // segment had already crossed a glyph near the ceiling.
-      let hit = null, hitLine = null;
+      let hit = null, hitLine = null, hitY = 0;
       for(const line of lines){
         const ly = line.y - crawl;
         if(ly > viewEnterY + 2 || ly < VIEW_BOT-2) continue;
@@ -4045,8 +4099,9 @@ function tick(now){
         for(const L of line.letters){
           if(L.broken || L.dissolve > 0 || L.arrive < 1) continue;
           if(Math.abs(bl.position.x - L.x) < CH_W*0.85){
-            if(chewedThrough(L, ly, bl.position.x, bl.position.y)) continue;   // straight through the hole
-            hit = L; hitLine = line; break; }
+            const hy = firstIntactY(L, ly, bl.position.x, bl.position.y);
+            if(hy == null) continue;              // that column is chewed clean through
+            hit = L; hitLine = line; hitY = hy; break; }
         }
         if(hit) break;
       }
@@ -4056,8 +4111,9 @@ function tick(now){
            The spark burst is thrown from the IMPACT rather than the letter's centre, so the debris comes off
            the bit that just broke. */
         const ly = hitLine.y - crawl;
-        const dead = biteLetter(hit, ly, bl.position.x, bl.position.y, bl.userData.bite || BITE.R.base);
-        spark(new THREE.Vector3(bl.position.x, bl.position.y, 0), TONES[hitLine.tone] || 0x9fd8ff, BITE.SPARKS);
+        // bite where the shot actually MET material, not where it entered the letter's box
+        const dead = biteLetter(hit, ly, bl.position.x, hitY, bl.userData.bite || BITE.R.base);
+        spark(new THREE.Vector3(bl.position.x, hitY, 0), TONES[hitLine.tone] || 0x9fd8ff, BITE.SPARKS);
         if(dead){
           hit.dissolve = 0.01;                   // finished: the shader spins what is left of it away
           brokenCount++;
