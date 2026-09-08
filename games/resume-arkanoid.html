@@ -2637,7 +2637,13 @@ function buildPlanet(){
   let stored=null; try{ stored = localStorage.getItem('bx_world'); }catch(e){}
   const forced = (typeof window !== 'undefined' && (window.__forceWorld ||
                   new URLSearchParams(location.search).get('world') || stored));
-  const WORLD = (forced && WORLDS[forced]) ? forced : WORLD_NAMES[(Math.random()*WORLD_NAMES.length)|0];
+  // DEFAULT: forge (RJ 2026-09-07 "default letters to forge"). It was a random world per run,
+  // which is a nice idea and a bad default for a portfolio page: a visitor's first impression
+  // should be the one that was chosen, not the one the dice picked. A stored choice from the
+  // bottom-left switcher, ?world= or __forceWorld all still outrank this.
+  const DEFAULT_WORLD = 'forge';
+  const WORLD = (forced && WORLDS[forced]) ? forced
+              : (WORLDS[DEFAULT_WORLD] ? DEFAULT_WORLD : WORLD_NAMES[0]);
   const pmap = texLoader.load('assets/planet_' + WORLD + '.jpg'),
         pnorm = texLoader.load('assets/planet_' + WORLD + '_n.jpg');
   window.__world = WORLD; window.__worldTint = WORLDS[WORLD];
