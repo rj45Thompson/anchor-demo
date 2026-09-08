@@ -92,6 +92,10 @@
   <button id="fsBtn" style="position:fixed;right:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">⛶ Fullscreen (F)</button>
   <button id="shieldBtn" hidden style="position:fixed;left:14px;bottom:54px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:9px;padding:12px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;touch-action:none">&#128737; SHIELD</button>
   <button id="sndBtn" style="position:fixed;left:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#128263; Sound off</button>
+  <div id="lookPanel" style="position:fixed;left:14px;bottom:86px;z-index:40;display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+    <button id="worldBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#129680; World: &hellip;</button>
+    <button id="lettersBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#128196; Letters: &hellip;</button>
+  </div>
   <button id="camBtn" style="position:fixed;right:14px;top:50px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#10227; Camera (C)</button>
   <div id="bigHint" class="bighint"><b></b><small></small></div>
   <div class="hud" id="banner" style="left:0;right:0;top:88px;text-align:center;font-size:13px;font-weight:700;letter-spacing:2px;opacity:0;transition:opacity .45s;pointer-events:none;text-shadow:0 0 18px rgba(255,180,90,.85);color:#ffd7a8"></div>
@@ -587,6 +591,46 @@ const AUDIO = (function(){
            muted(){ return muted; }, setMuted, toggle(){ return setMuted(!muted); } };
 })();
 window.AUDIO = AUDIO;
+// THE LOOK SWITCHER (RJ 2026-09-07: "let me toggle through them all"). Bottom-left, stacked above
+// the power readout at bottom:44 and the touch shield at bottom:54, so nothing overlaps.
+// Letters cycle LIVE - resetLetterVisuals() rebuilds them in place. Worlds cannot: their textures
+// are bound when the planet is built, so the pick is stored and the page reloads. Both buttons name
+// the CURRENT value, so you can see what you are looking at without cycling to find out.
+(function(){
+  const wb = document.getElementById('worldBtn'), lb = document.getElementById('lettersBtn');
+  if(!wb || !lb) return;
+  const WORLDS_LIST = ['circuit','citadel','derelict','forge','glacier','reactor'];
+  function currentWorld(){
+    if(window.__world) return window.__world;
+    try{ return localStorage.getItem('bx_world') || WORLDS_LIST[0]; }catch(e){ return WORLDS_LIST[0]; }
+  }
+  function paint(){
+    wb.innerHTML = '&#129680; World: ' + currentWorld().toUpperCase();
+    const st = (typeof LETTER_STYLES !== 'undefined' && typeof letterStyle !== 'undefined')
+      ? LETTER_STYLES[letterStyle].label.split(' - ')[0] : '?';
+    lb.innerHTML = '&#128196; Letters: ' + st + '  <span style="opacity:.55">(L)</span>';
+  }
+  wb.addEventListener('click', e => {
+    e.stopPropagation();
+    const i = WORLDS_LIST.indexOf(currentWorld());
+    const next = WORLDS_LIST[(i + 1 + WORLDS_LIST.length) % WORLDS_LIST.length];
+    try{ localStorage.setItem('bx_world', next); }catch(e){}
+    wb.innerHTML = '&#129680; World: ' + next.toUpperCase() + ' &hellip;';
+    location.reload();                       // the textures bind at build time; see the note above
+  });
+  lb.addEventListener('click', e => {
+    e.stopPropagation();
+    if(typeof cycleLetterStyle === 'function') cycleLetterStyle();
+    paint();
+  });
+  addEventListener('keydown', e => { if(e.key === 'l' || e.key === 'L') setTimeout(paint, 0); });
+  // Deferred: this panel is wired next to AUDIO, which sits ABOVE the `const LETTER_STYLES`
+  // declaration in the same script, so painting inline read a not-yet-initialised binding and the
+  // button showed its placeholder. Same trap as the first-flight card and KEYBIND. One tick later
+  // the whole script has run and every binding is live.
+  setTimeout(paint, 0);
+  window.__paintLookPanel = paint;
+})();
 // The sound switch. Top-left, opposite Fullscreen/Camera on the right, and it states the CURRENT
 // state rather than the action - a button that says 'Sound off' when sound is off is readable at a
 // glance; one that says 'Mute' makes you work out which way round it is.
@@ -2586,8 +2630,13 @@ function buildPlanet(){
   // Default: a random world each run (RJ's ask). Repro hook: window.__forceWorld (or ?world=) pins one
   // BY NAME so a screenshot harness gets the same planet every load - robust to code changes, unlike
   // seeding Math.random (adding a material before this line shifts the draw and flips the world).
+  // A CHOSEN world outranks the random one, and survives the reload the switcher needs.
+  // The planet's textures are bound here at construction, so a live swap would mean rebuilding the
+  // material and its maps; storing the pick and reloading is the honest cheap version, and the
+  // reload is what a player expects from 'give me a different world' anyway.
+  let stored=null; try{ stored = localStorage.getItem('bx_world'); }catch(e){}
   const forced = (typeof window !== 'undefined' && (window.__forceWorld ||
-                  new URLSearchParams(location.search).get('world')));
+                  new URLSearchParams(location.search).get('world') || stored));
   const WORLD = (forced && WORLDS[forced]) ? forced : WORLD_NAMES[(Math.random()*WORLD_NAMES.length)|0];
   const pmap = texLoader.load('assets/planet_' + WORLD + '.jpg'),
         pnorm = texLoader.load('assets/planet_' + WORLD + '_n.jpg');
