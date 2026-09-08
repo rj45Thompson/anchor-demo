@@ -600,6 +600,7 @@ const LETTER_STYLES = [
   { key:'outline', label:'OUTLINE - dark outline, no card' },
   { key:'neon',    label:'NEON - self-lit glyph' },
   { key:'extrude', label:'EXTRUDED - real 3D letterforms' },   // L1a: TextGeometry, not a texture on a quad
+  { key:'emissive',label:'EMISSIVE - wins on light, no backing' },  // L1c: NEON minus the dark halo
 ];
 let letterStyle = 0;
 try { const v = localStorage.getItem('bx_letter_style'); if(v !== null) letterStyle = Math.max(0, Math.min(LETTER_STYLES.length-1, +v)); } catch(e){}
@@ -704,6 +705,19 @@ function glyphTexture(ch, kind, tone, turret, style){
     g.strokeText(ch, cx, cy);
     g.fillStyle = turret ? '#ffd0b4' : '#ffffff';
     g.fillText(ch, cx, cy);
+  } else if(style === 'emissive'){
+    /* L1c EMISSIVE. Wins on LUMINANCE alone - no dark halo, no backing of any kind. A coloured
+       self-glow built up around a near-white core, so the shipped bloom catches it and it reads as
+       a light source rather than as ink. This is NEON with the dark halo removed; L1d is the halo on
+       its own, and RJ's NEON is the two combined. The honest tradeoff is that over the very
+       brightest planet cells (already luma 255) pure brightness has the least to win with - which is
+       exactly what the L2 numbers will show, and why it is worth having as a distinct option. */
+    g.shadowColor = col; g.shadowBlur = 30;
+    g.fillStyle = col; g.fillText(ch, cx, cy);
+    g.fillText(ch, cx, cy);                       // build the coloured glow
+    g.shadowBlur = 0;
+    g.fillStyle = turret ? '#fff0e8' : '#ffffff';
+    g.fillText(ch, cx, cy);                       // near-white core, the brightest thing in frame
   } else {
     /* NEON. A soft dark halo the shape of the letter goes down first (a black shadow, blurred),
        which buys local contrast without a card; then the glyph is drawn twice - once as a coloured
@@ -1788,8 +1802,10 @@ function syncMeshes(){
           L.extruded = true;
         } else {
           m = takeMesh(); L.extruded = false;
+          // Pass the real style so outline/neon/emissive/halo each get their own glyph; page's mesh
+          // is invisible so its texture (falls through to neon) never shows.
           m.material.uniforms.map.value =
-            glyphTexture(L.ch, line.kind, line.tone, !!L.turret, style === 'neon' ? 'neon' : 'outline');
+            glyphTexture(L.ch, line.kind, line.tone, !!L.turret, style);
           // an armed letter burns hotter: you must be able to see which ones shoot back
           if(L.turret){
             m.material.uniforms.uGlow.value = 1.2;
