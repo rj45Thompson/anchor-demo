@@ -161,7 +161,8 @@ const PLANET_VERT = `
 const PLANET_FRAG = `
   uniform sampler2D uMap; uniform sampler2D uNorm; uniform samplerCube uEnv;
   uniform vec3 uLight; uniform vec3 uCam; uniform vec3 uTint;
-  uniform float uTime; uniform float uBump;
+  uniform float uTime;
+uniform float uLights;   // 1 = city lights + strip lights on, 0 = off (the bottom-left switch) uniform float uBump;
   /* How brightly the SURFACE itself is lit, separate from its emissives. RJ asked for two things
      that are the same setting: "make it dark with lights that twinkle emissive", and "make sure
      her letters contrast to it - letters well lit". A planet lit to near-white leaves a white
@@ -281,7 +282,7 @@ const PLANET_FRAG = `
     vec3 base = alb * uTint * lam * uGround;
     // the reflection is held to the LIMB (fresnel-weighted) so the face you read over stays dark
     vec3 col = base + env * (0.03 + 0.26 * fres) + specTint * spec + specTint * sheen
-             + lamps + strips;
+             + (lamps + strips) * uLights;   // uLights 0 kills the twinkling city lights and the seam strips; the plating, tint and limb stay
     gl_FragColor = vec4(col, 1.0);
   }`;
 

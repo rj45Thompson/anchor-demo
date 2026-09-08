@@ -94,6 +94,7 @@
   <button id="sndBtn" style="position:fixed;left:14px;top:12px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#128263; Sound off</button>
   <div id="lookPanel" style="position:fixed;left:14px;bottom:86px;z-index:40;display:flex;flex-direction:column;gap:6px;align-items:flex-start">
     <button id="worldBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#129680; World: &hellip;</button>
+    <button id="lightsBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#10024; Lights: &hellip;</button>
     <button id="lettersBtn" style="background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;min-width:190px;text-align:left">&#128196; Letters: &hellip;</button>
   </div>
   <button id="camBtn" style="position:fixed;right:14px;top:50px;z-index:40;background:#12202c;border:1px solid #2f6d99;color:#cfe3f2;border-radius:7px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer">&#10227; Camera (C)</button>
@@ -150,7 +151,7 @@
 <script src="./postprocessing/UnpackDepthRGBAShader.js"></script>
 <script src="./postprocessing/SSAOPass.js"></script>
 <!-- the machine world's surface: shared with _planetlab.html, never copied -->
-<script src="./planet_surface.js"></script>
+<script src="./planet_surface.js?v=20260907c"></script>
 <script>
 // ---------------------------------------------------------------- resume data
 // Every entry is a real line from the actual CV.
@@ -609,6 +610,8 @@ window.AUDIO = AUDIO;
     const st = (typeof LETTER_STYLES !== 'undefined' && typeof letterStyle !== 'undefined')
       ? LETTER_STYLES[letterStyle].label.split(' - ')[0] : '?';
     lb.innerHTML = '&#128196; Letters: ' + st + '  <span style="opacity:.55">(L)</span>';
+    const g2 = document.getElementById('lightsBtn');
+    if(g2) g2.innerHTML = (lightStep === 0 ? '&#9899;' : '&#10024;') + ' Lights: ' + LIGHT_STEPS[lightStep].label;
   }
   wb.addEventListener('click', e => {
     e.stopPropagation();
@@ -623,6 +626,32 @@ window.AUDIO = AUDIO;
     if(typeof cycleLetterStyle === 'function') cycleLetterStyle();
     paint();
   });
+  // THE LIGHTS WHEEL (RJ: "or a wheel of different lights to choose"). One uniform, so it is live -
+  // no reload, unlike the world. The scale multiplies the city lights and the seam strips together;
+  // they are added after the lighting term, which is why they read at night and why they were
+  // drowning every world equally at 1.0.
+  const LIGHT_STEPS = [
+    { key:'off',    label:'OFF',    v:0    },
+    { key:'ember',  label:'EMBER',  v:0.35 },
+    { key:'dim',    label:'DIM',    v:0.6  },
+    { key:'normal', label:'NORMAL', v:1    },
+    { key:'blaze',  label:'BLAZE',  v:1.8  },
+  ];
+  let lightStep = 3;
+  try { const v = localStorage.getItem('bx_lights');
+        const i = LIGHT_STEPS.findIndex(s => s.key === v); if(i >= 0) lightStep = i; } catch(e){}
+  const gb = document.getElementById('lightsBtn');
+  function applyLights(){
+    const m = window.__groundMat;
+    if(m && m.uniforms && m.uniforms.uLights) m.uniforms.uLights.value = LIGHT_STEPS[lightStep].v;
+    try{ localStorage.setItem('bx_lights', LIGHT_STEPS[lightStep].key); }catch(e){}
+  }
+  if(gb) gb.addEventListener('click', e => {
+    e.stopPropagation();
+    lightStep = (lightStep + 1) % LIGHT_STEPS.length;
+    applyLights(); paint();
+  });
+  setTimeout(applyLights, 0);   // the material is built after this block runs
   addEventListener('keydown', e => { if(e.key === 'l' || e.key === 'L') setTimeout(paint, 0); });
   // Deferred: this panel is wired next to AUDIO, which sits ABOVE the `const LETTER_STYLES`
   // declaration in the same script, so painting inline read a not-yet-initialised binding and the
@@ -2662,6 +2691,10 @@ function buildPlanet(){
       uCam: { value: new THREE.Vector3() },
       uTint: { value: new THREE.Color(WORLDS[WORLD]) },   // the chosen world's own metal (was one steel for all six)
       uTime: { value: 0 }, uBump: { value: 0.30 },
+      // THE LITTLE LIGHTS (RJ 2026-09-07). Twinkling city lights and the lit seam strips are added
+      // AFTER the lighting term, so they read on the night side and feed bloom - which is also why
+      // they dominate every world equally. This is the switch, live, no reload.
+      uLights: { value: 1 },   // the wheel sets this on the first tick; see the Lights button
       // sub-panels per cube face: 4x the geometry's PLATE_GRID, so every displaced plate
       // carries a 4x4 field of shaded sub-plates instead of being one flat facet.
       // sub-panels per cube face. 4.5x the geometry's grid puts a sub-plate at about a ship
@@ -2690,6 +2723,7 @@ function buildPlanet(){
     extensions: { derivatives: true },
     name: 'planet.ground',
   });
+  window.__groundMat = groundMat;   // the bottom-left Lights wheel drives uLights on this material, live
   // 192 x 120 segments -> 46,080 triangles once the quads are split. Enough that a plate edge on
   // the limb is a few pixels wide at the distance you fly, which is the point of the whole thing.
   const ground = new THREE.Mesh(plateSphere(192, 120), new THREE.MeshStandardMaterial({
