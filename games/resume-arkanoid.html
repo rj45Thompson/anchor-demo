@@ -186,7 +186,7 @@
 <script src="./postprocessing/UnpackDepthRGBAShader.js"></script>
 <script src="./postprocessing/SSAOPass.js"></script>
 <!-- the machine world's surface: shared with _planetlab.html, never copied -->
-<script src="./planet_surface.js?v=20260907f"></script>
+<script src="./planet_surface.js?v=20260908a"></script>
 <script>
 // ---------------------------------------------------------------- resume data
 // Every entry is a real line from the actual CV.
@@ -720,10 +720,13 @@ window.AUDIO = AUDIO;
     // planet's own shader is largely hidden behind the atmosphere shell and the ring bands. These
     // two reach the things that are actually on top of it.
     { id:'limbBtn',  icon:['&#9899;','&#127761;'], name:'Air',   store:'bx_air',
-      steps:[['OFF',0],['THIN',0.05],['NORMAL',0.13],['THICK',0.3]],
+      steps:[['OFF',0],['THIN',0.05],['NORMAL',0.13],['THICK',0.3]], def:1,   // RJ 2026-09-08: "default air thin"
+
       set:v => { const a=window.__air; if(a&&a.material){ a.material.opacity=v; a.visible = v>0; } } },
     { id:'shineBtn', icon:['&#9899;','&#128736;'], name:'Rings', store:'bx_rings',
-      steps:[['OFF',0],['ON',1]],
+      // RJ 2026-09-08: "default rings on". It already landed there, but only because the shared
+      // default of 2 was CLAMPED to this knob's last step - an accident, not a decision. Stated now.
+      steps:[['OFF',0],['ON',1]], def:1,
       set:v => { const d=window.__planetDetail; if(d) d.traverse(o=>{ if(o.userData&&o.userData.isRing) o.visible = v>0; }); } },
     { id:'bloomBtn', icon:['&#9899;','&#127774;'], name:'Bloom', store:'bx_bloom',
       steps:[['OFF',0],['SOFT',0.25],['NORMAL',0.5],['STRONG',1.0]], def:3,   // RJ 2026-09-08: "bloom strong by default"
@@ -4170,8 +4173,14 @@ function tick(now){
 
 // ---------------------------------------------------------------- input / boot
 document.addEventListener('click', e=>{
-  if(e.target && e.target.id==='fsBtn') goFullscreen();
-  if(e.target && e.target.id==='camBtn') nextCamera();
+  /* closest(), not e.target.id. RJ 2026-09-08: "screen window doesn't go fullscreen." These two used
+     to be plain text buttons, so the click target WAS the button. Moving them into the knob column
+     gave them the knob's three <span> layout, and from then on every click landed on a span - the id
+     test never matched and neither button did anything. closest() finds the button whatever is
+     inside it, which is also what makes the knobs safe to restyle later. */
+  const t = e.target && e.target.closest ? e.target.closest('#fsBtn, #camBtn') : null;
+  if(!t) return;
+  if(t.id === 'fsBtn') goFullscreen(); else nextCamera();
 });
 addEventListener('keydown', e=>{
   /* L cycles the letter treatment. RJ: "maybe I have a button that I can cycle through the letters,

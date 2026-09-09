@@ -230,14 +230,20 @@ uniform float uSpec;     // specular highlight + sheen
     // seam: a dark hairline, widened to at least a pixel so it never aliases into sparkle
     float seam = (1.0 - smoothstep(0.0, max(0.035, pw * 1.5), edge)) * detailFade;
     float pr = hash21(cellId + F.z * 53.0);
+    /* RJ 2026-09-08: "when lights are off I still see the gridlines." There are TWO grids on this
+       surface and only one of them was switched. The lit strips below are gated by uLights; this
+       DARK recessed seam is not, and neither is the per-plate tone that tiles the sphere into
+       squares - so turning the lights off removed the glow and left the grid drawn in shadow.
+       Both are the plating, and the plating is what reads as a grid, so both follow the switch now.
+       uLights 0 leaves the world map, its tint and the limb: a smooth dark planet, no lines. */
     // each plate its own slight tone - a plate field is never one flat value
-    alb *= 1.0 + (0.34 * pr - 0.20) * detailFade;
-    alb *= 1.0 - 0.62 * seam;                       // recessed seam
+    alb *= 1.0 + (0.34 * pr - 0.20) * detailFade * uLights;
+    alb *= 1.0 - 0.62 * seam * uLights;             // recessed seam
     // rivets: a ring of dots inset from the panel border, only on the larger plates
     vec2 rq = abs(f - 0.5);
     float rivet = step(0.86, pr) * (1.0 - smoothstep(0.012, 0.030,
                     abs(max(rq.x, rq.y) - 0.40) + abs(fract(min(rq.x, rq.y) * 9.0) - 0.5) * 0.10));
-    alb += rivet * 0.16;
+    alb += rivet * 0.16 * uLights;                  // rivets are laid out ON the plate grid, so they go with it
 
     // the sphere's own tangent frame: no tangent attribute, no BufferGeometryUtils
     vec3 nm = texture2D(uNorm, vUv).xyz * 2.0 - 1.0;
