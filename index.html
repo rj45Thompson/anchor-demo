@@ -19,6 +19,14 @@ if(v==="games")r.setAttribute("data-view-boot","");})();
 <meta name="twitter:title" content="Anchor - a knowledge engine that tells you how sure it is">
 <meta name="twitter:description" content="No neural weights. Measured confidence, independent sources, honest refusals - over a 66.4M-fact graph, live in your browser.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231f3b57'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Georgia,serif' font-weight='700' fill='%23fbfaf8' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- ONE superfamily in three voices, because this page speaks in three registers: what you
+     OPERATE (sans), what you READ (serif), and what was MEASURED (mono). IBM Plex was drawn for
+     technical documentation, so the three share a skeleton and the page reads as one object
+     rather than three fonts. Every face has a real fallback: a blocked font request degrades to
+     the stack this page used before, not to Times. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
 :root{--bg:#fbfaf8;--fg:#1a1a19;--muted:#62625d;--line:#e3e0da;--card:#fff;
 --hi:#1f3b57;--good:#1a6b4a;--mid:#8a6a1f;--low:#8a3a2f;--code:#f2efe9;
@@ -37,16 +45,46 @@ if(v==="games")r.setAttribute("data-view-boot","");})();
 --x-line2:#16222e;--x-accent:#2f6d99;--x-code:#111c26;--x-codefg:#8fe8ff;
 --x-beta:#ffcf6b;--x-betaline:#6b5320;--x-warnbg:#1d1109;--x-warnline:#6b3a20;
 --x-warnfg:#ffcda6;--x-warnstrong:#ffb877}}
+/* The three voices, and a type scale the page actually stays on. Sizes are named for their job,
+   not their pixels, so a heading cannot drift a point at a time the way it had. */
+:root{
+  --f-sans:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --f-serif:"IBM Plex Serif",ui-serif,Georgia,serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --t-micro:11.5px; --t-label:13px; --t-small:14.5px; --t-body:16.5px;
+  --t-lede:18.5px;  --t-h2:20px;    --t-h1:44px;
+}
 a{color:var(--hi)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 ui-serif,Georgia,serif}
-.wrap{max-width:790px;margin:0 auto;padding:44px 22px 90px}
-h1{font-size:2rem;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:var(--t-body)/1.68 var(--f-serif);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:790px;margin:0 auto;padding:40px 22px 90px}
+
+/* THE MEASUREMENT RULE. Every number this page reports was measured, so every number is set in
+   mono with tabular figures - digits line up down a column and a value reads as a reading rather
+   than as prose. This is the one typographic decision that carries information about the subject
+   instead of decorating it. */
+.num,td,th,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+td,th{font-size:var(--t-small)}
+
+h1{font:700 var(--t-h1)/1.02 var(--f-sans);margin:0;letter-spacing:-.022em}
 .sub{color:var(--muted);margin:0 0 30px}
-.tabs{display:flex;gap:6px;margin:0 0 22px;border-bottom:1px solid var(--line)}
-.tab{padding:9px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;
-font:15px ui-sans-serif,system-ui,sans-serif;font-weight:600}
-.tab.on{color:var(--fg);border-bottom-color:var(--hi)}
+
+/* An eyebrow is a mono label: small, spaced, and always naming a real category. */
+.eyebrow{font:500 var(--t-micro)/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--x-text3);margin:0 0 14px}
+
+/* Navigation that looks like navigation. It was 15px grey text on a hairline, which reads as a
+   sentence someone forgot to finish. */
+.tabs{display:flex;gap:2px;margin:0 0 26px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{padding:11px 15px 10px;cursor:pointer;color:var(--x-text3);
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  font:600 var(--t-label)/1 var(--f-sans);letter-spacing:.015em;
+  transition:color .13s ease,border-color .13s ease}
+.tab:hover{color:var(--x-strong)}
+.tab.on{color:var(--x-strong);border-bottom-color:var(--x-accent)}
+.tab:focus-visible{outline:2px solid var(--x-accent);outline-offset:2px;border-radius:4px}
 .panel{display:none}.panel.on{display:block}
 .ask{display:flex;gap:8px;margin:0 0 6px}
 input,textarea{flex:1;padding:13px 15px;border:1px solid var(--line);border-radius:9px;
@@ -78,13 +116,17 @@ border-radius:8px;padding:14px 16px;margin:0 0 10px}
 .ev .evl{font:10.5px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.5px;
   text-transform:uppercase;color:var(--muted)}
 .ev.noanchor .evl{color:var(--low)}
-h2{font-size:1.02rem;margin:36px 0 9px;letter-spacing:.02em;text-transform:uppercase;
-color:var(--muted);font-family:ui-sans-serif,system-ui,sans-serif}
-table{border-collapse:collapse;width:100%;font-size:.92rem;margin:0 0 8px}
-th,td{text-align:right;padding:6px 9px;border-bottom:1px solid var(--line)}
+/* Section headings had been 1.02rem uppercase grey - the same visual weight as a caption, which
+   is why the page read as one undifferentiated column. A heading now outranks its body text. */
+h2{font:600 var(--t-h2)/1.25 var(--f-sans);margin:44px 0 12px;letter-spacing:-.008em;
+color:var(--x-strong);padding-top:16px;border-top:1px solid var(--line)}
+h2:first-child{border-top:0;padding-top:0;margin-top:8px}
+table{border-collapse:collapse;width:100%;margin:0 0 8px}
+th,td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--line)}
 th:first-child,td:first-child{text-align:left}
-th{color:var(--muted);font-weight:600;font-size:.84rem;
-font-family:ui-sans-serif,system-ui,sans-serif}
+/* A column header is interface (sans); the value under it is a measurement (mono, tabular). */
+th{color:var(--x-text3);font:600 var(--t-micro)/1.4 var(--f-sans);letter-spacing:.06em;
+text-transform:uppercase}
 p{margin:0 0 13px}
 .small{font-size:.9rem;color:var(--muted)}
 .warn{background:var(--code);border-radius:7px;padding:12px 15px;font-size:.9rem;margin:0 0 26px}
@@ -208,7 +250,29 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style></head><body><div class="wrap">
 
-<h1>R.J. Thompson</h1>
+<!-- THE MASTHEAD. It used to be a bare <h1> followed immediately by a search box, so the first
+     thing a hiring manager met was an empty form field and no claim. The page's whole argument is
+     that these numbers were MEASURED, so the numbers open it.
+     Every figure here is READ, not written: facts and subjects come from index.json (the file this
+     page actually loads - `facts: 66404117`, `subjects: 12172957`); the calibration error is the
+     one stated and derived at the Papers & data tab below. Nothing here is rounded up. -->
+<header class="masthead">
+  <p class="eyebrow">Senior C++ / C# engineer &middot; 30 years shipping
+    <span class="avail">open to work</span></p>
+  <h1>R.J. Thompson</h1>
+  <p class="mast-claim" data-aud="ai">A knowledge engine with <strong>no neural weights</strong>.
+  Every answer carries a measured confidence, the evidence behind it, and a refusal when the
+  evidence runs out. It is running in this page.</p>
+  <p class="mast-claim" data-aud="games">Two playable demos and a job-search desk, all running in
+  this page - and the engine underneath them, which has <strong>no neural weights</strong> and
+  refuses rather than guesses.</p>
+  <dl class="readout">
+    <div><dt>facts in the graph</dt><dd class="num">66,404,117</dd></div>
+    <div><dt>distinct subjects</dt><dd class="num">12,172,957</dd></div>
+    <div><dt>calibration error</dt><dd class="num">0.20 pp</dd></div>
+    <div><dt>neural weights</dt><dd class="num">0</dd></div>
+  </dl>
+</header>
 <div class="audbar">
   <span class="audlbl">show for</span>
   <button class="audbtn on" data-aud-set="ai">AI / ML roles</button>
@@ -216,10 +280,12 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <span class="audnote" id="audNote"></span>
 </div>
 <div id="chatbox"></div>
-<p class="tagline" data-aud="ai">Senior C++ / C# engineer, 30 years shipping. Everything below runs in this page - the engine and the research behind it. Open to work.</p>
-<p class="tagline" data-aud="games">Senior C++ / C# engineer, 30 years shipping. Two playable demos below, both running in this page, and a job-search desk that runs on my own machine. Open to work.</p>
-<p class="sub" data-aud="ai">A system with <strong>no neural weights</strong>. Every answer - a fact or a program - carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
-doesn't have enough.</p>
+<!-- TERSE, because the masthead now carries the claim. Three paragraphs used to sit here and all
+     three repeated it: both taglines opened with the "Senior C++ / C# engineer, 30 years shipping"
+     that is now the eyebrow, and the .sub was the no-neural-weights sentence a second time, twelve
+     lines under the first. Saying a thing twice on one screen makes a reader trust it less, not
+     more. The one fact they carried that nothing else did - that he is open to work - is now the
+     availability chip in the masthead, where a hiring manager reads it first instead of last. -->
 
 <div class="tabs">
   <div class="tab on" data-p="think" data-aud="ai">Ask anything · watch it think <span class="beta">BETA</span></div>
@@ -287,9 +353,16 @@ doesn't have enough.</p>
      (<p class="sub"> under the tagline), which had been invisible since the sub-tabs landed. */
   #p-inv .sub{display:none}
   #p-inv .sub.on{display:block}
-  .sub h4{margin:0 0 6px;font-size:15px;color:var(--x-strong)}
-  .sub .lede{margin:0 0 10px;font-size:14px;color:var(--x-text);font-weight:600;line-height:1.5}
-  .sub p{font-size:13px;line-height:1.68;color:var(--x-text);margin:0 0 10px}
+  /* This panel had its own shrunken scale - h4 15px over 13px body - so a section heading was
+     barely two points larger than the paragraph under it and the whole tab read as fine print.
+     It now sits on the page's scale: the heading outranks its prose, and the prose is the same
+     size as prose everywhere else on the page. */
+  .sub h4{margin:0 0 7px;font:600 var(--t-h2)/1.3 var(--f-sans);letter-spacing:-.008em;
+    color:var(--x-strong)}
+  .sub .lede{margin:0 0 14px;font:var(--t-lede)/1.5 var(--f-serif);color:var(--x-text2);
+    font-weight:400;max-width:36em;text-wrap:pretty}
+  .sub p{font-size:var(--t-small);line-height:1.7;color:var(--x-text);margin:0 0 12px;
+    max-width:38em}
   .sub .why{border-left:3px solid var(--x-accent);background:var(--x-card2);padding:9px 12px;border-radius:0 6px 6px 0}
   .sub .small{color:var(--x-text2)}
   table.mini{border-collapse:collapse;margin:0 0 10px;font-size:12.5px}
@@ -331,7 +404,33 @@ doesn't have enough.</p>
   .specbox ul{margin:5px 0 0;padding-left:18px}
   .specbox code{background:var(--x-code);border:1px solid var(--x-line);border-radius:4px;padding:1px 5px;
     font-size:11.5px;color:var(--x-codefg)}
-  .tagline{margin:2px 0 0;font-size:14px;color:var(--x-text2);line-height:1.6}
+  .tagline{margin:2px 0 0;font-size:var(--t-small);color:var(--x-text2);line-height:1.65}
+
+  /* --- masthead ------------------------------------------------------------------------- */
+  .masthead{margin:0 0 22px}
+  /* Availability is a STATUS, so it is drawn as one - a chip, not a sentence at the bottom of the
+     intro where it had been sitting. Green is semantic here (available), not the page's accent. */
+  .avail{display:inline-block;margin-left:9px;padding:2px 8px 3px;border-radius:999px;
+    background:var(--x-chipon);color:var(--x-strong);border:1px solid var(--x-line);
+    letter-spacing:.1em;vertical-align:1px}
+  .mast-claim{font:var(--t-lede)/1.5 var(--f-serif);color:var(--x-text);max-width:34em;
+    margin:14px 0 0;text-wrap:pretty}
+  .mast-claim strong{color:var(--x-strong);font-weight:600}
+  /* The readout is the one place the page raises its voice, and it does it with data rather than
+     with a colour. Grid, not flex-wrap: four cells that stay on a shared baseline and collapse to
+     two on a phone instead of orphaning one. */
+  .readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;
+    margin:26px 0 0;padding:0;background:var(--x-line);border:1px solid var(--x-line);
+    border-radius:8px;overflow:hidden}
+  .readout > div{background:var(--x-card);padding:13px 14px 12px;min-width:0}
+  .readout dt{font:500 10.5px/1.3 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--x-text3);margin:0 0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .readout dd{margin:0;font:500 19px/1.1 var(--f-mono);font-variant-numeric:tabular-nums;
+    color:var(--x-strong);letter-spacing:-.02em}
+  @media (max-width:620px){
+    .readout{grid-template-columns:repeat(2,minmax(0,1fr))}
+    :root{--t-h1:34px}
+  }
   .intro{margin:0 0 12px}
   .intro h3{margin:0 0 5px;font-size:15px;color:var(--x-strong)}
   .intro p{margin:0 0 5px;font-size:13px;line-height:1.62;color:var(--x-text)}
@@ -4992,9 +5091,13 @@ renderCode();
    (html[data-view] + data-aud, in the style block above); this script only keeps the buttons,
    the open tab, the note, the title and the address in step. */
 (function(){
+  // These say what the SWITCH does, not what the page is - the masthead states that, and this
+  // line sits ten pixels under it. The AI note used to open "The knowledge engine, with no neural
+  // weights", which put that phrase on screen three times inside one viewport; a claim repeated
+  // that fast reads as a slogan rather than as a measurement.
   var NOTE = {
-    ai:    "The knowledge engine, with no neural weights: ask it a question and watch every step, then the research behind it.",
-    games: "Two playable demos, R\u00e9sum\u00e9 Breakout and Star Fighter, both running in this page."
+    ai:    "Showing the engine, the research behind it, and how the requirements were gathered.",
+    games: "Showing R\u00e9sum\u00e9 Breakout, Star Fighter and the job desk - all running in this page."
   };
   var TITLE = { ai: document.title, games: "R.J. Thompson - playable demos" };
   var root = document.documentElement;
