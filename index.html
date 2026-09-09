@@ -217,7 +217,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 </div>
 <div id="chatbox"></div>
 <p class="tagline" data-aud="ai">Senior C++ / C# engineer, 30 years shipping. Everything below runs in this page - the engine and the research behind it. Open to work.</p>
-<p class="tagline" data-aud="games">Senior C++ / C# engineer, 30 years shipping. Two playable demos below, both running in this page. Open to work.</p>
+<p class="tagline" data-aud="games">Senior C++ / C# engineer, 30 years shipping. Two playable demos below, both running in this page, and a job-search desk that runs on my own machine. Open to work.</p>
 <p class="sub" data-aud="ai">A system with <strong>no neural weights</strong>. Every answer - a fact or a program - carries a <em>measured</em> confidence, the evidence behind it, and an honest refusal when it
 doesn't have enough.</p>
 
@@ -228,6 +228,7 @@ doesn't have enough.</p>
   -->
   <div class="tab" data-p="resume" data-aud="games">R&eacute;sum&eacute; Breakout</div>
   <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
+  <div class="tab" data-p="desk" data-aud="games">Job Desk</div>
   <div class="tab" data-p="inv" data-aud="ai">Inventions</div>
   <div class="tab" data-p="reqs" data-aud="ai">Requirements gathering</div>
   <div class="tab" data-p="papers" data-aud="ai">White papers</div>
@@ -492,6 +493,28 @@ doesn't have enough.</p>
       <p class="how">Keys move &nbsp;·&nbsp; mouse aims &nbsp;·&nbsp; hold to fire &nbsp;·&nbsp; F for fullscreen</p>
       <a class="playbtn" href="./games/resume-arkanoid.html" target="_blank" rel="noopener">Play fullscreen &rarr;</a>
       <button class="inlinebtn" data-embed="./games/resume-arkanoid.html">or embed it here</button>
+    </div>
+  </div>
+  <div class="gamewrap" hidden></div>
+</div>
+
+<div id="p-desk" class="panel">
+  <div class="launch">
+    <div class="launch-body">
+      <h3>Job Desk</h3>
+      <p>A job-search desk that runs <em>on my own machine</em> and answers through a tunnel: sign
+         in, drop a r&eacute;sum&eacute; in, and it reads the PDF itself, searches the web for
+         currently-open roles that actually match it, and tailors the application - showing you the
+         whole thing before anything is sent. Asked for two matches, it came back with two live
+         Ubisoft Montr&eacute;al postings and justified each against real lines from the CV.</p>
+      <p class="how">Built stdlib-only in one Python file &nbsp;·&nbsp; a Chrome extension signs you
+         in as your real Google account with no OAuth client, no cloud project and no console
+         &nbsp;·&nbsp; every login gets its own project, so nobody sees anyone else's
+         &nbsp;·&nbsp; 68 tests</p>
+      <p class="how">It only answers while my desktop is awake - it is my own Claude behind it, not
+         a hosted service. If the page says the desk is not answering, that is what it means.</p>
+      <a class="playbtn" href="https://rj45thompson.github.io/job-desk/" target="_blank" rel="noopener">Open the desk &rarr;</a>
+      <button class="inlinebtn" data-embed="https://rj45thompson.github.io/job-desk/">or embed it here</button>
     </div>
   </div>
   <div class="gamewrap" hidden></div>
