@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 828" width="1180" height="828" font-family="system-ui,-apple-system,Segoe UI,sans-serif">
+<style>.ov{fill:#fff;stroke:#2c4a63;stroke-width:1.6}.ovd{fill:#fff;stroke:#8fa6b8;stroke-width:1.6;stroke-dasharray:6 4}.t{font-size:12.5px;fill:#12202c}.id{font-size:10px;fill:#5b7286;font-weight:700}.assoc{stroke:#9fb2c2;stroke-width:1.1;fill:none}.inc{stroke:#2c6fb0;stroke-width:1.4;fill:none}.inct{stroke:#2c6fb0;stroke-width:1.2;fill:none;stroke-dasharray:5 4}.lbl{font-size:9.5px;fill:#2c6fb0}.bnd{fill:none;stroke:#c8d4de;stroke-width:1.4}.bt{font-size:13px;fill:#5b7286;font-weight:600}.ep{fill:#eef4fa;stroke:#2c4a63;stroke-width:2}.key{font-size:10.5px;fill:#5b7286}</style>
+<rect width="1180" height="828" fill="#fbfaf8"/>
+<rect class="bnd" x="200" y="60" width="940" height="732" rx="12"/>
+<text class="bt" x="220" y="84">Starblast</text>
+<g stroke="#2c4a63" stroke-width="1.8" fill="none"><circle cx="105" cy="414" r="11" fill="#fff"/><line x1="105" y1="425" x2="105" y2="459"/><line x1="87" y1="436" x2="123" y2="436"/><line x1="105" y1="459" x2="90" y2="484"/><line x1="105" y1="459" x2="120" y2="484"/><line x1="105" y1="425" x2="105" y2="425"/></g>
+<text class="t" x="105" y="502" text-anchor="middle">player</text>
+<ellipse class="ep" cx="615" cy="108" rx="200" ry="26"/>
+<text class="id" x="615" y="103" text-anchor="middle">EPIC-1 &#183; kite</text>
+<text class="t" x="615" y="119" text-anchor="middle">A player&#8217;s whole run, start to finish</text>
+<ellipse class="ov" cx="400" cy="150" rx="125" ry="28"/>
+<text class="id" x="400" y="138" text-anchor="middle">UC-01</text>
+<text class="t" x="400" y="153" text-anchor="middle">A team survives an Invasion run</text>
+<path class="assoc" d="M 125 444 C 225 444, 220 150, 275 150"/>
+<line class="assoc" x1="615" y1="134" x2="400" y2="122"/>
+<ellipse class="ov" cx="400" cy="234" rx="125" ry="28"/>
+<text class="id" x="400" y="222" text-anchor="middle">UC-02</text>
+<text class="t" x="400" y="237" text-anchor="middle">Player mines gems and converts</text>
+<text class="t" x="400" y="251" text-anchor="middle">them into a better ship</text>
+<path class="assoc" d="M 125 444 C 225 444, 220 234, 275 234"/>
+<line class="assoc" x1="615" y1="134" x2="400" y2="206"/>
+<ellipse class="ov" cx="400" cy="318" rx="125" ry="28"/>
+<text class="id" x="400" y="306" text-anchor="middle">UC-03</text>
+<text class="t" x="400" y="321" text-anchor="middle">A round of Survival Mode, start</text>
+<text class="t" x="400" y="335" text-anchor="middle">to finish</text>
+<path class="assoc" d="M 125 444 C 225 444, 220 318, 275 318"/>
+<line class="assoc" x1="615" y1="134" x2="400" y2="290"/>
+<ellipse class="ov" cx="400" cy="402" rx="125" ry="28"/>
+<text class="id" x="400" y="390" text-anchor="middle">UC-04</text>
+<text class="t" x="400" y="405" text-anchor="middle">A round of Team Mode, start to</text>
+<text class="t" x="400" y="419" text-anchor="middle">finish</text>
+<path class="assoc" d="M 125 444 C 225 444, 220 402, 275 402"/>
+<line class="assoc" x1="615" y1="134" x2="400" y2="374"/>
+<ellipse class="ovd" cx="830" cy="150" rx="125" ry="28"/>
+<text class="id" x="830" y="138" text-anchor="middle">UC-05</text>
+<text class="t" x="830" y="153" text-anchor="middle">Player reaches Tier 2</text>
+<path class="assoc" d="M 125 444 C 225 444, 650 150, 705 150"/>
+<line class="assoc" x1="615" y1="134" x2="830" y2="122"/>
+<ellipse class="ovd" cx="830" cy="234" rx="125" ry="28"/>
+<text class="id" x="830" y="222" text-anchor="middle">UC-06</text>
+<text class="t" x="830" y="237" text-anchor="middle">Player reaches Tier 3</text>
+<path class="assoc" d="M 125 444 C 225 444, 650 234, 705 234"/>
+<line class="assoc" x1="615" y1="134" x2="830" y2="206"/>
+<ellipse class="ovd" cx="830" cy="318" rx="125" ry="28"/>
+<text class="id" x="830" y="306" text-anchor="middle">UC-07</text>
+<text class="t" x="830" y="321" text-anchor="middle">Player reaches Tier 4</text>
+<path class="assoc" d="M 125 444 C 225 444, 650 318, 705 318"/>
+<line class="assoc" x1="615" y1="134" x2="830" y2="290"/>
+<ellipse class="ovd" cx="830" cy="402" rx="125" ry="28"/>
+<text class="id" x="830" y="390" text-anchor="middle">UC-08</text>
+<text class="t" x="830" y="405" text-anchor="middle">Player reaches Tier 5</text>
+<path class="assoc" d="M 125 444 C 225 444, 650 402, 705 402"/>
+<line class="assoc" x1="615" y1="134" x2="830" y2="374"/>
+<ellipse class="ovd" cx="830" cy="486" rx="125" ry="28"/>
+<text class="id" x="830" y="474" text-anchor="middle">UC-09</text>
+<text class="t" x="830" y="489" text-anchor="middle">Player reaches Tier 6</text>
+<path class="assoc" d="M 125 444 C 225 444, 650 486, 705 486"/>
+<line class="assoc" x1="615" y1="134" x2="830" y2="458"/>
+<ellipse class="ovd" cx="830" cy="570" rx="125" ry="28"/>
+<text class="id" x="830" y="558" text-anchor="middle">UC-10</text>
+<text class="t" x="830" y="573" text-anchor="middle">Player reaches Tier 7</text>
+<path class="assoc" d="M 125 444 C 225 444, 650 570, 705 570"/>
+<line class="assoc" x1="615" y1="134" x2="830" y2="542"/>
+<ellipse class="ovd" cx="830" cy="654" rx="125" ry="28"/>
+<text class="id" x="830" y="642" text-anchor="middle">UC-11</text>
+<text class="t" x="830" y="657" text-anchor="middle">Player reaches Tier 8</text>
+<path class="assoc" d="M 125 444 C 225 444, 650 654, 705 654"/>
+<line class="assoc" x1="615" y1="134" x2="830" y2="626"/>
+<path class="inct" d="M 517 170 C 585 170, 585 214, 517 214"/>
+<text class="lbl" x="541" y="196">&#171;include&#187;</text>
+<path class="inct" d="M 517 254 C 585 254, 585 298, 517 298"/>
+<text class="lbl" x="541" y="280">&#171;include&#187;</text>
+<path class="inct" d="M 525 318 C 595 318, 635 570, 705 570"/>
+<path class="inct" d="M 525 402 C 595 402, 635 234, 705 234"/>
+<path class="inct" d="M 525 402 C 595 402, 635 486, 705 486"/>
+<path class="inct" d="M 525 402 C 595 402, 635 570, 705 570"/>
+<path class="inc" d="M 947 254 C 1015 254, 1015 130, 947 130"/>
+<text class="lbl" x="971" y="196">&#171;include&#187;</text>
+<path class="inc" d="M 947 338 C 1015 338, 1015 214, 947 214"/>
+<text class="lbl" x="971" y="280">&#171;include&#187;</text>
+<path class="inc" d="M 947 422 C 1015 422, 1015 298, 947 298"/>
+<text class="lbl" x="971" y="364">&#171;include&#187;</text>
+<path class="inc" d="M 947 506 C 1015 506, 1015 382, 947 382"/>
+<text class="lbl" x="971" y="448">&#171;include&#187;</text>
+<path class="inc" d="M 947 590 C 1015 590, 1015 466, 947 466"/>
+<text class="lbl" x="971" y="532">&#171;include&#187;</text>
+<path class="inc" d="M 947 674 C 1015 674, 1015 550, 947 550"/>
+<text class="lbl" x="971" y="616">&#171;include&#187;</text>
+<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6" fill="none" stroke="#2c6fb0"/></marker></defs>
+<text class="key" x="220" y="802">solid oval = actor named by a source &#183; dashed oval = no sourced actor (walked from the fact graph) &#183; solid blue = &#171;include&#187; from the graph &#183; dashed blue = matched on text</text>
+</svg>
