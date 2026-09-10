@@ -258,7 +258,8 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
      one stated and derived at the Papers & data tab below. Nothing here is rounded up. -->
 <header class="masthead">
   <p class="eyebrow">Senior C++ / C# engineer &middot; 30 years shipping
-    <span class="avail">open to work</span></p>
+    <span class="avail">open to work</span>
+    <span class="updated">Last updated <time datetime="2026-09-10">10 September 2026</time></span></p>
   <h1>R.J. Thompson</h1>
   <p class="mast-claim" data-aud="ai">A knowledge engine with <strong>no neural weights</strong>.
   Every answer carries a measured confidence, the evidence behind it, and a refusal when the
@@ -296,8 +297,8 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
   <div class="tab" data-p="desk" data-aud="games">Job Desk</div>
   <div class="tab" data-p="inv" data-aud="ai">The work</div>
-  <div class="tab" data-p="reqs" data-aud="ai">Requirements gathering</div>
-  <div class="tab" data-p="audit" data-aud="ai">Count what's missing</div>
+  <div class="tab" data-p="reqs" data-aud="ai">Requirements gathering <span class="beta">BETA</span></div>
+  <div class="tab" data-p="audit" data-aud="ai">Count what's missing <span class="beta">BETA</span></div>
 </div>
 
 <!-- ===== rj-extra-tabs ===== -->
@@ -414,6 +415,12 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   .avail{display:inline-block;margin-left:9px;padding:2px 8px 3px;border-radius:999px;
     background:var(--x-chipon);color:var(--x-strong);border:1px solid var(--x-line);
     letter-spacing:.1em;vertical-align:1px}
+  /* Sits beside availability because it answers the same question a reader is asking in the
+     first two seconds: is this current? It is deliberately quieter than the chip - a date is a
+     fact, not a status, and drawing it as a second chip would make the masthead shout twice. */
+  .updated{margin-left:9px;color:var(--x-text3);letter-spacing:.1em;white-space:nowrap}
+  .updated time{color:var(--x-text2)}
+  @media(max-width:520px){.updated{display:block;margin:8px 0 0}}
   .mast-claim{font:var(--t-lede)/1.5 var(--f-serif);color:var(--x-text);max-width:34em;
     margin:14px 0 0;text-wrap:pretty}
   .mast-claim strong{color:var(--x-strong);font-weight:600}
@@ -1300,6 +1307,44 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   .gm-code{display:block;font-size:10px;letter-spacing:.05em;color:var(--x-text3);
     text-transform:uppercase;margin-bottom:2px}
   .gm-cost{color:var(--x-text2);font-size:11.5px}
+  .gm-status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;
+    font-size:11.5px;color:var(--x-text3)}
+  .gm-chip{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;padding:2px 8px;border-radius:999px;
+    border:1px solid var(--x-betaline);background:var(--x-warnbg);color:var(--x-beta)}
+  .gm-chip.gm-go{border-color:var(--x-line);background:var(--x-chip);color:var(--x-text2);
+    font-weight:600}
+  .gm-cmp{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0 0}
+  .gm-cmp th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--x-text3);font-weight:600;padding:6px 10px 7px 0;
+    border-bottom:1px solid var(--x-line);vertical-align:bottom}
+  .gm-cmp th small{display:block;text-transform:none;letter-spacing:0;font-size:10.5px;
+    color:var(--x-text3);font-weight:400;margin-top:2px}
+  .gm-cmp td{padding:7px 10px 7px 0;border-bottom:1px solid var(--x-line2);color:var(--x-text);
+    font-variant-numeric:tabular-nums;vertical-align:top}
+  .gm-cmp td:first-child{color:var(--x-text2);font-variant-numeric:normal;white-space:nowrap}
+  .gm-cmp tr.gm-lead td{font-size:17px;color:var(--x-strong);font-weight:600}
+  .gm-cmp td b{color:var(--x-strong)}
+  .gm-cmp .gm-warnv{color:var(--x-warnfg)}
+  /* The number cells take a right alignment from the surrounding page, which is correct for
+     figures and wrong for the sentence under each column. */
+  .gm-cmp tfoot td{border-bottom:0;font-size:11.5px;color:var(--x-text2);text-align:left;
+    font-variant-numeric:normal;line-height:1.6;padding-top:10px}
+  .gm-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0}
+  @media(max-width:820px){.gm-two{grid-template-columns:1fr}}
+  .gm-sys{background:var(--x-card2);border:1px solid var(--x-line);border-radius:10px;
+    padding:14px 16px}
+  .gm-sys h4{margin:0 0 2px;font-size:13px;color:var(--x-strong)}
+  .gm-sys .gm-role{font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--x-text3);margin:0 0 9px}
+  .gm-sys p{margin:0 0 8px;font-size:12px;color:var(--x-text2);line-height:1.6}
+  .gm-sys dl{margin:0;font-size:11.5px;line-height:1.55}
+  .gm-sys dt{color:var(--x-text3);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+    margin-top:8px}
+  .gm-sys dd{margin:1px 0 0;color:var(--x-text)}
+  .gm-terms{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 0}
+  .gm-terms span{font-size:11px;padding:3px 8px;border-radius:6px;
+    border:1px solid var(--x-warnline);background:var(--x-warnbg);color:var(--x-warnfg)}
   .gm-note{font-size:12px;color:var(--x-text2);background:var(--x-card2);
     border-left:3px solid var(--x-accent);border-radius:0 8px 8px 0;padding:10px 14px;
     margin:18px 0 0;line-height:1.65;max-width:74ch}
@@ -1308,6 +1353,12 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 </style>
 
 <h2 style="margin-top:6px">Count what's missing</h2>
+<div class="gm-status">
+  <span class="gm-chip">Beta</span>
+  <span class="gm-chip gm-go">Ongoing</span>
+  <span>Runs below last measured <time datetime="2026-09-10">10 September 2026</time>.
+    JavaScript only; the surface rule and the finding set are still moving.</span>
+</div>
 <p style="max-width:70ch;color:var(--x-text2)">A language model writes requirements well. Asked to
 check its own coverage, it writes the list first and then measures against it &mdash; so the sweep
 cannot come back low. This is the other half: <code style="font-size:12px">gml audit</code> extracts
@@ -1337,6 +1388,92 @@ the set from the syntax tree and subtracts. Same specification below, two denomi
   <div class="rq-stat"><b id="gmS3">16</b><span>never cited</span></div>
   <div class="rq-stat"><b>2</b><span>chain breaks</span></div>
   <div class="rq-stat"><b>213</b><span>declarations in all</span></div>
+</div>
+
+<div class="gm-card" style="margin:0 0 18px">
+  <h3>Two systems, and they are not rivals</h3>
+  <p class="gm-sub">The other tab builds a model. This one checks a finished one. They catch
+    opposite failures, which is why both are here &mdash; and the middle column below is the same
+    model the other tab builds, run through this one.</p>
+  <div class="gm-two">
+    <div class="gm-sys">
+      <h4>Requirements gathering</h4>
+      <p class="gm-role">The writing half &middot; the other tab</p>
+      <p>Reads a corpus into a triple store and builds a UML use case model out of it, refusing to
+        rest a step on a single source.</p>
+      <dl>
+        <dt>The question it asks</dt><dd>Does this claim rest on enough independent sources?</dd>
+        <dt>What it catches</dt><dd>Fabrication &mdash; a plausible claim with one source, or none</dd>
+        <dt>Its unit</dt><dd><i>k</i>, the number of independent domains behind a fact</dd>
+        <dt>Its blind spot</dt><dd>A requirement nobody wrote. There is no claim to check the sources of</dd>
+      </dl>
+    </div>
+    <div class="gm-sys">
+      <h4>The audit</h4>
+      <p class="gm-role">The counting half &middot; this tab</p>
+      <p>Reads the source and the finished model into one store of eleven predicates and subtracts
+        one set of citations from the other.</p>
+      <dl>
+        <dt>The question it asks</dt><dd>What does the model never account for at all?</dd>
+        <dt>What it catches</dt><dd>Omission &mdash; and a citation that resolves to nothing</dd>
+        <dt>Its unit</dt><dd>The surface: declarations in the module body, found not assumed</dd>
+        <dt>Its blind spot</dt><dd>Whether a requirement is any <i>good</i>. It counts; it does not read</dd>
+      </dl>
+    </div>
+  </div>
+  <p class="gm-sub" style="margin:14px 0 0">Omission is the harder half. A fabricated requirement
+    leaves a sentence behind that somebody can go and check. A missing one leaves nothing &mdash;
+    no text to be suspicious of &mdash; which is how a coverage sweep reports 99% and is wrong.</p>
+</div>
+
+<div class="gm-card" style="margin:0 0 18px">
+  <h3>Three runs</h3>
+  <p class="gm-sub">Two subjects, three models, one auditor. Every figure is output from
+    <code>gml audit</code>.</p>
+  <div class="rq-scroll">
+  <table class="gm-cmp">
+    <thead><tr>
+      <th>&nbsp;</th>
+      <th>kripke_planner.js<small>387 lines &middot; spec written for this file</small></th>
+      <th>index.html<small>8,101 lines &middot; the other tab's model, grounded in code</small></th>
+      <th>index.html<small>8,101 lines &middot; the same, grounded in documentation</small></th>
+    </tr></thead>
+    <tbody>
+      <tr><td>Declarations in the file</td><td>213</td><td>6,492</td><td>6,492</td></tr>
+      <tr><td>On the surface</td><td><b>60</b></td><td><b>1,683</b></td><td><b>1,683</b></td></tr>
+      <tr><td>Use cases in the model</td><td>9</td><td>29</td><td>26</td></tr>
+      <tr class="gm-lead"><td>Accounted for</td><td>44 &middot; 73%</td>
+        <td>74 &middot; 4%</td><td class="gm-warnv">4 &middot; 0.2%</td></tr>
+      <tr><td>Cites what is not there</td><td>0</td><td>1</td>
+        <td class="gm-warnv">20</td></tr>
+      <tr><td>Cites a local, not the surface</td><td>0</td><td>0</td><td>2</td></tr>
+      <tr><td>Chain breaks</td><td>0</td><td>24</td><td>19</td></tr>
+    </tbody>
+    <tfoot><tr>
+      <td>&nbsp;</td>
+      <td>A model written to cover one file, and it nearly does. What it misses is specific:
+        four tuning constants, the frame's own fields, six exported functions.</td>
+      <td>29 use cases cannot cover 1,683 declarations, and nobody claimed they would. The 4% is
+        the <i>scale</i> reading &mdash; how much of a real file a model this size touches.</td>
+      <td>Same size model, and it resolves almost nothing. That is not a worse model. It is
+        pointed at a different set.</td>
+    </tr></tfoot>
+  </table>
+  </div>
+</div>
+
+<div class="gm-card" style="margin:0 0 18px">
+  <h3>What the documented run cited</h3>
+  <p class="gm-sub">The twenty citations from the documentation-grounded model that resolve to
+    nothing in <code>index.html</code>. Read them: not one is invented. Every one is a real thing
+    the sources talk about &mdash; and none of them is a declaration.</p>
+  <div class="gm-terms"><span>accelerate</span><span>cargo capacity</span><span>controls</span><span>death</span><span>endgame warning</span><span>energy regen</span><span>extra life</span><span>game mode</span><span>gems as shield</span><span>gravity field</span><span>objective</span><span>round end</span><span>space station</span><span>spend gems</span><span>steer</span><span>survival objective</span><span>tier up</span><span>upgrade categories</span><span>upgrade cost</span><span>weapons</span></div>
+  <p class="gm-sub" style="margin:12px 0 0"><b>Grounding in documentation and grounding in code are
+    different sets, and this is the seam between them.</b> A requirement resting on
+    <i>space station</i> is resting on something the corpus states and the parser cannot see; a
+    requirement resting on <code>spillGems</code> is the other way round. Neither denominator is
+    the right one on its own, and the audit is what makes the gap between them countable instead
+    of arguable.</p>
 </div>
 
 <div class="gm-cols">
