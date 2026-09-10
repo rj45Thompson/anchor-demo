@@ -297,6 +297,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <div class="tab" data-p="desk" data-aud="games">Job Desk</div>
   <div class="tab" data-p="inv" data-aud="ai">The work</div>
   <div class="tab" data-p="reqs" data-aud="ai">Requirements gathering</div>
+  <div class="tab" data-p="audit" data-aud="ai">Count what's missing</div>
 </div>
 
 <!-- ===== rj-extra-tabs ===== -->
@@ -1234,6 +1235,242 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 </script>
 </div>
 <!-- REQS-PANEL-END -->
+<!-- ================= AUDIT PANEL ================= -->
+<!-- The sibling of the Requirements gathering tab, and its opposite half. That one builds a
+     model; this one counts what a finished model does not account for. They are separate tabs
+     because the finding is that they are separate jobs: a language model writes requirements
+     well and cannot count over a set it chose itself. Every number below is output from
+     `gml audit`, pasted rather than typed - the payload at the bottom is the tool's own JSON. -->
+<div id="p-audit" class="panel">
+<style>
+  .gm-hero{background:var(--x-card);border:1px solid var(--x-line);border-radius:12px;
+    padding:18px 20px;margin:16px 0 18px}
+  .gm-switch{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+  .gm-switch button{font:inherit;font-size:12.5px;padding:7px 13px;border-radius:8px;
+    cursor:pointer;border:1px solid var(--x-line);background:var(--x-chip);
+    color:var(--x-text2);line-height:1.3}
+  .gm-switch button.on{background:var(--x-chipon);color:var(--x-strong);font-weight:600;
+    border-color:var(--x-accent)}
+  .gm-readout{display:flex;flex-wrap:wrap;align-items:flex-end;gap:20px}
+  .gm-big{font-size:52px;line-height:1;color:var(--x-strong);font-variant-numeric:tabular-nums;
+    font-weight:600}
+  .gm-frac{font-size:13px;color:var(--x-text3);margin-top:6px;font-variant-numeric:tabular-nums}
+  .gm-said{flex:1 1 260px;min-width:0;font-size:13px;color:var(--x-text2);line-height:1.6;
+    max-width:52ch}
+  .gm-said b{color:var(--x-text)}
+  .gm-flag{display:inline-block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    padding:2px 7px;border-radius:999px;margin-bottom:8px;
+    border:1px solid var(--x-warnline);background:var(--x-warnbg);color:var(--x-warnfg)}
+  .gm-flag.ok{border-color:var(--x-line);background:var(--x-chip);color:var(--x-text2)}
+  .gm-cols{display:grid;grid-template-columns:1fr minmax(280px,380px);gap:18px;align-items:start}
+  @media(max-width:900px){.gm-cols{grid-template-columns:1fr}}
+  .gm-card{background:var(--x-card);border:1px solid var(--x-line);border-radius:10px;
+    padding:14px 16px}
+  .gm-card h3{margin:0 0 3px;font-size:14px;color:var(--x-strong)}
+  .gm-card p.gm-sub{margin:0 0 12px;font-size:11.5px;color:var(--x-text3);line-height:1.6}
+  .gm-filters{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px}
+  .gm-filters button{font:inherit;font-size:11px;padding:4px 9px;border-radius:6px;cursor:pointer;
+    border:1px solid var(--x-line);background:var(--x-chip);color:var(--x-text2)}
+  .gm-filters button.on{background:var(--x-chipon);color:var(--x-strong);font-weight:600}
+  .gm-scroll{max-height:330px;overflow-y:auto;overflow-x:auto}
+  .gm-tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .gm-tbl th{position:sticky;top:0;background:var(--x-card);text-align:left;font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--x-text3);font-weight:600;
+    padding:4px 8px 5px 0;border-bottom:1px solid var(--x-line)}
+  .gm-tbl td{padding:5px 8px 5px 0;border-bottom:1px solid var(--x-line2);color:var(--x-text);
+    white-space:nowrap;text-align:left}
+  .gm-tbl td:first-child{width:14px;padding-right:6px}
+  .gm-tbl td.gm-sym{width:99%}
+  .gm-tbl td.gm-sym{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:11.5px}
+  .gm-tbl td.gm-num{text-align:right;color:var(--x-text3);font-variant-numeric:tabular-nums}
+  .gm-tbl tr.gm-miss td.gm-sym{color:var(--x-warnfg)}
+  .gm-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--x-accent)}
+  .gm-dot.gm-no{background:var(--x-warnline)}
+  .gm-kind{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--x-text3)}
+  .gm-term{background:var(--x-code);color:var(--x-codefg);border-radius:8px;padding:11px 13px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;
+    line-height:1.65;overflow-x:auto;white-space:pre;margin:0}
+  .gm-term b{color:var(--x-codefg);font-weight:700}
+  .gm-find{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--x-line2);
+    font-size:12px;line-height:1.55}
+  .gm-find:last-child{border-bottom:0}
+  .gm-n{flex:0 0 30px;text-align:right;font-variant-numeric:tabular-nums;color:var(--x-strong);
+    font-weight:600}
+  .gm-code{display:block;font-size:10px;letter-spacing:.05em;color:var(--x-text3);
+    text-transform:uppercase;margin-bottom:2px}
+  .gm-cost{color:var(--x-text2);font-size:11.5px}
+  .gm-note{font-size:12px;color:var(--x-text2);background:var(--x-card2);
+    border-left:3px solid var(--x-accent);border-radius:0 8px 8px 0;padding:10px 14px;
+    margin:18px 0 0;line-height:1.65;max-width:74ch}
+  .gm-note code{font-size:11px;background:var(--x-code);color:var(--x-codefg);
+    padding:1px 5px;border-radius:4px}
+</style>
+
+<h2 style="margin-top:6px">Count what's missing</h2>
+<p style="max-width:70ch;color:var(--x-text2)">A language model writes requirements well. Asked to
+check its own coverage, it writes the list first and then measures against it &mdash; so the sweep
+cannot come back low. This is the other half: <code style="font-size:12px">gml audit</code> extracts
+the set from the syntax tree and subtracts. Same specification below, two denominators.</p>
+
+<div class="gm-hero">
+  <div class="gm-switch">
+    <button id="gmOwn" class="on" type="button">Measured against its own list</button>
+    <button id="gmSrc" type="button">Measured against the source</button>
+  </div>
+  <div class="gm-readout">
+    <div>
+      <div class="gm-flag ok" id="gmFlag">Reported by the writer</div>
+      <div class="gm-big" id="gmPct">99%</div>
+      <div class="gm-frac" id="gmFrac">139 of 141 owned by a use case &middot; 0 unclaimed</div>
+    </div>
+    <p class="gm-said" id="gmSaid">The specification swept a closed space of <b>141 terms</b> and
+      found nearly all of them owned. Every term in that space was written by the same pass that
+      wrote the use cases, so anything it did not think of was never in the set. The number is not
+      a lie. It is true about a denominator nobody else chose.</p>
+  </div>
+</div>
+
+<div class="rq-stats">
+  <div class="rq-stat"><b id="gmS1">60</b><span>on the surface</span></div>
+  <div class="rq-stat"><b id="gmS2">44</b><span>cited</span></div>
+  <div class="rq-stat"><b id="gmS3">16</b><span>never cited</span></div>
+  <div class="rq-stat"><b>2</b><span>chain breaks</span></div>
+  <div class="rq-stat"><b>213</b><span>declarations in all</span></div>
+</div>
+
+<div class="gm-cols">
+  <div class="gm-card">
+    <h3>The denominator, printed so it can be argued with</h3>
+    <p class="gm-sub">Every declaration in <code>kripke_planner.js</code> that sits in the module
+      body, plus every property hanging off one &mdash; found by descending from the file through
+      wrappers that declare nothing of their own, so an IIFE costs no levels. 60 of the file's 213
+      declarations. The rest are locals, and no specification owes an account of a loop counter.</p>
+    <div class="gm-filters">
+      <button data-f="all" class="on" type="button">All 60</button>
+      <button data-f="miss" type="button">Never cited (16)</button>
+      <button data-f="cited" type="button">Cited (44)</button>
+    </div>
+    <div class="gm-scroll">
+      <table class="gm-tbl">
+        <thead><tr><th></th><th>Symbol</th><th>Kind</th><th class="gm-num">Reads</th>
+          <th class="gm-num">Line</th></tr></thead>
+        <tbody id="gmRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="gm-card">
+    <h3>What it forces a writer to invent</h3>
+    <p class="gm-sub">The list of misses is the measurement. This is what the measurement costs
+      &mdash; a builder handed a specification with a chain break does not stop. They invent
+      whatever makes the precondition true, and every builder invents something different.</p>
+    <div id="gmFinds"></div>
+  </div>
+</div>
+
+<div class="gm-card" style="margin-top:18px">
+  <h3>The run</h3>
+  <p class="gm-sub">Exit code is non-zero while anything is open, so it drops into CI unchanged.</p>
+  <pre class="gm-term" id="gmTerm">$ gml surface --source kripke_planner.js --root .
+   7x  function  plan                depth 3  kripke_planner.js:206
+   3x  property  MAX_WORLDS          depth 4  kripke_planner.js:36
+   ...
+60 on the surface &middot; 213 declarations in all &middot; 2 read nowhere
+
+$ gml audit spec.json --source kripke_planner.js --root .
+  surface             60   declarations a specification owes an account of
+  accounted for       44   73%
+  never cited         16
+
+  CHAIN BREAKS (2) &mdash; a precondition nothing makes true
+    UC-E1-1 needs S:no_frame
+    UC-E2-1 needs S:frame_standing
+
+  NEVER CITED (16)
+    CREDIT_BANDS, DRIFT_LABEL, DRIFT_POLL_S, HULL_BANDS, PERSIST_THROTTLE_MS,
+    R, ROUTE_MAX_DEPTH, V, _setTestHost, _testHost, diamond, ensures,
+    fingerprint, lastWorld, propsNow, reachable
+<b>exit 1</b></pre>
+</div>
+
+<p class="gm-note"><b>Why there is no prose path.</b> The first version of this searched a Markdown
+specification for each symbol name in turn. A pattern match cannot tell the variable
+<code>frame</code> from the English word, and it scored a name inside a pasted code fence as
+accounted for. So a specification cites instead: <code>ground UC-1 MAX_WORLDS</code> is an edge, and
+the whole audit is a difference between two sets of edges. Both sides &mdash; the syntax tree and
+the specification &mdash; are read into one store of eleven predicates. Nothing here is a search.</p>
+
+<script type="application/json" id="gmData">{"surface":[["API","c",1,3,"287",1],["CFG","c",12,3,"30",1],["CREDIT_BANDS","p",1,4,"31",0],["DRIFT_LABEL","p",2,4,"39",0],["DRIFT_POLL_S","p",1,4,"33",0],["HULL_BANDS","p",1,4,"32",0],["KFrame","f",4,3,"47",1],["MAX_WORLDS","p",3,4,"36",1],["MIN_SUPPORT_PROVEN","p",1,4,"34",1],["PERSIST_KEY","p",3,4,"37",1],["PERSIST_THROTTLE_MS","p",1,4,"38",0],["R","p",1,4,"260",0],["ROUTE_MAX_DEPTH","p",2,4,"35",0],["V","p",1,4,"260",0],["_capSkip","f",1,3,"152",1],["_capWarned","c",2,3,"142",1],["_last","c",9,3,"141",1],["_saveTimer","c",1,3,"143",1],["_setTestHost","p",1,4,"293",0],["_testHost","c",3,3,"43",0],["add_transition","p",3,4,"53",1],["add_world","p",1,4,"48",1],["anyWorldModels","f",1,3,"186",1],["arm","f",4,3,"146",1],["band","f",1,3,"109",1],["box","p",1,4,"73",1],["clearAll","f",1,3,"281",1],["counts","p",1,4,"260",1],["diamond","p",1,4,"78",0],["driftTick","f",1,3,"166",1],["ensures","p",2,4,"83",0],["ensuresHere","f",1,3,"229",1],["entityOf","f",1,3,"174",1],["fingerprint","p",0,4,"290",0],["fpOf","f",4,3,"130",1],["frame","c",13,3,"140",1],["host","f",1,3,"44",1],["knownProps","f",1,3,"247",1],["lastWorld","p",0,4,"294",0],["load","f",1,3,"277",1],["models","p",3,4,"72",1],["observe","f",2,3,"156",1],["plan","f",1,3,"206",1],["propsNow","p",1,4,"290",0],["propsOf","f",3,3,"131",1],["reachable","p",1,4,"92",0],["reading","f",4,3,"110",1],["restore","f",2,3,"256",1],["routeTo","f",1,3,"187",1],["save","f",1,3,"272",1],["saveNow","f",2,3,"268",1],["set_true","p",2,4,"49",1],["snapshot","f",2,3,"255",1],["stamp","f",2,3,"145",1],["stats","p",1,4,"291",1],["successors","p",1,4,"62",1],["supportOf","f",3,3,"185",1],["taintCheck","f",1,3,"175",1],["win","f",7,3,"42",1],["worlds","p",6,4,"47",1]],"tooDeep":["all","check","cur","edges","ent","inter","lab","mirrorWorld","out","props","proven","seen","sset","sys","systems","w0","w2"],"breaks":[["UC-E1-1","S:no_frame"],["UC-E2-1","S:frame_standing"]],"forces":[["MISPLACED_CITATION",17,"the writer rests a requirement on a name that is real but local, so it holds until somebody renames a loop counter","a citation to the declaration that owns it, at the module's surface"],["UNCLAIMED_GROUND",16,"the writer meets a constant or function no requirement explains and guesses what it is for","a `ground` citation from the use case that owns it, or a use case that does"],["UNDECOMPOSED_EPIC",3,"the writer has a story and no beats, so they invent the decomposition","use cases under the epic, each with its `requires` and `establishes`"],["DANGLING_POSTCONDITION",3,"the writer produces a state nothing consumes and cannot tell whether it matters","a use case that `requires` the state, or removal of the postcondition"],["CHAIN_BREAK",2,"the writer reaches a step whose precondition nothing established, and invents whatever makes it true","a use case that `establishes` the missing state, an ordering that reaches one, or `establishes` on the epic when it is the state the story opens in"]],"declarations":213,"triples":1768,"specTriples":172}</script>
+<script>
+(function(){
+  var host = document.getElementById("gmRows"); if(!host) return;
+  var D = JSON.parse(document.getElementById("gmData").textContent);
+  var KIND = {f:"function", c:"const", p:"property", m:"method"};
+
+  // Two real measurements of one specification. The first is the figure the writing pass
+  // reported about the space it assembled; the second is `gml audit` against the space the
+  // parser reads off the file. Neither is invented for the demo.
+  var VIEW = {
+    own: {pct:"99%", frac:"139 of 141 owned by a use case · 0 unclaimed", flag:"Reported by the writer",
+      warn:false,
+      said:"The specification swept a closed space of <b>141 terms</b> and found nearly all of them "+
+        "owned. Every term in that space was written by the same pass that wrote the use cases, so "+
+        "anything it did not think of was never in the set. The number is not a lie. It is true "+
+        "about a denominator nobody else chose."},
+    src: {pct:"73%", frac:"44 of 60 declarations cited · 16 never mentioned", flag:"Measured by the parser",
+      warn:true,
+      said:"Against the set read off the syntax tree, the same specification accounts for <b>44 of "+
+        "60</b>. The sixteen it misses are real: four tuning constants, the frame's own fields, and "+
+        "six exported functions. It also rests seventeen citations on local variables inside "+
+        "functions, which hold until somebody renames a loop counter."}
+  };
+
+  function show(which){
+    var v = VIEW[which];
+    document.getElementById("gmPct").textContent = v.pct;
+    document.getElementById("gmFrac").textContent = v.frac;
+    document.getElementById("gmSaid").innerHTML = v.said;
+    var f = document.getElementById("gmFlag");
+    f.textContent = v.flag;
+    f.classList.toggle("ok", !v.warn);
+    document.getElementById("gmOwn").classList.toggle("on", which === "own");
+    document.getElementById("gmSrc").classList.toggle("on", which === "src");
+  }
+  document.getElementById("gmOwn").addEventListener("click", function(){ show("own"); });
+  document.getElementById("gmSrc").addEventListener("click", function(){ show("src"); });
+
+  function draw(filter){
+    var rows = D.surface.filter(function(r){
+      return filter === "all" || (filter === "miss" ? !r[5] : r[5]);
+    });
+    host.innerHTML = rows.map(function(r){
+      return '<tr class="' + (r[5] ? "" : "gm-miss") + '">' +
+        '<td><span class="gm-dot' + (r[5] ? "" : " gm-no") + '"></span></td>' +
+        '<td class="gm-sym">' + r[0] + '</td>' +
+        '<td class="gm-kind">' + (KIND[r[1]] || r[1]) + '</td>' +
+        '<td class="gm-num">' + r[2] + '×</td>' +
+        '<td class="gm-num">' + r[4] + '</td></tr>';
+    }).join("");
+  }
+  [].slice.call(document.querySelectorAll(".gm-filters button")).forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".gm-filters button").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      draw(b.dataset.f);
+    });
+  });
+  draw("all");
+
+  document.getElementById("gmFinds").innerHTML = D.forces.map(function(f){
+    return '<div class="gm-find"><div class="gm-n">' + f[1] + '</div><div>' +
+      '<span class="gm-code">' + f[0] + '</span>' +
+      '<span class="gm-cost">' + f[2] + '</span></div></div>';
+  }).join("");
+})();
+</script>
+</div>
+<!-- AUDIT-PANEL-END -->
 <!-- ================= FACTS PANEL ================= -->
 <div id="p-facts" class="panel">
 <div class="ask">
