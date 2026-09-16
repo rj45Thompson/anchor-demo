@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tami</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #14161b; color: #e8e6e1;
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 32rem; padding: 2rem 1.25rem; text-align: center; }
+  h1 { font-size: 2rem; margin: 0 0 .5rem; letter-spacing: .02em; }
+  p { margin: 0 0 1.25rem; color: #b9b6ae; }
+  button { font: inherit; padding: .5rem 1.25rem; border-radius: .5rem; border: 1px solid #4a4f5c; background: #232731;
+           color: inherit; cursor: pointer; }
+  button:hover { background: #2d3240; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tami</h1>
+  <p id="status">Finding the game&hellip;</p>
+  <button id="retry" hidden>Try again</button>
+</main>
+<script>
+  // tami.json is written by tami_play.py: the game's current address while it is being served, "" when it is not.
+  var statusLine = document.getElementById("status"), retry = document.getElementById("retry");
+  function alive(base) {
+    var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, 8000);
+    return fetch(base + "/health", { signal: ctl.signal, cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { clearTimeout(timer); return !!(d && d.ok === true && d.app === "tami-play"); })
+      .catch(function () { clearTimeout(timer); return false; });
+  }
+  function find() {
+    retry.hidden = true;
+    statusLine.textContent = "Finding the game\u2026";
+    fetch("tami.json?" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .catch(function () { return {}; })
+      .then(function (j) {
+        var url = String((j && j.url) || "").replace(/\/+$/, "");
+        return url ? alive(url).then(function (ok) { return ok ? url : ""; }) : "";
+      })
+      .then(function (url) {
+        if (url) { statusLine.textContent = "Starting the game\u2026"; location.replace(url + "/"); return; }
+        statusLine.textContent = "The Tami demo is offline right now. Please try again a little later.";
+        retry.hidden = false;
+      });
+  }
+  retry.onclick = find;
+  find();
+</script>
+</body>
+</html>
