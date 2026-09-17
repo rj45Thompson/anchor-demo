@@ -12,8 +12,10 @@
     font:13px/1.5 ui-monospace,"SF Mono",Menlo,Consolas,monospace; overflow:hidden; }
   #stage { position:fixed; inset:0; }
   #stage canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
-  .hud { position:fixed; background:rgba(18,24,35,.95); border:1px solid var(--line);
-    border-radius:9px; padding:11px 13px; backdrop-filter:blur(7px); }
+  .hud { position:fixed; padding:11px 13px; }
+  /* RJ: "get rid of that just have letters in the air". No plates, no blur - legibility
+     comes from a shadow instead, which costs the view nothing. */
+  .hud, #tip, #keys { text-shadow:0 1px 3px #000, 0 0 10px #000, 0 0 2px #000; }
   #left { top:12px; left:12px; width:310px; max-height:calc(100% - 150px); overflow:auto; }
   #bot { left:12px; bottom:12px; right:12px; display:flex; gap:10px; align-items:center;
     flex-wrap:wrap; }
@@ -21,29 +23,26 @@
   p.s { margin:0 0 8px; color:var(--dim); font-size:10.5px; }
   h2 { font-size:10px; margin:12px 0 6px; color:var(--dim); letter-spacing:.09em;
     text-transform:uppercase; }
-  select, button { background:var(--panel); color:var(--ink); border:1px solid var(--line);
+  select, button { background:rgba(18,24,35,.55); color:var(--ink); border:1px solid var(--line);
     border-radius:6px; padding:6px 10px; font:inherit; font-size:11.5px; cursor:pointer; }
   select { width:100%; }
   button:hover, select:hover { border-color:var(--cool); }
   .row { display:flex; justify-content:space-between; gap:8px; padding:2px 0; }
   .row span { color:var(--dim); }
-  .cfg { border:1px solid var(--line); border-radius:7px; padding:7px 9px; margin-bottom:6px;
+  .cfg { border-left:2px solid var(--line); padding:5px 0 5px 9px; margin-bottom:9px;
     cursor:pointer; }
   .cfg:hover { border-color:var(--cool); }
-  .cfg.on { border-color:var(--hot); background:rgba(255,179,71,.09); }
+  .cfg.on { border-left-color:var(--hot); }
   .cfg .n { font-weight:700; font-size:11px; margin-bottom:4px; }
-  .peak { background:rgba(126,231,135,.13); border:1px solid rgba(126,231,135,.45);
-    border-radius:5px; padding:3px 6px; margin:4px 0; display:flex;
-    justify-content:space-between; }
+  .peak { padding:2px 0; margin:2px 0; display:flex; justify-content:space-between; }
   .peak b { color:var(--good); font-size:13px; }
   .win { color:var(--good); } .lose { color:var(--bad); }
-  #tip { position:fixed; max-width:260px; padding:8px 10px; background:rgba(10,14,20,.97);
-    border:1px solid var(--cool); border-radius:7px; font-size:11px; line-height:1.45;
-    pointer-events:none; display:none; z-index:50; }
+  #tip { position:fixed; max-width:260px; padding:6px 8px; border-left:2px solid var(--cool);
+    font-size:11px; line-height:1.45; pointer-events:none; display:none; z-index:50; }
   #tip b { color:var(--cool); display:block; margin-bottom:3px; }
   #keys { position:fixed; right:12px; top:12px; font-size:10.5px; color:var(--dim);
     text-align:right; }
-  kbd { background:var(--panel); border:1px solid var(--line); border-radius:3px;
+  kbd { background:rgba(18,24,35,.6); border:1px solid var(--line); border-radius:3px;
     padding:0 4px; color:var(--ink); }
   #err { position:fixed; inset:0; display:none; place-items:center; padding:40px;
     text-align:center; color:var(--bad); }
@@ -54,9 +53,10 @@
 <div id="tip"></div>
 
 <div class="hud" id="keys">
-  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly &nbsp; <kbd>Q</kbd><kbd>E</kbd> down/up<br>
-  drag to look &nbsp; <kbd>shift</kbd> boost<br>
-  hover any part for what it is
+  <b style="color:#ffb347">QUAKE CONTROLS</b><br>
+  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly &nbsp; <kbd>Q</kbd><kbd>E</kbd> down / up<br>
+  <kbd>shift</kbd> boost &nbsp; drag mouse to look<br>
+  hover any surface for what it is
 </div>
 
 <div class="hud" id="left">
@@ -67,6 +67,15 @@
   <select id="mount"></select>
   <h2>Configurations</h2>
   <div id="list"></div>
+  <h2>Mirror cost, all-in <span id="mrate" style="color:var(--hot)"></span></h2>
+  <input type="range" id="mirror" min="0" max="120" step="1" value="90"
+         style="width:100%;accent-color:var(--hot)">
+  <p class="s" style="margin:2px 0 0">Reflector <em>plus its structure</em>, per m&sup2;. This
+     single number decides the ranking, and it is the one I could not source &mdash; so it is
+     yours to set. Drag it and the order re-sorts.</p>
+  <h2>Money over time</h2>
+  <canvas id="cum" width="560" height="150" style="width:100%;height:76px;display:block"></canvas>
+  <p class="s" id="cumlbl" style="margin:3px 0 0"></p>
   <p class="s" id="basis" style="margin-top:10px"></p>
 </div>
 
@@ -123,9 +132,29 @@
   var matRay = new THREE.LineBasicMaterial({ color:0xffb347, transparent:true, opacity:0.42,
     blending:THREE.AdditiveBlending, depthWrite:false });
 
-  var SPACING = 9.0;
+  var SPACING = 9.0, PA = 2.583, INV_PER_W = 0.18, RATE = 0.18, LIFE = 25;
+  var mirrorRate = 90;
+
+  // Cost is RECOMPUTED here rather than read from the file, so the mirror assumption can
+  // be moved without re-running the tracer. The traced energy never changes - only what
+  // the hardware is assumed to cost.
+  function costFor(c) {
+    var cb = D.costBasis;
+    var axes = (c.panelTrack ? 1 : 0) + (c.mirrorTrack ? 1 : 0);
+    return cb.panelPerM2 * PA + cb.boxPerM2 * PA + mirrorRate * (c.ratio * PA)
+         + cb.axisCost * axes / 6 + INV_PER_W * c.inverterW;
+  }
+  function econ(c) {
+    var cost = costFor(c), d = c.degradePct / 100, life = 0, run = -cost, pay = null, cum = [];
+    for (var y = 0; y < LIFE; y++) {
+      var out = c.annual * Math.pow(1 - d, y);
+      life += out; run += out * RATE; cum.push(run);
+      if (pay === null && run >= 0) pay = y + 1;
+    }
+    return { cost: cost, life: life, lcoe: cost / life, payback: pay, net: run, cum: cum };
+  }
   var mountIdx = 0, cfgIdx = 0, sunIdx = 4, playing = true, showRays = true;
-  var groups = [], hoverables = [], cache = {};
+  var groups = [], hoverables = [], cache = {}, listOrder = [];
 
   function sunKey(i) {
     var s = D.sunList[i] || D.sunList[0];
@@ -203,22 +232,63 @@
   }
 
   function buildList() {
-    var cfgs = D.mounts[mountIdx].configs;
+    var cfgs = D.mounts[mountIdx].configs.slice();
+    cfgs.forEach(function (c) { c._e = econ(c); });
+    var best = Math.min.apply(null, cfgs.map(function (c) { return c._e.lcoe; }));
+    cfgs.sort(function (a, b) { return a._e.lcoe - b._e.lcoe; });
     var html = "";
     cfgs.forEach(function (c, i) {
       html += "<div class='cfg" + (i === cfgIdx ? " on" : "") + "' data-i='" + i + "'>" +
         "<div class='n'>" + c.name + "</div>" +
-        "<div class='peak'><span>peak power</span><b>" + (c.peak * 1000).toFixed(0) + " W</b></div>" +
-        "<div class='row'><span>annual</span><b>" + c.annual.toFixed(0) + " kWh</b></div>" +
-        "<div class='row'><span>cost</span><b>$" + c.cost.toFixed(0) + "</b></div>" +
-        "<div class='row'><span>kWh per $</span><b class='" + (c.vsBare >= 0 ? "win" : "lose") +
-          "'>" + c.perDollar.toFixed(3) + "</b></div>" +
+        "<div class='peak'><span>PEAK POWER</span><b>" + (c.peak * 1000).toFixed(0) + " W</b></div>" +
+        "<div class='row'><span>year 1</span><b>" + c.annual.toFixed(0) + " kWh</b></div>" +
+        "<div class='row'><span>year 10</span><b>" + c.year10.toFixed(0) + " kWh</b></div>" +
+        "<div class='row'><span>25-yr total</span><b>" + (c.lifetime/1000).toFixed(1) + "k kWh</b></div>" +
+        "<div class='row'><span>cost</span><b>$" + c._e.cost.toFixed(0) + "</b></div>" +
+        "<div class='peak'><span>$ PER kWh (life)</span><b class='" +
+          (c._e.lcoe <= best + 1e-9 ? "win" : "") + "'>$" + c._e.lcoe.toFixed(4) + "</b></div>" +
         "<div class='row'><span>vs bare fixed</span><b class='" + (c.vsBare >= 0 ? "win" : "lose") +
           "'>" + (c.vsBare >= 0 ? "+" : "") + c.vsBare.toFixed(1) + "%</b></div>" +
+        "<div class='row'><span>decay/yr</span><b>" + c.degradePct.toFixed(2) + "%</b></div>" +
+        "<div class='row'><span>payback</span><b>" + (c._e.payback ? c._e.payback + " yr" : "never") + "</b></div>" +
+        "<div class='peak'><span>25-YR NET</span><b>$" + Math.round(c._e.net).toLocaleString() + "</b></div>" +
+        "<div class='row'><span>inverter</span><b>" + c.inverterW + " W</b></div>" +
         "<div class='row'><span>hottest cell</span><b>" + c.maxCell.toFixed(0) + "°C</b></div>" +
         "</div>";
     });
     document.getElementById("list").innerHTML = html;
+    listOrder = cfgs;
+    drawCum();
+  }
+
+  function drawCum() {
+    // The hole and the climb out of it: year 0 is the full cost as a negative, each year
+    // adds that year's (shrinking) output at the retail rate. Where it crosses zero is
+    // payback; where it ends is what the thing actually made you.
+    var c = listOrder[cfgIdx] || D.mounts[mountIdx].configs[cfgIdx];
+    if (c && !c._e) c._e = econ(c);
+    var cv = document.getElementById("cum"), x = cv.getContext("2d");
+    var W = cv.width, H = cv.height;
+    x.clearRect(0, 0, W, H);
+    if (!c || !c._e) return;
+    var lo = Math.min(-c._e.cost, 0), hi = Math.max.apply(null, c._e.cum);
+    var span = (hi - lo) || 1;
+    function Y(v) { return H - (v - lo) / span * (H - 8) - 4; }
+    x.strokeStyle = "#55627a"; x.setLineDash([4, 4]); x.lineWidth = 1;
+    x.beginPath(); x.moveTo(0, Y(0)); x.lineTo(W, Y(0)); x.stroke(); x.setLineDash([]);
+    x.beginPath();
+    x.moveTo(0, Y(-c._e.cost));
+    c._e.cum.forEach(function (v, i) { x.lineTo((i + 1) / c._e.cum.length * W, Y(v)); });
+    x.strokeStyle = "#7ee787"; x.lineWidth = 2.5; x.stroke();
+    if (c._e.payback) {
+      var px = c._e.payback / c._e.cum.length * W;
+      x.strokeStyle = "#ffb347"; x.lineWidth = 1.5;
+      x.beginPath(); x.moveTo(px, 0); x.lineTo(px, H); x.stroke();
+    }
+    document.getElementById("cumlbl").innerHTML =
+      "starts at −$" + c._e.cost.toFixed(0) + ", breaks even year " +
+      (c._e.payback || "—") + ", ends +$" + Math.round(c._e.net).toLocaleString() +
+      " &nbsp;<span style='color:#ffb347'>(at $0.18/kWh, a placeholder)</span>";
   }
 
   // ---- fly camera ---------------------------------------------------------------
@@ -227,8 +297,20 @@
   var HOME = { x: 0, y: 6, z: 18, yaw: Math.PI, pitch: -0.22 };
   var pos = new THREE.Vector3(HOME.x, HOME.y, HOME.z), yaw = HOME.yaw, pitch = HOME.pitch;
   var keys = {}, drag = false, lx = 0, ly = 0;
-  addEventListener("keydown", function (e) { keys[e.key.toLowerCase()] = true; });
-  addEventListener("keyup", function (e) { keys[e.key.toLowerCase()] = false; });
+  // A <select> or button that still has focus eats W/A/S/D (type-ahead), which is exactly
+  // what happens the moment you pick a mount - so movement died after the first click on
+  // any control. Captured on the document, and every control blurred after use, so the
+  // keys always belong to the camera.
+  var MOVE = { w:1, a:1, s:1, d:1, q:1, e:1, shift:1 };
+  document.addEventListener("keydown", function (ev) {
+    var k = ev.key.toLowerCase();
+    if (MOVE[k]) { keys[k] = true; ev.preventDefault(); }
+  }, true);
+  document.addEventListener("keyup", function (ev) {
+    var k = ev.key.toLowerCase();
+    if (MOVE[k]) { keys[k] = false; ev.preventDefault(); }
+  }, true);
+  addEventListener("blur", function () { keys = {}; });   // don't stick on alt-tab
   renderer.domElement.addEventListener("mousedown", function (e) { drag = true; lx = e.clientX; ly = e.clientY; });
   addEventListener("mouseup", function () { drag = false; });
   addEventListener("mousemove", function (e) {
@@ -274,7 +356,8 @@
     t.innerHTML = "<b>" + hit.object.userData.title + " &mdash; " + c.name + "</b>" +
       hit.object.userData.role +
       "<div style='margin-top:6px;color:#8598ae'>This design: " + c.annual.toFixed(0) +
-      " kWh/yr, $" + c.cost.toFixed(0) + ", " + c.perDollar.toFixed(3) + " kWh/$</div>";
+      " kWh in year 1, " + c.year10.toFixed(0) + " by year 10, $" + c.lcoe.toFixed(4) +
+      "/kWh over 25 years.</div>";
   }
 
   // ---- sizing: measure the CONTAINER, never innerWidth. Born inside a hidden tab this
@@ -314,22 +397,23 @@
   msel.value = D.mounts.length - 1;   // open on the ground mount: it has the most to show
   mountIdx = D.mounts.length - 1;
   msel.addEventListener("change", function () {
-    mountIdx = +this.value; cfgIdx = 0; layout();
+    mountIdx = +this.value; cfgIdx = 0; layout(); this.blur();
   });
   document.getElementById("list").addEventListener("click", function (e) {
     var el = e.target.closest(".cfg"); if (!el) return;
     cfgIdx = +el.dataset.i; buildList();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     var g = groups[cfgIdx];
     if (g) { pos.set(g.holder.position.x, 3.2, g.holder.position.z + 7.5); yaw = Math.PI; pitch = -0.18; }
   });
   document.getElementById("play").addEventListener("click", function () {
-    playing = !playing; this.innerHTML = playing ? "&#10073;&#10073;" : "&#9654;";
+    this.blur(); playing = !playing; this.innerHTML = playing ? "&#10073;&#10073;" : "&#9654;";
   });
   document.getElementById("rays").addEventListener("click", function () {
-    showRays = !showRays; this.textContent = "rays: " + (showRays ? "on" : "off"); refresh();
+    this.blur(); showRays = !showRays; this.textContent = "rays: " + (showRays ? "on" : "off"); refresh();
   });
   document.getElementById("reset").addEventListener("click", function () {
-    pos.set(HOME.x, HOME.y, HOME.z); yaw = HOME.yaw; pitch = HOME.pitch;
+    this.blur(); pos.set(HOME.x, HOME.y, HOME.z); yaw = HOME.yaw; pitch = HOME.pitch;
   });
   document.getElementById("sun").addEventListener("input", function () {
     playing = false; document.getElementById("play").innerHTML = "&#9654;";
@@ -337,14 +421,37 @@
   });
   document.getElementById("sun").max = D.sunList.length - 1;
 
+  var msl = document.getElementById("mirror");
+  function setMirror() {
+    mirrorRate = +msl.value;
+    document.getElementById("mrate").textContent = "$" + mirrorRate + "/m²";
+    buildList();
+  }
+  msl.addEventListener("input", setMirror);
+  msl.addEventListener("change", function () { this.blur(); });
+  setMirror();
+
   var cb = D.costBasis;
   document.getElementById("basis").innerHTML =
     "Panel $" + cb.panelPerM2.toFixed(0) + "/m&sup2; is READ from a real listing. " +
     "Mirror $" + cb.mirrorPerM2 + "/m&sup2;, structure $" + cb.boxPerM2 + "/m&sup2; and " +
-    "actuator $" + cb.axisCost + "/axis are ESTIMATES. Mirrors are defocused when the cell " +
+    "actuator $" + cb.axisCost + "/axis are ESTIMATES. Panels decay 0.5%/yr (warranty); mirror-derived output is decayed faster for weathering and soiling. Mirrors are defocused when the cell " +
     "or the inverter would be overrun, so surplus light is declined rather than wasted.";
 
+  // Slider wiring lives HERE, with the other controls. It was injected into costFor() by
+  // a replace that matched the wrong `var cb = D.costBasis` - there are two - and the
+  // result called itself until the stack blew.
+  var msl = document.getElementById("mirror");
+  function setMirror() {
+    mirrorRate = +msl.value;
+    document.getElementById("mrate").textContent = "$" + mirrorRate + "/m²";
+    buildList();
+  }
+  msl.addEventListener("input", setMirror);
+  msl.addEventListener("change", function () { this.blur(); });
+
   layout();
+  setMirror();
   requestAnimationFrame(tick);
 })();
 </script>
