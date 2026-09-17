@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solar setup - ray-traced configuration zoo</title>
+<style>
+  :root { --bg:#0a0d12; --panel:#131923; --line:#232c3a; --ink:#e6edf6; --dim:#8b9bb0;
+          --hot:#ffb347; --cool:#4fd1c5; --bad:#f07178; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font:13px/1.5 ui-monospace,"SF Mono",Menlo,Consolas,monospace; overflow:hidden; }
+  #stage { position:fixed; inset:0; }
+  /* CSS owns the canvas size; the renderer only sizes the drawing buffer to match. This
+     is what makes it immune to being born inside a hidden container. */
+  #stage canvas { position:absolute; inset:0; width:100% !important; height:100% !important;
+    display:block; }
+  #labels { position:fixed; inset:0; pointer-events:none; }
+  .tag { position:absolute; transform:translate(-50%,0); width:150px; padding:5px 7px;
+    background:rgba(13,18,26,.92); border:1px solid var(--line); border-radius:6px;
+    font-size:9.5px; line-height:1.35; backdrop-filter:blur(4px); }
+  .tag.best { border-color:var(--cool); box-shadow:0 0 0 1px rgba(79,209,197,.35); }
+  .tag .n { font-weight:700; font-size:11px; margin-bottom:3px; }
+  .tag .r { display:flex; justify-content:space-between; color:var(--dim); }
+  .tag .r b { color:var(--ink); font-weight:600; }
+  .tag .big { display:flex; justify-content:space-between; margin-top:3px;
+    padding-top:3px; border-top:1px solid var(--line); }
+  .tag .big b { font-size:13px; }
+  .win { color:var(--cool)!important; } .lose { color:var(--bad)!important; }
+  .hud { position:fixed; background:rgba(19,25,35,.94); border:1px solid var(--line);
+    border-radius:8px; padding:11px 13px; backdrop-filter:blur(6px); }
+  #top { top:12px; left:12px; max-width:420px; }
+  #bot { left:12px; right:12px; bottom:12px; display:flex; gap:12px; align-items:center; }
+  h1 { font-size:13px; margin:0 0 3px; letter-spacing:.05em; }
+  p.s { margin:0; color:var(--dim); font-size:11px; }
+  button { background:var(--panel); color:var(--ink); border:1px solid var(--line);
+    border-radius:6px; padding:6px 12px; cursor:pointer; font:inherit; font-size:12px; }
+  button:hover { border-color:var(--cool); }
+  input[type=range] { flex:1; accent-color:var(--hot); }
+  #err { position:fixed; inset:0; display:none; place-items:center; text-align:center;
+    padding:40px; color:var(--bad); }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="labels"></div>
+
+<div class="hud" id="top">
+  <h1>SOLAR SETUP &mdash; CONFIGURATION ZOO</h1>
+  <p class="s">Every box is one design, ray-traced. Sun sweeps &plusmn;60&deg; across all of
+     them at once. Numbers are annual output, build cost, and <b>kWh per dollar</b> &mdash;
+     the only one that decides anything. Site 53.63&deg;N, NASA POWER 2023.</p>
+</div>
+
+<div class="hud" id="bot">
+  <button id="play">&#10073;&#10073;</button>
+  <span style="color:var(--dim)">sun</span>
+  <input type="range" id="ang" min="-60" max="60" step="1" value="-60">
+  <span id="angv" style="width:54px;text-align:right">-60&deg;</span>
+  <button id="rays">rays: on</button>
+  <button id="sortb">sort: kWh/$</button>
+</div>
+
+<div id="err"></div>
+
+<script src="../three.min.js"></script>
+<script src="zoo.js"></script>
+<script>
+(function () {
+  "use strict";
+  var DATA = window.SOLAR_ZOO;
+  if (!DATA || !window.THREE) {
+    var e = document.getElementById("err");
+    e.style.display = "grid";
+    e.textContent = !window.THREE ? "three.min.js did not load." : "zoo.js did not load.";
+    return;
+  }
+
+  // Rows need MORE separation than columns: a label is taller in screen space than the box
+  // it belongs to, and a shallow camera compresses depth, so equal spacing made row 1's
+  // tags land on row 2's.
+  var FRAME_STEP = 10, FMIN = -60, FMAX = 60, DEPTH = 1.9, SPACING = 4.3, SPACING_Z = 7.2;
+  // Column count and camera distance are DERIVED, not hardcoded. This page runs both
+  // full-window and inside a narrow iframe on the Inventions tab, and a fixed distance
+  // that framed one clipped the other.
+  // Keep FOUR columns almost always. Dropping to two makes the grid deep instead of wide,
+  // the rows bunch together in screen space, and the labels pile on top of each other -
+  // measured, by trying it.
+  function colsFor() {
+    var w = document.getElementById("stage").clientWidth || innerWidth || 1000;
+    return w < 560 ? 2 : 4;
+  }
+  var COLS = colsFor();
+
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0d12);
+  var camera = new THREE.PerspectiveCamera(46, 1, 0.1, 400);
+  var renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  document.getElementById("stage").appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0x8fb6ff, 0x0a0d12, 0.6));
+  var sunLight = new THREE.DirectionalLight(0xfff0d0, 1.1);
+  scene.add(sunLight);
+
+  var matPanel = new THREE.MeshStandardMaterial({ color:0x10233d, roughness:0.42, metalness:0.2,
+    emissive:0x1e5fa8, emissiveIntensity:0.32 });
+  // Not metalness 1: with no environment map a metal renders black, which is how the
+  // mirrors first came out - dark slabs, the opposite of legible.
+  var matMirror = new THREE.MeshStandardMaterial({ color:0xeaf2ff, roughness:0.22, metalness:0.15,
+    emissive:0x9fc4ff, emissiveIntensity:0.22 });
+  var matWall = new THREE.MeshStandardMaterial({ color:0x2a3444, roughness:0.9 });
+  var matRay = new THREE.LineBasicMaterial({ color:0xffb347, transparent:true, opacity:0.5,
+    blending:THREE.AdditiveBlending, depthWrite:false });
+
+  function segMesh(s) {
+    var x0=s[0], y0=s[1], x1=s[2], y1=s[3], kind=s[4];
+    var dx=x1-x0, dy=y1-y0, len=Math.hypot(dx,dy);
+    if (len < 1e-6) return null;
+    var m = new THREE.Mesh(
+      new THREE.BoxGeometry(len, kind==="panel"?0.09:0.035, DEPTH),
+      kind==="panel"?matPanel:(kind==="mirror"?matMirror:matWall));
+    m.position.set((x0+x1)/2, (y0+y1)/2, 0);
+    m.rotation.z = Math.atan2(dy,dx);
+    return m;
+  }
+
+  function rayLine(path) {
+    var pts=[], i, LEAD=1.3;
+    for (i=0;i<path.length;i++) pts.push(new THREE.Vector3(path[i][0],path[i][1],0));
+    if (pts.length>=2) {
+      var d=new THREE.Vector3().subVectors(pts[0],pts[1]);
+      if (d.length()>LEAD) pts[0]=new THREE.Vector3().addVectors(pts[1],d.setLength(LEAD));
+      var n=pts.length, e2=new THREE.Vector3().subVectors(pts[n-1],pts[n-2]);
+      if (e2.length()>LEAD) pts[n-1]=new THREE.Vector3().addVectors(pts[n-2],e2.setLength(LEAD));
+    }
+    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), matRay);
+  }
+
+  // ---- lay the zoo out on a grid ------------------------------------------------
+  var order = DATA.zoo.map(function(c,i){ return i; });
+  var base = DATA.zoo.filter(function(z){ return z.ratio===0 && !z.panelTrack; })[0] || DATA.zoo[0];
+  var slots = [], cache = {}, angle=-60, playing=true, showRays=true, sortMode="perDollar";
+
+  function relayout() {
+    order.sort(function(a,b){
+      return sortMode==="perDollar" ? DATA.zoo[b].perDollar-DATA.zoo[a].perDollar
+                                    : DATA.zoo[b].kwh-DATA.zoo[a].kwh;
+    });
+    slots.forEach(function(s){ scene.remove(s.holder); });
+    slots = [];
+    var rows = Math.ceil(order.length/COLS);
+    order.forEach(function(ci, k) {
+      var col=k%COLS, row=Math.floor(k/COLS);
+      var h=new THREE.Group();
+      h.position.set((col-(COLS-1)/2)*SPACING, 0, (row-(rows-1)/2)*SPACING_Z);
+      scene.add(h);
+      slots.push({ ci:ci, holder:h, cur:null });
+    });
+    buildTags();
+  }
+
+  function frameKey(a){
+    var q=Math.round(a/FRAME_STEP)*FRAME_STEP;
+    return Math.max(FMIN,Math.min(FMAX,q));
+  }
+
+  function groupFor(ci, fa) {
+    var key=ci+"|"+fa;
+    if (cache[key]) return cache[key];
+    var f=DATA.zoo[ci].frames[String(fa)], g=new THREE.Group();
+    if (f) {
+      var i,m;
+      for (i=0;i<f.segments.length;i++){ m=segMesh(f.segments[i]); if(m) g.add(m); }
+      var rg=new THREE.Group(); rg.name="rays";
+      for (i=0;i<f.rays.length;i++) rg.add(rayLine(f.rays[i]));
+      g.add(rg);
+    }
+    cache[key]=g; return g;
+  }
+
+  function apply() {
+    var fa=frameKey(angle);
+    slots.forEach(function(s){
+      var g=groupFor(s.ci,fa);
+      if (s.cur!==g) { if(s.cur) s.holder.remove(s.cur); s.holder.add(g); s.cur=g; }
+      var rg=g.getObjectByName("rays"); if(rg) rg.visible=showRays;
+    });
+    var a=angle*Math.PI/180;
+    sunLight.position.set(Math.sin(a)*14, Math.cos(a)*14, 4);
+    document.getElementById("ang").value=angle;
+    document.getElementById("angv").textContent=angle.toFixed(0)+"°";
+  }
+
+  // ---- the numbers beside each box -----------------------------------------------
+  var tags=[];
+  function buildTags() {
+    var box=document.getElementById("labels");
+    box.innerHTML=""; tags=[];
+    var bestPD=Math.max.apply(null, DATA.zoo.map(function(z){return z.perDollar;}));
+    slots.forEach(function(s){
+      var c=DATA.zoo[s.ci];
+      var rel=(c.perDollar/base.perDollar-1)*100;
+      var d=document.createElement("div");
+      d.className="tag"+(c.perDollar===bestPD?" best":"");
+      d.innerHTML="<div class='n'>"+c.name+"</div>"+
+        "<div class='r'><span>output</span><b>"+c.kwh.toFixed(0)+" kWh</b></div>"+
+        "<div class='r'><span>cost</span><b>$"+c.cost.toFixed(0)+"</b></div>"+
+        "<div class='big'><span>kWh / $</span><b class='"+(rel>=0?"win":"lose")+"'>"+
+        c.perDollar.toFixed(3)+"</b></div>"+
+        "<div class='r'><span>vs bare fixed</span><b class='"+(rel>=0?"win":"lose")+"'>"+
+        (rel>=0?"+":"")+rel.toFixed(1)+"%</b></div>";
+      box.appendChild(d);
+      tags.push({ el:d, holder:s.holder });
+    });
+  }
+
+  var v=new THREE.Vector3();
+  function placeTags() {
+    var w=innerWidth, h=innerHeight;
+    tags.forEach(function(t){
+      v.setFromMatrixPosition(t.holder.matrixWorld);
+      v.y += 1.55;
+      v.project(camera);
+      var vis = v.z < 1;
+      t.el.style.display = vis ? "block" : "none";
+      if (!vis) return;
+      t.el.style.left = ((v.x*0.5+0.5)*w).toFixed(0)+"px";
+      t.el.style.top  = ((-v.y*0.5+0.5)*h).toFixed(0)+"px";
+    });
+  }
+
+  // ---- camera -------------------------------------------------------------------
+  var yaw=0.0, pitch=0.80, dist=20.5, drag=false, lx=0, ly=0;
+  renderer.domElement.addEventListener("mousedown",function(e){drag=true;lx=e.clientX;ly=e.clientY;});
+  addEventListener("mouseup",function(){drag=false;});
+  addEventListener("mousemove",function(e){
+    if(!drag) return;
+    yaw-=(e.clientX-lx)*0.005;
+    pitch=Math.max(0.12,Math.min(1.4,pitch+(e.clientY-ly)*0.005));
+    lx=e.clientX; ly=e.clientY;
+  });
+  renderer.domElement.addEventListener("wheel",function(e){
+    e.preventDefault(); dist=Math.max(6,Math.min(40,dist+e.deltaY*0.012));
+  },{passive:false});
+
+  function fitCamera(){
+    var rows=Math.ceil(order.length/COLS);
+    var gw=COLS*SPACING, gd=rows*SPACING_Z;
+    var vfov=camera.fov*Math.PI/180;
+    var hfov=2*Math.atan(Math.tan(vfov/2)*camera.aspect);
+    var needV=(gd*Math.cos(pitch)+3.2)/(2*Math.tan(vfov/2));
+    var needH=(gw+3.4)/(2*Math.tan(hfov/2));
+    var d=Math.max(needV,needH)*1.1;
+    // Never let a bad measurement poison the camera: one NaN here puts the camera at an
+    // undefined position and the canvas is black forever after.
+    dist = (isFinite(d) && d > 0) ? d : 20.5;
+  }
+
+  var lastW=0, lastH=0, stageEl=document.getElementById("stage");
+  function resize(){
+    // Measure the CONTAINER, not the window. innerWidth is a lie in the cases that matter:
+    // inside an iframe that was laid out while hidden it can be right while the renderer
+    // still holds three.js's default 300x150 buffer, which is a tiny dead canvas with the
+    // HUD floating over it - exactly the "black screen" symptom.
+    var w=stageEl.clientWidth, h=stageEl.clientHeight;
+    if (!w || !h) return false;
+    if (w===lastW && h===lastH) return true;
+    lastW=w; lastH=h;
+    camera.aspect=w/h; camera.updateProjectionMatrix();
+    renderer.setSize(w,h,false);          // false: CSS already sizes the element
+    var c=colsFor();
+    if (c!==COLS){ COLS=c; relayout(); apply(); }
+    fitCamera();
+    return true;
+  }
+  addEventListener("resize",resize);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stageEl);
+
+  var dir=1;
+  function tick(){
+    requestAnimationFrame(tick);
+    // Poll the viewport instead of trusting the resize event. This is what recovers the
+    // page when it was born hidden (0x0) and only later became visible.
+    if (stageEl.clientWidth!==lastW || stageEl.clientHeight!==lastH) resize();
+    if (!lastW) return;
+    if(playing){
+      angle+=dir*0.32;
+      if(angle>=60){angle=60;dir=-1;}
+      if(angle<=-60){angle=-60;dir=1;}
+      apply();
+    }
+    camera.position.set(Math.sin(yaw)*Math.cos(pitch)*dist,
+                        Math.sin(pitch)*dist, Math.cos(yaw)*Math.cos(pitch)*dist);
+    camera.lookAt(0,0,0);
+    camera.updateMatrixWorld();
+    scene.updateMatrixWorld();
+    placeTags();
+    renderer.render(scene,camera);
+  }
+
+  document.getElementById("play").addEventListener("click",function(){
+    playing=!playing; this.innerHTML=playing?"&#10073;&#10073;":"&#9654;";
+  });
+  document.getElementById("rays").addEventListener("click",function(){
+    showRays=!showRays; this.textContent="rays: "+(showRays?"on":"off"); apply();
+  });
+  document.getElementById("sortb").addEventListener("click",function(){
+    sortMode = sortMode==="perDollar" ? "kwh" : "perDollar";
+    this.textContent="sort: "+(sortMode==="perDollar"?"kWh/$":"kWh");
+    relayout(); apply();
+  });
+  document.getElementById("ang").addEventListener("input",function(){
+    playing=false; document.getElementById("play").innerHTML="&#9654;";
+    angle=+this.value; apply();
+  });
+
+  relayout(); apply(); resize(); tick();
+
+  // WATCHDOG. If this ever fails again it should say so rather than present a black
+  // rectangle: a blank canvas with no explanation tells you nothing and wastes an
+  // afternoon. Reports the actual numbers that would cause it.
+  // It must also CLEAR itself. Embedded in the Inventions tab this page really is born at
+  // 0x0, the poll above recovers it a moment later, and a one-shot watchdog latched a
+  // permanent error banner over a perfectly working view - a false alarm is its own bug.
+  var born = Date.now();
+  setInterval(function(){
+    var e = document.getElementById("err");
+    var bad = !lastW || !lastH || !isFinite(dist) || !isFinite(camera.position.x);
+    if (bad && Date.now() - born > 2500) {
+      e.style.display = "grid";
+      e.innerHTML = "<div style='max-width:560px'><b>The 3D view could not size itself.</b><br><br>"+
+        "viewport "+innerWidth+"×"+innerHeight+", measured "+lastW+"×"+lastH+
+        ", camera distance "+dist+"<br><br>Resizing the window should recover it.</div>";
+    } else if (!bad && e.style.display === "grid") {
+      e.style.display = "none";
+      e.innerHTML = "";
+    }
+  }, 1200);
+})();
+</script>
+</body>
+</html>

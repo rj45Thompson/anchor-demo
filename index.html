@@ -297,6 +297,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
   <div class="tab" data-p="tami" data-aud="games">Tami</div>
   <div class="tab" data-p="desk" data-aud="games">Job Desk</div>
+  <div class="tab" data-p="finder" data-aud="games">Deal Finder <span class="beta">BETA</span></div>
   <div class="tab" data-p="inv" data-aud="ai">The work</div>
   <div class="tab" data-p="reqs" data-aud="ai">Requirements gathering <span class="beta">BETA</span></div>
   <div class="tab" data-p="audit" data-aud="ai">Count what's missing <span class="beta">BETA</span></div>
@@ -627,6 +628,21 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <div class="gamewrap" hidden></div>
 </div>
 
+<div id="p-finder" class="panel">
+  <div class="launch">
+    <div class="launch-body">
+      <h3>Deal Finder</h3>
+      <div class="gm-status">
+        <span class="gm-chip">Beta</span>
+        <span class="gm-chip gm-down">System Down</span>
+      </div>
+      <p>A tool to discover and monitor investment opportunities. [Implementation pending]</p>
+      <p class="how">Coming soon &nbsp;·&nbsp; Status: system is currently offline</p>
+    </div>
+  </div>
+  <div class="gamewrap" hidden></div>
+</div>
+
 <div id="p-space" class="panel">
   <div class="launch">
     <div class="launch-body">
@@ -680,6 +696,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     <button class="subtab" data-s="s-warship" data-aud="ai">WarShip</button>
     <button class="subtab" data-s="s-synth" data-aud="ai">Program search</button>
     <button class="subtab" data-s="s-cart" data-aud="">CART</button>
+    <button class="subtab" data-s="s-solar" data-aud="">Solar setup</button>
     <button class="subtab" data-s="s-papers" data-aud="ai">Papers &amp; data</button>
   </div>
 
@@ -766,6 +783,34 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     <p>Written up as its own repository. It is speculative by construction and is not offered as a
     result - it is here because it is mine and it is honest about what it is.</p>
     <p class="small"><a href="https://github.com/rj45Thompson/correlation-anchor-theory" target="_blank" rel="noopener">correlation-anchor-theory on GitHub</a></p>
+  </div>
+
+  <div class="sub" id="s-solar">
+    <h4>Solar setup - a ray-traced configuration zoo</h4>
+    <p class="lede">Every solar quote tells you kilowatts. None of them tell you kilowatt-hours
+    per dollar on <em>your</em> ground. This does.</p>
+    <p>A 2D ray tracer fires light at each candidate arrangement - fixed panel, tracked panel,
+    mirror troughs, adjustable louvres, a heliostat field - and counts what actually lands on
+    the cell, including the rays that shade a neighbour, bounce back out of the aperture, or
+    miss. Those optics are then weighted by a measured year of satellite weather for the site
+    (NASA POWER, 53.63&deg;N in Alberta) and divided by what the thing costs to build.</p>
+    <p>The sun sweeps &plusmn;60&deg; across all the designs at once. Each box carries its annual
+    output, its build cost, and the only number that settles an argument: <strong>kWh per
+    dollar</strong>.</p>
+    <p class="why">Three findings that surprised me, all of which contradict the obvious move.
+    An actuator on the <em>tilt</em> axis is worth <strong>+0.1%</strong> - it is the
+    <em>azimuth</em> axis that carries 24%. A cheap ram with only &plusmn;60&deg; of swing keeps
+    <strong>90%</strong> of the full tracking prize, so nothing needs a slew drive. And pointing
+    unlimited mirrors at one panel does not scale: silicon peaks near <strong>2.4&times;</strong>
+    and is destroyed by its own heat well before it gets there.</p>
+    <div style="border:1px solid var(--x-line);border-radius:8px;overflow:hidden;margin:14px 0">
+      <iframe id="solarFrame" data-src="./solar/index.html" title="Solar configuration zoo"
+        style="width:100%;height:min(74vh,660px);border:0;display:block;background:#0a0d12"
+        loading="lazy"></iframe>
+    </div>
+    <p class="small">Drag to orbit, scroll to zoom, scrub the sun, toggle the rays. Panel and
+    racking prices are read from real listings; reflector, structure and actuator costs are
+    still estimates and are labelled as such in the model rather than quietly averaged in.</p>
   </div>
 
   <div class="hire">
@@ -1330,6 +1375,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     border:1px solid var(--x-betaline);background:var(--x-warnbg);color:var(--x-beta)}
   .gm-chip.gm-go{border-color:var(--x-line);background:var(--x-chip);color:var(--x-text2);
     font-weight:600}
+  .gm-chip.gm-down{border-color:var(--x-errline);background:var(--x-errbg);color:var(--x-err)}
   .gm-cmp{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0 0}
   .gm-cmp th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;
     color:var(--x-text3);font-weight:600;padding:6px 10px 7px 0;
@@ -5340,6 +5386,10 @@ renderCode();
     document.querySelectorAll("#p-inv .sub").forEach(function(s){
       s.classList.toggle("on", s.id===b.dataset.s);
     });
+    /* The solar zoo pulls three.js and ~200 KB of traced geometry. Same rule the games
+       panel follows: a visitor who never opens this tab never downloads any of it. */
+    var fr=document.getElementById("solarFrame");
+    if(fr && !fr.src && b.dataset.s==="s-solar") fr.src=fr.dataset.src;
   });
 })();
 </script>
