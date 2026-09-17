@@ -295,6 +295,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   -->
   <div class="tab" data-p="resume" data-aud="games">R&eacute;sum&eacute; Breakout</div>
   <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
+  <div class="tab" data-p="tami" data-aud="games">Tami</div>
   <div class="tab" data-p="desk" data-aud="games">Job Desk</div>
   <div class="tab" data-p="inv" data-aud="ai">The work</div>
   <div class="tab" data-p="reqs" data-aud="ai">Requirements gathering <span class="beta">BETA</span></div>
@@ -650,6 +651,21 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   if(b) b.dataset.embed = src;
 })();
 </script>
+
+<div id="p-tami" class="panel">
+  <div class="launch">
+    <div class="launch-body">
+      <h3>Tami</h3>
+      <p>A tactics RPG: creatures with types and synergies, height and terrain that decide what a move costs, and a
+      deploy screen that prints each creature onto the board. This is the real Unity game, not a cut-down web version -
+      the same renderer, post-processing and shaders as the desktop build, running in the browser on <strong>WebGPU</strong>.</p>
+      <p class="how">Needs Chrome, Edge, or Safari 26 &nbsp;·&nbsp; the first load pulls the whole game, so give it a
+      few minutes &nbsp;·&nbsp; it is served from my own machine, so the page says "offline" when that is off.</p>
+      <a class="playbtn" id="tami-play" href="games/tami/" target="_blank" rel="noopener">Play it &rarr;</a>
+    </div>
+  </div>
+  <div class="gamewrap" hidden></div>
+</div>
 
 <!-- rj-inventions:start -->
 <div id="p-inv" class="panel">
