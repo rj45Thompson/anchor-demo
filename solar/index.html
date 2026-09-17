@@ -3,340 +3,349 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Solar setup - ray-traced configuration zoo</title>
+<title>Solar setup - 3D ray-traced configuration zoo</title>
 <style>
-  :root { --bg:#0a0d12; --panel:#131923; --line:#232c3a; --ink:#e6edf6; --dim:#8b9bb0;
-          --hot:#ffb347; --cool:#4fd1c5; --bad:#f07178; }
+  :root { --bg:#070a0e; --panel:#121823; --line:#242e3d; --ink:#e8eef7; --dim:#8598ae;
+          --hot:#ffb347; --cool:#4fd1c5; --bad:#f07178; --good:#7ee787; }
   * { box-sizing:border-box; }
   html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
     font:13px/1.5 ui-monospace,"SF Mono",Menlo,Consolas,monospace; overflow:hidden; }
   #stage { position:fixed; inset:0; }
-  /* CSS owns the canvas size; the renderer only sizes the drawing buffer to match. This
-     is what makes it immune to being born inside a hidden container. */
-  #stage canvas { position:absolute; inset:0; width:100% !important; height:100% !important;
-    display:block; }
-  #labels { position:fixed; inset:0; pointer-events:none; }
-  .tag { position:absolute; transform:translate(-50%,0); width:150px; padding:5px 7px;
-    background:rgba(13,18,26,.92); border:1px solid var(--line); border-radius:6px;
-    font-size:9.5px; line-height:1.35; backdrop-filter:blur(4px); }
-  .tag.best { border-color:var(--cool); box-shadow:0 0 0 1px rgba(79,209,197,.35); }
-  .tag .n { font-weight:700; font-size:11px; margin-bottom:3px; }
-  .tag .r { display:flex; justify-content:space-between; color:var(--dim); }
-  .tag .r b { color:var(--ink); font-weight:600; }
-  .tag .big { display:flex; justify-content:space-between; margin-top:3px;
-    padding-top:3px; border-top:1px solid var(--line); }
-  .tag .big b { font-size:13px; }
-  .win { color:var(--cool)!important; } .lose { color:var(--bad)!important; }
-  .hud { position:fixed; background:rgba(19,25,35,.94); border:1px solid var(--line);
-    border-radius:8px; padding:11px 13px; backdrop-filter:blur(6px); }
-  #top { top:12px; left:12px; max-width:420px; }
-  #bot { left:12px; right:12px; bottom:12px; display:flex; gap:12px; align-items:center; }
-  h1 { font-size:13px; margin:0 0 3px; letter-spacing:.05em; }
-  p.s { margin:0; color:var(--dim); font-size:11px; }
-  button { background:var(--panel); color:var(--ink); border:1px solid var(--line);
-    border-radius:6px; padding:6px 12px; cursor:pointer; font:inherit; font-size:12px; }
-  button:hover { border-color:var(--cool); }
-  input[type=range] { flex:1; accent-color:var(--hot); }
-  #err { position:fixed; inset:0; display:none; place-items:center; text-align:center;
-    padding:40px; color:var(--bad); }
+  #stage canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
+  .hud { position:fixed; background:rgba(18,24,35,.95); border:1px solid var(--line);
+    border-radius:9px; padding:11px 13px; backdrop-filter:blur(7px); }
+  #left { top:12px; left:12px; width:310px; max-height:calc(100% - 150px); overflow:auto; }
+  #bot { left:12px; bottom:12px; right:12px; display:flex; gap:10px; align-items:center;
+    flex-wrap:wrap; }
+  h1 { font-size:12.5px; margin:0 0 3px; letter-spacing:.06em; }
+  p.s { margin:0 0 8px; color:var(--dim); font-size:10.5px; }
+  h2 { font-size:10px; margin:12px 0 6px; color:var(--dim); letter-spacing:.09em;
+    text-transform:uppercase; }
+  select, button { background:var(--panel); color:var(--ink); border:1px solid var(--line);
+    border-radius:6px; padding:6px 10px; font:inherit; font-size:11.5px; cursor:pointer; }
+  select { width:100%; }
+  button:hover, select:hover { border-color:var(--cool); }
+  .row { display:flex; justify-content:space-between; gap:8px; padding:2px 0; }
+  .row span { color:var(--dim); }
+  .cfg { border:1px solid var(--line); border-radius:7px; padding:7px 9px; margin-bottom:6px;
+    cursor:pointer; }
+  .cfg:hover { border-color:var(--cool); }
+  .cfg.on { border-color:var(--hot); background:rgba(255,179,71,.09); }
+  .cfg .n { font-weight:700; font-size:11px; margin-bottom:4px; }
+  .peak { background:rgba(126,231,135,.13); border:1px solid rgba(126,231,135,.45);
+    border-radius:5px; padding:3px 6px; margin:4px 0; display:flex;
+    justify-content:space-between; }
+  .peak b { color:var(--good); font-size:13px; }
+  .win { color:var(--good); } .lose { color:var(--bad); }
+  #tip { position:fixed; max-width:260px; padding:8px 10px; background:rgba(10,14,20,.97);
+    border:1px solid var(--cool); border-radius:7px; font-size:11px; line-height:1.45;
+    pointer-events:none; display:none; z-index:50; }
+  #tip b { color:var(--cool); display:block; margin-bottom:3px; }
+  #keys { position:fixed; right:12px; top:12px; font-size:10.5px; color:var(--dim);
+    text-align:right; }
+  kbd { background:var(--panel); border:1px solid var(--line); border-radius:3px;
+    padding:0 4px; color:var(--ink); }
+  #err { position:fixed; inset:0; display:none; place-items:center; padding:40px;
+    text-align:center; color:var(--bad); }
 </style>
 </head>
 <body>
 <div id="stage"></div>
-<div id="labels"></div>
+<div id="tip"></div>
 
-<div class="hud" id="top">
-  <h1>SOLAR SETUP &mdash; CONFIGURATION ZOO</h1>
-  <p class="s">Every box is one design, ray-traced. Sun sweeps &plusmn;60&deg; across all of
-     them at once. Numbers are annual output, build cost, and <b>kWh per dollar</b> &mdash;
-     the only one that decides anything. Site 53.63&deg;N, NASA POWER 2023.</p>
+<div class="hud" id="keys">
+  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly &nbsp; <kbd>Q</kbd><kbd>E</kbd> down/up<br>
+  drag to look &nbsp; <kbd>shift</kbd> boost<br>
+  hover any part for what it is
+</div>
+
+<div class="hud" id="left">
+  <h1>SOLAR SETUP &mdash; 3D ZOO</h1>
+  <p class="s">True 3D ray tracing against a measured year at 53.63&deg;N.
+     Every number below is traced, not rated.</p>
+  <h2>Mount</h2>
+  <select id="mount"></select>
+  <h2>Configurations</h2>
+  <div id="list"></div>
+  <p class="s" id="basis" style="margin-top:10px"></p>
 </div>
 
 <div class="hud" id="bot">
   <button id="play">&#10073;&#10073;</button>
   <span style="color:var(--dim)">sun</span>
-  <input type="range" id="ang" min="-60" max="60" step="1" value="-60">
-  <span id="angv" style="width:54px;text-align:right">-60&deg;</span>
+  <input type="range" id="sun" min="0" max="14" step="1" value="4" style="flex:1;accent-color:var(--hot)">
+  <span id="sunv" style="width:120px;text-align:right;color:var(--dim)"></span>
   <button id="rays">rays: on</button>
-  <button id="sortb">sort: kWh/$</button>
+  <button id="reset">reset view</button>
 </div>
 
 <div id="err"></div>
 
 <script src="../three.min.js"></script>
-<script src="zoo.js"></script>
+<script src="zoo3d.js"></script>
 <script>
 (function () {
   "use strict";
-  var DATA = window.SOLAR_ZOO;
-  if (!DATA || !window.THREE) {
+  var D = window.SOLAR_ZOO3D;
+  if (!D || !window.THREE) {
     var e = document.getElementById("err");
     e.style.display = "grid";
-    e.textContent = !window.THREE ? "three.min.js did not load." : "zoo.js did not load.";
+    e.textContent = !window.THREE ? "three.min.js did not load." : "zoo3d.js did not load.";
     return;
   }
 
-  // Rows need MORE separation than columns: a label is taller in screen space than the box
-  // it belongs to, and a shallow camera compresses depth, so equal spacing made row 1's
-  // tags land on row 2's.
-  var FRAME_STEP = 10, FMIN = -60, FMAX = 60, DEPTH = 1.9, SPACING = 4.3, SPACING_Z = 7.2;
-  // Column count and camera distance are DERIVED, not hardcoded. This page runs both
-  // full-window and inside a narrow iframe on the Inventions tab, and a fixed distance
-  // that framed one clipped the other.
-  // Keep FOUR columns almost always. Dropping to two makes the grid deep instead of wide,
-  // the rows bunch together in screen space, and the labels pile on top of each other -
-  // measured, by trying it.
-  function colsFor() {
-    var w = document.getElementById("stage").clientWidth || innerWidth || 1000;
-    return w < 560 ? 2 : 4;
-  }
-  var COLS = colsFor();
-
+  var stageEl = document.getElementById("stage");
   var scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0d12);
-  var camera = new THREE.PerspectiveCamera(46, 1, 0.1, 400);
+  scene.background = new THREE.Color(0x070a0e);
+  scene.fog = new THREE.Fog(0x070a0e, 30, 95);
+  var camera = new THREE.PerspectiveCamera(58, 1, 0.05, 400);
   var renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  document.getElementById("stage").appendChild(renderer.domElement);
+  stageEl.appendChild(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0x8fb6ff, 0x0a0d12, 0.6));
-  var sunLight = new THREE.DirectionalLight(0xfff0d0, 1.1);
+  scene.add(new THREE.HemisphereLight(0x9ec3ff, 0x0a0f16, 0.75));
+  var sunLight = new THREE.DirectionalLight(0xfff2d8, 1.25);
   scene.add(sunLight);
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400),
+    new THREE.MeshStandardMaterial({ color: 0x0e141d, roughness: 1 }));
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+  var grid = new THREE.GridHelper(200, 100, 0x1b2735, 0x121a25);
+  grid.position.y = 0.01;
+  scene.add(grid);
 
-  var matPanel = new THREE.MeshStandardMaterial({ color:0x10233d, roughness:0.42, metalness:0.2,
-    emissive:0x1e5fa8, emissiveIntensity:0.32 });
-  // Not metalness 1: with no environment map a metal renders black, which is how the
-  // mirrors first came out - dark slabs, the opposite of legible.
-  var matMirror = new THREE.MeshStandardMaterial({ color:0xeaf2ff, roughness:0.22, metalness:0.15,
-    emissive:0x9fc4ff, emissiveIntensity:0.22 });
-  var matWall = new THREE.MeshStandardMaterial({ color:0x2a3444, roughness:0.9 });
-  var matRay = new THREE.LineBasicMaterial({ color:0xffb347, transparent:true, opacity:0.5,
+  // Materials. NOT metalness 1 - with no environment map a metal renders black, which is
+  // how the mirrors first came out: dark slabs, the opposite of legible.
+  var matPanel = new THREE.MeshStandardMaterial({ color:0x0d1f38, roughness:0.38, metalness:0.25,
+    emissive:0x1b5d9e, emissiveIntensity:0.30, side:THREE.DoubleSide });
+  var matMirror = new THREE.MeshStandardMaterial({ color:0xeef4ff, roughness:0.18, metalness:0.2,
+    emissive:0xa9caff, emissiveIntensity:0.26, side:THREE.DoubleSide });
+  var matRay = new THREE.LineBasicMaterial({ color:0xffb347, transparent:true, opacity:0.42,
     blending:THREE.AdditiveBlending, depthWrite:false });
 
-  function segMesh(s) {
-    var x0=s[0], y0=s[1], x1=s[2], y1=s[3], kind=s[4];
-    var dx=x1-x0, dy=y1-y0, len=Math.hypot(dx,dy);
-    if (len < 1e-6) return null;
-    var m = new THREE.Mesh(
-      new THREE.BoxGeometry(len, kind==="panel"?0.09:0.035, DEPTH),
-      kind==="panel"?matPanel:(kind==="mirror"?matMirror:matWall));
-    m.position.set((x0+x1)/2, (y0+y1)/2, 0);
-    m.rotation.z = Math.atan2(dy,dx);
+  var SPACING = 9.0;
+  var mountIdx = 0, cfgIdx = 0, sunIdx = 4, playing = true, showRays = true;
+  var groups = [], hoverables = [], cache = {};
+
+  function sunKey(i) {
+    var s = D.sunList[i] || D.sunList[0];
+    return s[0] + "_" + s[1];
+  }
+
+  function rectMesh(r) {
+    var u = new THREE.Vector3(r.u[0], r.u[2], -r.u[1]);   // data is x,y,z-up -> three is y-up
+    var v = new THREE.Vector3(r.v[0], r.v[2], -r.v[1]);
+    var c = new THREE.Vector3(r.c[0], r.c[2], -r.c[1]);
+    var w = u.length() * 2, h = v.length() * 2;
+    var g = new THREE.PlaneGeometry(w, h);
+    var m = new THREE.Mesh(g, r.kind === "panel" ? matPanel : matMirror);
+    var n = new THREE.Vector3().crossVectors(u, v).normalize();
+    var basis = new THREE.Matrix4().makeBasis(u.clone().normalize(), v.clone().normalize(), n);
+    m.quaternion.setFromRotationMatrix(basis);
+    m.position.copy(c);
+    m.userData.role = r.role;
+    m.userData.title = r.kind === "panel" ? "PV module" : "Mirror";
     return m;
   }
 
-  function rayLine(path) {
-    var pts=[], i, LEAD=1.3;
-    for (i=0;i<path.length;i++) pts.push(new THREE.Vector3(path[i][0],path[i][1],0));
-    if (pts.length>=2) {
-      var d=new THREE.Vector3().subVectors(pts[0],pts[1]);
-      if (d.length()>LEAD) pts[0]=new THREE.Vector3().addVectors(pts[1],d.setLength(LEAD));
-      var n=pts.length, e2=new THREE.Vector3().subVectors(pts[n-1],pts[n-2]);
-      if (e2.length()>LEAD) pts[n-1]=new THREE.Vector3().addVectors(pts[n-2],e2.setLength(LEAD));
-    }
-    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), matRay);
-  }
-
-  // ---- lay the zoo out on a grid ------------------------------------------------
-  var order = DATA.zoo.map(function(c,i){ return i; });
-  var base = DATA.zoo.filter(function(z){ return z.ratio===0 && !z.panelTrack; })[0] || DATA.zoo[0];
-  var slots = [], cache = {}, angle=-60, playing=true, showRays=true, sortMode="perDollar";
-
-  function relayout() {
-    order.sort(function(a,b){
-      return sortMode==="perDollar" ? DATA.zoo[b].perDollar-DATA.zoo[a].perDollar
-                                    : DATA.zoo[b].kwh-DATA.zoo[a].kwh;
-    });
-    slots.forEach(function(s){ scene.remove(s.holder); });
-    slots = [];
-    var rows = Math.ceil(order.length/COLS);
-    order.forEach(function(ci, k) {
-      var col=k%COLS, row=Math.floor(k/COLS);
-      var h=new THREE.Group();
-      h.position.set((col-(COLS-1)/2)*SPACING, 0, (row-(rows-1)/2)*SPACING_Z);
-      scene.add(h);
-      slots.push({ ci:ci, holder:h, cur:null });
-    });
-    buildTags();
-  }
-
-  function frameKey(a){
-    var q=Math.round(a/FRAME_STEP)*FRAME_STEP;
-    return Math.max(FMIN,Math.min(FMAX,q));
-  }
-
-  function groupFor(ci, fa) {
-    var key=ci+"|"+fa;
+  function buildGroup(mi, ci, sk) {
+    var key = mi + "|" + ci + "|" + sk;
     if (cache[key]) return cache[key];
-    var f=DATA.zoo[ci].frames[String(fa)], g=new THREE.Group();
+    var cfg = D.mounts[mi].configs[ci];
+    var f = cfg.frames[sk];
+    var g = new THREE.Group();
     if (f) {
-      var i,m;
-      for (i=0;i<f.segments.length;i++){ m=segMesh(f.segments[i]); if(m) g.add(m); }
-      var rg=new THREE.Group(); rg.name="rays";
-      for (i=0;i<f.rays.length;i++) rg.add(rayLine(f.rays[i]));
+      f.rects.forEach(function (r) { g.add(rectMesh(r)); });
+      var rg = new THREE.Group(); rg.name = "rays";
+      f.rays.forEach(function (path) {
+        var pts = path.map(function (p) { return new THREE.Vector3(p[0], p[2], -p[1]); });
+        rg.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), matRay));
+      });
       g.add(rg);
     }
-    cache[key]=g; return g;
+    cache[key] = g;
+    return g;
   }
 
-  function apply() {
-    var fa=frameKey(angle);
-    slots.forEach(function(s){
-      var g=groupFor(s.ci,fa);
-      if (s.cur!==g) { if(s.cur) s.holder.remove(s.cur); s.holder.add(g); s.cur=g; }
-      var rg=g.getObjectByName("rays"); if(rg) rg.visible=showRays;
+  function layout() {
+    groups.forEach(function (g) { scene.remove(g.holder); });
+    groups = [];
+    var cfgs = D.mounts[mountIdx].configs;
+    var cols = Math.ceil(Math.sqrt(cfgs.length));
+    cfgs.forEach(function (c, i) {
+      var h = new THREE.Group();
+      h.position.set((i % cols - (cols - 1) / 2) * SPACING, 0,
+                     (Math.floor(i / cols) - (Math.ceil(cfgs.length / cols) - 1) / 2) * SPACING);
+      scene.add(h);
+      groups.push({ holder: h, ci: i, cur: null });
     });
-    var a=angle*Math.PI/180;
-    sunLight.position.set(Math.sin(a)*14, Math.cos(a)*14, 4);
-    document.getElementById("ang").value=angle;
-    document.getElementById("angv").textContent=angle.toFixed(0)+"°";
+    refresh();
+    buildList();
   }
 
-  // ---- the numbers beside each box -----------------------------------------------
-  var tags=[];
-  function buildTags() {
-    var box=document.getElementById("labels");
-    box.innerHTML=""; tags=[];
-    var bestPD=Math.max.apply(null, DATA.zoo.map(function(z){return z.perDollar;}));
-    slots.forEach(function(s){
-      var c=DATA.zoo[s.ci];
-      var rel=(c.perDollar/base.perDollar-1)*100;
-      var d=document.createElement("div");
-      d.className="tag"+(c.perDollar===bestPD?" best":"");
-      d.innerHTML="<div class='n'>"+c.name+"</div>"+
-        "<div class='r'><span>output</span><b>"+c.kwh.toFixed(0)+" kWh</b></div>"+
-        "<div class='r'><span>cost</span><b>$"+c.cost.toFixed(0)+"</b></div>"+
-        "<div class='big'><span>kWh / $</span><b class='"+(rel>=0?"win":"lose")+"'>"+
-        c.perDollar.toFixed(3)+"</b></div>"+
-        "<div class='r'><span>vs bare fixed</span><b class='"+(rel>=0?"win":"lose")+"'>"+
-        (rel>=0?"+":"")+rel.toFixed(1)+"%</b></div>";
-      box.appendChild(d);
-      tags.push({ el:d, holder:s.holder });
+  function refresh() {
+    var sk = sunKey(sunIdx);
+    hoverables = [];
+    groups.forEach(function (g) {
+      var mesh = buildGroup(mountIdx, g.ci, sk);
+      if (g.cur !== mesh) { if (g.cur) g.holder.remove(g.cur); g.holder.add(mesh); g.cur = mesh; }
+      var rg = mesh.getObjectByName("rays"); if (rg) rg.visible = showRays;
+      mesh.children.forEach(function (ch) {
+        if (ch.isMesh) { ch.userData.cfg = g.ci; hoverables.push(ch); }
+      });
     });
+    var s = D.sunList[sunIdx];
+    var az = s[0] * Math.PI / 180, el = s[1] * Math.PI / 180;
+    sunLight.position.set(Math.cos(el) * Math.sin(az) * 40, Math.sin(el) * 40,
+                          -Math.cos(el) * Math.cos(az) * 40);
+    document.getElementById("sunv").textContent = "az " + s[0] + "°  el " + s[1] + "°";
+    document.getElementById("sun").value = sunIdx;
   }
 
-  var v=new THREE.Vector3();
-  function placeTags() {
-    var w=innerWidth, h=innerHeight;
-    tags.forEach(function(t){
-      v.setFromMatrixPosition(t.holder.matrixWorld);
-      v.y += 1.55;
-      v.project(camera);
-      var vis = v.z < 1;
-      t.el.style.display = vis ? "block" : "none";
-      if (!vis) return;
-      t.el.style.left = ((v.x*0.5+0.5)*w).toFixed(0)+"px";
-      t.el.style.top  = ((-v.y*0.5+0.5)*h).toFixed(0)+"px";
+  function buildList() {
+    var cfgs = D.mounts[mountIdx].configs;
+    var html = "";
+    cfgs.forEach(function (c, i) {
+      html += "<div class='cfg" + (i === cfgIdx ? " on" : "") + "' data-i='" + i + "'>" +
+        "<div class='n'>" + c.name + "</div>" +
+        "<div class='peak'><span>peak power</span><b>" + (c.peak * 1000).toFixed(0) + " W</b></div>" +
+        "<div class='row'><span>annual</span><b>" + c.annual.toFixed(0) + " kWh</b></div>" +
+        "<div class='row'><span>cost</span><b>$" + c.cost.toFixed(0) + "</b></div>" +
+        "<div class='row'><span>kWh per $</span><b class='" + (c.vsBare >= 0 ? "win" : "lose") +
+          "'>" + c.perDollar.toFixed(3) + "</b></div>" +
+        "<div class='row'><span>vs bare fixed</span><b class='" + (c.vsBare >= 0 ? "win" : "lose") +
+          "'>" + (c.vsBare >= 0 ? "+" : "") + c.vsBare.toFixed(1) + "%</b></div>" +
+        "<div class='row'><span>hottest cell</span><b>" + c.maxCell.toFixed(0) + "°C</b></div>" +
+        "</div>";
     });
+    document.getElementById("list").innerHTML = html;
   }
 
-  // ---- camera -------------------------------------------------------------------
-  var yaw=0.0, pitch=0.80, dist=20.5, drag=false, lx=0, ly=0;
-  renderer.domElement.addEventListener("mousedown",function(e){drag=true;lx=e.clientX;ly=e.clientY;});
-  addEventListener("mouseup",function(){drag=false;});
-  addEventListener("mousemove",function(e){
-    if(!drag) return;
-    yaw-=(e.clientX-lx)*0.005;
-    pitch=Math.max(0.12,Math.min(1.4,pitch+(e.clientY-ly)*0.005));
-    lx=e.clientX; ly=e.clientY;
+  // ---- fly camera ---------------------------------------------------------------
+  // yaw 0 gives forward = +z, so a camera parked at +z was staring away from the scene at
+  // an empty field. Facing the origin means yaw = PI.
+  var HOME = { x: 0, y: 6, z: 18, yaw: Math.PI, pitch: -0.22 };
+  var pos = new THREE.Vector3(HOME.x, HOME.y, HOME.z), yaw = HOME.yaw, pitch = HOME.pitch;
+  var keys = {}, drag = false, lx = 0, ly = 0;
+  addEventListener("keydown", function (e) { keys[e.key.toLowerCase()] = true; });
+  addEventListener("keyup", function (e) { keys[e.key.toLowerCase()] = false; });
+  renderer.domElement.addEventListener("mousedown", function (e) { drag = true; lx = e.clientX; ly = e.clientY; });
+  addEventListener("mouseup", function () { drag = false; });
+  addEventListener("mousemove", function (e) {
+    var t = document.getElementById("tip");
+    mouse.x = (e.clientX / innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+    tipXY = [e.clientX, e.clientY];
+    if (!drag) return;
+    yaw -= (e.clientX - lx) * 0.0032;
+    pitch = Math.max(-1.45, Math.min(1.45, pitch - (e.clientY - ly) * 0.0032));
+    lx = e.clientX; ly = e.clientY;
+    t.style.display = "none";
   });
-  renderer.domElement.addEventListener("wheel",function(e){
-    e.preventDefault(); dist=Math.max(6,Math.min(40,dist+e.deltaY*0.012));
-  },{passive:false});
 
-  function fitCamera(){
-    var rows=Math.ceil(order.length/COLS);
-    var gw=COLS*SPACING, gd=rows*SPACING_Z;
-    var vfov=camera.fov*Math.PI/180;
-    var hfov=2*Math.atan(Math.tan(vfov/2)*camera.aspect);
-    var needV=(gd*Math.cos(pitch)+3.2)/(2*Math.tan(vfov/2));
-    var needH=(gw+3.4)/(2*Math.tan(hfov/2));
-    var d=Math.max(needV,needH)*1.1;
-    // Never let a bad measurement poison the camera: one NaN here puts the camera at an
-    // undefined position and the canvas is black forever after.
-    dist = (isFinite(d) && d > 0) ? d : 20.5;
+  function fly(dt) {
+    var sp = (keys["shift"] ? 26 : 9) * dt;
+    var fwd = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch),
+                                Math.cos(yaw) * Math.cos(pitch)).normalize();
+    var right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+    if (keys["w"]) pos.addScaledVector(fwd, sp);
+    if (keys["s"]) pos.addScaledVector(fwd, -sp);
+    if (keys["a"]) pos.addScaledVector(right, -sp);
+    if (keys["d"]) pos.addScaledVector(right, sp);
+    if (keys["e"]) pos.y += sp;
+    if (keys["q"]) pos.y -= sp;
+    pos.y = Math.max(0.4, pos.y);
+    camera.position.copy(pos);
+    camera.lookAt(pos.clone().add(fwd));
   }
 
-  var lastW=0, lastH=0, stageEl=document.getElementById("stage");
-  function resize(){
-    // Measure the CONTAINER, not the window. innerWidth is a lie in the cases that matter:
-    // inside an iframe that was laid out while hidden it can be right while the renderer
-    // still holds three.js's default 300x150 buffer, which is a tiny dead canvas with the
-    // HUD floating over it - exactly the "black screen" symptom.
-    var w=stageEl.clientWidth, h=stageEl.clientHeight;
-    if (!w || !h) return false;
-    if (w===lastW && h===lastH) return true;
-    lastW=w; lastH=h;
-    camera.aspect=w/h; camera.updateProjectionMatrix();
-    renderer.setSize(w,h,false);          // false: CSS already sizes the element
-    var c=colsFor();
-    if (c!==COLS){ COLS=c; relayout(); apply(); }
-    fitCamera();
-    return true;
+  // ---- hover --------------------------------------------------------------------
+  var ray = new THREE.Raycaster(), mouse = new THREE.Vector2(), tipXY = [0, 0];
+  function hover() {
+    var t = document.getElementById("tip");
+    if (drag) { t.style.display = "none"; return; }
+    ray.setFromCamera(mouse, camera);
+    var hit = ray.intersectObjects(hoverables, false)[0];
+    if (!hit) { t.style.display = "none"; return; }
+    var c = D.mounts[mountIdx].configs[hit.object.userData.cfg];
+    t.style.display = "block";
+    t.style.left = Math.min(tipXY[0] + 14, innerWidth - 275) + "px";
+    t.style.top = Math.min(tipXY[1] + 14, innerHeight - 130) + "px";
+    t.innerHTML = "<b>" + hit.object.userData.title + " &mdash; " + c.name + "</b>" +
+      hit.object.userData.role +
+      "<div style='margin-top:6px;color:#8598ae'>This design: " + c.annual.toFixed(0) +
+      " kWh/yr, $" + c.cost.toFixed(0) + ", " + c.perDollar.toFixed(3) + " kWh/$</div>";
   }
-  addEventListener("resize",resize);
+
+  // ---- sizing: measure the CONTAINER, never innerWidth. Born inside a hidden tab this
+  // page otherwise keeps three.js's default 300x150 buffer and renders as a black
+  // rectangle with the HUD floating over it.
+  var lastW = 0, lastH = 0;
+  function resize() {
+    var w = stageEl.clientWidth, h = stageEl.clientHeight;
+    if (!w || !h || (w === lastW && h === lastH)) return;
+    lastW = w; lastH = h;
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
+  }
+  addEventListener("resize", resize);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(stageEl);
 
-  var dir=1;
-  function tick(){
+  var last = performance.now(), acc = 0;
+  function tick(now) {
     requestAnimationFrame(tick);
-    // Poll the viewport instead of trusting the resize event. This is what recovers the
-    // page when it was born hidden (0x0) and only later became visible.
-    if (stageEl.clientWidth!==lastW || stageEl.clientHeight!==lastH) resize();
+    resize();
     if (!lastW) return;
-    if(playing){
-      angle+=dir*0.32;
-      if(angle>=60){angle=60;dir=-1;}
-      if(angle<=-60){angle=-60;dir=1;}
-      apply();
+    var dt = Math.min((now - last) / 1000, 0.1); last = now;
+    fly(dt);
+    if (playing) {
+      acc += dt;
+      if (acc > 1.1) { acc = 0; sunIdx = (sunIdx + 1) % D.sunList.length; refresh(); }
     }
-    camera.position.set(Math.sin(yaw)*Math.cos(pitch)*dist,
-                        Math.sin(pitch)*dist, Math.cos(yaw)*Math.cos(pitch)*dist);
-    camera.lookAt(0,0,0);
-    camera.updateMatrixWorld();
-    scene.updateMatrixWorld();
-    placeTags();
-    renderer.render(scene,camera);
+    hover();
+    renderer.render(scene, camera);
   }
 
-  document.getElementById("play").addEventListener("click",function(){
-    playing=!playing; this.innerHTML=playing?"&#10073;&#10073;":"&#9654;";
+  // ---- controls -----------------------------------------------------------------
+  var msel = document.getElementById("mount");
+  msel.innerHTML = D.mounts.map(function (m, i) {
+    return "<option value='" + i + "'>" + m.label + "</option>";
+  }).join("");
+  msel.value = D.mounts.length - 1;   // open on the ground mount: it has the most to show
+  mountIdx = D.mounts.length - 1;
+  msel.addEventListener("change", function () {
+    mountIdx = +this.value; cfgIdx = 0; layout();
   });
-  document.getElementById("rays").addEventListener("click",function(){
-    showRays=!showRays; this.textContent="rays: "+(showRays?"on":"off"); apply();
+  document.getElementById("list").addEventListener("click", function (e) {
+    var el = e.target.closest(".cfg"); if (!el) return;
+    cfgIdx = +el.dataset.i; buildList();
+    var g = groups[cfgIdx];
+    if (g) { pos.set(g.holder.position.x, 3.2, g.holder.position.z + 7.5); yaw = Math.PI; pitch = -0.18; }
   });
-  document.getElementById("sortb").addEventListener("click",function(){
-    sortMode = sortMode==="perDollar" ? "kwh" : "perDollar";
-    this.textContent="sort: "+(sortMode==="perDollar"?"kWh/$":"kWh");
-    relayout(); apply();
+  document.getElementById("play").addEventListener("click", function () {
+    playing = !playing; this.innerHTML = playing ? "&#10073;&#10073;" : "&#9654;";
   });
-  document.getElementById("ang").addEventListener("input",function(){
-    playing=false; document.getElementById("play").innerHTML="&#9654;";
-    angle=+this.value; apply();
+  document.getElementById("rays").addEventListener("click", function () {
+    showRays = !showRays; this.textContent = "rays: " + (showRays ? "on" : "off"); refresh();
   });
+  document.getElementById("reset").addEventListener("click", function () {
+    pos.set(HOME.x, HOME.y, HOME.z); yaw = HOME.yaw; pitch = HOME.pitch;
+  });
+  document.getElementById("sun").addEventListener("input", function () {
+    playing = false; document.getElementById("play").innerHTML = "&#9654;";
+    sunIdx = +this.value; refresh();
+  });
+  document.getElementById("sun").max = D.sunList.length - 1;
 
-  relayout(); apply(); resize(); tick();
+  var cb = D.costBasis;
+  document.getElementById("basis").innerHTML =
+    "Panel $" + cb.panelPerM2.toFixed(0) + "/m&sup2; is READ from a real listing. " +
+    "Mirror $" + cb.mirrorPerM2 + "/m&sup2;, structure $" + cb.boxPerM2 + "/m&sup2; and " +
+    "actuator $" + cb.axisCost + "/axis are ESTIMATES. Mirrors are defocused when the cell " +
+    "or the inverter would be overrun, so surplus light is declined rather than wasted.";
 
-  // WATCHDOG. If this ever fails again it should say so rather than present a black
-  // rectangle: a blank canvas with no explanation tells you nothing and wastes an
-  // afternoon. Reports the actual numbers that would cause it.
-  // It must also CLEAR itself. Embedded in the Inventions tab this page really is born at
-  // 0x0, the poll above recovers it a moment later, and a one-shot watchdog latched a
-  // permanent error banner over a perfectly working view - a false alarm is its own bug.
-  var born = Date.now();
-  setInterval(function(){
-    var e = document.getElementById("err");
-    var bad = !lastW || !lastH || !isFinite(dist) || !isFinite(camera.position.x);
-    if (bad && Date.now() - born > 2500) {
-      e.style.display = "grid";
-      e.innerHTML = "<div style='max-width:560px'><b>The 3D view could not size itself.</b><br><br>"+
-        "viewport "+innerWidth+"×"+innerHeight+", measured "+lastW+"×"+lastH+
-        ", camera distance "+dist+"<br><br>Resizing the window should recover it.</div>";
-    } else if (!bad && e.style.display === "grid") {
-      e.style.display = "none";
-      e.innerHTML = "";
-    }
-  }, 1200);
+  layout();
+  requestAnimationFrame(tick);
 })();
 </script>
 </body>
