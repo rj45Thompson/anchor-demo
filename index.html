@@ -264,9 +264,9 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <p class="mast-claim" data-aud="ai">A knowledge engine with <strong>no neural weights</strong>.
   Every answer carries a measured confidence, the evidence behind it, and a refusal when the
   evidence runs out. It is running in this page.</p>
-  <p class="mast-claim" data-aud="games">Two playable demos and a job-search desk, all running in
-  this page - and the engine underneath them, which has <strong>no neural weights</strong> and
-  refuses rather than guesses.</p>
+  <p class="mast-claim" data-aud="games">Three playable demos and a job-search desk - two of them
+  running in this page, the Unity game in its own - and the engine underneath them, which has
+  <strong>no neural weights</strong> and refuses rather than guesses.</p>
   <dl class="readout">
     <div><dt>facts in the graph</dt><dd class="num">66,404,117</dd></div>
     <div><dt>distinct subjects</dt><dd class="num">12,172,957</dd></div>
@@ -675,8 +675,9 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
       <p>A tactics RPG: creatures with types and synergies, height and terrain that decide what a move costs, and a
       deploy screen that prints each creature onto the board. This is the real Unity game, not a cut-down web version -
       the same renderer, post-processing and shaders as the desktop build, running in the browser on <strong>WebGPU</strong>.</p>
-      <p class="how">Needs Chrome, Edge, or Safari 26 &nbsp;·&nbsp; the first load pulls the whole game, so give it a
-      few minutes &nbsp;·&nbsp; it is served from my own machine, so the page says "offline" when that is off.</p>
+      <p class="how"><strong>Chrome, Edge or Safari 26 - not Firefox</strong>, which has no WebGPU yet
+      &nbsp;·&nbsp; the first load pulls the whole game, so give it a few minutes &nbsp;·&nbsp; it is served from my own
+      machine, so the page says "offline" when that is off.</p>
       <a class="playbtn" id="tami-play" href="games/tami/" target="_blank" rel="noopener">Play it &rarr;</a>
     </div>
   </div>
@@ -1901,9 +1902,10 @@ you to confirm - optional if English is enough to run a demo on.</div>
 <footer><span data-aud="ai">No model runs here. Ask a question and the page hashes your subject,
 fetches one shard of the graph, and counts the independent sources in your browser. Every answer is
 the same idea: <strong>propose from a fixed space, verify by execution, report a measured
-confidence, refuse rather than invent.</strong></span><span data-aud="games">Both games run entirely
+confidence, refuse rather than invent.</strong></span><span data-aud="games">Two of the three run entirely
 in this page - no server, no engine, no build step. R&eacute;sum&eacute; Breakout is hand-written
-three.js; Star Fighter is its own build, opened here from its own address.</span><br><br>
+three.js; Star Fighter is its own build, opened here from its own address. Tami is the Unity game on
+WebGPU, served from my own machine.</span><br><br>
 Facts data derived from REBEL, Wikidata5M, Wikidata-truthy, ConceptNet&nbsp;5, YAGO&nbsp;3, T-REx,
 DBpedia and KELM, released under
 <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:var(--hi)">CC&nbsp;BY-SA&nbsp;4.0</a>
@@ -5537,7 +5539,7 @@ renderCode();
   // that fast reads as a slogan rather than as a measurement.
   var NOTE = {
     ai:    "Showing the engine, the research behind it, and how the requirements were gathered.",
-    games: "Showing R\u00e9sum\u00e9 Breakout, Star Fighter and the job desk - all running in this page."
+    games: "Showing R\u00e9sum\u00e9 Breakout, Star Fighter, Tami and the job desk. The first two run in this page; Tami is a Unity build and opens in its own."
   };
   var TITLE = { ai: document.title, games: "R.J. Thompson - playable demos" };
   var root = document.documentElement;
