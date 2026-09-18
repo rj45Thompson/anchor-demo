@@ -230,6 +230,90 @@
   var matRay = new THREE.LineBasicMaterial({ color:0xffb347, transparent:true, opacity:0.4,
     blending:THREE.AdditiveBlending, depthWrite:false });
 
+
+  // ---- THE SUN, AND WHERE THE YEAR'S ENERGY COMES FROM ---------------------------------
+  // RJ: "the sun angle isn't apparent show the sun and it direction over time". Every mirror
+  // in the zoo is verified to bounce light onto a panel (mirror_audit.py checks the reflected
+  // ray actually lands on one), but with nothing in shot to read them against, the angles look
+  // arbitrary. This draws the SAME vector that lights the scene and that the tracer fired
+  // along - plus every sun position the measured year really delivered beam into, each sized
+  // by the kWh/m2 that came from it. The big dots are where your energy is.
+  var sunGroup = new THREE.Group(); scene.add(sunGroup);
+  var sunBall = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 18),
+    new THREE.MeshBasicMaterial({ color:0xfff0c2 }));
+  var sunHalo = new THREE.Mesh(new THREE.SphereGeometry(2.2, 20, 14),
+    new THREE.MeshBasicMaterial({ color:0xffb347, transparent:true, opacity:0.15,
+      blending:THREE.AdditiveBlending, depthWrite:false }));
+  var sunBeam = new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+      [new THREE.Vector3(), new THREE.Vector3()]),
+    new THREE.LineBasicMaterial({ color:0xffd479, transparent:true, opacity:0.5 }));
+  sunGroup.add(sunHalo); sunGroup.add(sunBall); sunGroup.add(sunBeam);
+
+  function sunDir(az, el) {
+    var a = az*Math.PI/180, e = el*Math.PI/180;
+    return new THREE.Vector3(Math.cos(e)*Math.sin(a), Math.sin(e), -Math.cos(e)*Math.cos(a));
+  }
+  // Canvas size is the label's aspect ratio, so the sprite scale has to match it or the text
+  // squashes. "az 210 deg el 20 deg" does not fit 128 px at 46 px type - it was being clipped.
+  function makeLabel(text, colour, w, px) {
+    var cv = document.createElement("canvas"); cv.width = w; cv.height = 72;
+    var g = cv.getContext("2d");
+    g.font = "bold " + px + "px ui-monospace,monospace"; g.fillStyle = colour;
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText(text, w/2, 36);
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(cv),
+      transparent:true, depthWrite:false, opacity:0.85 }));
+    sp.userData.aspect = w/72;
+    return sp;
+  }
+
+  var BINS = D.sunBins || [];
+  var binMax = 1; BINS.forEach(function(b){ if (b[2] > binMax) binMax = b[2]; });
+  var binDots = BINS.map(function(){
+    var m = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8),
+      new THREE.MeshBasicMaterial({ color:0xffb347, transparent:true, opacity:0.45 }));
+    sunGroup.add(m); return m;
+  });
+  // Cardinals, so "az 210" is something you can SEE rather than read off a toolbar.
+  var CARD = [["N",0],["E",90],["S",180],["W",270]];
+  var cardSprites = CARD.map(function(c){
+    var sp = makeLabel(c[0], "#8598ae", 72, 48); sunGroup.add(sp); return sp;
+  });
+  var sunLabel = makeLabel("", "#ffd479", 256, 40); sunGroup.add(sunLabel);
+
+  var labelFor = -1, sunCentre = new THREE.Vector3(), sunR = 8;
+  // The dome is sized off the ARRAY, not the camera: a camera-relative sun slides out
+  // of shot the moment it climbs, and the whole point is watching it move.
+  function sunRadius(span) { return Math.max(4, span*0.85); }
+  function placeSun(centre, R) {
+    var s = D.sunList[sunIdx] || [180, 30];
+    var p = sunDir(s[0], s[1]).multiplyScalar(R).add(centre);
+    var sc = R*0.05;
+    sunBall.position.copy(p); sunBall.scale.setScalar(sc);
+    sunHalo.position.copy(p); sunHalo.scale.setScalar(sc);
+    sunBeam.geometry.setFromPoints([p, centre]);
+    sunLabel.position.copy(p).y += sc*2.6;
+    var sh = R*0.055; sunLabel.scale.set(sh*sunLabel.userData.aspect, sh, 1);
+    if (labelFor !== sunIdx) {
+      labelFor = sunIdx;
+      var cv = sunLabel.material.map.image, g = cv.getContext("2d");
+      g.clearRect(0,0,cv.width,cv.height);
+      g.font = "bold 40px ui-monospace,monospace"; g.fillStyle = "#ffd479";
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText(s[0]+"° az   "+s[1]+"° el", 128, 36);
+      sunLabel.material.map.needsUpdate = true;
+    }
+    BINS.forEach(function(b, i){
+      binDots[i].position.copy(sunDir(b[0], b[1]).multiplyScalar(R).add(centre));
+      binDots[i].scale.setScalar(R*(0.006 + 0.020*(b[2]/binMax)));
+    });
+    cardSprites.forEach(function(sp, i){
+      sp.position.copy(sunDir(CARD[i][1], 0).multiplyScalar(R*1.02).add(centre));
+      sp.position.y = centre.y;
+      var ch = R*0.05; sp.scale.set(ch*sp.userData.aspect, ch, 1);
+    });
+  }
+
   var groups = [], hoverables = [], cache = {}, order = [];
 
   function sunKey(i){ var s = D.sunList[i] || D.sunList[0]; return s[0]+"_"+s[1]; }
@@ -324,6 +408,18 @@
         if (shown) hoverables.push(ch);
       });
     });
+    // The sun sits at a fraction of the CAMERA's distance, not on a fixed dome. A dome sized
+    // from the hardware puts it outside the frustum the moment the camera frames the hardware
+    // tightly, which is exactly when you want to see it.
+    var selB = selCi >= 0 ? boundsOf(selCi, sk, true) : new THREE.Box3();
+    var sunC = (solo && !selB.isEmpty())
+      ? selB.getCenter(new THREE.Vector3()).add(groups[selCi].holder.position)
+      : new THREE.Vector3(0, 0, 0);
+    sunCentre.copy(sunC);
+    var sspan = selB.isEmpty() ? SPACING : (function(){ var v = selB.getSize(new THREE.Vector3());
+      return Math.max(v.x, v.y, v.z); })();
+    sunR = solo ? sunRadius(sspan) : Math.max(14, SPACING*1.6);
+
     var s = D.sunList[sunIdx], az = s[0]*Math.PI/180, el = s[1]*Math.PI/180;
     sunLight.position.set(Math.cos(el)*Math.sin(az)*40, Math.sin(el)*40, -Math.cos(el)*Math.cos(az)*40);
     document.getElementById("sunv").textContent = "az "+s[0]+"°  el "+s[1]+"°";
@@ -475,6 +571,9 @@
     if (keys["q"]) pos.y -= sp;
     pos.y = Math.max(0.4, pos.y);
     camera.position.copy(pos); camera.lookAt(pos.clone().add(fwd));
+    // Every frame, because flyTo moves the camera without going through refresh(), and a sun
+    // pinned to the old camera distance ends up behind you the moment the view changes.
+    placeSun(sunCentre, sunR);
     if (playing) { acc += dt; if (acc > 1.1) { acc = 0; sunIdx = (sunIdx+1)%D.sunList.length; refresh(); } }
     hover();
     renderer.render(scene, camera);
@@ -489,6 +588,8 @@
     if (b.isEmpty()) { pos.set(g.holder.position.x, 3.6, g.holder.position.z+9); yaw = Math.PI; pitch = -0.17; return; }
     var c = b.getCenter(new THREE.Vector3()).add(g.holder.position);
     var sz = b.getSize(new THREE.Vector3()), span = Math.max(sz.x, sz.y, sz.z);
+    // Include the sun dome, or the sun is out of shot exactly when it climbs.
+    span = Math.max(span, sunRadius(span)*1.75);
     // 1.15, not 1.5: the bounds already include the ray launch plane well above the
     // hardware, so a generous margin on top of that parked the rig in the far distance.
     var dist = Math.max(3, (span*0.5)/Math.tan(camera.fov*Math.PI/360)*1.15);
