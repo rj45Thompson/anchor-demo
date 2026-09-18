@@ -298,9 +298,9 @@
       labelFor = sunIdx;
       var cv = sunLabel.material.map.image, g = cv.getContext("2d");
       g.clearRect(0,0,cv.width,cv.height);
-      g.font = "bold 40px ui-monospace,monospace"; g.fillStyle = "#ffd479";
+      g.font = "bold 29px ui-monospace,monospace"; g.fillStyle = "#ffd479";
       g.textAlign = "center"; g.textBaseline = "middle";
-      g.fillText(s[0]+"° az   "+s[1]+"° el", 128, 36);
+      g.fillText("az "+s[0]+"°   el "+s[1]+"°", 128, 36);
       sunLabel.material.map.needsUpdate = true;
     }
     BINS.forEach(function(b, i){
@@ -617,6 +617,19 @@
         if (px*hx + pz*hz < 0) { px = -px; pz = -pz; }   // keep the sunlit face toward us
         hx = px; hz = pz;
       }
+    }
+    // Never stand on the sun's own bearing: the sun then sits directly behind the array and
+    // is drawn on top of it. Swing at least 45 deg off, which still shows the lit face.
+    var shx = Math.sin(sa), shz = -Math.cos(sa);
+    var sep = Math.acos(Math.max(-1, Math.min(1, hx*shx + hz*shz)));
+    var MIN = 45*Math.PI/180;
+    if (sep < MIN) {
+      var turn = MIN - sep, cs = Math.cos(turn), sn = Math.sin(turn);
+      var rx = hx*cs - hz*sn, rz = hx*sn + hz*cs;        // rotate away from the sun
+      if (Math.acos(Math.max(-1, Math.min(1, rx*shx + rz*shz))) < sep) {
+        rx = hx*cs + hz*sn; rz = -hx*sn + hz*cs;         // other way if that closed the gap
+      }
+      hx = rx; hz = rz;
     }
     var dy = Math.max(1.6, span*0.42);
     pos.set(c.x + hx*dist, Math.max(0.6, c.y + dy), c.z + hz*dist);
