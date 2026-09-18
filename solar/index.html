@@ -80,6 +80,7 @@
     <div class="grp">
       <button id="play">&#10074;&#10074;</button>
       <button id="rays">rays</button>
+      <button id="solo" class="on">solo</button>
       <button id="prev">&#9664;</button>
       <button id="next">next &#9654;</button>
       <button id="cycle">cycle</button>
@@ -92,7 +93,8 @@
       <b style="color:var(--hot)">QUAKE CONTROLS</b><br>
       <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly &nbsp; <kbd>Q</kbd><kbd>E</kbd> down/up<br>
       <kbd>shift</kbd> boost &nbsp; drag to look<br>
-      hover a surface to identify it &nbsp;&middot;&nbsp; click it to jump to its row
+      hover a surface to identify it &nbsp;&middot;&nbsp; click it to jump to its row<br>
+      <b>solo</b> shows one experiment &mdash; turn it off for the whole zoo
     </div>
   </div>
 
@@ -128,9 +130,15 @@
     return;
   }
 
-  var PA = 2.583, INV_PER_W = 0.18, RATE = 0.18, LIFE = 25, SPACING = 9.0;
+  // No INV_PER_W here any more: the inverter is sized per design by the model and is already
+  // inside c.cost. Keeping a second copy of the bill in this file is what went wrong before.
+  var PA = 2.583, RATE = 0.18, LIFE = 25, SPACING = 9.0;
   var mirrorRate = 90, matIdx = 4, mountIdx = D.mounts.length - 1, cfgIdx = 0;
   var sunIdx = 4, playing = true, showRays = true, sortKey = "lcoe", sortDir = 1;
+  // SOLO is the default because the zoo laid out all 18 side by side and the one you
+  // picked was lost in the pile. RJ: "I can't see what's going on". One experiment fills
+  // the screen; "all" still gives the overview.
+  var solo = true;
 
   var MATERIALS = [
     { n:"film / mylar", cost:2, refl:0.85, deg:0.08,
@@ -174,13 +182,17 @@
   function econ(c) {
     var m = MATERIALS[matIdx], bare = bareAnnual();
     var share = c.annual > 0 ? Math.max(0, c.annual-bare)/c.annual : 0;
-    var annual = c.ratio > 0 ? bare + (c.annual-bare)*(m.refl/0.90) : c.annual;
-    var deg = c.ratio > 0 ? 0.005 + share*Math.max(0, m.deg-0.005) : 0.005;
-    var cb = D.costBasis, np = c.nPanels || 1;
-    var axes = (c.panelTrack?1:0) + (c.mirrorTrack?1:0);
+    var annual = c.mirrorM2 > 0 ? bare + (c.annual-bare)*(m.refl/0.90) : c.annual;
+    var deg = c.mirrorM2 > 0 ? 0.005 + share*Math.max(0, m.deg-0.005) : 0.005;
+    // Take the cost the model computed and adjust ONLY the mirror material, which is the one
+    // thing this control changes. Re-deriving the whole bill here is what put the heliostat
+    // ring at the top of the table: that copy dropped the mirror's BACKING STRUCTURE
+    // ($60/m² of reflector, and the ring carries 5.2 m² of it), dropped the tilt axis, and
+    // could not know a heliostat needs two actuators per mirror instead of one shared shaft.
+    // The error grew with mirror area, so it flattered the most mirror-heavy design most.
+    var cb = D.costBasis;
     var rate = (m.cost === null) ? mirrorRate : m.cost;
-    var cost = cb.panelPerM2*PA + cb.boxPerM2*PA + rate*(c.ratio*PA)
-             + cb.axisCost*axes/(np>1?np:6) + INV_PER_W*c.inverterW;
+    var cost = c.cost + (rate - cb.mirrorPerM2) * c.mirrorM2;
     var life = 0, run = -cost, pay = null, cum = [];
     for (var y = 0; y < LIFE; y++) {
       var out = annual*Math.pow(1-deg, y);
@@ -249,14 +261,43 @@
     }
     cache[key] = g; return g;
   }
+  // Every rectangle corner, in three.js axes. MEASURED, not assumed: the configs run from
+  // a single 1.7 m panel to a heliostat ring wider than the old fixed 9 m spacing, which is
+  // exactly why the zoo used to overlap into one unreadable smear.
+  var ORIGIN = new THREE.Vector3(0,0,0);
+  function boundsOf(ci, sk, withRays) {
+    var f = D.mounts[mountIdx].configs[ci].frames[sk], b = new THREE.Box3();
+    if (!f) return b;
+    f.rects.forEach(function(r){
+      for (var a = -1; a <= 1; a += 2) for (var d = -1; d <= 1; d += 2)
+        b.expandByPoint(new THREE.Vector3(
+           r.c[0] + a*r.u[0] + d*r.v[0],
+           r.c[2] + a*r.u[2] + d*r.v[2],
+         -(r.c[1] + a*r.u[1] + d*r.v[1])));
+    });
+    // Rays fall from a launch plane well above the hardware, so framing on the panels alone
+    // cuts off the incoming sunlight - which is the thing the demo exists to show.
+    if (withRays) f.rays.forEach(function(p){ p.forEach(function(q){
+      b.expandByPoint(new THREE.Vector3(q[0], q[2], -q[1])); }); });
+    return b;
+  }
   function layout() {
     groups.forEach(function(g){ scene.remove(g.holder); });
     groups = [];
     var n = D.mounts[mountIdx].configs.length, cols = Math.ceil(Math.sqrt(n));
+    var sk = sunKey(sunIdx), sz = new THREE.Vector3(), span = 0;
+    for (var k = 0; k < n; k++) {
+      var bk = boundsOf(k, sk, true);
+      if (bk.isEmpty()) continue;
+      bk.getSize(sz); span = Math.max(span, sz.x, sz.z);
+    }
+    SPACING = Math.max(6, span*1.35);
+    scene.fog.near = SPACING*1.8; scene.fog.far = SPACING*Math.max(cols,4)*2.4;
     for (var i = 0; i < n; i++) {
       var h = new THREE.Group();
-      h.position.set((i%cols-(cols-1)/2)*SPACING, 0,
-                     (Math.floor(i/cols)-(Math.ceil(n/cols)-1)/2)*SPACING);
+      h.userData.grid = new THREE.Vector3((i%cols-(cols-1)/2)*SPACING, 0,
+                          (Math.floor(i/cols)-(Math.ceil(n/cols)-1)/2)*SPACING);
+      h.position.copy(h.userData.grid);
       scene.add(h); groups.push({ holder:h, ci:i, cur:null });
     }
     refresh();
@@ -268,12 +309,18 @@
     groups.forEach(function(g){
       var mesh = groupFor(g.ci, sk);
       if (g.cur !== mesh) { if (g.cur) g.holder.remove(g.cur); g.holder.add(mesh); g.cur = mesh; }
+      // In solo the chosen config moves to the origin so the camera always has it centred.
+      var shown = solo ? (g.ci === selCi) : true;
+      g.holder.visible = shown;
+      g.holder.position.copy(solo ? ORIGIN : g.holder.userData.grid);
       var rg = mesh.getObjectByName("rays"); if (rg) rg.visible = showRays;
       mesh.children.forEach(function(ch){
         if (!ch.isMesh) return;
         ch.userData.cfg = g.ci;
         if (ch.userData.kind === "panel") ch.material = (g.ci === selCi) ? matPanelSel : matPanel;
-        hoverables.push(ch);
+        // A hidden holder does NOT make its meshes unpickable - the raycaster walks the
+        // list it is handed, so the list itself has to exclude them.
+        if (shown) hoverables.push(ch);
       });
     });
     var s = D.sunList[sunIdx], az = s[0]*Math.PI/180, el = s[1]*Math.PI/180;
@@ -318,7 +365,7 @@
       "<div class='r'><span>inverter</span><b>"+c.inverterW+" W</b></div>" +
       "<div class='r'><span>hottest cell</span><b>"+c.maxCell.toFixed(0)+"°C</b></div>" +
       "<div class='r'><span>panels per drive</span><b>"+(c.nPanels||1)+"</b></div>" +
-      "<div class='r'><span>mirror ratio</span><b>"+c.ratio.toFixed(2)+"</b></div>" +
+      "<div class='r'><span>mirror per panel</span><b>"+c.mirrorM2.toFixed(2)+" m²</b></div>" +
       "<p class='note'>"+(c.note||"")+"</p>";
     var cv = document.getElementById("cum"), x = cv.getContext("2d");
     var W = cv.width, H = cv.height; x.clearRect(0,0,W,H);
@@ -432,9 +479,29 @@
     renderer.render(scene, camera);
   }
 
+  // Frame the config from its own size, so a bare 1.7 m panel and an 8-mirror ring both
+  // fill the view instead of one being a speck and the other running off the edges.
   function flyTo(i) {
     var real = order[i], ci = D.mounts[mountIdx].configs.indexOf(real), g = groups[ci];
-    if (g) { pos.set(g.holder.position.x, 3.6, g.holder.position.z+9); yaw = Math.PI; pitch = -0.17; }
+    if (!g) return;
+    var b = boundsOf(ci, sunKey(sunIdx), showRays);
+    if (b.isEmpty()) { pos.set(g.holder.position.x, 3.6, g.holder.position.z+9); yaw = Math.PI; pitch = -0.17; return; }
+    var c = b.getCenter(new THREE.Vector3()).add(g.holder.position);
+    var s = b.getSize(new THREE.Vector3()), span = Math.max(s.x, s.y, s.z);
+    var dist = Math.max(4, (span*0.5)/Math.tan(camera.fov*Math.PI/360)*1.5);
+    var dy = Math.max(1.6, span*0.45);
+    pos.set(c.x, Math.max(0.6, c.y+dy), c.z+dist);
+    yaw = Math.PI; pitch = -Math.atan2(pos.y-c.y, dist);
+  }
+  // "reset view" has to know how big the zoo actually got: SPACING is measured now, so the
+  // old hardcoded HOME either sat inside the grid or cut half of it off.
+  function resetView() {
+    if (solo) { flyTo(cfgIdx); return; }
+    var n = groups.length || 1, cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n/cols);
+    var span = Math.max(cols, rows)*SPACING;
+    var dist = (span*0.5)/Math.tan(camera.fov*Math.PI/360)*1.15;
+    pos.set(0, Math.max(6, span*0.42), rows*SPACING*0.5 + dist*0.55);
+    yaw = Math.PI; pitch = -Math.atan2(pos.y, pos.z);
   }
   function selectCfg(i) {
     var n = order.length; cfgIdx = ((i%n)+n)%n;
@@ -488,6 +555,10 @@
   document.getElementById("rays").addEventListener("click", function(){
     this.blur(); showRays = !showRays; this.classList.toggle("on", !showRays); refresh();
   });
+  document.getElementById("solo").addEventListener("click", function(){
+    this.blur(); solo = !solo; this.classList.toggle("on", solo);
+    refresh(); if (solo) flyTo(cfgIdx); else resetView();
+  });
   document.getElementById("prev").addEventListener("click", function(){ this.blur(); selectCfg(cfgIdx-1); });
   document.getElementById("next").addEventListener("click", function(){ this.blur(); selectCfg(cfgIdx+1); });
   var cycleTimer = null;
@@ -496,9 +567,7 @@
     if (cycleTimer) { clearInterval(cycleTimer); cycleTimer = null; this.classList.remove("on"); }
     else { cycleTimer = setInterval(function(){ selectCfg(cfgIdx+1); }, 4000); this.classList.add("on"); }
   });
-  document.getElementById("reset").addEventListener("click", function(){
-    this.blur(); pos.set(HOME.x,HOME.y,HOME.z); yaw = HOME.yaw; pitch = HOME.pitch;
-  });
+  document.getElementById("reset").addEventListener("click", function(){ this.blur(); resetView(); });
   document.getElementById("sun").addEventListener("input", function(){
     playing = false;
     document.getElementById("play").innerHTML = "&#9654;";
@@ -508,12 +577,13 @@
 
   var cb = D.costBasis;
   document.getElementById("basis").innerHTML =
-    "Panel $"+cb.panelPerM2.toFixed(0)+"/m² is READ from a real listing; structure $"+
-    cb.boxPerM2+"/m² and actuator $"+cb.axisCost+"/axis are ESTIMATES. Mirrors defocus "+
-    "when the cell or inverter would be overrun. Sampling carries ~±5%, so gaps narrower "+
-    "than that are not real differences.";
+    "Panel $"+cb.panelPerM2.toFixed(0)+"/m² is READ from a real listing. ESTIMATES: structure $"+
+    cb.boxPerM2+"/m² (charged on the mirrors too, not just the panel), actuator $"+cb.axisCost+
+    "/axis, and $"+cb.heliostatDrive+" per heliostat — a ring cannot share one shaft, since every "+
+    "mirror needs its own two axes. Mirrors defocus when the cell or inverter would be overrun. "+
+    "Sampling carries ~±5%, so gaps narrower than that are not real differences.";
 
-  layout(); setMirror(); setMat(); requestAnimationFrame(tick);
+  layout(); setMirror(); setMat(); resetView(); requestAnimationFrame(tick);
 })();
 </script>
 </body>

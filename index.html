@@ -815,7 +815,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     faster than silicon. Every box carries its peak power, year 1 and year 10 output, build cost,
     payback year, and the number that settles an argument: <strong>dollars per kWh over
     25 years</strong>.</p>
-    <p class="why">Four findings that contradict the obvious move. An actuator on the <em>tilt</em>
+    <p class="why">Five findings that contradict the obvious move. An actuator on the <em>tilt</em>
     axis is worth <strong>+0.1%</strong> - it is the <em>azimuth</em> axis that carries the gain.
     A cheap ram with only &plusmn;60&deg; of swing keeps <strong>90%</strong> of the tracking
     prize, so nothing needs a slew drive. Pointing unlimited mirrors at one panel does not scale:
@@ -823,7 +823,17 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     is cooling, not optics. And the cheapest mirror loses - <strong>$2/m&sup2; film is very nearly
     free and still cannot pay for the structure to hold it</strong>, because it hazes at ~8% a
     year until the array is just a bare panel you overpaid to mount. Durable anodised aluminium
-    is the only material here that makes mirrors worth building.</p>
+    is the only material here that makes mirrors worth building. And the one that decides a real
+    build: a mirror occupies ground a panel could have used, so the zoo runs the honest control -
+    twelve panels ringed with mirrors against sixteen panels and none. Once reflectors are charged
+    for their own backing structure, <strong>mirrors buy nothing on price</strong>. The cheapest
+    kWh is a bare tracked panel at <strong>$0.0371</strong>; the best mirrored platform lands at
+    <strong>$0.0387</strong>, a 4% gap that sits inside the sampling noise - a tie, not a win.
+    What mirrors do buy is output <em>per mounting position</em>: 743 kWh against 645, <strong>+15%
+    </strong>. If money is the binding constraint, skip them. If the number of spots you can mount
+    is the constraint, they earn their place. The platform's <em>shape</em> - one long wing, a
+    double row, a square block - changes the instantaneous gain but lands within 3% annually,
+    also inside the noise, so build whatever the pole and the wind want.</p>
     <p class="small">What it does not do, stated plainly: it models one panel, or one ganged
     platform - not a whole roof. In a real array the interior panels have no room for reflectors,
     so mirror benefit scales with the perimeter rather than the area, and adjacent panels share
@@ -835,9 +845,10 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
         style="width:100%;height:min(88vh,920px);border:0;display:block;background:#0a0d12"
         loading="lazy"></iframe>
     </div>
-    <p class="small">Drag to orbit, scroll to zoom, scrub the sun, toggle the rays. Panel and
-    racking prices are read from real listings; reflector, structure and actuator costs are
-    still estimates and are labelled as such in the model rather than quietly averaged in.</p>
+    <p class="small">It opens on one experiment at a time - <em>next</em> and <em>cycle</em> step
+    through them, <em>solo</em> off shows the whole zoo side by side. Fly with <b>WASD</b>, up and
+    down on <b>Q</b>/<b>E</b>, drag to look, and click any panel or mirror to jump to its row in
+    the table. Scrub the sun along its path and toggle the rays to watch light land.</p>
   </div>
 
   <div class="hire">
