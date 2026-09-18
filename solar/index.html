@@ -67,6 +67,9 @@
   <select id="mount"></select>
   <h2>Configurations</h2>
   <div id="list"></div>
+  <h2>Mirror material</h2>
+  <select id="material"></select>
+  <p class="s" id="matnote" style="margin:3px 0 0"></p>
   <h2>Mirror cost, all-in <span id="mrate" style="color:var(--hot)"></span></h2>
   <input type="range" id="mirror" min="0" max="120" step="1" value="90"
          style="width:100%;accent-color:var(--hot)">
@@ -85,6 +88,9 @@
   <input type="range" id="sun" min="0" max="14" step="1" value="4" style="flex:1;accent-color:var(--hot)">
   <span id="sunv" style="width:120px;text-align:right;color:var(--dim)"></span>
   <button id="rays">rays: on</button>
+  <button id="prev">&#9664; prev</button>
+  <button id="next">next exp &#9654;</button>
+  <button id="cycle">cycle: off</button>
   <button id="reset">reset view</button>
 </div>
 
@@ -135,23 +141,69 @@
   var SPACING = 9.0, PA = 2.583, INV_PER_W = 0.18, RATE = 0.18, LIFE = 25;
   var mirrorRate = 90;
 
+  // MIRROR MATERIALS. RJ: "plastic mirror on wood ... ultra durable ultra cheap". The
+  // cheap ones win year one and lose the quarter-century, which is the entire point of
+  // carrying degradation through the model rather than quoting a year-1 number.
+  // Reflectivity scales the mirror-derived share only (traced at 0.90); the panel's own
+  // direct light is untouched. Prices marked READ came off real listings, the rest are
+  // estimates and say so.
+  var MATERIALS = [
+    { n:"Aluminised film / mylar", cost:2,  refl:0.85, deg:0.08,
+      note:"Pennies per m² and genuinely reflective when new. Outdoors it hazes, "
+           + "lifts and tears - ESTIMATE 8%/yr loss. Wins year one, loses the decade." },
+    { n:"Mirror vinyl wrap on plywood", cost:24, refl:0.85, deg:0.04,
+      note:"Your build: chrome wrap smoothed onto ply, clear-coated. Wrap ~$12/m² + "
+           + "ply ~$12/m². ESTIMATE 4%/yr; a good clear coat is what decides it." },
+    { n:"Acrylic mirror sheet", cost:60, refl:0.85, deg:0.02,
+      note:"READ: $147-248 CAD per 4x8 sheet ≈ $50-83/m². UV-stable, but it "
+           + "scratches and can bow in heat." },
+    { n:"Anodised aluminium (MIRO type)", cost:35, refl:0.95, deg:0.005,
+      note:"What actual solar concentrators use, and it won an independent reflector "
+           + "shoot-out. Highest reflectivity AND the slowest decay. ESTIMATE price." },
+    { n:"Glass mirror", cost:40, refl:0.93, deg:0.005,
+      note:"Durable and highly reflective, but heavy and it breaks - the structure has to "
+           + "carry it and the hail has to miss it. ESTIMATE price." },
+    { n:"Custom (use the slider)", cost:null, refl:0.90, deg:0.02,
+      note:"Set the cost yourself with the slider below." }
+  ];
+  var matIdx = 1;
+
   // Cost is RECOMPUTED here rather than read from the file, so the mirror assumption can
   // be moved without re-running the tracer. The traced energy never changes - only what
   // the hardware is assumed to cost.
+  function bareAnnualFor(mount) {
+    var b = D.mounts[mount].configs.filter(function (x) { return x.ratio === 0; });
+    return b.length ? Math.min.apply(null, b.map(function (x) { return x.annual; })) : 0;
+  }
+  function adjusted(c) {
+    // Reflectivity moves only the mirror-derived share; the panel's own direct light is
+    // the same whatever the mirror is made of.
+    var m = MATERIALS[matIdx];
+    var bare = bareAnnualFor(mountIdx);
+    var share = c.annual > 0 ? Math.max(0, c.annual - bare) / c.annual : 0;
+    var ann = bare + (c.annual - bare) * (m.refl / 0.90);
+    var deg = 0.005 + share * Math.max(0, m.deg - 0.005);
+    return { annual: c.ratio > 0 ? ann : c.annual, deg: c.ratio > 0 ? deg : 0.005, share: share };
+  }
   function costFor(c) {
     var cb = D.costBasis;
     var axes = (c.panelTrack ? 1 : 0) + (c.mirrorTrack ? 1 : 0);
-    return cb.panelPerM2 * PA + cb.boxPerM2 * PA + mirrorRate * (c.ratio * PA)
-         + cb.axisCost * axes / 6 + INV_PER_W * c.inverterW;
+    var m = MATERIALS[matIdx];
+    var rate = (m.cost === null) ? mirrorRate : m.cost;
+    var np = c.nPanels || 1;
+    return cb.panelPerM2 * PA + cb.boxPerM2 * PA + rate * (c.ratio * PA)
+         + cb.axisCost * axes / (np > 1 ? np : 6) + INV_PER_W * c.inverterW;
   }
   function econ(c) {
-    var cost = costFor(c), d = c.degradePct / 100, life = 0, run = -cost, pay = null, cum = [];
+    var adj = adjusted(c);
+    var cost = costFor(c), d = adj.deg, life = 0, run = -cost, pay = null, cum = [];
     for (var y = 0; y < LIFE; y++) {
-      var out = c.annual * Math.pow(1 - d, y);
+      var out = adj.annual * Math.pow(1 - d, y);
       life += out; run += out * RATE; cum.push(run);
       if (pay === null && run >= 0) pay = y + 1;
     }
-    return { cost: cost, life: life, lcoe: cost / life, payback: pay, net: run, cum: cum };
+    return { cost: cost, life: life, lcoe: cost / life, payback: pay, net: run, cum: cum,
+             annual: adj.annual, deg: d };
   }
   var mountIdx = 0, cfgIdx = 0, sunIdx = 4, playing = true, showRays = true;
   var groups = [], hoverables = [], cache = {}, listOrder = [];
@@ -241,15 +293,16 @@
       html += "<div class='cfg" + (i === cfgIdx ? " on" : "") + "' data-i='" + i + "'>" +
         "<div class='n'>" + c.name + "</div>" +
         "<div class='peak'><span>PEAK POWER</span><b>" + (c.peak * 1000).toFixed(0) + " W</b></div>" +
-        "<div class='row'><span>year 1</span><b>" + c.annual.toFixed(0) + " kWh</b></div>" +
-        "<div class='row'><span>year 10</span><b>" + c.year10.toFixed(0) + " kWh</b></div>" +
+        "<div class='row'><span>year 1</span><b>" + c._e.annual.toFixed(0) + " kWh</b></div>" +
+        "<div class='row'><span>year 10</span><b>" +
+          (c._e.annual * Math.pow(1 - c._e.deg, 9)).toFixed(0) + " kWh</b></div>" +
         "<div class='row'><span>25-yr total</span><b>" + (c.lifetime/1000).toFixed(1) + "k kWh</b></div>" +
         "<div class='row'><span>cost</span><b>$" + c._e.cost.toFixed(0) + "</b></div>" +
         "<div class='peak'><span>$ PER kWh (life)</span><b class='" +
           (c._e.lcoe <= best + 1e-9 ? "win" : "") + "'>$" + c._e.lcoe.toFixed(4) + "</b></div>" +
         "<div class='row'><span>vs bare fixed</span><b class='" + (c.vsBare >= 0 ? "win" : "lose") +
           "'>" + (c.vsBare >= 0 ? "+" : "") + c.vsBare.toFixed(1) + "%</b></div>" +
-        "<div class='row'><span>decay/yr</span><b>" + c.degradePct.toFixed(2) + "%</b></div>" +
+        "<div class='row'><span>decay/yr</span><b>" + (c._e.deg * 100).toFixed(2) + "%</b></div>" +
         "<div class='row'><span>payback</span><b>" + (c._e.payback ? c._e.payback + " yr" : "never") + "</b></div>" +
         "<div class='peak'><span>25-YR NET</span><b>$" + Math.round(c._e.net).toLocaleString() + "</b></div>" +
         "<div class='row'><span>inverter</span><b>" + c.inverterW + " W</b></div>" +
@@ -421,6 +474,41 @@
   });
   document.getElementById("sun").max = D.sunList.length - 1;
 
+  // Cycle through the experiments (RJ: "have a way to cycle through the experiments").
+  function selectCfg(i) {
+    var n = listOrder.length || D.mounts[mountIdx].configs.length;
+    cfgIdx = ((i % n) + n) % n;
+    buildList();
+    var g = groups[cfgIdx];
+    if (g) { pos.set(g.holder.position.x, 3.4, g.holder.position.z + 8.5);
+             yaw = Math.PI; pitch = -0.18; }
+  }
+  document.getElementById("prev").addEventListener("click", function () { this.blur(); selectCfg(cfgIdx - 1); });
+  document.getElementById("next").addEventListener("click", function () { this.blur(); selectCfg(cfgIdx + 1); });
+  var cycling = false, cycleTimer = null;
+  document.getElementById("cycle").addEventListener("click", function () {
+    this.blur(); cycling = !cycling;
+    this.textContent = "cycle: " + (cycling ? "on" : "off");
+    if (cycleTimer) clearInterval(cycleTimer);
+    if (cycling) cycleTimer = setInterval(function () { selectCfg(cfgIdx + 1); }, 4000);
+  });
+
+  var mat = document.getElementById("material");
+  mat.innerHTML = MATERIALS.map(function (m, i) {
+    return "<option value='" + i + "'>" + m.n + (m.cost === null ? "" : "  — $" + m.cost + "/m²") + "</option>";
+  }).join("");
+  mat.value = matIdx;
+  function setMat() {
+    matIdx = +mat.value;
+    var m = MATERIALS[matIdx];
+    document.getElementById("matnote").innerHTML =
+      m.note + " &nbsp;<b>" + (m.refl * 100).toFixed(0) + "% reflective, " +
+      (m.deg * 100).toFixed(1) + "%/yr decay.</b>";
+    document.getElementById("mirror").disabled = (m.cost !== null);
+    buildList();
+  }
+  mat.addEventListener("change", function () { setMat(); this.blur(); });
+
   var msl = document.getElementById("mirror");
   function setMirror() {
     mirrorRate = +msl.value;
@@ -441,6 +529,22 @@
   // Slider wiring lives HERE, with the other controls. It was injected into costFor() by
   // a replace that matched the wrong `var cb = D.costBasis` - there are two - and the
   // result called itself until the stack blew.
+  var mat = document.getElementById("material");
+  mat.innerHTML = MATERIALS.map(function (m, i) {
+    return "<option value='" + i + "'>" + m.n + (m.cost === null ? "" : "  — $" + m.cost + "/m²") + "</option>";
+  }).join("");
+  mat.value = matIdx;
+  function setMat() {
+    matIdx = +mat.value;
+    var m = MATERIALS[matIdx];
+    document.getElementById("matnote").innerHTML =
+      m.note + " &nbsp;<b>" + (m.refl * 100).toFixed(0) + "% reflective, " +
+      (m.deg * 100).toFixed(1) + "%/yr decay.</b>";
+    document.getElementById("mirror").disabled = (m.cost !== null);
+    buildList();
+  }
+  mat.addEventListener("change", function () { setMat(); this.blur(); });
+
   var msl = document.getElementById("mirror");
   function setMirror() {
     mirrorRate = +msl.value;
@@ -452,6 +556,7 @@
 
   layout();
   setMirror();
+  setMat();
   requestAnimationFrame(tick);
 })();
 </script>
