@@ -324,7 +324,6 @@
         if (shown) hoverables.push(ch);
       });
     });
-    if (solo && !userMoved && order.length) flyTo(cfgIdx);
     var s = D.sunList[sunIdx], az = s[0]*Math.PI/180, el = s[1]*Math.PI/180;
     sunLight.position.set(Math.cos(el)*Math.sin(az)*40, Math.sin(el)*40, -Math.cos(el)*Math.cos(az)*40);
     document.getElementById("sunv").textContent = "az "+s[0]+"°  el "+s[1]+"°";
@@ -387,11 +386,11 @@
 
   var HOME = { x:0, y:7, z:22, yaw:Math.PI, pitch:-0.24 };
   var pos = new THREE.Vector3(HOME.x,HOME.y,HOME.z), yaw = HOME.yaw, pitch = HOME.pitch;
-  var keys = {}, drag = false, moved = false, lx = 0, ly = 0, userMoved = false;
+  var keys = {}, drag = false, moved = false, lx = 0, ly = 0;
   var mouse = new THREE.Vector2(), tipXY = [0,0];
   var MOVE = { w:1,a:1,s:1,d:1,q:1,e:1,shift:1 };
   document.addEventListener("keydown", function(ev){
-    var k = ev.key.toLowerCase(); if (MOVE[k]) { keys[k] = true; userMoved = true; ev.preventDefault(); }
+    var k = ev.key.toLowerCase(); if (MOVE[k]) { keys[k] = true; ev.preventDefault(); }
   }, true);
   document.addEventListener("keyup", function(ev){
     var k = ev.key.toLowerCase(); if (MOVE[k]) { keys[k] = false; ev.preventDefault(); }
@@ -408,7 +407,6 @@
     tipXY = [e.clientX, e.clientY];
     if (!drag) return;
     if (Math.abs(e.clientX-lx) + Math.abs(e.clientY-ly) > 3) moved = true;
-    userMoved = true;
     yaw -= (e.clientX-lx)*0.0032;
     pitch = Math.max(-1.45, Math.min(1.45, pitch-(e.clientY-ly)*0.0032));
     lx = e.clientX; ly = e.clientY;
@@ -524,7 +522,6 @@
     var dx = pos.x-c.x, dz = pos.z-c.z;
     yaw = Math.atan2(-dx, -dz);
     pitch = -Math.atan2(pos.y-c.y, Math.sqrt(dx*dx + dz*dz));
-    userMoved = false;
   }
   // "reset view" has to know how big the zoo actually got: SPACING is measured now, so the
   // old hardcoded HOME either sat inside the grid or cut half of it off.
