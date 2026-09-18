@@ -40,7 +40,7 @@
   #tip b { color:var(--cool); display:block; margin-bottom:3px; }
 
   #data { border-top:1px solid var(--line); background:var(--panel);
-    display:grid; grid-template-columns:1fr 260px; height:44vh; min-height:210px; }
+    display:grid; grid-template-columns:1fr 260px; height:37vh; min-height:200px; }
   #tblwrap { overflow:auto; }
   table { border-collapse:collapse; width:100%; font-size:11.5px; }
   th,td { padding:5px 9px; text-align:right; white-space:nowrap; }
@@ -324,6 +324,7 @@
         if (shown) hoverables.push(ch);
       });
     });
+    if (solo && !userMoved && order.length) flyTo(cfgIdx);
     var s = D.sunList[sunIdx], az = s[0]*Math.PI/180, el = s[1]*Math.PI/180;
     sunLight.position.set(Math.cos(el)*Math.sin(az)*40, Math.sin(el)*40, -Math.cos(el)*Math.cos(az)*40);
     document.getElementById("sunv").textContent = "az "+s[0]+"°  el "+s[1]+"°";
@@ -386,11 +387,11 @@
 
   var HOME = { x:0, y:7, z:22, yaw:Math.PI, pitch:-0.24 };
   var pos = new THREE.Vector3(HOME.x,HOME.y,HOME.z), yaw = HOME.yaw, pitch = HOME.pitch;
-  var keys = {}, drag = false, moved = false, lx = 0, ly = 0;
+  var keys = {}, drag = false, moved = false, lx = 0, ly = 0, userMoved = false;
   var mouse = new THREE.Vector2(), tipXY = [0,0];
   var MOVE = { w:1,a:1,s:1,d:1,q:1,e:1,shift:1 };
   document.addEventListener("keydown", function(ev){
-    var k = ev.key.toLowerCase(); if (MOVE[k]) { keys[k] = true; ev.preventDefault(); }
+    var k = ev.key.toLowerCase(); if (MOVE[k]) { keys[k] = true; userMoved = true; ev.preventDefault(); }
   }, true);
   document.addEventListener("keyup", function(ev){
     var k = ev.key.toLowerCase(); if (MOVE[k]) { keys[k] = false; ev.preventDefault(); }
@@ -407,6 +408,7 @@
     tipXY = [e.clientX, e.clientY];
     if (!drag) return;
     if (Math.abs(e.clientX-lx) + Math.abs(e.clientY-ly) > 3) moved = true;
+    userMoved = true;
     yaw -= (e.clientX-lx)*0.0032;
     pitch = Math.max(-1.45, Math.min(1.45, pitch-(e.clientY-ly)*0.0032));
     lx = e.clientX; ly = e.clientY;
@@ -488,11 +490,41 @@
     var b = boundsOf(ci, sunKey(sunIdx), showRays);
     if (b.isEmpty()) { pos.set(g.holder.position.x, 3.6, g.holder.position.z+9); yaw = Math.PI; pitch = -0.17; return; }
     var c = b.getCenter(new THREE.Vector3()).add(g.holder.position);
-    var s = b.getSize(new THREE.Vector3()), span = Math.max(s.x, s.y, s.z);
-    var dist = Math.max(4, (span*0.5)/Math.tan(camera.fov*Math.PI/360)*1.5);
-    var dy = Math.max(1.6, span*0.45);
-    pos.set(c.x, Math.max(0.6, c.y+dy), c.z+dist);
-    yaw = Math.PI; pitch = -Math.atan2(pos.y-c.y, dist);
+    var sz = b.getSize(new THREE.Vector3()), span = Math.max(sz.x, sz.y, sz.z);
+    // 1.15, not 1.5: the bounds already include the ray launch plane well above the
+    // hardware, so a generous margin on top of that parked the rig in the far distance.
+    var dist = Math.max(3, (span*0.5)/Math.tan(camera.fov*Math.PI/360)*1.15);
+    // STAND SQUARE TO THE ARRAY, ON THE SUNNY SIDE. A camera on a fixed bearing sees a
+    // 12-panel wing end-on as a receding line, and the sun's own bearing is no better: the
+    // platforms do not sit perpendicular to it (the 1x12 wing runs on a ~30 deg bearing while
+    // the sun is due east). So take the array's OWN long axis from its panel centres, look
+    // along the perpendicular to it, and pick the side the sun is on so the lit face is
+    // toward you. A single-panel design has no long axis, and there the sun bearing is right.
+    var sun = D.sunList[sunIdx] || [180, 30];
+    var sa = sun[0]*Math.PI/180;
+    var hx = Math.sin(sa), hz = -Math.cos(sa);          // sun bearing, horizontal, three axes
+    var fr = D.mounts[mountIdx].configs[ci].frames[sunKey(sunIdx)];
+    if (fr) {
+      var pc = [], i, j;
+      for (i = 0; i < fr.rects.length; i++)
+        if (fr.rects[i].kind === "panel") pc.push([fr.rects[i].c[0], -fr.rects[i].c[1]]);
+      var bx = 0, bz = 0, best = 0;
+      for (i = 0; i < pc.length; i++) for (j = i+1; j < pc.length; j++) {
+        var ddx = pc[j][0]-pc[i][0], ddz = pc[j][1]-pc[i][1], d2 = ddx*ddx + ddz*ddz;
+        if (d2 > best) { best = d2; bx = ddx; bz = ddz; }
+      }
+      if (best > 1.0) {                                  // a real spread, not one panel
+        var L = Math.sqrt(best), px = -bz/L, pz = bx/L;  // perpendicular to the long axis
+        if (px*hx + pz*hz < 0) { px = -px; pz = -pz; }   // keep the sunlit face toward us
+        hx = px; hz = pz;
+      }
+    }
+    var dy = Math.max(1.6, span*0.42);
+    pos.set(c.x + hx*dist, Math.max(0.6, c.y + dy), c.z + hz*dist);
+    var dx = pos.x-c.x, dz = pos.z-c.z;
+    yaw = Math.atan2(-dx, -dz);
+    pitch = -Math.atan2(pos.y-c.y, Math.sqrt(dx*dx + dz*dz));
+    userMoved = false;
   }
   // "reset view" has to know how big the zoo actually got: SPACING is measured now, so the
   // old hardcoded HOME either sat inside the grid or cut half of it off.
