@@ -295,7 +295,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   -->
   <div class="tab" data-p="resume" data-aud="games">R&eacute;sum&eacute; Breakout</div>
   <div class="tab" data-p="space" data-aud="games">Star Fighter</div>
-  <div class="tab" data-p="tami" data-aud="games">Tami <span class="beta">ALPHA</span></div>
+  <div class="tab" data-p="tami" data-aud="games">Level builder <span class="beta">ALPHA</span></div>
   <div class="tab" data-p="desk" data-aud="games">Job Desk</div>
   <div class="tab" data-p="finder" data-aud="games">Deal Finder <span class="beta">BETA</span></div>
   <div class="tab" data-p="inv" data-aud="ai">The work</div>
@@ -671,11 +671,22 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 <div id="p-tami" class="panel">
   <div class="launch">
     <div class="launch-body">
-      <h3>Tami <span class="beta">ALPHA VERSION</span></h3>
-      <p>An <strong>alpha</strong>: a small slice of the tactics layer, not the finished game. Creatures with types and
-      synergies, height and terrain that decide what a move costs, and a deploy screen that prints each creature onto
-      the board. It runs the real Unity build rather than a cut-down web port - the same renderer, post-processing and
-      shaders as the desktop build, in the browser on <strong>WebGPU</strong>.</p>
+      <h3>Block Painter <span class="beta">LEVEL BUILDER</span></h3>
+      <p><strong>The tools are the point here; the game is what came out of them.</strong> Block Painter is a
+      <strong>33,000-line</strong> level and terrain builder that replaces the Unity interface for this project:
+      terrain sculpting and splat painting across sixteen textures, prop snapping that respects colliders rather than
+      bounding boxes, an eighteen-state tile system with staged multi-select, ridge and brush tools, and biome
+      palettes.</p>
+      <p><strong>Almost none of it is hard-coded.</strong> Tile looks, god rays and laser lines, depth of field,
+      per-beat camera profiles, deploy and battle framing - all of it is configurable in the window, and the whole
+      authored look saves to a named preset that loads back exactly as it was. Behind the window sits a
+      <strong>132-route</strong> HTTP bridge so scripts and agents can drive the editor headlessly, NUnit suites that
+      run without opening Unity, a console gate that fails a change on new errors, and a check-in gate that blocks any
+      asset committed without its metadata.</p>
+      <p>Below is an <strong>alpha</strong>: a small slice of the tactics layer of a title still
+      <strong>to be announced</strong>, built entirely in that tool. It runs the real Unity build rather than a
+      cut-down web port - the same renderer, post-processing and shaders as the desktop build - in the browser on
+      <strong>WebGPU</strong>.</p>
       <p class="how"><strong>Chrome, Edge or Safari 26 - not Firefox</strong>, which has no WebGPU yet
       &nbsp;·&nbsp; the first load pulls the whole game, so give it a few minutes &nbsp;·&nbsp; it is served from my own
       machine, so the page says "offline" when that is off.</p>
@@ -1919,8 +1930,8 @@ fetches one shard of the graph, and counts the independent sources in your brows
 the same idea: <strong>propose from a fixed space, verify by execution, report a measured
 confidence, refuse rather than invent.</strong></span><span data-aud="games">Two of the three run entirely
 in this page - no server, no engine, no build step. R&eacute;sum&eacute; Breakout is hand-written
-three.js; Star Fighter is its own build, opened here from its own address. Tami is the Unity game on
-WebGPU, served from my own machine.</span><br><br>
+three.js; Star Fighter is its own build, opened here from its own address. The level builder demo is the
+real Unity build on WebGPU, served from my own machine.</span><br><br>
 Facts data derived from REBEL, Wikidata5M, Wikidata-truthy, ConceptNet&nbsp;5, YAGO&nbsp;3, T-REx,
 DBpedia and KELM, released under
 <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:var(--hi)">CC&nbsp;BY-SA&nbsp;4.0</a>
@@ -5554,7 +5565,7 @@ renderCode();
   // that fast reads as a slogan rather than as a measurement.
   var NOTE = {
     ai:    "Showing the engine, the research behind it, and how the requirements were gathered.",
-    games: "Showing R\u00e9sum\u00e9 Breakout, Star Fighter, Tami and the job desk. The first two run in this page; Tami is a Unity build and opens in its own."
+    games: "Showing R\u00e9sum\u00e9 Breakout, Star Fighter, the level builder and the job desk. The first two run in this page; the level builder is a Unity build and opens in its own."
   };
   var TITLE = { ai: document.title, games: "R.J. Thompson - playable demos" };
   var root = document.documentElement;
