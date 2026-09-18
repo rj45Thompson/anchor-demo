@@ -129,7 +129,7 @@
   }
 
   var PA = 2.583, INV_PER_W = 0.18, RATE = 0.18, LIFE = 25, SPACING = 9.0;
-  var mirrorRate = 90, matIdx = 1, mountIdx = D.mounts.length - 1, cfgIdx = 0;
+  var mirrorRate = 90, matIdx = 4, mountIdx = D.mounts.length - 1, cfgIdx = 0;
   var sunIdx = 4, playing = true, showRays = true, sortKey = "lcoe", sortDir = 1;
 
   var MATERIALS = [
@@ -139,6 +139,8 @@
       note:"Chrome wrap smoothed onto ply and clear-coated. Wrap ~$12/m² + ply ~$12/m². ESTIMATE 4%/yr; the clear coat decides it." },
     { n:"acrylic mirror sheet", cost:60, refl:0.85, deg:0.02,
       note:"READ: $147–248 CAD per 4×8 sheet ≈ $50–83/m². UV-stable, but it scratches and bows in heat." },
+    { n:"silvered polymer film (solar grade)", cost:40, refl:0.94, deg:0.01,
+      note:"The real answer to 'highly reflective plastic, UV resistant': silvered polymer mirror film built for concentrators (ReflecTech, 3M Solar Mirror). NOT window tint. ⚠ PRICE AND SPEC UNVERIFIED — a search for it returned window film instead, so these numbers are from background knowledge, not a listing I read." },
     { n:"anodised aluminium", cost:35, refl:0.95, deg:0.005,
       note:"What real concentrators use, and it won an independent reflector shoot-out. Highest reflectivity AND slowest decay. ESTIMATE price." },
     { n:"glass mirror", cost:40, refl:0.93, deg:0.005,
