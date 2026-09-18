@@ -790,20 +790,34 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     <h4>Solar setup - a ray-traced configuration zoo</h4>
     <p class="lede">Every solar quote tells you kilowatts. None of them tell you kilowatt-hours
     per dollar on <em>your</em> ground. This does.</p>
-    <p>A 2D ray tracer fires light at each candidate arrangement - fixed panel, tracked panel,
-    mirror troughs, adjustable louvres, a heliostat field - and counts what actually lands on
-    the cell, including the rays that shade a neighbour, bounce back out of the aperture, or
-    miss. Those optics are then weighted by a measured year of satellite weather for the site
-    (NASA POWER, 53.63&deg;N in Alberta) and divided by what the thing costs to build.</p>
-    <p>The sun sweeps &plusmn;60&deg; across all the designs at once. Each box carries its annual
-    output, its build cost, and the only number that settles an argument: <strong>kWh per
-    dollar</strong>.</p>
-    <p class="why">Three findings that surprised me, all of which contradict the obvious move.
-    An actuator on the <em>tilt</em> axis is worth <strong>+0.1%</strong> - it is the
-    <em>azimuth</em> axis that carries 24%. A cheap ram with only &plusmn;60&deg; of swing keeps
-    <strong>90%</strong> of the full tracking prize, so nothing needs a slew drive. And pointing
-    unlimited mirrors at one panel does not scale: silicon peaks near <strong>2.4&times;</strong>
-    and is destroyed by its own heat well before it gets there.</p>
+    <p>A 3D ray tracer fires light at each candidate arrangement - fixed panel, tracked panel,
+    mirror troughs, four-sided boxes, adjustable louvres, a heliostat ring, and ganged platforms
+    where one worm gear swivels a dozen panels and a second drives tilt through a scissor. It
+    counts what actually lands on the cell, including the rays that shade a neighbour, bounce
+    back out of the aperture, or miss entirely. The sun is followed along its real path in both
+    azimuth and elevation, and the optics are weighted by a measured year of hourly satellite
+    weather for the site (NASA POWER 2023, 53.63&deg;N in Alberta).</p>
+    <p>Then the awkward part: what it costs. The inverter is sized to each design rather than
+    assumed, mirrors defocus when the cell or the inverter would be overrun, and output is
+    decayed year by year - faster for designs that lean on reflectors, because reflectors weather
+    faster than silicon. Every box carries its peak power, year 1 and year 10 output, build cost,
+    payback year, and the number that settles an argument: <strong>dollars per kWh over
+    25 years</strong>.</p>
+    <p class="why">Four findings that contradict the obvious move. An actuator on the <em>tilt</em>
+    axis is worth <strong>+0.1%</strong> - it is the <em>azimuth</em> axis that carries the gain.
+    A cheap ram with only &plusmn;60&deg; of swing keeps <strong>90%</strong> of the tracking
+    prize, so nothing needs a slew drive. Pointing unlimited mirrors at one panel does not scale:
+    silicon peaks near <strong>2.4&times;</strong> and cooks itself well before that, so the limit
+    is cooling, not optics. And the cheapest mirror loses - <strong>$2/m&sup2; film is very nearly
+    free and still cannot pay for the structure to hold it</strong>, because it hazes at ~8% a
+    year until the array is just a bare panel you overpaid to mount. Durable anodised aluminium
+    is the only material here that makes mirrors worth building.</p>
+    <p class="small">What it does not do, stated plainly: it models one panel, or one ganged
+    platform - not a whole roof. In a real array the interior panels have no room for reflectors,
+    so mirror benefit scales with the perimeter rather than the area, and adjacent panels share
+    structure. Panel and racking prices are read from real listings; reflector, structure and
+    actuator costs are estimates and are labelled as such in the model. Ray sampling carries about
+    &plusmn;5%, so gaps narrower than that are not real differences.</p>
     <div style="border:1px solid var(--x-line);border-radius:8px;overflow:hidden;margin:14px 0">
       <iframe id="solarFrame" data-src="./solar/index.html" title="Solar configuration zoo"
         style="width:100%;height:min(74vh,660px);border:0;display:block;background:#0a0d12"
