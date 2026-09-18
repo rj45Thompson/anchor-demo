@@ -48,29 +48,49 @@ S = dict(
 )
 
 # --- experience: company, dates, one line of what was actually done ------------------------------
+# CORRECTED 2026-09-17. This list had drifted away from the resumes actually being sent to
+# employers, and a recruiter who followed the link from an application got a different document
+# about the same person. Six dates were wrong and one employer was wrong:
+#   * Activision was listed as an employer. It was not. That work was done at EDEN INDUSTRIES,
+#     which held the contracts with Activision, Kabam and the Operation Tango team. Eden is the
+#     employer; those are the clients. RJ confirmed this 2026-09-17 from his own older resumes.
+#   * EA read "2016-21 / five years". It is Oct 2016 - Sep 2020, which is FOUR years.
+#   * Microsoft Big Park and Novadaq were both dated 2012-13, which is impossible.
+#   * Utherverse, BioWare, Finger Food, Industrial Alliance and Neoteric were all off by a year
+#     or more against LinkedIn and the master resume.
+# Every date below matches the baseline resumes of 2026-09-17 and RJ's LinkedIn.
 JOBS = [
-    ("Utherverse", "2024-25",
-     "Assistant to the Director of Development. Live virtual-world platform operations."),
-    ("BioWare", "2023-24",
-     "Shipped the dialogue and narrative system for <b>Dragon Age 4</b> on Frostbite."),
-    ("Activision", "2022-23",
-     "Call of Duty live-ops. Ported low-level networking and real-time voice chat to Nintendo Switch."),
-    ("Sega / Relic", "2021-22",
+    ("Utherverse", "Jan - May 2025",
+     "Assistant to Lead Developer on a four-month contract. Live virtual-world platform "
+     "operations, plus hiring, training and departmental planning."),
+    ("BioWare", "May - Aug 2024",
+     "Shipped the dialog and narrative system for <b>Dragon Age: The Veilguard</b> on Frostbite. "
+     "Mentored developers on the Frosted cinematic and narrative system."),
+    ("Eden Industries", "Feb 2022 - Dec 2023",
+     "Client work in C++ and Unity. <b>Activision, Call of Duty</b>: shipped a new live ops "
+     "system. <b>Operation Tango</b>: ported low-level networking and real-time voice chat to "
+     "<b>Nintendo Switch</b>. <b>Kabam, Disney Mirrorverse</b>: fixed difficult low-level "
+     "threading and networking faults."),
+    ("Sega / Relic", "Jan 2021 - Jan 2022",
      "<b>Company of Heroes 3</b>. Profiled and optimized a C++ system for a measured <b>7%</b> "
-     "performance gain on the shipping title."),
-    ("Electronic Arts", "2016-21",
-     "Five years on Frostbite editor frameworks, cinematics and lighting. Wrote the blueprint / "
-     "visual-scripting system used across the studio."),
-    ("Unity (Finger Food)", "2014-16",
+     "performance gain on the shipping title, and wrote build tools for Perforce and the "
+     "pipeline's hot reload."),
+    ("Electronic Arts", "Oct 2016 - Sep 2020",
+     "Four years on the Frostbite editor: editor frameworks, cinematics, schematics and lighting "
+     "workflows. Architected MVVM upgrades to the legacy visual coding diagram library, wrote a "
+     "crash control and recovery application, added Azure telemetry, and helped architect the "
+     "keyframe editor."),
+    ("Unity (Finger Food)", "Apr 2015 - Sep 2016",
      "Development Team Lead across <b>Skylanders</b>, <b>Star Wars BB-8</b> and Call of Duty. "
      "Accelerated Skylanders asset-bundle loading by <b>200%</b>. Shipped Skylanders Imaginators "
      "on iOS and Android."),
-    ("Industrial Alliance", "2013-14", "Architected Unification in .NET. WPF, WCF, MVVM."),
-    ("Microsoft Big Park", "2012-13", "Real-time Lua UI for NFL, ESPN and UFC on Xbox."),
-    ("Novadaq", "2012-13",
+    ("Industrial Alliance", "Aug 2014 - Feb 2015", "Architected Unification in .NET. WPF, WCF, MVVM."),
+    ("Microsoft Big Park", "Apr 2013 - Aug 2014", "Real-time Lua UI for NFL, ESPN and UFC on Xbox."),
+    ("Novadaq", "Apr 2012 - Apr 2013",
      "Lead architect, <b>SPY ELITE</b>. Regulated surgical fluorescence-imaging medical device."),
-    ("FinancialCAD", "2010-12", "Lead architect, Silverlight / XNA presentation layer."),
-    ("Neoteric", "2004-10", "Win32 / C++ UI libraries. Led a team of four."),
+    ("FinancialCAD", "Sep 2010 - Apr 2012", "Lead architect, Silverlight / XNA presentation layer."),
+    ("Neoteric", "Jul 2004 - Jun 2010",
+     "Win32 / C++ UI libraries. Led a team of four, with hiring and training."),
 ]
 EARLIER = ("<b>Earlier:</b> Max Integration, project lead on a Win32 CRM (2004) &nbsp;&middot;&nbsp; "
            "RedHawk Gaming, subsystems and device drivers (2001-03) &nbsp;&middot;&nbsp; "
@@ -99,11 +119,17 @@ CURRENT = [
     # those is 54,028; 33,202 of those lines are neither blank nor comment, and that stricter
     # figure is the one quoted, because it is the one that survives being checked. The 19,496
     # lines of tests for it are deliberately not counted here or mentioned anywhere.
-    ("Tami - Tactics RPG for Nintendo Switch", "2025 - present",
-     "Indie tactics RPG for <b>Nintendo Switch</b> at a startup studio, shipping <b>December</b>. "
-     "I build the engine and tooling: <b>Block Painter</b>, a <b>33,000-line</b> authoring tool "
-     "that replaces the Unity interface completely, and a <b>132-route</b> HTTP bridge that lets "
-     "scripts and AI agents drive the editor headlessly."),
+    # UNNAMED from 2026-09-17. RJ: "You can name it if you want but I don't want to tell my
+    # employer just yet." The studio, the title, the platform and the ship date all came out of
+    # this entry, because this page is public and his current client can find it by searching his
+    # name. Applications and interviews may still name it; a browsable portfolio may not. The
+    # engineering below is unchanged and still checkable.
+    ("Lead developer, tactics RPG in development", "2025 - present",
+     "Contract lead developer at a small independent studio. I build the engine and tooling: a "
+     "<b>33,000-line</b> level and terrain authoring tool that replaces the Unity interface, a "
+     "<b>132-route</b> HTTP bridge that lets scripts and agents drive the editor headlessly, the "
+     "tactics camera and battle cinematics, and a Unity to <b>Unreal Engine 5</b> VFX converter "
+     "that moved all <b>65</b> particle emitters into Niagara."),
     ("Verification and calibration for AI systems", "2025 - present",
      "A knowledge engine with <b>no neural weights</b> over <b>66.4M facts</b>, running entirely "
      "in the browser: it reports a measured confidence per inference chain and abstains rather "
@@ -159,8 +185,8 @@ def build(path="games/RJ_Thompson_Resume.pdf"):
     F.append(rule())
     F.append(Paragraph(
         "Senior C++ / C# engineer. 30 years shipping real-time systems: game engines and tooling, "
-        "low-level networking, and regulated medical-device software. Authorized to work in Canada, "
-        "no sponsorship needed. Open to remote, relocation, or contract.", S["summary"]))
+        "low-level networking, and regulated medical-device software. Canadian citizen working "
+        "remotely from Alberta: no visa, sponsorship or petition needed to engage me.", S["summary"]))
 
     F.append(Paragraph("CURRENT WORK", S["section"]))
     for a, b, c in CURRENT:
