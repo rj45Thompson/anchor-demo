@@ -5635,4 +5635,68 @@ renderCode();
   try{ new ChatBox(host); }catch(e){ host.style.display="none"; }
 })();
 </script>
+<script>
+/* Deep links. Every tab and sub-tab answers to an address, so a link in an email or a resume
+   opens the exact panel it is talking about instead of the front page:
+
+     #reqs  Requirements gathering     #audit  Count what's missing     #inv     The work
+     #law   The anchor law             #bench  BossBench                #papers  Papers & data
+
+   Any tab's data-p works, as does any sub-tab's id without its "s-", plus the few plain-English
+   aliases below. Clicks keep the address bar in step, the same promise the view switch makes:
+   whatever is on screen can be copied as is. A hash that names nothing, or names something this
+   page hides on purpose (data-aud=""), is ignored and the page opens exactly as it always has.
+   The whole block sits in a try: a broken link must never cost the page itself. */
+(function(){
+  try{
+    var ALIAS = { requirements:"reqs", uml:"reqs", usecases:"reqs", "use-cases":"reqs",
+                  missing:"audit", work:"inv", anchorlaw:"law", "anchor-law":"law",
+                  bossbench:"bench", ask:"think" };
+    function q(sel){ return document.querySelector(sel); }
+    function shownNow(el){ return getComputedStyle(el).display !== "none"; }
+    function remember(name){
+      try{ history.replaceState(null, "", location.pathname + location.search + "#" + name); }catch(e){}
+    }
+    function settle(){
+      var bar = q(".tabs"); if(bar && bar.scrollIntoView) bar.scrollIntoView({ block: "start" });
+    }
+    function open(raw, scroll){
+      var name = String(raw || "").replace(/^#/, "");
+      try{ name = decodeURIComponent(name); }catch(e){}
+      name = name.trim().toLowerCase().replace(/^(p|s)-/, "");
+      name = ALIAS[name] || name;
+      if(!/^[a-z0-9-]+$/.test(name)) return false;
+      var tab = q('.tab[data-p="' + name + '"]'), sub = null;
+      if(!tab){
+        sub = q('#invTabs .subtab[data-s="s-' + name + '"]');
+        if(sub) tab = q('.tab[data-p="inv"]');
+      }
+      if(!tab) return false;
+      var target = sub || tab;
+      if(target.getAttribute("data-aud") === "") return false;      // hidden on purpose
+      if(!shownNow(target)){                                          // shown only in the other view
+        var btn = q('[data-aud-set="' + (target.getAttribute("data-aud") || "").split(",")[0] + '"]');
+        if(btn) btn.click();
+        if(!shownNow(target)) return false;
+        remember(name);                                               // the view switch rewrote the address
+      }
+      if(!tab.classList.contains("on")) tab.click();
+      if(sub && !sub.classList.contains("on")) sub.click();
+      if(scroll) settle();
+      return true;
+    }
+    document.querySelectorAll(".tab").forEach(function(t){
+      t.addEventListener("click", function(e){ if(e.isTrusted) remember(t.dataset.p); });
+    });
+    var inv = document.getElementById("invTabs");
+    if(inv) inv.addEventListener("click", function(e){
+      var b = e.target && e.target.closest ? e.target.closest(".subtab") : null;
+      if(b && e.isTrusted) remember(b.dataset.s.replace(/^s-/, ""));
+    });
+    window.addEventListener("hashchange", function(){ open(location.hash, true); });
+    // fonts and images can still move the bar after this runs, so it is settled once more on load
+    if(location.hash && open(location.hash, true)) window.addEventListener("load", settle);
+  }catch(e){}
+})();
+</script>
 </body></html>
