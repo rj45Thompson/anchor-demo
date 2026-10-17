@@ -268,6 +268,7 @@ pre.mermaid { overflow-x: auto; }
 <div class="shell"><nav class="toc"><div class="brand">u2ue</div><div class="part">Front matter</div>
 <a href="#README">u2ue - the Unity to Unreal porting toolkit: Manual</a>
 <a href="#why-u2ue">Why u2ue</a>
+<a href="#nutshell">Porting to Unreal in a nutshell</a>
 <a href="#00-short-version">The short version</a>
 <div class="part">Part I - getting started</div>
 <a href="#01-introduction">1. Introduction</a>
@@ -284,18 +285,19 @@ pre.mermaid { overflow-x: auto; }
 <a href="#10-verification">10. Verification and gates</a>
 <a href="#11-metrics-and-reports">11. Metrics and reports</a>
 <a href="#12-extending">12. Extending the toolkit</a>
-<div class="part">Part IV - the hard parts and the tools</div>
+<div class="part">Part IV - the hard parts, the tools, the AI porter</div>
 <a href="#13-shuriken-to-niagara">13. Shuriken to Niagara, in depth</a>
 <a href="#14-unity-tools">14. The Unity tools: headless, driving an editor, several agents</a>
 <a href="#15-unreal-tools">15. The Unreal tools: headless runs, the host, publishing</a>
 <a href="#16-test-driven-porting">16. Test-driven porting</a>
+<a href="#17-porting-with-opus">17. Porting with Opus 5.5</a>
 <div class="part">Part V - reference</div>
-<a href="#17-facade">17. The facade: detailed requirements</a>
-<a href="#18-commands">18. Command reference</a>
-<a href="#19-reference">19. Reference</a>
-<a href="#20-architecture">20. Architecture and the UML</a>
+<a href="#18-facade">18. The facade: detailed requirements</a>
+<a href="#19-commands">19. Command reference</a>
+<a href="#20-reference">20. Reference</a>
+<a href="#21-architecture">21. Architecture and the UML</a>
 <div class="part">Part VI - when it goes wrong</div>
-<a href="#21-troubleshooting">21. Troubleshooting</a>
+<a href="#22-troubleshooting">22. Troubleshooting</a>
 <a href="#faq">Questions and answers</a>
 <div class="part">Appendices</div>
 <a href="#a1-worked-example">Appendix A. A worked example: the reference port</a>
@@ -333,7 +335,7 @@ reference, the facade's requirements, the use cases, the class model, the switch
 <tbody>
 <tr>
 <td><strong>Front matter</strong></td>
-<td>this page, <a href="#why-u2ue">Why u2ue</a> (what it does and the measured numbers), <a href="#00-short-version">The short version</a> (every aspect of a port on one screen each)</td>
+<td>this page, <a href="#why-u2ue">Why u2ue</a> (what it does and the measured numbers), <a href="#nutshell">Porting to Unreal in a nutshell</a> (a quick start, and the five problems every port meets with the toolkit's answer to each), <a href="#00-short-version">The short version</a> (every aspect of a port on one screen each)</td>
 <td>orientation</td>
 </tr>
 <tr>
@@ -352,18 +354,18 @@ reference, the facade's requirements, the use cases, the class model, the switch
 <td>doing</td>
 </tr>
 <tr>
-<td><strong>Part IV - the hard parts and the tools</strong></td>
-<td>13 Shuriken to Niagara in depth, 14 The Unity tools, 15 The Unreal tools, 16 Test-driven porting</td>
+<td><strong>Part IV - the hard parts, the tools, the AI porter</strong></td>
+<td>13 Shuriken to Niagara in depth, 14 The Unity tools, 15 The Unreal tools, 16 Test-driven porting, 17 Porting with Opus 5.5 (the skills, the index, several agents, reviewing AI code)</td>
 <td>understanding, doing</td>
 </tr>
 <tr>
 <td><strong>Part V - reference</strong></td>
-<td>17 The facade's detailed requirements, 18 Command reference, 19 Reference (formats, switches, tools, selftests), 20 Architecture and the UML</td>
+<td>18 The facade's detailed requirements, 19 Command reference, 20 Reference (formats, switches, tools, selftests), 21 Architecture and the UML</td>
 <td>looking up</td>
 </tr>
 <tr>
 <td><strong>Part VI - when it goes wrong</strong></td>
-<td>21 Troubleshooting, <a href="#faq">Questions and answers</a></td>
+<td>22 Troubleshooting, <a href="#faq">Questions and answers</a></td>
 <td>fixing</td>
 </tr>
 <tr>
@@ -376,12 +378,12 @@ reference, the facade's requirements, the use cases, the class model, the switch
 <h3 id="reading-paths">Reading paths</h3>
 <ul>
 <li><strong>Porting a game, first time</strong>: The short version, then Chapters 3 and 4 in order. Then the Part III chapter for each part of your
-  game as you reach it, with <a href="#21-troubleshooting">Chapter 21</a> open beside you.</li>
-<li><strong>An AI model doing the port</strong>: <a href="#02-concepts">Chapter 2</a>, then the two skills (<code>u2ue/skill/u2ue-logic/SKILL.md</code> for the game's logic,
-  <code>u2ue/skill/u2ue-port/SKILL.md</code> for an effect gap), <a href="#16-test-driven-porting">Chapter 16</a> for how its work is checked, and <a href="#18-commands">Chapter 18</a> for each command.</li>
-<li><strong>Reviewing a port</strong>: Why u2ue, <a href="#05-use-cases">Chapter 5</a> (start at the epic), <a href="#20-architecture">Chapter 20</a> (the architecture and the UML), <a href="#17-facade">Chapter 17</a> (each
+  game as you reach it, with <a href="#22-troubleshooting">Chapter 22</a> open beside you.</li>
+<li><strong>An AI model doing the port</strong>: <a href="#17-porting-with-opus">Chapter 17</a> first (how the reference port was run with Opus 5.5), <a href="#02-concepts">Chapter 2</a>, then the skills (<code>u2ue/skill/u2ue-logic/SKILL.md</code> for the game's logic,
+  <code>u2ue/skill/u2ue-port/SKILL.md</code> for an effect gap), <a href="#16-test-driven-porting">Chapter 16</a> for how its work is checked, and <a href="#19-commands">Chapter 19</a> for each command.</li>
+<li><strong>Reviewing a port</strong>: Why u2ue, <a href="#05-use-cases">Chapter 5</a> (start at the epic), <a href="#21-architecture">Chapter 21</a> (the architecture and the UML), <a href="#18-facade">Chapter 18</a> (each
   command as a requirement), <a href="#a4-traceability">Appendix E</a>.</li>
-<li><strong>Extending the toolkit</strong>: <a href="#02-concepts">Chapter 2</a>, <a href="#12-extending">Chapter 12</a>, <a href="#16-test-driven-porting">Chapter 16</a>, <a href="#20-architecture">Chapter 20</a>.</li>
+<li><strong>Extending the toolkit</strong>: <a href="#02-concepts">Chapter 2</a>, <a href="#12-extending">Chapter 12</a>, <a href="#16-test-driven-porting">Chapter 16</a>, <a href="#21-architecture">Chapter 21</a>.</li>
 </ul>
 <h3 id="examples">Examples</h3>
 <p>Every example in this manual is real: its commands ran, and its output was recorded on the game named beside it.</p>
@@ -463,19 +465,27 @@ reference, the facade's requirements, the use cases, the class model, the switch
 </tr>
 <tr>
 <td>know exactly what a command accepts and refuses</td>
-<td><a href="#17-facade">17. The facade</a>, <a href="#18-commands">18. Command reference</a></td>
+<td><a href="#18-facade">18. The facade</a>, <a href="#19-commands">19. Command reference</a></td>
 </tr>
 <tr>
 <td>find a format, a switch or a tool</td>
-<td><a href="#19-reference">19. Reference</a></td>
+<td><a href="#20-reference">20. Reference</a></td>
 </tr>
 <tr>
 <td>review the design and its UML</td>
-<td><a href="#20-architecture">20. Architecture and the UML</a></td>
+<td><a href="#21-architecture">21. Architecture and the UML</a></td>
+</tr>
+<tr>
+<td>run the port with an AI model, save its tokens, review its work</td>
+<td><a href="#17-porting-with-opus">17. Porting with Opus 5.5</a></td>
+</tr>
+<tr>
+<td>get going in five minutes</td>
+<td><a href="#nutshell">Porting to Unreal in a nutshell</a></td>
 </tr>
 <tr>
 <td>get past a known trap</td>
-<td><a href="#21-troubleshooting">21. Troubleshooting</a></td>
+<td><a href="#22-troubleshooting">22. Troubleshooting</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -541,7 +551,7 @@ on a license or blocks the person who is working. <em>Chapter 7, <a href="#13-sh
 <h3 id="shuriken-to-niagara-behaviour-by-behaviour-with-evidence">Shuriken to Niagara, behaviour by behaviour, with evidence</h3>
 <p>The converter turns Unity's particle systems into Niagara systems. Every behaviour it ports is a <strong>route</strong> behind a switch. A route
 starts OFF, and is turned ON only after it has been measured, proven over every emitter, trialled, looked at, and given an evidence
-row in the flip table. The switch table in <a href="#19-reference">Chapter 19</a> lists each route with its evidence. When the converter cannot port something,
+row in the flip table. The switch table in <a href="#20-reference">Chapter 20</a> lists each route with its evidence. When the converter cannot port something,
 it says what, and why, per emitter. <em>Chapter 8, <a href="#13-shuriken-to-niagara">Chapter 13</a>.</em></p>
 <h3 id="it-measures-unity-instead-of-guessing">It measures Unity instead of guessing</h3>
 <p>When the port depends on how Unity behaves (a sub-emitter's birth frame, a scaling mode, a float format), the toolkit measures it in
@@ -574,7 +584,7 @@ step. <em>Chapter 15.</em></p>
 <h3 id="a-model-to-review-not-a-diff">A model to review, not a diff</h3>
 <p>The use cases, the facade's requirements, the class model and the traceability are all generated from the toolkit's code and
 documents, and gated. A diagram that names a class, a verb or a step that does not exist fails the build. A reviewer starts at the
-epic and follows each step into the command that proves it. <em>Chapter 5, <a href="#17-facade">Chapter 17</a>, <a href="#20-architecture">Chapter 20</a>, <a href="#a4-traceability">Appendix E</a>.</em></p>
+epic and follows each step into the command that proves it. <em>Chapter 5, <a href="#18-facade">Chapter 18</a>, <a href="#21-architecture">Chapter 21</a>, <a href="#a4-traceability">Appendix E</a>.</em></p>
 <h3 id="requirements-nobody-wrote">Requirements nobody wrote</h3>
 <p>Chaining each use case step's precondition to the step before it exposes requirements that nobody wrote down. On the reference game,
 most of the requirements the chain inferred turned out to be real defects (see the tile above). <em>Chapter 5.</em></p>
@@ -590,10 +600,64 @@ trusted. <em>Chapter 6, <a href="#08-effects">Chapter 8</a>.</em></p>
 never substitutes a plausible number, and a refusal names its cause. <em>Chapter 1.</em></p>
 <h2 id="where-to-start">Where to start</h2>
 <ul>
+<li>In a hurry: <a href="#nutshell">Porting to Unreal in a nutshell</a> - a quick start, and the five problems every port meets.</li>
 <li>New to the toolkit: <a href="#00-short-version">The short version</a>, then <a href="#03-install">Chapter 3</a> (installation) and <a href="#04-quick-start">Chapter 4</a> (the tutorial).</li>
+<li>Porting with an AI model: <a href="#17-porting-with-opus">Chapter 17</a> - the skills, saving tokens, several agents measured, and reviewing the model's work.</li>
 <li>Evaluating it: <a href="#05-use-cases">Chapter 5</a> (what it does, as use cases), <a href="#a1-worked-example">Appendix A</a> (the reference port in numbers), <a href="#a3-prior-art">Appendix D</a> (other ways to port).</li>
-<li>Reviewing how it ports: <a href="#20-architecture">Chapter 20</a> (the architecture and the UML), <a href="#17-facade">Chapter 17</a> (every command as a requirement).</li>
+<li>Reviewing how it ports: <a href="#21-architecture">Chapter 21</a> (the architecture and the UML), <a href="#18-facade">Chapter 18</a> (every command as a requirement).</li>
 </ul></section>
+<section id="nutshell"><h1 id="porting-to-unreal-in-a-nutshell">Porting to Unreal in a nutshell</h1>
+<p>The whole job on two screens: a quick start you can run today, and the five problems every Unity to Unreal port meets, each with the
+toolkit's answer and the chapter that has the details.</p>
+<h2 id="quick-start">Quick start</h2>
+<p>You need Windows with native PowerShell, Python with PyYAML, the .NET SDK, Unreal Engine 5.7, and your Unity project saved as text
+(<em>Force Text</em> serialization). <a href="#03-install">Chapter 3</a> has the full list.</p>
+<pre><code>py -m u2ue                                          # every verb the toolkit has
+py -m u2ue find &lt;words&gt;                             # everything it holds about a subject, as path:line
+</code></pre>
+<p>Describe your game in one project file, <code>u2ue/projects/&lt;game&gt;.json</code> (<a href="#03-install">Chapter 3</a> has a complete one). Then:</p>
+<pre><code>py -m u2ue --project &lt;game&gt; info                    # every path the file names, opened - fix the file until it exits 0
+py -m u2ue --project &lt;game&gt; inventory --survey      # which folders are the game's own code; name them as code.roots
+py -m u2ue --project &lt;game&gt; inventory               # the game's C#, type by type: Unity calls, pure rules, frame order
+py -m u2ue --project &lt;game&gt; extract                 # the particle effects as the engine-neutral IR, every refusal named
+py -m u2ue --project &lt;game&gt; check                   # the toolkit's selftests and your project's gates - red means stop
+py -m u2ue --project &lt;game&gt; build --dry             # the plan and the Unreal host's state, before anything runs
+py -m u2ue --project &lt;game&gt; build                   # the effects as Niagara systems (native PowerShell, one Unreal at a time)
+py -m u2ue --project &lt;game&gt; report --out &lt;game&gt;.html
+py -m u2ue --project &lt;game&gt; metrics                 # how identical it is, each number from a record
+</code></pre>
+<p>That is a first report. <a href="#04-quick-start">Chapter 4</a> walks the same steps with real output, then carries on through the game's code, scenes, UI and
+its own Unreal project. If an AI model is doing the port, start it with <a href="#17-porting-with-opus">Chapter 17</a> and <code>py -m u2ue --project &lt;game&gt; logic</code>.</p>
+<h2 id="the-five-problems-every-port-meets">The five problems every port meets</h2>
+<h3 id="1-unity-does-not-behave-the-way-its-documentation-reads">1. Unity does not behave the way its documentation reads</h3>
+<p>A converter written from the documentation is wrong in the details that show: the frame a sub-emitter's child is born on, what a
+scaling mode really scales, how Mono prints a float. <strong>The toolkit measures Unity instead of reading about it.</strong> A probe case is
+data, run in the owner's editor only while the owner is idle, and judged by a judge that must refuse a planted wrong answer. Each
+rule is stored with the Unity version it was measured on, and on another version it is reported as unverified rather than trusted.
+<em>Chapter 9, <a href="#14-unity-tools">Chapter 14</a>.</em></p>
+<h3 id="2-shuriken-and-niagara-do-not-map-one-to-one">2. Shuriken and Niagara do not map one to one</h3>
+<p>Shuriken is a fixed set of modules; Niagara is an emitter stack of scripts. A Unity setting can need several Niagara modules, and
+some have no equivalent at all. <strong>The toolkit reads every effect into an engine-neutral IR, converts it in stages, and puts every
+behaviour behind a switch.</strong> A switch starts OFF and is turned ON only with an evidence row that a trial proved. What cannot be
+ported is named per emitter on the acceptance page, never dropped. <em>Chapter 8, <a href="#13-shuriken-to-niagara">Chapter 13</a>.</em></p>
+<h3 id="3-the-games-rules-are-tangled-into-monobehaviours">3. The game's rules are tangled into MonoBehaviours</h3>
+<p>The rules live inside <code>Update</code> methods, coroutines, inspector values and Unity types, in an execution order nobody wrote down.
+<strong>The toolkit moves them into an engine-free model behind seams.</strong> The engine fills the seams (view, input, camera, effects,
+platform); the model is driven in Unity's frame order and runs without either engine. Its answers are proven by float bits on
+.NET, on that Unity version's own Mono runtime, and in Unreal. <em>Chapter 6, <a href="#16-test-driven-porting">Chapter 16</a>, and the logic skill.</em></p>
+<h3 id="4-transforms-do-not-compose-the-same-way">4. Transforms do not compose the same way</h3>
+<p>The two engines differ in axes, units and rotation order. Worse, a non-uniform scale under a rotation makes Unity draw a shear that
+Unreal's transform cannot hold at all. <strong>The toolkit states one conversion, in one place, and finds every node Unreal cannot place
+as Unity does</strong> (<code>py -m u2ue --project &lt;game&gt; shear</code>), with the error in centimetres. Such a node is named for a decision, never
+averaged into something that looks close. <em>Chapter 7.</em></p>
+<h3 id="5-it-looks-right-is-not-proof">5. "It looks right" is not proof</h3>
+<p>A photo of an effect is one draw of a random process. A metric alone can lie too: on the reference port, a render whose whole scene
+went black scored better, because dark geometry stopped hiding a bright backdrop. <strong>The toolkit proves the data first.</strong> It reads
+back every emitter frame by frame and holds it to Unity's own particle state (<code>u2ue conform</code>). It reports "identical" as a family of
+four numbers, never one. Pictures come last, with the capture's own artefacts labelled. <em>Chapter 10, <a href="#11-metrics-and-reports">Chapter 11</a>, <a href="#16-test-driven-porting">Chapter 16</a>.</em></p>
+<h2 id="the-one-rule-under-all-five">The one rule under all five</h2>
+<p>Every value is <strong>READ</strong> from the source, with where it came from; or <strong>MEASURED</strong> in Unity, by a judge that can fail; or
+<strong>ABSENT</strong>, named with the reason. There is no fourth kind. A port that guesses looks finished long before it is. <em>Chapter 1.</em></p></section>
 <section id="00-short-version"><h1 id="the-short-version">The short version</h1>
 <p>This part is the whole toolkit in one sitting: one screen per aspect of a port, each saying what happens, the command that does it,
 what it prints, and what it does not do yet. The chapters behind it go deeper: Part I gets you started (installation and the
@@ -985,7 +1049,7 @@ the reference port it covers 9,560 emitters and 3.4 million engine calls in abou
 <li><strong>A porter</strong> - an engineer moving a Unity game to Unreal, who wants the game running the same and every difference named.</li>
 <li><strong>An AI agent</strong> - the toolkit ships with a playbook (<code>u2ue/skill/u2ue-port/SKILL.md</code>) so an agent can drive a port with the same
   discipline, and every output is text an agent can read.</li>
-<li><strong>A reviewer</strong> - a senior engineer judging how the port is done: <a href="#20-architecture">Chapter 20</a> and <code>u2ue/ARCHITECTURE.md</code> are written for them.</li>
+<li><strong>A reviewer</strong> - a senior engineer judging how the port is done: <a href="#21-architecture">Chapter 21</a> and <code>u2ue/ARCHITECTURE.md</code> are written for them.</li>
 <li><strong>The game's owner</strong> - who answers only the decisions that are theirs; the report lists them, each with its count.</li>
 </ul>
 <p>Two systems support them: the owner's Unity editor, where a Unity behaviour is measured only while its owner is idle (<a href="#09-measuring-unity">Chapter 9</a>), and
@@ -1030,7 +1094,7 @@ identical measured.</p>
 </tr>
 <tr>
 <td>a review that holds</td>
-<td>the class model and the use cases (<a href="#20-architecture">Chapter 20</a>)</td>
+<td>the class model and the use cases (<a href="#21-architecture">Chapter 21</a>)</td>
 </tr>
 </tbody>
 </table></div>
@@ -1050,7 +1114,7 @@ the last two the reference game's:</p>
   (<code>unity_tex_artifact</code>); the built-in resources (<code>u1e_builtin_names</code>, from <code>unity_builtin_extra</code>); alpha-source and alpha-fill
   derivations (<code>u1e_alpha</code>, <code>u1e_alphadilate</code>); a PSD inside a PNG (<code>u1e_psdtex</code>). Proven on two games and two Unity versions.</li>
 <li><strong>The engine-pair knowledge: Shuriken to Niagara.</strong> <code>build_niagara</code> and <code>shuriken_size</code>, every route flipped on with its evidence row
-  in the flip table (<code>patch_flip_defaults.TABLE</code>) or named OFF with what it waits on (<code>flip_audit</code>); <a href="#19-reference">Chapter 19</a> counts them. Every rule
+  in the flip table (<code>patch_flip_defaults.TABLE</code>) or named OFF with what it waits on (<code>flip_audit</code>); <a href="#20-reference">Chapter 20</a> counts them. Every rule
   in it was MEASURED in Unity (the probes' facts in <code>shared/conformance/*.json</code>) or READ in an engine's source. This is the asset a
   second game reuses for free.</li>
 <li><strong>The proof machinery.</strong> The read-back per frame (<code>u1e_color_size_readback</code>) and its sweep checks, a judge per route written BEFORE
@@ -1179,7 +1243,7 @@ without either editor, diffable between runs, and a different Unity version chan
 <p><code>vfxport/build_niagara.py</code> turns one IR emitter into Niagara stack writes, in twenty stages in the order Unity's own modules run. A
 <strong>route</strong> is one ported behaviour (a shape, a curve mode, a sub-emitter trigger). Each new route lands behind a <strong>switch</strong>
 (<code>VFXPORT_&lt;NAME&gt;</code>), default off, and is flipped on only after its proof (<a href="#10-verification">Chapter 10</a>); the flip table
-(<code>vfxport/patch_flip_defaults.py</code>) records each switch with its evidence. <a href="#19-reference">Chapter 19</a> lists them all.</p>
+(<code>vfxport/patch_flip_defaults.py</code>) records each switch with its evidence. <a href="#20-reference">Chapter 20</a> lists them all.</p>
 <h2 id="windows-measuring-unity">Windows: measuring Unity</h2>
 <p>Where Unity's behaviour is not in its data, it is <strong>measured</strong>. A <strong>probe</strong> (a small Editor script) is dropped into the owner's Unity
 editor for one run inside a <strong>window</strong> - only when the owner has been idle ten minutes, stopped the moment they return - and writes a
@@ -1202,7 +1266,7 @@ evidence lives. The product in one sentence: <strong>a customer points an AI age
 the skill (<a href="#06-game-code">Chapter 6</a>), and every other asset family ports itself - each by Routes that follow measured Rules, held to Unity by
 Judges.</strong> <code>py u2ue/survey/concepts_gate.py</code> checks every concept the table below says exists, and counts how many do; a pillar of
 <code>u2ue cycle</code> requires that count never to go down. The concept diagram itself is generated from <code>u2ue/CONCEPTS.md</code>, never drawn
-by hand: <a href="#20-architecture">Chapter 20</a>, "The concept model".</p>
+by hand: <a href="#21-architecture">Chapter 21</a>, "The concept model".</p>
 <h3 id="where-each-concept-lives-in-the-code">Where each concept lives in the code</h3>
 <p>Every concept is a class today - the source table's <code>status</code> column reads EXISTS on every row - and the <code>class</code> column is the
 module and the class that holds it, which <code>concepts_gate.py</code> checks.</p>
@@ -1814,7 +1878,7 @@ cycle. Run it before any report. <em>Chapter 16.</em></p>
 <li>The game's code, in full: <a href="#06-game-code">Chapter 6</a>, and <code>u2ue/BASICS.md</code> topic by topic.</li>
 <li>A behaviour that must match exactly: <a href="#09-measuring-unity">Chapter 9</a>, and the tools that run it: <a href="#14-unity-tools">Chapter 14</a>.</li>
 <li>An effect family the converter refuses: <a href="#08-effects">Chapter 8</a>'s route protocol, then <a href="#13-shuriken-to-niagara">Chapter 13</a>.</li>
-<li>Something went wrong: <a href="#21-troubleshooting">Chapter 21</a>.</li>
+<li>Something went wrong: <a href="#22-troubleshooting">Chapter 22</a>.</li>
 </ul></section>
 <section id="05-use-cases"><h1 id="5-use-cases">5. Use cases</h1>
 <p>This chapter is the toolkit's requirements model: what each kind of user does with it, step by step. It is generated, not written.
@@ -1831,7 +1895,7 @@ a requirement nobody wrote.</p>
 <li><strong>The main success scenario</strong> is three to eleven steps. Each step's postcondition is the next step's precondition, so a step that
   needs what nothing before it guarantees shows a gap.</li>
 <li><strong>Extensions</strong> are where the chain breaks. Each is numbered by the step it branches from (<code>3a</code> branches from step 3; <code>*</code> from any
-  step), and each one was read where its document says it starts. <a href="#21-troubleshooting">Chapter 21</a> is part of the model, not a page beside it.</li>
+  step), and each one was read where its document says it starts. <a href="#22-troubleshooting">Chapter 22</a> is part of the model, not a page beside it.</li>
 <li><strong>Include and extend point opposite ways.</strong> An include runs from the base case to the case it includes (the epic includes the
   quick start). An extend runs from the extension to the base it extends.</li>
 <li><strong>Proven by</strong> names the command that checks a step. That command is the test, and it fails on a planted defect before it is
@@ -1845,7 +1909,7 @@ py u2ue/manual/build.py                    # this chapter, from the engine's mod
 <p>Between the last two, the requirements engine is run over the harvest: its trace, its epic builder, and its checker, which refuses a
 case without a dressed field, a scenario outside three to eleven steps, or a citation that does not resolve.</p>
 <!-- GEN:usecases -->
-<p><strong>19 use cases</strong> - one summary-level epic and 18 user-goal cases - with <strong>124 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 163 (the 2 extension(s) that branch from any step carry no row number). The model holds 1566 facts of this domain.</p>
+<p><strong>19 use cases</strong> - one summary-level epic and 18 user-goal cases - with <strong>124 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 163 (the 2 extension(s) that branch from any step carry no row number). The model holds 1582 facts of this domain.</p>
 <h2 id="the-actors">The actors</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -2121,8 +2185,8 @@ case without a dressed field, a scenario outside three to eleven steps, or a cit
 </ol>
 <p><strong>Extensions</strong> (where the chain breaks, numbered by the step they branch from):</p>
 <ul>
-<li><strong>2a</strong> A patch that refused left the file it patches empty - open(path, "w").write(patch(text)) opens - and truncates - the file before patch runs, so when patch refuses (an anchor moved, already patched) the file is left at 0 bytes. Build the new text first, then open the file. Every patch script in the toolkit does, and each carries a plant: pointed at a copy that already carries its mark, it must refuse and leave the copy byte-identical. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>2b</strong> Two patches to one file, each proven on its own copy - That proves each, not both: an anchor the first one moves would make the second refuse at landing time. Apply them in landing order to one copy and compile it before either lands (the reference port's two converter patches were proven both ways round). <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
+<li><strong>2a</strong> A patch that refused left the file it patches empty - open(path, "w").write(patch(text)) opens - and truncates - the file before patch runs, so when patch refuses (an anchor moved, already patched) the file is left at 0 bytes. Build the new text first, then open the file. Every patch script in the toolkit does, and each carries a plant: pointed at a copy that already carries its mark, it must refuse and leave the copy byte-identical. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>2b</strong> Two patches to one file, each proven on its own copy - That proves each, not both: an anchor the first one moves would make the second refuse at landing time. Apply them in landing order to one copy and compile it before either lands (the reference port's two converter patches were proven both ways round). <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
 </ul>
 <h2 id="uc-02-a-developer-answers-one-game-specific-question-with-an-adapter">UC-02 A developer answers one game-specific question with an adapter</h2>
 <div class="table-wrap"><table>
@@ -2326,7 +2390,7 @@ case without a dressed field, a scenario outside three to eleven steps, or a cit
 </tr>
 <tr>
 <td>Success guarantee</td>
-<td>u2ue check runs the selftest and <a href="#19-reference">Chapter 19</a> lists it.</td>
+<td>u2ue check runs the selftest and <a href="#20-reference">Chapter 20</a> lists it.</td>
 </tr>
 <tr>
 <td>Read from</td>
@@ -2382,7 +2446,7 @@ case without a dressed field, a scenario outside three to eleven steps, or a cit
 </tr>
 <tr>
 <td>Success guarantee</td>
-<td>the command line, find and <a href="#18-commands">Chapter 18</a> all show the verb, from its one registry row.</td>
+<td>the command line, find and <a href="#19-commands">Chapter 19</a> all show the verb, from its one registry row.</td>
 </tr>
 <tr>
 <td>Read from</td>
@@ -2720,10 +2784,10 @@ case without a dressed field, a scenario outside three to eleven steps, or a cit
 <p><strong>Extensions</strong> (where the chain breaks, numbered by the step they branch from):</p>
 <ul>
 <li><strong>2a</strong> The owner comes back - At any step the window leaves Play first, then takes the probes out (step 9); nothing else runs. <em>(<a href="#09-measuring-unity">Chapter 9</a>)</em></li>
-<li><strong>7a</strong> Unity crashes in native code during a probe - ParticleSystem.Particle.GetMeshIndex on a renderer that is not a Mesh renderer with meshes kills the editor; a managed try/catch does not see it. Check the renderer before any renderer-dependent query, and write the field ABSENT otherwise. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7b</strong> A probe's work never runs while the editor is in the background - EditorApplication.delayCall does not fire for an unfocused editor. Poll from EditorApplication.update. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7c</strong> The first case a probe renders is wrong, and only that one - The first render after a probe sets up its scene can come out incomplete (measured: without the scene's ambient, so an ON - OFF difference read the ambient as light). Throw one or two renders away before the first case, and have the judge compare every OFF render of a surface against the others, so an incomplete one is refused by name instead of read as data. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>6a</strong> A measurement right after a recompile reproduces the old numbers - Entering Play while a compile is pending runs the old assembly. Wait until the editor assembly's timestamp is newer than the source and isCompiling reads false, then Play. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
+<li><strong>7a</strong> Unity crashes in native code during a probe - ParticleSystem.Particle.GetMeshIndex on a renderer that is not a Mesh renderer with meshes kills the editor; a managed try/catch does not see it. Check the renderer before any renderer-dependent query, and write the field ABSENT otherwise. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7b</strong> A probe's work never runs while the editor is in the background - EditorApplication.delayCall does not fire for an unfocused editor. Poll from EditorApplication.update. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7c</strong> The first case a probe renders is wrong, and only that one - The first render after a probe sets up its scene can come out incomplete (measured: without the scene's ambient, so an ON - OFF difference read the ambient as light). Throw one or two renders away before the first case, and have the judge compare every OFF render of a surface against the others, so an incomplete one is refused by name instead of read as data. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>6a</strong> A measurement right after a recompile reproduces the old numbers - Entering Play while a compile is pending runs the old assembly. Wait until the editor assembly's timestamp is newer than the source and isCompiling reads false, then Play. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
 </ul>
 <h2 id="uc-11-the-porter-imports-a-unity-scene-as-an-unreal-level-and-grades-it">UC-11 The porter imports a Unity scene as an Unreal level and grades it</h2>
 <div class="table-wrap"><table>
@@ -2975,9 +3039,9 @@ case without a dressed field, a scenario outside three to eleven steps, or a cit
 <p><strong>Extensions</strong> (where the chain breaks, numbered by the step they branch from):</p>
 <ul>
 <li><strong>1a</strong> A rule does value-type maths (Vector3, Mathf, Color) - It does not move as written: where those types live in an engine-free model is the owner's decision, made once for the whole model, and the rule waits for it. <em>(<a href="#06-game-code">Chapter 6</a>)</em></li>
-<li><strong>7a</strong> Text built from floats differs between Unity and .NET - Unity's Mono rounds float text to seven significant digits first, rounds halves away from zero, and prints a value that rounds to zero without a sign. Any number a player reads, or a stream compared against Unity, goes through one formatter that reproduces Mono's rules. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7b</strong> Float results differ by one ULP - Mono may keep a float expression at higher precision. u2ue parity names every such row; an allowance pins the exact row and bits, and the fix (explicit float locals) moves Unity's own value, so it is the owner's call. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7c</strong> System.Text.Json writes {} for a Unity data class - Unity's JsonUtility serializes public fields; System.Text.Json ignores fields unless IncludeFields = true. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
+<li><strong>7a</strong> Text built from floats differs between Unity and .NET - Unity's Mono rounds float text to seven significant digits first, rounds halves away from zero, and prints a value that rounds to zero without a sign. Any number a player reads, or a stream compared against Unity, goes through one formatter that reproduces Mono's rules. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7b</strong> Float results differ by one ULP - Mono may keep a float expression at higher precision. u2ue parity names every such row; an allowance pins the exact row and bits, and the fix (explicit float locals) moves Unity's own value, so it is the owner's call. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7c</strong> System.Text.Json writes {} for a Unity data class - Unity's JsonUtility serializes public fields; System.Text.Json ignores fields unless IncludeFields = true. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
 </ul>
 <h2 id="uc-14-opus-ports-a-unity-games-logic-through-the-skill">UC-14 Opus ports a Unity game's logic through the skill</h2>
 <div class="table-wrap"><table>
@@ -3256,20 +3320,20 @@ case without a dressed field, a scenario outside three to eleven steps, or a cit
 </ol>
 <p><strong>Extensions</strong> (where the chain breaks, numbered by the step they branch from):</p>
 <ul>
-<li><strong>7a</strong> A headless Unreal never finishes and its log grows to hundreds of megabytes - UnrealSharp finds dotnet by the PATH entry Program Files\dotnet\ with the trailing backslash. Git Bash hands PowerShell a PATH without it, so UnrealSharp reports ".NET SDK can't be found" and, under -unattended, raises the dialog again forever (measured: a 634 MB log, nothing built). Run every Unreal verb from native PowerShell. The verbs refuse the Bash chain up front. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>5a</strong> An effect's blend mode is wrong - The blend mode is a number in the material (_DstBlend == 1 is additive), never the shader's name. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7b</strong> A texture looks different in Unreal although the file is the same - Unity samples its imported texture (mip chain, alpha fill, size caps), not the source file. The import is in Library/Artifacts and can be read offline (_effects/tools/unity_tex_artifact.py); validate the match against the source, since the artifact index can point at a neighbouring asset. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>6a</strong> A gate reports a symbol ABSENT that you know exists - Check whether the port moved it (into the model, for example) before believing the gate. Widen the gate to follow the move, then re-run its plants. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7c</strong> The photo of an effect differs from Unity's in a way the data does not - A photo is one draw of a random process, and a frame can catch a capture artefact. Labelled frames (RANDDRAW, GRIDTICK) are never counted. Compare several frames and the read-back data before calling a route wrong. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>8a</strong> u2ue metrics prints STALE - An input is older than the newest build. Re-run the step that writes it (the sweep, the photo pass); the number is never presented as current until then. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7d</strong> A long build stops at exactly the shell tool's timeout, leaving the content half old and half new - Stopping a background task kills its children, including UnrealEditor-Cmd. Before a long launch, compare the tool's timeout with the script's own watchdog and give the tool the larger one. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7e</strong> Two Unreal runs at once - One headless Unreal at a time. build, read and photo ask the adapter's host_busy and refuse while an Unreal (or the game's own queue) holds the host. build --dry shows the host's state. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7f</strong> Niagara draws nothing in an editor script - -run=pythonscript asserts, and -ExecutePythonScript quits before the tick loop runs. The editor world never ticks actors, so Niagara simulates only inside Simulate or Play-In-Editor unless something advances it. The read-back advances each system itself: NiagaraSimCacheFunctionLibrary's immediate capture with bAdvanceSimulation (_effects/tools/u1e_color_size_readback.py, which u2ue read runs). <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7g</strong> A headless run plays sound through the user's speakers, or records silence - Pass -DeterministicAudio (the non-realtime renderer: nothing reaches a device, and each tick renders its own delta) and -ini:Engine:[Audio]:UnfocusedVolumeMultiplier=1.0 (an unfocused application otherwise mixes at volume 0). <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>7h</strong> An UnrealSharp editor wedges while files are being generated - With automatic hot reload on, the editor recompiles a managed file the instant it is written, mid-write, fails, and can stop responding. Set AutomaticHotReloading=Off in the host's DefaultEditorPerProjectUserSettings.ini, or keep the editor closed while a tool writes managed C#. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>4a</strong> The reader refuses a scene with m_RemovedGameObjects - A prefab instance in a scene that deletes one of the prefab's objects is not handled yet (the reader that applies it is proven and lands with the next build; <a href="#a2-roadmap">Appendix B</a>). u2ue data --no-expand reads the scene's own components without expanding instances. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>5b</strong> A nested prefab's object cannot be found by its fileID - A nested object's id is the instance's id XOR the source object's id. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
-<li><strong>5c</strong> A material's values look like its shader's defaults - A material variant stores only what it overrides; the rest comes through m_Parent. Read the chain. <em>(<a href="#21-troubleshooting">Chapter 21</a>)</em></li>
+<li><strong>7a</strong> A headless Unreal never finishes and its log grows to hundreds of megabytes - UnrealSharp finds dotnet by the PATH entry Program Files\dotnet\ with the trailing backslash. Git Bash hands PowerShell a PATH without it, so UnrealSharp reports ".NET SDK can't be found" and, under -unattended, raises the dialog again forever (measured: a 634 MB log, nothing built). Run every Unreal verb from native PowerShell. The verbs refuse the Bash chain up front. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>5a</strong> An effect's blend mode is wrong - The blend mode is a number in the material (_DstBlend == 1 is additive), never the shader's name. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7b</strong> A texture looks different in Unreal although the file is the same - Unity samples its imported texture (mip chain, alpha fill, size caps), not the source file. The import is in Library/Artifacts and can be read offline (_effects/tools/unity_tex_artifact.py); validate the match against the source, since the artifact index can point at a neighbouring asset. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>6a</strong> A gate reports a symbol ABSENT that you know exists - Check whether the port moved it (into the model, for example) before believing the gate. Widen the gate to follow the move, then re-run its plants. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7c</strong> The photo of an effect differs from Unity's in a way the data does not - A photo is one draw of a random process, and a frame can catch a capture artefact. Labelled frames (RANDDRAW, GRIDTICK) are never counted. Compare several frames and the read-back data before calling a route wrong. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>8a</strong> u2ue metrics prints STALE - An input is older than the newest build. Re-run the step that writes it (the sweep, the photo pass); the number is never presented as current until then. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7d</strong> A long build stops at exactly the shell tool's timeout, leaving the content half old and half new - Stopping a background task kills its children, including UnrealEditor-Cmd. Before a long launch, compare the tool's timeout with the script's own watchdog and give the tool the larger one. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7e</strong> Two Unreal runs at once - One headless Unreal at a time. build, read and photo ask the adapter's host_busy and refuse while an Unreal (or the game's own queue) holds the host. build --dry shows the host's state. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7f</strong> Niagara draws nothing in an editor script - -run=pythonscript asserts, and -ExecutePythonScript quits before the tick loop runs. The editor world never ticks actors, so Niagara simulates only inside Simulate or Play-In-Editor unless something advances it. The read-back advances each system itself: NiagaraSimCacheFunctionLibrary's immediate capture with bAdvanceSimulation (_effects/tools/u1e_color_size_readback.py, which u2ue read runs). <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7g</strong> A headless run plays sound through the user's speakers, or records silence - Pass -DeterministicAudio (the non-realtime renderer: nothing reaches a device, and each tick renders its own delta) and -ini:Engine:[Audio]:UnfocusedVolumeMultiplier=1.0 (an unfocused application otherwise mixes at volume 0). <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>7h</strong> An UnrealSharp editor wedges while files are being generated - With automatic hot reload on, the editor recompiles a managed file the instant it is written, mid-write, fails, and can stop responding. Set AutomaticHotReloading=Off in the host's DefaultEditorPerProjectUserSettings.ini, or keep the editor closed while a tool writes managed C#. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>4a</strong> The reader refuses a scene with m_RemovedGameObjects - A prefab instance in a scene that deletes one of the prefab's objects is not handled yet (the reader that applies it is proven and lands with the next build; <a href="#a2-roadmap">Appendix B</a>). u2ue data --no-expand reads the scene's own components without expanding instances. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>5b</strong> A nested prefab's object cannot be found by its fileID - A nested object's id is the instance's id XOR the source object's id. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
+<li><strong>5c</strong> A material's values look like its shader's defaults - A material variant stores only what it overrides; the rest comes through m_Parent. Read the chain. <em>(<a href="#22-troubleshooting">Chapter 22</a>)</em></li>
 </ul>
 <h2 id="uc-17-opus-runs-the-effect-pipeline-from-the-prefabs-to-the-metrics">UC-17 Opus runs the effect pipeline from the prefabs to the metrics</h2>
 <div class="table-wrap"><table>
@@ -4331,7 +4395,7 @@ their numbers, are in <code>shared/PORTING_ANOTHER_PROJECT.md</code>; what trans
     the DLLs.</li>
 <li>Launch from native PowerShell: UnrealSharp finds dotnet by the literal <code>Program Files\dotnet\</code> on the PATH.</li>
 <li>A publish does NOT need the editor closed, because UnrealSharp hot-reloads the DLLs. What must not happen while the owner's editor
-    is open is WRITING the model's sources: a hot reload that lands mid-write fails to compile and can wedge the editor (<a href="#21-troubleshooting">Chapter 21</a>).</li>
+    is open is WRITING the model's sources: a hot reload that lands mid-write fails to compile and can wedge the editor (<a href="#22-troubleshooting">Chapter 22</a>).</li>
 <li><strong>Removing a reference does not remove the DLL.</strong> A runtime that probes a directory can still bind what the build no longer
     names; the publish gate fails if an old DLL comes back, and its selftest plants one to prove it.</li>
 <li><strong>G7 the game actually plays</strong> - enter play on the real scene, drive it to a verdict, and capture BOTH a JSON outcome and a PNG; then
@@ -4825,7 +4889,7 @@ it. <strong>Trigger</strong>: a screen of the game is to run in Unreal.</p>
 <p>Authored clips (<code>.wav</code>, <code>.ogg</code>) import into Unreal as Sound Waves directly. Which sound plays and how loud should be a rule in the
 model (the reference port's is one presentation class), so both engines pick the same sound. Clips Unity generates at run time are
 rendered once to float PCM and played through a small C++ bridge that hands the samples to Unreal's mixer unconverted, as a 2D
-one-shot. Headless runs pass <code>-DeterministicAudio</code> so nothing reaches a device (<a href="#21-troubleshooting">Chapter 21</a>). The bridge as a reusable plugin is on the
+one-shot. Headless runs pass <code>-DeterministicAudio</code> so nothing reaches a device (<a href="#22-troubleshooting">Chapter 22</a>). The bridge as a reusable plugin is on the
 roadmap.</p>
 <h2 id="animation-and-physics">Animation and physics</h2>
 <p><strong>Not covered.</strong> The reference port's units are painted cards whose motion is a rule in the model; it has no Animator controllers, no
@@ -4862,7 +4926,7 @@ the reference port:</p>
 <h2 id="the-effect-readers-the-ir-extraction-tools">The effect readers: the IR extraction tools</h2>
 <p>What <code>extract</code> runs (<a href="#08-effects">Chapter 8</a> has the pipeline): every effect the game can fire, resolved from the game's own data to a prefab, then
 each prefab's ParticleSystems READ into the engine-neutral IR - nested prefabs expanded, game rules that switch emitters off applied,
-missing assets named. The column "check" says whether <code>u2ue check --only selftests</code> runs the tool's own selftest (<a href="#19-reference">Chapter 19</a> lists
+missing assets named. The column "check" says whether <code>u2ue check --only selftests</code> runs the tool's own selftest (<a href="#20-reference">Chapter 20</a> lists
 them all).</p>
 <div class="table-wrap"><table>
 <thead>
@@ -5152,7 +5216,7 @@ assets read without Unreal.</p>
 </tr>
 </tbody>
 </table></div>
-<p>The reference port's own unit-sprite and tile-texture steps (<code>units_tools</code>, <code>tiles_tools</code> in <a href="#19-reference">Chapter 19</a>) are its game's art, but
+<p>The reference port's own unit-sprite and tile-texture steps (<code>units_tools</code>, <code>tiles_tools</code> in <a href="#20-reference">Chapter 20</a>) are its game's art, but
 each records a method a second game's art port needs:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -6387,14 +6451,14 @@ own code resolves them, and its host is busy while its own build queues run.</p>
 <h2 id="a-verb">A verb</h2>
 <p><strong>Scope</strong>: one command of the facade. <strong>Precondition</strong>: the work it runs exists as a module or a tool on disk. <strong>Minimal
 guarantee</strong>: a verb that wraps a tool which is not on disk stops, by name; it never skips. <strong>Success guarantee</strong>: the command line,
-<code>find</code> and <a href="#18-commands">Chapter 18</a> all show the verb, from its one registry row. <strong>Trigger</strong>: a step of a port has no command.</p>
+<code>find</code> and <a href="#19-commands">Chapter 19</a> all show the verb, from its one registry row. <strong>Trigger</strong>: a step of a port has no command.</p>
 <ol>
-<li><strong>Write the module.</strong> <code>u2ue/verbs/&lt;name&gt;.py</code>: a docstring, which becomes the verb's page in <a href="#18-commands">Chapter 18</a>, and <code>run(p, argv)</code>, where
+<li><strong>Write the module.</strong> <code>u2ue/verbs/&lt;name&gt;.py</code>: a docstring, which becomes the verb's page in <a href="#19-commands">Chapter 19</a>, and <code>run(p, argv)</code>, where
    <code>p</code> is the project, or <code>None</code> for a verb that needs none.</li>
 <li><strong>Register it.</strong> One row in <code>VERBS</code> in <code>u2ue/verbs/__init__.py</code>, in the order a port runs the verbs. The command line, the verb
    list, <code>find</code> and this manual all read that registry; a verb added anywhere else is invisible.</li>
 <li><strong>Find it.</strong> <code>py -m u2ue find &lt;name&gt;</code> lists it under verb, with the file it lives in.</li>
-<li><strong>Rebuild the manual.</strong> <code>py u2ue/manual/build.py</code> writes its page into <a href="#18-commands">Chapter 18</a>; <code>py u2ue/manual/build.py --check</code> exits 1 until
+<li><strong>Rebuild the manual.</strong> <code>py u2ue/manual/build.py</code> writes its page into <a href="#19-commands">Chapter 19</a>; <code>py u2ue/manual/build.py --check</code> exits 1 until
    it has.</li>
 </ol>
 <p>A verb that wraps a tool runs it as a subprocess through <code>u2ue.tools</code> with the project's <code>U2UE_*</code> environment, below normal priority,
@@ -6439,13 +6503,13 @@ converter re-derives the rule from the fact file at every build. <strong>Trigger
 <h2 id="a-selftest">A selftest</h2>
 <p><strong>Scope</strong>: one tool that can be wrong. <strong>Precondition</strong>: the tool runs offline, or the reason it cannot is measured. <strong>Minimal
 guarantee</strong>: a tool whose selftest cannot run offline is listed with that reason, never skipped silently. <strong>Success guarantee</strong>:
-<code>u2ue check</code> runs the selftest and <a href="#19-reference">Chapter 19</a> lists it. <strong>Trigger</strong>: a tool that can be wrong is written.</p>
+<code>u2ue check</code> runs the selftest and <a href="#20-reference">Chapter 20</a> lists it. <strong>Trigger</strong>: a tool that can be wrong is written.</p>
 <ol>
 <li><strong>Plant the defects.</strong> The tool carries <code>--selftest</code> with planted defects, and must refuse each one.</li>
 <li><strong>Register it</strong> in <code>u2ue/survey/pt1_selftests.py</code> (<code>RUNS</code>: the tool, its folder, its exact command). A tool whose selftest cannot
    run offline goes in <code>NOT_RUN</code> with the measured reason.</li>
 <li><strong>Run it with the rest.</strong> <code>py -m u2ue --project &lt;name&gt; check --only selftests</code> runs it.</li>
-<li><strong>See it listed.</strong> <code>py u2ue/manual/build.py</code> writes it into <a href="#19-reference">Chapter 19</a>'s selftest list.</li>
+<li><strong>See it listed.</strong> <code>py u2ue/manual/build.py</code> writes it into <a href="#20-reference">Chapter 20</a>'s selftest list.</li>
 </ol>
 <h2 id="where-the-toolkits-parts-live">Where the toolkit's parts live</h2>
 <p><code>u2ue/tools.py</code> names each part's folder once (<code>PARTS</code>). Setting <code>U2UE_TOOLKIT_ROOT=&lt;root&gt;</code> resolves every part to <code>&lt;root&gt;/&lt;part&gt;</code>,
@@ -6577,7 +6641,7 @@ never rewriting them. Each package's tools are listed in the chapter that uses t
 </tr>
 </tbody>
 </table></div>
-<p>The counts are the survey's (2026-10-13); <a href="#19-reference">Chapter 19</a>'s generated inventory is today's, by folder.</p>
+<p>The counts are the survey's (2026-10-13); <a href="#20-reference">Chapter 20</a>'s generated inventory is today's, by folder.</p>
 <h3 id="how-the-survey-was-measured">How the survey was measured</h3>
 <ul>
 <li><strong>Inventory</strong>: <code>pt1_inventory.py</code> opened every tool file in the port's tool folders and the model gates, and recorded each one's
@@ -7053,7 +7117,7 @@ a TwoColors start colour draws ONE fraction for all four channels; two RandomRan
 (correlation 0.006); a value Unity holds per particle is a spawn-only random in Niagara.</p>
 <h2 id="the-ir-reading-shuriken-offline">The IR: reading Shuriken offline</h2>
 <p>The reader is <code>effects_tools/u1e_ir.py</code> over <code>vfxport/shuriken_ir.py</code>, with <code>effects_tools/u1e_nested.py</code> for nested prefabs. It
-reads the YAML of a project serialized as text, with no Unity running. <a href="#08-effects">Chapter 8</a> shows an IR excerpt, <a href="#19-reference">Chapter 19</a> its format.</p>
+reads the YAML of a project serialized as text, with no Unity running. <a href="#08-effects">Chapter 8</a> shows an IR excerpt, <a href="#20-reference">Chapter 20</a> its format.</p>
 <p>Per effect key it holds: every emitter's modules, each value with its mode and a <code>readAs</code> saying how it was read; the renderer (mode,
 alignment, <code>rendererEnabled</code>, meshes, pivot, sort); the material, its shader resolved by guid and its blend READ as numbers; the
 emitter's place in the prefab (<code>prefabPos</code>, <code>prefabRot</code>), <code>ownerScale</code>, <code>lossyScale</code> and <code>nodeMatrix</code>; the system's file id
@@ -7360,7 +7424,7 @@ switch still defaults OFF anywhere in the code trees.</p>
 py vfxport/patch_flip_defaults.py --dry &lt;ROW&gt; ...     what the flip would change; nothing written
 py vfxport/patch_flip_defaults.py &lt;ROW&gt; ...           the flip: atomic per file, compiled before it replaces the file
 </code></pre>
-<p>Chapter 19's converter switch table is generated from that table and the code, with each switch's state today.</p>
+<p>Chapter 20's converter switch table is generated from that table and the code, with each switch's state today.</p>
 <h3 id="flip_audit-and-the-state-of-a-route">flip_audit and the state of a route</h3>
 <p><code>lane/flip_audit.py</code> compares every switch a trial set with its default in the code as it stands, and flags a trial switch read
 default OFF anywhere (unless <code>DELIBERATE_OFF</code> names why) and a switch whose read sites disagree. <code>DELIBERATE_OFF</code> is evidence too: a
@@ -7547,7 +7611,7 @@ the toolkit shipped as <code>u2ue/GUIDE.md</code> and <code>u2ue/README.md</code
 <p>With <code>"adapter": "unity_project"</code> the toolkit answers the game questions itself: every prefab holding a ParticleSystem is an effect,
 Unity's own rule decides what starts at spawn, and the Unreal host is busy only while an Unreal runs. Write an adapter in
 <code>u2ue/adapters/</code> (subclass <code>UnityProject</code>, override ONE method) only when the game's code changes one of those answers, for example when
-its effects are the ones an ability table names (<a href="#12-extending">Chapter 12</a>). Reviewers start at <a href="#20-architecture">Chapter 20</a> (<code>u2ue/ARCHITECTURE.md</code>).
+its effects are the ones an ability table names (<a href="#12-extending">Chapter 12</a>). Reviewers start at <a href="#21-architecture">Chapter 21</a> (<code>u2ue/ARCHITECTURE.md</code>).
 <code>py -m u2ue find &lt;words&gt;</code> searches every document, tool, rule and route at once.</p>
 <h3 id="extract-and-check">extract and check</h3>
 <p><code>extract</code> builds the guid index in order - <code>Assets/...</code>, the project's embedded <code>Packages/</code>, then <code>Library/PackageCache</code> (package
@@ -7801,7 +7865,7 @@ py -m u2ue --project &lt;game&gt; data --from &lt;Assets/...unity&gt; --class Li
 <p><code>--script</code> matches a MonoBehaviour by its script's guid, never a line number (a re-saved file moves its lines); <code>--class</code> takes a
 class id (20 Camera, 108 Light) or a YAML type name; <code>--tsv</code> writes one <code>&lt;dotted path&gt; &lt;TAB&gt; &lt;value&gt;</code> row per leaf, which two readers'
 outputs can be diffed in. The traps a reader must handle (the nested-object fileID, material variants, the blend mode as a number)
-are in <a href="#07-transforms-and-scenes">Chapter 7</a> and <a href="#21-troubleshooting">Chapter 21</a>.</p>
+are in <a href="#07-transforms-and-scenes">Chapter 7</a> and <a href="#22-troubleshooting">Chapter 22</a>.</p>
 <h3 id="unitys-imported-textures-off-libraryartifacts">Unity's imported textures, off <code>Library/Artifacts</code></h3>
 <p>Unity samples its <em>imported</em> texture, not the source file. Each import is a SerializedFile under <code>Library/Artifacts/&lt;hh&gt;/&lt;hash&gt;</code>, so
 "what does Unity actually sample here" needs no window. <code>effects_tools/unity_tex_artifact.py</code> finds the texture's GUID in
@@ -8397,7 +8461,7 @@ routes do not. Several of the tools still default to the reference project's fol
 moving each one is the "No absolute paths" item of <a href="#a2-roadmap">Appendix B</a>.</p>
 <p><strong>The bridge does NOT ship yet.</strong> It lives inside the reference project (<code>CopilotBridge.cs</code>, 14,445 lines, and its monitor window),
 with the game's routes in the same file as the server. Its generic core has NOT been split out into the package. Until it is, a window,
-the console gate and the recovery tools need a bridge in the project, and another project has none (<a href="#20-architecture">Chapter 20</a> lists "measuring rules
+the console gate and the recovery tools need a bridge in the project, and another project has none (<a href="#21-architecture">Chapter 21</a> lists "measuring rules
 in another project without the reference port's bridge" as open).</p>
 <p>The split:</p>
 <ol>
@@ -8457,7 +8521,7 @@ folder (<code>unity.probe_dir</code>) for one window and taken out again.</p>
   reference frames wrong. <code>vfxport/probe_spawn_gate.py</code> refuses a probe that sets an instantiated prefab's transform itself, and the
   runner drops <code>ProbeSpawn.cs</code> in with any probe that calls it.</li>
 <li><strong>A query that can crash Unity is guarded.</strong> <code>ParticleSystem.Particle.GetMeshIndex</code> on a renderer without meshes kills the editor in
-  native code, which no managed try / catch sees (<a href="#21-troubleshooting">Chapter 21</a>).</li>
+  native code, which no managed try / catch sees (<a href="#22-troubleshooting">Chapter 22</a>).</li>
 </ul>
 <h3 id="a-probe-case-is-data">A probe case is data</h3>
 <p>Hand-written probes grow: <code>ColorSizeFactsProbe.cs</code> reached 5,915 lines of hand-written cases. <code>ParticleCaseProbe.cs</code> is one generic
@@ -8490,7 +8554,7 @@ RULES ATTRIBUTED 189 of 220 (orphan 0, ambiguous 3, unformatted 28)
 <section id="15-unreal-tools"><h1 id="15-the-unreal-tools-headless-runs-the-host-publishing">15. The Unreal tools: headless runs, the host, publishing</h1>
 <p>Every Unreal step of a port runs the same way: headless, from native PowerShell, one engine at a time, through one runner that
 refuses an unsafe launch, and judged by what the run wrote, never by its exit code. This chapter is each Unreal-side tool, why it is
-built that way, and the traps it catches; <a href="#21-troubleshooting">Chapter 21</a>'s "Unreal runs" entries are the short form, by symptom.</p>
+built that way, and the traps it catches; <a href="#22-troubleshooting">Chapter 22</a>'s "Unreal runs" entries are the short form, by symptom.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -9079,7 +9143,7 @@ trial's own content root with the route's switch on, one Unreal at a time, stopp
 <li><strong>The .NET SDK.</strong> <code>dotnet --list-sdks</code> lists a 10.0 SDK: the managed project targets net10.0 (<a href="#03-install">Chapter 3</a> lists the rest).</li>
 <li><strong>The runner refuses each rule.</strong> <code>py -m u2ue --project &lt;game&gt; tool ue_headless_selftest.ps1</code> prints PASS and exits 0.</li>
 <li><strong>The Unreal-side selftests pass with no engine.</strong> <code>py -m u2ue --project &lt;game&gt; check --only selftests</code> passes; it runs the host,
-   photo, read-back, capture and trial selftests among the rest (<a href="#19-reference">Chapter 19</a> lists them). The host selftest builds its cases from the
+   photo, read-back, capture and trial selftests among the rest (<a href="#20-reference">Chapter 20</a> lists them). The host selftest builds its cases from the
    second example project in <code>u2ue/projects/</code>, so that project's model must be on disk.</li>
 <li><strong>The host is free.</strong> After <code>extract</code> (<a href="#04-quick-start">Chapter 4</a>), <code>py -m u2ue --project &lt;game&gt; build --dry</code> prints <code>the Unreal host: free</code>.</li>
 <li><strong>A Windows SDK, or an AutoSDK.</strong> <code>py -m u2ue --project &lt;game&gt; host compile</code> proves <code>Result: Succeeded</code>, or its log says
@@ -9496,7 +9560,7 @@ selftest). Run them yourself; <code>py -m u2ue --project &lt;game&gt; logic</cod
 <code>parity</code>, and names each test run it does not start as NOT RUN, with its command.</p>
 <h3 id="the-selftest-registry-and-u2ue-check">The selftest registry and <code>u2ue check</code></h3>
 <p>Every tool's selftest is registered once, in <code>u2ue/survey/pt1_selftests.py</code>: <code>RUNS</code> holds each tool, its folder and its exact command,
-read off the tool by hand. It held 107 entries on 2026-10-17; <a href="#19-reference">Chapter 19</a> lists them. A selftest that cannot run safely is in <code>NOT_RUN</code>
+read off the tool by hand. It held 107 entries on 2026-10-17; <a href="#20-reference">Chapter 20</a> lists them. A selftest that cannot run safely is in <code>NOT_RUN</code>
 with its measured reason - two: one corrupts and restores a plugin DLL an owner's open Unity editor loads, one launches the Unreal editor.</p>
 <pre><code>py -m u2ue --project &lt;game&gt; check                      # all four parts
 py -m u2ue --project &lt;game&gt; check --only selftests [--tool console_check.py ...]
@@ -9621,7 +9685,340 @@ named decision. <strong>Trigger</strong>: a rule is about to move out of the Uni
     it is fixed; it is never re-baselined.</li>
 </ol>
 <p>Steps 1 to 8 spend no shared resource, steps 9 and 10 need no Editor, and step 11 only reads one that is already running.</p></section>
-<section id="17-facade"><h1 id="17-the-facade-detailed-requirements">17. The facade: detailed requirements</h1>
+<section id="17-porting-with-opus"><h1 id="17-porting-with-opus-55">17. Porting with Opus 5.5</h1>
+<p>u2ue is built to be driven by an AI model. The owner points Opus 5.5 at the game's logic through the toolkit's skills, and every
+other asset family ports itself. This chapter covers how the reference port was actually run, and the skills that keep a long session
+working. It covers how to keep the model's tokens down, and what was measured about running several agents at once. It also
+covers how the work is reviewed: the model is never trusted on its own word.</p>
+<h2 id="how-the-reference-port-was-run">How the reference port was run</h2>
+<p>The reference port was done by one model, Opus 5.5, working in Claude Code over many sessions. Four things carried it from session
+to session. None of them is clever, and each one is there because its absence cost a day.</p>
+<ul>
+<li><strong>A project rules file, read at the start of every session.</strong> It holds the iron law (no guessing, no fallbacks, no toys,
+  verify with both the data and the picture), the safety rules (never the Unity Test Runner, never the owner's live editor, one
+  headless Unreal at a time), "fix the class, not the instance", and the rule that UML class diagrams steer the work.</li>
+<li><strong>One task list on disk.</strong> Every item is a line with an observable a stranger could re-check (<code>DONE WHEN: ...</code>). The session
+  reads it at the start of every item, because a session cannot see its own context being compacted.</li>
+<li><strong>Memory notes, one fact per file.</strong> A trap is written down once, with its fix, so that the next session does not pay for it
+  again. Two examples: a shell that rewrote the PATH so Unreal could not find .NET, and a heredoc that ate backslashes.</li>
+<li><strong>Skills.</strong> A skill is a packaged procedure that the model loads when the task matches it. The port used the owner's own:</li>
+<li>a <strong>long-run skill</strong>: finish the list, never stop at a turn boundary, verify before reporting, and when blocked, solve it
+    or ask, never drift sideways - the owner calls it the "don't stop" skill;</li>
+<li>a <strong>senior-dev loop</strong> for backlogs: waves of work, one driver for a shared editor, and an assessment after each wave;</li>
+<li>a <strong>use-case skill</strong>: use cases from the problem story, and a class model from the source, gated so that a name the code
+    lacks fails.
+  It also used the toolkit's own two skills. For the large fan-outs (the six writers of this manual's new chapters), the work ran as
+  multi-agent workflows that the owner asked for.</li>
+</ul>
+<p>The package ships the generic forms of what made this work (below). The owner's personal skills stay the owner's.</p>
+<h2 id="the-four-skills-the-package-ships">The four skills the package ships</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>skill</th>
+<th>what it is for</th>
+<th>read it when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>u2ue/skill/u2ue-logic/SKILL.md</code></td>
+<td>port a game's C# into an engine-free model behind seams, slice by slice, each step with its command and its DONE WHEN</td>
+<td>the logic port (<a href="#06-game-code">Chapter 6</a>)</td>
+</tr>
+<tr>
+<td><code>u2ue/skill/u2ue-port/SKILL.md</code></td>
+<td>port an effect gap by the route protocol: census, a switch that starts OFF, proof, trial, LOOK, flip with evidence</td>
+<td>an effect the converter refuses (<a href="#08-effects">Chapter 8</a>, <a href="#13-shuriken-to-niagara">Chapter 13</a>)</td>
+</tr>
+<tr>
+<td><code>u2ue/skill/u2ue-lookup/SKILL.md</code></td>
+<td>answer code questions from the index and the class model, read the file last; choose the agent before starting one</td>
+<td>before reading any file to find something; before fanning out</td>
+</tr>
+<tr>
+<td><code>u2ue/skill/u2ue-long-run/SKILL.md</code></td>
+<td>finish a long list: one list on disk, an observable per item, a re-check before any report</td>
+<td>"finish it all", and any time a session is about to report with items open</td>
+</tr>
+</tbody>
+</table></div>
+<p>The skill gate (<code>u2ue/survey/skill_gate.py</code>, pillar 2 of the cycle) holds all four to the toolkit. A command a skill names must
+exist. A step written as <code>### Step N.</code> must carry at least one <code>RUN:</code> line and exactly one <code>DONE WHEN:</code> line. A skill that sends
+the model hunting for a command that is not there fails the cycle.</p>
+<h2 id="directing-the-model-at-a-game">Directing the model at a game</h2>
+<p>A session opens on where the port stands, never on a re-derivation:</p>
+<pre><code>py -m u2ue --project &lt;game&gt; logic          each step of the logic skill, judged by its own DONE WHEN; the step to take next
+py -m u2ue --project &lt;game&gt; info           every path the project names, opened
+</code></pre>
+<p>What makes a prompt work, as it was learned on the reference port:</p>
+<ul>
+<li><strong>Name the observable.</strong> "Port this slice" ends when the model thinks it looks done. "Port this slice so that <code>py -m u2ue
+  --project &lt;game&gt; parity</code> exits 0 and the slice's diagram resolves" ends when it does.</li>
+<li><strong>Give it the diagram, not a description.</strong> The logic skill's step 2 draws the class model of one slice before anything moves
+  (<code>py -m u2ue --project &lt;game&gt; uml mermaid --focus &lt;TypeA&gt; &lt;TypeB&gt;</code>). The target diagram is the prompt: the model is asked to make
+  it true, and the gate checks every name in it against the code. A prompt that carries a diagram cannot drift into a design the
+  owner never saw.</li>
+<li><strong>Quote the owner's acceptance sentence</strong> at the top of the list. Then every item answers one question: does this move that
+  line? Progress is measured against the owner's words, never against the model's own plan.</li>
+<li><strong>Forbid the plausible constant.</strong> A value that is not read is ABSENT, with the reason. The iron law is in the rules file
+  because a model, when stuck, will otherwise supply a number that looks right.</li>
+</ul>
+<h2 id="saving-tokens-ask-the-index-read-the-file-last">Saving tokens: ask the index, read the file last</h2>
+<p>Anthropic's own guidance names the constraint: the context window fills up fast, and performance degrades as it fills (<em>Best
+practices for Claude Code</em>, https://code.claude.com/docs/en/best-practices). Every file the model reads to answer a question is
+context it cannot use for the port. The toolkit holds three indexes that answer such questions instead:</p>
+<ul>
+<li><strong>The catalogue</strong>: <code>py -m u2ue find &lt;words&gt;</code> searches the verbs, adapters, tools, documents, measured Unity rules, converter
+  stages and routes, and prints each hit as <code>path:line</code>. Its selftest (<code>py -m u2ue find --selftest</code>) checks every source it reads.</li>
+<li><strong>The game's class model</strong>: <code>py -m u2ue --project &lt;game&gt; uml extract</code>, then <code>uml where | ask | callers | tests &lt;Name&gt;</code>. It is
+  built from the game's own code roots, and from its engine-free model once one is scaffolded. A project with no code roots is
+  refused, never pointed at a guessed folder (<code>py -m u2ue.verbs.uml --selftest</code>).</li>
+<li><strong>The requirements model's triples</strong>: every use-case step in <a href="#05-use-cases">Chapter 5</a> is a set of subject-relation-object facts, each citing the
+  document and the line it was read from. The traceability in <a href="#a4-traceability">Appendix E</a> is a walk over them.</li>
+</ul>
+<p>On the reference port, a compiler-grade index of the game's Unity assembly was searched as well, through a local MCP server. It
+taught the rule that matters most about any index. A fresh rebuild, minutes old, held no rows at all for five symbols that had
+moved into the engine-free model, because it indexed one assembly and the port had moved code out of it on purpose. <strong>A miss is
+UNKNOWN, never ABSENT.</strong> Before you trust a miss, check what the index read and when.</p>
+<p>The lookup skill (<code>u2ue-lookup</code>) is the order to ask in: the catalogue, then the class model, then a text search for an exact name,
+then the file - and only the lines named.</p>
+<h2 id="several-agents-or-one-measured">Several agents, or one: measured</h2>
+<p>A common belief: several agents work faster but spend more tokens. It was tested on this toolkit with an exact answer key
+(<code>u2ue/survey/agent_bench.py</code>). The task is to find where each named function or class is defined. Python's own parser builds the
+key, so an answer is right or wrong by construction. The same task ran in each condition below, and every run was judged.</p>
+<!-- GEN:agentbench -->
+<p><strong>The lookup task</strong> (seed 1017): 12 names, each to be found where it is defined, the answer key built by Python's own parser over the toolkit's code, every run judged against it by <code>survey/agent_bench.py</code>. One run per condition.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>condition</th>
+<th>agents</th>
+<th>right</th>
+<th>tokens</th>
+<th>tokens a name</th>
+<th>wall-clock (slowest agent)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>one agent, text search</td>
+<td>1</td>
+<td>12 of 12</td>
+<td>90,998</td>
+<td>7,583</td>
+<td>16 s</td>
+</tr>
+<tr>
+<td>one agent, the toolkit's index</td>
+<td>1</td>
+<td>12 of 12</td>
+<td>92,099</td>
+<td>7,674</td>
+<td>67 s</td>
+</tr>
+<tr>
+<td>three agents in parallel, text search</td>
+<td>3</td>
+<td>12 of 12</td>
+<td>271,002</td>
+<td>22,583</td>
+<td>14 s</td>
+</tr>
+<tr>
+<td>three agents in parallel, the index</td>
+<td>3</td>
+<td>12 of 12</td>
+<td>272,270</td>
+<td>22,689</td>
+<td>37 s</td>
+</tr>
+<tr>
+<td>one lean agent (no project rules file), text search</td>
+<td>1</td>
+<td>12 of 12</td>
+<td>48,228</td>
+<td>4,019</td>
+<td>9 s</td>
+</tr>
+</tbody>
+</table></div>
+<p>What the runs measured:</p>
+<ul>
+<li><strong>Every condition was right on every name</strong> (12 of 12 each): the task was easy for all of them.</li>
+<li><strong>Three agents cost 3.0 times the tokens of one</strong> (text search: 271,002 against 90,998), and the wall-clock moved from 16 s to 14 s.</li>
+<li><strong>Most of an agent's cost is its starting context</strong>: a lean agent that does not load the project's rules file did the same task for 48,228 tokens against 90,998 - 47 % less - before any work differs.</li>
+<li><strong>The index did not save tokens on exact names</strong> (92,099 against 90,998) and was slower (67 s against 16 s): a single text search per unique name is already cheap.</li>
+</ul>
+<p><strong>The manual's writers</strong>: six writer agents drafting the u2ue manual's new chapters in parallel (2026-10-17, launched 11:3x), each a general-purpose agent with the project's rules file loaded. Source: the agent platform's usage report for each agent (tokens, wall-clock), copied from each agent's completion notice.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>writer</th>
+<th>tokens</th>
+<th>minutes</th>
+<th>words written</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a1 Shuriken to Niagara (13)</td>
+<td>573,684</td>
+<td>26</td>
+<td>10,786</td>
+</tr>
+<tr>
+<td>a2 the Unity tools (14)</td>
+<td>482,178</td>
+<td>24</td>
+<td>7,992</td>
+</tr>
+<tr>
+<td>a3 the Unreal tools (15)</td>
+<td>477,652</td>
+<td>26</td>
+<td>6,971</td>
+</tr>
+<tr>
+<td>a4 test-driven porting (16)</td>
+<td>433,857</td>
+<td>24</td>
+<td>7,000</td>
+</tr>
+<tr>
+<td>a5 folding eight documents in (01-12)</td>
+<td>588,767</td>
+<td>39</td>
+<td>25,617</td>
+</tr>
+<tr>
+<td>a6 prior art (<a href="#a3-prior-art">Appendix D</a>)</td>
+<td>265,493</td>
+<td>12</td>
+<td>9,653</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>2,821,631 tokens for 68,019 words</strong> (41 a word); the slowest writer took 39 minutes, the six together 2.5 agent-hours: in parallel the work finished <strong>3.9 times sooner</strong> than the same six runs one after another.</li>
+<li>Not measured: what one agent would have spent doing all six in turn. Its context would have grown with every chapter, so its tokens are not the sum above, and no record says which way that goes.</li>
+</ul>
+<!-- /GEN:agentbench -->
+
+<p>What this means for a port, read with the caution that each condition ran once:</p>
+<ul>
+<li><strong>Fan out for big work that splits cleanly, not for small work.</strong> The writers' work was large, and each writer owned its own
+  files, so parallel agents bought real time. The lookup task was small, so three agents bought almost none and paid three
+  starting contexts for it.</li>
+<li><strong>The rules file is a tax every agent pays.</strong> The lean agent's saving is the project rules file it did not load. Anthropic's
+  guidance says the same from the other side: keep the rules file short, because a bloated one makes the model ignore the rules
+  that matter. Move what is not needed every time into skills, which load on demand, and give lookups to a lean read-only agent.</li>
+<li><strong>For exact names, a text search is as good as an index.</strong> The index's value lies elsewhere, in the next section.</li>
+<li><strong>Not measured yet:</strong> questions a text search answers badly, such as who calls a function through an interface, which measured
+  rule applies to an emitter, or which use-case step a verb proves. That is the next task family for the benchmark. Until it is run,
+  the toolkit makes no token claim for the index on such questions.</li>
+</ul>
+<p>To run the benchmark on your own machine and your own rules file:</p>
+<pre><code>py u2ue/survey/agent_bench.py task --seed &lt;S&gt;
+py u2ue/survey/agent_bench.py prompt --seed &lt;S&gt; --slice 1/1 --tools grep
+py u2ue/survey/agent_bench.py add --seed &lt;S&gt; --condition one-grep --tokens &lt;N&gt; --ms &lt;M&gt; --answers &lt;file&gt;
+py u2ue/survey/agent_bench.py report --seed &lt;S&gt;
+</code></pre>
+<h2 id="the-index-the-triples-and-the-non-hallucination-engine-do-they-fit">The index, the triples and the non-hallucination engine: do they fit?</h2>
+<p>The same author's knowledge engine (the anchor page's "Ask anything" tab) answers questions with no neural weights. Its principle,
+in its own words: <em>propose from a fixed space, verify by execution, report a measured confidence, refuse rather than invent.</em>
+u2ue's iron law is the same principle applied to a port:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>the engine</th>
+<th>u2ue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>propose from a fixed space</td>
+<td>every value is READ from the source, with where it came from; a symbol must be one the class model holds</td>
+</tr>
+<tr>
+<td>verify by execution</td>
+<td>every Unity behaviour is MEASURED in Unity by a probe; every change runs a judge, and every judge has a plant it must refuse</td>
+</tr>
+<tr>
+<td>report a measured confidence</td>
+<td>every number names its record and its denominator; a stale input prints STALE</td>
+</tr>
+<tr>
+<td>refuse rather than invent</td>
+<td>a value that cannot be read is ABSENT, with the reason; a miss in an index is UNKNOWN</td>
+</tr>
+</tbody>
+</table></div>
+<p>They fit together as one loop for an AI porter. The model proposes. The index and the triples are the fixed space its proposal
+must land in. The gates verify by running. A miss is reported, never filled in.</p>
+<p><strong>Whether it is beneficial</strong>, measured rather than argued:</p>
+<ul>
+<li><strong>Tokens:</strong> no gain was measured on exact-name lookups (above).</li>
+<li><strong>Correctness:</strong> this is where the value shows. Every gate in the loop refuses a planted fabrication. The class-model gate
+  refuses a method name the code lacks (<code>uml.py selftest</code>). The manual's command gate refuses an option the facade does not read.
+  The coverage gate refuses a placement whose identifiers never arrived. The use-case checker refuses a step that cites nothing.
+  The toolkit never relies on the model not to invent. It makes inventions fail, by name, before anyone reads them.</li>
+</ul>
+<p>So the honest fit is one principle on three surfaces: the engine's answers, the toolkit's measurements and the model's code. The
+index earns its place as a refuser of fabrications, not yet as a token saver.</p>
+<h2 id="reviewing-ai-written-code">Reviewing AI-written code</h2>
+<p>Anthropic publishes how it reviews work done by Claude (<em>Best practices for Claude Code</em>, the same page). In short:</p>
+<ul>
+<li><strong>Give the model a check it can run</strong> - a test suite, a build, a script that diffs against a fixture, a screenshot to compare.
+  A model stops when the work looks done, and without a check, "looks done" is the only signal.</li>
+<li><strong>Have it show evidence rather than assert success</strong>: the command it ran, and what that command returned.</li>
+<li><strong>Explore, plan, then code.</strong></li>
+<li><strong>Review in a fresh context.</strong> A reviewer in a separate subagent sees only the diff and the criteria, not the reasoning that
+  produced the change. One instance can write the tests and another the code.</li>
+<li><strong>Scope the reviewer.</strong> A reviewer asked to find gaps will report some. Tell it to flag only gaps that affect correctness or the
+  stated requirements.</li>
+<li><strong>Mind the trust-then-verify gap</strong>: a plausible implementation that misses its edge cases. If it cannot be verified, do not ship
+  it.</li>
+</ul>
+<p>u2ue builds each of these in, and adds UML at both ends: to steer the work, and to review it.</p>
+<ol>
+<li><strong>Checks it can run, everywhere.</strong> Every step of every skill has a <code>RUN:</code> and a <code>DONE WHEN:</code> (the skill gate). Every pillar of
+   the product has recurring checks (<code>py -m u2ue --project &lt;game&gt; cycle</code>), and red stops the cycle.</li>
+<li><strong>Checks that can fail.</strong> A judge with no plant proves nothing, so every judge has one (<code>py -m u2ue --project &lt;game&gt; judge
+   --prove</code>), and a gate that is widened is re-proven against its plants (<a href="#16-test-driven-porting">Chapter 16</a>).</li>
+<li><strong>Evidence, not claims.</strong> Every number names its record (<code>u2ue metrics</code>). Every tile on the hook page names the command that
+   produced it. A task line is ticked with its evidence, never with "done".</li>
+<li><strong>Fresh-context reviewers.</strong> The writers of this manual's deep chapters were held to gates, not to their own word: the coverage
+   gate, the naming gate and the command gate. While documenting the tools, they read the tools' code with fresh eyes and found
+   defects in the tools themselves: a console check that can miss new errors, a recovery script that acts on every editor on the
+   machine, a field gate blind to a module family. Each finding went to the owner's list with its file, instead of being patched
+   quietly.</li>
+<li><strong>UML for the prompt.</strong> The target class model is drawn first (<code>u2ue/CONCEPTS.md</code>, <a href="#21-architecture">Chapter 21</a>), and code is moved under it. A
+   slice's diagram is drawn before its code moves (the logic skill's step 2). The model is asked to make a diagram true, and the
+   diagram is checked against the code.</li>
+<li><strong>UML for the review.</strong> A reviewer does not read the diff line by line. They read the generated model: the epic and the use cases
+   (<a href="#05-use-cases">Chapter 5</a>), each command as a requirement (<a href="#18-facade">Chapter 18</a>), the class model and the facade map (<a href="#21-architecture">Chapter 21</a>), and the traceability
+   from the owner's words to the selftests (<a href="#a4-traceability">Appendix E</a>). A class the diagram names and the code lacks fails the build, so the model
+   cannot be out of date with the code. Between sessions, the class model's snapshot and diff (<code>uml.py snapshot</code>, <code>uml.py diff</code>)
+   show what changed in structure.</li>
+<li><strong>Scoped review.</strong> The owner's acceptance sentence sits at the top of the list, and reviews report gaps against it, not style.</li>
+</ol>
+<h2 id="a-session-start-to-finish">A session, start to finish</h2>
+<ol>
+<li><strong>Find where the port stands.</strong> <code>py -m u2ue --project &lt;game&gt; logic</code> names the next step.</li>
+<li><strong>Look things up before reading.</strong> <code>py -m u2ue find &lt;words&gt;</code>, then <code>py -m u2ue --project &lt;game&gt; uml where &lt;Name&gt;</code>; read only the
+   lines named.</li>
+<li><strong>Draw the slice.</strong> <code>py -m u2ue --project &lt;game&gt; uml mermaid --focus &lt;TypeA&gt; &lt;TypeB&gt;</code>, then the target diagram the slice must
+   become.</li>
+<li><strong>Move the slice and prove it.</strong> Move it, then run <code>py -m u2ue --project &lt;game&gt; digest run --entry &lt;Ns.Class.Method&gt; --cases
+   &lt;Cases.cs&gt;</code> and <code>py -m u2ue --project &lt;game&gt; parity</code> until they exit 0.</li>
+<li><strong>Check the toolkit and the project.</strong> <code>py -m u2ue --project &lt;game&gt; check</code>.</li>
+<li><strong>Review in a fresh context.</strong> Give a separate agent the diff and the slice's diagram, and ask only for gaps against the owner's
+   sentence.</li>
+<li><strong>Run the cycle before any report.</strong> <code>py -m u2ue --project &lt;game&gt; cycle</code>; red stops the session's report, not the session.</li>
+<li><strong>Write the evidence onto the list</strong>, take the next item, and report only at the end of the run.</li>
+</ol></section>
+<section id="18-facade"><h1 id="18-the-facade-detailed-requirements">18. The facade: detailed requirements</h1>
 <p>The facade is the toolkit's one entry point, <code>py -m u2ue</code>. Each verb it answers is one requirement on the toolkit. This chapter
 states each requirement and everything the code says about it, read from the verb's own source on every build, so the page and the
 code cannot drift apart.</p>
@@ -9638,7 +10035,7 @@ code cannot drift apart.</p>
   reference game is shown with that part replaced by <code>&lt;path&gt;</code> or <code>&lt;game&gt;</code>. Those are hard-wired sites the core is shedding (pillar 7,
   <a href="#16-test-driven-porting">Chapter 16</a>).</li>
 <li><strong>Exits</strong>: the literal exit values in the module. Across the facade, 0 is success, and 2 is a refusal before any work starts (an
-  unknown verb, or a project that does not load). Each verb's own meaning of 1 is in its usage text (<a href="#18-commands">Chapter 18</a>).</li>
+  unknown verb, or a project that does not load). Each verb's own meaning of 1 is in its usage text (<a href="#19-commands">Chapter 19</a>).</li>
 <li><strong>Verified by</strong>: the verb's selftest in the selftest registry (<code>u2ue/survey/pt1_selftests.py</code>), with the verdict of its last
   run. ABSENT means the registry runs no selftest for that verb. The gap is listed here instead of being hidden. Each run's date is
   in <code>u2ue/survey/pt1_selftests.json</code>. This page carries only the verdict, so a cycle that re-runs the selftests leaves it current,
@@ -9647,7 +10044,7 @@ code cannot drift apart.</p>
   just one the model does not exercise yet.</li>
 </ul>
 <!-- GEN:facade -->
-<p><strong>28 verbs</strong>, each read from its module's own source: 18 with a selftest in the registry, 26 run as the proof of a use-case step. A requirement is numbered <code>FR-&lt;verb&gt;</code>; its inputs, refusals and exits are the code's, line by line.</p>
+<p><strong>28 verbs</strong>, each read from its module's own source: 20 with a selftest in the registry, 26 run as the proof of a use-case step. A requirement is numbered <code>FR-&lt;verb&gt;</code>; its inputs, refusals and exits are the code's, line by line.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -9663,7 +10060,7 @@ code cannot drift apart.</p>
 <td>FR-FIND</td>
 <td><code>find</code></td>
 <td>no</td>
-<td>ABSENT</td>
+<td>passes (exit 0)</td>
 <td>1</td>
 </tr>
 <tr>
@@ -9684,7 +10081,7 @@ code cannot drift apart.</p>
 <td>FR-UML</td>
 <td><code>uml</code></td>
 <td>yes</td>
-<td>ABSENT</td>
+<td>passes (exit 0)</td>
 <td>2</td>
 </tr>
 <tr>
@@ -9859,7 +10256,7 @@ code cannot drift apart.</p>
 </table></div>
 <h2 id="fr-find-find">FR-FIND <code>find</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): search everything the toolkit holds: verbs, adapters, tools, docs, measured rules, converter stages, routes.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/find.py</code> (76 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: no. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/find.py</code> (76 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: no. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -9899,11 +10296,11 @@ code cannot drift apart.</p>
 </table></div>
 <p><strong>Refuses</strong>: no refusal message of its own; it stops with the exit of the tool it runs.</p>
 <p><strong>Exits</strong>: 0, 1, 2.</p>
-<p><strong>Verified by</strong>: ABSENT - the selftest registry runs no selftest of this verb.</p>
+<p><strong>Verified by</strong>: <code>py -m u2ue find --selftest</code> - last run passes (exit 0) (<code>u2ue/survey/pt1_selftests.json</code>).</p>
 <p><strong>Exercised by</strong>: UC-06 step 3.</p>
 <h2 id="fr-info-info">FR-INFO <code>info</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): every path the project names, OPENED; its adapter.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/info.py</code> (15 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/info.py</code> (15 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments; it takes none by name.</p>
 <p><strong>Refuses</strong>: no refusal message of its own; it stops with the exit of the tool it runs.</p>
 <p><strong>Exits</strong>: the exit of the tool it runs.
@@ -9912,7 +10309,7 @@ Its docstring: <em>u2ue info - every path the project names, OPENED (exit 1 when
 <p><strong>Exercised by</strong>: UC-02 step 4, UC-16 step 1, UC-17 step 1.</p>
 <h2 id="fr-inventory-inventory">FR-INVENTORY <code>inventory</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the game's own C#, type by type: Unity API by family, pure rules, the frame order (no editor runs).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/inventory.py</code> (425 lines; public: <code>blank</code>, <code>execution_order</code>, <code>inventory</code>, <code>report</code>, <code>run</code>, <code>scan_file</code>, <code>selftest</code>, <code>survey</code>, <code>types_of</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/inventory.py</code> (425 lines; public: <code>blank</code>, <code>execution_order</code>, <code>inventory</code>, <code>report</code>, <code>run</code>, <code>scan_file</code>, <code>selftest</code>, <code>survey</code>, <code>types_of</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -9959,18 +10356,18 @@ Its docstring: <em>u2ue info - every path the project names, OPENED (exit 1 when
 <p><strong>Exercised by</strong>: UC-13 step 1, UC-14 step 1, UC-14 step 3, UC-14 step 8, UC-16 step 2, UC-16 step 3.</p>
 <h2 id="fr-uml-uml">FR-UML <code>uml</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the game's class model off its own code roots (and its model once scaffolded): extract, mermaid, where, ask.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/uml.py</code> (51 lines; public: <code>roots</code>, <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
-<p><strong>Inputs</strong>: read by hand from its arguments - <code>--cache</code>, <code>--root</code>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/uml.py</code> (96 lines; public: <code>roots</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
+<p><strong>Inputs</strong>: read by hand from its arguments - <code>--cache</code>, <code>--root</code>, <code>--selftest</code>.</p>
 <p><strong>Refuses</strong> (1 messages, as the code writes them):</p>
 <ul>
 <li>line 44: <code>REFUSED: ...</code></li>
 </ul>
 <p><strong>Exits</strong>: 2.</p>
-<p><strong>Verified by</strong>: ABSENT - the selftest registry runs no selftest of this verb.</p>
+<p><strong>Verified by</strong>: <code>py -m u2ue.verbs.uml --selftest</code> - last run passes (exit 0) (<code>u2ue/survey/pt1_selftests.json</code>).</p>
 <p><strong>Exercised by</strong>: UC-13 step 1, UC-14 step 2.</p>
 <h2 id="fr-scaffold-scaffold">FR-SCAFFOLD <code>scaffold</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the engine-free model a game's rules move into: created, declared in the project file, built and gated.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/scaffold.py</code> (215 lines; public: <code>files_for</code>, <code>model_block</code>, <code>run</code>, <code>scaffold</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/scaffold.py</code> (215 lines; public: <code>files_for</code>, <code>model_block</code>, <code>run</code>, <code>scaffold</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10009,7 +10406,7 @@ Its docstring: <em>both projects and runs that check. Exit 0 = the model exists,
 <p><strong>Exercised by</strong>: UC-13 step 6, UC-14 step 4.</p>
 <h2 id="fr-logic-logic">FR-LOGIC <code>logic</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): where this project's logic port stands: each u2ue-logic skill step judged by its own DONE WHEN, read from its records.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/logic.py</code> (75 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/logic.py</code> (75 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments - <code>--selftest</code>.</p>
 <p><strong>Refuses</strong> (1 messages, as the code writes them):</p>
 <ul>
@@ -10020,7 +10417,7 @@ Its docstring: <em>both projects and runs that check. Exit 0 = the model exists,
 <p><strong>Exercised by</strong>: no use-case step runs it as its proof.</p>
 <h2 id="fr-data-data">FR-DATA <code>data</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): a component's or ScriptableObject's serialized values off a scene / prefab / asset, overrides applied (no editor runs).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/data.py</code> (208 lines; public: <code>leaves</code>, <code>read</code>, <code>run</code>, <code>script_guid</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/data.py</code> (208 lines; public: <code>leaves</code>, <code>read</code>, <code>run</code>, <code>script_guid</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10087,7 +10484,7 @@ Its docstring: <em>both projects and runs that check. Exit 0 = the model exists,
 <p><strong>Exercised by</strong>: UC-13 step 5, UC-16 step 4.</p>
 <h2 id="fr-shear-shear">FR-SHEAR <code>shear</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the scene nodes Unreal cannot place as Unity does (a sheared transform chain), with the error in cm.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/shear.py</code> (196 lines; public: <code>census</code>, <code>gltf_chains</code>, <code>run</code>, <code>selftest</code>, <code>yaml_chains</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/shear.py</code> (196 lines; public: <code>census</code>, <code>gltf_chains</code>, <code>run</code>, <code>selftest</code>, <code>yaml_chains</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10148,7 +10545,7 @@ Its docstring: <em>both projects and runs that check. Exit 0 = the model exists,
 <p><strong>Exercised by</strong>: UC-11 step 1.</p>
 <h2 id="fr-scene-scene">FR-SCENE <code>scene</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): a Unity scene as an Unreal level: export (in a window), import, readback, and the fidelity gate against its own baseline.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/scene.py</code> (167 lines; public: <code>run</code>, <code>scene_of</code>, <code>selftest</code>, <code>unity_scene_path</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/scene.py</code> (167 lines; public: <code>run</code>, <code>scene_of</code>, <code>selftest</code>, <code>unity_scene_path</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments - <code>--content</code>, <code>--dir</code>, <code>--dry</code>, <code>--json</code>, <code>--no-parity</code>, <code>--out</code>, <code>--scene-dir</code>, <code>--selftest</code>, <code>--unity-scene</code>.</p>
 <p><strong>Refuses</strong> (5 messages, as the code writes them):</p>
 <ul>
@@ -10164,7 +10561,7 @@ Its docstring: <em>files and the scene's OWN measured baseline (<scene dir>/fide
 <p><strong>Exercised by</strong>: UC-11 step 2, UC-11 step 3, UC-11 step 4, UC-11 step 5, UC-11 step 6.</p>
 <h2 id="fr-parity-parity">FR-PARITY <code>parity</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the game's rules on every runtime they run on, compared by float bits with a characterised allowance.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/parity.py</code> (78 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/parity.py</code> (78 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments - <code>--characterise</code>, <code>--dir</code>, <code>--require</code>, <code>--selftest</code>.</p>
 <p><strong>Refuses</strong>: no refusal message of its own; it stops with the exit of the tool it runs.</p>
 <p><strong>Exits</strong>: 2.
@@ -10173,7 +10570,7 @@ Its docstring: <em>value or a wider gap stays red. Exit 0 agree, 1 a row differs
 <p><strong>Exercised by</strong>: UC-13 step 7, UC-14 step 9, UC-14 step 10.</p>
 <h2 id="fr-digest-digest">FR-DIGEST <code>digest</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the game's rule cases answered with no engine: on CoreCLR (Headless) and on that Unity's own Mono (UnityMono).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/digest.py</code> (322 lines; public: <code>DigestError</code>, <code>fact_for</code>, <code>faithful</code>, <code>model_refs</code>, <code>mono_home</code>, <code>on_coreclr</code>, <code>on_mono</code>, <code>rows</code>, <code>run</code>, <code>run_cases</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/digest.py</code> (322 lines; public: <code>DigestError</code>, <code>fact_for</code>, <code>faithful</code>, <code>model_refs</code>, <code>mono_home</code>, <code>on_coreclr</code>, <code>on_mono</code>, <code>rows</code>, <code>run</code>, <code>run_cases</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Subcommands</strong>: <code>faithful</code>, <code>run</code>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
@@ -10223,7 +10620,7 @@ Its docstring: <em>ran, and that digest. Exit 0 = identical; the measurement is 
 <p><strong>Exercised by</strong>: UC-13 step 7, UC-14 step 9.</p>
 <h2 id="fr-host-host">FR-HOST <code>host</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the game's OWN Unreal project, made as a customer makes one: create, install, compile, generate, wire, publish, run.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/host.py</code> (357 lines; public: <code>game_map</code>, <code>run</code>, <code>run_unreal</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/host.py</code> (357 lines; public: <code>game_map</code>, <code>run</code>, <code>run_unreal</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments - <code>--dry</code>, <code>--quiet</code>, <code>--selftest</code>.</p>
 <p><strong>Refuses</strong>: no refusal message of its own; it stops with the exit of the tool it runs.</p>
 <p><strong>Exits</strong>: 0, 2.
@@ -10232,7 +10629,7 @@ Its docstring: <em>(and <code>run</code> also by the digest file being written a
 <p><strong>Exercised by</strong>: UC-14 step 10.</p>
 <h2 id="fr-ui-ui">FR-UI <code>ui</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): a Unity UI screen converted to a folder Unreal reads; the generic uGUI / TextMeshPro library's tests.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/ui.py</code> (119 lines; public: <code>convert_tool</code>, <code>out_refusal</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/ui.py</code> (119 lines; public: <code>convert_tool</code>, <code>out_refusal</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments - <code>--out</code>, <code>--screen</code>, <code>--selftest</code>.</p>
 <p><strong>Refuses</strong> (2 messages, as the code writes them):</p>
 <ul>
@@ -10244,7 +10641,7 @@ Its docstring: <em>(and <code>run</code> also by the digest file being written a
 <p><strong>Exercised by</strong>: UC-15 step 2, UC-15 step 3.</p>
 <h2 id="fr-window-window">FR-WINDOW <code>window</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): ONE Unity measurement window from a data file: idle-gated, owner-stoppable, nothing replaced, md5-held.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/window.py</code> (469 lines; public: <code>FakeWorld</code>, <code>RealWorld</code>, <code>Refused</code>, <code>Window</code>, <code>World</code>, <code>md5</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/window.py</code> (469 lines; public: <code>FakeWorld</code>, <code>RealWorld</code>, <code>Refused</code>, <code>Window</code>, <code>World</code>, <code>md5</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10285,7 +10682,7 @@ Its docstring: <em>py -m u2ue --project <name> window check <spec.json>     ever
 <p><strong>Exercised by</strong>: UC-04 step 3, UC-08 step 2, UC-10 step 1, UC-10 step 2, UC-10 step 3, UC-10 step 4, UC-10 step 5, UC-10 step 6, UC-10 step 7, UC-10 step 9, UC-10 step 10, UC-12 step 2.</p>
 <h2 id="fr-trial-trial">FR-TRIAL <code>trial</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): a route's TRIAL in Unreal from a data file: build, resave, read, judge, photos; one Unreal at a time, stoppable.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/trial.py</code> (901 lines; public: <code>Exec</code>, <code>FakeExec</code>, <code>PlanExec</code>, <code>RealExec</code>, <code>Refused</code>, <code>Stop</code>, <code>Trial</code>, <code>clean_env</code>, <code>commits</code>, <code>fill</code>, <code>others</code>, <code>preflight</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/trial.py</code> (901 lines; public: <code>Exec</code>, <code>FakeExec</code>, <code>PlanExec</code>, <code>RealExec</code>, <code>Refused</code>, <code>Stop</code>, <code>Trial</code>, <code>clean_env</code>, <code>commits</code>, <code>fill</code>, <code>others</code>, <code>preflight</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10327,7 +10724,7 @@ Its docstring: <em>py -m u2ue --project <name> window check <spec.json>     ever
 <p><strong>Exercised by</strong>: UC-08 step 3, UC-12 step 4.</p>
 <h2 id="fr-conform-conform">FR-CONFORM <code>conform</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): data-first conformance over all keys: Unity's particle state (one generic probe) against Niagara's readback, paired by file id.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/conform.py</code> (1002 lines; public: <code>build_notes</code>, <code>burst_dues</code>, <code>cases_cmd</code>, <code>classes_cmd</code>, <code>classify</code>, <code>deathtick</code>, <code>diff</code>, <code>diff_cmd</code>, <code>drawn_frame</code>, <code>draws_at_random</code>, <code>first_seen</code>, <code>first_seen_unity</code>, <code>fx16_boundary</code>, <code>fx16c_k</code>, <code>gridtick</code>, <code>handles</code>, <code>judge_emitter</code>, <code>judge_id</code>, <code>latest_cmd</code>, <code>probe_clock</code>, <code>run</code>, <code>selftest</code>, <code>unity_side</code>, <code>unreal_side</code>, <code>unreal_sides</code>, <code>within_draws</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/conform.py</code> (1002 lines; public: <code>build_notes</code>, <code>burst_dues</code>, <code>cases_cmd</code>, <code>classes_cmd</code>, <code>classify</code>, <code>deathtick</code>, <code>diff</code>, <code>diff_cmd</code>, <code>drawn_frame</code>, <code>draws_at_random</code>, <code>first_seen</code>, <code>first_seen_unity</code>, <code>fx16_boundary</code>, <code>fx16c_k</code>, <code>gridtick</code>, <code>handles</code>, <code>judge_emitter</code>, <code>judge_id</code>, <code>latest_cmd</code>, <code>probe_clock</code>, <code>run</code>, <code>selftest</code>, <code>unity_side</code>, <code>unreal_side</code>, <code>unreal_sides</code>, <code>within_draws</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Subcommands</strong>: <code>cases</code>, <code>diff</code>, <code>latest</code>, <code>classes</code>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
@@ -10429,7 +10826,7 @@ Its docstring: <em>conform.standing_run unless --run): "CONFORM OK n of m (x %)"
 <p><strong>Exercised by</strong>: UC-08 step 1, UC-08 step 4, UC-08 step 5, UC-08 step 6.</p>
 <h2 id="fr-judge-judge">FR-JUDGE <code>judge</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): every judge the trials run, the trials that run it, and whether its plant can refuse (its --selftest, or a trial's declared plant).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/judge.py</code> (21 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/judge.py</code> (21 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments - <code>--mode</code>, <code>--prove</code>, <code>--selftest</code>.</p>
 <p><strong>Refuses</strong>: no refusal message of its own; it stops with the exit of the tool it runs.</p>
 <p><strong>Exits</strong>: the exit of the tool it runs.
@@ -10438,7 +10835,7 @@ Its docstring: <em>py -m u2ue --project <name> judge --prove     runs each judge
 <p><strong>Exercised by</strong>: UC-12 step 4.</p>
 <h2 id="fr-extract-extract">FR-EXTRACT <code>extract</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): Unity prefabs -&gt; the engine-neutral IR (no editor runs).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/extract.py</code> (174 lines; public: <code>check</code>, <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/extract.py</code> (174 lines; public: <code>check</code>, <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10480,7 +10877,7 @@ Its docstring: <em>Checked after the ir step, exit 1 on any:</em></p>
 <p><strong>Exercised by</strong>: UC-02 step 5, UC-16 step 5, UC-17 step 2.</p>
 <h2 id="fr-check-check">FR-CHECK <code>check</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the toolkit's selftests, the project's field gates, the measured rules' Unity versions.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/check.py</code> (136 lines; public: <code>facts</code>, <code>gates</code>, <code>model</code>, <code>run</code>, <code>selftests</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/check.py</code> (136 lines; public: <code>facts</code>, <code>gates</code>, <code>model</code>, <code>run</code>, <code>selftests</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10514,7 +10911,7 @@ Its docstring: <em>Exit 1 when any one fails. Nothing launches Unreal or Unity; 
 <p><strong>Exercised by</strong>: UC-05 step 3, UC-13 step 6, UC-14 step 5, UC-14 step 6, UC-14 step 11, UC-16 step 6, UC-17 step 3, UC-18 step 1.</p>
 <h2 id="fr-build-build">FR-BUILD <code>build</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): IR -&gt; Niagara systems under the project's content root (Unreal, headless).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/build.py</code> (100 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/build.py</code> (100 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10567,7 +10964,7 @@ Its docstring: <em>Exit 1 when any one fails. Nothing launches Unreal or Unity; 
 <p><strong>Exercised by</strong>: UC-16 step 7, UC-17 step 4.</p>
 <h2 id="fr-read-read">FR-READ <code>read</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the built systems read back frame by frame (Unreal, headless).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/read.py</code> (66 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/read.py</code> (66 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10609,7 +11006,7 @@ Its docstring: <em>system that captured no frame, or fewer than asked, is named 
 <p><strong>Exercised by</strong>: UC-16 step 7, UC-17 step 5.</p>
 <h2 id="fr-photo-photo">FR-PHOTO <code>photo</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the built systems photographed, paired with Unity's frames (Unreal, headless).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/photo.py</code> (162 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/photo.py</code> (162 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10651,7 +11048,7 @@ Its docstring: <em>system that captured no frame, or fewer than asked, is named 
 <p><strong>Exercised by</strong>: UC-16 step 7, UC-17 step 6.</p>
 <h2 id="fr-report-report">FR-REPORT <code>report</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the acceptance page from the project's records.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/report.py</code> (50 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/report.py</code> (50 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10677,7 +11074,7 @@ Its docstring: <em>system that captured no frame, or fewer than asked, is named 
 <p><strong>Exercised by</strong>: UC-16 step 8, UC-17 step 7.</p>
 <h2 id="fr-metrics-metrics">FR-METRICS <code>metrics</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the port's numbers, each from a record, with its definition.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/metrics.py</code> (193 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/metrics.py</code> (193 lines; public: <code>run</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10703,7 +11100,7 @@ Its docstring: <em>system that captured no frame, or fewer than asked, is named 
 <p><strong>Exercised by</strong>: UC-16 step 8, UC-17 step 8.</p>
 <h2 id="fr-tempo-tempo">FR-TEMPO <code>tempo</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): each verified route's first code -&gt; verified flip, read off git.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/tempo.py</code> (219 lines; public: <code>measure</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/tempo.py</code> (219 lines; public: <code>measure</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10740,7 +11137,7 @@ Its docstring: <em>system that captured no frame, or fewer than asked, is named 
 <p><strong>Exercised by</strong>: UC-17 step 9.</p>
 <h2 id="fr-cycle-cycle">FR-CYCLE <code>cycle</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): every pillar of the product checked: PASS / FAIL / HELD by a named decision / ABSENT (no check yet).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/cycle.py</code> (152 lines; public: <code>baseline_record</code>, <code>cycle</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/cycle.py</code> (152 lines; public: <code>baseline_record</code>, <code>cycle</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10773,7 +11170,7 @@ Its docstring: <em>cycle reads it for every Trend (a number that must not move t
 <p><strong>Exercised by</strong>: UC-07 step 1, UC-07 step 2, UC-07 step 3, UC-07 step 4, UC-07 step 5, UC-07 step 6, UC-07 step 7, UC-07 step 8, UC-07 step 9, UC-07 step 10, UC-07 step 11.</p>
 <h2 id="fr-tool-tool">FR-TOOL <code>tool</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): one tool of the toolkit run by hand, found by its file name, with the project's variables (u2ue/env.py).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/tool.py</code> (87 lines; public: <code>command</code>, <code>find</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/tool.py</code> (87 lines; public: <code>command</code>, <code>find</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments - <code>--selftest</code>.</p>
 <p><strong>Refuses</strong> (1 messages, as the code writes them):</p>
 <ul>
@@ -10785,7 +11182,7 @@ Its docstring: <em>folder, their output streamed through and their exit code ret
 <p><strong>Exercised by</strong>: UC-09 step 5.</p>
 <h2 id="fr-release-release">FR-RELEASE <code>release</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the package as a repo: assembled from the toolkit's own trees by one manifest, secrets refused, public readiness counted.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/release.py</code> (141 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: no. Its usage text is in <a href="#18-commands">Chapter 18</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/release.py</code> (141 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: no. Its usage text is in <a href="#19-commands">Chapter 19</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -10829,7 +11226,7 @@ Its docstring: <em>Exit 0 = assembled (or current); 1 = --check found a differen
 <p><strong>Verified by</strong>: <code>py -m u2ue.verbs.release --selftest</code> - last run passes (exit 0) (<code>u2ue/survey/pt1_selftests.json</code>).</p>
 <p><strong>Exercised by</strong>: no use-case step runs it as its proof.</p>
 <!-- /GEN:facade --></section>
-<section id="18-commands"><h1 id="18-command-reference">18. Command reference</h1>
+<section id="19-commands"><h1 id="19-command-reference">19. Command reference</h1>
 <p><em>Generated by <code>u2ue/manual/build.py</code> from the facade's verb registry (<code>u2ue/verbs/__init__.py</code>) and each verb's own docstring - edit the code, not this page.</em></p>
 <p>Every command runs from the toolkit's root (<code>.opus-tools</code>):</p>
 <pre><code>py -m u2ue                                   # list every verb
@@ -11517,7 +11914,7 @@ time); `tool` adds none and removes none.
 Exit 0 = assembled (or current); 1 = --check found a difference; 2 = refused (a secret, a folder that is not a release, no --to).
 Nothing is committed or pushed: the repo's history and its remote are the owner's.
 </code></pre></section>
-<section id="19-reference"><h1 id="19-reference">19. Reference</h1>
+<section id="20-reference"><h1 id="20-reference">20. Reference</h1>
 <p>The tables marked <em>generated</em> are written by <code>u2ue/manual/build.py</code> from the code, so they change when the code does. Edit the code,
 not the table.</p>
 <h2 id="file-formats">File formats</h2>
@@ -12392,7 +12789,7 @@ not the table.</p>
 
 <h2 id="selftests-generated">Selftests <em>(generated)</em></h2>
 <!-- GEN:selftests -->
-<p>108 selftests run by <code>py -m u2ue --project &lt;name&gt; check --only selftests</code>, each its tool's own:</p>
+<p>109 selftests run by <code>py -m u2ue --project &lt;name&gt; check --only selftests</code>, each its tool's own:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -12833,6 +13230,10 @@ not the table.</p>
 <td>u2ue release</td>
 <td><code>-m u2ue.verbs.release --selftest</code></td>
 </tr>
+<tr>
+<td>u2ue uml</td>
+<td><code>-m u2ue.verbs.uml --selftest</code></td>
+</tr>
 </tbody>
 </table></div>
 <ul>
@@ -12840,7 +13241,7 @@ not the table.</p>
 <li><code>ue_publish_gate.py</code> is NOT run by <code>u2ue check</code>: its selftest launches UnrealEditor; one headless Unreal at a time and the effect queues hold it</li>
 </ul>
 <!-- /GEN:selftests --></section>
-<section id="20-architecture"><h1 id="20-architecture-and-the-uml">20. Architecture and the UML</h1>
+<section id="21-architecture"><h1 id="21-architecture-and-the-uml">21. Architecture and the UML</h1>
 <p><code>u2ue/ARCHITECTURE.md</code> is the reviewer's document: the pipeline, the principles, the converter, the design read from the code, the
 review and its findings, and the questions a senior engineer will ask, with their answers. This chapter is the map.</p>
 <h2 id="layers">Layers</h2>
@@ -12880,13 +13281,13 @@ names a class, a verb or a step the toolkit does not have cannot be published. R
    checks that every concept it calls a class exists at its own line.</li>
 <li><strong>The use case model</strong> (<a href="#05-use-cases">Chapter 5</a>): who uses the toolkit for what - the use case diagram, the epic's activity flow, every case
    fully dressed with the document each step was read from.</li>
-<li><strong>The facade's requirements</strong> (<a href="#17-facade">Chapter 17</a>): every verb as a requirement, read from its own source - its inputs, its refusals with
+<li><strong>The facade's requirements</strong> (<a href="#18-facade">Chapter 18</a>): every verb as a requirement, read from its own source - its inputs, its refusals with
    their lines, its exits, the selftest that verifies it and the use-case steps that run it.</li>
 <li><strong>The class model</strong> (below): the toolkit's modules and classes and how they use one another, from the code's imports and bases.</li>
 <li><strong>The facade map</strong> (below): which modules and tool parts each verb reaches.</li>
 <li><strong>The traceability</strong> (<a href="#a4-traceability">Appendix E</a>): each stakeholder requirement down to the selftest that proves it.</li>
 </ol>
-<p>A reviewer starts at the epic (<a href="#05-use-cases">Chapter 5</a>), follows a step into the verb that proves it (<a href="#17-facade">Chapter 17</a>), and only then opens code.</p>
+<p>A reviewer starts at the epic (<a href="#05-use-cases">Chapter 5</a>), follows a step into the verb that proves it (<a href="#18-facade">Chapter 18</a>), and only then opens code.</p>
 <h2 id="the-concept-model">The concept model</h2>
 <!-- GEN:concepts -->
 
@@ -13587,8 +13988,8 @@ names a class, a verb or a step the toolkit does not have cannot be published. R
 <tr>
 <td><code>verbs_uml</code></td>
 <td>module</td>
-<td>2</td>
-<td>-</td>
+<td>3</td>
+<td><code>Project</code>, <code>ProjectError</code></td>
 </tr>
 <tr>
 <td><code>verbs_window</code></td>
@@ -13598,7 +13999,7 @@ names a class, a verb or a step the toolkit does not have cannot be published. R
 </tr>
 </tbody>
 </table></div>
-<p><em>2 game adapter module(s) and class(es) left out: an adapter is its game's code (<a href="#12-extending">Chapter 12</a>).</em> <em>drew 105 classes / modules, 146 relationships (members: uml.py extract; edges: the code's own imports and bases), generated by <code>u2ue/survey/design_diagram.py</code>; run <code>py u2ue/survey/design_diagram.py OUT.mmd</code> for the diagram with every member's signature.</em></p>
+<p><em>2 game adapter module(s) and class(es) left out: an adapter is its game's code (<a href="#12-extending">Chapter 12</a>).</em> <em>drew 105 classes / modules, 148 relationships (members: uml.py extract; edges: the code's own imports and bases), generated by <code>u2ue/survey/design_diagram.py</code>; run <code>py u2ue/survey/design_diagram.py OUT.mmd</code> for the diagram with every member's signature.</em></p>
 <!-- /GEN:classdiagram -->
 
 <h2 id="the-facade-map">The facade map</h2>
@@ -13665,6 +14066,7 @@ environment, and judges their records. The map shows which shared modules each v
     end
     v_find --&gt; m_catalog
     v_info --&gt; m_adapters
+    v_uml --&gt; m_project
     v_scaffold --&gt; m_project
     v_logic --&gt; m_logic
     v_data --&gt; m_tools
@@ -13746,7 +14148,7 @@ environment, and judges their records. The map shows which shared modules each v
 </tr>
 <tr>
 <td><code>uml</code></td>
-<td>-</td>
+<td><code>project</code></td>
 <td>-</td>
 </tr>
 <tr>
@@ -14003,7 +14405,7 @@ the reader. The converter never opens a Unity file.</p>
 - which is what makes every change provable in about 100 seconds. What runs in the game at run time (spawning the systems) is the
 game's own code, not the tool's.</p>
 <p><strong>Why so many switches?</strong> Each route shipped as a staged rollout: OFF until its trial held, then ON, with <code>VFXPORT_&lt;NAME&gt;=0</code> still able
-to switch it off for an A/B against the old behaviour (<a href="#19-reference">Chapter 19</a> counts them, generated). That is the debt: the ones permanently ON
+to switch it off for an A/B against the old behaviour (<a href="#20-reference">Chapter 20</a> counts them, generated). That is the debt: the ones permanently ON
 carry OFF branches that are dead code. They are retired after the acceptance report, in one pass that <code>whole_trace.py</code> proves (the
 trace with the flipped set ON must not move).</p>
 <p><strong>Why does the lane hold so many queue scripts?</strong> They are the reference port's job history - each trial's exact orchestration, kept
@@ -14240,10 +14642,10 @@ the search, and a term that starts to hit leaves this table.</p>
 <pre><code>py uml.py --lang py --root . check --doc u2ue/USECASES.md    # every backticked call the model names resolves in the toolkit's code
 py -X utf8 u2ue/survey/usecase_absence.py                    # the inferred requirements' key terms, against the owner's words
 </code></pre></section>
-<section id="21-troubleshooting"><h1 id="21-troubleshooting">21. Troubleshooting</h1>
+<section id="22-troubleshooting"><h1 id="22-troubleshooting">22. Troubleshooting</h1>
 <p>Each entry was hit for real on the reference port. The symptom comes first, then the cause, then what to do. Each section names the step of a
 procedure it branches from, and an entry that branches elsewhere names its own; the requirements model reads those as the
-procedures' extensions (<a href="#20-architecture">Chapter 20</a>).</p>
+procedures' extensions (<a href="#21-architecture">Chapter 21</a>).</p>
 <h2 id="finding-your-problem">Finding your problem</h2>
 <p>Start from what you see. Most problems in a port fall into one of the rows below, and each row names where its answer is.</p>
 <div class="table-wrap"><table>
@@ -14256,7 +14658,7 @@ procedures' extensions (<a href="#20-architecture">Chapter 20</a>).</p>
 <tbody>
 <tr>
 <td>a command printed <code>REFUSED: ...</code></td>
-<td>that verb's refusals, every message with its line, are in <a href="#17-facade">Chapter 17</a>; the message names its cause, so fix the input it names and run it again</td>
+<td>that verb's refusals, every message with its line, are in <a href="#18-facade">Chapter 18</a>; the message names its cause, so fix the input it names and run it again</td>
 </tr>
 <tr>
 <td>a command says the project is missing a path or a key</td>
@@ -14466,13 +14868,13 @@ Write an adapter. It answers the few questions that depend on a game, and the fi
 (<code>effect_keys()</code>). <a href="#12-extending">Chapter 12</a> has the recipe.</p>
 <p><strong>A gate went red, but I know the code is right.</strong>
 First check whether the code moved. A gate that walks one folder reports a symbol it cannot see as absent. Widen the gate to follow
-the move, then prove that it can still fail (<a href="#16-test-driven-porting">Chapter 16</a>, <a href="#21-troubleshooting">Chapter 21</a>). Never re-record a baseline to make a red gate green.</p>
+the move, then prove that it can still fail (<a href="#16-test-driven-porting">Chapter 16</a>, <a href="#22-troubleshooting">Chapter 22</a>). Never re-record a baseline to make a red gate green.</p>
 <p><strong>How long does a port take?</strong>
 The toolkit measures this rather than estimating it. <code>u2ue tempo</code> times each converter route from its first code to its verified flip,
 read off git, and <code>u2ue metrics</code> reports the machine time of the builds (<a href="#11-metrics-and-reports">Chapter 11</a>). <a href="#a1-worked-example">Appendix A</a> has the reference port's numbers.</p>
 <p><strong>Can I review the port without reading the code?</strong>
-Yes - that is what the model is for. Start at the epic in <a href="#05-use-cases">Chapter 5</a>, follow a step to the verb that proves it (<a href="#17-facade">Chapter 17</a>), and run
-that verb. The class model and the facade map in <a href="#20-architecture">Chapter 20</a> show where the code sits.</p>
+Yes - that is what the model is for. Start at the epic in <a href="#05-use-cases">Chapter 5</a>, follow a step to the verb that proves it (<a href="#18-facade">Chapter 18</a>), and run
+that verb. The class model and the facade map in <a href="#21-architecture">Chapter 21</a> show where the code sits.</p>
 <h2 id="the-approach">The approach</h2>
 <p><strong>Why not just translate the MonoBehaviours into Actors?</strong>
 Because then nothing can be compared. Two engines running two hand-translated copies of the rules disagree in ways no one can locate:
@@ -14533,7 +14935,7 @@ Measured: one headless Unreal process holding the effect content reached about 2
 folder race each other's asset registry. One at a time, with a queue, finishes sooner than two that fail.</p>
 <p><strong>Why headless Unreal, and not a running editor?</strong>
 A headless run is reproducible, unattended and owns nothing anyone else is using. The cost is that the editor world does not tick
-actors, so Niagara does not simulate by itself; the read-back advances each system explicitly (<a href="#21-troubleshooting">Chapter 21</a>).</p>
+actors, so Niagara does not simulate by itself; the read-back advances each system explicitly (<a href="#22-troubleshooting">Chapter 22</a>).</p>
 <p><strong>Why does the YAML reader refuse a scene that edits an object inside a model?</strong>
 A model (an FBX) is binary, so the scene's YAML holds only the edit, not the object it edits. Reading FBX in Python to rebuild that
 object's transform would re-derive what Unity has already resolved: the scene's glTF export walks Unity's live hierarchy and writes
@@ -14917,7 +15319,7 @@ effect materials transcribe URP's Lit model rather than being named and left (<a
 <tbody>
 <tr>
 <td>1</td>
-<td><strong>Ports and adapters, not a generic game.</strong> The three questions that depend on a game (<code>effect_keys</code>, <code>spawn_rules</code>, <code>host_busy</code>) behind one interface, <code>u2ue/adapters</code>; <code>UnityProject</code> answers them for any Unity project, and a game adapter is the worked example of a game that chooses its effects in code. Reviewers start at <code>ARCHITECTURE.md</code> (<a href="#20-architecture">Chapter 20</a>)</td>
+<td><strong>Ports and adapters, not a generic game.</strong> The three questions that depend on a game (<code>effect_keys</code>, <code>spawn_rules</code>, <code>host_busy</code>) behind one interface, <code>u2ue/adapters</code>; <code>UnityProject</code> answers them for any Unity project, and a game adapter is the worked example of a game that chooses its effects in code. Reviewers start at <code>ARCHITECTURE.md</code> (<a href="#21-architecture">Chapter 21</a>)</td>
 <td>DONE</td>
 </tr>
 <tr>
@@ -15556,7 +15958,7 @@ memory, and a class of bug a logic-parity test does not see:</p>
 </ul>
 <p>From the FAQ: UnrealSharp reaches only what is exposed to reflection, the same restriction Blueprint has, so anything else needs C++
 written by you; and a UObject class is made with <code>NewObject&lt;T&gt;()</code>, never <code>new T()</code>. The traps the reference port met with it are in
-<a href="#21-troubleshooting">Chapter 21</a>.</p>
+<a href="#22-troubleshooting">Chapter 22</a>.</p>
 <h3 id="the-alternatives">The alternatives</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -15813,7 +16215,7 @@ bounded by what was found, not by what exists.</p>
 </ul></section>
 <section id="a4-traceability"><h1 id="appendix-e-traceability">Appendix E. Traceability</h1>
 <p>The chain from what the toolkit's owner asked for to what proves it was delivered: each stakeholder requirement, the steps of the
-epic that cite it, the use cases that carry those steps (<a href="#05-use-cases">Chapter 5</a>), the verbs those cases prove with (<a href="#17-facade">Chapter 17</a>), and each verb's
+epic that cite it, the use cases that carry those steps (<a href="#05-use-cases">Chapter 5</a>), the verbs those cases prove with (<a href="#18-facade">Chapter 18</a>), and each verb's
 selftest with its last verdict. Everything here is generated from <code>u2ue/USECASES.md</code>, the requirements engine's model and the
 selftest registry. A requirement that the epic does not cite is listed as untraced, not as met.</p>
 <h2 id="stakeholder-requirement-to-selftest">Stakeholder requirement to selftest</h2>
@@ -15844,7 +16246,7 @@ selftest registry. A requirement that the epic does not cite is listed as untrac
 <td>step 4, step 5</td>
 <td>UC-13, UC-14, UC-15</td>
 <td><code>check</code>, <code>data</code>, <code>digest</code>, <code>host</code>, <code>inventory</code>, <code>parity</code>, <code>scaffold</code>, <code>ui</code>, <code>uml</code></td>
-<td><code>check</code> ABSENT; <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>host</code> registered, never run; <code>inventory</code> passes (exit 0); <code>parity</code> passes (exit 0); <code>scaffold</code> passes (exit 0); <code>ui</code> passes (exit 0); <code>uml</code> ABSENT</td>
+<td><code>check</code> ABSENT; <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>host</code> registered, never run; <code>inventory</code> passes (exit 0); <code>parity</code> passes (exit 0); <code>scaffold</code> passes (exit 0); <code>ui</code> passes (exit 0); <code>uml</code> passes (exit 0)</td>
 </tr>
 <tr>
 <td>Q3</td>
@@ -15860,7 +16262,7 @@ selftest registry. A requirement that the epic does not cite is listed as untrac
 <td>step 8, EPIC-1 (success guarantee)</td>
 <td>UC-07, UC-14, UC-16</td>
 <td><code>build</code>, <code>check</code>, <code>cycle</code>, <code>data</code>, <code>digest</code>, <code>extract</code>, <code>host</code>, <code>info</code>, <code>inventory</code>, <code>metrics</code>, <code>parity</code>, <code>photo</code>, <code>read</code>, <code>report</code>, <code>scaffold</code>, <code>uml</code></td>
-<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>cycle</code> passes (exit 0); <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>uml</code> ABSENT</td>
+<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>cycle</code> passes (exit 0); <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>uml</code> passes (exit 0)</td>
 </tr>
 <tr>
 <td>Q5</td>
@@ -15876,7 +16278,7 @@ selftest registry. A requirement that the epic does not cite is listed as untrac
 <td>step 2, step 5</td>
 <td>UC-13, UC-14, UC-15, UC-16</td>
 <td><code>build</code>, <code>check</code>, <code>data</code>, <code>digest</code>, <code>extract</code>, <code>host</code>, <code>info</code>, <code>inventory</code>, <code>metrics</code>, <code>parity</code>, <code>photo</code>, <code>read</code>, <code>report</code>, <code>scaffold</code>, <code>ui</code>, <code>uml</code></td>
-<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>ui</code> passes (exit 0); <code>uml</code> ABSENT</td>
+<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>ui</code> passes (exit 0); <code>uml</code> passes (exit 0)</td>
 </tr>
 <tr>
 <td>Q7</td>
@@ -15892,7 +16294,7 @@ selftest registry. A requirement that the epic does not cite is listed as untrac
 <td>step 3, step 4, step 6</td>
 <td>UC-11, UC-13, UC-14, UC-16</td>
 <td><code>build</code>, <code>check</code>, <code>data</code>, <code>digest</code>, <code>extract</code>, <code>host</code>, <code>info</code>, <code>inventory</code>, <code>metrics</code>, <code>parity</code>, <code>photo</code>, <code>read</code>, <code>report</code>, <code>scaffold</code>, <code>scene</code>, <code>shear</code>, <code>uml</code></td>
-<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>scene</code> passes (exit 0); <code>shear</code> passes (exit 0); <code>uml</code> ABSENT</td>
+<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>scene</code> passes (exit 0); <code>shear</code> passes (exit 0); <code>uml</code> passes (exit 0)</td>
 </tr>
 <tr>
 <td>Q9</td>
@@ -15924,7 +16326,7 @@ selftest registry. A requirement that the epic does not cite is listed as untrac
 <td>step 7, step 8</td>
 <td>UC-07, UC-12, UC-14, UC-16, UC-17</td>
 <td><code>build</code>, <code>check</code>, <code>cycle</code>, <code>data</code>, <code>digest</code>, <code>extract</code>, <code>host</code>, <code>info</code>, <code>inventory</code>, <code>judge</code>, <code>metrics</code>, <code>parity</code>, <code>photo</code>, <code>read</code>, <code>report</code>, <code>scaffold</code>, <code>tempo</code>, <code>trial</code>, <code>uml</code>, <code>window</code></td>
-<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>cycle</code> passes (exit 0); <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>judge</code> ABSENT; <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>tempo</code> passes (exit 0); <code>trial</code> passes (exit 0); <code>uml</code> ABSENT; <code>window</code> passes (exit 0)</td>
+<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>cycle</code> passes (exit 0); <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>judge</code> ABSENT; <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>tempo</code> passes (exit 0); <code>trial</code> passes (exit 0); <code>uml</code> passes (exit 0); <code>window</code> passes (exit 0)</td>
 </tr>
 <tr>
 <td>Q13</td>
@@ -15940,7 +16342,7 @@ selftest registry. A requirement that the epic does not cite is listed as untrac
 <td>step 3, step 4</td>
 <td>UC-13, UC-14, UC-16</td>
 <td><code>build</code>, <code>check</code>, <code>data</code>, <code>digest</code>, <code>extract</code>, <code>host</code>, <code>info</code>, <code>inventory</code>, <code>metrics</code>, <code>parity</code>, <code>photo</code>, <code>read</code>, <code>report</code>, <code>scaffold</code>, <code>uml</code></td>
-<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>uml</code> ABSENT</td>
+<td><code>build</code> ABSENT; <code>check</code> ABSENT; <code>data</code> passes (exit 0); <code>digest</code> passes (exit 0); <code>extract</code> ABSENT; <code>host</code> registered, never run; <code>info</code> ABSENT; <code>inventory</code> passes (exit 0); <code>metrics</code> ABSENT; <code>parity</code> passes (exit 0); <code>photo</code> passes (exit 0); <code>read</code> ABSENT; <code>report</code> ABSENT; <code>scaffold</code> passes (exit 0); <code>uml</code> passes (exit 0)</td>
 </tr>
 <tr>
 <td>Q15</td>
@@ -16008,7 +16410,7 @@ selftest registry. A requirement that the epic does not cite is listed as untrac
 <tr>
 <td>UC-06 A developer adds a verb to the facade</td>
 <td><code>find</code></td>
-<td>ABSENT</td>
+<td>passes (exit 0)</td>
 </tr>
 <tr>
 <td>UC-07 The owner checks every pillar of the product each cycle</td>
@@ -16048,12 +16450,12 @@ selftest registry. A requirement that the epic does not cite is listed as untrac
 <tr>
 <td>UC-13 The porter moves a game's code into an engine-free model</td>
 <td><code>check</code>, <code>data</code>, <code>digest</code>, <code>inventory</code>, <code>parity</code>, <code>scaffold</code>, <code>uml</code></td>
-<td>ABSENT; passes (exit 0); passes (exit 0); passes (exit 0); passes (exit 0); passes (exit 0); ABSENT</td>
+<td>ABSENT; passes (exit 0); passes (exit 0); passes (exit 0); passes (exit 0); passes (exit 0); passes (exit 0)</td>
 </tr>
 <tr>
 <td>UC-14 Opus ports a Unity game's logic through the skill</td>
 <td><code>check</code>, <code>digest</code>, <code>host</code>, <code>inventory</code>, <code>parity</code>, <code>scaffold</code>, <code>uml</code></td>
-<td>ABSENT; passes (exit 0); registered, never run; passes (exit 0); passes (exit 0); passes (exit 0); ABSENT</td>
+<td>ABSENT; passes (exit 0); registered, never run; passes (exit 0); passes (exit 0); passes (exit 0); passes (exit 0)</td>
 </tr>
 <tr>
 <td>UC-15 The porter lays out the game's uGUI screens in Unreal</td>
