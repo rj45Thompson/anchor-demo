@@ -471,6 +471,8 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   [data-aud=""]{display:none!important}
   html[data-view=ai] [data-aud="games"]{display:none!important}
   html[data-view=games] [data-aud="ai"]{display:none!important}
+  html[data-view=games] .tab[data-p=u2ue]{order:-4}
+  html[data-view=games] .tab[data-p=u2ue-manual]{order:-3}
   html[data-view=games] .tab[data-p=resume]{order:-2}
   html[data-view=games] .tab[data-p=space]{order:-1}
   html[data-view-boot] .panel{display:none}
@@ -5908,7 +5910,7 @@ renderCode();
   // that fast reads as a slogan rather than as a measurement.
   var NOTE = {
     ai:    "Showing the engine, the research behind it, and how the requirements were gathered.",
-    games: "Showing R\u00e9sum\u00e9 Breakout, Star Fighter, the level builder and the job desk. The first two run in this page; the level builder is a Unity build and opens in its own."
+    games: "Showing u2ue (the Unity to Unreal porting toolkit) and its manual, R\u00e9sum\u00e9 Breakout, Star Fighter, the level builder and the job desk. The first two run in this page; the level builder is a Unity build and opens in its own."
   };
   var TITLE = { ai: document.title, games: "R.J. Thompson - playable demos" };
   var root = document.documentElement;
@@ -5924,11 +5926,13 @@ renderCode();
       var firstSb = [].slice.call(document.querySelectorAll("#p-inv .subtab")).filter(shown)[0];
       if(firstSb) firstSb.click();
     }
-    // same for the open tab; the games address lands on Résumé Breakout by design
+    // same for the open tab; the games address lands on u2ue (RJ 10-17: "make the u2ue show up first under game studios"),
+    // then Résumé Breakout
     var cur = document.querySelector(".tab.on");
     if(!cur || !shown(cur) || (onLoad && mode === "games")){
       var tabs = [].slice.call(document.querySelectorAll(".tab")).filter(shown);
-      var want = tabs.filter(function(t){ return mode === "games" && t.dataset.p === "resume"; })[0] || tabs[0];
+      var want = tabs.filter(function(t){ return mode === "games" && t.dataset.p === "u2ue"; })[0] ||
+                 tabs.filter(function(t){ return mode === "games" && t.dataset.p === "resume"; })[0] || tabs[0];
       if(want) want.click();
     }
     var n = document.getElementById("audNote"); if(n) n.textContent = NOTE[mode] || "";
