@@ -819,6 +819,47 @@ over a hundred boxes is unreadable at page width; <code>py u2ue/survey/design_di
 </tr>
 </tbody>
 </table></div>
+<h2 id="the-symbols-drawn">The symbols, drawn</h2>
+<p>The three small diagrams below are drawn the way the manual's own diagrams are, with made-up names, so each symbol can be seen once
+before it is met in a real one.</p>
+<p><strong>A class diagram.</strong> <code>Project</code> and <code>Adapter</code> are classes: the name on top, then members (a name with brackets is a method, one
+without is data). The solid arrow is an association, read along its label: a Project asks its Adapter. The dashed arrow is a
+dependency: <code>Cli</code> imports <code>Project</code>. The hollow triangle points at the base class: <code>GameAdapter</code> is a kind of <code>Adapter</code>.</p>
+<div class="diagram-scroll"><div class="diagram-wide"><pre class="mermaid wide">classDiagram
+    class Project {
+        name
+        env()
+    }
+    class Adapter {
+        effect_keys()
+    }
+    class GameAdapter
+    class Cli
+    Project --&gt; Adapter : asks
+    Cli ..&gt; Project
+    Adapter &lt;|-- GameAdapter
+</pre></div></div>
+<p><strong>A use case diagram, as a flowchart.</strong> The dashed box outside is an actor, the large box is the system boundary, the rounded shapes
+are use cases. The base case always does the case it includes; the extending case runs only on a condition, and its arrow points
+the other way, back at the base.</p>
+<div class="diagram-scroll"><div class="diagram-wide"><pre class="mermaid wide">flowchart LR
+    porter[&quot;porter&quot;]:::actor
+    subgraph toolkit[&quot;the toolkit&quot;]
+        port([&quot;UC-A Port a game&quot;])
+        effects([&quot;UC-B Port the effects&quot;])
+        measure([&quot;UC-C Measure a rule in Unity&quot;])
+    end
+    porter --- port
+    port -. include .-&gt; effects
+    measure -. extend .-&gt; port
+    classDef actor fill:none,stroke-dasharray:3 3
+</pre></div></div>
+<p><strong>A flow diagram.</strong> Boxes are steps, solid arrows the order, the diamond a gate checked before the next step, the cylinder stored
+data one step writes and the next reads.</p>
+<div class="diagram-scroll"><div class="diagram-wide"><pre class="mermaid wide">flowchart LR
+    read[&quot;read the effect&quot;] --&gt; ir[(&quot;the IR files&quot;)] --&gt; build[&quot;build it in Unreal&quot;] --&gt; gate{&quot;does it hold to Unity?&quot;}
+    gate -- yes --&gt; report[&quot;report it&quot;]
+</pre></div></div>
 <h2 id="what-a-use-case-is">What a use case is</h2>
 <p>A use case is one goal of one actor, written as a short story in numbered steps that ends with the goal reached, plus the ways the
 story can go wrong. It is not a feature list and not a method of the code: "The porter takes a new game from its project file to its
@@ -984,6 +1025,12 @@ and run it again: the third row below is the second row's game with its two vend
 </tr>
 </tbody>
 </table></div>
+<p>How big each project is, read off its files by the same census (a code line has its comments and strings blanked, and blank lines are not counted):</p>
+<ul>
+<li>The reference port, as it was before its logic moved (Unity 6000.3): <strong>95,665 code lines of game C# in 339 files</strong> (90,777 coupled, 4,888 pure); its own editor tools 111,014 lines in 282 files, not ported; 3,768 prefabs, 2,445 of them with a particle system; 146 scenes, 1 in the build.</li>
+<li>A second game, another studio's (Unity 2021.3), every folder its project file names: <strong>182,129 code lines of game C# in 1,932 files</strong> (125,959 coupled, 56,170 pure); its own editor tools 7,366 lines in 55 files, not ported; 3,229 prefabs, 52 of them with a particle system; 463 scenes, 24 in the build.</li>
+<li>The same game, its two vendored libraries excluded (a networking framework and a WebSocket client, each read by its namespace): <strong>103,657 code lines of game C# in 1,392 files</strong> (89,817 coupled, 13,840 pure); its own editor tools 5,333 lines in 30 files, not ported; 3,229 prefabs, 52 of them with a particle system; 463 scenes, 24 in the build; 80,505 lines of vendored libraries left out.</li>
+</ul>
 <p>The rates they multiply by, each read from the reference port's records (<code>u2ue/basis/tokens.json</code>):</p>
 <ul>
 <li><code>logic_coupled_line</code>: <strong>70,776 tokens per coupled code line</strong>, n=27, bootstrap band 54,112 to 91,003, one sample's actual over predicted 0.40 to 2.13 (leave-one-out, P10 to P90), all-in overhead x1.61 (all the agents of wf_341e7e76-b72 over those that moved one measured file each: verifying, gating, playing and consolidating are real cost too); 97.3 % of them cache reads, 0.6 % output. Workflow runs wf_341e7e76-b72 (81 agents): each step agent's tokens off its own transcript; each step's file measured in the pre-move copy (14469 code lines in 27 samples).</li>
@@ -997,6 +1044,10 @@ and run it again: the third row below is the second row's game with its two vend
 </ul>
 <!-- /GEN:estimate -->
 
+<p><strong>A yardstick.</strong> The reference port, the game the toolkit was built on and its first row, is a medium-sized game: about
+96,000 code lines of game C#, thousands of prefabs and over a hundred scenes (its size line above). Bigger than a game jam
+project, well short of a large studio title. The logic estimate grows with the coupled lines, so a game with half as many coupled
+lines costs about half as much to port.</p>
 <h2 id="what-the-number-is-made-of">What the number is made of</h2>
 <p><strong>The logic is where the tokens go.</strong> Effects, scenes, UI conversion, the game's own Unreal project, parity and the acceptance page
 (the report of every effect, every gap and every decision left to the game's owner) are each run by a verb. <code>u2ue port</code> runs them
@@ -8733,7 +8784,7 @@ py u2ue/manual/build.py                    # this chapter, from the engine's mod
 <p>Between the last two, the requirements engine is run over the harvest: its trace, its epic builder, and its checker, which refuses a
 case without a dressed field, a scenario outside three to eleven steps, or a citation that does not resolve.</p>
 <!-- GEN:usecases -->
-<p><strong>21 use cases</strong> - one summary-level epic and 20 user-goal cases - with <strong>135 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 174 (the 2 extension(s) that branch from any step carry no row number). The model holds 1750 facts of this domain.</p>
+<p><strong>21 use cases</strong> - one summary-level epic and 20 user-goal cases - with <strong>135 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 174 (the 2 extension(s) that branch from any step carry no row number). The model holds 1751 facts of this domain.</p>
 <h2 id="the-actors">The actors</h2>
 <div class="table-wrap"><table>
 <thead>
