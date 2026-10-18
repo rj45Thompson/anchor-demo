@@ -8645,6 +8645,18 @@ It gives no time, because no time per line has been measured yet (<a href="#cost
 time rather than estimating it: <code>u2ue tempo</code> times each converter route from its first code to its verified flip, read off git, and
 <code>u2ue metrics</code> reports the machine time of the builds (<a href="#10-metrics-and-reports">Chapter 10</a>). For scale, measured on the reference port (2026-10-15): building 673
 effect keys took 31.8 hours of headless machine time, summed over the keys, a median of 98 s a key (<a href="#a1-worked-example">Appendix A</a>).</p>
+<h2 id="after-the-port">After the port</h2>
+<p><strong>The game keeps changing in Unity. How does the port keep up?</strong>
+It depends on what changed. The logic lives in one engine-free model that Unity and Unreal both run (<a href="#05-game-code">Chapter 5</a>), so a rule changes
+once, in the model, and <code>u2ue parity</code> proves the engines still agree bit for bit. Content authored in Unity is ported again by the
+verb for that part: <code>u2ue scene</code> for a level, checked against that scene's own baseline (<a href="#06-transforms-and-scenes">Chapter 6</a>); <code>u2ue extract</code> and
+<code>u2ue build</code> for effects (<a href="#07-effects">Chapter 7</a>); <code>u2ue ui convert</code> for screens (<a href="#06-transforms-and-scenes">Chapter 6</a>). Running <code>u2ue port</code> again re-reads every stage from
+its records (<a href="#04-quick-start">Chapter 4</a>). What is not built yet is a step that finds which assets changed since the last port: after a change,
+rerun the verb for that part yourself.</p>
+<p><strong>After the port, is Unity or Unreal the source?</strong>
+That is the owner's decision, and the toolkit does not make it. The verbs read the Unity project, so they serve a team that keeps
+authoring levels, effects and screens in Unity and ports them again. A team that moves its authoring into Unreal stops porting
+content; the shared model still keeps the rules in one place for both engines, for as long as both ship.</p>
 <h2 id="the-approach">The approach</h2>
 <p><strong>Why not just translate the MonoBehaviours into Actors?</strong>
 Because then nothing can be compared. Two engines running two hand-translated copies of the rules disagree in ways no one can locate:
@@ -8784,7 +8796,7 @@ py u2ue/manual/build.py                    # this chapter, from the engine's mod
 <p>Between the last two, the requirements engine is run over the harvest: its trace, its epic builder, and its checker, which refuses a
 case without a dressed field, a scenario outside three to eleven steps, or a citation that does not resolve.</p>
 <!-- GEN:usecases -->
-<p><strong>21 use cases</strong> - one summary-level epic and 20 user-goal cases - with <strong>135 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 174 (the 2 extension(s) that branch from any step carry no row number). The model holds 1751 facts of this domain.</p>
+<p><strong>21 use cases</strong> - one summary-level epic and 20 user-goal cases - with <strong>135 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 174 (the 2 extension(s) that branch from any step carry no row number). The model holds 1752 facts of this domain.</p>
 <h2 id="the-actors">The actors</h2>
 <div class="table-wrap"><table>
 <thead>
