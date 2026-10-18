@@ -371,19 +371,13 @@ the model has read before, at a fraction of the price.
 <div class="hook-tile"><b>99.97 %</b><span>of 26,973 per-frame checks on the built effects hold</span><i>26 checks, 8 red, each named &middot; u2ue metrics</i></div>
 <div class="hook-tile"><b>383 / 383</b><span>game-rule results agree across Unity, .NET and Unreal: 348 to the bit, 35 within one ULP</span><i>each ULP row pinned to its bits; Unity&#x27;s side run with no editor, 383 of 383 equal &middot; u2ue digest faithful, u2ue parity</i></div>
 <div class="hook-tile"><b>11 / 11</b><span>product pillars pass their recurring checks</span><i>cycle of 2026-10-18 02:12 &middot; u2ue cycle</i></div>
-<div class="hook-tile"><b>174</b><span>use case steps and extensions, each checked against the document it was read from</span><i>21 use cases; the checker: PASS &middot; usecases.py</i></div>
-<div class="hook-tile"><b>14 of 19</b><span>requirements the use case chain inferred, that nobody had written, confirmed real</span><i>0 refuted, 5 not yet judged &middot; the game&#x27;s own use case record</i></div>
-<div class="hook-tile"><b>54.6 %</b><span>of 9,560 emitters born on Unity&#x27;s frame with Unity&#x27;s live count, judged against Unity&#x27;s own particle state</span><i>5,224 of 9,560, every key in one run &middot; u2ue conform</i></div>
-<div class="hook-tile"><b>7 / 7</b><span>judges the trials run have a planted fault they must refuse</span><i>a judge that cannot fail proves nothing; checked every cycle &middot; u2ue judge --prove</i></div>
-<div class="hook-tile"><b>860 / 860</b><span>samples hold a Unity timing rule measured from data alone</span><i>Unity&#x27;s fixed-step clock under simulation speed: synthetic cases, no new probe code &middot; simspeed_rule.py</i></div>
-<div class="hook-tile"><b>27 / 27</b><span>of the toolkit&#x27;s concepts are classes, each found at its own line</span><i>the concept model drawn first, the code moved under it; a class the model names and the code lacks fails the gate &middot; concepts_gate.py</i></div>
-<div class="hook-tile"><b>22 / 29</b><span>seams the reference title&#x27;s Unreal host fills, read from source</span><i>209 interfaces sorted: 29 seams only an engine fills, 180 the model fills itself &middot; u2ue.seam</i></div>
 <div class="hook-tile"><b>2,065 of 2,130</b><span>misses carry a named cause: the converter&#x27;s own note on that emitter, or a Unity rule measured on data</span><i>timing 650 of 670; the other 65 listed as the work, never passed &middot; u2ue conform classes</i></div>
+<div class="hook-tile"><b>174</b><span>use case steps and extensions, each checked against the document it was read from</span><i>21 use cases; the checker: PASS &middot; usecases.py</i></div>
 <div class="hook-tile"><b>$2,738</b><span>to port a second game&#x27;s logic, its vendored libraries excluded, on Opus 5.5, estimated before it starts</span><i>89,817 coupled lines; band $2,119 to $3,488, confidence LOW, with its reasons &middot; u2ue estimate</i></div>
 <div class="hook-tile"><b>90 %</b><span>of that cost saved by the prompt cache</span><i>$27,105 with no cache; 97.3 % of the processed tokens are cache reads &middot; u2ue estimate</i></div>
 </div>
 
-<p class="hook-meta">Measured on the reference port and recorded 2026-10-18 02:13 by <code>u2ue/survey/showcase.py --record</code> (toolkit commit f5962b2); every tile names the command that produced it.</p>
+<p class="hook-meta">Measured on the reference port and recorded 2026-10-18 15:38 by <code>u2ue/survey/showcase.py --record</code> (toolkit commit 8538bff); every tile names the command that produced it.</p>
 <!-- /GEN:hook -->
 
 <h2 id="why-the-numbers-can-be-trusted">Why the numbers can be trusted</h2>
@@ -2404,6 +2398,67 @@ where UnrealSharp cannot reach.</p>
   PR --&gt;|view seams| TH[&quot;headless test host&quot;]
   RT[&quot;U2ue.Runtime: Unity's frame, clock, coroutines, platform&quot;] --&gt; model
 </pre></div></div>
+<h2 id="an-example-a-units-move-range">An example: a unit's move range</h2>
+<p>The reference port is a turn-based tactics game in the manner of XCOM: units on a grid of tiles, each turn spending action points
+to move and attack. Its rules lived in its MonoBehaviours. Here is one of them as the port moved it. The game's namespace is written
+<code>&lt;Game&gt;.Core</code>; the rest is the code as it is, shortened where it says <code>...</code>.</p>
+<p><strong>Before: the rule inside the MonoBehaviour.</strong> <code>Unit</code> was a MonoBehaviour of 6,837 lines before the move (5,552 after). The unit's
+move range was one of its methods, reading the unit's statuses and rounding through Unity's <code>Mathf</code>:</p>
+<pre><code class="language-csharp">public int GetEffectiveMovement()
+{
+    // Root: cannot move at all (can still attack)
+    if (IsRooted) return 0;
+
+    int baseMoveRange = unitData.SpeciesAttributes.HorizontalMovement;
+    int moveRange = baseMoveRange;
+    if (ActiveStatusEffects != null)
+    {
+        foreach (var s in ActiveStatusEffects)
+        {
+            if (s.Type == StatusType.MoveDown)
+                moveRange -= Mathf.RoundToInt(s.Magnitude);
+            if (s.Type == StatusType.ExcessMovement)
+                moveRange += Mathf.RoundToInt(s.Magnitude);
+            ...
+        }
+    }
+    ...
+}
+</code></pre>
+<p><strong>After: the same rule in the engine-free model.</strong> It moved verbatim, with two changes. The unit is reached through an interface the
+rule declares (<code>self</code>), and <code>Mathf.RoundToInt</code> became the model's <code>MathRules.RoundToInt</code>, copied from a compatibility layer proven
+bit for bit against Unity's own <code>UnityEngine.dll</code>: banker's rounding, as Unity rounds. Those two changes are the port: the rule
+now names no Unity type, so Unreal and the headless runner can run it too, and what it computes is the same.</p>
+<pre><code class="language-csharp">public static class UnitMovementRules&lt;TUnit&gt; where TUnit : class, IStatContributionUnit
+{
+    public static int EffectiveMovement(TUnit self, IAccessoryLookup accessories, IMovementRangeHost host)
+    {
+        // Root: cannot move at all (can still attack)
+        if (self.IsRooted) return 0;
+
+        int baseMoveRange = self.SpeciesAttributes.HorizontalMovement;
+        int moveRange = baseMoveRange;
+        for (int i = 0; i &lt; self.ActiveStatusCount; i++)
+        {
+            var s = self.ActiveStatusAt(i);
+            if (s.Type == StatusType.MoveDown)
+                moveRange -= MathRules.RoundToInt(s.Magnitude);
+            if (s.Type == StatusType.ExcessMovement)
+                moveRange += MathRules.RoundToInt(s.Magnitude);
+            ...
+        }
+        ...
+    }
+}
+</code></pre>
+<p><strong>What is left in Unity: one line.</strong> The MonoBehaviour keeps its public method, so nothing that calls it changes, and forwards to the
+rule. The warnings the rule used to log inline reach Unity's console through a small host object:</p>
+<pre><code class="language-csharp">public int GetEffectiveMovement()
+    =&gt; &lt;Game&gt;.Core.UnitMovementRules&lt;Unit&gt;.EffectiveMovement(
+        this, UnityAccessoryLookup.Shared, UnityMovementRangeHost.Shared);
+</code></pre>
+<p>The headless runner and the Unreal host play the reference battle on the model's own unit, <code>BattleUnit</code>, which calls the same rule,
+and <code>u2ue parity</code> compares the engines' answers bit for bit. The playbook's Step 6 (below) is this move, made for every rule.</p>
 <h2 id="the-method-step-by-step">The method, step by step</h2>
 <h3 id="1-inventory-the-code">1. Inventory the code</h3>
 <pre><code>py -m u2ue --project &lt;game&gt; inventory --survey     # every top folder under Assets with its .cs count: name the game's own as code.roots
