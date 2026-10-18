@@ -2400,7 +2400,8 @@ where UnrealSharp cannot reach.</p>
 </pre></div></div>
 <h2 id="an-example-a-units-move-range">An example: a unit's move range</h2>
 <p>The reference port is a turn-based tactics game in the manner of XCOM: units on a grid of tiles, each turn spending action points
-to move and attack. Its rules lived in its MonoBehaviours. Here is one of them as the port moved it. The game's namespace is written
+to move and attack. Its rules lived in its MonoBehaviours. Here is one of them as the port moved it, in its extraction run on
+2026-09-29: nothing below was changed for this page. The excerpts are the copy taken before the move and the code as it stands. The game's namespace is written
 <code>&lt;Game&gt;.Core</code>; the rest is the code as it is, shortened where it says <code>...</code>.</p>
 <p><strong>Before: the rule inside the MonoBehaviour.</strong> <code>Unit</code> was a MonoBehaviour of 6,837 lines before the move (5,552 after). The unit's
 move range was one of its methods, reading the unit's statuses and rounding through Unity's <code>Mathf</code>:</p>
