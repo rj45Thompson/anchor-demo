@@ -268,6 +268,7 @@ pre.mermaid { overflow-x: auto; }
 <div class="shell"><nav class="toc"><div class="brand">u2ue</div><div class="part">Part I - for the evaluator: should you use it</div>
 <a href="#why-u2ue">Why u2ue</a>
 <a href="#README">About this manual</a>
+<a href="#uml-primer">Reading UML and use cases</a>
 <a href="#cost">What a port costs</a>
 <a href="#nutshell">Porting to Unreal in a nutshell</a>
 <a href="#00-short-version">The short version</a>
@@ -359,7 +360,7 @@ the command that produced it. None of them is typed by hand.</p>
 <div class="hook-tile"><b>90 %</b><span>of that cost saved by the prompt cache</span><i>$27,105 with no cache; 97.3 % of the processed tokens are cache reads &middot; u2ue estimate</i></div>
 </div>
 
-<p class="hook-meta">Measured on the reference port and recorded 2026-10-17 22:13 by <code>u2ue/survey/showcase.py --record</code> (toolkit commit 36f690d); every tile names the command that produced it.</p>
+<p class="hook-meta">Measured on the reference port and recorded 2026-10-17 22:40 by <code>u2ue/survey/showcase.py --record</code> (toolkit commit 36f690d); every tile names the command that produced it.</p>
 <!-- /GEN:hook -->
 
 <h2 id="why-the-numbers-can-be-trusted">Why the numbers can be trusted</h2>
@@ -465,7 +466,7 @@ well enough to run a script, and C# well enough to read a MonoBehaviour.</p>
 <tr>
 <td><strong>Part I</strong></td>
 <td>the <strong>evaluator</strong> deciding whether to use u2ue</td>
-<td><a href="#why-u2ue">Why u2ue</a> (what it does, what it proved, what is not done yet), this page, <a href="#cost">What a port costs</a>, <a href="#nutshell">Porting to Unreal in a nutshell</a> (a quick start, and the five problems every port meets), <a href="#00-short-version">The short version</a> (every aspect of a port on one screen each), <a href="#01-introduction">1. Introduction</a> (exactly what it is and is not)</td>
+<td><a href="#why-u2ue">Why u2ue</a> (what it does, what it proved, what is not done yet), this page, <a href="#uml-primer">Reading UML and use cases</a> (the diagrams and case pages, before any page assumes them), <a href="#cost">What a port costs</a>, <a href="#nutshell">Porting to Unreal in a nutshell</a> (a quick start, and the five problems every port meets), <a href="#00-short-version">The short version</a> (every aspect of a port on one screen each), <a href="#01-introduction">1. Introduction</a> (exactly what it is and is not)</td>
 </tr>
 <tr>
 <td><strong>Part II</strong></td>
@@ -488,6 +489,8 @@ well enough to run a script, and C# well enough to read a MonoBehaviour.</p>
 installation, a tutorial, procedures, troubleshooting.</p>
 <h2 id="reading-paths">Reading paths</h2>
 <ul>
+<li><strong>New to UML or use cases</strong>: <a href="#uml-primer">Reading UML and use cases</a> first. It is every symbol and field the
+  manual uses, and nothing it does not.</li>
 <li><strong>Deciding whether to use it</strong>: Why u2ue, then <a href="#cost">What a port costs</a> with <code>u2ue estimate</code> run on your own project, then
   <a href="#01-introduction">Chapter 1</a>. <a href="#a1-worked-example">Appendix A</a> is the reference port in numbers, <a href="#a2-roadmap">Appendix B</a> what is left to do, <a href="#a3-prior-art">Appendix D</a> the other ways to port.</li>
 <li><strong>Porting your game</strong>: price it with <code>py -m u2ue estimate --unity &lt;your Unity project&gt;</code>, describe it in a project file (<a href="#03-install">Chapter 3</a>),
@@ -640,6 +643,227 @@ command or an option the facade does not have, or names a tool file the package 
 <p>The Markdown files in <code>u2ue/manual/</code> are the source. <code>py u2ue/manual/build.py</code> regenerates the generated parts and writes
 <code>manual.html</code>, the single-page edition; <code>py u2ue/manual/build.py --check</code> exits 1 when a generated part is stale, and
 <code>py u2ue/manual/build.py --selftest</code> proves the gates still refuse their plants.</p></section>
+<section id="uml-primer"><h1 id="reading-uml-and-use-cases">Reading UML and use cases</h1>
+<p><strong>Who this is for</strong>: every reader who has not used UML or use cases before - what the diagrams and the case pages in this manual
+mean, read before any page assumes it.</p>
+<p>This manual shows the toolkit, and the method it gives a port, in two kinds of model: diagrams of how the code is put together, and
+use cases that say who wants what done and how they get it. Both come from UML, the Unified Modeling Language: a standard set of
+diagram kinds for describing software, kept by the Object Management Group. You do not need the standard to read this manual. This
+page is everything it uses, and nothing it does not.</p>
+<h2 id="why-a-porting-manual-uses-uml">Why a porting manual uses UML</h2>
+<p>A port is mostly moving code into a new shape: rules out of Unity's MonoBehaviours into a model that knows no engine (<a href="#05-game-code">Chapter 5</a>). A
+diagram of the shape you want is a shorter, checkable description than prose. The method is to draw the target first and then make
+the code match it, and an AI model doing the port is given the diagram as its instructions (<a href="#15-porting-with-opus">Chapter 15</a>). The toolkit holds every
+generated diagram to the code: a diagram that names a class, a method, a verb or a step the code does not have fails the build.
+A diagram here is a checked fact, not a drawing.</p>
+<h2 id="the-three-diagram-kinds">The three diagram kinds</h2>
+<p>The diagrams are written in Mermaid, a text format that draws diagrams in a web page. Mermaid has no use case diagram, so this manual
+draws use case diagrams as flowcharts and says so where it does.</p>
+<ul>
+<li><strong>Class diagram</strong>: the STRUCTURE. Which things exist (classes) and how they use one another. <a href="#22-architecture">Chapter 22</a>'s concept model is one.</li>
+<li><strong>Use case diagram</strong>: the GOALS. Who uses the system (actors), for what (use cases), and how the goals depend on one another.
+  <a href="#17-use-cases">Chapter 17</a> has the toolkit's.</li>
+<li><strong>Activity or flow diagram</strong>: the ORDER. Steps, the arrows between them, and the decisions that pick a path. The short version and
+  Chapters 5, 7 and 14 use them as sketches.</li>
+</ul>
+<h2 id="a-uml-glossary-every-symbol-this-manual-draws">A UML glossary: every symbol this manual draws</h2>
+<p><strong>In a class diagram</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>what you see</th>
+<th>its name</th>
+<th>what it means here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a box with a name on top</td>
+<td>class</td>
+<td>one idea the code holds as one class. In the concept model the first line under the name says what it is in plain words (this manual's own habit, not standard UML), and the lines after it are its main members</td>
+</tr>
+<tr>
+<td><code>name()</code> inside a box</td>
+<td>method</td>
+<td>something the class does; a name without brackets is data it holds</td>
+</tr>
+<tr>
+<td>a solid arrow <code>A --&gt; B</code> with a label</td>
+<td>association</td>
+<td>A uses, asks or holds B, and the label says how ("Project --&gt; Adapter : asks" reads "a Project asks its Adapter")</td>
+</tr>
+<tr>
+<td>a dashed arrow</td>
+<td>dependency</td>
+<td>A imports B (the class model drawn by <code>py u2ue/survey/design_diagram.py</code>)</td>
+</tr>
+<tr>
+<td>a hollow triangle at one end</td>
+<td>generalisation</td>
+<td>the class at the plain end is a kind of the class at the triangle, its base</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>In a use case diagram (drawn as a flowchart)</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>what you see</th>
+<th>its name</th>
+<th>what it means here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a dashed box outside the boundary</td>
+<td>actor</td>
+<td>a role that wants something from the system: a person (the porter, the game's owner, a developer), the AI model, or the toolkit's own runners. A role, not a person: one person can play several</td>
+</tr>
+<tr>
+<td>the large box around the cases</td>
+<td>system boundary</td>
+<td>what is inside is the toolkit; what is outside uses it</td>
+</tr>
+<tr>
+<td>a rounded shape with an id (<code>UC-07</code>, <code>EPIC-1</code>)</td>
+<td>use case</td>
+<td>one goal an actor can reach, named as a goal ("The owner checks every pillar of the product each cycle")</td>
+</tr>
+<tr>
+<td>a plain line between an actor and a case</td>
+<td>association</td>
+<td>that actor takes part in that case</td>
+</tr>
+<tr>
+<td>a dashed arrow labelled include</td>
+<td>include</td>
+<td>the base case always does the included case as part of itself; the arrow runs FROM the base TO the case it includes</td>
+</tr>
+<tr>
+<td>a dashed arrow labelled extend</td>
+<td>extend</td>
+<td>the extending case runs only when a condition at one step of the base holds; the arrow runs FROM the extension TO the base, the opposite way to include</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>In a flow diagram</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>what you see</th>
+<th>what it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a box</td>
+<td>one step</td>
+</tr>
+<tr>
+<td>a solid arrow</td>
+<td>then: the order of the steps</td>
+</tr>
+<tr>
+<td>a dashed arrow</td>
+<td>a step that happens only sometimes, or a path back</td>
+</tr>
+<tr>
+<td>a diamond or a braced label</td>
+<td>a decision or a gate: what is checked before the next step</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="what-a-use-case-is">What a use case is</h2>
+<p>A use case is one goal of one actor, written as a short story in numbered steps that ends with the goal reached, plus the ways the
+story can go wrong. It is not a feature list and not a method of the code: "The porter takes a new game from its project file to its
+first report" is a use case; <code>build()</code> is not. This manual writes use cases in the "fully dressed" form Alistair Cockburn describes
+in <em>Writing Effective Use Cases</em>, and every case in <a href="#17-use-cases">Chapter 17</a> is laid out the same way:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>field</th>
+<th>what it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>the goal, as an active phrase</td>
+</tr>
+<tr>
+<td>level</td>
+<td>how big the goal is: <strong>kite</strong> (a summary that strings several goals together - an epic), <strong>sea</strong> (one goal a user sits down to reach, the level to prefer), <strong>fish</strong> (a step inside another goal)</td>
+</tr>
+<tr>
+<td>primary actor</td>
+<td>the role whose goal it is; supporting actors are the others it needs</td>
+</tr>
+<tr>
+<td>stakeholders</td>
+<td>who else cares about the outcome, and what each wants</td>
+</tr>
+<tr>
+<td>trigger</td>
+<td>what starts it</td>
+</tr>
+<tr>
+<td>scope</td>
+<td>what the case covers</td>
+</tr>
+<tr>
+<td>precondition</td>
+<td>what must already be true for it to start</td>
+</tr>
+<tr>
+<td>minimal guarantee</td>
+<td>what holds even when it fails (here: nothing is dropped silently)</td>
+</tr>
+<tr>
+<td>success guarantee</td>
+<td>what holds when it succeeds</td>
+</tr>
+<tr>
+<td>main success scenario</td>
+<td>three to eleven numbered steps, each naming what it needs; outside that range the goal is the wrong size</td>
+</tr>
+<tr>
+<td>extensions</td>
+<td>where it can go wrong, each numbered by its step: <code>3a</code> branches from step 3, <code>*</code> from any step</td>
+</tr>
+<tr>
+<td>read from</td>
+<td>the document the case was read out of</td>
+</tr>
+<tr>
+<td>proven by</td>
+<td>the command that checks a step; that command is the test, and it must fail on a planted defect before it is trusted</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>An epic</strong> is the kite-level case that strings the others together: EPIC-1, "Port a Unity game to Unreal and show how identical it
+is", is the whole port, and each of its steps names the cases that carry it. If the epic's steps all run, the product works.</p>
+<p><strong>The chain, and the requirements it finds.</strong> Each step's result is the next step's precondition. When a step needs something no
+earlier step guarantees, the chain has found a requirement nobody wrote down. It is marked <strong>INFERRED</strong> and goes to the owner to
+confirm. A step that names code which exists is marked <strong>HAVE</strong> with the real name.</p>
+<h2 id="how-to-read-a-use-case-page">How to read a use case page</h2>
+<ol>
+<li>Read the name and the primary actor: whose goal, and what.</li>
+<li>Read the success guarantee: what is true at the end. Then the minimal guarantee: what is true even when it fails.</li>
+<li>Walk the main success scenario. For each step ask what it needs and whether an earlier step gave it.</li>
+<li>Read the extensions. They are where a real port goes wrong; <a href="#16-troubleshooting">Chapter 16</a> is the same branches by symptom.</li>
+<li>Run a step's "proven by" command instead of taking the step on trust.</li>
+</ol>
+<h2 id="the-rules-this-manual-holds-its-uml-to">The rules this manual holds its UML to</h2>
+<ul>
+<li><strong>Generated, then gated.</strong> The concept model, the class model, the use case model, the facade's requirements and the traceability
+  are generated from the code or the requirements model on every build. A view that names something the code lacks is refused.</li>
+<li><strong>Sketches are labelled.</strong> A few flow diagrams in the early chapters are drawn by hand to show an order; they are sketches, not
+  checked views.</li>
+<li><strong>The model comes first.</strong> A new idea is drawn as a class before the code is written, and a step of the logic port draws the target
+  diagram before any code moves (<a href="#05-game-code">Chapter 5</a>, step 2 of the playbook; <a href="#18-extending">Chapter 18</a>, "A concept").</li>
+<li><strong>One name, one meaning.</strong> A term the diagrams use is defined in the glossary (<a href="#glossary">Appendix C</a>), and a class's name in a diagram is the
+  name in the code.</li>
+</ul></section>
 <section id="cost"><h1 id="what-a-port-costs">What a port costs</h1>
 <p><strong>Who this is for</strong>: the evaluator deciding whether to use u2ue - what porting your game will cost in model tokens and in dollars on
 Opus 5.5, worked out before you start, and how sure that number is.</p>
@@ -8412,7 +8636,7 @@ py u2ue/manual/build.py                    # this chapter, from the engine's mod
 <p>Between the last two, the requirements engine is run over the harvest: its trace, its epic builder, and its checker, which refuses a
 case without a dressed field, a scenario outside three to eleven steps, or a citation that does not resolve.</p>
 <!-- GEN:usecases -->
-<p><strong>20 use cases</strong> - one summary-level epic and 19 user-goal cases - with <strong>130 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 169 (the 2 extension(s) that branch from any step carry no row number). The model holds 1647 facts of this domain.</p>
+<p><strong>20 use cases</strong> - one summary-level epic and 19 user-goal cases - with <strong>130 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 169 (the 2 extension(s) that branch from any step carry no row number). The model holds 1659 facts of this domain.</p>
 <h2 id="the-actors">The actors</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -15992,6 +16216,8 @@ URP's Lit model rather than being named and left (<a href="#07-effects">Chapter 
 <p><strong>Who this is for</strong>: every reader - each term the manual uses, defined in a sentence or two, with the chapter that explains it where one does.</p>
 <p><strong>ABSENT</strong> - a value the toolkit proved does not exist in the source, or could not read, named with the reason. Never replaced by a
 default.</p>
+<p><strong>actor</strong> - a role that wants something from the system: a person, the AI model, or the toolkit's own runners; one person can
+play several roles (Reading UML and use cases).</p>
 <p><strong>adapter</strong> - the object that answers the three game-specific questions (which prefabs are effects, what starts on spawn, when the
 host is busy). <code>unity_project</code> is the default (<a href="#18-extending">Chapter 18</a>).</p>
 <p><strong>aggregate</strong> - the one engine-free class that holds an entity's state and rules; the engine's object holds one and forwards
@@ -16000,11 +16226,15 @@ to it, so state has one home (<a href="#05-game-code">Chapter 5</a>).</p>
 <p><strong>bake</strong> - one run of a probe in Unity, saved as a fact file.</p>
 <p><strong>capability seam</strong> - the optional interfaces an engine implements when it draws more of the game than the base view calls say; a
 view without one gets the base call instead (<a href="#05-game-code">Chapter 5</a>).</p>
+<p><strong>class model</strong> - a diagram of which classes exist and how they use one another, drawn from the code and checked against it
+(<a href="#22-architecture">Chapter 22</a>; how to read one: Reading UML and use cases).</p>
 <p><strong>coverage</strong> - of the emitters Unity draws, the share Unreal draws: drawn / (drawn + gap).</p>
 <p><strong>digest</strong> - a runtime's per-case output of the game's model, floats as bit patterns, compared by <code>u2ue parity</code>.</p>
 <p><strong>effect key</strong> - one effect the game can spawn, usually one prefab; the unit the IR, the build and the report count in.</p>
 <p><strong>emitter</strong> - one Unity ParticleSystem, and the Niagara emitter built from it.</p>
 <p><strong>engine-free model</strong> - the game's rules as plain C# that references no engine, run by both engines' hosts.</p>
+<p><strong>epic</strong> - the summary-level use case that strings the others together; EPIC-1 is the whole port, and each of its steps names
+the cases that carry it (<a href="#17-use-cases">Chapter 17</a>).</p>
 <p><strong>event stream</strong> - the ordered, append-only list of events the model writes as it resolves an action; an engine draws only what it
 says, so everything a player must see is said once (<a href="#05-game-code">Chapter 5</a>).</p>
 <p><strong>facade</strong> - <code>py -m u2ue</code>, the single entry point; every verb is one row of its registry.</p>
@@ -16014,6 +16244,9 @@ says, so everything a player must see is said once (<a href="#05-game-code">Chap
 <p><strong>gap root</strong> - the emitter a gap is charged to: an absent parent's children count against the ancestor that is absent for its own
 reason, so a root's count is what porting it brings back.</p>
 <p><strong>host</strong> - the engine-side code that runs the model in one engine: Unity's MonoBehaviours, or UnrealSharp actors.</p>
+<p><strong>include and extend</strong> - the two ways one use case uses another: an include always runs as part of its base (the arrow runs
+from the base to it); an extend runs only when a condition at one step holds (the arrow runs from the extension to the base)
+(Reading UML and use cases).</p>
 <p><strong>IR</strong> - the engine-neutral intermediate representation of an effect: one JSON file per key, read from Unity's YAML.</p>
 <p><strong>judge</strong> - a script that holds a record (a fact file, a read-back, a capture) to a rule and refuses it when the rule does not hold.
 It carries planted defects it must refuse, and is written before the data it judges (<a href="#08-measuring-unity">Chapter 8</a>, <a href="#14-test-driven-porting">Chapter 14</a>).</p>
@@ -16039,6 +16272,10 @@ is caught up (<a href="#05-game-code">Chapter 5</a>).</p>
 <p><strong>stand-in</strong> - a value or asset the converter used in place of the real one, marked <code>SUBSTITUTED</code> and never counted as measured.</p>
 <p><strong>switch</strong> - an environment variable (<code>VFXPORT_&lt;NAME&gt;</code>, <code>U1E_&lt;NAME&gt;</code>) that turns one route on or off.</p>
 <p><strong>ULP</strong> - unit in the last place: the gap between two neighbouring floats. A one-ULP difference is the smallest a float can differ by.</p>
+<p><strong>UML</strong> - the Unified Modeling Language, a standard set of diagram kinds for software; this manual uses class, use case and
+flow diagrams (Reading UML and use cases).</p>
+<p><strong>use case</strong> - one goal of one actor, told as three to eleven numbered steps that end with the goal reached, plus the ways it
+can go wrong (its extensions) (Reading UML and use cases).</p>
 <p><strong>verb</strong> - one command of the facade (<code>extract</code>, <code>build</code>, <code>metrics</code>, ...).</p>
 <p><strong>view seam</strong> - the interfaces through which the presentation asks an engine to draw; every method is a game verb, never an engine
 primitive (<a href="#05-game-code">Chapter 5</a>).</p>
