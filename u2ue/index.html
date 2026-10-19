@@ -2398,6 +2398,70 @@ where UnrealSharp cannot reach.</p>
   PR --&gt;|view seams| TH[&quot;headless test host&quot;]
   RT[&quot;U2ue.Runtime: Unity's frame, clock, coroutines, platform&quot;] --&gt; model
 </pre></div></div>
+<h2 id="mvc-the-shape-the-logic-moves-into">MVC: the shape the logic moves into</h2>
+<p>A MonoBehaviour does three jobs at once: it holds the game's state, it runs the game's rules, and it draws. Unreal cannot run a
+MonoBehaviour, so a port has to pull those jobs apart, and they need somewhere to go. u2ue ports a game into <strong>Model, View,
+Controller (MVC)</strong>, with commands going in and events coming out. The <code>u2ue-mvc</code> skill holds the same rules for an AI model.</p>
+<ul>
+<li><strong>Model</strong> (<code>UnitModel</code>, <code>BattleModel</code>): the state of one thing and the rules about it, in plain C#. Think of a referee with a
+  scoresheet: it decides what happens and writes it down. It never draws, never waits, and never calls the engine.</li>
+<li><strong>Rules</strong> (<code>DamageRules</code>, <code>StatusRules</code>): plain classes grouped by topic whose methods take Models, so "how damage works" is
+  in one file. They take the Model class itself, never an interface written for one rule.</li>
+<li><strong>Command</strong> (<code>UseTechnique</code>, <code>MoveTo</code>, <code>EndTurn</code>): what the player or the AI asks for. <strong>Event</strong> (<code>Moved</code>, <code>Hit</code>,
+  <code>StatusEnded</code>, <code>Died</code>): what happened, in order. A scene's Model has one entry point, <code>Apply(command)</code>, and it returns the events.</li>
+<li><strong>Controller</strong> (<code>BattleController</code>): the stage manager, one per scene, not one per object. It turns input into commands, gives
+  them to the Model, and plays the returned events through the Views one at a time with <code>U2ue.Runtime.PlaybackQueue</code>. Input waits
+  until the playback has caught up.</li>
+<li><strong>View</strong> (<code>UnitView</code>): the actor on stage, a MonoBehaviour in Unity or an actor in Unreal. It holds the id of the Model it shows
+  and plays the events that name it. It decides nothing.</li>
+<li><strong>View model</strong> (<code>HudViewModel</code>): the scoreboard the audience sees, the state as shown. It moves on only as events finish
+  playing, so a health bar drops when the hit lands, not before. There is one per screen (the HUD, a menu).</li>
+<li><strong>Record</strong> (<code>UnitRecord</code>): what lasts between scenes, such as a unit you own with its level and gear. A Model is made from its
+  Record when a battle starts and writes back what the game keeps when it ends.</li>
+</ul>
+<div class="diagram-scroll"><div class="diagram-wide"><pre class="mermaid wide">flowchart LR
+    input[&quot;click or AI choice&quot;] --&gt; controller[&quot;BattleController&quot;]
+    controller -- &quot;command&quot; --&gt; model[&quot;BattleModel and its UnitModels&quot;]
+    model -- &quot;events, in order&quot; --&gt; controller
+    controller -- &quot;one event at a time&quot; --&gt; view[&quot;UnitView, BattleView&quot;]
+    controller -- &quot;as each event finishes&quot; --&gt; hud[&quot;HudViewModel&quot;]
+</pre></div></div>
+<p><strong>One attack, end to end.</strong> Unit A uses a technique on unit B, and B's neighbour C can intercept hits. The player clicks B; the
+Controller makes the command "A uses X on B" and calls <code>Apply</code>. The damage rules check A's action points, roll the hit with the
+battle's seeded random numbers and look at the board: C is next to B and intercepts, so C takes the hit. That rule needs the board
+and a second unit, so it belongs to the battle, not to one unit. C loses health, and its Sleep ends because it was hit. <code>Apply</code>
+returns <em>A used X; C intercepted; C took 12; C's Sleep ended</em>, and the Controller plays the list: A's cast, then C's hit, then the
+health bar, then the Sleep icon going. Unity, Unreal and the headless runner run every step but the last on the same code, so they
+cannot disagree.</p>
+<p><strong>Why MVC, and not another pattern.</strong></p>
+<ul>
+<li><strong>MVVM</strong> binds a screen to the latest state. A turn-based game has to show the order of what happened, so a world bound to the
+  latest state shows a unit dead before the shot lands. MVVM fits the HUD and menus, and that is where it is used: the view model.</li>
+<li><strong>ECS</strong> (entities and components processed by systems) pays off with thousands of entities. A tactics or card game has tens, and
+  ECS spreads one unit's behaviour across many systems, which is harder to read.</li>
+<li><strong>Model-View-Update</strong> (one pure update function, with the view drawn from the state) is MVC with immutable state. It needs the
+  same event playback for animation, and copying a large model on every change costs more without reading any simpler in C#.</li>
+<li><strong>MVC with commands and events</strong> reads as one sentence: input, controller, model, events, view. Its routing is boilerplate, and an
+  AI writes boilerplate; a person reads the shape.</li>
+</ul>
+<h3 id="sorting-every-monobehaviour">Sorting every MonoBehaviour</h3>
+<p>Read what each one holds, not what it is called:</p>
+<ul>
+<li><strong>It holds game state and runs rules</strong> (a unit, a tile, a card, the turn order): a Model and a View. The MonoBehaviour becomes the
+  View, and its state and rules move to the Model.</li>
+<li><strong>It only presents</strong> (a health bar, a VFX player, a camera follow, a menu animation): a View only. It plays events or reads a view
+  model, and it gets no Model.</li>
+<li><strong>It is plain C# with no Unity call</strong> (the inventory's pure types): a Model or Rules, moved as they are.</li>
+<li><strong>It turns clicks and keys into actions</strong>: part of the Controller, or an input source the Controller reads.</li>
+<li><strong>It is a manager holding a bit of everything</strong> (a <code>GameManager</code> singleton): it is split. Its state goes to the scene's Model,
+  its flow to the Controller, and its scene references to the Views.</li>
+<li><strong>It only holds authored data</strong> (a ScriptableObject, a config component): data the Model reads (<code>u2ue data</code>), neither Model nor
+  View.</li>
+</ul>
+<p><strong>Where the reference port stands.</strong> Its rules are out of the MonoBehaviours, but its state still lives twice: Unity's <code>Unit</code> keeps
+one copy for the game as it is played, and the model's <code>BattleUnit</code> keeps another for the headless runner and Unreal. The rules
+reach both through 209 small interfaces, most with one Unity implementor. Moving it into this shape, one topic at a time with
+<code>u2ue parity</code> holding the answers bit for bit, is under way; a second game should port straight into it.</p>
 <h2 id="an-example-a-units-move-range">An example: a unit's move range</h2>
 <p>The reference port is a turn-based tactics game in the manner of XCOM: units on a grid of tiles, each turn spending action points
 to move and attack. Its rules lived in its MonoBehaviours. Here is one of them as the port moved it, in its extraction run on
@@ -3062,7 +3126,9 @@ the class model before moving code. Ask me only for the decisions the skill name
 <li><strong>Core</strong> (<code>&lt;Model&gt;.Core</code>, made by <code>u2ue scaffold</code>) - the rulebook: what happens, never how it looks. No engine in it.</li>
 <li><strong>Aggregate</strong> - ONE class per entity holds its state (a unit, a card, a board); the engine's object HOLDS one and forwards to it.
   Never forty little interfaces over one MonoBehaviour: the shape adds code and makes nothing testable ("What a second game writes"
-  has the measurement).</li>
+  has the measurement).
+  This is the Model of the u2ue-mvc skill, "MVC: the shape the logic moves into" above (<code>&lt;Thing&gt;Model</code>). Holding and forwarding is the safe first step; the end shape is a
+  View that holds only the Model's id, with one Controller per scene owning the Models.</li>
 <li><strong>Seam</strong> - the plug sockets: the platform seam (logging, files, preferences, JSON, random numbers - <code>U2ue.Runtime.Platform</code>), the
   view seam (what draws), the capability seam (optional extras on top of the view seam, "The interface set" below). An engine
   implements a seam; the Core declares it.</li>
@@ -3113,8 +3179,8 @@ stands.</p>
 <h3 id="step-2-draw-the-class-model-of-one-slice-before-moving-anything">Step 2. Draw the class model of ONE slice before moving anything</h3>
 <ul>
 <li><strong>Do</strong>: pick the first slice - one feature whose rules use the fewest Unity families (a damage formula, a scoring rule, an
-  inventory stack). Extract the class model over the game's code roots, draw the slice's types, and write the TARGET diagram: which
-  types become the aggregate, which stay hosts, which seams appear. The diagram is the plan a person reviews; the code follows it.</li>
+  inventory stack). Extract the class model over the game's code roots, draw the slice's types, and write the TARGET diagram in the
+  shape "MVC: the shape the logic moves into" names: which types become Models, which become Views, which seams appear. The diagram is the plan a person reviews; the code follows it.</li>
 <li><strong>Run</strong>: <code>py -m u2ue --project &lt;name&gt; uml extract</code>, then <code>py -m u2ue --project &lt;name&gt; uml mermaid --focus &lt;TypeA&gt; &lt;TypeB&gt;</code>.</li>
 <li><strong>Done when</strong>: the slice's current and target diagrams exist, and every name in them resolves (<code>uml where &lt;Name&gt;</code>).</li>
 </ul>
@@ -3123,7 +3189,9 @@ stands.</p>
 <li><strong>Do</strong>: give every type in the slice ONE destination - CORE (a pure rule: it moves as it is), AGGREGATE (the state and rules inside
   a MonoBehaviour: they move into one Core class the MonoBehaviour then holds), HOST (what only an engine can do: draw, play, read
   input) or SEAM (a platform chore). Label each member the host keeps by its kind - PUNCTUAL, ONGOING, MUTATION, ANSWER or CONTROL
-  (the table in "What a second game writes" says what each one is and what it costs an engine).</li>
+  (the table in "What a second game writes" says what each one is and what it costs an engine). In MVC's names: a CORE type becomes
+  Rules or a Model, an AGGREGATE a <code>&lt;Thing&gt;Model</code> its MonoBehaviour's <code>&lt;Thing&gt;View</code> shows, a HOST a View or part of the scene's
+  Controller ("Sorting every MonoBehaviour" above decides which).</li>
 <li><strong>Run</strong>: <code>py -m u2ue --project &lt;name&gt; inventory</code>.</li>
 <li><strong>Done when</strong>: the target diagram carries every type's destination and every kept host member's kind.</li>
 <li><strong>Absent</strong>: a host-kind census for any game's model. Label by hand by the rule above: a non-void member is an ANSWER.</li>
@@ -8194,7 +8262,7 @@ keep it running, and the default path uses both.</p>
 </ul>
 <p><code>u2ue port</code> hands the AI stage over with both in mind. Its stop names the u2ue-logic skill to run with u2ue-long-run, and
 <code>u2ue logic</code> says the step it resumes from, so a new session picks up from the records instead of re-deriving the state.</p>
-<h2 id="the-five-skills-the-package-ships">The five skills the package ships</h2>
+<h2 id="the-skills-the-package-ships">The skills the package ships</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -8215,6 +8283,11 @@ keep it running, and the default path uses both.</p>
 <td>the logic port (<a href="#05-game-code">Chapter 5</a>)</td>
 </tr>
 <tr>
+<td><code>u2ue/skill/u2ue-mvc/SKILL.md</code></td>
+<td>the shape the logic moves into - Model, View, Controller, commands in and events out - and the rule that sorts every MonoBehaviour into it</td>
+<td>deciding where a type's state, rules and drawing go (<a href="#05-game-code">Chapter 5</a>, "MVC")</td>
+</tr>
+<tr>
 <td><code>u2ue/skill/u2ue-port/SKILL.md</code></td>
 <td>port an effect gap by the route protocol: census, a switch that starts OFF, proof, trial, LOOK, flip with evidence</td>
 <td>an effect the converter refuses (<a href="#07-effects">Chapter 7</a>, <a href="#11-shuriken-to-niagara">Chapter 11</a>)</td>
@@ -8231,7 +8304,7 @@ keep it running, and the default path uses both.</p>
 </tr>
 </tbody>
 </table></div>
-<p>The skill gate (<code>u2ue/survey/skill_gate.py</code>, pillar 2 of the cycle) holds all five to the toolkit: a command a skill names must
+<p>The skill gate (<code>u2ue/survey/skill_gate.py</code>, pillar 2 of the cycle) holds every one of them to the toolkit: a command a skill names must
 exist, and a step written as <code>### Step N.</code> must carry at least one <code>RUN:</code> line and exactly one <code>DONE WHEN:</code> line. A skill that sends
 the model hunting for a command that is not there fails the cycle.</p>
 <h2 id="directing-the-model-at-a-game">Directing the model at a game</h2>
@@ -8852,7 +8925,7 @@ py u2ue/manual/build.py                    # this chapter, from the engine's mod
 <p>Between the last two, the requirements engine is run over the harvest: its trace, its epic builder, and its checker, which refuses a
 case without a dressed field, a scenario outside three to eleven steps, or a citation that does not resolve.</p>
 <!-- GEN:usecases -->
-<p><strong>21 use cases</strong> - one summary-level epic and 20 user-goal cases - with <strong>135 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 174 (the 2 extension(s) that branch from any step carry no row number). The model holds 1752 facts of this domain.</p>
+<p><strong>21 use cases</strong> - one summary-level epic and 20 user-goal cases - with <strong>135 steps</strong> and <strong>41 extensions</strong>, every step read from the page named beside it. The requirements engine's checker verifies the citation of every numbered row: 174 (the 2 extension(s) that branch from any step carry no row number). The model holds 1761 facts of this domain.</p>
 <h2 id="the-actors">The actors</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -16630,6 +16703,7 @@ refuses them next (<a href="#11-shuriken-to-niagara">Chapter 11</a>).</p>
 <a href="#05-game-code">Chapter 5</a>) or the toolkit's (<a href="#22-architecture">Chapter 22</a>; how to read one: Reading UML and use cases).</p>
 <p><strong>Claude Code</strong> - the Anthropic tool the AI model works in during a port; it serves most of a session's tokens from the prompt cache
 (the cost page, <a href="#15-porting-with-opus">Chapter 15</a>).</p>
+<p><strong>command</strong> - in u2ue's MVC, what the player or the AI asks a scene's Model to do (<code>UseTechnique</code>, <code>EndTurn</code>); the Controller makes it and the Model's <code>Apply</code> runs it, returning events (<a href="#05-game-code">Chapter 5</a>, "MVC").</p>
 <p><strong>concept model</strong> - the toolkit's main ideas, each held by one named class, drawn in <code>u2ue/CONCEPTS.md</code> before the code; every
 cycle, <code>concepts_gate.py</code> checks that each class it names exists (<a href="#22-architecture">Chapter 22</a>).</p>
 <p><strong>conformance</strong> - the effects held to Unity on numbers: Unity's own particle state, read by one generic probe, against Niagara's
@@ -16701,6 +16775,7 @@ particle count more than max(1, 5 %) from Unity's at a probe time) (<code>u2ue c
 Mono, with no editor (<a href="#05-game-code">Chapter 5</a>).</p>
 <p><strong>mutation run</strong> - the code under test changed on purpose, one change at a time, to see whether any test notices; the package ships
 no harness yet (<a href="#14-test-driven-porting">Chapter 14</a>).</p>
+<p><strong>MVC</strong> - Model, View, Controller: the shape u2ue ports a game's logic into. The Model holds state and rules with no engine type, the View draws, and one Controller per scene turns input into commands and plays the Model's events through the Views (<a href="#05-game-code">Chapter 5</a>, the <code>u2ue-mvc</code> skill).</p>
 <p><strong>MVID</strong> - the module version id in a .NET assembly's metadata; the publish proof compares the loaded model's with the one the
 source just built, to know which build an engine ran (<a href="#05-game-code">Chapter 5</a>).</p>
 <p><strong>owner</strong> - the game owner: the person a port is for, who works in the Unity editor a window measures in and answers the report's
@@ -16739,7 +16814,7 @@ disagree with the adapter's spawn rule (<a href="#18-extending">Chapter 18</a>).
 the architecture to build a model on (<a href="#05-game-code">Chapter 5</a>).</p>
 <p><strong>Shuriken and Niagara</strong> - Unity's built-in particle system, and Unreal's; the converter turns the first into the second.</p>
 <p><strong>sim cache</strong> - a recording of a Niagara system's particle attributes, which <code>u2ue read</code> captures frame by frame (<a href="#13-unreal-tools">Chapter 13</a>).</p>
-<p><strong>skill</strong> - a packaged procedure an AI model loads when its task matches it; the package ships five under <code>u2ue/skill/</code>, and each
+<p><strong>skill</strong> - a packaged procedure an AI model loads when its task matches it; the package ships them under <code>u2ue/skill/</code>, and each
 <code>### Step N.</code> carries at least one RUN line and exactly one DONE WHEN (<a href="#15-porting-with-opus">Chapter 15</a>).</p>
 <p><strong>slice</strong> - one feature's rules, moved into the model at a time, smallest first, and proven by parity before the next is taken
 (<a href="#05-game-code">Chapter 5</a>).</p>
@@ -16771,6 +16846,7 @@ host project (<a href="#13-unreal-tools">Chapter 13</a>). Not the same as a host
 <p><strong>use case</strong> - one goal of one actor, told as three to eleven numbered steps that end with the goal reached, plus the ways it
 can go wrong (its extensions) (Reading UML and use cases).</p>
 <p><strong>verb</strong> - one command of the facade (<code>extract</code>, <code>build</code>, <code>metrics</code>, ...).</p>
+<p><strong>view model</strong> - the state as shown on one screen (the HUD, a menu): it moves on only as events finish playing, so the screen never runs ahead of the animation (<a href="#05-game-code">Chapter 5</a>, "MVC").</p>
 <p><strong>view seam</strong> - the interfaces through which the presentation asks an engine to draw; every method is a game verb, never an engine
 primitive (<a href="#05-game-code">Chapter 5</a>).</p>
 <p><strong>whole_trace</strong> - the offline proof of a route: the converter run against a recording stub at two versions, and every engine call
