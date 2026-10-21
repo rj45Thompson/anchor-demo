@@ -570,7 +570,7 @@ pre.mermaid { overflow-x: auto; }
 </div>
 <!-- U2UE-PANEL-END -->
 </div>
-<div id="manual" class="u2-mhead"><div><h2>The manual</h2><p>34 pages, 147,085 words: why u2ue exists, installation and a tutorial, every procedure, the hard parts in depth, the use cases, every command, the architecture and its UML, troubleshooting, and questions and answers. Its own contents list every chapter.</p></div></div>
+<div id="manual" class="u2-mhead"><div><h2>The manual</h2><p>34 pages, 149,134 words: why u2ue exists, installation and a tutorial, every procedure, the hard parts in depth, the use cases, every command, the architecture and its UML, troubleshooting, and questions and answers. Its own contents list every chapter.</p></div></div>
 <div class="shell"><nav class="toc"><div class="brand">u2ue</div><div class="part">Part I - for the evaluator: should you use it</div>
 <a href="#why-u2ue">Why u2ue</a>
 <a href="#README">About this manual</a>
@@ -2800,9 +2800,13 @@ because the two engines must agree before either changes. The reference port kep
 never fire because their trigger sits inside a branch their afflictions never reach. Each fix is the owner's decision, made as
 its own slice with its own test.</p>
 <p><strong>Prove the engine that plays it, on the model it loaded.</strong> The Unity half of a sequence lands only while the owner is away
-(<code>u2ue slice land</code>), and a test that compares what the editor recorded with a reference fight is run on the plugins the editor
+(<code>u2ue slice land</code>; an editor left in Play refuses it unless the project says an idle Play session is the landing's to stop,
+<code>slice.idle_play</code> with its reason, and then only after the quiet wait with no agent holding the editor), and a test that compares what the editor recorded with a reference fight is run on the plugins the editor
 actually loaded. Stacked slices make that matter: each earlier slice ships an older model than the tree's, and judging its
-recording on the tree's model fails a recording that is right.</p>
+recording on the tree's model fails a recording that is right. The same holds for what the editor reads while it records: a
+reference file the test suite writes from the tree's model is written again from the engine's model just before the editor
+records (<code>slice.landing_proves.replays</code>) and held read-only until it has. In the reference port a test run rewrote it two seconds
+before the editor read it, and a slice with nothing wrong failed its landing.</p>
 <p><strong>Announce each moment once.</strong> When the order moves into the Core, it also becomes the one place that tells the view what
 happened. In the reference port two layers had each been announcing the same moment: the unit's intake said "this unit took the
 hit", the technique that caused it said so again, and the view kept a table to swallow the repeat. Moving the announcement into
@@ -2852,10 +2856,12 @@ that is the owner's call, not the slice's.</p>
 <p><strong>Where the reference port stands.</strong> The order of every status landing, hit, tick and death now lives once in the Core, each
 engine's method a single call into it, both engines name a unit by the same id and hold one status entry type, and the event
 log carries every field an event has. Unity's <code>Unit</code> holds its <code>UnitModel</code> (named <code>BattleUnit</code> until the refactor began) and
-forwards much of its state to it, but its status list is still its own, beside the model's, and the rules still reach a unit
-through small per-topic interfaces that each engine implements. Moving the rest into
-this shape, one topic at a time with <code>u2ue parity</code> holding the answers bit for bit, is under way, statuses first; a second game
-should port straight into it.</p>
+forwards its state to it: its status list, its status operations, a status leaving, its technique timers and its per-turn
+bookkeeping each have one home, the model's, and the battle's turns, the AI's steps and the player's commands run through the
+Core's flow in both engines, on the Core's dice. The rules still reach a unit through small per-topic interfaces that each
+engine implements; most of them wait on the board, whose saved names are the owner's call (above). Moving the rest into this
+shape, one topic at a time with every landing's battles compared byte for byte, is under way; a second game should port
+straight into it.</p>
 <h2 id="an-example-a-units-move-range">An example: a unit's move range</h2>
 <p>The reference port is a turn-based tactics game in the manner of XCOM: units on a grid of tiles, each turn spending action points
 to move and attack. Its rules lived in its MonoBehaviours. Here is one of them as the port moved it, in its extraction run on
@@ -3169,8 +3175,11 @@ through the platform seam, never a host interface) on the folders the project fi
   are on disk" below calls these engine adapters) keeps the global stream, so the sequence the player sees is unchanged;
   headless and parity runs use a seeded <code>System.Random</code>. A presentation-only noise (a UI sound's samples) draws from the host's own
   stream, never the rules' stream.</li>
-<li><strong>Toolkit</strong>: HAVE. <code>U2ue.Runtime.Platform.IRandomSource</code> and <code>SeededRandom</code>, with Unity's bounds (int upper-exclusive, float
-  both-inclusive); <code>u2ue parity</code> compares the rules' answers across runtimes.</li>
+<li><strong>Toolkit</strong>: HAVE. <code>U2ue.Runtime.Platform.IRandomSource</code> and <code>SeededRandom</code> with Unity's bounds: int <code>Range</code> upper-exclusive,
+  float <code>Range</code> and <code>Value</code> inclusive at BOTH ends - measured in the editor, not taken from the documentation: 100,000,000 draws
+  each of Unity's <code>Random.Range(0f, 1f)</code> and <code>Random.value</code> returned exactly 1 and exactly 0 several times, the smallest positive
+  1.19e-7. <code>SeededRandom</code> draws k / 2^23 for k in [0, 2^23], one draw each, so both ends come up as Unity's do (it used to draw
+  <code>NextDouble()</code>, which never reaches 1). <code>u2ue parity</code> compares the rules' answers across runtimes.</li>
 </ul>
 <h3 id="floats-across-runtimes">Floats across runtimes</h3>
 <ul>
@@ -5951,14 +5960,19 @@ writes a float field holding 0 as <code>0</code>, which a YAML loader returns as
 more (the reference port's pool also plays the first system's whole subtree). The adapter names the rule (<a href="#18-extending">Chapter 18</a>), the IR records
 each emitter's spawn start, and an emitter the game never starts is absent in both engines.</p>
 <h3 id="the-field-gates-and-what-they-cannot-see">The field gates, and what they cannot see</h3>
-<p><code>yaml_field_gate</code> holds every key of every ENABLED module (and the ParticleSystem and renderer) to the reader: named by
-<code>shuriken_ir.py</code>, or excused with the reason and the values it may take, re-checked on every run. <code>ir_field_gate</code> holds every IR field
-to the converter: named there, or listed in <code>DELIBERATELY_UNREAD</code> with its reason. Both run in <code>u2ue check --only gates</code>.</p>
-<p>One hole, READ on 2026-10-17: the reader reads no Color by Speed, Size by Speed or Rotation by Speed module, and <code>yaml_field_gate</code>
-matches a field by its NAME. Every field those modules serialize (<code>enabled</code>, <code>gradient</code>, <code>curve</code>, <code>range</code>, <code>separateAxes</code>, <code>x</code>, <code>y</code>,
-<code>z</code>) is a name the reader reads for another module, so the gate passes an enabled by-speed module. (The Trigger module's <code>inside</code> and
-<code>outside</code> are named nowhere, so an enabled Trigger module fails the gate as it should.) Until the gate keys on the module too, list a
-project's enabled by-speed modules yourself before trusting a build.</p>
+<p><code>yaml_field_gate</code> holds every key of every ENABLED module (and the ParticleSystem and renderer) to the reader: read by
+<code>shuriken_ir.py</code> ON THAT MODULE, or excused with the reason and the values it may take, re-checked on every run. <code>ir_field_gate</code> holds
+every IR field to the converter: named there, or listed in <code>DELIBERATELY_UNREAD</code> with its reason. Both run in <code>u2ue check --only gates</code>.</p>
+<p>The gate keys a field by its module path - <code>ColorModule.gradient</code>, never the bare name <code>gradient</code>. Its <code>ReaderReads</code> reads the reader's
+source with ast from <code>emitter_ir</code> through every call it makes, and credits a read only to the module the reader reads it from; an
+idiom it cannot follow credits nothing, so the gate names that field rather than pass it. Until 2026-10-20 it matched a NAME, and every
+field the by-speed modules serialize (<code>enabled</code>, <code>gradient</code>, <code>curve</code>, <code>range</code>, <code>separateAxes</code>, <code>x</code>, <code>y</code>, <code>z</code>) is a name the reader
+reads for another module or writes as an IR key, so an enabled by-speed module passed unseen. The reader still reads no Color, Size or
+Rotation by Speed module (the table below), so a project that enables one now sees each of its fields named UNACCOUNTED until the
+reader and the converter port it. The gate's selftest proves both directions on a real prefab of the project: each by-speed module
+switched on fails, and a reader that reads one passes.</p>
+<p>What the gate still cannot see: it reads each source prefab's OWN documents. A system that lives in a nested prefab instance is checked
+only when its prefab is itself a source of the IR, and an instance's overrides never are.</p>
 <h2 id="module-by-module">Module by module</h2>
 <p>"Measured" means a Unity probe baked the rule (<a href="#08-measuring-unity">Chapter 8</a>) and the converter re-derives it at build time; SUBSTITUTED is a stand-in the
 acceptance report counts; ABSENT is not drawn, with its reason.</p>
@@ -8144,9 +8158,14 @@ with float maths measure their own drift (<a href="#05-game-code">Chapter 5</a>,
 <h3 id="unitys-answer-with-no-unity-u2ue-digest">Unity's answer with no Unity: <code>u2ue digest</code></h3>
 <p>Parity needs Unity's digest, and the Editor is the expensive place to get it. <code>u2ue digest</code> gets it from Unity's own runtime, with
 nothing opening and nothing taking focus:</p>
-<pre><code>py -m u2ue --project &lt;game&gt; digest run --entry &lt;Ns.Cases.Build&gt; --cases &lt;Cases.cs&gt; [--refs X.dll ...] [--dir DIR]
+<pre><code>py -m u2ue --project &lt;game&gt; digest run --entry &lt;Ns.Cases.Build&gt; --cases &lt;Cases.cs&gt; [--refs X.dll ...] [--dir DIR] [--editor DIR]
 py -m u2ue --project &lt;game&gt; digest faithful
 </code></pre>
+<p>The model is built Release for netstandard2.1, as Unity loads it. The configuration is part of the answer: Mono keeps float
+intermediates wide wherever the IL leaves them on the stack, and a Debug build stores them to locals instead. Measured on the reference
+port: one seeded battle replayed on Unity's Mono from a Debug build forecast two turns unlike Unity's, and from the Release build it
+forecast every turn as Unity did. <code>--editor</code> names the Unity install when the project names none; a run that finds no Mono is refused
+before either sheet is written.</p>
 <p><code>run</code> compiles the cases twice, for CoreCLR (<code>logic-Headless.txt</code>) and with that Unity version's own compiler and Mono
 (<code>logic-UnityMono.txt</code>). <code>logic-UnityMono.provenance.json</code> names the Mono and whether it is MEASURED faithful to the Editor for this
 Unity. That label is the point: Unity's Mono is Unity's runtime, not the Editor. <code>digest faithful</code> measures it against a digest the
@@ -11496,9 +11515,11 @@ and a sample built through the facade equals its records.</p>
   as None. Those are ABSENT, and the converter then has to name them.</li>
 <li><strong><code>yaml_field_gate</code> runs on any project</strong> (<code>U2UE_UNITY_ROOT</code>, <code>U2UE_IR_DIR</code>). It found the second game's unread light-module
   fields. It also found the reference port's own whole-game corpus RED: three excuses written on a sample of 51 prefabs ("0 on every
-  fired emitter") were false on 655 (ring buffers, unscaled time, renderer priority). The reader reads all of them now and the gate
-  passes on both projects; what is left is held by <code>ir_field_gate</code>, which names the fields the converter must port or name. An excuse
-  measured on a sample is a claim about the sample.</li>
+  fired emitter") were false on 655 (ring buffers, unscaled time, renderer priority). The reader reads all of them now; what it puts
+  in the IR is held by <code>ir_field_gate</code>, which names the fields the converter must port or name. An excuse measured on a sample is a
+  claim about the sample. Since 2026-10-20 the gate keys a field by its module path (it matched a bare name before, and passed every
+  enabled by-speed module), and it fails both projects again on fields no reader reads yet: the by-speed modules, the light
+  module's colour, range and intensity switches, and the collision module's quality.</li>
 </ul>
 <h3 id="not-run-and-why">Not run, and why</h3>
 <ul>
@@ -11831,7 +11852,7 @@ code cannot drift apart.</p>
   just one the model does not exercise yet.</li>
 </ul>
 <!-- GEN:facade -->
-<p><strong>31 verbs</strong>, each read from its module's own source: 23 with a selftest in the registry, 31 run as the proof of a use-case step. A requirement is numbered <code>FR-&lt;verb&gt;</code>; its inputs, refusals and exits are the code's, line by line.</p>
+<p><strong>32 verbs</strong>, each read from its module's own source: 24 with a selftest in the registry, 31 run as the proof of a use-case step. A requirement is numbered <code>FR-&lt;verb&gt;</code>; its inputs, refusals and exits are the code's, line by line.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -11898,6 +11919,13 @@ code cannot drift apart.</p>
 <td>yes</td>
 <td>registered, never run</td>
 <td>4</td>
+</tr>
+<tr>
+<td>FR-CITE</td>
+<td><code>cite</code></td>
+<td>yes</td>
+<td>registered, never run</td>
+<td>0</td>
 </tr>
 <tr>
 <td>FR-LOGIC</td>
@@ -12255,11 +12283,11 @@ Its docstring: <em>u2ue info - every path the project names, OPENED (exit 1 when
 <p><strong>Exercised by</strong>: UC-11 step 2, UC-14 step 2, UC-15 step 1, UC-16 step 1, UC-16 step 3, UC-16 step 8, UC-18 step 2, UC-18 step 3.</p>
 <h2 id="fr-uml-uml">FR-UML <code>uml</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the game's class model off its own code roots (and its model once scaffolded): extract, mermaid, where, ask.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/uml.py</code> (96 lines; public: <code>roots</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
-<p><strong>Inputs</strong>: read by hand from its arguments - <code>--cache</code>, <code>--root</code>, <code>--selftest</code>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/uml.py</code> (155 lines; public: <code>command</code>, <code>roots</code>, <code>run</code>, <code>selftest</code>, <code>usecases</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
+<p><strong>Inputs</strong>: read by hand from its arguments - <code>--cache</code>, <code>--doc</code>, <code>--root</code>, <code>--selftest</code>.</p>
 <p><strong>Refuses</strong> (1 messages, as the code writes them):</p>
 <ul>
-<li>line 44: <code>REFUSED: ...</code></li>
+<li>line 81: <code>REFUSED: ...</code></li>
 </ul>
 <p><strong>Exits</strong>: 2.</p>
 <p><strong>Verified by</strong>: <code>py -m u2ue.verbs.uml --selftest</code> - last run passes (exit 0) (<code>u2ue/survey/pt1_selftests.json</code>).</p>
@@ -12305,17 +12333,47 @@ Its docstring: <em>both projects and runs that check. Exit 0 = the model exists,
 <p><strong>Exercised by</strong>: UC-15 step 6, UC-16 step 4.</p>
 <h2 id="fr-slice-slice">FR-SLICE <code>slice</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): every check one slice of a logic refactor must pass before it lands: builds, tests against a recorded baseline, the model gates, Unity compiled headlessly (optionally from an overlay), parity.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/slice.py</code> (1377 lines; public: <code>RealEditorWorld</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
-<p><strong>Inputs</strong>: read by hand from its arguments - <code>--baseline</code>, <code>--because</code>, <code>--compare</code>, <code>--deadline-s</code>, <code>--filter</code>, <code>--ignore-kinds</code>, <code>--label</code>, <code>--mode</code>, <code>--nologo</code>, <code>--on</code>, <code>--out</code>, <code>--overlay</code>, <code>--quiet</code>, <code>--reset</code>, <code>--seed</code>, <code>--selftest</code>, <code>--standing</code>, <code>--standing-at-start</code>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/slice.py</code> (1839 lines; public: <code>RealEditorWorld</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
+<p><strong>Inputs</strong>: read by hand from its arguments - <code>--baseline</code>, <code>--battle</code>, <code>--because</code>, <code>--clicks</code>, <code>--compare</code>, <code>--deadline-s</code>, <code>--filter</code>, <code>--ignore-fields</code>, <code>--ignore-kinds</code>, <code>--ignore-rows</code>, <code>--label</code>, <code>--mode</code>, <code>--nologo</code>, <code>--on</code>, <code>--out</code>, <code>--overlay</code>, <code>--quiet</code>, <code>--reset</code>, <code>--seed</code>, <code>--selftest</code>, <code>--standing</code>, <code>--standing-at-start</code>.</p>
 <p><strong>Refuses</strong> (2 messages, as the code writes them):</p>
 <ul>
-<li>line 268: <code>u2ue slice %s: REFUSED - %s</code></li>
-<li>line 289: <code>u2ue slice: REFUSED - %s</code></li>
+<li>line 300: <code>u2ue slice %s: REFUSED - %s</code></li>
+<li>line 321: <code>u2ue slice: REFUSED - %s</code></li>
 </ul>
 <p><strong>Exits</strong>: 0, 1, 2.
 Its docstring: <em>Exit 0 = every check passed (the slice may land) / the landing PASSED; 1 = a check failed (each named, with its first error) / the</em></p>
 <p><strong>Verified by</strong>: <code>py -m u2ue.verbs.slice --selftest</code> - last run registered, never run (<code>u2ue/survey/pt1_selftests.json</code>).</p>
 <p><strong>Exercised by</strong>: UC-14 step 1, UC-14 step 4, UC-14 step 5, UC-14 step 7.</p>
+<h2 id="fr-cite-cite">FR-CITE <code>cite</code></h2>
+<p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): every File.cs:N breadcrumb in the model's comments held to the code it names: a quoted one HOLDS, MOVED (to the line it is on now) or BROKEN; one with no quote counted.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/cite.py</code> (106 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
+<p><strong>Inputs</strong>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>option</th>
+<th>for</th>
+<th>what it is</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--list</code></td>
+<td>all</td>
+<td>every citation with that verdict</td>
+<td>one of CitationCheck.VERDICTS</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Refuses</strong> (1 messages, as the code writes them):</p>
+<ul>
+<li>line 37: <code>REFUSED: %s names no model.root / model.scan - the folders whose comments cite the game's code</code></li>
+</ul>
+<p><strong>Exits</strong>: 2.
+Its docstring: <em>Exit 0 = no quoted citation is BROKEN; 1 = one is (each named); 2 = refused (the project names no model). A MOVED citation is</em></p>
+<p><strong>Verified by</strong>: <code>py -m u2ue.verbs.cite --selftest</code> - last run registered, never run (<code>u2ue/survey/pt1_selftests.json</code>).</p>
+<p><strong>Exercised by</strong>: no use-case step runs it as its proof.</p>
 <h2 id="fr-logic-logic">FR-LOGIC <code>logic</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): where this project's logic port stands: each u2ue-logic skill step judged by its own DONE WHEN, read from its records.</p>
 <p><strong>Implemented by</strong> <code>u2ue/verbs/logic.py</code> (75 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
@@ -12482,7 +12540,7 @@ Its docstring: <em>value or a wider gap stays red. Exit 0 agree, 1 a row differs
 <p><strong>Exercised by</strong>: UC-15 step 7, UC-16 step 9, UC-16 step 10.</p>
 <h2 id="fr-digest-digest">FR-DIGEST <code>digest</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the game's rule cases answered with no engine: on CoreCLR (Headless) and on that Unity's own Mono (UnityMono).</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/digest.py</code> (322 lines; public: <code>DigestError</code>, <code>fact_for</code>, <code>faithful</code>, <code>model_refs</code>, <code>mono_home</code>, <code>on_coreclr</code>, <code>on_mono</code>, <code>rows</code>, <code>run</code>, <code>run_cases</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/digest.py</code> (356 lines; public: <code>DigestError</code>, <code>built_for_unity</code>, <code>fact_for</code>, <code>faithful</code>, <code>model_refs</code>, <code>mono_home</code>, <code>on_coreclr</code>, <code>on_mono</code>, <code>rows</code>, <code>run</code>, <code>run_cases</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
 <p><strong>Subcommands</strong>: <code>faithful</code>, <code>run</code>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
@@ -12519,12 +12577,18 @@ Its docstring: <em>value or a wider gap stays red. Exit 0 agree, 1 a row differs
 <td>-</td>
 <td>-</td>
 </tr>
+<tr>
+<td><code>--editor</code></td>
+<td><code>run</code></td>
+<td>the Unity install whose Mono runs the cases (else the project's unity.editor)</td>
+<td>-</td>
+</tr>
 </tbody>
 </table></div>
 <p><strong>Refuses</strong> (2 messages, as the code writes them):</p>
 <ul>
-<li>line 258: <code>REFUSED: name --dir or the project's parity.dir - where the digests are compared</code></li>
-<li>line 263: <code>REFUSED: %s</code></li>
+<li>line 277: <code>REFUSED: name --dir or the project's parity.dir - where the digests are compared</code></li>
+<li>line 282: <code>REFUSED: %s</code></li>
 </ul>
 <p><strong>Exits</strong>: 0, 2.
 Its docstring: <em>ran, and that digest. Exit 0 = identical; the measurement is written as a conformance bake</em></p>
@@ -12532,7 +12596,7 @@ Its docstring: <em>ran, and that digest. Exit 0 = identical; the measurement is 
 <p><strong>Exercised by</strong>: UC-15 step 7, UC-16 step 9.</p>
 <h2 id="fr-host-host">FR-HOST <code>host</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the game's OWN Unreal project, made as a customer makes one: create, install, compile, generate, wire, publish, run.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/host.py</code> (358 lines; public: <code>game_map</code>, <code>run</code>, <code>run_unreal</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/host.py</code> (383 lines; public: <code>game_map</code>, <code>run</code>, <code>run_unreal</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
 <p><strong>Inputs</strong>: read by hand from its arguments - <code>--dry</code>, <code>--quiet</code>, <code>--selftest</code>.</p>
 <p><strong>Refuses</strong>: no refusal message of its own; it stops with the exit of the tool it runs.</p>
 <p><strong>Exits</strong>: 0, 2.
@@ -12553,7 +12617,7 @@ Its docstring: <em>(and <code>run</code> also by the digest file being written a
 <p><strong>Exercised by</strong>: UC-17 step 2, UC-17 step 3.</p>
 <h2 id="fr-window-window">FR-WINDOW <code>window</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): ONE Unity measurement window from a data file: idle-gated, owner-stoppable, nothing replaced, md5-held.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/window.py</code> (469 lines; public: <code>FakeWorld</code>, <code>RealWorld</code>, <code>Refused</code>, <code>Window</code>, <code>World</code>, <code>md5</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/window.py</code> (706 lines; public: <code>FakeWorld</code>, <code>RealWorld</code>, <code>Refused</code>, <code>Window</code>, <code>World</code>, <code>md5</code>, <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: yes. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -12579,14 +12643,18 @@ Its docstring: <em>(and <code>run</code> also by the digest file being written a
 </tr>
 </tbody>
 </table></div>
-<p><strong>Refuses</strong> (6 messages, as the code writes them):</p>
+<p><strong>Refuses</strong> (10 messages, as the code writes them):</p>
 <ul>
-<li>line 77: <code>the spec has no %r</code></li>
-<li>line 85: <code>no probe %s in %s</code></li>
-<li>line 274: <code>%s names no unity.probe_dir - the Editor folder a probe is dropped into (never guessed)</code></li>
-<li>line 299: <code>REFUSED: ...</code></li>
-<li>line 309: <code>REFUSED: no QUIET line from wait_quiet (%r) - not started</code></li>
-<li>line 327: <code>REFUSED: %s</code></li>
+<li>line 102: <code>no channel file - the probes find the runner's folder only through &lt;project&gt;/UserSettings/U2ue/channel.txt</code></li>
+<li>line 106: <code>the spec has no %r</code></li>
+<li>line 120: <code>the trigger names the placement %r, which the project's unity.placements does not give (%s)</code></li>
+<li>line 131: <code>no probe %s in %s</code></li>
+<li>line 371: <code>%s names no unity.probe_dir - the Editor folder a probe is dropped into (never guessed)</code></li>
+<li>line 374: <code>%s names no unity.probes - "copy" (each probe dropped in for the window) or "package" (the installed u2ue package holds them); it is %r</code></li>
+<li>line 396: <code>REFUSED: %s</code></li>
+<li>line 413: <code>REFUSED: ...</code></li>
+<li>line 423: <code>REFUSED: no QUIET line from wait_quiet (%r) - not started</code></li>
+<li>line 443: <code>REFUSED: %s</code></li>
 </ul>
 <p><strong>Exits</strong>: 2.
 Its docstring: <em>py -m u2ue --project <name> window check <spec.json>     every refusal judged now, nothing touched (exit 0 = it would start)</em></p>
@@ -13092,7 +13160,7 @@ Its docstring: <em>folder, their output streamed through and their exit code ret
 <p><strong>Exercised by</strong>: UC-09 step 5.</p>
 <h2 id="fr-release-release">FR-RELEASE <code>release</code></h2>
 <p><strong>Requirement</strong> (the registry row, <code>u2ue/verbs/__init__.py</code>): the package as a repo: assembled from the toolkit's own trees by one manifest, secrets refused, public readiness counted.</p>
-<p><strong>Implemented by</strong> <code>u2ue/verbs/release.py</code> (141 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: no. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
+<p><strong>Implemented by</strong> <code>u2ue/verbs/release.py</code> (514 lines; public: <code>run</code>, <code>selftest</code>). <strong>Needs a project</strong>: no. Its usage text is in <a href="#20-commands">Chapter 20</a>.</p>
 <p><strong>Inputs</strong>:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -13122,13 +13190,37 @@ Its docstring: <em>folder, their output streamed through and their exit code ret
 <td>exit 1 when the folder differs from what the manifest writes</td>
 <td>a flag</td>
 </tr>
+<tr>
+<td><code>--store</code></td>
+<td>all</td>
+<td>the Unity half as an Asset Store UPM product (StorePackage)</td>
+<td>a flag</td>
+</tr>
+<tr>
+<td><code>--namespace</code></td>
+<td>all</td>
+<td>--store: the publisher namespace the UPM enrolment reserved, exactly as Unity writes it (com.example); the package is <namespace>.u2ue, and --to must be a folder of that name</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--compile</code></td>
+<td>all</td>
+<td>--store: compile the package alone against the project's editor (Unity's own assemblies only)</td>
+<td>a flag</td>
+</tr>
 </tbody>
 </table></div>
-<p><strong>Refuses</strong> (3 messages, as the code writes them):</p>
+<p><strong>Refuses</strong> (9 messages, as the code writes them):</p>
 <ul>
-<li>line 28: <code>REFUSED: --to &lt;DIR&gt; names the repo folder</code></li>
-<li>line 34: <code>%d shipped line(s) look like a token or a key: %s</code></li>
-<li>line 40: <code>REFUSED: %s</code></li>
+<li>line 46: <code>REFUSED: --to &lt;DIR&gt; names the repo folder</code></li>
+<li>line 52: <code>%d shipped line(s) look like a token or a key: %s</code></li>
+<li>line 58: <code>REFUSED: %s</code></li>
+<li>line 87: <code>REFUSED: %s</code></li>
+<li>line 97: <code>REFUSED: --compile compiles against a Unity project's editor: name it with --project (its unity.root)</code></li>
+<li>line 102: <code>REFUSED: %s</code></li>
+<li>line 127: <code>REFUSED: writing the package needs --compile - its package.json names the Unity version it was compiled against (PackageCompile), never one typed in</code></li>
+<li>line 131: <code>REFUSED: %d rule(s) broken - nothing written</code></li>
+<li>line 136: <code>REFUSED: %s</code></li>
 </ul>
 <p><strong>Exits</strong>: 0, 1, 2.
 Its docstring: <em>py -m u2ue release --check --to <DIR>     exit 1 when DIR differs from what the manifest would write (a stale release)</em>
@@ -13192,6 +13284,11 @@ py -m u2ue --project &lt;name|file.json&gt; &lt;verb&gt; [options]
 <td><code>slice</code></td>
 <td>yes</td>
 <td>every check one slice of a logic refactor must pass before it lands: builds, tests against a recorded baseline, the model gates, Unity compiled headlessly (optionally from an overlay), parity</td>
+</tr>
+<tr>
+<td><code>cite</code></td>
+<td>yes</td>
+<td>every File.cs:N breadcrumb in the model's comments held to the code it names: a quoted one HOLDS, MOVED (to the line it is on now) or BROKEN; one with no quote counted</td>
 </tr>
 <tr>
 <td><code>logic</code></td>
@@ -13398,7 +13495,10 @@ This wraps .opus-tools/uml.py (the facade never rewrites a tool) with the projec
 model never lands on another game's index:
   roots   every code.roots folder under unity.root, then every model.scan folder under model.root once the project declares a model
   index   &lt;work.inventory&gt;/uml (uml.py --cache)
-A project with no code.roots is refused: name them first (`u2ue inventory --survey`), never guessed.
+  doc     check / graph / triples read the game's use-case model, code.usecases under unity.root (uml.py --doc)
+A project with no code.roots is refused: name them first (`u2ue inventory --survey`), never guessed. So is a check with no
+code.usecases: uml.py's own default document is the reference game's, and a second game's check would hold the reference game's
+use cases to its code (TASKS F6, found 10-17). Write the game's own first (the usecase-map skill).
 </code></pre>
 <h2 id="scaffold"><code>scaffold</code></h2>
 <p>the engine-free model a game's rules move into: created, declared in the project file, built and gated.</p>
@@ -13437,13 +13537,24 @@ numbers) on the one shared shelf, U2ue.Runtime's Platform interfaces, instead of
                                                               changes since the cut (files it left as it found them; a file both
                                                               changed is refused), in landing order; then gate it again
     py -m u2ue --project &lt;name&gt; slice land --seed &lt;N&gt; --overlay &lt;DIR&gt; [--compare before|null] [--ignore-kinds K,.. --because &lt;why&gt;]
+                                          [--ignore-rows &quot;K:FIELD=V;K:FIELD!=V&quot; --because &lt;why&gt;] [--battle ai|clicks]
+                                          [--ignore-fields &quot;K:FIELD;..&quot; --because &lt;why&gt;]
                                           [--overlay &lt;DIR&gt; ...] [--mode &lt;title mode&gt;]
                                                               write the overlay into the live project in the owner's absence,
                                                               compile, and PLAY a seeded battle (before and after, or twice);
                                                               several overlays land in order, each after the one before PASSED;
                                                               the options after an --overlay are its own. --ignore-kinds: event
                                                               kinds a slice changes BY DECISION, left out of the comparison of the
-                                                              row-named events (the reason is required and recorded)
+                                                              row-named events (the reason is required and recorded);
+                                                              --ignore-rows: only the rows of a kind a rule names, on a column of
+                                                              events.rows (e.g. &quot;6:side!=0&quot;, the flow's cast summary); the v3
+                                                              extras aligned with a row are left out with it. --ignore-fields:
+                                                              ONE field of a kind's v3 extras (e.g. &quot;2:path&quot;, a move's walk once
+                                                              a slice reports it), the row and its other fields still compared.
+                                                              --battle clicks:
+                                                              the player's turns are played through the player's own click path
+                                                              (deploy_record_run --clicks) for a slice that changes it; ai, the
+                                                              default, is AutoBattle on both sides
     py -m u2ue.verbs.slice --selftest                         every verdict proven on planted input, nothing built, no editor
 
 Exit 0 = every check passed (the slice may land) / the landing PASSED; 1 = a check failed (each named, with its first error) / the
@@ -13452,6 +13563,19 @@ moved, whose gate did not pass, whose editor is busy, whose earlier slice has no
 headlessly against the plugins that will be live). Each run writes &lt;work.records&gt;/slice/slice-latest.json; a landing writes
 &lt;work.records&gt;/slice/landing-&lt;stamp&gt;/ (its backups, both battles, landing.json). The gate alone never proves the Unity game PLAYS
 the same; `land` is the step that does, and it runs only while the owner is away (600 s of quiet, a presence watch).
+</code></pre>
+<h2 id="cite"><code>cite</code></h2>
+<p>every File.cs:N breadcrumb in the model's comments held to the code it names: a quoted one HOLDS, MOVED (to the line it is on now) or BROKEN; one with no quote counted.</p>
+<pre><code>u2ue cite - every `File.cs:N` breadcrumb in the model's comments, held to the code it names (u2ue/citation.py: CitationCheck).
+
+    py -m u2ue --project &lt;name&gt; cite             the citations in the project's model.scan folders, resolved against its model and
+                                                 host folders: HOLDS, MOVED (with the lines the quote is on now), BROKEN (the quote
+                                                 is gone), UNQUOTED (a line number alone, counted), UNRESOLVED (no such file, or two)
+    py -m u2ue --project &lt;name&gt; cite --list MOVED|BROKEN|UNRESOLVED|UNQUOTED   every citation with that verdict
+    py -m u2ue.verbs.cite --selftest             each verdict proven on planted files
+
+Exit 0 = no quoted citation is BROKEN; 1 = one is (each named); 2 = refused (the project names no model). A MOVED citation is
+reported, not failed: its quote still says where the code is. Nothing is rewritten - a citation's owner moves it.
 </code></pre>
 <h2 id="logic"><code>logic</code></h2>
 <p>where this project's logic port stands: each u2ue-logic skill step judged by its own DONE WHEN, read from its records.</p>
@@ -13548,11 +13672,17 @@ BASICS section 5): CoreCLR - what the Unreal host and a headless runner use - an
 window and nothing takes focus. `u2ue parity` then marks the two answer sheets against each other by the bit.
 
     py -m u2ue --project &lt;name&gt; digest run --entry Ns.Class.Method --cases A.cs [B.cs ...] [--refs X.dll ...] [--dir DIR]
+                                           [--editor UNITY_INSTALL]
     py -m u2ue --project &lt;name&gt; digest faithful
     py -m u2ue.verbs.digest --selftest
 
 The entry is a static method returning the digest text (string) or a U2ue.Runtime.Digest. --refs defaults to the project's model:
-every model layer built for netstandard2.1 (the build Unity loads) and U2ue.Runtime. `run` writes, into DIR (default parity.dir):
+every model layer built RELEASE for netstandard2.1 - the build Unity loads (plugin_sync_gate's canonical one) - and U2ue.Runtime.
+The configuration is part of the answer: Mono keeps float intermediates wide wherever the IL leaves them on the stack, and a Debug
+build's IL stores them to locals instead. MEASURED 2026-10-21 (TASKS D13): the seed-51 battle replayed on this Mono from a Debug
+build forecast turns 18 and 19 unlike Unity; the same source built Release forecast all 27 as Unity did. --editor names the Unity install whose Mono
+runs the cases (its folder name must be the project's unity.version); without it the project's unity.editor is read, and a
+project naming neither is refused BEFORE either sheet is written. `run` writes, into DIR (default parity.dir):
   logic-Headless.txt    the cases compiled with the .NET SDK and run on CoreCLR (net8.0)
   logic-UnityMono.txt   the same cases compiled by that Unity's csc.exe and run on its mono-bdwgc.exe (the Editor's own runtime
                         build), with logic-UnityMono.provenance.json naming the Mono and whether it is MEASURED faithful
@@ -13615,7 +13745,8 @@ each made by search-and-replace on the one before (which broke once, on half-ren
 A SPEC (JSON) - what the window measures, never how it is kept safe:
     {&quot;label&quot;: &quot;g23&quot;, &quot;why&quot;: &quot;...&quot;, &quot;probes&quot;: [&quot;EffectPhotoProbe&quot;],
      &quot;inputs&quot;: [{&quot;from&quot;: &quot;&lt;lane&gt;/x6/effect-photo-list-x6.tsv&quot;, &quot;to&quot;: &quot;effect-photo-list-x6.tsv&quot;}],      copied INTO the conformance dir
-     &quot;trigger&quot;: {&quot;file&quot;: &quot;.RUN_EFFECT_PHOTO&quot;, &quot;lines&quot;: [&quot;list:effect-photo-list-x6.tsv&quot;, &quot;record:effect-photo-unity-x6.json&quot;]},
+     &quot;trigger&quot;: {&quot;file&quot;: &quot;.RUN_EFFECT_PHOTO&quot;, &quot;lines&quot;: [&quot;list:effect-photo-list-x6.tsv&quot;, &quot;record:effect-photo-unity-x6.json&quot;,
+                                                         &quot;out:&lt;the folder for the frames&gt;&quot;]},
      &quot;outputs&quot;: [&quot;effect-photo-unity-x6.json&quot;], &quot;wait_seconds&quot;: 900}
 THE SAFETY, written once, here, for every window (the owner's editor is the owner's):
   - starts only after 600 s with no cursor move and no key or button (lane/wait_quiet.ps1 - its own QUIET line, nothing else), and a
@@ -13623,11 +13754,20 @@ THE SAFETY, written once, here, for every window (the owner's editor is the owne
   - refuses: Play mode or no bridge, the editor lock held, an output that already exists (nothing is replaced), the trigger already
     down, a DIFFERENT file already where an input goes, a probe already in the Editor folder, a probe that does not compile HEADLESS
   - holds the editor lock (.opus-tools/.locks/unity-editor.lock) for its whole life; md5s every conformance record (but its outputs)
-    and the project's guard files before and after - a change is a FAIL; console_check reset before, judged after
+    and the project's guard files before and after - a change is a FAIL; the console reset before (nothing changes if it cannot be)
+    and judged after, an editor mid-reload asked again (editorlink.judge_console) and a console never read a FAIL
+  - drops each probe with a last comment line unique to the drop, so the editor compiles it even when it never saw an earlier
+    window take the same file out (10-20)
   - deletes the probes only while the editor is idle (twice, 5 s apart: an earlier window deleted them mid-import) and waits until the editor DLL no
     longer holds their names
   - never answers a modal, never enters Play, never runs the Test Runner
-The project names: unity.root, unity.probe_dir (the Editor folder probes are dropped into), unity.guard (files whose md5 must hold).
+The project names: unity.root, unity.probe_dir (the Editor folder probes are dropped into), unity.guard (files whose md5 must hold),
+unity.probes - &quot;copy&quot; (each probe is dropped into probe_dir for the window and taken out again) or &quot;package&quot; (the installed u2ue
+package's Editor assembly holds them: nothing is copied, and every probe the spec names must be in that assembly) - and unity.link,
+how the editor is asked its state, a recompile and its console (u2ue/editorlink.py): &quot;http&quot; (the game's own bridge on
+bridge_port.txt) or &quot;channel&quot; (the package's EditorChannel, through the channel folder below; STORE-3c). Before the trigger
+the runner names its channel - the conformance folder - in &lt;unity.root&gt;/UserSettings/U2ue/channel.txt, which every probe reads
+(ProbeChannel), and puts that file back as it found it afterwards (STORE-3b, 10-20).
 </code></pre>
 <h2 id="trial"><code>trial</code></h2>
 <p>a route's TRIAL in Unreal from a data file: build, resave, read, judge, photos; one Unreal at a time, stoppable.</p>
@@ -13910,8 +14050,17 @@ time); `tool` adds none and removes none.
     py -m u2ue release --to &lt;DIR&gt; [--dry]     assemble the repo into DIR (empty, or a release checkout): what ships, what is left
                                               out and why, the public-readiness count; --dry writes nothing
     py -m u2ue release --check --to &lt;DIR&gt;     exit 1 when DIR differs from what the manifest would write (a stale release)
+    py -m u2ue release --store [--compile] [--to &lt;DIR&gt; --namespace &lt;NS&gt;] [--dry]
+                                              the Unity half as an Asset Store UPM product (StorePackage): every store rule's count;
+                                              --compile (with --project) adds 1.1.b, the package's C# compiled ALONE against the
+                                              project's editor - Unity's own assemblies and nothing of the project (PackageCompile);
+                                              with --to, the package written - only when every count is 0, it compiled, and the
+                                              publisher namespace (from the publisher's UPM enrolment) is given; --dry writes nothing
     py -m u2ue.verbs.release --selftest       a planted secret refuses; a run record, an image and an oversized file are named out;
-                                              a planted game name is counted; a second assembly writes nothing; drift is caught
+                                              a planted game name is counted; a second assembly writes nothing; drift is caught;
+                                              each store rule refuses its own plant; no package without a namespace or a compile;
+                                              the standalone compile leaves out each thing a project adds and refuses what it
+                                              cannot tell apart (a planted compiler stands in for Unity's)
 
 Exit 0 = assembled (or current); 1 = --check found a difference; 2 = refused (a secret, a folder that is not a release, no --to).
 Nothing is committed or pushed: the repo's history and its remote are the owner's.
@@ -14876,7 +15025,7 @@ trial proves it.</p>
 
 <h2 id="selftests-generated">Selftests <em>(generated)</em></h2>
 <!-- GEN:selftests -->
-<p>98 selftests run by <code>py -m u2ue --project &lt;name&gt; check --only selftests</code>, each its tool's own:</p>
+<p>102 selftests run by <code>py -m u2ue --project &lt;name&gt; check --only selftests</code>, each its tool's own:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -15182,8 +15331,16 @@ trial proves it.</p>
 <td><code>probe_spawn_gate.py --selftest</code></td>
 </tr>
 <tr>
+<td>yaml_field_gate.py</td>
+<td><code>yaml_field_gate.py --selftest</code></td>
+</tr>
+<tr>
 <td>u2ue window</td>
 <td><code>-m u2ue.verbs.window --selftest</code></td>
+</tr>
+<tr>
+<td>u2ue editorlink</td>
+<td><code>-m u2ue.editorlink --selftest</code></td>
 </tr>
 <tr>
 <td>u2ue trial</td>
@@ -15196,6 +15353,10 @@ trial proves it.</p>
 <tr>
 <td>headless_nunit.py</td>
 <td><code>headless_nunit.py --selftest</code></td>
+</tr>
+<tr>
+<td>bee_dag.py</td>
+<td><code>bee_dag.py --selftest</code></td>
 </tr>
 <tr>
 <td>rule_probes.py</td>
@@ -15264,6 +15425,10 @@ trial proves it.</p>
 <tr>
 <td>u2ue slice</td>
 <td><code>-m u2ue.verbs.slice --selftest</code></td>
+</tr>
+<tr>
+<td>u2ue cite</td>
+<td><code>-m u2ue.verbs.cite --selftest</code></td>
 </tr>
 <tr>
 <td>u2ue port</td>
@@ -15370,6 +15535,10 @@ the generated views in this order:</p>
     class Window {
         an idle-safe Unity run of ProbeCases
     }
+    class EditorLink {
+        how the toolkit talks to a Unity editor: one contract, two ways in
+        status()  recompile()  play()  stop()  run_menu()  console()
+    }
     class Capture {
         a deterministic frame of one side (seed, clock, step pinned)
     }
@@ -15403,9 +15572,17 @@ the generated views in this order:</p>
     class Gate {
         a rule the ported logic must hold (layer, host, parity, publish)
     }
+    class ReaderReads {
+        every field the IR reader reads, keyed by its module path (ColorModule.gradient), read off the reader's source
+        of(source)  reads(module, key)  leaks()
+    }
     class SliceLanding {
         a slice written into the live project only in the owner's absence, then played
         cut()  land()  restore()
+    }
+    class Citation {
+        a File.cs:N breadcrumb in the model's comments, held to the code it names
+        cited()  pattern()
     }
     class SliceGate {
         every check one refactor slice must pass before it lands
@@ -15421,7 +15598,7 @@ the generated views in this order:</p>
     }
     class LandingProof {
         the tests only a landing can prove, judged on the model the engine loaded
-        model_dir()  recordings()  run()
+        model_dir()  recordings()  replayed()  write_replayed()  run()
     }
     class SliceBlobs {
         the file versions a stacked slice was cut on, by hash: the merge base for a lower slice's late fix
@@ -15439,9 +15616,21 @@ the generated views in this order:</p>
         the editor's own suites a landing RUNS and waits for, read from the editor's log, never its Console window
         refusal()  menus()  unreported()
     }
+    class PresentationTrace {
+        what a seeded battle SHOWED, in order, read from the editor's log: compared like its events
+        refusal()  trace()  write()
+    }
     class Release {
         the package as a repo: a manifest of what ships, assembled, never hand-copied
         assemble()  check()  readiness()
+    }
+    class StorePackage {
+        the Unity half as an Asset Store UPM product, held to the store's rules: each a count
+        files()  metas()  documentation()  checks()  compile()  package_json()  assemble()
+    }
+    class PackageCompile {
+        the store package's C# compiled alone, against Unity's own assemblies only
+        version()  command()  run()
     }
     class HostProject {
         the game's own Unreal project, made as a customer makes one
@@ -15484,6 +15673,8 @@ the generated views in this order:</p>
     Route --&gt; Rule : follows
     Rule --&gt; ProbeCase : measured by
     ProbeCase --&gt; Window : runs in
+    Window --&gt; EditorLink : asks the editor through (a game's own bridge, or the package's channel)
+    StorePackage --&gt; EditorLink : ships the editor's side of (EditorChannel)
     Route --&gt; Trial : tried by
     Trial --&gt; Run : is a
     Trial --&gt; Readback : reads
@@ -15504,10 +15695,15 @@ the generated views in this order:</p>
     SliceLanding --&gt; LandingProof : proves the editor's recording with
     SliceLanding --&gt; SliceBlobs : rebases a stacked slice on, three ways
     SliceLanding --&gt; EditorAutoRuns : runs, then reads the summaries of
+    SliceLanding --&gt; PresentationTrace : compares what each battle showed with
     SliceGate --&gt; LandingProof : names PENDING from
     LogicPort --&gt; HostProject : runs the Core on
     HostProject --&gt; Gate : proven by (parity)
+    Gate --&gt; ReaderReads : credits a Unity field only on the module it is read from (the field gate)
     Release --&gt; Pillar : delivers (8, packaging)
+    StorePackage --&gt; Release : the store's half of, named by the same naming rule
+    StorePackage --&gt; PackageCompile : proven to build alone by (rule 1.1.b)
+    SliceGate --&gt; Citation : the model's breadcrumbs, held to the code a slice moves (u2ue cite)
     Project --&gt; PortPlan : ported by
     PortPlan --&gt; Stage : orders
     PortRun --&gt; PortPlan : runs
@@ -15517,7 +15713,7 @@ the generated views in this order:</p>
     Estimate --&gt; PriceTable : prices with
     MeasuredRate --&gt; TokenUse : measured from
 </pre></div></div>
-<p><em>The target model, from <code>u2ue/CONCEPTS.md</code>. <code>u2ue/survey/concepts_gate.py</code> checks every concept the table there says is a class against the code: </em><em>36 of 36 exist</em><em> as classes today, each at its own line (exit 0).</em></p>
+<p><em>The target model, from <code>u2ue/CONCEPTS.md</code>. <code>u2ue/survey/concepts_gate.py</code> checks every concept the table there says is a class against the code: </em><em>42 of 42 exist</em><em> as classes today, each at its own line (exit 0).</em></p>
 <!-- /GEN:concepts -->
 
 <h2 id="the-class-model">The class model</h2>
@@ -15542,7 +15738,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>_FakeEditor</code></td>
 <td>class</td>
-<td>21</td>
+<td>23</td>
 <td>extends <code>EditorWorld</code></td>
 </tr>
 <tr>
@@ -15555,6 +15751,12 @@ the generated views in this order:</p>
 <td><code>_P</code></td>
 <td>class</td>
 <td>2</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>_SimEditor</code></td>
+<td>class</td>
+<td>4</td>
 <td>-</td>
 </tr>
 <tr>
@@ -15608,7 +15810,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>CaseRun</code></td>
 <td>class</td>
-<td>3</td>
+<td>4</td>
 <td>-</td>
 </tr>
 <tr>
@@ -15624,9 +15826,27 @@ the generated views in this order:</p>
 <td>-</td>
 </tr>
 <tr>
+<td><code>ChannelLink</code></td>
+<td>class</td>
+<td>12</td>
+<td>extends <code>EditorLink</code></td>
+</tr>
+<tr>
 <td><code>Check</code></td>
 <td>class</td>
 <td>3</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>Citation</code></td>
+<td>class</td>
+<td>3</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>CitationCheck</code></td>
+<td>class</td>
+<td>5</td>
 <td>-</td>
 </tr>
 <tr>
@@ -15654,9 +15874,21 @@ the generated views in this order:</p>
 <td>-</td>
 </tr>
 <tr>
+<td><code>EditorLink</code></td>
+<td>class</td>
+<td>9</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>editorlink</code></td>
+<td>module</td>
+<td>6</td>
+<td>-</td>
+</tr>
+<tr>
 <td><code>EditorWorld</code></td>
 <td>class</td>
-<td>20</td>
+<td>22</td>
 <td>-</td>
 </tr>
 <tr>
@@ -15722,7 +15954,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>FakeWorld</code></td>
 <td>class</td>
-<td>12</td>
+<td>13</td>
 <td>extends <code>World</code></td>
 </tr>
 <tr>
@@ -15756,6 +15988,12 @@ the generated views in this order:</p>
 <td>-</td>
 </tr>
 <tr>
+<td><code>HttpLink</code></td>
+<td>class</td>
+<td>9</td>
+<td>extends <code>EditorLink</code></td>
+</tr>
+<tr>
 <td><code>InRaw</code></td>
 <td>class</td>
 <td>0</td>
@@ -15782,7 +16020,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>LandingProof</code></td>
 <td>class</td>
-<td>7</td>
+<td>9</td>
 <td>-</td>
 </tr>
 <tr>
@@ -15812,7 +16050,13 @@ the generated views in this order:</p>
 <tr>
 <td><code>P</code></td>
 <td>class</td>
-<td>1</td>
+<td>2</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>PackageCompile</code></td>
+<td>class</td>
+<td>8</td>
 <td>-</td>
 </tr>
 <tr>
@@ -15849,6 +16093,12 @@ the generated views in this order:</p>
 <td><code>PortRun</code></td>
 <td>class</td>
 <td>4</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>PresentationTrace</code></td>
+<td>class</td>
+<td>6</td>
 <td>-</td>
 </tr>
 <tr>
@@ -15914,7 +16164,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>RealEditorWorld</code></td>
 <td>class</td>
-<td>22</td>
+<td>23</td>
 <td>extends <code>EditorWorld</code></td>
 </tr>
 <tr>
@@ -15926,7 +16176,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>RealWorld</code></td>
 <td>class</td>
-<td>9</td>
+<td>10</td>
 <td>extends <code>World</code></td>
 </tr>
 <tr>
@@ -15944,7 +16194,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>release</code></td>
 <td>module</td>
-<td>1</td>
+<td>2</td>
 <td><code>facts</code>, <code>tools</code></td>
 </tr>
 <tr>
@@ -16017,7 +16267,7 @@ the generated views in this order:</p>
 <td><code>slice</code></td>
 <td>module</td>
 <td>10</td>
-<td><code>gates</code>, <code>tools</code></td>
+<td><code>editorlink</code>, <code>gates</code>, <code>tools</code></td>
 </tr>
 <tr>
 <td><code>SliceBlobs</code></td>
@@ -16040,7 +16290,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>SliceLanding</code></td>
 <td>class</td>
-<td>15</td>
+<td>21</td>
 <td>-</td>
 </tr>
 <tr>
@@ -16059,6 +16309,18 @@ the generated views in this order:</p>
 <td><code>Stop</code></td>
 <td>class</td>
 <td>0</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>StoreEntry</code></td>
+<td>class</td>
+<td>1</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>StorePackage</code></td>
+<td>class</td>
+<td>16</td>
 <td>-</td>
 </tr>
 <tr>
@@ -16092,6 +16354,12 @@ the generated views in this order:</p>
 <td>-</td>
 </tr>
 <tr>
+<td><code>TraceIncomplete</code></td>
+<td>class</td>
+<td>0</td>
+<td>extends <code>SliceError</code></td>
+</tr>
+<tr>
 <td><code>transform</code></td>
 <td>module</td>
 <td>19</td>
@@ -16119,18 +16387,18 @@ the generated views in this order:</p>
 <td><code>verbs</code></td>
 <td>module</td>
 <td>3</td>
-<td>runs: <code>verbs_build</code>, <code>verbs_check</code>, <code>verbs_conform</code>, <code>verbs_cycle</code>, <code>verbs_data</code>, <code>verbs_digest</code>, <code>verbs_estimate</code>, <code>verbs_extract</code>, <code>verbs_find</code>, <code>verbs_host</code>, <code>verbs_info</code>, <code>verbs_inventory</code>, <code>verbs_judge</code>, <code>verbs_logic</code>, <code>verbs_metrics</code>, <code>verbs_parity</code>, <code>verbs_photo</code>, <code>verbs_port</code>, <code>verbs_read</code>, <code>verbs_release</code>, <code>verbs_report</code>, <code>verbs_scaffold</code>, <code>verbs_scene</code>, <code>verbs_shear</code>, <code>verbs_slice</code>, <code>verbs_tempo</code>, <code>verbs_tool</code>, <code>verbs_trial</code>, <code>verbs_ui</code>, <code>verbs_uml</code>, <code>verbs_window</code></td>
+<td>runs: <code>verbs_build</code>, <code>verbs_check</code>, <code>verbs_cite</code>, <code>verbs_conform</code>, <code>verbs_cycle</code>, <code>verbs_data</code>, <code>verbs_digest</code>, <code>verbs_estimate</code>, <code>verbs_extract</code>, <code>verbs_find</code>, <code>verbs_host</code>, <code>verbs_info</code>, <code>verbs_inventory</code>, <code>verbs_judge</code>, <code>verbs_logic</code>, <code>verbs_metrics</code>, <code>verbs_parity</code>, <code>verbs_photo</code>, <code>verbs_port</code>, <code>verbs_read</code>, <code>verbs_release</code>, <code>verbs_report</code>, <code>verbs_scaffold</code>, <code>verbs_scene</code>, <code>verbs_shear</code>, <code>verbs_slice</code>, <code>verbs_tempo</code>, <code>verbs_tool</code>, <code>verbs_trial</code>, <code>verbs_ui</code>, <code>verbs_uml</code>, <code>verbs_window</code></td>
 </tr>
 <tr>
 <td><code>Window</code></td>
 <td>class</td>
-<td>9</td>
+<td>13</td>
 <td>-</td>
 </tr>
 <tr>
 <td><code>World</code></td>
 <td>class</td>
-<td>9</td>
+<td>10</td>
 <td>-</td>
 </tr>
 <tr>
@@ -16150,6 +16418,12 @@ the generated views in this order:</p>
 <td>module</td>
 <td>7</td>
 <td><code>facts</code>, <code>gates</code>, <code>tools</code></td>
+</tr>
+<tr>
+<td><code>verbs_cite</code></td>
+<td>module</td>
+<td>3</td>
+<td><code>Citation</code>, <code>CitationCheck</code></td>
 </tr>
 <tr>
 <td><code>verbs_conform</code></td>
@@ -16172,7 +16446,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>verbs_digest</code></td>
 <td>module</td>
-<td>14</td>
+<td>15</td>
 <td><code>facts</code>, <code>project</code></td>
 </tr>
 <tr>
@@ -16196,7 +16470,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>verbs_host</code></td>
 <td>module</td>
-<td>5</td>
+<td>6</td>
 <td><code>HostError</code>, <code>HostProject</code>, <code>Step</code>, <code>project</code>, <code>tools</code>, <code>verbs__ue</code></td>
 </tr>
 <tr>
@@ -16256,7 +16530,7 @@ the generated views in this order:</p>
 <tr>
 <td><code>verbs_release</code></td>
 <td>module</td>
-<td>2</td>
+<td>7</td>
 <td><code>release</code></td>
 </tr>
 <tr>
@@ -16287,7 +16561,7 @@ the generated views in this order:</p>
 <td><code>verbs_slice</code></td>
 <td>module</td>
 <td>16</td>
-<td><code>slice</code>, <code>tools</code></td>
+<td><code>editorlink</code>, <code>slice</code>, <code>tools</code></td>
 </tr>
 <tr>
 <td><code>verbs_tempo</code></td>
@@ -16316,18 +16590,18 @@ the generated views in this order:</p>
 <tr>
 <td><code>verbs_uml</code></td>
 <td>module</td>
-<td>3</td>
+<td>5</td>
 <td><code>project</code></td>
 </tr>
 <tr>
 <td><code>verbs_window</code></td>
 <td>module</td>
-<td>5</td>
-<td><code>tools</code></td>
+<td>7</td>
+<td><code>editorlink</code>, <code>tools</code></td>
 </tr>
 </tbody>
 </table></div>
-<p><em>2 game adapter module(s) and class(es) left out: an adapter is its game's code (<a href="#18-extending">Chapter 18</a>).</em> <em>drew 143 classes / modules, 128 relationships (members: uml.py extract; edges: the code's own imports and bases), generated by <code>u2ue/survey/design_diagram.py</code>; run <code>py u2ue/survey/design_diagram.py OUT.mmd</code> for the diagram, which lists up to 12 members per class with their signatures (<code>--members N</code> for more).</em></p>
+<p><em>2 game adapter module(s) and class(es) left out: an adapter is its game's code (<a href="#18-extending">Chapter 18</a>).</em> <em>drew 157 classes / modules, 137 relationships (members: uml.py extract; edges: the code's own imports and bases), generated by <code>u2ue/survey/design_diagram.py</code>; run <code>py u2ue/survey/design_diagram.py OUT.mmd</code> for the diagram, which lists up to 12 members per class with their signatures (<code>--members N</code> for more).</em></p>
 <!-- /GEN:classdiagram -->
 
 <h2 id="the-facades-layers-read-from-the-code">The facade's layers, read from the code</h2>
@@ -16365,6 +16639,7 @@ project's environment. The map shows which shared modules each verb imports and 
         v_uml[&quot;uml&quot;]
         v_scaffold[&quot;scaffold&quot;]
         v_slice[&quot;slice&quot;]
+        v_cite[&quot;cite&quot;]
         v_logic[&quot;logic&quot;]
         v_data[&quot;data&quot;]
         v_shear[&quot;shear&quot;]
@@ -16393,6 +16668,8 @@ project's environment. The map shows which shared modules each verb imports and 
         m_adapters[&quot;adapters&quot;]
         m_capture[&quot;capture&quot;]
         m_catalog[&quot;catalog&quot;]
+        m_citation[&quot;citation&quot;]
+        m_editorlink[&quot;editorlink&quot;]
         m_estimate[&quot;estimate&quot;]
         m_facts[&quot;facts&quot;]
         m_hostproject[&quot;hostproject&quot;]
@@ -16426,9 +16703,11 @@ project's environment. The map shows which shared modules each verb imports and 
     v_info --&gt; m_adapters
     v_uml --&gt; m_project
     v_scaffold --&gt; m_project
+    v_slice --&gt; m_editorlink
     v_slice --&gt; m_slice
     v_slice --&gt; m_tools
     v_slice -.-&gt; p_lane
+    v_cite --&gt; m_citation
     v_logic --&gt; m_logic
     v_data --&gt; m_tools
     v_data -.-&gt; p_effects_tools
@@ -16449,6 +16728,7 @@ project's environment. The map shows which shared modules each verb imports and 
     v_host -.-&gt; p_scene_tools
     v_ui --&gt; m_tools
     v_ui -.-&gt; p_ui
+    v_window --&gt; m_editorlink
     v_window --&gt; m_tools
     v_window -.-&gt; p_conformance
     v_window -.-&gt; p_lane
@@ -16529,8 +16809,13 @@ project's environment. The map shows which shared modules each verb imports and 
 </tr>
 <tr>
 <td><code>slice</code></td>
-<td><code>slice</code>, <code>tools</code></td>
+<td><code>editorlink</code>, <code>slice</code>, <code>tools</code></td>
 <td><code>lane</code></td>
+</tr>
+<tr>
+<td><code>cite</code></td>
+<td><code>citation</code></td>
+<td>-</td>
 </tr>
 <tr>
 <td><code>logic</code></td>
@@ -16574,7 +16859,7 @@ project's environment. The map shows which shared modules each verb imports and 
 </tr>
 <tr>
 <td><code>window</code></td>
-<td><code>tools</code></td>
+<td><code>editorlink</code>, <code>tools</code></td>
 <td><code>conformance</code>, <code>lane</code></td>
 </tr>
 <tr>
@@ -16649,7 +16934,7 @@ project's environment. The map shows which shared modules each verb imports and 
 </tr>
 </tbody>
 </table></div>
-<p><em>31 verbs, 20 modules, 6 tool parts; a solid arrow is an import, a dashed one a tool the verb runs from that part. Generated from each verb module's imports and its <code>part()</code> calls.</em></p>
+<p><em>32 verbs, 22 modules, 6 tool parts; a solid arrow is an import, a dashed one a tool the verb runs from that part. Generated from each verb module's imports and its <code>part()</code> calls.</em></p>
 <!-- /GEN:facademap -->
 
 <h2 id="the-review-finding-by-finding">The review, finding by finding</h2>
