@@ -476,7 +476,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   html[data-view-boot] .panel{display:none}
   /* 10-21 RJ: "i still see facts inthe graph" - the AI view lists Unity -> Unreal too, and the engine's claim and readout sat
      above it. While u2ue's tab is open, in either view, the masthead says nothing about the engine. */
-  html:has(#p-u2ue.on) .masthead [data-aud="ai"]{display:none!important}
+  html:has(#p-u2ue.on) .masthead [data-aud="ai"],html:has(#p-u2ue.on) footer > [data-aud="ai"]{display:none!important}
 
 /* ---- side-by-side: the same question to a frontier assistant and to this engine ------------
    RJ ran "how many bears have brown hair" through Copilot and pasted the whole transcript. It is
