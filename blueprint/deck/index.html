@@ -227,6 +227,78 @@
 <p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.2;color:#FF8A3D">A prompt is a wish. The loop is the instructions the AI acts on.</p>
 <aside>Keep in mind who reads these requirements: AI. Nobody types build GTA 6 into a chat box and gets GTA 6, because a prompt is a wish. It leaves every real decision open, and the AI fills each gap with a guess. Closed loop requirements are the opposite: every step of every story, every what-if answered or handed to the person who owns it, and a check the AI's work must pass wherever one can be written. The AI does not act on the prompt. It acts on the loop.</aside>
 </section>
+<section id="interrogate" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">How the loop closes</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:60px;font-weight:700;line-height:1.15;color:#0D1626">The holy grail of a prompt: nothing left to guess</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">“Did I think of every requirement?” has no answer: what you forgot leaves no trace. “Is the question queue empty?” does. <b style="color:#0D1626">interrogate.py</b> walks every use case, turns each hole in the chain into a question that names its line, and stays red until none is left.</p>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Find the hole</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">A step that needs what nobody wrote, a source rule no requirement cites, a pathway with no requirement, a module missing its who, why or when.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Ask, never guess</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Each hole is answered by a written requirement or handed to its owner. An invented answer is not one of the options.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Close the loop</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Its partner, usecase_kg.py, holds every requirement to 13 criteria and locks it: change the code or the requirement and it comes back stale.</p>
+</div>
+</div>
+<div style="width:560px;display:flex;flex-direction:column;gap:16px;background:#0D1626;border-radius:20px;padding:32px 40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">Measured</p>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#F4F0E6">37 questions</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">open today on this prototype’s own model (245 steps, 94 pathways): red until each is answered</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#FF8A3D">7 of 7</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">inferred requirements checked on a game in development were real bugs</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#F4F0E6">0 holes of ours</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">on the Lock-On Blueprint: its 18 open questions belong to its author</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Both tools are open source (autobot/ in the prototype’s repository). No loop has closed yet: each sample waits on its author.</p>
+<aside>This is the engine under the loop. Nobody can answer “did I think of every requirement?”, because what you forgot leaves no trace. Anybody can answer “is the question queue empty?”, because the queue is generated from the structure, not from imagination. interrogate.py walks every use case and every pathway and turns each hole into a question that names its line: a step that needs something nobody wrote, a rule in the source that no requirement cites, a pathway with no requirement, a module whose who, why or when is missing. Each question is answered by a written requirement or handed to the person who owns it; inventing an answer is not allowed. Its partner, usecase_kg.py, then holds every requirement to thirteen criteria and locks it, so a later change to the code or to the requirement comes back stale. That is why closed loop requirements are the holy grail of a prompt: an AI acting on them has nothing left to guess. Measured today on this prototype's own model, 37 questions are open across 245 steps and 94 pathways, and the gate stays red until each one is answered. On a game in development, all 7 inferred requirements checked so far were real bugs. On the public Lock-On Blueprint no hole of ours is left; its 18 open questions belong to its author, which is also why no loop is closed yet.</aside>
+</section>
+<section id="trust" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Trust, checked outside the model</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:68px;font-weight:700;line-height:1.15;color:#F4F0E6">The model proposes. Something outside it decides.</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="width:620px;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#8796AB">What an LLM is for</p>
+<div style="display:flex;flex-direction:row;gap:16px;align-items:start"><x-icon name="Check" style="color:#FF8A3D;width:40px;height:40px"></x-icon><p style="flex:1;font-size:30px;line-height:1.4;color:#F4F0E6">English: reading, writing, explaining</p></div>
+<div style="display:flex;flex-direction:row;gap:16px;align-items:start"><x-icon name="Check" style="color:#FF8A3D;width:40px;height:40px"></x-icon><p style="flex:1;font-size:30px;line-height:1.4;color:#F4F0E6">Brainstorming: options, questions, drafts</p></div>
+<div style="display:flex;flex-direction:row;gap:16px;align-items:start"><x-icon name="Warning" style="color:#8796AB;width:40px;height:40px"></x-icon><p style="flex:1;font-size:30px;line-height:1.4;color:#B8C6D9">Never the verdict on its own work</p></div>
+<p style="font-size:28px;line-height:1.4;color:#B8C6D9;background:#16243A;padding:20px 32px;border-radius:24px">Its reasoning goes to a file and is held to something it cannot talk its way past: a parser, a test, a game’s own referee. Plain code on a CPU, not a second model.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">Where it was learned: ARC-AGI-3</p>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#F4F0E6">0.02 → 0.23</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">public score on ARC-AGI-3’s interactive puzzle games, version 13 to version 48, every one scored by the games, never by the model</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#FF8A3D">1 of 37 → 0 of 37</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">a headline gain an audit outside the model took back: it accepted no verdict without a mutation test</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#F4F0E6">6 of 6, yet 9 of 18</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Claude’s logged reasoning on the Lock-On Blueprint: every claim held against the graph, and it still missed half the owner’s questions</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8796AB">ARC-AGI-3 work May to July 2026, Kaggle public leaderboard. Lock-On chain CH-1, 28 October, checked by chain_check.py.</p>
+<aside>An LLM is very good at English, which is its main purpose, and not bad at brainstorming. But nothing it produces is trusted on its own word. Its reasoning is written to a file, and something outside the model that it cannot talk its way past does the judging: a parser, a test, a game's own referee. That checking is plain code on a CPU; it needs no second model on a GPU. RJ learned this on ARC-AGI-3, the interactive puzzle benchmark. Claude sub-agents proposed plans and priors; the games scored them against a random control, and an audit outside the model accepted no verdict without a mutation test. That audit took a headline gain from 1 of 37 back to 0 of 37, and the plans Claude wrote for the 19 hardest games beat random on none of them. Meanwhile the public score rose from 0.02 to 0.23, every step of it measured by the games. The same rule runs here: Claude's logged reasoning about the Lock-On Blueprint made six claims, all six held up against the graph, and it still could not see nine of the eighteen questions the graph holds for the author. These trust mechanisms now sit under every project RJ builds with AI; in his experience a failure now almost always maps back to a requirement, though that share has not been counted yet.</aside>
+</section>
 <section id="rawest" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:44px">
 <h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">Take away the syntax. Three things are left.</h2>
 <div style="display:flex;flex-direction:row;gap:32px">
