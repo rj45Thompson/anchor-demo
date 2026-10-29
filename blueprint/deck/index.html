@@ -44,7 +44,7 @@
 </style>
 </head>
 <body>
-<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/" aria-current="page">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
+<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/" aria-current="page">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a><a href="../city/#enemyai">Enemy AI</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
 <div id="stage">
 <section id="cover" data-transition="magic" style="background:#070C16;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:0;display:flex;flex-direction:column">
 <img id="meme" src="assets/captain_meme.gif" alt="The pirate from Captain Phillips leans in and stares straight into the camera" style="position:absolute;left:374px;top:130px;width:1171px;height:820px;object-fit:cover;border-radius:12px">
@@ -781,6 +781,45 @@
 </table>
 <p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Measured by the tools on “Lock-On System” (hitted, blueprintue.com). Not yet measured with people: that is the next step.</p>
 <aside>Here is the whole story on one slide, all measured on the same published Blueprint. Every row on the right is something the view does today. One honest caveat: these are machine measurements. Whether it removes the friction for people is what we test next.</aside>
+</section>
+<section id="enemyai" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">One more, chosen for its friction</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:60px;font-weight:700;line-height:1.15;color:#0D1626">A whole enemy AI: 1,009 nodes, every friction measured</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">As drawn</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">One graph of 18,880 × 12,146 units: 1,090 wires with 174 crossings, 108 of them exec over data; branches 5 deep; a 35-statement path.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">In the view</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">36 graphs, 629 statements; 451 nodes folded into the line that reads them; 851 wires, none spanning six statements.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">On the loop</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">36 requirements with 236 checks, all holding and all flipping when planted; 0 holes of ours, 20 questions for its author.</p>
+</div>
+</div>
+<div style="width:560px;display:flex;flex-direction:column;gap:16px;background:#0D1626;border-radius:20px;padding:32px 40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">Each friction, honestly</p>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#F4F0E6">108 → 0</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">exec wires crossing data wires: as drawn, and in 3D, where the two kinds of pipe never share a plane</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#FF8A3D">1,009 of 1,009</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">nodes reached by a use case step, or excluded with the reason</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#F4F0E6">2 not answered</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">its parent class (the view refuses to guess) and changing values by watching (the paste holds no run)</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">“Enemy Blueprint for Antagonist Combat System” (JJ GameDesign, blueprintue.com, UE 5.3); the author keeps the rights.</p>
+<aside>One more Blueprint, picked because it is hard. It is the whole event graph of one enemy from a public combat system: 1,009 nodes in a single graph, driven from Tick, with nested casts and long exec chains. As drawn, its wires cross 174 times and 108 of those are exec over data; branches nest five deep and one path runs 35 statements. The view reads it into 36 graphs and 629 statements, folds 451 nodes into the line that reads them, and lays out 851 wires with none spanning six statements; in 3D the exec and data pipes never share a plane, so no exec pipe crosses a data pipe. Every one of the 1,009 nodes is reached by a use case step or excluded with its reason. The loop holds 36 requirements with 236 checks, every one of which holds and flips when planted the other way; no hole of ours is left, and 20 questions wait for the author. Two frictions are not answered here, and the slide says so: its parent class, because the headers the view reads disagree and it refuses to guess, and changing values by watching, because a paste holds no run to change. The same instruments measured Lock-On first, and the worked example has every friction card for both.</aside>
 </section>
 <section id="zip" data-transition="fade" style="background:#070C16;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
 <div style="display:flex;flex-direction:column;gap:12px">
