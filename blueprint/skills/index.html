@@ -55,31 +55,1027 @@
       <h2><span>/</span>usecase-map</h2>
       <p class="what">Builds a use case model from the problem story and a class model from the code, and never lets the two blur.</p>
       <p class="role"><b>In the prototype:</b> built the use case model from RJ’s Blueprint Paradox discussion and his messages: 59 use cases at three levels and 230 requirements, with the class model held to the code.</p>
-      <details data-src="skills/usecase-map/SKILL.md"><summary>Read the skill</summary><pre>Loading…</pre></details>
+      <details><summary>Read the skill</summary><pre>---
+name: usecase-map
+description: Build and verify a UML model for a codebase - a use case model derived from the problem story, and a class model extracted from source - then diff the class model between sessions so reviewers read UML instead of code. Use when asked for use cases, UML, requirements coverage, a class diagram, or a session change report.
+---
+
+# UML model: use cases from the problem story, classes from the source
+
+Two models, two different UML views, never conflated:
+
+| | view | comes from | answers |
+|---|---|---|---|
+| **Use case model** | behavioural | the PROBLEM STORY, authored above the code | can the actor reach their goal, and what must be true along the way |
+| **Class model** | structural | the source, extracted mechanically | what types and methods exist, and what changed since last session |
+
+A use case is an actor&#x27;s goal. A class is a unit of code. If you find yourself writing a use
+case named after a method, stop: that is the failure this skill exists to prevent.
+
+## 0. The rule that makes this worth doing
+
+**Choose the MODE before you write a line, and name it in the output.** Whether to read the
+code is a property of the task, not a law. Each mode has a different failure, and choosing wrong
+is the one error you cannot repair later by adding rows.
+
+| mode | when | base layer comes from | failure if chosen wrongly |
+|---|---|---|---|
+| **Clone-and-change** | copying an existing product, then changing it. **The common case.** | the REFERENCE product&#x27;s end-to-end behaviour; your own code is only the delta | refusing to read the reference reinvents a product that already works |
+| **Quarantine** | code exists but must not shape the base requirements | the problem story + end-to-end system basics, written BEFORE opening the source | reading code first bakes today&#x27;s bugs in as intent |
+| **Greenfield** | there is no code | the problem story alone | none, but say so, or a reader hunts for a source |
+| **Code-is-spec** | the existing code&#x27;s requirements are known-correct | harvest the source directly; it IS the base | canonising a broken implementation |
+
+In every mode the **end-to-end system basics come first** - how a request crosses the whole system
+and back - because user goals floating above an unspecified system describe features of something
+nobody specified. Code-derived rows are marked **HAVE** with a real symbol; what the chain needs
+and nobody authored is marked **INFERRED**.
+
+Why four modes: the common job is to copy an existing product and then change it, but some projects
+have product code that must not shape the base requirements, some have no code at all, and in some
+the code&#x27;s requirements are known to be right.
+
+A use case does not store a requirement. It **binds requirements into a causal chain**: a
+numbered scenario where each step&#x27;s postcondition is the next step&#x27;s precondition. When a
+step needs a precondition that nothing guarantees, the chain has **inferred a requirement
+nobody wrote**. Those inferred rows are the entire payload. Measured on the game&#x27;s Block Painter:
+7 inferred, 7 were real defects, 0 present in the authored requirements file.
+
+## 1. Find the problem story first
+
+Ask for it, or assemble it from what the user has actually said, with provenance per clause.
+Never compose it from the code. If you cannot source a clause, mark it ABSENT and ask.
+
+Write it as one sentence. Then list the problems that fall out of it - each becomes an epic
+or an extension.
+
+## 2. Find the authored requirements, and check their authority
+
+Locate the human-authored requirement files. **Verify which are authoritative rather than
+assuming** - a file named `*Requirements*` may declare itself non-normative. On the game,
+`BattleRequirements.txt` says in its own header &quot;I didn&#x27;t write BattleRequirements.txt&quot;, and
+an earlier version of this skill&#x27;s output wrongly listed it as authored intent. Read the top
+of every requirements file before citing it.
+
+## 3. Write the model
+
+Use Cockburn&#x27;s goal levels: **kite** (summary, an epic), **sea** (user goal, the level to
+prefer), **fish** (subfunction). A method name is fish level at best.
+
+**Always write at least one EPIC**: the longest chain, binding the most requirements, ending
+at the thing the software exists to do. If the epics run, the product works. Epic coverage is
+the metric that matters; per-method coverage is not, because every method can be tested while
+the actor still cannot reach the goal.
+
+Fully dressed fields, in order: name (active-verb goal phrase), scope, level, primary actor,
+supporting actors, stakeholders and interests, trigger, precondition, minimal guarantee,
+success guarantee, main success scenario, extensions.
+
+- Main success scenario: **3 to 11 steps**. Outside that range the goal level is wrong.
+- Each step names what it NEEDS (its precondition), the code, and the requirement - or
+  **INFERRED** when no authored requirement covers it.
+- Extensions are where the chain breaks. Number them against the step (3a, 6a).
+- `include` is mandatory and its arrow points base to included. `extend` is optional and its
+  arrow points extension to base. **They point opposite ways**; this is the most commonly
+  inverted detail in UML, so state it in the output.
+
+## 4. Prove the inferred requirements are absent
+
+For each inferred requirement, search the authored file for its key term and record the hit
+count. `0 hits` is evidence only if the same search, run on a CONTROL term the file is known to
+hold, hits: on 2026-10-27 Git Bash&#x27;s grep 3.0 with `-o -i` returned 0 for every term, controls
+included. &quot;I did not see one&quot; is not evidence. If a term hits, the requirement is authored and
+does not belong in the inferred table.
+
+## 5. Extract and verify the class model
+
+    py .opus-tools/uml.py extract          # source -&gt; class model
+    py .opus-tools/uml.py snapshot --label session-N
+    py .opus-tools/uml.py diff --from .uml/session-N.json
+    py .opus-tools/uml.py mermaid --focus TypeA TypeB --only Method1 Method2
+    py .opus-tools/uml.py check            # THE GATE
+
+`check` refuses a model that names a class or method which does not exist, that has no
+problem story, that has no primary actor, or whose epic falls outside 3-11 steps. Run it
+before publishing anything. **A diagram nobody can verify is decoration** - UML is exactly
+where plausible-looking names get invented, so it needs a resolver like any other value.
+A class-model note that is not a use case model: `check --doc NOTE.md --names-only` (names only).
+`uml.py check` runs with `--cache &lt;work folder&gt;` when another lane&#x27;s `.uml/current.json` is dirty.
+
+If the tool does not exist in this repo, port it; it is standalone. A model that must account for
+every pathway is kept as data and checked by the usecase-interrogate skill&#x27;s structured route
+(`autobot/usecase_model.py`, `autobot/usecase_kg.py` - the knowledge graph with the anchor count).
+
+## 6. Publish the artifact
+
+One artifact per large completed session, because developers review UML rather than code:
+the derivation, the use case model, the class diagram with real signatures, the structural
+diff, and the verdict. Load `artifact-design` first. Mermaid renders natively; mermaid has
+**no native use case diagram**, so approximate it with a flowchart plus a subgraph boundary
+and SAY that you did.
+
+## 6b. Verify the verifier, every time
+
+A gate you have not tried to break is a gate you are trusting on faith. Three rules, each
+from a real failure on this project:
+
+**Prove it can FAIL.** Hand the gate something it must refuse. `uml.py selftest` does this
+with a fabricated method name. A gate that has only ever passed is indistinguishable from a
+gate that does nothing.
+
+**Prove each CHANNEL is load-bearing.** Disable one channel and require the ANSWER to move.
+If it does not, that channel is redundant and you are paying for it. ⚠ Ablate the channel,
+not the input: my first attempt pointed the gate at an empty directory, which blinded BOTH
+channels, so it would have passed with the second channel deleted entirely. Hold the input
+fixed and swap only the one channel&#x27;s answer.
+
+**Check your own verification for the bug you are hunting.** I ran a silent-handler audit
+over my own tools, resolved the paths after the auditor changed directory, and got &quot;0
+handlers, 0 SILENT&quot; for a file with eight handlers - a not-found masquerading as a pass. Only
+implausibility caught it. Assert that your check actually looked at something.
+
+## 6c. An index may only be an anchor while it is FRESH
+
+Indexes go stale silently and then answer confidently, which turns &quot;I do not know&quot; into &quot;it
+does not exist&quot;. Measured on this project: the Roslyn index was 56 days old with 67% of files
+changed, holding 4,689 methods against 8,009 that exist - as an anchor it would have reported
+ABSENT for ~40% of real methods.
+
+Gate it (`uml.py freshness`), and know the SCOPE as well as the age: after a successful
+rebuild that same index still had ZERO entries for anything under an `/Editor/` folder,
+because it indexes one assembly. Not stale. Blind. Coverage and freshness are separate
+questions and both must be asked.
+
+Prefer an index you can rebuild in seconds over one you must remember to refresh.
+
+## 7. Self-improvement pass (required, every run)
+
+Answer these against what actually happened this run, not in the abstract. Add a dated
+changelog line for anything you change. Rules: only add a rule that a REAL failure this run
+would have prevented; never add speculative advice; if the file exceeds ~180 lines, cut the
+weakest rule rather than appending.
+
+1. Did I name any use case after a method or a CRUD verb? Why did it slip through?
+2. Did the epic bind the most requirements available, or did I pick a short chain?
+3. How many inferred requirements did the chain produce, and how many were real? If zero
+   were real, the chain was written from the code - say so and fix the derivation.
+4. Did the gate fail, and was the failure in the model or in the extractor? Verify before
+   believing the tool.
+5. Did I check the authority of every requirements file I cited?
+6. What did I state without measuring?
+7. Did any gate I added pass for a reason other than the one I intended? Try to make each
+   one fail on purpose before believing it.
+8. Did I count weak evidence as an anchor? A test that MENTIONS a name is not a test that
+   covers it, and a requirement written in my own model is not a second source.
+
+## Changelog
+
+- 2026-09-01 created, then **rewritten after a review rejected the whole approach**: rows had been
+  named after METHODS (not use cases); use cases come from the problem story and the chain is what
+  INFERS missing requirements; epics are the longest chains and are the metric that matters; use
+  case and class models are different views and must not be conflated. `uml.py` added as the gate
+  after the first draft&#x27;s coverage table proved unverifiable by hand.
+- 2026-09-01 added 6b (verify the verifier) and 6c (freshness AND scope) and the step 2 authority
+  check, all from real failures: a vacuous ablation gate, a self-audit that reported clean because
+  it read nothing, an index 56 days stale and then structurally blind to a whole assembly, and a
+  self-declared non-authoritative file cited as designer intent. Also demoted two non-anchors: a
+  test that merely mentions a name, and a self-authored requirement.
+- 2026-09-14 **&quot;never from code&quot; was wrong; it is now MODE SELECTION** (step 0), after a model came out with
+  five user goals and no end-to-end basics. Also: grep-for-absence hits must be INSPECTED (&quot;sync&quot; matched
+  &quot;async&quot; 17 times), and do not number headings (they become module names downstream).
+- 2026-10-27 step 4 now needs a control term (u2ue Blueprint view run): a broken `grep -o -i` read
+  0 for all 20 terms, which would have certified 16 inferred requirements on a search that read
+  nothing. The same run widened coverage.py&#x27;s id pattern (`UC-\d{3}` saw no `UC-BP1`).
+- 2026-10-27 **mode chosen wrongly**: clone-and-change (Unreal&#x27;s Blueprint editor as the product to copy) for an
+  experiment that was meant to be QUARANTINED and human-ergonomics first. Before clone-and-change, ask whether the existing
+  product should shape the base at all - when the job is to fix its friction, it is evidence, not the base.
+</pre></details>
     </li>
     <li class="skill">
       <h2><span>/</span>usecase-interrogate</h2>
       <p class="what">Walks the use case chain and turns every hole into a question. The gate stays red while any question is open.</p>
       <p class="role"><b>In the prototype:</b> the gap checker behind closed loop requirements. Every pathway and closed space is counted; requirements the chain needs but nobody wrote become questions for the owner (18 on the Lock-On Blueprint), and a logged reasoning chain is held to the graph.</p>
-      <details data-src="skills/usecase-interrogate/SKILL.md"><summary>Read the skill</summary><pre>Loading…</pre></details>
+      <details><summary>Read the skill</summary><pre>---
+name: usecase-interrogate
+description: Reach complete requirements by generating QUESTIONS from holes in a use-case chain, instead of writing more rows and hoping. Walks the chain, types each hole (inferred requirement, unmapped feature in a closed space, orphan id, unanchored precondition, an alternate pathway with no requirement, a source sentence no requirement cites), emits a question with the hole cited, and exits non-zero while any question is unanswered. For a model that must account for every pathway, checks it as data (usecase_model.py) and as a SQLite knowledge graph with the anchor count per requirement (usecase_kg.py). Use when asked for every requirement, full requirements coverage, what is missing, what should I be asking, or when a use-case model needs to be proved complete rather than merely long.
+---
+
+# Interrogate the chain: completeness as a count, not a feeling
+
+The sibling skill `usecase-map` BUILDS a model and verifies it. This one attacks the model and
+asks what it cannot answer. Run `usecase-map` first if there is no model; run this to find out
+whether the model is finished.
+
+## The one idea
+
+**&quot;Did I think of every requirement?&quot; is unanswerable** - what you failed to think of leaves no
+trace, so no amount of care detects it. **&quot;Is the question queue empty?&quot; is answerable**, because
+the queue is generated from a closed structure rather than from imagination.
+
+So never try to reach completeness by writing more rows. Close a space, walk the chain, and let
+the holes generate the questions. Completeness becomes a count that has to reach zero.
+
+This is not speculative. `&lt;game&gt;/Assets/Docs/UseCases.md:86` - *&quot;as INFERRED, and all five of them
+were real defects.&quot;* Five holes in the chain, five genuine bugs, found by asking what the chain
+needed rather than by reading the code.
+
+## Run it
+
+```
+py .opus-tools/autobot/coverage.py    --selftest        # FIRST, every run: a gate that has only ever passed proves nothing
+py .opus-tools/autobot/interrogate.py --selftest
+py .opus-tools/autobot/coverage.py    --space &lt;matrix.json&gt; --game &lt;name&gt; --docs &lt;doc.md&gt;
+py .opus-tools/autobot/interrogate.py --doc &lt;doc.md&gt; [--space &lt;matrix.json&gt; --game &lt;name&gt;]
+                                      [--source &lt;ref.txt&gt; --reqs &lt;reqs.txt&gt; [--every-sentence]]
+                                      [--no-probe] [--no-pathways]   # probe and pathways are ON by default
+```
+
+`coverage` proves the space is closed and mapped - and, when a feature names its `req`, that a STEP of its use case carries it
+(mapping a requirement to a use case&#x27;s name proves nothing about the scenario). `interrogate` turns what is left into questions,
+including every alternate pathway that cites no requirement and every use case of 3+ steps that has none.
+`--every-sentence` holds every sentence of an essay-style source to a requirement, not only the ones with a rule word.
+**Both exit 1 while anything is open.** That is the gate; there is no prose rule to skip.
+
+### When the model must account for EVERY pathway: write it as data, check it as a graph
+
+Markdown hides structure in prose. When every pathway of the use case descriptions must be accounted for, and a knowledge
+graph should help detect more gaps, keep the model as YAML (use cases with parents, steps,
+extensions, requirements, closed spaces, a question bank) and run:
+
+```
+py .opus-tools/autobot/usecase_model.py --selftest                 # 17 rules, each proved by a planted fault
+py .opus-tools/autobot/usecase_kg.py    --selftest                 # agrees with those rules on 12 plants; finds 2 classes they cannot
+py .opus-tools/autobot/usecase_model.py &lt;model folder&gt;             # U1-U17: hierarchy, every pathway, carriers, cells, gulfs ...
+py .opus-tools/autobot/usecase_kg.py build &lt;model folder&gt; --db &lt;store.sqlite&gt; --nt &lt;graph.nt&gt;
+```
+
+`usecase_model.py` is the rules checker (the &quot;compiler&quot; for requirements: every step and every extension must carry a
+requirement, every requirement must be carried, every cell of every closed space mapped or excluded with a reason, every kite
+step decomposed, every user goal states its gulf of execution and evaluation). `usecase_kg.py` builds the same model into a
+SQLite knowledge graph (chosen by measurement over DuckDB, igraph and NetworkX; Node&#x27;s `node:sqlite` reads it, so the Anchor 2
+engine can join it) whose completeness schema is DECLARED BY THE STORE, and adds what rules over YAML cannot see: the ANCHOR
+COUNT k per requirement (distinct independent evidence families - story, framework, language, brainstorm, code - never the
+model&#x27;s own structure), single-family requirements listed as questions, possible duplicates, and chains from source sentences
+to epics. Its review format is sorted N-Triples, byte-identical across rebuilds. Worked example:
+`.opus-tools/quarantine/blueprint_view/` (model/, KG_SURVEY.md, DEBUG.md).
+
+## The four holes, and the question each becomes
+
+| hole | detected by | the question |
+|---|---|---|
+| **inferred requirement** | every `INFERRED IR-n` cite, in a step&#x27;s Requirement cell or on an alternate pathway; each cite is its own question | step N (or pathway Na) needs X and nobody authored it - intended, and which file carries it? |
+| **unmapped feature** | a closed space says the parent game does X, no use case maps it | do we do X? if yes which use case and what file:line; if no, what search proves it absent? |
+| **orphan id** | the space names UC-n, no document defines it | what is that use case&#x27;s goal, or should the mapping be retired? |
+| **unanchored need** | a step&#x27;s precondition no earlier step delivers | which step is meant to deliver it, or is it an entry precondition? |
+| **baseline facet** | a module whose prose never says who/what/why/when/where/before/after | the five Ws for this module, each with the exact line to add to close it |
+| **one-sided link** | A says B runs after it, B names someone else as its predecessor | which of the two is right? |
+| **alternate pathway** | an extension (`- 3a.`, `**Extensions**: 1a.`, `**Extension 3a - ...:**`) citing no requirement, or a use case of 3+ steps with none | what happens when this step cannot complete, where does it end, which requirement does it carry? |
+
+The first three, the last three except `unanchored`, are **facts** and fail the gate. `unanchored`, and an extension that never
+says where it ends, are **keyword heuristics** - they cannot tell a real break from a rewording - so they are candidates and
+never fail the gate. A guess that can fail a build is worse than no check.
+
+Measured 2026-10-27 before the pathway hole existed: a model this tool passed had 14 of 14 extensions citing no requirement;
+on five real documents the new hole asks 4 to 16 questions each, and Inventory.md (no alternate pathway at all) went 10 -&gt; 20.
+
+## The second space: why one closed space is never enough
+
+Every new use case module gets a who / what / why / when / where attack that grows a baseline of
+knowledge about it, plus what comes before it and what comes after. This is
+`--probe`, and it is **ON by default** (`--no-probe` to gate on step-level holes only).
+
+It exists because of a measured failure. On `starfighter/ASTEROID_USE_CASES.md` the closed space of
+61 `CFG` constants read **61/61 claimed** and the gate went green - while the document had no step
+at all for *a bullet damages a rock*, and `astHitBullet` is a real function in the file. **A space
+of constants cannot see a missing step, because a missing step consumes no constant.** Re-running
+the same idea over a space of FUNCTIONS instead found 17 holes in the same document, one of which
+answered an open question the constant space had left standing.
+
+So the rule is: **each round of interrogation needs a space of a different SHAPE.** Constants, then
+functions, then the baseline facts a reader needs before any step can be checked at all. Closing
+one shape&#x27;s queue is progress, not completion - say which shape you closed.
+
+The probe **detects rather than assumes**: it reads the prose under each module heading for an
+opening label (`**Actor:**`, `- Why:`, `&gt; **Trigger** - `) and accepts a step&#x27;s backticked symbol or
+`file:line` as the answer to *where*, so it never asks what the document already says. It prints the
+whole grid, answered and open, because &quot;nothing fired&quot; and &quot;nothing was examined&quot; are otherwise the
+same silence. Measured 2026-09-08: `ASTEROID_USE_CASES.md` 6/42 answered, `&lt;game&gt;/Assets/Docs/UseCases.md`
+4/56.
+
+Answering **before**/**after** is what makes the queue recursive rather than a checklist: once two
+modules both declare their links, a one-sided link becomes a new question the tool derives on its own.
+
+## The third space: the SOURCE itself, never only your summary of it
+
+Measured 2026-10-24, on a remake of an arcade castle-defence game: a key game mechanic was missing from the build while the use
+case gap check stayed green, so the check itself needed repair. The closed space was 50 rows read from the SNES manual and the
+gate was green: every row mapped to a use case. But the rows were MY paraphrases. Row S15 said &quot;no enclosed castle loses the round&quot;
+where the manual says &quot;:675-677 if **you** do not have at least one Castle completely enclosed ... **you** lose the round&quot;; the
+requirement written from the row said &quot;the **team** loses a life&quot;, and every gate then agreed with every other gate about a rule
+the source never states. Death did not work, and nothing could see it. **A gate that checks a summary certifies the summariser.**
+
+So when a reference text exists (a manual, a spec, a design doc), gate it directly:
+
+```
+py .opus-tools/autobot/interrogate.py --doc &lt;chain.md&gt; --space &lt;space.json&gt; --game &lt;col&gt; \
+    --source &lt;reference.txt&gt; --reqs &lt;requirements.txt&gt;
+```
+
+`source_rules.py` extracts every sentence of the source that states a rule (mechanically - must/cannot/only/lose/win/become/award
+...), and each must be cited by a live requirement&#x27;s `:N-M` line range, or excluded by a reason recorded in the space
+(`source_excluded`, or a row whose copy cell is `no`). A sentence whose subject is the player (&quot;you&quot;, &quot;his&quot;) cited only by
+requirements that speak of the team is a **drift** question. Measured: the pre-fix requirements leave :675-677 and :689-698
+uncited (30 holes); a team-worded death rule citing :675-677 is caught as drift; the fixed file passes 142 sentences, 0 holes.
+Two traps it already handles: a WIDE cite (a page pointer) covers a sentence only if it also shares its words, and a cite must
+hold half a sentence&#x27;s lines (OCR sentences share boundary lines, so `:673-675` once &quot;covered&quot; the death rule at `:675-677`).
+
+## Four rules, each earned
+
+1. **Never write the document you audit.** It is usually owned by another session. A tool that
+   rewrites the artifact it grades cannot be trusted about it.
+2. **Check the parse against a quantity known independently**, and print both. The first run of
+   `interrogate` read one table out of four - 10 steps, 5 of the document&#x27;s 15 `INFERRED` markers -
+   and reported a confident question count over a third of the file. Nothing in the output looked
+   wrong. `grep -c INFERRED` is what caught it. A parser that silently reads a fraction is
+   indistinguishable from one that read it all, unless you hold it against an outside number.
+3. **An empty selection fails.** `coverage --game &lt;typo&gt;` selected 0 features, scored 0/0 as 100%
+   and PASSED. Empty means the selector matched nothing - a broken question, not an answer.
+4. **A question names its hole with a file:line.** A question nobody can locate is as unfalsifiable
+   as the prose this whole approach exists to replace.
+
+## Answering, and stopping
+
+Work the queue by kind, not by order: `inferred` first (each is a real requirement nobody wrote),
+then `link` (two claims disagree), then `unmapped`, then `orphan`, then `baseline` breadth-first -
+every module&#x27;s *who* before any module&#x27;s *why*, so the shallow pass over the whole epic lands before
+the deep pass over one corner of it. An answer is one of exactly two things - an **authored requirement**
+the step can cite, or a recorded **ABSENT** with the search that proves it. &quot;Probably fine&quot; is
+neither and does not clear a question.
+
+Record each answer as a claim with provenance:
+
+```
+py .opus-tools/agent_graph.py claim --subject &quot;IR-8&quot; --verdict yes \
+    --evidence &quot;&lt;file&gt;:&lt;line&gt; &lt;quoted token&gt;&quot; --kind READ --topic requirements
+```
+
+**Stop when the queue is zero, not when the list feels long.** If you stop with questions open,
+say how many and of which kind - that is an honest, useful report. A model with 30 open questions
+described as &quot;complete&quot; is the failure this skill exists to prevent.
+
+## Log your own reasoning chain, and hold it to the graph (by default, where there is code)
+
+Write the chain of reasoning to a file, then check it against the actual node graph, to find what the reasoning cannot see
+without the graph. Whenever you reason about a model that has code under it (a trace: the
+statements, decisions, paths and brainstorm questions of `quarantine/blueprint_view/view/trace.js`), write the chain down as you
+go - one claim per step, each citing the graph nodes it rests on - in `&lt;set&gt;/chains/CH-n_&lt;what&gt;.yaml`:
+
+```
+chain: {id, by, from, when, question, steps: [{says: &quot;...&quot;, cites: [Alias#sN | Alias#sN:outcome | REQ id | Q id]}]}
+py -X utf8 .opus-tools/quarantine/blueprint_view/tools/chain_check.py &lt;set&gt;/trace &lt;set&gt;/chains/*.yaml --out results/CHAINS.md
+```
+
+It reports each step ANCHORED (its cites exist), SUPPORTED (what the graph attaches there - questions, the pathways&#x27; requirements,
+their extensions - says the same) or not, and the owner questions the graph holds that no step reached: what the chain could not
+see. A cite naming nothing or a step citing nothing FAILS (`u2ue blueprint gates` runs it on every logged chain). Measured on the
+online sample (CH-1, six claims written from the converted code alone, before the graph existed): 6/6 anchored and supported - no
+claim was wrong - and **9 of the 18 owner questions were invisible to it** (a variable the search reads that nothing writes, a
+trace miss read as 0 units, a re-lock that never tells the old target). The chain is not worthless; it is half the picture.
+
+## Changelog
+
+- 2026-10-27 (a review found the gap checker missing gaps): measured what it missed on a model it passed (4 mis-carried
+  requirements, 14/14 extensions with no requirement, 22/44 source sentences unchecked), then added the alternate-pathway hole,
+  --every-sentence, a carrier check in coverage.py, self-tests for interrogate.py and coverage.py, and the structured model +
+  knowledge graph route (usecase_model.py, usecase_kg.py). Evidence: .opus-tools/quarantine/blueprint_view/DEBUG.md.
+- 2026-10-27 later the same night: the gate I had just fixed still missed inferred requirements, found only by holding its
+  question count against `grep INFERRED`: a cite on a pathway (5 of 16), a second cite on one row, and a bold pathway&#x27;s
+  unindented last line (GodRays.md:42) were never asked. Fixed, and interrogate now PRINTS that outside count on every run
+  (`INFERRED  N cite(s) in the text, M asked`, naming any id never asked) - read it before believing a pass. usecase_model.py
+  gained U16 (a requirement only epics carry) and U17 (a use case of 3+ steps with no alternate pathway), so the two checkers ask
+  the same questions. &quot;Outcome: end minimal/success&quot; now counts as a stated outcome (30 false candidates gone). DEBUG.md D14-D19.
+</pre></details>
     </li>
     <li class="skill">
       <h2><span>/</span>morph</h2>
       <p class="what">Zwicky’s morphological box: every dimension and value of an option space, each marked present (with where) or absent (with why).</p>
       <p class="role"><b>In the prototype:</b> laid out the view’s option space (direction, what is graphed, renderer, fidelity, layout, edit route, live data, replay, AI input) and Unreal’s 19 Blueprint-editor panels: 11 present, 8 absent, each with where or why.</p>
-      <details data-src="skills/morph/SKILL.md"><summary>Read the skill</summary><pre>Loading…</pre></details>
+      <details><summary>Read the skill</summary><pre>---
+name: morph
+description: |
+  Morphological analysis (Zwicky) of an option space: name the DIMENSIONS
+  of a design problem and every VALUE on each, then account for every
+  cell as either PRESENT (with a `where` that resolves) or ABSENT (with
+  a `why`). Use it whenever the ask is about &quot;the options&quot; - adding
+  settings to a tool or a tab, &quot;every option you could think that I
+  would want&quot;, &quot;did we cover everything&quot;, &quot;what is missing&quot;, reviewing
+  a feature&#x27;s surface before calling it done, or deciding whether a new
+  control is a new axis or a new value on an existing one.
+
+  Trigger phrases: /morph, &quot;morphological analysis&quot;, &quot;the options&quot;,
+  &quot;every option&quot;, &quot;did we miss anything&quot;, &quot;is this complete&quot;, &quot;what
+  else would I want&quot;, &quot;option space&quot;, &quot;Zwicky&quot;, &quot;cover the space&quot;.
+
+  The box is gated by a real script - a box that is only written is a
+  claim, not an analysis. Pairs with /decide (which routes a single
+  decision through the reasoning matrix); this one covers a SPACE.
+allowed-tools: Read, Bash, Grep, Glob, Agent, Write, Edit
+---
+
+# /morph - morphological analysis of an option space
+
+Fritz Zwicky&#x27;s method (1969): define the *dimensions* of a problem and the possible
+*values* on each, lay them out as a box, and work the cells. The framework writeup in
+this repo is `&lt;workspace&gt;/Tools/Copilot pilot/copilot pilot/proof/neurogolf_2026/MORPHOLOGICAL_MATRIX.md`.
+
+**Why it exists.** Without it, an option space is whatever occurred to whoever was
+typing. Twice in one week (a backdrop&#x27;s settings on 2026-09-21, the rope mounts on 2026-09-24)
+the request was for every option a user could want; both times the first cut was thin, and both times the gaps were
+findable in ten minutes by asking what would have to CHANGE for this to be a different
+instance.
+
+## The tool
+
+```bash
+py &lt;workspace&gt;/.opus-tools/morph_box.py --new &quot;&lt;subject&gt;&quot; &gt; &lt;workspace&gt;/.opus-tools/morph_boxes/&lt;name&gt;.json
+py &lt;workspace&gt;/.opus-tools/morph_box.py &lt;workspace&gt;/.opus-tools/morph_boxes/&lt;name&gt;.json --verify-present
+```
+
+It exits 1 and names the offending dimension and cell when a cell has no verdict, a
+PRESENT has no `where`, an ABSENT has no `why`, a dimension has fewer than two cells, or
+a name is duplicated. `--verify-present` OPENS every `where` and proves the symbol is
+there; an unresolved read is a failure, never a warning (CLAUDE.md, IRON LAW 1).
+`--selftest` runs the rule against synthetic boxes, including its own null case.
+Worked example that ships and passes: `.opus-tools/morph_boxes/rope_mounts.json`.
+
+## The method
+
+1. **Name the subject** as a noun a designer would use. &quot;A thing hung on a rope&quot;, not
+   &quot;RopeMount&#x27;s fields&quot;. The wrong subject gives you the class&#x27;s members back.
+2. **Find the dimensions** by asking what would have to CHANGE for this to be a
+   different instance. A dimension with one value is not a dimension, it is an
+   assumption - write it down as a one-value dimension anyway, because that is where the
+   holes are. MEASURED example: the Water tab&#x27;s placement is
+   `inst.transform.rotation = Quaternion.identity` and nothing else
+   (`BlockTilePainterWindow.Water.cs:705`), so &quot;which way it faces&quot; is a real dimension
+   with exactly one value and no stated reason - a river is unreachable.
+3. **List every value**, including the ones that are not built.
+4. **Classify every cell.** Exactly two verdicts, never a third:
+   - `PRESENT` with a `where` (file:line, or `path:symbol`) that resolves;
+   - `ABSENT` with a `why`, and where possible what to use instead.
+   An ABSENT with no reason is a guess wearing a verdict. This is the repo&#x27;s NO GUESSING
+   law applied to design space instead of to data.
+5. **Cross the axes.** The holes that matter are usually in the product, not in one
+   column. MEASURED: BackdropAutofit has an Anchor axis (Centred/Top/Bottom) and an op
+   axis; `ApplyBackdropFitLift(root, rep, anchor)` takes the anchor and
+   `ApplyBackdropFitSize(root, rep)` does not
+   (`BlockTilePainterWindow.BackdropAutofit.cs:724` vs `:757`), so three cells of that
+   sub-box do not exist - and the window draws the anchor popup three lines above the
+   button that ignores it.
+6. **Diff every surface** that exposes the space. A window and an HTTP route are two
+   spellings of one box and they drift in BOTH directions. MEASURED: `/backdrop/autofit`
+   accepts `apply=size` alone, which the window never offers; the window&#x27;s Cards op is
+   not an `apply` value at all, it is a separate route.
+7. **Axis or value?** Before adding a control, ask whether it is a new dimension or a new
+   value on one that exists. `BlockTilePainterWindow.Trees.cs:618` already reasons this
+   way in its own comment: *&quot;SWAY OFF IS ONE VALUE, NOT A SECOND MECHANISM&quot;*.
+8. **Run the gate.** A box that is only written is a claim.
+9. **Fill the holes, or record the ABSENT with its reason.** Both are finishing. Neither
+   is optional, and &quot;I&#x27;ll note it&quot; is not either one.
+
+## Use the agent toolset for step 2 and 3
+
+Dimensions are cheap to generate and expensive to generate WELL, and a single reader
+anchors on the code in front of them. Fan out one agent per surface that exposes the
+space - the window, the HTTP route, the pure rules file - each asked for dimensions and
+values **with file:line**. Then reconcile. Divergence between two agents&#x27; boxes is the
+finding, not a disagreement to average away: it is usually a real surface divergence of
+the kind in step 6.
+
+Spot-check the citations by opening the files yourself. An agent report is data, not a
+result. (Three of this skill&#x27;s own measured claims were re-read before being written down
+here; all three held.)
+
+## What a gate can and cannot do - measured, so nobody re-derives it
+
+- It CAN check that the box is complete: every cell classified, every `where` resolving,
+  every `why` present.
+- It CANNOT enumerate values that only exist at runtime. The Trees tab&#x27;s Set and Type
+  filters are built from an asset scan (`Trees.cs:437`, `:491`) and their legal values
+  change per category.
+- It CANNOT reach an option whose only control is a Scene-view gesture. Trees&#x27; dialled
+  yaw is `[SerializeField] treeManualYaw`, written ONLY inside the Shift-drag handler
+  (`Trees.cs:1350`); the tab displays the angle and offers Clear, with no field to type
+  one into. That is a value on a dimension the tab names and cannot reach.
+- It CANNOT see an option whose home is a ScriptableObject, a scene component or a static
+  (`TreePaletteAsset`; `WindZone.windMain`; `GaiaWindEditorPreview.Enabled`).
+- The nearest existing instrument, `/blockpainter/draw-audit`, enumerates FIELDS and only
+  proves the tab does not throw - the codebase says exactly that about itself at
+  `CopilotBridge.cs:4831`.
+
+So the gate checks the box; a person or an agent still has to WRITE the box by reading
+the code. That division is the point, not a shortcoming.
+
+## Keep the box next to the code
+
+The rope mounts&#x27; box lives as a comment block in
+`&lt;game&gt;/Assets/Media/Scripts/Ropes/RopeMount.cs` (`THE OPTION SPACE`), and
+`RopeMountOptionSpaceTests` fails if a dimension or an ABSENT reason is deleted from that
+header, or if two values on the facing axis pose identically. A box in a separate document
+rots; a box the tests read does not.
+
+## Where to put the JSON
+
+`&lt;workspace&gt;/.opus-tools/morph_boxes/&lt;subject&gt;.json`. That directory is checked in, so a
+box is a durable artifact and the next session inherits the analysis instead of redoing it.
+</pre></details>
     </li>
     <li class="skill">
       <h2><span>/</span>decide</h2>
       <p class="what">Routes a judgement call through a calibrated decision matrix, so the agent takes a measured strategy instead of guessing.</p>
       <p class="role"><b>In the prototype:</b> settled the opening forks: a Blueprint-styled view over code rather than real Blueprint assets, a web page before an Unreal plugin, headless replays rather than live editor data. It also picked the knowledge-graph store by benchmark (SQLite).</p>
-      <details data-src="skills/decide/SKILL.md"><summary>Read the skill</summary><pre>Loading…</pre></details>
+      <details><summary>Read the skill</summary><pre>---
+name: decide
+description: |
+  Route a reasoning decision through the morphological reasoning matrix
+  instead of asking the user. Use when you&#x27;re about to ask &quot;should I do
+  A or B?&quot; / &quot;is X feasible?&quot; / &quot;is this in scope?&quot; / &quot;should I build
+  infrastructure for this?&quot; / &quot;how deep to investigate?&quot; — the matrix
+  has 23 calibrated decision-shapes with recommended resolution
+  strategies (try-it, prior-art, ask-user, cheap-llm, ...) and cost +
+  reliability estimates per cell.
+
+  Trigger phrases: /decide, &quot;should I&quot;, &quot;is X worth&quot;, &quot;which of these&quot;,
+  &quot;build infrastructure&quot;, &quot;ask the user about&quot;, &quot;how should I approach&quot;.
+
+  After running the lookup, take the recommended primary strategy. If
+  the lookup returns no_match, that itself is signal — add the new
+  shape to reasoning_matrix.json.
+allowed-tools: Read, Bash
+---
+
+# /decide — reasoning-matrix lookup
+
+When a decision can be routed through the matrix instead of asking
+the user, do this:
+
+```bash
+py &quot;&lt;workspace&gt;/Tools/Copilot pilot/copilot pilot/proof/neurogolf_2026/apply_reasoning_matrix.py&quot; \
+   --decision &quot;&lt;the decision shape, e.g. &#x27;pick between N options&#x27;&gt;&quot;
+```
+
+Read the matched shape + primary strategy + fallback chain + cost +
+reliability. Take the primary strategy.
+
+## Common shapes and what to do
+
+| Decision shape | Primary strategy | What I do |
+|---|---|---|
+| `pick_between_n_options` | `try_it` | write a small benchmark, run it, pick winner |
+| `estimate_feasibility` | `try_it` | time-box a 10%-of-budget probe |
+| `schema_design` | `prior_art` | look up Bertin / D3 / model-card patterns; build small instance |
+| `detect_self_hallucination` | `try_it` | verify file exists / command works |
+| `design_visualization` | `prior_art` | standard charts cover 90%; pick one; render |
+| `estimate_generalization` | `try_it` | held-out test |
+| `build_infrastructure_or_not` | `build_mvp` | if reuse expected ≥3 times, build; else one-shot |
+| `evaluate_user_intent` | `ask_user` | matrix doesn&#x27;t read minds; this one&#x27;s correct |
+| `add_feature_or_not` | `ask_user` | scope question |
+| `decide_to_refactor` | `default_todo` | avoid yak-shaving |
+
+## Outcome logging
+
+After resolving a decision via the matrix, log the outcome so the
+calibration stays honest:
+
+```bash
+py &quot;&lt;workspace&gt;/Tools/Copilot pilot/copilot pilot/proof/neurogolf_2026/apply_reasoning_matrix.py&quot; \
+   --log &lt;decision_id&gt; &lt;strategy_id&gt; &lt;0_or_1&gt;
+```
+
+The 0/1 says whether the strategy actually got the right answer. After
+N uses per cell, the reliability score in `reasoning_matrix.json` can
+be recalibrated from the log.
+
+## When the lookup returns no_match
+
+That&#x27;s important data, not failure. Add the new decision shape to
+`reasoning_matrix.json` so the matrix grows:
+
+```json
+{&quot;id&quot;: &quot;&lt;new_shape_id&gt;&quot;,
+ &quot;name&quot;: &quot;&lt;short description&gt;&quot;,
+ &quot;best_strategies&quot;: [&quot;primary&quot;, &quot;fallback&quot;, &quot;...&quot;],
+ &quot;fallback_chain&quot;: [&quot;primary&quot;, &quot;fallback&quot;, &quot;...&quot;],
+ &quot;notes&quot;: &quot;&lt;one-line context&gt;&quot;}
+```
+
+This is the matrix self-improving. Every &quot;no_match&quot; is a gap to fill.
+
+## Composition with other matrices
+
+The reasoning matrix sits one level above the AGI / morphological /
+problem-space matrices. Its queries SEED their cells:
+
+```
+Decision: &quot;is Opus useful for ToM?&quot;
+   → reasoning_matrix → strategy = try_it (probe, $0.05)
+   → I run the probe
+   → result fills agi_matrix.csv cell (T15 Opus × P11 ToM)
+   → next iteration: graph similarity edges update
+```
+
+## Files
+
+- `reasoning_matrix.json` — the cells
+- `apply_reasoning_matrix.py` — lookup tool (always available)
+- `REASONING_MATRIX.md` — the framework writeup
+- `matrix_viz.html` — visual browser (run `py matrix_viz.py` to regen)
+- `test_matrix_viz.py` — proof-of-correctness test
+</pre></details>
     </li>
     <li class="skill">
       <h2><span>/</span>autonomous-worker</h2>
       <p class="what">Keeps a task list on disk and works it item by item until done, checking each item against something a stranger could re-check.</p>
       <p class="role"><b>In the prototype:</b> ran the work off the experiment’s TASKS.md. Every item had a “done when” check, verified before it was ticked; blockers were recorded with their measurement.</p>
-      <details data-src="skills/autonomous-worker/SKILL.md"><summary>Read the skill</summary><pre>Loading…</pre></details>
+      <details><summary>Read the skill</summary><pre>---
+name: autonomous-worker
+description: Use when the user hands over a long multi-item job and wants it FINISHED without the session stopping early to ask permission or to report progress - &quot;finish it all&quot;, &quot;work through the list&quot;, &quot;keep going until done&quot;, &quot;/autonomous-worker&quot;, &quot;don&#x27;t stop&quot;, &quot;loop until stagnant&quot;. Keeps a durable file-backed task list (./TASKS.md) that survives context compaction, loops item by item until a pass moves nothing, verifies each item against a named observable before marking it done, records blockers instead of halting on them, and reports once at the end.
+---
+
+# Autonomous worker
+
+The user is not watching. Stopping to ask costs them a round trip and often a whole
+evening. The job is to FINISH, and to be honest about what finished.
+
+## 0. FIRST, EVERY TIME - read the list off disk
+
+Your first tool call under this skill, and again at the top of every item:
+
+    Read ./TASKS.md          (step 1 creates it if it is missing)
+
+Not &quot;if context was compacted&quot; - you cannot perceive your own compaction, and the run
+that most needs this reminder is the one that already lost it. So make it
+unconditional. Re-reading a 30-line file costs nothing. Reporting &quot;done&quot; for work you
+can no longer see costs the whole run. **The file is the source of truth; your memory
+is not.**
+
+## 1. First action - write the list
+
+**ADOPT, DO NOT FORK.** First look for a list that already exists - `TASKS.md`, a
+`*_TASKS.md`, or the tracker the user named. If one is there, USE IT, whatever it is
+called. A second list is worse than none: the moment two exist, one of them is silently
+going stale and you cannot tell which one the next session will read. (Measured
+2026-08-31: this skill&#x27;s own first run created `TASKS.md` alongside an existing
+`BLOCKPAINTER_TASKS.md` and left both on disk.) Only write a new file when no list exists.
+
+Then write the list. One line per item, in this exact shape:
+
+    - [ ] ID  &lt;verb + target&gt;  -&gt; DONE WHEN: &lt;observable a stranger could re-check&gt;
+
+GOOD - `- [ ] T3  null-guard OptionsPanel.Show -&gt; DONE WHEN: OptionsPanelTests.Show_NullOverlay_DoesNotThrow passes`
+BAD  - `- [ ] T3  look at the options panel`   (no verb, no observable, can never be honestly marked done)
+
+Markers: `[ ]` open, `[x]` done + evidence, `[!]` blocked + measurement, `[-]` dropped +
+reason. If the job arrived as prose, decompose it into these lines FIRST. A vague line
+is a line you will later tick on vibes.
+
+Keep the file SKIMMABLE. Open items at the top, done items below them, and evidence held to the one or two lines
+that carry the number - a `[x]` line that runs to a paragraph belongs in the commit message, with the list keeping
+the claim and the figure. A task list nobody can scan is a task list the next session re-derives from scratch.
+
+## 1b. If the user gave a TIME BOX or a REPORT POINT, that outranks the loop
+
+&quot;work for an hour and report&quot;, &quot;check in at 5&quot;, &quot;one pass then tell me&quot; - the termination test below is NOT the
+whole contract when the user named a time or a checkpoint. Measured 2026-09-06: the invocation said &quot;Work for one
+hour, then report&quot;; this file said the loop ends on stagnation and nothing else, so the run continued well past the
+hour and the user had to ask twice for the report they had already requested.
+
+At the top of the run, write the deadline into the list as a line of its own:
+
+    &lt;!-- time box: report at 22:06Z (one hour from 21:06Z), asked for in the invocation --&gt;
+
+Then: take the clock at the top of every pass (`date -u +%H:%M`). When the box is spent, STOP TAKING NEW ITEMS,
+run the verification gate, and report. If work is genuinely mid-flight, finish that one item first - never leave a
+half-applied edit - then report. The user may say &quot;continue&quot; after; that starts a new box, it does not retro-extend
+the old one. With no time box given, the stagnation test below is the whole contract.
+
+## 1c. A message from the user mid-run outranks everything on the list
+
+The user is not gone just because the run is autonomous. When a new instruction arrives, it is the highest-priority
+item - fold it in as `[ ]` lines immediately, before continuing. Do not finish the current sweep first and do not
+treat &quot;do not stop to report&quot; as a reason to ignore new direction: that rule is about volunteering status, not
+about deafness. If the new instruction contradicts an open item, mark the old one `[-] superseded by &lt;what&gt;`.
+
+Measured 2026-09-06: eight instructions arrived during one run (deprecate a window, more looks, AAA quality, a
+properly mapped mesh, a washed-out planet, invisible droids, agent sprawl). Every one was a real change of
+direction, and treating them as interruptions to be batched would have produced an hour of the wrong work.
+
+## 1d. ONE agent
+
+Do not spawn subagents, forks, or workflow fan-outs from inside this loop. Do the work in this session.
+
+Measured 2026-09-06: six spawned CLI workers were alive at once and kept launching more, until the user stepped in
+and capped it at one agent each. The spawnAgent default is Opus + ultracode, so a fan-out is
+not a small cost. If the job is genuinely too big for one session, say so in the report and let the user decide.
+
+## 2. The loop
+
+Repeat until the termination test fires:
+
+1. Read `TASKS.md`.
+2. Take the topmost `[ ]` item.
+3. Do it.
+4. Verify against its DONE WHEN, then rewrite that line in place with the evidence:
+   `- [x] T3  null-guard OptionsPanel.Show -&gt; PASSED Show_NullOverlay_DoesNotThrow (12/12)`
+5. Append any new work that surfaced as fresh `[ ]` lines. Go to 1.
+
+At the end of each pass over the remaining open items, append a counter line to the file:
+
+    &lt;!-- pass 3: 2 done, 1 blocked, 1 appended --&gt;
+
+**STAGNANT = one complete pass in which nothing moved to `[x]` or `[!]` and nothing new
+was appended** (a `0 done, 0 blocked, 0 appended` line). That is the termination
+condition. Otherwise you stop only when no `[ ]` lines remain, or a DO-stop trigger
+below fires. Nothing else ends the loop - not &quot;this feels like a good place to check
+in&quot;, not a long turn, not context pressure. Update the file and keep going.
+
+## Definition of done, per item
+
+An item is done when its OBSERVABLE is true, never when the edit is written:
+
+| kind of work | what &quot;done&quot; means |
+|---|---|
+| code change | it COMPILES, and the relevant test passes - name the test |
+| bug fix | the failure is REPRODUCED first, then gone, and something guards it |
+| tool | it RAN, on the real input, and its output was inspected |
+| UI change | it was rendered and LOOKED AT, not just typechecked |
+
+Write the evidence next to the item. &quot;Fixed&quot; with no observable is not done.
+
+## Nothing ships without a line
+
+If you find yourself about to commit, check in, publish, or hand over something that has
+no line in the file, STOP and add the line first - with its DONE WHEN - then satisfy it.
+
+This is not bookkeeping. The DONE WHEN is the only thing that makes you check; work that
+never became an item never gets checked. (Measured 2026-08-31: a UI panel was written,
+typechecked and CHECKED IN without ever being rendered, because it was done as a side
+quest and so never acquired the &quot;DONE WHEN: rendered and looked at&quot; that every other UI
+item had. It was caught later by luck, not by process.)
+
+The rule is not &quot;add it afterwards for tidiness&quot;. It is: an item with no observable is an
+item you will ship unverified.
+
+## 1e. THE TURN BOUNDARY IS NOT THE END OF THE RUN
+
+This is the defect behind six unwanted stops in one session, each one restarted by the user, and the file did not
+cover it. &quot;Batch the reporting&quot; was read as &quot;report once per turn&quot;, which is once per few minutes.
+
+**A report is the LAST thing in a RUN, not a habit at the end of a TURN.** Before you write a
+closing summary, look at the list. If an open `[ ]` item exists and nothing in DO-stop applies, take
+it instead. Writing prose is not progress and a well-written status is still a stop.
+
+The test, applied literally: *is there an item I could start right now?* If yes, start it. The run
+ends when the list is empty, stagnation fires, a DO-stop trigger fires, or a time box is spent.
+Nothing else, and specifically not &quot;this is a natural place to check in&quot; or &quot;I have a satisfying
+amount to report&quot;.
+
+**A &quot;not done&quot; line in a report is an open item you skipped.** Before the report, read your own draft:
+every &quot;not done&quot;, &quot;remaining&quot;, &quot;next would be&quot;, &quot;could also&quot; that you are able to do without the user
+goes back on the list as `[ ]` and gets done. A report may only list as not done what is BLOCKED (on the
+user, hardware, a decision) - with the block named. Measured 2026-10-24: a run closed its list
+by marking items `[x] ... NOT done: cliff relief` and reported &quot;Not done: cliff relief, a close frame
+of a disc&quot;, and the user had to ask why it had stopped. Tucking work into a done
+line&#x27;s evidence is the same stop with better manners.
+
+## 1f. EVERY ITEM MUST EARN ITS PLACE AGAINST THE USER&#x27;S OWN WORDS
+
+Pin the user&#x27;s acceptance test at the TOP of the list, quoted in THEIR words, before any item:
+
+    &lt;!-- ACCEPTANCE (the user&#x27;s own words): &quot;a player can finish a battle end to end: the turns,
+         the cameras, the abilities and the effects&quot; --&gt;
+
+Then every item answers: does this move that line? An item that does not is a `[-]` with the reason,
+however interesting it is.
+
+Measured 2026-09-26: a run spent a long stretch chasing 1-ULP differences in Quaternion members
+while the stated goal was a working Unreal build, until the user stopped it.
+The work was real and correct and it was not the job.
+The same run then reported completion percentages against denominators it had invented, which is
+the same failure wearing a tie: **progress is measured against the user&#x27;s acceptance test, never
+against your own plan.** If you catch yourself quoting a percentage, say what the denominator is in
+the user&#x27;s words or do not say it.
+
+## 1g. NEVER BLOCK A TURN ON SOMETHING SLOW
+
+Builds, engine launches and imports here run 90 seconds to 7 minutes. Waiting on them synchronously
+spends the turn doing nothing, and several turns in one session went that way.
+
+Background anything over ~60s and do other list items while it runs. A polling loop that sleeps is
+the same mistake with extra steps. Reorder around it as 1h (below) already says, and come back when
+the notification arrives.
+
+## 1h. WHEN BLOCKED: SOLVE IT OR ASK. NEVER PIVOT SIDEWAYS.
+
+The worst failure in a long run is not stopping and it is not guessing. It is DRIFTING: hitting a
+real blocker on the item that matters and quietly starting adjacent work that does not.
+
+Measured 2026-09-27, one Unreal-port run: blocked on getting a managed actor to spawn, the run
+produced a conformance harness, a seam map, a logic digest, a hole-finder, a render smoke test and a
+plugin gate. Every one was sound, none was the thing asked for, and the user&#x27;s summary was &quot;far from
+complete ... I imagine if I try nothing is working at all.&quot; Six good instruments do not add up to one
+working slice.
+
+When the top item blocks, there are exactly two moves:
+
+1. **Solve it.** Dig into the actual blocker. Read the engine&#x27;s source, probe the API, try the next
+   approach on the SAME item. This is almost always the right move and it is the one that feels
+   slow.
+2. **Ask.** One precise question naming the decision only the user can make, e.g. &quot;may I write C++
+   in this module?&quot;. Then stop on THAT item and take the next unrelated `[ ]` item.
+
+What is NOT a move: inventing a nearby task because it is tractable. Tractability is not relevance.
+If you notice yourself building a tool when the item called for a result, you have already drifted -
+go back to the item.
+
+**Build a tool only when the item cannot be verified without it.** A measurement instrument is
+justified when it is the DONE WHEN, never as a consolation prize for a blocked one.
+
+## Do not stop for these
+
+- Reversible work that follows from the original request. Just do it.
+- Choosing between two reasonable implementations. Pick the better one, say which and why.
+- A tidy-up you noticed on the way (dead code, a missing guard, a stale comment).
+- Wanting to report progress. Batch it - one report at the end, or when something changes
+  the plan.
+
+## DO stop for these
+
+- Destructive or outward-facing actions: deleting data, force-pushing, sending anything,
+  publishing, spending money.
+- A genuine scope change - the user asked for X and the honest fix is a different X.
+- A decision that is the user&#x27;s to make: licensing, product behaviour, what a look should be.
+- Anything a standing rule in the project forbids (in this repo: running the Unity test
+  runner without an explicit go-ahead; auto-answering a modal in the live editor - EXCEPT
+  Unity&#x27;s &quot;The open scene(s) have been modified externally&quot;, a standing exception the user
+  granted: click Reload when the scene has no unsaved changes, keep the user&#x27;s work (Ignore)
+  and say so when it has).
+- The user is working in the Unity editor: do not touch it - no bridge renders, compiles or
+  asset writes. Do the work that needs no Unity, and resume the Unity steps when the user says
+  the editor is free.
+
+## The list lives in the REPO you are changing
+
+`./TASKS.md` means the tree whose files you are about to edit, not whatever directory the
+session happens to have started in. A session can be opened in one repo and asked to work
+in another; putting the list where the work is not is how the next session finds nothing.
+
+&quot;ADOPT, DO NOT FORK&quot; means adopt a list for THIS project. A big `TASKS.md` belonging to a
+DIFFERENT project in the same session is not the list to adopt - check what it is about
+before writing into it. (Measured 2026-09-06: a run in `&lt;another project&gt;` nearly adopted
+`&lt;workspace&gt;/TASKS.md`, 142KB of another project&#x27;s work, because both are &quot;./TASKS.md&quot; from
+some point of view.)
+
+## Someone else may be editing the same tree
+
+Before the first edit, check whether another agent or another session is live in this repo:
+`git log` with times, `git status`, and file mtimes over the last hour. A second worker
+committing every few minutes is not hypothetical and it is not visible from your own context.
+
+If there is one, do all three:
+
+1. **Take a lane and write it down** - put a &quot;hands off&quot; list of THEIR live files at the top
+   of `TASKS.md`, and stay out of those files even when you find a real bug in one.
+2. **Report the bugs you find in their files instead of fixing them.** A verified finding with
+   its file:line and its reproduction, recorded in the shared list, is worth more than a patch
+   that collides. Losing the finding is the only failure mode here.
+3. **Stage precisely.** `git add -A` will sweep their half-finished work into your commit. Stage
+   named files; if one file holds both your change and theirs, build the blob you mean with
+   `git show HEAD:file &gt; tmp`, edit that, `git hash-object -w --path file`, `git update-index
+   --cacheinfo`, and leave their working tree alone.
+
+(Measured 2026-09-06: a lane ran alongside another agent making ~1 commit per 4 minutes in the
+same repo. Zero collisions, because the lane was declared before the first edit - and one
+`index.html` commit had to be staged by hash because the other agent&#x27;s version bump sat three
+lines from my own change.)
+
+## Do not contaminate what you are measuring
+
+A probe that changes the system has not measured it. This bites hardest in a live page or a
+long-running process, where your scratch names share a namespace with the program&#x27;s.
+
+- Wrap every injected probe in an IIFE, or namespace it. A bare `var x =` at global scope in a
+  browser page **overwrites a global of that name** in the program under test.
+- Restore anything you monkey-patch in a `finally`, not at the end of the happy path.
+- After a probe, check the program still works before trusting the numbers it just gave you.
+
+(Measured 2026-09-06: a one-line profiling probe declared `var rr = ...`; the game under test
+had a global `rr()` that draws every rounded rectangle. The game threw &quot;rr is not a function&quot;
+on every label from then on, and the run AFTER that read 31.6 ms/frame against a true 15.3 - it
+was measuring its own damage. It was caught only because that game happens to show a crash
+banner. Assume yours does not.)
+
+**Drive the WHOLE loop, not the part you think matters.** When you hand-step a system to measure it, step every
+function the real loop steps, in the real order. A subset silently freezes whatever you left out, and then you are
+measuring a state the program never has.
+
+(Measured 2026-09-06, same run: a visibility test stepped `step()` and the subsystem under test but not
+`updateCamera()`, so it projected objects against a camera frozen at page load. It reported 0 of 240 samples on
+screen and would have justified a second round of &quot;fixes&quot; to something that was not broken. With the camera
+stepped too, the same code measured 66%. The first number was not a small error - it was the opposite conclusion.)
+
+**A measurement that contradicts what you can see is the measurement&#x27;s problem until proven otherwise.** Open the
+screenshot, or read the value the program itself displays, before you act on a number that says everything failed.
+
+## Before starting anything long, check what it blocks
+
+Long background work (a test suite, a build, an import) often makes the NEXT items
+impossible while it runs - it can take a lock, saturate the machine, or steal focus. Look
+at the remaining `[ ]` lines before you launch one, and reorder so the blocked items are
+not next. (Measured 2026-08-31: a full test-suite run was launched immediately before an
+item that needed the editor, and the suite&#x27;s own second editor stole the window.)
+
+Reordering is free. Discovering the conflict halfway through is not.
+
+## When an item blocks
+
+Do NOT halt the run. Record and continue:
+
+1. Rewrite the line: `- [!] ID  blocked: &lt;what failed, measured&gt; | need: &lt;the one thing&gt;`.
+2. Take the next item.
+3. Surface every blocker in the final report.
+
+A blocked item is information, not a stopping condition.
+
+## 3. The verification gate - run this BEFORE the report
+
+Not a sentiment, a pass. Walk every `[x]` line in the file and answer out loud:
+
+1. Does the line name a real observable, or just say &quot;fixed&quot;? No observable -&gt; `[ ]`.
+2. Re-run / re-read that observable **now**, this turn. Memory of it passing is not
+   evidence; a test that passed 40 turns and 6 edits ago is unverified.
+3. Did it actually reproduce? No -&gt; flip back to `[ ]` or `[!]` and say so.
+4. Is the change where the user will look - the live tree, not a clone or scratch copy?
+
+Order the gate by what a later edit could have broken, not by the order the items were done: anything touching a
+file that changed after its check, first. If the gate cannot be finished inside the time box, verify those and say
+plainly in the report which lines are **claimed but not re-verified** - an honest gap beats a blanket &quot;all done&quot;.
+
+Only lines that survive all four may be reported as done. A run that reports work it
+cannot demonstrate is worse than a run that did less.
+
+## 4. The final report
+
+One message. Lead with what changed and whether it works. Then:
+- what got done, with the evidence for each
+- what is blocked, and on what
+- what you deliberately did NOT do, and why
+- the single most useful next thing
+- where the list lives, so the next session resumes instead of restarting
+
+**Do NOT include advice on how to prompt this skill better.** If a run only went well
+because the user phrased the request a particular way, that is a DEFECT IN THIS FILE, not
+a lesson for them. Fix the file instead - the behaviour should be automatic. The user
+should be able to type `/autonomous-worker do the thing` and get the same discipline they
+would get from a carefully worded paragraph.
+
+Never end a turn with a plan you could have executed. If the last paragraph is &quot;next I
+will...&quot;, go back to step 2 and do it instead.
+
+## 1i. LESSONS THIS FILE EARNED ON 2026-09-28/29 (a 16-hour, 81-agent port run)
+
+Each of these cost real time or real trust. None is theoretical.
+
+- **Headless is not a flag you claim, it is a window count.** `UnrealEditor-Cmd -ExecutePythonScript
+  -unattended` put TWO visible editor windows on the user&#x27;s desktop (measured: 102 polls over 30 s);
+  `-RenderOffScreen` puts zero. `-unattended` only changes the prompt action. If a tool can steal
+  focus, prove it does not, with a probe, and put the proof behind a gate that names no executable.
+- **A picture is never the proof, and a frame sent early is worse than no frame.** The user&#x27;s words:
+  &quot;until the basics are done there is no reason to screenshot it&#x27;s all fake puppet show&quot;. Ship counts
+  first (how many objects, what residual, against what floor); a rendered frame is a courtesy after.
+- **Measure before you hypothesise, and say so when the measurement refutes you.** Two confident
+  explanations for a dark scene (the sun, then the skylight) were both refuted by sweeps; the real
+  cause was our own exposure pin making every frame exactly 4x too bright. Sweeping one variable with
+  the others pinned found it in one pass; arguing about it would not have.
+- **Stop a background run only after its structured result lands.** The evidence line is written
+  BEFORE the result; killing in between loses the step and its cache entry, and the work has to be
+  hand-fed to the next agent.
+- **Editing a workflow script that is running: freeze the cached prefix.** The runner keys its cache
+  on (prompt, opts) per call, so any edit to an embedded constant re-runs every completed step. Keep
+  a pre-edit copy and diff the frozen entries before resuming.
+- **A gate that goes red on someone else&#x27;s data must not halt your run.** A teammate&#x27;s asset edit
+  reddened a parity gate mid-run and stopped the whole port; the fix is to distinguish &quot;the product
+  still works and the diff names a file we did not touch&quot; from &quot;our code broke&quot; and record the first
+  rather than dying on it. Never re-baseline someone else&#x27;s work without telling them.
+- **⚠ THIS FILE IS 350 LINES AND ITS OWN RULE SAYS ~180.** Before adding anything else, cut the
+  weakest rule instead of appending. That is now the first job of the next run that touches it.
+
+## Changelog
+
+- 2026-09-27 added 1e, 1f, 1g from a measured Unreal-port run.
+- 2026-09-29 added 1i from a 16-hour port run: headless is a window count, pictures are not proof,
+  measure before hypothesising, stop only after the result lands, freeze a running script&#x27;s cache
+  prefix, and a foreign-data red must not halt the run. Flagged the file&#x27;s own length for trimming.
+</pre></details>
     </li>
   </ul>
 
