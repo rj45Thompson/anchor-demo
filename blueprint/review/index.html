@@ -155,7 +155,7 @@ a { color: var(--accent); }
 <header class="head">
   <div class="eyebrow">u2ue experiment, in quarantine &middot; 2026-10-27 to 10-28</div>
   <h1>Blueprint View</h1>
-  <p class="lede">Game code drawn as Blueprint-style graphs to make it easier to understand, and Unreal Blueprints turned back into code, with requirements built from human friction first. It never writes the game, and it joins u2ue only if RJ decides so from a measured report.</p>
+  <p class="lede">Game code drawn as Blueprint-style graphs to make it easier to understand, and Unreal Blueprints turned back into code, with requirements built from human friction first. It never writes the game, and it joins u2ue only if a measured report makes the case for it.</p>
   <p class="paths">This review is the experiment as it stood early on 10-28. The online sample with its closed loop, the Pong hello world, the asteroid shooter (a whole game, playing on its converted Blueprint) and the city came after it, and are on the showcase and the city above.</p>
 </header>
 
@@ -163,15 +163,15 @@ a { color: var(--accent); }
   <div class="verdict">
     <div class="eyebrow" id="v">Viability</div>
     <div class="big">Built and measured for right answers. Not yet measured with people.</div>
-    <p>Phases 1 to 7 and 9a are built, and a converter from Blueprint to code was added on RJ's word: read any method as a graph in five forms, find it, follow its calls, replay a battle and scrub it to the step a planted fault appears, set a value on a wire with no rebuild, change the sandbox through gates, and read real Unreal Blueprints as code. Every answer the experiment gives was held to a key computed another way. What it has not been measured for is friction: no person has used it, and that needs RJ's testers and baseline (IR-12).</p>
+    <p>Phases 1 to 7 and 9a are built, and a converter from Blueprint to code was added as a new requirement mid-run: read any method as a graph in five forms, find it, follow its calls, replay a battle and scrub it to the step a planted fault appears, set a value on a wire with no rebuild, change the sandbox through gates, and read real Unreal Blueprints as code. Every answer the experiment gives was held to a key computed another way. What it has not been measured for is friction: no person has used it, and that needs named testers and a baseline (IR-12).</p>
     <div class="split">
       <div>
         <h3>Not real Blueprint assets</h3>
-        <p>A Blueprint call node binds a UFunction (<span class="mono">K2Node_CallFunction.h</span> lines 77 and 158), and the model is plain C#. IR-3 asks RJ to confirm.</p>
+        <p>A Blueprint call node binds a UFunction (<span class="mono">K2Node_CallFunction.h</span> lines 77 and 158), and the model is plain C#. IR-3 asks for that to be confirmed.</p>
       </div>
       <div>
-        <h3>Not live edits in RJ's editor</h3>
-        <p>Hot reloading stays Off in his Unreal project. The same idea runs on a deterministic replay: a valve on a wire, a re-run in seconds, the new outcome beside the old.</p>
+        <h3>Not live edits in a running editor</h3>
+        <p>Hot reloading stays Off in the Unreal project in use, so a write never recompiles under an open editor. The same idea runs on a deterministic replay: a valve on a wire, a re-run in seconds, the new outcome beside the old.</p>
       </div>
       <div>
         <h3>Never a write to the game</h3>
@@ -204,14 +204,14 @@ a { color: var(--accent); }
     <div class="tile"><div class="n">0.84 s</div><div class="l">the slowest whole battle with a valve doubling a damage wire, no rebuild (IR-6's interim bound: 2 s)</div></div>
     <div class="tile"><div class="n" id="t-round">32 / 32</div><div class="l">task-bank answers right in round 2, each against a key computed another way (round 1: 29 of 32, its 3 page failures fixed)</div></div>
     <div class="tile"><div class="n">48 / 2 / 178</div><div class="l">of 228 requirements measured / failed / not yet; nothing without evidence counts as met</div></div>
-    <div class="tile"><div class="n">1,270</div><div class="l">graphs of a second game (Zombie Crossing, RJ's MonoGame port) read with no path of the first game's, all round-tripping</div></div>
+    <div class="tile"><div class="n">1,270</div><div class="l">graphs of a second game (Zombie Crossing, a MonoGame port) read with no path of the first game's, all round-tripping</div></div>
     <div class="tile"><div class="n">68,882</div><div class="l">nodes, each resolving to file, line and column in its source</div></div>
   </div>
 </section>
 
 <section aria-labelledby="bc">
   <h2 class="wire" id="bc">Blueprint to code</h2>
-  <p>RJ, mid-run: "Also I need a converter from blueprint to code as well". Requirements first (REQ-BPV-27, UC-BV34, BC-1 to BC-10 from the engine's 113 node classes), then the code, tested only on text the engine itself wrote: eleven Unreal 5.7.1 templates copied and exported by a headless commandlet with no window.</p>
+  <p>Added mid-run as a new requirement: a converter from Blueprint to code. Requirements first (REQ-BPV-27, UC-BV34, BC-1 to BC-10 from the engine's 113 node classes), then the code, tested only on text the engine itself wrote: eleven Unreal 5.7.1 templates copied and exported by a headless commandlet with no window.</p>
   <div class="tiles">
     <div class="tile"><div class="n">92</div><div class="l">template Blueprints converted, 0 failed (one export was UTF-16, read by its byte-order mark)</div></div>
     <div class="tile"><div class="n">275 / 275</div><div class="l">methods printed as C#, C++ and pseudo-code; every one parses as C# (Roslyn)</div></div>
@@ -228,7 +228,7 @@ a { color: var(--accent); }
     <table>
       <thead><tr><th>Space</th><th>Shape</th><th>Cells</th><th>Accounted for</th><th>Source</th></tr></thead>
       <tbody>
-        <tr><td class="id">S1</td><td>Every sentence of RJ's discussion</td><td class="num">44</td><td>44 mapped</td><td>his upload, copied byte for byte</td></tr>
+        <tr><td class="id">S1</td><td>Every sentence of the design discussion</td><td class="num">44</td><td>44 mapped</td><td>the discussion's text, copied byte for byte</td></tr>
         <tr><td class="id">S2</td><td>Cognitive Dimensions &times; 9 view surfaces</td><td class="num">126</td><td>117 mapped, 9 excluded with a reason</td><td>Green and Petre 1996; the 14 dimensions read from Wikipedia</td></tr>
         <tr><td class="id">S3</td><td>Human-factors principles</td><td class="num">30</td><td>30 mapped</td><td>from knowledge, not re-read this run</td></tr>
         <tr><td class="id">S4</td><td>Shneiderman's 7 tasks &times; 7 data types</td><td class="num">49</td><td>47 mapped, 2 excluded with a reason</td><td>Shneiderman 1996, "The Eyes Have It"</td></tr>
@@ -336,7 +336,7 @@ a { color: var(--accent); }
 
 <section aria-labelledby="kg">
   <h2 class="wire" id="kg">The knowledge graph</h2>
-  <p>The same model is also built into a SQLite graph. The store declares its own completeness rules and checks what rules over YAML cannot: how many independent kinds of evidence back each requirement, and which requirements are written twice. SQLite was chosen by running four systems on RJ's real Anchor store (10,711 entities, 20,196 edges). Node's built-in <span class="mono">node:sqlite</span> reads the same file.</p>
+  <p>The same model is also built into a SQLite graph. The store declares its own completeness rules and checks what rules over YAML cannot: how many independent kinds of evidence back each requirement, and which requirements are written twice. SQLite was chosen by running four systems on the real store of another project, Anchor (10,711 entities, 20,196 edges). Node's built-in <span class="mono">node:sqlite</span> reads the same file.</p>
   <div class="scroll">
     <table>
       <thead><tr><th>System</th><th>Load</th><th>Find a hole</th><th>Reach</th><th>Anchor count</th><th>Reopen</th><th>File</th></tr></thead>
@@ -360,7 +360,7 @@ a { color: var(--accent); }
 
 <section aria-labelledby="pl">
   <h2 class="wire" id="pl">One graph, many forms</h2>
-  <p>From RJ's third and fourth messages: the graph is stored in the node graph's own pseudo-language, and every view is generated from it. A reader picks Blueprint style, another visual style or C# text, and other code languages can follow. The stored form is trusted only while every graph prints back to its method's text.</p>
+  <p>The design rule: the graph is stored in the node graph's own pseudo-language, and every view is generated from it. A reader picks Blueprint style, another visual style or C# text, and other code languages can follow. The stored form is trusted only while every graph prints back to its method's text.</p>
   <div class="diagram">
 <pre class="mermaid">
 flowchart LR
@@ -391,8 +391,8 @@ flowchart LR
         <tr class="core"><td class="id">5</td><td>Replay: record, watch, scrub, compare</td><td>Done 10-28 headless: digests identical three ways on 6 battles; a planted constant found by scrubbing. Not yet shown on the graph</td><td class="mono">runs/</td><td>done</td></tr>
         <tr><td class="id">6</td><td>Changes in the sandbox: graph edits, spoken or typed commands, review</td><td>Typed commands done 10-28: gates pass, a failure put back byte for byte, the game unchanged. Graph edits and spoken commands not built</td><td class="mono">sandbox/</td><td>half</td></tr>
         <tr><td class="id">7</td><td>Valves on a replay</td><td>Done 10-28: a damage wire doubled with no rebuild, slowest 0.84 s; the kept valve as an edit replays identically</td><td class="mono">runs/ sandbox/</td><td>done</td></tr>
-        <tr><td class="id">8</td><td>Unreal editor view, only if RJ wants it</td><td>Blocked on IR-2: browser first unless he says otherwise</td><td class="mono">its own project</td><td>L</td></tr>
-        <tr><td class="id">9</td><td>The verdict</td><td>Second game done 10-28 (Zombie Crossing, 1,270 graphs); this report written; RJ decides whether the view joins u2ue</td><td class="mono">this folder</td><td>RJ</td></tr>
+        <tr><td class="id">8</td><td>Unreal editor view, only if IR-2 chooses it</td><td>Blocked on IR-2: the browser comes first unless that decision says otherwise</td><td class="mono">its own project</td><td>L</td></tr>
+        <tr><td class="id">9</td><td>The verdict</td><td>Second game done 10-28 (Zombie Crossing, 1,270 graphs); this report written; whether the view joins u2ue is decided from it</td><td class="mono">this folder</td><td>decision</td></tr>
         <tr><td class="id">BC</td><td>Blueprint to code (added 10-28)</td><td>Done 10-28: 92 engine Blueprints, 275 methods, all parsing as C#; a paste box in the page. A real clipboard copy not yet tried</td><td class="mono">view/ runs/</td><td>done</td></tr>
       </tbody>
     </table>
@@ -400,8 +400,8 @@ flowchart LR
 </section>
 
 <section aria-labelledby="qq">
-  <h2 class="wire" id="qq">Decisions for RJ</h2>
-  <p>Sixteen requirements the chain needs and nobody has stated, asked at the 35 places they are cited. Each pathway that rests on one says what the view does until he decides. These eleven are product calls.</p>
+  <h2 class="wire" id="qq">Open product decisions</h2>
+  <p>Sixteen requirements the chain needs and nobody has stated, asked at the 35 places they are cited. Each pathway that rests on one says what the view does until it is decided. These eleven are product calls.</p>
   <div class="qs">
     <div class="q"><span class="id">IR-1</span><p>Which code is drawn first: the engine-free model and presentation, the Unreal host classes, or the Unity scripts? <small>Until then, engine-bound code is drawn without live data and marked.</small></p></div>
     <div class="q"><span class="id">IR-2</span><p>Where does the view live first: a browser page or the Unreal editor?</p></div>
@@ -415,12 +415,12 @@ flowchart LR
     <div class="q"><span class="id">IR-14</span><p>Which second visual system, and which code languages beyond C#?</p></div>
     <div class="q"><span class="id">IR-15</span><p>Does the preview of a valve's effect need the game's own picture? <small>That needs the Unreal port playing the replay in an instance of its own.</small></p></div>
   </div>
-  <p>The other five hold a stated default until he says otherwise. IR-10: every change acts on the sandbox. IR-11: the sandbox records its game commit and lists kept changes before a refresh. IR-12: rounds without named testers are run by Claude and marked not human. IR-13: notes are kept per person. IR-16: results are kept in the experiment folder with their date, snapshot and tool version.</p>
+  <p>The other five hold a stated default until decided otherwise. IR-10: every change acts on the sandbox. IR-11: the sandbox records its game commit and lists kept changes before a refresh. IR-12: rounds without named testers are run by Claude and marked not human. IR-13: notes are kept per person. IR-16: results are kept in the experiment folder with their date, snapshot and tool version.</p>
   <p>Three more from the build, each measured:</p>
   <div class="qs">
     <div class="q"><span class="id">DR-1</span><p>The graphs draw 2.5 nodes per statement where the requirement aimed at 1.5. Fold more into a node (a condition as one box), or accept 2.5? <small>Failed, left as it is.</small></p></div>
     <div class="q"><span class="id">LY-6</span><p>A big graph opens with every node shown; the requirement asked for at most 30 visible. Build fold and focus? <small>Failed, not built.</small></p></div>
-    <div class="q"><span class="id">BC5</span><p>One Ctrl+C in your editor: copy any Blueprint nodes and paste them into the page's From Blueprint tab, so the converter meets a real clipboard copy. <small>Only the editor writes one.</small></p></div>
+    <div class="q"><span class="id">BC5</span><p>One Ctrl+C in an Unreal editor: any Blueprint nodes copied and pasted into the page's From Blueprint tab, so the converter meets a real clipboard copy. <small>Only the editor writes one.</small></p></div>
   </div>
 </section>
 
@@ -439,12 +439,12 @@ flowchart LR
     <div class="gate"><span class="s hi">PASS</span><span>Coverage: 228 of 228 features carry a defined use case</span></div>
     <div class="gate"><span class="s hi">PASS</span><span>Source gate: all 44 sentences of the discussion cited by a requirement</span></div>
     <div class="gate"><span class="s hi">PASS</span><span>Option space: 36 cells, every PRESENT opened and read</span></div>
-    <div class="gate"><span class="s md">OPEN</span><span>Interrogation: 35 questions, all of them the 16 decisions above, by design until RJ answers</span></div>
+    <div class="gate"><span class="s md">OPEN</span><span>Interrogation: 35 questions, all of them the 16 decisions above, by design until they are answered</span></div>
   </div>
 </section>
 
 <footer>
-  <span>Sources: RJ's discussion and messages of 2026-10-27 and 10-28; <a href="https://en.wikipedia.org/wiki/Cognitive_dimensions_of_notations">Cognitive dimensions of notations</a> (Green and Petre 1996); Shneiderman 1996, "The Eyes Have It"; the census records; Unreal 5.7.1's engine source and its own exports. The 30 human-factors principles were cited from knowledge and not re-read for this run.</span>
+  <span>Sources: the design discussion and the product direction of 2026-10-27 and 10-28; <a href="https://en.wikipedia.org/wiki/Cognitive_dimensions_of_notations">Cognitive dimensions of notations</a> (Green and Petre 1996); Shneiderman 1996, "The Eyes Have It"; the census records; Unreal 5.7.1's engine source and its own exports. The 30 human-factors principles were cited from knowledge and not re-read for this run.</span>
   <span>Committed in .opus-tools only (the game repo untouched): the model 962d067d, the converter 8ddcf5d7, the task bank and round 1, the fixes and the second game 37cc0949, round 2's tools run at 5be3be41. The earlier clone-and-change plan is kept as history in the experiment folder.</span>
   </footer>
 

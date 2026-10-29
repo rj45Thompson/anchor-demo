@@ -464,9 +464,9 @@
 
   // ---------------------------------------------------------------- C++: a reading form, not a compiler
 
-  /** The same graph in C++ spelling, for a reader who thinks in C++ (IR-14: RJ named C++). It is NOT compiled and does not claim
-   *  to be: the model's types are C#'s, and a construct C++ has no form for is printed as C# inside a marker, and counted
-   *  (cppUntranslated), so the coverage of this projection is a measured number rather than an impression. */
+  /** The same graph in C++ spelling, for a reader who thinks in C++ (IR-14: C++ is the code language named beyond C#). It is NOT
+   *  compiled and does not claim to be: the model's types are C#'s, and a construct C++ has no form for is printed as C# inside a
+   *  marker, and counted (cppUntranslated), so the coverage of this projection is a measured number rather than an impression. */
   function CppPrinter(g, findGraph, counter) {
     CsPrinter.call(this, g, findGraph);
     this.counter = counter || { nodes: 0, untranslated: 0 };

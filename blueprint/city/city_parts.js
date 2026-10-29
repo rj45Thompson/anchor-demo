@@ -1,6 +1,6 @@
 // city_parts.js - what each thing the 3D city draws IS, what is written on it, and what it answers when a person points at it or
-// clicks it. RJ 10-28, of the city: "I couldn't click on everything like the interface and the nodes seem blank". Measured that
-// afternoon on the files the artifact serves: the 148 node boxes had nothing on them (a statement's line floated above its box and
+// clicks it. The first city could not be clicked everywhere, and its nodes looked blank. Measured 10-28 on the files the
+// published page served: the 148 node boxes had nothing on them (a statement's line floated above its box and
 // faded in only inside 34 units; the 49 expression nodes had no text at all), and a click answered on statements, entries and
 // question marks alone - never on an expression node, the interface ring or its messages, a call, a pipe, a title or a class floor.
 // The class of that defect is a thing a person can SEE and cannot ASK about, so this module is a list, not more labels:

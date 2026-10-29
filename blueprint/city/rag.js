@@ -1,5 +1,5 @@
 // rag.js - the trace as a retrieval layer: a question about the code answered from the few pieces of the graph it touches, not from
-// the files (RJ 10-28: "Are we using the node graph to its fullest and also saving tokens by acting as a rag").
+// the files, so the graph already built does a second job and a model reads a fraction of the tokens the code would cost.
 //
 // Documents are the trace's own pieces - a statement (its pseudo-code line), a use case step (what it does, its requirements, its
 // cites), a requirement (text and measure), a brainstorm question (and the requirements that answer it), a class member (its type,

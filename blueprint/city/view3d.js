@@ -1,5 +1,5 @@
-// view3d.js - Blueprint City: a converted Blueprint drawn in 3D with Three.js on WebGPU (RJ 10-28: "You can do the visualization in
-// three J's webgpu ... I want the graphics to look [good]"), answering the frictions of his discussion, section by section:
+// view3d.js - Blueprint City: a converted Blueprint drawn in 3D with Three.js on WebGPU, made to look good as well as to read well,
+// answering the Blueprint frictions the design discussion names, section by section:
 //   1 Spaghetti / exec vs data clutter  -> exec pipes ride ABOVE the nodes, data pipes BELOW: the two never cross in one plane
 //   1 Zoom blindness                     -> fly to anything by name; every box's title reads wherever it has room (nodeLabels) and its
 //                                           whole face when close; island titles from afar
@@ -11,7 +11,7 @@
 //   5 Time-travel replay                  -> any path through a graph replays step by step, scrubbed back and forth, each step showing
 //                                           the use case step and the requirement it serves
 // Everything drawn comes from window.BPV3D (view/scene_cli.js): nothing is placed or labelled by hand.
-// RJ 10-28 afternoon: "I couldn't click on everything like the interface and the nodes seem blank". Both were true, so every node
+// Measured 10-28: parts of the city, the interface among them, could not be clicked, and its node boxes were blank. So every node
 // now carries its own face (nodeFace: title bar and line, ON the box), and every part city_parts.js lists is registered in Picks
 // and answers a hover and a click; cityAudit() holds what was drawn to that list and says so in the badge.
 import * as THREE from 'three/webgpu';
@@ -977,7 +977,7 @@ function toast(s) { $('toast').textContent = s; $('toast').dataset.on = '1'; toa
 
 // ------------------------------------------------------------------------------------------------ the game: the Blueprint, running
 /** liveGame - the set's own game (view/games/<game>.js) played on the set's converted graphs (view/run.js running D.ngl), every node
- *  lit as it runs, in the city and in Unreal 2D (RJ 10-28: "for pong can you make the game play and watch the blueprint run").
+ *  lit as it runs, in the city and in Unreal 2D, so a person watches the Blueprint run while the game plays.
  *  What the game DOES is the paste's code; the engine under it - the court, the sizes, the Speed values, the keys, the computer
  *  player - is authored, and the panel lists each such value as authored. A node run every frame (a Tick, an input axis) glows
  *  steadily; one an event runs flashes, and the panel names what it did and the requirement it serves. A fault in the converted
@@ -1095,8 +1095,8 @@ $('gclose').addEventListener('click', stopGame);
 $('gpause').addEventListener('click', pauseGame);
 
 // ------------------------------------------------------------------------------------------------ the boxes' titles, where they read
-/** nodeLabels - each box's title where a person can read it (RJ 10-28, on the published Pong city: "The pong is missing labels on
- *  the boxes?"). Every box carries its face, but a face lies flat on a box a few tenths of a unit deep: from the opening view its
+/** nodeLabels - each box's title where a person can read it (the published Pong city of 10-28 read as boxes with no labels).
+ *  Every box carries its face, but a face lies flat on a box a few tenths of a unit deep: from the opening view its
  *  title is under a pixel, and flown to its graph it is about 7 px and under the glow (measured on the published page). So while a
  *  face's title would show smaller than LEGIBLE, the box's title is written over the box in screen space at a size that reads, as a
  *  map writes its towns: statements first, then expressions, the biggest boxes first, the type sized to the box and the text cut to
@@ -1217,7 +1217,7 @@ renderer.setAnimationLoop(() => {
   }
   if (keys.size) {
     // the speed follows how far the view stands from what it looks at: a fixed 16 a second crept from the asteroid shooter's game
-    // view, 225 units out (RJ 10-28: "w didn't seem to move forward"); a third of the distance a second crosses that city in about
+    // view, 225 units out, so W looked as if it did nothing (10-28); a third of the distance a second crosses that city in about
     // two seconds (half of it overshot the whole city in 1.5 s, measured); up close it stays 16, Shift still runs
     const sp = Math.max(16, camera.position.distanceTo(controls.target) * 0.3) * (keys.has('shift') ? 2.5 : 1) * dt;
     camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
@@ -1252,8 +1252,8 @@ renderer.setAnimationLoop(() => {
 // ------------------------------------------------------------------------------------------------ the audit
 /** cityAudit - what was drawn, held to what the data says is drawn (city_parts.parts): MISSING is a part nothing was drawn for,
  *  EXTRA a pick whose part the data does not list, LOOSE a mesh or sprite in the world that answers as no part (a thing a person
- *  can see and cannot ask about), BLANK a node whose face has no title. The city RJ opened on 10-28 had 148 blank faces and every
- *  expression node, pipe, call, title and floor loose; this is the check that would have said so before he did. */
+ *  can see and cannot ask about), BLANK a node whose face has no title. The city published on 10-28 had 148 blank faces and every
+ *  expression node, pipe, call, title and floor loose; this is the check that would have said so before a reader did. */
 function cityAudit() {
   const want = new Set(C.parts(D).map(C.keyOf));
   const missing = [...want].filter((k) => !Picks.byKey.has(k));

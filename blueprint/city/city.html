@@ -76,8 +76,8 @@
   /* the set's game, running its converted Blueprint (view/run.js + view/games/<set>.js): on the left, the city beside it */
   #game { position: fixed; z-index: 4; left: max(12px, env(safe-area-inset-left, 0px)); top: 74px; width: min(560px, 44vw); max-height: calc(100vh - 176px);
     padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
-  /* the panel scrolls rather than squeezing its parts: squeezed, a long statement in #gnow ran over the runs below it (RJ's Chrome,
-     the asteroid shooter's Timeline line, 10-28), and its long code tokens pushed the panel sideways */
+  /* the panel scrolls rather than squeezing its parts: squeezed, a long statement in #gnow ran over the runs below it (seen in
+     Chrome on the asteroid shooter's Timeline line, 10-28), and its long code tokens pushed the panel sideways */
   #game > * { flex-shrink: 0; }
   #game[hidden] { display: none; }
   .ghead { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }

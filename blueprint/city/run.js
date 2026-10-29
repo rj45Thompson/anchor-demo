@@ -1,4 +1,4 @@
-// run.js - the converted code RUN (RJ 10-28: "for pong can you make the game play and watch the blueprint run"). The NGL graphs the
+// run.js - the converted code RUN, so a game plays on its own converted Blueprint and a person can watch it run. The NGL graphs the
 // converter wrote from a Blueprint paste (view/bp.js -> <set>/graphs/*.ngl) are executed statement by statement on actors an
 // engine supplies, and every node is announced as it runs, so a page can light it. The game a page plays (view/games/*.js) is the
 // ENGINE: its actors, their places and sizes, the tick, the overlaps, the input. The LOGIC is the Blueprint's own, as converted -

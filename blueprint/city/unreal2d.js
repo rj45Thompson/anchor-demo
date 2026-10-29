@@ -1,5 +1,5 @@
-// unreal2d.js - a pasted Blueprint drawn the way Unreal's Blueprint editor draws it: the reference beside the city (RJ 10-28: "Also if
-// we can put the old blueprint style from unreal up to view as a reference somehow"). What is drawn is READ, not laid out by us:
+// unreal2d.js - a pasted Blueprint drawn the way Unreal's Blueprint editor draws it: the reference beside the city, so a reader can
+// hold the new view against the picture they already know. What is drawn is READ, not laid out by us:
 //   where           each node where its author put it (NodePosX / NodePosY), each comment box with its own size and colour
 //   pins and wires  as the paste stores them; a wire names its node AND its pin, because a duplicated node keeps its pins' ids
 //   titles          in the engine's formats - Event {FunctionName}, Cast To {TargetName}, Branch, Sequence (BlueprintGraph/Private/
