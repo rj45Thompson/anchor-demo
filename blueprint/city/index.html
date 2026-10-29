@@ -33,13 +33,14 @@ iframe { flex: 1; min-height: 0; width: 100%; border: 0; display: block; }
 <style>html, body { margin: 0; } [hidden] { display: none !important; }</style>
 </head>
 <body>
-<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong" aria-current="page">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a><a href="../city/#enemyai">Enemy AI</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
+<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong" aria-current="page">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a><a href="../city/#enemyai">Enemy AI</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../ergonomics/">Ergonomics</a><a href="../code/">Whole code</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
 <div class="band">
   <h1>Blueprint City</h1>
-  <p>Start small: a Pong <a href="https://blueprintue.com/blueprint/oscal-o3/" target="_blank" rel="noopener">ball</a> and <a href="https://blueprintue.com/blueprint/fvpp3w_/" target="_blank" rel="noopener">paddle</a> (32 nodes, UE 4.18, anonymous), then siljaZ's <a href="https://blueprintue.com/profile/siljaz/" target="_blank" rel="noopener">asteroid shooter</a> (16 pastes, 232 nodes, UE 5.0) - both playing on their converted code - then Lock-On System by hitted (<a href="https://blueprintue.com/blueprint/kg2evmas/" target="_blank" rel="noopener">blueprintue.com</a>, 162 nodes, UE 5.0): each converted to code and traced to the requirements it serves. The authors keep the rights, and any author's graphs come down on request.</p>
-  <p>Drag to orbit, scroll to zoom, <code>W A S D</code> to fly (while a game plays, the keys it names are its own); point at anything to name it, click it for what it is. <b>Unreal 2D</b> shows the selected graph's paste the way the Blueprint editor draws it.</p>
+  <p>Start small: a Pong <a href="https://blueprintue.com/blueprint/oscal-o3/" target="_blank" rel="noopener">ball</a> and <a href="https://blueprintue.com/blueprint/fvpp3w_/" target="_blank" rel="noopener">paddle</a> (32 nodes, UE 4.18, anonymous), then siljaZ's <a href="https://blueprintue.com/profile/siljaz/" target="_blank" rel="noopener">asteroid shooter</a> (16 pastes, 232 nodes, UE 5.0) - both playing on their converted code - then Lock-On System by hitted (<a href="https://blueprintue.com/blueprint/kg2evmas/" target="_blank" rel="noopener">blueprintue.com</a>, 162 nodes, UE 5.0), and last a whole enemy AI by JJ GameDesign (<a href="https://blueprintue.com/blueprint/jaj6jttv/" target="_blank" rel="noopener">blueprintue.com</a>, 1,009 nodes, UE 5.3): each converted to code and traced to the requirements it serves. The authors keep the rights, and any author's graphs come down on request.</p>
+  <p>Drag to orbit, scroll to zoom, <code>W A S D</code> to fly (while a game plays, the keys it names are its own); point at anything to name it, click it for what it is, or press <b>Mic</b> and say a command. <b>Unreal 2D</b> shows the selected graph's paste the way the Blueprint editor draws it.</p>
+  <p><a id="wholecode" href="../code/#pong"><b>Read the whole Blueprint as code</b></a>: every class, field and method of the set shown, not just one node.</p>
 </div>
-<iframe name="city" src="city.html?set=pong" title="Blueprint City in 3D" allow="fullscreen"></iframe>
+<iframe name="city" src="city.html?set=pong" title="Blueprint City in 3D" allow="fullscreen; microphone"></iframe>
 <script>
   // the band names the set the frame shows, and a link naming one (#pong, #asteroids, #lockon, #enemyai) opens on it: the host hands the page a plain
   // #token and never the query (measured on the published page 10-28: ?set=lockon reached no frame, #lockon did). The set links are the
@@ -51,6 +52,8 @@ iframe { flex: 1; min-height: 0; width: 100%; border: 0; display: block; }
     function known(set) { return links.some(function (a) { return setOf(a) === set; }); }
     function mark(set) {
       shown = set;
+      var code = document.getElementById('wholecode');
+      if (code) code.href = '../code/#' + set;
       links.forEach(function (b) {
         var on = setOf(b) === set;
         if (b.closest('.sitebar')) { if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }

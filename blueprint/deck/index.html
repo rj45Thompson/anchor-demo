@@ -44,7 +44,7 @@
 </style>
 </head>
 <body>
-<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/" aria-current="page">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a><a href="../city/#enemyai">Enemy AI</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
+<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/" aria-current="page">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a><a href="../city/#enemyai">Enemy AI</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../ergonomics/">Ergonomics</a><a href="../code/">Whole code</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
 <div id="stage">
 <section id="cover" data-transition="magic" style="background:#070C16;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:0;display:flex;flex-direction:column">
 <img id="meme" src="assets/captain_meme.gif" alt="The pirate from Captain Phillips leans in and stares straight into the camera" style="position:absolute;left:374px;top:130px;width:1171px;height:820px;object-fit:cover;border-radius:12px">
@@ -896,11 +896,19 @@
 <h2 style="font-family:'Oswald', Impact, sans-serif;font-size:80px;font-weight:700;line-height:1.1;color:#FF8A3D">Right here.</h2>
 <div style="display:flex;flex-direction:column;gap:2px">
 <p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../city/">See it run</a></p>
-<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Play Pong and an asteroid shooter, fly Lock-On, in WebGPU</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Play Pong and an asteroid shooter, fly Lock-On and a 1,009-node enemy AI, in WebGPU</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:2px">
 <p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../showcase/">Walk the worked example</a></p>
 <p style="font-size:26px;line-height:1.4;color:#B8C6D9">Fixing Blueprint Friction: traced node by node, each friction measured</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../ergonomics/">See how friction comes out</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Objects in 3D, dictation, the whole code, watching it run</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../code/">Read the whole Blueprint as code</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Every class, field and method of every sample</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:2px">
 <p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../doc/">Read how it works</a></p>
@@ -915,7 +923,7 @@
 <p style="font-size:26px;line-height:1.4;color:#B8C6D9">The AI playbooks the agents worked from</p>
 </div>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8796AB">From blueprintue.com: Pong (anonymous), asteroid shooter (siljaZ), Lock-On System (hitted); authors keep the rights. Source: <a href="https://github.com/rj45Thompson/blueprint-view-source">github.com/rj45Thompson/blueprint-view-source</a> (MIT).</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8796AB">From blueprintue.com: Pong (anonymous), asteroid shooter (siljaZ), Lock-On System (hitted), enemy AI (JJ GameDesign); authors keep the rights. Source: <a href="https://github.com/rj45Thompson/blueprint-view-source">github.com/rj45Thompson/blueprint-view-source</a> (MIT).</p>
 <aside>A nod to the old Wendy's ad: where's the beef? Here it is, in reading order. First, see it run: Blueprints as 3D cities you can fly through, live in the browser on WebGPU. Play Pong, a 32-node hello world, and a whole public asteroid shooter, both running on their converted Blueprints; the lock-on Blueprint is the third tab. Click any part, replay any path, ask it questions, or press Unreal 2D to see the same graph the way the Blueprint editor draws it. Then the worked example, Fixing Blueprint Friction: that same Blueprint traced node by node to its requirements, every friction measured, and the closed loop on it. Then the write-up, then the record behind it: the use cases, requirements and gap checks, as they stood early on 28 October before the online sample was added. And the AI skills the agents worked from.</aside>
 </section>
 <section id="built24" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
@@ -977,6 +985,51 @@
 </div>
 <p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#B4470F">Thank you.</p>
 <aside>Last slide: where it all lives. The Blueprint view was built on top of u2ue, RJ's Unity to Unreal porting toolkit; its public page carries the whole manual, and its source is private for now, available on request. On the right, where this prototype lives: this deck, the playable demos and the documents you've seen, all on one site. Its code is open source under the MIT licence, on GitHub. Thank you.</aside>
+</section>
+<section id="minds" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Why more than one way in</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.12;color:#F4F0E6">Different minds need different doors</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:40px;align-items:stretch">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#142035;border:1px solid #26354D;border-radius:20px;padding:36px 40px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:40px;font-weight:700;line-height:1.15;color:#FF8A3D">Minds differ</p>
+<p style="font-size:28px;line-height:1.45;color:#B8C6D9">Some people read their way in, some talk it through, some need to see it, and some only get it with their hands in the thing. Ergonomics has to serve all of them: code to read, commands to say, a city to fly, a run to watch.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#142035;border:1px solid #26354D;border-radius:20px;padding:36px 40px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:40px;font-weight:700;line-height:1.15;color:#FF8A3D">The craft changes, the art stays</p>
+<p style="font-size:28px;line-height:1.45;color:#B8C6D9">A hand-made table and a skyscraper are both building. Music went from playing every part to remixing, and the DJ arrived; vibe coding is that DJ. The game changed. The art did not leave.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#142035;border:1px solid #26354D;border-radius:20px;padding:36px 40px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:40px;font-weight:700;line-height:1.15;color:#FF8A3D">Our job: requirements, to the letter</p>
+<p style="font-size:28px;line-height:1.45;color:#B8C6D9">When code was slow, we planned so we never wrote it twice. Now it takes a second, so the danger is writing it wrong: nobody reads every line at this speed. Right the first time is what closed loop requirements are for.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8796AB">A prototype, measured by tools and not yet tested by people. Debugging, where ergonomics matters most, is not finished.</p>
+<aside>Human ergonomics is not one interface. People understand in different ways: some read their way in, some talk it through, some need to see it, and some only get it with their hands in the thing. You can sort that into a few types, but really it is a broad spectrum, and a tool built for one kind of mind leaves the others out. That is why the Blueprint view offers several doors into the same logic: read it as code, say it, see it as a city, watch it run, step it back and forth. Observation carries the most weight for people who learn by doing. RJ is one of them: describing a system to him engages very little; getting his hands into it engages everything. The craft is changing, and the artistry is not leaving. A hand-made table and a skyscraper are both building, at different scales, and both will always exist. RJ watched music go through this in his father's recording studio, from the seventies into the nineties: playing every part gave way to remixing, and later a DJ could make a record without playing an instrument, the way vibe coding makes software without reading it. The game changed; the art stayed. Games are at that point now, and AI remixes will be everywhere. So the work that is ours moves: understanding people, which is human ergonomics; the art itself; and the requirements, to the letter. When code was slow to write we planned so we would never write it twice. Now it takes a second to write, and the danger is writing it wrong: at that speed nobody reads every line, and there is no cheap repair. The only safe way is right the first time, which is what closed loop requirements are for. And this is a prototype: debugging, the part of ergonomics that matters most, is not finished.</aside>
+</section>
+<section id="over9000" data-transition="fade" style="background:#070C16;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:96px 112px 150px;display:flex;flex-direction:row;align-items:center;gap:64px">
+<div style="position:relative;width:640px;flex:none">
+<img src="assets/over9000.jpg" alt="Vegeta crushing his scouter, the 'It's over 9,000!' scene" style="width:640px;height:511px;object-fit:cover;border-radius:18px;display:block">
+<p style="position:absolute;left:0;bottom:22px;width:640px;margin:0;font-family:'Oswald', Impact, sans-serif;font-size:76px;font-weight:700;line-height:1.05;text-transform:uppercase;text-align:center;color:#FBFAF5;text-shadow:4px 4px 0 #05080F, -4px 4px 0 #05080F, 4px -4px 0 #05080F, -4px -4px 0 #05080F, 0 5px 0 #05080F, 0 -5px 0 #05080F, 5px 0 0 #05080F, -5px 0 0 #05080F">It’s over 9,000!</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:26px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">So, what did all this cost?</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:62px;font-weight:700;line-height:1.1;color:#F4F0E6">A huge build, on a small bill</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:18px">
+<div style="background:#142035;border:1px solid #26354D;border-radius:16px;padding:20px 22px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.05;color:#FF8A3D">102,092</p><p style="font-size:23px;line-height:1.35;color:#B8C6D9">lines of hand-written code in u2ue, the toolkit underneath</p></div>
+<div style="background:#142035;border:1px solid #26354D;border-radius:16px;padding:20px 22px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.05;color:#FF8A3D">15,417</p><p style="font-size:23px;line-height:1.35;color:#B8C6D9">lines in the Blueprint view on top, open source, built since Tuesday evening</p></div>
+<div style="background:#142035;border:1px solid #26354D;border-radius:16px;padding:20px 22px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.05;color:#FF8A3D">28%</p><p style="font-size:23px;line-height:1.35;color:#B8C6D9">of one week’s Max plan, on Thursday morning, every other project included</p></div>
+<div style="background:#142035;border:1px solid #26354D;border-radius:16px;padding:20px 22px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.05;color:#F4F0E6">6.39 M</p><p style="font-size:23px;line-height:1.35;color:#B8C6D9">tokens written by the model; 99.4% of what it read came straight from cache</p></div>
+<div style="background:#142035;border:1px solid #26354D;border-radius:16px;padding:20px 22px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.05;color:#F4F0E6">905</p><p style="font-size:23px;line-height:1.35;color:#B8C6D9">tokens to ask a Blueprint a question, not 164,230: 181x fewer</p></div>
+<div style="background:#142035;border:1px solid #26354D;border-radius:16px;padding:20px 22px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.05;color:#F4F0E6">81%</p><p style="font-size:23px;line-height:1.35;color:#B8C6D9">of the tokens through one writing session; the deck had its own, and 5 short helpers used 12%</p></div>
+</div>
+<p style="font-size:30px;line-height:1.4;color:#F4F0E6"><b style="color:#FF8A3D">One writer, closed loop requirements:</b> no committee of agents to referee. Find the fun fast in WebGPU or Unity, then ship AAA in Unreal, whose defaults look better than anything we would write ourselves.</p>
+</div>
+<p style="position:absolute;left:112px;bottom:52px;width:1696px;font-size:20px;line-height:1.35;color:#6F819B">Lines: non-blank, hand-written program source in each repository’s committed tree. Tokens: the model’s own usage in the session logs, Tue 27 Oct 19:17 MT on. Plan: the app’s usage meter. A question: the trace’s answer against the raw paste, Lock-On.</p>
+<aside>So what did all of this cost? Here is the power level, measured. u2ue, the porting toolkit underneath, is 102,092 lines of hand-written code, and the Blueprint view built on top of it since Tuesday evening is 15,417 more, open source. Building the Blueprint view took 6.39 M tokens written by the model, and 99.4% of everything it read came straight from the prompt cache, because one long-lived writer keeps its context warm. The whole week so far, every other project included, is 28% of one Max plan, on Thursday morning. Asking the Blueprint a question costs 905 tokens instead of 164,230 for the raw paste, 181 times fewer, because the trace hands a model only the slice that answers. 81% of the tokens went through one writing session; the deck was written in a session of its own, and 5 short helper agents, 12% of the tokens, took separate lanes. The approach is one writer working from closed loop requirements, not a committee of agents to referee: in RJ's experience, building in one shot from complete requirements runs around thirty percent more efficiently, sometimes far more, and it varies widely; that is experience, not a measurement in this deck. And the engine: prototype where the fun is found, in WebGPU or Unity, because fun is not an equation but it can be copied; then ship AAA in Unreal, whose default rendering looks better than anything we would write ourselves, across its millions of settings.</aside>
 </section>
 </div>
 <div id="bar"></div>
