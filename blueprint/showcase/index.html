@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fixing Blueprint Friction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+
+<style>
+/* layout: an engineering drawing set - a title block, then numbered sheets in reading order; the live city is sheet 0 */
+:root {
+  --paper: #f2f5f9; --ink: #142033; --soft: #5a6a82; --rule: #cfd8e4; --card: #ffffff; --code: #eef2f8;
+  --exec: #142033; --accent: #1f6fd1; --ok: #138a5b; --owner: #c2263b; --prop: #b26b00; --grid: rgba(31,111,209,.07);
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif; --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0b1424; --ink: #e4ebf5; --soft: #93a4bf; --rule: #22324d; --card: #101c31; --code: #0d1729;
+  --exec: #f4f7ff; --accent: #5aa9ff; --ok: #3fd38a; --owner: #ff5a6e; --prop: #ffb347; --grid: rgba(90,169,255,.06); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0b1424; --ink: #e4ebf5; --soft: #93a4bf; --rule: #22324d; --card: #101c31; --code: #0d1729;
+  --exec: #f4f7ff; --accent: #5aa9ff; --ok: #3fd38a; --owner: #ff5a6e; --prop: #ffb347; --grid: rgba(90,169,255,.06); color-scheme: dark }
+body { background: var(--paper); color: var(--ink); font: 15px/1.6 var(--body); }
+body { background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 24px 24px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: .3px; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(34px, 6vw, 58px); line-height: 1.02; }
+h2 { font-size: clamp(24px, 3.4vw, 34px); }
+h3 { font-size: 20px; }
+p { max-width: 68ch; margin: 0; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+.block { display: grid; grid-template-columns: 1.6fr 1fr; border: 2px solid var(--ink); background: var(--card); }
+.block > div { padding: 18px 20px; min-width: 0; }
+.block .meta { border-left: 2px solid var(--ink); display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13px; align-content: start; }
+.block .meta span:nth-child(odd) { color: var(--soft); text-transform: uppercase; letter-spacing: .8px; font-size: 11px; padding-top: 2px; }
+.lede { margin-top: 12px; color: var(--soft); font-size: 16px; }
+.sheet { margin-top: 44px; display: grid; gap: 16px; }
+.sheet > * { min-width: 0; }
+ol.ir li, .crit > * { overflow-wrap: anywhere; }   /* a code ref (OnComponentBeginOverlap(LockOnSphere)#s1:then) is one long word */
+.sheet-head { display: flex; gap: 14px; align-items: baseline; border-bottom: 2px solid var(--ink); padding-bottom: 6px; flex-wrap: wrap; }
+.sheet-no { font-family: var(--mono); font-size: 12px; color: var(--soft); letter-spacing: 1px; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.fig { border: 1px solid var(--rule); background: var(--card); padding: 12px 14px; }
+.fig b { display: block; font: 600 28px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.fig span { font-size: 12.5px; color: var(--soft); }
+.city { position: relative; border: 2px solid var(--ink); background: #05080f; aspect-ratio: 16 / 9; max-width: 100%; }
+.city iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+@media (max-width: 640px) { .city { aspect-ratio: 3 / 4; } .block { grid-template-columns: 1fr; } .block .meta { border-left: 0; border-top: 2px solid var(--ink); } }
+.caption { font-size: 13px; color: var(--soft); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.card { border: 1px solid var(--rule); background: var(--card); padding: 14px 16px; display: grid; gap: 6px; min-width: 0; align-content: start; }
+.card h3 { font-size: 19px; }
+.card .row { font-size: 13.5px; }
+.card .row b { font-weight: 600; color: var(--soft); text-transform: uppercase; letter-spacing: .7px; font-size: 11px; margin-right: 6px; }
+.chip { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border: 1px solid currentColor; letter-spacing: .3px; justify-self: start; }
+.chip.ok { color: var(--ok); } .chip.part { color: var(--prop); } .chip.no { color: var(--owner); }
+.ue2d { display: grid; gap: 12px; margin: 10px 0 14px; } .ue2d img { display: block; max-width: 100%; height: auto; border: 2px solid var(--ink); background: #262626; }
+pre.code { margin: 0; background: var(--code); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; font: 12.5px/1.55 var(--mono); max-width: 100%; }
+.chain { display: grid; gap: 0; }
+.link { display: grid; grid-template-columns: 150px 1fr; border-left: 3px solid var(--accent); padding: 8px 14px; gap: 12px; background: var(--card); }
+.link + .link { border-top: 1px dashed var(--rule); }
+.link > span:first-child { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .8px; color: var(--soft); padding-top: 3px; }
+.link.own { border-left-color: var(--owner); }
+@media (max-width: 560px) { .link { grid-template-columns: 1fr; gap: 2px; } }
+ol.ir { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 8px; counter-reset: ir; }
+ol.ir li { border-left: 3px solid var(--owner); background: var(--card); padding: 8px 12px; font-size: 14px; }
+ol.ir li code { color: var(--owner); font-weight: 600; margin-right: 6px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+.mermaid-wrap { border: 1px solid var(--rule); background: var(--card); padding: 10px; overflow-x: auto; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 80ch; }
+.crits { display: grid; border: 1px solid var(--rule); background: var(--card); }
+.crit { display: grid; grid-template-columns: 150px 1fr 180px 150px; gap: 12px; padding: 7px 12px; font-size: 13.5px; align-items: baseline; }
+.crit + .crit { border-top: 1px dashed var(--rule); }
+.crit.head { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .8px; color: var(--soft); }
+.crit code { font-weight: 600; }
+.crit .was { color: var(--owner); font-size: 12.5px; } .crit .had { color: var(--soft); font-size: 12.5px; }
+@media (max-width: 760px) { .crit { grid-template-columns: 1fr; gap: 2px; } .crit.head { display: none; } }
+.foot { margin-top: 48px; border-top: 1px solid var(--rule); padding-top: 14px; font-size: 12.5px; color: var(--soft); }
+.family { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.family a { display: inline-flex; flex-wrap: wrap; gap: 0 8px; align-items: baseline; min-width: 0; border: 1px solid var(--rule); background: var(--card); padding: 5px 10px; text-decoration: none; font-size: 13.5px; }
+.family a span { font: 600 10.5px var(--mono); text-transform: uppercase; letter-spacing: .8px; color: var(--soft); }
+.family a:hover { border-color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700&family=Oswald:wght@700&display=swap">
+<link rel="stylesheet" href="../site.css">
+<style>html, body { margin: 0; } [hidden] { display: none !important; }</style>
+</head>
+<body>
+<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/" aria-current="page">Worked example</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
+<div class="wrap">
+  <div class="block">
+    <div>
+      <h1>Fixing Blueprint Friction</h1>
+      <p class="lede">Start with the hello world, a Pong ball and paddle in 32 nodes, then a whole game, an asteroid shooter: both playing on their converted code, every node lighting up as it runs. Then the real thing: a Blueprint someone pasted online, badly written the way most are, turned into code, traced node by node to the use case and requirement it serves, and drawn as a 3D city. Each friction from RJ's <i>Blueprint Paradox</i> is measured on it.</p>
+      <p class="lede">Three ideas, each shown below: <b>closed loop requirements</b> (sheets 4 and 5), <b>human ergonomics</b> (sheets 2 and 3) and <b>observational understanding</b> (sheet 0's replays here, values and valves on the battles of a game in production).</p>
+    </div>
+    <div class="meta">
+      <span>Sample</span><span>Lock-On System by hitted</span>
+      <span>Engine</span><span>UE 5.0, read by the 5.7.1 converter</span>
+      <span>Pastes</span><span>4 texts, 162 nodes</span>
+      <span>Source</span><span><a href="https://blueprintue.com/blueprint/kg2evmas/" target="_blank" rel="noopener">blueprintue.com</a> (the author keeps the rights)</span>
+      <span>Tested by</span><span>tools, not yet people (IR-12)</span>
+    </div>
+  </div>
+  <section class="sheet" id="hello">
+    <div class="sheet-head"><span class="sheet-no">START HERE</span><h2>Hello world: Pong, before the Lock-On</h2></div>
+    <p>Two pastes from blueprintue.com, <a href="https://blueprintue.com/blueprint/oscal-o3/" target="_blank" rel="noopener">Pong - BP_Ball</a> (23 nodes) and <a href="https://blueprintue.com/blueprint/fvpp3w_/" target="_blank" rel="noopener">Pong - BP_Paddle</a> (9 nodes), UE 4.18, by anonymous: a ball that is served in a random direction, moves every frame, turns off a paddle (its X) and off a wall (its Y), and is served again from a goal; and a paddle the player moves with one axis. Converted to 13 statements in 5 graphs, traced to 6 use cases and 10 requirements: every node, every path (12 of 12) and every question (8 of 8) accounted for; 13 of 13 effects hold on the code and 13 plants flip.</p>
+    <p class="caption">The loop: LOOP OPEN: every hole of ours is closed; 6 owner hole(s), from 3 question(s) only the owner can answer, keep it open</p>
+    <div class="two">
+      <pre class="code">//@graph 1:1 BP_Ball.ReceiveTick
+{
+    K2_AddActorWorldOffset(Velocity * KismetMathLibrary.Multiply_FloatFloat(DeltaSeconds, Speed), true, false, out _);
+}
+//@graph 10:1 BP_Ball.ReceiveBeginPlay
+{
+    var RandomUnitVectorInConeInDegrees_result_2 = KismetMathLibrary.RandomUnitVectorInConeInDegrees(new Vector { X = -1, Y = 0, Z = 0 }, 30);
+    Velocity = new Vector { X = RandomUnitVectorInConeInDegrees_result_2.X, Y = RandomUnitVectorInConeInDegrees_result_2.Y, Z = 0 };
+}
+//@graph 82:1 BP_Ball.BndEvt__Sphere_K2Node_ComponentBoundEvent_0_ComponentBeginOverlapSignature__DelegateSignature
+{
+    if (OtherActor is BP_Paddle AsBP_Paddle_1) {
+        Velocity = new Vector { X = KismetMathLibrary.Multiply_FloatFloat(Velocity.X, -1), Y = Velocity.Y, Z = Velocity.Z };
+    }
+    if (OtherActor is BP_Wall AsBP_Wall_3) {
+        Velocity = new Vector { X = Velocity.X, Y = KismetMathLibrary.Multiply_FloatFloat(Velocity.Y, -1), Z = Velocity.Z };
+    }
+    if (OtherActor is BP_Goal AsBP_Goal_5) {
+        K2_SetActorLocation(new Vector { X = 0, Y = 0, Z = 0 }, false, false, out _);
+        var RandomUnitVectorInConeInDegrees_result_8 = KismetMathLibrary.RandomUnitVectorInConeInDegrees(new Vector { X = -1, Y = 0, Z = 0 }, 30);
+        Velocity = new Vector { X = RandomUnitVectorInConeInDegrees_result_8.X, Y = RandomUnitVectorInConeInDegrees_result_8.Y, Z = 0 };
+    }
+}
+//@graph 1:1 BP_Paddle.ReceiveTick
+{
+    K2_AddActorWorldOffset(Velocity * KismetMathLibrary.Multiply_FloatFloat(DeltaSeconds, Speed), true, false, out _);
+}
+//@graph 11:1 BP_Paddle.K2Node_InputAxisEvent_0
+{
+    Velocity = new Vector { X = 0, Y = -1, Z = 0 } * AxisValue;
+}</pre>
+      <div><p><b>Only the author can answer</b></p><ul class="plain"><li><code>IR-PG-1</code> A ball that reaches a goal scores a point for the player at the other end, and the score is shown</li><li><code>IR-PG-2</code> The ball&#x27;s Speed and the paddle&#x27;s Speed are each set before play, to values the author names</li><li><code>IR-PG-3</code> Which end a serve goes toward, and how wide it may spread, are named design values; today every serve, the first and each after a goal, goes within 30 degrees of -X, toward the same end</li></ul>
+      <p><b>What the hello world found in the converter</b>, each fixed, with the class of the fault, and held by a test: a split struct pin read as its default (the serve printed <code>Velocity = (0, 0, 0)</code> where Random Unit Vector was wired); pin ids that repeat across a duplicated node (the paddle was made from the ball), so a pin is found by its node too; two Blueprints' members of one name merged (the paddle's Velocity counted as the ball's); and two names it could not read, the paddle's owner and its axis event's title.</p></div>
+    </div>
+    <p><b>As the Blueprint editor draws them</b>, the reference: each node where its author put it, titles in the engine's own formats, the editor's colours. The box sizes and the grid are this page's.</p>
+    <div class="ue2d"><img src="data/pong_BP_Ball.svg" alt="Pong - BP_Ball as the Blueprint editor draws it" loading="lazy"><img src="data/pong_BP_Paddle.svg" alt="Pong - BP_Paddle as the Blueprint editor draws it" loading="lazy"></div>
+    <div class="city"><iframe src="../city/city.html?set=pong" title="Blueprint City: Pong in 3D" loading="lazy" allow="fullscreen"></iframe></div>
+    <p class="caption">The same two pastes as a city: point at anything to name it, click it for what it is, and <b>Unreal 2D</b> shows the selected graph's paste as above. <a href="../city/#pong" target="_blank" rel="noopener">Open it full screen</a>.</p>
+  </section>
+
+
+  <section class="sheet" id="asteroids">
+    <div class="sheet-head"><span class="sheet-no">THEN PLAY</span><h2>A whole game: an asteroid shooter, running on its converted Blueprint</h2></div>
+    <p><a href="https://blueprintue.com/profile/siljaz/" target="_blank" rel="noopener">siljaZ's asteroid shooter</a> (UE 5.0), posted to blueprintue.com a graph at a time: 16 of its pastes, 232 nodes. The ship circles the middle of the screen on one axis and fires into it; asteroids and enemy ships fly out of the middle at it; a hit costs a life and the last one sends the game back to its title. Converted to 83 statements in 20 graphs and traced to 12 use cases: 24 requirements READ from the nodes, every node, every path (53 covered, 11 excluded with the reason) and every question (34 of 34) accounted for; 65 of 65 effects hold on the code and 65 plants flip.</p>
+    <div class="figs">
+      <div class="fig"><b>3 / 2</b><span>games started from the title / ended by the last life, in 180 s with the computer at the controls</span></div>
+      <div class="fig"><b>93 of 99</b><span>enemy ships shot down: the paste's own HitboxEnemy overlap destroys them</span></div>
+      <div class="fig"><b>61</b><span>shots swallowed by asteroids, 100 points each: the paste never breaks one</span></div>
+      <div class="fig"><b>81 of 83</b><span>statements ran; the rest never can, each for a recorded reason</span></div>
+    </div>
+    <p class="caption">The loop: LOOP OPEN: every hole of ours is closed; 30 owner hole(s), from 15 question(s) only the owner can answer, keep it open. Never ran: <code>ReduceLives#s4</code>; <code>ReceiveTick(BP_Meteor)#s1</code> - the literal-false side of ReduceLives's DoOnce (the test is the literal false: the DoOnce&#x27;s Start Closed pin is left at its default (false) in the paste, so its then side never runs (StandardMacros.t3d:340)) and BP_Meteor's Tick, which BP_Asteorid's supersedes.</p>
+    <div class="city"><iframe src="../city/city.html?set=asteroids" title="Blueprint City: the asteroid shooter, playing" loading="lazy" allow="fullscreen"></iframe></div>
+    <p class="caption">It opens playing: the game on the left is the converted code running, and every node it runs glows in the city on the right. Press a key to take over (A / D turn, Space fires); left alone, the computer plays. <a href="../city/#asteroids" target="_blank" rel="noopener">Open it full screen</a>. The 13 values the pastes do not carry - sizes, speeds, the waves - are this page's, and the game's panel lists each one as authored.</p>
+    <div class="two">
+      <div><p><b>What a whole game took in the converter</b>, each a fix to the class with its evidence: a graph's kind read from its own event nodes (an event stands only in an event graph, K2Node_Event.cpp:523), so a pasted BeginPlay is code; DoOnce's state kept on the object and DecrementInt given its code form (StandardMacros.t3d); the shot's Timeline as an island whose outputs the engine fires each frame; an owner declared in the manifest, with the reason, where a copy cannot say whose it is; and a class renamed between pastes found by its variables' GUIDs (BP_Meteor became BP_Asteorid: its AimVector and Speed keep their GUIDs).</p></div>
+      <div><p><b>Only the author can answer</b> (15)</p><ul class="plain"><li><code>IR-AS-1</code> BP_Meteor and BP_Asteorid are one Blueprint, renamed: the asteroid takes its aim from BP_Meteor&#x27;s ReceiveBeginPlay, and BP_Asteorid&#x27;s Tick (which adds the growth) supersedes BP_Meteor&#x27;s</li><li><code>IR-AS-2</code> Every speed is set before play, to values the author names: the asteroid&#x27;s Speed (BP_Meteor&#x27;s, the same variable), the enemy bullet&#x27;s Speed and the ship&#x27;s RotationSpeed</li><li><code>IR-AS-3</code> How long a ship waits before it may fire (DelayUntilShooting), how fast a hit ship flashes (FlashInterval), and the 0.2 s before the flashing starts, are named design values set before play</li><li><code>IR-AS-4</code> What each target is worth comes from one scoring table: a ship&#x27;s HitEnemyShipScore is a variable set before play, while an asteroid&#x27;s 100 is written into its graph</li><li><code>IR-AS-5</code> Each enemy ship&#x27;s path is a Spline built in its own Blueprint before play</li><li><code>IR-AS-6</code> An enemy ship&#x27;s speed is a named design value; today the variable Speed is overwritten with 100 every frame, so its default, and any change to it, has no effect</li><li><code>IR-AS-7</code> How large things grow as they leave the middle (the game&#x27;s perspective) is named design values: an asteroid 0.5 + min(d / 150, 1), a ship 0.1 + min(d / 200, 0.2)</li><li><code>IR-AS-8</code> The asteroid timer runs from the spawner&#x27;s ReceiveBeginPlay for as long as the spawner lives: nothing in the pastes pauses it, during the flashing or at any point of a game</li><li><code>IR-AS-9</code> Enemy ships come in waves: something starts a looping 0.5 s timer that runs CustomEvent_1, and something ends it, so that a wave holds a number of ships the author names</li><li><code>IR-AS-10</code> An asteroid is never destroyed: a shot that hits it scores 100 and is itself destroyed, and an asteroid that hits the ship costs a life and flies on through</li><li><code>IR-AS-11</code> The ship turns with its controller, and its sprite and muzzle (ProjectileSpawn) sit away from its middle, so that turning the control rotation carries them around a ring</li><li><code>IR-AS-12</code> The player character is always a BP_Character and the player controller a BP_Controller (the game mode&#x27;s defaults), so every cast to them succeeds; were one to fail an asteroid or a bullet would keep its default aim, the title would mark nothing and a lost life would hide no icon</li><li><code>IR-AS-13</code> A shot&#x27;s flight takes as long as its Timeline and follows its track NewTrack_0, and the component that moves (RenderComponent) is the one that collides</li><li><code>IR-AS-14</code> What the pastes name but do not hold is built as its name says: the score widget BP_Score (UpdateScore, the icons Life1-3), the explosion BP_Explosion, and the controller&#x27;s DestroyUI</li><li><code>IR-AS-15</code> The ship starts with Lives = 3: three icons to lose, and the fourth hit ends the game</li></ul></div>
+    </div>
+  </section>
+
+  <section class="sheet" id="city">
+    <div class="sheet-head"><span class="sheet-no">SHEET 0</span><h2>Observational understanding: a city you can fly through</h2></div>
+    <div class="city"><iframe src="../city/city.html?set=lockon" title="Blueprint City: the Lock-On System in 3D" loading="lazy" allow="fullscreen"></iframe></div>
+    <p class="caption">Drag to orbit, scroll to zoom, W A S D to fly; point at anything to name it and click it for what it is, a node for its whole chain. Type <code>ask what happens when the locked target dies</code>, <code>questions</code>, <code>fly to ConeCycle</code> or <code>play</code>. Exec pipes run above the nodes and data pipes below. The two graphs a timer runs 100 times a second burn red, and a call made by a function's name marches in orange. <a href="../city/#lockon" target="_blank" rel="noopener">Open it full screen</a>. Microphone input works where the browser allows it, which this frame does not.</p>
+    <div class="figs">
+      <div class="fig"><b>162 / 162</b><span>Blueprint nodes traced to a use case step</span></div>
+      <div class="fig"><b>54</b><span>paths through the code: 48 covered, 6 excluded with a reason</span></div>
+      <div class="fig"><b>54 / 54</b><span>brainstorm questions answered (15 rules)</span></div>
+      <div class="fig"><b>18</b><span>questions only the author can answer</span></div>
+      <div class="fig"><b>27.2x</b><span>fewer tokens than the whole code to answer a question</span></div>
+      <div class="fig"><b>75 / 75</b><span>real-data test rows passing</span></div>
+    </div>
+  </section>
+
+  <section class="sheet" id="sample">
+    <div class="sheet-head"><span class="sheet-no">SHEET 1</span><h2>What was pasted</h2></div>
+    <p><a href="https://blueprintue.com/blueprint/kg2evmas/" target="_blank" rel="noopener">Lock-On System</a> (121 nodes) &middot; <a href="https://blueprintue.com/blueprint/cj7dxfjy/" target="_blank" rel="noopener">Distance To Frank</a> (12 nodes) &middot; <a href="https://blueprintue.com/blueprint/bbhr3jku/" target="_blank" rel="noopener">Toggle Lock On</a> (5 nodes) &middot; <a href="https://blueprintue.com/blueprint/img2fl86/" target="_blank" rel="noopener">New Control Rotation</a> (24 nodes). Measured in the author's own layout: <b>200 wires with 29 crossings, 17 of them an exec wire over a data wire</b>. There are no comments. Two timers call functions by a <i>name in a string</i> (DistanceToFrank, ToggleLockOn) every 0.01 s. The paste names no parent class.</p>
+  </section>
+
+  <section class="sheet" id="code">
+    <div class="sheet-head"><span class="sheet-no">SHEET 2</span><h2>The same logic as classes and code</h2></div>
+    <p>The converter read all 162 nodes, as the engine reads them: object paths, event names, the macros, and a pin that defaults to <code>self</code>. It wrote 99 statements in 12 methods, and each one parses as C#. Then the methods were assembled into the classes they belong to. Each parent class was READ from what the Blueprint uses on itself: <b>FrankBP : Character</b>, with 11 typed fields, 11 methods and its two components, and <b>MasterEnemy : Actor</b>, the Blueprint DistanceToFrank's own paste names as its self. The event graph casts to <b>Master_Enemy</b>, an asset at another path, so the two are held apart as read: one Blueprint moved and renamed, or two, is the author's to say. The toolkit's own UML gate holds that class model to the code.</p>
+    <div class="two">
+      <div class="mermaid-wrap"><pre class="mermaid">classDiagram
+  class LockOnInterface {
+    &lt;&lt;interface&gt;&gt;
+    +LockOnInterface()
+  }
+  class MasterEnemy {
+    +float DistanceToFrankVar
+    +bool CanBeTargeted
+    +DistanceToFrank()
+  }
+  Actor &lt;|-- MasterEnemy
+  class FrankBP {
+    +bool LockedOn
+    +double ClosestTargetDistance
+    +Master_Enemy EnemyElement
+    +Master_Enemy LockedOnTarget
+    +double MaxDistance
+    +Rotator RotationInstance
+    +bool NoFalse
+    +List~Master_Enemy~ Out_Actors
+    +List~Master_Enemy~ ConeActors
+    +Rotator LockOnTargetRotator
+    +Vector TargetLocation
+    +LockON()
+    +BndEvt__BP_TopDownCharacter_Sphere_K2Node_ComponentBoundEvent_0_ComponentBeginOverlapSignature__DelegateSignature()
+    +BndEvt__BP_TopDownCharacter_Sphere_K2Node_ComponentBoundEvent_1_ComponentEndOverlapSignature__DelegateSignature()
+    +LockOnDone()
+    +SetLockOnTarget()
+    +EnemyDeath()
+    +BndEvt__FrankBP_LockOnCone_K2Node_ComponentBoundEvent_2_ComponentBeginOverlapSignature__DelegateSignature()
+    +BndEvt__FrankBP_LockOnCone_K2Node_ComponentBoundEvent_3_ComponentEndOverlapSignature__DelegateSignature()
+    +ConeCycle()
+    +NewControlRotation()
+    +ToggleLockOn()
+  }
+  Character &lt;|-- FrankBP
+  FrankBP *-- PrimitiveComponent : LockOnSphere
+  FrankBP *-- PrimitiveComponent : LockOnCone
+  class Master_Enemy {
+    +float Distance_to_Frank_Var
+    +bool IsDead
+  }
+  FrankBP ..&gt; LockOnInterface : messages</pre></div>
+      <div class="mermaid-wrap"><pre class="mermaid">classDiagram
+  class LockOnInterface {
+    &lt;&lt;interface&gt;&gt;
+    +float Distance_to_Frank_Var
+    +bool IsDead
+    +void LockOnInterface(Master_Enemy Locked_On_Target)
+  }
+  LockOnInterface &lt;|.. Master_Enemy
+  class LockOnSystemComponent {
+    -LockedOn
+    -ClosestTargetDistance
+    -EnemyElement
+    -LockedOnTarget
+    -MaxDistance
+    -RotationInstance
+    -NoFalse
+    -Out_Actors
+    -ConeActors
+    -LockOnTargetRotator
+    -TargetLocation
+    +LockON()
+    +On_Component_Begin_Overlap_LockOnSphere_()
+    +On_Component_End_Overlap_LockOnSphere_()
+    +LockOnDone()
+    +SetLockOnTarget()
+    +EnemyDeath()
+    +On_Component_Begin_Overlap_LockOnCone_()
+    +On_Component_End_Overlap_LockOnCone_()
+    +ConeCycle()
+    +NewControlRotation()
+    +ToggleLockOn()
+  }
+  FrankBP *-- LockOnSystemComponent
+  Character &lt;|-- FrankBP
+  LockOnSystemComponent --&gt; LockOnInterface : asks, never casts</pre></div>
+    </div>
+    <p class="caption">Left: as read. Right: the OO shape proposed for what the brainstorm found. It is a design, and nothing here rewrites the Blueprint.</p>
+    <ul class="plain"><li><b>the casting trap: 4 Cast To nodes test an actor&#x27;s class before using it</b> - an interface the cast class implements, holding the members the code reads through the cast; the code asks the interface instead of casting</li><li><b>the same statements written twice (SetLockOnTarget#s1:then, SetLockOnTarget#s9:else)</b> - extract one method and call it from both places</li><li><b>3 events fired like function calls (LockON, LockOnDone, SetLockOnTarget)</b> - private methods of the class: called in order, can return a result, cannot be fired from outside</li><li><b>2 functions run by a NAME in a string (DistanceToFrank, ToggleLockOn)</b> - a delegate bound to the method itself: a rename is a compile error, and the reference shows in a search</li><li><b>ClosestTargetDistance written by 2 graphs</b> - one owner: a private field behind a single method that changes it (and tells whoever must know)</li><li><b>LockedOn written by 4 graphs</b> - one owner: a private field behind a single method that changes it (and tells whoever must know)</li><li><b>LockedOnTarget written by 3 graphs</b> - one owner: a private field behind a single method that changes it (and tells whoever must know)</li><li><b>FrankBP carries 11 fields, 2 components and 11 methods that are all one behaviour</b> - one component any Character can add (composition), named after the system: FrankBP keeps being a Character, the behaviour moves out of its graph</li><li><b>state polled by looping timers (DistanceToFrank, ToggleLockOn)</b> - ask when needed instead of polling: compute the value where it is used, and update on the owner&#x27;s own tick</li></ul>
+  </section>
+
+  <section class="sheet" id="frictions">
+    <div class="sheet-head"><span class="sheet-no">SHEET 3</span><h2>Human ergonomics: each friction RJ named, measured</h2></div>
+    <p>The view's layout of the same graphs: 148 wires, 0 spanning six or more statements, 0 nodes moved between two layouts. Every figure below comes from <code>tools/friction.py</code>, none typed by hand.</p>
+    <div class="grid2"><div class="card"><h3>The Spaghetti Wire Effect</h3><div class="row"><b>RJ wrote</b>Unlike traditional text code which reads strictly top-to-bottom, Blueprints require dragging data lines across the screen. When a single variable is needed in multiple distant node...</div><div class="row"><b>In this Blueprint</b>the author&#x27;s own layout: 200 wires (82 exec, 118 data) with 29 crossings between wires of one graph; the longest 1509 units (straight segments between node positions - the text carries no node sizes)</div><div class="row"><b>In the view</b>the view lays the same graphs out from the code&#x27;s structure: 148 wires drawn, 0 spanning 6 or more statements, 0 nodes moved between two layouts, longest 1011 px (layout gate PASS); a value read far away gets a getter beside its reader instead of a wire</div><span class="chip ok">ANSWERED (measured)</span></div><div class="card"><h3>Scale and Zoom Blindness</h3><div class="row"><b>RJ wrote</b>Complex logic forces the developer to zoom out until the nodes become unreadable blocks. If you zoom in to fix a small detail, you completely lose sight of the broader logic flow.</div><div class="row"><b>In this Blueprint</b>the event graph spans 2736 x 2160 units of canvas; finding one node means panning it</div><div class="row"><b>In the view</b>fly to any of 99 statements by name or text, one command, typed or spoken; island titles carry the map from far away and node labels fade in as you come close; &#x27;ask&#x27; hands back only the slice that answers (results/RAG-LOCKON.md:16 At budget 3000 (the smallest that answers all 10): RAG 9053 tokens against CODE 246150 and RAW 1642300 - 27.2x fewer than the converted code, 181x fewer than the raw text.)</div><span class="chip ok">ANSWERED (measured)</span></div><div class="card"><h3>Execution vs. Data Clutter</h3><div class="row"><b>RJ wrote</b>The screen must balance two entirely different connection paths simultaneously: white wires (which dictate the chronological sequence of events) and coloured wires (which pass alon...</div><div class="row"><b>In this Blueprint</b>17 of those crossings are an exec wire over a data wire</div><div class="row"><b>In the view</b>in 3D the two never share a plane: exec pipes run above the nodes (lowest point y=0.466), data pipes below them (highest point y=0.125) - a 0.34-unit gap, so no exec pipe can cross a data pipe (view3d.js buildIsland)</div><span class="chip ok">ANSWERED (by construction)</span></div><div class="card"><h3>The Hiding of the Hierarchy</h3><div class="row"><b>RJ wrote</b>When you create a child Blueprint, it automatically inherits all variables, health pools, and movement logic from the parent. However, the child graph appears completely blank. To ...</div><div class="row"><b>In this Blueprint</b>the pasted text names no parent class for either Blueprint</div><div class="row"><b>In the view</b>each class is a district standing over its engine parent&#x27;s floor, the parent READ from what the class uses on itself: Master_Enemy : Actor; FrankBP : Character (oo.js, the engine headers that declare those members)</div><span class="chip ok">ANSWERED (read, not drawn by hand)</span></div><div class="card"><h3>The Lack of Encapsulation</h3><div class="row"><b>RJ wrote</b>In traditional text-based OOP, you hide complex logic inside private methods or parent classes and call them with a single line of text (e.g., TakeDamage(10)). In Blueprints, devel...</div><div class="row"><b>In this Blueprint</b>1 rule written twice (SetLockOnTarget#s1:then), 3 events fired like functions, 3 members written by several graphs</div><div class="row"><b>In the view</b>assembled as classes (typed fields, methods, components), and each pattern named with the OO form that removes it: 9 proposals, each tied to the questions that found it (CLASSES.md)</div><span class="chip ok">ANSWERED for reading and planning; the view does not rewrite the Blueprint</span></div><div class="card"><h3>The Casting Trap</h3><div class="row"><b>RJ wrote</b>In strict OOP, polymorphism allows you to treat a child object as its parent. Blueprints rely heavily on explicit execution paths, leading to a constant need for massive &quot;Cast To&quot; ...</div><div class="row"><b>In this Blueprint</b>4 Cast To nodes test an actor&#x27;s class before every use</div><div class="row"><b>In the view</b>the proposed shape replaces them with an interface the cast class implements, holding exactly the members the code reads through the cast (LockOnInterface: float Distance_to_Frank_Var { get; }, bool IsDead { get; }, void LockOnInterface(Master_Enemy Locked_On_Target))</div><span class="chip part">PROPOSED (a design, not a change)</span></div><div class="card"><h3>The Multi-Dimensional Grid Problem</h3><div class="row"><b>RJ wrote</b>Text-based code is highly compact because it relies on hidden, structural namespaces (e.g., Player.Weapon.Stats.Damage). Representing those nested boundaries visually turns your co...</div><div class="row"><b>In this Blueprint</b>the logic sits in 12 graphs across 4 pasted texts; a member like LockedOn is written in 4 of them</div><div class="row"><b>In the view</b>one command reaches any of them; the members panel lists every field with who writes and names it; the retrieval layer answers a question from the trace without opening a file (results/RAG-LOCKON.md:16 At budget 3000 (the smallest that answers all 10): RAG 9053 tokens against CODE 246150 and RAW 1642300 - 27.2x fewer than the converted code, 181x fewer than the raw text.)</div><span class="chip ok">ANSWERED (measured)</span></div><div class="card"><h3>Invisible Relationships</h3><div class="row"><b>RJ wrote</b>OOP works beautifully in text because relationships are abstract. If you forced a logic graph to visually display this inheritance, every child node would need physical pipes const...</div><div class="row"><b>In this Blueprint</b>5 calls are made by a function NAME in a string (DistanceToFrank, ToggleLockOn) - no reference the editor can find</div><div class="row"><b>In the view</b>every call between graphs is an arc; a call by name marches in orange and says so; the interface is a ring the 6 messages go through; the parent is a floor, not a pipe per member</div><span class="chip ok">ANSWERED (drawn from the trace)</span></div><div class="card"><h3>Encapsulation Gates</h3><div class="row"><b>RJ wrote</b>A strict OOP graph wouldn&#x27;t let you just drag a wire from &quot;Health&quot; to a UI element. It would force you to drop a reference node, wire that into a getter component, wire that into a...</div><div class="row"><b>In this Blueprint</b>43 of 162 Blueprint nodes are variable reads and pure math - boilerplate a strict OO graph would multiply</div><div class="row"><b>In the view</b>they are written INTO the statement that reads them (as the engine compiles a pure node in front of its reader), so a getter is a word in a line, not a node to wire</div><span class="chip ok">ANSWERED (measured)</span></div><div class="card"><h3>Voice-to-Code Input</h3><div class="row"><b>RJ wrote</b>Instead of digging through menus, you speak your command (&quot;When the player enters the damage trigger zone, subtract 10 from health and update the UI&quot;). The AI parses the string, ha...</div><div class="row"><b>In this Blueprint</b>every look in Unreal is a click, a pan or a search box</div><div class="row"><b>In the view</b>a command bar takes typed or spoken commands (the browser&#x27;s speech recognition where it is offered - not exercised in this session, said so); changes are typed commands on the code through three gates (tools/edit.py, P6a)</div><span class="chip part">PARTLY: commands yes; speaking a CHANGE, not yet</span></div><div class="card"><h3>The &quot;Icing&quot; Concept</h3><div class="row"><b>RJ wrote</b>The visual layer is nothing but icing over actual raw code. However, this icing is load-bearing. The human brain did not evolve to read abstract text, but it is highly evolved to r...</div><div class="row"><b>In this Blueprint</b>the Blueprint is the only form of this logic</div><div class="row"><b>In the view</b>the visual map is generated from the code and never edited apart from it: every one of the 162 nodes becomes a graph node and maps to a requirement (S-BP spaces, 162/162), and the city is laid out from the code&#x27;s structure, so it stays where the reader remembers it (0 nodes moved between two layouts)</div><span class="chip ok">ANSWERED (measured)</span></div><div class="card"><h3>Data as Flowing Water</h3><div class="row"><b>RJ wrote</b>The graph becomes a live plumbing system. You physically see pulses of execution energy traveling through the wires. Thick, rushing pipes indicate heavy vectors, while tiny trickli...</div><div class="row"><b>In this Blueprint</b>DistanceToFrank runs 100 times a second (OnComponentBeginOverlap(LockOnSphere)#s3); ToggleLockOn runs 100 times a second (SetLockOnTarget#s14) - nothing in the editor shows that cost</div><div class="row"><b>In the view</b>pulses run the exec pipes; those two graphs burn and pulse red at their timers&#x27; rate; data pipes are as thick as their type is heavy (a Vector or Rotator thick, a bool thin) and coloured like Blueprint pins</div><span class="chip ok">ANSWERED (rates READ from the timers)</span></div><div class="card"><h3>Time-Travel Auto-Replay</h3><div class="row"><b>RJ wrote</b>The engine maintains a rolling buffer of your visual graph&#x27;s execution. If an event bugs out, you don&#x27;t guess what went wrong. The exact node segment that triggered the error loops...</div><div class="row"><b>In this Blueprint</b>the editor shows a value only at a breakpoint, live, one at a time</div><div class="row"><b>In the view</b>every one of the 54 paths through the graphs replays step by step, scrubbed back and forth, each step naming the use case step and requirement it serves; with VALUES for the battles of a game in production: measured in the experiment's records</div><span class="chip ok">ANSWERED for paths; VALUES on the replays of a game in production (the sample cannot run: its enemy class is not in the pastes)</span></div><div class="card"><h3>Coding via Observation</h3><div class="row"><b>RJ wrote</b>If you see the water flowing into a node and it doesn&#x27;t look right, you manipulate the logic live. You pull a wire from a gauge, drop a modifier valve onto a pipe, and watch the li...</div><div class="row"><b>In this Blueprint</b>changing a value means editing, compiling and playing again</div><div class="row"><b>In the view</b>on the replays of a game in production a valve changes a value at a probe and re-runs every battle with no rebuild: measured in the experiment's records</div><span class="chip no">ANSWERED on the replays of a game in production; ABSENT on the sample (no run to change)</span></div></div>
+  </section>
+
+  <section class="sheet" id="chain">
+    <div class="sheet-head"><span class="sheet-no">SHEET 4</span><h2>From one node to the requirement it serves</h2></div>
+    <p>Every piece of the Blueprint links to the use case step it realises, and the steps form a linear, hierarchical chain. Here is one node, as the city's details panel shows it.</p>
+    <div class="chain">
+      <div class="link"><span>Blueprint</span><div><code>K2Node_IfThenElse_12</code> reading <code>LockedOnTarget.IsDead</code> (LockOn_EventGraph.t3d:609)</div></div>
+      <div class="link"><span>Code</span><div><code>if (!LockedOnTarget.IsDead)</code>, statement LockON#s22</div></div>
+      <div class="link"><span>Step</span><div>UC-LO1.5: after the search the lock is set if the target is not dead</div></div>
+      <div class="link"><span>Use case</span><div>UC-LO1 Lock on to the closest enemy (sea), in EPIC-LO Fight while locked on to an enemy (kite)</div></div>
+      <div class="link"><span>Requirement</span><div>LO-14: after the search the lock is set only if the target is not dead</div></div>
+      <div class="link own"><span>For the author</span><div>IR-LO-1: when no enemy is closer than 4000, IsDead is read on a target that may be None. IR-LO-18: nothing pasted ever sets IsDead.</div></div>
+    </div>
+    <p>The loop is closed by counts, as code coverage closes it, and the toolkit's existing gap checker gates them. All 162 nodes are mapped. Of 60 decision outcomes, 58 are cited and 2 are excluded because they cannot happen. Of 54 paths, 48 are covered and 6 excluded. All 54 brainstorm questions are answered.</p>
+  </section>
+
+  <section class="sheet" id="loop">
+    <div class="sheet-head"><span class="sheet-no">SHEET 5</span><h2>Closed loop requirements: the loop an AI acts on</h2></div>
+    <p>RJ: closed-loop requirements are now the replacement for code, so an AI acts on the loop rather than on prompts, and no mistake gets through unless the requirements carry it too. The node was judged by one question: <b>what mistake can still get past it?</b> Thirteen criteria answer it, each named by the mistake it stops, and 6 of them could not be held at all before today. Three additions to the node made all 13 measurable. The <b>effect</b> says, in the code's own terms, what each requirement makes the code set, call, branch on or read, and where. The <b>terms</b> bind each word of the requirements to the code names it means. The <b>lock</b> records each requirement's fingerprint as last verified.</p>
+    <div class="figs">
+      <div class="fig"><b>6 of 13</b><span>criteria the node could not hold before</span></div>
+      <div class="fig"><b>0</b><span>holes of ours now (the gate fails on one)</span></div>
+      <div class="fig"><b>84</b><span>assertions of 25 READ requirements hold against the code</span></div>
+      <div class="fig"><b>13</b><span>assertions from the owner's questions fail on the code as pasted</span></div>
+      <div class="fig"><b>97 / 97</b><span>verdicts flipped by their own plant</span></div>
+      <div class="fig"><b>18</b><span>owner questions keep the loop open (43 holes)</span></div>
+    </div>
+    <div class="crits"><div class="crit head"><span>criterion</span><span>the mistake it stops</span><span>before 10-28</span><span>now: ours / owner / listed</span></div><div class="crit"><code>L1 IDENTITY</code><span>a rebuild points an edge at another node, and a verdict follows the wrong thing</span><span class="had">0 / 0 / 0</span><span>0 / 0 / 0</span></div><div class="crit"><code>L2 SOURCED</code><span>a requirement nothing outside the model states, or a cell dropped with no reason</span><span class="had">0 / 0 / 0</span><span>0 / 0 / 0</span></div><div class="crit"><code>L3 CORROBORATED</code><span>a requirement only one family states inherits that family&#x27;s mistakes (listed)</span><span class="had">0 / 0 / 11</span><span>0 / 0 / 11</span></div><div class="crit"><code>L4 CARRIED</code><span>a requirement no pathway an epic reaches realises: nobody builds it</span><span class="had">0 / 0 / 0</span><span>0 / 0 / 0</span></div><div class="crit"><code>L5 ENDED</code><span>a pathway with no end or no actor, a step carrying nothing: behaviour nobody specified</span><span class="had">0 / 0 / 0</span><span>0 / 0 / 0</span></div><div class="crit"><code>L6 ANSWERED</code><span>a question nobody answered, settled by a guess</span><span class="had">0 / 18 / 0</span><span>0 / 18 / 0</span></div><div class="crit"><code>L7 REALIZED</code><span>code linked to the right requirement that does the wrong thing</span><span class="was">not held: no field for it</span><span>0 / 21 / 0</span></div><div class="crit"><code>L8 FALSIFIABLE</code><span>a check that passes whatever the code does</span><span class="was">not held: no field for it</span><span>0 / 0 / 0</span></div><div class="crit"><code>L9 JUSTIFIED</code><span>code no requirement asked for: behaviour that slipped in</span><span class="had">0 / 0 / 0</span><span>0 / 0 / 0</span></div><div class="crit"><code>L10 DEFINED</code><span>a requirement naming what the code does not have, or a word read two ways</span><span class="was">not held: no field for it</span><span>0 / 4 / 4</span></div><div class="crit"><code>L11 CAUSAL</code><span>a step relying on a condition nothing makes true</span><span class="was">not held: no field for it</span><span>0 / 0 / 0</span></div><div class="crit"><code>L12 CONSISTENT</code><span>two requirements demanding opposite effects: meeting one breaks the other</span><span class="was">not held: no field for it</span><span>0 / 0 / 0</span></div><div class="crit"><code>L13 CHANGE-SAFE</code><span>a requirement, or the code it reads, changed after it was verified</span><span class="was">not held: no field for it</span><span>0 / 0 / 0</span></div></div>
+    <h3>What the loop caught in the code</h3>
+    <ol class="ir"><li><code>assert:IR-LO-1#1</code>calls IsValid with LockedOnTarget at LockON#s21:then (no statement at LockON#s21:then calls IsValid (read 3))</li><li><code>assert:IR-LO-1#2</code>calls IsValid with LockedOnTarget at LockON#s31:then (no statement at LockON#s31:then calls IsValid (read 3))</li><li><code>assert:IR-LO-3#1</code>sets Out_Actors by Array_AddUnique at OnComponentBeginOverlap(LockOnSphere)#s1:then (no statement at OnComponentBeginOverlap(LockOnSphere)#s1:then sets Out_Actors (read 5))</li><li><code>assert:IR-LO-3#2</code>sets ConeActors by Array_AddUnique at OnComponentBeginOverlap(LockOnCone)#s1:then (no statement at OnComponentBeginOverlap(LockOnCone)#s1:then sets ConeActors (read 1))</li><li><code>assert:IR-LO-5#1</code>branches LockedOnTarget at EnemyDeath (no statement at EnemyDeath branches LockedOnTarget (read 2))</li><li><code>assert:IR-LO-6#1</code>calls GetDistanceTo at DistanceToFrank (no statement at DistanceToFrank calls GetDistanceTo (read 4))</li><li><code>assert:IR-LO-7#1</code>branches LineTraceSingleForObjects at DistanceToFrank (no statement at DistanceToFrank branches LineTraceSingleForObjects (read 4))</li><li><code>assert:IR-LO-8#1</code>calls LineTraceSingleForObjects with EDrawDebugTrace.None at DistanceToFrank#s1 (no statement at DistanceToFrank#s1 calls LineTraceSingleForObjects (read 1))</li><li><code>assert:IR-LO-11#1</code>calls K2_SetTimerDelegate at OnComponentBeginOverlap(LockOnSphere)#s1:then (no statement at OnComponentBeginOverlap(LockOnSphere)#s1:then calls K2_SetTimerDelegate (read 5))</li><li><code>assert:IR-LO-14#1</code>calls GetWorldDeltaSeconds at NewControlRotation#s1:then (no statement at NewControlRotation#s1:then calls GetWorldDeltaSeconds (read 7))</li><li><code>assert:IR-LO-15#1</code>calls LockOnInterface at OnComponentBeginOverlap(LockOnSphere)#s4:then (no statement at OnComponentBeginOverlap(LockOnSphere)#s4:then calls LockOnInterface (read 2))</li><li><code>assert:IR-LO-15#2</code>calls LockOnInterface at OnComponentEndOverlap(LockOnSphere)#s5:then (no statement at OnComponentEndOverlap(LockOnSphere)#s5:then calls LockOnInterface (read 2))</li><li><code>assert:IR-LO-17#1</code>sets Distance_to_Frank_Var at DistanceToFrank#s2 (no statement at DistanceToFrank#s2 sets Distance_to_Frank_Var (read 1))</li></ol>
+    <p class="caption">The loop's honest limit is RJ's own caveat, counted: 11 requirements rest on the code alone (L3), so a mistake already in the code is in them too. Change safety was tested on a copy of this sample: an edited requirement, and a changed statement it reads, each came back STALE. Generated from two runs of the gate: <code>results/LOOP_LOCKON.md</code>.</p>
+  </section>
+
+  <section class="sheet" id="owner">
+    <div class="sheet-head"><span class="sheet-no">SHEET 6</span><h2>What only the author can answer</h2></div>
+    <p>These are the gaps the chain found: things the code does that nobody decided, each with the question for its author. Most are defects.</p>
+    <ol class="ir"><li><code>IR-LO-1</code>A search that finds no candidate closer than 4000 must not keep a target an earlier event left, nor ask whether a missing target is dead</li><li><code>IR-LO-2</code>NoFalse must record something the search finds; today every candidate sets it to true, so its test after the loop always passes</li><li><code>IR-LO-3</code>An enemy must be listed once even when two of its parts overlap the range or the cone</li><li><code>IR-LO-4</code>LockON, LockOnDone and SetLockOnTarget are events fired like function calls: decide whether they are functions</li><li><code>IR-LO-5</code>When the target dies the lock must move on or end; today nothing releases it and the facing update keeps running</li><li><code>IR-LO-6</code>The distance must be to Frank, not to whatever the trace hits first</li><li><code>IR-LO-7</code>An enemy whose trace hits nothing must not read as 0 units away</li><li><code>IR-LO-8</code>The distance trace must not draw debug lines in a shipped game</li><li><code>IR-LO-9</code>What an enemy does when told it is (or is no longer) the target is not in the pastes</li><li><code>IR-LO-10</code>The two copies disagree: ToggleLockOn&#x27;s call expects a second output (Character) that NewControlRotation does not declare</li><li><code>IR-LO-11</code>Functions a timer runs must be called so that a rename is caught</li><li><code>IR-LO-12</code>Say which is the lock range: the 4000 a search starts from, or MaxDistance</li><li><code>IR-LO-13</code>The update rate (0.01 s) is written into three timers: one setting or three?</li><li><code>IR-LO-14</code>The turn smoothing must match the update rate: it assumes 0.1 s between updates while they come every 0.01 s</li><li><code>IR-LO-15</code>Choosing the lock again (an enemy enters, the target leaves) must tell the old target it is no longer the target</li><li><code>IR-LO-17</code>The search must read the distance the enemy measures: as pasted, the enemy writes DistanceToFrankVar and the search reads Distance to Frank Var - two different variables</li><li><code>IR-LO-18</code>Whoever kills an enemy must set its IsDead, and the order against EnemyDeath must be said</li><li><code>IR-LO-16</code>The player must learn when a lock fails: nobody close enough, or the chosen target dead</li></ol>
+  </section>
+
+  <section class="sheet" id="ideas">
+    <div class="sheet-head"><span class="sheet-no">SHEET 7</span><h2>The ideas, measured</h2></div>
+    <div class="grid2">
+      <div class="card"><h3>The graph as retrieval</h3><div class="row">Answering a question takes the few pieces of the trace it touches: 9053 tokens for 10 questions, against 246150 for the converted code and 1642300 for the raw paste. That is <b>27.2x and 181x fewer</b>, with every answer's key facts kept. Five held-out questions gave the same result.</div></div>
+      <div class="card"><h3>Reasoning checked against the graph</h3><div class="row">My first reading of this code, written before the graph existed, made six claims. All six are anchored in the graph and 6 are supported by it. <b>The graph holds 9 of 18 owner questions that reading never saw</b>, including a variable the search reads that nothing writes.</div></div>
+      <div class="card"><h3>A graph network as a suggester</h3><div class="row">Message passing over the graph proposes the step a statement belongs to: <b>86.9% right</b>, against 73.7% for the nearest-cite baseline, and 99.0% against 97.0% for the use case. It is kept as a suggester. It never decides coverage.</div></div>
+      <div class="card"><h3>Unreal's editor, panel by panel</h3><div class="row">The engine names 15 Blueprint-editor panels. 9 have an answer here. The rest are absent, each for a reason:</div><ul class="plain"><li><b>Class Defaults (DefaultEditorID)</b>: a clipboard copy carries no defaults (the sample&#x27;s MaxDistance is read, never valued); an export does - whether to show them is IR-17, RJ&#x27;s</li><li><b>Palette (PaletteID)</b>: no node is placed by hand: a change is a typed command on the code, through three gates (tools/edit.py, P6a, ED-2)</li><li><b>Viewport (SCSViewportID)</b>: the components&#x27; meshes and transforms live in the Blueprint asset, not in the graphs a person pastes - drawing them in place is IR-18, RJ&#x27;s</li><li><b>Replace References (ReplaceNodeReferencesID)</b>: the view does not edit Blueprints; a rename goes through the C#, where the compiler finds every reference - and a call by NAME is flagged (Q-NAME), the one kind the engine cannot find</li><li><b>Timeline editor (TimelineEditorID)</b>: a Timeline has no code form: the converter keeps it as a marked island (BC-9); there are no curves to edit</li><li><b>User Defined Structure (UserDefinedStructureID)</b>: a struct&#x27;s definition is an asset of its own, not a graph; structs reach the view as Make/Break nodes (BC-6)</li></ul></div>
+    </div>
+  </section>
+
+  <section class="sheet" id="u2ue">
+    <div class="sheet-head"><span class="sheet-no">SHEET 8</span><h2>How it folds into u2ue</h2></div>
+    <pre class="code">py -m u2ue blueprint doctor      # every prerequisite, found or missing with its install command
+py -m u2ue blueprint install     # prints those commands; runs them only with --yes
+py -m u2ue blueprint test        # 75 rows on real data: the online paste, Epic's templates, the game's own code
+py -m u2ue blueprint gates       # names, orphans, the models, the frictions, the retrieval, the chains, the closed loop
+py -m u2ue blueprint build &lt;set&gt; "&lt;title&gt;"   # a paste set end to end, into the city, ending on the loop's verdict</pre>
+    <p>It is one verb in the toolkit's single registry, with self-test rows that <code>u2ue check</code> runs. The existing gap checker gained a <i>code</i> basis instead of a second checker being written, and <code>uml.py</code> and <code>morph_box.py</code> are reused. Every file is reached by something that runs and drawn in the class model, so nothing is orphaned. The experiment stays quarantined until RJ moves it.</p>
+  </section>
+
+  <section class="sheet" id="not-done">
+    <div class="sheet-head"><span class="sheet-no">SHEET 9</span><h2>Not done, and why</h2></div>
+    <ul class="plain">
+      <li>No person has used the view yet, so how much friction it removes for people is unmeasured. Who tests it, against what, is IR-12.</li>
+      <li>This sample cannot be replayed with values: its enemy class and the engine's timers are not in the pastes, and every value would be invented. Every one of its paths replays instead, and value replays run on the battles of a game in production.</li>
+      <li>Speaking a <i>change</i> is not built. Under the closed loop a change belongs on a requirement's effect, and the loop then names the code that must change and what went stale. The page cannot write the model, so a spoken edit needs a local writer the toolkit does not have yet, which is RJ's call. Spoken commands work, where the browser offers speech.</li>
+      <li>Class Defaults and the components Viewport are RJ's calls (IR-17, IR-18). A clipboard copy never carries defaults.</li>
+      <li>The OO shape is a proposal. Writing Unreal paste text back is not built: the engine's writer is C++, and the view holds no pin ids to write.</li>
+      <li>A second model's reasoning was not checked here, because the local model's server was down. The checker takes any model's chain in the same format.</li>
+    </ul>
+  </section>
+
+  <p class="foot">Sample: <a href="https://blueprintue.com/blueprint/kg2evmas/" target="_blank" rel="noopener">Lock-On System</a> (121 nodes) &middot; <a href="https://blueprintue.com/blueprint/cj7dxfjy/" target="_blank" rel="noopener">Distance To Frank</a> (12 nodes) &middot; <a href="https://blueprintue.com/blueprint/bbhr3jku/" target="_blank" rel="noopener">Toggle Lock On</a> (5 nodes) &middot; <a href="https://blueprintue.com/blueprint/img2fl86/" target="_blank" rel="noopener">New Control Rotation</a> (24 nodes). Analysis only: the pasted text is not republished, the authors keep the rights, and any author's graphs come down on request. Built by the Blueprint view experiment; every figure is read from its result files.</p>
+  </div>
+<script>
+  // a link naming a sheet (#hello, #loop ...) opens on it: the host hands the page a plain #token and never the query (measured on the
+  // published city 10-28). Asked again once the page has loaded, as the drawings above a sheet may still be growing, unless the
+  // reader has already moved
+  (function () {
+    var moved = false;
+    ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (e) { addEventListener(e, function () { moved = true; }, { passive: true }); });
+    function go() { var el = location.hash.length > 1 && document.getElementById(location.hash.slice(1)); if (el && !moved) el.scrollIntoView(); }
+    go(); addEventListener('load', go); setTimeout(go, 1500);
+    addEventListener('hashchange', function () { moved = false; go(); });
+  })();
+</script>
+</body>
+</html>

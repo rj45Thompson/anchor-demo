@@ -1,0 +1,16 @@
+/* The shared site bar: one strip on every page (deck, demos, documents) so they read as one piece of work.
+   Pages include it as <nav class="sitebar">…</nav> right after <body>; links are relative to the page. */
+.sitebar {
+  position: relative; z-index: 10; display: flex; align-items: center; gap: 18px; flex-wrap: nowrap; overflow-x: auto;
+  padding: 10px 16px; background: #070C16; border-bottom: 1px solid #1E2C44;
+  font: 500 14px/1.2 'DM Sans', 'Segoe UI', Arial, sans-serif; color: #B8C6D9; white-space: nowrap; scrollbar-width: none;
+}
+.sitebar::-webkit-scrollbar { display: none; }
+.sitebar a { color: #D9E2EE; text-decoration: none; border-radius: 6px; padding: 4px 6px; }
+.sitebar a:hover { color: #FFFFFF; background: #16243A; }
+.sitebar a:focus-visible { outline: 2px solid #FF8A3D; outline-offset: 2px; }
+.sitebar a[aria-current="page"] { color: #FF8A3D; }
+.sitebar .brand { font: 700 16px/1 'Oswald', Impact, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #F4F0E6; }
+.sitebar .grp { display: flex; align-items: center; gap: 4px; }
+.sitebar .lbl { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #6F819B; margin-right: 2px; }
+.sitebar .sep { width: 1px; align-self: stretch; background: #1E2C44; }

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closed Loop Requirements</title><meta name="description" content="Closed loop requirements and the Blueprint view: the idea, the frictions, what is measured.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../site.css"><link rel="stylesheet" href="../page.css"></head><body>
+<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../doc/" aria-current="page">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav><main class="read"><h1>Closed Loop Requirements and the Blueprint View</h1>
+<p class="byline">RJ Thompson · 28 October 2026 · a draft prototype, built and measured by tools, not yet tested by people</p>
+
+<p>Closed loop requirements turn a finished program into a complete, gap-checked set of requirements. Once every question is answered or handed to its owner, code, Blueprints and pictures are all views of one source. This document explains the idea, the three Blueprint friction points, and what the Blueprint view prototype has built and measured so far.</p>
+<h2>At a glance</h2>
+<figure class="glance"><svg viewBox="0 0 860 300" role="img" aria-label="Code or a Blueprint goes into the loop, one logic graph tied to requirements; Blueprint, C#, C++, pseudo-code and a 3D city are printed from it"><rect x="10" y="70" width="150" height="56" rx="10" class="in"/><text x="85" y="104" class="t">Code</text><path d="M160 98 L270 150" class="arrow" marker-end="url(#gh)"/><rect x="10" y="180" width="150" height="56" rx="10" class="in"/><text x="85" y="214" class="t">Blueprint</text><path d="M160 208 L270 150" class="arrow" marker-end="url(#gh)"/><rect x="280" y="80" width="280" height="140" rx="18" class="loop"/><text x="420" y="132" class="lt">The loop</text><text x="420" y="160" class="ls">one logic graph,</text><text x="420" y="182" class="ls">every node tied to a requirement</text><path d="M330 222 Q420 268 510 222" class="ret" marker-end="url(#gh)"/><text x="420" y="285" class="ls">gap-checked until every question is answered</text><path d="M560 150 L660 38" class="arrow" marker-end="url(#gh)"/><rect x="668" y="16" width="180" height="44" rx="10" class="out"/><text x="758" y="44" class="t">Blueprint</text><path d="M560 150 L660 94" class="arrow" marker-end="url(#gh)"/><rect x="668" y="72" width="180" height="44" rx="10" class="out"/><text x="758" y="100" class="t">C#</text><path d="M560 150 L660 150" class="arrow" marker-end="url(#gh)"/><rect x="668" y="128" width="180" height="44" rx="10" class="out"/><text x="758" y="156" class="t">C++</text><path d="M560 150 L660 206" class="arrow" marker-end="url(#gh)"/><rect x="668" y="184" width="180" height="44" rx="10" class="out"/><text x="758" y="212" class="t">Pseudo-code</text><path d="M560 150 L660 262" class="arrow" marker-end="url(#gh)"/><rect x="668" y="240" width="180" height="44" rx="10" class="out"/><text x="758" y="268" class="t">3D city</text><defs><marker id="gh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" class="head"/></marker></defs></svg><figcaption>The closed loop: two inputs, one source, every view printed from it.</figcaption></figure>
+<p>Code or a Blueprint goes in; the loop holds it as one logic graph tied to requirements; every view people read is printed from that, never edited apart from it.</p>
+<h2>Closed loop requirements</h2>
+<p>Closed loop requirements are every problem, solution and interaction a program carries, aimed at being complete enough for an AI to rebuild the program exactly, with nothing misread. No rebuild from requirements has been tried yet; what is measured is that each requirement's effect can be checked against the code. They are reached from a finished product, not imagined up front.</p>
+<ol>
+<li><strong>Start from finished code.</strong> Source that already does everything its users need.</li>
+<li><strong>Read every line into a node graph.</strong> The prototype's reader is <code>U2ue.CodeGraph</code>, built on Roslyn, so it reads meaning and not only text.</li>
+<li><strong>Tie each node to a use case step.</strong> Use case descriptions are linear: a main path plus every alternate path, each with its stated outcome.</li>
+<li><strong>Walk the chain.</strong> A node, path or source sentence with no requirement becomes a typed question. It is never filled with a plausible guess.</li>
+<li><strong>Close the loop.</strong> The loop is closed when every question is answered or handed to its owner.</li>
+</ol>
+<p><strong>Why it is the new raw element.</strong> Strip the syntax off a program and three things are left: problems, solutions and the interactions between a person and the system. We write them as user stories, use case descriptions and class diagrams of the concepts (not necessarily the code's exact classes). Everything above that layer, C#, C++ or a Blueprint, becomes an interpreted form, picked for whoever is reading.</p>
+<p><strong>The compiler for requirements.</strong> Code has a compiler and requirements never had one, so nothing said a branch was missed. The gap checker fills that role:</p>
+<ul>
+<li><code>usecase_model.py</code> checks the model as data with 17 rules, each shown able to fail by a planted fault.</li>
+<li><code>usecase_kg.py</code> holds the model as a SQLite knowledge graph and counts the independent evidence behind each requirement.</li>
+<li><code>interrogate.py</code> turns every hole in the chain into a question and exits non-zero while any is unanswered.</li>
+</ul>
+<p><strong>Measured on a public Blueprint.</strong> Each requirement is judged by what mistake can still get past it: 13 criteria. The requirement node as it stood could not hold 6 of them, so it gained three fields: an effect (what the code sets, calls, branches on or reads, and where), terms (words bound to names in the code) and a lock (fingerprints as last verified).</p>
+<ul>
+<li>35 of 43 requirements carry a check (an effect that can fail); the other 8 carry a written reason instead, calls only the author can make. The 84 checks from the 25 requirements read from the code all hold; since they are checked against that same code, they guard against change rather than prove it correct.</li>
+<li>13 checks from 10 of the owner's questions fail on the code as pasted: these are the defects the loop found.</li>
+<li>97 of 97 planted faults flip the result.</li>
+<li>On a copy of the sample, an edited requirement and a changed statement it reads both came back stale.</li>
+<li>The loop is still open: 43 holes from 18 questions only the author can answer. 11 requirements rest on the code alone, so a mistake already in the code is in them too.</li>
+</ul>
+<p><strong>A hello world first.</strong> Pong, two public Blueprints with 32 nodes between them, went through the same tools: 6 use cases, 10 requirements, 12 of 12 paths, 13 of 13 effects hold and flip. Its loop is open too, on 3 questions for its owner: the score, the two speeds, and which end a serve goes to.</p>
+<p><strong>A whole game.</strong> siljaZ's asteroid shooter (Unreal Engine 5.0, January 2023) is the one whole asteroid game on blueprintue.com; no classic Asteroids is pasted there. 16 of its 23 pastes, 232 nodes, convert to 83 statements in 20 graphs. The model holds 12 use cases and 24 requirements read from the nodes, and all 65 of their effects hold on the code and flip when a fault is planted. All 232 nodes are tied to a requirement, 37 of 38 outcomes are cited (1 excluded with its reason) and 53 of 64 paths are covered (11 excluded). Its loop is open on 15 questions only the author can answer, with 0 holes of ours.</p>
+<h2>One source, many views</h2>
+<p>Because every view is printed from one logic graph, Blueprints convert to code and code converts to Blueprint-style graphs. The graph's canonical form is a small pseudo-language of its own; Blueprint, C#, C++, pseudo-code and the 3D city are renderings of it.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Measured round trip</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unreal Engine 5.7.1 template Blueprints to code</td>
+<td>92 Blueprints from 11 templates, 0 failed; 275 methods, 275 parse as C#</td>
+</tr>
+<tr>
+<td>A game in production, code to graph and back</td>
+<td>4,201 of 4,201 methods print back to the same syntax tree</td>
+</tr>
+<tr>
+<td>Every graph in every form</td>
+<td>16,804 text and block renders plus 4,201 Blueprint renders, 0 errors</td>
+</tr>
+<tr>
+<td>A second game (Zombie Crossing, an XNA game, its MonoGame port, read only)</td>
+<td>1,270 of 1,270 round trip; needed two reader fixes</td>
+</tr>
+<tr>
+<td>A public Blueprint pasted from blueprintue.com</td>
+<td>162 of 162 nodes converted, 12 methods, all parse</td>
+</tr>
+</tbody>
+</table></div>
+<p>Six nodes in the Unreal templates have no code form (4 Timelines, an async action, a DMX plugin node). They are marked as islands, never dropped.</p>
+<p>The C++ view is not complete yet: it leaves 11.3% of the templates and 5.4% of the public Blueprint marked as C#.</p>
+<h2>The Blueprint frictions, one by one</h2>
+<p>RJ's discussion "The Blueprint Paradox" names three friction points (visual clutter, the object-oriented disconnect, the limits of a pure object graph) and two remedies (dictation and live observation). Each is measured on hitted's "Lock-On System", a public Blueprint on blueprintue.com (Unreal Engine 5.0, 162 nodes). The table is generated by the prototype's own friction tool; no number in it is typed by hand.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Friction</th>
+<th>In the public Blueprint</th>
+<th>In the view</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Spaghetti wires</td>
+<td>200 wires (82 order, 118 value), 29 crossings</td>
+<td>148 wires drawn, 0 spanning 6 or more statements; a far read becomes a Get chip beside its reader</td>
+<td>Answered, measured</td>
+</tr>
+<tr>
+<td>Zoom blindness</td>
+<td>Event graph spans 2,736 x 2,160 units</td>
+<td>Fly to any of 99 statements by name, typed or spoken; labels fade in as you come close</td>
+<td>Answered, measured</td>
+</tr>
+<tr>
+<td>Order vs value clutter</td>
+<td>17 crossings are an order wire over a value wire</td>
+<td>In 3D, order pipes run above the nodes and value pipes below; they cannot cross</td>
+<td>Answered by construction</td>
+</tr>
+<tr>
+<td>Hidden hierarchy</td>
+<td>The pasted text names no parent class</td>
+<td>Each class is a district on its parent's floor, the parent read from the code: FrankBP : Character, MasterEnemy : Actor. The event graph casts to Master_Enemy, at another asset path; the two are held apart until the author says whether they are one Blueprint</td>
+<td>Answered; one question for the author</td>
+</tr>
+<tr>
+<td>No encapsulation</td>
+<td>1 rule written twice, 3 events fired like functions, 3 members written by several graphs</td>
+<td>Assembled as classes, with 9 proposals naming the object-oriented form that removes each pattern</td>
+<td>Answered for reading</td>
+</tr>
+<tr>
+<td>The Cast To trap</td>
+<td>4 Cast To nodes</td>
+<td>One proposed interface holding exactly the members the code reads through the casts</td>
+<td>Proposed, not applied</td>
+</tr>
+<tr>
+<td>Grid problem</td>
+<td>Logic in 12 graphs across 4 pasted texts</td>
+<td>One command reaches any of them; a members panel lists who writes each field</td>
+<td>Answered, measured</td>
+</tr>
+<tr>
+<td>Invisible relationships</td>
+<td>5 calls made by a function name in a string</td>
+<td>Every call between graphs is an arc; a call by name is drawn in orange and says so</td>
+<td>Answered</td>
+</tr>
+<tr>
+<td>Encapsulation gates</td>
+<td>43 of 162 nodes are variable reads and pure math</td>
+<td>Folded into the statement that reads them, as the engine compiles them</td>
+<td>Answered, measured</td>
+</tr>
+<tr>
+<td>Voice to code</td>
+<td>Every look is a click, a pan or a search box</td>
+<td>A command bar takes typed or spoken commands; changes are typed commands behind three checks</td>
+<td>Partly: speaking a change is not built</td>
+</tr>
+<tr>
+<td>The icing concept</td>
+<td>The Blueprint is the only form of the logic</td>
+<td>The map is generated from the code, every node maps to a requirement (162 of 162), 0 nodes moved between two layouts</td>
+<td>Answered, measured</td>
+</tr>
+<tr>
+<td>Data as flowing water</td>
+<td>Two functions run 100 times a second, with no sign in the editor</td>
+<td>Pulses run the pipes; those two graphs burn red at their timers' rate; pipe thickness follows the value's type</td>
+<td>Answered</td>
+</tr>
+<tr>
+<td>Time-travel replay</td>
+<td>A value shows only at a breakpoint, live</td>
+<td>All 54 paths replay step by step; on the game, values too</td>
+<td>Answered</td>
+</tr>
+<tr>
+<td>Coding by observation</td>
+<td>Changing a value means edit, compile, play</td>
+<td>A valve changes a value and every battle replays with no rebuild (on the game; the sample has no runnable enemy)</td>
+<td>Answered on the game</td>
+</tr>
+</tbody>
+</table></div>
+<p>No person has used the view yet. "Answered" means the view does the thing, measured by tools; whether it removes the friction for people is the next test.</p>
+<h2>Human ergonomics</h2>
+<p>Human ergonomics means breaking a hard problem into analogies and mnemonics a person already knows, arranged as parent and child, and read in a line. It is the shape layer: the same graph, laid out for a human mind rather than for the machine.</p>
+<ul>
+<li><strong>Analogies.</strong> A class is a district in a city; its parent class is the floor it stands on. Inheritance becomes a place you can see, not a fact you have to remember.</li>
+<li><strong>Parent and child.</strong> A large idea breaks into smaller ones you open one at a time. Use cases follow the same rule: epics hold user goals, and user goals hold subfunctions.</li>
+<li><strong>Linear.</strong> Steps read in order, like a story. Order pipes run above the nodes and value pipes below them, so the two never cross.</li>
+<li><strong>Stable places.</strong> Unchanged code lays out in the same place every time (0 nodes moved between two layouts), so spatial memory keeps working.</li>
+</ul>
+<p>On the game's core, a one-to-one drawing would have 2,343 wires running six or more statements. The view draws 0: a value read far from where it was set gets a small Get chip beside its reader instead.</p>
+<p>Two layout targets failed and are left as design calls, not patched: graphs average 2.5 nodes per line of code against an aim of 1.5, and big graphs open with every node showing against an aim of at most 30.</p>
+<h2>Observational understanding</h2>
+<p>Observational understanding means learning a system by watching it run, the way you learn plumbing by opening and closing valves. The system keeps running in front of you; you can see it, rewind it and change it mid-flight.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What you do</th>
+<th>What the view does</th>
+<th>Measured</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Watch it run</td>
+<td>Pulses travel the order pipes; value pipes are as thick as their type is heavy; a hot path glows red</td>
+<td>In the public Blueprint, DistanceToFrank and ToggleLockOn each run 100 times a second, read from their timers</td>
+</tr>
+<tr>
+<td>Rewind it</td>
+<td>Every path replays step by step and can be scrubbed back and forth; each step names its use case step and requirement</td>
+<td>54 of 54 paths in the public Blueprint. On the game, a crit multiplier planted in a copy (1 to 1.1) made 4 of 6 battles diverge at a named step (339 to 372 damage)</td>
+</tr>
+<tr>
+<td>Change it mid-flight</td>
+<td>A valve changes a value at a probe and replays every recorded battle, with no rebuild</td>
+<td>Doubling one damage value doubled every battle's first hit (503 to 1,006); the slowest whole replay took 0.84 s against a 2 s target</td>
+</tr>
+</tbody>
+</table></div>
+<p>The valves run on headless replays of recorded battles, never on a live editor.</p>
+<p><strong>Try it: <a href="../city/#pong">Pong plays live</a>.</strong> What moves the ball is the converter's own graph of the Pong Blueprint, run statement by statement: each node glows in the city as it runs, Unreal 2D rings the nodes it came from, and the panel names the statement that just ran and the requirement it serves. The court around it (sizes, the speed, keys, the computer player) is authored, and the page lists every authored value. Run headless for 120 s, it made 52 paddle hits, each sent back, 19 wall turns and 17 goals, and all 13 converted statements ran. With the paddle's turn removed from a copy of the paste, the ball goes straight through (77 hits, 0 sent back).</p>
+<p><strong><a href="../city/#asteroids">The asteroid shooter plays too</a>,</strong> the same way, on its converted Blueprints. 13 values are ours and listed on the page (sizes, speeds and the enemy waves, which live in the author's own macro that the converter does not inline yet). With the computer at the controls for 180 s: 3 games started, 2 ended on the last life, 93 of 99 enemy ships shot down, 61 shots swallowed by asteroids (the paste never breaks one), 11 lives lost, and 81 of 83 statements ran (the 2 that never run each have a reason on the page). With the enemy ship's own destroy taken out of a copy of the paste, 0 of 105 ships go down.</p>
+<h2>What the loop caught on a public Blueprint</h2>
+<p>The requirement graph holds 18 questions only the Blueprint's owner can answer; an AI reasoning from the converted code alone reached 9 of them. Every one of the 162 nodes is tied to a requirement and all 54 paths are accounted for (48 covered, 6 excluded with a reason).</p>
+<p>Some of what it flagged, each tied to the requirement that found it:</p>
+<ul>
+<li><strong>Two variables that never meet.</strong> The enemy writes DistanceToFrankVar; the search reads Distance to Frank Var.</li>
+<li><strong>A lock that never lets go.</strong> When the locked target dies, the lock is not released.</li>
+<li><strong>Hidden cost.</strong> Every enemy line-traces 100 times a second with debug drawing left on.</li>
+<li><strong>An unanswered handover.</strong> Nothing in the pasted graphs tells the old target it is no longer the target.</li>
+<li><strong>Calls a rename would break.</strong> Functions run by a timer are called by a name in a string, so a rename is not caught.</li>
+</ul>
+<h2>Status and open decisions</h2>
+<p>The prototype is built and machine-measured, and kept apart from the game it reads: it never writes the game's code or touches a live Unity or Unreal editor.</p>
+<p><strong>Built and measured:</strong> both converters, the five-way graph view, the 3D city (Three.js on WebGPU), two games playing on their converted Blueprints, replay and scrub, valves, the RAG layer (27.2 times fewer tokens than the converted code, 181 times fewer than the raw paste, all 10 test questions answered), the <code>u2ue blueprint</code> command, and two task rounds run by Claude (round 2: 32 of 32).</p>
+<p><strong>Looked at, not only measured.</strong> A city of nine classes once stood in a single row 631 units long and drew black beyond the fog, while the audit was green with 0 errors. Only looking at the screenshot caught it. Districts now wrap into rows. That is why every view here is both measured and looked at.</p>
+<p><strong>Not built or not verified:</strong></p>
+<ul>
+<li>No person has used the view. Friction removed for people is unmeasured.</li>
+<li>Speaking a change (not just a command) and editing directly on the graph.</li>
+<li>The Unreal editor version of the view.</li>
+</ul>
+<p><strong>Open decisions:</strong> who tests the view and against what baseline; browser first or a panel inside the Unreal editor; what the Class Defaults and Viewport panels map to; whether big graphs open folded; and whether the view joins the u2ue toolkit as a product.</p>
+<h2>Where it lives</h2>
+<ul>
+<li><strong><a href="../deck/">The deck</a>:</strong> I'm the Code Now, 33 slides built from this document's numbers.</li>
+<li><strong><a href="../city/#pong">Blueprint City</a>:</strong> play <a href="../city/#pong">Pong</a> and <a href="../city/#asteroids">the asteroid shooter</a>, fly <a href="../city/#lockon">Lock-On</a>; replay any path, ask it questions, or press Unreal 2D to see a graph the way the Blueprint editor draws it.</li>
+<li><strong><a href="../showcase/">Fixing Blueprint Friction</a>:</strong> the worked example, the online Blueprint traced node by node, each friction measured and the closed loop on it.</li>
+<li><strong><a href="../review/">The record</a>:</strong> the use cases, requirements and gap checks behind it, as of early 28 October.</li>
+<li><strong><a href="../skills/">The AI skills</a>:</strong> the five playbooks the agents worked from.</li>
+<li><strong><a href="https://rj45thompson.github.io/anchor-demo/u2ue/">u2ue: Unity to Unreal</a>:</strong> the porting toolkit this was built on, with its whole manual.</li>
+<li><strong><a href="https://github.com/rj45Thompson/blueprint-view-source">Source code</a>:</strong> open source under the MIT licence: the C# reader, the views and the 3D city, the Blueprint converter and the use case checkers.</li>
+</ul>
+<p><strong>The public samples.</strong> Pong (anonymous), the asteroid shooter (siljaZ) and the Lock-On System (hitted) are public pastes on blueprintue.com, and their authors keep the rights. This site never carries the pasted texts; the graphs shown are derived from them, each credited with a link to its original, and any of them comes down at its author's request.</p></main></body></html>

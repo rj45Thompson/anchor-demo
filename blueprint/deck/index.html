@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>I’m the Code Now</title>
+<meta name="description" content="Closed loop requirements and the Blueprint view: a prototype pitch deck.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../site.css">
+<style>
+  /* The stage: every slide is authored at 1920x1080 and scaled to fit the window, letterboxed. */
+  html, body { margin: 0; height: 100%; background: #05080F; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  #stage > section { position: absolute; inset: 0; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden;
+    opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s linear .35s; }
+  #stage > section.on { opacity: 1; visibility: visible; transition: opacity .35s ease; }
+  #stage section * { margin: 0; box-sizing: border-box; }
+  #stage section aside { display: none; }
+  #stage section a { color: inherit; text-decoration: underline; text-underline-offset: .12em; }
+  #stage section a:focus-visible { outline: 4px solid #FF8A3D; outline-offset: 4px; }
+  /* What the slide format's own runtime drew: icons, arrow shapes, a connector, pop-in builds */
+  x-icon { display: inline-block; flex: none; }
+  x-icon svg { width: 100%; height: 100%; display: block; }
+  x-shape { display: block; flex: none; }
+  x-shape[kind="arrow-right"] { clip-path: polygon(0 32%, 58% 32%, 58% 0, 100% 50%, 58% 100%, 58% 68%, 0 68%); }
+  section.on [data-build-in="pop"] { animation: pop .45s cubic-bezier(.2,1.4,.4,1) .5s both; }
+  @keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { #stage > section { transition: none; } section.on [data-build-in="pop"] { animation: none; } }
+  /* The deck's own controls, under the shared site bar */
+  .deck-ui { position: fixed; right: 16px; bottom: 14px; display: flex; gap: 8px; align-items: center; z-index: 5;
+    font: 600 14px/1 'DM Sans', Arial, sans-serif; color: #B8C6D9; }
+  .deck-ui button { font: inherit; color: #F4F0E6; background: rgba(22,36,58,.85); border: 1px solid #2A3D5C; border-radius: 8px;
+    padding: 8px 12px; cursor: pointer; }
+  .deck-ui button:hover { border-color: #FF8A3D; }
+  .deck-ui button:focus-visible { outline: 2px solid #FF8A3D; outline-offset: 2px; }
+  #count { min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; color: #F4F0E6;
+    background: rgba(22,36,58,.85); border: 1px solid #2A3D5C; border-radius: 8px; padding: 8px 10px; }
+  #bar { position: fixed; left: 0; bottom: 0; height: 4px; background: #FF8A3D; z-index: 5; transition: width .3s ease; }
+  #notes { position: fixed; left: 16px; right: 16px; bottom: 60px; max-height: 32vh; overflow: auto; z-index: 6; display: none;
+    background: rgba(13,22,38,.96); color: #F4F0E6; border: 1px solid #2A3D5C; border-radius: 12px; padding: 16px 20px;
+    font: 17px/1.55 'DM Sans', Arial, sans-serif; }
+  #notes.open { display: block; }
+  #notes b { color: #FF8A3D; }
+</style>
+</head>
+<body>
+<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/" aria-current="page">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
+<div id="stage">
+<section id="cover" data-transition="magic" style="background:#070C16;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:0;display:flex;flex-direction:column">
+<img id="meme" src="assets/captain_meme.gif" alt="The pirate from Captain Phillips leans in and stares straight into the camera" style="position:absolute;left:374px;top:130px;width:1171px;height:820px;object-fit:cover;border-radius:12px">
+<p id="cap-top" style="position:absolute;left:128px;top:146px;width:1664px;font-family:'Oswald', Impact, sans-serif;font-size:112px;font-weight:700;line-height:1.1;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#FBFAF5;text-shadow:5px 5px 0 #05080F, -5px 5px 0 #05080F, 5px -5px 0 #05080F, -5px -5px 0 #05080F, 0 6px 0 #05080F, 0 -6px 0 #05080F, 6px 0 0 #05080F, -6px 0 0 #05080F">Look at me.</p>
+<p id="cap-bottom" style="position:absolute;left:128px;top:806px;width:1664px;font-family:'Oswald', Impact, sans-serif;font-size:112px;font-weight:700;line-height:1.1;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#FBFAF5;text-shadow:5px 5px 0 #05080F, -5px 5px 0 #05080F, 5px -5px 0 #05080F, -5px -5px 0 #05080F, 0 6px 0 #05080F, 0 -6px 0 #05080F, 6px 0 0 #05080F, -6px 0 0 #05080F">I’m the captain now.</p>
+<aside>Open on the meme everyone knows, from the 2013 film Captain Phillips: the pirate leans in and tells the captain who is in charge now. Let it land for a beat. Then click: same scene, one word changed.</aside>
+</section>
+<section id="codenow" data-transition="fade" style="background:#070C16;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:0;display:flex;flex-direction:column">
+<img id="meme" src="assets/captain_meme.gif" alt="The same scene: the pirate, now labelled Closed Loop Requirements, stares straight into the camera" style="position:absolute;left:374px;top:130px;width:1171px;height:820px;object-fit:cover;border-radius:12px">
+<p id="cap-top" style="position:absolute;left:128px;top:146px;width:1664px;font-family:'Oswald', Impact, sans-serif;font-size:112px;font-weight:700;line-height:1.1;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#FBFAF5;text-shadow:5px 5px 0 #05080F, -5px 5px 0 #05080F, 5px -5px 0 #05080F, -5px -5px 0 #05080F, 0 6px 0 #05080F, 0 -6px 0 #05080F, 6px 0 0 #05080F, -6px 0 0 #05080F">Look at me.</p>
+<p data-build-in="pop" style="position:absolute;left:905px;top:330px;width:620px;font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.1;white-space:nowrap;text-transform:uppercase;text-align:center;color:#0D1626;background:#FF8A3D;padding:12px 24px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.45)">Closed loop requirements</p>
+<p data-build-in="pop" style="position:absolute;left:925px;top:424px;width:580px;font-size:30px;font-weight:700;line-height:1.3;text-align:center;color:#0D1626;background:#F4F0E6;padding:10px 20px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.45)">…staring down your source code</p>
+<x-connector x1="905" y1="370" x2="845" y2="410" head="end" style="color:#FF8A3D;border-width:6px"></x-connector>
+<p id="cap-bottom" style="position:absolute;left:128px;top:806px;width:1664px;font-family:'Oswald', Impact, sans-serif;font-size:112px;font-weight:700;line-height:1.1;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#FF9F5A;text-shadow:5px 5px 0 #05080F, -5px 5px 0 #05080F, 5px -5px 0 #05080F, -5px -5px 0 #05080F, 0 6px 0 #05080F, 0 -6px 0 #05080F, 6px 0 0 #05080F, -6px 0 0 #05080F">I’m the code now.</p>
+<aside>Same scene, one change. He is looking straight at the camera, which is the captain's eyes: that captain is source code, for fifty years the thing everyone treats as the truth. The one leaning in is closed loop requirements. Once the requirements are complete enough to rebuild the program exactly, they are the real source, and the code is just one way of printing them.</aside>
+</section>
+<section id="openit" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Before we explain anything</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:80px;font-weight:700;line-height:1.1;color:#F4F0E6">Play it. Fly it. Click anything.</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:28px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#16243A;border:2px solid #2A3D5C;border-radius:20px;padding:32px 36px">
+<p style="font-size:22px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#49B6FF">Hello world · play it</p>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F4F0E6"><a href="../city/#pong">Pong</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">The ball runs on its own converted Blueprint. 32 nodes.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#16243A;border:2px solid #49B6FF;border-radius:20px;padding:32px 36px">
+<p style="font-size:22px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#49B6FF">A whole game · play it</p>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F4F0E6"><a href="../city/#asteroids">Asteroid Shooter</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">A real public game: 232 nodes, run on its converted Blueprints.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#16243A;border:2px solid #FF8A3D;border-radius:20px;padding:32px 36px">
+<p style="font-size:22px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">The messy one · fly it</p>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F4F0E6"><a href="../city/#lockon">Lock-On</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">A real public Blueprint: 162 nodes, 200 wires, 29 crossings.</p>
+</div>
+</div>
+<p style="font-size:28px;line-height:1.4;color:#B8C6D9">Each node lights as it fires. All three fly as 3D cities in WebGPU; press <b style="color:#F4F0E6">Unreal 2D</b> to see a graph the way the Blueprint editor draws it.</p>
+<div style="display:flex;flex-direction:row;gap:48px;border-top:3px solid #2A3D5C;padding:28px 0 0 0">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#8796AB;padding:4px 0 0 0">Then read</p>
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../showcase/">The worked example</a></p>
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../doc/">How it works</a></p>
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../review/">The record</a></p>
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../skills/">The AI skills</a></p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8796AB">From blueprintue.com: Pong (anonymous), asteroid shooter (siljaZ), Lock-On System (hitted); authors keep the rights. Counts: TASKS.md.</p>
+<aside>Before I explain a single idea, here's the thing itself. Three real Blueprints, all pasted from blueprintue.com. Pong is the hello world, thirty-two nodes: the city opens with it running, and what moves the ball is the code converted from that Blueprint, statement by statement. Take a paddle with W and S, or the arrow keys. The asteroid shooter is a whole public game, two hundred and thirty-two nodes, and it plays on its own converted Blueprints too. Lock-On is the messy one, a hundred and sixty-two nodes and two hundred wires, the one we use for every number in this deck. In all three, each node lights as it fires; click any part, replay any path, or press Unreal 2D to see the same graph the way Unreal's own editor draws it. Underneath are the documents: the worked example, the write-up, the record, and the AI skills behind it.</aside>
+</section>
+<section id="printed" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:row;align-items:center;gap:72px">
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">How we build Blueprints this big in a day</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#0D1626">We don’t draw Blueprints. We print them.</h2>
+</div>
+<p style="font-size:30px;line-height:1.4;color:#3D4A5C">Someone wired Lock-On by hand, node by node: <b style="color:#B4470F">162 nodes</b>. Overnight we printed a whole game in production: <b style="color:#0D1626">4,201 graphs, 67,284 nodes, 79,507 wires.</b></p>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:row;gap:24px;align-items:baseline"><p style="width:48px;font-family:'Oswald', Impact, sans-serif;font-size:40px;font-weight:700;color:#B4470F">1</p><p style="flex:1;font-size:26px;line-height:1.4;color:#3D4A5C"><b style="color:#0D1626">Read.</b> Roslyn, the C# compiler’s own reader, takes in every line of the finished code: its meaning, not just its text.</p></div>
+<div style="display:flex;flex-direction:row;gap:24px;align-items:baseline"><p style="width:48px;font-family:'Oswald', Impact, sans-serif;font-size:40px;font-weight:700;color:#B4470F">2</p><p style="flex:1;font-size:26px;line-height:1.4;color:#3D4A5C"><b style="color:#0D1626">Graph.</b> Each method becomes one logic graph, and a call opens its own graph: 14,499 links, none to nowhere.</p></div>
+<div style="display:flex;flex-direction:row;gap:24px;align-items:baseline"><p style="width:48px;font-family:'Oswald', Impact, sans-serif;font-size:40px;font-weight:700;color:#B4470F">3</p><p style="flex:1;font-size:26px;line-height:1.4;color:#3D4A5C"><b style="color:#0D1626">Print, then prove.</b> The Blueprint is printed from the graph, and the graph prints back to the exact same code: 4,201 of 4,201.</p></div>
+</div>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.2;color:#B4470F">Then the requirements hang on that same graph.</p>
+</div>
+<div style="width:604px;display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:700;line-height:1.3;color:#B4470F">■ Lock-On, wired by hand: 1 square</p>
+<svg viewBox="0 0 604 575" width="604" height="575" xmlns="http://www.w3.org/2000/svg" aria-label="A grid of 415 squares; the first, in orange, is the Lock-On Blueprint; all 415 together are the game" style="width:604px;height:575px"><rect x="0" y="0" width="24" height="24" rx="4" fill="#FF8A3D"/><rect x="29" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="0" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="29" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="58" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="87" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="116" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="145" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="174" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="203" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="232" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="261" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="290" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="319" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="348" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="377" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="406" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="435" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="464" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="493" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="464" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="493" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="522" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="551" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="580" y="522" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="0" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="29" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="58" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="87" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="116" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="145" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="174" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="203" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="232" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="261" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="290" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="319" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="348" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="377" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="406" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/><rect x="435" y="551" width="24" height="24" rx="4" fill="#49B6FF" opacity="0.55"/></svg>
+<p style="font-size:24px;line-height:1.4;color:#3D4A5C">The game, printed: over 415 Lock-Ons’ worth of nodes.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Counts: the Blueprint view’s build log, Wed 28 Oct (runs/graphs_build_tr2.log, REQ-BPV-7); Lock-On from FRICTION_LOCKON.md.</p>
+<aside>So how do you get Blueprints this big in a day? You stop drawing them. Somebody built Lock-On the normal way, dragging and wiring one node at a time: a hundred and sixty-two nodes. That same night we printed an entire game in production as Blueprint-style graphs: forty-two hundred graphs, sixty-seven thousand nodes, seventy-nine and a half thousand wires. That's more than four hundred Lock-Ons. Three steps. Read: Roslyn, the compiler's own reader, takes in the finished code by meaning, not text. Graph: every method becomes one logic graph, and calls link to each other's graphs. Print, then prove: the picture is printed from the graph, and the graph prints back to the exact same code, every one of the forty-two hundred. Nobody wires anything. And once the logic is a graph, the requirements can hang on it. That's the closed loop.</aside>
+</section>
+<section id="bigidea" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:40px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">The big idea</p>
+<h1 style="font-family:'Oswald', Impact, sans-serif;font-size:120px;font-weight:700;line-height:1.05;color:#0D1626">Code is just one way<br>of writing it down.</h1>
+<p style="font-size:40px;line-height:1.4;color:#3D4A5C;width:1400px">Underneath every program is something rawer: the problems it solves, the answers it gives, and every exchange between a person and the machine. Capture all of it, with nothing left out, and code becomes a translation you pick, like a language.</p>
+<p style="font-size:40px;line-height:1.4;color:#0D1626;font-weight:700">That complete capture is what we call <span style="color:#B4470F">closed loop requirements</span>.</p>
+<aside>This is the whole pitch in one sentence. Today the code is the only complete description of a program, so everyone has to read code. If the requirements are complete, they become the description, and every language, every picture, is just a view of them.</aside>
+</section>
+<section id="closedloop" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Closed loop requirements</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#F4F0E6">How to easily understand closed loop requirements</h2>
+</div>
+<div style="display:flex;flex-direction:row;align-items:center;gap:28px;background:#16243A;border:2px solid #2A3B57;border-radius:16px;padding:28px 36px">
+<x-icon name="Book" style="color:#FF8A3D;width:64px;height:64px"></x-icon>
+<p style="flex:1;font-size:32px;line-height:1.4;color:#F4F0E6">Think of a recipe so complete that a stranger cooks your exact dish, and every “what if” is written down: out of eggs? oven runs hot? Nothing is left to guess.</p>
+</div>
+<div style="display:flex;flex-direction:row;align-items:center;gap:12px">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#16243A;border:2px solid #2A3B57;border-radius:16px;padding:28px;align-self:stretch">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#FF8A3D">1</p>
+<p style="font-size:30px;font-weight:700;line-height:1.2;color:#F4F0E6">Take a finished program</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">One that already works.</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:24px;background:#FF8A3D"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#16243A;border:2px solid #2A3B57;border-radius:16px;padding:28px;align-self:stretch">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#FF8A3D">2</p>
+<p style="font-size:30px;font-weight:700;line-height:1.2;color:#F4F0E6">Tie each line to a story step</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Who does what, and why.</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:24px;background:#FF8A3D"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#16243A;border:2px solid #2A3B57;border-radius:16px;padding:28px;align-self:stretch">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#FF8A3D">3</p>
+<p style="font-size:30px;font-weight:700;line-height:1.2;color:#F4F0E6">Read the story in order</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Step by step, every side path too.</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:24px;background:#FF8A3D"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#16243A;border:2px solid #2A3B57;border-radius:16px;padding:28px;align-self:stretch">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#FF8A3D">4</p>
+<p style="font-size:30px;font-weight:700;line-height:1.2;color:#F4F0E6">Every gap is a question</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Asked out loud, never guessed.</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:24px;background:#FF8A3D"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#FF8A3D;border:2px solid #FF8A3D;border-radius:16px;padding:28px;align-self:stretch">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#0D1626">5</p>
+<p style="font-size:30px;font-weight:700;line-height:1.2;color:#0D1626">The loop closes</p>
+<p style="font-size:26px;line-height:1.4;color:#0D1626">Every question answered, or handed to its owner.</p>
+</div>
+</div>
+<svg viewBox="0 0 1664 64" width="1664" height="64" xmlns="http://www.w3.org/2000/svg" aria-label="An arrow loops back from step five to step one: found a gap, go round again"><path d="M1523 0 V28 Q1523 50 1501 50 H163 Q141 50 141 28 V16" fill="none" stroke="#FF8A3D" stroke-width="5" stroke-dasharray="14 10"/><path d="M127 20 L141 0 L155 20 Z" fill="#FF8A3D"/></svg>
+<aside>The easiest way in is a recipe. A normal recipe gets you close. A closed loop recipe is so complete that a stranger cooks exactly your dish, because every what-if is already written down. Closed loop requirements are that recipe for a program. Take a program that already works. Tie every line of its code to a step in a story, a use case: who does what, and why. Read the story in order, including every side path. Wherever a line has no story or a story has no line, that gap becomes a question, asked out loud, never guessed. Go round again until every question is answered or handed to the person who owns it. The aim is a recipe complete enough to rebuild the program exactly; that rebuild has not been tried yet, but every requirement's check can already be run against the code.</aside>
+</section>
+<section id="loopproof" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Closed loop, measured</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:60px;font-weight:700;line-height:1.15;color:#0D1626">Every requirement carries a check, or the reason it can’t yet</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Each requirement is judged by one question: what mistake can still get past it? 35 of 43 now carry a check that can fail. The other 8 carry a written reason: calls only the author can make.</p>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Effect</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">What the code must set, call, branch on or read, and where.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Terms</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Each word bound to a name in the code, so nothing reads two ways.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Lock</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">A fingerprint as last verified. Edit the requirement, or the line it reads, and it comes back stale.</p>
+</div>
+</div>
+<div style="width:560px;display:flex;flex-direction:column;gap:16px;background:#0D1626;border-radius:20px;padding:32px 40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">On the public Blueprint</p>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#F4F0E6">84 of 84 hold</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">checks from the 25 requirements read from the code</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#FF8A3D">13 fail</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">checks from 10 of the owner’s questions: the defects</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#F4F0E6">97 of 97</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">planted faults caught</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">“Lock-On System” (hitted, blueprintue.com). The loop is still open: 18 questions only its author can answer.</p>
+<aside>This is what makes the loop more than a list. Every requirement is judged by what mistake could still get past it, thirteen criteria in all. A requirement now carries its effect in the code's own terms, which is a check that can fail, plus the words it uses bound to real names in the code, and a lock that flags it stale the moment the requirement or the code it reads changes. On the public lock-on Blueprint, 35 of 43 requirements carry a check; the other 8 carry a written reason, because only the author can decide them. The 84 checks from the 25 requirements read from the code all hold; since they are checked against that same code, they guard against change rather than prove it right. The 13 checks from 10 of the owner's questions fail on the code as published, and those are the defects. All 97 planted faults are caught. A check, not a proof. Be honest about the finish line: the loop is still open, because 18 questions can only be answered by the Blueprint's author. And 11 requirements rest on the code alone, so a mistake already in the code would be in them too.</aside>
+</section>
+<section id="prompt" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Why this matters for AI</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#F4F0E6">Nobody types “build GTA 6” and gets GTA 6</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="width:700px;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#8796AB">A prompt</p>
+<p style="font-size:40px;font-weight:700;line-height:1.3;color:#0D1626;background:#F4F0E6;padding:20px 32px;border-radius:24px">Build GTA 6.</p>
+<p style="font-size:30px;line-height:1.4;color:#B8C6D9;background:#16243A;padding:20px 32px;border-radius:24px">Which city? Whose rules? What happens when the car hits the wall? Every answer the AI invents is a guess.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">A closed loop</p>
+<div style="display:flex;flex-direction:row;gap:16px;align-items:start"><x-icon name="Check" style="color:#FF8A3D;width:40px;height:40px"></x-icon><p style="flex:1;font-size:30px;line-height:1.4;color:#F4F0E6">Every step of every story, in order</p></div>
+<div style="display:flex;flex-direction:row;gap:16px;align-items:start"><x-icon name="Check" style="color:#FF8A3D;width:40px;height:40px"></x-icon><p style="flex:1;font-size:30px;line-height:1.4;color:#F4F0E6">Every “what if”, answered or handed to its owner</p></div>
+<div style="display:flex;flex-direction:row;gap:16px;align-items:start"><x-icon name="Check" style="color:#FF8A3D;width:40px;height:40px"></x-icon><p style="flex:1;font-size:30px;line-height:1.4;color:#F4F0E6">A check the AI’s work must pass, wherever one can be written</p></div>
+</div>
+</div>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:56px;font-weight:700;line-height:1.2;color:#FF8A3D">A prompt is a wish. The loop is the instructions the AI acts on.</p>
+<aside>Keep in mind who reads these requirements: AI. Nobody types build GTA 6 into a chat box and gets GTA 6, because a prompt is a wish. It leaves every real decision open, and the AI fills each gap with a guess. Closed loop requirements are the opposite: every step of every story, every what-if answered or handed to the person who owns it, and a check the AI's work must pass wherever one can be written. The AI does not act on the prompt. It acts on the loop.</aside>
+</section>
+<section id="rawest" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:44px">
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">Take away the syntax. Three things are left.</h2>
+<div style="display:flex;flex-direction:row;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:40px">
+<x-icon name="Warning" style="color:#B4470F;width:64px;height:64px"></x-icon>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#0D1626">Problems</h3>
+<p style="font-size:30px;line-height:1.4;color:#3D4A5C">What hurts, and why someone came to the software at all.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:40px">
+<x-icon name="Lightbulb" style="color:#B4470F;width:64px;height:64px"></x-icon>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#0D1626">Solutions</h3>
+<p style="font-size:30px;line-height:1.4;color:#3D4A5C">What the system does about each problem, and when.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:40px">
+<x-icon name="Users" style="color:#B4470F;width:64px;height:64px"></x-icon>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#0D1626">Interactions</h3>
+<p style="font-size:30px;line-height:1.4;color:#3D4A5C">Every back and forth between a person and the machine.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:row;align-items:center;gap:20px;flex-wrap:wrap">
+<p style="font-size:28px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#B4470F">Written down as</p>
+<p style="font-size:30px;font-weight:500;color:#0D1626;background:#E6DFCF;padding:12px 28px;border-radius:40px">User stories</p>
+<p style="font-size:30px;font-weight:500;color:#0D1626;background:#E6DFCF;padding:12px 28px;border-radius:40px">Use case descriptions</p>
+<p style="font-size:30px;font-weight:500;color:#0D1626;background:#E6DFCF;padding:12px 28px;border-radius:40px">Class diagrams of the concepts</p>
+</div>
+<p style="font-size:40px;line-height:1.35;font-weight:700;color:#0D1626">That is the new raw element. Every language is now an interpreted one.</p>
+<aside>Code is not the rawest form of a program. Strip the syntax off and you are left with problems, solutions and interactions. We write those down the way software engineers always have: user stories, use case descriptions, class diagrams. The classes in those diagrams are concepts, not necessarily the exact classes in the code. What matters is that the requirements close the loop. The aim: complete enough that an AI could rebuild the system as it is, with nothing misread.</aside>
+</section>
+<section id="onesource" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column">
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#F4F0E6">One source. Every view.</h2>
+<svg viewBox="0 0 760 700" width="760" height="700" xmlns="http://www.w3.org/2000/svg" aria-label="A hub diagram: the loop in the centre, linked to Blueprint, C#, C++, pseudo-code and a 3D city view" style="position:absolute;left:128px;top:250px;width:760px;height:700px">
+<g stroke="#49B6FF" stroke-width="3" stroke-dasharray="10 8" opacity="0.8">
+<path d="M380 350 L380 92"/><path d="M380 350 L660 250"/><path d="M380 350 L585 585"/><path d="M380 350 L175 585"/><path d="M380 350 L100 250"/>
+</g>
+<circle cx="380" cy="350" r="150" fill="#FF8A3D"/>
+<g fill="#16243A" stroke="#49B6FF" stroke-width="3">
+<circle cx="380" cy="92" r="88"/><circle cx="660" cy="250" r="88"/><circle cx="585" cy="585" r="88"/><circle cx="175" cy="585" r="88"/><circle cx="100" cy="250" r="88"/>
+</g>
+</svg>
+<p style="position:absolute;left:378px;top:552px;width:260px;font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;text-align:center;color:#0D1626">The loop</p>
+<p style="position:absolute;left:383px;top:612px;width:250px;font-size:24px;line-height:1.3;text-align:center;color:#0D1626">requirements and one logic graph</p>
+<p style="position:absolute;left:420px;top:324px;width:176px;font-size:28px;font-weight:700;text-align:center;color:#F4F0E6">Blueprint</p>
+<p style="position:absolute;left:700px;top:482px;width:176px;font-size:28px;font-weight:700;text-align:center;color:#F4F0E6">C#</p>
+<p style="position:absolute;left:625px;top:817px;width:176px;font-size:28px;font-weight:700;text-align:center;color:#F4F0E6">C++</p>
+<p style="position:absolute;left:215px;top:819px;width:176px;font-size:24px;font-weight:700;text-align:center;color:#F4F0E6">Pseudo-code</p>
+<p style="position:absolute;left:140px;top:482px;width:176px;font-size:28px;font-weight:700;text-align:center;color:#F4F0E6">3D city</p>
+<div style="position:absolute;left:968px;top:262px;width:824px;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#FF8A3D">92 of 92</p>
+<p style="font-size:28px;line-height:1.4;color:#B8C6D9">Unreal Engine’s own template Blueprints turned into C# and pseudo-code, none failed. The C++ view still marks 11% as C#.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#FF8A3D">4,201 of 4,201</p>
+<p style="font-size:28px;line-height:1.4;color:#B8C6D9">Methods of a game in production drawn as node graphs, each one printed back to its exact source.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#FF8A3D">1,270 of 1,270</p>
+<p style="font-size:28px;line-height:1.4;color:#B8C6D9">Methods of a second game, a 2011 XNA title, through the same reader.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8796AB">Counted by the converter’s round-trip check: Unreal 5.7.1’s own templates, our production game, and a 2011 XNA game.</p>
+<aside>Because the underlying structure is the loop, not any one language, the same logic can be shown however a person reads best: Blueprint nodes, C#, C++, plain pseudo-code, or a 3D city you can fly through. Blueprints convert to code and code converts to Blueprints. These numbers are measured, not projected: 92 template Blueprints from Unreal Engine 5.7 converted with none failing (275 methods, every one parses as C#; the C++ view still leaves 11.3% of the templates and 5.4% of the public sample marked as C#); all 4,201 methods of our game in production drawn as graphs and printed back to identical source; and a second, older game through the same reader.</aside>
+</section>
+<section id="nuke" data-transition="fade" style="background:#05080F;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:0;display:flex;flex-direction:column">
+<img src="assets/nuke_blueprints.gif" alt="Ripley from Aliens looks down, making up her mind" style="position:absolute;left:565px;top:72px;width:790px;height:720px;object-fit:cover;border-radius:8px">
+<p style="position:absolute;left:128px;top:812px;width:1664px;font-family:'DM Sans', Arial, sans-serif;font-size:48px;font-weight:700;line-height:1.3;text-align:center;color:#FBFAF5;text-shadow:3px 3px 0 #000000, -3px 3px 0 #000000, 3px -3px 0 #000000, -3px -3px 0 #000000">I say we take off and nuke Blueprints from orbit.<br>It’s the only way to be sure.</p>
+<aside>This one is a joke, and say so with a grin. Anyone who has inherited a big Blueprint has felt this. Pause, then click.</aside>
+</section>
+<section id="keep" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Kidding</p>
+<h1 style="font-family:'Oswald', Impact, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#0D1626">We keep Blueprints.</h1>
+</div>
+<p style="font-size:44px;line-height:1.4;color:#3D4A5C;width:1400px">Whole teams build games with them, and for small things they are wonderful. The trouble is a paradox.</p>
+<aside>Of course we are not nuking anything. Whole teams make games with Blueprints, and for a small feature they are great. The trouble is a paradox, and the next slide shows it.</aside>
+</section>
+<section id="paradox" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">The Blueprint paradox</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#F4F0E6">Easy on day one. Out of control by month six.</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:64px;align-items:start">
+<div style="width:560px;display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:40px;font-weight:700;line-height:1.1;color:#49B6FF">Day 1</p>
+<img src="assets/day1.png" alt="A tidy Blueprint: Event BeginPlay wired to Spawn Actor wired to Print String" style="width:560px;height:124px;object-fit:contain;border-radius:8px">
+<p style="font-size:36px;font-weight:700;line-height:1.3;color:#F4F0E6">How did something so easy get so out of control?</p>
+<p style="font-size:28px;line-height:1.4;color:#B8C6D9">Built to make logic simple for non-programmers, Blueprints turn any complex system into a massive, unreadable grid.</p>
+<p style="font-size:24px;line-height:1.4;color:#8796AB">Both pictures are illustrations in the editor’s style, not a real project.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:40px;font-weight:700;line-height:1.1;color:#FF8A3D">Month 6</p>
+<img src="assets/month6.png" alt="The same Blueprint grown into spaghetti: dozens of nodes, wires crossing everywhere, a comment box reading DO NOT TOUCH, works somehow" style="width:1040px;height:582px;object-fit:cover;border-radius:8px">
+</div>
+</div>
+<aside>Every Blueprint starts like the one on the left: an event, a node, a print. Nobody sets out to build the one on the right. It grows one reasonable change at a time: a cast here, a timer there, one more wire to a value on the other side of the graph, and a comment that says do not touch. That is the Blueprint paradox: the tool made to keep logic simple is exactly what makes a big system unreadable. Both pictures are our own illustrations, drawn in the editor's style.</aside>
+</section>
+<section id="escalated" data-transition="fade" style="background:#2A1A12;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:0;display:flex;flex-direction:column">
+<img src="assets/thatescalated.jpg" alt="Ron Burgundy from Anchorman stares into the camera" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<p style="position:absolute;left:128px;top:56px;width:1664px;font-family:'Oswald', Impact, sans-serif;font-size:120px;font-weight:700;line-height:1.1;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#FBFAF5;text-shadow:5px 5px 0 #05080F, -5px 5px 0 #05080F, 5px -5px 0 #05080F, -5px -5px 0 #05080F, 0 6px 0 #05080F, 0 -6px 0 #05080F, 6px 0 0 #05080F, -6px 0 0 #05080F">Well…</p>
+<p data-build-in="pop" style="position:absolute;left:128px;top:600px;width:470px;font-size:32px;font-weight:700;line-height:1.3;color:#0D1626;background:#F4F0E6;padding:16px 24px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.45)">One public 162-node Blueprint: 200 wires, 29 crossings.</p>
+<p style="position:absolute;left:128px;top:812px;width:1664px;font-family:'Oswald', Impact, sans-serif;font-size:120px;font-weight:700;line-height:1.1;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#FBFAF5;text-shadow:5px 5px 0 #05080F, -5px 5px 0 #05080F, 5px -5px 0 #05080F, -5px -5px 0 #05080F, 0 6px 0 #05080F, 0 -6px 0 #05080F, 6px 0 0 #05080F, -6px 0 0 #05080F">That escalated quickly.</p>
+<aside>A Blueprint starts as drag a node, wire it, press play. Then the system grows. The lock-on Blueprint we measured is only 162 nodes and it already has 200 wires crossing each other 29 times. How did something so easy get so hard, so fast? That is the Blueprint paradox, and it comes down to three frictions.</aside>
+</section>
+<section id="frictions" data-transition="fade" style="background:#FF8A3D;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#0D1626">The Blueprint paradox, in three frictions</p>
+<h1 style="font-family:'Oswald', Impact, sans-serif;font-size:132px;font-weight:700;line-height:1.05;color:#0D1626">Why Blueprints hurt</h1>
+</div>
+<div style="display:flex;flex-direction:row;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;border-top:6px solid #0D1626;padding:24px 0 0 0">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#0D1626">1</p>
+<p style="font-size:40px;font-weight:700;line-height:1.2;color:#0D1626">Too many lines.</p>
+<p style="font-size:30px;line-height:1.4;color:#2B1A10">Wires everywhere, until nobody can see the logic.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;border-top:6px solid #0D1626;padding:24px 0 0 0">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#0D1626">2</p>
+<p style="font-size:40px;font-weight:700;line-height:1.2;color:#0D1626">The objects go missing.</p>
+<p style="font-size:30px;line-height:1.4;color:#2B1A10">Object-oriented underneath, procedural on screen.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;border-top:6px solid #0D1626;padding:24px 0 0 0">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#0D1626">3</p>
+<p style="font-size:40px;font-weight:700;line-height:1.2;color:#0D1626">Forcing objects in is worse.</p>
+<p style="font-size:30px;line-height:1.4;color:#2B1A10">A strict object graph buries you in pipes and gates.</p>
+</div>
+</div>
+<aside>Unreal Blueprints were meant to make game logic easy, and for small things they do. At scale they hit three walls. One: the screen fills with wires. Two: Blueprints are object-oriented under the hood, but the graph hides that and reads as procedural. Three: if you tried to force a visual graph to show real object-oriented structure, it would get worse, not better. The next three slides take each one, measured on a real Blueprint that someone published online.</aside>
+</section>
+<section id="sample" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Where our numbers come from</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">We picked a messy Blueprint on purpose</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Real, public, and not ours</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Someone published it on blueprintue.com to share it. We did not write it, tidy it, or go looking for a flattering one.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Small enough to read, big enough to tangle</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">A lock-on targeting system for Unreal Engine 5.0: 162 nodes spread over 12 graphs.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Counted, never typed</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Every Blueprint number in this deck is produced by our tools from the pasted text, which they re-read from the published page.</p>
+</div>
+</div>
+<div style="width:600px;display:flex;flex-direction:column;gap:24px;background:#0D1626;border-radius:20px;padding:40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">Why this one</p>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:52px;font-weight:700;line-height:1.15;color:#F4F0E6">If the tools can read a stranger’s messy Blueprint, they can read yours.</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">The game numbers come from our own game in production: 4,201 methods and six recorded battles.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Sample: “Lock-On System” by hitted, blueprintue.com/blueprint/kg2evmas. The pasted text stays the author’s; we keep only our counts.</p>
+<aside>Before any numbers, where they come from. We did not grade our own homework. We took a Blueprint someone published on blueprintue.com, a lock-on targeting system, 162 nodes in 12 graphs. It is real, it is public, it is not ours, and it is tangled in exactly the ways the paradox predicts. Every number about it in this deck is counted by our tools, not typed by hand, and the tools re-read the published page to make sure the text has not changed. The numbers about our game come from our own production code and six recorded battles. The point: if this reads a stranger's messy Blueprint, it can read yours.</aside>
+</section>
+<section id="clutter" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Friction 1 · Too many lines</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">The visual clutter of Blueprints</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">The spaghetti wire effect</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Text reads top to bottom. A Blueprint drags each value across the screen, so one shared variable cuts through everything else.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Zoom blindness</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Zoom out to see the shape and you can’t read a node. Zoom in to fix one and the shape is gone.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Two kinds of wire, one screen</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">White wires say what happens next. Coloured wires carry values. They cross, and you have to track both at once.</p>
+</div>
+</div>
+<div style="width:560px;display:flex;flex-direction:column;gap:24px;background:#0D1626;border-radius:20px;padding:40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">Measured on a real Blueprint</p>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">200 wires</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">82 for order, 118 for values</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">29 crossings</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">17 of them an order wire over a value wire</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">2,736 × 2,160</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">units of canvas to pan for one event graph</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Sample: “Lock-On System” by hitted, published on blueprintue.com (Unreal Engine 5.0, 162 nodes). Counts read from the author’s own layout.</p>
+<aside>To keep this honest we did not pick a Blueprint we wrote. We took one somebody published online, a lock-on targeting system, 162 nodes, and measured it. Two hundred wires. Twenty-nine places where wires cross, seventeen of them an execution wire crossing a data wire. And the event graph alone covers a canvas you have to pan around to read.</aside>
+</section>
+<section id="oop" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Friction 2 · The objects go missing</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">Objects underneath, procedures on screen</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">The hierarchy hides</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">A child Blueprint inherits everything from its parent, yet its graph opens blank. Reaching the parent takes a special node.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">No encapsulation</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Text code hides a fifteen-step routine behind one line, TakeDamage(10). In Blueprints it gets copy-pasted, node for node.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">The Cast To trap</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Instead of one clean interface call, every use starts with a Cast To roadblock in the middle of the graph.</p>
+</div>
+</div>
+<div style="width:560px;display:flex;flex-direction:column;gap:24px;background:#0D1626;border-radius:20px;padding:40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">Measured on a real Blueprint</p>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">0 parents</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">named anywhere in the pasted Blueprints</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">4 Cast Tos</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">each testing an actor’s class before using it</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">1 rule, twice</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">a six-node chain copy-pasted, plus 3 variables written from several graphs</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Sample: “Lock-On System” by hitted, published on blueprintue.com (Unreal Engine 5.0, 162 nodes).</p>
+<aside>Blueprints are object-oriented. Every Blueprint has a parent class and inherits its health, movement and functions. But the graph hides all of it. In the lock-on sample, the pasted Blueprints never say what their parents are, there are four Cast To nodes standing in for what should be one interface, and the same six-node chain is copy-pasted twice.</aside>
+</section>
+<section id="pureoop" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Friction 3 · Forcing objects in is worse</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">Why a pure object graph fails people</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">The grid problem</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Player.Weapon.Stats.Damage is one line of text. Drawn as boxes inside boxes, it is a map you have to travel.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Invisible relationships</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Draw every child-to-parent link as a pipe and the screen turns into a matrix of lines.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:34px;font-weight:700;line-height:1.2;color:#0D1626">Encapsulation gates</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Showing Health on screen would take a reference, a getter and a gate, each one a node to wire by hand.</p>
+</div>
+</div>
+<div style="width:560px;display:flex;flex-direction:column;gap:24px;background:#0D1626;border-radius:20px;padding:40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">Measured on a real Blueprint</p>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">12 graphs</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">spread over 4 pasted texts, one variable written in 4 of them</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">5 calls</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">made by a function name typed in a string, which the editor can’t follow</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">43 of 162</p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">nodes are only variable reads and math</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Sample: “Lock-On System” by hitted, published on blueprintue.com (Unreal Engine 5.0, 162 nodes).</p>
+<aside>The obvious fix, draw the real object structure, makes things worse. Text hides nesting and relationships in a few characters; a picture has to draw them. In the sample, the logic is spread over twelve graphs, five calls are made by a name typed into a string so nothing can follow them, and more than a quarter of the nodes are just reading a variable or doing arithmetic. So the answer is not more drawing. It is a different shape.</aside>
+</section>
+<section id="easy" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">What is easy?</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">Visual programming misread what makes things easy</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#6A7280">The bet</p>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#0D1626">Pictures are easier than words</h3>
+<p style="font-size:30px;line-height:1.4;color:#3D4A5C">So draw the code: boxes and wires instead of text. It works, for three nodes.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#0D1626;border:2px solid #0D1626;border-radius:16px;padding:40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">How people understand</p>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:52px;font-weight:700;line-height:1.1;color:#F4F0E6">We see pictures. We understand stories.</h3>
+<p style="font-size:30px;line-height:1.4;color:#B8C6D9">Who wants what, what happens next, and what if it goes wrong.</p>
+</div>
+</div>
+<p style="font-size:40px;line-height:1.35;font-weight:700;color:#0D1626">A wiring diagram is a picture with no story. That is why it stops being easy.</p>
+<aside>Visual programming is a textbook example of misunderstanding how people understand. It asked: what is easy? And it answered: pictures. That is half right. We take in a picture at a glance, and we remember where things are. But we understand through stories: someone wants something, things happen in order, and something can go wrong. A wiring diagram has the picture and none of the story, so it is easy on day one and impossible by month six.</aside>
+</section>
+<section id="stories" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Back to the cave</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#F4F0E6">We have understood in stories since the cave</h2>
+</div>
+<div style="display:flex;flex-direction:row;align-items:center;gap:32px">
+<svg viewBox="0 0 700 440" width="700" height="440" xmlns="http://www.w3.org/2000/svg" aria-label="A cave painting: three stick-figure hunters with spears close in on a bison">
+<defs>
+<radialGradient id="rock" cx="0.45" cy="0.45" r="0.75"><stop offset="0" stop-color="#D49A62"/><stop offset="0.6" stop-color="#B07A48"/><stop offset="1" stop-color="#7A4E2C"/></radialGradient>
+</defs>
+<rect x="0" y="0" width="700" height="440" rx="24" fill="url(#rock)"/>
+<g fill="#5E3A1E" opacity="0.18"><ellipse cx="120" cy="90" rx="90" ry="40"/><ellipse cx="560" cy="380" rx="130" ry="50"/><ellipse cx="420" cy="70" rx="70" ry="26"/><ellipse cx="80" cy="360" rx="60" ry="30"/></g>
+<path d="M610 70 l14 -6 l4 14 l10 -4 l2 30 q-6 24 -26 26 q-18 -2 -22 -22 l0 -30 l10 4 z" fill="#8E2A14" opacity="0.55"/>
+<path d="M382 250 Q392 192 452 182 Q502 150 562 186 Q612 196 622 242 Q627 286 602 300 L597 342 L582 342 L580 306 Q522 316 472 306 L470 346 L454 346 L450 302 Q422 296 407 282 Q387 302 372 298 Q352 292 354 272 Q358 257 382 250 Z" fill="#7A2E16" stroke="#3A1A0E" stroke-width="4" stroke-linejoin="round"/>
+<path d="M374 254 Q360 238 372 226 M392 250 Q396 232 410 230" fill="none" stroke="#3A1A0E" stroke-width="5" stroke-linecap="round"/>
+<path d="M622 240 Q648 236 652 262" fill="none" stroke="#3A1A0E" stroke-width="4" stroke-linecap="round"/>
+<g fill="none" stroke="#3A1A0E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="110" cy="236" r="12" fill="#3A1A0E"/><path d="M110 250 L112 300 M112 300 L92 346 M112 300 L130 346 M110 266 L140 252 M110 266 L84 284"/>
+<circle cx="196" cy="226" r="12" fill="#3A1A0E"/><path d="M196 240 L200 292 M200 292 L180 340 M200 292 L220 338 M198 256 L228 246 M198 256 L174 276"/>
+<circle cx="270" cy="250" r="12" fill="#3A1A0E"/><path d="M270 264 L270 314 M270 314 L252 358 M270 314 L290 356 M270 280 L300 270 M270 280 L246 296"/>
+</g>
+<g stroke="#3A1A0E" stroke-width="4" stroke-linecap="round"><path d="M128 258 L262 196"/><path d="M216 250 L350 222"/><path d="M290 274 L372 262"/></g>
+</svg>
+<x-shape kind="arrow-right" style="width:64px;height:32px;background:#FF8A3D"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#16243A;border:2px solid #2A3B57;border-radius:16px;padding:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;font-weight:500;line-height:1.4;color:#FF8A3D">UC-1  Hunt the bison</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.4;color:#B8C6D9">Actor: the hunters</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.4;color:#B8C6D9">Goal:  feed the tribe</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.4;color:#F4F0E6">1. Track the herd to the river.</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.4;color:#F4F0E6">2. Circle one bison.</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.4;color:#F4F0E6">3. Strike together.</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.4;color:#49B6FF">2a. Herd stampedes: climb, wait.</p>
+</div>
+</div>
+<p style="font-size:34px;line-height:1.35;font-weight:700;color:#F4F0E6">A use case is that same story: an actor, a goal, steps in order, and every “what if”. That is why the loop is built on them.</p>
+<aside>Long before writing, people passed on what they knew as stories, and painted them on cave walls: who, what they wanted, what happened, what to do when it goes wrong. A UML use case description is exactly that shape. Here is the hunt from the wall written as one: an actor, a goal, three steps in order, and the alternate path when the herd stampedes. That is why closed loop requirements are built on use cases, and why human ergonomics means stories in a line, not wires on a grid.</aside>
+</section>
+<section id="threeideas" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:64px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">The fix</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:96px;font-weight:700;line-height:1.1;color:#F4F0E6">Three ideas, working together</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;border-top:6px solid #FF8A3D;padding:28px 0 0 0">
+<p style="font-size:28px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">1 · The source</p>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#F4F0E6">Closed loop requirements</h3>
+<p style="font-size:30px;line-height:1.4;color:#B8C6D9">One complete description that every language and every picture is drawn from.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;border-top:6px solid #49B6FF;padding:28px 0 0 0">
+<p style="font-size:28px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#49B6FF">2 · The shape</p>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#F4F0E6">Human ergonomics</h3>
+<p style="font-size:30px;line-height:1.4;color:#B8C6D9">Logic arranged the way a mind holds it: parent and child, one step after another.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;border-top:6px solid #F4F0E6;padding:28px 0 0 0">
+<p style="font-size:28px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#F4F0E6">3 · The motion</p>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#F4F0E6">Observational understanding</h3>
+<p style="font-size:30px;line-height:1.4;color:#B8C6D9">A system that keeps running, so you learn it by watching it, not by reading it.</p>
+</div>
+</div>
+<aside>Here is the fix, and it is three ideas, not one. The source is closed loop requirements. The shape is human ergonomics: how the logic is laid out for a human brain. The motion is observational understanding: the system keeps running in front of you so you can see what it does. What it is, how it looks, how it moves.</aside>
+</section>
+<section id="ergonomics" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Idea 2 · Human ergonomics</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">Shaped for the way people think</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C"><b>Analogies you already know.</b> A class is a district in a city. Its parent class is the floor it stands on.</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C"><b>Parent and child.</b> A big idea breaks into smaller ones you open one at a time.</p>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C"><b>In a line.</b> Steps read in order, like a story, never as a web of wires.</p>
+</div>
+<div style="position:relative;width:700px;height:420px">
+<svg viewBox="0 0 700 420" width="700" height="420" xmlns="http://www.w3.org/2000/svg" aria-label="Side view of one class: an orange order pipe runs above a row of nodes, a blue value pipe runs below them, and the class stands on its parent's floor">
+<rect x="0" y="0" width="700" height="420" rx="20" fill="#0D1626"/>
+<path d="M40 110 H660" stroke="#FF8A3D" stroke-width="10" stroke-linecap="round"/>
+<path d="M650 96 L676 110 L650 124 Z" fill="#FF8A3D"/>
+<path d="M115 110 V160 M275 110 V160 M435 110 V160 M595 110 V160" stroke="#FF8A3D" stroke-width="5"/>
+<g fill="#F4F0E6"><rect x="60" y="160" width="110" height="64" rx="10"/><rect x="220" y="160" width="110" height="64" rx="10"/><rect x="380" y="160" width="110" height="64" rx="10"/><rect x="540" y="160" width="110" height="64" rx="10"/></g>
+<path d="M115 224 V256 M275 224 V256 M435 224 V256 M595 224 V256" stroke="#49B6FF" stroke-width="4"/>
+<path d="M40 256 H660" stroke="#49B6FF" stroke-width="6" stroke-linecap="round"/>
+<rect x="30" y="300" width="640" height="38" rx="8" fill="#2A3B57"/>
+<rect x="10" y="346" width="680" height="58" rx="8" fill="#49B6FF"/>
+</svg>
+<p style="position:absolute;left:40px;top:40px;width:620px;font-size:24px;font-weight:700;color:#FF8A3D">Order runs up here</p>
+<p style="position:absolute;left:40px;top:262px;width:620px;font-size:24px;font-weight:700;color:#49B6FF">Values run down here</p>
+<p style="position:absolute;left:40px;top:303px;width:620px;font-size:24px;font-weight:700;color:#F4F0E6;text-align:center">The child class: one district</p>
+<p style="position:absolute;left:40px;top:359px;width:620px;font-size:26px;font-weight:700;color:#0D1626;text-align:center">The parent class: the floor it stands on</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:row;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;border-left:6px solid #B4470F;padding:4px 0 4px 24px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#0D1626">0 long wires</p>
+<p style="font-size:24px;line-height:1.4;color:#3D4A5C">across six or more steps, where a one-to-one drawing of the game’s core had 2,343</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;border-left:6px solid #B4470F;padding:4px 0 4px 24px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#0D1626">Never cross</p>
+<p style="font-size:24px;line-height:1.4;color:#3D4A5C">order pipes run above the nodes and value pipes below, by construction</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;border-left:6px solid #B4470F;padding:4px 0 4px 24px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:48px;font-weight:700;line-height:1.1;color:#0D1626">Folded in</p>
+<p style="font-size:24px;line-height:1.4;color:#3D4A5C">variable reads and math become words in a line, not nodes to wire</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Counted by the layout check over every graph of our game’s core code.</p>
+<aside>Human ergonomics means we take a hard problem and break it into analogies and mnemonics a person already understands, arranged as parents and children, and put in a line. In the view, a class is a district in a city standing on its parent's floor, so inheritance is something you see, not something you remember. Order runs on pipes above the nodes and values run below, so they can never cross. A value read far away gets a small chip beside its reader instead of a long wire: across the whole game core that is zero long wires, where drawing it one to one would have given 2,343.</aside>
+</section>
+<section id="observation" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Idea 3 · Observational understanding</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#F4F0E6">Learn it by watching it run</h2>
+</div>
+<svg viewBox="0 0 1664 200" width="1664" height="200" xmlns="http://www.w3.org/2000/svg" aria-label="A pipe carries pulses of data through a valve; after the valve the pipe is thicker and orange; under it, a timeline scrubber with a rewind mark">
+<rect x="0" y="50" width="770" height="36" rx="18" fill="#16243A" stroke="#49B6FF" stroke-width="3"/>
+<g fill="#49B6FF"><circle cx="120" cy="68" r="10"/><circle cx="300" cy="68" r="10"/><circle cx="480" cy="68" r="10"/><circle cx="660" cy="68" r="10"/></g>
+<rect x="870" y="40" width="794" height="56" rx="28" fill="#16243A" stroke="#FF8A3D" stroke-width="3"/>
+<g fill="#FF8A3D"><circle cx="960" cy="68" r="16"/><circle cx="1140" cy="68" r="16"/><circle cx="1320" cy="68" r="16"/><circle cx="1500" cy="68" r="16"/></g>
+<rect x="770" y="54" width="100" height="28" fill="#2A3B57"/>
+<circle cx="820" cy="22" r="20" fill="none" stroke="#F4F0E6" stroke-width="6"/>
+<path d="M820 2 V42 M800 22 H840 M820 42 V54" stroke="#F4F0E6" stroke-width="5"/>
+<path d="M80 160 H1604" stroke="#2A3B57" stroke-width="8" stroke-linecap="round"/>
+<path d="M80 160 H1050" stroke="#FF8A3D" stroke-width="8" stroke-linecap="round"/>
+<circle cx="1050" cy="160" r="18" fill="#F4F0E6"/>
+<path d="M50 146 L26 160 L50 174 Z M30 146 L6 160 L30 174 Z" fill="#F4F0E6"/>
+</svg>
+<div style="display:flex;flex-direction:row;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#16243A;border-radius:16px;padding:32px">
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F4F0E6">Watch it run</h3>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Pulses travel the pipes. Heavy values flow thick, simple ones trickle. Two lock-on functions fire 100 times a second, and here they glow red.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#16243A;border-radius:16px;padding:32px">
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F4F0E6">Rewind it</h3>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Every path replays step by step: all 54 in the sample. On our game, scrubbing found a deliberately planted bug at its exact step: one hit, 339 to 372.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#16243A;border-radius:16px;padding:32px">
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F4F0E6">Change it mid-flight</h3>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Turn a valve to double one damage value: six battles replay with it, the slowest in 0.84 s, with no rebuild.</p>
+</div>
+</div>
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6">Try it: play <a href="../city/#pong">Pong</a> or <a href="../city/#asteroids">the asteroid shooter</a> and watch its own Blueprint run, each node lighting as it fires.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8796AB">Game numbers: six recorded battles of our game, replayed headlessly. Sample numbers: the Lock-On Blueprint.</p>
+<aside>Like water in pipes with valves. The system keeps running in front of you. You can see what flows where, rewind it, and turn a valve to change something while it runs, then watch what happens downstream. In the sample, two functions run a hundred times a second and the Unreal editor gives you no sign of it; in the view they glow red. On our game, a bug we planted on purpose was found by scrubbing back to the exact step where one hit went from 339 to 372 damage, and doubling a damage value replayed six whole battles with no rebuild, the slowest in under a second. And you can try it yourself: Pong and a whole public asteroid shooter both play on the code converted from their Blueprints, and every node lights as it runs.</aside>
+</section>
+<section id="caught" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Proof · A public Blueprint</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#F4F0E6">The loop asks what a reader misses</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:56px;align-items:start">
+<div style="width:520px;display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:160px;font-weight:700;line-height:1;color:#FF8A3D">18 vs 9</p>
+<p style="font-size:30px;line-height:1.4;color:#B8C6D9">The loop holds 18 questions only the owner can answer. An AI reasoning from the converted code alone reached 9 of them.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#49B6FF">Some of what it flagged</p>
+<div style="background:#16243A;border-left:6px solid #FF8A3D;border-radius:12px;padding:20px 28px">
+<p style="font-size:28px;line-height:1.4;color:#F4F0E6">The enemy writes <span style="color:#FF8A3D">DistanceToFrankVar</span>. The search reads <span style="color:#FF8A3D">Distance to Frank Var</span>. Two different variables.</p>
+</div>
+<div style="background:#16243A;border-left:6px solid #FF8A3D;border-radius:12px;padding:20px 28px">
+<p style="font-size:28px;line-height:1.4;color:#F4F0E6">When the locked-on target dies, the lock is never released.</p>
+</div>
+<div style="background:#16243A;border-left:6px solid #FF8A3D;border-radius:12px;padding:20px 28px">
+<p style="font-size:28px;line-height:1.4;color:#F4F0E6">Every enemy runs a line trace 100 times a second, with debug drawing left on.</p>
+</div>
+<div style="background:#16243A;border-left:6px solid #FF8A3D;border-radius:12px;padding:20px 28px">
+<p style="font-size:28px;line-height:1.4;color:#F4F0E6">Does the old target ever hear it lost the lock? The pasted graphs never say.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Sample: “Lock-On System” by hitted on blueprintue.com. 162 of 162 nodes tied; 54 paths: 48 covered, 6 excluded with a reason.</p>
+<aside>This is what closing the loop buys you. We gave an AI the converted code and asked what is wrong with it. It reached nine of the questions the owner needs to answer. The requirement graph, which ties every node to a requirement and accounts for all 54 paths, holds all eighteen. Some are plain bugs: the enemy writes one variable and the search reads a differently spelled one, so the two never meet. In a Blueprint those are two boxes in different graphs and nobody would ever see it.</aside>
+</section>
+<section id="scoreboard" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Before and after</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">The same Blueprint, side by side</h2>
+</div>
+<table style="font-family:'DM Sans', Arial, sans-serif;font-size:28px;color:#0D1626">
+<tr style="background:#0D1626"><th style="width:28%;color:#F4F0E6;text-align:left">Friction</th><th style="width:34%;color:#F4F0E6;text-align:left">As published</th><th style="width:38%;color:#FF8A3D;text-align:left">In the new view</th></tr>
+<tr><td>Long wires</td><td>200 wires, 29 crossings</td><td>0 wires across 6 or more steps</td></tr>
+<tr style="background:#EAE3D3"><td>Order over values</td><td>17 crossings</td><td>None: they run on separate levels</td></tr>
+<tr><td>Finding one node</td><td>Pan a 2,736 × 2,160 canvas</td><td>One typed or spoken command</td></tr>
+<tr style="background:#EAE3D3"><td>The hidden parent</td><td>Named nowhere</td><td>Read from the code: FrankBP is a Character</td></tr>
+<tr><td>Cast To</td><td>4 casts</td><td>1 interface, proposed (not yet applied)</td></tr>
+<tr style="background:#EAE3D3"><td>Answering 10 questions</td><td>1.6 million tokens of raw text</td><td>9,053 tokens: 181× fewer</td></tr>
+<tr><td>Every node accounted for</td><td>No link to any requirement</td><td>162 of 162 tied to a requirement</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Measured by the tools on “Lock-On System” (hitted, blueprintue.com). Not yet measured with people: that is the next step.</p>
+<aside>Here is the whole story on one slide, all measured on the same published Blueprint. Every row on the right is something the view does today. One honest caveat: these are machine measurements. Whether it removes the friction for people is what we test next.</aside>
+</section>
+<section id="zip" data-transition="fade" style="background:#070C16;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">The far future</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#F4F0E6">Picture a program that ships as a zip file</h2>
+</div>
+<div style="display:flex;flex-direction:row;align-items:center;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:16px;background:#16243A;border:2px solid #2A3B57;border-radius:20px;padding:32px;align-self:stretch">
+<svg viewBox="0 0 160 190" width="160" height="190" xmlns="http://www.w3.org/2000/svg" aria-label="A zip file icon"><path d="M12 8 H112 L148 44 V182 H12 Z" fill="#F4F0E6" stroke="#B8C6D9" stroke-width="3"/><path d="M112 8 V44 H148" fill="#D9D2C2" stroke="#B8C6D9" stroke-width="3"/><g fill="#0D1626"><rect x="72" y="16" width="16" height="10"/><rect x="72" y="36" width="16" height="10"/><rect x="72" y="56" width="16" height="10"/><rect x="72" y="76" width="16" height="10"/><rect x="72" y="96" width="16" height="10"/></g><rect x="62" y="114" width="36" height="44" rx="6" fill="#FF8A3D"/><rect x="72" y="126" width="16" height="20" rx="3" fill="#0D1626"/></svg>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;font-weight:500;color:#F4F0E6">game.zip</p>
+</div>
+<x-shape kind="arrow-right" style="width:56px;height:28px;background:#FF8A3D"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#16243A;border:2px solid #2A3B57;border-radius:20px;padding:32px;align-self:stretch">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#8796AB">Inside</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;font-weight:500;line-height:1.4;color:#F4F0E6">stories.graph</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;font-weight:500;line-height:1.4;color:#F4F0E6">rules.graph</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;font-weight:500;line-height:1.4;color:#F4F0E6">checks.graph</p>
+<p style="font-size:28px;font-weight:700;line-height:1.4;color:#FF8A3D">No .cpp, no .cs, no Blueprints</p>
+</div>
+<x-shape kind="arrow-right" style="width:56px;height:28px;background:#FF8A3D"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FF8A3D;border:2px solid #FF8A3D;border-radius:20px;padding:32px;align-self:stretch">
+<x-icon name="Play" style="color:#0D1626;width:72px;height:72px"></x-icon>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#0D1626">Unpacked by AI</p>
+<p style="font-size:28px;line-height:1.4;color:#0D1626">and written into a running program, in real time.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#F4F0E6">Does the zip contain code? <span style="color:#FF8A3D">No.</span></p>
+<p style="font-size:32px;line-height:1.4;color:#B8C6D9">It holds a graph of closed loop reasoning: the program’s raw essence, which an AI extrapolates back into the program.</p>
+</div>
+<aside>Picture the far future. A program ships as a zip file. You unzip it and an AI builds the program from it, in real time, on whatever machine it lands on. So here is the question: does that zip contain code? No. It holds a graph database of closed loop reasoning: every story, every rule, every check. That is the program's raw essence, and the code is extrapolated back out of it each time. That is what we mean by I'm the code now. This slide is a picture of where it leads, not something we have built.</aside>
+</section>
+<section id="future" data-transition="fade" style="background:#070C16;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:48px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#FF8A3D">Five years from now</p>
+<div style="display:flex;flex-direction:column;gap:8px">
+<h1 style="font-family:'Oswald', Impact, sans-serif;font-size:140px;font-weight:700;line-height:1.05;color:#F4F0E6">You describe it.</h1>
+<h1 style="font-family:'Oswald', Impact, sans-serif;font-size:140px;font-weight:700;line-height:1.05;color:#FF8A3D">The loop holds it.</h1>
+<h1 style="font-family:'Oswald', Impact, sans-serif;font-size:140px;font-weight:700;line-height:1.05;color:#49B6FF">You see it your way.</h1>
+</div>
+<p style="font-size:40px;line-height:1.4;color:#B8C6D9;width:1400px">Blueprints, C#, C++, a city you fly through: all just views. The requirements are the program.</p>
+<aside>Here is where this goes. Nobody reads the assembly today; in five years nobody will have to read the code either. You say what you want. The closed loop holds it completely, with every path accounted for. And each person looks at it in whatever form fits their mind: nodes, text, a city, a replay. Porting from one engine to another stops being a question of whether, and becomes a question of how long.</aside>
+</section>
+<section id="today" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Where it stands today</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">Built, measured, and ready for people</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:36px">
+<x-icon name="CheckCircle" style="color:#B4470F;width:56px;height:56px"></x-icon>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#0D1626">Working now</h3>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Blueprint to code and code to graph, a five-way view, the 3D city, two games playing on their converted Blueprints, replays and valves.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:36px">
+<x-icon name="Users" style="color:#B4470F;width:56px;height:56px"></x-icon>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#0D1626">Next</h3>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Developers using it for real, with friction measured before and after. So far only machines have tested it.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:36px">
+<x-icon name="Tool" style="color:#B4470F;width:56px;height:56px"></x-icon>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#0D1626">Then</h3>
+<p style="font-size:28px;line-height:1.4;color:#3D4A5C">Inside the Unreal editor as a panel, and spoken changes, not only spoken commands.</p>
+</div>
+</div>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#B4470F">Bring us your messiest Blueprint.</p>
+<aside>Be straight about where it is. The converters, the views, the replays and the valves all work and are measured by machine, on a real game and on a real published Blueprint. No person has used it in anger yet, and that is exactly the next step: put it in front of developers and measure the friction before and after. After that, it moves into the Unreal editor itself. Close on the challenge: bring us your messiest Blueprint.</aside>
+</section>
+<section id="beef" data-transition="fade" style="background:#0D1626;color:#F4F0E6;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:row;align-items:center;gap:64px">
+<div style="position:relative;width:720px;height:540px">
+<img src="assets/wheresthebeef.jpg" alt="A roast beef sandwich piled high with beef" style="width:720px;height:540px;object-fit:cover;border-radius:16px">
+<p style="position:absolute;left:0px;top:20px;width:720px;font-family:'Oswald', Impact, sans-serif;font-size:84px;font-weight:700;line-height:1.1;text-transform:uppercase;text-align:center;color:#FBFAF5;text-shadow:4px 4px 0 #05080F, -4px 4px 0 #05080F, 4px -4px 0 #05080F, -4px -4px 0 #05080F, 0 5px 0 #05080F, 0 -5px 0 #05080F, 5px 0 0 #05080F, -5px 0 0 #05080F">Where’s the beef?</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:80px;font-weight:700;line-height:1.1;color:#FF8A3D">Right here.</h2>
+<div style="display:flex;flex-direction:column;gap:2px">
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../city/">See it run</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Play Pong and an asteroid shooter, fly Lock-On, in WebGPU</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../showcase/">Walk the worked example</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Fixing Blueprint Friction: traced node by node, each friction measured</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../doc/">Read how it works</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Closed Loop Requirements and the Blueprint View</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../review/">Check the record</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">Use cases, requirements and gap checks behind it</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<p style="font-size:30px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../skills/">Meet the skills behind it</a></p>
+<p style="font-size:26px;line-height:1.4;color:#B8C6D9">The AI playbooks the agents worked from</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8796AB">From blueprintue.com: Pong (anonymous), asteroid shooter (siljaZ), Lock-On System (hitted); authors keep the rights. Source: <a href="https://github.com/rj45Thompson/blueprint-view-source">github.com/rj45Thompson/blueprint-view-source</a> (MIT).</p>
+<aside>A nod to the old Wendy's ad: where's the beef? Here it is, in reading order. First, see it run: Blueprints as 3D cities you can fly through, live in the browser on WebGPU. Play Pong, a 32-node hello world, and a whole public asteroid shooter, both running on their converted Blueprints; the lock-on Blueprint is the third tab. Click any part, replay any path, ask it questions, or press Unreal 2D to see the same graph the way the Blueprint editor draws it. Then the worked example, Fixing Blueprint Friction: that same Blueprint traced node by node to its requirements, every friction measured, and the closed loop on it. Then the write-up, then the record behind it: the use cases, requirements and gap checks, as they stood early on 28 October before the online sample was added. And the AI skills the agents worked from.</aside>
+</section>
+<section id="built24" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">About this prototype</p>
+<h1 style="font-family:'Oswald', Impact, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#0D1626">Built in under 24 hours</h1>
+<p style="font-size:30px;line-height:1.4;color:#3D4A5C">On top of RJ’s existing u2ue toolkit, whose gates it reuses.</p>
+</div>
+<div style="display:flex;flex-direction:row;gap:20px;border-top:4px solid #0D1626;padding:20px 0 0 0">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:36px;font-weight:700;line-height:1.1;color:#B4470F">Tue 19:17</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">RJ sets the direction: Blueprints as icing over code</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:36px;font-weight:700;line-height:1.1;color:#B4470F">Tue 23:33</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">Requirements written as data, gap checkers fixed</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:36px;font-weight:700;line-height:1.1;color:#B4470F">Wed 00:22</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">4,201 game methods drawn as graphs, round trip exact</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:36px;font-weight:700;line-height:1.1;color:#B4470F">Wed 02:00</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">Unreal Blueprints convert to code</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:36px;font-weight:700;line-height:1.1;color:#B4470F">Wed 10:15</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">A public Blueprint traced to requirements; the 3D city</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px"><p style="font-family:'Oswald', Impact, sans-serif;font-size:36px;font-weight:700;line-height:1.1;color:#B4470F">Wed 11:04</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">The closed loop measured</p></div>
+</div>
+<h3 style="font-family:'Oswald', Impact, sans-serif;font-size:44px;font-weight:700;line-height:1.2;color:#0D1626">A prototype, not a product. What it shows is how RJ thinks.</h3>
+<div style="display:flex;flex-direction:row;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:28px"><p style="font-size:30px;font-weight:700;line-height:1.2;color:#0D1626">Long-range vision</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">Sees where software is going and builds toward it now.</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:28px"><p style="font-size:30px;font-weight:700;line-height:1.2;color:#0D1626">Out of the box</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">Asked what is easy for a human mind, not what is easy to draw.</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:28px"><p style="font-size:30px;font-weight:700;line-height:1.2;color:#0D1626">Problem solving</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">Named each friction, measured it, and answered it.</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:16px;padding:28px"><p style="font-size:30px;font-weight:700;line-height:1.2;color:#0D1626">Directing AI</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">Steered AI agents from an idea to a measured prototype overnight.</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">Times are Mountain Time, 27–28 Oct 2026, from RJ’s request and the commit log. Built on the existing u2ue toolkit.</p>
+<aside>All of this was built in under twenty-four hours, about sixteen, on top of RJ's existing u2ue porting toolkit: the gates it reuses, like the UML check, the option-space gate and the gap checker, came first. RJ set the direction on Tuesday evening at 7:17. By 11:33 the requirements were data and the gap checkers had been fixed. Past midnight, every method of the game drew as a graph and printed back exactly. By two in the morning, Unreal Blueprints converted to code. By Wednesday morning a public Blueprint was traced to requirements and flying as a 3D city, and by eleven the closed loop was measured. It is a prototype, not a product. What it shows is how RJ thinks: long-range vision, out-of-the-box questions about what is actually easy for people, problem solving by measurement, and the ability to steer AI agents from an idea to a working, measured prototype overnight.</aside>
+</section>
+<section id="skills" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">How it was built</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:72px;font-weight:700;line-height:1.15;color:#0D1626">The AI skills behind the prototype</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:row;gap:32px;align-items:baseline"><p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:500;color:#B4470F">usecase-map</p><p style="flex:1;font-size:28px;line-height:1.4;color:#3D4A5C">Use cases from the problem story, classes from the code, never blurred.</p></div>
+<div style="display:flex;flex-direction:row;gap:32px;align-items:baseline"><p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:500;color:#B4470F">usecase-interrogate</p><p style="flex:1;font-size:28px;line-height:1.4;color:#3D4A5C">The gap checker: every hole in the story becomes a question, and the gate stays red until it is answered.</p></div>
+<div style="display:flex;flex-direction:row;gap:32px;align-items:baseline"><p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:500;color:#B4470F">morph</p><p style="flex:1;font-size:28px;line-height:1.4;color:#3D4A5C">Maps every design choice as a box of options, each present (with where) or absent (with why).</p></div>
+<div style="display:flex;flex-direction:row;gap:32px;align-items:baseline"><p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:500;color:#B4470F">decide</p><p style="flex:1;font-size:28px;line-height:1.4;color:#3D4A5C">Routes judgement calls through a calibrated decision matrix instead of a guess.</p></div>
+<div style="display:flex;flex-direction:row;gap:32px;align-items:baseline"><p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:500;color:#B4470F">autonomous-worker</p><p style="flex:1;font-size:28px;line-height:1.4;color:#3D4A5C">Works a task list on disk to the end, checking each item against evidence.</p></div>
+</div>
+<p style="font-size:32px;line-height:1.4;font-weight:700;color:#0D1626">Read each one in full: <a href="../skills/">The skills behind the loop</a></p>
+<p style="font-size:24px;line-height:1.4;color:#6A7280">The pages themselves were laid out with Anthropic’s built-in artifact-design skill.</p>
+<aside>How it was built. Five AI skills, each a plain-text playbook the agents load before they start. usecase-map writes the use cases from the problem story and keeps them apart from the code. usecase-interrogate is the gap checker that turns every hole into a question. morph maps every design option so nothing is left to chance. decide routes judgement calls through a calibrated matrix. autonomous-worker keeps the long build on a task list until it is done, with evidence. The link opens all five in full. Last, where it all lives.</aside>
+</section>
+<section id="u2ue" data-transition="fade" style="background:#F4F0E6;color:#0D1626;font-family:'DM Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B4470F">Where it lives</p>
+<h2 style="font-family:'Oswald', Impact, sans-serif;font-size:80px;font-weight:700;line-height:1.1;color:#0D1626">u2ue, and the code behind it</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FBF9F3;border:2px solid #E0D8C6;border-radius:20px;padding:36px 40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#B4470F">u2ue · the porting toolkit this was built on</p>
+<div style="display:flex;flex-direction:column;gap:2px"><p style="font-size:32px;font-weight:700;line-height:1.3;color:#0D1626"><a href="https://rj45thompson.github.io/anchor-demo/u2ue/">u2ue: Unity to Unreal</a></p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">The toolkit’s public page, with its whole manual on it</p></div>
+<div style="display:flex;flex-direction:column;gap:2px"><p style="font-size:32px;font-weight:700;line-height:1.3;color:#0D1626">The toolkit’s source</p><p style="font-size:24px;line-height:1.4;color:#3D4A5C">Private for now: access on request</p></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#0D1626;border-radius:20px;padding:36px 40px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FF8A3D">This prototype</p>
+<div style="display:flex;flex-direction:column;gap:2px"><p style="font-size:32px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="../">rj45thompson.github.io/anchor-demo/blueprint</a></p><p style="font-size:24px;line-height:1.4;color:#B8C6D9">This deck, the playable demos and the documents</p></div>
+<div style="display:flex;flex-direction:column;gap:2px"><p style="font-size:32px;font-weight:700;line-height:1.3;color:#F4F0E6"><a href="https://github.com/rj45Thompson/blueprint-view-source">The prototype’s source</a></p><p style="font-size:24px;line-height:1.4;color:#B8C6D9">Open, MIT licence: github.com/rj45Thompson/blueprint-view-source</p></div>
+</div>
+</div>
+<p style="font-family:'Oswald', Impact, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#B4470F">Thank you.</p>
+<aside>Last slide: where it all lives. The Blueprint view was built on top of u2ue, RJ's Unity to Unreal porting toolkit; its public page carries the whole manual, and its source is private for now, available on request. On the right, where this prototype lives: this deck, the playable demos and the documents you've seen, all on one site. Its code is open source under the MIT licence, on GitHub. Thank you.</aside>
+</section>
+</div>
+<div id="bar"></div>
+<div id="notes" role="region" aria-label="Speaker notes"></div>
+<div class="deck-ui">
+  <button type="button" id="prev" aria-label="Previous slide">←</button>
+  <span id="count" aria-live="polite"></span>
+  <button type="button" id="next" aria-label="Next slide">→</button>
+  <button type="button" id="notesBtn" aria-pressed="false" title="Speaker notes (N)">Notes</button>
+  <button type="button" id="fsBtn" title="Full screen (F)">Full screen</button>
+</div>
+<script>
+(function () {
+  var ICONS = {"Check": "<polyline points=\"20 6 9 17 4 12\"/>", "CheckCircle": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m8.5 12.5 2.5 2.5 4.5-5\"/>", "Users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>", "Warning": "<path d=\"M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", "Lightbulb": "<path d=\"M9 18h6\"/><path d=\"M10 22h4\"/><path d=\"M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z\"/>", "Tool": "<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z\"/>", "Book": "<path d=\"M4 19.5A2.5 2.5 0 0 1 6.5 17H20\"/><path d=\"M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z\"/>", "Play": "<polygon points=\"6 3 20 12 6 21 6 3\" fill=\"currentColor\"/>"};
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(stage.children);
+  var i = 0;
+
+  // icons: the slide format named them; draw each as an inline SVG in its own colour
+  document.querySelectorAll('x-icon').forEach(function (el) {
+    var d = ICONS[el.getAttribute('name')];
+    if (!d) throw new Error('no icon drawn for ' + el.getAttribute('name'));
+    el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  });
+  // connectors: a straight line on the slide's own 1920x1080 grid, with an arrowhead at its end
+  document.querySelectorAll('x-connector').forEach(function (el, k) {
+    var x1 = +el.getAttribute('x1'), y1 = +el.getAttribute('y1'), x2 = +el.getAttribute('x2'), y2 = +el.getAttribute('y2');
+    var w = parseFloat(el.style.borderWidth) || 4, col = el.style.color || '#FF8A3D', id = 'ah' + k;
+    var svg = '<svg viewBox="0 0 1920 1080" width="1920" height="1080" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true">' +
+      '<defs><marker id="' + id + '" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="' + col + '"/></marker></defs>' +
+      '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round"' +
+      (el.getAttribute('head') === 'end' ? ' marker-end="url(#' + id + ')"' : '') + '/></svg>';
+    el.outerHTML = svg;
+  });
+
+  function fit() {
+    var bar = document.querySelector('.sitebar');
+    var top = bar ? bar.getBoundingClientRect().height : 0;
+    var s = Math.min(window.innerWidth / 1920, (window.innerHeight - top) / 1080);
+    stage.style.transform = 'translate(-50%, calc(-50% + ' + (top / 2) + 'px)) scale(' + s + ')';
+    stage.style.transformOrigin = 'center center';
+  }
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === i); s.setAttribute('aria-hidden', k === i ? 'false' : 'true');
+      s.querySelectorAll('a').forEach(function (a) { a.tabIndex = k === i ? 0 : -1; }); });
+    document.getElementById('count').textContent = (i + 1) + ' / ' + slides.length;
+    document.getElementById('bar').style.width = ((i + 1) / slides.length * 100) + '%';
+    var aside = slides[i].querySelector('aside');
+    document.getElementById('notes').innerHTML = '<b>Notes ' + (i + 1) + '.</b> ' + (aside ? aside.innerHTML : '');
+    if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+  }
+  function fromHash() { var n = parseInt(location.hash.slice(1), 10); return isNaN(n) ? 0 : n - 1; }
+  function toggleNotes() { var el = document.getElementById('notes'), on = !el.classList.contains('open');
+    el.classList.toggle('open', on); document.getElementById('notesBtn').setAttribute('aria-pressed', on); }
+  function fullscreen() { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }
+
+  document.getElementById('prev').onclick = function () { show(i - 1); };
+  document.getElementById('next').onclick = function () { show(i + 1); };
+  document.getElementById('notesBtn').onclick = toggleNotes;
+  document.getElementById('fsBtn').onclick = fullscreen;
+  document.addEventListener('keydown', function (e) {
+    if (e.target.closest && e.target.closest('input, textarea')) return;
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].indexOf(e.key) >= 0 && !(e.key === 'Enter' && e.target.tagName === 'A')) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].indexOf(e.key) >= 0) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') show(0); else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'n' || e.key === 'N') toggleNotes(); else if (e.key === 'f' || e.key === 'F') fullscreen();
+  });
+  var x0 = null;
+  stage.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+  stage.addEventListener('touchend', function (e) { if (x0 === null) return; var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1)); x0 = null; });
+  window.addEventListener('resize', fit);
+  window.addEventListener('hashchange', function () { show(fromHash()); });
+  fit(); show(fromHash());
+})();
+</script>
+</body>
+</html>

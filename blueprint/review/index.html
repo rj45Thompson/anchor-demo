@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>u2ue Blueprint View</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column like an engineering review; the Blueprint editor's own vocabulary (exec wire, pin colours, node header) marks structure. */
+:root {
+  --bg: #f3f5f7;
+  --panel: #ffffff;
+  --fg: #161b21;
+  --muted: #56616e;
+  --rule: #d8dee5;
+  --accent: #1f6fcf;      /* object-reference pin blue */
+  --data: #3f9a3a;        /* float pin green */
+  --ext: #c27a12;         /* extended tier, and single-family evidence */
+  --island: #c23b3b;      /* island tier */
+  --good: #2f8a4a;
+  --warn: #b7791f;
+  --bad: #c23b3b;
+  --exec: #2a3038;        /* the exec wire, dark on light */
+  --display: "Barlow Semi Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15191e; --panel: #1d2329; --fg: #e6eaef; --muted: #9aa6b2; --rule: #2e3740;
+    --accent: #5aa2f0; --data: #74c46c; --ext: #e2a64a; --island: #ef7a7a;
+    --good: #6cc48a; --warn: #e2b04a; --bad: #ef7a7a; --exec: #e9edf2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15191e; --panel: #1d2329; --fg: #e6eaef; --muted: #9aa6b2; --rule: #2e3740;
+  --accent: #5aa2f0; --data: #74c46c; --ext: #e2a64a; --island: #ef7a7a;
+  --good: #6cc48a; --warn: #e2b04a; --bad: #ef7a7a; --exec: #e9edf2;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55;
+}
+.wrap {
+  max-width: 980px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+  display: grid; gap: 40px;
+}
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: 2.4rem; font-weight: 700; letter-spacing: 0.01em; }
+h2 { font-size: 1.55rem; font-weight: 600; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+.eyebrow { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+section { display: grid; gap: 16px; min-width: 0; }
+.head { display: grid; gap: 12px; }
+.lede { font-size: 1.12rem; color: var(--fg); }
+.paths { color: var(--muted); font-size: 0.92rem; overflow-wrap: anywhere; }
+
+/* the exec wire: a section's spine */
+.wire { display: flex; align-items: center; gap: 10px; }
+.wire::before { content: ""; width: 14px; height: 14px; flex: none; clip-path: polygon(0 0, 60% 0, 100% 50%, 60% 100%, 0 100%); background: var(--exec); }
+
+.verdict { background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 6px; padding: 20px 22px; display: grid; gap: 14px; }
+.verdict .big { font-family: var(--display); font-size: 1.6rem; font-weight: 700; }
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.split > div { min-width: 0; display: grid; gap: 6px; align-content: start; }
+ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+li { max-width: 70ch; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.tile .n { font-family: var(--mono); font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tile .l { color: var(--muted); font-size: 0.92rem; }
+
+.bars { display: grid; gap: 12px; }
+.bar-row { display: grid; grid-template-columns: minmax(130px, 200px) 1fr; gap: 12px; align-items: center; }
+.bar-row .name { font-weight: 600; }
+.bar-row .name small { display: block; font-weight: 400; color: var(--muted); font-size: 0.82rem; }
+.bar { display: flex; height: 26px; border-radius: 4px; overflow: hidden; border: 1px solid var(--rule); background: var(--panel); }
+.bar span { display: flex; align-items: center; padding: 0 8px; font-family: var(--mono); font-size: 0.78rem; color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bar .bp { background: var(--data); }
+.bar .ex { background: var(--ext); }
+.bar .is { background: var(--island); min-width: 3px; padding: 0; }
+.bar .k1 { background: var(--ext); }
+.bar .k2 { background: var(--accent); }
+.bar .k3 { background: var(--data); min-width: 3px; padding: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 0.88rem; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+@media (max-width: 560px) { .bar-row { grid-template-columns: 1fr; gap: 4px; } }
+
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td.id { font-family: var(--mono); white-space: nowrap; font-weight: 600; }
+tr.core td.id::after { content: " *"; color: var(--accent); }
+tr.best td { font-weight: 600; }
+
+/* the hierarchy: one node card per epic, its user goals as pins, subfunctions under them */
+.epics { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+.epic { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; display: grid; align-content: start; min-width: 0; }
+.epic header { background: var(--exec); color: var(--bg); padding: 10px 14px; display: grid; gap: 2px; }
+.epic header .eyebrow { color: var(--bg); opacity: 0.75; }
+.epic header h3 { color: var(--bg); }
+.epic ul.sea { list-style: none; padding: 12px 14px; gap: 8px; }
+.epic ul.fish { list-style: none; padding: 4px 0 0 18px; gap: 4px; }
+.epic li { display: grid; gap: 4px; }
+.epic .row { display: grid; grid-template-columns: 82px 1fr; gap: 8px; align-items: baseline; }
+.epic .uid { font-family: var(--mono); font-size: 0.76rem; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.epic ul.fish .uid { color: var(--data); }
+.epic ul.fish .t { color: var(--muted); font-size: 0.93rem; }
+
+.chip { display: inline-block; font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.hi { color: var(--good); }
+.md { color: var(--warn); }
+.lo { color: var(--bad); }
+
+.diagram { overflow-x: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px; }
+pre.mermaid { margin: 0; background: transparent; }
+
+.qs { display: grid; gap: 10px; }
+.q { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
+.q .id { font-family: var(--mono); font-weight: 600; color: var(--accent); }
+.q p { max-width: none; }
+.q small { color: var(--muted); display: block; }
+.gates { display: grid; gap: 8px; }
+.gate { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: baseline; }
+.gate .s { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; }
+.gate > span:last-child { min-width: 0; }
+footer { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; }
+/* the rest of the story: the deck, the doc, the skills and the other pages, each in a new tab */
+.family { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.family a { display: inline-flex; flex-wrap: wrap; gap: 0 8px; align-items: baseline; min-width: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 10px; text-decoration: none; font-size: 0.92rem; }
+.family a span { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.family a:hover { border-color: var(--accent); }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700&family=Oswald:wght@700&display=swap">
+<link rel="stylesheet" href="../site.css">
+<style>html, body { margin: 0; } [hidden] { display: none !important; }</style>
+</head>
+<body>
+<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../doc/">How it works</a><a href="../review/" aria-current="page">The record</a><a href="../skills/">AI skills</a></span></nav>
+<div class="wrap">
+
+<header class="head">
+  <div class="eyebrow">u2ue experiment, in quarantine &middot; 2026-10-27 to 10-28</div>
+  <h1>Blueprint View</h1>
+  <p class="lede">Game code drawn as Blueprint-style graphs to make it easier to understand, and Unreal Blueprints turned back into code, with requirements built from human friction first. It never writes the game, and it joins u2ue only if RJ decides so from a measured report.</p>
+  <p class="paths">This review is the experiment as it stood early on 10-28. The online sample with its closed loop, the Pong hello world, the asteroid shooter (a whole game, playing on its converted Blueprint) and the city came after it, and are on the showcase and the city above.</p>
+</header>
+
+<section aria-labelledby="v">
+  <div class="verdict">
+    <div class="eyebrow" id="v">Viability</div>
+    <div class="big">Built and measured for right answers. Not yet measured with people.</div>
+    <p>Phases 1 to 7 and 9a are built, and a converter from Blueprint to code was added on RJ's word: read any method as a graph in five forms, find it, follow its calls, replay a battle and scrub it to the step a planted fault appears, set a value on a wire with no rebuild, change the sandbox through gates, and read real Unreal Blueprints as code. Every answer the experiment gives was held to a key computed another way. What it has not been measured for is friction: no person has used it, and that needs RJ's testers and baseline (IR-12).</p>
+    <div class="split">
+      <div>
+        <h3>Not real Blueprint assets</h3>
+        <p>A Blueprint call node binds a UFunction (<span class="mono">K2Node_CallFunction.h</span> lines 77 and 158), and the model is plain C#. IR-3 asks RJ to confirm.</p>
+      </div>
+      <div>
+        <h3>Not live edits in RJ's editor</h3>
+        <p>Hot reloading stays Off in his Unreal project. The same idea runs on a deterministic replay: a valve on a wire, a re-run in seconds, the new outcome beside the old.</p>
+      </div>
+      <div>
+        <h3>Never a write to the game</h3>
+        <p>Every change lands in a sandbox copy that records its game commit (cc93149), and every run that writes is wrapped by an audit hashing the game's folders: 22 of 22 audit records say 0 changes. The engine and the second game are only ever read, from copies.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="c">
+  <h2 class="wire" id="c">The requirements, counted</h2>
+  <p>The model is written as data (<span class="mono">model/*.yaml</span>), and the documents are generated from it. Generation refuses to run while the model has a hole. Every figure here comes from a gate run on 2026-10-27.</p>
+  <div class="tiles">
+    <div class="tile"><div class="n">59</div><div class="l">use cases: 6 epics, 34 user goals, 19 subfunctions</div></div>
+    <div class="tile"><div class="n">151</div><div class="l">pathways, 59 main and 92 alternate, each with a stated outcome</div></div>
+    <div class="tile"><div class="n">228</div><div class="l">requirements: 36 authored, 176 derived, 16 inferred and asked</div></div>
+    <div class="tile"><div class="n">431</div><div class="l">cells in 7 closed spaces (the 7th: the engine's 113 Blueprint node classes), every one mapped or excluded with a reason</div></div>
+    <div class="tile"><div class="n">57</div><div class="l">questions people would ask, each inverted into the use case that answers it</div></div>
+    <div class="tile"><div class="n">12 / 12</div><div class="l">faults planted in the real model, each caught by its own rule</div></div>
+  </div>
+</section>
+
+<section aria-labelledby="b">
+  <h2 class="wire" id="b">Built and measured, 2026-10-28</h2>
+  <p>Every figure below was produced by a gate that has been shown to fail on a planted fault. The task rounds were run by Claude, so they say whether the answers are right, never how hard a person finds them.</p>
+  <div class="tiles">
+    <div class="tile"><div class="n">4,201</div><div class="l">methods of a game in production (its core and presentation assemblies) as graphs; every one prints back to its source as the same syntax tree</div></div>
+    <div class="tile"><div class="n">0 / 2,343</div><div class="l">long wires drawn; the far reads are Get chips, and unchanged code moves 0 nodes between layouts</div></div>
+    <div class="tile"><div class="n">6 battles</div><div class="l">fought headless, identical plain, with 22,569 probes and traced; a planted fault found by scrubbing in 4 of 6</div></div>
+    <div class="tile"><div class="n">0.84 s</div><div class="l">the slowest whole battle with a valve doubling a damage wire, no rebuild (IR-6's interim bound: 2 s)</div></div>
+    <div class="tile"><div class="n" id="t-round">32 / 32</div><div class="l">task-bank answers right in round 2, each against a key computed another way (round 1: 29 of 32, its 3 page failures fixed)</div></div>
+    <div class="tile"><div class="n">48 / 2 / 178</div><div class="l">of 228 requirements measured / failed / not yet; nothing without evidence counts as met</div></div>
+    <div class="tile"><div class="n">1,270</div><div class="l">graphs of a second game (Zombie Crossing, RJ's MonoGame port) read with no path of the first game's, all round-tripping</div></div>
+    <div class="tile"><div class="n">68,882</div><div class="l">nodes, each resolving to file, line and column in its source</div></div>
+  </div>
+</section>
+
+<section aria-labelledby="bc">
+  <h2 class="wire" id="bc">Blueprint to code</h2>
+  <p>RJ, mid-run: "Also I need a converter from blueprint to code as well". Requirements first (REQ-BPV-27, UC-BV34, BC-1 to BC-10 from the engine's 113 node classes), then the code, tested only on text the engine itself wrote: eleven Unreal 5.7.1 templates copied and exported by a headless commandlet with no window.</p>
+  <div class="tiles">
+    <div class="tile"><div class="n">92</div><div class="l">template Blueprints converted, 0 failed (one export was UTF-16, read by its byte-order mark)</div></div>
+    <div class="tile"><div class="n">275 / 275</div><div class="l">methods printed as C#, C++ and pseudo-code; every one parses as C# (Roslyn)</div></div>
+    <div class="tile"><div class="n">6</div><div class="l">nodes left as marked islands: 4 Timelines, an async action, a DMX plugin node; nothing reachable dropped</div></div>
+    <div class="tile"><div class="n">13</div><div class="l">converter defects found by reading its own output, each fixed in the class (DEBUG.md D24-D36)</div></div>
+  </div>
+  <p>What the code means is read from the engine, not assumed: a function's outputs are out parameters and a pure node runs once per step (KismetCompiler.cpp); unset pins print what the compiler writes; ForEachLoop, ForLoop, WhileLoop, FlipFlop and DoOnce follow their own macro graphs, exported from the engine and read. The page has a From Blueprint tab: paste nodes, read them in every form. Not yet tried: a real clipboard copy, which only the editor makes.</p>
+</section>
+
+<section aria-labelledby="s">
+  <h2 class="wire" id="s">Where the requirements come from</h2>
+  <p>Writing more rows cannot prove a list complete. A closed space can: its cells come from somewhere other than the requirements, so a cell no requirement covers shows up as a hole. Each space has a different shape, because a space of one shape cannot see what another shape would catch.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Space</th><th>Shape</th><th>Cells</th><th>Accounted for</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td class="id">S1</td><td>Every sentence of RJ's discussion</td><td class="num">44</td><td>44 mapped</td><td>his upload, copied byte for byte</td></tr>
+        <tr><td class="id">S2</td><td>Cognitive Dimensions &times; 9 view surfaces</td><td class="num">126</td><td>117 mapped, 9 excluded with a reason</td><td>Green and Petre 1996; the 14 dimensions read from Wikipedia</td></tr>
+        <tr><td class="id">S3</td><td>Human-factors principles</td><td class="num">30</td><td>30 mapped</td><td>from knowledge, not re-read this run</td></tr>
+        <tr><td class="id">S4</td><td>Shneiderman's 7 tasks &times; 7 data types</td><td class="num">49</td><td>47 mapped, 2 excluded with a reason</td><td>Shneiderman 1996, "The Eyes Have It"</td></tr>
+        <tr><td class="id">S5</td><td>C# node families</td><td class="num">59</td><td>59 mapped to a drawing requirement</td><td>extracted from <span class="mono">NodeFamilies.cs</span> by pattern</td></tr>
+        <tr><td class="id">S6</td><td>Code evidence</td><td class="num">10</td><td>10 mapped</td><td>the census and the gates</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="h">
+  <h2 class="wire" id="h">The use cases, as a hierarchy</h2>
+  <p>Six epics at the top. Each user goal realises one step of its epic, and each subfunction realises a step or an alternate pathway of its user goal. The model checks every one of those links.</p>
+  <div class="epics">
+    <article class="epic">
+      <header><span class="eyebrow">EPIC-1 &middot; 7 steps &middot; 2 alternate</span><h3>Understand a piece of the game's logic without reading its code</h3></header>
+      <ul class="sea">
+        <li><div class="row"><span class="uid">UC-BV1</span><span>Find where to look</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV1.1</span><span class="t">List who calls, reads or implements this</span></div></li><li><div class="row"><span class="uid">UC-BV1.2</span><span class="t">Open a failing run's stack as a trail</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV2</span><span>Read a method as a graph</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV2.1</span><span class="t">Read C# with its meaning</span></div></li><li><div class="row"><span class="uid">UC-BV2.2</span><span class="t">Draw each construct</span></div></li><li><div class="row"><span class="uid">UC-BV2.3</span><span class="t">Lay out a graph without long wires</span></div></li><li><div class="row"><span class="uid">UC-BV2.4</span><span class="t">Fold a long method into named groups</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV7</span><span>Read the logic in the form I prefer</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV3</span><span>See what a class inherits, overrides and implements</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV3.1</span><span class="t">Find which implementation runs</span></div></li><li><div class="row"><span class="uid">UC-BV3.2</span><span class="t">Compare a base and an override</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV4</span><span>See the whole game's map</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV5</span><span>Watch a recorded run on the graph</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV5.1</span><span class="t">Trace a run without changing it</span></div></li><li><div class="row"><span class="uid">UC-BV5.2</span><span class="t">Spot the slow nodes</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV6</span><span>Keep my place and notes</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV33</span><span>Share or keep a copy of what I see</span></div></li>
+      </ul>
+    </article>
+    <article class="epic">
+      <header><span class="eyebrow">EPIC-2 &middot; 6 steps &middot; 1 alternate</span><h3>Find out why the game did something</h3></header>
+      <ul class="sea">
+        <li><div class="row"><span class="uid">UC-BV8</span><span>Reproduce a recorded case</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV9</span><span>Find the step where a value went wrong</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV9.1</span><span class="t">See where an error was raised</span></div></li><li><div class="row"><span class="uid">UC-BV9.2</span><span class="t">Scrub a run to a step</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV10</span><span>Compare two runs</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV11</span><span>See why a branch went the way it did</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV12</span><span>Try a what-if on a replay</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV12.1</span><span class="t">Drop a valve on a wire</span></div></li></ul></li>
+      </ul>
+    </article>
+    <article class="epic">
+      <header><span class="eyebrow">EPIC-3 &middot; 6 steps &middot; 1 alternate</span><h3>Change or write logic in the sandbox by showing or saying</h3></header>
+      <ul class="sea">
+        <li><div class="row"><span class="uid">UC-BV13</span><span>Change code on the graph</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV13.1</span><span class="t">Write an edit into the sandbox's C#</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV14</span><span>Change code by saying it</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV14.1</span><span class="t">Resolve what the person means</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV15</span><span>Write new logic by describing it</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV16</span><span>Review and keep a change</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV16.1</span><span class="t">Run the gates on a proposed change</span></div></li><li><div class="row"><span class="uid">UC-BV16.2</span><span class="t">See a change's reach</span></div></li></ul></li>
+      </ul>
+    </article>
+    <article class="epic">
+      <header><span class="eyebrow">EPIC-4 &middot; 5 steps &middot; 2 alternate</span><h3>Learn an unfamiliar codebase</h3></header>
+      <ul class="sea">
+        <li><div class="row"><span class="uid">UC-BV17</span><span>Find the entry points</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV18</span><span>Follow a guided tour of a recorded battle</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV19</span><span>Map a game word to code</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV20</span><span>Learn the view's notation</span></div></li>
+      </ul>
+    </article>
+    <article class="epic">
+      <header><span class="eyebrow">EPIC-5 &middot; 6 steps &middot; 2 alternate</span><h3>Use the view with any body and any eyes</h3></header>
+      <ul class="sea">
+        <li><div class="row"><span class="uid">UC-BV21</span><span>Operate the view by keyboard</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV22</span><span>Read the view without relying on colour</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV23</span><span>Enlarge everything</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV24</span><span>Use the view without motion</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV25</span><span>Read a graph with a screen reader</span></div></li>
+      </ul>
+    </article>
+    <article class="epic">
+      <header><span class="eyebrow">EPIC-6 &middot; 7 steps &middot; 3 alternate</span><h3>Run the quarantined experiment and judge it</h3></header>
+      <ul class="sea">
+        <li><div class="row"><span class="uid">UC-BV26</span><span>Take a sandbox snapshot</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV26.1</span><span class="t">Refresh the sandbox from a newer game snapshot</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV27</span><span>Prove the quarantine holds</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV28</span><span>Measure the view's ergonomics</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV29</span><span>Gap-check the requirements</span></div>
+          <ul class="fish"><li><div class="row"><span class="uid">UC-BV29.1</span><span class="t">Mutation-test the gap checker on the real model</span></div></li></ul></li>
+        <li><div class="row"><span class="uid">UC-BV30</span><span>Keep the view honest</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV31</span><span>Report the experiment</span></div></li>
+        <li><div class="row"><span class="uid">UC-BV32</span><span>Decide whether the view goes into u2ue</span></div></li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section aria-labelledby="g0">
+  <h2 class="wire" id="g0">What the old gap checker missed</h2>
+  <p>The model written earlier the same day passed every gate: 25 questions, 20 of 20 mapped, 0 source holes. Measured on those same files, this is what the gates never looked at. Re-running the fixed gates on the new model then found more misses inside the checker itself.</p>
+  <div class="tiles">
+    <div class="tile"><div class="n">176 / 194</div><div class="l">applicable ergonomics cells that the old requirements did not reach</div></div>
+    <div class="tile"><div class="n">14 / 14</div><div class="l">alternate pathways that named no requirement (10 never said where they end)</div></div>
+    <div class="tile"><div class="n">22 / 44</div><div class="l">sentences of the discussion never checked against a requirement</div></div>
+    <div class="tile"><div class="n">4 / 20</div><div class="l">requirements mapped to a use case whose steps never carry them</div></div>
+    <div class="tile"><div class="n">5 / 16</div><div class="l">inferred requirements the fixed checker still never asked, because they were cited only on pathways</div></div>
+    <div class="tile"><div class="n">14 / 19</div><div class="l">defects fixed in the gap-check tools, each re-run on real documents; the other 5 were shell traps avoided, or reported to their owners (DEBUG.md)</div></div>
+  </div>
+  <p>Every one of those misses was found by holding a gate's count against an independent count, never by the gate itself. The interrogation tool now prints that comparison on every run: <span class="mono">INFERRED 35 cite(s) in the text, 35 asked</span>.</p>
+</section>
+
+<section aria-labelledby="kg">
+  <h2 class="wire" id="kg">The knowledge graph</h2>
+  <p>The same model is also built into a SQLite graph. The store declares its own completeness rules and checks what rules over YAML cannot: how many independent kinds of evidence back each requirement, and which requirements are written twice. SQLite was chosen by running four systems on RJ's real Anchor store (10,711 entities, 20,196 edges). Node's built-in <span class="mono">node:sqlite</span> reads the same file.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>System</th><th>Load</th><th>Find a hole</th><th>Reach</th><th>Anchor count</th><th>Reopen</th><th>File</th></tr></thead>
+      <tbody>
+        <tr class="best"><td>SQLite (chosen)</td><td class="num">110 ms</td><td class="num">0.6 ms</td><td class="num">1.4 ms</td><td class="num">21 ms</td><td class="num">5 ms</td><td class="num">2 MB</td></tr>
+        <tr><td>NetworkX</td><td class="num">90 ms</td><td class="num">15.4 ms</td><td class="num">24.2 ms</td><td class="num">17.8 ms</td><td class="num">851 ms</td><td class="num">2.4 MB</td></tr>
+        <tr><td>igraph</td><td class="num">37 ms</td><td class="num">22.5 ms</td><td class="num">6.9 ms</td><td class="num">63.9 ms</td><td class="num">152 ms</td><td class="num">2.7 MB</td></tr>
+        <tr><td>DuckDB</td><td class="num">66,635 ms</td><td class="num">25.8 ms</td><td class="num">33.2 ms</td><td class="num">34.6 ms</td><td class="num">36 ms</td><td class="num">3.6 MB</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="bars" role="img" aria-label="Evidence families per sourced requirement: 172 rest on one family, 26 on two, 3 on three, of 201">
+    <div class="bar-row">
+      <div class="name">201 sourced requirements <small>by independent evidence families</small></div>
+      <div class="bar"><span class="k1" style="width:85.6%">172 on one family</span><span class="k2" style="width:12.9%">26</span><span class="k3" style="width:1.5%" title="3 on three families"></span></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--ext)"></i>one family</span><span><i style="background:var(--accent)"></i>two families</span><span><i style="background:var(--data)"></i>three families</span></div>
+  </div>
+  <p><strong>This is the model's weak spot.</strong> Most of the 172 are a published framework applied to this view, which is a sourced method but still a reading. Their second kind of evidence is meant to be people: plan phase 4 measures real tasks against them, and that has not run yet.</p>
+</section>
+
+<section aria-labelledby="pl">
+  <h2 class="wire" id="pl">One graph, many forms</h2>
+  <p>From RJ's third and fourth messages: the graph is stored in the node graph's own pseudo-language, and every view is generated from it. A reader picks Blueprint style, another visual style or C# text, and other code languages can follow. The stored form is trusted only while every graph prints back to its method's text.</p>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  G["Game code, read only"] --> R["Reader: census vocabulary, 59 node families"]
+  R --> P[("Stored graph in its own pseudo-language")]
+  P --> B["Blueprint style"]
+  P --> V["Another visual style"]
+  P --> T["C# text"]
+  P -.-> L["Other code languages, IR-14"]
+  P --> RT{"Prints back to the method's text?"}
+  RT -->|no| X["Refused, never shown"]
+</pre>
+  </div>
+</section>
+
+<section aria-labelledby="ph">
+  <h2 class="wire" id="ph">Plan</h2>
+  <p>Each phase is done when its observable holds, and each ends with the quarantine audit. Sizes are estimates: S about one session, M two to four, L five or more. Rows marked * are the smallest prototype that answers the discussion.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Phase</th><th>Builds</th><th>Done when</th><th>Writes</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td class="id">0</td><td>Census, node vocabulary, the requirements model and its gates</td><td>Done 10-27: census exit 0 on both projects; model passes 17 rules; 12 of 12 mutations caught</td><td class="mono">this folder</td><td>done</td></tr>
+        <tr class="core"><td class="id">1</td><td>Sandbox and quarantine audit</td><td>Done 10-28: 303 files from game commit cc93149; a planted outside write and a <span class="mono">..</span> escape refused; every audit record 0 changes</td><td class="mono">sandbox/ audit/</td><td>done</td></tr>
+        <tr class="core"><td class="id">2</td><td>Graph reader, pseudo-language store, stable layout, round-trip gate</td><td>Done 10-28: 4,201 graphs printing back; 0 long wires drawn against the 2,343 counted; unchanged code moves 0 nodes</td><td class="mono">graphs/</td><td>done</td></tr>
+        <tr class="core"><td class="id">3</td><td>Browser view: forms, search, click-through, map, class view</td><td>Done 10-28: three named graphs looked at in each form; every name found; callers by method, a ranked class list, its source shown. No inheritance view yet</td><td class="mono">view/</td><td>done</td></tr>
+        <tr class="core"><td class="id">4</td><td>Ergonomics measurement: task bank, baseline, results</td><td>Done for right answers 10-28: 57 questions, 32 tasks with keys, 25 absent with why; rounds 1 and 2 recorded, NOT HUMAN. Friction waits on IR-12</td><td class="mono">results/</td><td>half</td></tr>
+        <tr class="core"><td class="id">5</td><td>Replay: record, watch, scrub, compare</td><td>Done 10-28 headless: digests identical three ways on 6 battles; a planted constant found by scrubbing. Not yet shown on the graph</td><td class="mono">runs/</td><td>done</td></tr>
+        <tr><td class="id">6</td><td>Changes in the sandbox: graph edits, spoken or typed commands, review</td><td>Typed commands done 10-28: gates pass, a failure put back byte for byte, the game unchanged. Graph edits and spoken commands not built</td><td class="mono">sandbox/</td><td>half</td></tr>
+        <tr><td class="id">7</td><td>Valves on a replay</td><td>Done 10-28: a damage wire doubled with no rebuild, slowest 0.84 s; the kept valve as an edit replays identically</td><td class="mono">runs/ sandbox/</td><td>done</td></tr>
+        <tr><td class="id">8</td><td>Unreal editor view, only if RJ wants it</td><td>Blocked on IR-2: browser first unless he says otherwise</td><td class="mono">its own project</td><td>L</td></tr>
+        <tr><td class="id">9</td><td>The verdict</td><td>Second game done 10-28 (Zombie Crossing, 1,270 graphs); this report written; RJ decides whether the view joins u2ue</td><td class="mono">this folder</td><td>RJ</td></tr>
+        <tr><td class="id">BC</td><td>Blueprint to code (added 10-28)</td><td>Done 10-28: 92 engine Blueprints, 275 methods, all parsing as C#; a paste box in the page. A real clipboard copy not yet tried</td><td class="mono">view/ runs/</td><td>done</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="qq">
+  <h2 class="wire" id="qq">Decisions for RJ</h2>
+  <p>Sixteen requirements the chain needs and nobody has stated, asked at the 35 places they are cited. Each pathway that rests on one says what the view does until he decides. These eleven are product calls.</p>
+  <div class="qs">
+    <div class="q"><span class="id">IR-1</span><p>Which code is drawn first: the engine-free model and presentation, the Unreal host classes, or the Unity scripts? <small>Until then, engine-bound code is drawn without live data and marked.</small></p></div>
+    <div class="q"><span class="id">IR-2</span><p>Where does the view live first: a browser page or the Unreal editor?</p></div>
+    <div class="q"><span class="id">IR-3</span><p>Confirm a Blueprint-styled view the toolkit owns rather than real Blueprint assets. <small>Until then, a request for a real asset is explained and offered the styled view.</small></p></div>
+    <div class="q"><span class="id">IR-4</span><p>Which way does execution flow: down the page like text, or left to right like Blueprint?</p></div>
+    <div class="q"><span class="id">IR-5</span><p>What does the overview map show: modules and classes with calls, the battle flow, or both? <small>Until then, modules and classes with calls.</small></p></div>
+    <div class="q"><span class="id">IR-6</span><p>How fast must "instantly" be for a value change on a replay?</p></div>
+    <div class="q"><span class="id">IR-7</span><p>Which edits does the graph itself support, and which go to a spoken or typed command instead?</p></div>
+    <div class="q"><span class="id">IR-8</span><p>Which AI writes code from a command, where does it run, and who pays for it in the product?</p></div>
+    <div class="q"><span class="id">IR-9</span><p>What counts as a bottleneck: time per node against which budget?</p></div>
+    <div class="q"><span class="id">IR-14</span><p>Which second visual system, and which code languages beyond C#?</p></div>
+    <div class="q"><span class="id">IR-15</span><p>Does the preview of a valve's effect need the game's own picture? <small>That needs the Unreal port playing the replay in an instance of its own.</small></p></div>
+  </div>
+  <p>The other five hold a stated default until he says otherwise. IR-10: every change acts on the sandbox. IR-11: the sandbox records its game commit and lists kept changes before a refresh. IR-12: rounds without named testers are run by Claude and marked not human. IR-13: notes are kept per person. IR-16: results are kept in the experiment folder with their date, snapshot and tool version.</p>
+  <p>Three more from the build, each measured:</p>
+  <div class="qs">
+    <div class="q"><span class="id">DR-1</span><p>The graphs draw 2.5 nodes per statement where the requirement aimed at 1.5. Fold more into a node (a condition as one box), or accept 2.5? <small>Failed, left as it is.</small></p></div>
+    <div class="q"><span class="id">LY-6</span><p>A big graph opens with every node shown; the requirement asked for at most 30 visible. Build fold and focus? <small>Failed, not built.</small></p></div>
+    <div class="q"><span class="id">BC5</span><p>One Ctrl+C in your editor: copy any Blueprint nodes and paste them into the page's From Blueprint tab, so the converter meets a real clipboard copy. <small>Only the editor writes one.</small></p></div>
+  </div>
+</section>
+
+<section aria-labelledby="gt">
+  <h2 class="wire" id="gt">Gates, 2026-10-27 and 10-28</h2>
+  <div class="gates">
+    <div class="gate"><span class="s hi">PASS</span><span>Round trip: 4,201 of 4,201 graphs of a game in production and 1,270 of 1,270 Zombie Crossing graphs print back to their source (planted deletion, swap and dropped argument each fail)</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Census, keyword by keyword, and long wires: 0 differ; layout: 0 long wires drawn, 0 nodes moved, 0 undrawn</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Converter: 275 of 275 methods parse as C#; every value under the statement that reads it; 3 broken texts refused naming the line</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span id="g-round">Round 2 of the task bank (NOT HUMAN): 32 of 32 answers right</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Quarantine audit: every record 0 changes to the game's folders and the game repo's model caches; hot reloading Off</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Structured checker: every use case, pathway, requirement, cell and question accounted for, by 17 rules</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Knowledge graph: 0 failing gaps; 172 single-family requirements listed, not failing</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Mutation test: 12 of 12 faults planted in the real model caught; 2 that only the graph can see listed</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span><span class="mono">uml.py check</span> on the generated use cases: every named identifier resolves</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Coverage: 228 of 228 features carry a defined use case</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Source gate: all 44 sentences of the discussion cited by a requirement</span></div>
+    <div class="gate"><span class="s hi">PASS</span><span>Option space: 36 cells, every PRESENT opened and read</span></div>
+    <div class="gate"><span class="s md">OPEN</span><span>Interrogation: 35 questions, all of them the 16 decisions above, by design until RJ answers</span></div>
+  </div>
+</section>
+
+<footer>
+  <span>Sources: RJ's discussion and messages of 2026-10-27 and 10-28; <a href="https://en.wikipedia.org/wiki/Cognitive_dimensions_of_notations">Cognitive dimensions of notations</a> (Green and Petre 1996); Shneiderman 1996, "The Eyes Have It"; the census records; Unreal 5.7.1's engine source and its own exports. The 30 human-factors principles were cited from knowledge and not re-read for this run.</span>
+  <span>Committed in .opus-tools only (the game repo untouched): the model 962d067d, the converter 8ddcf5d7, the task bank and round 1, the fixes and the second game 37cc0949, round 2's tools run at 5be3be41. The earlier clone-and-change plan is kept as history in the experiment folder.</span>
+  </footer>
+
+</div>
+</body>
+</html>

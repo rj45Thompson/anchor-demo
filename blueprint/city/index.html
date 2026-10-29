@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blueprint City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* layout: one screen - a title band over the live city, which fills the rest; the hello world first (RJ 10-28) */
+:root { --bg: #05080f; --band: #0b1424; --rule: #22324d; --fg: #e4ebf5; --soft: #93a4bf; --accent: #5aa9ff;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif; --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace; color-scheme: dark; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.45 var(--body); display: flex; flex-direction: column; }
+.band { background: var(--band); border-bottom: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 2px 18px; align-items: baseline;
+  padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.band h1 { font: 600 21px/1.1 var(--display); letter-spacing: .3px; margin: 0; }
+.band p { margin: 0; color: var(--soft); min-width: 0; }
+.band code, .band b { font-family: var(--mono); font-size: 12px; color: var(--fg); font-weight: 400; }
+.band a { color: var(--accent); }
+.band a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sets { display: flex; gap: 6px; flex-wrap: wrap; }
+.sets a { text-decoration: none; color: var(--soft); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 9px; font: 600 13px var(--body); }
+.sets a[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(90,169,255,.12); }
+.family { display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; margin-left: auto; color: var(--soft); }
+.family a { text-decoration: none; }
+.family a:hover { text-decoration: underline; }
+iframe { flex: 1; min-height: 0; width: 100%; border: 0; display: block; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700&family=Oswald:wght@700&display=swap">
+<link rel="stylesheet" href="../site.css">
+<style>html, body { margin: 0; } [hidden] { display: none !important; }</style>
+</head>
+<body>
+<nav class="sitebar" aria-label="Blueprint view"><a class="brand" href="../">Blueprint View</a><span class="sep"></span><a href="../deck/">The deck</a><span class="sep"></span><span class="grp"><span class="lbl">Play</span><a href="../city/#pong" aria-current="page">Pong</a><a href="../city/#asteroids">Asteroid Shooter</a><a href="../city/#lockon">Lock-On</a></span><span class="sep"></span><span class="grp"><span class="lbl">Read</span><a href="../showcase/">Worked example</a><a href="../doc/">How it works</a><a href="../review/">The record</a><a href="../skills/">AI skills</a></span></nav>
+<div class="band">
+  <h1>Blueprint City</h1>
+  <p>Start small: a Pong <a href="https://blueprintue.com/blueprint/oscal-o3/" target="_blank" rel="noopener">ball</a> and <a href="https://blueprintue.com/blueprint/fvpp3w_/" target="_blank" rel="noopener">paddle</a> (32 nodes, UE 4.18, anonymous), then siljaZ's <a href="https://blueprintue.com/profile/siljaz/" target="_blank" rel="noopener">asteroid shooter</a> (16 pastes, 232 nodes, UE 5.0) - both playing on their converted code - then Lock-On System by hitted (<a href="https://blueprintue.com/blueprint/kg2evmas/" target="_blank" rel="noopener">blueprintue.com</a>, 162 nodes, UE 5.0): each converted to code and traced to the requirements it serves. The authors keep the rights, and any author's graphs come down on request.</p>
+  <p>Drag to orbit, scroll to zoom, <code>W A S D</code> to fly (while a game plays, the keys it names are its own); point at anything to name it, click it for what it is. <b>Unreal 2D</b> shows the selected graph's paste the way the Blueprint editor draws it.</p>
+</div>
+<iframe name="city" src="city.html?set=pong" title="Blueprint City in 3D" allow="fullscreen"></iframe>
+<script>
+  // the band names the set the frame shows, and a link naming one (#pong, #asteroids, #lockon) opens on it: the host hands the page a plain
+  // #token and never the query (measured on the published page 10-28: ?set=lockon reached no frame, #lockon did). The set links are the
+  // band's own (.sets) or, on the public site, the site bar's Play links (../city/#pong ...): each names its set
+  (function () {
+    var frame = document.querySelector('iframe[name="city"]'), shown = null;
+    var links = [].slice.call(document.querySelectorAll('.sets a[data-set], .sitebar a[href*="city/#"]'));
+    function setOf(a) { return a.dataset.set || a.getAttribute('href').split('#')[1]; }
+    function known(set) { return links.some(function (a) { return setOf(a) === set; }); }
+    function mark(set) {
+      shown = set;
+      links.forEach(function (b) {
+        var on = setOf(b) === set;
+        if (b.closest('.sitebar')) { if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
+        else b.setAttribute('aria-current', on ? 'true' : 'false');
+      });
+    }
+    function open() { var s = location.hash.slice(1); if (known(s) && s !== shown) { frame.src = 'city.html?set=' + s; mark(s); } }
+    links.forEach(function (a) { a.addEventListener('click', function () { mark(setOf(a)); }); });
+    // the city's own set menu reloads the frame by itself: read back the set it opened, and hand it the keyboard
+    frame.addEventListener('load', function () {
+      var s = new URLSearchParams(frame.contentWindow.location.search).get('set');
+      if (s) mark(s);
+      try { frame.contentWindow.focus(); } catch (e) {}
+    });
+    // keys pressed on this page reach the city it frames: before a click inside the 3D view this page holds the focus, and W A S D
+    // flew nothing (RJ 10-28: "w didn't seem to move forward" - measured on this page, 0 px in 1.5 s)
+    function forward(e) {
+      var t = e.target;
+      if (t && t.closest && t.closest('input, select, textarea')) return;
+      var w = frame.contentWindow;
+      if (!w) return;
+      w.dispatchEvent(new KeyboardEvent(e.type, { key: e.key, code: e.code, shiftKey: e.shiftKey, repeat: e.repeat }));
+      if (e.key === ' ' || e.key.indexOf('Arrow') === 0) e.preventDefault();
+    }
+    addEventListener('keydown', forward);
+    addEventListener('keyup', forward);
+    mark('pong');
+    open();
+    addEventListener('hashchange', open);
+  })();
+</script>
+</body>
+</html>
