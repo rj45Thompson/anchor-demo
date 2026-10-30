@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>How to Use AI for Games</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: a reference manual - a sticky contents rail beside one reading column; every claim from the slides has its own anchored section */
+:root {
+  --paper: #F4F5F1; --card: #FCFCFA; --ink: #14202B; --body: #36424F; --muted: #5A6571; --rule: #DADCD4;
+  --blue: #2A62A0; --blue-soft: #DCE6F2; --orange: #A3440E; --orange-soft: #F2E0D2; --code: #E9EAE3;
+  --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', Arial, sans-serif; --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--body); font: 17px/1.65 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 14px; line-height: 1.45; }
+nav.toc p { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+nav.toc p:first-child { margin-top: 0 }
+nav.toc a { display: block; color: var(--body); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid transparent; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); border-left-color: var(--blue); outline: none }
+main { min-width: 0; max-width: 700px; }
+header.top { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin: 0 0 10px; }
+h1 { font: 600 46px/1.1 var(--serif); color: var(--ink); margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 600 30px/1.2 var(--serif); color: var(--ink); margin: 0 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.35 var(--sans); color: var(--ink); margin: 26px 0 6px; }
+.lede { font-size: 20px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
+section { padding-top: 44px; scroll-margin-top: 16px; }
+section + section { border-top: 1px solid var(--rule); margin-top: 44px; }
+section.raw { background: var(--card); border: 2px solid var(--blue); border-radius: 14px; padding: 28px 26px 22px; margin-top: 32px; }
+section.raw h2 { font-size: 34px }
+.part { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 64px 0 -20px; }
+p { margin: 0 0 14px } ul, ol { margin: 0 0 14px; padding-left: 22px } li { margin: 4px 0 }
+strong { color: var(--ink); font-weight: 600 }
+a { color: var(--blue) } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+code { font: 14px/1.5 var(--mono); background: var(--code); padding: 1px 5px; border-radius: 4px; color: var(--ink); overflow-wrap: anywhere }
+pre { font: 14px/1.6 var(--mono); background: var(--code); color: var(--ink); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px }
+pre code { background: none; padding: 0 }
+.chip { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; vertical-align: 2px; margin-right: 6px; white-space: nowrap }
+.chip.measured { background: var(--blue-soft); color: var(--blue) }
+.chip.target { background: transparent; color: var(--orange); border: 1.5px dashed var(--orange) }
+.chip.open { background: var(--orange-soft); color: var(--orange) }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; color: var(--muted); margin-top: 6px }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin: 0 0 16px }
+.box > :last-child { margin-bottom: 0 }
+.box .label { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin: 0 0 8px }
+.box.evidence .label { color: var(--blue) }
+.box.plain .label { color: var(--orange) }
+.seen { font-size: 14px; color: var(--muted); margin-top: 18px }
+.seen a { white-space: nowrap }
+dl.terms { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr); gap: 10px 20px; margin: 0 }
+dl.terms dt { font-weight: 600; color: var(--ink) } dl.terms dd { margin: 0 }
+.crit { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; margin: 0 0 10px }
+.crit b { font: 600 14px/1.65 var(--mono); color: var(--blue) }
+.passes { display: grid; gap: 12px; margin: 0 0 16px }
+.pass { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px }
+.pass .n { font: 600 28px/1.1 var(--serif); color: var(--orange) } .pass .n small { display: block; font: 500 13px/1.4 var(--sans); color: var(--muted) }
+.pass p { margin: 0 }
+details.mtoc { display: none }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 28px 72px }
+  nav.toc { display: none }
+  details.mtoc { display: block; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px }
+  details.mtoc summary { cursor: pointer; font-weight: 600; color: var(--ink) }
+  details.mtoc a { display: block; padding: 4px 0; text-decoration: none }
+  h1 { font-size: 36px } h2 { font-size: 26px }
+  dl.terms { grid-template-columns: minmax(0, 1fr) } dl.terms dd { margin-bottom: 8px }
+  .pass { grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+</style></head><body>
+<div class="wrap">
+<nav class="toc" aria-label="Contents" id="toc">
+<p>Start here</p>
+<a href="#top">How to read this</a><a href="#raw"><strong>Testing raw</strong></a><a href="#idea">The idea in one minute</a><a href="#extract">Requirements make requirements</a><a href="#why">Why use it</a><a href="#when">When it fits</a><a href="#thin">Why a thin model misleads</a><a href="#seed">Seed it first, then it flies</a><a href="#how">How to run it</a><a href="#ten">The ten points</a>
+<p>The pieces</p>
+<a href="#pass">One pass, end to end</a><a href="#model">The model</a><a href="#breaks">Breaking code on purpose</a><a href="#speed">Why it is fast enough</a><a href="#owner">The right test must notice</a><a href="#equivalents">Breaks that change nothing</a><a href="#claims">Claims and locks</a><a href="#nodegraph">The node graph, and the demo</a><a href="#graph">The knowledge graph</a><a href="#criteria">The 17 checks</a><a href="#modal">Must and may</a><a href="#map">The map finds mistakes</a><a href="#gnnhow">How the GNN works</a><a href="#gnn">The GNN</a><a href="#reviewers">Fresh reviewers</a><a href="#chains">Argument chains</a><a href="#buzzsaw">Buzzsaw testing</a><a href="#questions">Who, what, why: where asked</a><a href="#tuner">Shaping the graph for the GNN</a>
+<p>What was measured</p>
+<a href="#feature">The test subject</a><a href="#morph">Five passes</a><a href="#flatter">One way flatters</a><a href="#self">The tool on itself</a><a href="#public">On public code</a><a href="#selfimprove">Self-improvement, on by default</a><a href="#telemetry">Telemetry</a><a href="#choose">How the stats choose</a><a href="#ab">On against off</a><a href="#matrix">Six kinds of task</a><a href="#learn">What it can learn</a><a href="#recursive">The loop on its own improvement</a><a href="#novelty">How new is it</a>
+<p>Limits and targets</p>
+<a href="#limits">What it is not, yet</a><a href="#targets">The two targets</a>
+<p>Using it</p>
+<a href="#install">Install</a><a href="#adapters">Other languages</a><a href="#harness">Your harness</a><a href="#glossary">Words used here</a>
+</nav>
+
+<main>
+<header class="top" id="top">
+<p class="eyebrow">Closed loop · prototype 0.1 · 29 October 2026</p>
+<h1>How to use AI for games</h1>
+<p class="lede"><strong>Our internal training manual at TNT Tools, adapted for Heavy Iron.</strong> The method is the closed loop: requirements first, tested by AI, so nothing is a guess.</p>
+<p class="lede">An AI that tests the requirements before it writes the code: <a href="#raw">testing raw</a>. The slides are the highlights. This is the whole story in plain words: what each part does, why it is there, and for every number on the slides, the test that produced it and what the number means.</p>
+<p>Every slide has a link to the section here that backs it up. Each number carries a tag:</p>
+<div class="legend"><span><span class="chip measured">Measured</span>we ran it and read the number</span><span><span class="chip target">Target</span>a goal, not measured yet</span><span><span class="chip open">Open</span>not settled</span></div>
+<details class="mtoc"><summary>Contents</summary>
+<a href="#accuracy">The key is accuracy</a><a href="#waterfall">Requirements first</a><a href="#firstclass">AI as a tester first</a><a href="#lineage">Where it comes from</a><a href="#raw">Testing raw</a><a href="#idea">The idea in one minute</a><a href="#extract">Requirements make requirements</a><a href="#why">Why use it</a><a href="#when">When it fits</a><a href="#thin">Why a thin model misleads</a><a href="#seed">Seed it first, then it flies</a><a href="#how">How to run it</a><a href="#ten">The ten points</a><a href="#pass">One pass, end to end</a><a href="#model">The model</a><a href="#breaks">Breaking code on purpose</a><a href="#speed">Why it is fast enough</a><a href="#owner">The right test must notice</a><a href="#equivalents">Breaks that change nothing</a><a href="#claims">Claims and locks</a><a href="#graph">The knowledge graph</a><a href="#criteria">The 17 checks</a><a href="#modal">Must and may</a><a href="#gnn">The GNN</a><a href="#reviewers">Fresh reviewers</a><a href="#chains">Argument chains</a><a href="#buzzsaw">Buzzsaw testing</a><a href="#questions">Who, what, why: where asked</a><a href="#tuner">Shaping the graph for the GNN</a><a href="#feature">The test subject</a><a href="#morph">Five passes</a><a href="#flatter">One way flatters</a><a href="#self">The tool on itself</a><a href="#public">On public code</a><a href="#selfimprove">Self-improvement, on by default</a><a href="#telemetry">Telemetry</a><a href="#choose">How the stats choose</a><a href="#ab">On against off</a><a href="#matrix">Six kinds of task</a><a href="#learn">What it can learn</a><a href="#recursive">The loop on its own improvement</a><a href="#novelty">How new is it</a><a href="#limits">What it is not, yet</a><a href="#targets">The two targets</a><a href="#install">Install</a><a href="#adapters">Other languages</a><a href="#harness">Your harness</a><a href="#glossary">Words used here</a>
+</details>
+</header>
+
+<section id="accuracy">
+<h2>The key is accuracy</h2>
+<p>Accuracy boosts productivity across the board. In our view it makes AI, in some cases, thousands of times smarter. That multiplier is our view, not a measurement: the largest multiplier we have measured is <a href="#selfimprove">216 times less reading</a>.</p>
+<p>The gap between what AI guesses and what is true is what people deem AI slop. At TNT Tools the standard is no slop: every value is either read from a source, with a note of where, or marked absent with the reason. There is no third kind.</p>
+<div class="box evidence"><p class="label">Where these numbers come from: our knowledge graph, on facts</p>
+<p><span class="chip measured">Measured</span> <strong>99.03%</strong> of 35,951 derivations it had never seen were right, using reasoning rules guarded by type, on a verified-or-abstain knowledge graph of 60.33 million facts, each carrying which sources state it.</p>
+<p><span class="chip measured">Measured</span> <strong>616 of 616</strong> of its top-tier facts were right against an outside truth (cached Wikidata), on a frozen test population of 2,714 entities, with the bars declared before the run.</p>
+<p><span class="chip measured">Measured</span> <strong>99.2%</strong> right on 209 held-out questions, answering 61% of them and abstaining on the rest. Asked the same questions on the same facts, a local language model answered 95% at 98.0%, with 4 confident wrong answers. The accuracy comes from being allowed to say "I don't know".</p></div>
+<p>Those are facts, not code. On code, the numbers are in <a href="#morph">one feature over five passes</a> and <a href="#matrix">six kinds of task</a>, and the target for agents writing code with the loop is still <a href="#targets">a target</a>. Graders on those tasks counted 17 invented values with the loop and 5 without, so "no guesses" is the standard being worked toward there, and the count is how we know.</p>
+</section>
+
+<section id="waterfall">
+<h2>Back to 1999: requirements first</h2>
+<p>This is how we review our code: we pour the effort into requirements first. It is time to learn systems analysis and design again. Agile is, for the most part, dead. Long live waterfall.</p>
+<p>The reason is mechanical. The more requirements you have, the better a graph neural network (GNN) works at filling the gaps, and the more of the loop closes, so that nothing is left to a guess. That is what gets you slopless code. We want hand-crafted quality on an IKEA budget.</p>
+<div class="box evidence"><p class="label">Where this comes from</p>
+<p><span class="chip measured">Measured</span> On the shop feature, the graph neural network (GNN) scored 0.48 with a tenth of the requirement links, 0.63 with a quarter, 0.73 with half and 0.77 with three quarters or all, against 0.67 for a plain rule with no test results to read. See <a href="#seed">seed it first</a>. Once test results exist, a plain rule that reads them does better on that feature: see <a href="#gnn">the part that learns</a>.</p></div>
+</section>
+
+<section id="firstclass">
+<h2>There is no such thing as "we don't use AI"</h2>
+<p>AI is a first-class testing tool first, and a code writer second. Write every line by hand if you like: it will still tell you which of your tests cannot fail, and which code no test notices. When it does write code, it is held to the same requirements and the same tests as everyone else.</p>
+<p>There is no reason to throw away really well done tests. That is the baby with the bathwater. Your tests become the judge of what AI does.</p>
+</section>
+
+<section id="lineage">
+<h2>Where it comes from: a mutation of an ARC3 self-improvement loop</h2>
+<p>This toolkit is not only a shop feature's numbers. It is a mutation of the self-improvement loop from our ARC3 harness, which was a piece of a failed attempt at AGI. The shop feature, a weapon shop among the examples, is what we built this version on, because our own is internal and cannot be extracted. What came across is the part that survived: propose, then verify; abstain rather than guess; and never trust a number you could game.</p>
+<div class="box evidence"><p class="label">What the ARC3 work measured</p>
+<p><span class="chip measured">Measured</span> <strong>A weak proposer and a strong verifier beat either alone.</strong> On a frozen set of 63 games, at a budget of 150 steps, the unified agent reached 31 where random reached 14. At 250 steps it reached 35 against random's 29, reproduced identically twice.</p>
+<p><span class="chip measured">Measured</span> <strong>The failure that shaped this tool.</strong> An autonomous self-improvement run went 16 days and 330 commits and found nothing that generalized. A counter that could be gamed rose from 147 to 168 while the honest number stayed flat. That is why here every stat must have a reader, a control and a fresh reviewer, and why <a href="#selfimprove">the loop audits its own stats</a>.</p>
+<p><span class="chip measured">Measured</span> <strong>The honest baseline.</strong> The one-shot solver covered all 249 games and reached 106 of them, but blind transfer to games it had not seen was about 1 of 81. We report that number because it is the real one.</p></div>
+<p>If this harness is useful to you and working together does not happen, perhaps the harnesses can merge: it is self-improving, so a merged one keeps improving for both sides.</p>
+</section>
+
+<section id="raw" class="raw">
+<p class="eyebrow">The point of all of it</p>
+<h2>Testing raw: AI that tests the requirements</h2>
+<p class="lede">We test code. Requirements get reviewed by people, now and then. What AI adds is <strong>requirements testing done by a machine</strong>, all the time, at the scale of the code. This loop is built for exactly that.</p>
+<p><strong>The requirements are the code behind the code.</strong> When an agent writes the program, it writes it from the requirements, so in its rawest form the requirements are the code. A mistake in a requirement becomes a mistake in every line written from it. Testing before that stage, on the requirements themselves, is what we call <strong>testing raw</strong>.</p>
+<p><strong>It makes new requirements by finding failures in the ones it has.</strong> The loop walks each use case step by step and asks what every step needs. When a step needs something no requirement provides, that gap is a failure of the requirements, and it becomes a new requirement: marked inferred, and put to the owner as a question.</p>
+<div class="box evidence"><p class="label">Measured</p>
+<p><span class="chip measured">Measured</span> On the shop feature, walking the use cases found <strong>10 requirements nobody had written</strong>, beside the 17 the designers wrote. Each went to the owner as a question, for example “what raises a shop’s level?”.</p>
+<p><span class="chip measured">Measured</span> On an earlier tool for the same game, the same method inferred <strong>7 requirements; all 7 were real defects</strong>, and none of them was in the written requirements.</p></div>
+<p>The code still gets tested. Breaking the code on purpose (<a href="#breaks">how</a>) is how the loop checks that each requirement really reached the code. But the requirements are tested first, because that is where a mistake is cheapest to catch.</p>
+<p>Very little work has been done on AI requirements testing yet. As agents write more of the code, the part people write is the specification, and the work moves back toward writing it first, closer to waterfall. Testing that specification becomes the main job, and that is where this loop puts its effort.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-1">the cover</a>, <a href="../deck/#slide-6">slide 6</a>.</p>
+</section>
+
+<section id="idea">
+<h2>The idea in one minute</h2>
+<p>When an AI agent writes code, it usually finishes by saying it is done. Most of the time you cannot check that without reading everything it did. The closed loop makes “done” something a machine can check.</p>
+<p>Think of a building inspector with the plans in hand. The plans are your requirements, written down as data instead of as a paragraph. The inspector never takes the builder’s word. It checks every item on the plans against the building, and for every part of the building it asks which item on the plans that part is for.</p>
+<p>What keeps the inspection honest is that the inspector also <strong>breaks things on purpose</strong>. It takes a piece of working code, changes it slightly so it is wrong, and checks that at least one test notices. If no test notices, nothing is really checking that code, whatever the test report says.</p>
+<p>At the end you get a count of three things: breaks no test noticed, code no requirement asked for, and questions only the owner can answer. “Done” means that count is zero.</p>
+<div class="box plain"><p class="label">Why a count and not a feeling</p>
+<p>“Did I think of every requirement?” has no answer: what you forgot leaves no trace. “Is the list of open questions empty?” does have one, because the list is generated from the plans and the code, not from memory. So the loop never tries to be complete by writing more. It walks the plans, and every gap it meets becomes a question with a file and a line.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-6">slide 6</a>.</p>
+</section>
+
+<section id="extract">
+<h2>It extracts new requirements from the ones you have</h2>
+<p>The tool automatically extracts requirements from existing requirements. You do not list them by hand. It walks each use case step by step: every step needs something to be true, and when no requirement provides that, the chain has inferred one nobody wrote. It is marked inferred and goes to the owner as a question, because only the owner can decide it. See <a href="#idea">the idea in one minute</a> for what that found on the shop feature, and <a href="#matrix">growing a model from a small seed</a> for how far it went from 3 requirements.</p>
+<h3>Complete in, accurate out</h3>
+<p>The more complete the requirements, the more accurate the prompt built from them: an agent acting on them has less to guess. Which ones you write first matters as well, so start with the ones that run through the most code (<a href="#seed">seed it first</a>).</p>
+<h3>Remix, don't invent</h3>
+<p>When adding a large feature, it is probably better to remix two features that already have solid requirements than to invent something new with no clear ones. Adding a weapon shop, say, is a remix of a shop and an inventory, and a shop is one of the examples this tool was built on. A remix starts from requirements that have already been tested, so the gaps it leaves are the places where the two meet, and the walk finds those. A new invention starts with nothing to walk.</p>
+<p><span class="chip open">Open</span> This is our judgment from building with it. No run has measured complete against incomplete requirements, or remix against invention, directly.</p>
+</section>
+
+<section id="why">
+<h2>Why use it</h2>
+<h3>Requirements written as prose cannot fail</h3>
+<p>A paragraph saying “the player can buy an item if they have enough money” never turns red when the code drifts away from it. The loop keeps each requirement as a record with an id, its source, and the code it points at, so a requirement that no longer matches the code shows up as a failure.</p>
+<h3>Tests can pass for the wrong reason</h3>
+<p>A test that checks the price shown on screen passes even if buying never takes the money out of the wallet. Every test is green and the rule is broken. Breaking the code on purpose finds this: take the line that subtracts the money out, and see whether any test fails. If none does, the rule has no test, however many tests there are.</p>
+<h3>Long runs forget</h3>
+<p>An agent’s working memory (its context window) fills up during a long job, and early details drop out. Later steps then guess at what was settled before. The loop writes everything it learns to a graph on disk, so a later step looks the answer up instead of guessing it again. Every entry says where it came from.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-4">slide 4</a>.</p>
+</section>
+
+<section id="when">
+<h2>When it fits, and when it does not</h2>
+<p><strong>Use it for larger systems:</strong> code that many changes will touch, where a rule must still be true after the agent’s tenth edit as well as its first, and where you want to know which line exists because of which requirement. It also helps most when agents run for hours, across many context windows.</p>
+<p><strong>Skip it for</strong> a one-off prompt, a quick script, or exploring an idea. The loop costs setup and run time, and it pays that back only when the same requirements are held across many changes. It is also no help with how something looks or feels: visuals, timing and feel still need a person.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-20">slide 20</a>.</p>
+</section>
+
+<section id="thin">
+<h2>Why a thin model can be worse than nothing</h2>
+<p>The loop can only check what is written in the model. Suppose the model holds three requirements and two tests. The loop may honestly report everything closed, because everything it knows about is checked. But a green report reads as “the work is complete”, when all it proves is that three small things are right. That false confidence is worse than having no report at all.</p>
+<p>How large a model must be before its report means something is only partly known. The first measurements are in <a href="#seed">Seed it first, then it flies</a>. Until there are more, treat a green loop over a small model as “these few things hold”, never as “it is done”.</p>
+<p><span class="chip open">Open</span> How many requirements, tests and graph nodes are “enough” for the whole report is not known yet; for the part that learns there is a first answer.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-20">slide 20</a>, <a href="../deck/#slide-20">slide 20</a>.</p>
+</section>
+
+<section id="seed">
+<h2>Seed it first, then it flies</h2>
+<p>The loop learns from what is already written down. Give it a model with a handful of requirements and it can check those few, but it has little to reason from when new code arrives. Give it many, with their code claimed, and it starts to see the patterns: which requirement a new branch most likely belongs to, which questions follow from which. So the order of work is: <strong>seed the model with as many sourced requirements as you can, then let the loop carry it.</strong></p>
+<h3>How full is full enough</h3>
+<p>We measured this for the part that learns, the graph neural network (GNN). For each graph it was allowed to see only a share of the known links between code and the requirements that own it (a tenth, a quarter, half, three quarters, all of them), always tested on methods it had never seen, and compared with a plain rule that does not learn: “suggest the requirements whose effects already sit in this method”.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>The shop feature</strong> (27 requirements over 41 methods): the graph neural network (GNN) loses below half (MRR 0.48 with a tenth of the links, 0.63 with a quarter) and wins from half on (0.73 at half, 0.77 with three quarters or all), against 0.67 for the plain rule.</p>
+<p><span class="chip measured">Measured</span> <strong>The two kit examples</strong> (4 requirements each): the plain rule wins at every fullness, 0.90 and 0.86 against the graph neural network (GNN)’s best of 0.78 and 0.85.</p>
+<p><span class="chip measured">Measured</span> <strong>The tool’s own model</strong> (20 requirements): the graph neural network (GNN) wins only at half and falls back after, so it has no dependable crossover yet.</p>
+<p>Two seeds each, five folds by method, 29 October. That is thin: read it as a first shape, not a law.</p></div>
+<p>So on a small model the GNN stays quiet and the plain rule does the work. It earns its place only once the model is large and about half of its code is claimed.</p>
+<h3>Some requirements are pillars</h3>
+<p>Which requirements are written matters as much as how many. A few carry most of the code. On the shop feature, 3 of its 27 requirements own 56% of all the links between code and requirements, and 8 own 80%. On the tool’s own model, 7 of the 12 requirements that own any code own 80% of it, and one of them runs through 16 methods. Seed those first: a rule that runs through many methods gives the rest of the graph something to attach to.</p>
+<p>The same curve was then seeded by requirement instead of by method: only some requirements' claims were seen, added in three orders.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>On the shop feature</strong> (27 requirements): in <strong>random order</strong> the GNN beats the plain rule only once every requirement is seeded (MRR 0.41 with a tenth, 0.53 with a quarter, 0.63 with half, against 0.67). <strong>Pillars first</strong> (the requirements owning the most code) it wins from a quarter, about 7 requirements (0.71). <strong>Cross-cutting first</strong> (the requirements running through the most methods) it wins from a tenth: <strong>3 requirements</strong> (0.74).</p>
+<p><span class="chip measured">Measured</span> <strong>On the tool's own model</strong> (20 requirements) no order makes the GNN beat the plain rule.</p>
+<p>One seed each, five folds by method, 29 October. Thin, but the gap between the orders is large.</p></div>
+<p>So <strong>which requirements are written first matters more than how many</strong>. On the shop feature, the three that run through the most methods give the learning part what a random start needs all twenty-seven for. Write the cross-cutting rules first.</p>
+<h3>The smallest seed that grows into the whole loop</h3>
+<p>The loop already grows requirements. It walks each step, asks what the step needs, and every need nobody wrote becomes a new requirement for the owner to settle. On the shop feature, 10 of the 27 requirements were inferred that way, on top of the 17 that cite a written source. So the open question is how small the written set can be and still grow into the full model. A small, well-chosen seed would mean less to write up front, and a structure that is easier to keep consistent.</p>
+<p><span class="chip open">Open</span> The experiment for it: give an agent only the problem story and a few pillar requirements, let it grow the model with the loop, and count how many of the full model’s requirements it arrives at, and at what cost.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-15">slide 15</a>.</p>
+</section>
+
+<section id="how">
+<h2>How to run it</h2>
+<ol>
+<li><strong>Install.</strong> <code>python install.py</code> puts the skill where Claude Code finds it and the tools beside it, then runs every selftest and the whole loop on a small example project. The example must pass (“hold”), or the install says so. See <a href="#install">Install</a>.</li>
+<li><strong>Write the model of your system.</strong> First the problem story in your own words, each sentence with its source. Then the requirements, each pointing at the code it is about. Then the use cases: who wants what, step by step. Then a short block that names your code folders and your test files. <code>python -X utf8 usecase_model.py &lt;model&gt;</code> checks the 19 rules (see <a href="#model">The model</a>).</li>
+<li><strong>Run the one command.</strong>
+<pre><code>CLOSED_LOOP_ROOT=&lt;your repo&gt; python -X utf8 closed_loop.py run &lt;model&gt; --out REPORT.md --pin-claims "&lt;why&gt;"</code></pre>
+It breaks your code every way it knows, runs your tests against every break, builds the graph, applies the 17 checks and writes a report.</li>
+<li><strong>Close what is yours.</strong> The report sorts what is open into two kinds. Yours: a missing test, a line no requirement claims, a break that changes nothing and needs explaining. The owner’s: questions about what the system should do, which only the person who owns the requirements can answer.</li>
+<li><strong>Take the lock.</strong> When nothing of yours is left, <code>--accept "&lt;why&gt;"</code> records the verified state. A later change to that code makes the affected requirements stale until they are verified again. The lock refuses while any hole of yours stands, so it can never be used to turn a red report green.</li>
+</ol>
+<p class="seen">On the slides: <a href="../deck/#slide-8">slide 8</a>.</p>
+</section>
+
+<section id="ten">
+<h2>The ten points, each with its section</h2>
+<ol>
+<li><strong>What it is:</strong> one command that holds an agent’s requirements to the code, the tests and the agent’s own reasoning. <a href="#idea">More</a></li>
+<li><strong>How it tests:</strong> it breaks every decision in the code on purpose, every way it knows, and each break must make a test fail, the test of the requirement that owns that code. <a href="#breaks">More</a>, <a href="#owner">the right test</a></li>
+<li><strong>Speed:</strong> every break is built in one compile, then each runs alone. <a href="#speed">More</a></li>
+<li><strong>The graph is the record:</strong> every piece is a node, and the checks read the graph. <a href="#graph">More</a></li>
+<li><strong>One feature over five passes:</strong> what the numbers were and what changed each time. <a href="#morph">More</a></li>
+<li><strong>Equivalents:</strong> a break that changes nothing is proven or explained, never waved away. <a href="#equivalents">More</a></li>
+<li><strong>Testable by design:</strong> a screen’s decisions were moved out of drawing code to where tests reach them. <a href="#feature">More</a></li>
+<li><strong>The GNN:</strong> a learning model that suggests which requirement owns new code. <a href="#gnn">More</a></li>
+<li><strong>On against off:</strong> the same task given to two agents, one using the loop, graded blind. <a href="#ab">More</a></li>
+<li><strong>A fresh reviewer each pass:</strong> a new agent hunts for ways a check could pass wrongly. <a href="#reviewers">More</a></li>
+</ol>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-3">slide 3</a>.</p>
+</section>
+
+<p class="part">Part 2 · The pieces</p>
+
+<section id="pass">
+<h2>One pass, end to end</h2>
+<ol>
+<li><strong>The model</strong> is read and checked against its 19 rules.</li>
+<li><strong>The code is broken</strong>: every statement the requirements cover, every way the tool knows, all built at once.</li>
+<li><strong>The tests run</strong> against each break separately. Each break should make some test fail.</li>
+<li><strong>Everything goes into the graph</strong>: requirements, steps, code places, breaks, tests, and which test caught which break.</li>
+<li><strong>The 17 checks</strong> read the graph. Each one is named after a mistake it stops.</li>
+<li><strong>The verdict</strong> is either HOLDS, or OPEN with a list of questions and whose each one is.</li>
+</ol>
+<p>You close your questions and run again. That repeat is the loop.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-8">slide 8</a>.</p>
+</section>
+
+<section id="model">
+<h2>The model: your requirements as data</h2>
+<p>The model is a few small text files (YAML) beside your code:</p>
+<ul>
+<li><strong>The problem story</strong>: one paragraph on what the system is for, each sentence with where it came from (a person, a design document, a date).</li>
+<li><strong>Requirements</strong>, each with an id, its text, how to check it, its source, and the code it points at. A requirement is <strong>authored</strong> (someone wrote it) or <strong>inferred</strong> (the loop found that a step needs it and nobody wrote it). Inferred ones are questions for the owner, never facts.</li>
+<li><strong>Use cases</strong>: who wants what, as 3 to 11 numbered steps, plus what happens when a step cannot complete. Each step names the requirement it relies on.</li>
+<li><strong>The loop block</strong>: which code folders and test files the loop works on.</li>
+</ul>
+<p>The 19 rules refuse a model that is malformed before anything runs. Some examples of what they refuse, in their own words: a use case with too few or too many steps; “step 3 carries no requirement”; “a requirement with no text”; “no measure: nothing says how to check it”; a story sentence with no source; two items sharing one id; a use case with “no alternate pathway: what happens when a step cannot complete?”; a requirement carried only by summary steps, so no real user goal ever reaches it.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-8">slide 8</a>, <a href="../deck/#slide-8">slide 8</a>.</p>
+</section>
+
+<section id="breaks">
+<h2>Breaking the code on purpose</h2>
+<p>The usual name is <strong>mutation testing</strong>, and each broken copy is a <strong>mutant</strong>. This manual calls them <strong>breaks</strong>. A break that makes some test fail is <strong>caught</strong> (or “killed”). A break that every test still passes <strong>got past</strong> (or “survived”), and that points at a missing test.</p>
+<div class="box plain"><p class="label">A small example</p>
+<pre><code>if (wallet.Money &gt;= price)   // the real code: exact money is enough
+if (wallet.Money &gt;  price)   // a break: paying the exact price now fails</code></pre>
+<p>If every test still passes with the second line, then no test buys something with exactly enough money. That is a missing test, and the report names the line.</p></div>
+<p>The kinds of break the C# adapter makes, in plain words:</p>
+<ul>
+<li><strong>Conditions</strong>: turned around, forced always true, forced always false.</li>
+<li><strong>Operators</strong>: <code>&lt;</code> made <code>&lt;=</code>, <code>==</code> made <code>!=</code>, <code>&amp;&amp;</code> made <code>||</code>, plus made minus.</li>
+<li><strong>Values</strong>: a number made one more, true made false, a text emptied, a function argument replaced by its default.</li>
+<li><strong>Structure</strong>: the two outcomes of a <code>? :</code> swapped, an else branch removed, a statement removed, the whole method made to return at once.</li>
+</ul>
+<p>Each statement gets at most 24 breaks, one of each kind first, so a busy statement cannot crowd out the kinds of break that matter most.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-9">slide 9</a>.</p>
+</section>
+
+<section id="speed">
+<h2>Why it is fast enough</h2>
+<p>Building each broken copy separately would mean hundreds of compiles. Instead, every method is copied once per break inside one build, and a switch picks which copy runs. One compile serves every break. A copy that does not compile is found by the line and column of its error and dropped, and the rest are rebuilt.</p>
+<p>Each break then runs the tests alone, in its own copy of the build in a temporary folder. The live project is never touched.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> On 29 October, pass 4 on the shop feature (see <a href="#feature">the test subject</a>) made <strong>772 breaks</strong>. Compiling all of them once took <strong>about 45 seconds</strong>. Each break then ran the shop’s tests in <strong>about 3 seconds</strong>, two at a time, so the whole pass took about 20 minutes on one desktop machine.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-9">slide 9</a>.</p>
+</section>
+
+<section id="owner">
+<h2>The right test must notice</h2>
+<p>It is not enough that <em>some</em> test fails when a requirement’s code is broken. It should be that requirement’s own test. Otherwise the requirement is only protected by accident: a test written for something else happens to fail today and may not tomorrow.</p>
+<p>So each test says what it checks, on the line above it:</p>
+<pre><code>/// CHECKS: W-1
+[Test]
+public void Pay_TakesExactlyThePrice() { ... }</code></pre>
+<p>A requirement whose named test misses its own breaks is a hole, even when another test caught them. And a test named as a requirement’s check that catches none of that requirement’s breaks is a hole too, so listing more tests can never make the score look better.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-17">slide 17</a>.</p>
+</section>
+
+<section id="equivalents">
+<h2>Breaks that change nothing</h2>
+<p>Some breaks get past every test because they do not change what the program does. Example from the shop feature: the cursor moves by the <em>sign</em> of a number, so changing a 1 to a 2 there moves it the same way. No test can catch that, and none should. These are called <strong>equivalent</strong> breaks.</p>
+<p>The danger is calling a real missing test “equivalent” to make it go away. So the loop accepts an equivalent in only two ways:</p>
+<ul>
+<li><strong>Proven by the compiled code.</strong> C# compiles to IL, the instructions the runtime actually runs. If the broken copy’s IL is identical to the original’s, the two are the same program (a technique called Trivial Compiler Equivalence, Papadakis and others, 2015). The loop checks this itself.</li>
+<li><strong>Declared with a reason.</strong> Otherwise a person or agent writes down why it changes nothing, and names the methods the reason depends on. If those methods change later, the reason lapses and the break is counted as a hole again.</li>
+</ul>
+<p>And if a test ever does catch a break that was declared equivalent, the declaration was wrong, and that is reported as a hole. This happened twice on the shop feature: two breaks looked harmless (one about how a German computer writes the number “2.0”, one about an invisible zero-width character before a “#”), but each could change the result. Both are now held by tests instead.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-9">slide 9</a>.</p>
+</section>
+
+<section id="claims">
+<h2>Claims and locks</h2>
+<p>A <strong>claim</strong> says “this method belongs to requirement X”. The loop pins each claim to a fingerprint of the method’s statements. If someone adds a line to that method or deletes one, the fingerprint changes and the claim goes stale. A new line can never slip in under an old claim without being looked at.</p>
+<p>The pins are kept in a small file (<code>claims.lock</code>). If that file goes missing, every claim is unpinned until a person pins them again with a reason. A missing lock never quietly re-pins itself; a reviewer found that it used to, and it was fixed.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-9">slide 9</a>, <a href="../deck/#slide-17">slide 17</a>.</p>
+</section>
+
+<section id="nodegraph">
+<h2>The node graph, and flying through it</h2>
+<p>Everything the loop knows about a feature is one graph: who asked for what, which code does it, every way that code was broken, and which test noticed. The shop feature's graph has 1,714 nodes and 10,024 edges. It is stored as SQLite and N-Triples. <a href="../">The fly-through demo</a> draws that store as it is, with nothing added and nothing left out. The pictures behind the slides are stills from the same page.</p>
+<h3>How it is laid out</h3>
+<p>The store has no shape of its own, so the demo gives it one you can read from top to bottom, one ring for each kind of node:</p>
+<ul>
+<li><strong>Why it exists:</strong> 19 sources, 27 requirements (17 written by people, 10 inferred by walking the use cases), 7 owner's questions, 6 use cases and their 32 steps.</li>
+<li><strong>Claude's reasoning:</strong> a chain and its 9 steps, each citing what it stands on.</li>
+<li><strong>What the code does:</strong> 50 methods in a ring, sorted by name, so a class's methods sit together.</li>
+<li><strong>What proves it:</strong> 313 branches, 1,097 breaks and 45 tests. Each branch and each break sits at the angle of the method it belongs to, so a method and everything under it line up.</li>
+</ul>
+<h3>How code maps to requirements</h3>
+<p>Two kinds of edge do it. A branch <em>maps to</em> a requirement: 620 of those. A branch <em>is at</em> a method: 313. Together they take you from any decision in the code to who asked for it, and from a requirement to all the code that answers to it. A decision no requirement owns is a hole, and the loop lists it.</p>
+<h3>What the red points are</h3>
+<p>The 130 breaks no test caught. Red is what the graph records, not a verdict: 23 of them are proven by compiled code to be the same program, 20 have a written reason, 52 have no verdict yet, and 35 are unexplained, which are the real work.</p>
+<h3>The demo</h3>
+<p>Drag to orbit, scroll to zoom, W A S D to fly, Q and E for down and up. The tour follows one real thread: a source, a requirement, the step that needs it, Claude's reasoning, the code, a branch, a break of that branch, the test that caught it, and a break that got past. The Show menu narrows it to one question: how code maps to requirements, every break and what caught it, Claude's reasoning, requirements and use cases, or what the graph neural network reads.</p>
+<p>It is a tool in the kit, for any graph the loop has written. <code>--hide</code> keeps names you choose off the page:</p>
+<pre><code>python graph_flythrough.py &lt;store.sqlite&gt; --out page.html --hide "NameA|NameB"</code></pre>
+</section>
+
+<section id="graph">
+<h2>The knowledge graph</h2>
+<p>A graph here is just a list of things (<strong>nodes</strong>) and the links between them (<strong>edges</strong>). The things are requirements, use case steps, places in the code, branches, breaks, tests and reasoning steps. The links say how they relate, for example:</p>
+<pre><code>requirement W-1   is checked by   test Pay_TakesExactlyThePrice
+break #312        was caught by   test Pay_TakesExactlyThePrice
+method Pay        is claimed by   requirement W-1</code></pre>
+<p>The graph is <strong>the record</strong>: the 17 checks read it, and a later agent reads it instead of re-deriving what an earlier one found. It is written on every run as a SQLite database and as an N-Triples text file, a standard format any graph tool can open.</p>
+<div class="box evidence"><p class="label">How big it gets</p>
+<p><span class="chip measured">Measured</span> After pass 5 on the shop feature the graph held <strong>1,271 nodes and 6,878 edges</strong>, read from that pass’s line in the morph log.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-11">slide 11</a>, <a href="../deck/#slide-11">slide 11</a>.</p>
+</section>
+
+<section id="criteria">
+<h2>The 17 checks</h2>
+<p>Each check is named after the mistake it stops. Each one is proven by a <strong>planted mistake</strong>: the tool’s own selftest builds a small model with that exact mistake in it and requires the check to catch it. A check that has only ever passed cannot be told apart from one that is switched off.</p>
+<div class="crit"><b>L1</b><span><strong>Identity.</strong> Things keep their identity across rebuilds, so a verdict never ends up attached to the wrong thing.</span></div>
+<div class="crit"><b>L2</b><span><strong>Sourced.</strong> Every requirement traces to something outside the model: a person’s words, a design document. Nothing is invented.</span></div>
+<div class="crit"><b>L3</b><span><strong>Corroborated.</strong> A requirement only one source states is listed, because it inherits that source’s mistakes.</span></div>
+<div class="crit"><b>L4</b><span><strong>Carried.</strong> Every requirement is reached by some path through the main use case. Otherwise nobody builds it.</span></div>
+<div class="crit"><b>L5</b><span><strong>Ended.</strong> Every path has an end and someone acting; every step carries something.</span></div>
+<div class="crit"><b>L6</b><span><strong>Answered.</strong> Every question was answered by a person, not settled by a guess.</span></div>
+<div class="crit"><b>L7</b><span><strong>Realized.</strong> Code linked to a requirement has the shape the requirement describes.</span></div>
+<div class="crit"><b>L8</b><span><strong>Falsifiable.</strong> A check must be able to fail. One that passes whatever the code does is a hole.</span></div>
+<div class="crit"><b>L9</b><span><strong>Justified.</strong> Code no requirement asked for is flagged: behaviour that slipped in.</span></div>
+<div class="crit"><b>L10</b><span><strong>Defined.</strong> A requirement names things the code really has, and uses each word one way.</span></div>
+<div class="crit"><b>L11</b><span><strong>Causal.</strong> Every step’s starting condition is made true by something earlier.</span></div>
+<div class="crit"><b>L12</b><span><strong>Consistent.</strong> No two requirements demand opposite things.</span></div>
+<div class="crit"><b>L13</b><span><strong>Change-safe.</strong> A requirement, or the code it reads, that changed after it was verified is stale until verified again.</span></div>
+<div class="crit"><b>L14</b><span><strong>Caught.</strong> Breaking a requirement’s code makes a test fail.</span></div>
+<div class="crit"><b>L15</b><span><strong>Pinned.</strong> Every branch is held by a test: break it any way and something fails.</span></div>
+<div class="crit"><b>L16</b><span><strong>Own check.</strong> The test that notices is the requirement’s own named test (<a href="#owner">why</a>).</span></div>
+<div class="crit"><b>L19</b><span><strong>Equivalent.</strong> A break called “the same program” has a proof, or a reason no test refutes (<a href="#equivalents">why</a>).</span></div>
+<p>The numbering skips L17 and L18. L17 is a planned check from the research (vacuity: a requirement’s check must fail when its condition is forced off), not built yet.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-8">slide 8</a>.</p>
+</section>
+
+<section id="modal">
+<h2>Must and may: what “closed” means</h2>
+<p>The research behind the loop looked at how logicians describe “complete”. The closest fit is a <strong>Modal Transition System</strong> (Larsen and Thomsen, 1988). Every behaviour is marked either <strong>must</strong> (it has to happen) or <strong>may</strong> (it is allowed, not yet decided). A specification is finished when no “may” is left: every open choice has been settled one way or the other.</p>
+<p>Here, the authored requirements are the musts. The inferred ones, the things the steps need that nobody wrote, are the mays. Each may is a question for the owner, who settles it as a must or as “either is fine”. On the shop feature, “what raises a shop’s level?” is one such may: the code needs it and no one has said.</p>
+<div class="box plain"><p class="label">The honest limit</p>
+<p>Breaking code can show that requirements are <em>not</em> closed. It can never prove they are. “Closed” always means “closed against the breaks we tried and the tests that watched”. A new kind of break might find something new.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-11">slide 11</a>.</p>
+</section>
+
+<section id="map">
+<h2>The requirements map to the code, and the map finds mistakes</h2>
+<p>This is an early prototype. Every requirement links to the code it owns, in one graph. The graph's criteria and the breaks do most of the finding so far. A graph neural network (GNN) learns on the same map, proposes which requirement owns new code, and is set to learn what does not fit; using it as a second opinion on every claim is planned and not yet measured.</p>
+<div class="box evidence"><p class="label">What the map has found</p>
+<p><span class="chip measured">Measured</span> <strong>356 holes listed, 84 left,</strong> while an agent grew one model from 3 requirements to 49: 318 closed, 46 new, 38 already there. (An earlier run, on code that cited its requirement ids, ended at 67.)</p>
+<p><span class="chip measured">Measured</span> <strong>13 branches</strong> of checked-in code that no requirement owned, on the shop feature.</p>
+<p><span class="chip measured">Measured</span> <strong>On public code:</strong> a public asteroid game's document modelled as 48 requirements. 10 rest on a function's behaviour with no value behind them, and the parse check caught a document row missing a column. Language-neutral parts only, with no breaks, since there is no JavaScript adapter; a thin graph, where a green result means little.</p>
+<p><span class="chip measured">Measured</span> <strong>On the toolkit's own code:</strong> 885 of the 1,532 breaks caught. See <a href="#self">the tool on itself</a>.</p>
+<p><span class="chip open">Open</span> The same run on source a reader can check for themselves is the next trial. There is no C++ adapter, so on C++ it would run the language-neutral parts only.</p></div>
+</section>
+
+<section id="gnnhow">
+<h2>How the GNN works, what it records, and how it tries to improve</h2>
+<h3>How it works</h3>
+<ol>
+<li><strong>It reads.</strong> Each node starts as its own words, hashed to 512 numbers.</li>
+<li><strong>It listens.</strong> GraphSAGE layers let each node hear its neighbours, relation by relation. After that a node's numbers say something about what surrounds it.</li>
+<li><strong>It ranks.</strong> A scorer ranks every requirement for a decision that has no owner.</li>
+<li><strong>It asks.</strong> Below 70% sure it abstains. Above that, its answer goes out as a question for a person or an exact check. It is never a verdict.</li>
+</ol>
+<p>It never reads breaks, tests or chains. Those hold the answer, and new code would not have them. Two ways that answer leaked in were measured and closed before any score here was taken. Whole methods are held out when it is tested, so each score is on code it has not seen.</p>
+<h3>What it records</h3>
+<ul>
+<li><strong>Its score beside the plain rules,</strong> on each pass run with <code>--gnn</code> (<code>stats.jsonl</code>): GNN 0.76 over four seeds (0.74 to 0.79), the best plain rule 0.67, words 0.50, random 0.19, the same method 0.13, in mean reciprocal rank, where 1.0 is always ranked first. 3 of the shop feature's 7 passes ran it.</li>
+<li><strong>Each job against the best plain rule</strong> (<code>kg/gnn_tasks.jsonl</code>): who owns new code, which tests catch a break, which steps carry a requirement, which breaks are the same program. <a href="#gnn">The results</a>.</li>
+<li><strong>The shape of what it reads:</strong> 562 nodes, 1,570 links, 553 of them owner links, 41 methods, and how those links pile up: 3 requirements hold 56% of them, and 8 hold 80%.</li>
+<li><strong>Breaks ranked</strong> (<code>kg/survivor_rank.jsonl</code>): a learned order finds 50% of the survivors in the first fifth of a run, on average over ten seeds, against 31% for the plain rule and 21% for random. One seed flatters: this one ranged from 35% to 64%.</li>
+<li><strong>Its curve</strong> (<code>gnn_curve</code>): 0.48 with a tenth of the links, 0.77 with all of them.</li>
+<li><strong>How sure it was:</strong> at 70% sure or more it was right 92% of the time, on about 40% of new code (25% to 58%), over four seeds.</li>
+<li><strong>Every tune</strong> (<code>gnn_tune.jsonl</code>): each variant's score, and what was kept.</li>
+</ul>
+<h3>How it tries to improve</h3>
+<p>Its lead over the plain rules is itself a stat. On the shop feature that lead fell from 0.23 to 0.15 to 0.12 as more tests arrived, and the telemetry reports it as worsening and names reshaping the graph as a next job, beside writing tests. A tune is due after 5 passes without one anyway. A standing tick or a person then runs it: <code>graph_gnn.py tune &lt;graph&gt;</code>. <a href="#tuner">A tune</a> redraws what the GNN reads, with each relation left out and each derived link added. A change is kept only if it wins by 0.02 on the tuning seeds and again on a seed it was not chosen on.</p>
+<div class="box evidence"><p class="label">So far</p>
+<p><span class="chip measured">Measured</span> <strong>2 tunes, 14 variants, nothing kept.</strong> The best reached 0.750 against the full graph's 0.737, which is short of the bar. It attempts to improve itself, and the attempt has not paid yet.</p>
+<p><span class="chip open">Open</span> A project's run plan records whether each learned job wins there, and so far only 1 of its 7 switches reaches what a pass runs.</p></div>
+</section>
+
+<section id="gnn">
+<h2>The GNN: who owns new code?</h2>
+<p>When someone adds code, the loop needs to know which requirement it belongs to. The GNN (a graph neural network, a learning model that reads the graph) suggests an answer. It looks at what is already linked around that code and ranks the requirements from most to least likely owner.</p>
+<h3>How it was tested fairly</h3>
+<p>It was trained on part of the shop feature’s graph, with whole methods hidden from it. Then it was asked to rank owners for the hidden methods, code it had never seen. It was compared against simple rankers that do not learn, such as “the requirements already linked to this method” or “the requirement whose words overlap the code’s names most”. It is only allowed to make suggestions if it beats them.</p>
+<h3>What the numbers mean</h3>
+<p><strong>MRR</strong> (mean reciprocal rank) scores a ranking: the right owner ranked first scores 1, second scores ½, third ⅓, and so on, averaged over every test case. An MRR of 0.75 means the right owner is usually first, sometimes second.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> On the shop feature, with whole methods held out, measured three ways: a separate check on the pass 5 graph gave <strong>MRR 0.75</strong> against <strong>0.66</strong> for the best ranker that does not learn, with the right owner in its top three <strong>90%</strong> of the time; the loop’s own check inside pass 6 gave <strong>0.79</strong> against <strong>0.67</strong>; and the fullness curve on the pass 5 graph, two seeds, every claim seen, gave <strong>0.77</strong> against <strong>0.67</strong>. The check inside pass 5 itself read 0.63, before the strongest plain ranker was part of that check. Runs differ by about a tenth, so a single number is never the whole story.</p>
+<p><span class="chip measured">Measured</span> It only wins on a large enough graph that is about half claimed: see <a href="#seed">Seed it first, then it flies</a>.</p>
+<p><span class="chip measured">Measured</span> When the GNN said it was at least 70% sure, it was right <strong>92%</strong> of the time, over four seeds. It was that sure for about 40% of the new code, from 25% to 58% by seed. For the rest it says “not sure” and asks. (Measured again on 30 October on the grown graph; on an earlier graph it was 94% on about half.)</p></div>
+<p>Its suggestions are always questions for a person, never verdicts. One lesson from building it: the first version did worse than the simple rankers, because the links it was asked to predict were also links it could read. Separating the two fixed it.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-15">slide 15</a>.</p>
+</section>
+
+<section id="reviewers">
+<h2>A fresh reviewer every pass</h2>
+<p>After each pass, a new agent that has not seen the work is asked one question: <em>how could each check pass while the requirement is not really closed?</em> A fresh agent is used because one that built the work tends to confirm it.</p>
+<div class="box evidence"><p class="label">What they found</p>
+<p><span class="chip measured">Measured</span> The first reviewer found <strong>9</strong> such ways, all fixed. The second found <strong>10</strong>; <strong>8</strong> are fixed and <strong>2</strong> are open. Three examples:</p>
+<ul>
+<li>Deleting a line made the score <em>better</em>. Now the claim’s fingerprint moves and the claim goes stale (<a href="#claims">claims</a>).</li>
+<li>Naming more tests as a requirement’s checks could only remove holes. Now a named test must catch a break of its own requirement (<a href="#owner">the right test</a>).</li>
+<li>A deleted lock file re-pinned itself in silence. Now a missing lock leaves every claim unpinned.</li>
+</ul>
+<p><span class="chip open">Open</span> A structured claim on each reasoning step (so a step that says “or” where the code says “and” fails), and the on/off pair rerun with a hidden acceptance test (<a href="#ab">on against off</a>).</p></div>
+<p>Every fix lands with a planted mistake the selftest must catch, the same rule as for <a href="#criteria">the 17 checks</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-17">slide 17</a>.</p>
+</section>
+
+<section id="chains">
+<h2>Argument chains: holding the agent’s explanation to the requirements</h2>
+<p>Breaking the code checks the code. A chain checks the agent’s <em>explanation</em> of the code. When an agent finishes a change, it writes down, step by step, why the change does what the requirements ask: each step is one claim in plain words, plus what that claim stands on. The loop then checks every step against the requirements, the code and the graph.</p>
+<p>A chain is a written argument the agent produces on purpose, like showing your work. It is not a recording of the model’s private thinking, and the tool does not try to extract that.</p>
+<h3>What a chain looks like</h3>
+<p>A real one, written by the agent that built the shop feature. It names the question it set out to answer, then its steps; each step <strong>says</strong> one thing and <strong>cites</strong> what it stands on: a requirement’s id, a question put to the owner, or a method in the code.</p>
+<pre><code>chain:
+  id: CH-EXAMPLE
+  question: "Does a purchase stop when the stock is gone?"
+  steps:
+    - says: "A limited line sells its quantity and is then sold out"
+      cites: [W-3, Store.Buy]</code></pre>
+<h3>The four checks</h3>
+<ol>
+<li><strong>Grounded.</strong> Every cite must exist: a requirement in the model, a question the owner was asked, or a method the code really has. A step that cites nothing, or cites something that is not there, fails the run.</li>
+<li><strong>Same words.</strong> The step’s words should share at least one word with what it cites. If they share none, the step is flagged for a person (“a new finding, or a mistake”). This is a hint, not a failure.</li>
+<li><strong>Joined in the graph.</strong> For every pair of things one step cites, the graph must already connect them within four links. The shortcuts that would make everything look connected are not counted: the chain’s own links, the shared “space” node, and the records of breaks and tests. A pair the graph does not join is either a link the model is missing or a mistake in the argument, and a person decides which.</li>
+<li><strong>Blind spots.</strong> Every inferred requirement (an owner’s open question) that no step cites is listed: the chain never looked there.</li>
+</ol>
+<p>The chain also becomes part of the graph: a node for the chain, a node for each step, and a link from each step to everything it cites. A later agent can see which explanations rest on which requirements.</p>
+<h3>How a chain meets the code</h3>
+<p>The chain does not sit beside the graph: it goes in. Take a step from the kit's example, <em>“A limited line sells its quantity and is then sold out”</em>, citing <code>W-3</code> and <code>Store.Buy</code>. The step becomes a node with an edge to each of those, and both were already nodes. Then the graph walks from one to the other. Here a branch of that method maps to W-3, so the two are 2 links apart, and the report says so: <em>“grounded; the graph joins every pair it cites”</em>. <a href="../">The demo's tour</a> follows a step like it on down through the code, a branch, a break of that branch and the test that caught it.</p>
+<div class="box evidence"><p class="label">Run end to end on 30 October, on a copy of the kit's example</p>
+<p><span class="chip measured">Measured</span> A chain with real cites: exit 0, and the chain and its step are in the graph with their cites. The same step citing a requirement that does not exist: exit 1. Citing a method the code does not have: exit 1. Citing nothing: exit 1.</p></div>
+<div class="box evidence"><p class="label">Measured on the shop feature</p>
+<p><span class="chip measured">Measured</span> One chain on the shop feature: <strong>9 steps, all 9 grounded</strong>, and every pair a step cites already joined in the graph, two to four links apart. <strong>7 of the 10</strong> owner questions were blind spots, for example how many rows the list shows and what a refused purchase says.</p></div>
+<div class="box evidence"><p class="label">Across the on-against-off runs</p>
+<p><span class="chip measured">Measured</span> <strong>9 chains, 102 steps:</strong> every cite resolved by the end. The checks did bite on the way there: <strong>4 steps</strong> the graph would not join. One agent split its 2; another reported its 2 as resting only on its reading of view code no test runs. Selftests plant a step citing nothing and a cite that names nothing, and each must fail.</p>
+<p>This is how we go after hallucination. A claim that stands on nothing cannot pass. It checks what a claim stands on, not whether it is true: a step can cite real things and still be wrong, which is why the breaks and the tests sit underneath it. So it removes the hallucination that invents a source, and cannot promise to remove all of it.</p></div>
+<div class="box plain"><p class="label">What it does not check yet</p>
+<p><span class="chip open">Open</span> <strong>Whether a claim is true of the code.</strong> One real step said “or” where the code needs both, and it passed. A fresh reviewer found it. The fix being built: a step can carry a precise claim in the same form a requirement’s effect uses (for example, which two values a method branches on), and the code check tests it the way it tests an effect.</p>
+<p><span class="chip open">Open</span> <strong>Whether the code a step stands on is tested.</strong> Next: a chain is accepted only if no break that got past the tests sits in code one of its steps stands on.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-12">slide 12</a>, <a href="../deck/#slide-12">slide 12</a>.</p>
+</section>
+
+<section id="buzzsaw">
+<h2>Buzzsaw testing: attacking the assumptions</h2>
+<p>Breaking the code attacks the code. Buzzsaw testing attacks what the requirements <em>assume</em>. Every model takes some things as given:</p>
+<ul>
+<li><strong>Inferred requirements</strong>: things a step needs that nobody wrote down. Only the owner can say if they are right.</li>
+<li><strong>Entry conditions</strong>: facts that come from outside the model, such as “a sheet line names an item the game has”.</li>
+<li><strong>Declared equivalents</strong>: breaks someone said change nothing, with a reason.</li>
+</ul>
+<p>For each one, buzzsaw flips the answer (“what if this is not true?”) and walks the graph to find everything that rests on it: the later steps of every use case that relies on it, the requirements those steps carry, their effects, the code, and the tests that would have to change. That set is the assumption’s <strong>blast radius</strong>. The widest ones go to the owner first, because the most depends on them.</p>
+<div class="box evidence"><p class="label">Measured on the shop feature</p>
+<p><span class="chip measured">Measured</span> <strong>41 assumptions</strong>: 10 inferred requirements, 7 entry conditions, 24 declared equivalents. The owner’s widest question was “the player has a wallet the shops read and pay from”, with a radius of <strong>79</strong> (9 steps, 10 requirements, 12 effects, 11 code places and the tests on them). The game has no money system yet, so this is the question to settle first.</p>
+<p><span class="chip measured">Measured</span> <strong>3 entry conditions that nothing reads</strong> any more. The code that read them moved when the screen was refactored, so they are stale and should be removed or re-pointed.</p></div>
+<div class="box plain"><p class="label">A lesson from building it</p>
+<p>The first version said every assumption reached 33 steps and all 41 tests, so it could not rank anything. The summary use case (the epic) repeats requirements the detailed use cases carry, and walking on from the summary reaches everything. Starting the walk only from the most specific step that carries an assumption fixed it.</p></div>
+<p>What it cannot do: it does not know which answer is right, and it measures how much depends on an assumption, not how likely it is to be wrong. Next: the same attack on the design spreadsheet’s values, by changing each value across its range and running the tests (<span class="chip open">Open</span>).</p>
+</section>
+
+<section id="questions">
+<h2>Where the model asks who, what, why</h2>
+<p>Good requirements answer seven questions: <strong>who</strong> acts, <strong>what</strong> they want, <strong>why</strong>, <strong>when</strong> it starts, <strong>where</strong> it happens, what must be true <strong>before</strong>, and what is true <strong>after</strong>. The model has three levels where these can be asked: a use case, a step inside it, and an extension (what happens when a step cannot complete). Each level has a field for some of the questions and none for others.</p>
+<div class="box evidence"><p class="label">Measured on the shop feature</p>
+<p><span class="chip measured">Measured</span> <strong>Use cases (6)</strong>: all seven answered in every one. The model’s rules require them.</p>
+<p><span class="chip measured">Measured</span> <strong>Steps (32)</strong>: what and why answered in all 32; who, when, where, before and after are <strong>never asked</strong>, because a step has no field for them.</p>
+<p><span class="chip measured">Measured</span> <strong>Extensions (11)</strong>: what, why, when and after answered; who, where and before never asked.</p></div>
+<p>So the gaps are not in the summaries but one level down, in the steps between them. These counts go into the morph log every pass. <span class="chip open">Open</span> Whether asking more at the step level makes agents more accurate, or just slower, is for the on/off pairs to measure once there are enough of them.</p>
+</section>
+
+<section id="tuner">
+<h2>Shaping the graph for the GNN</h2>
+<p>The GNN learns from the graph’s links, and not every kind of link helps it. A tuning pass tries leaving out one kind of link at a time (for example the link from every branch to the one shared “space” node, which ties everything to everything) and measures the GNN again on code it never saw. A change is kept only if it helps on the tuning runs <em>and</em> again on a separate run it was not chosen on, so that a lucky result is not mistaken for a real one. The kept choice is written beside the graph, and the GNN reads it from then on.</p>
+<p>The stats decide when to tune: when the GNN’s lead over the simple rankers stops growing, or every five passes otherwise (<a href="#choose">how the stats choose</a>).</p>
+<div class="box evidence"><p class="label">The first tune, on the shop graph</p>
+<p><span class="chip measured">Measured</span> The full graph: <strong>MRR 0.737</strong> (0.747 and 0.726 on two runs, so the run-to-run noise alone is about 0.02). Six variants were tried. None beat the full graph by the required 0.02, so <strong>nothing was changed</strong>. The best, leaving out the use-case structure links, gained 0.012; leaving out the shared “space” node gained 0.009.</p>
+<p><span class="chip measured">Measured</span> The links the GNN relies on most: “binds requirement” (leaving it out costs 0.016) and “is at”, which ties a branch to its method (costs 0.012).</p></div>
+<div class="box evidence"><p class="label">The second tune: adding links, three runs each</p>
+<p><span class="chip measured">Measured</span> Adding links the graph lacks did not help beyond the noise: linking the methods of one class <strong>+0.005</strong>, linking requirements one step carries together <strong>+0.003</strong>. Leaving out the use-case structure links was the only change never worse on any run (<strong>+0.013</strong> on average), still under the 0.02 bar. <strong>Nothing was changed.</strong></p>
+<p>What that says: on this graph the GNN already gets what the structure can give it. The next gains are more likely from more graphs to learn from and better descriptions of each node than from reshaping this one.</p></div>
+</section>
+
+<p class="part">Part 3 · What was measured</p>
+
+<section id="feature">
+<h2>The test subject</h2>
+<p>Every number from the shop feature comes from one real feature in a C# game in production: a shop system with <strong>15 shops and 4 move tutors</strong>, read from the game’s design spreadsheet. Its rules live in one file of <strong>488 lines of code</strong> (734 with comments). It has <strong>45 tests</strong> today; it had 15 when the loop first ran on it.</p>
+<p>Partway through, the screen’s decisions (which arrow to show, what text goes on the right of a line, what the description box says) were moved out of the drawing code into plain code that tests can reach. To prove nothing changed on screen, all <strong>23</strong> shop screens were drawn before and after, and every picture was identical pixel for pixel.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-3">slide 3</a>.</p>
+</section>
+
+<section id="morph">
+<h2>One feature over five passes</h2>
+<p>“Got past” means: the loop broke the code that way, and every test still passed. Read the two numbers together. In pass 3 the count went <em>up</em>, because the loop tried more kinds of break (the net got wider), not because the code got worse.</p>
+<div class="passes">
+<div class="pass"><div class="n">89<small>of 340 got past</small></div><p><strong>Pass 1.</strong> The first time every statement was broken every way. 15 tests.</p></div>
+<div class="pass"><div class="n">13<small>of 340 got past</small></div><p><strong>Pass 2.</strong> Nine new tests for edge cases the real spreadsheet never had: empty cells, one-letter names, a row at the very edge. 24 tests.</p></div>
+<div class="pass"><div class="n">69<small>of 631 got past</small></div><p><strong>Pass 3.</strong> The net widened: returns, <code>? :</code> choices, function arguments and texts are now broken too. 24 tests.</p></div>
+<div class="pass"><div class="n">28<small>of 772 got past</small></div><p><strong>Pass 4.</strong> Tests for a German-language computer, Windows line endings and more; conditions forced true and false. 32 tests.</p></div>
+<div class="pass"><div class="n">29<small>of 806 got past</small></div><p><strong>Pass 5.</strong> The screen’s decisions moved where tests reach them. The report lists 25 of these breaks as equivalent, each with its proof or reason, and names the rest as missing tests at four places in the screen code. 41 tests.</p></div>
+</div>
+<p>Two more numbers moved over the same five passes:</p>
+<ul>
+<li><strong>Statements held by a test: 31 → 169 of 173.</strong> A statement is held when breaking it makes some test fail. The total grew from 82 to 173 as the loop started counting every statement, not only decisions.</li>
+<li><strong>Requirements checked only by the code’s shape: 15 → 1.</strong> “Shape” means the loop could only see that the right kind of code exists at the right place, not that it behaves. Those were mostly screen decisions the tests could not reach, until they were moved.</li>
+</ul>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> Every number is read from the morph log, a file the loop appends one line to on every pass (<code>stats.jsonl</code> beside the model). Passes 0 to 5 were written back into it from each pass’s report the same day.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-3">slide 3</a>.</p>
+</section>
+
+<section id="flatter">
+<h2>Breaking code one way flatters it</h2>
+<p>The first version of the loop broke each requirement’s code one way, once. It reported: <strong>15 caught, 0 got past</strong>. A perfect score.</p>
+<p>The same day, on the same code, breaking every statement every way the tool knew gave: <strong>89 of 340 got past</strong>. Nothing about the code had changed. Only how hard the loop tried.</p>
+<p>That is why every pass records how wide the net was beside what got through it, and why a score from a narrow net should never be trusted on its own.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-2">slide 2</a>.</p>
+</section>
+
+<section id="self">
+<h2>The tool runs on itself</h2>
+<p>The loop’s own requirements are written as a model too, from the author’s own words with their dates: <strong>7 use cases, 18 authored requirements and 2 inferred ones</strong>, and the model passes the 19 rules. A Python adapter breaks the loop’s own decision code the same way the C# adapter breaks a game’s, and the loop’s selftests are the tests.</p>
+<p>The model is expected to stay open in places, and to say so: it must report that the installer is the newest piece, that the two targets are not measured, and that a reviewer every pass is still a practice rather than a check.</p>
+<div class="box evidence"><p class="label">The first pass on its own code (29 October, 65 minutes)</p>
+<p><span class="chip measured">Measured</span> <strong>1,626 breaks</strong> of the tool’s own decision code. Its selftests caught <strong>885 (54%)</strong>; <strong>647 got past</strong> every test; 94 were proven to change nothing by comparing compiled bytecode. <strong>174 of 392 statements</strong> are held by a test (44%).</p>
+<p>So the tool is far less tested than the shop feature it tests (169 of 173). Its tests are planted mistakes that each prove one rule; they were never written to catch every break of every line. That gap is the next work, and these numbers are on code you will hold: the kit ships this source.</p>
+<p><span class="chip measured">Measured</span> The model passes all 19 rules; its graph holds 2,335 nodes and 6,259 edges; 2 questions stay open for the owner.</p></div>
+<div class="box plain"><p class="label">Two lessons from getting it to run</p>
+<p>The first attempt ran all 1,626 breaks, then crashed while writing the summary, and the hour of runs was lost. The tool now saves every verdict before it builds the summary, and reuses them when the code and tests are unchanged. The second attempt refused to start, correctly, because a tool’s own test was failing while it was being edited. Rule since: never edit a tool while a run is using it.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-17">slide 17</a>.</p>
+</section>
+
+<section id="public">
+<h2>A run on public code: the asteroids mining loop</h2>
+<p>Numbers from a private repository are hard to trust from outside. So the loop also ran on a game whose code anyone can read: the asteroids mining loop of <a href="https://github.com/rj45Thompson/starfighter">starfighter</a>, a browser game in JavaScript. Its repository already holds a use-case document for the mining loop (ASTEROID_USE_CASES.md) and the list of the 61 constants that govern rocks, gems, the belt and the mining drones.</p>
+<p>The kit cannot break JavaScript yet (it has adapters for C# and Python), so this run uses only the parts that do not need the code broken: the model’s 19 rules, the graph, the checks that read only the graph, buzzsaw and the question grid. The model says so itself, and the other checks report “not held” rather than passing.</p>
+<div class="box evidence"><p class="label">Measured</p>
+<p><span class="chip measured">Measured</span> The document became <strong>7 use cases and 48 requirements</strong>: 44 traced to the code, 4 open questions for the owner. All <strong>61 constants</strong> are claimed by some step.</p>
+<p><span class="chip measured">Measured</span> <strong>10 requirements rest only on what a function does</strong> (for example “a destroyed rock spills a gem”), with no constant behind them. The constant list cannot see them; only breaking the code could hold them. That is exactly where a JavaScript adapter would pay.</p>
+<p><span class="chip measured">Measured</span> Of the checks that need no code: 10 requirements with no source standing behind them, 34 resting on a single source, 4 open questions, and none carried by nothing or ending nowhere. Buzzsaw ranks the owner’s first question as “which collision applies ramming damage?”: five later steps rest on it.</p>
+<p><span class="chip measured">Measured</span> The tool’s own cross-check found a row in the document with a missing column before anything else ran.</p></div>
+<div class="box plain"><p class="label">A thin graph, on purpose</p>
+<p>The graph holds 186 nodes and 396 edges, with no code and no tests in it. That is the thin case this manual warns about (<a href="#thin">why</a>): the checks that ran are real, but a clean result here would mean little, and the GNN has nothing to learn from.</p></div>
+</section>
+
+<section id="selfimprove">
+<h2>Self-improvement, on by default</h2>
+<p>The tool tests itself, and that is on unless you turn it off. It happens at two sizes.</p>
+<p><strong>Every pass.</strong> A pass writes one row of stats about itself to the morph log, checks those stats against the tool's own requirements for improving, and prints what to improve next. Nothing about your code changes.</p>
+<p><strong>The standing tick.</strong> A fresh agent with no memory takes one item, measures the same stat before and after the change, and records whether it was worth it. Both ship in this kit, with the self-improving qualities we built for our ARC3 harness. Nothing starts a tick for you: <code>TICK.md</code> is its runbook, and you schedule it.</p>
+<h3>Turning it off</h3>
+<p>Run with <code>--no-self-improve</code>, or put <code>self_improve: false</code> in the model's <code>loop:</code> block. The pass then records no row and prints no picks. There may be some token saving, but on a pass it is small; the larger spend is the tick, which only runs if you schedule it, and stops when you stop scheduling it or create <code>.loop_tick.STOP</code> beside the tools.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>A pass:</strong> 44 stats in a row, about a third of a second to collect them, three printed lines for the agent to read. On the kit's Python example, a clean install, with it off a pass wrote no row and printed 295 fewer characters.</p>
+<p><span class="chip measured">Measured</span> <strong>A tick:</strong> the app counted 197,134 tokens for the first tick and 291,042 for the second, over 9 and 22 minutes.</p></div>
+<h3>One shared graph, not networked in this version</h3>
+<p>Ideally everyone working on a project shares one graph, because it also works as a retrieval store (retrieval-augmented generation, RAG): an agent looks up what is already proven instead of re-reading the files to work it out again. We share ours across the team that way to save tokens. This version is not networked, and each checkout keeps its own graph; you could add sharing in whatever way suits your network.</p>
+<div class="box evidence"><p class="label">Where this number comes from</p>
+<p><span class="chip measured">Measured</span> To learn who owns a method, what it must do and which tests catch it, the graph's rows for that method come to a median of <strong>775 characters</strong> across 39 methods of the shop feature. The files holding the same facts come to <strong>167,665 characters</strong>: the model, the source and the tests. That is <strong>216 times</strong> less to read. It is the size of what is read. No agent has been timed using it yet, so it is not a token saving until one has.</p></div>
+<h3>What it has found so far</h3>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>19</strong> ways a check could pass for the wrong reason, found by fresh reviewers; 17 fixed, each with a planted mistake a selftest must catch (see <a href="#reviewers">reviewers</a>).</p>
+<p><span class="chip measured">Measured</span> <strong>11 stats</strong> were recorded with nothing reading them. The audit first said 6, and that was itself a bug: it counted test fixtures and the recorder as readers. Now 0: each stat triggers something, or has a reader with a date.</p>
+<p><span class="chip measured">Measured</span> <strong>32 requirements</strong> on its own stats, 2 records banked for a learner that does not exist yet, and 4 triggers firing now. Each trigger that fires is a work item. It was 12 until a tick found that 8 of them fired on every pass whatever happened.</p>
+<p><span class="chip measured">Measured</span> <strong>9 faults</strong> its first round of on against off found in itself: 5 in the harness, 4 in the tool, all fixed.</p>
+<p><span class="chip measured">Measured</span> <strong>Its optional parts:</strong> the run plan marks 1 of 7 on for the shop feature and 2 of 7 on for its own code, each on that project's own evidence at one seed, and three of those verdicts flip with the seed alone: a learned part is marked on only if it beats the plain rule by more than 0.02. <strong>Only 1 of those 7 switches reaches what a pass runs so far.</strong> Its own tick found that the other 6 are recorded and read by nothing that changes a pass, so wiring them is the next piece of work.</p>
+<p><span class="chip measured">Measured</span> <strong>58%</strong> of the breaks of its own code are caught, 885 of 1,532, on its one self pass. The tool is less tested than the feature it tests.</p>
+<p><span class="chip open">Open</span> <strong>0 of the 20</strong> measured outcomes its improvement learner needs, so rules choose the work for now, not a model. These numbers show what it has found, not yet how fast it gets better.</p></div>
+<h3>The loop, in pseudo C++</h3>
+<p>The toolkit is written in Python. This is the same logic for a C++ reader; the lower-case names are the real ones in the code.</p>
+<pre><code>// One pass. Self-improvement is on by default.
+Verdict run(Model&amp; m, bool selfImprove = true) {
+  Breaks  b = Mutate(m.code);       // one compile
+  Results r = RunEachAlone(b, m.tests);
+  Graph   g = KnowledgeGraph(m, r);
+  Holes   h = Criteria(g);          // 17 checks
+
+  if (self_improve_on(m, selfImprove)) {
+    Row row = PassStats(m).collect();  // 44 stats
+    MorphLog(m).add(row);
+    auto fired = improvement::fires(rules, log);
+    Print(NextImprovement(log, fired).picks());
+  }
+
+  return h.ours.empty() ? HOLDS : OPEN;
+}
+
+// One tick. A fresh agent, one item, no memory.
+void Tick() {
+  Start s = loop_tick::start();     // the lock
+  if (s.stopped || s.busy || s.idle) return;
+  if (s.epochStarts) Brainstorm();  // every 12
+  RunSelftests();                   // red = item
+  telemetry_audit();                // unread = item
+  Item i = Choose(improvement::check(), board);
+  Stat before = i.stat.Measure();
+  i.Do();                           // one change
+  Stat after = i.stat.Measure();
+  if (s.epochEnds) {
+    run_plan::decide();             // parts on or off
+    improvement::graph();           // did it work?
+  }
+  loop_tick::finish(i, before, after, worth);
+}</code></pre>
+<p>Three ticks in a row worth "no" and the tick sleeps until something it watches changes, so an idle loop costs almost nothing. The improvement graph is <a href="#recursive">the same shape one level up</a>: stats are its code, triggers its requirements, ticks its tests.</p>
+</section>
+
+<section id="telemetry">
+<h2>Telemetry: measuring growth both ways</h2>
+<p>A loop can look better by trying less, and look worse by trying more. So every number the loop records is one of five kinds, and they are read together:</p>
+<dl class="terms">
+<dt>Net</dt><dd>How hard the pass tried: how many breaks, how many kinds, how much code. Should grow, then hold.</dd>
+<dt>Closure</dt><dd>How much of what it tried was caught, claimed or answered. Should grow towards the net.</dd>
+<dt>Open</dt><dd>What is still open, and whose it is. Should shrink; the owner’s part only shrinks when the owner answers.</dd>
+<dt>Cost</dt><dd>What a pass costs in time. Should not grow faster than the net.</dd>
+<dt>Tool</dt><dd>The tool itself: its size, and how much of it its own planted mistakes prove.</dd>
+</dl>
+<p style="margin-top:14px">A pass where the net grew and the open count grew too is progress, not a step back. The list of stats is revisited every pass, and a new one is added whenever a pass shows growth the existing ones miss.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-17">slide 17</a>.</p>
+</section>
+
+<section id="choose">
+<h2>How the stats choose what to improve next</h2>
+<p>Every pass, each stat in the morph log is read as a trend over the passes and given one word: <strong>improving</strong>, <strong>worsening</strong>, <strong>stalled</strong> (the last three values barely moved), <strong>done</strong> (an open count stuck at zero), or <strong>too few</strong> (fewer than three passes have it). The word compares the stat to the way its kind should move: the net and what was caught should rise, what is open should fall.</p>
+<p>The next improvement is then chosen by the stats, not by a person’s feeling. Each area of the tool (tests, the GNN, the kinds of break, speed, the owner’s questions, assumptions, coverage) names the stats that speak for it. A worsening stat scores 3, a stalled one 2, and an area scores its worst stat. The GNN tune is also due every five passes. The pick, and the trend lines that chose it, are printed after every pass.</p>
+<div class="box evidence"><p class="label">Measured on the shop feature</p>
+<p><span class="chip measured">Measured</span> Over its six recorded passes, the graph grew from <strong>676 to 1,271 nodes</strong> and from <strong>2,070 to 6,878 edges</strong>. The stats’ first pick was the GNN tune, because it had never been run (<a href="#tuner">the tune</a>).</p>
+<p><span class="chip measured">Measured</span> A bug the selftest caught while building this: adding up an area’s stats ranked two related GNN stats, both stalled, above a survivor count that was getting worse. An area now scores its single worst stat.</p></div>
+<h3>Stats that might predict others</h3>
+<p>The loop also looks for stats that move <em>before</em> others: does a change in one stat this pass go with a change in another the next pass? Each pair says how many passes it rests on. With fewer than eight it is labelled an <strong>anecdote</strong>, and pairs where one stat is simply made from the other are labelled <strong>mechanical</strong>. On the shop feature every pair so far rests on 4 passes, so they are anecdotes to watch, not findings.</p>
+<h3>The report every 20 passes</h3>
+<p>Every 20th pass writes a report: each stat’s trend, how much the graph grew (in total and by kind of node) for the feature’s model <em>and</em> for the loop’s own requirements model, the predictive candidates, the GNN tunes so far, and what the stats pick next.</p>
+</section>
+
+<section id="ab">
+<h2>On against off</h2>
+<p>The loop’s own report cannot say whether the loop helps, because it grades work by its own rules. So there is a separate harness. One task goes to two agents, each in its own copy of the code. One works with the loop (the <strong>on</strong> arm), one without it (the <strong>off</strong> arm). Neither is told it is being compared.</p>
+<ol>
+<li>The task is a real prompt, taken from the team’s own past sessions.</li>
+<li>The harness measures what each arm produced. It never takes an arm’s word for it.</li>
+<li>A third agent grades both answers <strong>blind</strong>: it sees the task, the two changes labelled X and Y, and the measured results, and it does not know which arm is which.</li>
+<li>Every failure goes into one <strong>pile</strong> by kind (wrong behaviour, a missed requirement, an invented value, a weak test, and so on). “Different but both fine” has its own pile, so two good answers that differ are not counted as a failure.</li>
+</ol>
+<h3>A hidden acceptance test, written first</h3>
+<p>An arm’s own tests only show that it agrees with itself. So from the second pair on, the person setting up the pair writes an <strong>acceptance test</strong> before either arm starts. Neither arm ever sees it. It is copied into each arm’s copy only to be measured, then removed. The harness refuses to accept the test once either arm’s copy exists, refuses it if it changed after it was set, and proves beforehand that it can fail (on the code before the change) and can pass (on a reference change kept apart from both arms). The blind grader sees that test’s result, and not the arms’ own test counts.</p>
+<div class="box evidence"><p class="label">What happened so far</p>
+<p><span class="chip measured">Measured</span> The first pair: both arms passed their own tests. The on arm hit a crash in the loop itself (it failed when the code and the copy sat on different drives). That crash is fixed, and the pair counts as “tool failed”, neither for nor against the loop.</p>
+<p><span class="chip measured">Measured</span> <strong>The second pair, the first fair one</strong> (a small shop task: say what unlocks a line that is not on sale yet). The hidden test was proven first: it fails on the code before the change, on two wrong answers that compile, and passes on a reference answer kept apart from both arms.</p>
+<ul>
+<li><strong>Correctness: a tie.</strong> Both answers pass the hidden test 5 of 5 and their own 49 tests, and both mark the new wording as an open question for the owner.</li>
+<li><strong>Cost: the loop cost more.</strong> With the loop: 337,580 tokens and 39 minutes. Without it: 214,293 tokens and 6.5 minutes. That is 58% <em>more</em> tokens on this task, not fewer.</li>
+<li><strong>The blind grader preferred the answer made without the loop</strong>, because it stayed inside the task. The loop arm’s one failure was scope creep: following the loop’s report, it fixed listed items its change had not caused.</li>
+</ul>
+<p>One pair is one data point, on the kind of task this manual says the loop is not for: small and precisely specified. It still showed two things to fix. The arm started in a model with hundreds of old holes it had not caused, and the report did not separate the holes <em>its change</em> made from those already there. Both are on the board.</p></div>
+<p>The off arm still follows the project’s own working rules (never guess a value, say what was not verified), so the comparison measures the tool, not discipline.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-19">slide 19</a>.</p>
+</section>
+
+<p class="part">Part 4 · Limits and targets</p>
+
+<section id="matrix">
+<h2>Six kinds of task, on against off</h2>
+<p>One pair says little, so on 29 October six small tasks of different kinds were each given to two agents, one with the loop and one without. Each task has a hidden acceptance test, written before either agent started and proven first: it passes a reference solution and fails the untouched code. Beside it sits a second score, after the novelty review below: <strong>the tests each answer leaves behind</strong> are run against plausible wrong versions of the feature (a refund that forgets the stock, a menu that wraps only one way), and the score is how many of those wrong versions they catch. Each wrong version was itself checked to fail the hidden test first.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>A refund (C#, precise):</strong> both passed the hidden test 7 of 7, and both left tests that catch 9 of 9 wrong versions. With the loop: 203,945 tokens and 14.5 minutes; without: 128,015 and 5.1. The blind grader preferred the answer made <em>without</em> the loop, which also guarded a stock count against overflow.</p>
+<p><span class="chip measured">Measured</span> <strong>A bulk purchase (Python, precise):</strong> both 9 of 9 on the hidden test and 9 of 9 wrong versions caught. With the loop: 237,213 tokens and 9.4 minutes; without: 128,011 and 3.2. The grader preferred the loop answer, on a point that favours the loop's own habits (it declared a harmless break the way the model already does).</p>
+<p><span class="chip measured">Measured</span> <strong>"Make buying fairer" (vague):</strong> without the loop the agent changed nothing and asked the owner four questions; with it, the agent added a "how much you are short" helper and a forgiveness amount that starts at zero, and wrote the amount down as the owner's question. Both pass the hidden test, which holds only the rules already stated. 214,714 tokens and 15 minutes against 103,391 and a minute. The grader preferred the loop answer; the other agent's questions were only in its reply, which the grader never sees.</p>
+<p><span class="chip measured">Measured</span> <strong>Owners for 13 unowned branches (the model only):</strong> both gave every method an owner. With the loop: 309,133 tokens and 47 minutes, closing 14 holes and opening one it could not close; without: 251,751 and 8 minutes. Both pass the corrected hidden test 12 of 12 (the first version of that test had two flaws of its own, both reported).</p>
+<p><span class="chip measured">Measured</span> <strong>A menu that wraps (Unity, a requirement an existing test contradicts):</strong> both 7 of 7. With the loop: 352,912 tokens and 77 minutes; without: 189,555 and 7. The grader preferred the loop answer: the other quietly changed an edge case the task said to keep.</p>
+<p><span class="chip measured">Measured</span> <strong>A bug in the tool itself:</strong> both 8 of 8. With the loop: 297,545 tokens and 145 minutes (two full passes over the tool's own code); without: 127,704 and under 3. The grader preferred the loop answer, whose tests pinned more of the behaviour. Along the way the loop arm found four real bugs in the tool, all since fixed.</p></div>
+<p><strong>The six, by their first blind grader: the loop answer was preferred 4 times, the answer without it twice.</strong> Every answer passed its hidden test either way.</p>
+<h3>The same tasks again, and three graders on each</h3>
+<p>On 30 October five of the six were repeated with the same hidden tests and the tools as they then stood. The sixth, the bug in the tool itself, could not be repeated because that bug is now fixed. One grader per pair turned out to be too noisy, so two more blind graders then judged every pair, each with its own coin for which answer is X, on briefs with the arm's tells removed.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>By the majority of three graders: the loop preferred on 7 of 11 pairs, the answer without it on 3, 1 split.</strong> Round 1: loop 5, without 1. Round 2: loop 2, without 2, 1 split. All three graders agreed on 7 of the 11.</p>
+<p><span class="chip measured">Measured</span> <strong>What one grader would have told you.</strong> With only the first grader, rounds 1 and 2 together came to 5, 5 and 1, and 3 of the 5 repeated tasks reversed. With three graders, 1 reversed (the fairer rule) and 1 went to a split (the wrapping menu). The noise was the single grader.</p>
+<p><span class="chip measured">Measured</span> <strong>The losses are consistent.</strong> The model-only task went against the loop 3 to 0 in both rounds. On the fairer rule's repeat, 3 to 0 against: the loop arm removed a public constructor, so the hidden test no longer compiled, while the loop reported that everything held. The loop does not yet hold the public surface of the code (a planned check).</p>
+<p><span class="chip measured">Measured</span> <strong>What the 28 newer grades counted</strong> (6 of them compare the loop to the hint arm below): left unfinished, 9 with the loop and 18 without; scope creep, 4 and 10; invented values, 17 and 5. The loop writes more down, and graders call some of that invented.</p>
+<p><span class="chip measured">Measured</span> <strong>Two first grades are weaker than the rest.</strong> Three loop arms of the 27 read the run's own notes, which can say how the other arm finished, and two diffs named the arm or the tool. Those tells are now blanked for graders and each arm can be scanned for what it read. The first grade of each pair is still on the older brief.</p></div>
+<h3>A cheap hint instead of the loop</h3>
+<p>A third kind of arm got no loop at all, only a short list before writing its tests: the statements of the code it changed most likely to let a break past the tests, learned from the project's own past results.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>Three tasks against the loop arm.</strong> Every answer passed its hidden test. Tests left behind were equal on all three (9 of 9, 9 of 9, 7 of 8). The bulk purchase tied. On the refund and the wrapping menu the grader preferred the loop answer, but the code behaved the same and the edge was in what it wrote down, such as recording the new rule as a requirement. The loop arm cost 1.7 to 2.3 times the tokens and 3 to 10 times the minutes of the hint arm.</p></div>
+<h3>Growing a model from a small seed</h3>
+<p>What looked like the largest gap went away once the run was fair. An agent was given a feature's problem story, its sources and its 3 most cross-cutting requirements, and asked to grow the rest of the model; another did the same without the loop. Each was scored by how many of the real model's other requirements it arrived at, matched by the methods they own, never by wording.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>With the requirement ids removed from the code: 16 of 24 each, a tie.</strong> Of the requirements each grew, 14 of 46 matched a real one with the loop and 12 of 41 without. With the loop: 511,317 tokens and 81 minutes; without: 323,773 and 17. One run each, and neither arm asked for anything it should not see.</p>
+<p><span class="chip measured">Measured</span> <strong>The first run read 19 of 24 against 10,</strong> at 515,241 tokens and 68 minutes against 277,720 and 13, but the code cited its requirement ids, so both arms started with more than the 3. Do not quote it. Recovering a model is not where the loop has shown a gain.</p></div>
+<p><strong>What it says so far.</strong> On small tasks correctness does not separate the two: nearly every answer passed its hidden test, and the tests left behind were as strong either way where they could be compared. Graders still prefer the loop's answers more often than not, mostly for what they leave finished and written down. The loop cost <strong>1.2 to 2.3 times the tokens and 3 to 55 times the time</strong>. Where it does differ is in what gets written down: the open questions, the new requirement, the reason a claim changed. That fits <a href="#when">when it fits</a>: the loop is meant to pay over many changes, and that has not been measured yet. Inside one small change it does not, and the one fair test of building a model tied.</p>
+<p><strong>The harness was tested too.</strong> Five of its own faults turned up and were fixed: hiding a chain's file name blanked a plain word in one answer and voided a grade; the grader was told the requirements were "the shops'" for every task; one hidden test was stricter than its task; answers given only in a reply are invisible to the grader; and the loop brief told a model-only task to write tests.</p>
+<p>The first round's two losses still say something, whichever way the repeats went. On the refund the answer without the loop guarded an overflow the loop answer missed. On the model-only task the loop answer closed its holes by pinning code on requirements whose words do not cover it: the count of holes reached zero without the intent being met. That is now a planned check (a second opinion on every claim).</p>
+<p><span class="chip open">Open</span> Three graders per pair with their agreement counted, so a verdict only counts where they agree; arms that cannot reach the other arm's files and diffs that cannot name their arm; the grown model repeated on code that cites no ids; and the tests-left-behind score made fair for tests that also check a choice of their own.</p>
+</section>
+
+<section id="learn">
+<h2>What it can learn from its own stats</h2>
+<p>Every pass leaves a verdict for every break: which kind of break, on which statement, in which method, and whether a test caught it. That is training data. A small model trained on it ranks the breaks most likely to get past the tests first, so a pass can show its holes early, and an agent writing new code can be told where its tests are likely to be weak before anything runs.</p>
+<h3>The test that lets it improve</h3>
+<p>It is only scored on code it never saw: whole methods are held out, and the score is how many of the real survivors it finds in the first fifth of its ranking. Random order finds a fifth; the plain rule to beat ranks each kind of break by how often that kind survived before.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>Within the shop feature:</strong> the learner finds <strong>50%</strong> of the survivors in the first fifth on average over ten seeds, from 35% to 64%, against 31% for the plain rule and 21% for random order. It won at all ten.</p>
+<p><span class="chip measured">Measured</span> <strong>Within the tool's own code:</strong> 30% over ten seeds, against the plain rule's 25% (random 20%). It won at nine of the ten, and the first seed happened to be the one it lost.</p>
+<p><span class="chip measured">Measured</span> <strong>Across projects</strong> it is worse than random: the words it learns belong to one project. Only the plain rule carries over. So, again: seed first, then it flies.</p></div>
+<p>The real test of learning is over time: trained on the earlier passes, scored on the next pass's new code. That needs every pass's verdicts kept; until 29 October each pass overwrote the last, so the loop now archives them, and that test starts with the next passes.</p>
+<h3>Planned rounds of improvement</h3>
+<p>The standing loop works in <strong>epochs</strong> of twelve ticks. The first tick of an epoch is a brainstorm: a fresh agent reads the stats, the tick log and the results, and ranks ideas by the one stat each should move. The last tick is a benchmark: the same fixed measures every time, on inputs no tick may change. An epoch counts as an improvement only if a number moved the right way and none moved the wrong way.</p>
+<h3>The code-writing side</h3>
+<p><span class="chip open">Planned</span> Connect what it learns to the agent that writes the code: before it writes tests, hand it the statements of its change most likely to get past them, and the requirement the GNN thinks its new method belongs to. Measured as a third arm beside on and off.</p>
+</section>
+
+<section id="recursive">
+<h2>The loop on its own improvement</h2>
+<p>The loop records a great deal about itself: every pass leaves fifty numbers, and the learned parts leave evidence of when they help. Recording a number is only worth it if something reads it and acts. On 29 October an audit found <strong>28 numbers that nothing read</strong>, and many more that were only printed.</p>
+<p>So the improvement of the loop now has requirements of its own, written the way the product's are. Each number has a requirement saying <strong>what pattern in it should trigger something, what that is, and why the number is kept</strong>: a test that catches nothing for two passes is a speed item; an excuse for a harmless break that lapses is a hole; the graph not growing for three passes means the model is not being seeded. A number kept for a learner that does not exist yet must name that learner and a date. Past the date, unread, it fails.</p>
+<h3>Three levels, one graph</h3>
+<ul>
+<li><strong>Level 1, the product.</strong> The loop holds the code to the product's requirements.</li>
+<li><strong>Level 2, the improvement.</strong> The loop holds itself to its improvement requirements, with the same kind of closure rules: every number covered, every trigger that fires acted on, every action naming the number it meant to move and its result measured, and an action that never moves its number retired.</li>
+<li><strong>Level 3 is level 2 again.</strong> How well the improvement graph is doing (numbers covered, triggers acted on, actions that worked) is itself written as numbers with requirements, so they sit in the same graph. The tower closes on itself.</li>
+</ul>
+<p>The same learning applies one level up: once enough actions have measured results, a model can learn which kind of action moves which number, and it is switched on only where it beats the plain rule, like everything else.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> The audit on 29 October: 28 numbers read by nothing at first; after giving each a reader or a trigger, <strong>none</strong>. 19 now drive a decision in code and 25 are covered by a trigger.</p>
+<p><span class="chip measured">Measured</span> The first run of the triggers fired 12: among them, 5 tests in the tool's own suite that catch no break at all, 8 of the who/what/why questions never asked on each model, and one requirement whose breaks were all caught last pass and are not now.</p>
+<p><span class="chip open">Open</span> No action has a measured result yet; the improvement graph becomes learnable at 20.</p></div>
+</section>
+
+<section id="novelty">
+<h2>How new is it?</h2>
+<p>An independent agent with web search compared the loop with published work on 29 October. Its answer: about eight of the ten parts are known. Requirements kept as data with gaps turned into questions are close to GitHub's <a href="https://github.com/github/spec-kit">Spec Kit</a> and to <a href="https://kiro.dev/docs/specs/correctness/">Kiro</a>'s requirements turned into tests. Compiling all breaks at once and checking only what changed is what <a href="https://stryker-mutator.io/docs/stryker-net/technical-reference/mutant-schemata/">Stryker.NET</a> already does. Breaks as feedback to an AI agent is Meta's <a href="https://arxiv.org/abs/2501.12862">mutation-guided test generation</a>. Suggesting which requirement owns code is standard trace-link recovery.</p>
+<p><span class="chip open">Medium confidence</span> What looks new is the whole used as an agent's <strong>"done" gate</strong>: every break in requirement-owned code must be caught by that requirement's own test, proven to change nothing by compiled code, explained with a reason that lapses when its code changes, or settled by the owner. Pieces of that exist (<a href="https://arxiv.org/abs/2610.13065">TestSuiteBench</a> ties each break to one requirement and one test); the gate does not seem to.</p>
+<p>It also said three things are aimed slightly off, and each could change the outcome more than polish: the breaks are syntactic while agents' mistakes are about intent; the on/off test graded correctness, where both sides hit the ceiling, rather than the tests left behind; and the GNN ignores its strongest signal, which requirement's tests catch the new code's breaks. The second is now measured (<a href="#matrix">six kinds of task</a>); the other two are on the work board.</p>
+</section>
+
+<section id="limits">
+<h2>What it is not, yet</h2>
+<div class="box evidence"><p class="label">The first trial on code anyone can read</p>
+<p><span class="chip measured">Measured</span> <strong>The C# adapter was skipping code without saying so.</strong> On Unreal's own SemVer.cs it saw 35 of 68 statements, including none of the private method that does all the comparing, and on JsonObject.cs 213 of 288. It dropped overloaded methods, operators and generic methods with a <code>where</code> clause, and does not walk property bodies. The report still read as if the whole file was held. The shop feature has no overloads, which is why its numbers never showed it.</p>
+<p><span class="chip open">Open</span> The fixes are being landed, each with a planted case: naming every overload and operator, a report that names what it did not walk, a read-only tree such as a Perforce workspace, a constructor of a nested type, one bad break stopping a whole run, and a break that hangs a test forever. The kit goes public after those land.</p></div>
+
+<ul>
+<li><strong>A prototype.</strong> Version 0.1. Its own model still names holes.</li>
+<li><strong>A thin model misleads.</strong> A green report over a small model reads as proof and is not (<a href="#thin">why</a>).</li>
+<li><strong>Setup comes first.</strong> A problem story, requirements, use cases and tests a machine can run, before it helps at all.</li>
+<li><strong>Not a chatbot.</strong> It is a harness for agents that build systems. It does not answer questions.</li>
+<li><strong>It refutes, it never proves.</strong> “Closed” means closed against the breaks it tried (<a href="#modal">why</a>).</li>
+<li><strong>Feel is not checked.</strong> Visuals, timing and feel still need a person to look.</li>
+</ul>
+<p>Used where it does not fit, it can be worse than not using it at all.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-20">slide 20</a>.</p>
+</section>
+
+<section id="targets">
+<h2>The two targets</h2>
+<p>These are goals for the loop at its full potential, used where it fits. Neither has been measured yet.</p>
+<div class="box"><p class="label" style="color:var(--orange)">95% accuracy or better</p>
+<p><span class="chip target">Target</span> Agents using the loop on work it fits should get the task right at least 95 times in 100. The remaining 5% would be bugs in our own code.</p>
+<p><strong>How it will be measured:</strong> the on/off harness, graded blind, counted per failure pile, with the hidden acceptance test deciding whether the task was done.</p></div>
+<div class="box"><p class="label" style="color:var(--orange)">Up to 90% fewer tokens</p>
+<p><span class="chip target">Target</span> On average, up to 90% fewer tokens per closed requirement, because a later step looks up what the graph already holds instead of re-reading and re-deriving it. This number is always being re-evaluated.</p>
+<p><strong>How it will be measured:</strong> the same harness, from each arm’s own usage records (the tokens the model read and wrote), per task.</p>
+<p><span class="chip measured">Measured</span> <strong>The first data point goes the other way:</strong> on one small, precisely specified task, the loop used 58% more tokens for the same correctness (<a href="#ab">details</a>). The target is about larger systems held across many changes, where re-reading and re-deriving is what costs; that has not been measured yet.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-20">slide 20</a>.</p>
+</section>
+
+<p class="part">Part 5 · Using it</p>
+
+<section id="install">
+<h2>Install</h2>
+<pre><code>python install.py              # install for this user
+python install.py --check      # check only, copy nothing
+python install.py --uninstall  # remove what it put down, nothing else</code></pre>
+<p>It puts the skill where Claude Code finds it and the tools beside it. It needs Python 3.10 or newer and PyYAML. PyTorch (for the GNN), the .NET SDK (for the C# adapter and the example) and PowerShell 7 (for the IL comparison) are optional; if one is missing it says what that piece would have done, and never pretends it ran.</p>
+<p>Then it runs every selftest in the installed copy, and the whole loop on the example: a small wallet and store in C#, with NUnit tests that each name the requirement they check. The example must <strong>hold</strong>: everything closed except one question that only its owner can answer.</p>
+<div class="box evidence"><p class="label">What a clean install showed</p>
+<p><span class="chip measured">Measured</span> Installing the built kit into an empty folder on 29 October: <strong>18 of 18 selftests passed</strong>, and the loop over the example’s <strong>58 breaks</strong> reported <strong>HOLDS</strong>.</p></div>
+<p class="seen">On the slides: <a href="../deck/#slide-22">slide 22</a>.</p>
+</section>
+
+<section id="adapters">
+<h2>Other languages</h2>
+<p>The model, the graph, the checks, the GNN and the telemetry do not care what language the code is in. Only the part that breaks code does:</p>
+<ul>
+<li><strong>C#</strong>: any .NET project, through <code>dotnet test</code>.</li>
+<li><strong>Python</strong>: breaks code through its syntax tree; the tests are commands.</li>
+<li><strong>Anything else</strong> (C++, Blueprints): write an adapter that produces one result file in the same format the C# adapter writes: for each requirement, whether its code has the right shape, and for each break, whether a test caught it and which.</li>
+</ul>
+<p class="seen">On the slides: <a href="../deck/#slide-22">slide 22</a>.</p>
+</section>
+
+<section id="harness">
+<h2>The harness matters more than the prompt</h2>
+<p>Most of the gain is in how the agents are set up, not in what they are asked. The loop is a harness: a model to act on, checks that can fail, a record that outlives the context window, fresh reviewers, and measurements of its own progress. Keep improving your own: the agents’ instructions, their tools, and what they must prove before they say “done”. Measure each change with the on/off harness rather than by feel.</p>
+<p>What would help most in return:</p>
+<ul>
+<li><strong>Benchmarks</strong>: agents with and without it, on your own systems.</li>
+<li><strong>Failure piles</strong>: the kinds of failure you see, and how often.</li>
+<li><strong>A wrong pass</strong>: any check you can make pass for the wrong reason.</li>
+</ul>
+<p class="seen">On the slides: <a href="../deck/#slide-22">slide 22</a>.</p>
+</section>
+
+<section id="glossary">
+<h2>Words used here</h2>
+<dl class="terms">
+<dt>Break (mutant)</dt><dd>A copy of the code changed on purpose so it is wrong.</dd>
+<dt>Caught (killed)</dt><dd>A break that made at least one test fail. Good.</dd>
+<dt>Got past (survived)</dt><dd>A break every test still passed. A missing test, unless it is equivalent.</dd>
+<dt>Equivalent</dt><dd>A break that does not change what the program does.</dd>
+<dt>Requirement</dt><dd>One rule the system must follow, with an id, a source and the code it points at.</dd>
+<dt>Authored / inferred</dt><dd>Written by a person / found missing by the loop. Inferred ones are questions.</dd>
+<dt>Use case</dt><dd>Who wants what, as numbered steps.</dd>
+<dt>Claim</dt><dd>“This code belongs to that requirement.”</dd>
+<dt>Lock</dt><dd>The recorded, verified state. A later change makes what it touches stale.</dd>
+<dt>Node, edge</dt><dd>A thing in the graph, and a link between two things.</dd>
+<dt>Check (criterion)</dt><dd>One of the 17 rules the graph is held to, each named after the mistake it stops.</dd>
+<dt>Planted mistake</dt><dd>A deliberate error the selftest makes to prove a check can fail.</dd>
+<dt>Must / may</dt><dd>Decided / not yet decided by the owner.</dd>
+<dt>MRR</dt><dd>A score for a ranking: 1 for right-first, ½ for second, ⅓ for third, averaged.</dd>
+<dt>Arm</dt><dd>One of the two agents in an on/off pair.</dd>
+<dt>Acceptance test</dt><dd>A test written before the arms start and hidden from both.</dd>
+<dt>Morph log</dt><dd>The file that gets one line of numbers per pass.</dd>
+</dl>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  try {
+    var id = (location.hash || "").slice(1);
+    if (!/^[A-Za-z0-9._~-]+$/.test(id)) return;
+    var el = document.getElementById(id);
+    if (el) requestAnimationFrame(function () { el.scrollIntoView({ block: "start" }); });
+  } catch (e) { /* a page opened with no section named simply opens at the top */ }
+})();
+</script>
+</body></html>

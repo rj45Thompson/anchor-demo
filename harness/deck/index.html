@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>How to Use AI for Games: the deck</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070C11;color:#F4F2EC;font:17px/1.55 'IBM Plex Sans',system-ui,sans-serif}
+.top{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;padding-block:18px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1320px;margin:0 auto}
+.top h1{margin:0;font:600 24px/1.2 'Space Grotesk',system-ui,sans-serif;text-wrap:balance}.top a{color:#7FB2E5}
+.deck{display:flex;flex-direction:column;gap:22px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:40px;max-width:1320px;margin:0 auto}
+.frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#0B1219;border-radius:8px}
+.frame>section{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0}
+section>*{position:relative}section p,section h1,section h2,section h3,section ul,section ol{margin:0}section ul{padding-left:36px}section a{color:inherit}
+section table{border-collapse:collapse;width:100%}section td,section th{padding:.35em .6em;border-bottom:1px solid #2E4052;text-align:left}
+details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color:#A9B7C4}details p{margin:8px 0 0}</style></head><body>
+<header class="top"><h1>How to use AI for games</h1><span><a href="../">The fly-through</a></span><span><a href="../manual/">The manual</a></span></header>
+<main class="deck">
+<article id="slide-1"><div class="frame"><section id="cover" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:96px 128px 72px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<img src="img/whole.jpg" alt="The real graph of one shop feature: 1,714 nodes, drawn from the store the loop wrote." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">TNT Tools · internal training manual</p>
+<h1 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:120px;font-weight:700;line-height:1.02;width:1200px;color:#F4F2EC">How to use AI for games</h1>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;line-height:1.2;width:1000px;color:#F4F2EC">Adapted for Heavy Iron. Requirements first, tested by AI, so nothing is a guess.</p>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:2px solid #F08A3C;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#F08A3C">99%</p>
+<p style="font-size:28px;line-height:1.3;color:#F4F2EC">accurate: 99.03% of 35,951 blind derivations, from a graph that abstains rather than guesses</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#7FB2E5">7 of 11</p>
+<p style="font-size:28px;line-height:1.3;color:#F4F2EC">task pairs went to the loop, with three blind graders judging each</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#7FB2E5">216×</p>
+<p style="font-size:28px;line-height:1.3;color:#F4F2EC">less to read to learn who owns a method: the graph against the files</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:24px;color:#7FB2E5"><a href="../manual/#top">The full manual, in plain words: every claim here, and the test behind it</a></p>
+</section>
+</div><details><summary>Slide 1: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. Three measured numbers to start. The 99% is from our knowledge graph, on facts: 99.03% of 35,951 derivations it had never seen were right, and when it cannot back an answer it abstains. Seven of eleven pairs went to the loop when three blind graders judged the two answers; slide 19 has the losses and the cost. The graph answers who owns a method, what it must do and which tests catch it by reading 216 times less than the files hold: 775 characters at the median against 167,665. That is the size of what is read, and no agent has been timed using it yet. Behind this slide: The real graph of one shop feature: 1,714 nodes, drawn from the store the loop wrote.</p></details></article>
+<article id="slide-2"><div class="frame"><section id="flatter" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<img src="img/proof.jpg" alt="Every break of that feature and the test that caught it. Red: no test caught it, and each one has to be explained." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Same code, same day</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">A perfect test score hid a quarter of the breaks</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:rgba(16,26,36,.86);padding:48px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-size:32px;line-height:1.3;color:#C9D3DC">Break each requirement once</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#F4F2EC">0</p>
+<p style="font-size:32px;line-height:1.3;color:#F4F2EC">got past. 15 caught. A perfect score.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:rgba(16,26,36,.86);padding:48px;border:2px solid #F08A3C;border-radius:16px">
+<p style="font-size:32px;line-height:1.3;color:#C9D3DC">Break every statement, every way</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#F08A3C">89</p>
+<p style="font-size:32px;line-height:1.3;color:#F4F2EC">of 340 got past every test.</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:32px;line-height:1.4;color:#C9D3DC">Nothing about the code changed. Only how hard it was tried.</p>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: every break of one feature. Red: no test caught it.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#flatter">What was tested both times</a></p>
+<p style="font-size:24px;color:#A9B7C4">2</p>
+</div>
+</section>
+</div><details><summary>Slide 2: what the speaker says</summary><p>The first version of the loop broke each requirement's code one way, once, and reported 15 caught, 0 got past. The same day, on the same code, breaking every statement every way the tool knew gave 89 of 340 got past. A loop that breaks code one way flatters it. That is why the tool breaks every decision every way it knows. Behind this slide: Every break of that feature and the test that caught it. Red: no test caught it, and each one has to be explained.</p></details></article>
+<article id="slide-3"><div class="frame"><section id="numbers" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<img src="img/under.jpg" alt="The same graph from below: the ring of tests nearest, the requirements furthest." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Measured · every number has its test</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">What it does on real code</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">96.5%</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">of 1,097 breaks of one shop feature caught by a test, leaving out those proven to change nothing.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">290 of 313</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">statements held by a test, up from 31 of 82. Held means breaking it fails a test.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">10</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">requirements nobody had written, found by walking its use cases, beside the designers’ 17.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">45 s</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">to compile 772 breaks in one build. Each then runs alone in about 3 seconds, never in the live project.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">Half</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">the work left unfinished: blind graders counted 9 items with the loop, 18 without.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">17</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">ways of being wrong the graph checks, each proven by a planted mistake it must catch.</p>
+</div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#morph">Where each number comes from</a></p>
+<p style="font-size:24px;color:#A9B7C4">3</p>
+</div>
+</section>
+</div><details><summary>Slide 3: what the speaker says</summary><p>The first four are one shop feature over its passes. A statement is held when breaking it makes some test fail; the count grew from 82 to 313 as the loop began counting every statement. The compile is fast because every break goes into one build. Half the unfinished work comes from 28 blind grades, 6 of them against the hint arm. The 17 are the graph's criteria: each stops one way of being wrong, and a selftest plants that mistake and must catch it. Behind this slide: The same graph from below: the ring of tests nearest, the requirements furthest.</p></details></article>
+<article id="slide-4"><div class="frame"><section id="slop" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<img src="img/inside.jpg" alt="Inside the graph, among the methods." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">The key is accuracy</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">The gap between a guess and the truth is what people call AI slop</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Accuracy pays everywhere</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">It boosts productivity across the board. Our view: in some cases it makes AI thousands of times smarter.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Why the gap opens</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">Prose can’t be checked. Tests pass for the wrong reason. The context window forgets.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(8,13,18,.92);padding:24px 28px;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C">At TNT Tools: no slop</h3>
+<p style="font-size:28px;line-height:1.35;color:#F4F2EC">That is the standard. Every value is read from a source, or marked absent with its reason.</p>
+</div>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:8px 28px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">616 of 616</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">top-tier facts right against outside truth</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:8px 28px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">99.2%</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">right on 209 held-out questions, answering 61% and abstaining on the rest</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:8px 28px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">60M</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">facts in the graph it reasons over, each carrying its sources</p>
+</div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#accuracy">What accuracy has been measured, and on what</a></p>
+<p style="font-size:24px;color:#A9B7C4">4</p>
+</div>
+</section>
+</div><details><summary>Slide 4: what the speaker says</summary><p>The key is accuracy. It boosts productivity across the board, and in our view it makes AI, in some cases, thousands of times smarter; that multiplier is our view, not a measurement, and the largest multiplier we have measured is 216 times less reading. The gap between what AI guesses and what is true is what people deem AI slop. These three numbers are from our knowledge-graph work, on facts rather than code, against cached Wikidata as the outside truth, with bars declared before each run. The precision comes from abstaining: asked the same 209 questions, a local language model answered 95% at 98.0%. The numbers on code are on slide 3. Behind this slide: Inside the graph, among the methods.</p></details></article>
+<article id="slide-5"><div class="frame"><section id="waterfall" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<img src="img/maps.jpg" alt="Requirements at the top, code below: the orange lines are the links that say which requirement owns which decision. It does look like a waterfall." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.86) 0%, rgba(11,18,25,.64) 45%, rgba(11,18,25,.64) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Back to 1999!</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">Requirements first. Long live waterfall.</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:32px;line-height:1.4;color:#F4F2EC">This is how we review our code: we pour the effort into requirements first. Time to learn systems analysis and design again. Agile is, for the most part, dead.</p>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">More requirements, gaps filled, loop closed, nothing is a guess: slopless code.</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.2;color:#F08A3C">Hand-crafted quality on an IKEA budget.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(16,26,36,.86);padding:32px 36px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">The more requirements, the better a graph neural network (GNN) fills gaps</h3>
+<div style="display:grid;grid-template-columns:120px 1fr;gap:10px 16px;align-items:center">
+<p style="font-size:24px;color:#C9D3DC">a tenth</p><div style="width:288px;height:32px;background:#7FB2E5;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px"><p style="font-size:24px;color:#14202B">0.48</p></div>
+<p style="font-size:24px;color:#C9D3DC">a quarter</p><div style="width:378px;height:32px;background:#7FB2E5;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px"><p style="font-size:24px;color:#14202B">0.63</p></div>
+<p style="font-size:24px;color:#C9D3DC">half</p><div style="width:438px;height:32px;background:#F08A3C;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px"><p style="font-size:24px;color:#14202B">0.73</p></div>
+<p style="font-size:24px;color:#C9D3DC">all</p><div style="width:462px;height:32px;background:#F08A3C;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px"><p style="font-size:24px;color:#14202B">0.77</p></div>
+</div>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">Its score on one feature, by how much of the requirement links it can see. Orange beats the 0.67 of a plain rule with no test results to read.</p>
+</div>
+</div>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: the links from requirements down to the code they own.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#waterfall">Requirements first, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">5</p>
+</div>
+</section>
+</div><details><summary>Slide 5: what the speaker says</summary><p>Back to 1999. This is how we review our code: first by pouring our effort into requirements. Time to learn systems analysis and design again. No more agile, it is dead for the most part; long live waterfall. The more requirements you have, the better the graph neural network works at filling gaps and closing the loop, so nothing is a guess, which means slopless code. We want hand-crafted quality on an IKEA budget. The chart is mean reciprocal rank on the shop feature, 27 requirements, where 1.0 is always ranked first; three quarters of the links scored the same 0.77 as all of them. Once test results exist, a plain rule that reads them beats it: slide 15. Behind this slide: Requirements at the top, code below: the orange lines are the links that say which requirement owns which decision. It does look like a waterfall.</p></details></article>
+<article id="slide-6"><div class="frame"><section id="extract" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<img src="img/why.jpg" alt="The requirements and the use cases that need them. Orange ones people wrote. The pale ones the walk inferred." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Requirements make requirements</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">It extracts new requirements from the ones you have</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(16,26,36,.86);padding:36px;border:2px solid #F08A3C;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F08A3C">Automatic</h3>
+<p style="font-size:32px;line-height:1.4;color:#F4F2EC">Each use case step needs something. What no requirement provides becomes a new one, marked inferred, and goes to the owner as a question.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(16,26,36,.86);padding:36px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">Complete in, accurate out</h3>
+<p style="font-size:32px;line-height:1.4;color:#C9D3DC">The more complete the requirements, the more accurate the prompt built from them. Start with the ones that run through the most code.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(16,26,36,.86);padding:36px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">Remix, don’t invent</h3>
+<p style="font-size:32px;line-height:1.4;color:#C9D3DC">Adding a weapon shop? Remix a shop and an inventory that already have solid requirements, rather than inventing one with no clear ones.</p>
+</div>
+</div>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: requirements and use cases. Orange, people wrote. Pale, the walk inferred.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#extract">How requirements make requirements</a></p>
+<p style="font-size:24px;color:#A9B7C4">6</p>
+</div>
+</section>
+</div><details><summary>Slide 6: what the speaker says</summary><p>The tool automatically extracts requirements from existing requirements: it walks each use case, and when a step needs a condition that nothing provides, the chain has inferred a requirement nobody wrote. Those go to the owner as questions, never as decisions. The other two cards are how to use it. The more complete the requirements, the more accurate the prompt, so seed the cross-cutting ones first. When adding a large feature, it is probably better to remix two features with solid requirements than to invent something new without clear ones, because a remix starts from requirements already tested, and the walk finds the gaps where the two meet. A weapon shop is the kind of example this tool was built on. That advice is our judgment from building with it; no run has measured it directly. Behind this slide: The requirements and the use cases that need them. Orange ones people wrote. The pale ones the walk inferred.</p></details></article>
+<article id="slide-7"><div class="frame"><section id="firstclass" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<img src="img/tests.jpg" alt="The tests: the green ring, and the breaks each one caught." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.86) 0%, rgba(11,18,25,.64) 45%, rgba(11,18,25,.64) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">What AI is for</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">There is no such thing as “we don’t use AI”</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(8,13,18,.92);padding:36px;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C">FIRST</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.15;color:#F4F2EC">A first-class testing tool</h3>
+<p style="font-size:28px;line-height:1.4;color:#B9C6D2">Write every line by hand if you like. It still tells you which of your tests cannot fail, and which code no test notices.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:36px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#7FB2E5">SECOND</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.15;color:#F4F2EC">A code writer</h3>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">When it writes code, it is held to the same requirements and the same tests as everyone else.</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:32px;line-height:1.4;color:#F4F2EC"><b>Keep your tests.</b> There is no reason to throw away really well done tests: that is the baby with the bathwater. They become the judge of what AI does.</p>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: the tests, and every break each one caught.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#firstclass">AI as a tester first, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">7</p>
+</div>
+</section>
+</div><details><summary>Slide 7: what the speaker says</summary><p>The reality is that AI is a first-class testing tool primarily and a code writer second. A team that writes all its code by hand can still point it at its tests: every break it makes must fail a test, and a break that does not is a test you do not have. Nothing here asks you to throw away tests you already trust. They are what it is measured against. Behind this slide: The tests: the green ring, and the breaks each one caught.</p></details></article>
+<article id="slide-8"><div class="frame"><section id="how" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<img src="img/whole2.jpg" alt="The graph one pass leaves behind." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">How it runs</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">Write the model, then one command</h2>
+</div>
+<div style="display:flex;gap:16px;align-items:center">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.15;color:#F4F2EC">Model</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">story, requirements, use cases; 19 rules check it</p>
+</div>
+<svg aria-hidden="true" width="48" height="24" viewBox="0 0 48 24" style="width:48px;height:24px;"><polygon points="0,7.2 28.8,7.2 28.8,0 48,12 28.8,24 28.8,16.8 0,16.8" fill="#7FB2E5"/></svg>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.15;color:#F4F2EC">Break</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">every decision, every way, in one compile</p>
+</div>
+<svg aria-hidden="true" width="48" height="24" viewBox="0 0 48 24" style="width:48px;height:24px;"><polygon points="0,7.2 28.8,7.2 28.8,0 48,12 28.8,24 28.8,16.8 0,16.8" fill="#7FB2E5"/></svg>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.15;color:#F4F2EC">Test</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">each break alone; a test must fail</p>
+</div>
+<svg aria-hidden="true" width="48" height="24" viewBox="0 0 48 24" style="width:48px;height:24px;"><polygon points="0,7.2 28.8,7.2 28.8,0 48,12 28.8,24 28.8,16.8 0,16.8" fill="#7FB2E5"/></svg>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.15;color:#F4F2EC">Graph</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">every piece a node; 17 criteria read it</p>
+</div>
+<svg aria-hidden="true" width="48" height="24" viewBox="0 0 48 24" style="width:48px;height:24px;"><polygon points="0,7.2 28.8,7.2 28.8,0 48,12 28.8,24 28.8,16.8 0,16.8" fill="#7FB2E5"/></svg>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(8,13,18,.92);padding:24px;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.15;color:#F08A3C">Verdict</h3>
+<p style="font-size:28px;line-height:1.35;color:#F4F2EC">HOLDS, or OPEN with its questions</p>
+</div>
+</div>
+<div style="background:rgba(8,13,18,.92);padding:32px 40px;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;line-height:1.3;color:#F4F2EC">python closed_loop.py run &lt;model&gt; --out REPORT.md</p>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:32px;line-height:1.4;color:#F4F2EC">Close what is yours: a missing test, an unclaimed line, a break to explain. The owner’s questions go to the owner. Run again, and lock it once nothing of yours stands.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#pass">One pass, end to end</a></p>
+<p style="font-size:24px;color:#A9B7C4">8</p>
+</div>
+</section>
+</div><details><summary>Slide 8: what the speaker says</summary><p>One pass runs from the model to a verdict. Every requirement, use case step, code place, branch, break, test and reasoning step becomes a node in a graph, and each of the 17 criteria stops one way of being wrong, proven by a planted mistake. Holes that are yours you close. Questions only the owner can settle go to the owner. Behind this slide: The graph one pass leaves behind.</p></details></article>
+<article id="slide-9"><div class="frame"><section id="breaks" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<img src="img/proofclose.jpg" alt="One stretch of the breaks up close: each point is one way of breaking one decision." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Breaking the code</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">Every decision, broken every way</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:24px">
+<div style="display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Conditions</h3>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">negated, made true, made false</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Operators</h3>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">&lt; to &lt;=, equality swapped, &amp;&amp; to ||, arithmetic swapped</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Values</h3>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">a number plus one, a bool flipped, a text emptied, an argument defaulted</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Structure</h3>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">ternary arms swapped, an else removed, a statement removed, an early return</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.2;color:#F4F2EC">When a break survives, there are only two honest answers</p>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#7FB2E5">It is the same program</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">Proven by the compiled code: the same IL, set aside. Otherwise it needs a written reason, which lapses when its code changes.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(8,13,18,.92);padding:28px 32px;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C">A test is missing</h3>
+<p style="font-size:28px;line-height:1.35;color:#F4F2EC">Every claim is pinned to its code’s fingerprint, so a deleted line stales the claim. Two of our own “same program” claims were false, and tests now pin them.</p>
+</div>
+</div>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: breaks up close. Each point is one way of breaking one decision.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#equivalents">What a break is, and when it is the same program</a></p>
+<p style="font-size:24px;color:#A9B7C4">9</p>
+</div>
+</section>
+</div><details><summary>Slide 9: what the speaker says</summary><p>Up to 24 breaks a statement, one of each kind first. One limit on every: the C# adapter does not yet see property bodies, and until this week it skipped overloads and operators without saying so; slide 20 has the numbers. A break that survives every test is either a missing test or the same program. Same program is proven by comparing compiled code, Trivial Compiler Equivalence from Papadakis and others, 2015. Anything else needs a reason in writing, and a declared equivalent that a test ever kills is a hole, not a pass. Behind this slide: One stretch of the breaks up close: each point is one way of breaking one decision.</p></details></article>
+<article id="slide-10"><div class="frame"><section id="nodegraph" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:26px">
+<img src="img/layers.jpg" alt="The real node graph of one shop feature, a ring per kind of node: requirements at the top, then use cases, reasoning, code, branches, breaks and tests" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px;width:660px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">The node graph</p>
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:600;line-height:1.1;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)">Everything is one graph, from why to proof</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;width:620px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">How it is laid out</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">One ring per kind of node, top to bottom: why it exists, what the code does, what proves it. Each branch and each break hangs under its method.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;width:620px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">How code maps to requirements</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">620 links say which requirement owns which decision in the code. 313 say where that decision sits. A decision nobody owns is a hole.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 24px;border:1px solid #2E4052;border-radius:16px;width:620px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C"><a href="../">Fly through it: the demo</a></p>
+<p style="font-size:24px;line-height:1.3;color:#F4F2EC">W A S D, or follow one requirement down to the test that holds it.</p>
+</div>
+<p style="position:absolute;left:1634px;width:158px;text-align:right;top:214px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">19 sources</p>
+<p style="position:absolute;left:1404px;width:388px;text-align:right;top:328px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F08A3C;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">27 requirements, 10 inferred</p>
+<p style="position:absolute;left:1494px;width:298px;text-align:right;top:414px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9B6F2;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">6 use cases, 32 steps</p>
+<p style="position:absolute;left:1417px;width:375px;text-align:right;top:466px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FE0C3;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">Claude’s reasoning, 9 steps</p>
+<p style="position:absolute;left:1634px;width:158px;text-align:right;top:530px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FB2E5;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">50 methods</p>
+<p style="position:absolute;left:1609px;width:183px;text-align:right;top:606px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#9CD0FF;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">313 branches</p>
+<p style="position:absolute;left:1430px;width:362px;text-align:right;top:699px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9D3DC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">1,097 breaks, <span style="color:#FF7A7A">130 uncaught</span></p>
+<p style="position:absolute;left:1660px;width:132px;text-align:right;top:814px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#8BE28B;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">45 tests</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#nodegraph">The graph and the demo, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">10</p>
+</div>
+</section>
+</div><details><summary>Slide 10: what the speaker says</summary><p>This is the actual graph of one shop feature, drawn from the store the loop wrote: 1,714 nodes and 10,024 edges, nothing invented and nothing left out. The store itself is SQLite and N-Triples; the rings are how the demo draws it. Each ring is one kind of node. Each branch and each break sits at the angle of the method it belongs to, so a method and everything under it line up. The mapping is two kinds of edge: a branch maps to a requirement, and a branch is at a method. That is how you get from any line of decision in the code to who asked for it, and back. The red points are the 130 breaks no test caught: 23 proven by compiled code to be the same program, 20 with a written reason, 52 with no verdict yet, and 35 unexplained, which are the work. The fly-through is the same data in three.js: drag to orbit, W A S D to fly, and a tour that follows one real thread from a source to a requirement, Claude's reasoning about it, the code, a branch, a break of that branch and the test that caught it. It also has views for just the code-to-requirement links, just the breaks, just the reasoning, and just what the graph neural network reads.</p></details></article>
+<article id="slide-11"><div class="frame"><section id="graph" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<img src="img/inside2.jpg" alt="Inside the graph." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">The record</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">The graph remembers; closed means no “may” is left</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:32px 36px;border:2px solid #7FB2E5;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#7FB2E5">MUST</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Authored requirements</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">The owner wrote them. Each must hold, and a test must notice when it does not.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:32px 36px;border:2px dashed #F08A3C;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C">MAY</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Inferred requirements</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">What the chain needs and nobody wrote. Only the owner settles each one.</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:32px;line-height:1.4;color:#F4F2EC"><b>Breaking code can refute closure, never prove it:</b> closed is always relative to the breaks tried and the tests that watch.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#graph">The graph, and must and may, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">11</p>
+</div>
+</section>
+</div><details><summary>Slide 11: what the speaker says</summary><p>The graph is the record, and the criteria read it. The closest formal idea of closed is the Modal Transition System of Larsen and Thomsen, 1988: every behaviour is marked must or may, and a specification is refined until no may is left. Here the authored requirements are the musts, and the inferred ones the chain needs are the mays. The owner's open questions are exactly those mays. Behind this slide: Inside the graph.</p></details></article>
+<article id="slide-12"><div class="frame"><section id="chain" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:18px">
+<img src="img/thread.jpg" alt="One real thread through the graph: a requirement, Claude's step citing it and the code, a branch of that code, a break of the branch and the test that caught it" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:12px;width:760px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">Checking Claude’s reasoning</p>
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:52px;font-weight:600;line-height:1.1;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)">Claude writes its reasoning as a chain; the graph checks every step</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:14px 20px;border:1px solid #2E4052;border-radius:16px;width:760px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.3;color:#F4F2EC">says: "A limited line sells its quantity and is then sold out"<br><span style="color:#7FB2E5">cites: [W-3, Store.Buy]</span></p>
+</div>
+<p style="font-size:26px;line-height:1.3;color:#F4F2EC;width:760px;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>Where it meets the code:</b> the step becomes a node citing two nodes already there. A branch of that method maps to that requirement, so the two join, 2 links apart.</p>
+<p style="font-size:26px;line-height:1.3;color:#C9D3DC;width:760px;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>Grounded:</b> a cite that is not there fails the run. <b>Joined:</b> what a step cites must connect within 4 links. <b>Not checked yet:</b> whether the words are true. A real step said “or” where the code needs both, and it passed.</p>
+<div style="display:flex;gap:12px;width:760px">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:12px 16px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F08A3C">102</p>
+<p style="font-size:24px;line-height:1.25;color:#C9D3DC">steps in 9 chains, every cite resolved</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:12px 16px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F08A3C">4</p>
+<p style="font-size:24px;line-height:1.25;color:#C9D3DC">steps that would not join</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:12px 16px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F08A3C">7 of 10</p>
+<p style="font-size:24px;line-height:1.25;color:#C9D3DC">owner’s questions one chain missed</p>
+</div>
+</div>
+<p style="position:absolute;left:1209px;top:229px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A source: where it is stated</p>
+<p style="position:absolute;left:1130px;top:327px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F08A3C;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">The requirement</p>
+<p style="position:absolute;left:1042px;top:399px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9B6F2;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A use case step needs it</p>
+<p style="position:absolute;left:1198px;top:494px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FE0C3;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">Claude’s step cites both</p>
+<p style="position:absolute;left:1178px;width:426px;text-align:right;top:625px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FB2E5;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">The code: one method</p>
+<p style="position:absolute;left:1217px;width:388px;text-align:right;top:733px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#9CD0FF;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A branch of it maps to the requirement</p>
+<p style="position:absolute;left:1356px;width:311px;text-align:right;top:869px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9D3DC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A break of that branch</p>
+<p style="position:absolute;left:943px;width:324px;text-align:right;top:693px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#8BE28B;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">The test that caught it</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#chains">The chain checks, and what they do not check yet</a></p>
+<p style="font-size:24px;color:#A9B7C4">12</p>
+</div>
+</section>
+</div><details><summary>Slide 12: what the speaker says</summary><p>When Claude finishes a change it writes down, step by step, why the change does what the requirements ask. A chain is a written argument it produces on purpose, like showing your work; it is not a recording of the model's private thinking. The chain and every step become nodes in the same graph as the code, with an edge to each requirement and method they cite. A cite to something that is not a node fails the run, so a made-up requirement or a method the code does not have cannot pass. Then the graph walks from one cite to the next; if they do not meet within 4 links the step is reported. Of 102 steps, 2 had to be split and 2 were reported as resting on reading alone. An owner's question no step reached is listed as a blind spot; one chain missed 7 of 10. The step quoted here is from the kit's example, which you can run yourself. The picture is the same walk on a larger graph, with its names removed: the requirement, the step citing it and the code, a branch, a break of that branch and the test that caught it. It checks what each claim stands on, not whether the claim is true: a real step said "or" where the code needs both, and it passed. A fresh reviewer found that one. No check yet walks on from a step to whether the code under it is tested.</p></details></article>
+<article id="slide-13"><div class="frame"><section id="map" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<img src="img/maps2.jpg" alt="Only the links from code to requirements." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.86) 0%, rgba(11,18,25,.64) 45%, rgba(11,18,25,.64) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Early prototype</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">The requirements map to the code, and the map finds mistakes</h2>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:32px;line-height:1.4;color:#F4F2EC">Every requirement links to the code it owns, in one graph. Its checks and the breaks do most of the finding so far. A GNN learns on the same map, proposes who owns new code, and is set to learn what does not fit.</p>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">356 → 84</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">holes listed and closed while growing one model, 318 closed and 46 new</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">13</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">branches of checked-in code no requirement owned, on the shop feature</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">10 of 48</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">requirements on a public asteroid game resting on behaviour with no value behind it</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Next:</b> the same run on source your team can read for itself.</p>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: only the links from code to requirements.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#map">What the map has found, and on what</a></p>
+<p style="font-size:24px;color:#A9B7C4">13</p>
+</div>
+</section>
+</div><details><summary>Slide 13: what the speaker says</summary><p>It is an early prototype, and it has already found a lot of problems by mapping code to the graph. Be accurate about who found what: so far it is the graph's criteria and the breaks. The graph neural network proposes which requirement owns new code, and using it to flag a claim that does not fit is planned, not measured; slide 15 shows where a plain rule still beats it. The first number is a model grown from 3 requirements to 49 by an agent using the loop, on code with its requirement ids removed. Those are holes the loop listed for that agent to close; an agent without the loop recovered just as many of the real requirements, as slide 19 says. The asteroid run is public code, language-neutral parts only, with no breaks, because there is no JavaScript adapter yet. The next trial is on source your team can read, on the same terms. Behind this slide: Only the links from code to requirements.</p></details></article>
+<article id="slide-14"><div class="frame"><section id="gnnhow" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<img src="img/heard.jpg" alt="What the graph neural network reads: the real graph with breaks, tests and chains left out, 562 nodes" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">How it learns</p>
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)">A graph neural network (GNN) proposes what the graph is missing</h2>
+</div>
+<div style="display:flex;gap:20px">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:22px 26px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C">How it works</h3>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Reads.</b> Each node starts as its own words, hashed to 512 numbers.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Listens.</b> GraphSAGE layers let each node hear its neighbours, relation by relation.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Ranks.</b> A scorer ranks every requirement for a decision with no owner.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Asks.</b> Below 70% sure it abstains. Above, its answer goes out as a question, never a verdict.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Never reads</b> breaks, tests or chains. They hold the answer, and new code has none.</p>
+</div>
+<div style="flex:1.15;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:22px 26px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C">What it records</h3>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Score, when a pass runs it:</b> GNN 0.76 against the best plain rule’s 0.67, words 0.50, random 0.19.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Each job,</b> per project and per seed: the next slide. 3 verdicts flip with the seed alone.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Breaks ranked:</b> 50% of survivors in the first fifth; plain rule 31%, random 21%.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">What it reads:</b> 562 nodes, 1,570 links, 553 of them owner links.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">More requirements:</b> 0.48 with a tenth of the links, 0.77 with all.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">How sure:</b> at 70% sure it is right 92% of the time, on about 40%.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Every tune:</b> each variant’s score, and what was kept.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:22px 26px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C">How it tries to improve</h3>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">The stats call it.</b> Its lead over the plain rules fell 0.23, 0.15, 0.12, so the stats name a tune as a next job. It is due after 5 passes anyway.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">A tune redraws what it reads:</b> each relation left out, each derived link added.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">The bar:</b> kept only if it wins by 0.02, then again on a seed it was not chosen on.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">So far:</b> 2 tunes, 14 variants, nothing kept. Best 0.750 against 0.737.</p>
+</div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#gnnhow">How it works and what it records, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">14</p>
+</div>
+</section>
+</div><details><summary>Slide 14: what the speaker says</summary><p>Be clear what kind of thing it is: a proposer. It proposes which requirement owns new code, and a person or an exact check accepts the proposal; it is never a verdict. Whole methods are held out when it is tested, so the score is on code it has not seen. The picture behind this slide is exactly what it reads: the graph with breaks, tests and chains taken away, because those hold the answer and new code would not have them. Both leaks were measured before they were closed. The stats are all recorded in files beside the model, one row a pass or a tune; a pass adds the score when it is run with the GNN switched on, and 3 of the shop feature's 7 passes were. Scores are mean reciprocal rank, where 1.0 is always ranked first. The 0.67 rule reads no test results; once test results exist a plain rule beats it, and the next slide shows where. Self-improvement here means this: its lead over the plain rules is a stat. On the shop feature that lead fell from 0.23 to 0.15 to 0.12 as more tests arrived, so the stats report it as worsening and name reshaping the graph as a next job, beside writing tests. It is due after 5 passes without one anyway. A standing tick or a person then runs the tune. So far it has been tried twice, on 14 variants, and nothing has earned a place: the best beat the full graph by 0.013, and the bar is 0.02. That is the honest state: it attempts to improve itself, and the attempt has not paid yet.</p></details></article>
+<article id="slide-15"><div class="frame"><section id="gnn" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<img src="img/heard2.jpg" alt="What the graph neural network reads, from above." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">What learns</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">A graph neural network (GNN) has to earn its place</h2>
+</div>
+<table style="font-size:24px;color:#F4F2EC">
+<tr><th style="width:48%">Learned score against the plain rule, mean over seeds</th><th style="width:26%">Shop feature</th><th style="width:26%">The toolkit’s own code</th></tr>
+<tr><td>Graph neural network (GNN): who owns new code</td><td>0.77 vs 0.84, loses</td><td>0.65 vs 0.72, loses</td></tr>
+<tr><td>Graph neural network (GNN): which tests catch a break</td><td>0.83 vs 0.88, loses</td><td style="color:#F08A3C">0.72 vs 0.63, wins 4 of 5</td></tr>
+<tr><td>GNN: which steps carry a requirement</td><td>0.40 vs 0.56, loses</td><td>0.44 vs 0.69, loses</td></tr>
+<tr><td>Learned: which breaks are the same program</td><td>0.62 vs 0.58, wins 7 of 10</td><td style="color:#F08A3C">0.66 vs 0.41, wins 10 of 10</td></tr>
+<tr><td>Learned: breaks found in the first fifth of a run</td><td style="color:#F08A3C">50% vs 31%, wins 10 of 10</td><td>30% vs 25%, wins 9 of 10</td></tr>
+</table>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Each project’s run plan records the verdict.</b> On the shop feature “the tests that catch a break name its owner” beats it. When it is at least 70% sure who owns new code it is right 92% of the time, on about 40% of it, and it abstains on the rest.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#gnn">How it was tested, and what the scores mean</a></p>
+<p style="font-size:24px;color:#A9B7C4">15</p>
+</div>
+</section>
+</div><details><summary>Slide 15: what the speaker says</summary><p>The graph neural network, GraphSAGE layers over the graph's typed relations, proposes links: its proposals are questions, never verdicts. Each job is tested on code it never saw, against the best rule that does not learn, and a project's run plan marks it on only if it wins there by more than 0.02. Be accurate about how far that goes: the plan records the verdict, and so far only 1 of its 7 switches reaches what a pass runs. Wiring the rest is the next piece of work, found by the tool's own tick. Every number is a mean over seeds, because a single seed flatters: the shop feature's break order read 64% against 26% on its first seed, the best of ten, and the fair number is 50% against 31%. Three verdicts flip with the seed alone, shown as wins out of seeds. The last two rows have ten seeds and the tests row on the toolkit five; the shop feature's first two rows have two so far and the steps row one. The first three rows are mean reciprocal rank, where 1.0 is always ranked first. The same-program row is the share of proven equivalents in the first fifth of the ranked list. Across projects the learned order did worse than random, so each project trains on its own results. Behind this slide: What the graph neural network reads, from above.</p></details></article>
+<article id="slide-16"><div class="frame"><section id="selfimprove" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<img src="img/self.jpg" alt="The tool's own graph: its own requirements, its own code, its own breaks." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">It tests itself</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">Self-improvement is on by default</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(8,13,18,.92);padding:32px 36px;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#7FB2E5">ON</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Every pass</h3>
+<p style="font-size:28px;line-height:1.4;color:#F4F2EC">Records 44 stats about itself, checks them against the tool’s own rules for improving, and names what to improve next.</p>
+<p style="font-size:28px;line-height:1.4;color:#7FB2E5">Overhead: about a third of a second and 3 printed lines.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(16,26,36,.86);padding:32px 36px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#7FB2E5">OFF</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Some tokens saved</h3>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">Run with --no-self-improve, or set self_improve: false in the model. A pass saves little.</p>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">The real spend is the standing tick, which ships in the kit and which you schedule: about 200,000 to 290,000 tokens a tick so far.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(16,26,36,.86);padding:32px 36px;border:2px dashed #F08A3C;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C">NOT NETWORKED HERE</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">One shared graph</h3>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">We share ours across the team as a retrieval store (RAG) to save tokens: agents look up what is proven instead of re-reading it.</p>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">This version keeps one graph per checkout. Add sharing in whatever way suits your network.</p>
+</div>
+</div>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: the tool’s own graph.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#selfimprove">Self-improvement, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">16</p>
+</div>
+</section>
+</div><details><summary>Slide 16: what the speaker says</summary><p>Self-improvement is on by default because the tool tests itself. Every pass writes one row of stats, checks them against requirements on those stats, and prints what to improve next. That is cheap. A standing tick costs far more: a fresh agent takes one item, measures before and after, and records whether it was worth it. Tokens here are the app's count for each agent, and nothing starts a tick for you. How far a shared graph cuts tokens has not been measured in this version, which is not networked; what has been measured is the size of what is read. Behind this slide: The tool's own graph: its own requirements, its own code, its own breaks.</p></details></article>
+<article id="slide-17"><div class="frame"><section id="selfstats" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<img src="img/selfproof.jpg" alt="Every break of the tool's own code. Red: no test caught it. It is less tested than what it tests, and you can see it." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Self-improvement · measured</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">What it has found in itself</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">19</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">ways a check could pass for the wrong reason, found by fresh reviewers. 17 fixed, each with a planted mistake a selftest must catch.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">11 → 0</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">stats recorded with nothing reading them. Each now triggers something, or has a dated reader.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">32</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">requirements on its own stats. 4 are firing now, and each one that fires is a work item.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">9</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">faults its first on-against-off round found in itself: 5 in the harness, 4 in the tool. All fixed.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">1 of 7</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">run plan switches that reach what a pass runs. Its own tick found the other 6 change nothing yet.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">58%</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">of the breaks of its own code caught, 885 of 1,532, on its one self pass. It is less tested than what it tests.</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Not yet:</b> 0 of the 20 measured outcomes its improvement learner needs, so rules choose the work for now, not a model.</p>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: every break of its own code. Red: no test caught it.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#selfimprove">Every self-improvement stat, where it comes from</a></p>
+<p style="font-size:24px;color:#A9B7C4">17</p>
+</div>
+</section>
+</div><details><summary>Slide 17: what the speaker says</summary><p>The audit of its own stats is itself a result: it reported 6 unread stats, and when the audit was fixed the true number was 11. All 11 now have a reader. The requirements on its stats are a second layer of the same idea: a pattern in a stat fires, and what fires becomes a work item. This is young. The standing tick has run only a few times, and no improvement has yet been measured before and after by the learner, so these numbers show what it has found, not yet how fast it gets better. Behind this slide: Every break of the tool's own code. Red: no test caught it. It is less tested than what it tests, and you can see it.</p></details></article>
+<article id="slide-18"><div class="frame"><section id="selfloop" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<img src="img/selfinside.jpg" alt="Inside the tool's own graph." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">The loop, in pseudo C++</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">One pass, then one tick</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;background:rgba(16,26,36,.86);padding:24px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.28;color:#F4F2EC;white-space:nowrap"><span style="color:#7FB2E5">// One pass. Self-improvement is on by default.</span><br>Verdict run(Model&amp; m, bool selfImprove = true) {<br>&#160;&#160;Breaks&#160;&#160;b = Mutate(m.code);&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#7FB2E5">// one compile</span><br>&#160;&#160;Results r = RunEachAlone(b, m.tests);<br>&#160;&#160;Graph&#160;&#160;&#160;g = KnowledgeGraph(m, r);<br>&#160;&#160;Holes&#160;&#160;&#160;h = Criteria(g);&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#7FB2E5">// 17 checks</span><br><br>&#160;&#160;if (self_improve_on(m, selfImprove)) {<br>&#160;&#160;&#160;&#160;Row row = PassStats(m).collect();&#160;&#160;<span style="color:#7FB2E5">// 44 stats</span><br>&#160;&#160;&#160;&#160;MorphLog(m).add(row);<br>&#160;&#160;&#160;&#160;auto fired = improvement::fires(rules, log);<br>&#160;&#160;&#160;&#160;Print(NextImprovement(log, fired).picks());<br>&#160;&#160;}<br><br>&#160;&#160;return h.ours.empty() ? HOLDS : OPEN;<br>}</p>
+</div>
+<div style="flex:1;background:rgba(16,26,36,.86);padding:24px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.28;color:#F4F2EC;white-space:nowrap"><span style="color:#F08A3C">// One tick. A fresh agent, one item, no memory.</span><br>void Tick() {<br>&#160;&#160;Start s = loop_tick::start();&#160;&#160;&#160;&#160;&#160;<span style="color:#F08A3C">// the lock</span><br>&#160;&#160;if (s.stopped || s.busy || s.idle) return;<br>&#160;&#160;if (s.epochStarts) Brainstorm();&#160;&#160;<span style="color:#F08A3C">// every 12</span><br>&#160;&#160;RunSelftests();&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#F08A3C">// red = item</span><br>&#160;&#160;telemetry_audit();&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#F08A3C">// unread = item</span><br>&#160;&#160;Item i = Choose(improvement::check(), board);<br>&#160;&#160;Stat before = i.stat.Measure();<br>&#160;&#160;i.Do();&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#F08A3C">// one change</span><br>&#160;&#160;Stat after = i.stat.Measure();<br>&#160;&#160;if (s.epochEnds) {<br>&#160;&#160;&#160;&#160;run_plan::decide();&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#F08A3C">// parts on or off</span><br>&#160;&#160;&#160;&#160;improvement::graph();&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#F08A3C">// did it work?</span><br>&#160;&#160;}<br>&#160;&#160;loop_tick::finish(i, before, after, worth);<br>}</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:24px;line-height:1.35;color:#C9D3DC">The same shape, one level up: stats are its code, triggers its requirements, ticks its tests. Three ticks worth “no” in a row and it sleeps until something changes.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#recursive">The recursive graph, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">18</p>
+</div>
+</section>
+</div><details><summary>Slide 18: what the speaker says</summary><p>The toolkit is written in Python; this is pseudo C++ for a C++ audience, and the lower-case names are the real ones in the code: self_improve_on, improvement fires and check, loop_tick start and finish, telemetry_audit, run_plan decide, improvement graph. Left: one pass, which is what an agent runs. If self-improvement is on, it writes a row and prints the stats' picks. Right: one tick, the standing job. A fresh agent, no memory, chooses one item: a red selftest first, then an unread stat, then a fired trigger, then the board. It measures the same stat before and after. Every 12 ticks is an epoch: the first tick brainstorms, the last benchmarks, re-decides which parts run and asks whether the improvements worked. The improvement graph is checked the way the requirement graph is. Behind this slide: Inside the tool's own graph.</p></details></article>
+<article id="slide-19"><div class="frame"><section id="ab" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<img src="img/top.jpg" alt="The shop graph from above." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">On against off · measured</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">Same task, two agents, three blind graders</h2>
+</div>
+<div style="display:flex;gap:24px;align-items:stretch">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(8,13,18,.92);padding:20px 28px;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">5 to 1</p>
+<p style="font-size:28px;line-height:1.3;color:#F4F2EC">for the loop, first round</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:20px 28px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F4F2EC">2 to 2</p>
+<p style="font-size:28px;line-height:1.3;color:#C9D3DC">in the repeat, 1 split</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:20px 28px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F4F2EC">1.2–2.3×</p>
+<p style="font-size:28px;line-height:1.3;color:#C9D3DC">the tokens</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:20px 28px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F4F2EC">3–55×</p>
+<p style="font-size:28px;line-height:1.3;color:#C9D3DC">the time</p>
+</div>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">What the graders counted</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">Scope creep: 4 with the loop, 10 without. Invented values: 17 and 5, so it writes more down, and some of that is a guess.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Where it lost, 3 grades to 0</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">A model-only task, twice: it pinned code on requirements that do not cover it. A repeat: it removed a public constructor and the loop still said HOLDS. And a tie: growing a model from 3 requirements, 16 of 24 each once the code’s requirement ids were removed.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">A cheap hint alone</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">No loop, only a list of weak spots: about half the tokens. Graders chose the loop twice and tied once, for what it wrote down, not for better code.</p>
+</div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#matrix">The tasks, the grades and the harness</a></p>
+<p style="font-size:24px;color:#A9B7C4">19</p>
+</div>
+</section>
+</div><details><summary>Slide 19: what the speaker says</summary><p>Six small tasks, then five of them again: eleven pairs, each with a hidden test neither arm saw. Almost every answer passed its hidden test either way, so correctness is not what separates them on small tasks; what differs is what gets written down and what gets left unfinished. One grader per pair was too noisy: with one grader 3 of the 5 repeats reversed, with three only 1 reversed and 1 split. All three graders agreed on 7 of the 11. The fault counts come from the 28 newer grades, on briefs with the arm's tells removed; 6 of those grades compare the loop to the hint arm. The first grade of each pair is on an older brief, which could name the arm in a few cases. The loop's losses are now planned checks. The tie matters most: the first grow run read 19 of 24 against 10, but the code cited its requirement ids, so both arms started with more than the seed. With the ids removed it was 16 of 24 each, 14 of 46 grown requirements matching a real one with the loop and 12 of 41 without, at 1.6 times the tokens and 4.6 times the minutes, one run each, and neither arm asked for anything it should not see. So recovering a model is not where the loop has shown a gain. Behind this slide: The shop graph from above.</p></details></article>
+<article id="slide-20"><div class="frame"><section id="limits" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<img src="img/thin.jpg" alt="A thin graph: the public asteroid game's, 186 nodes against the shop feature's 1,714. Green on this much says little." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Honest limits</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">When to use it, and what it is not yet</h2>
+</div>
+<div style="display:flex;gap:20px">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(8,13,18,.92);padding:24px 32px;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#7FB2E5">Use it when</h3>
+<ul style="font-size:28px;line-height:1.35;color:#F4F2EC"><li>many changes will touch the same code</li><li>a rule must still hold after the tenth edit</li><li>agents run long, across context windows</li></ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">Skip it when</h3>
+<ul style="font-size:28px;line-height:1.35;color:#C9D3DC"><li>it is a one-off prompt or a quick script</li><li>there is no model yet, and no runnable tests</li><li>the question is how it looks or feels</li></ul>
+</div>
+</div>
+<div style="display:flex;gap:20px">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">A prototype</h3>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">Version 0.1. On Unreal’s SemVer.cs its C# adapter saw 35 of 68 statements, and the report did not say so. Being fixed.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">A thin graph misleads</h3>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">A green loop over a thin model reads as proof it is not.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 28px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">A full pass takes time</h3>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">24 minutes for 1,097 breaks of one feature.</p>
+</div>
+</div>
+<div style="display:flex;gap:20px">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:14px 28px;border:2px dashed #F08A3C;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C">TARGET ON CODE · NOT MEASURED</p>
+<p style="font-size:24px;line-height:1.3;color:#F4F2EC"><b>95% or better accuracy</b> for agents using the loop where it fits</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:14px 28px;border:2px dashed #F08A3C;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C">TARGET ON CODE · NOT MEASURED</p>
+<p style="font-size:24px;line-height:1.3;color:#F4F2EC"><b>Up to 90% fewer tokens</b> per closed requirement, on average</p>
+</div>
+</div>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: a thin graph, 186 nodes. The shop feature’s has 1,714.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#limits">Each limit, and each target, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">20</p>
+</div>
+</section>
+</div><details><summary>Slide 20: what the speaker says</summary><p>Used where it does not fit, it can be worse than not using it at all. The prototype card is the first trial on code your team can read: the C# adapter skipped overloaded methods, operators and property bodies without saying so, so on Unreal's SemVer.cs it saw 35 of 68 statements and on JsonObject.cs 213 of 288. The shop feature has no overloads, which is why its numbers never showed it. The fix is being landed, and the report will name what it did not walk. How thin is too thin is not known yet. The two targets are for agents writing code with the loop, shown dashed because neither has been measured there; the 99% on the cover is on facts, from the knowledge graph. The on-against-off harness exists to measure both targets, and the token figure is always being re-evaluated. Behind this slide: A thin graph: the public asteroid game's, 186 nodes against the shop feature's 1,714. Green on this much says little.</p></details></article>
+<article id="slide-21"><div class="frame"><section id="edge" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<img src="img/selftop.jpg" alt="The tool's own graph from above." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">What you are getting</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">Look closely at the secret sauce</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:32px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">Where it comes from</h3>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">A mutation of our ARC3 self-improvement loop: a piece of a failed attempt at AGI, which is why it distrusts its own numbers. Ours is internal, so this version was made for you.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:32px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">How new it is</h3>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">An independent search found about 8 of its 10 parts are known work. The whole, used as an agent’s done gate, looks new, at medium confidence.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:32px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">A small edge, for now</h3>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DC">As harnesses improve, this will become common knowledge. Today it sets you apart from companies using code generation like a chatbot.</p>
+</div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#lineage">Where it comes from, and what it measured there</a></p>
+<p style="font-size:24px;color:#A9B7C4">21</p>
+</div>
+</section>
+</div><details><summary>Slide 21: what the speaker says</summary><p>This is the method we use ourselves, the secret sauce of TNT Tools. The harness is a piece of a failed attempt at AGI. That attempt's autonomous self-improvement run went 16 days and found nothing that generalized: a counter that could be gamed rose while the honest number stayed flat. That failure is why every stat here must have a reader, a control and a fresh reviewer. Its best agent, a weak proposer with a strong verifier, reached 31 of 63 games where random reached 14. As harnesses improve this will become more common knowledge, so the edge is small and it is for now. Our graph is shared across the team as a retrieval store; this version is not networked, and you could add that in whatever way suits your network. Behind this slide: The tool's own graph from above.</p></details></article>
+<article id="slide-22"><div class="frame"><section id="install" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<img src="img/example.jpg" alt="The example's own graph, the one you get when the install holds: 122 nodes." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Try it</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">Install it; the example must hold</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:rgba(8,13,18,.92);padding:32px 36px;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.3;color:#F4F2EC">python install.py</p>
+<p style="font-size:28px;line-height:1.35;color:#B9C6D2">Puts the skill into Claude Code and the tools beside it, runs every selftest, then the whole loop on both examples. Needs Python 3.10+ and PyYAML; names PyTorch and the .NET SDK when absent.</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.3;color:#F4F2EC">python install.py --check</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.3;color:#F4F2EC">python install.py --uninstall</p>
+<p style="font-size:28px;line-height:1.35;color:#7FB2E5">Clean install: 18 of 18 selftests pass, and the C# and Python examples both hold. The kit’s public release follows its fixes: see the manual.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:32px 36px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">What we would most like back</h3>
+<ul style="font-size:28px;line-height:1.4;color:#C9D3DC"><li>benchmarks of agents with and without it, on your own systems</li><li>the kinds of failure you see, and how often</li><li>any check you can make pass for the wrong reason</li></ul>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">Most of the gain is in how agents are set up. Keep upgrading your own harness, and measure each change on against off.</p>
+</div>
+</div>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: the example’s own graph, 122 nodes.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#install">What the installer checks</a></p>
+<p style="font-size:24px;color:#A9B7C4">22</p>
+</div>
+</section>
+</div><details><summary>Slide 22: what the speaker says</summary><p>The installer checks what it needs, copies the skill and tools, runs every selftest in the installed copy, then runs the whole loop on the examples, a C# wallet and store and its Python twin, which must hold. Any other language writes one verdict file. The manual has every claim in this deck in plain words, with the test behind it. Behind this slide: The example's own graph, the one you get when the install holds: 122 nodes.</p></details></article>
+</main><script>function fit(){document.querySelectorAll('.frame').forEach(function(f){f.firstElementChild.style.transform='scale('+(f.clientWidth/1920)+')';});}
+addEventListener('resize',fit);fit();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);</script></body></html>
