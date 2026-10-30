@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=69a795e9bb"><style>
+:root{--bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--treeW:320px;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;font-variant-numeric:tabular-nums}
+a{color:var(--blue)}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;line-height:1.2;text-wrap:balance;margin:0}
+button{background:#1D2C3A;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;min-height:32px;white-space:nowrap}
+button:hover{border-color:var(--accent)}button[aria-pressed="true"]{background:var(--accent);color:#0B1219;border-color:var(--accent)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#tree{position:fixed;left:0;top:0;bottom:0;width:var(--treeW);display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line);z-index:6;padding-left:env(safe-area-inset-left,0px)}
+#treeHead{padding:14px 14px 10px;border-bottom:1px solid var(--line)}#treeHead h1{font-size:19px}
+.by{margin:2px 0 0;color:var(--muted);font-size:12.5px}.by span{display:inline-block}.by span::first-letter{text-transform:uppercase}
+#findRow{display:flex;gap:8px;margin-top:10px;align-items:center}#filter{flex:1;min-width:0;background:#0E1720;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:16px;line-height:1.2}
+#filter::placeholder{color:#8C9BA9}#findRow button{flex:none}
+#found{display:block;margin-top:6px;font-size:12px;color:var(--muted);min-height:1.3em}
+#treeRoot{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;margin:0;padding:6px 6px 12px;list-style:none;overscroll-behavior:contain}
+#treeRoot ul{list-style:none;margin:0;padding:0}
+#treeRoot li{outline:none}
+.row{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:6px;cursor:pointer;min-height:28px;line-height:1.25;font-size:13.5px;color:var(--soft)}
+.row:hover{background:#1A2733;color:var(--fg)}
+li:focus-visible>.row{outline:2px solid var(--accent);outline-offset:-2px}
+li[aria-selected="true"]>.row{background:#26394A;color:var(--fg);box-shadow:inset 3px 0 0 var(--accent)}
+li.top>.row{font:600 14px/1.25 'Space Grotesk',system-ui,sans-serif;color:var(--fg)}
+.ch{flex:none;width:14px;text-align:center;color:var(--muted);font-size:11px;transition:transform .12s}li[aria-expanded="true"]>.row>.ch{transform:rotate(90deg)}
+li[aria-expanded="false"]>ul{display:none}
+.l{flex:1;min-width:0;overflow-wrap:anywhere}.after{flex:none;font-size:11px;color:var(--muted);max-width:44%;text-align:right}
+.g{flex:none;width:10px;height:10px;display:inline-block;background:var(--c,#7FB2E5)}
+.g.dot{border-radius:50%}.g.panel{width:13px;height:8px;background:none;border:1.5px solid var(--blue);border-radius:2px}.g.stop{border-radius:50%;background:#FFD9A8}
+.g.view{border-radius:50%;background:none;border:1.5px solid var(--muted)}.g.doc{width:9px;height:11px;background:none;border:1.5px solid var(--muted);border-radius:1.5px}
+.g.stat{width:8px;height:8px;transform:rotate(45deg)}
+.g.r-reached{border-radius:50%}.g.r-doubted,.g.r-partly{border-radius:50%;background:radial-gradient(circle,var(--c) 34%,transparent 40%,transparent 56%,var(--c) 60%)}
+.g.r-trying{border-radius:50%;background:none;border:2px solid var(--c)}.g.r-borrowed,.g.r-planned{border-radius:50%;background:none;border:1.5px dotted var(--c)}
+#treeFoot{padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);font-size:12px;color:var(--muted)}#treeFoot p{margin:0}
+#view{position:fixed;left:var(--treeW);right:0;top:0;bottom:0;overflow:hidden;background:var(--bg)}
+body.treeOff{--treeW:0px}body.treeOff #tree{display:none}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;outline:none}canvas:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
+#hud{background:linear-gradient(180deg,rgba(11,18,25,.82) 0%,rgba(11,18,25,.55) 62%,rgba(11,18,25,0) 100%);position:absolute;left:0;right:0;top:0;display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) 8px 12px;pointer-events:none;z-index:3}
+#hud>*{pointer-events:auto}
+#here{min-width:0;flex:1;pointer-events:none;text-shadow:0 1px 4px #0B1219,0 0 12px #0B1219}#hereT{font-size:17px}#hereS{margin:2px 0 0;font-size:13px;color:var(--soft);max-width:64ch}
+#byPhone{display:none;margin:2px 0 0;font-size:12px;color:var(--muted)}#byPhone span{display:inline-block}#byPhone span::first-letter{text-transform:uppercase}
+#ctl{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;flex:none;max-width:60%}#menu{display:none}
+#gl{align-self:center;font-size:12px;color:var(--muted);padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:rgba(18,28,38,.8);white-space:nowrap;cursor:help}
+#gl.off{color:#FF8F6B;border-color:#FF8F6B}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}.lab{position:absolute;left:0;top:0;font-size:12px;color:var(--c);white-space:nowrap;text-shadow:0 1px 3px #0B1219,0 0 8px #0B1219;will-change:transform}
+#callout{position:absolute;left:0;top:0;pointer-events:none;z-index:2;background:rgba(18,28,38,.92);border:1px solid var(--accent);border-radius:6px;padding:2px 7px;font-size:12.5px;max-width:260px;overflow-wrap:anywhere;display:none}
+#page{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--panel);border-top:1px solid var(--line);display:flex;flex-direction:column;height:44px;transition:height .22s ease;padding-bottom:env(safe-area-inset-bottom,0px)}
+#page.open{height:var(--pageH,38vh)}
+#grip{position:absolute;left:0;right:0;top:-5px;height:9px;cursor:ns-resize;touch-action:none}
+#pageBar{flex:none;display:flex;align-items:center;gap:6px;height:43px;padding:0 10px}
+#pageHandle{flex:1;min-width:0;display:flex;gap:8px;align-items:center;text-align:left;background:none;border:none;padding:4px 6px;font:600 14px/1.2 'Space Grotesk',system-ui,sans-serif;overflow:hidden}
+#pageHandle .arrow{flex:none;color:var(--accent);transition:transform .2s}#page.open #pageHandle .arrow{transform:rotate(180deg)}
+#pageName{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pageBody{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:4px 18px 24px;overscroll-behavior:contain;display:none}#page.open #pageBody{display:block}
+#pageBody>div{max-width:820px;margin:0 auto}
+#pageBody h2{font-size:24px;margin:2px 0 8px}#pageBody h3{font-size:17px;margin:18px 0 6px}#pageBody h4{font:600 14px/1.3 'Space Grotesk',system-ui,sans-serif;margin:10px 0 2px}
+#pageBody p{margin:0 0 10px}#pageBody ul,#pageBody ol{margin:0 0 10px;padding-left:20px}#pageBody li{margin:3px 0}
+.kick{font:600 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:6px 0 2px!important}
+.cap{display:inline-block}.cap::first-letter{text-transform:uppercase}.lede{font-size:16.5px;color:var(--fg)}.note{color:var(--muted);font-size:14px}.plainlist{list-style:none;padding-left:0!important}
+.said{margin:0 0 10px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel2)}.said summary{cursor:pointer;color:var(--soft)}.said pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 'JetBrains Mono',monospace;margin:6px 0}
+.shot{font-size:14px}.state{display:inline-block;font:600 13px/1 'IBM Plex Sans',sans-serif;border:1px solid currentColor;border-radius:999px;padding:5px 10px}
+.s-reached,.s-doubted,.s-partly{color:#FFD27A}.s-trying{color:#FF8F6B}.s-borrowed,.s-planned{color:#A9B7C4}.hist{list-style:none;padding-left:0!important}.hist time{color:var(--muted);font-size:13px;margin-right:6px}
+.foot{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:14px}
+code{overflow-wrap:anywhere}pre{max-width:100%}
+#tip{position:fixed;z-index:20;left:0;top:0;max-width:300px;background:#0E1720;border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12.5px;color:var(--fg);pointer-events:none;overflow-wrap:anywhere;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+#tip[hidden]{display:none}
+#fail{position:absolute;left:12px;right:12px;bottom:60px;z-index:5;color:#FF8F6B}
+#scrim{display:none}
+@media (max-width:760px){
+ :root{--treeW:0px}
+ #tree{width:min(86vw,340px);transform:translateX(-102%);transition:transform .2s;box-shadow:6px 0 24px rgba(0,0,0,.5)}body.treeOpen #tree{transform:none}body.treeOff #tree{display:flex}
+ body.treeOpen #scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:5}
+ #menu{display:inline-block}#treeHide{display:none}
+ #view{left:0}#hud{flex-direction:column;align-items:stretch;gap:6px}#ctl{order:-1;max-width:none;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+ #ctl button{flex:none}#gl{position:absolute;right:12px;top:calc(52px + env(safe-area-inset-top,0px));padding:3px 8px;font-size:11px}
+ #here{padding-right:70px}#hereT{font-size:15px}#hereS{display:none}#byPhone{display:block}body.chosen #byPhone{display:none}
+ #page.open{height:var(--pageH,52dvh)}#pageBody{padding:4px 14px 20px}#pageBody h2{font-size:20px}
+ #pagePrev,#pageNext{padding:6px 8px}#pageCopy{display:none}
+ .lab{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<aside id="tree" aria-label="Everything you can fly to">
+<div id="treeHead"><h1>The fly-through manual</h1><p class="by"><span>by RJ’s TNT Tools</span></p>
+<div id="findRow"><input id="filter" type="search" placeholder="Filter" aria-label="Filter the tree" data-tip="Type to find any item by its words. Down arrow goes on into the tree." autocomplete="off"><button id="treeHide" type="button" data-tip="Hide the tree, for more room." aria-label="Hide the tree, for more room.">Hide</button></div><span id="found" aria-live="polite"></span></div>
+<ul id="treeRoot" role="tree" aria-label="Everything you can fly to"></ul>
+<div id="treeFoot"><p>TNT Tools’ own work, not a Heavy Iron product.</p></div>
+</aside>
+<div id="scrim"></div>
+<main id="view">
+<canvas id="c" tabindex="0" aria-label="A three dimensional graph of requirements, code, breaks and tests, with slides and readers standing in it" data-tip="Drag to orbit, scroll to zoom, W A S D to fly."></canvas>
+<div id="labels" aria-hidden="true"></div><div id="callout" aria-hidden="true"></div>
+<div id="hud"><div id="here"><h2 id="hereT">The fly-through manual</h2><p id="hereS">Pick anything on the left, or start the tour.</p><p id="byPhone"><span>by RJ’s TNT Tools</span></p></div>
+<div id="ctl"><button id="menu" aria-expanded="false" aria-controls="tree" type="button" data-tip="Shows or hides the tree of everything you can fly to." aria-label="Shows or hides the tree of everything you can fly to.">Contents</button><button id="tourPrev" type="button" data-tip="The tour&#x27;s previous stop." aria-label="The tour&#x27;s previous stop.">‹</button><button id="tourPlay" type="button" data-tip="Start or stop the guided tour along one real thread through the graph." aria-label="Start or stop the guided tour along one real thread through the graph.">Tour</button><button id="tourNext" type="button" data-tip="The tour&#x27;s next stop." aria-label="The tour&#x27;s next stop.">›</button><button id="homeBtn" type="button" data-tip="Fly back to see the whole graph. The page stays as it is." aria-label="Fly back to see the whole graph. The page stays as it is.">Whole graph</button><button id="helpBtn" type="button" data-tip="Help: how to fly, and where the manual is." aria-label="Help: how to fly, and where the manual is.">?</button><button id="treeShow" type="button" hidden data-tip="Show the tree again." aria-label="Show the tree again.">Show tree</button><span id="gl" tabindex="0" data-tip="Working out how to draw the graph." role="status">Starting</span></div></div>
+<section id="page" aria-label="The page for the selected item"><div id="grip" aria-hidden="true"></div>
+<div id="pageBar"><button id="pageHandle" type="button" aria-expanded="false" aria-controls="pageBody" data-tip="Shows or hides the page for the selected item. Up and down arrows change its height."><span class="arrow" aria-hidden="true">&#9650;</span><span id="pageName">Pick anything to open its page</span></button> <button id="pagePrev" type="button" data-tip="The previous item in this part of the tree." aria-label="The previous item in this part of the tree.">Previous</button> <button id="pageNext" type="button" data-tip="The next item in this part of the tree." aria-label="The next item in this part of the tree.">Next</button> <button id="pageCopy" type="button" data-tip="Copy a link that opens on this item." aria-label="Copy a link that opens on this item.">Copy link</button></div>
+<div id="pageBody" tabindex="0" role="region" aria-label="Page text"><div id="pageIn"></div></div></section>
+<p id="fail" role="alert" hidden></p>
+</main>
+<div id="tip" role="tooltip" hidden></div><div id="sr" class="vh" aria-live="polite"></div>
+<noscript><div style="position:fixed;inset:0;z-index:30;background:#0B1219;padding:24px;font-size:17px"><p>The fly-through needs JavaScript. The manual does not: <a href="../manual/">read the whole manual</a>, or <a href="../deck/">the deck</a>.</p></div></noscript>
+<script>'use strict';
+const $=(id)=>document.getElementById(id), Q=new URLSearchParams(location.search), MAXFPS=Number(Q.get('maxfps')||0);
+const reducedQuery=matchMedia('(prefers-reduced-motion: reduce)'); const reduced=()=>reducedQuery.matches;
+const D_TITLE=document.title.split(',')[0], FOV=50*Math.PI/180, TAN=Math.tan(FOV/2), EXPOSURE=1.3, BG=[11/255,18/255,25/255];
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2], cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const norm=(a)=>{ const l=Math.hypot(a[0],a[1],a[2])||1; return [a[0]/l,a[1]/l,a[2]/l]; };
+const hex=(c)=>[parseInt(c.slice(1,3),16)/255,parseInt(c.slice(3,5),16)/255,parseInt(c.slice(5,7),16)/255];
+const ease=(t)=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+function mul4(a,b){ const o=new Float32Array(16); for(let c=0;c<4;c++) for(let r=0;r<4;r++){ let s=0; for(let k=0;k<4;k++) s+=a[k*4+r]*b[c*4+k]; o[c*4+r]=s; } return o; }
+function lookAt(e,t){ const z=norm(sub(e,t)), x=norm(cross([0,1,0],z)), y=cross(z,x); return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,e),-dot(y,e),-dot(z,e),1]); }
+// a perspective with its centre moved to (cx,cy) in clip space: the room the panels leave is where the eye looks, and what is square on stays square on
+function perspective(aspect,near,far,cx,cy,z01){ const t=1/TAN, m=new Float32Array(16); m[0]=t/aspect; m[5]=t; m[8]=-cx; m[9]=-cy; m[11]=-1; if(z01){ m[10]=far/(near-far); m[14]=near*far/(near-far); } else { m[10]=(far+near)/(near-far); m[14]=2*far*near/(near-far); } return m; }
+
+/* The shaders, twice: WGSL for WebGPU, GLSL for the fallback. Same quads, same glow, so the same scene looks the same either way. Everything adds into a floating point target and is tone mapped at the end, which keeps thousands of overlapping lines from burning to white. */
+const WGSL_COMMON=`struct U { vp:mat4x4f, res:vec2f, time:f32, mixT:f32, dim:f32, scale:f32, lineW:f32, minPx:f32 };
+@group(0) @binding(0) var<uniform> u:U;`;
+const WGSL_POINT=WGSL_COMMON+`
+struct PO { @builtin(position) pos:vec4f, @location(0) uv:vec2f, @location(1) c:vec3f, @location(2) s:f32, @location(3) g:f32 };
+@vertex fn vs(@builtin(vertex_index) i:u32, @location(0) p:vec3f, @location(1) size:f32, @location(2) col:vec3f, @location(3) style:f32, @location(4) gains:vec2f)->PO {
+  var q=array<vec2f,4>(vec2f(-1,-1),vec2f(1,-1),vec2f(-1,1),vec2f(1,1)); var o:PO; let clip=u.vp*vec4f(p,1.0); let g=mix(gains.x,gains.y,u.mixT)*u.dim;
+  o.uv=q[i]; o.c=col; o.s=style; o.g=g;
+  if(g<.004||size<=0.0||clip.w<.5){ o.pos=vec4f(2.0,2.0,2.0,1.0); return o; }
+  var least=select(u.minPx,u.minPx*3.0,style>.5); if(style>4.5){ least=u.minPx*1.25; } let r=max(size*u.scale/clip.w*.5,least)*1.6;
+  o.pos=clip+vec4f(q[i]*r*2.0/u.res*clip.w,0.0,0.0); return o; }
+@fragment fn fs(i:PO)->@location(0) vec4f {
+  let d=length(i.uv)*1.6; var a=0.0;
+  if(i.s<.5){ let k=smoothstep(1.0,.15,d); a=(.55+.9*k*k)*k+.16*exp(-d*d*1.3); }
+  else if(i.s<1.5){ a=1.5*smoothstep(1.0,.9,d)+.3*exp(-d*d*1.1); }
+  else if(i.s<2.5){ a=1.3*smoothstep(.12,.05,abs(d-.88))+1.5*smoothstep(.46,.38,d)+.2*exp(-d*d*1.2); }
+  else if(i.s<3.5){ a=1.2*smoothstep(.11,.04,abs(d-.88))+.05*exp(-d*d*1.4); }
+  else if(i.s<4.5){ let t=atan2(i.uv.y,i.uv.x); a=.9*smoothstep(.1,.04,abs(d-.85))*smoothstep(-.2,.2,sin(t*7.0+u.time*.4)); }
+  else { let m=(abs(i.uv.x)+abs(i.uv.y))*1.6; a=1.3*smoothstep(1.0,.82,m)+.12*exp(-d*d*1.2); }
+  return vec4f(i.c*a*i.g,1.0); }`;
+const WGSL_LINE=WGSL_COMMON+`
+struct LO { @builtin(position) pos:vec4f, @location(0) v:f32, @location(1) c:vec3f, @location(2) g:f32 };
+@vertex fn vs(@builtin(vertex_index) i:u32, @location(0) a:vec3f, @location(1) w:f32, @location(2) b:vec3f, @location(3) col:vec3f, @location(4) gains:vec2f)->LO {
+  var q=array<vec2f,4>(vec2f(0,-1),vec2f(1,-1),vec2f(0,1),vec2f(1,1)); var o:LO; o.v=q[i].y; o.c=col; o.g=mix(gains.x,gains.y,u.mixT)*u.dim;
+  var ca=u.vp*vec4f(a,1.0); var cb=u.vp*vec4f(b,1.0); let n=.5;
+  if(o.g<.004||(ca.w<n&&cb.w<n)){ o.pos=vec4f(2.0,2.0,2.0,1.0); return o; }
+  if(ca.w<n){ ca=mix(ca,cb,(n-ca.w)/(cb.w-ca.w)); } if(cb.w<n){ cb=mix(cb,ca,(n-cb.w)/(ca.w-cb.w)); }
+  var d=(cb.xy/cb.w-ca.xy/ca.w)*u.res; let l=length(d); if(l<.001){ d=vec2f(1.0,0.0); } else { d=d/l; }
+  let off=vec2f(-d.y,d.x)*q[i].y*(w*u.lineW+1.0)/u.res*2.0; let c=mix(ca,cb,q[i].x);
+  o.pos=c+vec4f(off*c.w,0.0,0.0); return o; }
+@fragment fn fs(i:LO)->@location(0) vec4f { let a=smoothstep(1.0,.2,abs(i.v)); return vec4f(i.c*a*i.g,1.0); }`;
+const WGSL_PANEL=WGSL_COMMON+`
+struct P { c:vec4f, r:vec4f, up:vec4f };
+@group(1) @binding(0) var<uniform> p:P; @group(1) @binding(1) var smp:sampler; @group(1) @binding(2) var tex:texture_2d<f32>;
+struct AO { @builtin(position) pos:vec4f, @location(0) uv:vec2f };
+@vertex fn vs(@builtin(vertex_index) i:u32)->AO { var q=array<vec2f,4>(vec2f(-1,-1),vec2f(1,-1),vec2f(-1,1),vec2f(1,1)); var o:AO; let w=p.c.xyz+p.r.xyz*q[i].x+p.up.xyz*q[i].y; o.pos=u.vp*vec4f(w,1.0); o.uv=vec2f(q[i].x*.5+.5,.5-q[i].y*.5); return o; }
+@fragment fn fs(i:AO)->@location(0) vec4f { let c=textureSample(tex,smp,i.uv).rgb*p.c.w; return vec4f(-log(vec3f(1.0)-min(c,vec3f(.992)))/${EXPOSURE.toFixed(2)},1.0); }`;
+const WGSL_PRESENT=`@group(0) @binding(0) var hdr:texture_2d<f32>;
+@vertex fn vs(@builtin(vertex_index) i:u32)->@builtin(position) vec4f { var q=array<vec2f,3>(vec2f(-1,-1),vec2f(3,-1),vec2f(-1,3)); return vec4f(q[i],0.0,1.0); }
+@fragment fn fs(@builtin(position) p:vec4f)->@location(0) vec4f { let c=textureLoad(hdr,vec2i(p.xy),0).rgb; let t=vec3f(1.0)-exp(-c*${EXPOSURE.toFixed(2)}); let n=fract(sin(dot(p.xy,vec2f(12.9898,78.233)))*43758.5453)-.5; return vec4f(t+vec3f(n/255.0),1.0); }`;
+
+const GL_POINT_V=`#version 300 es
+precision highp float; uniform mat4 vp; uniform vec2 res; uniform float mixT,dim,scale,minPx;
+layout(location=0) in vec3 p; layout(location=1) in float size; layout(location=2) in vec3 col; layout(location=3) in float style; layout(location=4) in vec2 gains;
+out vec2 uv; out vec3 c; out float s; out float g;
+const vec2 q[4]=vec2[4](vec2(-1,-1),vec2(1,-1),vec2(-1,1),vec2(1,1));
+void main(){ vec4 clip=vp*vec4(p,1.0); g=mix(gains.x,gains.y,mixT)*dim; uv=q[gl_VertexID]; c=col; s=style;
+  if(g<.004||size<=0.0||clip.w<.5){ gl_Position=vec4(2,2,2,1); return; }
+  float least=style>4.5?minPx*1.25:style>.5?minPx*3.0:minPx; float r=max(size*scale/clip.w*.5,least)*1.6; gl_Position=clip+vec4(uv*r*2.0/res*clip.w,0,0); }`;
+const GL_POINT_F=`#version 300 es
+precision highp float; uniform float time; in vec2 uv; in vec3 c; in float s; in float g; out vec4 o;
+void main(){ float d=length(uv)*1.6, a=0.0;
+  if(s<.5){ float k=smoothstep(1.0,.15,d); a=(.55+.9*k*k)*k+.16*exp(-d*d*1.3); }
+  else if(s<1.5){ a=1.5*smoothstep(1.0,.9,d)+.3*exp(-d*d*1.1); }
+  else if(s<2.5){ a=1.3*smoothstep(.12,.05,abs(d-.88))+1.5*smoothstep(.46,.38,d)+.2*exp(-d*d*1.2); }
+  else if(s<3.5){ a=1.2*smoothstep(.11,.04,abs(d-.88))+.05*exp(-d*d*1.4); }
+  else if(s<4.5){ float t=atan(uv.y,uv.x); a=.9*smoothstep(.1,.04,abs(d-.85))*smoothstep(-.2,.2,sin(t*7.0+time*.4)); }
+  else { float m=(abs(uv.x)+abs(uv.y))*1.6; a=1.3*smoothstep(1.0,.82,m)+.12*exp(-d*d*1.2); }
+  o=vec4(c*a*g,1.0); }`;
+const GL_LINE_V=`#version 300 es
+precision highp float; uniform mat4 vp; uniform vec2 res; uniform float mixT,dim,lineW;
+layout(location=0) in vec3 a; layout(location=1) in float w; layout(location=2) in vec3 b; layout(location=3) in vec3 col; layout(location=4) in vec2 gains;
+out float v; out vec3 c; out float g; const vec2 q[4]=vec2[4](vec2(0,-1),vec2(1,-1),vec2(0,1),vec2(1,1));
+void main(){ vec2 k=q[gl_VertexID]; v=k.y; c=col; g=mix(gains.x,gains.y,mixT)*dim; vec4 ca=vp*vec4(a,1.0), cb=vp*vec4(b,1.0); const float n=.5;
+  if(g<.004||(ca.w<n&&cb.w<n)){ gl_Position=vec4(2,2,2,1); return; }
+  if(ca.w<n) ca=mix(ca,cb,(n-ca.w)/(cb.w-ca.w)); if(cb.w<n) cb=mix(cb,ca,(n-cb.w)/(ca.w-cb.w));
+  vec2 d=(cb.xy/cb.w-ca.xy/ca.w)*res; float l=length(d); d=l<.001?vec2(1,0):d/l; vec2 off=vec2(-d.y,d.x)*k.y*(w*lineW+1.0)/res*2.0; vec4 p=mix(ca,cb,k.x); gl_Position=p+vec4(off*p.w,0,0); }`;
+const GL_LINE_F=`#version 300 es
+precision highp float; in float v; in vec3 c; in float g; out vec4 o; void main(){ float a=smoothstep(1.0,.2,abs(v)); o=vec4(c*a*g,1.0); }`;
+const GL_PANEL_V=`#version 300 es
+precision highp float; uniform mat4 vp; uniform vec4 pc,pr,pu; out vec2 uv; const vec2 q[4]=vec2[4](vec2(-1,-1),vec2(1,-1),vec2(-1,1),vec2(1,1));
+void main(){ vec2 k=q[gl_VertexID]; gl_Position=vp*vec4(pc.xyz+pr.xyz*k.x+pu.xyz*k.y,1.0); uv=vec2(k.x*.5+.5,.5-k.y*.5); }`;
+const GL_PANEL_F=`#version 300 es
+precision highp float; uniform sampler2D tex; uniform vec4 pc; in vec2 uv; out vec4 o; void main(){ vec3 c=texture(tex,uv).rgb*pc.w; o=vec4(-log(vec3(1.0)-min(c,vec3(.992)))/${EXPOSURE.toFixed(2)},1.0); }`;
+const GL_PRESENT_V=`#version 300 es
+precision highp float; const vec2 q[3]=vec2[3](vec2(-1,-1),vec2(3,-1),vec2(-1,3)); void main(){ gl_Position=vec4(q[gl_VertexID],0,1); }`;
+const GL_PRESENT_F=`#version 300 es
+precision highp float; uniform sampler2D hdr; out vec4 o; void main(){ vec3 c=texelFetch(hdr,ivec2(gl_FragCoord.xy),0).rgb; vec3 t=vec3(1.0)-exp(-c*${EXPOSURE.toFixed(2)}); float n=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)-.5; o=vec4(t+vec3(n/255.0),1.0); }`;
+const BG_HDR=BG.map((c)=>-Math.log(1-c)/EXPOSURE), RAYS_REST=16, RAYS_VIEW=140;     // every ray at once burns to white where they meet: a reader draws a few at rest, more in the readers' overview, and all only when it is selected
+
+/* The scene interface. WebGpuScene and WebGlScene both hold: init, resize, setNodes, setNodeGains, setEdges, setEdgeGains, setLines, setMarks, addPanel, setPanelImage, dropPanelFull, draw. A point is x y z size r g b style; a line is ax ay az width bx by bz r g b. */
+class WebGpuScene {
+  /* Draws the scene straight with WebGPU and WGSL: instanced quads for the points and lines, panels with depth so the graph passes behind them, all into a float target tone mapped to the screen. */
+  async init(canvas){ if(!navigator.gpu) throw new Error('this browser has no WebGPU');
+    const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'}); if(!adapter) throw new Error('no WebGPU adapter');
+    const dev=this.dev=await adapter.requestDevice(); this.name='WebGPU'; this.z01=true; this.lost=null;
+    dev.lost.then((i)=>{ if(this.onLost) this.onLost(i.message); }); dev.onuncapturederror=(e)=>console.error('WebGPU: '+e.error.message);
+    this.ctx=canvas.getContext('webgpu'); this.fmt=navigator.gpu.getPreferredCanvasFormat(); this.ctx.configure({device:dev,format:this.fmt,alphaMode:'opaque'}); this.canvas=canvas;
+    const gl=this.gLayout=dev.createBindGroupLayout({entries:[{binding:0,visibility:GPUShaderStage.VERTEX|GPUShaderStage.FRAGMENT,buffer:{type:'uniform'}}]});
+    const pl=this.pLayout=dev.createBindGroupLayout({entries:[{binding:0,visibility:GPUShaderStage.VERTEX|GPUShaderStage.FRAGMENT,buffer:{type:'uniform'}},{binding:1,visibility:GPUShaderStage.FRAGMENT,sampler:{type:'filtering'}},{binding:2,visibility:GPUShaderStage.FRAGMENT,texture:{sampleType:'float'}}]});
+    const hl=this.hLayout=dev.createBindGroupLayout({entries:[{binding:0,visibility:GPUShaderStage.FRAGMENT,texture:{sampleType:'unfilterable-float'}}]});
+    this.ub=dev.createBuffer({size:96,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}); this.gBind=dev.createBindGroup({layout:gl,entries:[{binding:0,resource:{buffer:this.ub}}]});
+    const module=async(code)=>{ const m=dev.createShaderModule({code}); const info=await m.getCompilationInfo(); for(const x of info.messages) if(x.type==='error') console.error('WGSL: '+x.message); return m; };
+    const pm=await module(WGSL_POINT), lm=await module(WGSL_LINE), am=await module(WGSL_PANEL), sm=await module(WGSL_PRESENT);
+    const add={color:{srcFactor:'one',dstFactor:'one',operation:'add'},alpha:{srcFactor:'one',dstFactor:'one',operation:'add'}};
+    const gainBuf={arrayStride:8,stepMode:'instance',attributes:[{shaderLocation:4,offset:0,format:'float32x2'}]};
+    const layout=(...b)=>dev.createPipelineLayout({bindGroupLayouts:b});
+    const depthRead={format:'depth24plus',depthWriteEnabled:false,depthCompare:'less'};
+    this.pointPipe=dev.createRenderPipeline({layout:layout(gl),vertex:{module:pm,entryPoint:'vs',buffers:[{arrayStride:32,stepMode:'instance',attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32'},{shaderLocation:2,offset:16,format:'float32x3'},{shaderLocation:3,offset:28,format:'float32'}]},gainBuf]},fragment:{module:pm,entryPoint:'fs',targets:[{format:'rgba16float',blend:add}]},primitive:{topology:'triangle-strip'},depthStencil:depthRead});
+    this.linePipe=dev.createRenderPipeline({layout:layout(gl),vertex:{module:lm,entryPoint:'vs',buffers:[{arrayStride:40,stepMode:'instance',attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32'},{shaderLocation:2,offset:16,format:'float32x3'},{shaderLocation:3,offset:28,format:'float32x3'}]},gainBuf]},fragment:{module:lm,entryPoint:'fs',targets:[{format:'rgba16float',blend:add}]},primitive:{topology:'triangle-strip'},depthStencil:depthRead});
+    this.panelPipe=dev.createRenderPipeline({layout:layout(gl,pl),vertex:{module:am,entryPoint:'vs'},fragment:{module:am,entryPoint:'fs',targets:[{format:'rgba16float'}]},primitive:{topology:'triangle-strip'},depthStencil:{format:'depth24plus',depthWriteEnabled:true,depthCompare:'less'}});
+    this.presentPipe=dev.createRenderPipeline({layout:layout(hl),vertex:{module:sm,entryPoint:'vs'},fragment:{module:sm,entryPoint:'fs',targets:[{format:this.fmt}]},primitive:{topology:'triangle-list'}});
+    this.sampler=dev.createSampler({magFilter:'linear',minFilter:'linear',mipmapFilter:'linear',addressModeU:'clamp-to-edge',addressModeV:'clamp-to-edge',maxAnisotropy:8});
+    this.panels=[]; this.ones=dev.createBuffer({size:8*4096,usage:GPUBufferUsage.VERTEX,mappedAtCreation:true}); new Float32Array(this.ones.getMappedRange()).fill(1); this.ones.unmap();
+    this.counts={nodes:0,edges:0,lines:0,marks:0}; this.w=this.h=0; }
+  buf(data,usage){ const b=this.dev.createBuffer({size:Math.max(16,data.byteLength),usage:usage|GPUBufferUsage.COPY_DST}); this.dev.queue.writeBuffer(b,0,data); return b; }
+  setNodes(inst,n){ this.nodeBuf=this.buf(inst,GPUBufferUsage.VERTEX); this.counts.nodes=n; }
+  setEdges(inst,n){ this.edgeBuf=this.buf(inst,GPUBufferUsage.VERTEX); this.counts.edges=n; }
+  setNodeGains(g){ if(!this.nodeGain) this.nodeGain=this.buf(g,GPUBufferUsage.VERTEX); else this.dev.queue.writeBuffer(this.nodeGain,0,g); }
+  setEdgeGains(g){ if(!this.edgeGain) this.edgeGain=this.buf(g,GPUBufferUsage.VERTEX); else this.dev.queue.writeBuffer(this.edgeGain,0,g); }
+  dynamic(name,inst,n){ const need=n*(name==='lineBuf'?40:32); if(!this[name]||this[name].size<need){ if(this[name]) this[name].destroy(); this[name]=this.dev.createBuffer({size:Math.max(4096,need*2),usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST}); } if(n) this.dev.queue.writeBuffer(this[name],0,inst,0,n*(name==='lineBuf'?10:8)); }
+  setLines(inst,n){ this.dynamic('lineBuf',inst,Math.min(n,4096)); this.counts.lines=Math.min(n,4096); }
+  setMarks(inst,n){ this.dynamic('markBuf',inst,Math.min(n,4096)); this.counts.marks=Math.min(n,4096); }
+  addPanel(c,r,u){ const b=this.dev.createBuffer({size:48,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST}); const d=new Float32Array([c[0],c[1],c[2],1,r[0],r[1],r[2],0,u[0],u[1],u[2],0]); this.dev.queue.writeBuffer(b,0,d); this.panels.push({b,d,bind:null,thumb:null,full:null,c,normal:norm(cross(r,u))}); return this.panels.length-1; }
+  async texture(bitmap){ const levels=4, tex=this.dev.createTexture({size:[bitmap.width,bitmap.height],format:'rgba8unorm',mipLevelCount:levels,usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.RENDER_ATTACHMENT});
+    this.dev.queue.copyExternalImageToTexture({source:bitmap},{texture:tex,mipLevel:0},[bitmap.width,bitmap.height]);
+    for(let l=1;l<levels;l++){ const w=Math.max(1,bitmap.width>>l), h=Math.max(1,bitmap.height>>l), small=await createImageBitmap(bitmap,{resizeWidth:w,resizeHeight:h,resizeQuality:'high'}); this.dev.queue.copyExternalImageToTexture({source:small},{texture:tex,mipLevel:l},[w,h]); small.close(); }
+    return tex; }
+  bindPanel(p){ const t=p.full||p.thumb; p.bind=t?this.dev.createBindGroup({layout:this.pLayout,entries:[{binding:0,resource:{buffer:p.b}},{binding:1,resource:this.sampler},{binding:2,resource:t.createView()}]}):null; }
+  async setPanelImage(i,bitmap,tier){ const p=this.panels[i], tex=await this.texture(bitmap); if(p[tier]) p[tier].destroy(); p[tier]=tex; this.bindPanel(p); }
+  dropPanelFull(i){ const p=this.panels[i]; if(p.full){ const old=p.full; p.full=null; this.bindPanel(p); old.destroy(); } }
+  setPanelBrightness(i,v){ const p=this.panels[i]; if(p.d[3]!==v){ p.d[3]=v; this.dev.queue.writeBuffer(p.b,0,p.d); } }
+  resize(w,h){ if(w===this.w&&h===this.h) return; this.w=w; this.h=h; if(this.hdr){ this.hdr.destroy(); this.depth.destroy(); }
+    this.canvas.width=w; this.canvas.height=h; this.hdr=this.dev.createTexture({size:[w,h],format:'rgba16float',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING}); this.depth=this.dev.createTexture({size:[w,h],format:'depth24plus',usage:GPUTextureUsage.RENDER_ATTACHMENT}); this.hBind=this.dev.createBindGroup({layout:this.hLayout,entries:[{binding:0,resource:this.hdr.createView()}]}); }
+  draw(f){ const dev=this.dev, data=new Float32Array(24); data.set(f.vp,0); data[16]=this.w; data[17]=this.h; data[18]=f.time; data[19]=f.mix; data[20]=f.dim; data[21]=f.scale; data[22]=f.lineW; data[23]=f.minPx; dev.queue.writeBuffer(this.ub,0,data);
+    const enc=dev.createCommandEncoder(), pass=enc.beginRenderPass({colorAttachments:[{view:this.hdr.createView(),clearValue:{r:BG_HDR[0],g:BG_HDR[1],b:BG_HDR[2],a:1},loadOp:'clear',storeOp:'store'}],depthStencilAttachment:{view:this.depth.createView(),depthClearValue:1,depthLoadOp:'clear',depthStoreOp:'discard'}});
+    pass.setPipeline(this.panelPipe); pass.setBindGroup(0,this.gBind); for(const p of this.panels){ if(!p.bind||dot(p.normal,sub(f.eye,p.c))<=0) continue; pass.setBindGroup(1,p.bind); pass.draw(4); }
+    const lines=(buf,gain,n)=>{ if(!n||!buf) return; pass.setVertexBuffer(0,buf); pass.setVertexBuffer(1,gain); pass.draw(4,n); };
+    pass.setPipeline(this.linePipe); pass.setBindGroup(0,this.gBind); lines(this.edgeBuf,this.edgeGain,this.counts.edges); lines(this.lineBuf,this.ones,this.counts.lines);
+    pass.setPipeline(this.pointPipe); pass.setBindGroup(0,this.gBind); lines(this.nodeBuf,this.nodeGain,this.counts.nodes); lines(this.markBuf,this.ones,this.counts.marks); pass.end();
+    const out=enc.beginRenderPass({colorAttachments:[{view:this.ctx.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:1},loadOp:'clear',storeOp:'store'}]}); out.setPipeline(this.presentPipe); out.setBindGroup(0,this.hBind); out.draw(3); out.end(); dev.queue.submit([enc.finish()]); }
+}
+class WebGlScene {
+  /* The same scene for a browser without WebGPU: WebGL 2, the same quads and the same glow, behind the same interface. */
+  async init(canvas){ const gl=this.gl=canvas.getContext('webgl2',{antialias:false,alpha:false,depth:false,powerPreference:'high-performance'}); if(!gl) throw new Error('this browser has no WebGL 2'); this.name='WebGL 2'; this.z01=false; this.canvas=canvas;
+    canvas.addEventListener('webglcontextlost',(e)=>{ e.preventDefault(); if(this.onLost) this.onLost('the WebGL context was lost'); });
+    this.floatOk=!!(gl.getExtension('EXT_color_buffer_float')||gl.getExtension('EXT_color_buffer_half_float')); this.aniso=gl.getExtension('EXT_texture_filter_anisotropic');
+    this.pointProg=this.program(GL_POINT_V,GL_POINT_F); this.lineProg=this.program(GL_LINE_V,GL_LINE_F); this.panelProg=this.program(GL_PANEL_V,GL_PANEL_F); this.presentProg=this.program(GL_PRESENT_V,GL_PRESENT_F);
+    this.panels=[]; this.counts={nodes:0,edges:0,lines:0,marks:0}; this.w=this.h=0; this.empty=gl.createVertexArray();
+    this.onesBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,this.onesBuf); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(8192).fill(1),gl.STATIC_DRAW);
+    this.vaos={}; this.bufs={}; gl.bindVertexArray(null); }
+  program(vs,fs){ const gl=this.gl, one=(type,src)=>{ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error('GLSL: '+gl.getShaderInfoLog(s)); return s; }, p=gl.createProgram(); gl.attachShader(p,one(gl.VERTEX_SHADER,vs)); gl.attachShader(p,one(gl.FRAGMENT_SHADER,fs)); gl.linkProgram(p); if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error('GLSL: '+gl.getProgramInfoLog(p)); const u={}, n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS); for(let i=0;i<n;i++){ const name=gl.getActiveUniform(p,i).name; u[name]=gl.getUniformLocation(p,name); } return {p,u}; }
+  vao(name,stride,attrs,gainBuf){ const gl=this.gl, v=gl.createVertexArray(), b=this.bufs[name]||(this.bufs[name]=gl.createBuffer()); gl.bindVertexArray(v); gl.bindBuffer(gl.ARRAY_BUFFER,b); for(const [loc,size,off] of attrs){ gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,size,gl.FLOAT,false,stride,off); gl.vertexAttribDivisor(loc,1); } gl.bindBuffer(gl.ARRAY_BUFFER,gainBuf); gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4,2,gl.FLOAT,false,8,0); gl.vertexAttribDivisor(4,1); gl.bindVertexArray(null); this.vaos[name]=v; return b; }
+  pointVao(name,gain){ return this.vao(name,32,[[0,3,0],[1,1,12],[2,3,16],[3,1,28]],gain); }
+  lineVao(name,gain){ return this.vao(name,40,[[0,3,0],[1,1,12],[2,3,16],[3,3,28]],gain); }
+  gainBuf(name,g){ const gl=this.gl; if(!this.bufs[name]){ this.bufs[name]=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,this.bufs[name]); gl.bufferData(gl.ARRAY_BUFFER,g,gl.DYNAMIC_DRAW); } else { gl.bindBuffer(gl.ARRAY_BUFFER,this.bufs[name]); gl.bufferSubData(gl.ARRAY_BUFFER,0,g); } return this.bufs[name]; }
+  setNodeGains(g){ const had=!!this.bufs.nodeG, b=this.gainBuf('nodeG',g); if(!had&&this.pendingNodes){ this.fill('node',this.pointVao('node',b),this.pendingNodes); this.pendingNodes=null; } }
+  setEdgeGains(g){ const had=!!this.bufs.edgeG, b=this.gainBuf('edgeG',g); if(!had&&this.pendingEdges){ this.fill('edge',this.lineVao('edge',b),this.pendingEdges); this.pendingEdges=null; } }
+  fill(name,b,data){ const gl=this.gl; gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW); }
+  setNodes(inst,n){ this.pendingNodes=inst; this.counts.nodes=n; if(this.bufs.nodeG){ this.fill('node',this.pointVao('node',this.bufs.nodeG),inst); this.pendingNodes=null; } }
+  setEdges(inst,n){ this.pendingEdges=inst; this.counts.edges=n; if(this.bufs.edgeG){ this.fill('edge',this.lineVao('edge',this.bufs.edgeG),inst); this.pendingEdges=null; } }
+  setLines(inst,n){ const gl=this.gl; n=Math.min(n,4096); if(!this.vaos.line) this.lineVao('line',this.onesBuf); gl.bindBuffer(gl.ARRAY_BUFFER,this.bufs.line); gl.bufferData(gl.ARRAY_BUFFER,inst.subarray(0,n*10),gl.DYNAMIC_DRAW); this.counts.lines=n; }
+  setMarks(inst,n){ const gl=this.gl; n=Math.min(n,4096); if(!this.vaos.mark) this.pointVao('mark',this.onesBuf); gl.bindBuffer(gl.ARRAY_BUFFER,this.bufs.mark); gl.bufferData(gl.ARRAY_BUFFER,inst.subarray(0,n*8),gl.DYNAMIC_DRAW); this.counts.marks=n; }
+  addPanel(c,r,u){ this.panels.push({c,r,u,bright:1,thumb:null,full:null,normal:norm(cross(r,u))}); return this.panels.length-1; }
+  async setPanelImage(i,bitmap,tier){ const gl=this.gl, p=this.panels[i], t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,bitmap); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE); if(this.aniso) gl.texParameterf(gl.TEXTURE_2D,this.aniso.TEXTURE_MAX_ANISOTROPY_EXT,8); if(p[tier]) gl.deleteTexture(p[tier]); p[tier]=t; }
+  dropPanelFull(i){ const p=this.panels[i]; if(p.full){ this.gl.deleteTexture(p.full); p.full=null; } }
+  setPanelBrightness(i,v){ this.panels[i].bright=v; }
+  target(fmt,type){ const gl=this.gl, t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); gl.texImage2D(gl.TEXTURE_2D,0,fmt,this.w,this.h,0,gl.RGBA,type,null); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST); gl.bindFramebuffer(gl.FRAMEBUFFER,this.fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t,0); return t; }
+  resize(w,h){ if(w===this.w&&h===this.h) return; const gl=this.gl; this.w=w; this.h=h; this.canvas.width=w; this.canvas.height=h; if(this.hdr){ gl.deleteTexture(this.hdr); gl.deleteRenderbuffer(this.depth); gl.deleteFramebuffer(this.fbo); }
+    this.fbo=gl.createFramebuffer(); this.depth=gl.createRenderbuffer(); gl.bindRenderbuffer(gl.RENDERBUFFER,this.depth); gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT24,w,h); gl.bindFramebuffer(gl.FRAMEBUFFER,this.fbo); gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,this.depth);
+    this.hdr=this.floatOk?this.target(gl.RGBA16F,gl.HALF_FLOAT):this.target(gl.RGBA8,gl.UNSIGNED_BYTE); if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){ gl.deleteTexture(this.hdr); this.hdr=this.target(gl.RGBA8,gl.UNSIGNED_BYTE); } gl.bindFramebuffer(gl.FRAMEBUFFER,null); }
+  draw(f){ const gl=this.gl; gl.bindFramebuffer(gl.FRAMEBUFFER,this.fbo); gl.viewport(0,0,this.w,this.h); gl.clearColor(BG_HDR[0],BG_HDR[1],BG_HDR[2],1); gl.depthMask(true); gl.clearDepth(1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+    const pp=this.panelProg; gl.useProgram(pp.p); gl.uniformMatrix4fv(pp.u.vp,false,f.vp); gl.bindVertexArray(this.empty); gl.activeTexture(gl.TEXTURE0); gl.uniform1i(pp.u.tex,0);
+    for(const p of this.panels){ const t=p.full||p.thumb; if(!t||dot(p.normal,sub(f.eye,p.c))<=0) continue; gl.bindTexture(gl.TEXTURE_2D,t); gl.uniform4f(pp.u.pc,p.c[0],p.c[1],p.c[2],p.bright); gl.uniform4f(pp.u.pr,p.r[0],p.r[1],p.r[2],0); gl.uniform4f(pp.u.pu,p.u[0],p.u[1],p.u[2],0); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); }
+    gl.depthMask(false); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE);
+    const lp=this.lineProg; gl.useProgram(lp.p); gl.uniformMatrix4fv(lp.u.vp,false,f.vp); gl.uniform2f(lp.u.res,this.w,this.h); gl.uniform1f(lp.u.mixT,f.mix); gl.uniform1f(lp.u.dim,f.dim); gl.uniform1f(lp.u.lineW,f.lineW);
+    const run=(name,n)=>{ if(n&&this.vaos[name]){ gl.bindVertexArray(this.vaos[name]); gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,n); } }; run('edge',this.counts.edges); run('line',this.counts.lines);
+    const np=this.pointProg; gl.useProgram(np.p); gl.uniformMatrix4fv(np.u.vp,false,f.vp); gl.uniform2f(np.u.res,this.w,this.h); gl.uniform1f(np.u.mixT,f.mix); gl.uniform1f(np.u.dim,f.dim); gl.uniform1f(np.u.scale,f.scale); gl.uniform1f(np.u.minPx,f.minPx); gl.uniform1f(np.u.time,f.time); run('node',this.counts.nodes); run('mark',this.counts.marks);
+    gl.bindVertexArray(this.empty); gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,this.w,this.h); gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.useProgram(this.presentProg.p); gl.bindTexture(gl.TEXTURE_2D,this.hdr); gl.uniform1i(this.presentProg.u.hdr,0); gl.drawArrays(gl.TRIANGLES,0,3); }
+}
+class NoScene {
+  /* A browser with neither: the tree and the pages still work, and the page says the graph cannot be drawn. */
+  async init(){ this.name='none'; this.z01=false; this.panels=[]; }
+  resize(){} setNodes(){} setEdges(){} setNodeGains(){} setEdgeGains(){} setLines(){} setMarks(){} addPanel(){ return 0; } async setPanelImage(){} dropPanelFull(){} setPanelBrightness(){} draw(){}
+}
+async function startScene(canvas,forced){ const notes=[];
+  if(forced!=='webgl'){ try { const s=new WebGpuScene(); await s.init(canvas); return {scene:s,canvas,why:'Drawn directly with WebGPU and WGSL.'}; } catch(e){ notes.push(e.message); } }
+  let c=canvas; if(forced!=='webgl'){ c=canvas.cloneNode(); canvas.replaceWith(c); }      // a canvas that has been offered to WebGPU may not accept another context
+  try { const s=new WebGlScene(); await s.init(c); return {scene:s,canvas:c,why:(notes[0]?notes[0][0].toUpperCase()+notes[0].slice(1):'WebGPU was turned off')+', so the same scene is drawn with WebGL 2.'}; } catch(e){ notes.push(e.message); }
+  const s=new NoScene(); await s.init(); return {scene:s,canvas:c,why:'This browser has neither WebGPU nor WebGL 2, so the graph cannot be drawn. The tree and the pages still work.'}; }
+
+class OrbitCamera {
+  /* Where the eye is: a point it looks at, how far back, and two angles. A flight is a move from one such view to another, rising a little when the two are far apart. The panels take up part of the screen, so the camera is told the free room and frames inside it. */
+  constructor(){ this.v={x:0,y:8,z:0,dist:620,theta:.7,phi:1.26}; this.flight=null; this.top=0; this.bottom=0; this.topGoal=0; this.bottomGoal=0; this.wandered=false; this.w=1; this.h=1; this.vp=new Float32Array(16); this.eye=[0,0,0]; }
+  setRoom(w,h,top,bottom){ this.w=w; this.h=h; this.topGoal=top; this.bottomGoal=bottom; if(reduced()||!this.seenRoom){ this.top=top; this.bottom=bottom; this.seenRoom=true; } }
+  freeH(){ return Math.max(60,this.h-this.topGoal-this.bottomGoal); }
+  fitRect(w,h){ const m=.97; return Math.max(w*(this.h/2)/(TAN*this.w*m),h*(this.h/2)/(TAN*this.freeH()*m)); }
+  fitRing(r,phi,tall){ const hor=r*this.h/(TAN*this.w), ver=Math.max((r*Math.cos(phi)+14)*1.3,tall||0)*this.h/(TAN*this.freeH()); return Math.max(hor,ver)*1.08; }
+  fitSphere(r){ return r*this.h/(TAN*Math.min(this.w,this.freeH()))*1.08; }
+  fly(to,instant){ const t=Object.assign({},to); t.phi=Math.max(.08,Math.min(Math.PI-.08,t.phi)); if(instant||reduced()){ Object.assign(this.v,t); this.flight=null; return; }
+    const from=Object.assign({},this.v), D=Math.hypot(t.x-from.x,t.y-from.y,t.z-from.z); t.theta=from.theta+((t.theta-from.theta+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+    const dur=Math.max(800,Math.min(2400,700+420*Math.log(1+D/30+Math.abs(t.dist-from.dist)/120))); this.flight={from,to:t,start:performance.now(),dur,bump:Math.min(D*.32,170)}; }
+  update(now,dt,keys){ if(this.flight){ const f=this.flight, u=Math.min(1,(now-f.start)/f.dur), e=ease(u); for(const k of ['x','y','z','dist','theta','phi']) this.v[k]=f.from[k]+(f.to[k]-f.from[k])*e; this.v.dist+=f.bump*Math.sin(Math.PI*e); if(u>=1) this.flight=null; }
+    const sp=this.v.dist*dt*.7, fx=Math.cos(this.v.theta), fz=Math.sin(this.v.theta); let moved=false; if(keys.w){ this.v.x-=fx*sp; this.v.z-=fz*sp; moved=true; } if(keys.s){ this.v.x+=fx*sp; this.v.z+=fz*sp; moved=true; } if(keys.a){ this.v.x-=fz*sp; this.v.z+=fx*sp; moved=true; } if(keys.d){ this.v.x+=fz*sp; this.v.z-=fx*sp; moved=true; } if(keys.q){ this.v.y-=sp; moved=true; } if(keys.e){ this.v.y+=sp; moved=true; } if(moved) this.free();
+    const blend=Math.min(1,dt*9); this.top+=(this.topGoal-this.top)*blend; this.bottom+=(this.bottomGoal-this.bottom)*blend; }
+  free(){ this.flight=null; this.wandered=true; }
+  matrices(z01){ const v=this.v, s=Math.sin(v.phi); this.eye=[v.x+v.dist*s*Math.cos(v.theta),v.y+v.dist*Math.cos(v.phi),v.z+v.dist*s*Math.sin(v.theta)]; const cy=(this.bottom-this.top)/this.h; const P=perspective(this.w/this.h,1,5000,0,cy,z01), V=lookAt(this.eye,[v.x,v.y,v.z]); this.vp=mul4(P,V); return this.vp; }
+  project(x,y,z){ const m=this.vp, W=m[3]*x+m[7]*y+m[11]*z+m[15]; if(W<=.5) return null; return {x:(m[0]*x+m[4]*y+m[8]*z+m[12])/W*.5*this.w+this.w/2,y:-(m[1]*x+m[5]*y+m[9]*z+m[13])/W*.5*this.h+this.h/2,w:W}; }
+}
+
+class World {
+  /* What stands where: the graph as the data has it, the slides beside what they talk about, the readers outside the rings, the stats under them. It only builds the arrays the scene draws. */
+  constructor(D,scene){ this.D=D; this.scene=scene; const g=this.g=D.graph, N=this.N=g.kind.length, E=this.E=g.edges.length/3; this.nodeInst=new Float32Array(N*8); this.edgeInst=new Float32Array(E*10); const cols=g.colour.map(hex), red=hex(g.survived), inf=hex(g.inferred);
+    for(let i=0;i<N;i++){ const c=g.flag[i]===1?red:g.flag[i]===2?inf:cols[g.kind[i]]; this.nodeInst.set([g.pos[3*i],g.pos[3*i+1],g.pos[3*i+2],g.flag[i]===1?7:g.size[g.kind[i]],c[0],c[1],c[2],0],i*8); }
+    const rc=g.relColour.map(hex); for(let e=0;e<E;e++){ const a=g.edges[3*e],b=g.edges[3*e+1],r=g.edges[3*e+2],w=g.relWeight[r]*.24; this.edgeInst.set([g.pos[3*a],g.pos[3*a+1],g.pos[3*a+2],.6,g.pos[3*b],g.pos[3*b+1],g.pos[3*b+2],rc[r][0]*w,rc[r][1]*w,rc[r][2]*w],e*10); }
+    scene.setNodes(this.nodeInst,N); scene.setEdges(this.edgeInst,E);
+    this.panels=D.panels.map((p)=>{ const right=[Math.sin(p.a)*p.w/2,0,-Math.cos(p.a)*p.w/2], up=[0,p.h/2,0]; const n=[Math.cos(p.a),0,Math.sin(p.a)]; return Object.assign({},p,{right,up,n,index:scene.addPanel(p.c,right,up)}); });
+    this.readers=g.readers.map((r)=>{ const ids=[]; const k=new Set(r.reads); for(let i=0;i<N;i++) if(k.has(g.kind[i])) ids.push(i); ids.sort((a,b)=>((a*2654435761)>>>0)-((b*2654435761)>>>0)); return Object.assign({},r,{ids,colour:hex(D.readerColour[r.state]),style:D.readerGlyph[r.state],R:(r.state==='planned'||r.state==='borrowed')?6:11}); });
+    this.statPos=D.statMarks; this.statColour=D.statColours.map(hex); }
+  P(i){ const p=this.g.pos; return [p[3*i],p[3*i+1],p[3*i+2]]; }
+}
+
+class Focus {
+  /* What is lit: the same graph, with some of it turned up and the rest down. It changes by fading between two sets of brightness, and the scene only sees the arrays. */
+  constructor(world,scene){ this.w=world; this.s=scene; const N=world.N,E=world.E; this.node=new Float32Array(N*2).fill(1); this.edge=new Float32Array(E*2).fill(1); this.mix=1; this.dimFrom=1; this.dimTo=1; this.dim=1; this.start=0; scene.setNodeGains(this.node); scene.setEdgeGains(this.edge); }
+  set(fn,dim,instant){ const m=this.mix, N=this.w.N, E=this.w.E, node=this.node, edge=this.edge, g=this.w.g; const out=fn();
+    for(let i=0;i<N;i++){ node[2*i]=node[2*i]+(node[2*i+1]-node[2*i])*m; node[2*i+1]=out.node(i); }
+    for(let e=0;e<E;e++){ edge[2*e]=edge[2*e]+(edge[2*e+1]-edge[2*e])*m; edge[2*e+1]=out.edge(e,g.edges[3*e],g.edges[3*e+1],g.edges[3*e+2]); }
+    this.s.setNodeGains(node); this.s.setEdgeGains(edge); this.dimFrom=this.dim; this.dimTo=dim; this.start=performance.now(); this.mix=(instant||reduced())?1:0; if(this.mix===1) this.dim=dim; }
+  tick(now){ if(this.mix<1){ this.mix=Math.min(1,(now-this.start)/420); this.dim=this.dimFrom+(this.dimTo-this.dimFrom)*this.mix; } return this.mix; }
+}
+
+class TreeView {
+  /* The left panel: a tree in the ARIA pattern, one tab stop, arrows to move, right and left to open and close, Enter to fly, a filter over all of it. */
+  constructor(root,data,activate){ this.root=root; this.activate=activate; this.byItem=new Map(); this.rows=[]; for(const n of data) root.append(this.node(n,0,true)); this.tabTo(root.querySelector('li')); this.bind(); }
+  node(n,depth,top){ const li=document.createElement('li'); li.setAttribute('role','treeitem'); li.tabIndex=-1; if(top) li.classList.add('top'); const row=document.createElement('div'); row.className='row'; row.style.paddingLeft=(6+depth*14)+'px'; row.dataset.tip=n.tip||n.label; li.dataset.tip=n.tip||n.label;
+    const ch=document.createElement('span'); ch.className='ch'; ch.setAttribute('aria-hidden','true'); if(n.children) ch.textContent='▶'; row.append(ch);
+    if(n.glyph){ const g=document.createElement('span'); g.className='g '+n.glyph; if(n.colour) g.style.setProperty('--c',n.colour); g.setAttribute('aria-hidden','true'); row.append(g); }
+    const l=document.createElement('span'); l.className='l'; l.textContent=n.label; row.append(l); li.setAttribute('aria-label',n.label+(n.after?', '+n.after:''));
+    if(n.after&&(!n.glyph||!n.glyph.startsWith('r-')||true)){ const a=document.createElement('span'); a.className='after'; a.textContent=n.after; row.append(a); }
+    li.append(row); li._label=n.label; li._search=(n.label+' '+(n.tip||'')+' '+(n.after||'')).toLowerCase(); if(n.id){ li.dataset.item=n.id; this.byItem.set(n.id,li); li.setAttribute('aria-selected','false'); }
+    if(n.children){ li.setAttribute('aria-expanded',n.open?'true':'false'); const ul=document.createElement('ul'); ul.setAttribute('role','group'); for(const c of n.children) ul.append(this.node(c,depth+1,false)); li.append(ul); } return li; }
+  visible(){ const out=[]; const walk=(ul)=>{ for(const li of ul.children){ if(li.hidden) continue; out.push(li); if(li.getAttribute('aria-expanded')==='true') walk(li.querySelector(':scope>ul')); } }; walk(this.root); return out; }
+  tabTo(li){ if(this.tab) this.tab.tabIndex=-1; this.tab=li; if(li) li.tabIndex=0; }
+  focus(li){ this.tabTo(li); li.focus({preventScroll:false}); li.querySelector(':scope>.row').scrollIntoView({block:'nearest'}); }
+  expand(li,open){ if(li.hasAttribute('aria-expanded')) li.setAttribute('aria-expanded',open?'true':'false'); }
+  setCurrent(id){ if(this.cur) this.cur.setAttribute('aria-selected','false'); const li=this.byItem.get(id); this.cur=li||null; if(!li) return; li.setAttribute('aria-selected','true'); for(let p=li.parentElement.closest('li');p;p=p.parentElement.closest('li')) this.expand(p,true); this.tabTo(li); if(this.root.offsetParent!==null) li.querySelector(':scope>.row').scrollIntoView({block:'nearest'}); }
+  leaves(li){ const top=li.closest('#treeRoot>li'); return [...top.querySelectorAll('li[data-item]')].filter((x)=>!x.hasAttribute('aria-expanded')); }
+  step(id,by){ const li=this.byItem.get(id); if(!li) return null; const all=this.leaves(li), n=all.indexOf(li); if(n<0) return all.length?all[0].dataset.item:null; const t=all[n+by]; return t?t.dataset.item:null; }
+  bind(){ this.root.addEventListener('click',(e)=>{ const row=e.target.closest('.row'); if(!row) return; const li=row.parentElement; this.tabTo(li); const parent=li.hasAttribute('aria-expanded'); if(parent){ const open=li.getAttribute('aria-expanded')==='true'; if(e.target.closest('.ch')||!li.dataset.item){ this.expand(li,!open); return; } this.expand(li,true); } if(li.dataset.item) this.activate(li.dataset.item); });
+    this.root.addEventListener('keydown',(e)=>{ const li=e.target.closest('li'); if(!li||e.altKey||e.ctrlKey||e.metaKey) return; const list=this.visible(), i=list.indexOf(li), k=e.key; let done=true;
+      if(k==='ArrowDown'){ if(i<list.length-1) this.focus(list[i+1]); } else if(k==='ArrowUp'){ if(i>0) this.focus(list[i-1]); else $('filter').focus(); }
+      else if(k==='ArrowRight'){ if(li.hasAttribute('aria-expanded')){ if(li.getAttribute('aria-expanded')==='false') this.expand(li,true); else if(list[i+1]) this.focus(list[i+1]); } }
+      else if(k==='ArrowLeft'){ if(li.getAttribute('aria-expanded')==='true') this.expand(li,false); else { const p=li.parentElement.closest('li'); if(p) this.focus(p); } }
+      else if(k==='Home') this.focus(list[0]); else if(k==='End') this.focus(list[list.length-1]);
+      else if(k==='Enter'||k===' '){ if(li.dataset.item) this.activate(li.dataset.item); else this.expand(li,li.getAttribute('aria-expanded')!=='true'); }
+      else if(k==='*'){ for(const x of li.parentElement.children) this.expand(x,true); }
+      else if(k.length===1&&/\S/.test(k)){ const c=k.toLowerCase(), order=list.slice(i+1).concat(list.slice(0,i+1)), hit=order.find((x)=>x._label.toLowerCase().startsWith(c)); if(hit) this.focus(hit); else done=false; } else done=false;
+      if(done){ e.preventDefault(); e.stopPropagation(); } }); }
+  filter(text){ const q=text.trim().toLowerCase(), words=q.split(/\s+/).filter(Boolean); const rows=[...this.root.querySelectorAll('li')]; if(!words.length){ for(const li of rows){ li.hidden=false; if(li._wasOpen!==undefined){ li.setAttribute('aria-expanded',li._wasOpen); li._wasOpen=undefined; } } if(this.cur) this.setCurrent(this.cur.dataset.item); $('found').textContent=''; return 0; }
+    let hits=0; const walk=(li)=>{ const kids=li.querySelector(':scope>ul'); let any=false; if(kids) for(const c of kids.children) if(walk(c)) any=true; const mine=words.every((w)=>li._search.includes(w)); const isLeaf=!kids; if(mine&&isLeaf) hits++; const show=any||(mine&&isLeaf)||(mine&&any); li.hidden=!show; if(kids){ if(li._wasOpen===undefined) li._wasOpen=li.getAttribute('aria-expanded'); li.setAttribute('aria-expanded',any?'true':'false'); } return show; }; for(const li of this.root.children) walk(li);
+    $('found').textContent=hits?hits+(hits===1?' match':' matches'):'Nothing matches'; const first=this.visible().find((x)=>!x.hasAttribute('aria-expanded')); if(first) this.tabTo(first); return hits; }
+}
+
+class PagePanel {
+  /* The bottom panel: the readable page for the selected item. Selecting an item opens it, selecting that item again or clicking the bar closes it, and flying freely leaves it alone. */
+  constructor(app){ this.app=app; this.el=$('page'); this.body=$('pageBody'); this.inner=$('pageIn'); this.name=$('pageName'); this.isOpen=false; this.id=null; const h=$('pageHandle'); h.onclick=()=>{ if(this.dragged){ this.dragged=false; return; } if(!this.id) return; this.toggle(); };
+    h.addEventListener('keydown',(e)=>{ if(e.key==='ArrowUp'||e.key==='ArrowDown'){ e.preventDefault(); this.setHeight(this.el.getBoundingClientRect().height+(e.key==='ArrowUp'?48:-48)); } });
+    const grip=$('grip'); grip.addEventListener('pointerdown',(e)=>{ this.dragging=true; grip.setPointerCapture(e.pointerId); this.el.style.transition='none'; }); grip.addEventListener('pointermove',(e)=>{ if(this.dragging){ this.setHeight(innerHeight-e.clientY); } }); const up=()=>{ this.dragging=false; this.el.style.transition=''; }; grip.addEventListener('pointerup',up); grip.addEventListener('pointercancel',up);
+    this.inner.addEventListener('click',(e)=>{ const a=e.target.closest('a[href^="#"]'); if(!a) return; e.preventDefault(); this.app.select(a.getAttribute('href').slice(1),{user:true,link:true}); }); }
+  setHeight(px){ const h=Math.max(120,Math.min(innerHeight*.85,px)); this.el.style.setProperty('--pageH',h+'px'); if(!this.isOpen&&this.id) this.open(); this.app.roomChanged(); }
+  open(){ this.isOpen=true; this.el.classList.add('open'); $('pageHandle').setAttribute('aria-expanded','true'); this.app.roomChanged(); }
+  close(){ this.isOpen=false; this.el.classList.remove('open'); $('pageHandle').setAttribute('aria-expanded','false'); this.app.roomChanged(); }
+  toggle(){ if(this.isOpen) this.close(); else this.open(); }
+  show(id,item){ this.id=id; this.name.textContent=item.title; const p=this.app.D.pages[id], sections=this.app.D.sections, parts=[p.head]; for(const s of p.secs) parts.push('<div class="mpage">'+sections[s]+'</div>'); parts.push(p.foot); this.inner.innerHTML=parts.join(''); this.body.scrollTop=0; }
+}
+
+class TipLayer {
+  /* One tooltip for everything: on pointing, on keyboard focus, and on a long press for touch. Escape dismisses it, and the same text is on the help page and on each item's page. */
+  constructor(){ this.el=$('tip'); this.timer=0; this.owner=null; const on=(e,delay)=>{ const t=e.target.closest&&e.target.closest('[data-tip]'); if(!t||e.target.tagName==='CANVAS') return; this.schedule(t,delay); };
+    document.addEventListener('pointerover',(e)=>{ if(e.pointerType==='touch') return; on(e,380); }); document.addEventListener('pointerout',(e)=>{ if(e.pointerType!=='touch'&&e.target.closest&&e.target.closest('[data-tip]')&&!e.target.closest('[data-tip]').contains(e.relatedTarget)) this.hide(); });
+    document.addEventListener('focusin',(e)=>{ if(e.target.matches&&e.target.matches(':focus-visible')){ const t=e.target.closest('[data-tip]'); if(t) this.schedule(t,0); } }); document.addEventListener('focusout',()=>this.hide()); document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') this.hide(); });
+    let press=0; document.addEventListener('touchstart',(e)=>{ const t=e.target.closest&&e.target.closest('[data-tip]'); if(!t||t.tagName==='CANVAS') return; clearTimeout(press); press=setTimeout(()=>{ this.show(t); setTimeout(()=>this.hide(),3500); },480); },{passive:true}); for(const n of ['touchend','touchmove','touchcancel']) document.addEventListener(n,()=>clearTimeout(press),{passive:true}); }
+  schedule(t,delay){ clearTimeout(this.timer); if(delay) this.timer=setTimeout(()=>this.show(t),delay); else this.show(t); }
+  show(t){ const text=t.dataset.tip; if(!text) return; if(this.owner) this.owner.removeAttribute('aria-describedby'); this.owner=t; t.setAttribute('aria-describedby','tip'); this.el.textContent=text; this.el.hidden=false; const r=(t.matches('li')?t.querySelector(':scope>.row'):t).getBoundingClientRect(), b=this.el.getBoundingClientRect(); const inTree=t.closest('#treeRoot'); let x=inTree?r.right+8:r.left, y=inTree?r.top:r.bottom+6; if(x+b.width>innerWidth-6) x=Math.max(6,innerWidth-b.width-6); if(y+b.height>innerHeight-6) y=Math.max(6,r.top-b.height-6); this.place(x,y); }
+  place(x,y){ this.el.style.transform='translate('+Math.round(x)+'px,'+Math.round(y)+'px)'; }
+  at(x,y,text){ this.el.textContent=text; this.el.hidden=false; const b=this.el.getBoundingClientRect(); this.place(Math.min(x+14,innerWidth-b.width-6),Math.max(6,y-b.height-10)); }
+  hide(){ clearTimeout(this.timer); this.el.hidden=true; if(this.owner){ this.owner.removeAttribute('aria-describedby'); this.owner=null; } }
+}
+
+class App {
+  /* Selecting an item, and everything that follows from it: where the camera goes, what is lit, what the tree highlights, what the page shows, and the address. */
+  constructor(D,started){ this.D=D; this.scene=started.scene; this.canvas=started.canvas; this.cam=new OrbitCamera(); this.world=new World(D,this.scene); this.focusLit=new Focus(this.world,this.scene); this.tip=new TipLayer(); this.page=new PagePanel(this); this.tree=new TreeView($('treeRoot'),D.tree,(id)=>this.select(id,{user:true,fromTree:true})); this.cur=null; this.keys={}; this.playing=false; this.thread=[]; this.ptr=null; this.ptrDirty=false; this.fullLoaded=[]; this.lastFrame=performance.now(); this.lastDraw=0; this.startTime=performance.now(); this.rays=[]; this.fps={n:0,t:performance.now(),v:0}; this.lines=new Float32Array(10*4096); this.marks=new Float32Array(8*4096); this.markBase=0; this.settleWaiters=[];
+    this.renderNotice(started); this.loadThumbs(); this.buildLabels(); this.bindView(); this.bindControls(); this.resize(); new ResizeObserver(()=>this.resize()).observe($('view')); new ResizeObserver(()=>this.roomChanged()).observe(this.page.el);
+    addEventListener('popstate',()=>this.fromAddress(false)); addEventListener('hashchange',()=>this.fromAddress(false)); this.scene.onLost=(why)=>this.lost(why);
+    this.rebuildMarks(); this.rebuildLines(); this.fromAddress(true); requestAnimationFrame((t)=>this.frame(t)); }
+  renderNotice(s){ const g=$('gl'); g.textContent=s.scene.name==='none'?'No 3D':s.scene.name; g.dataset.tip=s.why; g.classList.toggle('off',s.scene.name!=='WebGPU'); g.setAttribute('aria-label','Renderer: '+s.why); }
+  lost(why){ console.error('The renderer stopped: '+why); $('fail').hidden=false; $('fail').textContent='The graphics stopped working ('+why+'). The tree and the pages still work. Reload to draw the graph again.'; this.scene=new NoScene(); $('gl').textContent='No 3D'; $('gl').classList.add('off'); }
+  async image(url){ const r=await fetch(url); if(!r.ok) throw new Error(url+' answered '+r.status); return createImageBitmap(await r.blob()); }
+  loadThumbs(){ this.world.panels.forEach((p)=>{ this.image('slides/'+p.name+'.thumb.webp?v='+this.D.version).then((b)=>this.scene.setPanelImage(p.index,b,'thumb').then(()=>b.close())).catch((e)=>console.error('A slide picture did not load: '+e.message)); }); }
+  loadFull(p){ if(this.fullLoaded.includes(p.index)) return; this.fullLoaded.push(p.index); while(this.fullLoaded.length>3){ this.scene.dropPanelFull(this.fullLoaded.shift()); } this.image('slides/'+p.name+'.webp?v='+this.D.version).then((b)=>this.scene.setPanelImage(p.index,b,'full').then(()=>b.close())).catch((e)=>console.error('A slide picture did not load: '+e.message)); }
+  /* ---- layer names floating beside their rings */
+  buildLabels(){ this.labels=[]; const box=$('labels'), add=(text,colour,y,r)=>{ const d=document.createElement('div'); d.className='lab'; d.style.setProperty('--c',colour); d.textContent=text; box.append(d); this.labels.push({d,y,r}); }; for(const l of this.D.layers) add(l.title,l.colour,l.y,l.r); add('Readers','#FFD27A',this.D.readersAt.y,this.D.readersAt.r); add('Stats','#A9B7C4',this.D.statsAt.y,this.D.statsAt.r); }
+  /* ---- what each kind of item looks like from the camera */
+  faceOn(p){ return {x:p.c[0],y:p.c[1],z:p.c[2],theta:p.a,phi:Math.PI/2,dist:this.cam.fitRect(p.w,p.h)}; }
+  home(theta){ const c=this.cam; return {x:0,y:-2,z:0,dist:c.fitRing(c.w<c.h?226:258,1.26,172),theta:theta===undefined?.7:theta,phi:1.26}; }
+  viewFor(it){ const W=this.world, c=this.cam, D=this.D; switch(it.kind){
+    case 'slide': return this.faceOn(W.panels[it.panel]);
+    case 'layer': { const l=D.layers[it.layer], phi=.98; return {x:0,y:l.y,z:0,dist:Math.max(c.fitRing(l.r,phi),60),theta:.7+it.layer*.5,phi}; }
+    case 'goal': { const r=W.readers[it.reader], a=Math.atan2(r.pos[2],r.pos[0]); return {x:r.pos[0]*.45,y:r.pos[1]*.45,z:r.pos[2]*.45,dist:c.fitRing(205,1.24,118),theta:a+.5,phi:1.24}; }
+    case 'goals': return {x:0,y:12,z:0,dist:c.fitRing(240,1.2),theta:.3,phi:1.2};
+    case 'stat': { const p=W.statPos[it.mark], g=D.statGroups.find((x)=>x.id===it.group); return {x:p[0],y:p[1],z:p[2],dist:Math.max(c.fitSphere(g.r*.62),22),theta:g.a,phi:Math.PI/2}; }
+    case 'statgroup': { const g=D.statGroups.find((x)=>x.id===it.group); return {x:g.c[0],y:g.c[1],z:g.c[2],dist:Math.max(c.fitSphere(g.r*1.15),30),theta:g.a,phi:Math.PI/2}; }
+    case 'stats': { const phi=1.05, a=D.statsAt; return {x:0,y:a.y,z:0,dist:c.fitRing(a.r+24,phi),theta:.2,phi}; }
+    case 'stop': { const s=D.graph.stops[it.stop]; if(s.goal!==undefined) return this.viewFor({kind:'goal',reader:s.goal}); if(s.node===null||s.node===undefined) return s.view?this.viewFor({kind:'goals'}):this.home(); const p=W.P(s.node), a=Math.atan2(p[2],p[0]); return {x:p[0],y:p[1],z:p[2],dist:105,theta:a+.35,phi:1.22}; }
+    case 'view': { const n=D.graph.views.findIndex((v)=>v.id===it.view); return this.home(.7+n*.9); }
+    case 'manual': case 'concept': { if(it.to){ const t=D.items[it.to]; if(t) return this.viewFor(t); } return this.home(it.orbit===undefined?.7:it.orbit); }
+    default: return this.home(); } }
+  /* ---- what is lit for each kind of item */
+  lightsFor(it){ const g=this.world.g, on1=()=>({node:()=>1,edge:()=>1}); switch(it.kind){
+    case 'slide': return {fn:on1,dim:.14};
+    case 'layer': { const k=new Set(this.D.layers[it.layer].kinds); return {dim:1,fn:()=>({node:(i)=>k.has(g.kind[i])?1.35:.1,edge:(e,a,b)=>(k.has(g.kind[a])||k.has(g.kind[b]))?1.5:.05})}; }
+    case 'goal': { const r=this.world.readers[it.reader], src=r.uses!==null?this.world.readers[r.uses]:r, k=new Set(src.reads), pred=src.predicts; return {dim:1,fn:()=>({node:(i)=>k.has(g.kind[i])?.9:.15,edge:(e,a,b,rel)=>rel===pred?2.6:.05})}; }
+    case 'goals': return {dim:1,fn:()=>({node:()=>.55,edge:()=>.28})};
+    case 'stat': case 'statgroup': case 'stats': return {dim:1,fn:()=>({node:()=>.3,edge:()=>.1})};
+    case 'stop': return {dim:1,fn:()=>({node:()=>.75,edge:()=>.45})};
+    case 'view': { const v=g.views.find((x)=>x.id===it.view), kr=v.rels&&new Set(v.rels), kk=v.kinds&&new Set(v.kinds), gain=(v.gain||(kr?1.8:1)); return {dim:1,fn:()=>({node:(i)=>(!kk||kk.has(g.kind[i]))?1:0,edge:(e,a,b,r)=>(!kr||kr.has(r))&&(!kk||(kk.has(g.kind[a])&&kk.has(g.kind[b])))?gain:0})}; }
+    case 'manual': case 'concept': { const t=it.to&&this.D.items[it.to]; return t?this.lightsFor(t):{fn:on1,dim:1}; }
+    default: return {fn:on1,dim:1}; } }
+  /* ---- selecting */
+  select(id,o={}){ const D=this.D, it=D.items[id]; if(!it){ $('hereS').textContent='Nothing here has the address '+id+'.'; $('sr').textContent='No such item'; return; }
+    const same=this.cur===id;
+    if(o.user&&!o.link&&same&&this.page.isOpen&&!this.cam.wandered){ this.page.close(); if(o.fromTree&&innerWidth<=760) this.closeDrawer(); return; }
+    if(o.user) this.setPlaying(false);
+    this.cur=id; document.body.classList.add('chosen'); this.tree.setCurrent(id); this.setHere(it); this.page.show(id,it); if(!o.keepPage&&(o.user||o.open)) this.page.open(); else this.roomChanged();
+    clearTimeout(this.refit); this.cam.wandered=false; this.cam.fly(this.viewFor(it),o.instant);
+    const lit=this.lightsFor(it); this.focusLit.set(lit.fn,lit.dim,o.instant);
+    this.rebuildLines(); this.rebuildMarks(); this.world.panels.forEach((p)=>this.scene.setPanelBrightness(p.index,1));
+    const target=it.kind==='slide'?it:(it.to&&D.items[it.to]&&D.items[it.to].kind==='slide'?D.items[it.to]:null); if(target) this.loadFull(this.world.panels[target.panel]);
+    if(!o.fromAddress){ const url='#'+id; if(o.user) history.pushState(null,'',url); else history.replaceState(null,'',url); } $('sr').textContent=it.title; if(o.fromTree&&innerWidth<=760) this.closeDrawer(); this.syncTour(id); }
+  setHere(it){ $('hereT').textContent=it.title; $('hereS').textContent=it.tip||''; }
+  roomChanged(){ const h=$('hud').getBoundingClientRect().height, v=$('view').getBoundingClientRect(), target=this.page.isOpen?this.openHeight():46, top=Math.min(h,v.height*.3), c=this.cam; if(Math.abs(c.w-v.width)<1&&Math.abs(c.h-v.height)<1&&Math.abs(c.topGoal-top)<1&&Math.abs(c.bottomGoal-target)<1) return; c.setRoom(v.width,v.height,top,target); clearTimeout(this.refit); if(this.cur&&!c.wandered) this.refit=setTimeout(()=>{ if(!c.wandered&&this.cur) c.fly(this.viewFor(this.D.items[this.cur]),reduced()); },30); else if(!this.cur&&!c.wandered) c.v.dist=this.home().dist; }
+  openHeight(){ const cs=getComputedStyle(this.page.el).getPropertyValue('--pageH'); if(cs&&cs.trim()) return parseFloat(cs); const v=$('view').getBoundingClientRect(); return innerWidth<=760?v.height*.52:innerHeight*.38; }
+  fromAddress(first){ const id=decodeURIComponent(location.hash.slice(1)); if(!id){ const lit=this.lightsFor({kind:'home'}); this.cam.wandered=false; this.cam.fly(this.home(),first); this.cur=null; this.tree.setCurrent(null); document.body.classList.remove('chosen'); if(!first){ this.page.close(); this.setHere({title:D_TITLE,tip:'Pick anything on the left, or start the tour.'}); } this.focusLit.set(lit.fn,lit.dim,first); this.thread=[]; this.rebuildLines(); this.rebuildMarks(); return; } if(id===this.cur) return; if(this.D.items[id]) this.select(id,{fromAddress:true,instant:first,open:true}); else { this.cam.fly(this.home(),true); $('hereS').textContent='Nothing here has the address '+id+'. Pick anything on the left.'; } }
+  /* ---- the tour */
+  setPlaying(v){ this.playing=v; $('tourPlay').setAttribute('aria-pressed',v?'true':'false'); $('tourPlay').textContent=v?'Stop tour':'Tour'; this.lastAdvance=performance.now(); }
+  stopIndex(){ const it=this.cur&&this.D.items[this.cur]; return it&&it.kind==='stop'?it.stop:-1; }
+  goStop(n){ const count=this.D.graph.stops.length; const k=(n+count)%count; this.select('stop-'+(k+1),{keepPage:true}); }
+  syncTour(id){ const n=this.stopIndex(); this.thread=[]; if(n>=0) for(let k=0;k<=n;k++){ const p=this.D.graph.stops[k].path||[]; for(let j=0;j+1<p.length;j+=2) this.thread.push([p[j],p[j+1]]); } this.rebuildLines(); this.rebuildMarks(); }
+  /* ---- the lines that are not the graph: slide frames, the rays of the readers, the links of a stat, the tour's thread */
+  rebuildLines(){ const W=this.world, D=this.D, L=this.lines, it=this.cur?D.items[this.cur]:null; let n=0; const line=(a,b,c,g,w)=>{ if(n>=4096) return; L.set([a[0],a[1],a[2],w,b[0],b[1],b[2],c[0]*g,c[1]*g,c[2]*g],n*10); n++; };
+    const panelOf=it&&(it.kind==='slide'?it.panel:(it.to&&D.items[it.to]&&D.items[it.to].kind==='slide'?D.items[it.to].panel:-1));
+    W.panels.forEach((p,i)=>{ const on=i===panelOf, g=on?.9:.2, c=on?[.94,.54,.24]:[.5,.7,.9]; const cor=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>[p.c[0]+p.right[0]*x+p.up[0]*y,p.c[1]+p.right[1]*x+p.up[1]*y,p.c[2]+p.right[2]*x+p.up[2]*y]); for(let k=0;k<4;k++) line(cor[k],cor[(k+1)%4],c,g,on?1:.6); const foot=[p.ring*Math.cos(p.a)*.94,p.c[1],p.ring*Math.sin(p.a)*.94]; if(!on) line(p.c,foot,c,.12,.5); });
+    const reader=(it&&it.kind==='goal')?it.reader:(it&&it.kind==='stop'&&D.graph.stops[it.stop].goal!==undefined)?D.graph.stops[it.stop].goal:-1, stat=it&&it.kind==='stat'?it.mark:-1, group=it&&(it.kind==='statgroup'||it.kind==='stat')?it.group:null;
+    const all=it&&(it.kind==='goals'||(it.kind==='view'&&it.view==='readers')||(it.kind==='stop'&&D.graph.stops[it.stop].view));
+    W.readers.forEach((r,i)=>{ const chosen=i===reader; let count=chosen?r.ids.length:all?Math.min(r.ids.length,RAYS_VIEW):(reader<0&&stat<0&&!group)?Math.min(r.ids.length,RAYS_REST):0; const gain=chosen?.1*Math.sqrt(562/Math.max(562,r.ids.length)):all?.08:.1; for(let k=0;k<count;k++) line(r.pos,W.P(r.ids[k]),r.colour,gain,.5); if(r.uses!==null&&(chosen||all||reader<0)) line(r.pos,W.readers[r.uses].pos,r.colour,chosen?.7:.2,.8); });
+    if(stat>=0||group){ const rows=group&&it.kind==='statgroup'?D.statGroups.find((x)=>x.id===group).rows:[stat]; for(const i of rows){ const row=D.graph.statRows[i]; if(!row) continue; for(const g of row.goals) line(W.statPos[i],W.readers[g].pos,[1,.82,.48],stat>=0?.75:.22,stat>=0?1:.5); } }
+    if(it&&it.kind==='layer'){ const l=D.layers[it.layer]; for(let k=0;k<72;k++){ const a=k/72*2*Math.PI,b=(k+1)/72*2*Math.PI; line([l.r*Math.cos(a),l.y,l.r*Math.sin(a)],[l.r*Math.cos(b),l.y,l.r*Math.sin(b)],hex(l.colour),.6,.8); } }
+    for(const [a,b] of this.thread){ line(W.P(a),W.P(b),[1,.85,.66],1.3,1.6); }
+    this.scene.setLines(L,n); }
+  rebuildMarks(){ const W=this.world, D=this.D, M=this.marks, it=this.cur?D.items[this.cur]:null; let n=0; const mark=(p,size,c,g,style)=>{ M.set([p[0],p[1],p[2],size,c[0]*g,c[1]*g,c[2]*g,style],n*8); n++; };
+    const reader=it&&it.kind==='goal'?it.reader:-1, stat=it&&it.kind==='stat'?it.mark:-1, group=it&&(it.kind==='statgroup'||it.kind==='stat')?it.group:null, rows=group?D.statGroups.find((x)=>x.id===group).rows:null, statsOn=it&&(it.kind==='stats');
+    const linked=stat>=0?new Set(D.graph.statRows[stat].goals):null;
+    W.readers.forEach((r,i)=>{ const on=i===reader||(linked&&linked.has(i)); mark(r.pos,2*r.R,r.colour,on?1.5:1,r.style); });
+    W.statPos.forEach((p,i)=>{ const on=i===stat, inGroup=rows&&rows.includes(i); mark(p,on?4.6:inGroup?2.8:2.2,W.statColour[i],on?2.2:inGroup||statsOn?1.1:.55,5); });
+    if(it&&it.kind==='stop'){ const s=D.graph.stops[it.stop]; if(s.node!==null&&s.node!==undefined) mark(W.P(s.node),7,[1,.9,.75],1.5,0); for(const [a,b] of this.thread){ mark(W.P(a),4,[1,.85,.66],1.4,0); mark(W.P(b),4,[1,.85,.66],1.4,0); } }
+    this.markBase=n; this.pulses=[]; if(this.thread.length) for(const [a,b] of this.thread.slice(0,48)) this.pulses.push([W.P(a),W.P(b),[1,.95,.85]]); if(reader>=0&&W.readers[reader].state!=='trying'&&W.readers[reader].state!=='planned'){ const r=W.readers[reader]; for(let k=0;k<Math.min(24,r.ids.length);k++) this.pulses.push([r.pos,W.P(r.ids[k]),r.colour]); }
+    this.scene.setMarks(M,n); }
+  tickPulses(now){ if(!this.pulses||!this.pulses.length) return; let n=this.markBase; const M=this.marks; const phase=reduced()?.5:(now/1400)%1; for(let i=0;i<this.pulses.length;i++){ const [a,b,c]=this.pulses[i], t=(phase+i*.137)%1; M.set([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t,3.2,c[0]*1.5,c[1]*1.5,c[2]*1.5,0],n*8); n++; } this.scene.setMarks(M,n); }
+  /* ---- the eye: drag, zoom, keys, and what is under the pointer */
+  bindView(){ const cv=this.canvas, cam=this.cam; let drag=null; const touches=new Map(); let pinch=0;
+    cv.addEventListener('pointerdown',(e)=>{ cv.setPointerCapture(e.pointerId); touches.set(e.pointerId,[e.clientX,e.clientY]); drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false}; if(touches.size===2){ const p=[...touches.values()]; pinch=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]); } cv.style.cursor='grabbing'; this.tip.hide(); });
+    cv.addEventListener('pointermove',(e)=>{ if(drag){ if(touches.has(e.pointerId)) touches.set(e.pointerId,[e.clientX,e.clientY]); if(touches.size===2){ const p=[...touches.values()], d=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]); if(pinch>0){ cam.free(); this.setPlaying(false); cam.v.dist=Math.max(8,Math.min(1800,cam.v.dist*pinch/Math.max(1,d))); } pinch=d; drag.moved=true; return; } const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<5) return; if(!drag.moved){ drag.moved=true; cam.free(); this.setPlaying(false); } cam.v.theta+=dx*.005; cam.v.phi=Math.max(.08,Math.min(Math.PI-.08,cam.v.phi-dy*.005)); drag.x=e.clientX; drag.y=e.clientY; } else { this.ptr={x:e.clientX,y:e.clientY}; this.ptrDirty=true; } });
+    const up=(e)=>{ touches.delete(e.pointerId); if(!touches.size){ const tapped=drag&&!drag.moved; const type=e.pointerType; drag=null; cv.style.cursor='grab'; if(tapped&&e.type==='pointerup') this.tap(e.clientX,e.clientY,type); } }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); cv.addEventListener('pointerleave',(e)=>{ this.ptr=null; if(e.pointerType!=='touch') this.tip.hide(); });
+    cv.addEventListener('wheel',(e)=>{ e.preventDefault(); cam.free(); this.setPlaying(false); cam.v.dist=Math.max(8,Math.min(1800,cam.v.dist*Math.exp(e.deltaY*.001))); },{passive:false});
+    cv.addEventListener('focus',()=>{ if(cv.matches(':focus-visible')){ this.nearestToCentre=true; } }); cv.addEventListener('blur',()=>this.tip.hide());
+    const typing=(e)=>e.target.closest&&e.target.closest('input,textarea,select,[contenteditable]');
+    addEventListener('keydown',(e)=>{ if(e.key==='Escape'&&document.body.classList.contains('treeOpen')){ this.closeDrawer(); $('menu').focus(); return; } if(e.ctrlKey||e.metaKey||e.altKey||typing(e)) return; const k=e.key.toLowerCase(); if(e.key==='?'){ e.preventDefault(); this.select('help',{user:true}); return; } if(e.target.closest&&e.target.closest('#treeRoot')) return; if('wasdqe'.includes(k)&&k.length===1){ this.keys[k]=true; this.setPlaying(false); } else if(k==='n'||k==='p'){ this.stepItem(k==='n'?1:-1); } else if(k==='escape'){ this.closeDrawer(); this.setPlaying(false); } });
+    addEventListener('keyup',(e)=>{ this.keys[e.key.toLowerCase()]=false; }); addEventListener('blur',()=>{ this.keys={}; }); }
+  stepItem(by){ if(!this.cur){ this.select('stop-1',{user:true}); return; } const n=this.tree.step(this.cur,by); if(n) this.select(n,{user:true,keep:true}); }
+  pick(x,y){ const box=this.canvas.getBoundingClientRect(), ex=x-box.left, ey=y-box.top, cam=this.cam, W=this.world; let best=null,bd=26*26;
+    W.readers.forEach((r,i)=>{ const s=cam.project(r.pos[0],r.pos[1],r.pos[2]); if(!s) return; const d=(s.x-ex)**2+(s.y-ey)**2, lim=Math.max(14,r.R*(cam.h*.9)/s.w*.5)**2; if(d<lim&&d<bd){ bd=d; best={type:'reader',i}; } }); if(best) return best;
+    bd=14*14; W.statPos.forEach((p,i)=>{ const s=cam.project(p[0],p[1],p[2]); if(!s) return; const d=(s.x-ex)**2+(s.y-ey)**2; if(d<bd){ bd=d; best={type:'stat',i}; } }); if(best) return best;
+    let near=Infinity; W.panels.forEach((p,i)=>{ if(dot(p.n,sub(cam.eye,p.c))<=0) return; const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>cam.project(p.c[0]+p.right[0]*a+p.up[0]*b,p.c[1]+p.up[1]*b,p.c[2]+p.right[2]*a+p.up[2]*b)); if(c.some((s)=>!s)) return; let inside=true; for(let k=0;k<4;k++){ const q=c[k],r=c[(k+1)%4]; if((r.x-q.x)*(ey-q.y)-(r.y-q.y)*(ex-q.x)>0) inside=false; } const dist=Math.hypot(...sub(cam.eye,p.c)); if(inside&&dist<near){ near=dist; best={type:'panel',i}; } }); if(best) return best;
+    bd=18*18; const g=W.g, gain=this.focusLit.node; for(let i=0;i<W.N;i++){ if(gain[2*i+1]<.05) continue; const s=cam.project(g.pos[3*i],g.pos[3*i+1],g.pos[3*i+2]); if(!s) continue; const d=(s.x-ex)**2+(s.y-ey)**2; if(d<bd){ bd=d; best={type:'node',i}; } } return best; }
+  nodeWords(i){ const g=this.world.g, kind=g.kinds[g.kind[i]], role=g.flag[i]===1?'a break no test caught':g.flag[i]===2?'a requirement the walk inferred':(g.roles&&g.roles[kind])||('a '+kind); return role[0].toUpperCase()+role.slice(1)+'. Its kind: '+kind+'.'; }
+  tipOf(hit){ const D=this.D; if(hit.type==='node') return this.nodeWords(hit.i); if(hit.type==='reader'){ const id=this.itemOf('reader',hit.i); return id?D.items[id].title+': '+D.items[id].tip:''; } if(hit.type==='stat'){ const id=this.itemOf('mark',hit.i); return id?D.items[id].title+': '+D.items[id].tip:''; } if(hit.type==='panel'){ const p=this.world.panels[hit.i]; return 'Slide: '+D.items[p.item].title; } return ''; }
+  itemOf(field,i){ this.index=this.index||{}; if(!this.index[field]){ this.index[field]={}; for(const [id,it] of Object.entries(this.D.items)) if(it[field]!==undefined) this.index[field][it[field]]=id; } return this.index[field][i]; }
+  tap(x,y,type){ const hit=this.pick(x,y); if(!hit) return; if(hit.type==='node'){ const box=this.canvas.getBoundingClientRect(); this.tip.at(x,y,this.nodeWords(hit.i)); if(type==='touch') setTimeout(()=>this.tip.hide(),3500); return; } if(hit.type==='panel') this.select(this.world.panels[hit.i].item,{user:true}); else if(hit.type==='reader') this.select(this.itemOf('reader',hit.i),{user:true}); else if(hit.type==='stat') this.select(this.itemOf('mark',hit.i),{user:true}); }
+  /* ---- the controls */
+  closeDrawer(){ document.body.classList.remove('treeOpen'); $('menu').setAttribute('aria-expanded','false'); }
+  bindControls(){ $('menu').onclick=()=>{ const open=document.body.classList.toggle('treeOpen'); $('menu').setAttribute('aria-expanded',open?'true':'false'); if(open&&this.tree.tab) this.tree.tab.focus(); }; $('scrim').onclick=()=>this.closeDrawer();
+    $('treeHide').onclick=()=>{ document.body.classList.add('treeOff'); $('treeShow').hidden=false; $('treeShow').focus(); this.resize(); }; $('treeShow').onclick=()=>{ document.body.classList.remove('treeOff'); $('treeShow').hidden=true; this.resize(); if(this.tree.tab) this.tree.tab.focus(); };
+    $('tourPlay').onclick=()=>{ if(this.playing){ this.setPlaying(false); return; } this.setPlaying(true); const n=this.stopIndex(); this.goStop(n<0?0:n); }; $('tourNext').onclick=()=>{ this.setPlaying(false); this.goStop(this.stopIndex()+1); }; $('tourPrev').onclick=()=>{ this.setPlaying(false); const n=this.stopIndex(); this.goStop((n<0?0:n)-1); };
+    $('homeBtn').onclick=()=>{ this.setPlaying(false); this.cam.wandered=false; this.cam.fly(this.home(),false); const it=this.D.items.home; this.tree.setCurrent('home'); this.cur='home'; document.body.classList.add('chosen'); const lit=this.lightsFor(it); this.focusLit.set(lit.fn,lit.dim); this.page.show('home',it); this.setHere(it); this.rebuildLines(); this.rebuildMarks(); this.syncTour('home'); history.pushState(null,'','#home'); };
+    $('helpBtn').onclick=()=>this.select('help',{user:true}); $('pagePrev').onclick=()=>this.stepItem(-1); $('pageNext').onclick=()=>this.stepItem(1);
+    $('pageCopy').onclick=async()=>{ const url=location.origin+location.pathname+(this.cur?'#'+this.cur:''); let ok=false; try { await navigator.clipboard.writeText(url); ok=true; } catch(e){ ok=false; } $('pageCopy').textContent=ok?'Copied':'Link: see the address bar'; setTimeout(()=>{ $('pageCopy').textContent='Copy link'; },1600); };
+    const f=$('filter'); f.addEventListener('input',()=>this.tree.filter(f.value)); f.addEventListener('keydown',(e)=>{ if(e.key==='ArrowDown'){ e.preventDefault(); const v=this.tree.visible(); const li=this.tree.tab&&!this.tree.tab.hidden&&v.includes(this.tree.tab)?this.tree.tab:v[0]; if(li) this.tree.focus(li); } else if(e.key==='Enter'){ const first=this.tree.visible().find((x)=>!x.hasAttribute('aria-expanded')&&x.dataset.item); if(first){ e.preventDefault(); this.select(first.dataset.item,{user:true,fromTree:true}); } } else if(e.key==='Escape'&&f.value){ f.value=''; this.tree.filter(''); } }); }
+  resize(){ const v=$('view').getBoundingClientRect(), dpr=Math.min(devicePixelRatio||1,2), w=Math.max(2,Math.round(v.width*dpr)), h=Math.max(2,Math.round(v.height*dpr)); this.dpr=dpr; this.scene.resize(w,h); this.deviceH=h; this.roomChanged(); }
+  /* ---- one frame */
+  frame(now){ requestAnimationFrame((t)=>this.frame(t)); if(document.hidden){ this.lastFrame=now; return; } if(MAXFPS&&now-this.lastDraw<1000/MAXFPS) return; this.lastDraw=now; const dt=Math.min(.05,(now-this.lastFrame)/1000); this.lastFrame=now; const cam=this.cam;
+    if(!this.cur&&!cam.wandered&&!cam.flight&&!reduced()) cam.v.theta+=dt*.03;
+    if(this.playing&&!cam.flight&&now-this.lastAdvance>5200){ this.goStop(this.stopIndex()+1); this.lastAdvance=now; }
+    cam.update(now,dt,this.keys); const mix=this.focusLit.tick(now); this.tickPulses(now); const vp=cam.matrices(!!this.scene.z01);
+    this.scene.draw({vp,eye:cam.eye,time:(now-this.startTime)/1000,mix,dim:this.focusLit.dim,scale:this.deviceH*.9,lineW:(this.dpr||1),minPx:(this.dpr||1)*1.05}); this.updateLabels(); this.pointer();
+    this.fps.n++; if(now-this.fps.t>1000){ this.fps.v=this.fps.n*1000/(now-this.fps.t); this.fps.n=0; this.fps.t=now; } if(!cam.flight&&this.settleWaiters.length&&this.focusLit.mix>=1){ const w=this.settleWaiters; this.settleWaiters=[]; for(const f of w) f(); } }
+  updateLabels(){ const cam=this.cam, far=cam.v.dist>200, a=cam.v.theta+Math.PI/2; const room=cam.h-cam.bottom; for(const l of this.labels){ let shown=false; if(far&&this.D.items){ const s=cam.project(l.r*Math.cos(a),l.y,l.r*Math.sin(a)); if(s&&s.y>cam.top&&s.y<room-10&&s.x<cam.w-70&&s.x>0){ l.d.style.transform='translate('+Math.round(s.x+8)+'px,'+Math.round(s.y-8)+'px)'; shown=true; } } if(l.shown!==shown){ l.d.style.display=shown?'':'none'; l.shown=shown; } }
+    const co=$('callout'), it=this.cur&&this.D.items[this.cur]; let at=null; if(it){ if(it.kind==='stat') at=this.world.statPos[it.mark]; else if(it.kind==='goal') at=this.world.readers[it.reader].pos; } if(at){ const s=cam.project(at[0],at[1],at[2]); if(s&&s.y>cam.top&&s.y<room){ co.textContent=it.title; co.style.display='block'; co.style.transform='translate('+Math.round(Math.min(s.x+12,cam.w-270))+'px,'+Math.round(s.y-26)+'px)'; } else co.style.display='none'; } else co.style.display='none'; }
+  pointer(){ if(this.nearestToCentre&&document.activeElement===this.canvas){ this.nearestToCentre=false; const box=this.canvas.getBoundingClientRect(), cx=box.left+box.width/2, cy=box.top+this.cam.top+(this.cam.h-this.cam.top-this.cam.bottom)/2; let best=-1,bd=1e12; const g=this.world.g; for(let i=0;i<this.world.N;i++){ const s=this.cam.project(g.pos[3*i],g.pos[3*i+1],g.pos[3*i+2]); if(!s) continue; const d=(s.x-(cx-box.left))**2+(s.y-(cy-box.top))**2; if(d<bd){ bd=d; best=i; } } if(best>=0){ const text='Nearest the middle: '+this.nodeWords(best); this.tip.at(cx,cy,text); $('sr').textContent=text; } return; }
+    if(!this.ptrDirty||!this.ptr) return; this.ptrDirty=false; const hit=this.pick(this.ptr.x,this.ptr.y); const t=hit?this.tipOf(hit):''; if(t){ this.tip.at(this.ptr.x,this.ptr.y,t); this.canvas.style.cursor=hit.type==='node'?'grab':'pointer'; } else { this.tip.hide(); this.canvas.style.cursor='grab'; } }
+}
+
+(async function(){ const forced=Q.get('renderer'), bad=(msg)=>{ const f=$('fail'); f.hidden=false; f.textContent=msg; console.error(msg); };
+  let D; try { const r=await fetch('data.json?v=69a795e9bb'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
+  const started=await startScene($('c'),forced); const app=new App(D,started); window.__fly={renderer:started.scene.name,why:started.why,app,settle:()=>new Promise((res)=>app.settleWaiters.push(res)),state:()=>({cur:app.cur,pageOpen:app.page.isOpen,pageId:app.page.id,playing:app.playing,eye:app.cam.eye.slice(),view:Object.assign({},app.cam.v),fps:app.fps.v})};
+})();
+</script></body></html>
