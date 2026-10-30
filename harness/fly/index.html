@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=2c33aa95e2"><style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=dfcb77c056"><style>
 :root{--bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--treeW:320px;color-scheme:dark}
 *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;font-variant-numeric:tabular-nums}
 a{color:var(--blue)}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -77,6 +77,7 @@ code{overflow-wrap:anywhere}pre{max-width:100%}
  #pagePrev,#pageNext{padding:6px 8px}#pageCopy{display:none}
  .lab{font-size:11px}
 }
+.noderow{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:2px 14px;margin:6px 0 10px}.noderow dt{color:var(--muted)}.noderow dd{margin:0}.nodejoins{list-style:none;padding-left:0!important;margin:6px 0 10px}.nodejoins li{margin:3px 0}
 #bpframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;z-index:3;color-scheme:dark}
 #bpclose{position:absolute;right:10px;bottom:56px;z-index:4;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 10px;cursor:pointer;font:13px 'IBM Plex Sans',system-ui,sans-serif}
 #bpclose:hover{background:var(--line)}
@@ -421,6 +422,7 @@ class App {
     case 'stat': { const p=W.statPos[it.mark], g=D.statGroups.find((x)=>x.id===it.group); return {x:p[0],y:p[1],z:p[2],dist:Math.max(c.fitSphere(g.r*.62),22),theta:g.a,phi:Math.PI/2}; }
     case 'statgroup': { const g=D.statGroups.find((x)=>x.id===it.group); return {x:g.c[0],y:g.c[1],z:g.c[2],dist:Math.max(c.fitSphere(g.r*1.15),30),theta:g.a,phi:Math.PI/2}; }
     case 'stats': { const phi=1.05, a=D.statsAt; return {x:0,y:a.y,z:0,dist:c.fitRing(a.r+24,phi),theta:.2,phi}; }
+    case 'node': { const p=W.P(it.node), a=Math.atan2(p[2],p[0]); return {x:p[0],y:p[1],z:p[2],dist:105,theta:a+.35,phi:1.22}; }
     case 'stop': { const s=D.graph.stops[it.stop]; if(s.goal!==undefined) return this.viewFor({kind:'goal',reader:s.goal}); if(s.node===null||s.node===undefined) return s.view?this.viewFor({kind:'goals'}):this.home(); const p=W.P(s.node), a=Math.atan2(p[2],p[0]); return {x:p[0],y:p[1],z:p[2],dist:105,theta:a+.35,phi:1.22}; }
     case 'view': { const n=D.graph.views.findIndex((v)=>v.id===it.view); return this.home(.7+n*.9); }
     case 'manual': case 'concept': { if(it.to){ const t=D.items[it.to]; if(t) return this.viewFor(t); } return this.home(it.orbit===undefined?.7:it.orbit); }
@@ -432,12 +434,13 @@ class App {
     case 'goal': { const r=this.world.readers[it.reader], src=r.uses!==null?this.world.readers[r.uses]:r, k=new Set(src.reads), pred=src.predicts; return {dim:1,fn:()=>({node:(i)=>k.has(g.kind[i])?.9:.15,edge:(e,a,b,rel)=>rel===pred?2.6:.05})}; }
     case 'goals': return {dim:1,fn:()=>({node:()=>.55,edge:()=>.28})};
     case 'stat': case 'statgroup': case 'stats': return {dim:1,fn:()=>({node:()=>.3,edge:()=>.1})};
+    case 'node': { const me=it.node, near=new Set([me]), e=g.edges; for(let n=0;n<e.length;n+=3){ if(e[n]===me) near.add(e[n+1]); else if(e[n+1]===me) near.add(e[n]); } return {dim:1,fn:()=>({node:(i)=>near.has(i)?1.4:.1,edge:(n,a,b)=>a===me||b===me?1.4:.03})}; }
     case 'stop': return {dim:1,fn:()=>({node:()=>.75,edge:()=>.45})};
     case 'view': { const v=g.views.find((x)=>x.id===it.view), kr=v.rels&&new Set(v.rels), kk=v.kinds&&new Set(v.kinds), gain=(v.gain||(kr?1.35:1)); return {dim:1,fn:()=>({node:(i)=>(!kk||kk.has(g.kind[i]))?1:0,edge:(e,a,b,r)=>(!kr||kr.has(r))&&(!kk||(kk.has(g.kind[a])&&kk.has(g.kind[b])))?gain:0})}; }
     case 'manual': case 'concept': { const t=it.to&&this.D.items[it.to]; return t?this.lightsFor(t):{fn:on1,dim:1}; }
     default: return {fn:on1,dim:1}; } }
   /* ---- selecting */
-  select(id,o={}){ const D=this.D, it=D.items[id]; if(!it){ $('hereS').textContent='Nothing here has the address '+id+'.'; $('sr').textContent='No such item'; return; }
+  select(id,o={}){ const D=this.D; if(/^node-\d+$/.test(id)) this.nodeItem(+id.slice(5)); const it=D.items[id]; if(!it){ $('hereS').textContent='Nothing here has the address '+id+'.'; $('sr').textContent='No such item'; return; }
     this.blueprint(it.kind==='blueprint'?it:null);
     if(it.kind==='blueprint'){ if(o.user) this.setPlaying(false); this.cur=id; document.body.classList.add('chosen'); this.tree.setCurrent(id); this.page.close(); this.cam.wandered=false; this.cam.fly(this.home(),o.instant); const homeLit=this.lightsFor({kind:'home'}); this.focusLit.set(homeLit.fn,homeLit.dim,o.instant); if(!o.fromAddress){ const url='#'+id; if(o.user) history.pushState(null,'',url); else history.replaceState(null,'',url); } $('sr').textContent=it.title; if(o.fromTree&&innerWidth<=760) this.closeDrawer(); this.syncTour(id); return; }
     const same=this.cur===id;
@@ -449,8 +452,19 @@ class App {
     this.rebuildLines(); this.rebuildMarks(); this.world.panels.forEach((p)=>this.scene.setPanelBrightness(p.index,it.kind==='layer'?.45:1));
     const target=it.kind==='slide'?it:(it.to&&D.items[it.to]&&D.items[it.to].kind==='slide'?D.items[it.to]:null); if(target) this.loadFull(this.world.panels[target.panel]);
     if(!o.fromAddress){ const url='#'+id; if(o.user) history.pushState(null,'',url); else history.replaceState(null,'',url); } $('sr').textContent=it.title; if(o.fromTree&&innerWidth<=760) this.closeDrawer(); this.syncTour(id); }
+  /* a node's own page, made when it is asked for, because 1,714 pages would be most of the file: the row behind it, what it is joined to, then what that kind of thing is */
+  nodeItem(i){ const D=this.D, g=this.world.g, id='node-'+i; if(D.items[id]||!D.nodeRows[i]) return; const h=(t)=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;'), kind=g.kinds[g.kind[i]], row=D.nodeRows[i], verdict=row[0].verdict, words=this.nodeWords(i);
+    const title=kind!=='mutant'?words.split('. ')[0]:verdict==='killed'?'a break a test caught':verdict==='survived'?'a break no test caught':'a break with no verdict';
+    const means=kind!=='mutant'?'':verdict==='killed'?'A test failed when this break was switched on.':verdict==='survived'?'Every test still passed with this break switched on.':'It did not compile, or no test covers its file, so it says nothing either way.';
+    const fields=[['Its kind',kind]].concat(Object.entries(row[0]).map(([k,v])=>[k[0].toUpperCase()+k.slice(1),v])); if(means) fields.push(['What that means',means]); if(g.flag[i]===2) fields.push(['Inferred','the walk inferred this requirement; only its owner can settle it']);
+    const joins={}; for(let e=0;e<g.edges.length;e+=3){ const a=g.edges[e],b=g.edges[e+1],r=g.rels[g.edges[e+2]]; if(a===i) (joins[r+' \u2192']=joins[r+' \u2192']||[]).push(b); else if(b===i) (joins['\u2190 '+r]=joins['\u2190 '+r]||[]).push(a); }
+    const links=(ids)=>ids.slice(0,14).map((n)=>'<a href="#node-'+n+'">'+h(g.kinds[g.kind[n]])+'</a>').join(', ')+(ids.length>14?', and '+(ids.length-14)+' more':''), rels=Object.keys(joins).sort();
+    const head='<p class="kick">A node of the graph</p><h2 class="cap">'+h(title)+'</h2><h3>The data behind it</h3><dl class="noderow">'+fields.map(([k,v])=>'<dt>'+h(k)+'</dt><dd>'+h(v)+'</dd>').join('')+'</dl>'
+      +(row[1]?'<p class="note">Its own '+row[1]+(row[1]===1?' word is':' words are')+' left out here: they are a private game\'s text. Everything else it holds is above and below.</p>':'')
+      +'<h3>What it is joined to</h3>'+(rels.length?'<ul class="nodejoins">'+rels.map((r)=>'<li><b>'+h(r)+'</b> ('+joins[r].length+'): '+links(joins[r])+'</li>').join('')+'</ul>':'<p>Nothing.</p>')+'<h3>What this kind of thing is</h3>';
+    const sec=D.kindSection[kind]; D.items[id]={kind:'node',node:i,title:title[0].toUpperCase()+title.slice(1),tip:words}; D.pages[id]={head,secs:sec&&D.sections[sec]?[sec]:[],foot:''}; }
   /* the Blueprint: a page of its own over the stage, this graph showing through behind its floors. One frame, moved from floor to floor by its address */
-  blueprint(it){ const on=!!it, fr=$('bpframe'); document.body.classList.toggle('bp-on',on); fr.hidden=!on; $('bpclose').hidden=!on; if(!on) return; if(fr.dataset.on) fr.contentWindow.location.hash='embed.'+it.frame; else { fr.dataset.on='1'; fr.src='../blueprint/index.html?v=2c33aa95e2#embed.'+it.frame; } }
+  blueprint(it){ const on=!!it, fr=$('bpframe'); document.body.classList.toggle('bp-on',on); fr.hidden=!on; $('bpclose').hidden=!on; if(!on) return; if(fr.dataset.on) fr.contentWindow.location.hash='embed.'+it.frame; else { fr.dataset.on='1'; fr.src='../blueprint/index.html?v=dfcb77c056#embed.'+it.frame; } }
   setHere(it){ $('hereT').textContent=it.title; $('hereS').textContent=it.sub||it.tip||''; }
   roomChanged(){ const h=$('hud').getBoundingClientRect().height, v=$('view').getBoundingClientRect(), target=this.page.isOpen?this.openHeight():46, top=Math.min(h,v.height*.3), c=this.cam; if(Math.abs(c.w-v.width)<1&&Math.abs(c.h-v.height)<1&&Math.abs(c.topGoal-top)<1&&Math.abs(c.bottomGoal-target)<1) return; c.setRoom(v.width,v.height,top,target); clearTimeout(this.refit); if(this.cur&&!c.wandered) this.refit=setTimeout(()=>{ if(!c.wandered&&this.cur) c.fly(this.viewFor(this.D.items[this.cur]),reduced()); },30); else if(!this.cur&&!c.wandered) c.v.dist=this.home().dist; }
   openHeight(){ const cs=getComputedStyle(this.page.el).getPropertyValue('--pageH'); if(cs&&cs.trim()) return parseFloat(cs); const v=$('view').getBoundingClientRect(); return innerWidth<=760?v.height*.52:innerHeight*.38; }
@@ -476,6 +490,7 @@ class App {
     const linked=stat>=0?new Set(D.graph.statRows[stat].goals):null;
     W.readers.forEach((r,i)=>{ const on=i===reader||(linked&&linked.has(i)); mark(r.pos,2*r.R,r.colour,on?1.5:1,r.style); });
     W.statPos.forEach((p,i)=>{ const on=i===stat, inGroup=rows&&rows.includes(i); mark(p,on?4.6:inGroup?2.8:2.2,W.statColour[i],on?2.2:inGroup||statsOn?1.1:.55,5); });
+    if(it&&it.kind==='node') mark(W.P(it.node),7,[1,.9,.75],1.5,0);
     if(it&&it.kind==='stop'){ const s=D.graph.stops[it.stop]; if(s.node!==null&&s.node!==undefined) mark(W.P(s.node),7,[1,.9,.75],1.5,0); for(const [a,b] of this.thread){ mark(W.P(a),4,[1,.85,.66],1.4,0); mark(W.P(b),4,[1,.85,.66],1.4,0); } }
     this.markBase=n; this.pulses=[]; if(this.thread.length) for(const [a,b] of this.thread.slice(0,48)) this.pulses.push([W.P(a),W.P(b),[1,.95,.85]]); if(reader>=0&&W.readers[reader].state!=='trying'&&W.readers[reader].state!=='planned'){ const r=W.readers[reader]; for(let k=0;k<Math.min(24,r.ids.length);k++) this.pulses.push([r.pos,W.P(r.ids[k]),r.colour]); }
     this.scene.setMarks(M,n); }
@@ -496,10 +511,10 @@ class App {
     bd=14*14; W.statPos.forEach((p,i)=>{ const s=cam.project(p[0],p[1],p[2]); if(!s) return; const d=(s.x-ex)**2+(s.y-ey)**2; if(d<bd){ bd=d; best={type:'stat',i}; } }); if(best) return best;
     let near=Infinity; W.panels.forEach((p,i)=>{ if(dot(p.n,sub(cam.eye,p.c))<=0) return; const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>cam.project(p.c[0]+p.right[0]*a+p.up[0]*b,p.c[1]+p.up[1]*b,p.c[2]+p.right[2]*a+p.up[2]*b)); if(c.some((s)=>!s)) return; let inside=true; for(let k=0;k<4;k++){ const q=c[k],r=c[(k+1)%4]; if((r.x-q.x)*(ey-q.y)-(r.y-q.y)*(ex-q.x)>0) inside=false; } const dist=Math.hypot(...sub(cam.eye,p.c)); if(inside&&dist<near){ near=dist; best={type:'panel',i}; } }); if(best) return best;
     bd=18*18; const g=W.g, gain=this.focusLit.node; for(let i=0;i<W.N;i++){ if(gain[2*i+1]<.05) continue; const s=cam.project(g.pos[3*i],g.pos[3*i+1],g.pos[3*i+2]); if(!s) continue; const d=(s.x-ex)**2+(s.y-ey)**2; if(d<bd){ bd=d; best={type:'node',i}; } } return best; }
-  nodeWords(i){ const g=this.world.g, kind=g.kinds[g.kind[i]], role=g.flag[i]===1?'a break no test caught':g.flag[i]===2?'a requirement the walk inferred':(g.roles&&g.roles[kind])||('a '+kind); return role[0].toUpperCase()+role.slice(1)+'. Its kind: '+kind+'.'; }
+  nodeWords(i){ const g=this.world.g, kind=g.kinds[g.kind[i]], row=this.D.nodeRows[i], role=kind==='mutant'&&row&&row[0].verdict==='no verdict'?'a break with no verdict':g.flag[i]===1?'a break no test caught':g.flag[i]===2?'a requirement the walk inferred':(g.roles&&g.roles[kind])||('a '+kind); return role[0].toUpperCase()+role.slice(1)+'. Its kind: '+kind+'.'; }
   tipOf(hit){ const D=this.D; if(hit.type==='node') return this.nodeWords(hit.i); if(hit.type==='reader'){ const id=this.itemOf('reader',hit.i); return id?D.items[id].title+': '+D.items[id].tip:''; } if(hit.type==='stat'){ const id=this.itemOf('mark',hit.i); return id?D.items[id].title+': '+D.items[id].tip:''; } if(hit.type==='panel'){ const p=this.world.panels[hit.i]; return 'Slide: '+D.items[p.item].title; } return ''; }
   itemOf(field,i){ this.index=this.index||{}; if(!this.index[field]){ this.index[field]={}; for(const [id,it] of Object.entries(this.D.items)) if(it[field]!==undefined) this.index[field][it[field]]=id; } return this.index[field][i]; }
-  tap(x,y,type){ const hit=this.pick(x,y); if(!hit) return; if(hit.type==='node'){ const box=this.canvas.getBoundingClientRect(); this.tip.at(x,y,this.nodeWords(hit.i)); if(type==='touch') setTimeout(()=>this.tip.hide(),3500); return; } if(hit.type==='panel') this.select(this.world.panels[hit.i].item,{user:true}); else if(hit.type==='reader') this.select(this.itemOf('reader',hit.i),{user:true}); else if(hit.type==='stat') this.select(this.itemOf('mark',hit.i),{user:true}); }
+  tap(x,y,type){ const hit=this.pick(x,y); if(!hit) return; if(hit.type==='node'){ this.tip.hide(); this.select('node-'+hit.i,{user:true}); return; } if(hit.type==='panel') this.select(this.world.panels[hit.i].item,{user:true}); else if(hit.type==='reader') this.select(this.itemOf('reader',hit.i),{user:true}); else if(hit.type==='stat') this.select(this.itemOf('mark',hit.i),{user:true}); }
   /* ---- the controls */
   closeDrawer(){ document.body.classList.remove('treeOpen'); $('menu').setAttribute('aria-expanded','false'); }
   bindControls(){ $('menu').onclick=()=>{ const open=document.body.classList.toggle('treeOpen'); $('menu').setAttribute('aria-expanded',open?'true':'false'); if(open&&this.tree.tab) this.tree.tab.focus(); }; $('scrim').onclick=()=>this.closeDrawer();
@@ -525,7 +540,7 @@ class App {
 }
 
 (async function(){ const forced=Q.get('renderer'), bad=(msg)=>{ const f=$('fail'); f.hidden=false; f.textContent=msg; console.error(msg); };
-  let D; try { const r=await fetch('data.json?v=2c33aa95e2'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
+  let D; try { const r=await fetch('data.json?v=dfcb77c056'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
   const started=await startScene($('c'),forced); const app=new App(D,started); window.__fly={renderer:started.scene.name,why:started.why,app,settle:()=>new Promise((res)=>app.settleWaiters.push(res)),state:()=>({cur:app.cur,pageOpen:app.page.isOpen,pageId:app.page.id,playing:app.playing,eye:app.cam.eye.slice(),view:Object.assign({},app.cam.v),fps:app.fps.v})};
 })();
 </script></body></html>
