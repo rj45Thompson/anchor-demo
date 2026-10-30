@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: a reference manual - a sticky contents rail beside one reading column; every claim from the slides has its own anchored section */
+:root {
+  --paper: #F4F5F1; --card: #FCFCFA; --ink: #14202B; --body: #36424F; --muted: #5A6571; --rule: #DADCD4;
+  --blue: #2A62A0; --blue-soft: #DCE6F2; --orange: #A3440E; --orange-soft: #F2E0D2; --code: #E9EAE3;
+  --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', Arial, sans-serif; --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--body); font: 17px/1.65 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 14px; line-height: 1.45; }
+nav.toc p { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+nav.toc p:first-child { margin-top: 0 }
+nav.toc a { display: block; color: var(--body); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid transparent; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); border-left-color: var(--blue); outline: none }
+main { min-width: 0; max-width: 700px; }
+header.top { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin: 0 0 10px; }
+h1 { font: 600 46px/1.1 var(--serif); color: var(--ink); margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 600 30px/1.2 var(--serif); color: var(--ink); margin: 0 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.35 var(--sans); color: var(--ink); margin: 26px 0 6px; }
+.lede { font-size: 20px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
+section { padding-top: 44px; scroll-margin-top: 16px; }
+section + section { border-top: 1px solid var(--rule); margin-top: 44px; }
+section.raw { background: var(--card); border: 2px solid var(--blue); border-radius: 14px; padding: 28px 26px 22px; margin-top: 32px; }
+section.raw h2 { font-size: 34px }
+.part { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 64px 0 -20px; }
+p { margin: 0 0 14px } ul, ol { margin: 0 0 14px; padding-left: 22px } li { margin: 4px 0 }
+strong { color: var(--ink); font-weight: 600 }
+a { color: var(--blue) } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+code { font: 14px/1.5 var(--mono); background: var(--code); padding: 1px 5px; border-radius: 4px; color: var(--ink); overflow-wrap: anywhere }
+pre { font: 14px/1.6 var(--mono); background: var(--code); color: var(--ink); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px }
+pre code { background: none; padding: 0 }
+.chip { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; vertical-align: 2px; margin-right: 6px; white-space: nowrap }
+.chip.measured { background: var(--blue-soft); color: var(--blue) }
+.chip.target { background: transparent; color: var(--orange); border: 1.5px dashed var(--orange) }
+.chip.open { background: var(--orange-soft); color: var(--orange) }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; color: var(--muted); margin-top: 6px }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin: 0 0 16px }
+.box > :last-child { margin-bottom: 0 }
+.box .label { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin: 0 0 8px }
+.box.evidence .label { color: var(--blue) }
+.box.plain .label { color: var(--orange) }
+.seen { font-size: 14px; color: var(--muted); margin-top: 18px }
+.seen a { white-space: nowrap }
+dl.terms { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr); gap: 10px 20px; margin: 0 }
+dl.terms dt { font-weight: 600; color: var(--ink) } dl.terms dd { margin: 0 }
+.crit { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; margin: 0 0 10px }
+.crit b { font: 600 14px/1.65 var(--mono); color: var(--blue) }
+.passes { display: grid; gap: 12px; margin: 0 0 16px }
+.pass { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px }
+.pass .n { font: 600 28px/1.1 var(--serif); color: var(--orange) } .pass .n small { display: block; font: 500 13px/1.4 var(--sans); color: var(--muted) }
+.pass p { margin: 0 }
+details.mtoc { display: none }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 28px 72px }
+  nav.toc { display: none }
+  details.mtoc { display: block; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px }
+  details.mtoc summary { cursor: pointer; font-weight: 600; color: var(--ink) }
+  details.mtoc a { display: block; padding: 4px 0; text-decoration: none }
+  h1 { font-size: 36px } h2 { font-size: 26px }
+  dl.terms { grid-template-columns: minmax(0, 1fr) } dl.terms dd { margin-bottom: 8px }
+  .pass { grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+</style><title>The limits</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/" aria-current="page" style="font-weight:600;color:inherit">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
+<section id="limits">
+<h2>What it is not, yet</h2>
+<div class="box evidence"><p class="label">The first trial on code anyone can read</p>
+<p><span class="chip measured">Measured</span> <strong>The C# adapter was skipping code without saying so.</strong> On Unreal's own SemVer.cs it saw 35 of 68 statements, including none of the private method that does all the comparing, and on JsonObject.cs 213 of 288. It dropped overloaded methods, operators and generic methods with a <code>where</code> clause, and does not walk property bodies. The report still read as if the whole file was held. The shop feature has no overloads, which is why its numbers never showed it.</p>
+<p><span class="chip open">Open</span> The fixes are being landed, each with a planted case: naming every overload and operator, a report that names what it did not walk, a read-only tree such as a Perforce workspace, a constructor of a nested type, one bad break stopping a whole run, and a break that hangs a test forever. The kit goes public after those land.</p></div>
+
+<ul>
+<li><strong>A prototype.</strong> Version 0.1. Its own model still names holes.</li>
+<li><strong>A thin model misleads.</strong> A green report over a small model reads as proof and is not (<a href="../manual/#thin">why</a>).</li>
+<li><strong>Setup comes first.</strong> A problem story, requirements, use cases and tests a machine can run, before it helps at all.</li>
+<li><strong>Not a chatbot.</strong> It is a harness for agents that build systems. It does not answer questions.</li>
+<li><strong>It refutes, it never proves.</strong> “Closed” means closed against the breaks it tried (<a href="../manual/#modal">why</a>).</li>
+<li><strong>Feel is not checked.</strong> Visuals, timing and feel still need a person to look.</li>
+</ul>
+<p>Used where it does not fit, it can be worse than not using it at all.</p>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-20">slide 20</a>.</p>
+</section>
+<section id="targets">
+<h2>The two targets</h2>
+<p>These are goals for the loop at its full potential, used where it fits. Neither has been measured yet.</p>
+<div class="box"><p class="label" style="color:var(--orange)">95% accuracy or better</p>
+<p><span class="chip target">Target</span> Agents using the loop on work it fits should get the task right at least 95 times in 100. The remaining 5% would be bugs in our own code.</p>
+<p><strong>How it will be measured:</strong> the on/off harness, graded blind, counted per failure pile, with the hidden acceptance test deciding whether the task was done.</p></div>
+<div class="box"><p class="label" style="color:var(--orange)">Up to 90% fewer tokens</p>
+<p><span class="chip target">Target</span> On average, up to 90% fewer tokens per closed requirement, because a later step looks up what the graph already holds instead of re-reading and re-deriving it. This number is always being re-evaluated.</p>
+<p><strong>How it will be measured:</strong> the same harness, from each arm’s own usage records (the tokens the model read and wrote), per task.</p>
+<p><span class="chip measured">Measured</span> <strong>The first data point goes the other way:</strong> on one small, precisely specified task, the loop used 58% more tokens for the same correctness (<a href="../on-vs-off/#ab">details</a>). The target is about larger systems held across many changes, where re-reading and re-deriving is what costs; that has not been measured yet.</p></div>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-20">slide 20</a>.</p>
+</section>
+<p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>

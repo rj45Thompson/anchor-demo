@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: a reference manual - a sticky contents rail beside one reading column; every claim from the slides has its own anchored section */
+:root {
+  --paper: #F4F5F1; --card: #FCFCFA; --ink: #14202B; --body: #36424F; --muted: #5A6571; --rule: #DADCD4;
+  --blue: #2A62A0; --blue-soft: #DCE6F2; --orange: #A3440E; --orange-soft: #F2E0D2; --code: #E9EAE3;
+  --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', Arial, sans-serif; --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--body); font: 17px/1.65 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 14px; line-height: 1.45; }
+nav.toc p { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+nav.toc p:first-child { margin-top: 0 }
+nav.toc a { display: block; color: var(--body); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid transparent; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); border-left-color: var(--blue); outline: none }
+main { min-width: 0; max-width: 700px; }
+header.top { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin: 0 0 10px; }
+h1 { font: 600 46px/1.1 var(--serif); color: var(--ink); margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 600 30px/1.2 var(--serif); color: var(--ink); margin: 0 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.35 var(--sans); color: var(--ink); margin: 26px 0 6px; }
+.lede { font-size: 20px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
+section { padding-top: 44px; scroll-margin-top: 16px; }
+section + section { border-top: 1px solid var(--rule); margin-top: 44px; }
+section.raw { background: var(--card); border: 2px solid var(--blue); border-radius: 14px; padding: 28px 26px 22px; margin-top: 32px; }
+section.raw h2 { font-size: 34px }
+.part { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 64px 0 -20px; }
+p { margin: 0 0 14px } ul, ol { margin: 0 0 14px; padding-left: 22px } li { margin: 4px 0 }
+strong { color: var(--ink); font-weight: 600 }
+a { color: var(--blue) } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+code { font: 14px/1.5 var(--mono); background: var(--code); padding: 1px 5px; border-radius: 4px; color: var(--ink); overflow-wrap: anywhere }
+pre { font: 14px/1.6 var(--mono); background: var(--code); color: var(--ink); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px }
+pre code { background: none; padding: 0 }
+.chip { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; vertical-align: 2px; margin-right: 6px; white-space: nowrap }
+.chip.measured { background: var(--blue-soft); color: var(--blue) }
+.chip.target { background: transparent; color: var(--orange); border: 1.5px dashed var(--orange) }
+.chip.open { background: var(--orange-soft); color: var(--orange) }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; color: var(--muted); margin-top: 6px }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin: 0 0 16px }
+.box > :last-child { margin-bottom: 0 }
+.box .label { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin: 0 0 8px }
+.box.evidence .label { color: var(--blue) }
+.box.plain .label { color: var(--orange) }
+.seen { font-size: 14px; color: var(--muted); margin-top: 18px }
+.seen a { white-space: nowrap }
+dl.terms { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr); gap: 10px 20px; margin: 0 }
+dl.terms dt { font-weight: 600; color: var(--ink) } dl.terms dd { margin: 0 }
+.crit { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; margin: 0 0 10px }
+.crit b { font: 600 14px/1.65 var(--mono); color: var(--blue) }
+.passes { display: grid; gap: 12px; margin: 0 0 16px }
+.pass { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px }
+.pass .n { font: 600 28px/1.1 var(--serif); color: var(--orange) } .pass .n small { display: block; font: 500 13px/1.4 var(--sans); color: var(--muted) }
+.pass p { margin: 0 }
+details.mtoc { display: none }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 28px 72px }
+  nav.toc { display: none }
+  details.mtoc { display: block; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px }
+  details.mtoc summary { cursor: pointer; font-weight: 600; color: var(--ink) }
+  details.mtoc a { display: block; padding: 4px 0; text-decoration: none }
+  h1 { font-size: 36px } h2 { font-size: 26px }
+  dl.terms { grid-template-columns: minmax(0, 1fr) } dl.terms dd { margin-bottom: 8px }
+  .pass { grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+</style><title>Requirements first</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/" aria-current="page" style="font-weight:600;color:inherit">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
+<section id="waterfall">
+<h2>Back to 1999: requirements first</h2>
+<p>This is how we review our code: we pour the effort into requirements first. It is time to learn systems analysis and design again. Agile is, for the most part, dead. Long live waterfall.</p>
+<p>The reason is mechanical. The more requirements you have, the better a graph neural network (GNN) works at filling the gaps, and the more of the loop closes, so that nothing is left to a guess. That is what gets you slopless code. We want hand-crafted quality on an IKEA budget.</p>
+<div class="box evidence"><p class="label">Where this comes from</p>
+<p><span class="chip measured">Measured</span> On the shop feature, the graph neural network (GNN) scored 0.48 with a tenth of the requirement links, 0.63 with a quarter, 0.73 with half and 0.77 with three quarters or all, against 0.67 for a plain rule with no test results to read. See <a href="../manual/#seed">seed it first</a>. Once test results exist, a plain rule that reads them does better on that feature: see <a href="../gnn/#gnn">the part that learns</a>.</p></div>
+</section>
+<section id="extract">
+<h2>It extracts new requirements from the ones you have</h2>
+<p>The tool automatically extracts requirements from existing requirements. You do not list them by hand. It walks each use case step by step: every step needs something to be true, and when no requirement provides that, the chain has inferred one nobody wrote. It is marked inferred and goes to the owner as a question, because only the owner can decide it. See <a href="../manual/#idea">the idea in one minute</a> for what that found on the shop feature, and <a href="../on-vs-off/#matrix">growing a model from a small seed</a> for how far it went from 3 requirements.</p>
+<h3>Complete in, accurate out</h3>
+<p>The more complete the requirements, the more accurate the prompt built from them: an agent acting on them has less to guess. Which ones you write first matters as well, so start with the ones that run through the most code (<a href="../manual/#seed">seed it first</a>).</p>
+<h3>Remix, don't invent</h3>
+<p>When adding a large feature, it is probably better to remix two features that already have solid requirements than to invent something new with no clear ones. Adding a weapon shop, say, is a remix of a shop and an inventory, and a shop is one of the examples this tool was built on. A remix starts from requirements that have already been tested, so the gaps it leaves are the places where the two meet, and the walk finds those. A new invention starts with nothing to walk.</p>
+<p><span class="chip open">Open</span> This is our judgment from building with it. No run has measured complete against incomplete requirements, or remix against invention, directly.</p>
+</section>
+<p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>

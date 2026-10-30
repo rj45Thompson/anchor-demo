@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: a reference manual - a sticky contents rail beside one reading column; every claim from the slides has its own anchored section */
+:root {
+  --paper: #F4F5F1; --card: #FCFCFA; --ink: #14202B; --body: #36424F; --muted: #5A6571; --rule: #DADCD4;
+  --blue: #2A62A0; --blue-soft: #DCE6F2; --orange: #A3440E; --orange-soft: #F2E0D2; --code: #E9EAE3;
+  --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', Arial, sans-serif; --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--body); font: 17px/1.65 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 14px; line-height: 1.45; }
+nav.toc p { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+nav.toc p:first-child { margin-top: 0 }
+nav.toc a { display: block; color: var(--body); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid transparent; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); border-left-color: var(--blue); outline: none }
+main { min-width: 0; max-width: 700px; }
+header.top { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin: 0 0 10px; }
+h1 { font: 600 46px/1.1 var(--serif); color: var(--ink); margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 600 30px/1.2 var(--serif); color: var(--ink); margin: 0 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.35 var(--sans); color: var(--ink); margin: 26px 0 6px; }
+.lede { font-size: 20px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
+section { padding-top: 44px; scroll-margin-top: 16px; }
+section + section { border-top: 1px solid var(--rule); margin-top: 44px; }
+section.raw { background: var(--card); border: 2px solid var(--blue); border-radius: 14px; padding: 28px 26px 22px; margin-top: 32px; }
+section.raw h2 { font-size: 34px }
+.part { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 64px 0 -20px; }
+p { margin: 0 0 14px } ul, ol { margin: 0 0 14px; padding-left: 22px } li { margin: 4px 0 }
+strong { color: var(--ink); font-weight: 600 }
+a { color: var(--blue) } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+code { font: 14px/1.5 var(--mono); background: var(--code); padding: 1px 5px; border-radius: 4px; color: var(--ink); overflow-wrap: anywhere }
+pre { font: 14px/1.6 var(--mono); background: var(--code); color: var(--ink); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px }
+pre code { background: none; padding: 0 }
+.chip { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; vertical-align: 2px; margin-right: 6px; white-space: nowrap }
+.chip.measured { background: var(--blue-soft); color: var(--blue) }
+.chip.target { background: transparent; color: var(--orange); border: 1.5px dashed var(--orange) }
+.chip.open { background: var(--orange-soft); color: var(--orange) }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; color: var(--muted); margin-top: 6px }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin: 0 0 16px }
+.box > :last-child { margin-bottom: 0 }
+.box .label { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin: 0 0 8px }
+.box.evidence .label { color: var(--blue) }
+.box.plain .label { color: var(--orange) }
+.seen { font-size: 14px; color: var(--muted); margin-top: 18px }
+.seen a { white-space: nowrap }
+dl.terms { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr); gap: 10px 20px; margin: 0 }
+dl.terms dt { font-weight: 600; color: var(--ink) } dl.terms dd { margin: 0 }
+.crit { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; margin: 0 0 10px }
+.crit b { font: 600 14px/1.65 var(--mono); color: var(--blue) }
+.passes { display: grid; gap: 12px; margin: 0 0 16px }
+.pass { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px }
+.pass .n { font: 600 28px/1.1 var(--serif); color: var(--orange) } .pass .n small { display: block; font: 500 13px/1.4 var(--sans); color: var(--muted) }
+.pass p { margin: 0 }
+details.mtoc { display: none }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 28px 72px }
+  nav.toc { display: none }
+  details.mtoc { display: block; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px }
+  details.mtoc summary { cursor: pointer; font-weight: 600; color: var(--ink) }
+  details.mtoc a { display: block; padding: 4px 0; text-decoration: none }
+  h1 { font-size: 36px } h2 { font-size: 26px }
+  dl.terms { grid-template-columns: minmax(0, 1fr) } dl.terms dd { margin-bottom: 8px }
+  .pass { grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+</style><title>Breaking the code</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/" aria-current="page" style="font-weight:600;color:inherit">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
+<section id="breaks">
+<h2>Breaking the code on purpose</h2>
+<p>The usual name is <strong>mutation testing</strong>, and each broken copy is a <strong>mutant</strong>. This manual calls them <strong>breaks</strong>. A break that makes some test fail is <strong>caught</strong> (or “killed”). A break that every test still passes <strong>got past</strong> (or “survived”), and that points at a missing test.</p>
+<div class="box plain"><p class="label">A small example</p>
+<pre><code>if (wallet.Money &gt;= price)   // the real code: exact money is enough
+if (wallet.Money &gt;  price)   // a break: paying the exact price now fails</code></pre>
+<p>If every test still passes with the second line, then no test buys something with exactly enough money. That is a missing test, and the report names the line.</p></div>
+<p>The kinds of break the C# adapter makes, in plain words:</p>
+<ul>
+<li><strong>Conditions</strong>: turned around, forced always true, forced always false.</li>
+<li><strong>Operators</strong>: <code>&lt;</code> made <code>&lt;=</code>, <code>==</code> made <code>!=</code>, <code>&amp;&amp;</code> made <code>||</code>, plus made minus.</li>
+<li><strong>Values</strong>: a number made one more, true made false, a text emptied, a function argument replaced by its default.</li>
+<li><strong>Structure</strong>: the two outcomes of a <code>? :</code> swapped, an else branch removed, a statement removed, the whole method made to return at once.</li>
+</ul>
+<p>Each statement gets at most 24 breaks, one of each kind first, so a busy statement cannot crowd out the kinds of break that matter most.</p>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-9">slide 9</a>.</p>
+</section>
+<section id="equivalents">
+<h2>Breaks that change nothing</h2>
+<p>Some breaks get past every test because they do not change what the program does. Example from the shop feature: the cursor moves by the <em>sign</em> of a number, so changing a 1 to a 2 there moves it the same way. No test can catch that, and none should. These are called <strong>equivalent</strong> breaks.</p>
+<p>The danger is calling a real missing test “equivalent” to make it go away. So the loop accepts an equivalent in only two ways:</p>
+<ul>
+<li><strong>Proven by the compiled code.</strong> C# compiles to IL, the instructions the runtime actually runs. If the broken copy’s IL is identical to the original’s, the two are the same program (a technique called Trivial Compiler Equivalence, Papadakis and others, 2015). The loop checks this itself.</li>
+<li><strong>Declared with a reason.</strong> Otherwise a person or agent writes down why it changes nothing, and names the methods the reason depends on. If those methods change later, the reason lapses and the break is counted as a hole again.</li>
+</ul>
+<p>And if a test ever does catch a break that was declared equivalent, the declaration was wrong, and that is reported as a hole. This happened twice on the shop feature: two breaks looked harmless (one about how a German computer writes the number “2.0”, one about an invisible zero-width character before a “#”), but each could change the result. Both are now held by tests instead.</p>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-9">slide 9</a>.</p>
+</section>
+<p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>

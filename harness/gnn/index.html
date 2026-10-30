@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: a reference manual - a sticky contents rail beside one reading column; every claim from the slides has its own anchored section */
+:root {
+  --paper: #F4F5F1; --card: #FCFCFA; --ink: #14202B; --body: #36424F; --muted: #5A6571; --rule: #DADCD4;
+  --blue: #2A62A0; --blue-soft: #DCE6F2; --orange: #A3440E; --orange-soft: #F2E0D2; --code: #E9EAE3;
+  --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', Arial, sans-serif; --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--body); font: 17px/1.65 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 14px; line-height: 1.45; }
+nav.toc p { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+nav.toc p:first-child { margin-top: 0 }
+nav.toc a { display: block; color: var(--body); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid transparent; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); border-left-color: var(--blue); outline: none }
+main { min-width: 0; max-width: 700px; }
+header.top { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin: 0 0 10px; }
+h1 { font: 600 46px/1.1 var(--serif); color: var(--ink); margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 600 30px/1.2 var(--serif); color: var(--ink); margin: 0 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.35 var(--sans); color: var(--ink); margin: 26px 0 6px; }
+.lede { font-size: 20px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
+section { padding-top: 44px; scroll-margin-top: 16px; }
+section + section { border-top: 1px solid var(--rule); margin-top: 44px; }
+section.raw { background: var(--card); border: 2px solid var(--blue); border-radius: 14px; padding: 28px 26px 22px; margin-top: 32px; }
+section.raw h2 { font-size: 34px }
+.part { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 64px 0 -20px; }
+p { margin: 0 0 14px } ul, ol { margin: 0 0 14px; padding-left: 22px } li { margin: 4px 0 }
+strong { color: var(--ink); font-weight: 600 }
+a { color: var(--blue) } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+code { font: 14px/1.5 var(--mono); background: var(--code); padding: 1px 5px; border-radius: 4px; color: var(--ink); overflow-wrap: anywhere }
+pre { font: 14px/1.6 var(--mono); background: var(--code); color: var(--ink); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px }
+pre code { background: none; padding: 0 }
+.chip { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; vertical-align: 2px; margin-right: 6px; white-space: nowrap }
+.chip.measured { background: var(--blue-soft); color: var(--blue) }
+.chip.target { background: transparent; color: var(--orange); border: 1.5px dashed var(--orange) }
+.chip.open { background: var(--orange-soft); color: var(--orange) }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; color: var(--muted); margin-top: 6px }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin: 0 0 16px }
+.box > :last-child { margin-bottom: 0 }
+.box .label { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin: 0 0 8px }
+.box.evidence .label { color: var(--blue) }
+.box.plain .label { color: var(--orange) }
+.seen { font-size: 14px; color: var(--muted); margin-top: 18px }
+.seen a { white-space: nowrap }
+dl.terms { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr); gap: 10px 20px; margin: 0 }
+dl.terms dt { font-weight: 600; color: var(--ink) } dl.terms dd { margin: 0 }
+.crit { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; margin: 0 0 10px }
+.crit b { font: 600 14px/1.65 var(--mono); color: var(--blue) }
+.passes { display: grid; gap: 12px; margin: 0 0 16px }
+.pass { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px }
+.pass .n { font: 600 28px/1.1 var(--serif); color: var(--orange) } .pass .n small { display: block; font: 500 13px/1.4 var(--sans); color: var(--muted) }
+.pass p { margin: 0 }
+details.mtoc { display: none }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 28px 72px }
+  nav.toc { display: none }
+  details.mtoc { display: block; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px }
+  details.mtoc summary { cursor: pointer; font-weight: 600; color: var(--ink) }
+  details.mtoc a { display: block; padding: 4px 0; text-decoration: none }
+  h1 { font-size: 36px } h2 { font-size: 26px }
+  dl.terms { grid-template-columns: minmax(0, 1fr) } dl.terms dd { margin-bottom: 8px }
+  .pass { grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+</style><title>The graph neural networks</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/" aria-current="page" style="font-weight:600;color:inherit">The graph neural networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
+<section id="gnnhow">
+<h2>How the GNN works, what it records, and how it tries to improve</h2>
+<h3>How it works</h3>
+<ol>
+<li><strong>It reads.</strong> Each node starts as its own words, hashed to 512 numbers.</li>
+<li><strong>It listens.</strong> GraphSAGE layers let each node hear its neighbours, relation by relation. After that a node's numbers say something about what surrounds it.</li>
+<li><strong>It ranks.</strong> A scorer ranks every requirement for a decision that has no owner.</li>
+<li><strong>It asks.</strong> Below 70% sure it abstains. Above that, its answer goes out as a question for a person or an exact check. It is never a verdict.</li>
+</ol>
+<p>It never reads breaks, tests or chains. Those hold the answer, and new code would not have them. Two ways that answer leaked in were measured and closed before any score here was taken. Whole methods are held out when it is tested, so each score is on code it has not seen.</p>
+<h3>What it records</h3>
+<ul>
+<li><strong>Its score beside the plain rules,</strong> on each pass run with <code>--gnn</code> (<code>stats.jsonl</code>): GNN 0.76 over four seeds (0.74 to 0.79), the best plain rule 0.67, words 0.50, random 0.19, the same method 0.13, in mean reciprocal rank, where 1.0 is always ranked first. 3 of the shop feature's 7 passes ran it.</li>
+<li><strong>Each job against the best plain rule</strong> (<code>kg/gnn_tasks.jsonl</code>): who owns new code, which tests catch a break, which steps carry a requirement, which breaks are the same program. <a href="#gnn">The results</a>.</li>
+<li><strong>The shape of what it reads:</strong> 562 nodes, 1,570 links, 553 of them owner links, 41 methods, and how those links pile up: 3 requirements hold 56% of them, and 8 hold 80%.</li>
+<li><strong>Breaks ranked</strong> (<code>kg/survivor_rank.jsonl</code>): a learned order finds 50% of the survivors in the first fifth of a run, on average over ten seeds, against 31% for the plain rule and 21% for random. One seed flatters: this one ranged from 35% to 64%.</li>
+<li><strong>Its curve</strong> (<code>gnn_curve</code>): 0.48 with a tenth of the links, 0.77 with all of them.</li>
+<li><strong>How sure it was:</strong> at 70% sure or more it was right 92% of the time, on about 40% of new code (25% to 58%), over four seeds.</li>
+<li><strong>Every tune</strong> (<code>gnn_tune.jsonl</code>): each variant's score, and what was kept.</li>
+</ul>
+<h3>How it tries to improve</h3>
+<p>Its lead over the plain rules is itself a stat. On the shop feature that lead fell from 0.23 to 0.15 to 0.12 as more tests arrived, and the telemetry reports it as worsening and names reshaping the graph as a next job, beside writing tests. A tune is due after 5 passes without one anyway. A standing tick or a person then runs it: <code>graph_gnn.py tune &lt;graph&gt;</code>. <a href="#tuner">A tune</a> redraws what the GNN reads, with each relation left out and each derived link added. A change is kept only if it wins by 0.02 on the tuning seeds and again on a seed it was not chosen on.</p>
+<div class="box evidence"><p class="label">So far</p>
+<p><span class="chip measured">Measured</span> <strong>2 tunes, 14 variants, nothing kept.</strong> The best reached 0.750 against the full graph's 0.737, which is short of the bar. It attempts to improve itself, and the attempt has not paid yet.</p>
+<p><span class="chip open">Open</span> A project's run plan records whether each learned job wins there, and so far only 1 of its 7 switches reaches what a pass runs.</p></div>
+</section>
+<section id="gnn">
+<h2>The GNN: who owns new code?</h2>
+<p>When someone adds code, the loop needs to know which requirement it belongs to. The GNN (a graph neural network, a learning model that reads the graph) suggests an answer. It looks at what is already linked around that code and ranks the requirements from most to least likely owner.</p>
+<h3>How it was tested fairly</h3>
+<p>It was trained on part of the shop feature’s graph, with whole methods hidden from it. Then it was asked to rank owners for the hidden methods, code it had never seen. It was compared against simple rankers that do not learn, such as “the requirements already linked to this method” or “the requirement whose words overlap the code’s names most”. It is only allowed to make suggestions if it beats them.</p>
+<h3>What the numbers mean</h3>
+<p><strong>MRR</strong> (mean reciprocal rank) scores a ranking: the right owner ranked first scores 1, second scores ½, third ⅓, and so on, averaged over every test case. An MRR of 0.75 means the right owner is usually first, sometimes second.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> On the shop feature, with whole methods held out, measured three ways: a separate check on the pass 5 graph gave <strong>MRR 0.75</strong> against <strong>0.66</strong> for the best ranker that does not learn, with the right owner in its top three <strong>90%</strong> of the time; the loop’s own check inside pass 6 gave <strong>0.79</strong> against <strong>0.67</strong>; and the fullness curve on the pass 5 graph, two seeds, every claim seen, gave <strong>0.77</strong> against <strong>0.67</strong>. The check inside pass 5 itself read 0.63, before the strongest plain ranker was part of that check. Runs differ by about a tenth, so a single number is never the whole story.</p>
+<p><span class="chip measured">Measured</span> It only wins on a large enough graph that is about half claimed: see <a href="../manual/#seed">Seed it first, then it flies</a>.</p>
+<p><span class="chip measured">Measured</span> When the GNN said it was at least 70% sure, it was right <strong>92%</strong> of the time, over four seeds. It was that sure for about 40% of the new code, from 25% to 58% by seed. For the rest it says “not sure” and asks. (Measured again on 30 October on the grown graph; on an earlier graph it was 94% on about half.)</p></div>
+<p>Its suggestions are always questions for a person, never verdicts. One lesson from building it: the first version did worse than the simple rankers, because the links it was asked to predict were also links it could read. Separating the two fixed it.</p>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-3">slide 3</a>, <a href="../../harness/deck/#slide-15">slide 15</a>.</p>
+</section>
+<section id="tuner">
+<h2>Shaping the graph for the GNN</h2>
+<p>The GNN learns from the graph’s links, and not every kind of link helps it. A tuning pass tries leaving out one kind of link at a time (for example the link from every branch to the one shared “space” node, which ties everything to everything) and measures the GNN again on code it never saw. A change is kept only if it helps on the tuning runs <em>and</em> again on a separate run it was not chosen on, so that a lucky result is not mistaken for a real one. The kept choice is written beside the graph, and the GNN reads it from then on.</p>
+<p>The stats decide when to tune: when the GNN’s lead over the simple rankers stops growing, or every five passes otherwise (<a href="../manual/#choose">how the stats choose</a>).</p>
+<div class="box evidence"><p class="label">The first tune, on the shop graph</p>
+<p><span class="chip measured">Measured</span> The full graph: <strong>MRR 0.737</strong> (0.747 and 0.726 on two runs, so the run-to-run noise alone is about 0.02). Six variants were tried. None beat the full graph by the required 0.02, so <strong>nothing was changed</strong>. The best, leaving out the use-case structure links, gained 0.012; leaving out the shared “space” node gained 0.009.</p>
+<p><span class="chip measured">Measured</span> The links the GNN relies on most: “binds requirement” (leaving it out costs 0.016) and “is at”, which ties a branch to its method (costs 0.012).</p></div>
+<div class="box evidence"><p class="label">The second tune: adding links, three runs each</p>
+<p><span class="chip measured">Measured</span> Adding links the graph lacks did not help beyond the noise: linking the methods of one class <strong>+0.005</strong>, linking requirements one step carries together <strong>+0.003</strong>. Leaving out the use-case structure links was the only change never worse on any run (<strong>+0.013</strong> on average), still under the 0.02 bar. <strong>Nothing was changed.</strong></p>
+<p>What that says: on this graph the GNN already gets what the structure can give it. The next gains are more likely from more graphs to learn from and better descriptions of each node than from reshaping this one.</p></div>
+</section>
+<p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: a reference manual - a sticky contents rail beside one reading column; every claim from the slides has its own anchored section */
+:root {
+  --paper: #F4F5F1; --card: #FCFCFA; --ink: #14202B; --body: #36424F; --muted: #5A6571; --rule: #DADCD4;
+  --blue: #2A62A0; --blue-soft: #DCE6F2; --orange: #A3440E; --orange-soft: #F2E0D2; --code: #E9EAE3;
+  --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', Arial, sans-serif; --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--body); font: 17px/1.65 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 14px; line-height: 1.45; }
+nav.toc p { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+nav.toc p:first-child { margin-top: 0 }
+nav.toc a { display: block; color: var(--body); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid transparent; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); border-left-color: var(--blue); outline: none }
+main { min-width: 0; max-width: 700px; }
+header.top { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin: 0 0 10px; }
+h1 { font: 600 46px/1.1 var(--serif); color: var(--ink); margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 600 30px/1.2 var(--serif); color: var(--ink); margin: 0 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.35 var(--sans); color: var(--ink); margin: 26px 0 6px; }
+.lede { font-size: 20px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
+section { padding-top: 44px; scroll-margin-top: 16px; }
+section + section { border-top: 1px solid var(--rule); margin-top: 44px; }
+section.raw { background: var(--card); border: 2px solid var(--blue); border-radius: 14px; padding: 28px 26px 22px; margin-top: 32px; }
+section.raw h2 { font-size: 34px }
+.part { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 64px 0 -20px; }
+p { margin: 0 0 14px } ul, ol { margin: 0 0 14px; padding-left: 22px } li { margin: 4px 0 }
+strong { color: var(--ink); font-weight: 600 }
+a { color: var(--blue) } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+code { font: 14px/1.5 var(--mono); background: var(--code); padding: 1px 5px; border-radius: 4px; color: var(--ink); overflow-wrap: anywhere }
+pre { font: 14px/1.6 var(--mono); background: var(--code); color: var(--ink); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px }
+pre code { background: none; padding: 0 }
+.chip { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; vertical-align: 2px; margin-right: 6px; white-space: nowrap }
+.chip.measured { background: var(--blue-soft); color: var(--blue) }
+.chip.target { background: transparent; color: var(--orange); border: 1.5px dashed var(--orange) }
+.chip.open { background: var(--orange-soft); color: var(--orange) }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; color: var(--muted); margin-top: 6px }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin: 0 0 16px }
+.box > :last-child { margin-bottom: 0 }
+.box .label { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin: 0 0 8px }
+.box.evidence .label { color: var(--blue) }
+.box.plain .label { color: var(--orange) }
+.seen { font-size: 14px; color: var(--muted); margin-top: 18px }
+.seen a { white-space: nowrap }
+dl.terms { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr); gap: 10px 20px; margin: 0 }
+dl.terms dt { font-weight: 600; color: var(--ink) } dl.terms dd { margin: 0 }
+.crit { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; margin: 0 0 10px }
+.crit b { font: 600 14px/1.65 var(--mono); color: var(--blue) }
+.passes { display: grid; gap: 12px; margin: 0 0 16px }
+.pass { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px }
+.pass .n { font: 600 28px/1.1 var(--serif); color: var(--orange) } .pass .n small { display: block; font: 500 13px/1.4 var(--sans); color: var(--muted) }
+.pass p { margin: 0 }
+details.mtoc { display: none }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 28px 72px }
+  nav.toc { display: none }
+  details.mtoc { display: block; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px }
+  details.mtoc summary { cursor: pointer; font-weight: 600; color: var(--ink) }
+  details.mtoc a { display: block; padding: 4px 0; text-decoration: none }
+  h1 { font-size: 36px } h2 { font-size: 26px }
+  dl.terms { grid-template-columns: minmax(0, 1fr) } dl.terms dd { margin-bottom: 8px }
+  .pass { grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+</style><title>Self-improvement</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../self-improvement/" aria-current="page" style="font-weight:600;color:inherit">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
+<section id="selfimprove">
+<h2>Self-improvement, on by default</h2>
+<p>The tool tests itself, and that is on unless you turn it off. It happens at two sizes.</p>
+<p><strong>Every pass.</strong> A pass writes one row of stats about itself to the morph log, checks those stats against the tool's own requirements for improving, and prints what to improve next. Nothing about your code changes.</p>
+<p><strong>The standing tick.</strong> A fresh agent with no memory takes one item, measures the same stat before and after the change, and records whether it was worth it. Both ship in this kit, with the self-improving qualities we built for our ARC3 harness. Nothing starts a tick for you: <code>TICK.md</code> is its runbook, and you schedule it.</p>
+<h3>Turning it off</h3>
+<p>Run with <code>--no-self-improve</code>, or put <code>self_improve: false</code> in the model's <code>loop:</code> block. The pass then records no row and prints no picks. There may be some token saving, but on a pass it is small; the larger spend is the tick, which only runs if you schedule it, and stops when you stop scheduling it or create <code>.loop_tick.STOP</code> beside the tools.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>A pass:</strong> 44 stats in a row, about a third of a second to collect them, three printed lines for the agent to read. On the kit's Python example, a clean install, with it off a pass wrote no row and printed 295 fewer characters.</p>
+<p><span class="chip measured">Measured</span> <strong>A tick:</strong> the app counted 197,134 tokens for the first tick and 291,042 for the second, over 9 and 22 minutes.</p></div>
+<h3>One shared graph, not networked in this version</h3>
+<p>Ideally everyone working on a project shares one graph, because it also works as a retrieval store (retrieval-augmented generation, RAG): an agent looks up what is already proven instead of re-reading the files to work it out again. We share ours across the team that way to save tokens. This version is not networked, and each checkout keeps its own graph; you could add sharing in whatever way suits your network.</p>
+<div class="box evidence"><p class="label">Where this number comes from</p>
+<p><span class="chip measured">Measured</span> To learn who owns a method, what it must do and which tests catch it, the graph's rows for that method come to a median of <strong>775 characters</strong> across 39 methods of the shop feature. The files holding the same facts come to <strong>167,665 characters</strong>: the model, the source and the tests. That is <strong>216 times</strong> less to read. It is the size of what is read. No agent has been timed using it yet, so it is not a token saving until one has.</p></div>
+<h3>What it has found so far</h3>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> <strong>19</strong> ways a check could pass for the wrong reason, found by fresh reviewers; 17 fixed, each with a planted mistake a selftest must catch (see <a href="../manual/#reviewers">reviewers</a>).</p>
+<p><span class="chip measured">Measured</span> <strong>11 stats</strong> were recorded with nothing reading them. The audit first said 6, and that was itself a bug: it counted test fixtures and the recorder as readers. Now 0: each stat triggers something, or has a reader with a date.</p>
+<p><span class="chip measured">Measured</span> <strong>32 requirements</strong> on its own stats, 2 records banked for a learner that does not exist yet, and 4 triggers firing now. Each trigger that fires is a work item. It was 12 until a tick found that 8 of them fired on every pass whatever happened.</p>
+<p><span class="chip measured">Measured</span> <strong>9 faults</strong> its first round of on against off found in itself: 5 in the harness, 4 in the tool, all fixed.</p>
+<p><span class="chip measured">Measured</span> <strong>Its optional parts:</strong> the run plan marks 1 of 7 on for the shop feature and 2 of 7 on for its own code, each on that project's own evidence at one seed, and three of those verdicts flip with the seed alone: a learned part is marked on only if it beats the plain rule by more than 0.02. <strong>Only 1 of those 7 switches reaches what a pass runs so far.</strong> Its own tick found that the other 6 are recorded and read by nothing that changes a pass, so wiring them is the next piece of work.</p>
+<p><span class="chip measured">Measured</span> <strong>58%</strong> of the breaks of its own code are caught, 885 of 1,532, on its one self pass. The tool is less tested than the feature it tests.</p>
+<p><span class="chip open">Open</span> <strong>0 of the 20</strong> measured outcomes its improvement learner needs, so rules choose the work for now, not a model. These numbers show what it has found, not yet how fast it gets better.</p></div>
+<h3>The loop, in pseudo C++</h3>
+<p>The toolkit is written in Python. This is the same logic for a C++ reader; the lower-case names are the real ones in the code.</p>
+<pre><code>// One pass. Self-improvement is on by default.
+Verdict run(Model&amp; m, bool selfImprove = true) {
+  Breaks  b = Mutate(m.code);       // one compile
+  Results r = RunEachAlone(b, m.tests);
+  Graph   g = KnowledgeGraph(m, r);
+  Holes   h = Criteria(g);          // 17 checks
+
+  if (self_improve_on(m, selfImprove)) {
+    Row row = PassStats(m).collect();  // 44 stats
+    MorphLog(m).add(row);
+    auto fired = improvement::fires(rules, log);
+    Print(NextImprovement(log, fired).picks());
+  }
+
+  return h.ours.empty() ? HOLDS : OPEN;
+}
+
+// One tick. A fresh agent, one item, no memory.
+void Tick() {
+  Start s = loop_tick::start();     // the lock
+  if (s.stopped || s.busy || s.idle) return;
+  if (s.epochStarts) Brainstorm();  // every 12
+  RunSelftests();                   // red = item
+  telemetry_audit();                // unread = item
+  Item i = Choose(improvement::check(), board);
+  Stat before = i.stat.Measure();
+  i.Do();                           // one change
+  Stat after = i.stat.Measure();
+  if (s.epochEnds) {
+    run_plan::decide();             // parts on or off
+    improvement::graph();           // did it work?
+  }
+  loop_tick::finish(i, before, after, worth);
+}</code></pre>
+<p>Three ticks in a row worth "no" and the tick sleeps until something it watches changes, so an idle loop costs almost nothing. The improvement graph is <a href="#recursive">the same shape one level up</a>: stats are its code, triggers its requirements, ticks its tests.</p>
+</section>
+<section id="recursive">
+<h2>The loop on its own improvement</h2>
+<p>The loop records a great deal about itself: every pass leaves fifty numbers, and the learned parts leave evidence of when they help. Recording a number is only worth it if something reads it and acts. On 29 October an audit found <strong>28 numbers that nothing read</strong>, and many more that were only printed.</p>
+<p>So the improvement of the loop now has requirements of its own, written the way the product's are. Each number has a requirement saying <strong>what pattern in it should trigger something, what that is, and why the number is kept</strong>: a test that catches nothing for two passes is a speed item; an excuse for a harmless break that lapses is a hole; the graph not growing for three passes means the model is not being seeded. A number kept for a learner that does not exist yet must name that learner and a date. Past the date, unread, it fails.</p>
+<h3>Three levels, one graph</h3>
+<ul>
+<li><strong>Level 1, the product.</strong> The loop holds the code to the product's requirements.</li>
+<li><strong>Level 2, the improvement.</strong> The loop holds itself to its improvement requirements, with the same kind of closure rules: every number covered, every trigger that fires acted on, every action naming the number it meant to move and its result measured, and an action that never moves its number retired.</li>
+<li><strong>Level 3 is level 2 again.</strong> How well the improvement graph is doing (numbers covered, triggers acted on, actions that worked) is itself written as numbers with requirements, so they sit in the same graph. The tower closes on itself.</li>
+</ul>
+<p>The same learning applies one level up: once enough actions have measured results, a model can learn which kind of action moves which number, and it is switched on only where it beats the plain rule, like everything else.</p>
+<div class="box evidence"><p class="label">Where these numbers come from</p>
+<p><span class="chip measured">Measured</span> The audit on 29 October: 28 numbers read by nothing at first; after giving each a reader or a trigger, <strong>none</strong>. 19 now drive a decision in code and 25 are covered by a trigger.</p>
+<p><span class="chip measured">Measured</span> The first run of the triggers fired 12: among them, 5 tests in the tool's own suite that catch no break at all, 8 of the who/what/why questions never asked on each model, and one requirement whose breaks were all caught last pass and are not now.</p>
+<p><span class="chip open">Open</span> No action has a measured result yet; the improvement graph becomes learnable at 20.</p></div>
+</section>
+<p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>
