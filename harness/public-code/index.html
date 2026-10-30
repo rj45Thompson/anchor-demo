@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: a reference manual - a sticky contents rail beside one reading column; every claim from the slides has its own anchored section */
+:root {
+  --paper: #F4F5F1; --card: #FCFCFA; --ink: #14202B; --body: #36424F; --muted: #5A6571; --rule: #DADCD4;
+  --blue: #2A62A0; --blue-soft: #DCE6F2; --orange: #A3440E; --orange-soft: #F2E0D2; --code: #E9EAE3;
+  --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', Arial, sans-serif; --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0F171E; --card: #16212B; --ink: #EDF1F4; --body: #C2CCD5; --muted: #94A2AF; --rule: #283744;
+  --blue: #8ABAEA; --blue-soft: #1B2C3D; --orange: #F29A5F; --orange-soft: #36271C; --code: #1B2631; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--body); font: 17px/1.65 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 14px; line-height: 1.45; }
+nav.toc p { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+nav.toc p:first-child { margin-top: 0 }
+nav.toc a { display: block; color: var(--body); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid transparent; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--ink); border-left-color: var(--blue); outline: none }
+main { min-width: 0; max-width: 700px; }
+header.top { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin: 0 0 10px; }
+h1 { font: 600 46px/1.1 var(--serif); color: var(--ink); margin: 0 0 16px; text-wrap: balance; }
+h2 { font: 600 30px/1.2 var(--serif); color: var(--ink); margin: 0 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.35 var(--sans); color: var(--ink); margin: 26px 0 6px; }
+.lede { font-size: 20px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
+section { padding-top: 44px; scroll-margin-top: 16px; }
+section + section { border-top: 1px solid var(--rule); margin-top: 44px; }
+section.raw { background: var(--card); border: 2px solid var(--blue); border-radius: 14px; padding: 28px 26px 22px; margin-top: 32px; }
+section.raw h2 { font-size: 34px }
+.part { font: 600 13px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 64px 0 -20px; }
+p { margin: 0 0 14px } ul, ol { margin: 0 0 14px; padding-left: 22px } li { margin: 4px 0 }
+strong { color: var(--ink); font-weight: 600 }
+a { color: var(--blue) } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+code { font: 14px/1.5 var(--mono); background: var(--code); padding: 1px 5px; border-radius: 4px; color: var(--ink); overflow-wrap: anywhere }
+pre { font: 14px/1.6 var(--mono); background: var(--code); color: var(--ink); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px }
+pre code { background: none; padding: 0 }
+.chip { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; vertical-align: 2px; margin-right: 6px; white-space: nowrap }
+.chip.measured { background: var(--blue-soft); color: var(--blue) }
+.chip.target { background: transparent; color: var(--orange); border: 1.5px dashed var(--orange) }
+.chip.open { background: var(--orange-soft); color: var(--orange) }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; color: var(--muted); margin-top: 6px }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin: 0 0 16px }
+.box > :last-child { margin-bottom: 0 }
+.box .label { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin: 0 0 8px }
+.box.evidence .label { color: var(--blue) }
+.box.plain .label { color: var(--orange) }
+.seen { font-size: 14px; color: var(--muted); margin-top: 18px }
+.seen a { white-space: nowrap }
+dl.terms { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr); gap: 10px 20px; margin: 0 }
+dl.terms dt { font-weight: 600; color: var(--ink) } dl.terms dd { margin: 0 }
+.crit { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; margin: 0 0 10px }
+.crit b { font: 600 14px/1.65 var(--mono); color: var(--blue) }
+.passes { display: grid; gap: 12px; margin: 0 0 16px }
+.pass { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px }
+.pass .n { font: 600 28px/1.1 var(--serif); color: var(--orange) } .pass .n small { display: block; font: 500 13px/1.4 var(--sans); color: var(--muted) }
+.pass p { margin: 0 }
+details.mtoc { display: none }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 28px 72px }
+  nav.toc { display: none }
+  details.mtoc { display: block; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px }
+  details.mtoc summary { cursor: pointer; font-weight: 600; color: var(--ink) }
+  details.mtoc a { display: block; padding: 4px 0; text-decoration: none }
+  h1 { font-size: 36px } h2 { font-size: 26px }
+  dl.terms { grid-template-columns: minmax(0, 1fr) } dl.terms dd { margin-bottom: 8px }
+  .pass { grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+</style><title>Code you can read yourself</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../public-code/" aria-current="page" style="font-weight:600;color:inherit">Code you can read yourself</a><a href="../gnn-on-itself/">The tool on its own networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
+<section id="publiccode">
+<h2>On code you can read for yourself</h2>
+<p>Three trials on 30 October 2026, on code outside our own project: two parts of Unreal Engine's own C# and the scoring rules of a shipped open-source game. Every number below was measured on these runs, and every defect was reproduced by running it. No test and no product code was written for any target: only the requirements model, and <code>/// CHECKS:</code> comments in a scratch copy of the tests. Findings were proven with throwaway calls that are not part of any result.</p>
+<h3>What was tested</h3>
+<ul>
+<li><strong>Unreal Engine 5.7, <code>EpicGames.Core/SemVer.cs</code>.</strong> Requirements: the public Semantic Versioning 2.0.0 spec, every numbered rule either mapped or excluded with a reason. Tests: <code>EpicGames.Core.Tests</code>, 2 of them on this class.</li>
+<li><strong>Unreal Engine 5.7, <code>EpicGames.Core/JsonObject.cs</code>.</strong> Requirements: the class's own doc comments, Microsoft's published <code>Equals</code> and <code>GetHashCode</code> contract, and RFC 8259. Tests: 43 on this class. 37 C# files under the engine's <code>Source/Programs</code> name this class.</li>
+<li><strong>osu!, a shipped rhythm game (ppy/osu, MIT, commit 845336e), <code>ScoreProcessor.cs</code> and <code>HitResult.cs</code>.</strong> Requirements: their own doc comments. Tests: the 151 test cases in <code>osu.Game.Tests/Rulesets/Scoring</code>. The project has many more, which this pass did not run per break: see below.</li>
+</ul>
+<p>Unreal's source is available to anyone with an Unreal licence, not to the general public, so this file gives counts, method names and calls we wrote, and no engine code.</p>
+<h3>The numbers</h3>
+<p>"Live" leaves out breaks that did not compile and breaks whose compiled code was proven identical to the original.</p>
+<p><strong>SemVer</strong>
+- Coverage tool, for comparison: 90% of lines, 85% of branches.
+- 246 breaks made; 236 live; 206 caught (87.3%); 30 got past every test.
+- 14 of those 30 sit on lines the coverage tool marks as covered.
+- 48 of 68 statements held by a test; 18 have a break that gets past.
+- 7 of the 16 requirements taken from the spec have no test about them, including every rule about which strings are valid. Which test is about what was our reading of each test, written before any break ran.</p>
+<p><strong>JsonObject</strong>
+- Coverage tool: 77% of lines, 69% of branches.
+- 582 breaks made; 429 live; 299 caught (69.7%); 130 got past every test.
+- 67 of those 130 sit on lines the coverage tool marks as covered.
+- 176 of 289 statements held by a test; 82 have a break that gets past.
+- 6 questions only the class's owner can answer.</p>
+<p><strong>osu! scoring</strong>
+- Coverage tool, from those 151 tests: 72% of lines, 78% of branches.
+- 563 breaks made; 536 live; 286 caught (53.4%); 250 got past those 151 tests.
+- 145 of those 250 sit on lines the coverage tool marks as covered.
+- 81 of 191 statements held by those tests; 110 have a break that gets past.
+- Read 53.4% as what those three test files hold, and as low for the game as a whole. We applied 7 of the surviving breaks by hand and ran the rest of <code>osu.Game.Tests</code>: <code>TestFailScore</code>, <code>TestResetFromReplayFrame</code> and <code>AccuracyRankAndTotalScoreOfLazerScorePreserved</code> catch some of them. We could not finish that project on this machine: its test host crashed on the clean copy and the broken one, at different points, with and without the visual tests, so what the rest of it would catch is unknown.
+- This pass ran before property bodies were walked, so 5 statements in property bodies got no break.</p>
+<h3>Checking the tool's verdicts without the tool</h3>
+<p>We applied breaks the tool said no test notices, by hand, to clean copies, and ran the tests ourselves.</p>
+<ul>
+<li><strong>SemVer:</strong> 6 breaks at once (including <code>CompareTo</code> always answering "equal" and <code>TryParse</code> no longer testing the match): all 90 tests that run still pass, 1 is skipped. No other test project names the class.</li>
+<li><strong>JsonObject:</strong> 8 breaks, each alone, against both test projects that name the class. 7 pass everywhere: <code>RemoveField</code> removes nothing, <code>Equals</code> answers true for anything, <code>GetHashCode</code> is always zero, the file reader stops skipping a byte order mark, the file reader stops skipping comments, <code>Parse</code> refuses trailing commas, a missing double field answers true.</li>
+<li><strong>The 8th is the tests' credit.</strong> JSON <code>false</code> reading as <code>true</code> passes the class's own project, but <code>UnrealBuildTool.Tests</code> catches it. We had first read that as uncaught, and running the second project corrected us.</li>
+<li>8 of <code>UnrealBuildTool.Tests</code>' 116 tests fail on the clean copy in our setup, so they could catch nothing here.</li>
+</ul>
+<h3>What it found</h3>
+<p>Each of these fails when run, on the code as shipped.</p>
+<p><strong>SemVer against the spec</strong>
+- <code>Compare</code> throws <code>ArgumentOutOfRangeException</code> on valid versions, including the spec's own example compared with itself: <code>v = SemVer.Parse("1.0.0-x-y-z.--"); v.CompareTo(v);</code>. Any pre-release ending in a hyphen does the same.
+- A hyphen is treated as a separator, but the spec separates identifiers only at dots. <code>1.0.0-alpha-10</code> sorts above <code>1.0.0-alpha-9</code> (the spec says below). <code>1.0.0-2</code> sorts above <code>1.0.0-1-2</code> (below).
+- <code>1.0.0-a.b</code> and <code>1.0.0-a-b</code> compare as equal while <code>Equals</code> says they differ.
+- It accepts strings the spec rules out: <code>"1.0.0\n"</code>, and non-ASCII digits such as an Arabic-Indic zero in <code>1٠.0.0</code>. Both come from .NET's meaning of <code>$</code> and <code>\d</code> in the spec's regular expression.
+- <strong>Reach:</strong> no other C# file under the install's <code>Source/Programs</code> or <code>Plugins</code> names this class, so nothing in that tree is hurt today.</p>
+<p><strong>JsonObject against Microsoft's contract</strong>
+- <code>Equals</code> throws <code>NullReferenceException</code> on any object with a null field, even <code>x.Equals(x)</code>. The contract says it must not throw, and that <code>x.Equals(x)</code> is true.
+- Two objects that compare equal have different hash codes, which the contract forbids. A <code>HashSet</code> of two equal objects holds 2. We found no <code>HashSet&lt;JsonObject&gt;</code> or <code>Dictionary&lt;JsonObject, ...&gt;</code> in the engine's C#.</p>
+<p><strong>osu! against its doc comments</strong>
+- <code>TotalScoreWithoutMods</code> reads 1,000,000 right after <code>ApplyBeatmap</code>, while <code>TotalScore</code> reads 0, and <code>PopulateScore</code> before the first hit copies that 1,000,000 into the score. The field's doc says "The total number of points awarded for the score without including mod multipliers", and <code>Reset</code>'s doc says "Resets this ScoreProcessor to a default state", but <code>Reset</code> never clears it. We did not trace what the game does with the value afterwards.
+- After a second <code>ApplyBeatmap</code> on one processor, <code>MinimumAccuracy</code> reads 1 before any hit. We did not check whether the game ever applies a beatmap twice.</p>
+<p><strong>JsonObject: the owner's questions, not defects we can call</strong>
+- <code>Equals</code> answers false for two parses of the same text when it holds an array or an object.
+- A repeated name keeps the last value at the top level and throws one level down. <code>{"A":1,"a":2}</code> silently keeps one field, and throws one level down. RFC 8259 only says duplicates are unpredictable between programs.
+- <code>Read</code> accepts comments and <code>Parse</code> refuses them. A root that is not an object throws <code>InvalidOperationException</code> from <code>Read</code> and <code>JsonException</code> from <code>Parse</code>.
+- <code>{"a":1e999}</code> parses, then <code>ToJsonString</code> throws. <code>{"id":9007199254740993}</code> writes back as <code>...992</code>, which RFC 8259 allows.
+- <code>TryGetIntegerField</code> accepts the string <code>"12"</code>. <code>TryGetEnumField&lt;DayOfWeek&gt;</code> accepts <code>"99"</code>. On a German machine <code>TryGetDoubleField</code> reads the string <code>"1.5"</code> as 15.</p>
+<h3>What it found nothing on</h3>
+<ul>
+<li><strong>SemVer:</strong> 13 valid strings taken from the spec, 15 of the 19 invalid strings we tried, the printed precedence chain, and build metadata were all correct. All 21 breaks of <code>GetField</code> and all 6 of <code>CompareNumericFields</code> were caught.</li>
+<li><strong>JsonObject:</strong> <code>ToSystemJsonObject</code> (8 of 8 caught), <code>ToJsonNode</code> (10 of 10), <code>Read</code> (5 of 5), <code>ContainsField</code> (3 of 3). A 562 KB file with long escaped strings read correctly, and from that we judged the pooled buffer in <code>Read</code> latent. That was wrong, and the control run below proved it: "all breaks of <code>Read</code> caught" did not mean <code>Read</code> was right.</li>
+<li><strong>osu!:</strong> all 41 breaks of the nine <code>HitResult</code> questions the tests ask about (<code>IsHit</code>, <code>IsBonus</code>, <code>AffectsCombo</code> and the like) were caught, and so were all 8 of <code>ApplyBeatmap</code>, all 11 of <code>updateScoreMultiplier</code> and all 5 of <code>GetComboScoreChange</code>. By hand, a reverted hit put the score, combo and accuracy back, and each rank's cutoff gave that rank.</li>
+</ul>
+<h3>Who found what</h3>
+<p>Be accurate about this. The defects above were found by an agent reading the code against each rule while writing the model: the requirements step. The breaks did not find them. The breaks measured how much the tests hold, and showed where no test looks: 9 breaks of <code>JsonObject.Equals</code> got past every test, and that is where the crash was. No graph neural network (GNN) played a part in any finding here.</p>
+<h3>The control run: the loop against careful reading</h3>
+<p>The trials above could not say whether the loop beats reading the code carefully, so we ran that comparison on the two Unreal classes.</p>
+<p>Each class got two agents on the same model with the same brief, in sandboxes of their own holding a copy of the class, its tests and its contract: one with the closed loop and told to use it, one without. A scan of their transcripts found neither had read our findings above. Every claimed defect had to come with a C# program, and our harness compiled and ran each one, so nothing rests on an agent's word: none failed to compile and none hung. Three graders per class then read both reports with the arms' names hidden, beside what the harness printed.</p>
+<p><strong>SemVer</strong>
+- Without the loop: 21.9 minutes, 294,903 tokens. With it: 36.3 minutes, 414,499 tokens.
+- Real faults: the graders counted 4 or 5 distinct ones depending on how they grouped them, the same ones in both arms. No grader found a real fault in only one arm.
+- Questions for the owner: 6 without, 7 with. Wrong claims: none.
+- Better report: tie, tie, and one slightly for the loop, which traced each fault to its cause and line more closely.</p>
+<p><strong>JsonObject</strong>
+- Without the loop: 31.4 minutes, 389,792 tokens. With it: 33.0 minutes, 480,628 tokens.
+- Real faults: 11, 12 or 14 distinct ones depending on the grader, the same ones in both arms. No grader found a real fault in only one arm.
+- Questions for the owner: 17 to 19 without, 23 to 25 with. Wrong claims: none.
+- Better report: tie, tie, and one for the arm without the loop. All three graders found that the arm with the loop called more undecided things defects: 6 to 8 of them against 2 to 4.</p>
+<p><strong>What this says.</strong> On finding defects in a class that has a written contract, the loop added no defect, and it cost more: 1.4 times the tokens and 1.7 times the minutes on SemVer, 1.2 times the tokens on JsonObject. An agent reading carefully, with no tool of ours, found everything the loop arm found. It also found far more than our own first pass above, which spent most of its budget on the tool's bugs.</p>
+<p><strong>What it does not say.</strong> This is one run per class, on one model, so it is a sign and not a measure. It tested finding defects. It did not test how much the tests hold, which is what breaks are for: neither agent was asked for that number, and a reader cannot get it by reading. The loop arm's extra questions rest partly on breaks no test caught, and the graders split on what those are worth.</p>
+<p><strong>Faults the control run found that we had missed</strong>, each proven by the harness on the code as shipped:
+- <code>Read</code> and <code>TryRead</code> parse a file over 128 KiB from a pooled buffer they have already returned. A valid 173 KB file with a very long name came back with other fields silently replaced, while <code>Parse</code> of the same text read it correctly, and a second file made <code>Read</code> throw <code>FormatException</code>.
+- Name matching uses a culture comparer, so names that are different strings can count as one field.
+- <code>RemoveField</code> and <code>AddOrSetFieldValue</code> ignore the empty name, which RFC 8259 allows.
+- <code>NaN</code> and infinity can be set, and then <code>ToJsonString</code> cannot write them. An object parsed 64 levels deep cannot be written either: it reports a cycle that is not there.
+- <code>TryGetEnumField</code> throws on a struct that is not an enum.
+- <code>CreateDeepCopy</code> shares reference values it does not know how to copy, and throws on keys that differ by case and on a multi-dimensional array.</p>
+<h3>What went badly</h3>
+<p>The trial's biggest finding was in our own tool. Real code broke it five ways on the first attempts, and a sixth way on osu!, none of which our own examples had shown:</p>
+<ul>
+<li><strong>It silently skipped code.</strong> Any method with overloads, any operator, any generic method with a <code>where</code> clause and any property body was left out, and the report still read as if the whole file was held. On SemVer it saw 35 of 68 statements, missing the private <code>Compare</code> that does all the comparing. On JsonObject it saw 213 of 288.</li>
+<li>It crashed on read-only files, which is how a Perforce workspace keeps them, on the first run.</li>
+<li>It mistook a nested type's constructor for a method, and stopped.</li>
+<li>One mutant with broken braces stopped the whole run.</li>
+<li>An endless loop in a mutant tested alone hung the run: 11 minutes on one test host before we killed it.</li>
+</ul>
+<p>It also could not read MSTest or xUnit tests' <code>/// CHECKS:</code> lines, only NUnit's, and it took a parameterized test's arguments for part of its name, so it reported named tests as never run. Because that fix came after osu!'s pass, its per-requirement check results are not quoted here. All of these are fixed, each with a planted test. A field's value and an indexer are still not walked, and the report now names them.</p>
+<p>Our earlier figures on one shop feature came through nearly unchanged, because that code has no overloads: 96.5% of 1,097 breaks became 96.4% of 1,104, and 290 of 313 statements became 293 of 317. No existing verdict changed. The 7 new breaks found one real gap.</p>
+<p>The budget did not hold. We set 45 minutes and 150K tokens per trial and spent about 100 minutes and over 260K output tokens, most of it on the tool's own bugs. A full pass took 13 minutes on SemVer, 9 on JsonObject and 74 on osu! (each constructor break rebuilds the game), at low priority on a busy machine. The earlier-budgeted 60 minutes for osu! did not hold either.</p>
+<h3>Re-running it</h3>
+<p>The models are in <code>t7/</code> beside this file. For the Unreal trials, copy <code>EpicGames.Core</code>, <code>EpicGames.Core.Tests</code> and their props files from your own engine to a scratch folder and run <code>closed_loop.py</code> on the model; numbers may differ on another engine version, and these are from 5.7. For osu!, clone ppy/osu at commit 845336e, keep the three test files under <code>osu.Game.Tests/Rulesets/Scoring</code>, and run it the same way.</p>
+</section>
+<p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>

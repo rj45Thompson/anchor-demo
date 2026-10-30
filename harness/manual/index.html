@@ -79,7 +79,7 @@ details.mtoc { display: none }
 <p>The pieces</p>
 <a href="#pass">One pass, end to end</a><a href="#model">The model</a><a href="#breaks">Breaking code on purpose</a><a href="#speed">Why it is fast enough</a><a href="#owner">The right test must notice</a><a href="#equivalents">Breaks that change nothing</a><a href="#claims">Claims and locks</a><a href="#nodegraph">The node graph, and the demo</a><a href="#graph">The knowledge graph</a><a href="#criteria">The 17 checks</a><a href="#modal">Must and may</a><a href="#map">The map finds mistakes</a><a href="#gnnhow">How the GNN works</a><a href="#gnn">The GNN</a><a href="#goalslist">The two lists</a><a href="#gnnself">The tool on its own networks</a><a href="#reviewers">Fresh reviewers</a><a href="#chains">Argument chains</a><a href="#buzzsaw">Buzzsaw testing</a><a href="#questions">Who, what, why: where asked</a><a href="#tuner">Shaping the graph for the GNN</a>
 <p>What was measured</p>
-<a href="#feature">The test subject</a><a href="#morph">Five passes</a><a href="#flatter">One way flatters</a><a href="#self">The tool on itself</a><a href="#public">On public code</a><a href="#selfimprove">Self-improvement, on by default</a><a href="#telemetry">Telemetry</a><a href="#choose">How the stats choose</a><a href="#ab">On against off</a><a href="#matrix">Six kinds of task</a><a href="#learn">What it can learn</a><a href="#recursive">The loop on its own improvement</a><a href="#novelty">How new is it</a>
+<a href="#feature">The test subject</a><a href="#morph">Five passes</a><a href="#flatter">One way flatters</a><a href="#self">The tool on itself</a><a href="#publiccode">Code you can read yourself</a><a href="#public">On public code</a><a href="#selfimprove">Self-improvement, on by default</a><a href="#telemetry">Telemetry</a><a href="#choose">How the stats choose</a><a href="#ab">On against off</a><a href="#matrix">Six kinds of task</a><a href="#learn">What it can learn</a><a href="#recursive">The loop on its own improvement</a><a href="#novelty">How new is it</a>
 <p>Limits and targets</p>
 <a href="#limits">What it is not, yet</a><a href="#targets">The two targets</a>
 <p>Using it</p>
@@ -184,7 +184,7 @@ details.mtoc { display: none }
 <h2>When it fits, and when it does not</h2>
 <p><strong>Use it for larger systems:</strong> code that many changes will touch, where a rule must still be true after the agent’s tenth edit as well as its first, and where you want to know which line exists because of which requirement. It also helps most when agents run for hours, across many context windows.</p>
 <p><strong>Skip it for</strong> a one-off prompt, a quick script, or exploring an idea. The loop costs setup and run time, and it pays that back only when the same requirements are held across many changes. It is also no help with how something looks or feels: visuals, timing and feel still need a person.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-23">slide 23</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>.</p>
 </section>
 
 <section id="thin">
@@ -192,7 +192,7 @@ details.mtoc { display: none }
 <p>The loop can only check what is written in the model. Suppose the model holds three requirements and two tests. The loop may honestly report everything closed, because everything it knows about is checked. But a green report reads as “the work is complete”, when all it proves is that three small things are right. That false confidence is worse than having no report at all.</p>
 <p>How large a model must be before its report means something is only partly known. The first measurements are in <a href="#seed">Seed it first, then it flies</a>. Until there are more, treat a green loop over a small model as “these few things hold”, never as “it is done”.</p>
 <p><span class="chip open">Open</span> How many requirements, tests and graph nodes are “enough” for the whole report is not known yet; for the part that learns there is a first answer.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-23">slide 23</a>, <a href="../deck/#slide-23">slide 23</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>, <a href="../deck/#slide-24">slide 24</a>.</p>
 </section>
 
 <section id="seed">
@@ -217,7 +217,7 @@ details.mtoc { display: none }
 <h3>The smallest seed that grows into the whole loop</h3>
 <p>The loop already grows requirements. It walks each step, asks what the step needs, and every need nobody wrote becomes a new requirement for the owner to settle. On the shop feature, 10 of the 27 requirements were inferred that way, on top of the 17 that cite a written source. So the open question is how small the written set can be and still grow into the full model. A small, well-chosen seed would mean less to write up front, and a structure that is easier to keep consistent.</p>
 <p><span class="chip open">Open</span> The experiment for it: give an agent only the problem story and a few pillar requirements, let it grow the model with the loop, and count how many of the full model’s requirements it arrives at, and at what cost.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-15">slide 15</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-16">slide 16</a>.</p>
 </section>
 
 <section id="how">
@@ -315,7 +315,7 @@ if (wallet.Money &gt;  price)   // a break: paying the exact price now fails</co
 [Test]
 public void Pay_TakesExactlyThePrice() { ... }</code></pre>
 <p>A requirement whose named test misses its own breaks is a hole, even when another test caught them. And a test named as a requirement’s check that catches none of that requirement’s breaks is a hole too, so listing more tests can never make the score look better.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-20">slide 20</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-21">slide 21</a>.</p>
 </section>
 
 <section id="equivalents">
@@ -334,7 +334,7 @@ public void Pay_TakesExactlyThePrice() { ... }</code></pre>
 <h2>Claims and locks</h2>
 <p>A <strong>claim</strong> says “this method belongs to requirement X”. The loop pins each claim to a fingerprint of the method’s statements. If someone adds a line to that method or deletes one, the fingerprint changes and the claim goes stale. A new line can never slip in under an old claim without being looked at.</p>
 <p>The pins are kept in a small file (<code>claims.lock</code>). If that file goes missing, every claim is unpinned until a person pins them again with a reason. A missing lock never quietly re-pins itself; a reviewer found that it used to, and it was fixed.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-9">slide 9</a>, <a href="../deck/#slide-20">slide 20</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-9">slide 9</a>, <a href="../deck/#slide-21">slide 21</a>.</p>
 </section>
 
 <section id="nodegraph">
@@ -411,7 +411,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <p><span class="chip measured">Measured</span> <strong>13 branches</strong> of checked-in code that no requirement owned, on the shop feature.</p>
 <p><span class="chip measured">Measured</span> <strong>On public code:</strong> a public asteroid game's document modelled as 48 requirements. 10 rest on a function's behaviour with no value behind them, and the parse check caught a document row missing a column. Language-neutral parts only, with no breaks, since there is no JavaScript adapter; a thin graph, where a green result means little.</p>
 <p><span class="chip measured">Measured</span> <strong>On the toolkit's own code:</strong> 885 of the 1,532 breaks caught. See <a href="#self">the tool on itself</a>.</p>
-<p><span class="chip open">Open</span> The same run on source a reader can check for themselves is the next trial. There is no C++ adapter, so on C++ it would run the language-neutral parts only.</p></div>
+<p><span class="chip open">Open</span> That trial is done, on C#: see <a href="#publiccode">code you can read yourself</a>. There is no C++ adapter, so on C++ it would run the language-neutral parts only.</p></div>
 </section>
 
 <section id="gnnhow">
@@ -453,7 +453,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <p><span class="chip measured">Measured</span> It only wins on a large enough graph that is about half claimed: see <a href="#seed">Seed it first, then it flies</a>.</p>
 <p><span class="chip measured">Measured</span> When the GNN said it was at least 70% sure, it was right <strong>92%</strong> of the time, over four seeds. It was that sure for about 40% of the new code, from 25% to 58% by seed. For the rest it says “not sure” and asks. (Measured again on 30 October on the grown graph; on an earlier graph it was 94% on about half.)</p></div>
 <p>Its suggestions are always questions for a person, never verdicts. One lesson from building it: the first version did worse than the simple rankers, because the links it was asked to predict were also links it could read. Separating the two fixed it.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-15">slide 15</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-16">slide 16</a>.</p>
 </section>
 
 <section id="goalslist">
@@ -493,7 +493,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 </ul>
 <p><span class="chip open">Open</span> A structured claim on each reasoning step (so a step that says “or” where the code says “and” fails), and the on/off pair rerun with a hidden acceptance test (<a href="#ab">on against off</a>).</p></div>
 <p>Every fix lands with a planted mistake the selftest must catch, the same rule as for <a href="#criteria">the 17 checks</a>.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-20">slide 20</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-21">slide 21</a>.</p>
 </section>
 
 <section id="chains">
@@ -617,7 +617,112 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <p><span class="chip measured">Measured</span> The model passes all 19 rules; its graph holds 2,335 nodes and 6,259 edges; 2 questions stay open for the owner.</p></div>
 <div class="box plain"><p class="label">Two lessons from getting it to run</p>
 <p>The first attempt ran all 1,626 breaks, then crashed while writing the summary, and the hour of runs was lost. The tool now saves every verdict before it builds the summary, and reuses them when the code and tests are unchanged. The second attempt refused to start, correctly, because a tool’s own test was failing while it was being edited. Rule since: never edit a tool while a run is using it.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-20">slide 20</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-21">slide 21</a>.</p>
+</section>
+
+<section id="publiccode">
+<h2>On code you can read for yourself</h2>
+<p>Three trials on 30 October 2026, on code outside our own project: two parts of Unreal Engine's own C# and the scoring rules of a shipped open-source game. Every number below was measured on these runs, and every defect was reproduced by running it. No test and no product code was written for any target: only the requirements model, and <code>/// CHECKS:</code> comments in a scratch copy of the tests. Findings were proven with throwaway calls that are not part of any result.</p>
+<h3>What was tested</h3>
+<ul>
+<li><strong>Unreal Engine 5.7, <code>EpicGames.Core/SemVer.cs</code>.</strong> Requirements: the public Semantic Versioning 2.0.0 spec, every numbered rule either mapped or excluded with a reason. Tests: <code>EpicGames.Core.Tests</code>, 2 of them on this class.</li>
+<li><strong>Unreal Engine 5.7, <code>EpicGames.Core/JsonObject.cs</code>.</strong> Requirements: the class's own doc comments, Microsoft's published <code>Equals</code> and <code>GetHashCode</code> contract, and RFC 8259. Tests: 43 on this class. 37 C# files under the engine's <code>Source/Programs</code> name this class.</li>
+<li><strong>osu!, a shipped rhythm game (ppy/osu, MIT, commit 845336e), <code>ScoreProcessor.cs</code> and <code>HitResult.cs</code>.</strong> Requirements: their own doc comments. Tests: the 151 test cases in <code>osu.Game.Tests/Rulesets/Scoring</code>. The project has many more, which this pass did not run per break: see below.</li>
+</ul>
+<p>Unreal's source is available to anyone with an Unreal licence, not to the general public, so this file gives counts, method names and calls we wrote, and no engine code.</p>
+<h3>The numbers</h3>
+<p>"Live" leaves out breaks that did not compile and breaks whose compiled code was proven identical to the original.</p>
+<p><strong>SemVer</strong>
+- Coverage tool, for comparison: 90% of lines, 85% of branches.
+- 246 breaks made; 236 live; 206 caught (87.3%); 30 got past every test.
+- 14 of those 30 sit on lines the coverage tool marks as covered.
+- 48 of 68 statements held by a test; 18 have a break that gets past.
+- 7 of the 16 requirements taken from the spec have no test about them, including every rule about which strings are valid. Which test is about what was our reading of each test, written before any break ran.</p>
+<p><strong>JsonObject</strong>
+- Coverage tool: 77% of lines, 69% of branches.
+- 582 breaks made; 429 live; 299 caught (69.7%); 130 got past every test.
+- 67 of those 130 sit on lines the coverage tool marks as covered.
+- 176 of 289 statements held by a test; 82 have a break that gets past.
+- 6 questions only the class's owner can answer.</p>
+<p><strong>osu! scoring</strong>
+- Coverage tool, from those 151 tests: 72% of lines, 78% of branches.
+- 563 breaks made; 536 live; 286 caught (53.4%); 250 got past those 151 tests.
+- 145 of those 250 sit on lines the coverage tool marks as covered.
+- 81 of 191 statements held by those tests; 110 have a break that gets past.
+- Read 53.4% as what those three test files hold, and as low for the game as a whole. We applied 7 of the surviving breaks by hand and ran the rest of <code>osu.Game.Tests</code>: <code>TestFailScore</code>, <code>TestResetFromReplayFrame</code> and <code>AccuracyRankAndTotalScoreOfLazerScorePreserved</code> catch some of them. We could not finish that project on this machine: its test host crashed on the clean copy and the broken one, at different points, with and without the visual tests, so what the rest of it would catch is unknown.
+- This pass ran before property bodies were walked, so 5 statements in property bodies got no break.</p>
+<h3>Checking the tool's verdicts without the tool</h3>
+<p>We applied breaks the tool said no test notices, by hand, to clean copies, and ran the tests ourselves.</p>
+<ul>
+<li><strong>SemVer:</strong> 6 breaks at once (including <code>CompareTo</code> always answering "equal" and <code>TryParse</code> no longer testing the match): all 90 tests that run still pass, 1 is skipped. No other test project names the class.</li>
+<li><strong>JsonObject:</strong> 8 breaks, each alone, against both test projects that name the class. 7 pass everywhere: <code>RemoveField</code> removes nothing, <code>Equals</code> answers true for anything, <code>GetHashCode</code> is always zero, the file reader stops skipping a byte order mark, the file reader stops skipping comments, <code>Parse</code> refuses trailing commas, a missing double field answers true.</li>
+<li><strong>The 8th is the tests' credit.</strong> JSON <code>false</code> reading as <code>true</code> passes the class's own project, but <code>UnrealBuildTool.Tests</code> catches it. We had first read that as uncaught, and running the second project corrected us.</li>
+<li>8 of <code>UnrealBuildTool.Tests</code>' 116 tests fail on the clean copy in our setup, so they could catch nothing here.</li>
+</ul>
+<h3>What it found</h3>
+<p>Each of these fails when run, on the code as shipped.</p>
+<p><strong>SemVer against the spec</strong>
+- <code>Compare</code> throws <code>ArgumentOutOfRangeException</code> on valid versions, including the spec's own example compared with itself: <code>v = SemVer.Parse("1.0.0-x-y-z.--"); v.CompareTo(v);</code>. Any pre-release ending in a hyphen does the same.
+- A hyphen is treated as a separator, but the spec separates identifiers only at dots. <code>1.0.0-alpha-10</code> sorts above <code>1.0.0-alpha-9</code> (the spec says below). <code>1.0.0-2</code> sorts above <code>1.0.0-1-2</code> (below).
+- <code>1.0.0-a.b</code> and <code>1.0.0-a-b</code> compare as equal while <code>Equals</code> says they differ.
+- It accepts strings the spec rules out: <code>"1.0.0\n"</code>, and non-ASCII digits such as an Arabic-Indic zero in <code>1٠.0.0</code>. Both come from .NET's meaning of <code>$</code> and <code>\d</code> in the spec's regular expression.
+- <strong>Reach:</strong> no other C# file under the install's <code>Source/Programs</code> or <code>Plugins</code> names this class, so nothing in that tree is hurt today.</p>
+<p><strong>JsonObject against Microsoft's contract</strong>
+- <code>Equals</code> throws <code>NullReferenceException</code> on any object with a null field, even <code>x.Equals(x)</code>. The contract says it must not throw, and that <code>x.Equals(x)</code> is true.
+- Two objects that compare equal have different hash codes, which the contract forbids. A <code>HashSet</code> of two equal objects holds 2. We found no <code>HashSet&lt;JsonObject&gt;</code> or <code>Dictionary&lt;JsonObject, ...&gt;</code> in the engine's C#.</p>
+<p><strong>osu! against its doc comments</strong>
+- <code>TotalScoreWithoutMods</code> reads 1,000,000 right after <code>ApplyBeatmap</code>, while <code>TotalScore</code> reads 0, and <code>PopulateScore</code> before the first hit copies that 1,000,000 into the score. The field's doc says "The total number of points awarded for the score without including mod multipliers", and <code>Reset</code>'s doc says "Resets this ScoreProcessor to a default state", but <code>Reset</code> never clears it. We did not trace what the game does with the value afterwards.
+- After a second <code>ApplyBeatmap</code> on one processor, <code>MinimumAccuracy</code> reads 1 before any hit. We did not check whether the game ever applies a beatmap twice.</p>
+<p><strong>JsonObject: the owner's questions, not defects we can call</strong>
+- <code>Equals</code> answers false for two parses of the same text when it holds an array or an object.
+- A repeated name keeps the last value at the top level and throws one level down. <code>{"A":1,"a":2}</code> silently keeps one field, and throws one level down. RFC 8259 only says duplicates are unpredictable between programs.
+- <code>Read</code> accepts comments and <code>Parse</code> refuses them. A root that is not an object throws <code>InvalidOperationException</code> from <code>Read</code> and <code>JsonException</code> from <code>Parse</code>.
+- <code>{"a":1e999}</code> parses, then <code>ToJsonString</code> throws. <code>{"id":9007199254740993}</code> writes back as <code>...992</code>, which RFC 8259 allows.
+- <code>TryGetIntegerField</code> accepts the string <code>"12"</code>. <code>TryGetEnumField&lt;DayOfWeek&gt;</code> accepts <code>"99"</code>. On a German machine <code>TryGetDoubleField</code> reads the string <code>"1.5"</code> as 15.</p>
+<h3>What it found nothing on</h3>
+<ul>
+<li><strong>SemVer:</strong> 13 valid strings taken from the spec, 15 of the 19 invalid strings we tried, the printed precedence chain, and build metadata were all correct. All 21 breaks of <code>GetField</code> and all 6 of <code>CompareNumericFields</code> were caught.</li>
+<li><strong>JsonObject:</strong> <code>ToSystemJsonObject</code> (8 of 8 caught), <code>ToJsonNode</code> (10 of 10), <code>Read</code> (5 of 5), <code>ContainsField</code> (3 of 3). A 562 KB file with long escaped strings read correctly, and from that we judged the pooled buffer in <code>Read</code> latent. That was wrong, and the control run below proved it: "all breaks of <code>Read</code> caught" did not mean <code>Read</code> was right.</li>
+<li><strong>osu!:</strong> all 41 breaks of the nine <code>HitResult</code> questions the tests ask about (<code>IsHit</code>, <code>IsBonus</code>, <code>AffectsCombo</code> and the like) were caught, and so were all 8 of <code>ApplyBeatmap</code>, all 11 of <code>updateScoreMultiplier</code> and all 5 of <code>GetComboScoreChange</code>. By hand, a reverted hit put the score, combo and accuracy back, and each rank's cutoff gave that rank.</li>
+</ul>
+<h3>Who found what</h3>
+<p>Be accurate about this. The defects above were found by an agent reading the code against each rule while writing the model: the requirements step. The breaks did not find them. The breaks measured how much the tests hold, and showed where no test looks: 9 breaks of <code>JsonObject.Equals</code> got past every test, and that is where the crash was. No graph neural network (GNN) played a part in any finding here.</p>
+<h3>The control run: the loop against careful reading</h3>
+<p>The trials above could not say whether the loop beats reading the code carefully, so we ran that comparison on the two Unreal classes.</p>
+<p>Each class got two agents on the same model with the same brief, in sandboxes of their own holding a copy of the class, its tests and its contract: one with the closed loop and told to use it, one without. A scan of their transcripts found neither had read our findings above. Every claimed defect had to come with a C# program, and our harness compiled and ran each one, so nothing rests on an agent's word: none failed to compile and none hung. Three graders per class then read both reports with the arms' names hidden, beside what the harness printed.</p>
+<p><strong>SemVer</strong>
+- Without the loop: 21.9 minutes, 294,903 tokens. With it: 36.3 minutes, 414,499 tokens.
+- Real faults: the graders counted 4 or 5 distinct ones depending on how they grouped them, the same ones in both arms. No grader found a real fault in only one arm.
+- Questions for the owner: 6 without, 7 with. Wrong claims: none.
+- Better report: tie, tie, and one slightly for the loop, which traced each fault to its cause and line more closely.</p>
+<p><strong>JsonObject</strong>
+- Without the loop: 31.4 minutes, 389,792 tokens. With it: 33.0 minutes, 480,628 tokens.
+- Real faults: 11, 12 or 14 distinct ones depending on the grader, the same ones in both arms. No grader found a real fault in only one arm.
+- Questions for the owner: 17 to 19 without, 23 to 25 with. Wrong claims: none.
+- Better report: tie, tie, and one for the arm without the loop. All three graders found that the arm with the loop called more undecided things defects: 6 to 8 of them against 2 to 4.</p>
+<p><strong>What this says.</strong> On finding defects in a class that has a written contract, the loop added no defect, and it cost more: 1.4 times the tokens and 1.7 times the minutes on SemVer, 1.2 times the tokens on JsonObject. An agent reading carefully, with no tool of ours, found everything the loop arm found. It also found far more than our own first pass above, which spent most of its budget on the tool's bugs.</p>
+<p><strong>What it does not say.</strong> This is one run per class, on one model, so it is a sign and not a measure. It tested finding defects. It did not test how much the tests hold, which is what breaks are for: neither agent was asked for that number, and a reader cannot get it by reading. The loop arm's extra questions rest partly on breaks no test caught, and the graders split on what those are worth.</p>
+<p><strong>Faults the control run found that we had missed</strong>, each proven by the harness on the code as shipped:
+- <code>Read</code> and <code>TryRead</code> parse a file over 128 KiB from a pooled buffer they have already returned. A valid 173 KB file with a very long name came back with other fields silently replaced, while <code>Parse</code> of the same text read it correctly, and a second file made <code>Read</code> throw <code>FormatException</code>.
+- Name matching uses a culture comparer, so names that are different strings can count as one field.
+- <code>RemoveField</code> and <code>AddOrSetFieldValue</code> ignore the empty name, which RFC 8259 allows.
+- <code>NaN</code> and infinity can be set, and then <code>ToJsonString</code> cannot write them. An object parsed 64 levels deep cannot be written either: it reports a cycle that is not there.
+- <code>TryGetEnumField</code> throws on a struct that is not an enum.
+- <code>CreateDeepCopy</code> shares reference values it does not know how to copy, and throws on keys that differ by case and on a multi-dimensional array.</p>
+<h3>What went badly</h3>
+<p>The trial's biggest finding was in our own tool. Real code broke it five ways on the first attempts, and a sixth way on osu!, none of which our own examples had shown:</p>
+<ul>
+<li><strong>It silently skipped code.</strong> Any method with overloads, any operator, any generic method with a <code>where</code> clause and any property body was left out, and the report still read as if the whole file was held. On SemVer it saw 35 of 68 statements, missing the private <code>Compare</code> that does all the comparing. On JsonObject it saw 213 of 288.</li>
+<li>It crashed on read-only files, which is how a Perforce workspace keeps them, on the first run.</li>
+<li>It mistook a nested type's constructor for a method, and stopped.</li>
+<li>One mutant with broken braces stopped the whole run.</li>
+<li>An endless loop in a mutant tested alone hung the run: 11 minutes on one test host before we killed it.</li>
+</ul>
+<p>It also could not read MSTest or xUnit tests' <code>/// CHECKS:</code> lines, only NUnit's, and it took a parameterized test's arguments for part of its name, so it reported named tests as never run. Because that fix came after osu!'s pass, its per-requirement check results are not quoted here. All of these are fixed, each with a planted test. A field's value and an indexer are still not walked, and the report now names them.</p>
+<p>Our earlier figures on one shop feature came through nearly unchanged, because that code has no overloads: 96.5% of 1,097 breaks became 96.4% of 1,104, and 290 of 313 statements became 293 of 317. No existing verdict changed. The 7 new breaks found one real gap.</p>
+<p>The budget did not hold. We set 45 minutes and 150K tokens per trial and spent about 100 minutes and over 260K output tokens, most of it on the tool's own bugs. A full pass took 13 minutes on SemVer, 9 on JsonObject and 74 on osu! (each constructor break rebuilds the game), at low priority on a busy machine. The earlier-budgeted 60 minutes for osu! did not hold either.</p>
+<h3>Re-running it</h3>
+<p>The models are in <code>t7/</code> beside this file. For the Unreal trials, copy <code>EpicGames.Core</code>, <code>EpicGames.Core.Tests</code> and their props files from your own engine to a scratch folder and run <code>closed_loop.py</code> on the model; numbers may differ on another engine version, and these are from 5.7. For osu!, clone ppy/osu at commit 845336e, keep the three test files under <code>osu.Game.Tests/Rulesets/Scoring</code>, and run it the same way.</p>
 </section>
 
 <section id="public">
@@ -706,7 +811,7 @@ void Tick() {
 <dt>Tool</dt><dd>The tool itself: its size, and how much of it its own planted mistakes prove.</dd>
 </dl>
 <p style="margin-top:14px">A pass where the net grew and the open count grew too is progress, not a step back. The list of stats is revisited every pass, and a new one is added whenever a pass shows growth the existing ones miss.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-20">slide 20</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-21">slide 21</a>.</p>
 </section>
 
 <section id="choose">
@@ -743,7 +848,7 @@ void Tick() {
 </ul>
 <p>One pair is one data point, on the kind of task this manual says the loop is not for: small and precisely specified. It still showed two things to fix. The arm started in a model with hundreds of old holes it had not caused, and the report did not separate the holes <em>its change</em> made from those already there. Both are on the board.</p></div>
 <p>The off arm still follows the project’s own working rules (never guess a value, say what was not verified), so the comparison measures the tool, not discipline.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-22">slide 22</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-23">slide 23</a>.</p>
 </section>
 
 <p class="part">Part 4 · Limits and targets</p>
@@ -826,7 +931,7 @@ void Tick() {
 <h2>What it is not, yet</h2>
 <div class="box evidence"><p class="label">The first trial on code anyone can read</p>
 <p><span class="chip measured">Measured</span> <strong>The C# adapter was skipping code without saying so.</strong> On Unreal's own SemVer.cs it saw 35 of 68 statements, including none of the private method that does all the comparing, and on JsonObject.cs 213 of 288. It dropped overloaded methods, operators and generic methods with a <code>where</code> clause, and does not walk property bodies. The report still read as if the whole file was held. The shop feature has no overloads, which is why its numbers never showed it.</p>
-<p><span class="chip open">Open</span> The fixes are being landed, each with a planted case: naming every overload and operator, a report that names what it did not walk, a read-only tree such as a Perforce workspace, a constructor of a nested type, one bad break stopping a whole run, and a break that hangs a test forever. The kit goes public after those land.</p></div>
+<p><span class="chip open">Open</span> All fixed, each with a planted case: naming every overload and operator, a report that names what it did not walk, a read-only tree such as a Perforce workspace, a constructor of a nested type, one bad break stopping a whole run, and a break that hangs a test forever. A field's value and an indexer are still not walked, and the report says so. The shop feature's numbers barely moved: 96.5% of 1,097 became 96.4% of 1,104, and 290 of 313 became 293 of 317.</p></div>
 
 <ul>
 <li><strong>A prototype.</strong> Version 0.1. Its own model still names holes.</li>
@@ -837,7 +942,7 @@ void Tick() {
 <li><strong>Feel is not checked.</strong> Visuals, timing and feel still need a person to look.</li>
 </ul>
 <p>Used where it does not fit, it can be worse than not using it at all.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-23">slide 23</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>.</p>
 </section>
 
 <section id="targets">
@@ -850,7 +955,7 @@ void Tick() {
 <p><span class="chip target">Target</span> On average, up to 90% fewer tokens per closed requirement, because a later step looks up what the graph already holds instead of re-reading and re-deriving it. This number is always being re-evaluated.</p>
 <p><strong>How it will be measured:</strong> the same harness, from each arm’s own usage records (the tokens the model read and wrote), per task.</p>
 <p><span class="chip measured">Measured</span> <strong>The first data point goes the other way:</strong> on one small, precisely specified task, the loop used 58% more tokens for the same correctness (<a href="#ab">details</a>). The target is about larger systems held across many changes, where re-reading and re-deriving is what costs; that has not been measured yet.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-23">slide 23</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>.</p>
 </section>
 
 <p class="part">Part 5 · Using it</p>
@@ -864,7 +969,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <p>Then it runs every selftest in the installed copy, and the whole loop on the example: a small wallet and store in C#, with NUnit tests that each name the requirement they check. The example must <strong>hold</strong>: everything closed except one question that only its owner can answer.</p>
 <div class="box evidence"><p class="label">What a clean install showed</p>
 <p><span class="chip measured">Measured</span> Installing the built kit into an empty folder on 29 October: <strong>18 of 18 selftests passed</strong>, and the loop over the example’s <strong>58 breaks</strong> reported <strong>HOLDS</strong>.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-26">slide 26</a>.</p>
 </section>
 
 <section id="adapters">
@@ -875,7 +980,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <li><strong>Python</strong>: breaks code through its syntax tree; the tests are commands.</li>
 <li><strong>Anything else</strong> (C++, Blueprints): write an adapter that produces one result file in the same format the C# adapter writes: for each requirement, whether its code has the right shape, and for each break, whether a test caught it and which.</li>
 </ul>
-<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-26">slide 26</a>.</p>
 </section>
 
 <section id="harness">
@@ -887,7 +992,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <li><strong>Failure piles</strong>: the kinds of failure you see, and how often.</li>
 <li><strong>A wrong pass</strong>: any check you can make pass for the wrong reason.</li>
 </ul>
-<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-26">slide 26</a>.</p>
 </section>
 
 <section id="glossary">

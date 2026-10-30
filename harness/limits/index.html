@@ -72,12 +72,12 @@ details.mtoc { display: none }
 }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
 </style><title>The limits</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
-<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../gnn-on-itself/">The tool on its own networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/" aria-current="page" style="font-weight:600;color:inherit">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../public-code/">Code you can read yourself</a><a href="../gnn-on-itself/">The tool on its own networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/" aria-current="page" style="font-weight:600;color:inherit">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
 <section id="limits">
 <h2>What it is not, yet</h2>
 <div class="box evidence"><p class="label">The first trial on code anyone can read</p>
 <p><span class="chip measured">Measured</span> <strong>The C# adapter was skipping code without saying so.</strong> On Unreal's own SemVer.cs it saw 35 of 68 statements, including none of the private method that does all the comparing, and on JsonObject.cs 213 of 288. It dropped overloaded methods, operators and generic methods with a <code>where</code> clause, and does not walk property bodies. The report still read as if the whole file was held. The shop feature has no overloads, which is why its numbers never showed it.</p>
-<p><span class="chip open">Open</span> The fixes are being landed, each with a planted case: naming every overload and operator, a report that names what it did not walk, a read-only tree such as a Perforce workspace, a constructor of a nested type, one bad break stopping a whole run, and a break that hangs a test forever. The kit goes public after those land.</p></div>
+<p><span class="chip open">Open</span> All fixed, each with a planted case: naming every overload and operator, a report that names what it did not walk, a read-only tree such as a Perforce workspace, a constructor of a nested type, one bad break stopping a whole run, and a break that hangs a test forever. A field's value and an indexer are still not walked, and the report says so. The shop feature's numbers barely moved: 96.5% of 1,097 became 96.4% of 1,104, and 290 of 313 became 293 of 317.</p></div>
 
 <ul>
 <li><strong>A prototype.</strong> Version 0.1. Its own model still names holes.</li>
@@ -88,7 +88,7 @@ details.mtoc { display: none }
 <li><strong>Feel is not checked.</strong> Visuals, timing and feel still need a person to look.</li>
 </ul>
 <p>Used where it does not fit, it can be worse than not using it at all.</p>
-<p class="seen">On the slides: <a href="../../harness/deck/#slide-23">slide 23</a>.</p>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-24">slide 24</a>.</p>
 </section>
 <section id="targets">
 <h2>The two targets</h2>
@@ -100,6 +100,6 @@ details.mtoc { display: none }
 <p><span class="chip target">Target</span> On average, up to 90% fewer tokens per closed requirement, because a later step looks up what the graph already holds instead of re-reading and re-deriving it. This number is always being re-evaluated.</p>
 <p><strong>How it will be measured:</strong> the same harness, from each arm’s own usage records (the tokens the model read and wrote), per task.</p>
 <p><span class="chip measured">Measured</span> <strong>The first data point goes the other way:</strong> on one small, precisely specified task, the loop used 58% more tokens for the same correctness (<a href="../on-vs-off/#ab">details</a>). The target is about larger systems held across many changes, where re-reading and re-deriving is what costs; that has not been measured yet.</p></div>
-<p class="seen">On the slides: <a href="../../harness/deck/#slide-23">slide 23</a>.</p>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-24">slide 24</a>.</p>
 </section>
 <p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>
