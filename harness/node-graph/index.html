@@ -75,19 +75,19 @@ details.mtoc { display: none }
 <nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../fly/">The fly-through manual</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/" aria-current="page" style="font-weight:600;color:inherit">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../public-code/">Code you can read yourself</a><a href="../gnn-on-itself/">The tool on its own networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a><a href="https://github.com/rj45Thompson/closed-loop-kit">The kit</a></nav>
 <section id="nodegraph">
 <h2>The node graph, and flying through it</h2>
-<p>Everything the loop knows about a feature is one graph: who asked for what, which code does it, every way that code was broken, and which test noticed. The shop feature's graph has 1,714 nodes and 10,024 edges. It is stored as SQLite and N-Triples. <a href="../">The fly-through demo</a> draws that store as it is, with nothing added and nothing left out. The pictures behind the slides are stills from the same page.</p>
+<p>Everything the loop knows about a feature is one graph: who asked for what, which code does it, every way that code was broken, and which test noticed. The shop feature's graph has 1,729 nodes and 10,069 edges. It is stored as SQLite and N-Triples. <a href="../">The fly-through demo</a> draws that store as it is, with nothing added and nothing left out. The pictures behind the slides are stills from the same page.</p>
 <h3>How it is laid out</h3>
 <p>The store has no shape of its own, so the demo gives it one you can read from top to bottom, one ring for each kind of node:</p>
 <ul>
 <li><strong>Why it exists:</strong> 19 sources, 27 requirements (17 written by people, 10 inferred by walking the use cases), 7 owner's questions, 6 use cases and their 32 steps.</li>
 <li><strong>Claude's reasoning:</strong> a chain and its 9 steps, each citing what it stands on.</li>
 <li><strong>What the code does:</strong> 50 methods in a ring, sorted by name, so a class's methods sit together.</li>
-<li><strong>What proves it:</strong> 313 branches, 1,097 breaks and 45 tests. Each branch and each break sits at the angle of the method it belongs to, so a method and everything under it line up.</li>
+<li><strong>What proves it:</strong> 317 branches, 1,104 breaks and 45 tests. Each branch and each break sits at the angle of the method it belongs to, so a method and everything under it line up.</li>
 </ul>
 <h3>How code maps to requirements</h3>
-<p>Two kinds of edge do it. A branch <em>maps to</em> a requirement: 620 of those. A branch <em>is at</em> a method: 313. Together they take you from any decision in the code to who asked for it, and from a requirement to all the code that answers to it. A decision no requirement owns is a hole, and the loop lists it.</p>
+<p>Two kinds of edge do it. A branch <em>maps to</em> a requirement: 625 of those. A branch <em>is at</em> a method: 317. Together they take you from any decision in the code to who asked for it, and from a requirement to all the code that answers to it. A decision no requirement owns is a hole, and the loop lists it.</p>
 <h3>What the red points are</h3>
-<p>The 130 breaks no test caught. Red is what the graph records, not a verdict: 23 of them are proven by compiled code to be the same program, 20 have a written reason, 52 have no verdict yet, and 35 are unexplained, which are the real work. That is what the deck's 96.5% means: 967 caught against those 35, leaving out the other 95. Excusing only the 23 that are proven, it is 90.0%, 967 of 1,074.</p>
+<p>The 130 breaks no test caught. Red is what the graph records, not a verdict: 23 of them are proven by compiled code to be the same program, 20 have a written reason, 52 have no verdict yet, and 35 are unexplained, which are the real work. That is what the deck's 96.5% means: 974 caught against those 35, leaving out the other 95. Excusing only the 23 that are proven, it is 90.1%, 974 of 1,081.</p>
 <h3>The demo</h3>
 <p>Drag to orbit, scroll to zoom, W A S D to fly, Q and E for down and up. The tour follows one real thread: a source, a requirement, the step that needs it, Claude's reasoning, the code, a branch, a break of that branch, the test that caught it, and a break that got past. The Show menu narrows it to one question: how code maps to requirements, every break and what caught it, Claude's reasoning, requirements and use cases, or what the graph neural network reads.</p>
 <p>It is a tool in the kit, for any graph the loop has written. <code>--hide</code> keeps names you choose off the page:</p>
@@ -99,9 +99,10 @@ details.mtoc { display: none }
 <pre><code>requirement W-1   is checked by   test Pay_TakesExactlyThePrice
 break #312        was caught by   test Pay_TakesExactlyThePrice
 method Pay        is claimed by   requirement W-1</code></pre>
-<p>The graph is <strong>the record</strong>: the 17 checks read it, and a later agent reads it instead of re-deriving what an earlier one found. It is written on every run as a SQLite database and as an N-Triples text file, a standard format any graph tool can open.</p>
+<p>The graph is <strong>the record</strong>: the 18 checks read it, and a later agent reads it instead of re-deriving what an earlier one found. It is written on every run as a SQLite database and as an N-Triples text file, a standard format any graph tool can open.</p>
 <div class="box evidence"><p class="label">How big it gets</p>
 <p><span class="chip measured">Measured</span> After pass 5 on the shop feature the graph held <strong>1,271 nodes and 6,878 edges</strong>, read from that pass’s line in the morph log.</p></div>
+<p><strong>The documents are nodes too.</strong> When a number or a behaviour changes, something has to say which documents go stale, so a model can declare its documents and each section, slide and page becomes a node. A link from a requirement, stat, goal or method to a document exists only when the document names it literally, or an authored line says so and quotes the words it stands on. Likeness never makes a link. <code>doc_nodes.py what-to-update &lt;node&gt;</code> answers which documents describe a node. A document naming a requirement the model does not hold is a hole. A requirement no document describes is counted and named, not failed, because most models have never declared any documents.</p>
 <p class="seen">On the slides: <a href="../../harness/deck/#slide-11">slide 11</a>, <a href="../../harness/deck/#slide-11">slide 11</a>.</p>
 </section>
 <p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>

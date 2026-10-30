@@ -103,7 +103,7 @@ Verdict run(Model&amp; m, bool selfImprove = true) {
   Breaks  b = Mutate(m.code);       // one compile
   Results r = RunEachAlone(b, m.tests);
   Graph   g = KnowledgeGraph(m, r);
-  Holes   h = Criteria(g);          // 17 checks
+  Holes   h = Criteria(g);          // 18 checks
 
   if (self_improve_on(m, selfImprove)) {
     Row row = PassStats(m).collect();  // 44 stats
