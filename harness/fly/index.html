@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=426232a441"><style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=2c33aa95e2"><style>
 :root{--bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--treeW:320px;color-scheme:dark}
 *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;font-variant-numeric:tabular-nums}
 a{color:var(--blue)}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -77,6 +77,11 @@ code{overflow-wrap:anywhere}pre{max-width:100%}
  #pagePrev,#pageNext{padding:6px 8px}#pageCopy{display:none}
  .lab{font-size:11px}
 }
+#bpframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;z-index:3;color-scheme:dark}
+#bpclose{position:absolute;right:10px;bottom:56px;z-index:4;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 10px;cursor:pointer;font:13px 'IBM Plex Sans',system-ui,sans-serif}
+#bpclose:hover{background:var(--line)}
+body.bp-on #c{filter:brightness(.5) saturate(.85)}
+body.bp-on #hud,body.bp-on #page,body.bp-on #labels,body.bp-on #callout{display:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <aside id="tree" aria-label="Everything you can fly to">
@@ -89,6 +94,7 @@ code{overflow-wrap:anywhere}pre{max-width:100%}
 <main id="view">
 <canvas id="c" tabindex="0" aria-label="A three dimensional graph of requirements, code, breaks and tests, with slides and readers standing in it" data-tip="Drag to orbit, scroll to zoom, W A S D to fly."></canvas>
 <div id="labels" aria-hidden="true"></div><div id="callout" aria-hidden="true"></div>
+<iframe id="bpframe" title="Blueprint of the whole system" hidden></iframe><button id="bpclose" type="button" hidden>Back to the graph</button>
 <div id="hud"><div id="here"><h2 id="hereT">The fly-through manual</h2><p id="hereS">Pick anything on the left, or start the tour.</p><p id="byPhone"><span>by RJ’s TNT Tools</span></p></div>
 <div id="ctl"><button id="menu" aria-expanded="false" aria-controls="tree" type="button" data-tip="Shows or hides the tree of everything you can fly to." aria-label="Shows or hides the tree of everything you can fly to.">Contents</button><button id="tourPrev" type="button" data-tip="The tour&#x27;s previous stop." aria-label="The tour&#x27;s previous stop.">‹</button><button id="tourPlay" type="button" data-tip="Start or stop the guided tour along one real thread through the graph." aria-label="Start or stop the guided tour along one real thread through the graph.">Tour</button><button id="tourNext" type="button" data-tip="The tour&#x27;s next stop." aria-label="The tour&#x27;s next stop.">›</button><button id="homeBtn" type="button" data-tip="Fly back to see the whole graph. The page stays as it is." aria-label="Fly back to see the whole graph. The page stays as it is.">Whole graph</button><button id="helpBtn" type="button" data-tip="Help: how to fly, and where the manual is." aria-label="Help: how to fly, and where the manual is.">?</button><button id="treeShow" type="button" hidden data-tip="Show the tree again." aria-label="Show the tree again.">Show tree</button><span id="gl" tabindex="0" data-tip="Working out how to draw the graph." role="status">Starting</span></div></div>
 <section id="page" aria-label="The page for the selected item"><div id="grip" aria-hidden="true"></div>
@@ -432,6 +438,8 @@ class App {
     default: return {fn:on1,dim:1}; } }
   /* ---- selecting */
   select(id,o={}){ const D=this.D, it=D.items[id]; if(!it){ $('hereS').textContent='Nothing here has the address '+id+'.'; $('sr').textContent='No such item'; return; }
+    this.blueprint(it.kind==='blueprint'?it:null);
+    if(it.kind==='blueprint'){ if(o.user) this.setPlaying(false); this.cur=id; document.body.classList.add('chosen'); this.tree.setCurrent(id); this.page.close(); this.cam.wandered=false; this.cam.fly(this.home(),o.instant); const homeLit=this.lightsFor({kind:'home'}); this.focusLit.set(homeLit.fn,homeLit.dim,o.instant); if(!o.fromAddress){ const url='#'+id; if(o.user) history.pushState(null,'',url); else history.replaceState(null,'',url); } $('sr').textContent=it.title; if(o.fromTree&&innerWidth<=760) this.closeDrawer(); this.syncTour(id); return; }
     const same=this.cur===id;
     if(o.user&&!o.link&&same&&this.page.isOpen&&!this.cam.wandered){ this.page.close(); if(o.fromTree&&innerWidth<=760) this.closeDrawer(); return; }
     if(o.user) this.setPlaying(false);
@@ -441,10 +449,12 @@ class App {
     this.rebuildLines(); this.rebuildMarks(); this.world.panels.forEach((p)=>this.scene.setPanelBrightness(p.index,it.kind==='layer'?.45:1));
     const target=it.kind==='slide'?it:(it.to&&D.items[it.to]&&D.items[it.to].kind==='slide'?D.items[it.to]:null); if(target) this.loadFull(this.world.panels[target.panel]);
     if(!o.fromAddress){ const url='#'+id; if(o.user) history.pushState(null,'',url); else history.replaceState(null,'',url); } $('sr').textContent=it.title; if(o.fromTree&&innerWidth<=760) this.closeDrawer(); this.syncTour(id); }
+  /* the Blueprint: a page of its own over the stage, this graph showing through behind its floors. One frame, moved from floor to floor by its address */
+  blueprint(it){ const on=!!it, fr=$('bpframe'); document.body.classList.toggle('bp-on',on); fr.hidden=!on; $('bpclose').hidden=!on; if(!on) return; if(fr.dataset.on) fr.contentWindow.location.hash='embed.'+it.frame; else { fr.dataset.on='1'; fr.src='../blueprint/index.html?v=2c33aa95e2#embed.'+it.frame; } }
   setHere(it){ $('hereT').textContent=it.title; $('hereS').textContent=it.sub||it.tip||''; }
   roomChanged(){ const h=$('hud').getBoundingClientRect().height, v=$('view').getBoundingClientRect(), target=this.page.isOpen?this.openHeight():46, top=Math.min(h,v.height*.3), c=this.cam; if(Math.abs(c.w-v.width)<1&&Math.abs(c.h-v.height)<1&&Math.abs(c.topGoal-top)<1&&Math.abs(c.bottomGoal-target)<1) return; c.setRoom(v.width,v.height,top,target); clearTimeout(this.refit); if(this.cur&&!c.wandered) this.refit=setTimeout(()=>{ if(!c.wandered&&this.cur) c.fly(this.viewFor(this.D.items[this.cur]),reduced()); },30); else if(!this.cur&&!c.wandered) c.v.dist=this.home().dist; }
   openHeight(){ const cs=getComputedStyle(this.page.el).getPropertyValue('--pageH'); if(cs&&cs.trim()) return parseFloat(cs); const v=$('view').getBoundingClientRect(); return innerWidth<=760?v.height*.52:innerHeight*.38; }
-  fromAddress(first){ const id=decodeURIComponent(location.hash.slice(1)); if(!id){ const lit=this.lightsFor({kind:'home'}); this.cam.wandered=false; this.cam.fly(this.home(),first); this.cur=null; this.tree.setCurrent(null); document.body.classList.remove('chosen'); if(!first){ this.page.close(); this.setHere({title:D_TITLE,tip:'Pick anything on the left, or start the tour.'}); } this.focusLit.set(lit.fn,lit.dim,first); this.thread=[]; this.rebuildLines(); this.rebuildMarks(); return; } if(id===this.cur) return; if(this.D.items[id]) this.select(id,{fromAddress:true,instant:first,open:true}); else { this.cam.fly(this.home(),true); $('hereS').textContent='Nothing here has the address '+id+'. Pick anything on the left.'; } }
+  fromAddress(first){ const id=decodeURIComponent(location.hash.slice(1)); if(!id){ this.blueprint(null); const lit=this.lightsFor({kind:'home'}); this.cam.wandered=false; this.cam.fly(this.home(),first); this.cur=null; this.tree.setCurrent(null); document.body.classList.remove('chosen'); if(!first){ this.page.close(); this.setHere({title:D_TITLE,tip:'Pick anything on the left, or start the tour.'}); } this.focusLit.set(lit.fn,lit.dim,first); this.thread=[]; this.rebuildLines(); this.rebuildMarks(); return; } if(id===this.cur) return; if(this.D.items[id]) this.select(id,{fromAddress:true,instant:first,open:true}); else { this.cam.fly(this.home(),true); $('hereS').textContent='Nothing here has the address '+id+'. Pick anything on the left.'; } }
   /* ---- the tour */
   setPlaying(v){ this.playing=v; $('tourPlay').setAttribute('aria-pressed',v?'true':'false'); $('tourPlay').textContent=v?'Stop tour':'Tour'; this.lastAdvance=performance.now(); }
   stopIndex(){ const it=this.cur&&this.D.items[this.cur]; return it&&it.kind==='stop'?it.stop:-1; }
@@ -495,6 +505,7 @@ class App {
   bindControls(){ $('menu').onclick=()=>{ const open=document.body.classList.toggle('treeOpen'); $('menu').setAttribute('aria-expanded',open?'true':'false'); if(open&&this.tree.tab) this.tree.tab.focus(); }; $('scrim').onclick=()=>this.closeDrawer();
     $('treeHide').onclick=()=>{ document.body.classList.add('treeOff'); $('treeShow').hidden=false; $('treeShow').focus(); this.resize(); }; $('treeShow').onclick=()=>{ document.body.classList.remove('treeOff'); $('treeShow').hidden=true; this.resize(); if(this.tree.tab) this.tree.tab.focus(); };
     $('tourPlay').onclick=()=>{ if(this.playing){ this.setPlaying(false); return; } this.setPlaying(true); const n=this.stopIndex(); this.goStop(n<0?0:n); }; $('tourNext').onclick=()=>{ this.setPlaying(false); this.goStop(this.stopIndex()+1); }; $('tourPrev').onclick=()=>{ this.setPlaying(false); const n=this.stopIndex(); this.goStop((n<0?0:n)-1); };
+    $('bpclose').onclick=()=>this.select('home',{user:true});
     $('homeBtn').onclick=()=>{ this.setPlaying(false); this.cam.wandered=false; this.cam.fly(this.home(),false); const it=this.D.items.home; this.tree.setCurrent('home'); this.cur='home'; document.body.classList.add('chosen'); const lit=this.lightsFor(it); this.focusLit.set(lit.fn,lit.dim); this.page.show('home',it); this.setHere(it); this.rebuildLines(); this.rebuildMarks(); this.syncTour('home'); history.pushState(null,'','#home'); };
     $('helpBtn').onclick=()=>this.select('help',{user:true}); $('pagePrev').onclick=()=>this.stepItem(-1); $('pageNext').onclick=()=>this.stepItem(1);
     $('pageCopy').onclick=async()=>{ const url=location.origin+location.pathname+(this.cur?'#'+this.cur:''); let ok=false; try { await navigator.clipboard.writeText(url); ok=true; } catch(e){ ok=false; } $('pageCopy').textContent=ok?'Copied':'Link: see the address bar'; setTimeout(()=>{ $('pageCopy').textContent='Copy link'; },1600); };
@@ -514,7 +525,7 @@ class App {
 }
 
 (async function(){ const forced=Q.get('renderer'), bad=(msg)=>{ const f=$('fail'); f.hidden=false; f.textContent=msg; console.error(msg); };
-  let D; try { const r=await fetch('data.json?v=426232a441'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
+  let D; try { const r=await fetch('data.json?v=2c33aa95e2'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
   const started=await startScene($('c'),forced); const app=new App(D,started); window.__fly={renderer:started.scene.name,why:started.why,app,settle:()=>new Promise((res)=>app.settleWaiters.push(res)),state:()=>({cur:app.cur,pageOpen:app.page.isOpen,pageId:app.page.id,playing:app.playing,eye:app.cam.eye.slice(),view:Object.assign({},app.cam.v),fps:app.fps.v})};
 })();
 </script></body></html>

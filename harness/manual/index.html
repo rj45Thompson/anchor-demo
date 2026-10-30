@@ -965,13 +965,14 @@ void Tick() {
 
 <section id="install">
 <h2>Install</h2>
+<p>Get it from <a href="https://github.com/rj45Thompson/closed-loop-kit">github.com/rj45Thompson/closed-loop-kit</a>, under the MIT licence.</p>
 <pre><code>python install.py              # install for this user
 python install.py --check      # check only, copy nothing
 python install.py --uninstall  # remove what it put down, nothing else</code></pre>
 <p>It puts the skill where Claude Code finds it and the tools beside it. It needs Python 3.10 or newer and PyYAML. PyTorch (for the GNN), the .NET SDK (for the C# adapter and the example) and PowerShell 7 (for the IL comparison) are optional; if one is missing it says what that piece would have done, and never pretends it ran.</p>
 <p>Then it runs every selftest in the installed copy, and the whole loop on the example: a small wallet and store in C#, with NUnit tests that each name the requirement they check. The example must <strong>hold</strong>: everything closed except one question that only its owner can answer.</p>
 <div class="box evidence"><p class="label">What a clean install showed</p>
-<p><span class="chip measured">Measured</span> Installing the built kit into an empty folder on 29 October: <strong>18 of 18 selftests passed</strong>, and the loop over the example’s <strong>58 breaks</strong> reported <strong>HOLDS</strong>.</p></div>
+<p><span class="chip measured">Measured</span> Installing the built kit into an empty folder on 29 October: <strong>every selftest passes with PyTorch, scikit-learn and the .NET SDK (14 of 20 on Python and PyYAML alone, the rest named as skipped)ed</strong>, and the loop over the example’s <strong>58 breaks</strong> reported <strong>HOLDS</strong>.</p></div>
 <p class="seen">On the slides: <a href="../deck/#slide-26">slide 26</a>.</p>
 </section>
 
