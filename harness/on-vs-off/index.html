@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style><style>
 /* Layout: a reference manual - a sticky contents rail beside one reading column; every claim from the slides has its own anchored section */
 :root {
   --paper: #F4F5F1; --card: #FCFCFA; --ink: #14202B; --body: #36424F; --muted: #5A6571; --rule: #DADCD4;
@@ -72,7 +72,7 @@ details.mtoc { display: none }
 }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
 </style><title>On against off</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
-<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/" aria-current="page" style="font-weight:600;color:inherit">On against off</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../gnn-on-itself/">The tool on its own networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/" aria-current="page" style="font-weight:600;color:inherit">On against off</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a></nav>
 <section id="ab">
 <h2>On against off</h2>
 <p>The loop’s own report cannot say whether the loop helps, because it grades work by its own rules. So there is a separate harness. One task goes to two agents, each in its own copy of the code. One works with the loop (the <strong>on</strong> arm), one without it (the <strong>off</strong> arm). Neither is told it is being compared.</p>
@@ -94,7 +94,7 @@ details.mtoc { display: none }
 </ul>
 <p>One pair is one data point, on the kind of task this manual says the loop is not for: small and precisely specified. It still showed two things to fix. The arm started in a model with hundreds of old holes it had not caused, and the report did not separate the holes <em>its change</em> made from those already there. Both are on the board.</p></div>
 <p>The off arm still follows the project’s own working rules (never guess a value, say what was not verified), so the comparison measures the tool, not discipline.</p>
-<p class="seen">On the slides: <a href="../../harness/deck/#slide-19">slide 19</a>.</p>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-22">slide 22</a>.</p>
 </section>
 <section id="matrix">
 <h2>Six kinds of task, on against off</h2>
