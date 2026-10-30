@@ -1,0 +1,179 @@
+<style>
+.read { --loop:#E26F22; --without:#3A8FD4; --caught:#2B9FB0; --uncaught:#E5484D; --left:#5B6875; --track:#1D2C3A; max-width:1160px; margin:0 auto; padding:clamp(56px,8vw,112px) clamp(16px,4vw,48px) 56px; font-size:17px; line-height:1.5 }
+.read a { color:var(--fg); text-underline-offset:3px; text-decoration-color:var(--accent) }
+.read a:hover { color:var(--accent) }
+.read a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:2px }
+.read h2 { margin:0 0 8px; font:600 clamp(30px,3.6vw,46px)/1.1 'Space Grotesk',system-ui,sans-serif; letter-spacing:-.012em; scroll-margin-top:24px }
+.read section { scroll-margin-top:24px }
+.read section + section { margin-top:clamp(72px,10vw,128px) }
+.lede { margin:0 0 24px; color:var(--muted); max-width:62ch }
+.how { list-style:none; margin:24px 0 0; padding:0 }
+.how li, .group { display:grid; grid-template-columns:minmax(150px,220px) minmax(0,1fr); gap:6px 32px; border-top:1px solid var(--line) }
+.how li { padding:18px 0 }
+.how b, .group h3 { margin:0; font:600 18px/1.3 'Space Grotesk',system-ui,sans-serif }
+.how p { margin:0; font-size:clamp(17px,1.5vw,20px); line-height:1.45; max-width:60ch }
+.group { padding:30px 0 40px }
+.group .scope { margin:6px 0 0; color:var(--muted); font-size:14.5px; line-height:1.4 }
+.tiles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:44px 44px }
+.fig { margin:0; font:600 clamp(38px,4.4vw,56px)/1.05 'Space Grotesk',system-ui,sans-serif; letter-spacing:-.015em }
+.say { margin:10px 0 0; max-width:46ch }
+.src { margin:10px 0 0; color:var(--muted); font-size:14.5px; line-height:1.4 }
+.tile.lead { grid-column:1/-1; display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 36px; align-items:end }
+.tile.lead .fig { font-size:clamp(104px,15vw,196px); line-height:.86; letter-spacing:-.035em }
+.tile.lead .say { margin:0; font-size:clamp(20px,2.3vw,30px); line-height:1.22; max-width:26ch }
+.tile.lead .src { grid-column:1/-1; margin-top:18px; font-size:15px }
+.bars { margin:16px 0 0; display:grid; gap:7px; max-width:440px; font-size:13.5px; line-height:1.3; color:var(--muted) }
+.row { display:grid; grid-template-columns:7.2em minmax(0,1fr) 5.4em; gap:10px; align-items:center }
+.row .val { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--fg) }
+.track { display:block; height:8px; background:var(--track); border-radius:0 4px 4px 0 }
+.track i { display:block; height:100%; min-width:2px; border-radius:0 4px 4px 0 }
+.stack { display:flex; gap:2px; height:10px; margin:16px 0 0; max-width:440px }
+.stack i { display:block; height:100%; min-width:2px }
+.stack i:last-child { border-radius:0 4px 4px 0 }
+.units { display:flex; flex-wrap:wrap; gap:3px; margin:16px 0 0; max-width:440px }
+.units i { display:block; width:13px; height:13px; border-radius:3px }
+.key { list-style:none; display:flex; flex-wrap:wrap; gap:4px 16px; margin:10px 0 0; padding:0; font-size:13.5px; line-height:1.3; color:var(--muted) }
+.key i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:6px }
+.costs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 44px; margin-top:24px }
+.costs h3 { margin:0; padding-top:18px; border-top:1px solid var(--line); font:600 18px/1.3 'Space Grotesk',system-ui,sans-serif }
+.costs ul { margin:10px 0 0; padding:0; list-style:none }
+.costs li { padding:5px 0; color:var(--muted); max-width:44ch }
+.foot { display:flex; flex-wrap:wrap; gap:8px 28px; justify-content:space-between; margin-top:clamp(72px,10vw,120px); padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:14.5px }
+.foot p { margin:0 }
+.foot nav { display:flex; flex-wrap:wrap; gap:8px 20px }
+@media (max-width:760px) {
+  .read { font-size:16px }
+  .how li, .group { grid-template-columns:minmax(0,1fr) }
+  .tiles, .costs { grid-template-columns:minmax(0,1fr) }
+  .group { padding:24px 0 32px }
+  .tiles { margin-top:16px; gap:36px }
+  .costs h3 + ul + h3 { margin-top:20px }
+  .tile.lead { grid-template-columns:minmax(0,1fr) }
+  .tile.lead .say { margin-top:12px; max-width:none }
+}
+</style>
+<main class="read">
+<section id="how" aria-labelledby="how-title">
+<h2 id="how-title">How it works</h2>
+<ol class="how">
+<li><b>Write it, break it</b><p>You write the requirements as a model, and the harness breaks every decision in the code every way it knows, in one compile; each break must fail a test.</p></li>
+<li><b>One graph</b><p>Every requirement, step, method, branch, break and test becomes a node in one graph, and that is the graph flying above, drawn with its names removed.</p></li>
+<li><b>Checked reasoning</b><p>Claude writes its reasoning as a chain of steps, each citing what it stands on, and a citation that is not there fails the run.</p></li>
+<li><b>A proposer</b><p>A graph neural network proposes which requirement owns new code, as a question and never a verdict, and it has to beat plain rules.</p></li>
+<li><b>Self-improving</b><p>Self-improvement is on by default: every pass records its own stats, checks them against its own rules and names what to improve next.</p></li>
+</ol>
+</section>
+
+<section id="numbers" aria-labelledby="numbers-title">
+<h2 id="numbers-title">The numbers</h2>
+<p class="lede">Each one says what it was measured on.</p>
+
+<div class="group">
+<div><h3>On facts</h3><p class="scope">From our knowledge graph. Not measured on code.</p></div>
+<div class="tiles">
+<article class="tile lead">
+<p class="fig">99%</p>
+<p class="say">accurate when the graph can back the answer; it abstains otherwise.</p>
+<p class="src">99.03% of 35,951 blind derivations, on facts, from our knowledge graph.</p>
+</article>
+<article class="tile">
+<p class="fig">616 of 616</p>
+<p class="say">top-tier facts right against outside truth (Wikidata), on a frozen population of 2,714.</p>
+</article>
+</div>
+</div>
+
+<div class="group">
+<div><h3>On real code</h3><p class="scope">One feature of a game, the one in the graph above.</p></div>
+<div class="tiles">
+<article class="tile">
+<p class="fig">96.5%</p>
+<p class="say">of 1,097 breaks of one feature caught by a test, leaving out those proven to change nothing (23), those with a written reason (20) and those with no verdict yet (52).</p>
+<div class="stack" aria-hidden="true"><i style="flex:967 0 0;background:var(--caught)"></i><i style="flex:35 0 0;background:var(--uncaught)"></i><i style="flex:95 0 0;background:var(--left)"></i></div>
+<ul class="key"><li><i style="background:var(--caught)"></i>967 caught</li><li><i style="background:var(--uncaught)"></i>35 uncaught, unexplained</li><li><i style="background:var(--left)"></i>95 left out</li></ul>
+<p class="src">The 130 red points in the graph are those 95 and those 35.</p>
+</article>
+<article class="tile">
+<p class="fig">290 of 313</p>
+<p class="say">statements held by a test, up from 31 of 82. Held means breaking it fails a test.</p>
+<div class="bars" aria-hidden="true">
+<div class="row"><span>now</span><span class="track"><i style="width:92.65%;background:var(--loop)"></i></span><span class="val">290 / 313</span></div>
+<div class="row"><span>before</span><span class="track"><i style="width:37.8%;background:var(--left)"></i></span><span class="val">31 / 82</span></div>
+</div>
+</article>
+<article class="tile">
+<p class="fig">216&times;</p>
+<p class="say">less to read to learn who owns a method: 775 characters at the median against 167,665. This is the size of what is read; no agent was timed.</p>
+<div class="bars" aria-hidden="true">
+<div class="row"><span>from the graph</span><span class="track"><i style="width:.46%;background:var(--loop)"></i></span><span class="val">775</span></div>
+<div class="row"><span>from the files</span><span class="track"><i style="width:100%;background:var(--left)"></i></span><span class="val">167,665</span></div>
+</div>
+</article>
+<article class="tile">
+<p class="fig">10</p>
+<p class="say">requirements nobody had written, found by walking the use cases, beside the designers' 17.</p>
+<div class="units" aria-hidden="true"><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--left)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i></div>
+<ul class="key"><li><i style="background:var(--left)"></i>17 the designers wrote</li><li><i style="background:var(--loop)"></i>10 found by the walk</li></ul>
+</article>
+</div>
+</div>
+
+<div class="group">
+<div><h3>With the loop and without</h3><p class="scope">Same task, two agents. The loop is this harness at work on the task.</p></div>
+<div class="tiles">
+<article class="tile">
+<p class="fig">7 of 11</p>
+<p class="say">task pairs went to the loop, 3 to the agent without it, 1 split, three blind graders each.</p>
+<div class="units" aria-hidden="true"><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--without)"></i><i style="background:var(--without)"></i><i style="background:var(--without)"></i><i style="background:var(--left)"></i></div>
+<ul class="key"><li><i style="background:var(--loop)"></i>7 the loop</li><li><i style="background:var(--without)"></i>3 without it</li><li><i style="background:var(--left)"></i>1 split</li></ul>
+</article>
+<article class="tile">
+<p class="fig">Half</p>
+<p class="say">the work left unfinished: blind graders counted 9 items with the loop, 18 without.</p>
+<div class="bars" aria-hidden="true">
+<div class="row"><span>with the loop</span><span class="track"><i style="width:50%;background:var(--loop)"></i></span><span class="val">9</span></div>
+<div class="row"><span>without</span><span class="track"><i style="width:100%;background:var(--without)"></i></span><span class="val">18</span></div>
+</div>
+</article>
+</div>
+</div>
+
+<div class="group">
+<div><h3>Its reasoning, and where it comes from</h3></div>
+<div class="tiles">
+<article class="tile">
+<p class="fig">102</p>
+<p class="say">reasoning steps checked, every citation resolved by the end, 4 the graph would not join.</p>
+</article>
+<article class="tile">
+<p class="fig">31 of 63</p>
+<p class="say">ARC3 lineage: its best agent reached 31 of 63 games where random reached 14.</p>
+<div class="bars" aria-hidden="true">
+<div class="row"><span>best agent</span><span class="track"><i style="width:49.2%;background:var(--loop)"></i></span><span class="val">31</span></div>
+<div class="row"><span>random</span><span class="track"><i style="width:22.2%;background:var(--left)"></i></span><span class="val">14</span></div>
+</div>
+</article>
+</div>
+</div>
+</section>
+
+<section id="limits" aria-labelledby="limits-title">
+<h2 id="limits-title">What it costs, and its limits</h2>
+<div class="costs">
+<div><h3>Costs</h3><ul>
+<li>1.2 to 2.3 times the tokens, 3 to 55 times the time, on small tasks.</li>
+<li>24 minutes for a full pass of 1,097 breaks.</li>
+</ul></div>
+<div><h3>Limits</h3><ul>
+<li>Prototype 0.1.</li>
+<li>A green result on a thin model means little.</li>
+<li>95% accuracy on code is a target, not a measurement.</li>
+</ul></div>
+</div>
+</section>
+
+<footer class="foot">
+<p>By RJ's TNT Tools. TNT Tools' own work, not a Heavy Iron product.</p>
+<nav aria-label="This page and the site"><a href="#stage">Back to the graph</a><a href="../">Anchor demo home</a></nav>
+</footer>
+</main>
