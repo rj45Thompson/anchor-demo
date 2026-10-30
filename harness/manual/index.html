@@ -351,7 +351,7 @@ public void Pay_TakesExactlyThePrice() { ... }</code></pre>
 <h3>How code maps to requirements</h3>
 <p>Two kinds of edge do it. A branch <em>maps to</em> a requirement: 620 of those. A branch <em>is at</em> a method: 313. Together they take you from any decision in the code to who asked for it, and from a requirement to all the code that answers to it. A decision no requirement owns is a hole, and the loop lists it.</p>
 <h3>What the red points are</h3>
-<p>The 130 breaks no test caught. Red is what the graph records, not a verdict: 23 of them are proven by compiled code to be the same program, 20 have a written reason, 52 have no verdict yet, and 35 are unexplained, which are the real work.</p>
+<p>The 130 breaks no test caught. Red is what the graph records, not a verdict: 23 of them are proven by compiled code to be the same program, 20 have a written reason, 52 have no verdict yet, and 35 are unexplained, which are the real work. That is what the deck's 96.5% means: 967 caught against those 35, leaving out the other 95. Excusing only the 23 that are proven, it is 90.0%, 967 of 1,074.</p>
 <h3>The demo</h3>
 <p>Drag to orbit, scroll to zoom, W A S D to fly, Q and E for down and up. The tour follows one real thread: a source, a requirement, the step that needs it, Claude's reasoning, the code, a branch, a break of that branch, the test that caught it, and a break that got past. The Show menu narrows it to one question: how code maps to requirements, every break and what caught it, Claude's reasoning, requirements and use cases, or what the graph neural network reads.</p>
 <p>It is a tool in the kit, for any graph the loop has written. <code>--hide</code> keeps names you choose off the page:</p>
@@ -549,7 +549,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 
 <section id="feature">
 <h2>The test subject</h2>
-<p>Every number from the shop feature comes from one real feature in a C# game in production: a shop system with <strong>15 shops and 4 move tutors</strong>, read from the game’s design spreadsheet. Its rules live in one file of <strong>488 lines of code</strong> (734 with comments). It has <strong>45 tests</strong> today; it had 15 when the loop first ran on it.</p>
+<p>Every number from the shop feature comes from one real feature in a C# game in production: a shop system, read from the game’s design spreadsheet. Its rules live in one file of <strong>488 lines of code</strong> (734 with comments). It has <strong>45 tests</strong> today; it had 15 when the loop first ran on it.</p>
 <p>Partway through, the screen’s decisions (which arrow to show, what text goes on the right of a line, what the description box says) were moved out of the drawing code into plain code that tests can reach. To prove nothing changed on screen, all <strong>23</strong> shop screens were drawn before and after, and every picture was identical pixel for pixel.</p>
 <p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-3">slide 3</a>.</p>
 </section>
