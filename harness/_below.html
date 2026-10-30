@@ -6,6 +6,11 @@
 .read h2 { margin:0 0 8px; font:600 clamp(30px,3.6vw,46px)/1.1 'Space Grotesk',system-ui,sans-serif; letter-spacing:-.012em; scroll-margin-top:24px }
 .read section { scroll-margin-top:24px }
 .read section + section { margin-top:clamp(72px,10vw,128px) }
+.concepts { display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 20px; margin:0 0 clamp(56px,8vw,96px) }
+.read .concepts h2 { margin:0; font:600 18px/1.3 'Space Grotesk',system-ui,sans-serif; letter-spacing:0 }
+.concepts ul { display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none }
+.read .concepts a { display:block; padding:6px 12px; border:1px solid var(--line); border-radius:8px; background:#141F2A; color:var(--fg); font-size:15px; line-height:1.3; text-decoration:none }
+.read .concepts a:hover { border-color:var(--accent); color:var(--fg) }
 .lede { margin:0 0 24px; color:var(--muted); max-width:62ch }
 .how { list-style:none; margin:24px 0 0; padding:0 }
 .how li, .group { display:grid; grid-template-columns:minmax(150px,220px) minmax(0,1fr); gap:6px 32px; border-top:1px solid var(--line) }
@@ -55,7 +60,24 @@
   .tile.lead .say { margin-top:12px; max-width:none }
 }
 </style>
-<main class="read">
+<main class="read" id="read">
+<nav class="concepts" aria-labelledby="concepts-title">
+<h2 id="concepts-title">Key concepts</h2>
+<ul>
+<li><a href="goals/">Goals</a></li>
+<li><a href="stats/">Stats</a></li>
+<li><a href="gnn/">The graph network</a></li>
+<li><a href="breaks/">Breaks</a></li>
+<li><a href="node-graph/">The node graph</a></li>
+<li><a href="chains/">Chains</a></li>
+<li><a href="self-improvement/">Self-improvement</a></li>
+<li><a href="accuracy/">Accuracy</a></li>
+<li><a href="requirements/">Requirements</a></li>
+<li><a href="on-vs-off/">On against off</a></li>
+<li><a href="limits/">Limits</a></li>
+</ul>
+</nav>
+
 <section id="how" aria-labelledby="how-title">
 <h2 id="how-title">How it works</h2>
 <ol class="how">
