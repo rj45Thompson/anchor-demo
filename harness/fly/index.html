@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=00be6e9ce3"><style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=a496c90f8f"><style>
 :root{--bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--treeW:320px;color-scheme:dark}
 *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;font-variant-numeric:tabular-nums}
 a{color:var(--blue)}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -63,7 +63,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:gra
 code{overflow-wrap:anywhere}pre{max-width:100%}
 #tip{position:fixed;z-index:20;left:0;top:0;max-width:300px;background:#0E1720;border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12.5px;color:var(--fg);pointer-events:none;overflow-wrap:anywhere;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 #tip[hidden]{display:none}
-#fail{position:absolute;left:12px;right:12px;bottom:60px;z-index:5;color:#FF8F6B}
+#fail{position:absolute;left:12px;right:12px;top:92px;z-index:5;color:#FF8F6B;margin:0;max-width:60ch}#fail[hidden],#labels[hidden]{display:none}
 #scrim{display:none}
 @media (max-width:760px){
  :root{--treeW:0px}
@@ -397,7 +397,7 @@ class App {
     this.renderNotice(started); this.loadThumbs(); this.buildLabels(); this.bindView(); this.bindControls(); this.resize(); new ResizeObserver(()=>this.resize()).observe($('view')); new ResizeObserver(()=>this.roomChanged()).observe(this.page.el);
     addEventListener('popstate',()=>this.fromAddress(false)); addEventListener('hashchange',()=>this.fromAddress(false)); this.scene.onLost=(why)=>this.lost(why);
     this.rebuildMarks(); this.rebuildLines(); this.fromAddress(true); requestAnimationFrame((t)=>this.frame(t)); }
-  renderNotice(s){ const g=$('gl'); g.textContent=s.scene.name==='none'?'No 3D':s.scene.name; g.dataset.tip=s.why; g.classList.toggle('off',s.scene.name!=='WebGPU'); g.setAttribute('aria-label','Renderer: '+s.why); }
+  renderNotice(s){ const g=$('gl'); g.textContent=s.scene.name==='none'?'No 3D':s.scene.name; g.dataset.tip=s.why; g.classList.toggle('off',s.scene.name!=='WebGPU'); g.setAttribute('aria-label','Renderer: '+s.why); if(s.scene.name==='none'){ $('fail').hidden=false; $('fail').textContent=s.why; } }
   lost(why){ console.error('The renderer stopped: '+why); $('fail').hidden=false; $('fail').textContent='The graphics stopped working ('+why+'). The tree and the pages still work. Reload to draw the graph again.'; this.scene=new NoScene(); $('gl').textContent='No 3D'; $('gl').classList.add('off'); }
   async image(url){ const r=await fetch(url); if(!r.ok) throw new Error(url+' answered '+r.status); return createImageBitmap(await r.blob()); }
   loadThumbs(){ if(this.scene.name==='none') return; this.world.panels.forEach((p)=>{ this.image('slides/'+p.name+'.thumb.webp?v='+this.D.version).then((b)=>this.scene.setPanelImage(p.index,b,'thumb').then(()=>b.close())).catch((e)=>console.error('A slide picture did not load: '+e.message)); }); }
@@ -406,7 +406,7 @@ class App {
   buildLabels(){ this.labels=[]; const box=$('labels'), add=(text,colour,y,r)=>{ const d=document.createElement('div'); d.className='lab'; d.style.setProperty('--c',colour); d.textContent=text; box.append(d); this.labels.push({d,y,r}); }; for(const l of this.D.layers) add(l.title,l.colour,l.y,l.r); add('Readers','#FFD27A',this.D.readersAt.y,this.D.readersAt.r); add('Stats','#A9B7C4',this.D.statsAt.y,this.D.statsAt.r); }
   /* ---- what each kind of item looks like from the camera */
   faceOn(p){ return {x:p.c[0],y:p.c[1],z:p.c[2],theta:p.a,phi:Math.PI/2,dist:this.cam.fitRect(p.w,p.h)}; }
-  home(theta){ const c=this.cam; return {x:0,y:-2,z:0,dist:c.fitRing(c.w<c.h?226:258,1.26,172),theta:theta===undefined?.7:theta,phi:1.26}; }
+  home(theta){ const c=this.cam; return {x:0,y:-10,z:0,dist:c.fitRing(c.w<c.h?226:258,1.26,186),theta:theta===undefined?.7:theta,phi:1.26}; }
   viewFor(it){ const W=this.world, c=this.cam, D=this.D; switch(it.kind){
     case 'slide': return this.faceOn(W.panels[it.panel]);
     case 'layer': { const l=D.layers[it.layer], phi=.98; return {x:0,y:l.y,z:0,dist:Math.max(c.fitRing(l.r,phi),60),theta:.7+it.layer*.5,phi}; }
@@ -438,7 +438,7 @@ class App {
     this.cur=id; document.body.classList.add('chosen'); this.tree.setCurrent(id); this.setHere(it); this.page.show(id,it); if(!o.keepPage&&(o.user||o.open)) this.page.open(); else this.roomChanged();
     clearTimeout(this.refit); this.cam.wandered=false; this.cam.fly(this.viewFor(it),o.instant);
     const lit=this.lightsFor(it); this.focusLit.set(lit.fn,lit.dim,o.instant);
-    this.rebuildLines(); this.rebuildMarks(); this.world.panels.forEach((p)=>this.scene.setPanelBrightness(p.index,1));
+    this.rebuildLines(); this.rebuildMarks(); this.world.panels.forEach((p)=>this.scene.setPanelBrightness(p.index,it.kind==='layer'?.45:1));
     const target=it.kind==='slide'?it:(it.to&&D.items[it.to]&&D.items[it.to].kind==='slide'?D.items[it.to]:null); if(target) this.loadFull(this.world.panels[target.panel]);
     if(!o.fromAddress){ const url='#'+id; if(o.user) history.pushState(null,'',url); else history.replaceState(null,'',url); } $('sr').textContent=it.title; if(o.fromTree&&innerWidth<=760) this.closeDrawer(); this.syncTour(id); }
   setHere(it){ $('hereT').textContent=it.title; $('hereS').textContent=it.sub||it.tip||''; }
@@ -507,14 +507,14 @@ class App {
     cam.update(now,dt,this.keys); const mix=this.focusLit.tick(now); this.tickPulses(now); const vp=cam.matrices(!!this.scene.z01);
     this.scene.draw({vp,eye:cam.eye,time:(now-this.startTime)/1000,mix,dim:this.focusLit.dim,scale:this.deviceH*.9,lineW:(this.dpr||1),minPx:(this.dpr||1)*1.05}); this.updateLabels(); this.pointer();
     this.fps.n++; if(now-this.fps.t>1000){ this.fps.v=this.fps.n*1000/(now-this.fps.t); this.fps.n=0; this.fps.t=now; } if(!cam.flight&&this.settleWaiters.length&&this.focusLit.mix>=1){ const w=this.settleWaiters; this.settleWaiters=[]; for(const f of w) f(); } }
-  updateLabels(){ const cam=this.cam, far=cam.v.dist>200, a=cam.v.theta+Math.PI/2; const room=cam.h-cam.bottom; for(const l of this.labels){ let shown=false; if(far&&this.D.items){ const s=cam.project(l.r*Math.cos(a),l.y,l.r*Math.sin(a)); if(s&&s.y>cam.top&&s.y<room-10&&s.x<cam.w-70&&s.x>0){ l.d.style.transform='translate('+Math.round(s.x+8)+'px,'+Math.round(s.y-8)+'px)'; shown=true; } } if(l.shown!==shown){ l.d.style.display=shown?'':'none'; l.shown=shown; } }
+  updateLabels(){ if(this.scene.name==='none'){ if(!this.labelsOff){ $('labels').hidden=true; this.labelsOff=true; } return; } const cam=this.cam, far=cam.v.dist>200, a=cam.v.theta+Math.PI/2; const room=cam.h-cam.bottom; for(const l of this.labels){ let shown=false; if(far&&this.D.items){ const s=cam.project(l.r*Math.cos(a),l.y,l.r*Math.sin(a)); if(s&&s.y>cam.top&&s.y<room-10&&s.x<cam.w-70&&s.x>0){ l.d.style.transform='translate('+Math.round(s.x+8)+'px,'+Math.round(s.y-8)+'px)'; shown=true; } } if(l.shown!==shown){ l.d.style.display=shown?'':'none'; l.shown=shown; } }
     const co=$('callout'), it=this.cur&&this.D.items[this.cur]; let at=null; if(it){ if(it.kind==='stat') at=this.world.statPos[it.mark]; else if(it.kind==='goal') at=this.world.readers[it.reader].pos; } if(at){ const s=cam.project(at[0],at[1],at[2]); if(s&&s.y>cam.top&&s.y<room){ co.textContent=it.title; co.style.display='block'; co.style.transform='translate('+Math.round(Math.min(s.x+12,cam.w-270))+'px,'+Math.round(s.y-26)+'px)'; } else co.style.display='none'; } else co.style.display='none'; }
   pointer(){ if(this.nearestToCentre&&document.activeElement===this.canvas){ this.nearestToCentre=false; const box=this.canvas.getBoundingClientRect(), cx=box.left+box.width/2, cy=box.top+this.cam.top+(this.cam.h-this.cam.top-this.cam.bottom)/2; let best=-1,bd=1e12; const g=this.world.g; for(let i=0;i<this.world.N;i++){ const s=this.cam.project(g.pos[3*i],g.pos[3*i+1],g.pos[3*i+2]); if(!s) continue; const d=(s.x-(cx-box.left))**2+(s.y-(cy-box.top))**2; if(d<bd){ bd=d; best=i; } } if(best>=0){ const text='Nearest the middle: '+this.nodeWords(best); this.tip.at(cx,cy,text); $('sr').textContent=text; } return; }
     if(!this.ptrDirty||!this.ptr) return; this.ptrDirty=false; const hit=this.pick(this.ptr.x,this.ptr.y); const t=hit?this.tipOf(hit):''; if(t){ this.tip.at(this.ptr.x,this.ptr.y,t); this.canvas.style.cursor=hit.type==='node'?'grab':'pointer'; } else { this.tip.hide(); this.canvas.style.cursor='grab'; } }
 }
 
 (async function(){ const forced=Q.get('renderer'), bad=(msg)=>{ const f=$('fail'); f.hidden=false; f.textContent=msg; console.error(msg); };
-  let D; try { const r=await fetch('data.json?v=00be6e9ce3'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
+  let D; try { const r=await fetch('data.json?v=a496c90f8f'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
   const started=await startScene($('c'),forced); const app=new App(D,started); window.__fly={renderer:started.scene.name,why:started.why,app,settle:()=>new Promise((res)=>app.settleWaiters.push(res)),state:()=>({cur:app.cur,pageOpen:app.page.isOpen,pageId:app.page.id,playing:app.playing,eye:app.cam.eye.slice(),view:Object.assign({},app.cam.v),fps:app.fps.v})};
 })();
 </script></body></html>
