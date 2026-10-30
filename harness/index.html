@@ -110,13 +110,16 @@ html,body { height:auto; overflow:visible }
 .foot { display:flex; flex-wrap:wrap; gap:8px 28px; justify-content:space-between; margin-top:clamp(72px,10vw,120px); padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:14.5px }
 .foot p { margin:0 }
 .foot nav { display:flex; flex-wrap:wrap; gap:8px 20px }
+@media (max-width:1000px) {
+  .tiles { grid-template-columns:minmax(0,1fr); gap:36px }
+}
 @media (max-width:760px) {
   .read { font-size:16px }
   .how li, .group { grid-template-columns:minmax(0,1fr) }
-  .tiles, .costs { grid-template-columns:minmax(0,1fr) }
+  .costs { grid-template-columns:minmax(0,1fr) }
+  .costs > div + div { margin-top:18px }
   .group { padding:24px 0 32px }
-  .tiles { margin-top:16px; gap:36px }
-  .costs h3 + ul + h3 { margin-top:20px }
+  .tiles { margin-top:16px }
   .tile.lead { grid-template-columns:minmax(0,1fr) }
   .tile.lead .say { margin-top:12px; max-width:none }
 }
