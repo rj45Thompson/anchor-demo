@@ -91,10 +91,10 @@ details.mtoc { display: none }
 <div class="box evidence"><p class="label">Where these numbers come from</p>
 <p><span class="chip measured">Measured</span> <strong>19</strong> ways a check could pass for the wrong reason, found by fresh reviewers; 17 fixed, each with a planted mistake a selftest must catch (see <a href="../manual/#reviewers">reviewers</a>).</p>
 <p><span class="chip measured">Measured</span> <strong>11 stats</strong> were recorded with nothing reading them. The audit first said 6, and that was itself a bug: it counted test fixtures and the recorder as readers. Now 0: each stat triggers something, or has a reader with a date.</p>
-<p><span class="chip measured">Measured</span> <strong>32 requirements</strong> on its own stats, 2 records banked for a learner that does not exist yet, and 4 triggers firing now. Each trigger that fires is a work item. It was 12 until a tick found that 8 of them fired on every pass whatever happened.</p>
+<p><span class="chip measured">Measured</span> <strong>33 requirements</strong> on its own stats, 2 records banked for a learner that does not exist yet, and 4 triggers firing now. Each trigger that fires is a work item. It was 12 until a tick found that 8 of them fired on every pass whatever happened.</p>
 <p><span class="chip measured">Measured</span> <strong>9 faults</strong> its first round of on against off found in itself: 5 in the harness, 4 in the tool, all fixed.</p>
 <p><span class="chip measured">Measured</span> <strong>Its optional parts:</strong> of the run plan's 7 lines, 3 reach what a pass runs, and on today's evidence all 3 are off on both projects, because a plain rule wins by more than the 0.02 a learned part would need. The other 4 are marked measured only: they record a verdict and change nothing, and three of the verdicts behind the plan flip with the seed alone. Its own tick found that none of the 7 reached a pass by code before it wired these.</p>
-<p><span class="chip measured">Measured</span> <strong>58%</strong> of the breaks of its own code are caught, 885 of 1,532, on its one self pass. The tool is less tested than the feature it tests.</p>
+<p><span class="chip measured">Measured</span> <strong>58%</strong> of the breaks of its own code were caught, 885 of 1,532, on its first self pass; a second pass on 30 October caught 989 of 1,637 (60%). The tool is less tested than the feature it tests.</p>
 <p><span class="chip open">Open</span> <strong>0 of the 20</strong> measured outcomes its improvement learner needs, so rules choose the work for now, not a model. These numbers show what it has found, not yet how fast it gets better.</p></div>
 <h3>The loop, in pseudo C++</h3>
 <p>The toolkit is written in Python. This is the same logic for a C++ reader; the lower-case names are the real ones in the code.</p>
@@ -146,7 +146,7 @@ void Tick() {
 </ul>
 <p>The same learning applies one level up: once enough actions have measured results, a model can learn which kind of action moves which number, and it is switched on only where it beats the plain rule, like everything else.</p>
 <div class="box evidence"><p class="label">Where these numbers come from</p>
-<p><span class="chip measured">Measured</span> The audit on 29 October: 28 numbers read by nothing at first; after giving each a reader or a trigger, <strong>none</strong>. 19 now drive a decision in code and 25 are covered by a trigger.</p>
+<p><span class="chip measured">Measured</span> The audit on 29 October: 28 numbers read by nothing at first; after giving each a reader or a trigger, <strong>none</strong>. 14 now drive a decision in code and 28 are covered by a trigger.</p>
 <p><span class="chip measured">Measured</span> The first run of the triggers fired 12: among them, 5 tests in the tool's own suite that catch no break at all, 8 of the who/what/why questions never asked on each model, and one requirement whose breaks were all caught last pass and are not now.</p>
 <p><span class="chip open">Open</span> No action has a measured result yet; the improvement graph becomes learnable at 20.</p></div>
 </section>

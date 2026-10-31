@@ -11,7 +11,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <header class="top"><h1>How to use AI for games</h1><span><a href="../">The fly-through</a></span><span><a href="../manual/">The manual</a></span></header>
 <main class="deck">
 <article id="slide-1"><div class="frame"><section id="cover" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:96px 128px 72px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
-<img src="img/whole.jpg" alt="The real graph of osu!’s scoring rules: about 1,060 nodes, drawn from the store the loop wrote." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/whole.jpg" alt="The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:24px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">TNT Tools · internal training manual</p>
@@ -34,7 +34,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:24px;color:#7FB2E5"><a href="../manual/#top">The full manual, in plain words: every claim here, and the test behind it</a></p>
 </section>
-</div><details><summary>Slide 1: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. Three measured numbers to start. The 99% is from our knowledge graph, on facts: 99.03% of 35,951 derivations it had never seen were right, and when it cannot back an answer it abstains. Seven of eleven pairs went to the loop when three blind graders judged the two answers; slide 23 has the losses and the cost. The third is from three trials on code you can read for yourself: Unreal Engine’s version-string class, its JSON object and the scoring rules of the open-source game osu!. Each held a fault against its own spec or docs, and each was shown by calling the code as shipped; slide 14 has them, and the control run that found careful reading without the loop finds as many. Behind this slide: The real graph of osu!’s scoring rules: about 1,060 nodes, drawn from the store the loop wrote.</p></details></article>
+</div><details><summary>Slide 1: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. Three measured numbers to start. The 99% is from our knowledge graph, on facts: 99.03% of 35,951 derivations it had never seen were right, and when it cannot back an answer it abstains. Seven of eleven pairs went to the loop when three blind graders judged the two answers; slide 23 has the losses and the cost. The third is from three trials on code you can read for yourself: Unreal Engine’s version-string class, its JSON object and the scoring rules of the open-source game osu!. Each held a fault against its own spec or docs, and each was shown by calling the code as shipped; slide 14 has them, and the control run that found careful reading without the loop finds as many. Behind this slide: The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote.</p></details></article>
 <article id="slide-2"><div class="frame"><section id="flatter" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
 <img src="img/proof.jpg" alt="Every break of osu!’s scoring rules and the test that caught it. Red: no test caught it, and each one has to be explained." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
@@ -584,7 +584,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="display:flex;gap:20px">
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 22px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F08A3C">180</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F08A3C">183</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC">stats and metadata on file</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 22px;border:1px solid #2E4052;border-radius:16px">
@@ -631,29 +631,29 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <div style="display:flex;gap:20px">
 <table style="flex:1.25;font-size:24px;background:rgba(16,26,36,.86);border-radius:12px">
 <tr><th style="width:42%">Learned part</th><th style="width:26%">Breaks caught, got past</th><th style="width:32%">On a graph of itself</th></tr>
-<tr><td>Who owns new code</td><td>78, 37</td><td>lost, 0.75 vs 0.83</td></tr>
-<tr><td>Which tests catch a break</td><td>62, 50</td><td>lost, 0.83 vs 0.92</td></tr>
-<tr><td>Which steps carry it</td><td>19, 18</td><td>lost, 0.66 vs 0.81</td></tr>
-<tr><td>Which change nothing</td><td>41, 8</td><td>too thin to say</td></tr>
-<tr><td>Which get past the tests</td><td>134, 85</td><td>lost, 0.15 vs 0.19</td></tr>
-<tr><td>Where to add a test</td><td>35, 7</td><td>too thin to say</td></tr>
+<tr><td>Who owns new code</td><td>695, 382</td><td>lost, 0.65 vs 0.83</td></tr>
+<tr><td>Which tests catch a break</td><td>100, 76</td><td>lost, 0.83 vs 0.92</td></tr>
+<tr><td>Which steps carry it</td><td>37, 34</td><td>lost, 0.66 vs 0.81</td></tr>
+<tr><td>Which change nothing</td><td>84, 20</td><td>too thin to say</td></tr>
+<tr><td>Which get past the tests</td><td>161, 106</td><td>lost, 0.15 vs 0.19</td></tr>
+<tr><td>Where to add a test</td><td>97, 24</td><td>too thin to say</td></tr>
 </table>
 <div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:18px 24px;border:1px solid #2E4052;border-radius:16px">
 <h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:28px;font-weight:600;color:#F08A3C">What it found</h3>
 <p style="font-size:24px;line-height:1.3;color:#F4F2EC">With the guard that keeps the answer out removed, the network’s own selftest still passed.</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC">A win that is probably not one: it learned a statement’s shape from old labels.</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC">The bar for showing a proposal has no margin, and ignores the rule that wins.</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC">The code that writes a score no test holds: 32 of 32 breaks got past.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">In the first partial run, the code that writes a score was held by no test: 32 of 32 breaks got past.</p>
 </div>
 </div>
-<p style="font-size:26px;line-height:1.35;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>48 requirements, 140 stats, 32 of them unread.</b> Early: 1,238 of 1,812 breaks did not run, so these counts are lower bounds, and each graph-of-itself score is one seed.</p>
+<p style="font-size:26px;line-height:1.35;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>48 requirements, 144 stats, 32 of them unread.</b> 1,174 of 1,816 breaks caught, 642 got past, none left unrun. Each graph-of-itself score is one seed.</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#gnnself">Every network, every flaw, in plain words</a></p>
 <p style="font-size:24px;color:#A9B7C4">19</p>
 </div>
 </section>
-</div><details><summary>Slide 19: what the speaker says</summary><p>The requirements for each learned part are now a subgraph of their own: one use-case model per part, the stats it reads and records as a closed list inside that model, and all of them joined in one graph of 3,283 nodes where 30 stats are shared across parts. The loop then ran on each, breaking its code, and each part was run on a graph of itself. No part beat the plain rules on its own code: four lost and two were too thin to say. That is one seed each, so do not read those scores as means. The best find is the first one on the slide: remove the guard that keeps the answer out of what a network reads, and that network's own selftest still passes. Only a new guard, written from the requirement, catches it; 115 of the 369 catches came only from those new guards. The second: one result on the Goals List reaches its bar on labels that look wrong, inferred and not re-run, so it is marked doubted there. None of these flaws is fixed yet; they are on the board. This is not yet the improvement model itself under the rules, which stays an open item, and it is 2 hours of a budget that left 1,238 breaks unrun, 960 of them on the largest part. Behind this slide: the real graph, from below.</p></details></article>
+</div><details><summary>Slide 19: what the speaker says</summary><p>The requirements for each learned part are now a subgraph of their own: one use-case model per part, the stats it reads and records as a closed list inside that model, and all of them joined in one graph of 3,298 nodes where 30 stats are shared across parts. The loop then ran on each, breaking its code, and each part was run on a graph of itself. No part beat the plain rules on its own code: four lost and two were too thin to say. That is one seed each, so do not read those scores as means. The best find is the first one on the slide: remove the guard that keeps the answer out of what a network reads, and that network's own selftest still passes. Only a new guard, written from the requirement, catches it; in the first, partial run, 115 of the 369 catches came only from those new guards. The second: one result on the Goals List reaches its bar on labels that look wrong, inferred and not re-run, so it is marked doubted there. None of these flaws is fixed yet; they are on the board. This is not yet the improvement model itself under the rules, which stays an open item, and a longer run has since given every one of its 1,816 breaks a verdict, so the break counts in the table are complete, not lower bounds. Behind this slide: the real graph, from below.</p></details></article>
 <article id="slide-20"><div class="frame"><section id="selfimprove" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <img src="img/self.jpg" alt="The tool's own graph: its own requirements, its own code, its own breaks." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
@@ -706,7 +706,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;line-height:1.35;color:#C9D3DC">stats recorded with nothing reading them. Each now triggers something, or has a dated reader.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">32</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">33</p>
 <p style="font-size:24px;line-height:1.35;color:#C9D3DC">requirements on its own stats. 4 are firing now, and each one that fires is a work item.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
@@ -719,7 +719,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
 <p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">58%</p>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">of the breaks of its own code caught, 885 of 1,532, on its one self pass. It is less tested than the SemVer parser it was run on (87.3%).</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">of the breaks of its own code caught on its first self pass, 885 of 1,532; a second pass caught 989 of 1,637 (60%). It is less tested than the SemVer parser it was run on (87.3%).</p>
 </div>
 </div>
 <p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Not yet:</b> 0 of the 20 measured outcomes its improvement learner needs, so rules choose the work for now, not a model.</p>

@@ -470,11 +470,11 @@ method Pay        is claimed by   requirement W-1</code></pre>
 
 <section id="gnnself">
 <h2>The tool on its own networks</h2>
-<p>The requirements for each learned part are a subgraph of their own: one use-case model per part, with the stats it reads and records as a closed list inside it, all joined in one graph of 3,283 nodes and 7,987 edges, where 30 stats are shared across parts. The loop then ran on each part, breaking its code, and each part was run on a graph of itself.</p>
+<p>The requirements for each learned part are a subgraph of their own: one use-case model per part, with the stats it reads and records as a closed list inside it, all joined in one graph of 3,298 nodes and 8,863 edges, where 30 stats are shared across parts. The loop then ran on each part, breaking its code, and each part was run on a graph of itself.</p>
 <div class="box evidence"><p class="label">What it measured, on 30 October</p>
-<p><span class="chip measured">Measured</span> <strong>No part beat the plain rules on its own code.</strong> Who owns new code: 0.75 against 0.83. Which tests catch a break: 0.83 against 0.92. Which steps carry a requirement: 0.66 against 0.81. Which breaks get past the tests: 0.15 against 0.19. Two were too thin to say: which breaks change nothing, and where to add a test. One seed each, so these are not means.</p>
-<p><span class="chip measured">Measured</span> <strong>48 requirements, 9 of them inferred. 140 stats, used 229 times across the parts, 32 of them read by nobody. 369 breaks caught, 205 got past.</strong> 115 of the catches came only from new guards written from the requirements, because the tool's own selftests had passed those breaks.</p>
-<p><span class="chip open">Open</span> <strong>1,238 of the 1,812 breaks did not run</strong>, 960 of them on the largest part, so the counts are lower bounds.</p></div>
+<p><span class="chip measured">Measured</span> <strong>No part beat the plain rules on its own code.</strong> Who owns new code: 0.65 against 0.83. Which tests catch a break: 0.83 against 0.92. Which steps carry a requirement: 0.66 against 0.81. Which breaks get past the tests: 0.15 against 0.19. Two were too thin to say: which breaks change nothing, and where to add a test. One seed each, so these are not means.</p>
+<p><span class="chip measured">Measured</span> <strong>48 requirements, 9 of them inferred. 144 stats, used 233 times across the parts, 32 of them read by nobody. 1,174 of 1,816 breaks caught, 642 got past.</strong> In the first, partial run, 115 of the 369 catches came only from new guards written from the requirements, because the tool's own selftests had passed those breaks.</p>
+<p><span class="chip measured">Measured</span> <strong>Every break has a verdict: none is left unrun.</strong> The first run left most of them unrun, so its counts were lower bounds; these counts are not.</p></div>
 <h3>What it found, none of it fixed yet</h3>
 <ul>
 <li>With the guard that keeps the answer out of what a network reads removed, the network's own selftest still passes. Only the new guard catches it.</li>
@@ -599,7 +599,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 
 <section id="self">
 <h2>The tool runs on itself</h2>
-<p>The loop’s own requirements are written as a model too, from the author’s own words with their dates: <strong>7 use cases, 18 authored requirements and 2 inferred ones</strong>, and the model passes the 19 rules. A Python adapter breaks the loop’s own decision code the same way the C# adapter breaks a game’s, and the loop’s selftests are the tests.</p>
+<p>The loop’s own requirements are written as a model too, from the author’s own words with their dates: <strong>8 use cases, 18 authored requirements and 2 inferred ones</strong>, and the model passes the 19 rules. A Python adapter breaks the loop’s own decision code the same way the C# adapter breaks a game’s, and the loop’s selftests are the tests.</p>
 <p>The model is expected to stay open in places, and to say so: it must report that the installer is the newest piece, that the two targets are not measured, and that a reviewer every pass is still a practice rather than a check.</p>
 <div class="box evidence"><p class="label">The first pass on its own code (29 October, 65 minutes)</p>
 <p><span class="chip measured">Measured</span> <strong>1,626 breaks</strong> of the tool’s own decision code. Its selftests caught <strong>885 (54%)</strong>; <strong>647 got past</strong> every test; 94 were proven to change nothing by comparing compiled bytecode. <strong>174 of 392 statements</strong> are held by a test (44%).</p>
@@ -746,10 +746,10 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <div class="box evidence"><p class="label">Where these numbers come from</p>
 <p><span class="chip measured">Measured</span> <strong>19</strong> ways a check could pass for the wrong reason, found by fresh reviewers; 17 fixed, each with a planted mistake a selftest must catch (see <a href="#reviewers">reviewers</a>).</p>
 <p><span class="chip measured">Measured</span> <strong>11 stats</strong> were recorded with nothing reading them. The audit first said 6, and that was itself a bug: it counted test fixtures and the recorder as readers. Now 0: each stat triggers something, or has a reader with a date.</p>
-<p><span class="chip measured">Measured</span> <strong>32 requirements</strong> on its own stats, 2 records banked for a learner that does not exist yet, and 4 triggers firing now. Each trigger that fires is a work item. It was 12 until a tick found that 8 of them fired on every pass whatever happened.</p>
+<p><span class="chip measured">Measured</span> <strong>33 requirements</strong> on its own stats, 2 records banked for a learner that does not exist yet, and 4 triggers firing now. Each trigger that fires is a work item. It was 12 until a tick found that 8 of them fired on every pass whatever happened.</p>
 <p><span class="chip measured">Measured</span> <strong>9 faults</strong> its first round of on against off found in itself: 5 in the harness, 4 in the tool, all fixed.</p>
 <p><span class="chip measured">Measured</span> <strong>Its optional parts:</strong> of the run plan's 7 lines, 3 reach what a pass runs, and on today's evidence all 3 are off on both projects, because a plain rule wins by more than the 0.02 a learned part would need. The other 4 are marked measured only: they record a verdict and change nothing, and three of the verdicts behind the plan flip with the seed alone. Its own tick found that none of the 7 reached a pass by code before it wired these.</p>
-<p><span class="chip measured">Measured</span> <strong>58%</strong> of the breaks of its own code are caught, 885 of 1,532, on its one self pass. The tool is less tested than the feature it tests.</p>
+<p><span class="chip measured">Measured</span> <strong>58%</strong> of the breaks of its own code were caught, 885 of 1,532, on its first self pass; a second pass on 30 October caught 989 of 1,637 (60%). The tool is less tested than the feature it tests.</p>
 <p><span class="chip open">Open</span> <strong>0 of the 20</strong> measured outcomes its improvement learner needs, so rules choose the work for now, not a model. These numbers show what it has found, not yet how fast it gets better.</p></div>
 <h3>The loop, in pseudo C++</h3>
 <p>The toolkit is written in Python. This is the same logic for a C++ reader; the lower-case names are the real ones in the code.</p>
@@ -905,7 +905,7 @@ void Tick() {
 </ul>
 <p>The same learning applies one level up: once enough actions have measured results, a model can learn which kind of action moves which number, and it is switched on only where it beats the plain rule, like everything else.</p>
 <div class="box evidence"><p class="label">Where these numbers come from</p>
-<p><span class="chip measured">Measured</span> The audit on 29 October: 28 numbers read by nothing at first; after giving each a reader or a trigger, <strong>none</strong>. 19 now drive a decision in code and 25 are covered by a trigger.</p>
+<p><span class="chip measured">Measured</span> The audit on 29 October: 28 numbers read by nothing at first; after giving each a reader or a trigger, <strong>none</strong>. 14 now drive a decision in code and 28 are covered by a trigger.</p>
 <p><span class="chip measured">Measured</span> The first run of the triggers fired 12: among them, 5 tests in the tool's own suite that catch no break at all, 8 of the who/what/why questions never asked on each model, and one requirement whose breaks were all caught last pass and are not now.</p>
 <p><span class="chip open">Open</span> No action has a measured result yet; the improvement graph becomes learnable at 20.</p></div>
 </section>
