@@ -83,6 +83,8 @@ h1{font:700 var(--t-h1)/1.02 var(--f-sans);margin:0;letter-spacing:-.022em}
   font:600 var(--t-label)/1 var(--f-sans);letter-spacing:.015em;
   transition:color .13s ease,border-color .13s ease}
 .tab:hover{color:var(--x-strong)}
+.tablink{padding:11px 15px 10px;color:var(--x-accent);border-bottom:2px solid transparent;margin-bottom:-1px;text-decoration:none;font:inherit}
+.tablink:hover{color:var(--x-strong);text-decoration:underline}
 .tab.on{color:var(--x-strong);border-bottom-color:var(--x-accent)}
 .tab:focus-visible{outline:2px solid var(--x-accent);outline-offset:2px;border-radius:4px}
 .panel{display:none}.panel.on{display:block}
@@ -300,6 +302,7 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
   <div class="tab" data-p="desk" data-aud="games">Job Desk</div>
   <div class="tab" data-p="finder" data-aud="games">Deal Finder <span class="beta">BETA</span></div>
   <div class="tab" data-p="u2ue">Unity &rarr; Unreal <span class="beta">BETA</span></div>
+  <a class="tablink" href="harness/fly/" data-aud="games">Closed loop fly-through &rarr;</a>
   <div class="tab" data-p="inv" data-aud="ai">The work</div>
   <div class="tab" data-p="reqs" data-aud="ai">Requirements gathering <span class="beta">BETA</span></div>
   <div class="tab" data-p="audit" data-aud="ai">Count what's missing <span class="beta">BETA</span></div>
@@ -5599,7 +5602,7 @@ renderCode();
   // that fast reads as a slogan rather than as a measurement.
   var NOTE = {
     ai:    "Showing the engine, the research behind it, and how the requirements were gathered.",
-    games: "Showing u2ue (the Unity to Unreal porting toolkit, which has a page of its own), R\u00e9sum\u00e9 Breakout, Star Fighter, the level builder and the job desk. R\u00e9sum\u00e9 Breakout and Star Fighter run in this page; the level builder is a Unity build and opens in its own."
+    games: "Showing u2ue (the Unity to Unreal porting toolkit, which has a page of its own), R\u00e9sum\u00e9 Breakout, Star Fighter, the level builder, the job desk and a link to the closed loop fly-through. R\u00e9sum\u00e9 Breakout and Star Fighter run in this page; the level builder is a Unity build and opens in its own."
   };
   var TITLE = { ai: document.title, games: "R.J. Thompson - playable demos" };
   var root = document.documentElement;
