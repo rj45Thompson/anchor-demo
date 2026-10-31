@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=5179a48041"><style>
+<html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src 'self' https://api.anthropic.com; object-src 'none'; base-uri 'none'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=514e4dd0b5"><style>
 :root{--bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--treeW:320px;color-scheme:dark}
 *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;font-variant-numeric:tabular-nums}
 a{color:var(--blue)}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -464,7 +464,7 @@ class App {
       +'<h3>What it is joined to</h3>'+(rels.length?'<ul class="nodejoins">'+rels.map((r)=>'<li><b>'+h(r)+'</b> ('+joins[r].length+'): '+links(joins[r])+'</li>').join('')+'</ul>':'<p>Nothing.</p>')+'<h3>What this kind of thing is</h3>';
     const sec=D.kindSection[kind]; D.items[id]={kind:'node',node:i,title:title[0].toUpperCase()+title.slice(1),tip:words}; D.pages[id]={head,secs:sec&&D.sections[sec]?[sec]:[],foot:''}; }
   /* the Blueprint: a page of its own over the stage, this graph showing through behind its floors. One frame, moved from floor to floor by its address */
-  blueprint(it){ const on=!!it, fr=$('bpframe'); document.body.classList.toggle('bp-on',on); fr.hidden=!on; $('bpclose').hidden=!on; if(!on) return; if(fr.dataset.on) fr.contentWindow.location.hash='embed.'+it.frame; else { fr.dataset.on='1'; fr.src='../blueprint/index.html?v=5179a48041#embed.'+it.frame; } }
+  blueprint(it){ const on=!!it, fr=$('bpframe'); document.body.classList.toggle('bp-on',on); fr.hidden=!on; $('bpclose').hidden=!on; if(!on) return; if(fr.dataset.on) fr.contentWindow.location.hash='embed.'+it.frame; else { fr.dataset.on='1'; fr.src='../blueprint/index.html?v=514e4dd0b5#embed.'+it.frame; } }
   setHere(it){ $('hereT').textContent=it.title; $('hereS').textContent=it.sub||it.tip||''; }
   roomChanged(){ const h=$('hud').getBoundingClientRect().height, v=$('view').getBoundingClientRect(), target=this.page.isOpen?this.openHeight():46, top=Math.min(h,v.height*.3), c=this.cam; if(Math.abs(c.w-v.width)<1&&Math.abs(c.h-v.height)<1&&Math.abs(c.topGoal-top)<1&&Math.abs(c.bottomGoal-target)<1) return; c.setRoom(v.width,v.height,top,target); clearTimeout(this.refit); if(this.cur&&!c.wandered) this.refit=setTimeout(()=>{ if(!c.wandered&&this.cur) c.fly(this.viewFor(this.D.items[this.cur]),reduced()); },30); else if(!this.cur&&!c.wandered) c.v.dist=this.home().dist; }
   openHeight(){ const cs=getComputedStyle(this.page.el).getPropertyValue('--pageH'); if(cs&&cs.trim()) return parseFloat(cs); const v=$('view').getBoundingClientRect(); return innerWidth<=760?v.height*.52:innerHeight*.38; }
@@ -540,7 +540,562 @@ class App {
 }
 
 (async function(){ const forced=Q.get('renderer'), bad=(msg)=>{ const f=$('fail'); f.hidden=false; f.textContent=msg; console.error(msg); };
-  let D; try { const r=await fetch('data.json?v=5179a48041'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
+  let D; try { const r=await fetch('data.json?v=514e4dd0b5'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
   const started=await startScene($('c'),forced); const app=new App(D,started); window.__fly={renderer:started.scene.name,why:started.why,app,settle:()=>new Promise((res)=>app.settleWaiters.push(res)),state:()=>({cur:app.cur,pageOpen:app.page.isOpen,pageId:app.page.id,playing:app.playing,eye:app.cam.eye.slice(),view:Object.assign({},app.cam.v),fps:app.fps.v})};
 })();
-</script></body></html>
+</script><script>/* dictation.js - speech to text beside a page, and Claude to tidy the words or answer from the page.
+
+   ONE script, inlined by dictation_panel.py into every page that carries the panel (the deck and the fly-through), so the two cannot
+   drift apart. It loads nothing from outside and starts nothing by itself: the panel is closed until the viewer opens it, the microphone
+   starts only on a click, and Claude is asked only when a key has been typed here and a button or an end of speech asks for it.
+
+   OUR READING of "take dictation", which nobody has confirmed: the words you say appear as text beside the slide, and Claude tidies them
+   or answers a question from the deck. The panel says so in one line, so a viewer who meant something else can say so.
+
+   THE KEY is the viewer's and nobody else's.
+     - It is typed into a password-type field and held in a private field of KeyVault, in this tab's memory. It is not written to
+       any browser storage, a cookie, the address, the page, a file or the console; a reload or a closed tab forgets it.
+     - It is sent in one header, to one address (API below), and nowhere else. The page's own policy (a meta tag) allows connections to
+       the page's own origin and that address only, and allows no script from outside the page.
+     - The panel refuses to take a key at all when the page is not a secure context, is shown inside another page, holds a script that
+       is not inline, has had a script added since it opened, or has a fetch that is no longer the browser's own (PageGuard).
+   The pages work in full with no key. Without one the panel still turns speech into text.
+
+   THE AUDIO. This script does not record. Chrome's speech recognition sends the audio to a web service to turn it into text (MDN says so
+   of the API), so the panel says that on screen before the microphone can be started, and a browser with no speech recognition is told so
+   and typing works the same.
+
+   NOTHING IS HIDDEN. Every failure is a sentence on the panel: nothing heard, the microphone refused, no speech service, no key, the key
+   refused, the network failed, the service overloaded, a refusal from Claude. There is no substitute reply and no silent retry.
+
+   CLASSES  KeyVault (the key) - PageGuard (may a key be taken here) - SpeechInput (the browser's recognizer) - ClaudeClient (one request,
+   every failure named) - Prompts (what Claude is told) - DeckHost and FlyHost (what each page lets the panel read) - DictationPanel
+   (the screen, and the order things happen in). */
+(function () {
+  'use strict';
+  if (window.__dictation) return;
+
+  /* the one address a key is ever sent to, and the version header the API documents for it */
+  const API = 'https://api.anthropic.com/v1/messages';
+  const API_VERSION = '2026-10-21';
+  /* current model ids, from the API reference the panel was written against; the first is the default */
+  const MODELS = [['claude-opus-5-5', 'Claude Opus 5.5'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5'], ['claude-haiku-5-5', 'Claude Haiku 5.5']];
+  const MAX_TOKENS = 16000;            /* a ceiling, not a target: the prompts ask for short answers */
+  const TIMEOUT_MS = 90000;
+  const WHOLE_LIMIT = 120000;          /* characters of page text sent whole; past this only the part in view goes, and the panel says so */
+  const HINT_LIMIT = 6000;             /* tidying only needs the words in view to spell terms by */
+  const VERSION = 'dictation-1';
+
+  const h = (tag, attrs, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v === false || v === null || v === undefined) continue;
+      if (k === 'text') el.textContent = v; else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (const kid of kids) if (kid) el.append(kid);
+    return el;
+  };
+  const squash = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+
+  /* ------------------------------------------------------------------------------------------------------------ the key */
+  class KeyVault {
+    /* The key, and nothing else about it. A private field cannot be read from outside this class, and the only thing that leaves is
+       the header its sign method adds to a request headed for API. scrub() takes the key out of any text before it is shown. */
+    #key = '';
+    has() { return this.#key.length > 0; }
+    size() { return this.#key.length; }
+    take(text) {
+      const k = String(text || '').trim();
+      if (!k) return 'Type your key first.';
+      if (!/^[\x21-\x7E]+$/.test(k)) return 'A key is plain letters, digits and dashes with no spaces. This has something else in it.';
+      this.#key = k;
+      return '';
+    }
+    looksRight() { return this.#key.indexOf('sk-ant-') === 0; }
+    /* a key typed or pasted into the box for words, which is an ordinary field: browsers keep ordinary fields' text, and it would go to Claude as words */
+    shaped(text) { return /sk-ant-[A-Za-z0-9_-]{8,}/.test(text) || (this.#key.length >= 12 && String(text).includes(this.#key)); }
+    strip(text) { const t = String(text).replace(/sk-ant-[A-Za-z0-9_-]{8,}/g, ''); return this.#key.length >= 12 ? t.split(this.#key).join('') : t; }
+    forget() { this.#key = ''; }
+    sign(headers) { if (!this.#key) throw new Error('no key'); return Object.assign({}, headers, { 'x-api-key': this.#key }); }
+    scrub(text) { return this.#key ? String(text).split(this.#key).join('[key]') : String(text); }
+  }
+
+  /* ----------------------------------------------------------------------------------------------------- may a key be taken */
+  class PageGuard {
+    /* A key is taken only on a page that holds nothing it did not ship with. The checks are what a page can see of itself: it cannot
+       see a browser extension, and it says so rather than claim more. Once one fails, the key is refused for the life of the page. */
+    constructor(fetchRef) {
+      this.fetchRef = fetchRef;
+      this.added = [];
+      this.listeners = [];
+      this.watch();
+    }
+    static foreignAtLoad() {
+      return Array.from(document.querySelectorAll('script')).filter((s) => s.hasAttribute('src'))
+        .map((s) => 'a script loaded from ' + (s.getAttribute('src') || '').slice(0, 80));
+    }
+    watch() {
+      new MutationObserver((records) => {
+        /* only a script that arrives in THIS batch is news: the panel's own updates to the page come through here too, and must not set it off again */
+        let fresh = false;
+        for (const r of records) for (const n of r.addedNodes) {
+          if (n.nodeType !== 1) continue;
+          const found = n.tagName === 'SCRIPT' ? [n] : Array.from(n.querySelectorAll ? n.querySelectorAll('script') : []);
+          for (const s of found) { fresh = true; this.added.push('a script added after the page opened' + (s.getAttribute('src') ? ' (' + s.getAttribute('src').slice(0, 80) + ')' : '')); }
+        }
+        if (fresh) for (const f of this.listeners) f();
+      }).observe(document.documentElement, { childList: true, subtree: true });
+    }
+    onChange(f) { this.listeners.push(f); }
+    verdict() {
+      const why = [];
+      if (!window.isSecureContext) why.push('this page is not a secure context');
+      if (window.top !== window.self) why.push('this page is shown inside another page');
+      why.push(...PageGuard.foreignAtLoad());
+      why.push(...this.added);
+      let native = false;
+      try { native = /\[native code\]/.test(Function.prototype.toString.call(this.fetchRef)); } catch (e) { native = false; }
+      if (!native) why.push('the browser\'s fetch has been replaced by a script');
+      return { ok: why.length === 0, why: Array.from(new Set(why)) };
+    }
+  }
+
+  /* --------------------------------------------------------------------------------------------------- the browser's recognizer */
+  class SpeechInput {
+    /* The browser's own SpeechRecognition, one utterance per press, as the Blueprint city's command bar uses it. Everything it can
+       end in is reported through on(): started, interim, final, nothing, problem, ended. Nothing starts except through start(). */
+    constructor(on) {
+      this.on = on;
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      this.supported = !!SR;
+      this.listening = false;
+      if (!SR) return;
+      const rec = this.rec = new SR();
+      rec.lang = navigator.language || 'en-US';
+      rec.interimResults = true;
+      rec.continuous = false;
+      rec.maxAlternatives = 1;
+      rec.onstart = () => { this.listening = true; this.heard = false; this.reported = false; this.on('started'); };
+      rec.onresult = (e) => {
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) final += t; else interim += t;
+        }
+        if (interim) this.on('interim', squash(interim));
+        if (squash(final)) { this.heard = true; this.on('final', squash(final)); }
+      };
+      rec.onnomatch = () => { this.reported = true; this.on('problem', 'The browser heard sound but could not make words of it. Press Mic and say it again, or type it.'); };
+      rec.onerror = (e) => {
+        const why = {
+          'no-speech': 'Heard nothing. Press Mic and speak, or type it.',
+          'not-allowed': 'The microphone was refused for this page. Allow it in the address bar, or type.',
+          'service-not-allowed': 'This browser will not run speech recognition for this page. Type instead.',
+          'audio-capture': 'No microphone was found. Plug one in, or type.',
+          'network': 'The browser\'s speech service could not be reached, so nothing was turned into text. Check the network, or type.',
+          'language-not-supported': 'This browser has no speech recognition for your language. Type instead.',
+          'bad-grammar': 'The browser could not use its speech settings. Type instead.'
+        }[e.error];
+        if (e.error === 'aborted') return;
+        this.reported = true;
+        this.on('problem', why || ('Speech recognition stopped with an error (' + e.error + '). Type instead.'));
+      };
+      rec.onend = () => { const heard = !!this.heard; this.listening = false; this.on('ended', heard, this.reported); };
+    }
+    start() {
+      if (!this.supported) return false;
+      this.heard = false; this.reported = false;
+      try { this.rec.start(); return true; } catch (e) { this.on('problem', 'The microphone could not start (' + (e && e.message || e) + ').'); return false; }
+    }
+    stop() { if (this.supported && this.listening) this.rec.stop(); }
+  }
+
+  /* --------------------------------------------------------------------------------------------------------- one request */
+  class ClaudeProblem extends Error {
+    constructor(kind, message) { super(message); this.kind = kind; }
+  }
+
+  class ClaudeClient {
+    /* One request to API and what came back, every failure named. The key travels in a header made by the vault; the body holds the
+       prompt and the words and nothing else. No cookies and no referrer go with it. There is no retry and no stand-in reply. */
+    constructor(vault, fetchRef) { this.vault = vault; this.fetchRef = fetchRef; }
+    async ask(model, system, words) {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+      let res;
+      try {
+        res = await this.fetchRef.call(window, API, {
+          method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: ctl.signal,
+          headers: this.vault.sign({
+            'content-type': 'application/json',
+            'anthropic-version': API_VERSION,
+            /* the API refuses a browser's request without this one; it is how the API is told a person, not a server, holds the key */
+            'anthropic-dangerous-direct-browser-access': 'true'
+          }),
+          body: JSON.stringify({ model, max_tokens: MAX_TOKENS, system, output_config: { effort: 'low' }, messages: [{ role: 'user', content: words }] })
+        });
+      } catch (e) {
+        throw new ClaudeProblem(ctl.signal.aborted ? 'timeout' : 'network', ctl.signal.aborted
+          ? 'Claude did not answer in ' + Math.round(TIMEOUT_MS / 1000) + ' seconds, so the request was dropped.'
+          : 'The request to api.anthropic.com got no answer: the network failed, or the browser blocked it. Nothing was sent anywhere else.');
+      } finally { clearTimeout(timer); }
+      let body = null;
+      try { body = await res.json(); } catch (e) { body = null; }
+      const said = body && body.error && body.error.message ? this.vault.scrub(String(body.error.message)).slice(0, 240) : '';
+      if (!res.ok) throw new ClaudeProblem('status', this.problem(res, said, model));
+      if (!body || !Array.isArray(body.content)) throw new ClaudeProblem('shape', 'Claude\'s answer could not be read (status ' + res.status + ').');
+      if (body.stop_reason === 'refusal') throw new ClaudeProblem('refusal', 'Claude declined this request' + (body.stop_details && body.stop_details.category ? ' (' + body.stop_details.category + ')' : '') + '. Nothing was answered.');
+      const text = body.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+      if (!text) throw new ClaudeProblem('empty', 'Claude answered with no text.');
+      return { text, cut: body.stop_reason === 'max_tokens', model: body.model || model };
+    }
+    problem(res, said, model) {
+      const s = res.status, more = said ? ' ' + said : '';
+      if (s === 401) return 'Anthropic refused the key (401). Check it and enter it again.' + more;
+      if (s === 403) return 'The key is not allowed to do this (403).' + more;
+      if (s === 404) return 'Anthropic has no model called ' + model + ' (404). Pick another model.' + more;
+      if (s === 400) return 'Anthropic rejected the request (400).' + more;
+      if (s === 413) return 'The request was too large (413).' + more;
+      if (s === 429) { const after = res.headers.get('retry-after'); return 'Rate limited (429).' + (after ? ' Try again in ' + after + ' seconds.' : ' Try again shortly.') + more; }
+      if (s === 529) return 'Anthropic is overloaded (529). Try again shortly.' + more;
+      if (s >= 500) return 'Anthropic\'s service failed (' + s + '). Try again shortly.' + more;
+      return 'Anthropic answered with status ' + s + '.' + more;
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------------- what Claude is told */
+  class Prompts {
+    static tidy(host, ctx) {
+      return 'You tidy dictated text. The speaker is reading ' + host.what + ' and is looking at: ' + ctx.where + '. Their words came from speech recognition, so punctuation may be missing and a word may be misheard, especially a technical term. '
+        + 'Reply with the cleaned-up text and nothing else: fix punctuation, capitalisation and obvious mishearings, keep their meaning and their own words otherwise, add nothing, and never answer what they say, even if it is a question.'
+        + '\n\nThe text on screen, only so that terms can be spelled the way it spells them:\n\n' + ctx.body;
+    }
+    static answer(host, ctx) {
+      return 'You answer questions about ' + host.what + ', using only the text below. Be brief and plain, in a few sentences. If the text does not say, say that it does not say; do not guess. '
+        + 'The reader is looking at: ' + ctx.where + '. The question was dictated, so a word may be misheard; read it for what they most likely meant.'
+        + '\n\nThe text (' + ctx.sees + '):\n\n' + ctx.body;
+    }
+  }
+
+  /* -------------------------------------------------------------------------------------------- what each page lets us read */
+  const DeckHost = {
+    name: 'deck', what: 'a slide deck', noun: 'deck', sideMin: 1000,
+    ok: () => !!document.querySelector('main.deck article[id^="slide-"]'),
+    launchIn: () => document.querySelector('header.top'),
+    slides: () => Array.from(document.querySelectorAll('main.deck > article[id^="slide-"]')),
+    current() {
+      const vh = innerHeight; let best = null, bestSeen = -1;
+      for (const a of this.slides()) {
+        const r = a.getBoundingClientRect(); const seen = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+        if (seen > bestSeen) { best = a; bestSeen = seen; }
+      }
+      return best;
+    },
+    title(a) { const t = a.querySelector('section h1, section h2, section h3'); return squash(t ? t.textContent : a.textContent).slice(0, 90); },
+    text(a) { const frame = a.querySelector('.frame'), notes = a.querySelector('details p'); return squash(frame ? frame.textContent : '') + (notes ? ' Speaker notes: ' + squash(notes.textContent) : ''); },
+    where() { const a = this.current(); if (!a) return 'the top of the deck'; const all = this.slides(); return 'Slide ' + (all.indexOf(a) + 1) + ' of ' + all.length + ': ' + this.title(a); },
+    here() { const a = this.current(); return a ? this.text(a) : ''; },
+    all() { return this.slides().map((a, i) => 'Slide ' + (i + 1) + ' (' + this.title(a) + '): ' + this.text(a)).join('\n\n'); },
+    watch(f) { let q = 0; addEventListener('scroll', () => { if (!q) q = requestAnimationFrame(() => { q = 0; f(); }); }, { passive: true }); },
+    css: 'body[data-dict-layout="side"].dict-open{padding-right:var(--dict-w)}body[data-dict-layout="sheet"].dict-open{padding-bottom:var(--dict-h)}'
+  };
+
+  const FlyHost = {
+    name: 'fly', what: 'a page of a manual', noun: 'page', sideMin: 1240, floatMax: 760, floatIn: () => document.getElementById('view'),
+    ok: () => !!(document.getElementById('view') && document.getElementById('pageIn')),
+    launchIn: () => document.getElementById('ctl'),
+    opened() { const n = document.getElementById('pageName'); const t = n ? squash(n.textContent) : ''; return t && !/^Pick anything/.test(t) ? t : ''; },
+    where() { const t = this.opened(); return t ? 'the page "' + t + '"' : 'the graph, with no page open yet'; },
+    here() { return this.opened() ? squash(document.getElementById('pageIn').textContent) : ''; },
+    all() { return null; },
+    watch(f) { const n = document.getElementById('pageName'); if (n) new MutationObserver(f).observe(n, { childList: true, characterData: true, subtree: true }); },
+    css: 'body[data-dict-layout="side"].dict-open #view{right:var(--dict-w)}body[data-dict-layout="sheet"].dict-open #view{bottom:var(--dict-h)}body[data-dict-layout="sheet"].dict-open #page.open{height:auto;max-height:100%}'
+  };
+
+  /* ---------------------------------------------------------------------------------------------------------- the screen */
+  const CSS = `
+.dict,.dict *,.dict-launch{box-sizing:border-box}
+.dict{--d-bg:#121C26;--d-bg2:#16222E;--d-ink:#F4F2EC;--d-soft:#C9D3DC;--d-mute:#A9B7C4;--d-line:#2E4052;--d-accent:#F08A3C;--d-blue:#7FB2E5;--d-bad:#FF8F6B;--d-ok:#8FD6A0;
+ position:fixed;z-index:40;right:0;top:0;bottom:0;width:var(--dict-w);display:none;flex-direction:column;background:var(--d-bg);color:var(--d-ink);border-left:1px solid var(--d-line);
+ font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;padding-right:env(safe-area-inset-right,0px);color-scheme:dark}
+:root{--dict-w:380px;--dict-h:min(74dvh,640px)}
+body.dict-open .dict{display:flex}
+body[data-dict-layout="sheet"] .dict{top:auto;bottom:0;left:var(--treeW,0px);width:auto;height:var(--dict-h);border-left:0;border-top:1px solid var(--d-line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.dict-launch{background:#1D2C3A;color:#F4F2EC;border:1px solid #2E4052;border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer;min-height:36px;white-space:nowrap}
+.dict-launch:hover{border-color:#F08A3C}.dict-launch[aria-expanded="true"]{background:#F08A3C;color:#0B1219;border-color:#F08A3C}
+.top .dict-launch{margin-left:auto}
+.dict-launch.dict-float{position:absolute;right:calc(12px + env(safe-area-inset-right,0px));top:calc(96px + env(safe-area-inset-top,0px));z-index:3;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+body.dict-open .dict-launch.dict-float,body.bp-on .dict-launch{display:none}
+.dict button,.dict select,.dict textarea,.dict input{font:inherit;color:inherit}
+.dict button,.dict select{background:#1D2C3A;color:var(--d-ink);border:1px solid var(--d-line);border-radius:8px;padding:6px 12px;min-height:40px;cursor:pointer}
+.dict button:hover:not(:disabled){border-color:var(--d-accent)}.dict button:disabled{opacity:.55;cursor:default}
+.dict :focus-visible,.dict-launch:focus-visible{outline:2px solid var(--d-accent);outline-offset:2px}
+.dict-head{display:flex;align-items:flex-start;gap:8px;padding:10px 12px 6px;border-bottom:1px solid var(--d-line);flex:none}
+.dict-head h2{margin:0;font:600 17px/1.25 'Space Grotesk',system-ui,sans-serif}
+.dict-head p{margin:2px 0 0;font-size:13px;color:var(--d-soft);overflow-wrap:anywhere}
+.dict-head>div{flex:1;min-width:0}.dict-x{flex:none;min-width:40px}
+.dict{overflow-y:auto;overscroll-behavior:contain}
+.dict-info{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 12px 4px}
+.dict-ctl{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 12px;border-top:1px solid var(--d-line)}
+.dict-modes{display:inline-flex;gap:10px;align-items:center}
+.dict-reading{margin:0;font-size:13px;color:var(--d-soft)}
+.dict-say{margin:0;font-size:13px;color:var(--d-soft);border-left:3px solid var(--d-accent);padding-left:8px}
+.dict-row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.dict-row label{font-size:14px;display:inline-flex;gap:6px;align-items:center;min-height:30px}
+.dict-mic[data-on="1"]{background:var(--d-accent);color:#0B1219;border-color:var(--d-accent)}
+.dict-words{width:100%;min-height:58px;resize:vertical;background:#0E1720;color:var(--d-ink);border:1px solid var(--d-line);border-radius:8px;padding:8px 10px;font-size:16px;line-height:1.4}
+.dict-live{margin:0;font-size:13.5px;color:var(--d-mute);font-style:italic}.dict-live:empty{display:none}
+.dict-status{margin:0;font-size:14px;min-height:1.4em}
+.dict-status[data-kind="problem"]{color:var(--d-bad)}.dict-status[data-kind="ok"]{color:var(--d-ok)}
+.dict-log:empty::before{content:"Nothing yet. What you say, and what Claude answers, will be listed here, newest first.";color:var(--d-mute);font-size:13px}
+.dict-log{list-style:none;margin:0;padding:8px 12px;display:flex;flex-direction:column;gap:8px;flex:1 1 96px;min-height:96px;overflow-y:auto;overscroll-behavior:contain}
+.dict-turn{border:1px solid var(--d-line);border-radius:8px;padding:6px 10px;background:var(--d-bg2)}
+.dict-turn[data-kind="claude"]{border-left:3px solid var(--d-blue)}.dict-turn[data-kind="problem"]{border-left:3px solid var(--d-bad)}
+.dict-turn .who{font:600 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--d-mute)}
+.dict-turn[data-kind="problem"] .who{color:var(--d-bad)}
+.dict-turn .meta{display:block;font-size:12px;color:var(--d-mute)}
+.dict-turn p{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.dict-turn button{margin-top:6px;min-height:32px;font-size:13px}
+.dict-key{border:1px solid var(--d-line);border-radius:8px;padding:6px 10px;background:var(--d-bg2);flex:none;margin:0 12px 10px}
+.dict-key summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--d-soft)}
+.dict-key p{margin:6px 0;font-size:13px;color:var(--d-mute)}
+.dict-key input[type=password]{width:100%;background:#0E1720;border:1px solid var(--d-line);border-radius:8px;padding:8px 10px;font-size:16px;min-height:42px}
+.dict-key input:disabled{opacity:.5}
+.dict-key .dict-row{margin-top:6px}
+@media (prefers-reduced-motion:reduce){.dict *{transition:none!important}}
+`;
+
+  class DictationPanel {
+    /* The screen and the order things happen in. It builds its own DOM, docks beside the page (a side panel where there is room, a sheet
+       along the bottom where there is not), and ties the five parts above together. */
+    constructor(host) {
+      this.host = host;
+      this.vault = new KeyVault();
+      this.nativeFetch = window.fetch;
+      this.guard = new PageGuard(this.nativeFetch);
+      this.client = new ClaudeClient(this.vault, this.nativeFetch);
+      this.speech = new SpeechInput((kind, a, b) => this.heard(kind, a, b));
+      this.busy = false;
+      this.build();
+      this.guard.onChange(() => this.checkGuard());
+      addEventListener('resize', () => this.layout());
+      this.layout();
+      if (host.watch) host.watch(() => this.whereChanged());
+      this.whereChanged();
+      if (this.checkGuard()) this.status('info', 'No key yet. Speech still turns into text here; Claude answers once you add a key under "Your key and model".');
+      this.panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.toggle(false); });
+    }
+
+    build() {
+      const host = this.host;
+      document.head.append(h('style', { id: 'dict-style', text: CSS + host.css }));
+      this.launch = h('button', { type: 'button', class: 'dict-launch', 'aria-expanded': 'false', 'aria-controls': 'dictation', text: 'Dictate', 'data-tip': 'Speak or type; Claude tidies your words or answers from this ' + host.noun + '. You bring your own key.' });
+      this.home = host.launchIn();
+      this.place();
+      this.launch.addEventListener('click', () => this.toggle());
+
+      this.where = h('p', { text: '' });
+      const close = h('button', { type: 'button', class: 'dict-x', 'aria-label': 'Close the dictation panel', text: 'Close' });
+      close.addEventListener('click', () => this.toggle(false));
+      this.mic = h('button', { type: 'button', class: 'dict-mic', 'data-on': '0', 'aria-pressed': 'false', text: 'Mic' });
+      this.mic.addEventListener('click', () => this.micClick());
+      this.tidy = h('input', { type: 'radio', class: 'dict-tidy', name: 'dict-mode', value: 'tidy', checked: true });
+      this.answer = h('input', { type: 'radio', class: 'dict-answer', name: 'dict-mode', value: 'answer' });
+      this.auto = h('input', { type: 'checkbox', checked: true });
+      this.words = h('textarea', { class: 'dict-words', rows: '2', placeholder: 'Press Mic and speak, or type here', 'aria-label': 'Your words' });
+      this.live = h('p', { class: 'dict-live', 'aria-hidden': 'true' });
+      this.send = h('button', { type: 'button', class: 'dict-send', text: 'Send to Claude' });
+      this.send.addEventListener('click', () => this.ask());
+      this.words.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.ask(); } });
+      this.words.addEventListener('input', () => this.keyInWords());
+      this.statusEl = h('p', { class: 'dict-status', role: 'status' });
+      this.log = h('ol', { class: 'dict-log', 'aria-live': 'polite', 'aria-label': 'What was said and what Claude answered' });
+
+      this.keyNote = h('p', { text: '' });
+      this.keyIn = h('input', { type: 'password', class: 'dict-keyin', autocomplete: 'off', spellcheck: 'false', autocapitalize: 'off', 'aria-label': 'Your Anthropic API key', placeholder: 'Your Anthropic API key', 'data-lpignore': 'true', 'data-1p-ignore': 'true', 'data-bwignore': 'true' });
+      this.keyUse = h('button', { type: 'button', class: 'dict-use', text: 'Use this key' });
+      this.keyForget = h('button', { type: 'button', class: 'dict-forget', text: 'Forget the key' });
+      this.model = h('select', { class: 'dict-model', 'aria-label': 'Model' });
+      for (const [id, name] of MODELS) this.model.append(h('option', { value: id, text: name }));
+      this.keyUse.addEventListener('click', () => this.useKey());
+      this.keyIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); this.useKey(); } });
+      this.keyForget.addEventListener('click', () => { this.vault.forget(); this.keyIn.value = ''; this.keyBox.open = true; this.keyState(); this.status('info', 'The key is forgotten. Claude will not be asked until you add one.'); });
+      this.keySummary = h('summary', { text: 'Your key and model' });
+      this.keyBox = h('details', { class: 'dict-key', open: innerWidth >= host.sideMin },
+        this.keySummary,
+        h('p', { text: 'You type your own Anthropic key here. It stays in this tab\'s memory only, is never saved or put in the address, and is sent only to api.anthropic.com when Claude is asked. A reload or a closed tab forgets it. What you say, and the text of the ' + host.noun + ' Claude needs to answer, go to Claude with it, and the cost is billed to your key.' }),
+        this.keyIn,
+        h('div', { class: 'dict-row' }, this.keyUse, this.keyForget),
+        this.keyNote,
+        h('div', { class: 'dict-row' }, h('label', {}, 'Model ', this.model)));
+
+      this.panel = h('aside', { class: 'dict', id: 'dictation', 'aria-label': 'Dictation', 'data-version': VERSION },
+        h('div', { class: 'dict-head' }, h('div', {}, h('h2', { text: 'Speak or type, Claude helps' }), this.where), close),
+        h('div', { class: 'dict-info' },
+          h('p', { class: 'dict-reading', text: 'Our reading of dictation: your words appear here as text beside the ' + host.noun + ', and Claude tidies them or answers from the ' + host.noun + '.' }),
+          h('p', { class: 'dict-say', text: this.speech.supported
+            ? 'Before you press Mic: Chrome sends what you say to a speech service on the web to turn it into text. Nothing is heard until you press it.'
+            : 'This browser has no speech recognition, so there is no Mic here, and typing works the same way. (Chrome and Edge have it; Firefox and some phones do not.)' })),
+        this.log,
+        h('div', { class: 'dict-ctl' },
+          h('div', { class: 'dict-row' }, this.mic,
+            h('span', { class: 'dict-modes', role: 'group', 'aria-label': 'What Claude does with your words' },
+              h('label', { title: 'Claude cleans up your words and gives them back' }, this.tidy, 'Tidy'),
+              h('label', { title: 'Claude answers your question from the ' + host.noun }, this.answer, 'Answer')),
+            this.send),
+          this.words, this.live,
+          h('div', { class: 'dict-row' }, h('label', {}, this.auto, 'Send when I stop talking')),
+          this.statusEl),
+        this.keyBox);
+      document.body.append(this.panel);
+      if (!this.speech.supported) { this.mic.disabled = true; this.mic.textContent = 'Mic (not in this browser)'; this.auto.parentElement.hidden = true; }
+      this.keyState();
+    }
+
+    layout() {
+      const next = innerWidth >= this.host.sideMin ? 'side' : 'sheet';
+      const changed = document.body.dataset.dictLayout !== next;
+      document.body.dataset.dictLayout = next;
+      this.place();
+      /* the page's own resize handler runs before this one and so measures the old layout (a deck's slides were scaled to a width of nothing when the window narrowed with the panel open); it is run again against the new one */
+      if (changed && document.body.classList.contains('dict-open')) dispatchEvent(new Event('resize'));
+    }
+    /* the button lives in the page's own row of controls; where that row is a strip that scrolls sideways (a phone), it would sit out of sight, so it floats over the view instead */
+    place() {
+      const host = this.host, float = !!(host.floatIn && innerWidth <= host.floatMax);
+      const parent = float ? host.floatIn() : this.home;
+      this.launch.classList.toggle('dict-float', float);
+      if (!parent) { if (!this.launch.parentNode) document.body.append(this.launch); return; }
+      if (this.launch.parentNode === parent) return;
+      if (!float && host.name === 'fly') parent.insertBefore(this.launch, document.getElementById('gl')); else parent.append(this.launch);
+    }
+    toggle(force) {
+      const open = force === undefined ? !document.body.classList.contains('dict-open') : force;
+      document.body.classList.toggle('dict-open', open);
+      this.launch.setAttribute('aria-expanded', open ? 'true' : 'false');
+      this.whereChanged();
+      if (open) setTimeout(() => (this.vault.has() || !this.keyBox.open ? (this.mic.disabled ? this.words : this.mic) : (this.keyIn.disabled ? this.words : this.keyIn)).focus({ preventScroll: true }), 0);
+      else this.launch.focus();
+      dispatchEvent(new Event('resize'));
+    }
+    whereChanged() { this.where.textContent = 'Beside: ' + this.host.where(); }
+
+    status(kind, text) { this.statusEl.dataset.kind = kind; this.statusEl.textContent = text; }
+
+    checkGuard() {
+      const v = this.guard.verdict();
+      if (v.ok) { this.keyIn.disabled = false; this.keyUse.disabled = false; this.keyState(); return true; }
+      this.vault.forget();
+      this.keyIn.value = '';
+      this.keyIn.disabled = true;
+      this.keyUse.disabled = true;
+      this.keyNote.textContent = 'Key entry is switched off: ' + v.why.join('; ') + '. A key would not be safe here. Speech to text still works and nothing is sent to Claude.';
+      this.keyBox.open = true;
+      this.status('problem', 'Key entry is switched off on this page (' + v.why[0] + ').');
+      return false;
+    }
+    keyState() {
+      if (this.keyIn.disabled) return;
+      this.keySummary.textContent = this.vault.has() ? 'Your key and model: a key is held' : 'Your key and model: no key held yet';
+      this.keyNote.textContent = this.vault.has()
+        ? 'A key of ' + this.vault.size() + ' characters is held in this tab.' + (this.vault.looksRight() ? '' : ' It does not start with sk-ant-, so Anthropic will refuse it if it is not a key.')
+        : 'No key is held.';
+    }
+    useKey() {
+      if (!this.checkGuard()) return;
+      const problem = this.vault.take(this.keyIn.value);
+      if (problem) { this.status('problem', problem); return; }
+      this.keyIn.value = '';
+      this.keyState();
+      this.keyBox.open = false;
+      this.status('ok', 'Key held in this tab. Press Mic and speak, or type and send.');
+    }
+
+    keyInWords() {
+      if (!this.vault.shaped(this.words.value)) return false;
+      this.words.value = this.vault.strip(this.words.value);
+      this.keyBox.open = true;
+      this.status('problem', 'That looked like an API key, so it was taken out of this box and not sent. The key goes in the key box below, which is a password field.');
+      return true;
+    }
+
+    micClick() {
+      if (this.speech.listening) { this.speech.stop(); return; }
+      this.live.textContent = '';
+      this.speech.start();
+    }
+    heard(kind, a, b) {
+      if (kind === 'started') { this.mic.dataset.on = '1'; this.mic.setAttribute('aria-pressed', 'true'); this.mic.textContent = 'Stop'; this.status('info', 'Listening. Speak now.'); }
+      else if (kind === 'interim') this.live.textContent = a;
+      else if (kind === 'final') { this.words.value = (this.words.value ? this.words.value.trim() + ' ' : '') + a; this.live.textContent = ''; this.status('info', 'Heard: "' + a + '"'); }
+      else if (kind === 'problem') { this.status('problem', a); }
+      else if (kind === 'ended') {
+        this.mic.dataset.on = '0'; this.mic.setAttribute('aria-pressed', 'false'); this.mic.textContent = 'Mic'; this.live.textContent = '';
+        if (!a && !b) this.status('problem', 'Heard nothing. Press Mic and speak, or type it.');
+        else if (a && this.auto.checked) this.ask(true);
+        else if (a) this.status('info', 'Words are in the box. Press Send when you are ready.');
+      }
+    }
+
+    context(mode) {
+      const host = this.host, where = host.where(), here = host.here();
+      if (mode === 'tidy') return { where, body: here.slice(0, HINT_LIMIT), sees: 'only the part in view', size: Math.min(here.length, HINT_LIMIT), what: 'the text in view' };
+      const all = host.all();
+      if (all && all.length <= WHOLE_LIMIT) return { where, body: all, sees: 'the whole ' + host.noun, size: all.length, what: 'the whole ' + host.noun };
+      if (all) return { where, body: here, sees: 'only the part in view, because the whole ' + host.noun + ' is too long to send', size: here.length, what: 'only the part in view (the whole ' + host.noun + ' is too long to send)' };
+      return { where, body: here, sees: 'the page that is open', size: here.length, what: 'the page that is open' };
+    }
+
+    turn(kind, who, meta, text, copy) {
+      const li = h('li', { class: 'dict-turn', 'data-kind': kind }, h('span', { class: 'who', text: who }), meta ? h('span', { class: 'meta', text: meta }) : null, h('p', { text }));
+      if (copy) {
+        const b = h('button', { type: 'button', text: 'Copy' });
+        b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(text); b.textContent = 'Copied'; } catch (e) { b.textContent = 'Copy failed: select the text instead'; } });
+        li.append(b);
+      }
+      this.log.prepend(li);
+      this.log.scrollTop = 0;
+      return li;
+    }
+
+    async ask(spoken) {
+      if (this.busy) return;
+      if (this.keyInWords()) return;
+      const words = this.words.value.trim();
+      if (!words) { this.status('problem', 'There is nothing to send. Press Mic and speak, or type.'); return; }
+      const verdict = this.guard.verdict();
+      if (!verdict.ok) { this.checkGuard(); this.status('problem', 'Claude was not asked: ' + verdict.why[0] + '.'); return; }
+      if (!this.vault.has()) { this.keyBox.open = true; this.status('problem', 'There is no key, so Claude was not asked. Your words stay in the box.'); return; }
+      const mode = this.answer.checked ? 'answer' : 'tidy';
+      const ctx = this.context(mode);
+      const model = this.model.value;
+      const system = mode === 'tidy' ? Prompts.tidy(this.host, ctx) : Prompts.answer(this.host, ctx);
+      this.turn('you', spoken ? 'You said' : 'You wrote', ctx.where + '. Sent to Claude with ' + ctx.what + ' (' + ctx.size.toLocaleString('en-US') + ' characters), asking to ' + (mode === 'tidy' ? 'tidy' : 'answer') + '.', words);
+      this.busy = true; this.send.disabled = true;
+      this.status('info', 'Asking ' + model + '...');
+      try {
+        const r = await this.client.ask(model, system, words);
+        this.turn('claude', mode === 'tidy' ? 'Claude, tidied' : 'Claude, answered', r.model, r.text + (r.cut ? '\n(cut off at the length limit)' : ''), true);
+        this.words.value = '';
+        this.status('ok', 'Claude answered. It is in the list below, newest first.');
+      } catch (e) {
+        const msg = e instanceof ClaudeProblem ? e.message : 'Something went wrong asking Claude (' + this.vault.scrub(String(e && e.message || e)).slice(0, 160) + ').';
+        this.turn('problem', 'Claude was not heard from', null, msg);
+        this.status('problem', msg + ' Your words stay in the box.');
+      } finally { this.busy = false; this.send.disabled = false; }
+    }
+  }
+
+  /* ------------------------------------------------------------------------------------------------------------- start */
+  function mount(hostName) {
+    const host = { deck: DeckHost, fly: FlyHost }[hostName];
+    if (!host) throw new Error('dictation: no page called ' + hostName);
+    if (!host.ok()) throw new Error('dictation: this is not a ' + hostName + ' page');
+    const panel = new DictationPanel(host);
+    /* a handle for tests: what the panel is, never the key */
+    window.__dictation = Object.freeze({ version: VERSION, host: host.name, hasKey: () => panel.vault.has(), isOpen: () => document.body.classList.contains('dict-open') });
+    return panel;
+  }
+  window.DeckDictation = Object.freeze({ mount });
+})();
+DeckDictation.mount("fly");</script></body></html>

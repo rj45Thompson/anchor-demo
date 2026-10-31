@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>How to Use AI for Games: the deck</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070C11;color:#F4F2EC;font:17px/1.55 'IBM Plex Sans',system-ui,sans-serif}
+<html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src 'self' https://api.anthropic.com; object-src 'none'; base-uri 'none'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>How to Use AI for Games: the deck</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070C11;color:#F4F2EC;font:17px/1.55 'IBM Plex Sans',system-ui,sans-serif}
 .top{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;padding-block:18px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1320px;margin:0 auto}
 .top h1{margin:0;font:600 24px/1.2 'Space Grotesk',system-ui,sans-serif;text-wrap:balance}.top a{color:#7FB2E5}
 .deck{display:flex;flex-direction:column;gap:22px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:40px;max-width:1320px;margin:0 auto}
@@ -11,7 +11,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <header class="top"><h1>How to use AI for games</h1><span><a href="../">The fly-through</a></span><span><a href="../manual/">The manual</a></span></header>
 <main class="deck">
 <article id="slide-1"><div class="frame"><section id="cover" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:96px 128px 72px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
-<img src="img/whole.jpg" alt="The real graph of one shop feature: about 1,700 nodes, drawn from the store the loop wrote." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/whole.jpg" alt="The real graph of osu!’s scoring rules: about 1,060 nodes, drawn from the store the loop wrote." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:24px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">TNT Tools · internal training manual</p>
@@ -28,43 +28,43 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:28px;line-height:1.3;color:#F4F2EC">task pairs went to the loop, with three blind graders judging each</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#7FB2E5">216×</p>
-<p style="font-size:28px;line-height:1.3;color:#F4F2EC">less to read to learn who owns a method: the graph against the files</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#7FB2E5">3 of 3</p>
+<p style="font-size:28px;line-height:1.3;color:#F4F2EC">public targets, a version parser, a JSON object and a game’s scoring rules, each held a fault we could run</p>
 </div>
 </div>
 <p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:24px;color:#7FB2E5"><a href="../manual/#top">The full manual, in plain words: every claim here, and the test behind it</a></p>
 </section>
-</div><details><summary>Slide 1: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. Three measured numbers to start. The 99% is from our knowledge graph, on facts: 99.03% of 35,951 derivations it had never seen were right, and when it cannot back an answer it abstains. Seven of eleven pairs went to the loop when three blind graders judged the two answers; slide 23 has the losses and the cost. The graph answers who owns a method, what it must do and which tests catch it by reading 216 times less than the files hold: 775 characters at the median against 167,665. That is the size of what is read, and no agent has been timed using it yet. Behind this slide: The real graph of one shop feature: about 1,700 nodes, drawn from the store the loop wrote.</p></details></article>
+</div><details><summary>Slide 1: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. Three measured numbers to start. The 99% is from our knowledge graph, on facts: 99.03% of 35,951 derivations it had never seen were right, and when it cannot back an answer it abstains. Seven of eleven pairs went to the loop when three blind graders judged the two answers; slide 23 has the losses and the cost. The third is from three trials on code you can read for yourself: Unreal Engine’s version-string class, its JSON object and the scoring rules of the open-source game osu!. Each held a fault against its own spec or docs, and each was shown by calling the code as shipped; slide 14 has them, and the control run that found careful reading without the loop finds as many. Behind this slide: The real graph of osu!’s scoring rules: about 1,060 nodes, drawn from the store the loop wrote.</p></details></article>
 <article id="slide-2"><div class="frame"><section id="flatter" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
-<img src="img/proof.jpg" alt="Every break of that feature and the test that caught it. Red: no test caught it, and each one has to be explained." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/proof.jpg" alt="Every break of osu!’s scoring rules and the test that caught it. Red: no test caught it, and each one has to be explained." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Same code, same day</p>
-<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">A perfect test score hid a quarter of the breaks</h2>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Same code, two measures</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">90% coverage hid 30 uncaught breaks</h2>
 </div>
 <div style="display:flex;gap:32px">
 <div style="flex:1;display:flex;flex-direction:column;gap:16px;background:rgba(16,26,36,.86);padding:48px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-size:32px;line-height:1.3;color:#C9D3DC">Break each requirement once</p>
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#F4F2EC">0</p>
-<p style="font-size:32px;line-height:1.3;color:#F4F2EC">got past. 15 caught. A perfect score.</p>
+<p style="font-size:32px;line-height:1.3;color:#C9D3DC">A coverage tool said</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#F4F2EC">90%</p>
+<p style="font-size:32px;line-height:1.3;color:#F4F2EC">of lines run, 85% of branches. Unreal’s SemVer parser, with the 2 tests it has.</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:16px;background:rgba(16,26,36,.86);padding:48px;border:2px solid #F08A3C;border-radius:16px">
-<p style="font-size:32px;line-height:1.3;color:#C9D3DC">Break every statement, every way</p>
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#F08A3C">89</p>
-<p style="font-size:32px;line-height:1.3;color:#F4F2EC">of 340 got past every test.</p>
+<p style="font-size:32px;line-height:1.3;color:#C9D3DC">Break every decision, every way</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#F08A3C">30</p>
+<p style="font-size:32px;line-height:1.3;color:#F4F2EC">of 236 live breaks got past every test. 14 sat on lines coverage calls covered.</p>
 </div>
 </div>
 <p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:32px;line-height:1.4;color:#C9D3DC">Nothing about the code changed. Only how hard it was tried.</p>
-<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: every break of one feature. Red: no test caught it.</p>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: every break of osu!’s scoring rules. Red: no test caught it.</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
-<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#flatter">What was tested both times</a></p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#flatter">What was tested, and how</a></p>
 <p style="font-size:24px;color:#A9B7C4">2</p>
 </div>
 </section>
-</div><details><summary>Slide 2: what the speaker says</summary><p>The first version of the loop broke each requirement's code one way, once, and reported 15 caught, 0 got past. The same day, on the same code, breaking every statement every way the tool knew gave 89 of 340 got past. A loop that breaks code one way flatters it. That is why the tool breaks every decision every way it knows. Behind this slide: Every break of that feature and the test that caught it. Red: no test caught it, and each one has to be explained.</p></details></article>
+</div><details><summary>Slide 2: what the speaker says</summary><p>On Unreal Engine 5.7’s SemVer parser, a class that follows the public Semantic Versioning 2.0.0 spec and has 2 tests, a coverage tool reported 90% of lines and 85% of branches. Breaking every decision every way the tool knows made 246 breaks. 236 were live (the rest did not compile, or were proven by their compiled code to be the same program): 206 were caught and 30 got past every test, and 14 of those 30 sit on lines the coverage tool calls covered. A measure that counts lines run, or breaks code one way, flatters it; that is why the tool breaks every decision every way it knows. The picture is another target, osu!’s scoring rules, where 250 of 536 live breaks got past the three test files that were run. Behind this slide: every break of osu!’s scoring rules and the test that caught it. Red: no test caught it, and each one has to be explained.</p></details></article>
 <article id="slide-3"><div class="frame"><section id="numbers" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
-<img src="img/under.jpg" alt="The same graph from below: the ring of tests nearest, the requirements furthest." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/under.jpg" alt="osu!’s scoring graph from below: the ring of tests nearest, the requirements furthest." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Measured · every number has its test</p>
@@ -72,37 +72,37 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">96.5%</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">of 1,104 breaks of one shop feature caught by a test, leaving out 95: proven the same, explained, or no verdict.</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">87.3%</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">of 236 live breaks of Unreal’s SemVer parser caught by a test. 30 got past. JsonObject 69.7%, osu! 53.4%.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">294 of 317</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">statements held by a test, up from 31 of 82. Held means breaking it fails a test.</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">48 of 68</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">statements held by a test: breaking one fails a test. 7 of the 16 requirements taken from the spec have no test about them.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">10</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">requirements nobody had written, found by walking its use cases, beside the designers’ 17.</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">3</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">requirements the spec leaves unsaid, marked inferred and put to the owner as questions, beside the 16 it states.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">45 s</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">to compile 772 breaks in one build. Each then runs alone in about 3 seconds, never in the live project.</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">13 min</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">for a full pass over SemVer: 246 breaks, each run alone in a copy, never in the live project. osu!’s 563 took 74: each break of a constructor rebuilds the game.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
 <p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">Half</p>
 <p style="font-size:28px;line-height:1.35;color:#C9D3DC">the work left unfinished: blind graders counted 9 items with the loop, 18 without.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">17</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">18</p>
 <p style="font-size:28px;line-height:1.35;color:#C9D3DC">ways of being wrong the graph checks, each proven by a planted mistake it must catch.</p>
 </div>
 </div>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
-<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#morph">Where each number comes from</a></p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#publiccode">Where each number comes from</a></p>
 <p style="font-size:24px;color:#A9B7C4">3</p>
 </div>
 </section>
-</div><details><summary>Slide 3: what the speaker says</summary><p>The first four are one shop feature over its passes. Be exact about the 96.5%: 974 breaks were caught and 35 got past unexplained, and the 95 it leaves out are 23 proven by compiled code to be the same program, 20 with a written reason and 52 with no verdict yet. Excusing only the 23 that are proven, it is 90.1%, 974 of 1,081. The adapter's fuller walk added 7 breaks and changed no existing verdict; one of the 7 found a real gap, and a test now closes it. A statement is held when breaking it makes some test fail; the count grew from 82 to 317 as the loop began counting every statement. The compile is fast because every break goes into one build. Half the unfinished work comes from 28 blind grades, 6 of them against the hint arm. The 17 are the graph's criteria: each stops one way of being wrong, and a selftest plants that mistake and must catch it. Behind this slide: The same graph from below: the ring of tests nearest, the requirements furthest.</p></details></article>
+</div><details><summary>Slide 3: what the speaker says</summary><p>The first four are the three public trials of 30 October, mostly on SemVer: Unreal Engine 5.7’s version-string class, held to the public Semantic Versioning 2.0.0 spec, with the 2 tests that exist on it. 246 breaks were made and 236 were live; the 87.3% is 206 caught, and 30 got past. The JsonObject and osu! figures are on slide 14, where osu!’s 53.4% is what three test files hold and is low for the game as a whole. A statement is held when breaking it makes some test fail. The 3 inferred requirements are the model’s own: the spec says what is valid, not how a class refuses, and nobody has said which; they go to the owner, never settled by the tool. The pass took 764 seconds on SemVer, about 13 minutes, at low priority on a busy machine. Half the unfinished work comes from 28 blind grades, 6 of them against the hint arm. The 18 are the graph’s criteria: each stops one way of being wrong, and a selftest plants that mistake and must catch it. Behind this slide: osu!’s scoring graph from below: the ring of tests nearest, the requirements furthest.</p></details></article>
 <article id="slide-4"><div class="frame"><section id="slop" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
 <img src="img/inside.jpg" alt="Inside the graph, among the methods." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
@@ -144,9 +144,9 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">4</p>
 </div>
 </section>
-</div><details><summary>Slide 4: what the speaker says</summary><p>The key is accuracy. It boosts productivity across the board, and in our view it makes AI, in some cases, thousands of times smarter; that multiplier is our view, not a measurement, and the largest multiplier we have measured is 216 times less reading. The gap between what AI guesses and what is true is what people deem AI slop. These three numbers are from our knowledge-graph work, on facts rather than code, against cached Wikidata as the outside truth, with bars declared before each run. The precision comes from abstaining: asked the same 209 questions, a local language model answered 95% at 98.0%. The numbers on code are on slide 3. Behind this slide: Inside the graph, among the methods.</p></details></article>
+</div><details><summary>Slide 4: what the speaker says</summary><p>The key is accuracy. It boosts productivity across the board, and in our view it makes AI, in some cases, thousands of times smarter; that multiplier is our view, not a measurement, and no multiplier of that size has been measured. The gap between what AI guesses and what is true is what people deem AI slop. These three numbers are from our knowledge-graph work, on facts rather than code, against cached Wikidata as the outside truth, with bars declared before each run. The precision comes from abstaining: asked the same 209 questions, a local language model answered 95% at 98.0%. The numbers on code are on slide 3. Behind this slide: Inside the graph, among the methods.</p></details></article>
 <article id="slide-5"><div class="frame"><section id="waterfall" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
-<img src="img/maps.jpg" alt="Requirements at the top, code below: the orange lines are the links that say which requirement owns which decision. It does look like a waterfall." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/maps.jpg" alt="Requirements at the top, code below, in osu!’s scoring rules: the orange lines are the links that say which requirement owns which decision. It does look like a waterfall." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.86) 0%, rgba(11,18,25,.64) 45%, rgba(11,18,25,.64) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Back to 1999!</p>
@@ -159,14 +159,13 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.2;color:#F08A3C">Hand-crafted quality on an IKEA budget.</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(16,26,36,.86);padding:32px 36px;border:1px solid #2E4052;border-radius:16px">
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">The more requirements, the better a graph neural network (GNN) fills gaps</h3>
-<div style="display:grid;grid-template-columns:120px 1fr;gap:10px 16px;align-items:center">
-<p style="font-size:24px;color:#C9D3DC">a tenth</p><div style="width:288px;height:32px;background:#7FB2E5;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px"><p style="font-size:24px;color:#14202B">0.48</p></div>
-<p style="font-size:24px;color:#C9D3DC">a quarter</p><div style="width:378px;height:32px;background:#7FB2E5;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px"><p style="font-size:24px;color:#14202B">0.63</p></div>
-<p style="font-size:24px;color:#C9D3DC">half</p><div style="width:438px;height:32px;background:#F08A3C;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px"><p style="font-size:24px;color:#14202B">0.73</p></div>
-<p style="font-size:24px;color:#C9D3DC">all</p><div style="width:462px;height:32px;background:#F08A3C;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px"><p style="font-size:24px;color:#14202B">0.77</p></div>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">What writing them first found in a shipped parser</h3>
+<div style="display:grid;grid-template-columns:130px 1fr;gap:10px 20px;align-items:center">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.05;color:#F08A3C">16</p><p style="font-size:24px;line-height:1.3;color:#C9D3DC">requirements taken from the public SemVer spec, every numbered rule mapped or excluded with a reason</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.05;color:#F08A3C">4</p><p style="font-size:24px;line-height:1.3;color:#C9D3DC">faults against that spec, found while writing them, each shown by running the code</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.05;color:#F08A3C">7</p><p style="font-size:24px;line-height:1.3;color:#C9D3DC">of the 16 have no test about them, including every rule on which strings are valid</p>
 </div>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">Its score on one feature, by how much of the requirement links it can see. Orange beats the 0.67 of a plain rule with no test results to read.</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">Unreal Engine 5.7’s SemVer parser. Reading the code against each rule found the faults; the breaks found where no test looks.</p>
 </div>
 </div>
 <p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: the links from requirements down to the code they own.</p>
@@ -176,9 +175,9 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">5</p>
 </div>
 </section>
-</div><details><summary>Slide 5: what the speaker says</summary><p>Back to 1999. This is how we review our code: first by pouring our effort into requirements. Time to learn systems analysis and design again. No more agile, it is dead for the most part; long live waterfall. The more requirements you have, the better the graph neural network works at filling gaps and closing the loop, so nothing is a guess, which means slopless code. We want hand-crafted quality on an IKEA budget. The chart is mean reciprocal rank on the shop feature, 27 requirements, where 1.0 is always ranked first; three quarters of the links scored the same 0.77 as all of them. Once test results exist, a plain rule that reads them beats it: slide 16. Behind this slide: Requirements at the top, code below: the orange lines are the links that say which requirement owns which decision. It does look like a waterfall.</p></details></article>
+</div><details><summary>Slide 5: what the speaker says</summary><p>Back to 1999. This is how we review our code: first by pouring our effort into requirements. Time to learn systems analysis and design again. No more agile, it is dead for the most part; long live waterfall. More requirements, gaps filled, loop closed, nothing is a guess, which means slopless code. We want hand-crafted quality on an IKEA budget. The card is the public SemVer trial: the requirements were written from the Semantic Versioning 2.0.0 spec, every numbered rule either mapped to one or excluded with a reason, and writing them against the code found 4 faults that fail when run, such as Compare throwing on the spec’s own example. Be exact about who found what: an agent reading the code against each rule found them, not the breaks, and a control run showed that an agent reading carefully with no tool of ours found the same faults. What the requirements and the breaks add is the count of what no test holds: 7 of the 16 requirements have no test about them. Behind this slide: the links from requirements down to the code they own, in osu!’s scoring rules.</p></details></article>
 <article id="slide-6"><div class="frame"><section id="extract" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
-<img src="img/why.jpg" alt="The requirements and the use cases that need them. Orange ones people wrote. The pale ones the walk inferred." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/why.jpg" alt="The requirements and the use cases of osu!’s scoring rules: one epic, four use cases, 30 requirements." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Requirements make requirements</p>
@@ -194,18 +193,18 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:32px;line-height:1.4;color:#C9D3DC">The more complete the requirements, the more accurate the prompt built from them. Start with the ones that run through the most code.</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:14px;background:rgba(16,26,36,.86);padding:36px;border:1px solid #2E4052;border-radius:16px">
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">Where two features meet</h3>
-<p style="font-size:32px;line-height:1.4;color:#C9D3DC">On one pair, not blind, an agent reading both models named 24 places they meet: 20 real, 4 not, 3 missed. The tool named 2.</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">Epic to code: not measured</h3>
+<p style="font-size:32px;line-height:1.4;color:#C9D3DC">The aim is a rough epic grown into a larger set, then code written from it. These trials started from a spec or a game’s own docs. The epic-to-code test has not run.</p>
 </div>
 </div>
-<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: requirements and use cases. Orange, people wrote. Pale, the walk inferred.</p>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: osu!’s requirements and use cases: one epic, four use cases, 30 requirements. We wrote all 30; the walk inferred none.</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#extract">How requirements make requirements</a></p>
 <p style="font-size:24px;color:#A9B7C4">6</p>
 </div>
 </section>
-</div><details><summary>Slide 6: what the speaker says</summary><p>The tool automatically extracts requirements from existing requirements: it walks each use case, and when a step needs a condition that nothing provides, the chain has inferred a requirement nobody wrote. Those go to the owner as questions, never as decisions. The second card is how to use it: the more complete the requirements, the more accurate the prompt, so seed the cross-cutting ones first. That is our judgment from building with it; no run has measured it directly. The third is a test that did not go our way. We joined two finished features, a shop and its bag, and asked whether the tool names the places they meet. It does not yet: the walk asked no new question at the join, and the graph named at best 2 of the 23 real ones, none of the 8 that are open or in conflict. An agent reading both models named 20, with 4 false and 3 missed, and that found real faults. It is one pair and not blind, so the reading number is an upper bound. Remix against invent, and remixing with zero errors, were not measured. Behind this slide: The requirements and the use cases that need them. Orange ones people wrote. The pale ones the walk inferred.</p></details></article>
+</div><details><summary>Slide 6: what the speaker says</summary><p>The tool’s main intent is to take the requirements for a game from a rough epic use case and grow them into a larger set, so that the code written from them is as accurate as it can be. The first card is the mechanism: it walks each use case, and when a step needs a condition that nothing provides, it marks an inferred requirement and sends it to the owner as a question, never as a decision. The second card is our judgment from building with it; no run has measured it directly. The third is the honest state. The trials on public code started from a published spec or from a game’s own doc comments, so their requirements were written from existing words: on osu! all 30 were written and none inferred, and on SemVer 3 of 19 are marked inferred. The end-to-end test, a rough epic grown into requirements and code written from them, graded by tests from an independent source, has not run: the last slide says what it would take. Two earlier tries give no number to lean on: growing a model from three requirements tied with and without the loop, and when two features of ours were joined the walk did not find the places they meet. Behind this slide: osu!’s requirements and use cases.</p></details></article>
 <article id="slide-7"><div class="frame"><section id="firstclass" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <img src="img/tests.jpg" alt="The tests: the green ring, and the breaks each one caught." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.86) 0%, rgba(11,18,25,.64) 45%, rgba(11,18,25,.64) 100%)"></div>
@@ -311,7 +310,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(8,13,18,.92);padding:28px 32px;border-radius:16px">
 <h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C">A test is missing</h3>
-<p style="font-size:28px;line-height:1.35;color:#F4F2EC">Every claim is pinned to its code’s fingerprint, so a deleted line stales the claim. Two of our own “same program” claims were false, and tests now pin them.</p>
+<p style="font-size:28px;line-height:1.35;color:#F4F2EC">Every claim is pinned to its code’s fingerprint, so a deleted line stales the claim. Our own “same program” claims have been wrong before, and tests now pin them.</p>
 </div>
 </div>
 <p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: breaks up close. Each point is one way of breaking one decision.</p>
@@ -321,9 +320,9 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">9</p>
 </div>
 </section>
-</div><details><summary>Slide 9: what the speaker says</summary><p>Up to 24 breaks a statement, one of each kind first. One limit on every: until this week the C# adapter skipped overloads, operators and property bodies without saying so, and it still does not walk a field's value or an indexer, which the report now names; slide 24 has the numbers. A break that survives every test is either a missing test or the same program. Same program is proven by comparing compiled code, Trivial Compiler Equivalence from Papadakis and others, 2015. Anything else needs a reason in writing, and a declared equivalent that a test ever kills is a hole, not a pass. Behind this slide: One stretch of the breaks up close: each point is one way of breaking one decision.</p></details></article>
+</div><details><summary>Slide 9: what the speaker says</summary><p>Up to 24 breaks a statement, one of each kind first. One limit on every: until this week the C# adapter skipped overloads, operators and property bodies without saying so, and it still does not walk a field's value or an indexer, which the report now names; slide 25 has the numbers. A break that survives every test is either a missing test or the same program. Same program is proven by comparing compiled code, Trivial Compiler Equivalence from Papadakis and others, 2015. Anything else needs a reason in writing, and a declared equivalent that a test ever kills is a hole, not a pass. Behind this slide: One stretch of the breaks up close: each point is one way of breaking one decision.</p></details></article>
 <article id="slide-10"><div class="frame"><section id="nodegraph" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:26px">
-<img src="img/layers.jpg" alt="The real node graph of one shop feature, a ring per kind of node: requirements at the top, then use cases, reasoning, code, branches, breaks and tests" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/layers.jpg" alt="The real node graph of osu!’s scoring rules, a ring per kind of node: requirements at the top, then use cases, code, branches, breaks and tests" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px;width:660px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">The node graph</p>
@@ -335,27 +334,26 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;width:620px">
 <h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">How code maps to requirements</h3>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">625 links say which requirement owns which decision in the code. 317 say where that decision sits. A decision nobody owns is a hole.</p>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">339 links say which requirement owns which decision in the code. 191 say where that decision sits. A decision nobody owns is a hole.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 24px;border:1px solid #2E4052;border-radius:16px;width:620px">
 <p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C"><a href="../">Fly through it: the demo</a></p>
 <p style="font-size:24px;line-height:1.3;color:#F4F2EC">W A S D, or follow one requirement down to the test that holds it.</p>
 </div>
-<p style="position:absolute;left:1634px;width:158px;text-align:right;top:214px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">19 sources</p>
-<p style="position:absolute;left:1404px;width:388px;text-align:right;top:328px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F08A3C;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">27 requirements, 10 inferred</p>
-<p style="position:absolute;left:1494px;width:298px;text-align:right;top:414px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9B6F2;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">6 use cases, 32 steps</p>
-<p style="position:absolute;left:1417px;width:375px;text-align:right;top:466px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FE0C3;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">Claude’s reasoning, 9 steps</p>
-<p style="position:absolute;left:1634px;width:158px;text-align:right;top:530px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FB2E5;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">50 methods</p>
-<p style="position:absolute;left:1609px;width:183px;text-align:right;top:606px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#9CD0FF;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">317 branches</p>
-<p style="position:absolute;left:1430px;width:362px;text-align:right;top:699px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9D3DC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">1,104 breaks, <span style="color:#FF7A7A">130 uncaught</span></p>
-<p style="position:absolute;left:1660px;width:132px;text-align:right;top:814px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#8BE28B;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">45 tests</p>
+<p style="position:absolute;left:1666px;width:126px;text-align:right;top:214px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">1 source</p>
+<p style="position:absolute;left:1414px;width:378px;text-align:right;top:328px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F08A3C;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">30 requirements, all written</p>
+<p style="position:absolute;left:1502px;width:290px;text-align:right;top:414px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9B6F2;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">5 use cases, 17 steps</p>
+<p style="position:absolute;left:1640px;width:152px;text-align:right;top:530px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FB2E5;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">34 methods</p>
+<p style="position:absolute;left:1565px;width:227px;text-align:right;top:606px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#9CD0FF;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">200 branch cells</p>
+<p style="position:absolute;left:1464px;width:328px;text-align:right;top:699px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9D3DC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">563 breaks, <span style="color:#FF7A7A">277 uncaught</span></p>
+<p style="position:absolute;left:1653px;width:139px;text-align:right;top:814px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#8BE28B;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">168 tests</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#nodegraph">The graph and the demo, in plain words</a></p>
 <p style="font-size:24px;color:#A9B7C4">10</p>
 </div>
 </section>
-</div><details><summary>Slide 10: what the speaker says</summary><p>This is the actual graph of one shop feature, drawn from the store the loop wrote: about 1,700 nodes and 10,000 edges, nothing invented and nothing left out. The store itself is SQLite and N-Triples; the rings are how the demo draws it. Each ring is one kind of node. Each branch and each break sits at the angle of the method it belongs to, so a method and everything under it line up. The mapping is two kinds of edge: a branch maps to a requirement, and a branch is at a method. That is how you get from any line of decision in the code to who asked for it, and back. The red points are the 130 breaks no test caught: 23 proven by compiled code to be the same program, 20 with a written reason, 52 with no verdict yet, and 35 unexplained, which are the work. The fly-through is the same data in three.js: drag to orbit, W A S D to fly, and a tour that follows one real thread from a source to a requirement, Claude's reasoning about it, the code, a branch, a break of that branch and the test that caught it. It also has views for just the code-to-requirement links, just the breaks, just the reasoning, and just what the graph neural network reads.</p></details></article>
+</div><details><summary>Slide 10: what the speaker says</summary><p>This is the actual graph of osu!’s scoring rules, the rules of a shipped rhythm game (ppy/osu, MIT licence), drawn from the store the loop wrote: 1,062 nodes and 5,675 edges, nothing invented and nothing left out. The store itself is SQLite and N-Triples; the rings are how the demo draws it. Each ring is one kind of node. Each branch and each break sits at the angle of the method it belongs to, so a method and everything under it line up. The mapping is two kinds of edge: a branch maps to a requirement, and a branch is at a method. That is how you get from any line of decision in the code to who asked for it, and back. The model has one epic use case, four use cases under it and 30 requirements, all written from the code’s own doc comments; this trial wrote no argument chain, so that ring is empty. The red points are the 277 breaks no test caught: 250 got past every test that was run, 13 are proven by compiled code to be the same program and 14 did not run. The 250 are the work, and they are 250 of the 536 live breaks only for the three test files that were run, not for the game’s whole test project. The fly-through is the same data in three.js: drag to orbit, W A S D to fly, and a tour that follows one real thread. It also has views for just the code-to-requirement links, just the breaks, and just what the graph neural network reads.</p></details></article>
 <article id="slide-11"><div class="frame"><section id="graph" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <img src="img/inside2.jpg" alt="Inside the graph." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
@@ -384,7 +382,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </section>
 </div><details><summary>Slide 11: what the speaker says</summary><p>The graph is the record, and the criteria read it. The closest formal idea of closed is the Modal Transition System of Larsen and Thomsen, 1988: every behaviour is marked must or may, and a specification is refined until no may is left. Here the authored requirements are the musts, and the inferred ones the chain needs are the mays. The owner's open questions are exactly those mays. Behind this slide: Inside the graph.</p></details></article>
 <article id="slide-12"><div class="frame"><section id="chain" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:18px">
-<img src="img/thread.jpg" alt="One real thread through the graph: a requirement, Claude's step citing it and the code, a branch of that code, a break of the branch and the test that caught it" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/thread.jpg" alt="One real thread through the graph of the kit’s example: a requirement, Claude’s step citing it and the code, a branch of that code, a break of the branch and the test that caught it" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:12px;width:760px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">Checking Claude’s reasoning</p>
@@ -394,7 +392,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.3;color:#F4F2EC">says: "A limited line sells its quantity and is then sold out"<br><span style="color:#7FB2E5">cites: [W-3, Store.Buy]</span></p>
 </div>
 <p style="font-size:26px;line-height:1.3;color:#F4F2EC;width:760px;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>Where it meets the code:</b> the step becomes a node citing two nodes already there. A branch of that method maps to that requirement, so the two join, 2 links apart.</p>
-<p style="font-size:26px;line-height:1.3;color:#C9D3DC;width:760px;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>Grounded:</b> a cite that is not there fails the run. <b>Joined:</b> what a step cites must connect within 4 links. <b>Not checked yet:</b> whether the words are true. A real step said “or” where the code needs both, and it passed.</p>
+<p style="font-size:26px;line-height:1.3;color:#C9D3DC;width:760px;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>Grounded:</b> a cite that is not there fails the run. <b>Joined:</b> what a step cites must connect within 4 links. <b>Not checked yet:</b> whether the words are true. A real step once said “or” where the code needs both, and it passed.</p>
 <div style="display:flex;gap:12px;width:760px">
 <div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:12px 16px;border:1px solid #2E4052;border-radius:16px">
 <p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F08A3C">102</p>
@@ -405,25 +403,25 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;line-height:1.25;color:#C9D3DC">steps that would not join</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(16,26,36,.86);padding:12px 16px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F08A3C">7 of 10</p>
-<p style="font-size:24px;line-height:1.25;color:#C9D3DC">owner’s questions one chain missed</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#F08A3C">1 of 1</p>
+<p style="font-size:24px;line-height:1.25;color:#C9D3DC">owner’s question this chain never reached</p>
 </div>
 </div>
-<p style="position:absolute;left:1209px;top:229px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A source: where it is stated</p>
-<p style="position:absolute;left:1130px;top:327px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F08A3C;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">The requirement</p>
-<p style="position:absolute;left:1042px;top:399px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9B6F2;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A use case step needs it</p>
-<p style="position:absolute;left:1198px;top:494px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FE0C3;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">Claude’s step cites both</p>
-<p style="position:absolute;left:1178px;width:426px;text-align:right;top:625px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FB2E5;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">The code: one method</p>
-<p style="position:absolute;left:1217px;width:388px;text-align:right;top:733px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#9CD0FF;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A branch of it maps to the requirement</p>
-<p style="position:absolute;left:1356px;width:311px;text-align:right;top:869px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9D3DC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A break of that branch</p>
-<p style="position:absolute;left:943px;width:324px;text-align:right;top:693px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#8BE28B;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">The test that caught it</p>
+<p style="position:absolute;left:1312px;top:244px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">OWNER: where it is stated</p>
+<p style="position:absolute;left:1209px;top:359px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#F08A3C;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">W-3: the requirement</p>
+<p style="position:absolute;left:1039px;top:406px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9B6F2;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A use case step needs it</p>
+<p style="position:absolute;left:1143px;top:470px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FE0C3;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">Claude’s step cites both</p>
+<p style="position:absolute;left:1181px;width:265px;text-align:right;top:579px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#7FB2E5;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">Store.Buy: the code</p>
+<p style="position:absolute;left:1183px;width:353px;text-align:right;top:650px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#9CD0FF;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A branch of it maps to W-3</p>
+<p style="position:absolute;left:1487px;width:303px;text-align:right;top:850px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#C9D3DC;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">A break of that branch</p>
+<p style="position:absolute;left:1136px;top:848px;font-size:24px;line-height:1.3;white-space:nowrap;background:rgba(11,18,25,.74);padding:2px 12px;border-radius:8px;color:#8BE28B;text-shadow:0 2px 14px rgba(11,18,25,.95),0 0 6px rgba(11,18,25,1)">The test that caught it</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#chains">The chain checks, and what they do not check yet</a></p>
 <p style="font-size:24px;color:#A9B7C4">12</p>
 </div>
 </section>
-</div><details><summary>Slide 12: what the speaker says</summary><p>When Claude finishes a change it writes down, step by step, why the change does what the requirements ask. A chain is a written argument it produces on purpose, like showing your work; it is not a recording of the model's private thinking. The chain and every step become nodes in the same graph as the code, with an edge to each requirement and method they cite. A cite to something that is not a node fails the run, so a made-up requirement or a method the code does not have cannot pass. Then the graph walks from one cite to the next; if they do not meet within 4 links the step is reported. Of 102 steps, 2 had to be split and 2 were reported as resting on reading alone. An owner's question no step reached is listed as a blind spot; one chain missed 7 of 10. The step quoted here is from the kit's example, which you can run yourself. The picture is the same walk on a larger graph, with its names removed: the requirement, the step citing it and the code, a branch, a break of that branch and the test that caught it. It checks what each claim stands on, not whether the claim is true: a real step said "or" where the code needs both, and it passed. A fresh reviewer found that one. No check yet walks on from a step to whether the code under it is tested.</p></details></article>
+</div><details><summary>Slide 12: what the speaker says</summary><p>This is how we go after hallucination. When Claude finishes a change it writes down, step by step, why the change does what the requirements ask. A chain is a written argument it produces on purpose, like showing your work; it is not a recording of the model's private thinking. Here is how it meets the code. The chain and every step become nodes in the same graph as the code. Each step has cites edges to the requirement and the method it stands on. A cite to something that is not a node fails the run, so a made-up requirement or a method the code does not have cannot pass. Then the graph walks from one cite to the next: here W-3 and Store.Buy meet because a branch of that method maps to W-3, two links apart. If they do not meet within 4 links, the step is reported; across the on-against-off runs, of 102 steps in 9 chains, 4 would not join, and one agent split its 2 while another reported its 2 as resting on reading alone. An owner's question no step reached is listed as a blind spot; this chain never reached W-4, what a refused purchase does to the stock. The step and the picture are from the kit's example, which you can run yourself: the chain was added to a copy of it and the whole loop run, and it held. Be precise about the limit: it checks what each claim stands on, not whether the claim is true, and no check yet walks on from a step to whether the code it stands on is tested, though the links are there, as the picture shows. It removes the hallucination that invents a source; it cannot promise to remove all of it. And one real step is the proof: a fresh reviewer found it said or where the code needs both. It was grounded and joined, and it was still wrong.</p></details></article>
 <article id="slide-13"><div class="frame"><section id="map" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
 <img src="img/maps2.jpg" alt="Only the links from code to requirements." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.86) 0%, rgba(11,18,25,.64) 45%, rgba(11,18,25,.64) 100%)"></div>
@@ -434,19 +432,19 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:32px;line-height:1.4;color:#F4F2EC">Every requirement links to the code it owns, in one graph. Its checks and the breaks do most of the finding so far. A GNN learns on the same map, proposes who owns new code, and is set to learn what does not fit.</p>
 <div style="display:flex;gap:24px">
 <div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">356 → 84</p>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">holes listed and closed while growing one model, 318 closed and 46 new</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">7 of 16</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">requirements taken from the SemVer spec that no test is about, every rule on which strings are valid among them</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">13</p>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">branches of checked-in code no requirement owned, on the shop feature</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">110 of 191</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">branches of osu!’s scoring rules with a break no test caught, each claimed by the requirement that should have a test</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 28px;border:1px solid #2E4052;border-radius:16px">
 <p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">10 of 48</p>
 <p style="font-size:24px;line-height:1.35;color:#C9D3DC">requirements on a public asteroid game resting on behaviour with no value behind it</p>
 </div>
 </div>
-<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Next slide:</b> the same run on source your team can read for itself.</p>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Next slide:</b> the three public trials side by side, and the bugs.</p>
 <p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: only the links from code to requirements.</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
@@ -454,7 +452,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">13</p>
 </div>
 </section>
-</div><details><summary>Slide 13: what the speaker says</summary><p>It is an early prototype, and it has already found a lot of problems by mapping code to the graph. Be accurate about who found what: so far it is the graph's criteria and the breaks. The graph neural network proposes which requirement owns new code, and using it to flag a claim that does not fit is planned, not measured; slide 16 shows where a plain rule still beats it. The first number is a model grown from 3 requirements to 49 by an agent using the loop, on code with its requirement ids removed. Those are holes the loop listed for that agent to close; an agent without the loop recovered just as many of the real requirements, as slide 23 says. The asteroid run is public code, language-neutral parts only, with no breaks, because there is no JavaScript adapter yet. The next trial is on source your team can read, on the same terms. Behind this slide: Only the links from code to requirements.</p></details></article>
+</div><details><summary>Slide 13: what the speaker says</summary><p>It is an early prototype, and it has already found a lot of problems by mapping code to the graph. Be accurate about who found what: so far it is the graph's criteria and the breaks. The graph neural network proposes which requirement owns new code, and using it to flag a claim that does not fit is planned, not measured; slide 16 shows where a plain rule still beats it. The first number is a hole in the map itself: on SemVer, 7 of the 16 requirements taken from the spec have no test about them, found by reading each test against the requirements, before any break ran. The second is osu!’s scoring rules: all 191 branches the tests cover are claimed by a requirement, and 110 of them have a break that got past the three test files that were run, so those are tests missing, not requirements missing. Read it as what those three files hold, and as low for the game as a whole. The asteroid run is public code, language-neutral parts only, with no breaks, because there is no JavaScript adapter yet. The next slide is the three trials on source your team can read, on the same terms. Behind this slide: only the links from code to requirements.</p></details></article>
 <article id="slide-14"><div class="frame"><section id="onpublic" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:20px">
 <img src="img/osu.jpg" alt="The real graph of a shipped open-source game's scoring rules" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.9) 0%, rgba(11,18,25,.76) 42%, rgba(11,18,25,.76) 100%)"></div>
@@ -483,9 +481,9 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">14</p>
 </div>
 </section>
-</div><details><summary>Slide 14: what the speaker says</summary><p>These are the first numbers a reader can check. Three trials on code outside our own project: two parts of Unreal Engine's own C# and the scoring rules of a shipped open-source game, with requirements from public specs and the code's own doc comments, and no test or product code written. The table's last column is the point for a team that trusts coverage: nearly half of what got past sits on lines a coverage tool calls covered. Read osu!'s 53.4% as what three test files hold, and as low for the game as a whole: its full test project crashed on this machine on the clean copy too. The trials' biggest finding was in our own tool, which silently skipped overloads, operators and property bodies, and failed five other ways on real code. All are fixed with planted tests, and they barely moved the shop feature: 96.5% of 1,097 is now 96.5% of 1,104, and 290 of 313 is now 294 of 317, the one real gap they found closed by a test. The budget did not hold either: about 100 minutes and 260,000 tokens against 45 and 150,000 per trial, mostly on those bugs. Behind this slide: osu!'s real graph.</p></details></article>
+</div><details><summary>Slide 14: what the speaker says</summary><p>These are the first numbers a reader can check. Three trials on code outside our own project: two parts of Unreal Engine's own C# and the scoring rules of a shipped open-source game, with requirements from public specs and the code's own doc comments, and no test or product code written. The table's last column is the point for a team that trusts coverage: nearly half of what got past sits on lines a coverage tool calls covered. Read osu!'s 53.4% as what three test files hold, and as low for the game as a whole: its full test project crashed on this machine on the clean copy too. The trials' biggest finding was in our own tool, which silently skipped overloads, operators and property bodies, and failed five other ways on real code. All are fixed with planted tests. Re-run on an earlier target of ours that has no overloads, they changed no verdict and found one real gap, now closed by a test. The budget did not hold either: about 100 minutes and 260,000 tokens against 45 and 150,000 per trial, mostly on those bugs. Behind this slide: osu!'s real graph.</p></details></article>
 <article id="slide-15"><div class="frame"><section id="gnnhow" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
-<img src="img/heard.jpg" alt="What the graph neural network reads: the real graph with breaks, tests and chains left out, 562 nodes" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/heard.jpg" alt="What the graph neural network reads: the real graph with breaks, tests and chains left out" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">How it learns</p>
@@ -502,20 +500,20 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="flex:1.15;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:22px 26px;border:1px solid #2E4052;border-radius:16px">
 <h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C">What it records</h3>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Score, when a pass runs it:</b> GNN 0.76 against the best plain rule’s 0.67, words 0.50, random 0.19.</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Each job,</b> per project and per seed: the next slide. 3 verdicts flip with the seed alone.</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Breaks ranked:</b> 50% of survivors in the first fifth; plain rule 31%, random 21%.</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">What it reads:</b> 562 nodes, 1,570 links, 553 of them owner links.</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">More requirements:</b> 0.48 with a tenth of the links, 0.77 with all.</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">How sure:</b> at 70% sure it is right 92% of the time, on about 40%.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Score, when a pass runs it:</b> beside the best plain rule, the words alone and random.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Each job,</b> per project and per seed: the next slide. Some verdicts flip with the seed alone.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Breaks ranked:</b> how many survivors the first fifth of a run holds, against the plain rule and random.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">What it reads:</b> its nodes and links, and how many of them are owner links.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">More requirements:</b> its score by how much of the links it can see.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">How sure:</b> at 70% sure, how often it is right, and on how much of the new code.</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">Every tune:</b> each variant’s score, and what was kept.</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:10px;background:rgba(16,26,36,.86);padding:22px 26px;border:1px solid #2E4052;border-radius:16px">
 <h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F08A3C">How it tries to improve</h3>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">The stats call it.</b> Its lead over the plain rules fell 0.23, 0.15, 0.12, so the stats name a tune as a next job. It is due after 5 passes anyway.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">The stats call it.</b> When its lead over the plain rules falls, the stats name a tune as a next job. It is due after 5 passes anyway.</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">A tune redraws what it reads:</b> each relation left out, each derived link added.</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">The bar:</b> kept only if it wins by 0.02, then again on a seed it was not chosen on.</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">So far:</b> 2 tunes, 14 variants, nothing kept. Best 0.750 against 0.737.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC"><b style="color:#F4F2EC">So far:</b> tunes have been run and nothing was kept: no variant won by the bar.</p>
 </div>
 </div>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
@@ -524,7 +522,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">15</p>
 </div>
 </section>
-</div><details><summary>Slide 15: what the speaker says</summary><p>Be clear what kind of thing it is: a proposer. It proposes which requirement owns new code, and a person or an exact check accepts the proposal; it is never a verdict. Whole methods are held out when it is tested, so the score is on code it has not seen. The picture behind this slide is exactly what it reads: the graph with breaks, tests and chains taken away, because those hold the answer and new code would not have them. Both leaks were measured before they were closed. The stats are all recorded in files beside the model, one row a pass or a tune; a pass adds the score when it is run with the GNN switched on, and 3 of the shop feature's 7 passes were. Scores are mean reciprocal rank, where 1.0 is always ranked first. The 0.67 rule reads no test results; once test results exist a plain rule beats it, and the next slide shows where. Self-improvement here means this: its lead over the plain rules is a stat. On the shop feature that lead fell from 0.23 to 0.15 to 0.12 as more tests arrived, so the stats report it as worsening and name reshaping the graph as a next job, beside writing tests. It is due after 5 passes without one anyway. A standing tick or a person then runs the tune. So far it has been tried twice, on 14 variants, and nothing has earned a place: the best beat the full graph by 0.013, and the bar is 0.02. That is the honest state: it attempts to improve itself, and the attempt has not paid yet.</p></details></article>
+</div><details><summary>Slide 15: what the speaker says</summary><p>Be clear what kind of thing it is: a proposer. It proposes which requirement owns new code, and a person or an exact check accepts the proposal; it is never a verdict. Whole methods are held out when it is tested, so the score is on code it has not seen. The picture behind this slide is exactly what it reads, on osu!’s scoring rules: the graph with breaks, tests and chains taken away, because those hold the answer and new code would not have them. Both leaks were measured before they were closed. The stats are all recorded in files beside the model, one row a pass or a tune; a pass adds the score when it is run with the GNN switched on. Scores are mean reciprocal rank, where 1.0 is always ranked first. Once test results exist, a plain rule that reads them beats it, and the next slide shows where. Self-improvement here means this: its lead over the plain rules is a stat. When that lead falls as more tests arrive, the stats report it as worsening and name reshaping the graph as a next job, beside writing tests. It is due after 5 passes without one anyway. A standing tick or a person then runs the tune. So far tunes have been run and nothing has earned a place: no variant beat the full graph by the bar of 0.02. That is the honest state: it attempts to improve itself, and the attempt has not paid yet.</p></details></article>
 <article id="slide-16"><div class="frame"><section id="gnn" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
 <img src="img/heard2.jpg" alt="What the graph neural network reads, from above." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
@@ -533,21 +531,21 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">A graph neural network (GNN) has to earn its place</h2>
 </div>
 <table style="font-size:24px;color:#F4F2EC">
-<tr><th style="width:48%">Learned score against the plain rule, mean over seeds</th><th style="width:26%">The shop feature</th><th style="width:26%">The toolkit’s own code</th></tr>
-<tr><td>Graph neural network (GNN): who owns new code</td><td>0.77 vs 0.84, loses</td><td>0.65 vs 0.72, loses</td></tr>
-<tr><td>Graph neural network (GNN): which tests catch a break</td><td>0.82 vs 0.88, loses</td><td style="color:#F08A3C">0.72 vs 0.63, wins 4 of 5</td></tr>
-<tr><td>GNN: which steps carry a requirement</td><td>0.40 vs 0.56, loses</td><td>0.44 vs 0.69, loses</td></tr>
-<tr><td>Learned: which breaks are the same program</td><td style="color:#F7C873">0.62 vs 0.58, doubted</td><td style="color:#F7C873">0.66 vs 0.41, doubted</td></tr>
-<tr><td>Learned: breaks found in the first fifth of a run</td><td style="color:#F08A3C">50% vs 31%, wins 10 of 10</td><td>30% vs 25%, wins 9 of 10</td></tr>
+<tr><th style="width:68%">Learned score against the plain rule, mean over seeds</th><th style="width:32%">The toolkit’s own code</th></tr>
+<tr><td>Graph neural network (GNN): who owns new code</td><td>0.65 vs 0.72, loses</td></tr>
+<tr><td>Graph neural network (GNN): which tests catch a break</td><td style="color:#F08A3C">0.72 vs 0.63, wins 4 of 5</td></tr>
+<tr><td>GNN: which steps carry a requirement</td><td>0.44 vs 0.69, loses</td></tr>
+<tr><td>Learned: which breaks are the same program</td><td style="color:#F7C873">0.66 vs 0.41, doubted</td></tr>
+<tr><td>Learned: breaks found in the first fifth of a run</td><td>30% vs 25%, wins 9 of 10</td></tr>
 </table>
-<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Each project’s run plan records the verdict.</b> On the shop feature “the tests that catch a break name its owner” beats it. When it is at least 70% sure who owns new code it is right 92% of the time, on about 40% of it, and it abstains on the rest.</p>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Each project’s run plan records the verdict:</b> a network is switched on only where it beats the plain rule. Below 70% sure it abstains.</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#gnn">How it was tested, and what the scores mean</a></p>
 <p style="font-size:24px;color:#A9B7C4">16</p>
 </div>
 </section>
-</div><details><summary>Slide 16: what the speaker says</summary><p>The graph neural network, GraphSAGE layers over the graph's typed relations, proposes links: its proposals are questions, never verdicts. Each job is tested on code it never saw, against the best rule that does not learn, and a project's run plan marks it on only if it wins there by more than 0.02. Be accurate about how far that goes: the plan records the verdict, 3 of its 7 lines now reach what a pass runs, wired by the tool's own tick, and all 3 are off today because a plain rule wins. The other 4 are measured only. Every number is a mean over seeds, because a single seed flatters: the shop feature's break order read 64% against 26% on its first seed, the best of ten, and the fair number is 50% against 31%. Three verdicts flip with the seed alone, shown as wins out of seeds. The last two rows have ten seeds, the first two rows five on the toolkit and three on the shop feature, and the steps row one. The same-program row is doubted on both: on the toolkit its labels look wrong, and on both every example it learned from is a break a pass already removes, so the score says nothing about the survivors a person reads. That was found by running the tool on each network, the slides after next. The first three rows are mean reciprocal rank, where 1.0 is always ranked first. The same-program row is the share of proven equivalents in the first fifth of the ranked list. Across projects the learned order did worse than random, so each project trains on its own results. Behind this slide: What the graph neural network reads, from above.</p></details></article>
+</div><details><summary>Slide 16: what the speaker says</summary><p>The graph neural network, GraphSAGE layers over the graph's typed relations, proposes links: its proposals are questions, never verdicts. Each job is tested on code it never saw, against the best rule that does not learn, and a project's run plan marks it on only if it wins there by more than 0.02. Be accurate about how far that goes: the plan records the verdict, 3 of its 7 lines now reach what a pass runs, wired by the tool's own tick, and all 3 are off today because a plain rule wins. The other 4 are measured only. Every number is a mean over seeds, because a single seed flatters. Some verdicts flip with the seed alone, shown as wins out of seeds. The last two rows have ten seeds, the first two rows five, and the steps row one. The same-program row is doubted: its labels look wrong, and every example it learned from is a break a pass already removes, so the score says nothing about the survivors a person reads. That was found by running the tool on each network, the slides after next. The first three rows are mean reciprocal rank, where 1.0 is always ranked first. The same-program row is the share of proven equivalents in the first fifth of the ranked list. Across projects the learned order did worse than random, so each project trains on its own results. Behind this slide: What the graph neural network reads, from above.</p></details></article>
 <article id="slide-17"><div class="frame"><section id="gnngoals" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:22px">
 <img src="img/maps.jpg" alt="Only the links from code to requirements" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
@@ -556,8 +554,8 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)">The Goals List: trying is not reaching</h2>
 </div>
 <table style="font-size:24px;background:rgba(16,26,36,.86);border-radius:12px">
-<tr><th style="width:44%">Trained to</th><th style="width:28%">One game feature</th><th style="width:28%">The tool’s own code</th></tr>
-<tr><td>Who owns new code</td><td>0.77 vs 0.84, not reached</td><td>0.65 vs 0.72, not reached</td></tr><tr><td>Which tests catch a break</td><td>0.82 vs 0.88, not reached</td><td style="color:#F08A3C">0.72 vs 0.63, 4 of 5 seeds</td></tr><tr><td>Which steps carry a requirement</td><td>0.40 vs 0.56, not reached</td><td>0.44 vs 0.69, not reached</td></tr><tr><td>Which breaks change nothing</td><td style="color:#F7C873">0.62 vs 0.58, doubted</td><td style="color:#F7C873">0.66 vs 0.41, doubted</td></tr><tr><td>Which breaks will get past the tests</td><td style="color:#F08A3C">0.50 vs 0.31, 10 of 10 seeds</td><td style="color:#F08A3C">0.30 vs 0.25, 9 of 10 seeds</td></tr>
+<tr><th style="width:62%">Trained to</th><th style="width:38%">The tool’s own code</th></tr>
+<tr><td>Who owns new code</td><td>0.65 vs 0.72, not reached</td></tr><tr><td>Which tests catch a break</td><td style="color:#F08A3C">0.72 vs 0.63, 4 of 5 seeds</td></tr><tr><td>Which steps carry a requirement</td><td>0.44 vs 0.69, not reached</td></tr><tr><td>Which breaks change nothing</td><td style="color:#F7C873">0.66 vs 0.41, doubted</td></tr><tr><td>Which breaks will get past the tests</td><td style="color:#F08A3C">0.30 vs 0.25, 9 of 10 seeds</td></tr>
 </table>
 <p style="font-size:26px;line-height:1.35;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>The score</b> is its own against the plain rule it must beat, by more than 0.02, on code it has not seen, at most seeds.</p>
 <div style="display:flex;gap:20px">
@@ -576,7 +574,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">17</p>
 </div>
 </section>
-</div><details><summary>Slide 17: what the speaker says</summary><p>Goals are how we understand what we are training for, and trying for one does not mean reaching it. We are looking for patterns in which kinds get there. graph network reached its goal on 1 of 6 results; small model on the break's features reached its goal on 4 of 4 results (2 of them doubted). 3 of 10 results change with the random seed alone, so no single run settles one. Giving a goal more of the graph to read helped by more than the bar in 0 of 6 tries. Goals where each answer belongs to about one source, in a sparse table, beat a plain rule far more often than the rest. That says where plain rules are weak, not where work is saved. No rule was found that picks the goals which save work. All 60 of the best candidates were chance or anecdote. Ordering tests by a plain rule already saves most of what ordering them can. A learned order beat it on only 2 of 10 goals. The list is a data file, every number is read from the run that made it, a job no goal claims fails the check, and each run logs what moved, so its history keeps growing. A goal that stops stays on the list, with its reason. Two of the results that reach the bar are doubted: the same-program goal learned from labels that look wrong on the tool's own code, and every example it learned from is a break a pass already removes. The page says so. We also tried to turn a goal into a vector pointing at what pays off, with its bars and predictions committed in advance; there is a weak direction for what is learnable and none for what saves work, so a person or a tick still chooses, and the page says that too. Behind this slide: only the links from code to requirements.</p></details></article>
+</div><details><summary>Slide 17: what the speaker says</summary><p>Goals are how we understand what we are training for, and trying for one does not mean reaching it. On the tool's own code, 3 of 5 jobs with a result reached their goal, and 1 of those 3 is doubted. A goal is reached only when the learned score beats the plain rule it must beat, by more than 0.02, on code it has not seen, at most seeds. The list is a data file, every number is read from the run that made it, a job no goal claims fails the check, and each run logs what moved, so its history keeps growing. A goal that stops stays on the list, with its reason. A result that reaches the bar is doubted when the same-program goal learned from labels that look wrong on the tool's own code, and every example it learned from is a break a pass already removes. The page says so. We also tried to turn a goal into a vector pointing at what pays off, with its bars and predictions committed in advance; there is a weak direction for what is learnable and none for what saves work, so a person or a tick still chooses, and the page says that too. Behind this slide: only the links from code to requirements.</p></details></article>
 <article id="slide-18"><div class="frame"><section id="statlist" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:22px">
 <img src="img/under.jpg" alt="The real graph seen from below" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
@@ -586,11 +584,11 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="display:flex;gap:20px">
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 22px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F08A3C">176</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F08A3C">180</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC">stats and metadata on file</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 22px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F08A3C">116</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F08A3C">120</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC">used by a goal</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 22px;border:1px solid #2E4052;border-radius:16px">
@@ -598,7 +596,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC">recorded each pass, read by no goal yet</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 22px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F08A3C">52</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#F08A3C">56</p>
 <p style="font-size:24px;line-height:1.3;color:#C9D3DC">used by a goal, with no requirement reading them</p>
 </div>
 </div>
@@ -690,9 +688,9 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">20</p>
 </div>
 </section>
-</div><details><summary>Slide 20: what the speaker says</summary><p>Self-improvement is on by default because the tool tests itself. Every pass writes one row of stats, checks them against requirements on those stats, and prints what to improve next. That is cheap. A standing tick costs far more: a fresh agent takes one item, measures before and after, and records whether it was worth it. Tokens here are the app's count for each agent, and nothing starts a tick for you. How far a shared graph cuts tokens has not been measured in this version, which is not networked; what has been measured is the size of what is read. Behind this slide: The tool's own graph: its own requirements, its own code, its own breaks.</p></details></article>
+</div><details><summary>Slide 20: what the speaker says</summary><p>Self-improvement is on by default because the tool tests itself. Every pass writes one row of stats, checks them against requirements on those stats, and prints what to improve next. That is cheap. A standing tick costs far more: a fresh agent takes one item, measures before and after, and records whether it was worth it. Tokens here are the app's count for each agent, and nothing starts a tick for you. How far a shared graph cuts tokens has not been measured in this version, which is not networked, and no agent has been timed using a graph in place of the files. Behind this slide: The tool's own graph: its own requirements, its own code, its own breaks.</p></details></article>
 <article id="slide-21"><div class="frame"><section id="selfstats" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
-<img src="img/selfproof.jpg" alt="Every break of the tool's own code. Red: no test caught it. It is less tested than what it tests, and you can see it." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/selfproof.jpg" alt="Every break of the tool's own code. Red: no test caught it. It is less tested than the SemVer parser it was run on (87.3%), and you can see it." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Self-improvement · measured</p>
@@ -721,7 +719,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:24px 32px;border:1px solid #2E4052;border-radius:16px">
 <p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#7FB2E5">58%</p>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">of the breaks of its own code caught, 885 of 1,532, on its one self pass. It is less tested than what it tests.</p>
+<p style="font-size:24px;line-height:1.35;color:#C9D3DC">of the breaks of its own code caught, 885 of 1,532, on its one self pass. It is less tested than the SemVer parser it was run on (87.3%).</p>
 </div>
 </div>
 <p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:28px;line-height:1.4;color:#F4F2EC"><b>Not yet:</b> 0 of the 20 measured outcomes its improvement learner needs, so rules choose the work for now, not a model.</p>
@@ -732,7 +730,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">21</p>
 </div>
 </section>
-</div><details><summary>Slide 21: what the speaker says</summary><p>The audit of its own stats is itself a result: it reported 6 unread stats, and when the audit was fixed the true number was 11. All 11 now have a reader. The requirements on its stats are a second layer of the same idea: a pattern in a stat fires, and what fires becomes a work item. This is young. The standing tick has run only a few times, and no improvement has yet been measured before and after by the learner, so these numbers show what it has found, not yet how fast it gets better. Behind this slide: Every break of the tool's own code. Red: no test caught it. It is less tested than what it tests, and you can see it.</p></details></article>
+</div><details><summary>Slide 21: what the speaker says</summary><p>The audit of its own stats is itself a result: it reported 6 unread stats, and when the audit was fixed the true number was 11. All 11 now have a reader. The requirements on its stats are a second layer of the same idea: a pattern in a stat fires, and what fires becomes a work item. This is young. The standing tick has run only a few times, and no improvement has yet been measured before and after by the learner, so these numbers show what it has found, not yet how fast it gets better. Behind this slide: Every break of the tool's own code. Red: no test caught it. It is less tested than the SemVer parser it was run on (87.3%), and you can see it.</p></details></article>
 <article id="slide-22"><div class="frame"><section id="selfloop" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
 <img src="img/selfinside.jpg" alt="Inside the tool's own graph." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
@@ -757,7 +755,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </section>
 </div><details><summary>Slide 22: what the speaker says</summary><p>The toolkit is written in Python; this is pseudo C++ for a C++ audience, and the lower-case names are the real ones in the code: self_improve_on, improvement fires and check, loop_tick start and finish, telemetry_audit, run_plan decide, improvement graph. Left: one pass, which is what an agent runs. If self-improvement is on, it writes a row and prints the stats' picks. Right: one tick, the standing job. A fresh agent, no memory, chooses one item: a red selftest first, then an unread stat, then a fired trigger, then the board. It measures the same stat before and after. Every 12 ticks is an epoch: the first tick brainstorms, the last benchmarks, re-decides which parts run and asks whether the improvements worked. The improvement graph is checked the way the requirement graph is. Behind this slide: Inside the tool's own graph.</p></details></article>
 <article id="slide-23"><div class="frame"><section id="ab" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
-<img src="img/top.jpg" alt="The shop graph from above." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/top.jpg" alt="osu!’s scoring graph from above." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">On against off · measured</p>
@@ -801,7 +799,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">23</p>
 </div>
 </section>
-</div><details><summary>Slide 23: what the speaker says</summary><p>Six small tasks, then five of them again: eleven pairs, each with a hidden test neither arm saw. Almost every answer passed its hidden test either way, so correctness is not what separates them on small tasks; what differs is what gets written down and what gets left unfinished. One grader per pair was too noisy: with one grader 3 of the 5 repeats reversed, with three only 1 reversed and 1 split. All three graders agreed on 7 of the 11. The fault counts come from the 28 newer grades, on briefs with the arm's tells removed; 6 of those grades compare the loop to the hint arm. The first grade of each pair is on an older brief, which could name the arm in a few cases. The loop's losses are now planned checks. The tie matters most: the first grow run read 19 of 24 against 10, but the code cited its requirement ids, so both arms started with more than the seed. With the ids removed it was 16 of 24 each, 14 of 46 grown requirements matching a real one with the loop and 12 of 41 without, at 1.6 times the tokens and 4.6 times the minutes, one run each, and neither arm asked for anything it should not see. So recovering a model is not where the loop has shown a gain. Behind this slide: The shop graph from above.</p></details></article>
+</div><details><summary>Slide 23: what the speaker says</summary><p>Six small tasks, then five of them again: eleven pairs, each with a hidden test neither arm saw. Almost every answer passed its hidden test either way, so correctness is not what separates them on small tasks; what differs is what gets written down and what gets left unfinished. One grader per pair was too noisy: with one grader 3 of the 5 repeats reversed, with three only 1 reversed and 1 split. All three graders agreed on 7 of the 11. The fault counts come from the 28 newer grades, on briefs with the arm's tells removed; 6 of those grades compare the loop to the hint arm. The first grade of each pair is on an older brief, which could name the arm in a few cases. The loop's losses are now planned checks. The tie matters most: the first grow run read 19 of 24 against 10, but the code cited its requirement ids, so both arms started with more than the seed. With the ids removed it was 16 of 24 each, 14 of 46 grown requirements matching a real one with the loop and 12 of 41 without, at 1.6 times the tokens and 4.6 times the minutes, one run each, and neither arm asked for anything it should not see. So recovering a model is not where the loop has shown a gain. Behind this slide: osu!’s scoring graph from above.</p></details></article>
 <article id="slide-24"><div class="frame"><section id="landscape" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:20px">
 <div style="display:flex;flex-direction:column;gap:12px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Among the other tools</p>
@@ -817,7 +815,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </section>
 </div><details><summary>Slide 24: what the speaker says</summary><p>The owner asked for every agent requirements tool we could find, ranked, and ourselves ranked by the same rubric. The rubric was committed before any tool was scored, with 17 criteria: ten that other tools are good at and we may not be (asking a person good questions, gathering from documents, first use, install, editors, existing code, team review, adoption, price, licence) and seven the loop was built for (finding holes, tying requirements to code and to tests, proving a test catches a break, checking the agent&#x27;s argument, keeping requirements true, measured evidence). Each score is read from the tool&#x27;s own page and carries a link; a score with no page behind it is refused by a check with planted failures. 31 other tools were read, 28 of them ranked beside us, 15 with released code. On equal weights we are 1st at 70.6. On the 9 criteria a team names first, a choice made before scoring, we are 10th at 48.1, behind OpenSpec. On the seven deep criteria alone we are 1st at 95.2. We predicted we would not be first on equal weights and would be in the lower half on the team list; both predictions were wrong, and the place still moves by 9 places with the weights, so we say it depends on them. The scores are ours: one point off each takes us to 8th at equal weights. Other tools beat us on 8 of the criteria; the plan has eight items to take those abilities, ranked by what each would move, with the licence of each idea named.Behind this slide: the manual&#x27;s section on the other tools lists every one with its page.</p></details></article>
 <article id="slide-25"><div class="frame"><section id="limits" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
-<img src="img/thin.jpg" alt="A thin graph: the public asteroid game's, 186 nodes against the shop feature's about 1,700. Green on this much says little." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<img src="img/thin.jpg" alt="A thin graph: the public asteroid game's, 186 nodes against osu!'s scoring rules, 1,062. Green on this much says little." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Honest limits</p>
@@ -844,7 +842,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:18px 28px;border:1px solid #2E4052;border-radius:16px">
 <h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;color:#F4F2EC">A full pass takes time</h3>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC">23 minutes for 1,104 breaks of one feature.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">13 minutes for SemVer’s 246 breaks, 74 for osu!’s 563.</p>
 </div>
 </div>
 <div style="display:flex;gap:20px">
@@ -857,14 +855,14 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;line-height:1.3;color:#F4F2EC"><b>Up to 90% fewer tokens</b> per closed requirement, on average</p>
 </div>
 </div>
-<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: a thin graph, 186 nodes. The shop feature’s has about 1,700.</p>
+<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: a thin graph, 186 nodes. osu!’s scoring rules, with their breaks, have 1,062.</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#limits">Each limit, and each target, in plain words</a></p>
 <p style="font-size:24px;color:#A9B7C4">25</p>
 </div>
 </section>
-</div><details><summary>Slide 25: what the speaker says</summary><p>Used where it does not fit, it can be worse than not using it at all. The prototype card is the first trial on code your team can read: the C# adapter skipped overloaded methods, operators and property bodies without saying so, so on Unreal's SemVer.cs it saw 35 of 68 statements and on JsonObject.cs 213 of 288. The shop feature has no overloads, which is why its numbers never showed it. All of that is fixed with planted tests, the shop feature's numbers barely moved, and the report now names what it still does not walk: a field's value and an indexer. How thin is too thin is not known yet. The two targets are for agents writing code with the loop, shown dashed because neither has been measured there; the 99% on the cover is on facts, from the knowledge graph. The on-against-off harness exists to measure both targets, and the token figure is always being re-evaluated. Behind this slide: A thin graph: the public asteroid game's, 186 nodes against the shop feature's about 1,700. Green on this much says little.</p></details></article>
+</div><details><summary>Slide 25: what the speaker says</summary><p>Used where it does not fit, it can be worse than not using it at all. The prototype card is the first trial on code your team can read: the C# adapter skipped overloaded methods, operators and property bodies without saying so, so on Unreal's SemVer.cs it saw 35 of 68 statements and on JsonObject.cs 213 of 288. An earlier target of ours has no overloads, which is why its numbers never showed it. All of that is fixed with planted tests, re-running that target changed no verdict, and the report now names what it still does not walk: a field's value and an indexer. How thin is too thin is not known yet. The two targets are for agents writing code with the loop, shown dashed because neither has been measured there; the 99% on the cover is on facts, from the knowledge graph. The on-against-off harness exists to measure both targets, and the token figure is always being re-evaluated. Behind this slide: A thin graph: the public asteroid game's, 186 nodes against osu!'s scoring rules, 1,062. Green on this much says little.</p></details></article>
 <article id="slide-26"><div class="frame"><section id="edge" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <img src="img/selftop.jpg" alt="The tool's own graph from above." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
@@ -922,5 +920,595 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 </div>
 </section>
 </div><details><summary>Slide 27: what the speaker says</summary><p>The installer checks what it needs, copies the skill and tools, runs every selftest in the installed copy, then runs the whole loop on the examples, a C# wallet and store and its Python twin, which must hold. Any other language writes one verdict file. The manual has every claim in this deck in plain words, with the test behind it. Behind this slide: The example's own graph, the one you get when the install holds: 122 nodes.</p></details></article>
+<article id="slide-28"><div class="frame"><section id="next" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<img src="img/next.jpg" alt="osu!’s scoring graph, the real graph the loop wrote, seen from a distance." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.9) 0%, rgba(11,18,25,.7) 45%, rgba(11,18,25,.7) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">What is next</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">From a rough epic to code that is right</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:28px 32px;border:2px solid #F08A3C;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F08A3C">What the tool is for</h3>
+<p style="font-size:32px;line-height:1.35;color:#F4F2EC">Take the requirements for a game from a rough epic use case, grow them into a larger set, and write the code from that set as accurately as we can measure.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#F4F2EC">The question</h3>
+<p style="font-size:32px;line-height:1.35;color:#F4F2EC">If the requirements for something very difficult are complete and checked, how far does that move what an AI can build?</p>
+</div>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600;line-height:1.2;color:#7FB2E5">Measured so far</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DC">How much of existing code its tests hold: 87.3%, 69.7% and 53.4% of breaks caught on three public targets. In a control run on two of them, an agent reading carefully found as many faults as the loop did.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.86);padding:28px 32px;border:2px dashed #F08A3C;border-radius:16px">
+<h3 style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C">NOT MEASURED</h3>
+<p style="font-size:28px;line-height:1.35;color:#F4F2EC">The epic-to-code test has not run. Nothing yet shows that more requirements make the code more accurate.</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:34px;line-height:1.4;color:#F4F2EC">The direction is better tools for making video games. It is not a claim about general intelligence.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#targets">What is measured, and what is not</a></p>
+<p style="font-size:24px;color:#A9B7C4">28</p>
+</div>
+</section>
+</div><details><summary>Slide 28: what the speaker says</summary><p>The tool’s main intent is to take the requirements for a game from a rough epic use case and grow them into a larger set, so that the code written from them is as accurate as it can be. The question on the right is a question and not a result: if we have the requirements to do something very difficult, how does that change the landscape for the AI? What is measured is narrower. On three public targets, a version parser, a JSON object and a game’s scoring rules, it measures how much of existing code its tests hold, and that held up against careful reading: a control run gave agents the same task with and without the loop, and blind graders found no real fault in only one arm. What is not measured is the thing the intent names. No rough epic has been grown into requirements and then into code, and no code written from grown requirements has been graded. The trials here started from a published spec or a game’s own doc comments, and a first try at growing a model from three requirements tied with and without the loop. The test we plan starts from one rough epic for a small game whose right answers come from an independent published source, such as published move-count tables for chess. Agents write the code with and without the grown requirements, and hidden tests written from that source, never from our model, grade both blind. Tokens per arm are recorded, and so are how many requirements the epic grew into and how many the hidden tests needed that it missed. The direction is more advanced tools for making video games, and not general intelligence.</p></details></article>
 </main><script>function fit(){document.querySelectorAll('.frame').forEach(function(f){f.firstElementChild.style.transform='scale('+(f.clientWidth/1920)+')';});}
-addEventListener('resize',fit);fit();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);</script></body></html>
+addEventListener('resize',fit);fit();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);</script><script>/* dictation.js - speech to text beside a page, and Claude to tidy the words or answer from the page.
+
+   ONE script, inlined by dictation_panel.py into every page that carries the panel (the deck and the fly-through), so the two cannot
+   drift apart. It loads nothing from outside and starts nothing by itself: the panel is closed until the viewer opens it, the microphone
+   starts only on a click, and Claude is asked only when a key has been typed here and a button or an end of speech asks for it.
+
+   OUR READING of "take dictation", which nobody has confirmed: the words you say appear as text beside the slide, and Claude tidies them
+   or answers a question from the deck. The panel says so in one line, so a viewer who meant something else can say so.
+
+   THE KEY is the viewer's and nobody else's.
+     - It is typed into a password-type field and held in a private field of KeyVault, in this tab's memory. It is not written to
+       any browser storage, a cookie, the address, the page, a file or the console; a reload or a closed tab forgets it.
+     - It is sent in one header, to one address (API below), and nowhere else. The page's own policy (a meta tag) allows connections to
+       the page's own origin and that address only, and allows no script from outside the page.
+     - The panel refuses to take a key at all when the page is not a secure context, is shown inside another page, holds a script that
+       is not inline, has had a script added since it opened, or has a fetch that is no longer the browser's own (PageGuard).
+   The pages work in full with no key. Without one the panel still turns speech into text.
+
+   THE AUDIO. This script does not record. Chrome's speech recognition sends the audio to a web service to turn it into text (MDN says so
+   of the API), so the panel says that on screen before the microphone can be started, and a browser with no speech recognition is told so
+   and typing works the same.
+
+   NOTHING IS HIDDEN. Every failure is a sentence on the panel: nothing heard, the microphone refused, no speech service, no key, the key
+   refused, the network failed, the service overloaded, a refusal from Claude. There is no substitute reply and no silent retry.
+
+   CLASSES  KeyVault (the key) - PageGuard (may a key be taken here) - SpeechInput (the browser's recognizer) - ClaudeClient (one request,
+   every failure named) - Prompts (what Claude is told) - DeckHost and FlyHost (what each page lets the panel read) - DictationPanel
+   (the screen, and the order things happen in). */
+(function () {
+  'use strict';
+  if (window.__dictation) return;
+
+  /* the one address a key is ever sent to, and the version header the API documents for it */
+  const API = 'https://api.anthropic.com/v1/messages';
+  const API_VERSION = '2026-10-21';
+  /* current model ids, from the API reference the panel was written against; the first is the default */
+  const MODELS = [['claude-opus-5-5', 'Claude Opus 5.5'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5'], ['claude-haiku-5-5', 'Claude Haiku 5.5']];
+  const MAX_TOKENS = 16000;            /* a ceiling, not a target: the prompts ask for short answers */
+  const TIMEOUT_MS = 90000;
+  const WHOLE_LIMIT = 120000;          /* characters of page text sent whole; past this only the part in view goes, and the panel says so */
+  const HINT_LIMIT = 6000;             /* tidying only needs the words in view to spell terms by */
+  const VERSION = 'dictation-1';
+
+  const h = (tag, attrs, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v === false || v === null || v === undefined) continue;
+      if (k === 'text') el.textContent = v; else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (const kid of kids) if (kid) el.append(kid);
+    return el;
+  };
+  const squash = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+
+  /* ------------------------------------------------------------------------------------------------------------ the key */
+  class KeyVault {
+    /* The key, and nothing else about it. A private field cannot be read from outside this class, and the only thing that leaves is
+       the header its sign method adds to a request headed for API. scrub() takes the key out of any text before it is shown. */
+    #key = '';
+    has() { return this.#key.length > 0; }
+    size() { return this.#key.length; }
+    take(text) {
+      const k = String(text || '').trim();
+      if (!k) return 'Type your key first.';
+      if (!/^[\x21-\x7E]+$/.test(k)) return 'A key is plain letters, digits and dashes with no spaces. This has something else in it.';
+      this.#key = k;
+      return '';
+    }
+    looksRight() { return this.#key.indexOf('sk-ant-') === 0; }
+    /* a key typed or pasted into the box for words, which is an ordinary field: browsers keep ordinary fields' text, and it would go to Claude as words */
+    shaped(text) { return /sk-ant-[A-Za-z0-9_-]{8,}/.test(text) || (this.#key.length >= 12 && String(text).includes(this.#key)); }
+    strip(text) { const t = String(text).replace(/sk-ant-[A-Za-z0-9_-]{8,}/g, ''); return this.#key.length >= 12 ? t.split(this.#key).join('') : t; }
+    forget() { this.#key = ''; }
+    sign(headers) { if (!this.#key) throw new Error('no key'); return Object.assign({}, headers, { 'x-api-key': this.#key }); }
+    scrub(text) { return this.#key ? String(text).split(this.#key).join('[key]') : String(text); }
+  }
+
+  /* ----------------------------------------------------------------------------------------------------- may a key be taken */
+  class PageGuard {
+    /* A key is taken only on a page that holds nothing it did not ship with. The checks are what a page can see of itself: it cannot
+       see a browser extension, and it says so rather than claim more. Once one fails, the key is refused for the life of the page. */
+    constructor(fetchRef) {
+      this.fetchRef = fetchRef;
+      this.added = [];
+      this.listeners = [];
+      this.watch();
+    }
+    static foreignAtLoad() {
+      return Array.from(document.querySelectorAll('script')).filter((s) => s.hasAttribute('src'))
+        .map((s) => 'a script loaded from ' + (s.getAttribute('src') || '').slice(0, 80));
+    }
+    watch() {
+      new MutationObserver((records) => {
+        /* only a script that arrives in THIS batch is news: the panel's own updates to the page come through here too, and must not set it off again */
+        let fresh = false;
+        for (const r of records) for (const n of r.addedNodes) {
+          if (n.nodeType !== 1) continue;
+          const found = n.tagName === 'SCRIPT' ? [n] : Array.from(n.querySelectorAll ? n.querySelectorAll('script') : []);
+          for (const s of found) { fresh = true; this.added.push('a script added after the page opened' + (s.getAttribute('src') ? ' (' + s.getAttribute('src').slice(0, 80) + ')' : '')); }
+        }
+        if (fresh) for (const f of this.listeners) f();
+      }).observe(document.documentElement, { childList: true, subtree: true });
+    }
+    onChange(f) { this.listeners.push(f); }
+    verdict() {
+      const why = [];
+      if (!window.isSecureContext) why.push('this page is not a secure context');
+      if (window.top !== window.self) why.push('this page is shown inside another page');
+      why.push(...PageGuard.foreignAtLoad());
+      why.push(...this.added);
+      let native = false;
+      try { native = /\[native code\]/.test(Function.prototype.toString.call(this.fetchRef)); } catch (e) { native = false; }
+      if (!native) why.push('the browser\'s fetch has been replaced by a script');
+      return { ok: why.length === 0, why: Array.from(new Set(why)) };
+    }
+  }
+
+  /* --------------------------------------------------------------------------------------------------- the browser's recognizer */
+  class SpeechInput {
+    /* The browser's own SpeechRecognition, one utterance per press, as the Blueprint city's command bar uses it. Everything it can
+       end in is reported through on(): started, interim, final, nothing, problem, ended. Nothing starts except through start(). */
+    constructor(on) {
+      this.on = on;
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      this.supported = !!SR;
+      this.listening = false;
+      if (!SR) return;
+      const rec = this.rec = new SR();
+      rec.lang = navigator.language || 'en-US';
+      rec.interimResults = true;
+      rec.continuous = false;
+      rec.maxAlternatives = 1;
+      rec.onstart = () => { this.listening = true; this.heard = false; this.reported = false; this.on('started'); };
+      rec.onresult = (e) => {
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) final += t; else interim += t;
+        }
+        if (interim) this.on('interim', squash(interim));
+        if (squash(final)) { this.heard = true; this.on('final', squash(final)); }
+      };
+      rec.onnomatch = () => { this.reported = true; this.on('problem', 'The browser heard sound but could not make words of it. Press Mic and say it again, or type it.'); };
+      rec.onerror = (e) => {
+        const why = {
+          'no-speech': 'Heard nothing. Press Mic and speak, or type it.',
+          'not-allowed': 'The microphone was refused for this page. Allow it in the address bar, or type.',
+          'service-not-allowed': 'This browser will not run speech recognition for this page. Type instead.',
+          'audio-capture': 'No microphone was found. Plug one in, or type.',
+          'network': 'The browser\'s speech service could not be reached, so nothing was turned into text. Check the network, or type.',
+          'language-not-supported': 'This browser has no speech recognition for your language. Type instead.',
+          'bad-grammar': 'The browser could not use its speech settings. Type instead.'
+        }[e.error];
+        if (e.error === 'aborted') return;
+        this.reported = true;
+        this.on('problem', why || ('Speech recognition stopped with an error (' + e.error + '). Type instead.'));
+      };
+      rec.onend = () => { const heard = !!this.heard; this.listening = false; this.on('ended', heard, this.reported); };
+    }
+    start() {
+      if (!this.supported) return false;
+      this.heard = false; this.reported = false;
+      try { this.rec.start(); return true; } catch (e) { this.on('problem', 'The microphone could not start (' + (e && e.message || e) + ').'); return false; }
+    }
+    stop() { if (this.supported && this.listening) this.rec.stop(); }
+  }
+
+  /* --------------------------------------------------------------------------------------------------------- one request */
+  class ClaudeProblem extends Error {
+    constructor(kind, message) { super(message); this.kind = kind; }
+  }
+
+  class ClaudeClient {
+    /* One request to API and what came back, every failure named. The key travels in a header made by the vault; the body holds the
+       prompt and the words and nothing else. No cookies and no referrer go with it. There is no retry and no stand-in reply. */
+    constructor(vault, fetchRef) { this.vault = vault; this.fetchRef = fetchRef; }
+    async ask(model, system, words) {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+      let res;
+      try {
+        res = await this.fetchRef.call(window, API, {
+          method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: ctl.signal,
+          headers: this.vault.sign({
+            'content-type': 'application/json',
+            'anthropic-version': API_VERSION,
+            /* the API refuses a browser's request without this one; it is how the API is told a person, not a server, holds the key */
+            'anthropic-dangerous-direct-browser-access': 'true'
+          }),
+          body: JSON.stringify({ model, max_tokens: MAX_TOKENS, system, output_config: { effort: 'low' }, messages: [{ role: 'user', content: words }] })
+        });
+      } catch (e) {
+        throw new ClaudeProblem(ctl.signal.aborted ? 'timeout' : 'network', ctl.signal.aborted
+          ? 'Claude did not answer in ' + Math.round(TIMEOUT_MS / 1000) + ' seconds, so the request was dropped.'
+          : 'The request to api.anthropic.com got no answer: the network failed, or the browser blocked it. Nothing was sent anywhere else.');
+      } finally { clearTimeout(timer); }
+      let body = null;
+      try { body = await res.json(); } catch (e) { body = null; }
+      const said = body && body.error && body.error.message ? this.vault.scrub(String(body.error.message)).slice(0, 240) : '';
+      if (!res.ok) throw new ClaudeProblem('status', this.problem(res, said, model));
+      if (!body || !Array.isArray(body.content)) throw new ClaudeProblem('shape', 'Claude\'s answer could not be read (status ' + res.status + ').');
+      if (body.stop_reason === 'refusal') throw new ClaudeProblem('refusal', 'Claude declined this request' + (body.stop_details && body.stop_details.category ? ' (' + body.stop_details.category + ')' : '') + '. Nothing was answered.');
+      const text = body.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+      if (!text) throw new ClaudeProblem('empty', 'Claude answered with no text.');
+      return { text, cut: body.stop_reason === 'max_tokens', model: body.model || model };
+    }
+    problem(res, said, model) {
+      const s = res.status, more = said ? ' ' + said : '';
+      if (s === 401) return 'Anthropic refused the key (401). Check it and enter it again.' + more;
+      if (s === 403) return 'The key is not allowed to do this (403).' + more;
+      if (s === 404) return 'Anthropic has no model called ' + model + ' (404). Pick another model.' + more;
+      if (s === 400) return 'Anthropic rejected the request (400).' + more;
+      if (s === 413) return 'The request was too large (413).' + more;
+      if (s === 429) { const after = res.headers.get('retry-after'); return 'Rate limited (429).' + (after ? ' Try again in ' + after + ' seconds.' : ' Try again shortly.') + more; }
+      if (s === 529) return 'Anthropic is overloaded (529). Try again shortly.' + more;
+      if (s >= 500) return 'Anthropic\'s service failed (' + s + '). Try again shortly.' + more;
+      return 'Anthropic answered with status ' + s + '.' + more;
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------------- what Claude is told */
+  class Prompts {
+    static tidy(host, ctx) {
+      return 'You tidy dictated text. The speaker is reading ' + host.what + ' and is looking at: ' + ctx.where + '. Their words came from speech recognition, so punctuation may be missing and a word may be misheard, especially a technical term. '
+        + 'Reply with the cleaned-up text and nothing else: fix punctuation, capitalisation and obvious mishearings, keep their meaning and their own words otherwise, add nothing, and never answer what they say, even if it is a question.'
+        + '\n\nThe text on screen, only so that terms can be spelled the way it spells them:\n\n' + ctx.body;
+    }
+    static answer(host, ctx) {
+      return 'You answer questions about ' + host.what + ', using only the text below. Be brief and plain, in a few sentences. If the text does not say, say that it does not say; do not guess. '
+        + 'The reader is looking at: ' + ctx.where + '. The question was dictated, so a word may be misheard; read it for what they most likely meant.'
+        + '\n\nThe text (' + ctx.sees + '):\n\n' + ctx.body;
+    }
+  }
+
+  /* -------------------------------------------------------------------------------------------- what each page lets us read */
+  const DeckHost = {
+    name: 'deck', what: 'a slide deck', noun: 'deck', sideMin: 1000,
+    ok: () => !!document.querySelector('main.deck article[id^="slide-"]'),
+    launchIn: () => document.querySelector('header.top'),
+    slides: () => Array.from(document.querySelectorAll('main.deck > article[id^="slide-"]')),
+    current() {
+      const vh = innerHeight; let best = null, bestSeen = -1;
+      for (const a of this.slides()) {
+        const r = a.getBoundingClientRect(); const seen = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+        if (seen > bestSeen) { best = a; bestSeen = seen; }
+      }
+      return best;
+    },
+    title(a) { const t = a.querySelector('section h1, section h2, section h3'); return squash(t ? t.textContent : a.textContent).slice(0, 90); },
+    text(a) { const frame = a.querySelector('.frame'), notes = a.querySelector('details p'); return squash(frame ? frame.textContent : '') + (notes ? ' Speaker notes: ' + squash(notes.textContent) : ''); },
+    where() { const a = this.current(); if (!a) return 'the top of the deck'; const all = this.slides(); return 'Slide ' + (all.indexOf(a) + 1) + ' of ' + all.length + ': ' + this.title(a); },
+    here() { const a = this.current(); return a ? this.text(a) : ''; },
+    all() { return this.slides().map((a, i) => 'Slide ' + (i + 1) + ' (' + this.title(a) + '): ' + this.text(a)).join('\n\n'); },
+    watch(f) { let q = 0; addEventListener('scroll', () => { if (!q) q = requestAnimationFrame(() => { q = 0; f(); }); }, { passive: true }); },
+    css: 'body[data-dict-layout="side"].dict-open{padding-right:var(--dict-w)}body[data-dict-layout="sheet"].dict-open{padding-bottom:var(--dict-h)}'
+  };
+
+  const FlyHost = {
+    name: 'fly', what: 'a page of a manual', noun: 'page', sideMin: 1240, floatMax: 760, floatIn: () => document.getElementById('view'),
+    ok: () => !!(document.getElementById('view') && document.getElementById('pageIn')),
+    launchIn: () => document.getElementById('ctl'),
+    opened() { const n = document.getElementById('pageName'); const t = n ? squash(n.textContent) : ''; return t && !/^Pick anything/.test(t) ? t : ''; },
+    where() { const t = this.opened(); return t ? 'the page "' + t + '"' : 'the graph, with no page open yet'; },
+    here() { return this.opened() ? squash(document.getElementById('pageIn').textContent) : ''; },
+    all() { return null; },
+    watch(f) { const n = document.getElementById('pageName'); if (n) new MutationObserver(f).observe(n, { childList: true, characterData: true, subtree: true }); },
+    css: 'body[data-dict-layout="side"].dict-open #view{right:var(--dict-w)}body[data-dict-layout="sheet"].dict-open #view{bottom:var(--dict-h)}body[data-dict-layout="sheet"].dict-open #page.open{height:auto;max-height:100%}'
+  };
+
+  /* ---------------------------------------------------------------------------------------------------------- the screen */
+  const CSS = `
+.dict,.dict *,.dict-launch{box-sizing:border-box}
+.dict{--d-bg:#121C26;--d-bg2:#16222E;--d-ink:#F4F2EC;--d-soft:#C9D3DC;--d-mute:#A9B7C4;--d-line:#2E4052;--d-accent:#F08A3C;--d-blue:#7FB2E5;--d-bad:#FF8F6B;--d-ok:#8FD6A0;
+ position:fixed;z-index:40;right:0;top:0;bottom:0;width:var(--dict-w);display:none;flex-direction:column;background:var(--d-bg);color:var(--d-ink);border-left:1px solid var(--d-line);
+ font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;padding-right:env(safe-area-inset-right,0px);color-scheme:dark}
+:root{--dict-w:380px;--dict-h:min(74dvh,640px)}
+body.dict-open .dict{display:flex}
+body[data-dict-layout="sheet"] .dict{top:auto;bottom:0;left:var(--treeW,0px);width:auto;height:var(--dict-h);border-left:0;border-top:1px solid var(--d-line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.dict-launch{background:#1D2C3A;color:#F4F2EC;border:1px solid #2E4052;border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer;min-height:36px;white-space:nowrap}
+.dict-launch:hover{border-color:#F08A3C}.dict-launch[aria-expanded="true"]{background:#F08A3C;color:#0B1219;border-color:#F08A3C}
+.top .dict-launch{margin-left:auto}
+.dict-launch.dict-float{position:absolute;right:calc(12px + env(safe-area-inset-right,0px));top:calc(96px + env(safe-area-inset-top,0px));z-index:3;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+body.dict-open .dict-launch.dict-float,body.bp-on .dict-launch{display:none}
+.dict button,.dict select,.dict textarea,.dict input{font:inherit;color:inherit}
+.dict button,.dict select{background:#1D2C3A;color:var(--d-ink);border:1px solid var(--d-line);border-radius:8px;padding:6px 12px;min-height:40px;cursor:pointer}
+.dict button:hover:not(:disabled){border-color:var(--d-accent)}.dict button:disabled{opacity:.55;cursor:default}
+.dict :focus-visible,.dict-launch:focus-visible{outline:2px solid var(--d-accent);outline-offset:2px}
+.dict-head{display:flex;align-items:flex-start;gap:8px;padding:10px 12px 6px;border-bottom:1px solid var(--d-line);flex:none}
+.dict-head h2{margin:0;font:600 17px/1.25 'Space Grotesk',system-ui,sans-serif}
+.dict-head p{margin:2px 0 0;font-size:13px;color:var(--d-soft);overflow-wrap:anywhere}
+.dict-head>div{flex:1;min-width:0}.dict-x{flex:none;min-width:40px}
+.dict{overflow-y:auto;overscroll-behavior:contain}
+.dict-info{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 12px 4px}
+.dict-ctl{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 12px;border-top:1px solid var(--d-line)}
+.dict-modes{display:inline-flex;gap:10px;align-items:center}
+.dict-reading{margin:0;font-size:13px;color:var(--d-soft)}
+.dict-say{margin:0;font-size:13px;color:var(--d-soft);border-left:3px solid var(--d-accent);padding-left:8px}
+.dict-row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.dict-row label{font-size:14px;display:inline-flex;gap:6px;align-items:center;min-height:30px}
+.dict-mic[data-on="1"]{background:var(--d-accent);color:#0B1219;border-color:var(--d-accent)}
+.dict-words{width:100%;min-height:58px;resize:vertical;background:#0E1720;color:var(--d-ink);border:1px solid var(--d-line);border-radius:8px;padding:8px 10px;font-size:16px;line-height:1.4}
+.dict-live{margin:0;font-size:13.5px;color:var(--d-mute);font-style:italic}.dict-live:empty{display:none}
+.dict-status{margin:0;font-size:14px;min-height:1.4em}
+.dict-status[data-kind="problem"]{color:var(--d-bad)}.dict-status[data-kind="ok"]{color:var(--d-ok)}
+.dict-log:empty::before{content:"Nothing yet. What you say, and what Claude answers, will be listed here, newest first.";color:var(--d-mute);font-size:13px}
+.dict-log{list-style:none;margin:0;padding:8px 12px;display:flex;flex-direction:column;gap:8px;flex:1 1 96px;min-height:96px;overflow-y:auto;overscroll-behavior:contain}
+.dict-turn{border:1px solid var(--d-line);border-radius:8px;padding:6px 10px;background:var(--d-bg2)}
+.dict-turn[data-kind="claude"]{border-left:3px solid var(--d-blue)}.dict-turn[data-kind="problem"]{border-left:3px solid var(--d-bad)}
+.dict-turn .who{font:600 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--d-mute)}
+.dict-turn[data-kind="problem"] .who{color:var(--d-bad)}
+.dict-turn .meta{display:block;font-size:12px;color:var(--d-mute)}
+.dict-turn p{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.dict-turn button{margin-top:6px;min-height:32px;font-size:13px}
+.dict-key{border:1px solid var(--d-line);border-radius:8px;padding:6px 10px;background:var(--d-bg2);flex:none;margin:0 12px 10px}
+.dict-key summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--d-soft)}
+.dict-key p{margin:6px 0;font-size:13px;color:var(--d-mute)}
+.dict-key input[type=password]{width:100%;background:#0E1720;border:1px solid var(--d-line);border-radius:8px;padding:8px 10px;font-size:16px;min-height:42px}
+.dict-key input:disabled{opacity:.5}
+.dict-key .dict-row{margin-top:6px}
+@media (prefers-reduced-motion:reduce){.dict *{transition:none!important}}
+`;
+
+  class DictationPanel {
+    /* The screen and the order things happen in. It builds its own DOM, docks beside the page (a side panel where there is room, a sheet
+       along the bottom where there is not), and ties the five parts above together. */
+    constructor(host) {
+      this.host = host;
+      this.vault = new KeyVault();
+      this.nativeFetch = window.fetch;
+      this.guard = new PageGuard(this.nativeFetch);
+      this.client = new ClaudeClient(this.vault, this.nativeFetch);
+      this.speech = new SpeechInput((kind, a, b) => this.heard(kind, a, b));
+      this.busy = false;
+      this.build();
+      this.guard.onChange(() => this.checkGuard());
+      addEventListener('resize', () => this.layout());
+      this.layout();
+      if (host.watch) host.watch(() => this.whereChanged());
+      this.whereChanged();
+      if (this.checkGuard()) this.status('info', 'No key yet. Speech still turns into text here; Claude answers once you add a key under "Your key and model".');
+      this.panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.toggle(false); });
+    }
+
+    build() {
+      const host = this.host;
+      document.head.append(h('style', { id: 'dict-style', text: CSS + host.css }));
+      this.launch = h('button', { type: 'button', class: 'dict-launch', 'aria-expanded': 'false', 'aria-controls': 'dictation', text: 'Dictate', 'data-tip': 'Speak or type; Claude tidies your words or answers from this ' + host.noun + '. You bring your own key.' });
+      this.home = host.launchIn();
+      this.place();
+      this.launch.addEventListener('click', () => this.toggle());
+
+      this.where = h('p', { text: '' });
+      const close = h('button', { type: 'button', class: 'dict-x', 'aria-label': 'Close the dictation panel', text: 'Close' });
+      close.addEventListener('click', () => this.toggle(false));
+      this.mic = h('button', { type: 'button', class: 'dict-mic', 'data-on': '0', 'aria-pressed': 'false', text: 'Mic' });
+      this.mic.addEventListener('click', () => this.micClick());
+      this.tidy = h('input', { type: 'radio', class: 'dict-tidy', name: 'dict-mode', value: 'tidy', checked: true });
+      this.answer = h('input', { type: 'radio', class: 'dict-answer', name: 'dict-mode', value: 'answer' });
+      this.auto = h('input', { type: 'checkbox', checked: true });
+      this.words = h('textarea', { class: 'dict-words', rows: '2', placeholder: 'Press Mic and speak, or type here', 'aria-label': 'Your words' });
+      this.live = h('p', { class: 'dict-live', 'aria-hidden': 'true' });
+      this.send = h('button', { type: 'button', class: 'dict-send', text: 'Send to Claude' });
+      this.send.addEventListener('click', () => this.ask());
+      this.words.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.ask(); } });
+      this.words.addEventListener('input', () => this.keyInWords());
+      this.statusEl = h('p', { class: 'dict-status', role: 'status' });
+      this.log = h('ol', { class: 'dict-log', 'aria-live': 'polite', 'aria-label': 'What was said and what Claude answered' });
+
+      this.keyNote = h('p', { text: '' });
+      this.keyIn = h('input', { type: 'password', class: 'dict-keyin', autocomplete: 'off', spellcheck: 'false', autocapitalize: 'off', 'aria-label': 'Your Anthropic API key', placeholder: 'Your Anthropic API key', 'data-lpignore': 'true', 'data-1p-ignore': 'true', 'data-bwignore': 'true' });
+      this.keyUse = h('button', { type: 'button', class: 'dict-use', text: 'Use this key' });
+      this.keyForget = h('button', { type: 'button', class: 'dict-forget', text: 'Forget the key' });
+      this.model = h('select', { class: 'dict-model', 'aria-label': 'Model' });
+      for (const [id, name] of MODELS) this.model.append(h('option', { value: id, text: name }));
+      this.keyUse.addEventListener('click', () => this.useKey());
+      this.keyIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); this.useKey(); } });
+      this.keyForget.addEventListener('click', () => { this.vault.forget(); this.keyIn.value = ''; this.keyBox.open = true; this.keyState(); this.status('info', 'The key is forgotten. Claude will not be asked until you add one.'); });
+      this.keySummary = h('summary', { text: 'Your key and model' });
+      this.keyBox = h('details', { class: 'dict-key', open: innerWidth >= host.sideMin },
+        this.keySummary,
+        h('p', { text: 'You type your own Anthropic key here. It stays in this tab\'s memory only, is never saved or put in the address, and is sent only to api.anthropic.com when Claude is asked. A reload or a closed tab forgets it. What you say, and the text of the ' + host.noun + ' Claude needs to answer, go to Claude with it, and the cost is billed to your key.' }),
+        this.keyIn,
+        h('div', { class: 'dict-row' }, this.keyUse, this.keyForget),
+        this.keyNote,
+        h('div', { class: 'dict-row' }, h('label', {}, 'Model ', this.model)));
+
+      this.panel = h('aside', { class: 'dict', id: 'dictation', 'aria-label': 'Dictation', 'data-version': VERSION },
+        h('div', { class: 'dict-head' }, h('div', {}, h('h2', { text: 'Speak or type, Claude helps' }), this.where), close),
+        h('div', { class: 'dict-info' },
+          h('p', { class: 'dict-reading', text: 'Our reading of dictation: your words appear here as text beside the ' + host.noun + ', and Claude tidies them or answers from the ' + host.noun + '.' }),
+          h('p', { class: 'dict-say', text: this.speech.supported
+            ? 'Before you press Mic: Chrome sends what you say to a speech service on the web to turn it into text. Nothing is heard until you press it.'
+            : 'This browser has no speech recognition, so there is no Mic here, and typing works the same way. (Chrome and Edge have it; Firefox and some phones do not.)' })),
+        this.log,
+        h('div', { class: 'dict-ctl' },
+          h('div', { class: 'dict-row' }, this.mic,
+            h('span', { class: 'dict-modes', role: 'group', 'aria-label': 'What Claude does with your words' },
+              h('label', { title: 'Claude cleans up your words and gives them back' }, this.tidy, 'Tidy'),
+              h('label', { title: 'Claude answers your question from the ' + host.noun }, this.answer, 'Answer')),
+            this.send),
+          this.words, this.live,
+          h('div', { class: 'dict-row' }, h('label', {}, this.auto, 'Send when I stop talking')),
+          this.statusEl),
+        this.keyBox);
+      document.body.append(this.panel);
+      if (!this.speech.supported) { this.mic.disabled = true; this.mic.textContent = 'Mic (not in this browser)'; this.auto.parentElement.hidden = true; }
+      this.keyState();
+    }
+
+    layout() {
+      const next = innerWidth >= this.host.sideMin ? 'side' : 'sheet';
+      const changed = document.body.dataset.dictLayout !== next;
+      document.body.dataset.dictLayout = next;
+      this.place();
+      /* the page's own resize handler runs before this one and so measures the old layout (a deck's slides were scaled to a width of nothing when the window narrowed with the panel open); it is run again against the new one */
+      if (changed && document.body.classList.contains('dict-open')) dispatchEvent(new Event('resize'));
+    }
+    /* the button lives in the page's own row of controls; where that row is a strip that scrolls sideways (a phone), it would sit out of sight, so it floats over the view instead */
+    place() {
+      const host = this.host, float = !!(host.floatIn && innerWidth <= host.floatMax);
+      const parent = float ? host.floatIn() : this.home;
+      this.launch.classList.toggle('dict-float', float);
+      if (!parent) { if (!this.launch.parentNode) document.body.append(this.launch); return; }
+      if (this.launch.parentNode === parent) return;
+      if (!float && host.name === 'fly') parent.insertBefore(this.launch, document.getElementById('gl')); else parent.append(this.launch);
+    }
+    toggle(force) {
+      const open = force === undefined ? !document.body.classList.contains('dict-open') : force;
+      document.body.classList.toggle('dict-open', open);
+      this.launch.setAttribute('aria-expanded', open ? 'true' : 'false');
+      this.whereChanged();
+      if (open) setTimeout(() => (this.vault.has() || !this.keyBox.open ? (this.mic.disabled ? this.words : this.mic) : (this.keyIn.disabled ? this.words : this.keyIn)).focus({ preventScroll: true }), 0);
+      else this.launch.focus();
+      dispatchEvent(new Event('resize'));
+    }
+    whereChanged() { this.where.textContent = 'Beside: ' + this.host.where(); }
+
+    status(kind, text) { this.statusEl.dataset.kind = kind; this.statusEl.textContent = text; }
+
+    checkGuard() {
+      const v = this.guard.verdict();
+      if (v.ok) { this.keyIn.disabled = false; this.keyUse.disabled = false; this.keyState(); return true; }
+      this.vault.forget();
+      this.keyIn.value = '';
+      this.keyIn.disabled = true;
+      this.keyUse.disabled = true;
+      this.keyNote.textContent = 'Key entry is switched off: ' + v.why.join('; ') + '. A key would not be safe here. Speech to text still works and nothing is sent to Claude.';
+      this.keyBox.open = true;
+      this.status('problem', 'Key entry is switched off on this page (' + v.why[0] + ').');
+      return false;
+    }
+    keyState() {
+      if (this.keyIn.disabled) return;
+      this.keySummary.textContent = this.vault.has() ? 'Your key and model: a key is held' : 'Your key and model: no key held yet';
+      this.keyNote.textContent = this.vault.has()
+        ? 'A key of ' + this.vault.size() + ' characters is held in this tab.' + (this.vault.looksRight() ? '' : ' It does not start with sk-ant-, so Anthropic will refuse it if it is not a key.')
+        : 'No key is held.';
+    }
+    useKey() {
+      if (!this.checkGuard()) return;
+      const problem = this.vault.take(this.keyIn.value);
+      if (problem) { this.status('problem', problem); return; }
+      this.keyIn.value = '';
+      this.keyState();
+      this.keyBox.open = false;
+      this.status('ok', 'Key held in this tab. Press Mic and speak, or type and send.');
+    }
+
+    keyInWords() {
+      if (!this.vault.shaped(this.words.value)) return false;
+      this.words.value = this.vault.strip(this.words.value);
+      this.keyBox.open = true;
+      this.status('problem', 'That looked like an API key, so it was taken out of this box and not sent. The key goes in the key box below, which is a password field.');
+      return true;
+    }
+
+    micClick() {
+      if (this.speech.listening) { this.speech.stop(); return; }
+      this.live.textContent = '';
+      this.speech.start();
+    }
+    heard(kind, a, b) {
+      if (kind === 'started') { this.mic.dataset.on = '1'; this.mic.setAttribute('aria-pressed', 'true'); this.mic.textContent = 'Stop'; this.status('info', 'Listening. Speak now.'); }
+      else if (kind === 'interim') this.live.textContent = a;
+      else if (kind === 'final') { this.words.value = (this.words.value ? this.words.value.trim() + ' ' : '') + a; this.live.textContent = ''; this.status('info', 'Heard: "' + a + '"'); }
+      else if (kind === 'problem') { this.status('problem', a); }
+      else if (kind === 'ended') {
+        this.mic.dataset.on = '0'; this.mic.setAttribute('aria-pressed', 'false'); this.mic.textContent = 'Mic'; this.live.textContent = '';
+        if (!a && !b) this.status('problem', 'Heard nothing. Press Mic and speak, or type it.');
+        else if (a && this.auto.checked) this.ask(true);
+        else if (a) this.status('info', 'Words are in the box. Press Send when you are ready.');
+      }
+    }
+
+    context(mode) {
+      const host = this.host, where = host.where(), here = host.here();
+      if (mode === 'tidy') return { where, body: here.slice(0, HINT_LIMIT), sees: 'only the part in view', size: Math.min(here.length, HINT_LIMIT), what: 'the text in view' };
+      const all = host.all();
+      if (all && all.length <= WHOLE_LIMIT) return { where, body: all, sees: 'the whole ' + host.noun, size: all.length, what: 'the whole ' + host.noun };
+      if (all) return { where, body: here, sees: 'only the part in view, because the whole ' + host.noun + ' is too long to send', size: here.length, what: 'only the part in view (the whole ' + host.noun + ' is too long to send)' };
+      return { where, body: here, sees: 'the page that is open', size: here.length, what: 'the page that is open' };
+    }
+
+    turn(kind, who, meta, text, copy) {
+      const li = h('li', { class: 'dict-turn', 'data-kind': kind }, h('span', { class: 'who', text: who }), meta ? h('span', { class: 'meta', text: meta }) : null, h('p', { text }));
+      if (copy) {
+        const b = h('button', { type: 'button', text: 'Copy' });
+        b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(text); b.textContent = 'Copied'; } catch (e) { b.textContent = 'Copy failed: select the text instead'; } });
+        li.append(b);
+      }
+      this.log.prepend(li);
+      this.log.scrollTop = 0;
+      return li;
+    }
+
+    async ask(spoken) {
+      if (this.busy) return;
+      if (this.keyInWords()) return;
+      const words = this.words.value.trim();
+      if (!words) { this.status('problem', 'There is nothing to send. Press Mic and speak, or type.'); return; }
+      const verdict = this.guard.verdict();
+      if (!verdict.ok) { this.checkGuard(); this.status('problem', 'Claude was not asked: ' + verdict.why[0] + '.'); return; }
+      if (!this.vault.has()) { this.keyBox.open = true; this.status('problem', 'There is no key, so Claude was not asked. Your words stay in the box.'); return; }
+      const mode = this.answer.checked ? 'answer' : 'tidy';
+      const ctx = this.context(mode);
+      const model = this.model.value;
+      const system = mode === 'tidy' ? Prompts.tidy(this.host, ctx) : Prompts.answer(this.host, ctx);
+      this.turn('you', spoken ? 'You said' : 'You wrote', ctx.where + '. Sent to Claude with ' + ctx.what + ' (' + ctx.size.toLocaleString('en-US') + ' characters), asking to ' + (mode === 'tidy' ? 'tidy' : 'answer') + '.', words);
+      this.busy = true; this.send.disabled = true;
+      this.status('info', 'Asking ' + model + '...');
+      try {
+        const r = await this.client.ask(model, system, words);
+        this.turn('claude', mode === 'tidy' ? 'Claude, tidied' : 'Claude, answered', r.model, r.text + (r.cut ? '\n(cut off at the length limit)' : ''), true);
+        this.words.value = '';
+        this.status('ok', 'Claude answered. It is in the list below, newest first.');
+      } catch (e) {
+        const msg = e instanceof ClaudeProblem ? e.message : 'Something went wrong asking Claude (' + this.vault.scrub(String(e && e.message || e)).slice(0, 160) + ').';
+        this.turn('problem', 'Claude was not heard from', null, msg);
+        this.status('problem', msg + ' Your words stay in the box.');
+      } finally { this.busy = false; this.send.disabled = false; }
+    }
+  }
+
+  /* ------------------------------------------------------------------------------------------------------------- start */
+  function mount(hostName) {
+    const host = { deck: DeckHost, fly: FlyHost }[hostName];
+    if (!host) throw new Error('dictation: no page called ' + hostName);
+    if (!host.ok()) throw new Error('dictation: this is not a ' + hostName + ' page');
+    const panel = new DictationPanel(host);
+    /* a handle for tests: what the panel is, never the key */
+    window.__dictation = Object.freeze({ version: VERSION, host: host.name, hasKey: () => panel.vault.has(), isOpen: () => document.body.classList.contains('dict-open') });
+    return panel;
+  }
+  window.DeckDictation = Object.freeze({ mount });
+})();
+DeckDictation.mount("deck");</script></body></html>

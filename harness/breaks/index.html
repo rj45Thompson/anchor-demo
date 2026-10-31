@@ -92,13 +92,13 @@ if (wallet.Money &gt;  price)   // a break: paying the exact price now fails</co
 </section>
 <section id="equivalents">
 <h2>Breaks that change nothing</h2>
-<p>Some breaks get past every test because they do not change what the program does. Example from the shop feature: the cursor moves by the <em>sign</em> of a number, so changing a 1 to a 2 there moves it the same way. No test can catch that, and none should. These are called <strong>equivalent</strong> breaks.</p>
+<p>Some breaks get past every test because they do not change what the program does. Example from the kit’s own example: in <code>Store.Buy</code> a line with none left is already refused two statements earlier, so changing <code>&gt; 0</code> to <code>&gt;= 0</code> changes nothing the program can do. No test can catch that, and none should. These are called <strong>equivalent</strong> breaks.</p>
 <p>The danger is calling a real missing test “equivalent” to make it go away. So the loop accepts an equivalent in only two ways:</p>
 <ul>
 <li><strong>Proven by the compiled code.</strong> C# compiles to IL, the instructions the runtime actually runs. If the broken copy’s IL is identical to the original’s, the two are the same program (a technique called Trivial Compiler Equivalence, Papadakis and others, 2015). The loop checks this itself.</li>
 <li><strong>Declared with a reason.</strong> Otherwise a person or agent writes down why it changes nothing, and names the methods the reason depends on. If those methods change later, the reason lapses and the break is counted as a hole again.</li>
 </ul>
-<p>And if a test ever does catch a break that was declared equivalent, the declaration was wrong, and that is reported as a hole. This happened twice on the shop feature: two breaks looked harmless (one about how a German computer writes the number “2.0”, one about an invisible zero-width character before a “#”), but each could change the result. Both are now held by tests instead.</p>
+<p>And if a test ever does catch a break that was declared equivalent, the declaration was wrong, and that is reported as a hole. This has happened: breaks that looked harmless could change the result, and both are now held by tests instead.</p>
 <p class="seen">On the slides: <a href="../../harness/deck/#slide-9">slide 9</a>.</p>
 </section>
 <p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>
