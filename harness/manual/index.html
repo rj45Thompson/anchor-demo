@@ -81,7 +81,7 @@ details.mtoc { display: none }
 <p>What was measured</p>
 <a href="#feature">The test subject</a><a href="#morph">Five passes</a><a href="#flatter">One way flatters</a><a href="#self">The tool on itself</a><a href="#publiccode">Code you can read yourself</a><a href="#public">On public code</a><a href="#selfimprove">Self-improvement, on by default</a><a href="#telemetry">Telemetry</a><a href="#choose">How the stats choose</a><a href="#ab">On against off</a><a href="#matrix">Six kinds of task</a><a href="#learn">What it can learn</a><a href="#recursive">The loop on its own improvement</a><a href="#novelty">How new is it</a>
 <p>Limits and targets</p>
-<a href="#limits">What it is not, yet</a><a href="#targets">The two targets</a>
+<a href="#landscape">Among other tools</a><a href="#limits">What it is not, yet</a><a href="#targets">The two targets</a>
 <p>Using it</p>
 <a href="#install">Install</a><a href="#adapters">Other languages</a><a href="#harness">Your harness</a><a href="#glossary">Words used here</a>
 </nav>
@@ -95,7 +95,7 @@ details.mtoc { display: none }
 <p>Every slide has a link to the section here that backs it up. Each number carries a tag:</p>
 <div class="legend"><span><span class="chip measured">Measured</span>we ran it and read the number</span><span><span class="chip target">Target</span>a goal, not measured yet</span><span><span class="chip open">Open</span>not settled</span></div>
 <details class="mtoc"><summary>Contents</summary>
-<a href="#accuracy">The key is accuracy</a><a href="#waterfall">Requirements first</a><a href="#firstclass">AI as a tester first</a><a href="#lineage">Where it comes from</a><a href="#raw">Testing raw</a><a href="#idea">The idea in one minute</a><a href="#extract">Requirements make requirements</a><a href="#why">Why use it</a><a href="#when">When it fits</a><a href="#thin">Why a thin model misleads</a><a href="#seed">Seed it first, then it flies</a><a href="#how">How to run it</a><a href="#ten">The ten points</a><a href="#pass">One pass, end to end</a><a href="#model">The model</a><a href="#breaks">Breaking code on purpose</a><a href="#speed">Why it is fast enough</a><a href="#owner">The right test must notice</a><a href="#equivalents">Breaks that change nothing</a><a href="#claims">Claims and locks</a><a href="#graph">The knowledge graph</a><a href="#criteria">The 18 checks</a><a href="#modal">Must and may</a><a href="#gnn">The GNN</a><a href="#reviewers">Fresh reviewers</a><a href="#chains">Argument chains</a><a href="#buzzsaw">Buzzsaw testing</a><a href="#questions">Who, what, why: where asked</a><a href="#tuner">Shaping the graph for the GNN</a><a href="#feature">The test subject</a><a href="#morph">Five passes</a><a href="#flatter">One way flatters</a><a href="#self">The tool on itself</a><a href="#public">On public code</a><a href="#selfimprove">Self-improvement, on by default</a><a href="#telemetry">Telemetry</a><a href="#choose">How the stats choose</a><a href="#ab">On against off</a><a href="#matrix">Six kinds of task</a><a href="#learn">What it can learn</a><a href="#recursive">The loop on its own improvement</a><a href="#novelty">How new is it</a><a href="#limits">What it is not, yet</a><a href="#targets">The two targets</a><a href="#install">Install</a><a href="#adapters">Other languages</a><a href="#harness">Your harness</a><a href="#glossary">Words used here</a>
+<a href="#accuracy">The key is accuracy</a><a href="#waterfall">Requirements first</a><a href="#firstclass">AI as a tester first</a><a href="#lineage">Where it comes from</a><a href="#raw">Testing raw</a><a href="#idea">The idea in one minute</a><a href="#extract">Requirements make requirements</a><a href="#why">Why use it</a><a href="#when">When it fits</a><a href="#thin">Why a thin model misleads</a><a href="#seed">Seed it first, then it flies</a><a href="#how">How to run it</a><a href="#ten">The ten points</a><a href="#pass">One pass, end to end</a><a href="#model">The model</a><a href="#breaks">Breaking code on purpose</a><a href="#speed">Why it is fast enough</a><a href="#owner">The right test must notice</a><a href="#equivalents">Breaks that change nothing</a><a href="#claims">Claims and locks</a><a href="#graph">The knowledge graph</a><a href="#criteria">The 18 checks</a><a href="#modal">Must and may</a><a href="#gnn">The GNN</a><a href="#reviewers">Fresh reviewers</a><a href="#chains">Argument chains</a><a href="#buzzsaw">Buzzsaw testing</a><a href="#questions">Who, what, why: where asked</a><a href="#tuner">Shaping the graph for the GNN</a><a href="#feature">The test subject</a><a href="#morph">Five passes</a><a href="#flatter">One way flatters</a><a href="#self">The tool on itself</a><a href="#public">On public code</a><a href="#selfimprove">Self-improvement, on by default</a><a href="#telemetry">Telemetry</a><a href="#choose">How the stats choose</a><a href="#ab">On against off</a><a href="#matrix">Six kinds of task</a><a href="#learn">What it can learn</a><a href="#recursive">The loop on its own improvement</a><a href="#novelty">How new is it</a><a href="#landscape">Among other tools</a><a href="#limits">What it is not, yet</a><a href="#targets">The two targets</a><a href="#install">Install</a><a href="#adapters">Other languages</a><a href="#harness">Your harness</a><a href="#glossary">Words used here</a>
 </details>
 </header>
 
@@ -186,7 +186,7 @@ details.mtoc { display: none }
 <h2>When it fits, and when it does not</h2>
 <p><strong>Use it for larger systems:</strong> code that many changes will touch, where a rule must still be true after the agent’s tenth edit as well as its first, and where you want to know which line exists because of which requirement. It also helps most when agents run for hours, across many context windows.</p>
 <p><strong>Skip it for</strong> a one-off prompt, a quick script, or exploring an idea. The loop costs setup and run time, and it pays that back only when the same requirements are held across many changes. It is also no help with how something looks or feels: visuals, timing and feel still need a person.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
 </section>
 
 <section id="thin">
@@ -194,7 +194,7 @@ details.mtoc { display: none }
 <p>The loop can only check what is written in the model. Suppose the model holds three requirements and two tests. The loop may honestly report everything closed, because everything it knows about is checked. But a green report reads as “the work is complete”, when all it proves is that three small things are right. That false confidence is worse than having no report at all.</p>
 <p>How large a model must be before its report means something is only partly known. The first measurements are in <a href="#seed">Seed it first, then it flies</a>. Until there are more, treat a green loop over a small model as “these few things hold”, never as “it is done”.</p>
 <p><span class="chip open">Open</span> How many requirements, tests and graph nodes are “enough” for the whole report is not known yet; for the part that learns there is a first answer.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>, <a href="../deck/#slide-24">slide 24</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>, <a href="../deck/#slide-25">slide 25</a>.</p>
 </section>
 
 <section id="seed">
@@ -934,6 +934,91 @@ void Tick() {
 <p>It also said three things are aimed slightly off, and each could change the outcome more than polish: the breaks are syntactic while agents' mistakes are about intent; the on/off test graded correctness, where both sides hit the ceiling, rather than the tests left behind; and the GNN ignores its strongest signal, which requirement's tests catch the new code's breaks. The second is now measured (<a href="#matrix">six kinds of task</a>); the other two are on the work board.</p>
 </section>
 
+<section id="landscape">
+<h2>Where it stands among the other tools</h2>
+<p>We set out to find every agent requirements tool we could, rank them, rank this kit beside them by the same rubric, and take the abilities they have that it lacks. The danger in a comparison like this is a rubric built from what one's own tool happens to do, which proves nothing. So <strong>the rubric was committed first</strong>, before any tool was scored, with its weights, its predictions and the checks on the order.</p>
+<p>It has 17 criteria in two groups. Ten are what other tools are good at and this kit may not be: asking a person good questions, gathering from conversation or documents, ease of first use, install friction, editor and agent integration, working on an existing codebase, a team's review workflow, adoption, price and licence. Seven are what the loop was built for: finding holes in the requirements, tying them to code, tying them to tests, proving a test catches a break, checking the agent's argument for a change, keeping requirements true over time, and measured evidence that it works. Each criterion says how a score from 0 to 3 is earned and what evidence counts. Two weightings were fixed before scoring: every criterion once, and the nine a typical team names first (a judgement, not a survey).</p>
+<p>Every score carries one kind of evidence. <strong>READ</strong> is the tool's own page, with its link. <strong>TRIED</strong> is something we ran, which only our own kit can have, since nothing of anyone else's was installed. <strong>ABSENT</strong> is a search of named pages that found nothing: a search result and not a proof, worth 0. <strong>SECOND_HAND</strong> is a third party, or a search summary of a page we did not fetch, and is capped at 2. <strong>CLAIM</strong> is a tool's own marketing with no measurement behind it, capped at 1, because a claim is not a measurement. A check, <code>landscape.py --check</code>, refuses a score with no page behind it, a tool with no link and a criterion nobody scored, and its selftest plants each refusal and sees it fire.</p>
+<!-- landscape:tools:begin -->
+<p><span class="chip measured">Measured</span> Read on 2026-10-30: <strong>31 tools</strong>, 28 of them ranked beside the kit, all 31 read at their own pages and 15 with released code. 493 scores: 258 read at the tool's own page, 213 not found on the pages read, 13 second-hand, 7 marketing claims, 2 run by us.</p>
+<p><span class="chip measured">Measured</span> With all <strong>17 criteria</strong> counting once the kit scores <strong>70.6</strong> of a possible 100 and is <strong>1st</strong>; next is Rebuild Dossier at 60.8. On the 9 criteria a team names first it scores <strong>48.1</strong> and is <strong>10th</strong>, tied with Devin; OpenSpec leads at 70.4. On the deep criteria alone it scores <strong>95.2</strong> and is 1st; Rebuild Dossier is next at 61.9.</p>
+<p><span class="chip open">Open</span> <strong>Our place depends on the weights</strong>: yes. Over 10,000 random weightings the kit is in the top third in <strong>99.9%</strong> and first in 90.0%, median place 1, range 1 to 13. Leaving out any one criterion leaves it 1st. Granting every absence on a deep criterion one point, or counting no marketing claim, leaves its place unchanged. Scoring ourselves one point lower on every deep criterion gives 2nd at equal weights; one point lower on every score gives <strong>8th</strong> at equal weights and 22nd on the team list.</p>
+<p>What other tools do better, by what taking it would move:</p>
+<ul>
+<li><strong>Adoption</strong>: we score 0 of 3, the best is 3 (GitHub Spec Kit, BMAD-METHOD, OpenSpec, Task Master and 1 more). Closing it would take the team-list place to 7th.</li>
+<li><strong>Editor and agent integration</strong>: we score 1 of 3, the best is 3 (GitHub Spec Kit, OpenSpec, Traycer, Agent OS and 2 more). Closing it would take the team-list place to 8th.</li>
+<li><strong>Ease of first use</strong>: we score 1 of 3, the best is 3 (Superpowers, Claude Code plan mode, Cursor plan mode). Closing it would take the team-list place to 8th.</li>
+<li><strong>Asks the human good questions</strong>: we score 1 of 3, the best is 2 (GitHub Spec Kit, BMAD-METHOD, OpenSpec, Tessl and 7 more). Closing it would take the team-list place to 10th.</li>
+<li><strong>Gathers from conversation or documents</strong>: we score 1 of 3, the best is 2 (Task Master, ArDoCo, SpecTrace (spec-trace), Elicitron). Closing it would take the team-list place to 10th.</li>
+<li><strong>Install friction</strong>: we score 2 of 3, the best is 3 (Claude Code plan mode, Cursor plan mode, Devin, ChatPRD). Closing it would take the team-list place to 10th.</li>
+<li><strong>Team and review workflow</strong>: we score 1 of 3, the best is 2 (AWS Kiro, OpenSpec, Tessl, Traycer and 7 more). Closing it would take the team-list place to 10th.</li>
+<li><strong>Measured evidence that it works</strong>: we score 2 of 3, the best is 3 (TDAD (Test-Driven Agentic Development)). Closing it would take the team-list place to 10th.</li>
+</ul>
+<h3>A system of record for requirements, with AI features added (a person works in it) (4)</h3>
+<ul>
+<li><a href="https://www.modernrequirements.com/ai/">Copilot4DevOps (Modern Requirements)</a>: not stated on the pages read (a hosted add-on), no code released, rank 19 on equal weights.</li>
+<li><a href="https://www.chatprd.ai/">ChatPRD</a>: not stated on the pages read (a hosted product), no code released, rank 22 on equal weights.</li>
+<li><a href="https://www.jamasoftware.com/legacy/solutions/artificial-intelligence/">Jama Connect Advisor</a>: not stated on the pages read (a hosted product), no code released, rank 23 on equal weights.</li>
+<li><a href="https://www.ibm.com/products/requirements-quality-assistant">IBM Requirements Quality Assistant with DOORS Next</a>: not stated on the pages read (a licensed product), no code released, rank 25 on equal weights.</li>
+</ul>
+<h3>A workflow that turns an idea into requirements, a design and tasks for a coding agent (8)</h3>
+<ul>
+<li><a href="https://github.com/github/spec-kit">GitHub Spec Kit</a>: MIT, code released, rank 3 on equal weights.</li>
+<li><a href="https://github.com/Fission-AI/OpenSpec">OpenSpec</a>: MIT, code released, rank 4 on equal weights.</li>
+<li><a href="https://github.com/bmad-code-org/BMAD-METHOD">BMAD-METHOD</a>: MIT, code released, rank 5 on equal weights.</li>
+<li><a href="https://github.com/obra/superpowers">Superpowers</a>: MIT, code released, rank 5 on equal weights.</li>
+<li><a href="https://github.com/buildermethods/agent-os">Agent OS</a>: MIT, code released, rank 9 on equal weights.</li>
+<li><a href="https://github.com/eyaltoledano/claude-task-master">Task Master</a>: MIT with Commons Clause, code released, rank 10 on equal weights.</li>
+<li><a href="https://tessl.io/">Tessl</a>: not stated on the pages read, no code released, rank 13 on equal weights.</li>
+<li><a href="https://kiro.dev/docs/specs/">AWS Kiro</a>: not stated on the pages read (a product with paid plans), no code released, rank 17 on equal weights.</li>
+</ul>
+<h3>A planning mode inside a coding agent or editor (3)</h3>
+<ul>
+<li><a href="https://code.claude.com/docs/en/permission-modes">Claude Code plan mode</a>: no open-source licence stated on the pages read, no code released, rank 8 on equal weights.</li>
+<li><a href="https://cursor.com/docs/agent/planning">Cursor plan mode</a>: not stated on the pages read (a product with paid plans), no code released, rank 13 on equal weights.</li>
+<li><a href="https://github.com/githubnext/copilot-workspace-user-manual">GitHub Copilot Workspace</a>: not stated on the page read, no code released, not ranked: Retired. Its user-manual repository was archived and made read-only on 2025-09-02 (page fetched); search summaries give a sunset of May 2025 and name the Copilot coding agent and VS Code agent modes as the replacement. Kept on the list so the gap in it is on the record, and not ranked because nobody can use it..</li>
+</ul>
+<h3>An agent that plans and writes the code itself, requirements being a step inside (2)</h3>
+<ul>
+<li><a href="https://docs.devin.ai/">Devin</a>: not stated on the pages read (a product with paid plans), no code released, rank 19 on equal weights.</li>
+<li><a href="https://arxiv.org/abs/2607.18886">TraceDev</a>: no software licence; the paper is under arXiv&#x27;s non-exclusive licence, no code released, rank 24 on equal weights.</li>
+</ul>
+<h3>Recovers links between documents, requirements, code and tests (3)</h3>
+<ul>
+<li><a href="https://github.com/ArDoCo/LiSSA">LiSSA</a>: MIT, code released, rank 17 on equal weights.</li>
+<li><a href="https://github.com/ArDoCo/Core">ArDoCo</a>: MIT, code released, rank 19 on equal weights.</li>
+<li><a href="https://arxiv.org/abs/2606.17203">Trust-Aware Multi-Agent Traceability</a>: no software licence; the paper is under arXiv&#x27;s non-exclusive licence, no code released, rank 25 on equal weights.</li>
+</ul>
+<h3>Research prototype that has agents gather requirements, from simulated people or from documents (3)</h3>
+<ul>
+<li><a href="https://github.com/jdm4pku/iReDev">iReDev</a>: MIT, code released, rank 16 on equal weights.</li>
+<li><a href="https://arxiv.org/abs/2404.16045">Elicitron</a>: no software licence; the paper is CC BY-NC-ND 4.0, no code released, rank 28 on equal weights.</li>
+<li><a href="https://arxiv.org/abs/2405.03256">MARE (multi-agent requirements engineering)</a>: no software licence; the paper is under arXiv&#x27;s non-exclusive licence, no code released, rank 29 on equal weights.</li>
+</ul>
+<h3>Makes tests the carrier of the requirement (6)</h3>
+<ul>
+<li><a href="https://github.com/Parker-Fawcett/rebuild-dossier">Rebuild Dossier</a>: MIT, code released, rank 2 on equal weights.</li>
+<li><a href="https://github.com/tslateman/spec-trace">SpecTrace (spec-trace)</a>: MIT, code released, rank 5 on equal weights.</li>
+<li><a href="https://github.com/Quratulain-bilal/spec-kit-trace">spec-kit-trace</a>: MIT, code released, rank 10 on equal weights.</li>
+<li><a href="https://github.com/pepealonso95/TDAD">TDAD (Test-Driven Agentic Development)</a>: MIT, code released, rank 12 on equal weights.</li>
+<li><a href="https://github.com/codeintegrity-ai/mutahunter">Mutahunter</a>: AGPL-3.0, code released, not ranked: A mutation tester, not a requirements tool. Listed because it is the nearest released tool to one criterion, proving a test catches a break, and the claim of difference there should be read against it..</li>
+<li><a href="https://arxiv.org/abs/2610.13065">TestSuiteBench</a>: no software licence on the page; the paper is CC BY 4.0, no code released, not ranked: A benchmark of 165 applications, not a tool to run on your own code. Listed because it ties each mutant to one specification requirement and to the test that kills it, which is the nearest published neighbour to what the kit&#x27;s breaks do..</li>
+</ul>
+<h3>A workspace that runs several coding agents side by side, with a planning skill among others (1)</h3>
+<ul>
+<li><a href="https://traycer.ai/">Traycer</a>: MIT, code released, rank 13 on equal weights.</li>
+</ul>
+<h3>An add-in that scores the wording and consistency of requirements held elsewhere (1)</h3>
+<ul>
+<li><a href="https://qracorp.com/qvscribe/">QVscribe</a>: not stated on the pages read (a licensed add-in), no code released, rank 25 on equal weights.</li>
+</ul>
+<!-- landscape:tools:end -->
+<p><span class="chip open">Open</span> <strong>The scorer is not independent for one row.</strong> The kit was scored by the lane that built it, by the same anchors, which is why the order is also shown with a point taken off each of our scores. Seven of the seventeen criteria are the ones this kit was designed to do well on, so equal weights favour it; the team list and the list of what it lacks are the corrective.</p>
+<p><span class="chip open">Open</span> <strong>What is not verified.</strong> Documentation only: nothing was installed or run, so a feature a page does not mention scores as not found, and a tool may do more than its pages say. Star counts are as the pages showed them on the day. Where a first-party page could not be fetched, a search summary or a third-party page was used, and it is marked and capped. Tools change, so each score is a reading of a page on one day.</p>
+<p>The abilities in the list above are on the work plan, each with a done-when. Where an idea comes from an MIT-licensed tool it is credited and no code is copied; an idea from a proprietary tool is an idea only, and nothing proprietary is used.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>.</p>
+</section>
+
 <section id="limits">
 <h2>What it is not, yet</h2>
 <div class="box evidence"><p class="label">The first trial on code anyone can read</p>
@@ -949,7 +1034,7 @@ void Tick() {
 <li><strong>Feel is not checked.</strong> Visuals, timing and feel still need a person to look.</li>
 </ul>
 <p>Used where it does not fit, it can be worse than not using it at all.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
 </section>
 
 <section id="targets">
@@ -962,7 +1047,7 @@ void Tick() {
 <p><span class="chip target">Target</span> On average, up to 90% fewer tokens per closed requirement, because a later step looks up what the graph already holds instead of re-reading and re-deriving it. This number is always being re-evaluated.</p>
 <p><strong>How it will be measured:</strong> the same harness, from each arm’s own usage records (the tokens the model read and wrote), per task.</p>
 <p><span class="chip measured">Measured</span> <strong>The first data point goes the other way:</strong> on one small, precisely specified task, the loop used 58% more tokens for the same correctness (<a href="#ab">details</a>). The target is about larger systems held across many changes, where re-reading and re-deriving is what costs; that has not been measured yet.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
 </section>
 
 <p class="part">Part 5 · Using it</p>
@@ -977,7 +1062,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <p>Then it runs every selftest in the installed copy, and the whole loop on the example: a small wallet and store in C#, with NUnit tests that each name the requirement they check. The example must <strong>hold</strong>: everything closed except one question that only its owner can answer.</p>
 <div class="box evidence"><p class="label">What a clean install showed</p>
 <p><span class="chip measured">Measured</span> Installing the built kit into an empty folder on 29 October: <strong>every selftest passes with PyTorch, scikit-learn and the .NET SDK (14 of 20 on Python and PyYAML alone, the rest named as skipped)ed</strong>, and the loop over the example’s <strong>58 breaks</strong> reported <strong>HOLDS</strong>.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-26">slide 26</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-27">slide 27</a>.</p>
 </section>
 
 <section id="adapters">
@@ -988,7 +1073,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <li><strong>Python</strong>: breaks code through its syntax tree; the tests are commands.</li>
 <li><strong>Anything else</strong> (C++, Blueprints): write an adapter that produces one result file in the same format the C# adapter writes: for each requirement, whether its code has the right shape, and for each break, whether a test caught it and which.</li>
 </ul>
-<p class="seen">On the slides: <a href="../deck/#slide-26">slide 26</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-27">slide 27</a>.</p>
 </section>
 
 <section id="harness">
@@ -1000,7 +1085,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <li><strong>Failure piles</strong>: the kinds of failure you see, and how often.</li>
 <li><strong>A wrong pass</strong>: any check you can make pass for the wrong reason.</li>
 </ul>
-<p class="seen">On the slides: <a href="../deck/#slide-26">slide 26</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-27">slide 27</a>.</p>
 </section>
 
 <section id="glossary">
