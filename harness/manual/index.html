@@ -126,7 +126,7 @@ details.mtoc { display: none }
 
 <section id="lineage">
 <h2>Where it comes from: a mutation of an ARC3 self-improvement loop</h2>
-<p>This toolkit is a mutation of the self-improvement loop from our ARC3 harness, which was a piece of a failed attempt at AGI. It was first built against one of our own game features, which is internal and cannot be extracted, so what is shown here is run on public code instead: Unreal Engine’s SemVer parser and JSON object, osu!’s scoring rules, and the toolkit’s own source. What came across is the part that survived: propose, then verify; abstain rather than guess; and never trust a number you could game.</p>
+<p>This toolkit is a mutation of the self-improvement loop from our ARC3 harness. It was first built against one of our own game features, which is internal and cannot be extracted, so what is shown here is run on public code instead: Unreal Engine’s SemVer parser and JSON object, osu!’s scoring rules, and the toolkit’s own source. What came across is the part that survived: propose, then verify; abstain rather than guess; and never trust a number you could game.</p>
 <div class="box evidence"><p class="label">What the ARC3 work measured</p>
 <p><span class="chip measured">Measured</span> <strong>A weak proposer and a strong verifier beat either alone.</strong> On a frozen set of 63 games, at a budget of 150 steps, the unified agent reached 31 where random reached 14. At 250 steps it reached 35 against random's 29, reproduced identically twice.</p>
 <p><span class="chip measured">Measured</span> <strong>The failure that shaped this tool.</strong> An autonomous self-improvement run went 16 days and 330 commits and found nothing that generalized. A counter that could be gamed rose from 147 to 168 while the honest number stayed flat. That is why here every stat must have a reader, a control and a fresh reviewer, and why <a href="#selfimprove">the loop audits its own stats</a>.</p>
@@ -145,7 +145,7 @@ details.mtoc { display: none }
 <p><span class="chip open">Open</span> How many requirements a rough epic grows into, and whether code written from them is more accurate, has not been measured: see <a href="#targets">the two targets</a>.</p></div>
 <p>The code still gets tested. Breaking the code on purpose (<a href="#breaks">how</a>) is how the loop checks that each requirement really reached the code. But the requirements are tested first, because that is where a mistake is cheapest to catch.</p>
 <p>Very little work has been done on AI requirements testing yet. As agents write more of the code, the part people write is the specification, and the work moves back toward writing it first, closer to waterfall. Testing that specification becomes the main job, and that is where this loop puts its effort.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-1">the cover</a>, <a href="../deck/#slide-6">slide 6</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-1">the cover</a>, <a href="../deck/#slide-7">slide 7</a>.</p>
 </section>
 
 <section id="idea">
@@ -156,7 +156,7 @@ details.mtoc { display: none }
 <p>At the end you get a count of three things: breaks no test noticed, code no requirement asked for, and questions only the owner can answer. “Done” means that count is zero.</p>
 <div class="box plain"><p class="label">Why a count and not a feeling</p>
 <p>“Did I think of every requirement?” has no answer: what you forgot leaves no trace. “Is the list of open questions empty?” does have one, because the list is generated from the plans and the code, not from memory. So the loop never tries to be complete by writing more. It walks the plans, and every gap it meets becomes a question with a file and a line.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-6">slide 6</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-7">slide 7</a>.</p>
 </section>
 
 <section id="extract">
@@ -178,14 +178,14 @@ details.mtoc { display: none }
 <p>A test that checks the price shown on screen passes even if buying never takes the money out of the wallet. Every test is green and the rule is broken. Breaking the code on purpose finds this: take the line that subtracts the money out, and see whether any test fails. If none does, the rule has no test, however many tests there are.</p>
 <h3>Long runs forget</h3>
 <p>An agent’s working memory (its context window) fills up during a long job, and early details drop out. Later steps then guess at what was settled before. The loop writes everything it learns to a graph on disk, so a later step looks the answer up instead of guessing it again. Every entry says where it came from.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-4">slide 4</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-5">slide 5</a>.</p>
 </section>
 
 <section id="when">
 <h2>When it fits, and when it does not</h2>
 <p><strong>Use it for larger systems:</strong> code that many changes will touch, where a rule must still be true after the agent’s tenth edit as well as its first, and where you want to know which line exists because of which requirement. It also helps most when agents run for hours, across many context windows.</p>
 <p><strong>Skip it for</strong> a one-off prompt, a quick script, or exploring an idea. The loop costs setup and run time, and it pays that back only when the same requirements are held across many changes. It is also no help with how something looks or feels: visuals, timing and feel still need a person.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-15">slide 15</a>.</p>
 </section>
 
 <section id="thin">
@@ -193,7 +193,7 @@ details.mtoc { display: none }
 <p>The loop can only check what is written in the model. Suppose the model holds three requirements and two tests. The loop may honestly report everything closed, because everything it knows about is checked. But a green report reads as “the work is complete”, when all it proves is that three small things are right. That false confidence is worse than having no report at all.</p>
 <p>How large a model must be before its report means something is only partly known. The first measurements are in <a href="#seed">Seed it first, then it flies</a>. Until there are more, treat a green loop over a small model as “these few things hold”, never as “it is done”.</p>
 <p><span class="chip open">Open</span> How many requirements, tests and graph nodes are “enough” for the whole report is not known yet; for the part that learns there is a first answer.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>, <a href="../deck/#slide-25">slide 25</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-15">slide 15</a>, <a href="../deck/#slide-15">slide 15</a>.</p>
 </section>
 
 <section id="seed">
@@ -218,7 +218,7 @@ details.mtoc { display: none }
 <h3>The smallest seed that grows into the whole loop</h3>
 <p>The loop already grows requirements. It walks each step, asks what the step needs, and every need nobody wrote becomes a new requirement for the owner to settle. On SemVer, 3 of the 19 requirements are marked inferred that way, on top of the 16 that cite the spec. So the open question is how small the written set can be and still grow into the full model. A small, well-chosen seed would mean less to write up front, and a structure that is easier to keep consistent.</p>
 <p><span class="chip open">Open</span> The experiment for it: give an agent only the problem story and a few pillar requirements, let it grow the model with the loop, and count how many of the full model’s requirements it arrives at, and at what cost.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-16">slide 16</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
 </section>
 
 <section id="how">
@@ -316,7 +316,7 @@ if (wallet.Money &gt;  price)   // a break: paying the exact price now fails</co
 [Test]
 public void Pay_TakesExactlyThePrice() { ... }</code></pre>
 <p>A requirement whose named test misses its own breaks is a hole, even when another test caught them. And a test named as a requirement’s check that catches none of that requirement’s breaks is a hole too, so listing more tests can never make the score look better.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-21">slide 21</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-22">slide 22</a>.</p>
 </section>
 
 <section id="equivalents">
@@ -335,7 +335,7 @@ public void Pay_TakesExactlyThePrice() { ... }</code></pre>
 <h2>Claims and locks</h2>
 <p>A <strong>claim</strong> says “this method belongs to requirement X”. The loop pins each claim to a fingerprint of the method’s statements. If someone adds a line to that method or deletes one, the fingerprint changes and the claim goes stale. A new line can never slip in under an old claim without being looked at.</p>
 <p>The pins are kept in a small file (<code>claims.lock</code>). If that file goes missing, every claim is unpinned until a person pins them again with a reason. A missing lock never quietly re-pins itself; a reviewer found that it used to, and it was fixed.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-9">slide 9</a>, <a href="../deck/#slide-21">slide 21</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-9">slide 9</a>, <a href="../deck/#slide-22">slide 22</a>.</p>
 </section>
 
 <section id="nodegraph">
@@ -369,7 +369,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <div class="box evidence"><p class="label">How big it gets</p>
 <p><span class="chip measured">Measured</span> The graph of osu!’s scoring rules holds <strong>1,062 nodes and 5,675 edges</strong>, SemVer’s <strong>448 and 1,554</strong> and JsonObject’s <strong>1,091 and 3,840</strong>, each read from its run’s line in the morph log.</p></div>
 <p><strong>The documents are nodes too.</strong> When a number or a behaviour changes, something has to say which documents go stale, so a model can declare its documents and each section, slide and page becomes a node. A link from a requirement, stat, goal or method to a document exists only when the document names it literally, or an authored line says so and quotes the words it stands on. Likeness never makes a link. <code>doc_nodes.py what-to-update &lt;node&gt;</code> answers which documents describe a node. A document naming a requirement the model does not hold is a hole. A requirement no document describes is counted and named, not failed, because most models have never declared any documents.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-11">slide 11</a>, <a href="../deck/#slide-11">slide 11</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-12">slide 12</a>, <a href="../deck/#slide-12">slide 12</a>.</p>
 </section>
 
 <section id="criteria">
@@ -403,7 +403,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <p>Here, the authored requirements are the musts. The inferred ones, the things the steps need that nobody wrote, are the mays. Each may is a question for the owner, who settles it as a must or as “either is fine”. On SemVer, “Parse throws on exactly the strings TryParse refuses” is one such may: the spec says what is valid, not how a class refuses, and no one has said.</p>
 <div class="box plain"><p class="label">The honest limit</p>
 <p>Breaking code can show that requirements are <em>not</em> closed. It can never prove they are. “Closed” always means “closed against the breaks we tried and the tests that watched”. A new kind of break might find something new.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-11">slide 11</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-12">slide 12</a>.</p>
 </section>
 
 <section id="map">
@@ -456,7 +456,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <p><span class="chip measured">Measured</span> It only wins on a large enough graph that is about half claimed: see <a href="#seed">Seed it first, then it flies</a>.</p>
 <p><span class="chip measured">Measured</span> The design is to abstain: below 70% sure the GNN says “not sure” and asks. How often it is right at 70% and on how much of the new code was measured on one project of ours, and is not repeated here because that project is not public.</p></div>
 <p>Its suggestions are always questions for a person, never verdicts. One lesson from building it: the first version did worse than the simple rankers, because the links it was asked to predict were also links it could read. Separating the two fixed it.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-16">slide 16</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-25">slide 25</a>.</p>
 </section>
 
 <section id="goalslist">
@@ -499,7 +499,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 </ul>
 <p><span class="chip open">Open</span> A structured claim on each reasoning step (so a step that says “or” where the code says “and” fails), and the on/off pair rerun with a hidden acceptance test (<a href="#ab">on against off</a>).</p></div>
 <p>Every fix lands with a planted mistake the selftest must catch, the same rule as for <a href="#criteria">the 18 checks</a>.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-21">slide 21</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-22">slide 22</a>.</p>
 </section>
 
 <section id="chains">
@@ -534,7 +534,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <div class="box plain"><p class="label">What it does not check yet</p>
 <p><span class="chip open">Open</span> <strong>Whether a claim is true of the code.</strong> A real step, in one of our own runs, said “or” where the code needs both, and passed. A fresh reviewer found it. The fix being built: a step can carry a precise claim in the same form a requirement’s effect uses (for example, which two values a method branches on), and the code check tests it the way it tests an effect.</p>
 <p><span class="chip open">Open</span> <strong>Whether the code a step stands on is tested.</strong> Next: a chain is accepted only if no break that got past the tests sits in code one of its steps stands on.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-12">slide 12</a>, <a href="../deck/#slide-12">slide 12</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-10">slide 10</a>, <a href="../deck/#slide-10">slide 10</a>.</p>
 </section>
 
 <section id="buzzsaw">
@@ -586,7 +586,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <li><strong>osu!’s scoring rules</strong> are the game: a shipped open-source rhythm game (ppy/osu, MIT), held to its own doc comments, with the 151 test cases of three test files. It has 191 statements.</li>
 </ul>
 <p>No code was changed and no test or product code was written: only a requirements model for each, and <code>/// CHECKS:</code> comments in a scratch copy of the tests. The numbers, the bugs and how to re-run them are in <a href="#publiccode">on code you can read for yourself</a>. The kit’s own example, a store’s wallet, is the one every install runs.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-14">slide 14</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-3">slide 3</a>, <a href="../deck/#slide-4">slide 4</a>.</p>
 </section>
 
 <section id="flatter">
@@ -607,7 +607,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <p><span class="chip measured">Measured</span> The model passes all 19 rules; its graph holds 2,335 nodes and 6,259 edges; 2 questions stay open for the owner.</p></div>
 <div class="box plain"><p class="label">Two lessons from getting it to run</p>
 <p>The first attempt ran all 1,626 breaks, then crashed while writing the summary, and the hour of runs was lost. The tool now saves every verdict before it builds the summary, and reuses them when the code and tests are unchanged. The second attempt refused to start, correctly, because a tool’s own test was failing while it was being edited. Rule since: never edit a tool while a run is using it.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-21">slide 21</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-22">slide 22</a>.</p>
 </section>
 
 <section id="publiccode">
@@ -801,7 +801,7 @@ void Tick() {
 <dt>Tool</dt><dd>The tool itself: its size, and how much of it its own planted mistakes prove.</dd>
 </dl>
 <p style="margin-top:14px">A pass where the net grew and the open count grew too is progress, not a step back. The list of stats is revisited every pass, and a new one is added whenever a pass shows growth the existing ones miss.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-21">slide 21</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-22">slide 22</a>.</p>
 </section>
 
 <section id="choose">
@@ -838,7 +838,7 @@ void Tick() {
 </ul>
 <p>One pair is one data point, on the kind of task this manual says the loop is not for: small and precisely specified. It still showed two things to fix. The arm started in a model with hundreds of old holes it had not caused, and the report did not separate the holes <em>its change</em> made from those already there. Both are on the board.</p></div>
 <p>The off arm still follows the project’s own working rules (never guess a value, say what was not verified), so the comparison measures the tool, not discipline.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-23">slide 23</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-14">slide 14</a>.</p>
 </section>
 
 <p class="part">Part 4 · Limits and targets</p>
@@ -999,7 +999,7 @@ void Tick() {
 <p><span class="chip open">Open</span> <strong>The scorer is not independent for one row.</strong> The kit was scored by the lane that built it, by the same anchors, which is why the order is also shown with a point taken off each of our scores. Seven of the seventeen criteria are the ones this kit was designed to do well on, so equal weights favour it; the team list and the list of what it lacks are the corrective.</p>
 <p><span class="chip open">Open</span> <strong>What is not verified.</strong> Documentation only: nothing was installed or run, so a feature a page does not mention scores as not found, and a tool may do more than its pages say. Star counts are as the pages showed them on the day. Where a first-party page could not be fetched, a search summary or a third-party page was used, and it is marked and capped. Tools change, so each score is a reading of a page on one day.</p>
 <p>The abilities in the list above are on the work plan, each with a done-when. Where an idea comes from an MIT-licensed tool it is credited and no code is copied; an idea from a proprietary tool is an idea only, and nothing proprietary is used.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-24">slide 24</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-23">slide 23</a>.</p>
 </section>
 
 <section id="limits">
@@ -1017,7 +1017,7 @@ void Tick() {
 <li><strong>Feel is not checked.</strong> Visuals, timing and feel still need a person to look.</li>
 </ul>
 <p>Used where it does not fit, it can be worse than not using it at all.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-15">slide 15</a>.</p>
 </section>
 
 <section id="targets">
@@ -1031,10 +1031,10 @@ void Tick() {
 <p><strong>How it will be measured:</strong> the same harness, from each arm’s own usage records (the tokens the model read and wrote), per task.</p>
 <p><span class="chip measured">Measured</span> <strong>The first data point goes the other way:</strong> on one small, precisely specified task, the loop used 58% more tokens for the same correctness (<a href="#ab">details</a>). The target is about larger systems held across many changes, where re-reading and re-deriving is what costs; that has not been measured yet.</p></div>
 <div class="box"><p class="label" style="color:var(--orange)">What is next: from a rough epic to code that is right</p>
-<p>The tool’s main intent is to take the requirements for a game from a rough epic use case and grow them into a larger set, so that the code written from them is as accurate as it can be. The question behind it is a question and not a result: if the requirements for something very difficult are complete and checked, how far does that move what an AI can build? The direction is better tools for making video games, not general intelligence.</p>
+<p>The tool’s main intent is to take the requirements for a game from a rough epic use case and grow them into a larger set, so that the code written from them is as accurate as it can be. The question behind it is a question and not a result: if the requirements for something very difficult are complete and checked, how far does that move what an AI can build? The direction is better tools for making video games.</p>
 <p><span class="chip measured">Measured</span> How much of existing code its tests hold, on three public targets, and that an agent reading carefully finds the same faults the loop does (<a href="#publiccode">on code you can read for yourself</a>).</p>
 <p><span class="chip open">Open</span> The epic-to-code test has run, and its results will be published with the benchmark. The test starts from one rough epic for a small game whose right answers come from an independent published source. Agents write the code with and without the grown requirements, and hidden tests written from that source, never from our model, grade both blind. Tokens per arm are recorded, with how many requirements the epic grew into and how many the hidden tests needed that it missed.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-25">slide 25</a>, <a href="../deck/#slide-28">slide 28</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-15">slide 15</a>, <a href="../deck/#slide-18">slide 18</a>.</p>
 </section>
 
 <p class="part">Part 5 · Using it</p>
@@ -1049,7 +1049,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <p>Then it runs every selftest in the installed copy, and the whole loop on the example: a small wallet and store in C#, with NUnit tests that each name the requirement they check. The example must <strong>hold</strong>: everything closed except one question that only its owner can answer.</p>
 <div class="box evidence"><p class="label">What a clean install showed</p>
 <p><span class="chip measured">Measured</span> Installing the built kit into an empty folder on 29 October: <strong>every selftest passes with PyTorch, scikit-learn and the .NET SDK (14 of 20 on Python and PyYAML alone, the rest named as skipped)</strong>, and the loop over the example’s <strong>58 breaks</strong> reported <strong>HOLDS</strong>.</p></div>
-<p class="seen">On the slides: <a href="../deck/#slide-27">slide 27</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-16">slide 16</a>.</p>
 </section>
 
 <section id="adapters">
@@ -1060,7 +1060,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <li><strong>Python</strong>: breaks code through its syntax tree; the tests are commands.</li>
 <li><strong>Anything else</strong> (C++, Blueprints): write an adapter that produces one result file in the same format the C# adapter writes: for each requirement, whether its code has the right shape, and for each break, whether a test caught it and which.</li>
 </ul>
-<p class="seen">On the slides: <a href="../deck/#slide-27">slide 27</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-16">slide 16</a>.</p>
 </section>
 
 <section id="harness">
@@ -1072,7 +1072,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <li><strong>Failure piles</strong>: the kinds of failure you see, and how often.</li>
 <li><strong>A wrong pass</strong>: any check you can make pass for the wrong reason.</li>
 </ul>
-<p class="seen">On the slides: <a href="../deck/#slide-27">slide 27</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-16">slide 16</a>.</p>
 </section>
 
 <section id="glossary">
