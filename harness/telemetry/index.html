@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="claude:viewport-fit-sides" content="cover">
+<title>Telemetry</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#0B1219;--panel:#121C26;--line:#2E4052;--fg:#F4F2EC;--soft:#C9D3DC;--mute:#A9B7C4;--link:#7FB2E5;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--grid:#26343F;--axis:#3A4C5D;--held:#7C8B99;--warn:#F7C873;color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#F6F5F1;--panel:#FCFCFB;--line:#D2D0C8;--fg:#14181C;--soft:#363E46;--mute:#58626B;--link:#1c5cab;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--grid:#E3E1DA;--axis:#C3C2B7;--held:#898781;--warn:#855400;color-scheme:light}}
+:root[data-theme="light"]{--bg:#F6F5F1;--panel:#FCFCFB;--line:#D2D0C8;--fg:#14181C;--soft:#363E46;--mute:#58626B;--link:#1c5cab;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--grid:#E3E1DA;--axis:#C3C2B7;--held:#898781;--warn:#855400;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.55 'IBM Plex Sans',system-ui,sans-serif}
+.wrap{max-width:1160px;margin:0 auto;padding-block:40px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(38px,6vw,60px)}h2{font-size:clamp(21px,2.6vw,26px)}h3{font-size:17px}
+p{margin:0}a{color:var(--link)}
+.lede{font-size:clamp(17px,2.1vw,20px);color:var(--soft);max-width:68ch;margin-top:14px}
+.note{color:var(--mute);font-size:15px}
+.bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:18px;color:var(--mute);font-size:15px}
+.bar button{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 12px;cursor:pointer}
+.bar button:focus-visible,.brow:focus-visible,.lc:focus-visible,.mrow:focus-visible,summary:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.banner{border:1px solid var(--warn);color:var(--warn);border-radius:10px;padding:10px 14px;margin-top:18px;font-size:15px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px;margin-top:26px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.tile b{display:block;font:700 clamp(28px,4vw,38px)/1.1 'Space Grotesk',system-ui,sans-serif;overflow-wrap:anywhere}
+.tile b.unk{font-size:22px;color:var(--warn)}
+.tile span{display:block;color:var(--soft);font-size:15px;margin-top:2px}
+.tile small{display:block;color:var(--mute);font-size:13px;margin-top:6px;overflow-wrap:anywhere}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:20px;min-width:0}
+.card>h2+p{margin-top:6px;color:var(--soft);font-size:16px;max-width:76ch}
+.card .reads{color:var(--mute);font-size:13px;margin-top:12px;overflow-wrap:anywhere}
+.unknown{border:1px dashed var(--warn);color:var(--warn);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:15px}
+.nogpu{border:1px dashed var(--line);color:var(--soft);border-radius:8px;padding:12px;margin:12px 0;font-size:15px}
+.sub{margin-top:18px}.sub>h3{margin-bottom:6px}
+.box{position:relative;isolation:isolate;margin-top:8px}
+canvas.marks{position:absolute;left:0;top:0;z-index:-1;pointer-events:none}
+.bars{position:relative}
+.brow{position:relative;display:grid;grid-template-columns:minmax(96px,32%) minmax(0,1fr);gap:10px;align-items:center;min-height:32px;padding:3px 6px;border-radius:6px}
+.brow.hot,.mrow.hot{background:rgba(127,160,190,.12)}
+.blabel{font-size:15px;color:var(--soft);overflow-wrap:anywhere}
+.bslot{position:relative;display:block;height:24px}
+.bval{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:14px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}
+.bval.unk{color:var(--warn);font-weight:500}
+.tip{position:absolute;z-index:5;pointer-events:none;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;max-width:min(320px,90%);box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.tip[hidden]{display:none}
+.tip b{font-size:16px;color:var(--fg)}.tip .l{color:var(--soft)}.tip .m{color:var(--mute);font-size:13px;display:block;margin-top:2px}
+.tip .r{display:flex;gap:8px;align-items:center;margin-top:3px}.tip i,.legend i{display:inline-block;width:14px;height:0;border-top:2px solid var(--s1);border-radius:1px;flex:none}
+.lc{position:relative;outline-offset:2px}
+.lc .plot{position:relative}
+.lc .tk{position:absolute;font-size:12.5px;color:var(--mute);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lc .tk.y{transform:translate(-100%,-50%);padding-right:6px}.lc .tk.x{transform:translateX(-50%)}
+.lc .end{position:absolute;font-size:13.5px;color:var(--soft);white-space:nowrap;transform:translateY(-50%)}
+.lc .axis-name{position:absolute;font-size:12.5px;color:var(--mute)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 18px;list-style:none;padding:0;margin:10px 0 0;font-size:14px;color:var(--soft)}
+.legend li{display:flex;gap:7px;align-items:center}.legend i{width:16px}
+.mrow{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:4px;padding:8px 6px;border-top:1px solid var(--grid);border-radius:6px}
+.mrow:first-child{border-top:0}
+.modeline{margin-top:14px;color:var(--soft);font-size:15.5px}.modeline .chip{margin-right:8px;color:var(--fg)}
+.mhead{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;justify-content:space-between}
+.mname{font-size:15.5px;color:var(--fg);font-weight:500;min-width:0;overflow-wrap:anywhere}
+.chip{display:inline-flex;gap:6px;align-items:center;font:600 12.5px/1 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--soft);white-space:nowrap}
+.chip .ic{width:9px;height:9px;border-radius:50%;background:var(--s1);display:inline-block}
+.chip.off .ic{background:transparent;border:2px solid var(--held)}
+.chip.unk{color:var(--warn);border-color:var(--warn)}.chip.unk .ic{background:transparent;border:2px dashed var(--warn)}
+.mslot{display:block;height:12px}
+.mwhy{font-size:13.5px;color:var(--mute);overflow-wrap:anywhere}
+details.tbl{margin-top:14px;color:var(--soft)}
+details.tbl>summary{cursor:pointer;color:var(--mute);font-size:14.5px}
+.tw{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 10px 5px 0;border-bottom:1px solid var(--grid);text-align:left;vertical-align:top}
+th{color:var(--mute);font-weight:500}td.num{text-align:right;padding-right:14px;white-space:nowrap}td.unk{color:var(--warn)}
+caption{text-align:left;color:var(--mute);font-size:13px;padding-bottom:4px}
+@media (max-width:560px){
+ .wrap{padding-block:24px 56px}
+ .brow{grid-template-columns:minmax(0,1fr);gap:2px}
+ .card{padding:14px 12px}
+}
+</style></head>
+<body><div class="wrap">
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../fly/">The fly-through manual</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../growth/">Growth</a><a href="../telemetry/" aria-current="page" style="font-weight:600;color:inherit">Telemetry</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../public-code/">Code you can read yourself</a><a href="../gnn-on-itself/">The tool on its own networks</a><a href="../self-improvement/">Self-improvement</a><a href="../limits/">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a><a href="https://github.com/rj45Thompson/closed-loop-kit">The kit</a></nav>
+<header><h1>Telemetry</h1><p class="lede" id="lede"></p>
+<div class="bar"><span id="stamp" role="status"></span><button id="theme" type="button">Theme: auto</button></div></header>
+<div class="banner" id="banner" hidden></div>
+<div class="tiles" id="tiles"></div>
+<main id="cards"></main>
+<p class="note" id="foot" style="margin-top:40px"></p>
+</div>
+<noscript><p class="note" style="padding:16px">This page draws its charts with script. The numbers are in the data file next to it (data.json).</p></noscript>
+<script type="application/json" id="data">{"banner": null, "fingerprint": "29f4cf64012c", "foot": "Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product. 37 proof items and 46 benchmark entries are held until a decision on a paper: they are counted here and not shown.", "form": "public", "generated": "2026-11-03T19:23:31", "graph": {"as_of": "2026-10-30T16:28:39", "by_kind": [{"kind": "mutant", "label": "Breaks (mutants)", "n": 1639}, {"kind": "cell", "label": "Branches (decisions)", "n": 426}, {"kind": "test", "label": "Tests", "n": 131}, {"kind": "code", "label": "Code (methods)", "n": 38}, {"kind": "step", "label": "Use case steps", "n": 32}, {"kind": "requirement", "label": "Requirements", "n": 20}, {"kind": "name", "label": "Names", "n": 16}, {"kind": "assertion", "label": "Effects (assertions)", "n": 15}, {"kind": "source", "label": "Sources", "n": 13}, {"kind": "extension", "label": "Alternate paths", "n": 10}, {"kind": "use case", "label": "Use cases", "n": 8}, {"kind": "actor", "label": "Actors", "n": 7}, {"kind": "question", "label": "Questions", "n": 7}, {"kind": "space", "label": "Closed sets", "n": 3}], "edges": 6272, "entities": 2365, "lede": "Every requirement, use case step, decision, break and test the loop holds about its own code is one entity in this graph; the bars count them by kind. The graph growing means the record grew, not that the code improved.", "source": "autobot/selfmodel/kg/selfmodel.sqlite: entity, edge", "state": "READ"}, "lede": "The closed loop's running stats, read from the files it keeps about itself. Every value names the file it came from, or says UNKNOWN and why. Every run measured here was small, and nothing on this page speaks to large systems.", "parts": {"always_on": ["usecase_rules", "commit_gate", "record_check", "leak_check", "public_words_gate", "telemetry_audit", "claims_check", "verification_gate", "loop_stop_switch"], "auto_switch": {"state": "READ", "text": "built; its results are not shown on this page."}, "lede": "Each optional part has a state, and a reason the registry gives for it. The mode is one setting for all of them: with token saving on, a part that spends model tokens starts off until its threshold is tuned. A meter shows a part's wake stat against its threshold; a stat with no threshold set yet is UNKNOWN. A pass run with a flag can differ from the registry, and its report says what it ran.", "mode": {"label": "Token saving: off", "meaning": "every part starts on, and the GNN waits for its stat.", "saving": false, "source": "autobot/switches.yaml: token_saving"}, "parts": [{"calls_model": false, "default": "off", "effective": "off", "enforced": true, "frac": 0.473, "id": "gnn_owner", "name": "GNN link proposer (owner of a branch)", "op": ">=", "reason": "defaults off by a specific ruling: graph_entities is 2,365 (COUNT(*) FROM entity in selfmodel.sqlite), under the threshold 5,000 (owner_ruling, provisional): stays off", "stat": "graph_entities", "state": "READ", "threshold_status": "a ruling, provisional", "threshold_text": "5,000", "value": 2365, "value_source": "COUNT(*) FROM entity in selfmodel.sqlite", "value_why": null}, {"calls_model": false, "default": "off", "effective": "off", "enforced": false, "frac": 0.473, "id": "gnn_jobs_other", "name": "GNN's other jobs (which tests catch a branch, which steps carry a requirement, likely-equivalent survivors, the relation lines)", "op": ">=", "reason": "defaults off by a specific ruling: graph_entities is 2,365 (COUNT(*) FROM entity in selfmodel.sqlite), under the threshold 5,000 (provisional): stays off", "stat": "graph_entities", "state": "READ", "threshold_status": "an estimate", "threshold_text": "5,000", "value": 2365, "value_source": "COUNT(*) FROM entity in selfmodel.sqlite", "value_why": null}, {"calls_model": false, "default": "off", "effective": "off", "enforced": false, "frac": 32.4, "id": "break_order_learned", "name": "Learned order for running the breaks", "op": ">=", "reason": "defaults off by a specific ruling: woken: survivors is 648 (survived and not declared equivalent, verdicts.json), at or over the threshold 20 (provisional)", "stat": "survivors", "state": "READ", "threshold_status": "an estimate", "threshold_text": "20", "value": 648, "value_source": "survived and not declared equivalent, verdicts.json", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "break_testing", "name": "Break testing (mutants)", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "decisions_in_scope", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 397, "value_source": "last row of stats.jsonl, `decisions`", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": 0.0, "id": "self_improvement", "name": "Self-improvement (a row in the morph log and the stats' picks each pass)", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "measured_outcomes", "state": "READ", "threshold_status": "an estimate", "threshold_text": "20", "value": 0, "value_source": "last row of improvement/graph_stats.jsonl, `measured_outcomes`", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "interrogate_pathways", "name": "Alternate-pathway questions", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "use_case_extensions", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 10, "value_source": "`ext` of each use case, usecases.yaml", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "interrogate_baseline_probe", "name": "Baseline probe (who, what, why, when, where, before, after per module)", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "use_cases", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 8, "value_source": "usecases.yaml", "value_why": null}, {"calls_model": true, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "chain_check_first_pass", "name": "Chain checker, first pass", "op": ">=", "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat chain_statements is UNKNOWN (no chain beside the model)", "stat": "chain_statements", "state": "UNKNOWN", "threshold_status": "UNKNOWN", "threshold_text": null, "value": null, "value_source": null, "value_why": "no chain beside the model"}, {"calls_model": true, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "blind_deep_look", "name": "Blind deep look at a flagged statement", "op": "in", "reason": "defaults off by a specific ruling: default off; the stat material_kind cannot be read: declared by the job that runs the part (material_kind); a closed_loop.py pass does not run it", "stat": "material_kind", "state": "UNKNOWN", "threshold_status": "an estimate", "threshold_text": "answers", "value": null, "value_source": null, "value_why": "declared by the job that runs the part (material_kind); a closed_loop.py pass does not run it"}, {"calls_model": true, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "sighted_recheck", "name": "Sighted recheck (a reader shown the previous decision)", "op": "in", "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat material_kind is UNKNOWN (declared by the job that runs the part (material_kind); a closed_loop.py pass does not run it)", "stat": "material_kind", "state": "UNKNOWN", "threshold_status": "UNKNOWN", "threshold_text": null, "value": null, "value_source": null, "value_why": "declared by the job that runs the part (material_kind); a closed_loop.py pass does not run it"}, {"calls_model": true, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "full_source_review", "name": "Full-source review", "op": "==", "reason": "token saving is off, so it starts on", "stat": "source_available", "state": "UNKNOWN", "threshold_status": "measured", "threshold_text": "True", "value": null, "value_source": null, "value_why": "declared by the job that runs the part (source_available); a closed_loop.py pass does not run it"}, {"calls_model": true, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "recursive_rounds", "name": "Rounds that add knowledge", "op": ">=", "reason": "defaults off by a specific ruling: default off; the stat unanswered_nodes cannot be read: declared by the job that runs the part (unanswered_nodes); a closed_loop.py pass does not run it", "stat": "unanswered_nodes", "state": "UNKNOWN", "threshold_status": "an estimate", "threshold_text": "1", "value": null, "value_source": null, "value_why": "declared by the job that runs the part (unanswered_nodes); a closed_loop.py pass does not run it"}, {"calls_model": true, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "events_adding_nodes", "name": "Events adding nodes to the graph", "op": ">=", "reason": "defaults off by a specific ruling: default off; the stat flagged_statements cannot be read: declared by the job that runs the part (flagged_statements); a closed_loop.py pass does not run it", "stat": "flagged_statements", "state": "UNKNOWN", "threshold_status": "an estimate", "threshold_text": "1", "value": null, "value_source": null, "value_why": "declared by the job that runs the part (flagged_statements); a closed_loop.py pass does not run it"}, {"calls_model": true, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "question_generation", "name": "Question generating and growing (scenario first)", "op": ">=", "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))", "stat": "requirement_pool_tokens", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 1639, "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)", "value_why": null}, {"calls_model": true, "default": "off", "effective": "off", "enforced": false, "frac": 15.0, "id": "problem_brainstorm", "name": "Brainstorm rounds on the problem graph", "op": ">=", "reason": "defaults off by a specific ruling: woken: live_problems is 15 (problems not rejected, problems.yaml), at or over the threshold 1 (provisional)", "stat": "live_problems", "state": "READ", "threshold_status": "an estimate", "threshold_text": "1", "value": 15, "value_source": "problems not rejected, problems.yaml", "value_why": null}, {"calls_model": false, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "slice_vectors", "name": "Context vectors for the requirement slice", "op": ">=", "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))", "stat": "requirement_pool_tokens", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 1639, "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "req_graph_load", "name": "Requirements loaded into one graph (no model)", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "requirement_pool_tokens", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 1639, "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)", "value_why": null}, {"calls_model": false, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "local_screen", "name": "Local-model screen of every requirement-to-code link", "op": ">=", "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))", "stat": "requirement_pool_tokens", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 1639, "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)", "value_why": null}, {"calls_model": true, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "intent_review", "name": "Intent review with the code hidden", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "chain_statements", "state": "UNKNOWN", "threshold_status": "UNKNOWN", "threshold_text": null, "value": null, "value_source": null, "value_why": "no chain beside the model"}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "step_trace_route", "name": "Code linked to steps by running each step's own tests", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "use_cases", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 8, "value_source": "usecases.yaml", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "owner_head", "name": "The owner head (which step owns a code place)", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "use_cases", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 8, "value_source": "usecases.yaml", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "break_order_head", "name": "The break-order head (survivors first)", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "survivors", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 648, "value_source": "survived and not declared equivalent, verdicts.json", "value_why": null}, {"calls_model": false, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "binds_head", "name": "The binds head (a step's requirement lines first)", "op": ">=", "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))", "stat": "requirement_pool_tokens", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 1639, "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)", "value_why": null}, {"calls_model": true, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "goals_asked_directly", "name": "Goals asked directly from the sources", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "live_problems", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 15, "value_source": "problems not rejected, problems.yaml", "value_why": null}, {"calls_model": false, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "slice_cosine", "name": "Cosine alone for a step's requirement slice", "op": ">=", "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))", "stat": "requirement_pool_tokens", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 1639, "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)", "value_why": null}, {"calls_model": false, "default": "off", "effective": "off", "enforced": false, "frac": null, "id": "operator_prior_order", "name": "Break order by the operator family's survival rate", "op": ">=", "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat survivors is 648 (survived and not declared equivalent, verdicts.json)", "stat": "survivors", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 648, "value_source": "survived and not declared equivalent, verdicts.json", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "stations_card", "name": "The stations card names the next improvement", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "use_cases", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 8, "value_source": "usecases.yaml", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "owner_question", "name": "Ask the owner which step untested code carries out", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "use_cases", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 8, "value_source": "usecases.yaml", "value_why": null}, {"calls_model": false, "default": "on", "effective": "on", "enforced": false, "frac": null, "id": "source_rules", "name": "Every rule sentence of a source must be cited by a requirement", "op": ">=", "reason": "token saving is off, so it starts on", "stat": "use_cases", "state": "READ", "threshold_status": "UNKNOWN", "threshold_text": null, "value": 8, "value_source": "usecases.yaml", "value_why": null}], "registry_note": "wake stats READ on autobot/selfmodel", "source": "autobot/switches.yaml", "state": "READ"}, "passes": {"lede": "One row per pass of the loop on a project, as the loop wrote it. A chart draws a line only through three or more readings, and breaks it where a pass holds no reading; with fewer it shows the readings as dots.", "min_line": 3, "projects": [{"first_time": "2026-10-29T15:26:47", "key": "The kit’s C# example", "label": "The kit’s C# example", "last_time": "2026-10-29T21:42:35", "passes": 6, "series": {"graph_nodes": [{"n": 1, "t": "2026-10-29T15:26:47", "v": 122.0}, {"n": 2, "t": "2026-10-29T15:29:20", "v": 122.0}, {"n": 3, "t": "2026-10-29T15:31:55", "v": 122.0}, {"n": 4, "t": "2026-10-29T15:34:30", "v": 122.0}, {"n": 5, "t": "2026-10-29T15:34:40", "v": 122.0}, {"n": 6, "t": "2026-10-29T21:42:35", "v": 122.0}], "holes_ours": [{"n": 1, "t": "2026-10-29T15:26:47", "v": 11.0}, {"n": 2, "t": "2026-10-29T15:29:20", "v": 5.0}, {"n": 3, "t": "2026-10-29T15:31:55", "v": 7.0}, {"n": 4, "t": "2026-10-29T15:34:30", "v": 0.0}, {"n": 5, "t": "2026-10-29T15:34:40", "v": 0.0}, {"n": 6, "t": "2026-10-29T21:42:35", "v": 0.0}], "kill_rate": [{"n": 1, "t": "2026-10-29T15:26:47", "v": 0.9474}, {"n": 2, "t": "2026-10-29T15:29:20", "v": 1.0}, {"n": 3, "t": "2026-10-29T15:31:55", "v": 0.9818}, {"n": 4, "t": "2026-10-29T15:34:30", "v": 1.0}, {"n": 5, "t": "2026-10-29T15:34:40", "v": 1.0}, {"n": 6, "t": "2026-10-29T21:42:35", "v": 1.0}], "killed": [{"n": 1, "t": "2026-10-29T15:26:47", "v": 54.0}, {"n": 2, "t": "2026-10-29T15:29:20", "v": 54.0}, {"n": 3, "t": "2026-10-29T15:31:55", "v": 54.0}, {"n": 4, "t": "2026-10-29T15:34:30", "v": 54.0}, {"n": 5, "t": "2026-10-29T15:34:40", "v": 54.0}, {"n": 6, "t": "2026-10-29T21:42:35", "v": 54.0}], "mutants": [{"n": 1, "t": "2026-10-29T15:26:47", "v": 58.0}, {"n": 2, "t": "2026-10-29T15:29:20", "v": 58.0}, {"n": 3, "t": "2026-10-29T15:31:55", "v": 58.0}, {"n": 4, "t": "2026-10-29T15:34:30", "v": 58.0}, {"n": 5, "t": "2026-10-29T15:34:40", "v": 58.0}, {"n": 6, "t": "2026-10-29T21:42:35", "v": 58.0}], "survived_unexplained": [{"n": 1, "t": "2026-10-29T15:26:47", "v": 3.0}, {"n": 2, "t": "2026-10-29T15:29:20", "v": 0.0}, {"n": 3, "t": "2026-10-29T15:31:55", "v": 1.0}, {"n": 4, "t": "2026-10-29T15:34:30", "v": 0.0}, {"n": 5, "t": "2026-10-29T15:34:40", "v": 0.0}, {"n": 6, "t": "2026-10-29T21:42:35", "v": 0.0}], "tests": [{"n": 1, "t": "2026-10-29T15:26:47", "v": 5.0}, {"n": 2, "t": "2026-10-29T15:29:20", "v": 5.0}, {"n": 3, "t": "2026-10-29T15:31:55", "v": 5.0}, {"n": 4, "t": "2026-10-29T15:34:30", "v": 5.0}, {"n": 5, "t": "2026-10-29T15:34:40", "v": 5.0}, {"n": 6, "t": "2026-10-29T21:42:35", "v": 5.0}]}, "source": "closed_loop_kit/example/stats.jsonl", "state": "READ", "trends": [{"first": 0.9474, "first_n": 1, "kind": "CLOSURE", "label": "Share of breaks caught", "last": 1.0, "last_n": 6, "readings": 6, "source": "closed_loop_kit/example/stats.jsonl", "stat": "kill_rate", "state": "READ", "unit": "share", "verdict": "done", "want": "rise"}, {"first": 58.0, "first_n": 1, "kind": "NET", "label": "Breaks made", "last": 58.0, "last_n": 6, "readings": 6, "source": "closed_loop_kit/example/stats.jsonl", "stat": "mutants", "state": "READ", "unit": "count", "verdict": "stalled", "want": "rise"}, {"first": 54.0, "first_n": 1, "kind": "CLOSURE", "label": "Breaks caught", "last": 54.0, "last_n": 6, "readings": 6, "source": "closed_loop_kit/example/stats.jsonl", "stat": "killed", "state": "READ", "unit": "count", "verdict": "stalled", "want": "rise"}, {"first": 3.0, "first_n": 1, "kind": "OPEN", "label": "Breaks that got past, not yet explained", "last": 0.0, "last_n": 6, "readings": 6, "source": "closed_loop_kit/example/stats.jsonl", "stat": "survived_unexplained", "state": "READ", "unit": "count", "verdict": "done", "want": "fall"}, {"first": 122.0, "first_n": 1, "kind": "NET", "label": "Graph nodes", "last": 122.0, "last_n": 6, "readings": 6, "source": "closed_loop_kit/example/stats.jsonl", "stat": "graph_nodes", "state": "READ", "unit": "count", "verdict": "stalled", "want": "rise"}, {"first": 5.0, "first_n": 1, "kind": "NET", "label": "Tests", "last": 5.0, "last_n": 6, "readings": 6, "source": "closed_loop_kit/example/stats.jsonl", "stat": "tests", "state": "READ", "unit": "count", "verdict": "stalled", "want": "rise"}, {"first": 11.0, "first_n": 1, "kind": "OPEN", "label": "Holes of ours", "last": 0.0, "last_n": 6, "readings": 6, "source": "closed_loop_kit/example/stats.jsonl", "stat": "holes_ours", "state": "READ", "unit": "count", "verdict": "done", "want": "fall"}]}, {"first_time": "2026-10-29T17:52:20", "key": "The kit’s Python example", "label": "The kit’s Python example", "last_time": "2026-10-29T21:40:28", "passes": 14, "series": {"graph_nodes": [{"n": 1, "t": "2026-10-29T17:52:20", "v": 148.0}, {"n": 2, "t": "2026-10-29T17:52:46", "v": 149.0}, {"n": 3, "t": "2026-10-29T17:53:07", "v": 149.0}, {"n": 4, "t": "2026-10-29T17:53:09", "v": 149.0}, {"n": 5, "t": "2026-10-29T18:25:35", "v": 149.0}, {"n": 6, "t": "2026-10-29T18:25:51", "v": 149.0}, {"n": 7, "t": "2026-10-29T21:37:22", "v": 161.0}, {"n": 8, "t": "2026-10-29T21:37:41", "v": 161.0}, {"n": 9, "t": "2026-10-29T21:38:08", "v": 150.0}, {"n": 10, "t": "2026-10-29T21:38:44", "v": 150.0}, {"n": 11, "t": "2026-10-29T21:39:23", "v": 149.0}, {"n": 12, "t": "2026-10-29T21:40:00", "v": 149.0}, {"n": 13, "t": "2026-10-29T21:40:16", "v": 149.0}, {"n": 14, "t": "2026-10-29T21:40:28", "v": 149.0}], "holes_ours": [{"n": 1, "t": "2026-10-29T17:52:20", "v": 9.0}, {"n": 2, "t": "2026-10-29T17:52:46", "v": 7.0}, {"n": 3, "t": "2026-10-29T17:53:07", "v": 4.0}, {"n": 4, "t": "2026-10-29T17:53:09", "v": 0.0}, {"n": 5, "t": "2026-10-29T18:25:35", "v": 0.0}, {"n": 6, "t": "2026-10-29T18:25:51", "v": 0.0}, {"n": 7, "t": "2026-10-29T21:37:22", "v": 12.0}, {"n": 8, "t": "2026-10-29T21:37:41", "v": 12.0}, {"n": 9, "t": "2026-10-29T21:38:08", "v": 12.0}, {"n": 10, "t": "2026-10-29T21:38:44", "v": 9.0}, {"n": 11, "t": "2026-10-29T21:39:23", "v": 6.0}, {"n": 12, "t": "2026-10-29T21:40:00", "v": 5.0}, {"n": 13, "t": "2026-10-29T21:40:16", "v": 4.0}, {"n": 14, "t": "2026-10-29T21:40:28", "v": 0.0}], "kill_rate": [{"n": 1, "t": "2026-10-29T17:52:20", "v": 0.9565}, {"n": 2, "t": "2026-10-29T17:52:46", "v": 0.9851}, {"n": 3, "t": "2026-10-29T17:53:07", "v": 1.0}, {"n": 4, "t": "2026-10-29T17:53:09", "v": 1.0}, {"n": 5, "t": "2026-10-29T18:25:35", "v": 1.0}, {"n": 6, "t": "2026-10-29T18:25:51", "v": 1.0}, {"n": 7, "t": "2026-10-29T21:37:22", "v": 1.0}, {"n": 8, "t": "2026-10-29T21:37:41", "v": 1.0}, {"n": 9, "t": "2026-10-29T21:38:08", "v": 1.0}, {"n": 10, "t": "2026-10-29T21:38:44", "v": 1.0}, {"n": 11, "t": "2026-10-29T21:39:23", "v": 1.0}, {"n": 12, "t": "2026-10-29T21:40:00", "v": 1.0}, {"n": 13, "t": "2026-10-29T21:40:16", "v": 1.0}, {"n": 14, "t": "2026-10-29T21:40:28", "v": 1.0}], "killed": [{"n": 1, "t": "2026-10-29T17:52:20", "v": 66.0}, {"n": 2, "t": "2026-10-29T17:52:46", "v": 66.0}, {"n": 3, "t": "2026-10-29T17:53:07", "v": 66.0}, {"n": 4, "t": "2026-10-29T17:53:09", "v": 66.0}, {"n": 5, "t": "2026-10-29T18:25:35", "v": 66.0}, {"n": 6, "t": "2026-10-29T18:25:51", "v": 66.0}, {"n": 7, "t": "2026-10-29T21:37:22", "v": 66.0}, {"n": 8, "t": "2026-10-29T21:37:41", "v": 66.0}, {"n": 9, "t": "2026-10-29T21:38:08", "v": 66.0}, {"n": 10, "t": "2026-10-29T21:38:44", "v": 66.0}, {"n": 11, "t": "2026-10-29T21:39:23", "v": 66.0}, {"n": 12, "t": "2026-10-29T21:40:00", "v": 66.0}, {"n": 13, "t": "2026-10-29T21:40:16", "v": 66.0}, {"n": 14, "t": "2026-10-29T21:40:28", "v": 66.0}], "mutants": [{"n": 1, "t": "2026-10-29T17:52:20", "v": 69.0}, {"n": 2, "t": "2026-10-29T17:52:46", "v": 69.0}, {"n": 3, "t": "2026-10-29T17:53:07", "v": 69.0}, {"n": 4, "t": "2026-10-29T17:53:09", "v": 69.0}, {"n": 5, "t": "2026-10-29T18:25:35", "v": 69.0}, {"n": 6, "t": "2026-10-29T18:25:51", "v": 69.0}, {"n": 7, "t": "2026-10-29T21:37:22", "v": 69.0}, {"n": 8, "t": "2026-10-29T21:37:41", "v": 69.0}, {"n": 9, "t": "2026-10-29T21:38:08", "v": 69.0}, {"n": 10, "t": "2026-10-29T21:38:44", "v": 69.0}, {"n": 11, "t": "2026-10-29T21:39:23", "v": 69.0}, {"n": 12, "t": "2026-10-29T21:40:00", "v": 69.0}, {"n": 13, "t": "2026-10-29T21:40:16", "v": 69.0}, {"n": 14, "t": "2026-10-29T21:40:28", "v": 69.0}], "survived_unexplained": [{"n": 1, "t": "2026-10-29T17:52:20", "v": 3.0}, {"n": 2, "t": "2026-10-29T17:52:46", "v": 1.0}, {"n": 3, "t": "2026-10-29T17:53:07", "v": 0.0}, {"n": 4, "t": "2026-10-29T17:53:09", "v": 0.0}, {"n": 5, "t": "2026-10-29T18:25:35", "v": 0.0}, {"n": 6, "t": "2026-10-29T18:25:51", "v": 0.0}, {"n": 7, "t": "2026-10-29T21:37:22", "v": 0.0}, {"n": 8, "t": "2026-10-29T21:37:41", "v": 0.0}, {"n": 9, "t": "2026-10-29T21:38:08", "v": 0.0}, {"n": 10, "t": "2026-10-29T21:38:44", "v": 0.0}, {"n": 11, "t": "2026-10-29T21:39:23", "v": 0.0}, {"n": 12, "t": "2026-10-29T21:40:00", "v": 0.0}, {"n": 13, "t": "2026-10-29T21:40:16", "v": 0.0}, {"n": 14, "t": "2026-10-29T21:40:28", "v": 0.0}], "tests": [{"n": 1, "t": "2026-10-29T17:52:20", "v": 1.0}, {"n": 2, "t": "2026-10-29T17:52:46", "v": 1.0}, {"n": 3, "t": "2026-10-29T17:53:07", "v": 1.0}, {"n": 4, "t": "2026-10-29T17:53:09", "v": 1.0}, {"n": 5, "t": "2026-10-29T18:25:35", "v": 1.0}, {"n": 6, "t": "2026-10-29T18:25:51", "v": 1.0}, {"n": 7, "t": "2026-10-29T21:37:22", "v": 1.0}, {"n": 8, "t": "2026-10-29T21:37:41", "v": 1.0}, {"n": 9, "t": "2026-10-29T21:38:08", "v": 1.0}, {"n": 10, "t": "2026-10-29T21:38:44", "v": 13.0}, {"n": 11, "t": "2026-10-29T21:39:23", "v": 13.0}, {"n": 12, "t": "2026-10-29T21:40:00", "v": 13.0}, {"n": 13, "t": "2026-10-29T21:40:16", "v": 13.0}, {"n": 14, "t": "2026-10-29T21:40:28", "v": 13.0}]}, "source": "closed_loop_kit/example_py/stats.jsonl", "state": "READ", "trends": [{"first": 0.9565, "first_n": 1, "kind": "CLOSURE", "label": "Share of breaks caught", "last": 1.0, "last_n": 14, "readings": 14, "source": "closed_loop_kit/example_py/stats.jsonl", "stat": "kill_rate", "state": "READ", "unit": "share", "verdict": "done", "want": "rise"}, {"first": 69.0, "first_n": 1, "kind": "NET", "label": "Breaks made", "last": 69.0, "last_n": 14, "readings": 14, "source": "closed_loop_kit/example_py/stats.jsonl", "stat": "mutants", "state": "READ", "unit": "count", "verdict": "stalled", "want": "rise"}, {"first": 66.0, "first_n": 1, "kind": "CLOSURE", "label": "Breaks caught", "last": 66.0, "last_n": 14, "readings": 14, "source": "closed_loop_kit/example_py/stats.jsonl", "stat": "killed", "state": "READ", "unit": "count", "verdict": "stalled", "want": "rise"}, {"first": 3.0, "first_n": 1, "kind": "OPEN", "label": "Breaks that got past, not yet explained", "last": 0.0, "last_n": 14, "readings": 14, "source": "closed_loop_kit/example_py/stats.jsonl", "stat": "survived_unexplained", "state": "READ", "unit": "count", "verdict": "done", "want": "fall"}, {"first": 148.0, "first_n": 1, "kind": "NET", "label": "Graph nodes", "last": 149.0, "last_n": 14, "readings": 14, "source": "closed_loop_kit/example_py/stats.jsonl", "stat": "graph_nodes", "state": "READ", "unit": "count", "verdict": "stalled", "want": "rise"}, {"first": 1.0, "first_n": 1, "kind": "NET", "label": "Tests", "last": 13.0, "last_n": 14, "readings": 14, "source": "closed_loop_kit/example_py/stats.jsonl", "stat": "tests", "state": "READ", "unit": "count", "verdict": "stalled", "want": "rise"}, {"first": 9.0, "first_n": 1, "kind": "OPEN", "label": "Holes of ours", "last": 0.0, "last_n": 14, "readings": 14, "source": "closed_loop_kit/example_py/stats.jsonl", "stat": "holes_ours", "state": "READ", "unit": "count", "verdict": "improving", "want": "fall"}]}, {"first_time": "2026-10-29T17:34:54", "key": "The tool’s own code", "label": "The tool’s own code", "last_time": "2026-10-30T16:28:41", "passes": 2, "series": {"graph_nodes": [{"n": 1, "t": "2026-10-29T17:34:54", "v": 2335.0}, {"n": 2, "t": "2026-10-30T16:28:41", "v": 2365.0}], "holes_ours": [{"n": 1, "t": "2026-10-29T17:34:54", "v": 252.0}, {"n": 2, "t": "2026-10-30T16:28:41", "v": 387.0}], "kill_rate": [{"n": 1, "t": "2026-10-29T17:34:54", "v": 0.5777}, {"n": 2, "t": "2026-10-30T16:28:41", "v": 0.6042}], "killed": [{"n": 1, "t": "2026-10-29T17:34:54", "v": 885.0}, {"n": 2, "t": "2026-10-30T16:28:41", "v": 989.0}], "mutants": [{"n": 1, "t": "2026-10-29T17:34:54", "v": 1626.0}, {"n": 2, "t": "2026-10-30T16:28:41", "v": 1639.0}], "survived_unexplained": [{"n": 1, "t": "2026-10-29T17:34:54", "v": 647.0}, {"n": 2, "t": "2026-10-30T16:28:41", "v": 648.0}], "tests": [{"n": 1, "t": "2026-10-29T17:34:54", "v": 5.0}, {"n": 2, "t": "2026-10-30T16:28:41", "v": 41.0}]}, "source": "autobot/selfmodel/stats.jsonl", "state": "READ", "trends": [{"first": 0.5777, "first_n": 1, "kind": "CLOSURE", "label": "Share of breaks caught", "last": 0.6042, "last_n": 2, "readings": 2, "source": "autobot/selfmodel/stats.jsonl", "stat": "kill_rate", "state": "READ", "unit": "share", "verdict": "too few", "want": "rise"}, {"first": 1626.0, "first_n": 1, "kind": "NET", "label": "Breaks made", "last": 1639.0, "last_n": 2, "readings": 2, "source": "autobot/selfmodel/stats.jsonl", "stat": "mutants", "state": "READ", "unit": "count", "verdict": "too few", "want": "rise"}, {"first": 885.0, "first_n": 1, "kind": "CLOSURE", "label": "Breaks caught", "last": 989.0, "last_n": 2, "readings": 2, "source": "autobot/selfmodel/stats.jsonl", "stat": "killed", "state": "READ", "unit": "count", "verdict": "too few", "want": "rise"}, {"first": 647.0, "first_n": 1, "kind": "OPEN", "label": "Breaks that got past, not yet explained", "last": 648.0, "last_n": 2, "readings": 2, "source": "autobot/selfmodel/stats.jsonl", "stat": "survived_unexplained", "state": "READ", "unit": "count", "verdict": "too few", "want": "fall"}, {"first": 2335.0, "first_n": 1, "kind": "NET", "label": "Graph nodes", "last": 2365.0, "last_n": 2, "readings": 2, "source": "autobot/selfmodel/stats.jsonl", "stat": "graph_nodes", "state": "READ", "unit": "count", "verdict": "too few", "want": "rise"}, {"first": 5.0, "first_n": 1, "kind": "NET", "label": "Tests", "last": 41.0, "last_n": 2, "readings": 2, "source": "autobot/selfmodel/stats.jsonl", "stat": "tests", "state": "READ", "unit": "count", "verdict": "too few", "want": "rise"}, {"first": 252.0, "first_n": 1, "kind": "OPEN", "label": "Holes of ours", "last": 387.0, "last_n": 2, "readings": 2, "source": "autobot/selfmodel/stats.jsonl", "stat": "holes_ours", "state": "READ", "unit": "count", "verdict": "too few", "want": "fall"}]}, {"first_time": "2026-10-29T18:50:13", "key": "One game feature", "label": "One game feature", "last_time": "2026-11-02T15:49:05", "passes": 13, "series": {"graph_nodes": [{"n": 1, "t": null, "v": 676.0}, {"n": 2, "t": null, "v": 685.0}, {"n": 3, "t": null, "v": 1042.0}, {"n": 4, "t": null, "v": 1191.0}, {"n": 5, "t": null, "v": 1271.0}, {"n": 6, "t": "2026-10-29T18:50:13", "v": 1714.0}, {"n": 7, "t": "2026-10-30T16:28:22", "v": 1729.0}, {"n": 8, "t": "2026-11-02T11:49:26", "v": 1719.0}, {"n": 9, "t": "2026-11-02T13:05:05", "v": 2259.0}, {"n": 10, "t": "2026-11-02T13:48:21", "v": 2244.0}, {"n": 11, "t": "2026-11-02T14:25:01", "v": 2240.0}, {"n": 12, "t": "2026-11-02T15:49:05", "v": 2308.0}], "holes_ours": [{"n": 0, "t": null, "v": 0.0}, {"n": 1, "t": null, "v": 68.0}, {"n": 2, "t": null, "v": 40.0}, {"n": 3, "t": null, "v": 92.0}, {"n": 4, "t": null, "v": 47.0}, {"n": 5, "t": null, "v": 42.0}, {"n": 6, "t": "2026-10-29T18:50:13", "v": 77.0}, {"n": 7, "t": "2026-10-30T16:28:22", "v": 77.0}, {"n": 8, "t": "2026-11-02T11:49:26", "v": 77.0}, {"n": 9, "t": "2026-11-02T13:05:05", "v": 240.0}, {"n": 10, "t": "2026-11-02T13:48:21", "v": 91.0}, {"n": 11, "t": "2026-11-02T14:25:01", "v": 88.0}, {"n": 12, "t": "2026-11-02T15:49:05", "v": 88.0}], "kill_rate": [{"n": 6, "t": "2026-10-29T18:50:13", "v": 0.9651}, {"n": 7, "t": "2026-10-30T16:28:22", "v": 0.9653}, {"n": 8, "t": "2026-11-02T11:49:26", "v": 0.9653}, {"n": 9, "t": "2026-11-02T13:05:05", "v": 0.9279}, {"n": 10, "t": "2026-11-02T13:48:21", "v": 0.9738}, {"n": 11, "t": "2026-11-02T14:25:01", "v": 0.9759}, {"n": 12, "t": "2026-11-02T15:49:05", "v": 0.9764}], "killed": [{"n": 1, "t": null, "v": 185.0}, {"n": 2, "t": null, "v": 268.0}, {"n": 3, "t": null, "v": 454.0}, {"n": 4, "t": null, "v": 609.0}, {"n": 5, "t": null, "v": 744.0}, {"n": 6, "t": "2026-10-29T18:50:13", "v": 967.0}, {"n": 7, "t": "2026-10-30T16:28:22", "v": 974.0}, {"n": 8, "t": "2026-11-02T11:49:26", "v": 974.0}, {"n": 9, "t": "2026-11-02T13:05:05", "v": 1196.0}, {"n": 10, "t": "2026-11-02T13:48:21", "v": 1263.0}, {"n": 11, "t": "2026-11-02T14:25:01", "v": 1256.0}, {"n": 12, "t": "2026-11-02T15:49:05", "v": 1283.0}], "mutants": [{"n": 1, "t": null, "v": 340.0}, {"n": 2, "t": null, "v": 340.0}, {"n": 3, "t": null, "v": 631.0}, {"n": 4, "t": null, "v": 772.0}, {"n": 5, "t": null, "v": 806.0}, {"n": 6, "t": "2026-10-29T18:50:13", "v": 1097.0}, {"n": 7, "t": "2026-10-30T16:28:22", "v": 1104.0}, {"n": 8, "t": "2026-11-02T11:49:26", "v": 1104.0}, {"n": 9, "t": "2026-11-02T13:05:05", "v": 1459.0}, {"n": 10, "t": "2026-11-02T13:48:21", "v": 1442.0}, {"n": 11, "t": "2026-11-02T14:25:01", "v": 1435.0}, {"n": 12, "t": "2026-11-02T15:49:05", "v": 1473.0}], "survived_unexplained": [{"n": 6, "t": "2026-10-29T18:50:13", "v": 35.0}, {"n": 7, "t": "2026-10-30T16:28:22", "v": 35.0}, {"n": 8, "t": "2026-11-02T11:49:26", "v": 35.0}, {"n": 9, "t": "2026-11-02T13:05:05", "v": 93.0}, {"n": 10, "t": "2026-11-02T13:48:21", "v": 34.0}, {"n": 11, "t": "2026-11-02T14:25:01", "v": 31.0}, {"n": 12, "t": "2026-11-02T15:49:05", "v": 31.0}], "tests": [{"n": 1, "t": null, "v": 15.0}, {"n": 2, "t": null, "v": 24.0}, {"n": 3, "t": null, "v": 24.0}, {"n": 4, "t": null, "v": 32.0}, {"n": 5, "t": null, "v": 41.0}, {"n": 6, "t": "2026-10-29T18:50:13", "v": 45.0}, {"n": 7, "t": "2026-10-30T16:28:22", "v": 45.0}, {"n": 8, "t": "2026-11-02T11:49:26", "v": 45.0}, {"n": 9, "t": "2026-11-02T13:05:05", "v": 52.0}, {"n": 10, "t": "2026-11-02T13:48:21", "v": 56.0}, {"n": 11, "t": "2026-11-02T14:25:01", "v": 56.0}, {"n": 12, "t": "2026-11-02T15:49:05", "v": 57.0}]}, "source": "One game feature: its stats.jsonl", "state": "READ", "trends": [{"first": 0.9651, "first_n": 6, "kind": "CLOSURE", "label": "Share of breaks caught", "last": 0.9764, "last_n": 12, "readings": 7, "source": "One game feature: its stats.jsonl", "stat": "kill_rate", "state": "READ", "unit": "share", "verdict": "stalled", "want": "rise"}, {"first": 340.0, "first_n": 1, "kind": "NET", "label": "Breaks made", "last": 1473.0, "last_n": 12, "readings": 12, "source": "One game feature: its stats.jsonl", "stat": "mutants", "state": "READ", "unit": "count", "verdict": "improving", "want": "rise"}, {"first": 185.0, "first_n": 1, "kind": "CLOSURE", "label": "Breaks caught", "last": 1283.0, "last_n": 12, "readings": 12, "source": "One game feature: its stats.jsonl", "stat": "killed", "state": "READ", "unit": "count", "verdict": "improving", "want": "rise"}, {"first": 35.0, "first_n": 6, "kind": "OPEN", "label": "Breaks that got past, not yet explained", "last": 31.0, "last_n": 12, "readings": 7, "source": "One game feature: its stats.jsonl", "stat": "survived_unexplained", "state": "READ", "unit": "count", "verdict": "improving", "want": "fall"}, {"first": 676.0, "first_n": 1, "kind": "NET", "label": "Graph nodes", "last": 2308.0, "last_n": 12, "readings": 12, "source": "One game feature: its stats.jsonl", "stat": "graph_nodes", "state": "READ", "unit": "count", "verdict": "improving", "want": "rise"}, {"first": 15.0, "first_n": 1, "kind": "NET", "label": "Tests", "last": 57.0, "last_n": 12, "readings": 12, "source": "One game feature: its stats.jsonl", "stat": "tests", "state": "READ", "unit": "count", "verdict": "improving", "want": "rise"}, {"first": 0.0, "first_n": 0, "kind": "OPEN", "label": "Holes of ours", "last": 88.0, "last_n": 12, "readings": 13, "source": "One game feature: its stats.jsonl", "stat": "holes_ours", "state": "READ", "unit": "count", "verdict": "improving", "want": "fall"}]}], "state": "READ", "trend_note": "Each verdict is loop_stats.Trend's, read against the direction the stat should move. Under three passes it says too few. A rise in the share caught does not show the tests got better."}, "proof": {"as_of": "2026-10-31T20:45:49", "benchmark": {"counts": {"fails": 9, "inconclusive": 5, "not_finished": 0, "passes": 34}, "held": 46, "source": "autobot/benchmark.yaml", "total": 48}, "items": {"counts": {"fail": 0, "not_run": 40, "pass": 57, "unknown": 0}, "held": 37, "total": 97}, "lede": "The last time every command in the benchmark record was run again, and the state each entry records. Pass, fail, unknown (it gave no answer or may have checked nothing) and not run are different things, and the board counts them apart.", "source": "autobot/prove_all_results.json", "state": "READ", "tier": "fast"}, "schema": 1, "tiles": [{"label": "proof items that pass, of those shown", "source": "autobot/prove_all_results.json: 97 shown, 37 held", "state": "READ", "unit": "count", "value": 57}, {"label": "entities in the loop's own graph", "source": "autobot/selfmodel/kg/selfmodel.sqlite: entity, edge", "state": "READ", "unit": "count", "value": 2365}, {"label": "of breaks caught, pass 2 on the tool's own code (2 passes on file)", "source": "autobot/selfmodel/stats.jsonl", "state": "READ", "unit": "share", "value": 0.6042}, {"label": "optional parts on, of 29", "source": "autobot/switches.yaml", "state": "READ", "unit": "count", "value": 14}, {"label": "token saving, one setting for all the parts", "source": "autobot/switches.yaml: token_saving", "state": "READ", "unit": "text", "value": "Off"}], "tokens": {"held_runs": 6, "held_source": "autobot/benchmark.yaml (held entries with a token cost)", "lede": "What the runs cost in tokens, from each run's own record. Held runs are counted and their figures are not shown.", "runs": [{"label": "C1-accuracy: Are the links from documents to requirements correct?", "source": "autobot/benchmark.yaml: C1-accuracy cost.tokens", "tokens": 590651}, {"label": "D2: Do the growth charts refuse a bad log and draw only...", "source": "autobot/benchmark.yaml: D2 cost.tokens", "tokens": 445494}, {"label": "L1: Ranking the other requirements tools by a rubric fi...", "source": "autobot/benchmark.yaml: L1 cost.tokens", "tokens": 427469}, {"label": "T8: Joining two finished features, does the graph name...", "source": "autobot/benchmark.yaml: T8 cost.tokens", "tokens": 353000}, {"label": "T3: Can the language-neutral parts model public code?", "source": "autobot/benchmark.yaml: T3 cost.tokens", "tokens": 60000}, {"label": "T1: Does the example run on a machine with only a newer...", "source": "autobot/benchmark.yaml: T1 cost.tokens", "tokens": 15000}, {"label": "T4: Can a fresh agent install the kit from the zip alone?", "source": "autobot/benchmark.yaml: T4 cost.tokens", "tokens": 131000}, {"label": "V2: Does a stranger get a working, proved install from...", "source": "autobot/benchmark.yaml: V2 cost.tokens", "tokens": 114373}], "sources": ["autobot/benchmark.yaml"], "state": "READ"}}</script>
+<script type="application/json" id="config">{"dataUrl": "data.json", "form": "public", "pollSeconds": 60}</script>
+<script>
+'use strict';
+/* The telemetry page's script. Every mark of every chart is drawn by WebGPU (WGSL) onto a canvas; every word and number is HTML laid over it, and every chart has a table of the same numbers.
+   Classes: GpuHost (the one device and pipeline), MarkCanvas (one canvas of marks), Ink (the page's colours, read from its CSS), Marks (shapes as instances), BarChart, LineChart, MeterList, Tables, App. */
+
+const CONFIG = JSON.parse(document.getElementById('config').textContent);
+let DATA = JSON.parse(document.getElementById('data').textContent);
+const UNKNOWN = 'UNKNOWN';
+
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return e;
+}
+function num(v, unit) {
+  if (v == null) return UNKNOWN;
+  if (typeof v !== 'number') return String(v);
+  if (unit === 'share') return (v * 100).toFixed(1) + '%';
+  if (Number.isInteger(v)) return v.toLocaleString('en-US');
+  return String(Number(v.toPrecision(4)));
+}
+const cap = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+function clock(iso) { return iso ? iso.replace('T', ' ').slice(0, 16) : 'no date in the row'; }
+
+const WGSL = `
+struct U { size: vec2f, pad: vec2f };
+@group(0) @binding(0) var<uniform> u: U;
+struct I { @location(0) geom: vec4f, @location(1) radii: vec4f, @location(2) color: vec4f, @location(3) extra: vec4f };
+struct V { @builtin(position) pos: vec4f, @location(0) local: vec2f, @location(1) hs: vec2f, @location(2) radii: vec4f, @location(3) color: vec4f };
+@vertex fn vertexMain(@builtin(vertex_index) vi: u32, inst: I) -> V {
+  var q = array<vec2f, 6>(vec2f(-1.0, -1.0), vec2f(1.0, -1.0), vec2f(-1.0, 1.0), vec2f(-1.0, 1.0), vec2f(1.0, -1.0), vec2f(1.0, 1.0));
+  let c = q[vi];
+  let hs = inst.geom.zw;
+  let loc = c * (hs + vec2f(2.0, 2.0));
+  let cs = cos(inst.extra.x);
+  let sn = sin(inst.extra.x);
+  let rot = vec2f(loc.x * cs - loc.y * sn, loc.x * sn + loc.y * cs);
+  let p = inst.geom.xy + rot;
+  var o: V;
+  o.pos = vec4f(p.x / u.size.x * 2.0 - 1.0, 1.0 - p.y / u.size.y * 2.0, 0.0, 1.0);
+  o.local = loc; o.hs = hs; o.radii = inst.radii; o.color = inst.color;
+  return o;
+}
+@fragment fn fragmentMain(v: V) -> @location(0) vec4f {
+  let p = v.local;
+  var r = v.radii.x;
+  if (p.x > 0.0 && p.y < 0.0) { r = v.radii.y; }
+  else if (p.x > 0.0 && p.y >= 0.0) { r = v.radii.z; }
+  else if (p.x <= 0.0 && p.y >= 0.0) { r = v.radii.w; }
+  r = min(r, min(v.hs.x, v.hs.y));
+  let q = abs(p) - v.hs + vec2f(r, r);
+  let d = length(max(q, vec2f(0.0, 0.0))) + min(max(q.x, q.y), 0.0) - r;
+  let a = clamp(0.5 - d, 0.0, 1.0);
+  return vec4f(v.color.rgb, v.color.a * a);
+}`;
+
+class GpuHost {
+  static async open() {
+    if (!navigator.gpu) throw new Error('navigator.gpu is missing, so this browser has no WebGPU');
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) throw new Error('the browser has WebGPU but gave this page no adapter');
+    const device = await adapter.requestDevice();
+    const host = new GpuHost(device);
+    device.lost.then((i) => { host.lostWhy = i.message; console.error('WebGPU device lost: ' + i.message); });
+    device.addEventListener('uncapturederror', (e) => { host.errors.push(e.error.message); console.error('WebGPU: ' + e.error.message); });
+    await host.build();
+    return host;
+  }
+  constructor(device) { this.device = device; this.errors = []; this.lostWhy = null; this.format = navigator.gpu.getPreferredCanvasFormat(); }
+  async build() {
+    const d = this.device;
+    const module = d.createShaderModule({ code: WGSL });
+    const info = await module.getCompilationInfo();
+    const bad = info.messages.filter((m) => m.type === 'error');
+    if (bad.length) throw new Error('WGSL: ' + bad.map((m) => m.lineNum + ': ' + m.message).join('; '));
+    this.pipeline = d.createRenderPipeline({
+      layout: 'auto',
+      vertex: { module, entryPoint: 'vertexMain', buffers: [{ arrayStride: 64, stepMode: 'instance', attributes: [0, 1, 2, 3].map((i) => ({ shaderLocation: i, offset: 16 * i, format: 'float32x4' })) }] },
+      fragment: { module, entryPoint: 'fragmentMain', targets: [{ format: this.format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' } } }] },
+      primitive: { topology: 'triangle-list' },
+    });
+  }
+}
+
+class MarkCanvas {
+  constructor(host, canvas) {
+    this.host = host; this.canvas = canvas; this.w = 0; this.h = 0; this.cap = 0; this.buf = null; this.last = null;
+    this.ctx = canvas.getContext('webgpu');
+    this.ctx.configure({ device: host.device, format: host.format, alphaMode: 'opaque', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
+    this.ubuf = host.device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    this.bind = host.device.createBindGroup({ layout: host.pipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: this.ubuf } }] });
+  }
+  size(w, h) {
+    const dpr = window.devicePixelRatio || 1;
+    this.w = w; this.h = h;
+    this.canvas.style.width = w + 'px'; this.canvas.style.height = h + 'px';
+    this.canvas.width = Math.max(1, Math.round(w * dpr)); this.canvas.height = Math.max(1, Math.round(h * dpr));
+  }
+  draw(marks, clear, readback) {
+    const d = this.host.device, n = marks.length;
+    this.last = { marks, clear };
+    if (n > this.cap) {
+      if (this.buf) this.buf.destroy();
+      this.cap = Math.max(64, n * 2);
+      this.buf = d.createBuffer({ size: this.cap * 64, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
+    }
+    if (n) { const f = new Float32Array(n * 16); marks.forEach((m, i) => f.set(m, i * 16)); d.queue.writeBuffer(this.buf, 0, f); }
+    d.queue.writeBuffer(this.ubuf, 0, new Float32Array([this.w, this.h, 0, 0]));
+    const enc = d.createCommandEncoder();
+    const tex = this.ctx.getCurrentTexture();
+    const pass = enc.beginRenderPass({ colorAttachments: [{ view: tex.createView(), clearValue: { r: clear[0], g: clear[1], b: clear[2], a: 1 }, loadOp: 'clear', storeOp: 'store' }] });
+    pass.setPipeline(this.host.pipeline); pass.setBindGroup(0, this.bind);
+    if (n) { pass.setVertexBuffer(0, this.buf); pass.draw(6, n); }
+    pass.end();
+    let rb = null, bpr = 0;
+    if (readback) {
+      bpr = Math.ceil(tex.width * 4 / 256) * 256;
+      rb = d.createBuffer({ size: bpr * tex.height, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+      enc.copyTextureToBuffer({ texture: tex }, { buffer: rb, bytesPerRow: bpr }, [tex.width, tex.height]);
+    }
+    d.queue.submit([enc.finish()]);
+    return rb ? { rb, bpr, w: tex.width, h: tex.height } : null;
+  }
+  /* Draws the last marks again, copies the picture back and counts what is on it: pixels that differ from the surface, and how many distinct colours they hold. A canvas that never drew counts 0. */
+  async proof() {
+    if (!this.last) return { drawn: false, why: 'nothing was drawn on this canvas' };
+    const r = this.draw(this.last.marks, this.last.clear, true);
+    await r.rb.mapAsync(GPUMapMode.READ);
+    const px = new Uint8Array(r.rb.getMappedRange().slice(0));
+    r.rb.unmap(); r.rb.destroy();
+    const bg = this.last.clear.map((c) => Math.round(c * 255));
+    const bgra = this.host.format.startsWith('bgra');
+    let ink = 0; const seen = new Set();
+    for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) {
+      const o = y * r.bpr + x * 4;
+      const c = bgra ? [px[o + 2], px[o + 1], px[o]] : [px[o], px[o + 1], px[o + 2]];
+      if (Math.abs(c[0] - bg[0]) + Math.abs(c[1] - bg[1]) + Math.abs(c[2] - bg[2]) > 12) { ink++; if (seen.size < 4096) seen.add((c[0] >> 3) << 10 | (c[1] >> 3) << 5 | (c[2] >> 3)); }
+    }
+    return { drawn: true, marks: this.last.marks.length, width: r.w, height: r.h, inkPixels: ink, colours: seen.size };
+  }
+}
+
+class Ink {
+  constructor() {
+    const cs = getComputedStyle(document.documentElement);
+    const c = (n) => Ink.rgb(cs.getPropertyValue(n));
+    this.panel = c('--panel'); this.fg = c('--fg'); this.grid = c('--grid'); this.axis = c('--axis'); this.held = c('--held');
+    this.s = [c('--s1'), c('--s2'), c('--s3'), c('--s4')];
+    this.track = Ink.mix(this.panel, this.s[0], 0.24);
+  }
+  static rgb(t) {
+    const m = /^#([0-9a-f]{6})$/i.exec(t.trim());
+    if (!m) throw new Error('a colour token is not #rrggbb: ' + t);
+    const n = parseInt(m[1], 16);
+    return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255, 1];
+  }
+  static mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, 1]; }
+  tone(name) { return name === 'held' ? this.held : this.s[Math.max(0, Number(String(name).replace('s', '')) - 1) || 0]; }
+  lift(c) { return Ink.mix(c, this.fg, 0.28); }
+}
+
+const Marks = {
+  rect(list, x0, y0, x1, y1, color, radii) { const r = radii || [0, 0, 0, 0]; list.push([(x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2, (y1 - y0) / 2, r[0], r[1], r[2], r[3], color[0], color[1], color[2], color[3], 0, 0, 0, 0]); },
+  dot(list, cx, cy, r, color) { Marks.rect(list, cx - r, cy - r, cx + r, cy + r, color, [r, r, r, r]); },
+  seg(list, x0, y0, x1, y1, th, color) { const len = Math.hypot(x1 - x0, y1 - y0); list.push([(x0 + x1) / 2, (y0 + y1) / 2, len / 2 + th / 2, th / 2, th / 2, th / 2, th / 2, th / 2, color[0], color[1], color[2], color[3], Math.atan2(y1 - y0, x1 - x0), 0, 0, 0]); },
+  hline(list, x0, x1, y, color) { const yy = Math.round(y) + 0.5; Marks.rect(list, x0, yy - 0.5, x1, yy + 0.5, color); },
+  vline(list, x, y0, y1, color) { const xx = Math.round(x) + 0.5; Marks.rect(list, xx - 0.5, y0, xx + 0.5, y1, color); },
+};
+
+/* Common to every chart: a box, a canvas of marks under it when WebGPU is there, a note saying so when it is not, a tooltip. */
+class Chart {
+  constructor(app, id) {
+    this.app = app; this.id = id; this.mc = null; this.hot = null;
+    this.box = h('div', { class: 'box' });
+    this.tip = h('div', { class: 'tip', hidden: true });
+    if (app.gpu) {
+      const cv = h('canvas', { class: 'marks', 'aria-hidden': 'true', 'data-chart': id });
+      this.box.append(cv); this.mc = new MarkCanvas(app.gpu, cv);
+    } else this.box.append(h('p', { class: 'nogpu', text: 'The marks of this chart are not drawn: ' + app.gpuWhy + '. Every number is in the table under it.' }));
+    this.box.append(this.tip);
+    this.ro = new ResizeObserver(() => this.relayout());
+    this.ro.observe(this.box);
+  }
+  relayout() { if (!this.box.isConnected || this.box.clientWidth < 2) return; this.layout(); this.paint(); }   /* a box with no width is not laid out yet: the observer calls again when it has one */
+  rel(el) { const b = this.box.getBoundingClientRect(), r = el.getBoundingClientRect(); return { x: r.left - b.left, y: r.top - b.top, w: r.width, h: r.height }; }
+  place() { if (this.mc) { this.mc.size(Math.max(1, this.box.clientWidth), Math.max(1, this.box.clientHeight)); } }
+  show(html, x, y) {
+    this.tip.replaceChildren(...html); this.tip.hidden = false;
+    const w = this.tip.offsetWidth, hh = this.tip.offsetHeight, bw = this.box.clientWidth, bh = this.box.clientHeight;
+    this.tip.style.left = Math.max(0, Math.min(bw - w, x)) + 'px';
+    this.tip.style.top = Math.max(0, Math.min(bh - hh, y)) + 'px';
+  }
+  hide() { this.tip.hidden = true; }
+  destroy() { this.ro.disconnect(); }
+}
+
+class BarChart extends Chart {
+  /* rows: {label, value, text, tone, tip[] , unknown} - a bar from one baseline, the value at its tip, one hairline at the baseline. */
+  constructor(app, id, rows) {
+    super(app, id); this.rows = rows;
+    this.list = h('div', { class: 'bars', role: 'list' });
+    this.els = rows.map((r, i) => {
+      const val = h('span', { class: 'bval' + (r.unknown ? ' unk' : ''), text: r.text });
+      const slot = h('span', { class: 'bslot' }, val);
+      const row = h('div', { class: 'brow', role: 'listitem', tabindex: '0', 'aria-label': r.label + ': ' + r.text + (r.tip && r.tip.length ? '. ' + r.tip.join('. ') : '') }, h('span', { class: 'blabel', text: r.label }), slot);
+      row.addEventListener('pointerenter', () => this.focusRow(i));
+      row.addEventListener('focus', () => this.focusRow(i));
+      row.addEventListener('pointerleave', () => this.blur());
+      row.addEventListener('blur', () => this.blur());
+      this.list.append(row);
+      return { row, slot, val };
+    });
+    this.box.prepend(this.list);
+  }
+  focusRow(i) {
+    this.hot = i;
+    const r = this.rows[i], e = this.els[i];
+    this.els.forEach((x, j) => x.row.classList.toggle('hot', j === i));
+    const s = this.rel(e.slot);
+    this.show([h('b', { text: r.text }), ' ', h('span', { class: 'l', text: r.label }), ...(r.tip || []).map((t) => h('span', { class: 'm', text: t }))], s.x + s.w * 0.35, s.y + s.h + 6);
+    this.paint();
+  }
+  blur() { this.hot = null; this.els.forEach((x) => x.row.classList.remove('hot')); this.hide(); this.paint(); }
+  layout() {
+    this.place();
+    const slots = this.els.map((e) => this.rel(e.slot));
+    const reserve = Math.max(0, ...this.els.map((e) => e.val.offsetWidth)) + 12;
+    const max = Math.max(1, ...this.rows.filter((r) => !r.nobar).map((r) => r.value || 0));
+    this.geo = slots.map((s, i) => {
+      const len = this.rows[i].value > 0 && !this.rows[i].nobar ? Math.max(2, (this.rows[i].value / max) * Math.max(8, s.w - reserve)) : 0;
+      this.els[i].val.style.left = (len + 8) + 'px';
+      return { s, len };
+    });
+  }
+  paint() {
+    if (!this.mc || !this.geo) return;
+    const ink = this.app.ink, list = [];
+    if (this.geo.length) Marks.vline(list, this.geo[0].s.x, this.geo[0].s.y - 4, this.geo[this.geo.length - 1].s.y + this.geo[this.geo.length - 1].s.h + 4, ink.axis);
+    this.geo.forEach((g, i) => {
+      if (!(g.len > 0)) return;
+      const th = Math.min(18, g.s.h - 4), cy = g.s.y + g.s.h / 2, base = ink.tone(this.rows[i].tone || 's1');
+      Marks.rect(list, g.s.x, cy - th / 2, g.s.x + g.len, cy + th / 2, this.hot === i ? ink.lift(base) : base, [0, 4, 4, 0]);
+    });
+    this.mc.draw(list, ink.panel);
+  }
+}
+
+class MeterList extends Chart {
+  /* rows: {name, state: on|off|unknown, frac|null, line, why, tip[]} - a track and a fill per part that has a threshold; the words (state, numbers, reason) are HTML. */
+  constructor(app, id, rows) {
+    super(app, id); this.rows = rows;
+    this.list = h('div', { role: 'list' });
+    this.els = rows.map((r, i) => {
+      const slot = r.frac == null ? null : h('span', { class: 'mslot' });
+      const word = { on: 'On', off: 'Off', unknown: UNKNOWN }[r.state];
+      const chip = h('span', { class: 'chip ' + r.state }, h('span', { class: 'ic', 'aria-hidden': 'true' }), word);
+      const row = h('div', { class: 'mrow', role: 'listitem', tabindex: '0', 'aria-label': r.name + ': ' + word + '. ' + r.line + '. ' + r.why }, h('div', { class: 'mhead' }, h('span', { class: 'mname', text: r.name }), chip), slot, h('div', { class: 'mwhy', text: r.line + (r.line ? ' ' : '') + cap(r.why) }));
+      row.addEventListener('pointerenter', () => this.focusRow(i));
+      row.addEventListener('focus', () => this.focusRow(i));
+      row.addEventListener('pointerleave', () => this.blur());
+      row.addEventListener('blur', () => this.blur());
+      this.list.append(row);
+      return { row, slot };
+    });
+    this.box.prepend(this.list);
+  }
+  focusRow(i) { this.hot = i; this.els.forEach((x, j) => x.row.classList.toggle('hot', j === i)); this.paint(); }
+  blur() { this.hot = null; this.els.forEach((x) => x.row.classList.remove('hot')); this.paint(); }
+  layout() { this.place(); this.geo = this.els.map((e) => (e.slot ? this.rel(e.slot) : null)); }
+  paint() {
+    if (!this.mc || !this.geo) return;
+    const ink = this.app.ink, list = [];
+    this.geo.forEach((s, i) => {
+      if (!s) return;
+      const cy = s.y + s.h / 2, th = 8, f = Math.max(0, Math.min(1, this.rows[i].frac));
+      Marks.rect(list, s.x, cy - th / 2, s.x + s.w, cy + th / 2, ink.track, [4, 4, 4, 4]);
+      if (f > 0) Marks.rect(list, s.x, cy - th / 2, s.x + Math.max(th, s.w * f), cy + th / 2, this.hot === i ? ink.lift(ink.s[0]) : ink.s[0], [4, 4, 4, 4]);
+    });
+    this.mc.draw(list, ink.panel);
+  }
+}
+
+class LineChart extends Chart {
+  /* spec: {yMin, yMax, yTicks[], unit, xName, series: [{name, tone, points: [{x, y, t}], line: bool}]}. A series with fewer than the minimum readings is dots; a line breaks where a pass has no reading. */
+  constructor(app, id, spec) {
+    super(app, id); this.spec = spec; this.cursor = null;
+    this.plot = h('div', { class: 'plot' });
+    this.ticks = h('div'); this.ends = h('div');
+    this.root = h('div', { class: 'lc', tabindex: '0', role: 'img', 'aria-label': spec.aria });
+    this.plot.append(this.ticks, this.ends);
+    this.root.append(this.plot);
+    this.box.prepend(this.root);
+    this.xs = [...new Set(spec.series.flatMap((s) => s.points.map((p) => p.x)))].sort((a, b) => a - b);
+    this.root.addEventListener('pointermove', (e) => { const b = this.plot.getBoundingClientRect(); this.near(e.clientX - b.left); });
+    this.root.addEventListener('pointerleave', () => { this.cursor = null; this.hide(); this.paint(); });
+    this.root.addEventListener('keydown', (e) => this.key(e));
+    this.root.addEventListener('focus', () => { if (this.cursor == null && this.xs.length) this.setCursor(this.xs[this.xs.length - 1]); });
+    this.root.addEventListener('blur', () => { this.cursor = null; this.hide(); this.paint(); });
+    this.legend = h('ul', { class: 'legend' }, spec.series.map((s) => h('li', {}, h('i', { style: 'border-top-color:var(--' + s.tone + ')' }), s.name + ' (' + s.points.length + ' reading' + (s.points.length === 1 ? '' : 's') + ')')));
+  }
+  key(e) {
+    if (!this.xs.length) return;
+    const i = this.cursor == null ? this.xs.length - 1 : this.xs.indexOf(this.cursor);
+    if (e.key === 'ArrowLeft') this.setCursor(this.xs[Math.max(0, i - 1)]);
+    else if (e.key === 'ArrowRight') this.setCursor(this.xs[Math.min(this.xs.length - 1, i + 1)]);
+    else if (e.key === 'Escape') { this.cursor = null; this.hide(); this.paint(); } else return;
+    e.preventDefault();
+  }
+  near(px) {
+    if (!this.xs.length || !this.geo) return;
+    let best = this.xs[0], d = 1e9;
+    for (const x of this.xs) { const dx = Math.abs(this.sx(x) - px); if (dx < d) { d = dx; best = x; } }
+    this.setCursor(best);
+  }
+  setCursor(x) {
+    this.cursor = x;
+    const rows = [h('b', { text: this.spec.xName + ' ' + x })];
+    for (const s of this.spec.series) {
+      const p = s.points.find((q) => q.x === x);
+      rows.push(h('div', { class: 'r' }, h('i', { style: 'border-top-color:var(--' + s.tone + ')' }), h('b', { text: p ? num(p.y, this.spec.unit) : 'no reading' }), h('span', { class: 'l', text: s.name }), p ? h('span', { class: 'm', text: clock(p.t) }) : null));
+    }
+    this.show(rows, this.sx(x) + 14, 8);
+    this.paint();
+  }
+  sx(x) { const g = this.geo; return this.xs.length < 2 ? g.x0 + (g.x1 - g.x0) / 2 : g.x0 + (x - this.xs[0]) / (this.xs[this.xs.length - 1] - this.xs[0]) * (g.x1 - g.x0); }
+  sy(y) { const g = this.geo; return g.y1 - (y - this.spec.yMin) / (this.spec.yMax - this.spec.yMin) * (g.y1 - g.y0); }
+  layout() {
+    const W = this.box.clientWidth, narrow = W < 560, H = narrow ? 230 : 280;
+    this.plot.style.height = H + 'px'; this.place();
+    const ends = !narrow && this.spec.series.length > 1;
+    this.geo = { x0: 46, x1: W - (ends ? 150 : 14), y0: 12, y1: H - 44 };
+    this.ticks.replaceChildren(); this.ends.replaceChildren();
+    for (const t of this.spec.yTicks) this.ticks.append(h('span', { class: 'tk y', style: 'left:' + this.geo.x0 + 'px;top:' + this.sy(t) + 'px', text: num(t, this.spec.unit) }));
+    const step = this.xs.length > 16 ? Math.ceil(this.xs.length / 12) : 1;
+    this.xs.forEach((x, i) => { if (i % step === 0) this.ticks.append(h('span', { class: 'tk x', style: 'left:' + this.sx(x) + 'px;top:' + (this.geo.y1 + 8) + 'px', text: String(x) })); });
+    this.ticks.append(h('span', { class: 'axis-name', style: 'left:' + this.geo.x0 + 'px;top:' + (H - 20) + 'px', text: this.spec.xName + ' number' }));
+    const lasts = this.spec.series.filter((s) => s.points.length).map((s) => ({ s, p: s.points[s.points.length - 1] })).map((o) => ({ ...o, y: this.sy(o.p.y) })).sort((a, b) => a.y - b.y);
+    const clash = lasts.some((o, i) => i && o.y - lasts[i - 1].y < 17);
+    if (ends && !clash) for (const o of lasts) this.ends.append(h('span', { class: 'end', style: 'left:' + (this.sx(o.p.x) + 12) + 'px;top:' + o.y + 'px', text: o.s.name }));
+  }
+  paint() {
+    if (!this.mc || !this.geo) return;
+    const ink = this.app.ink, g = this.geo, list = [], sp = this.spec;
+    for (const t of sp.yTicks) Marks.hline(list, g.x0, g.x1, this.sy(t), t === sp.yMin ? ink.axis : ink.grid);
+    if (this.cursor != null) Marks.vline(list, this.sx(this.cursor), g.y0, g.y1, ink.axis);
+    for (const s of sp.series) {
+      const c = ink.tone(s.tone), pts = s.points;
+      if (s.line) for (let i = 1; i < pts.length; i++) if (pts[i].x - pts[i - 1].x === 1) Marks.seg(list, this.sx(pts[i - 1].x), this.sy(pts[i - 1].y), this.sx(pts[i].x), this.sy(pts[i].y), 2, c);
+    }
+    for (const s of sp.series) {
+      const c = ink.tone(s.tone);
+      for (const p of s.points) { const big = p.x === this.cursor; Marks.dot(list, this.sx(p.x), this.sy(p.y), big ? 8 : 6, ink.panel); Marks.dot(list, this.sx(p.x), this.sy(p.y), big ? 6 : 4, c); }
+    }
+    this.mc.draw(list, ink.panel);
+  }
+}
+
+const Tables = {
+  make(caption, head, rows) {
+    const t = h('table', {}, h('caption', { text: caption }), h('thead', {}, h('tr', {}, head.map((x) => h('th', { text: x })))));
+    const body = h('tbody');
+    for (const r of rows) body.append(h('tr', {}, r.map((c) => h('td', { class: (typeof c === 'object' && c && c.unk ? 'unk ' : '') + (typeof c === 'object' && c && c.num ? 'num' : ''), text: typeof c === 'object' && c ? c.text : c }))));
+    t.append(body);
+    return t;
+  },
+  details(app, table) { return h('details', { class: 'tbl', open: app.gpu ? false : true }, h('summary', { text: 'Table: the same numbers' }), h('div', { class: 'tw' }, table)); },
+};
+const N = (v, unit) => ({ text: num(v, unit), num: typeof v === 'number', unk: v == null || v === UNKNOWN });
+
+class App {
+  constructor() { this.charts = []; this.gpu = null; this.gpuWhy = ''; this.checked = Date.now(); }
+  async start() {
+    try { this.gpu = await GpuHost.open(); } catch (e) { this.gpu = null; this.gpuWhy = e.message; }
+    this.setupTheme();
+    this.render();
+    new MutationObserver(() => this.repaint()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => this.repaint());
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this.charts.forEach((c) => c.relayout()));
+    setInterval(() => this.stamp(), 1000);
+    if (CONFIG.dataUrl) { this.poll(); setInterval(() => this.poll(), CONFIG.pollSeconds * 1000); }
+  }
+  setupTheme() {
+    const b = document.getElementById('theme'), order = ['auto', 'light', 'dark'];
+    let saved = 'auto';
+    try { saved = localStorage.getItem('telemetry-theme') || 'auto'; } catch (e) { saved = 'auto'; }
+    const apply = (m) => { if (m === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', m); b.textContent = 'Theme: ' + m; b.dataset.mode = m; };
+    apply(order.includes(saved) ? saved : 'auto');
+    b.addEventListener('click', () => { const m = order[(order.indexOf(b.dataset.mode) + 1) % 3]; apply(m); try { localStorage.setItem('telemetry-theme', m); } catch (e) { /* the choice just is not remembered */ } });
+  }
+  repaint() { this.ink = new Ink(); this.charts.forEach((c) => c.paint()); }
+  stamp() {
+    const s = document.getElementById('stamp');
+    const age = Math.round((Date.now() - this.checked) / 1000);
+    const live = CONFIG.dataUrl ? 'Live: this page asks for the numbers again every ' + CONFIG.pollSeconds + ' seconds; the last answer came ' + age + ' seconds ago.' : 'A snapshot: this file does not ask for newer numbers.';
+    s.textContent = 'Numbers read ' + clock(DATA.generated) + '. ' + live;
+  }
+  async poll() {
+    try {
+      const r = await fetch(CONFIG.dataUrl + (CONFIG.dataUrl.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const next = await r.json();
+      this.checked = Date.now();
+      if (next.fingerprint !== DATA.fingerprint) { DATA = next; this.render(); }
+      else { DATA.generated = next.generated; }
+      this.stamp();
+    } catch (e) {
+      document.getElementById('stamp').textContent = 'Numbers read ' + clock(DATA.generated) + '. The live request failed (' + e.message + '), so these are the last numbers it had.';
+    }
+  }
+  unknown(why) { return h('p', { class: 'unknown', text: UNKNOWN + ': ' + why }); }
+  card(title, lede, ...kids) { return h('section', { class: 'card' }, h('h2', { text: title }), lede ? h('p', { text: lede }) : null, ...kids); }
+  reads(...sources) { return h('p', { class: 'reads', text: 'Read from: ' + sources.filter(Boolean).join('; ') }); }
+  mount(chart) { this.charts.push(chart); return chart.box; }
+  finish() { this.charts.forEach((c) => c.relayout()); }
+
+  render() {
+    this.charts.forEach((c) => c.destroy()); this.charts = [];
+    this.ink = new Ink();
+    const D = DATA;
+    document.getElementById('lede').textContent = D.lede;
+    const ban = document.getElementById('banner');
+    ban.hidden = !D.banner; ban.textContent = D.banner || '';
+    document.getElementById('tiles').replaceChildren(...D.tiles.map((t) => h('div', { class: 'tile' }, h('b', { class: t.state === 'READ' ? '' : 'unk', text: t.state === 'READ' ? num(t.value, t.unit) : UNKNOWN }), h('span', { text: t.label }), h('small', { text: t.state === 'READ' ? t.source : t.why }))));
+    const cards = document.getElementById('cards');
+    cards.replaceChildren(this.passes(D.passes), this.proof(D.proof), this.graph(D.graph), this.tokens(D.tokens), this.parts(D.parts));
+    document.getElementById('foot').textContent = D.foot;
+    this.stamp();
+    this.finish();
+  }
+
+  passes(P) {
+    if (P.state !== 'READ') return this.card('Passes and trends', null, this.unknown(P.why));
+    const withKill = P.projects.filter((p) => p.state === 'READ' && (p.series.kill_rate || []).length);
+    const tones = ['s1', 's2', 's3', 's4'];
+    const series = withKill.map((p, i) => ({ name: p.label, tone: tones[i % 4], points: p.series.kill_rate.map((q) => ({ x: q.n, y: q.v, t: q.t })), line: p.series.kill_rate.length >= P.min_line }));
+    const kids = [];
+    if (series.length) {
+      const chart = new LineChart(this, 'kill-rate', { yMin: 0, yMax: 1, yTicks: [0, 0.25, 0.5, 0.75, 1], unit: 'share', xName: 'Pass', series, aria: 'Share of breaks caught, by pass number, for ' + series.map((s) => s.name).join(', ') + '. The table under the chart gives every number.' });
+      kids.push(h('div', { class: 'sub' }, h('h3', { text: 'Share of breaks caught, by pass' }), this.mount(chart), chart.legend));
+    } else kids.push(this.unknown('no project log holds a share of breaks caught'));
+    const rows = [], head = ['Project', 'Pass', 'Date', 'Share of breaks caught'];
+    for (const s of series) for (const p of s.points) rows.push([s.name, N(p.x), p.t ? clock(p.t) : { text: UNKNOWN + ' (no date in the row)', unk: true }, N(p.y, 'share')]);
+    kids.push(Tables.details(this, Tables.make('Share of breaks caught, every reading', head, rows)));
+    const trows = [];
+    for (const p of P.projects) {
+      if (p.state !== 'READ') { trows.push([p.label, { text: UNKNOWN + ': ' + p.why, unk: true }, '', '', '', '']); continue; }
+      for (const t of p.trends) trows.push(t.state === 'READ' ? [p.label, t.label, N(t.readings), N(t.first, t.unit), N(t.last, t.unit), t.verdict] : [p.label, t.label, { text: UNKNOWN + ': ' + t.why, unk: true }, '', '', '']);
+    }
+    kids.push(h('div', { class: 'sub' }, h('h3', { text: 'Trends, as the loop reads them' }), h('p', { class: 'note', text: P.trend_note }), Tables.details(this, Tables.make('Each stat across the passes in a project log', ['Project', 'Stat', 'Readings', 'First', 'Last', 'Verdict'], trows))));
+    kids.push(this.reads(...P.projects.map((p) => p.source)));
+    return this.card('Passes and trends', P.lede, ...kids);
+  }
+
+  proof(B) {
+    if (B.state !== 'READ') return this.card('Proof board', null, this.unknown(B.why));
+    const mk = (counts, held, labels) => {
+      const rows = labels.map(([k, label]) => ({ label, value: counts[k] || 0, text: num(counts[k] || 0), tone: 's1', tip: [] }));
+      rows.push({ label: 'Held, not shown', value: held, text: num(held), tone: 'held', tip: ['Results of these are unpublished, so only how many there are is counted.'] });
+      return rows;
+    };
+    const known = ['pass', 'fail', 'unknown', 'not_run'];
+    const extra = Object.keys(B.items.counts).filter((k) => !known.includes(k)).map((k) => [k, k]);
+    const itemRows = mk(B.items.counts, B.items.held, [['pass', 'Pass'], ['fail', 'Fail'], ['unknown', 'Unknown (no answer)'], ['not_run', 'Not run'], ...extra]);
+    const benchRows = mk(B.benchmark.counts, B.benchmark.held, [['passes', 'Pass'], ['fails', 'Fail'], ['inconclusive', 'Unknown (inconclusive)'], ['not_finished', 'Not finished']]);
+    const c1 = new BarChart(this, 'proof-items', itemRows), c2 = new BarChart(this, 'proof-benchmark', benchRows);
+    const trows = (rows, what) => rows.map((r) => [what, r.label, N(r.value)]);
+    const kids = [
+      h('div', { class: 'sub' }, h('h3', { text: 'Proofs run again (' + B.items.total + ' shown), ' + B.tier + ' tier' }), this.mount(c1)),
+      h('div', { class: 'sub' }, h('h3', { text: 'Benchmark entries (' + B.benchmark.total + ' shown)' }), this.mount(c2)),
+      Tables.details(this, Tables.make('Proof board, every count', ['Set', 'Verdict', 'Count'], [...trows(itemRows, 'Proofs run again'), ...trows(benchRows, 'Benchmark entries'), ...(B.held_counts ? Object.entries(B.held_counts).map(([k, v]) => ['Held proofs, by verdict', k, N(v)]) : [])])),
+      this.reads(B.source, B.benchmark.source, 'as of ' + clock(B.as_of)),
+    ];
+    return this.card('Proof board', B.lede, ...kids);
+  }
+
+  graph(G) {
+    if (G.state !== 'READ') return this.card('The loop’s own graph', null, this.unknown(G.why));
+    const rows = G.by_kind.map((k) => ({ label: k.label, value: k.n, text: num(k.n), tone: 's1', tip: ['kind: ' + k.kind] }));
+    const c = new BarChart(this, 'graph-kinds', rows);
+    return this.card('The loop’s own graph', G.lede,
+      h('div', { class: 'sub' }, h('h3', { text: num(G.entities) + ' entities and ' + num(G.edges) + ' edges, by kind of entity' }), this.mount(c)),
+      Tables.details(this, Tables.make('Entities by kind', ['Kind', 'Name on this page', 'Entities'], G.by_kind.map((k) => [k.kind, k.label, N(k.n)]))),
+      this.reads(G.source, 'as of ' + clock(G.as_of)));
+  }
+
+  tokens(T) {
+    if (T.state !== 'READ') return this.card('Tokens by run', null, this.unknown(T.why));
+    const rows = T.runs.map((r) => ({ label: r.label, value: r.tokens, text: num(r.tokens), tone: 's1', tip: [r.source] }));
+    rows.push({ label: 'Held runs', value: T.held_runs, nobar: true, text: num(T.held_runs) + ' runs, figures not shown', tone: 'held', tip: ['How many runs have a token figure that is held; the count is all this page carries. It is a number of runs, not tokens, so it has no bar.'] });
+    const c = new BarChart(this, 'tokens', rows);
+    const kids = [h('div', { class: 'sub' }, h('h3', { text: 'Tokens spent per run' }), this.mount(c))];
+    if (rows.length === 1 && !T.runs.length) kids.unshift(this.unknown('no run with a token figure that may be shown'));
+    kids.push(Tables.details(this, Tables.make('Tokens per run', ['Run', 'Tokens', 'Read from'], [...T.runs.map((r) => [r.label, N(r.tokens), r.source]), ['Held runs (count only)', N(T.held_runs), T.held_source]])));
+    return this.card('Tokens by run', T.lede, ...kids, this.reads(...T.sources));
+  }
+
+  parts(S) {
+    if (S.state !== 'READ') return this.card('Optional parts: on or off, and why', null, this.unknown(S.why));
+    const rows = S.parts.map((p) => ({
+      name: p.name, state: p.effective, frac: p.frac,
+      line: p.state === 'READ' && p.threshold_text ? num(p.value) + ' of ' + p.threshold_text + '.' : '',
+      why: p.reason, tip: [],
+    }));
+    const c = new MeterList(this, 'parts', rows);
+    const as = S.auto_switch;
+    const proofs = S.proofs ? Object.values(S.proofs).map((x) => (x.state === 'READ' ? (x.of != null ? x.value + ' of ' + x.of + ' verbs of the saving proof passed' : x.cases + ' cases of the on/off proof, ' + x.exercised + ' exercised and ' + x.not_exercised + ' not, as of ' + clock(x.as_of)) + ' (' + x.source + ')' : UNKNOWN + ': ' + x.why)).join('; ') : null;
+    const kids = [
+      h('p', { class: 'modeline' }, h('span', { class: 'chip ' + (S.mode.saving ? 'on' : 'off') }, h('span', { class: 'ic', 'aria-hidden': 'true' }), S.mode.label), ' ', cap(S.mode.meaning), h('span', { class: 'note', text: ' Read from ' + S.mode.source + '.' })),
+      h('div', { class: 'sub' }, h('h3', { text: S.parts.filter((p) => p.effective === 'on').length + ' of ' + S.parts.length + ' optional parts are on' }), this.mount(c)),
+      proofs ? h('p', { class: 'note', style: 'margin-top:10px', text: 'On/off proofs on file, held results shown in this form only: ' + proofs + '.' }) : null,
+      h('p', { class: 'note', style: 'margin-top:12px', text: 'Always on, never switched off by a stat: ' + S.always_on.join(', ') + '.' }),
+      as.state === 'READ' ? h('p', { class: 'note', text: 'Self-switching: ' + as.text }) : this.unknown('self-switching: ' + as.why),
+      as.report ? Tables.details(this, Tables.make('Self-switching report, ' + as.source, ['Part', 'State', 'Why', 'Helped', 'Did not help', 'Could not tell', 'Tokens spent'],
+        as.report.map((r) => [r.name || { text: UNKNOWN, unk: true }, r.state || { text: UNKNOWN, unk: true }, r.reason || { text: UNKNOWN, unk: true }, N(r.helped), N(r.did_not_help), N(r.could_not_tell), N(r.tokens_spent)]))) : null,
+      Tables.details(this, Tables.make('Optional parts, ' + S.mode.label.toLowerCase(), ['Part', 'On or off', 'Default', 'Wake stat', 'Value', 'Threshold', 'Status of the threshold', 'Why'],
+        S.parts.map((p) => [p.name, p.state === 'READ' ? p.effective : { text: UNKNOWN, unk: true }, p.default, p.stat, p.state === 'READ' ? N(p.value) : { text: UNKNOWN + ': ' + p.value_why, unk: true }, p.threshold_text || { text: UNKNOWN, unk: true }, p.threshold_status, p.reason]))),
+      this.reads(S.source, S.registry_note),
+    ];
+    return this.card('Optional parts: on or off, and why', S.lede, ...kids);
+  }
+}
+
+const app = new App();
+window.__telemetry = {
+  app,
+  /* Proof that WebGPU drew: for each chart, the pixels read back from its canvas that differ from the surface, and the colours among them. */
+  async proof() {
+    const out = { webgpu: !!app.gpu, why: app.gpuWhy, errors: app.gpu ? app.gpu.errors : [], charts: {} };
+    for (const c of app.charts) out.charts[c.id] = c.mc ? await c.mc.proof() : { drawn: false, why: 'no WebGPU' };
+    return out;
+  },
+};
+app.start().catch((e) => { document.getElementById('cards').replaceChildren(h('p', { class: 'unknown', text: 'The page failed to start: ' + e.message })); console.error(e); });
+
+</script></body></html>

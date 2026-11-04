@@ -1,0 +1,2437 @@
+{
+ "banner": null,
+ "fingerprint": "29f4cf64012c",
+ "foot": "Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product. 37 proof items and 46 benchmark entries are held until a decision on a paper: they are counted here and not shown.",
+ "form": "public",
+ "generated": "2026-11-03T19:23:31",
+ "graph": {
+  "as_of": "2026-10-30T16:28:39",
+  "by_kind": [
+   {
+    "kind": "mutant",
+    "label": "Breaks (mutants)",
+    "n": 1639
+   },
+   {
+    "kind": "cell",
+    "label": "Branches (decisions)",
+    "n": 426
+   },
+   {
+    "kind": "test",
+    "label": "Tests",
+    "n": 131
+   },
+   {
+    "kind": "code",
+    "label": "Code (methods)",
+    "n": 38
+   },
+   {
+    "kind": "step",
+    "label": "Use case steps",
+    "n": 32
+   },
+   {
+    "kind": "requirement",
+    "label": "Requirements",
+    "n": 20
+   },
+   {
+    "kind": "name",
+    "label": "Names",
+    "n": 16
+   },
+   {
+    "kind": "assertion",
+    "label": "Effects (assertions)",
+    "n": 15
+   },
+   {
+    "kind": "source",
+    "label": "Sources",
+    "n": 13
+   },
+   {
+    "kind": "extension",
+    "label": "Alternate paths",
+    "n": 10
+   },
+   {
+    "kind": "use case",
+    "label": "Use cases",
+    "n": 8
+   },
+   {
+    "kind": "actor",
+    "label": "Actors",
+    "n": 7
+   },
+   {
+    "kind": "question",
+    "label": "Questions",
+    "n": 7
+   },
+   {
+    "kind": "space",
+    "label": "Closed sets",
+    "n": 3
+   }
+  ],
+  "edges": 6272,
+  "entities": 2365,
+  "lede": "Every requirement, use case step, decision, break and test the loop holds about its own code is one entity in this graph; the bars count them by kind. The graph growing means the record grew, not that the code improved.",
+  "source": "autobot/selfmodel/kg/selfmodel.sqlite: entity, edge",
+  "state": "READ"
+ },
+ "lede": "The closed loop's running stats, read from the files it keeps about itself. Every value names the file it came from, or says UNKNOWN and why. Every run measured here was small, and nothing on this page speaks to large systems.",
+ "parts": {
+  "always_on": [
+   "usecase_rules",
+   "commit_gate",
+   "record_check",
+   "leak_check",
+   "public_words_gate",
+   "telemetry_audit",
+   "claims_check",
+   "verification_gate",
+   "loop_stop_switch"
+  ],
+  "auto_switch": {
+   "state": "READ",
+   "text": "built; its results are not shown on this page."
+  },
+  "lede": "Each optional part has a state, and a reason the registry gives for it. The mode is one setting for all of them: with token saving on, a part that spends model tokens starts off until its threshold is tuned. A meter shows a part's wake stat against its threshold; a stat with no threshold set yet is UNKNOWN. A pass run with a flag can differ from the registry, and its report says what it ran.",
+  "mode": {
+   "label": "Token saving: off",
+   "meaning": "every part starts on, and the GNN waits for its stat.",
+   "saving": false,
+   "source": "autobot/switches.yaml: token_saving"
+  },
+  "parts": [
+   {
+    "calls_model": false,
+    "default": "off",
+    "effective": "off",
+    "enforced": true,
+    "frac": 0.473,
+    "id": "gnn_owner",
+    "name": "GNN link proposer (owner of a branch)",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: graph_entities is 2,365 (COUNT(*) FROM entity in selfmodel.sqlite), under the threshold 5,000 (owner_ruling, provisional): stays off",
+    "stat": "graph_entities",
+    "state": "READ",
+    "threshold_status": "a ruling, provisional",
+    "threshold_text": "5,000",
+    "value": 2365,
+    "value_source": "COUNT(*) FROM entity in selfmodel.sqlite",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": 0.473,
+    "id": "gnn_jobs_other",
+    "name": "GNN's other jobs (which tests catch a branch, which steps carry a requirement, likely-equivalent survivors, the relation lines)",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: graph_entities is 2,365 (COUNT(*) FROM entity in selfmodel.sqlite), under the threshold 5,000 (provisional): stays off",
+    "stat": "graph_entities",
+    "state": "READ",
+    "threshold_status": "an estimate",
+    "threshold_text": "5,000",
+    "value": 2365,
+    "value_source": "COUNT(*) FROM entity in selfmodel.sqlite",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": 32.4,
+    "id": "break_order_learned",
+    "name": "Learned order for running the breaks",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: woken: survivors is 648 (survived and not declared equivalent, verdicts.json), at or over the threshold 20 (provisional)",
+    "stat": "survivors",
+    "state": "READ",
+    "threshold_status": "an estimate",
+    "threshold_text": "20",
+    "value": 648,
+    "value_source": "survived and not declared equivalent, verdicts.json",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "break_testing",
+    "name": "Break testing (mutants)",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "decisions_in_scope",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 397,
+    "value_source": "last row of stats.jsonl, `decisions`",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": 0.0,
+    "id": "self_improvement",
+    "name": "Self-improvement (a row in the morph log and the stats' picks each pass)",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "measured_outcomes",
+    "state": "READ",
+    "threshold_status": "an estimate",
+    "threshold_text": "20",
+    "value": 0,
+    "value_source": "last row of improvement/graph_stats.jsonl, `measured_outcomes`",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "interrogate_pathways",
+    "name": "Alternate-pathway questions",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "use_case_extensions",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 10,
+    "value_source": "`ext` of each use case, usecases.yaml",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "interrogate_baseline_probe",
+    "name": "Baseline probe (who, what, why, when, where, before, after per module)",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "use_cases",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 8,
+    "value_source": "usecases.yaml",
+    "value_why": null
+   },
+   {
+    "calls_model": true,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "chain_check_first_pass",
+    "name": "Chain checker, first pass",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat chain_statements is UNKNOWN (no chain beside the model)",
+    "stat": "chain_statements",
+    "state": "UNKNOWN",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": null,
+    "value_source": null,
+    "value_why": "no chain beside the model"
+   },
+   {
+    "calls_model": true,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "blind_deep_look",
+    "name": "Blind deep look at a flagged statement",
+    "op": "in",
+    "reason": "defaults off by a specific ruling: default off; the stat material_kind cannot be read: declared by the job that runs the part (material_kind); a closed_loop.py pass does not run it",
+    "stat": "material_kind",
+    "state": "UNKNOWN",
+    "threshold_status": "an estimate",
+    "threshold_text": "answers",
+    "value": null,
+    "value_source": null,
+    "value_why": "declared by the job that runs the part (material_kind); a closed_loop.py pass does not run it"
+   },
+   {
+    "calls_model": true,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "sighted_recheck",
+    "name": "Sighted recheck (a reader shown the previous decision)",
+    "op": "in",
+    "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat material_kind is UNKNOWN (declared by the job that runs the part (material_kind); a closed_loop.py pass does not run it)",
+    "stat": "material_kind",
+    "state": "UNKNOWN",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": null,
+    "value_source": null,
+    "value_why": "declared by the job that runs the part (material_kind); a closed_loop.py pass does not run it"
+   },
+   {
+    "calls_model": true,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "full_source_review",
+    "name": "Full-source review",
+    "op": "==",
+    "reason": "token saving is off, so it starts on",
+    "stat": "source_available",
+    "state": "UNKNOWN",
+    "threshold_status": "measured",
+    "threshold_text": "True",
+    "value": null,
+    "value_source": null,
+    "value_why": "declared by the job that runs the part (source_available); a closed_loop.py pass does not run it"
+   },
+   {
+    "calls_model": true,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "recursive_rounds",
+    "name": "Rounds that add knowledge",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the stat unanswered_nodes cannot be read: declared by the job that runs the part (unanswered_nodes); a closed_loop.py pass does not run it",
+    "stat": "unanswered_nodes",
+    "state": "UNKNOWN",
+    "threshold_status": "an estimate",
+    "threshold_text": "1",
+    "value": null,
+    "value_source": null,
+    "value_why": "declared by the job that runs the part (unanswered_nodes); a closed_loop.py pass does not run it"
+   },
+   {
+    "calls_model": true,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "events_adding_nodes",
+    "name": "Events adding nodes to the graph",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the stat flagged_statements cannot be read: declared by the job that runs the part (flagged_statements); a closed_loop.py pass does not run it",
+    "stat": "flagged_statements",
+    "state": "UNKNOWN",
+    "threshold_status": "an estimate",
+    "threshold_text": "1",
+    "value": null,
+    "value_source": null,
+    "value_why": "declared by the job that runs the part (flagged_statements); a closed_loop.py pass does not run it"
+   },
+   {
+    "calls_model": true,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "question_generation",
+    "name": "Question generating and growing (scenario first)",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))",
+    "stat": "requirement_pool_tokens",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 1639,
+    "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)",
+    "value_why": null
+   },
+   {
+    "calls_model": true,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": 15.0,
+    "id": "problem_brainstorm",
+    "name": "Brainstorm rounds on the problem graph",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: woken: live_problems is 15 (problems not rejected, problems.yaml), at or over the threshold 1 (provisional)",
+    "stat": "live_problems",
+    "state": "READ",
+    "threshold_status": "an estimate",
+    "threshold_text": "1",
+    "value": 15,
+    "value_source": "problems not rejected, problems.yaml",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "slice_vectors",
+    "name": "Context vectors for the requirement slice",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))",
+    "stat": "requirement_pool_tokens",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 1639,
+    "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "req_graph_load",
+    "name": "Requirements loaded into one graph (no model)",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "requirement_pool_tokens",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 1639,
+    "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "local_screen",
+    "name": "Local-model screen of every requirement-to-code link",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))",
+    "stat": "requirement_pool_tokens",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 1639,
+    "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)",
+    "value_why": null
+   },
+   {
+    "calls_model": true,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "intent_review",
+    "name": "Intent review with the code hidden",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "chain_statements",
+    "state": "UNKNOWN",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": null,
+    "value_source": null,
+    "value_why": "no chain beside the model"
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "step_trace_route",
+    "name": "Code linked to steps by running each step's own tests",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "use_cases",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 8,
+    "value_source": "usecases.yaml",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "owner_head",
+    "name": "The owner head (which step owns a code place)",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "use_cases",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 8,
+    "value_source": "usecases.yaml",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "break_order_head",
+    "name": "The break-order head (survivors first)",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "survivors",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 648,
+    "value_source": "survived and not declared equivalent, verdicts.json",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "binds_head",
+    "name": "The binds head (a step's requirement lines first)",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))",
+    "stat": "requirement_pool_tokens",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 1639,
+    "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)",
+    "value_why": null
+   },
+   {
+    "calls_model": true,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "goals_asked_directly",
+    "name": "Goals asked directly from the sources",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "live_problems",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 15,
+    "value_source": "problems not rejected, problems.yaml",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "slice_cosine",
+    "name": "Cosine alone for a step's requirement slice",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat requirement_pool_tokens is 1,639 (characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition))",
+    "stat": "requirement_pool_tokens",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 1639,
+    "value_source": "characters over 4 of requirements.yaml (slice_test.py's convention; an estimate by definition)",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "off",
+    "effective": "off",
+    "enforced": false,
+    "frac": null,
+    "id": "operator_prior_order",
+    "name": "Break order by the operator family's survival rate",
+    "op": ">=",
+    "reason": "defaults off by a specific ruling: default off; the threshold is UNKNOWN (UNKNOWN), the stat survivors is 648 (survived and not declared equivalent, verdicts.json)",
+    "stat": "survivors",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 648,
+    "value_source": "survived and not declared equivalent, verdicts.json",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "stations_card",
+    "name": "The stations card names the next improvement",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "use_cases",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 8,
+    "value_source": "usecases.yaml",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "owner_question",
+    "name": "Ask the owner which step untested code carries out",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "use_cases",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 8,
+    "value_source": "usecases.yaml",
+    "value_why": null
+   },
+   {
+    "calls_model": false,
+    "default": "on",
+    "effective": "on",
+    "enforced": false,
+    "frac": null,
+    "id": "source_rules",
+    "name": "Every rule sentence of a source must be cited by a requirement",
+    "op": ">=",
+    "reason": "token saving is off, so it starts on",
+    "stat": "use_cases",
+    "state": "READ",
+    "threshold_status": "UNKNOWN",
+    "threshold_text": null,
+    "value": 8,
+    "value_source": "usecases.yaml",
+    "value_why": null
+   }
+  ],
+  "registry_note": "wake stats READ on autobot/selfmodel",
+  "source": "autobot/switches.yaml",
+  "state": "READ"
+ },
+ "passes": {
+  "lede": "One row per pass of the loop on a project, as the loop wrote it. A chart draws a line only through three or more readings, and breaks it where a pass holds no reading; with fewer it shows the readings as dots.",
+  "min_line": 3,
+  "projects": [
+   {
+    "first_time": "2026-10-29T15:26:47",
+    "key": "The kit’s C# example",
+    "label": "The kit’s C# example",
+    "last_time": "2026-10-29T21:42:35",
+    "passes": 6,
+    "series": {
+     "graph_nodes": [
+      {
+       "n": 1,
+       "t": "2026-10-29T15:26:47",
+       "v": 122.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T15:29:20",
+       "v": 122.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T15:31:55",
+       "v": 122.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T15:34:30",
+       "v": 122.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T15:34:40",
+       "v": 122.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T21:42:35",
+       "v": 122.0
+      }
+     ],
+     "holes_ours": [
+      {
+       "n": 1,
+       "t": "2026-10-29T15:26:47",
+       "v": 11.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T15:29:20",
+       "v": 5.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T15:31:55",
+       "v": 7.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T15:34:30",
+       "v": 0.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T15:34:40",
+       "v": 0.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T21:42:35",
+       "v": 0.0
+      }
+     ],
+     "kill_rate": [
+      {
+       "n": 1,
+       "t": "2026-10-29T15:26:47",
+       "v": 0.9474
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T15:29:20",
+       "v": 1.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T15:31:55",
+       "v": 0.9818
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T15:34:30",
+       "v": 1.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T15:34:40",
+       "v": 1.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T21:42:35",
+       "v": 1.0
+      }
+     ],
+     "killed": [
+      {
+       "n": 1,
+       "t": "2026-10-29T15:26:47",
+       "v": 54.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T15:29:20",
+       "v": 54.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T15:31:55",
+       "v": 54.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T15:34:30",
+       "v": 54.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T15:34:40",
+       "v": 54.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T21:42:35",
+       "v": 54.0
+      }
+     ],
+     "mutants": [
+      {
+       "n": 1,
+       "t": "2026-10-29T15:26:47",
+       "v": 58.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T15:29:20",
+       "v": 58.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T15:31:55",
+       "v": 58.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T15:34:30",
+       "v": 58.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T15:34:40",
+       "v": 58.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T21:42:35",
+       "v": 58.0
+      }
+     ],
+     "survived_unexplained": [
+      {
+       "n": 1,
+       "t": "2026-10-29T15:26:47",
+       "v": 3.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T15:29:20",
+       "v": 0.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T15:31:55",
+       "v": 1.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T15:34:30",
+       "v": 0.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T15:34:40",
+       "v": 0.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T21:42:35",
+       "v": 0.0
+      }
+     ],
+     "tests": [
+      {
+       "n": 1,
+       "t": "2026-10-29T15:26:47",
+       "v": 5.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T15:29:20",
+       "v": 5.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T15:31:55",
+       "v": 5.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T15:34:30",
+       "v": 5.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T15:34:40",
+       "v": 5.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T21:42:35",
+       "v": 5.0
+      }
+     ]
+    },
+    "source": "closed_loop_kit/example/stats.jsonl",
+    "state": "READ",
+    "trends": [
+     {
+      "first": 0.9474,
+      "first_n": 1,
+      "kind": "CLOSURE",
+      "label": "Share of breaks caught",
+      "last": 1.0,
+      "last_n": 6,
+      "readings": 6,
+      "source": "closed_loop_kit/example/stats.jsonl",
+      "stat": "kill_rate",
+      "state": "READ",
+      "unit": "share",
+      "verdict": "done",
+      "want": "rise"
+     },
+     {
+      "first": 58.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Breaks made",
+      "last": 58.0,
+      "last_n": 6,
+      "readings": 6,
+      "source": "closed_loop_kit/example/stats.jsonl",
+      "stat": "mutants",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 54.0,
+      "first_n": 1,
+      "kind": "CLOSURE",
+      "label": "Breaks caught",
+      "last": 54.0,
+      "last_n": 6,
+      "readings": 6,
+      "source": "closed_loop_kit/example/stats.jsonl",
+      "stat": "killed",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 3.0,
+      "first_n": 1,
+      "kind": "OPEN",
+      "label": "Breaks that got past, not yet explained",
+      "last": 0.0,
+      "last_n": 6,
+      "readings": 6,
+      "source": "closed_loop_kit/example/stats.jsonl",
+      "stat": "survived_unexplained",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "done",
+      "want": "fall"
+     },
+     {
+      "first": 122.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Graph nodes",
+      "last": 122.0,
+      "last_n": 6,
+      "readings": 6,
+      "source": "closed_loop_kit/example/stats.jsonl",
+      "stat": "graph_nodes",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 5.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Tests",
+      "last": 5.0,
+      "last_n": 6,
+      "readings": 6,
+      "source": "closed_loop_kit/example/stats.jsonl",
+      "stat": "tests",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 11.0,
+      "first_n": 1,
+      "kind": "OPEN",
+      "label": "Holes of ours",
+      "last": 0.0,
+      "last_n": 6,
+      "readings": 6,
+      "source": "closed_loop_kit/example/stats.jsonl",
+      "stat": "holes_ours",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "done",
+      "want": "fall"
+     }
+    ]
+   },
+   {
+    "first_time": "2026-10-29T17:52:20",
+    "key": "The kit’s Python example",
+    "label": "The kit’s Python example",
+    "last_time": "2026-10-29T21:40:28",
+    "passes": 14,
+    "series": {
+     "graph_nodes": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:52:20",
+       "v": 148.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T17:52:46",
+       "v": 149.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T17:53:07",
+       "v": 149.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T17:53:09",
+       "v": 149.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T18:25:35",
+       "v": 149.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:25:51",
+       "v": 149.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-29T21:37:22",
+       "v": 161.0
+      },
+      {
+       "n": 8,
+       "t": "2026-10-29T21:37:41",
+       "v": 161.0
+      },
+      {
+       "n": 9,
+       "t": "2026-10-29T21:38:08",
+       "v": 150.0
+      },
+      {
+       "n": 10,
+       "t": "2026-10-29T21:38:44",
+       "v": 150.0
+      },
+      {
+       "n": 11,
+       "t": "2026-10-29T21:39:23",
+       "v": 149.0
+      },
+      {
+       "n": 12,
+       "t": "2026-10-29T21:40:00",
+       "v": 149.0
+      },
+      {
+       "n": 13,
+       "t": "2026-10-29T21:40:16",
+       "v": 149.0
+      },
+      {
+       "n": 14,
+       "t": "2026-10-29T21:40:28",
+       "v": 149.0
+      }
+     ],
+     "holes_ours": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:52:20",
+       "v": 9.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T17:52:46",
+       "v": 7.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T17:53:07",
+       "v": 4.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T17:53:09",
+       "v": 0.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T18:25:35",
+       "v": 0.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:25:51",
+       "v": 0.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-29T21:37:22",
+       "v": 12.0
+      },
+      {
+       "n": 8,
+       "t": "2026-10-29T21:37:41",
+       "v": 12.0
+      },
+      {
+       "n": 9,
+       "t": "2026-10-29T21:38:08",
+       "v": 12.0
+      },
+      {
+       "n": 10,
+       "t": "2026-10-29T21:38:44",
+       "v": 9.0
+      },
+      {
+       "n": 11,
+       "t": "2026-10-29T21:39:23",
+       "v": 6.0
+      },
+      {
+       "n": 12,
+       "t": "2026-10-29T21:40:00",
+       "v": 5.0
+      },
+      {
+       "n": 13,
+       "t": "2026-10-29T21:40:16",
+       "v": 4.0
+      },
+      {
+       "n": 14,
+       "t": "2026-10-29T21:40:28",
+       "v": 0.0
+      }
+     ],
+     "kill_rate": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:52:20",
+       "v": 0.9565
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T17:52:46",
+       "v": 0.9851
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T17:53:07",
+       "v": 1.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T17:53:09",
+       "v": 1.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T18:25:35",
+       "v": 1.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:25:51",
+       "v": 1.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-29T21:37:22",
+       "v": 1.0
+      },
+      {
+       "n": 8,
+       "t": "2026-10-29T21:37:41",
+       "v": 1.0
+      },
+      {
+       "n": 9,
+       "t": "2026-10-29T21:38:08",
+       "v": 1.0
+      },
+      {
+       "n": 10,
+       "t": "2026-10-29T21:38:44",
+       "v": 1.0
+      },
+      {
+       "n": 11,
+       "t": "2026-10-29T21:39:23",
+       "v": 1.0
+      },
+      {
+       "n": 12,
+       "t": "2026-10-29T21:40:00",
+       "v": 1.0
+      },
+      {
+       "n": 13,
+       "t": "2026-10-29T21:40:16",
+       "v": 1.0
+      },
+      {
+       "n": 14,
+       "t": "2026-10-29T21:40:28",
+       "v": 1.0
+      }
+     ],
+     "killed": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:52:20",
+       "v": 66.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T17:52:46",
+       "v": 66.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T17:53:07",
+       "v": 66.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T17:53:09",
+       "v": 66.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T18:25:35",
+       "v": 66.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:25:51",
+       "v": 66.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-29T21:37:22",
+       "v": 66.0
+      },
+      {
+       "n": 8,
+       "t": "2026-10-29T21:37:41",
+       "v": 66.0
+      },
+      {
+       "n": 9,
+       "t": "2026-10-29T21:38:08",
+       "v": 66.0
+      },
+      {
+       "n": 10,
+       "t": "2026-10-29T21:38:44",
+       "v": 66.0
+      },
+      {
+       "n": 11,
+       "t": "2026-10-29T21:39:23",
+       "v": 66.0
+      },
+      {
+       "n": 12,
+       "t": "2026-10-29T21:40:00",
+       "v": 66.0
+      },
+      {
+       "n": 13,
+       "t": "2026-10-29T21:40:16",
+       "v": 66.0
+      },
+      {
+       "n": 14,
+       "t": "2026-10-29T21:40:28",
+       "v": 66.0
+      }
+     ],
+     "mutants": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:52:20",
+       "v": 69.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T17:52:46",
+       "v": 69.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T17:53:07",
+       "v": 69.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T17:53:09",
+       "v": 69.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T18:25:35",
+       "v": 69.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:25:51",
+       "v": 69.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-29T21:37:22",
+       "v": 69.0
+      },
+      {
+       "n": 8,
+       "t": "2026-10-29T21:37:41",
+       "v": 69.0
+      },
+      {
+       "n": 9,
+       "t": "2026-10-29T21:38:08",
+       "v": 69.0
+      },
+      {
+       "n": 10,
+       "t": "2026-10-29T21:38:44",
+       "v": 69.0
+      },
+      {
+       "n": 11,
+       "t": "2026-10-29T21:39:23",
+       "v": 69.0
+      },
+      {
+       "n": 12,
+       "t": "2026-10-29T21:40:00",
+       "v": 69.0
+      },
+      {
+       "n": 13,
+       "t": "2026-10-29T21:40:16",
+       "v": 69.0
+      },
+      {
+       "n": 14,
+       "t": "2026-10-29T21:40:28",
+       "v": 69.0
+      }
+     ],
+     "survived_unexplained": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:52:20",
+       "v": 3.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T17:52:46",
+       "v": 1.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T17:53:07",
+       "v": 0.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T17:53:09",
+       "v": 0.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T18:25:35",
+       "v": 0.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:25:51",
+       "v": 0.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-29T21:37:22",
+       "v": 0.0
+      },
+      {
+       "n": 8,
+       "t": "2026-10-29T21:37:41",
+       "v": 0.0
+      },
+      {
+       "n": 9,
+       "t": "2026-10-29T21:38:08",
+       "v": 0.0
+      },
+      {
+       "n": 10,
+       "t": "2026-10-29T21:38:44",
+       "v": 0.0
+      },
+      {
+       "n": 11,
+       "t": "2026-10-29T21:39:23",
+       "v": 0.0
+      },
+      {
+       "n": 12,
+       "t": "2026-10-29T21:40:00",
+       "v": 0.0
+      },
+      {
+       "n": 13,
+       "t": "2026-10-29T21:40:16",
+       "v": 0.0
+      },
+      {
+       "n": 14,
+       "t": "2026-10-29T21:40:28",
+       "v": 0.0
+      }
+     ],
+     "tests": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:52:20",
+       "v": 1.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-29T17:52:46",
+       "v": 1.0
+      },
+      {
+       "n": 3,
+       "t": "2026-10-29T17:53:07",
+       "v": 1.0
+      },
+      {
+       "n": 4,
+       "t": "2026-10-29T17:53:09",
+       "v": 1.0
+      },
+      {
+       "n": 5,
+       "t": "2026-10-29T18:25:35",
+       "v": 1.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:25:51",
+       "v": 1.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-29T21:37:22",
+       "v": 1.0
+      },
+      {
+       "n": 8,
+       "t": "2026-10-29T21:37:41",
+       "v": 1.0
+      },
+      {
+       "n": 9,
+       "t": "2026-10-29T21:38:08",
+       "v": 1.0
+      },
+      {
+       "n": 10,
+       "t": "2026-10-29T21:38:44",
+       "v": 13.0
+      },
+      {
+       "n": 11,
+       "t": "2026-10-29T21:39:23",
+       "v": 13.0
+      },
+      {
+       "n": 12,
+       "t": "2026-10-29T21:40:00",
+       "v": 13.0
+      },
+      {
+       "n": 13,
+       "t": "2026-10-29T21:40:16",
+       "v": 13.0
+      },
+      {
+       "n": 14,
+       "t": "2026-10-29T21:40:28",
+       "v": 13.0
+      }
+     ]
+    },
+    "source": "closed_loop_kit/example_py/stats.jsonl",
+    "state": "READ",
+    "trends": [
+     {
+      "first": 0.9565,
+      "first_n": 1,
+      "kind": "CLOSURE",
+      "label": "Share of breaks caught",
+      "last": 1.0,
+      "last_n": 14,
+      "readings": 14,
+      "source": "closed_loop_kit/example_py/stats.jsonl",
+      "stat": "kill_rate",
+      "state": "READ",
+      "unit": "share",
+      "verdict": "done",
+      "want": "rise"
+     },
+     {
+      "first": 69.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Breaks made",
+      "last": 69.0,
+      "last_n": 14,
+      "readings": 14,
+      "source": "closed_loop_kit/example_py/stats.jsonl",
+      "stat": "mutants",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 66.0,
+      "first_n": 1,
+      "kind": "CLOSURE",
+      "label": "Breaks caught",
+      "last": 66.0,
+      "last_n": 14,
+      "readings": 14,
+      "source": "closed_loop_kit/example_py/stats.jsonl",
+      "stat": "killed",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 3.0,
+      "first_n": 1,
+      "kind": "OPEN",
+      "label": "Breaks that got past, not yet explained",
+      "last": 0.0,
+      "last_n": 14,
+      "readings": 14,
+      "source": "closed_loop_kit/example_py/stats.jsonl",
+      "stat": "survived_unexplained",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "done",
+      "want": "fall"
+     },
+     {
+      "first": 148.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Graph nodes",
+      "last": 149.0,
+      "last_n": 14,
+      "readings": 14,
+      "source": "closed_loop_kit/example_py/stats.jsonl",
+      "stat": "graph_nodes",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 1.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Tests",
+      "last": 13.0,
+      "last_n": 14,
+      "readings": 14,
+      "source": "closed_loop_kit/example_py/stats.jsonl",
+      "stat": "tests",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 9.0,
+      "first_n": 1,
+      "kind": "OPEN",
+      "label": "Holes of ours",
+      "last": 0.0,
+      "last_n": 14,
+      "readings": 14,
+      "source": "closed_loop_kit/example_py/stats.jsonl",
+      "stat": "holes_ours",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "improving",
+      "want": "fall"
+     }
+    ]
+   },
+   {
+    "first_time": "2026-10-29T17:34:54",
+    "key": "The tool’s own code",
+    "label": "The tool’s own code",
+    "last_time": "2026-10-30T16:28:41",
+    "passes": 2,
+    "series": {
+     "graph_nodes": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:34:54",
+       "v": 2335.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-30T16:28:41",
+       "v": 2365.0
+      }
+     ],
+     "holes_ours": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:34:54",
+       "v": 252.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-30T16:28:41",
+       "v": 387.0
+      }
+     ],
+     "kill_rate": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:34:54",
+       "v": 0.5777
+      },
+      {
+       "n": 2,
+       "t": "2026-10-30T16:28:41",
+       "v": 0.6042
+      }
+     ],
+     "killed": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:34:54",
+       "v": 885.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-30T16:28:41",
+       "v": 989.0
+      }
+     ],
+     "mutants": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:34:54",
+       "v": 1626.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-30T16:28:41",
+       "v": 1639.0
+      }
+     ],
+     "survived_unexplained": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:34:54",
+       "v": 647.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-30T16:28:41",
+       "v": 648.0
+      }
+     ],
+     "tests": [
+      {
+       "n": 1,
+       "t": "2026-10-29T17:34:54",
+       "v": 5.0
+      },
+      {
+       "n": 2,
+       "t": "2026-10-30T16:28:41",
+       "v": 41.0
+      }
+     ]
+    },
+    "source": "autobot/selfmodel/stats.jsonl",
+    "state": "READ",
+    "trends": [
+     {
+      "first": 0.5777,
+      "first_n": 1,
+      "kind": "CLOSURE",
+      "label": "Share of breaks caught",
+      "last": 0.6042,
+      "last_n": 2,
+      "readings": 2,
+      "source": "autobot/selfmodel/stats.jsonl",
+      "stat": "kill_rate",
+      "state": "READ",
+      "unit": "share",
+      "verdict": "too few",
+      "want": "rise"
+     },
+     {
+      "first": 1626.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Breaks made",
+      "last": 1639.0,
+      "last_n": 2,
+      "readings": 2,
+      "source": "autobot/selfmodel/stats.jsonl",
+      "stat": "mutants",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "too few",
+      "want": "rise"
+     },
+     {
+      "first": 885.0,
+      "first_n": 1,
+      "kind": "CLOSURE",
+      "label": "Breaks caught",
+      "last": 989.0,
+      "last_n": 2,
+      "readings": 2,
+      "source": "autobot/selfmodel/stats.jsonl",
+      "stat": "killed",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "too few",
+      "want": "rise"
+     },
+     {
+      "first": 647.0,
+      "first_n": 1,
+      "kind": "OPEN",
+      "label": "Breaks that got past, not yet explained",
+      "last": 648.0,
+      "last_n": 2,
+      "readings": 2,
+      "source": "autobot/selfmodel/stats.jsonl",
+      "stat": "survived_unexplained",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "too few",
+      "want": "fall"
+     },
+     {
+      "first": 2335.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Graph nodes",
+      "last": 2365.0,
+      "last_n": 2,
+      "readings": 2,
+      "source": "autobot/selfmodel/stats.jsonl",
+      "stat": "graph_nodes",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "too few",
+      "want": "rise"
+     },
+     {
+      "first": 5.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Tests",
+      "last": 41.0,
+      "last_n": 2,
+      "readings": 2,
+      "source": "autobot/selfmodel/stats.jsonl",
+      "stat": "tests",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "too few",
+      "want": "rise"
+     },
+     {
+      "first": 252.0,
+      "first_n": 1,
+      "kind": "OPEN",
+      "label": "Holes of ours",
+      "last": 387.0,
+      "last_n": 2,
+      "readings": 2,
+      "source": "autobot/selfmodel/stats.jsonl",
+      "stat": "holes_ours",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "too few",
+      "want": "fall"
+     }
+    ]
+   },
+   {
+    "first_time": "2026-10-29T18:50:13",
+    "key": "One game feature",
+    "label": "One game feature",
+    "last_time": "2026-11-02T15:49:05",
+    "passes": 13,
+    "series": {
+     "graph_nodes": [
+      {
+       "n": 1,
+       "t": null,
+       "v": 676.0
+      },
+      {
+       "n": 2,
+       "t": null,
+       "v": 685.0
+      },
+      {
+       "n": 3,
+       "t": null,
+       "v": 1042.0
+      },
+      {
+       "n": 4,
+       "t": null,
+       "v": 1191.0
+      },
+      {
+       "n": 5,
+       "t": null,
+       "v": 1271.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:50:13",
+       "v": 1714.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-30T16:28:22",
+       "v": 1729.0
+      },
+      {
+       "n": 8,
+       "t": "2026-11-02T11:49:26",
+       "v": 1719.0
+      },
+      {
+       "n": 9,
+       "t": "2026-11-02T13:05:05",
+       "v": 2259.0
+      },
+      {
+       "n": 10,
+       "t": "2026-11-02T13:48:21",
+       "v": 2244.0
+      },
+      {
+       "n": 11,
+       "t": "2026-11-02T14:25:01",
+       "v": 2240.0
+      },
+      {
+       "n": 12,
+       "t": "2026-11-02T15:49:05",
+       "v": 2308.0
+      }
+     ],
+     "holes_ours": [
+      {
+       "n": 0,
+       "t": null,
+       "v": 0.0
+      },
+      {
+       "n": 1,
+       "t": null,
+       "v": 68.0
+      },
+      {
+       "n": 2,
+       "t": null,
+       "v": 40.0
+      },
+      {
+       "n": 3,
+       "t": null,
+       "v": 92.0
+      },
+      {
+       "n": 4,
+       "t": null,
+       "v": 47.0
+      },
+      {
+       "n": 5,
+       "t": null,
+       "v": 42.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:50:13",
+       "v": 77.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-30T16:28:22",
+       "v": 77.0
+      },
+      {
+       "n": 8,
+       "t": "2026-11-02T11:49:26",
+       "v": 77.0
+      },
+      {
+       "n": 9,
+       "t": "2026-11-02T13:05:05",
+       "v": 240.0
+      },
+      {
+       "n": 10,
+       "t": "2026-11-02T13:48:21",
+       "v": 91.0
+      },
+      {
+       "n": 11,
+       "t": "2026-11-02T14:25:01",
+       "v": 88.0
+      },
+      {
+       "n": 12,
+       "t": "2026-11-02T15:49:05",
+       "v": 88.0
+      }
+     ],
+     "kill_rate": [
+      {
+       "n": 6,
+       "t": "2026-10-29T18:50:13",
+       "v": 0.9651
+      },
+      {
+       "n": 7,
+       "t": "2026-10-30T16:28:22",
+       "v": 0.9653
+      },
+      {
+       "n": 8,
+       "t": "2026-11-02T11:49:26",
+       "v": 0.9653
+      },
+      {
+       "n": 9,
+       "t": "2026-11-02T13:05:05",
+       "v": 0.9279
+      },
+      {
+       "n": 10,
+       "t": "2026-11-02T13:48:21",
+       "v": 0.9738
+      },
+      {
+       "n": 11,
+       "t": "2026-11-02T14:25:01",
+       "v": 0.9759
+      },
+      {
+       "n": 12,
+       "t": "2026-11-02T15:49:05",
+       "v": 0.9764
+      }
+     ],
+     "killed": [
+      {
+       "n": 1,
+       "t": null,
+       "v": 185.0
+      },
+      {
+       "n": 2,
+       "t": null,
+       "v": 268.0
+      },
+      {
+       "n": 3,
+       "t": null,
+       "v": 454.0
+      },
+      {
+       "n": 4,
+       "t": null,
+       "v": 609.0
+      },
+      {
+       "n": 5,
+       "t": null,
+       "v": 744.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:50:13",
+       "v": 967.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-30T16:28:22",
+       "v": 974.0
+      },
+      {
+       "n": 8,
+       "t": "2026-11-02T11:49:26",
+       "v": 974.0
+      },
+      {
+       "n": 9,
+       "t": "2026-11-02T13:05:05",
+       "v": 1196.0
+      },
+      {
+       "n": 10,
+       "t": "2026-11-02T13:48:21",
+       "v": 1263.0
+      },
+      {
+       "n": 11,
+       "t": "2026-11-02T14:25:01",
+       "v": 1256.0
+      },
+      {
+       "n": 12,
+       "t": "2026-11-02T15:49:05",
+       "v": 1283.0
+      }
+     ],
+     "mutants": [
+      {
+       "n": 1,
+       "t": null,
+       "v": 340.0
+      },
+      {
+       "n": 2,
+       "t": null,
+       "v": 340.0
+      },
+      {
+       "n": 3,
+       "t": null,
+       "v": 631.0
+      },
+      {
+       "n": 4,
+       "t": null,
+       "v": 772.0
+      },
+      {
+       "n": 5,
+       "t": null,
+       "v": 806.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:50:13",
+       "v": 1097.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-30T16:28:22",
+       "v": 1104.0
+      },
+      {
+       "n": 8,
+       "t": "2026-11-02T11:49:26",
+       "v": 1104.0
+      },
+      {
+       "n": 9,
+       "t": "2026-11-02T13:05:05",
+       "v": 1459.0
+      },
+      {
+       "n": 10,
+       "t": "2026-11-02T13:48:21",
+       "v": 1442.0
+      },
+      {
+       "n": 11,
+       "t": "2026-11-02T14:25:01",
+       "v": 1435.0
+      },
+      {
+       "n": 12,
+       "t": "2026-11-02T15:49:05",
+       "v": 1473.0
+      }
+     ],
+     "survived_unexplained": [
+      {
+       "n": 6,
+       "t": "2026-10-29T18:50:13",
+       "v": 35.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-30T16:28:22",
+       "v": 35.0
+      },
+      {
+       "n": 8,
+       "t": "2026-11-02T11:49:26",
+       "v": 35.0
+      },
+      {
+       "n": 9,
+       "t": "2026-11-02T13:05:05",
+       "v": 93.0
+      },
+      {
+       "n": 10,
+       "t": "2026-11-02T13:48:21",
+       "v": 34.0
+      },
+      {
+       "n": 11,
+       "t": "2026-11-02T14:25:01",
+       "v": 31.0
+      },
+      {
+       "n": 12,
+       "t": "2026-11-02T15:49:05",
+       "v": 31.0
+      }
+     ],
+     "tests": [
+      {
+       "n": 1,
+       "t": null,
+       "v": 15.0
+      },
+      {
+       "n": 2,
+       "t": null,
+       "v": 24.0
+      },
+      {
+       "n": 3,
+       "t": null,
+       "v": 24.0
+      },
+      {
+       "n": 4,
+       "t": null,
+       "v": 32.0
+      },
+      {
+       "n": 5,
+       "t": null,
+       "v": 41.0
+      },
+      {
+       "n": 6,
+       "t": "2026-10-29T18:50:13",
+       "v": 45.0
+      },
+      {
+       "n": 7,
+       "t": "2026-10-30T16:28:22",
+       "v": 45.0
+      },
+      {
+       "n": 8,
+       "t": "2026-11-02T11:49:26",
+       "v": 45.0
+      },
+      {
+       "n": 9,
+       "t": "2026-11-02T13:05:05",
+       "v": 52.0
+      },
+      {
+       "n": 10,
+       "t": "2026-11-02T13:48:21",
+       "v": 56.0
+      },
+      {
+       "n": 11,
+       "t": "2026-11-02T14:25:01",
+       "v": 56.0
+      },
+      {
+       "n": 12,
+       "t": "2026-11-02T15:49:05",
+       "v": 57.0
+      }
+     ]
+    },
+    "source": "One game feature: its stats.jsonl",
+    "state": "READ",
+    "trends": [
+     {
+      "first": 0.9651,
+      "first_n": 6,
+      "kind": "CLOSURE",
+      "label": "Share of breaks caught",
+      "last": 0.9764,
+      "last_n": 12,
+      "readings": 7,
+      "source": "One game feature: its stats.jsonl",
+      "stat": "kill_rate",
+      "state": "READ",
+      "unit": "share",
+      "verdict": "stalled",
+      "want": "rise"
+     },
+     {
+      "first": 340.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Breaks made",
+      "last": 1473.0,
+      "last_n": 12,
+      "readings": 12,
+      "source": "One game feature: its stats.jsonl",
+      "stat": "mutants",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "improving",
+      "want": "rise"
+     },
+     {
+      "first": 185.0,
+      "first_n": 1,
+      "kind": "CLOSURE",
+      "label": "Breaks caught",
+      "last": 1283.0,
+      "last_n": 12,
+      "readings": 12,
+      "source": "One game feature: its stats.jsonl",
+      "stat": "killed",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "improving",
+      "want": "rise"
+     },
+     {
+      "first": 35.0,
+      "first_n": 6,
+      "kind": "OPEN",
+      "label": "Breaks that got past, not yet explained",
+      "last": 31.0,
+      "last_n": 12,
+      "readings": 7,
+      "source": "One game feature: its stats.jsonl",
+      "stat": "survived_unexplained",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "improving",
+      "want": "fall"
+     },
+     {
+      "first": 676.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Graph nodes",
+      "last": 2308.0,
+      "last_n": 12,
+      "readings": 12,
+      "source": "One game feature: its stats.jsonl",
+      "stat": "graph_nodes",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "improving",
+      "want": "rise"
+     },
+     {
+      "first": 15.0,
+      "first_n": 1,
+      "kind": "NET",
+      "label": "Tests",
+      "last": 57.0,
+      "last_n": 12,
+      "readings": 12,
+      "source": "One game feature: its stats.jsonl",
+      "stat": "tests",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "improving",
+      "want": "rise"
+     },
+     {
+      "first": 0.0,
+      "first_n": 0,
+      "kind": "OPEN",
+      "label": "Holes of ours",
+      "last": 88.0,
+      "last_n": 12,
+      "readings": 13,
+      "source": "One game feature: its stats.jsonl",
+      "stat": "holes_ours",
+      "state": "READ",
+      "unit": "count",
+      "verdict": "improving",
+      "want": "fall"
+     }
+    ]
+   }
+  ],
+  "state": "READ",
+  "trend_note": "Each verdict is loop_stats.Trend's, read against the direction the stat should move. Under three passes it says too few. A rise in the share caught does not show the tests got better."
+ },
+ "proof": {
+  "as_of": "2026-10-31T20:45:49",
+  "benchmark": {
+   "counts": {
+    "fails": 9,
+    "inconclusive": 5,
+    "not_finished": 0,
+    "passes": 34
+   },
+   "held": 46,
+   "source": "autobot/benchmark.yaml",
+   "total": 48
+  },
+  "items": {
+   "counts": {
+    "fail": 0,
+    "not_run": 40,
+    "pass": 57,
+    "unknown": 0
+   },
+   "held": 37,
+   "total": 97
+  },
+  "lede": "The last time every command in the benchmark record was run again, and the state each entry records. Pass, fail, unknown (it gave no answer or may have checked nothing) and not run are different things, and the board counts them apart.",
+  "source": "autobot/prove_all_results.json",
+  "state": "READ",
+  "tier": "fast"
+ },
+ "schema": 1,
+ "tiles": [
+  {
+   "label": "proof items that pass, of those shown",
+   "source": "autobot/prove_all_results.json: 97 shown, 37 held",
+   "state": "READ",
+   "unit": "count",
+   "value": 57
+  },
+  {
+   "label": "entities in the loop's own graph",
+   "source": "autobot/selfmodel/kg/selfmodel.sqlite: entity, edge",
+   "state": "READ",
+   "unit": "count",
+   "value": 2365
+  },
+  {
+   "label": "of breaks caught, pass 2 on the tool's own code (2 passes on file)",
+   "source": "autobot/selfmodel/stats.jsonl",
+   "state": "READ",
+   "unit": "share",
+   "value": 0.6042
+  },
+  {
+   "label": "optional parts on, of 29",
+   "source": "autobot/switches.yaml",
+   "state": "READ",
+   "unit": "count",
+   "value": 14
+  },
+  {
+   "label": "token saving, one setting for all the parts",
+   "source": "autobot/switches.yaml: token_saving",
+   "state": "READ",
+   "unit": "text",
+   "value": "Off"
+  }
+ ],
+ "tokens": {
+  "held_runs": 6,
+  "held_source": "autobot/benchmark.yaml (held entries with a token cost)",
+  "lede": "What the runs cost in tokens, from each run's own record. Held runs are counted and their figures are not shown.",
+  "runs": [
+   {
+    "label": "C1-accuracy: Are the links from documents to requirements correct?",
+    "source": "autobot/benchmark.yaml: C1-accuracy cost.tokens",
+    "tokens": 590651
+   },
+   {
+    "label": "D2: Do the growth charts refuse a bad log and draw only...",
+    "source": "autobot/benchmark.yaml: D2 cost.tokens",
+    "tokens": 445494
+   },
+   {
+    "label": "L1: Ranking the other requirements tools by a rubric fi...",
+    "source": "autobot/benchmark.yaml: L1 cost.tokens",
+    "tokens": 427469
+   },
+   {
+    "label": "T8: Joining two finished features, does the graph name...",
+    "source": "autobot/benchmark.yaml: T8 cost.tokens",
+    "tokens": 353000
+   },
+   {
+    "label": "T3: Can the language-neutral parts model public code?",
+    "source": "autobot/benchmark.yaml: T3 cost.tokens",
+    "tokens": 60000
+   },
+   {
+    "label": "T1: Does the example run on a machine with only a newer...",
+    "source": "autobot/benchmark.yaml: T1 cost.tokens",
+    "tokens": 15000
+   },
+   {
+    "label": "T4: Can a fresh agent install the kit from the zip alone?",
+    "source": "autobot/benchmark.yaml: T4 cost.tokens",
+    "tokens": 131000
+   },
+   {
+    "label": "V2: Does a stranger get a working, proved install from...",
+    "source": "autobot/benchmark.yaml: V2 cost.tokens",
+    "tokens": 114373
+   }
+  ],
+  "sources": [
+   "autobot/benchmark.yaml"
+  ],
+  "state": "READ"
+ }
+}
