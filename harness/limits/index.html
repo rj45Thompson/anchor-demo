@@ -72,7 +72,7 @@ details.mtoc { display: none }
 }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
 </style><title>The limits</title><style>main{max-width:760px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}</style></head><body><main>
-<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../fly/">The fly-through manual</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../growth/">Growth</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../public-code/">Code you can read yourself</a><a href="../gnn-on-itself/">The tool on its own networks</a><a href="../self-improvement/">Self-improvement</a><a href="../on-vs-off/">On against off</a><a href="../limits/" aria-current="page" style="font-weight:600;color:inherit">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a><a href="https://github.com/rj45Thompson/closed-loop-kit">The kit</a></nav>
+<nav aria-label="Key concepts" style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:28px;font-size:15px"><a href="../">The fly-through</a><a href="../fly/">The fly-through manual</a><a href="../goals/">Goals List</a><a href="../stats/">Stats List</a><a href="../growth/">Growth</a><a href="../telemetry/">Telemetry</a><a href="../accuracy/">The key is accuracy</a><a href="../requirements/">Requirements first</a><a href="../breaks/">Breaking the code</a><a href="../node-graph/">The node graph</a><a href="../chains/">Claude&#x27;s reasoning</a><a href="../gnn/">The graph neural networks</a><a href="../public-code/">Code you can read yourself</a><a href="../gnn-on-itself/">The tool on its own networks</a><a href="../self-improvement/">Self-improvement</a><a href="../limits/" aria-current="page" style="font-weight:600;color:inherit">The limits</a><a href="../deck/">The deck</a><a href="../manual/">The whole manual</a><a href="https://github.com/rj45Thompson/closed-loop-kit">The kit</a></nav>
 <section id="limits">
 <h2>What it is not, yet</h2>
 <div class="box evidence"><p class="label">The first trial on code anyone can read</p>
@@ -88,22 +88,22 @@ details.mtoc { display: none }
 <li><strong>Feel is not checked.</strong> Visuals, timing and feel still need a person to look.</li>
 </ul>
 <p>Used where it does not fit, it can be worse than not using it at all.</p>
-<p class="seen">On the slides: <a href="../../harness/deck/#slide-15">slide 15</a>.</p>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-14">slide 14</a>.</p>
 </section>
 <section id="targets">
 <h2>The two targets</h2>
 <p>These are goals for the loop at its full potential, used where it fits. Neither has been measured yet.</p>
 <div class="box"><p class="label" style="color:var(--orange)">95% accuracy or better</p>
 <p><span class="chip target">Target</span> Agents using the loop on work it fits should get the task right at least 95 times in 100. The remaining 5% would be bugs in our own code.</p>
-<p><strong>How it will be measured:</strong> the on/off harness, graded blind, counted per failure pile, with the hidden acceptance test deciding whether the task was done.</p></div>
+<p><strong>How it will be measured:</strong> answers graded blind, counted per failure pile, with a hidden acceptance test deciding whether the task was done.</p></div>
 <div class="box"><p class="label" style="color:var(--orange)">Up to 90% fewer tokens</p>
 <p><span class="chip target">Target</span> On average, up to 90% fewer tokens per closed requirement, because a later step looks up what the graph already holds instead of re-reading and re-deriving it. This number is always being re-evaluated.</p>
-<p><strong>How it will be measured:</strong> the same harness, from each arm’s own usage records (the tokens the model read and wrote), per task.</p>
-<p><span class="chip measured">Measured</span> <strong>The first data point goes the other way:</strong> on one small, precisely specified task, the loop used 58% more tokens for the same correctness (<a href="../on-vs-off/#ab">details</a>). The target is about larger systems held across many changes, where re-reading and re-deriving is what costs; that has not been measured yet.</p></div>
+<p><strong>How it will be measured:</strong> from each run’s own usage records (the tokens the model read and wrote), per closed requirement.</p>
+<p>The target is about larger systems held across many changes, where re-reading and re-deriving is what costs; that has not been measured yet.</p></div>
 <div class="box"><p class="label" style="color:var(--orange)">What is next: from a rough epic to code that is right</p>
 <p>The tool’s main intent is to take the requirements for a game from a rough epic use case and grow them into a larger set, so that the code written from them is as accurate as it can be. The question behind it is a question and not a result: if the requirements for something very difficult are complete and checked, how far does that move what an AI can build? The direction is better tools for making video games.</p>
-<p><span class="chip measured">Measured</span> How much of existing code its tests hold, on three public targets, and that an agent reading carefully finds the same faults the loop does (<a href="../public-code/#publiccode">on code you can read for yourself</a>).</p>
-<p><span class="chip open">Open</span> The epic-to-code test has run, and its results will be published with the benchmark. The test starts from one rough epic for a small game whose right answers come from an independent published source. Agents write the code with and without the grown requirements, and hidden tests written from that source, never from our model, grade both blind. Tokens per arm are recorded, with how many requirements the epic grew into and how many the hidden tests needed that it missed.</p></div>
-<p class="seen">On the slides: <a href="../../harness/deck/#slide-15">slide 15</a>, <a href="../../harness/deck/#slide-18">slide 18</a>.</p>
+<p><span class="chip measured">Measured</span> How much of existing code its tests hold, on three public targets (<a href="../public-code/#publiccode">on code you can read for yourself</a>).</p>
+<p><span class="chip open">Open</span> The epic-to-code test has run, and its results will be published with the benchmark. The test starts from one rough epic for a small game whose right answers come from an independent published source. Agents write the code from the grown requirements, and hidden tests written from that source, never from our model, grade it blind. Tokens are recorded, with how many requirements the epic grew into and how many the hidden tests needed that it missed.</p></div>
+<p class="seen">On the slides: <a href="../../harness/deck/#slide-14">slide 14</a>, <a href="../../harness/deck/#slide-17">slide 17</a>.</p>
 </section>
 <p style="margin-top:40px;opacity:.75;font-size:15px">Made by RJ’s TNT Tools. TNT Tools’ own work, not a Heavy Iron product.</p></main></body></html>
