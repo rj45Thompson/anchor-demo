@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>R.J. Thompson - sample work and experiments</title>
-<meta name="description" content="Tools, games and research by R.J. Thompson, senior C++ / C# engineer: a closed loop requirements fly-through, Unreal Blueprints as code, a Unity to Unreal porting toolkit, playable games and a knowledge engine that runs in the browser.">
+<meta name="description" content="Sample work by R.J. Thompson, senior C++ / C# engineer. First u2ue, a toolkit that ports a Unity game to Unreal Engine 5, with its whole manual; then Unreal Blueprints as code, a closed loop requirements fly-through, playable games and AI research.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="R.J. Thompson - sample work and experiments">
-<meta property="og:description" content="Tools for game development, playable games and AI research. Most of it runs in the browser, with the source and data linked.">
+<meta property="og:description" content="u2ue, a toolkit that ports a Unity game to Unreal Engine 5, with its whole manual, then tools for game development, playable games and AI research. Most of it runs in the browser.">
 <meta property="og:url" content="https://rj45thompson.github.io/anchor-demo/">
-<meta property="og:image" content="https://rj45thompson.github.io/anchor-demo/thumbs/fly.jpg">
+<meta property="og:image" content="https://rj45thompson.github.io/anchor-demo/thumbs/share-home.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0B1219">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B1219'/%3E%3Ccircle cx='50' cy='50' r='34' fill='none' stroke='%232E4052' stroke-width='4'/%3E%3Ctext x='50' y='64' font-size='40' font-family='Arial,sans-serif' font-weight='700' fill='%23F08A3C' text-anchor='middle'%3ERJ%3C/text%3E%3C/svg%3E">
@@ -30,9 +30,10 @@
    OWN is checked against the page's real ids by test/home_page_check.py (every id here exists,
    and every section id is here). */
 (function(){
-  var OWN = ["top","main","tools","fly","blueprint","u2ue","games","starfighter","breakout","bpgames",
-             "research","engine","bossbench","warship","apps","casement","solar","repos","contact","about"];
-  var ALIAS = { projects:"tools", resume:"breakout", space:"starfighter", bench:"bossbench" };
+  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","games","starfighter","breakout","bpgames",
+             "research","engine","bossbench","warship","apps","casement","solar","docs","docs-u2ue","docs-blueprint","docs-loop",
+             "docs-research","repos","contact","about"];
+  var ALIAS = { projects:"u2ue", resume:"breakout", space:"starfighter", bench:"bossbench", manual:"u2ue-chapters", documentation:"docs" };
   function route(){
     var h = (location.hash || "").slice(1);
     try{ h = decodeURIComponent(h); }catch(e){}
@@ -59,14 +60,15 @@
   --bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--line2:#223142;--well:#0E1720;
   --fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;
   --green:#47D1A0;--amber:#F7C873;--lav:#C3A8F5;
-  --c-tools:#F08A3C;--c-games:#47D1A0;--c-research:#7FB2E5;--c-apps:#C3A8F5;--c-repos:#A9B7C4;--c-contact:#F4F2EC;
+  --c-u2ue:#F08A3C;--c-tools:#F7C873;--c-games:#47D1A0;--c-research:#7FB2E5;--c-apps:#C3A8F5;--c-docs:#F2A7C3;
+  --c-repos:#A9B7C4;--c-contact:#F4F2EC;
   --menuW:304px;
   --sans:'IBM Plex Sans',system-ui,sans-serif;--head:'Space Grotesk',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
 body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.6 var(--sans);font-variant-numeric:tabular-nums}
 /* the fly-through's night sky, fixed behind everything: two soft glows and a faint dot grid */
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
@@ -77,7 +79,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     var(--bg)}
 a{color:var(--blue)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-h1,h2,h3{font-family:var(--head);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1,h2,h3,h4{font-family:var(--head);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .skip{position:absolute;left:12px;top:-60px;z-index:50;background:var(--accent);color:#0B1219;padding:8px 12px;border-radius:8px;font-weight:600;text-decoration:none}
 .skip:focus{top:12px}
@@ -102,12 +104,14 @@ h1,h2,h3{font-family:var(--head);font-weight:600;line-height:1.15;text-wrap:bala
 .row:hover{background:#1A2733;color:var(--fg)}
 .row[aria-current="true"]{background:#26394A;color:var(--fg);box-shadow:inset 3px 0 0 var(--accent)}
 li.gr>.rowwrap .row{font:600 14px/1.25 var(--head);color:var(--fg)}
+li.gr.lead>.rowwrap .row{color:var(--c-u2ue)}
+.pill{flex:none;font:600 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#0B1219;background:var(--c-u2ue);border-radius:999px;padding:3px 6px}
 .l{flex:1;min-width:0;overflow-wrap:anywhere}
 .n{flex:none;font:12px/1 var(--mono);color:var(--muted)}
 .g{flex:none;width:10px;height:10px;display:inline-block;background:var(--c,#7FB2E5)}
 .g.dot{border-radius:50%;width:9px;height:9px}
 .g.ring{border-radius:50%;background:none;border:1.5px solid var(--c,#A9B7C4)}
-.g.doc{width:9px;height:11px;background:none;border:1.5px solid var(--muted);border-radius:1.5px}
+.g.doc{width:9px;height:11px;background:none;border:1.5px solid var(--c,var(--muted));border-radius:1.5px}
 .ch{flex:none;width:24px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;border-radius:6px;
   color:var(--muted);font-size:11px;cursor:pointer;padding:0}
 .ch:hover{color:var(--fg);background:#1A2733}
@@ -134,13 +138,22 @@ li.gr>ul .row{padding-left:34px}
 h1{font-size:clamp(40px,5.2vw,64px);line-height:1.02;letter-spacing:-.02em;font-weight:700}
 .role{font-size:18px;line-height:1.55;color:var(--soft);max-width:34em;margin:16px 0 0}
 .lede{color:var(--muted);margin:12px 0 0;max-width:36em}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+/* the opening's pointer to the main project */
+.leadlink{display:block;margin:18px 0 0;max-width:36em;padding:13px 16px 14px;border:1px solid color-mix(in srgb,var(--c-u2ue) 55%,var(--line));
+  border-radius:12px;background:linear-gradient(135deg,rgba(240,138,60,.14),rgba(18,28,38,.55) 62%);text-decoration:none;color:var(--soft);
+  transition:border-color .15s,box-shadow .15s}
+.leadlink:hover{border-color:var(--c-u2ue);box-shadow:0 0 26px rgba(240,138,60,.16)}
+.leadlink .kick{margin:0 0 4px;color:var(--c-u2ue)}
+.leadlink b{display:block;font:600 19px/1.25 var(--head);color:var(--fg)}
+.leadlink b::after{content:" \2192";color:var(--c-u2ue)}
+.leadlink span{display:block;margin-top:5px;font-size:14.5px;line-height:1.5;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
 .btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 14px;border-radius:9px;border:1px solid var(--line);
   background:#1D2C3A;color:var(--fg);text-decoration:none;font-weight:600;font-size:14px;line-height:1.2}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#0B1219}
 .btn.primary:hover{background:#F6A05E;border-color:#F6A05E}
-.jump{display:flex;flex-wrap:wrap;gap:6px;margin:22px 0 0;padding:0;list-style:none}
+.jump{display:flex;flex-wrap:wrap;gap:6px;margin:20px 0 0;padding:0;list-style:none}
 .jump a{display:inline-flex;align-items:center;gap:7px;font:500 12.5px/1 var(--mono);padding:8px 11px;border-radius:999px;border:1px solid var(--line);
   color:var(--soft);text-decoration:none;background:rgba(18,28,38,.7)}
 .jump a:hover{border-color:var(--c);color:var(--fg)}
@@ -157,8 +170,8 @@ h1{font-size:clamp(40px,5.2vw,64px);line-height:1.02;letter-spacing:-.02em;font-
 .ghead .kick{color:var(--c)}
 h2{font-size:30px;margin:0 0 6px}
 .gsub{color:var(--muted);margin:0;max-width:52em}
-/* Each group of three leads with one wide card and sets the other two side by side, so no row is
-   left half empty; a group of two is simply two side by side. */
+/* Each group leads with one wide card and sets the others side by side, so no row is left half
+   empty; a group of two is simply two side by side. */
 .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 .card.feature{grid-column:1/-1;flex-direction:row}
 .card.feature .shot{flex:0 0 56%;aspect-ratio:auto;min-height:300px;border-bottom:0;border-right:1px solid var(--line)}
@@ -179,7 +192,7 @@ h2{font-size:30px;margin:0 0 6px}
 .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
 .meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:0;font-size:12.5px;color:var(--muted)}
 .state{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor;border-radius:999px;padding:4px 8px}
-.s-play{color:var(--green)}.s-proto{color:var(--amber)}.s-data{color:var(--blue)}.s-app{color:var(--lav)}
+.s-play{color:var(--green)}.s-proto{color:var(--amber)}.s-data{color:var(--blue)}.s-app{color:var(--lav)}.s-lead{color:var(--c-u2ue)}
 h3{font-size:21px}
 h3 a{color:var(--fg);text-decoration:none}
 h3 a:hover{color:var(--accent)}
@@ -192,6 +205,71 @@ h3 a:hover{color:var(--accent)}
 .links a.go{display:inline-flex;align-items:center;min-height:36px;padding:7px 12px;border-radius:8px;background:var(--accent);color:#0B1219;
   font-weight:600;text-decoration:none}
 .links a.go:hover{background:#F6A05E}
+
+/* u2ue's lead card: a picture of the idea beside what it is and what it measured */
+.card.lead{grid-column:1/-1;flex-direction:row;border-color:color-mix(in srgb,var(--c-u2ue) 48%,var(--line));
+  box-shadow:0 18px 48px rgba(0,0,0,.32),0 0 34px rgba(240,138,60,.07)}
+.card.lead:hover{transform:none}
+.art{flex:0 0 42%;display:flex;align-items:center;justify-content:center;padding:18px;border-right:1px solid var(--line);
+  background:radial-gradient(380px 280px at 50% 58%,rgba(71,209,160,.11),transparent 70%),var(--well)}
+.art svg{width:100%;max-width:430px;height:auto;display:block;overflow:visible}
+.art text{font-family:var(--sans);fill:var(--soft)}
+.art .nm{font-family:var(--head);font-weight:600;fill:var(--fg)}
+.art .lab{font-family:var(--mono);fill:var(--amber)}
+.flow{stroke-dasharray:6 7;animation:flow 1.8s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-26}}
+.card.lead .body{padding:22px 24px}
+.card.lead h3{font-size:28px}
+.card.lead .line{font-size:16.5px}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:6px 0 0;padding:0;list-style:none}
+.figs li{min-width:0}
+.figs a{display:block;height:100%;background:var(--well);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;text-decoration:none}
+.figs a:hover{border-color:var(--c-u2ue)}
+.figs b{display:block;font:600 26px/1.1 var(--head);color:var(--c-u2ue);letter-spacing:-.01em;white-space:nowrap}
+.figs span{display:block;margin-top:5px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.prov{margin:0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+
+/* u2ue's manual, every chapter, under the part of the manual that holds it */
+.manual{grid-column:1/-1;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px 10px;scroll-margin-top:16px}
+.manual:target{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.mhead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;margin:0 0 18px}
+.mhead .kick{margin:0 0 6px;color:var(--c-u2ue)}
+.mhead h3{font-size:24px}
+.mhead .more{max-width:46em;margin:6px 0 0}
+.mhead .links{margin:0;padding:0}
+.parts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 28px}
+.part{min-width:0}
+.pk{font:600 11.5px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--c-u2ue);margin:0 0 3px}
+.part h4{font-size:16.5px;color:var(--fg)}
+.pw{margin:3px 0 8px;font-size:13px;line-height:1.45;color:var(--muted)}
+.chap{list-style:none;margin:0 0 18px;padding:0;border-top:1px solid var(--line2)}
+.chap a{display:flex;gap:10px;align-items:baseline;padding:6px 4px;border-bottom:1px solid var(--line2);color:var(--soft);text-decoration:none;
+  font-size:14px;line-height:1.35}
+.chap a:hover{color:var(--fg);background:#1A2733}
+.cn{flex:none;width:22px;text-align:right;font:12px/1.35 var(--mono);color:var(--c-u2ue)}
+
+/* the documentation: one shelf per project, every document with what it is */
+/* two balanced columns, read down then across: the u2ue family (u2ue, Blueprint View) fills the first */
+.shelves{columns:2;column-gap:18px}
+.shelf{break-inside:avoid;margin:0 0 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;
+  min-width:0;scroll-margin-top:16px}
+.shelf:target{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.shelf h3{display:flex;align-items:center;gap:10px;font-size:20px}
+.shelf h3 i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.shelf>p{margin:4px 0 12px;color:var(--muted);font-size:14px}
+.docs{list-style:none;margin:0;padding:0}
+.docrow{display:grid;grid-template-columns:84px minmax(0,1fr);gap:1px 12px;padding:9px 6px;border-top:1px solid var(--line2);text-decoration:none;
+  color:var(--soft);border-radius:6px}
+.docrow:hover{background:#1A2733}
+.kind{grid-row:1/3;align-self:start;margin-top:2px;font:600 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--c);
+  border:1px solid color-mix(in srgb,var(--c) 55%,transparent);border-radius:999px;padding:5px 6px;text-align:center}
+.docrow b{font:600 14.5px/1.3 var(--sans);color:var(--fg)}
+.docrow .d{font-size:13.5px;line-height:1.45;color:var(--muted)}
+.chipsh{margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--line2);font:600 11.5px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0 0 4px;padding:0}
+.chips a{display:inline-block;font-size:13px;line-height:1.2;padding:6px 9px;border-radius:999px;border:1px solid var(--line);color:var(--soft);
+  text-decoration:none;background:var(--well)}
+.chips a:hover{border-color:var(--c);color:var(--fg)}
 
 .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:10px;margin:0;padding:0;list-style:none}
 .item{display:block;height:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);text-decoration:none;color:var(--soft)}
@@ -210,13 +288,18 @@ h3 a:hover{color:var(--accent)}
   #main{padding:0 28px 36px}
   .hero{grid-template-columns:minmax(0,1fr);min-height:0;gap:10px;padding-top:36px}
   #map{height:320px}
-  .card.feature{flex-direction:column}
+  .card.feature,.card.lead{flex-direction:column}
   .card.feature .shot{flex:none;aspect-ratio:16/10;min-height:0;border-right:0;border-bottom:1px solid var(--line)}
-  .card.feature .body{padding:16px 18px 18px}
+  .art{flex:none;border-right:0;border-bottom:1px solid var(--line);padding:16px 18px}
+  .art svg{max-width:400px}
+  .card.feature .body,.card.lead .body{padding:16px 18px 18px}
   .card.feature h3{font-size:22px}
+  .card.lead h3{font-size:24px}
 }
 @media (max-width:1000px){
   .cards{grid-template-columns:minmax(0,1fr)}
+  .parts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .shelves{columns:1}
 }
 @media (max-width:760px){
   :root{--menuW:0px}
@@ -237,23 +320,31 @@ h3 a:hover{color:var(--accent)}
   .role{font-size:16.5px}
   #map{height:250px}
   .group{padding-top:40px;scroll-margin-top:56px}
-  .card{scroll-margin-top:64px}
+  .card,.manual,.shelf{scroll-margin-top:64px}
   .about{scroll-margin-top:64px}
   h2{font-size:25px}
   .fig b{font-size:38px}
   .card:hover{transform:none}
+  .figs{grid-template-columns:minmax(0,1fr)}
+  .figs a{display:flex;align-items:baseline;gap:12px}
+  .figs b{flex:none;min-width:5.4em;font-size:22px}
+  .figs span{margin-top:0}
+  .manual{padding:18px 16px 6px}
+  .parts{grid-template-columns:minmax(0,1fr)}
+  .shelf{padding:16px 14px 12px}
+  .docrow{grid-template-columns:76px minmax(0,1fr);gap:1px 10px}
 }
 </style>
 </head>
 <body>
-<a class="skip" href="#tools">Skip to the projects</a>
+<a class="skip" href="#u2ue">Skip to the projects</a>
 
 <aside id="menu" aria-label="Contents">
   <div id="menuHead">
     <a class="who" href="#top">R.J. Thompson</a>
     <p class="by">Tools, games and research</p>
     <div id="findRow">
-      <label class="vh" for="filter">Filter projects</label>
+      <label class="vh" for="filter">Filter projects and documents</label>
       <input id="filter" type="search" placeholder="Filter" autocomplete="off" spellcheck="false">
       <span id="found" aria-live="polite"></span>
     </div>
@@ -261,11 +352,15 @@ h3 a:hover{color:var(--accent)}
   <nav id="tree" aria-label="Projects">
     <ul>
       <li class="leaf top"><div class="rowwrap"><span class="sp"></span><a class="row" href="#top"><span class="g ring" style="--c:#F4F2EC"></span><span class="l">Start here</span></a></div></li>
+      <li class="gr lead" data-sec="u2ue"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide u2ue"><span>&#9656;</span></button><a class="row" href="#u2ue"><span class="g" style="--c:var(--c-u2ue)"></span><span class="l">u2ue: Unity to Unreal</span><span class="pill">Main</span></a></div>
+        <ul>
+          <li class="leaf"><a class="row" href="#u2ue-kit"><span class="g dot" style="--c:var(--c-u2ue)"></span><span class="l">The porting toolkit</span></a></li>
+          <li class="leaf"><a class="row" href="#u2ue-chapters"><span class="g doc" style="--c:var(--c-u2ue)"></span><span class="l">The manual, every chapter</span></a></li>
+          <li class="leaf"><a class="row" href="#blueprint"><span class="g dot" style="--c:var(--c-u2ue)"></span><span class="l">Blueprint View</span></a></li>
+        </ul></li>
       <li class="gr" data-sec="tools"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Tools for game development"><span>&#9656;</span></button><a class="row" href="#tools"><span class="g" style="--c:var(--c-tools)"></span><span class="l">Tools for game development</span><span class="n"></span></a></div>
         <ul>
           <li class="leaf"><a class="row" href="#fly"><span class="g dot" style="--c:var(--c-tools)"></span><span class="l">Closed loop fly-through</span></a></li>
-          <li class="leaf"><a class="row" href="#u2ue"><span class="g dot" style="--c:var(--c-tools)"></span><span class="l">u2ue: Unity to Unreal</span></a></li>
-          <li class="leaf"><a class="row" href="#blueprint"><span class="g dot" style="--c:var(--c-tools)"></span><span class="l">Blueprint View</span></a></li>
         </ul></li>
       <li class="gr" data-sec="games"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Games"><span>&#9656;</span></button><a class="row" href="#games"><span class="g" style="--c:var(--c-games)"></span><span class="l">Games</span><span class="n"></span></a></div>
         <ul>
@@ -283,6 +378,13 @@ h3 a:hover{color:var(--accent)}
         <ul>
           <li class="leaf"><a class="row" href="#casement"><span class="g dot" style="--c:var(--c-apps)"></span><span class="l">Casement Sheet</span></a></li>
           <li class="leaf"><a class="row" href="#solar"><span class="g dot" style="--c:var(--c-apps)"></span><span class="l">Solar setup</span></a></li>
+        </ul></li>
+      <li class="gr" data-sec="docs"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Documentation"><span>&#9656;</span></button><a class="row" href="#docs"><span class="g" style="--c:var(--c-docs)"></span><span class="l">Documentation</span><span class="n"></span></a></div>
+        <ul>
+          <li class="leaf"><a class="row" href="#docs-u2ue"><span class="g doc" style="--c:var(--c-docs)"></span><span class="l">u2ue</span></a></li>
+          <li class="leaf"><a class="row" href="#docs-blueprint"><span class="g doc" style="--c:var(--c-docs)"></span><span class="l">Blueprint View</span></a></li>
+          <li class="leaf"><a class="row" href="#docs-loop"><span class="g doc" style="--c:var(--c-docs)"></span><span class="l">Closed loop</span></a></li>
+          <li class="leaf"><a class="row" href="#docs-research"><span class="g doc" style="--c:var(--c-docs)"></span><span class="l">AI research</span></a></li>
         </ul></li>
       <li class="leaf top"><div class="rowwrap"><span class="sp"></span><a class="row" href="#repos"><span class="g" style="--c:var(--c-repos)"></span><span class="l">Code and data</span></a></div></li>
       <li class="leaf top"><div class="rowwrap"><span class="sp"></span><a class="row" href="#contact"><span class="g doc"></span><span class="l">Contact</span></a></div></li>
@@ -306,7 +408,8 @@ h3 a:hover{color:var(--accent)}
     <p class="kick">Sample work and experiments</p>
     <h1 id="h-top">R.J. Thompson</h1>
     <p class="role">Senior C++ / C# engineer. 30 years shipping real-time systems: game engines and tooling, low-level networking, and regulated medical-device software.</p>
-    <p class="lede">Tools, games and research I built. Pick a project from the menu or scroll down; most of them run right here in the browser, with the source and data linked.</p>
+    <p class="lede">Tools, games and research I built. Most of it runs right here in the browser, with the documentation, source and data linked.</p>
+    <a class="leadlink" href="#u2ue"><span class="kick">Main project</span><b>u2ue: port a Unity game to Unreal Engine 5</b><span>A toolkit that converts a game's effects, scenes, UI and materials, checks each against Unity, and moves the game's rules into one model both engines run. Its whole manual is public.</span></a>
     <div class="actions">
       <a class="btn primary" href="mailto:RJ45Thompson@gmail.com?subject=Role%20enquiry">Email me</a>
       <a class="btn" href="games/RJ_Thompson_Resume.pdf" target="_blank" rel="noopener">PDF résumé</a>
@@ -314,10 +417,12 @@ h3 a:hover{color:var(--accent)}
       <a class="btn" href="https://github.com/rj45Thompson" target="_blank" rel="noopener">GitHub</a>
     </div>
     <ul class="jump" aria-label="Groups">
+      <li><a href="#u2ue" style="--c:var(--c-u2ue)" data-count="u2ue"><i></i>u2ue <b></b></a></li>
       <li><a href="#tools" style="--c:var(--c-tools)" data-count="tools"><i></i>Tools <b></b></a></li>
       <li><a href="#games" style="--c:var(--c-games)" data-count="games"><i></i>Games <b></b></a></li>
       <li><a href="#research" style="--c:var(--c-research)" data-count="research"><i></i>AI research <b></b></a></li>
       <li><a href="#apps" style="--c:var(--c-apps)" data-count="apps"><i></i>Other tools <b></b></a></li>
+      <li><a href="#docs" style="--c:var(--c-docs)" data-count="docs"><i></i>Docs <b></b></a></li>
       <li><a href="#repos" style="--c:var(--c-repos)" data-count="repos"><i></i>Code and data <b></b></a></li>
     </ul>
   </div>
@@ -327,11 +432,146 @@ h3 a:hover{color:var(--accent)}
   </div>
 </section>
 
+<section id="u2ue" class="group" data-map="u2ue" data-lead style="--c:var(--c-u2ue)" aria-labelledby="h-u2ue">
+  <header class="ghead">
+    <p class="kick">01 · u2ue · main project</p>
+    <h2 id="h-u2ue">u2ue: Unity to Unreal</h2>
+    <p class="gsub">A toolkit that ports a Unity game to Unreal Engine 5 and proves it is still the same game. The toolkit's code is private; its whole manual is public, every chapter listed below.</p>
+  </header>
+  <div class="cards">
+    <article id="u2ue-kit" class="card lead" data-node="u2ue: Unity to Unreal">
+      <a class="art" href="u2ue/" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 440 330" role="img" aria-label="Unity and Unreal Engine 5 both run one engine-free model of the game's rules; effects, scenes, UI and materials are converted from Unity to Unreal and checked against Unity.">
+          <defs>
+            <radialGradient id="ga" r=".5"><stop offset="0" stop-color="#7FB2E5" stop-opacity=".45"/><stop offset="1" stop-color="#7FB2E5" stop-opacity="0"/></radialGradient>
+            <radialGradient id="gb" r=".5"><stop offset="0" stop-color="#F08A3C" stop-opacity=".5"/><stop offset="1" stop-color="#F08A3C" stop-opacity="0"/></radialGradient>
+            <radialGradient id="gc" r=".5"><stop offset="0" stop-color="#47D1A0" stop-opacity=".45"/><stop offset="1" stop-color="#47D1A0" stop-opacity="0"/></radialGradient>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#A9B7C4"/></marker>
+            <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#F08A3C"/></marker>
+          </defs>
+          <path class="flow" d="M108 66 C 170 30, 270 30, 332 66" fill="none" stroke="#F08A3C" stroke-width="2" marker-end="url(#ao)"/>
+          <text class="lab" x="220" y="22" font-size="13" text-anchor="middle">effects, scenes, UI, materials</text>
+          <text x="220" y="66" font-size="12" text-anchor="middle">converted, each held to Unity</text>
+          <line x1="108" y1="112" x2="182" y2="174" stroke="#A9B7C4" stroke-width="1.8" marker-end="url(#ah)" opacity=".85"/>
+          <line x1="332" y1="112" x2="258" y2="174" stroke="#A9B7C4" stroke-width="1.8" marker-end="url(#ah)" opacity=".85"/>
+          <circle cx="82" cy="86" r="66" fill="url(#ga)"/><circle cx="82" cy="86" r="38" fill="#16222E" stroke="#7FB2E5" stroke-width="2.4"/>
+          <text class="nm" x="82" y="92" font-size="18" text-anchor="middle">Unity</text>
+          <circle cx="358" cy="86" r="66" fill="url(#gb)"/><circle cx="358" cy="86" r="38" fill="#16222E" stroke="#F08A3C" stroke-width="2.4"/>
+          <text class="nm" x="358" y="84" font-size="16" text-anchor="middle">Unreal</text>
+          <text class="nm" x="358" y="102" font-size="13" text-anchor="middle">Engine 5</text>
+          <circle cx="220" cy="222" r="92" fill="url(#gc)"/><circle cx="220" cy="222" r="60" fill="#16222E" stroke="#47D1A0" stroke-width="2.4"/>
+          <text class="nm" x="220" y="216" font-size="16" text-anchor="middle">one model</text>
+          <text x="220" y="236" font-size="11.5" text-anchor="middle">the rules, plain C#</text>
+          <text x="220" y="306" font-size="13" text-anchor="middle">both engines run the same rule code,</text>
+          <text x="220" y="324" font-size="13" text-anchor="middle">so their answers can be compared bit for bit</text>
+        </svg>
+      </a>
+      <div class="body">
+        <p class="meta"><span class="state s-lead">Beta</span><span>Toolkit and its whole manual</span></p>
+        <h3><a href="u2ue/">u2ue: Unity to Unreal</a></h3>
+        <p class="line">Its own tools convert the effects, scenes, UI and materials of a Unity game and hold each result to Unity on numbers. An AI model ports the game's rules into an engine-free model by the toolkit's written skill, so both engines run the same rule code.</p>
+        <p class="more">A reviewer then reads a UML model instead of the code line by line: every use case step names the command that proves it.</p>
+        <ul class="figs" aria-label="Measured on a real port">
+          <li><a href="u2ue/#overview" data-from="u2ue"><b>92.4 %</b><span>of the particle emitters Unity draws are drawn in Unreal</span></a></li>
+          <li><a href="u2ue/#overview" data-from="u2ue"><b>383 / 383</b><span>game-rule results agree across Unity, .NET and Unreal</span></a></li>
+          <li><a href="u2ue/#overview" data-from="u2ue"><b>99.97 %</b><span>of 26,973 per-frame checks on the built effects hold</span></a></li>
+        </ul>
+        <p class="prov">From u2ue's page, where each figure names the command that measured it on the reference port: a medium-sized turn-based tactics game moved from Unity to Unreal.</p>
+        <ul class="tags"><li>Unity</li><li>Unreal Engine 5</li><li>C#</li><li>UML</li><li>AI agents</li></ul>
+        <p class="links"><a class="go" href="u2ue/">Open u2ue</a><a href="u2ue/#manual">Read the manual</a><a href="u2ue/#porting-to-unreal-in-a-nutshell">Quick start</a><a href="u2ue/#what-a-port-costs">What a port costs</a></p>
+      </div>
+    </article>
+
+    <div id="u2ue-chapters" class="manual spy">
+      <div class="mhead">
+        <div>
+          <p class="kick">The manual</p>
+          <h3><a href="u2ue/#manual">Every chapter of the u2ue manual</a></h3>
+          <p class="more">One page, divided by who is reading it: find your part, then open any chapter. Each link opens that chapter on u2ue's page.</p>
+        </div>
+        <p class="links"><a class="go" href="u2ue/#manual">Open the manual</a></p>
+      </div>
+      <div class="parts">
+        <div class="part">
+          <p class="pk">Part I</p>
+          <h4>Deciding whether to use it</h4>
+          <p class="pw">For the evaluator deciding whether to use u2ue.</p>
+          <ol class="chap">
+            <li><a href="u2ue/#why-u2ue-2"><span class="cn">·</span>Why u2ue</a></li>
+            <li><a href="u2ue/#about-this-manual"><span class="cn">·</span>About this manual</a></li>
+            <li><a href="u2ue/#reading-uml-and-use-cases"><span class="cn">·</span>Reading UML and use cases</a></li>
+            <li><a href="u2ue/#what-a-port-costs"><span class="cn">·</span>What a port costs</a></li>
+            <li><a href="u2ue/#porting-to-unreal-in-a-nutshell"><span class="cn">·</span>Porting to Unreal in a nutshell</a></li>
+            <li><a href="u2ue/#the-short-version"><span class="cn">·</span>The short version</a></li>
+            <li><a href="u2ue/#1-introduction"><span class="cn">1</span>Introduction</a></li>
+          </ol>
+        </div>
+        <div class="part">
+          <p class="pk">Part II</p>
+          <h4>Porting a game</h4>
+          <p class="pw">For the developer porting their own game, a person or an AI model.</p>
+          <ol class="chap">
+            <li><a href="u2ue/#2-concepts"><span class="cn">2</span>Concepts</a></li>
+            <li><a href="u2ue/#3-installation-and-the-project-file"><span class="cn">3</span>Installation and the project file</a></li>
+            <li><a href="u2ue/#4-tutorial-a-first-port-step-by-step"><span class="cn">4</span>Tutorial: a first port, step by step</a></li>
+            <li><a href="u2ue/#5-porting-the-game-code"><span class="cn">5</span>Porting the game code</a></li>
+            <li><a href="u2ue/#6-transforms-scenes-ui-audio"><span class="cn">6</span>Transforms, scenes, UI, audio</a></li>
+            <li><a href="u2ue/#7-effects"><span class="cn">7</span>Effects</a></li>
+            <li><a href="u2ue/#8-measuring-unity"><span class="cn">8</span>Measuring Unity</a></li>
+            <li><a href="u2ue/#9-verification-and-gates"><span class="cn">9</span>Verification and gates</a></li>
+            <li><a href="u2ue/#10-metrics-and-reports-2"><span class="cn">10</span>Metrics and reports</a></li>
+            <li><a href="u2ue/#11-shuriken-to-niagara-in-depth"><span class="cn">11</span>Shuriken to Niagara, in depth</a></li>
+            <li><a href="u2ue/#12-the-unity-tools-headless-driving-an-editor-several-agents"><span class="cn">12</span>The Unity tools: headless, driving an editor, several agents</a></li>
+            <li><a href="u2ue/#13-the-unreal-tools-headless-runs-the-host-publishing"><span class="cn">13</span>The Unreal tools: headless runs, the host, publishing</a></li>
+            <li><a href="u2ue/#14-test-driven-porting-2"><span class="cn">14</span>Test-driven porting</a></li>
+            <li><a href="u2ue/#15-porting-with-opus-55"><span class="cn">15</span>Porting with Opus 5.5</a></li>
+            <li><a href="u2ue/#16-troubleshooting-2"><span class="cn">16</span>Troubleshooting</a></li>
+            <li><a href="u2ue/#questions-and-answers"><span class="cn">·</span>Questions and answers</a></li>
+          </ol>
+        </div>
+        <div class="part">
+          <p class="pk">Part III</p>
+          <h4>Extending and reviewing it</h4>
+          <p class="pw">For the developer extending u2ue, and the reviewer checking it.</p>
+          <ol class="chap">
+            <li><a href="u2ue/#17-use-cases-2"><span class="cn">17</span>Use cases</a></li>
+            <li><a href="u2ue/#18-extending-the-toolkit"><span class="cn">18</span>Extending the toolkit</a></li>
+            <li><a href="u2ue/#19-the-facade-detailed-requirements"><span class="cn">19</span>The facade: detailed requirements</a></li>
+            <li><a href="u2ue/#20-command-reference"><span class="cn">20</span>Command reference</a></li>
+            <li><a href="u2ue/#21-reference-2"><span class="cn">21</span>Reference</a></li>
+            <li><a href="u2ue/#22-architecture-and-the-uml"><span class="cn">22</span>Architecture and the UML</a></li>
+          </ol>
+          <p class="pk">Appendices</p>
+          <ol class="chap">
+            <li><a href="u2ue/#appendix-a-a-worked-example-the-reference-port"><span class="cn">A</span>A worked example: the reference port</a></li>
+            <li><a href="u2ue/#appendix-b-roadmap"><span class="cn">B</span>Roadmap</a></li>
+            <li><a href="u2ue/#appendix-c-glossary"><span class="cn">C</span>Glossary</a></li>
+            <li><a href="u2ue/#appendix-d-prior-art-other-ways-to-port-a-unity-game"><span class="cn">D</span>Prior art: other ways to port a Unity game</a></li>
+            <li><a href="u2ue/#appendix-e-traceability"><span class="cn">E</span>Traceability</a></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <article id="blueprint" class="card feature" data-node="Blueprint View">
+      <a class="shot" href="blueprint/" tabindex="-1" aria-hidden="true"><img src="thumbs/blueprint.jpg" width="640" height="400" loading="lazy" alt=""></a>
+      <div class="body">
+        <p class="meta"><span class="state s-proto">Draft prototype</span><span>Runs in the browser</span><span>Built on u2ue</span></p>
+        <h3><a href="blueprint/">Blueprint View</a></h3>
+        <p class="line">Unreal Blueprints and code as two views of one source. Play public Blueprints running on the code converted from them, fly a messy one as a 3D city, and read every class it becomes.</p>
+        <p class="more">Four public Blueprints from blueprintue.com, from a 32-node Pong to a 1,009-node enemy AI. Built in under 24 hours on top of the u2ue toolkit; its source is public.</p>
+        <ul class="tags"><li>Unreal Blueprints</li><li>Code conversion</li><li>WebGPU</li></ul>
+        <p class="links"><a class="go" href="blueprint/">Open Blueprint View</a><a href="blueprint/deck/">The deck</a><a href="blueprint/doc/">How it works</a><a href="blueprint/code/">The whole code</a><a href="https://github.com/rj45Thompson/blueprint-view-source" rel="noopener">Source, MIT</a></p>
+      </div>
+    </article>
+  </div>
+</section>
+
 <section id="tools" class="group" data-map="Tools" style="--c:var(--c-tools)" aria-labelledby="h-tools">
   <header class="ghead">
-    <p class="kick">01 · Tools for game development</p>
+    <p class="kick">02 · Tools for game development</p>
     <h2 id="h-tools">Tools for game development</h2>
-    <p class="gsub">Requirements, Unreal Blueprints and engine ports: tools for building and checking large game code with AI agents.</p>
+    <p class="gsub">Requirements tools for building and checking large game code with AI agents.</p>
   </header>
   <div class="cards">
     <article id="fly" class="card feature" data-node="Closed loop fly-through">
@@ -345,34 +585,12 @@ h3 a:hover{color:var(--accent)}
         <p class="links"><a class="go" href="harness/fly/">Open the fly-through</a><a href="harness/osu/">The same loop on osu!</a><a href="https://github.com/rj45Thompson/closed-loop-kit" rel="noopener">Source, MIT</a></p>
       </div>
     </article>
-    <article id="u2ue" class="card" data-node="u2ue: Unity to Unreal">
-      <a class="shot" href="u2ue/" tabindex="-1" aria-hidden="true"><img src="thumbs/u2ue.jpg" width="640" height="400" loading="lazy" alt=""></a>
-      <div class="body">
-        <p class="meta"><span class="state s-proto">Beta</span><span>Toolkit and manual</span></p>
-        <h3><a href="u2ue/">u2ue: Unity to Unreal</a></h3>
-        <p class="line">A toolkit that ports a Unity game to Unreal Engine 5. Its own tools convert effects, scenes, UI and materials and check each result against Unity; an AI model ports the game logic by the toolkit's written skill.</p>
-        <p class="more">A reviewer reads a UML model instead of a diff. The page shows what it measured on a real port, and the whole manual.</p>
-        <ul class="tags"><li>Unity</li><li>Unreal Engine 5</li><li>Porting</li><li>UML</li></ul>
-        <p class="links"><a class="go" href="u2ue/">Open u2ue</a><a href="u2ue/#manual">The manual</a></p>
-      </div>
-    </article>
-    <article id="blueprint" class="card" data-node="Blueprint View">
-      <a class="shot" href="blueprint/" tabindex="-1" aria-hidden="true"><img src="thumbs/blueprint.jpg" width="640" height="400" loading="lazy" alt=""></a>
-      <div class="body">
-        <p class="meta"><span class="state s-proto">Draft prototype</span><span>Runs in the browser</span></p>
-        <h3><a href="blueprint/">Blueprint View</a></h3>
-        <p class="line">Unreal Blueprints and code as two views of one source. Play public Blueprints running on the code converted from them, fly a messy one as a 3D city, and read every class it becomes.</p>
-        <p class="more">Four public Blueprints from blueprintue.com, from a 32-node Pong to a 1,009-node enemy AI.</p>
-        <ul class="tags"><li>Unreal Blueprints</li><li>Code conversion</li><li>WebGPU</li></ul>
-        <p class="links"><a class="go" href="blueprint/">Open Blueprint View</a><a href="blueprint/deck/">The deck</a><a href="blueprint/doc/">How it works</a><a href="blueprint/code/">The whole code</a><a href="https://github.com/rj45Thompson/blueprint-view-source" rel="noopener">Source, MIT</a></p>
-      </div>
-    </article>
   </div>
 </section>
 
 <section id="games" class="group" data-map="Games" style="--c:var(--c-games)" aria-labelledby="h-games">
   <header class="ghead">
-    <p class="kick">02 · Games</p>
+    <p class="kick">03 · Games</p>
     <h2 id="h-games">Games</h2>
     <p class="gsub">Playable in the browser, nothing to install.</p>
   </header>
@@ -415,7 +633,7 @@ h3 a:hover{color:var(--accent)}
 
 <section id="research" class="group" data-map="AI research" style="--c:var(--c-research)" aria-labelledby="h-research">
   <header class="ghead">
-    <p class="kick">03 · AI research</p>
+    <p class="kick">04 · AI research</p>
     <h2 id="h-research">AI research</h2>
     <p class="gsub">Making AI answers checkable: an engine that shows its evidence and refuses when it runs out, and public data for testing models.</p>
   </header>
@@ -428,7 +646,7 @@ h3 a:hover{color:var(--accent)}
         <p class="line">A knowledge engine with no neural weights over 66.4 million facts, running in your browser. Every answer carries a measured confidence and the sources behind it, and it refuses when the evidence runs out.</p>
         <p class="more">Its confidence curve was checked on held-out facts: 0.20 percentage points calibration error. It is being rebuilt with real entity identity; this build runs on the previous version of this site.</p>
         <ul class="tags"><li>Knowledge graph</li><li>Calibration</li><li>JavaScript</li></ul>
-        <p class="links"><a class="go" href="engine.html#think">Ask it a question</a><a href="engine.html#law">The anchor law</a></p>
+        <p class="links"><a class="go" href="engine.html#think">Ask it a question</a><a href="engine.html#law">The anchor law</a><a href="WHITEPAPER.html">The whitepaper</a></p>
       </div>
     </article>
     <article id="bossbench" class="card" data-node="BossBench">
@@ -457,7 +675,7 @@ h3 a:hover{color:var(--accent)}
 
 <section id="apps" class="group" data-map="Other tools" style="--c:var(--c-apps)" aria-labelledby="h-apps">
   <header class="ghead">
-    <p class="kick">04 · Other tools</p>
+    <p class="kick">05 · Other tools</p>
     <h2 id="h-apps">Other tools</h2>
     <p class="gsub">Two applied tools outside games.</p>
   </header>
@@ -487,16 +705,100 @@ h3 a:hover{color:var(--accent)}
   </div>
 </section>
 
+<section id="docs" class="group" style="--c:var(--c-docs)" aria-labelledby="h-docs">
+  <header class="ghead">
+    <p class="kick">06 · Documentation</p>
+    <h2 id="h-docs">Documentation</h2>
+    <p class="gsub">Every manual, deck and guide on this site, by project, each with what it is. The u2ue manual is also listed chapter by chapter <a href="#u2ue-chapters">under u2ue</a>.</p>
+  </header>
+  <div class="shelves">
+    <section id="docs-u2ue" class="shelf spy" style="--c:var(--c-u2ue)" aria-labelledby="h-docs-u2ue">
+      <h3 id="h-docs-u2ue"><i></i>u2ue</h3>
+      <p>The porting toolkit's own page: what it measured, then the whole manual.</p>
+      <ul class="docs">
+        <li><a class="docrow" href="u2ue/#overview"><span class="kind">Overview</span><b>What it measured</b><span class="d">The figures from a real port, each with the command that measured it, and how a reviewer reads a port as a model.</span></a></li>
+        <li><a class="docrow" href="u2ue/#manual"><span class="kind">Manual</span><b>The manual</b><span class="d">The whole manual on one page, its contents down the side: installation, a tutorial, every procedure and every command.</span></a></li>
+        <li><a class="docrow" href="u2ue/#porting-to-unreal-in-a-nutshell"><span class="kind">Guide</span><b>Quick start</b><span class="d">Porting to Unreal in a nutshell: a quick start, and the five problems every port meets.</span></a></li>
+        <li><a class="docrow" href="u2ue/#the-short-version"><span class="kind">Guide</span><b>The short version</b><span class="d">Every aspect of a port, on one screen each.</span></a></li>
+        <li><a class="docrow" href="u2ue/#4-tutorial-a-first-port-step-by-step"><span class="kind">Tutorial</span><b>A first port, step by step</b><span class="d">From describing the game to its first report.</span></a></li>
+        <li><a class="docrow" href="u2ue/#what-a-port-costs"><span class="kind">Guide</span><b>What a port costs</b><span class="d">How it prices a port before the port starts, and how sure that price is.</span></a></li>
+        <li><a class="docrow" href="u2ue/#20-command-reference"><span class="kind">Reference</span><b>Command reference</b><span class="d">Every command of the toolkit, one section each.</span></a></li>
+        <li><a class="docrow" href="u2ue/#16-troubleshooting-2"><span class="kind">Reference</span><b>Troubleshooting</b><span class="d">Find a problem by where it shows: Unreal runs, Unity files, measuring, gates and reports.</span></a></li>
+        <li><a class="docrow" href="u2ue/#questions-and-answers"><span class="kind">Reference</span><b>Questions and answers</b><span class="d">Before you start, during a port, and after it.</span></a></li>
+        <li><a class="docrow" href="u2ue/#17-use-cases-2"><span class="kind">Model</span><b>Use cases</b><span class="d">The use case model a reviewer reads instead of a diff.</span></a></li>
+        <li><a class="docrow" href="u2ue/#22-architecture-and-the-uml"><span class="kind">Model</span><b>Architecture and the UML</b><span class="d">Its layers, its class model, and the review, finding by finding.</span></a></li>
+        <li><a class="docrow" href="u2ue/#appendix-d-prior-art-other-ways-to-port-a-unity-game"><span class="kind">Background</span><b>Prior art</b><span class="d">Other ways to port a Unity game, and how u2ue differs.</span></a></li>
+      </ul>
+    </section>
+    <section id="docs-blueprint" class="shelf spy" style="--c:var(--c-u2ue)" aria-labelledby="h-docs-blueprint">
+      <h3 id="h-docs-blueprint"><i></i>Blueprint View</h3>
+      <p>Unreal Blueprints and code as two views of one source; built on u2ue.</p>
+      <ul class="docs">
+        <li><a class="docrow" href="blueprint/deck/"><span class="kind">Deck</span><b>Code is just one way of writing it down</b><span class="d">The prototype in 39 slides.</span></a></li>
+        <li><a class="docrow" href="blueprint/doc/"><span class="kind">Guide</span><b>How it works</b><span class="d">The idea, the frictions, and what is measured.</span></a></li>
+        <li><a class="docrow" href="blueprint/showcase/"><span class="kind">Example</span><b>Fixing Blueprint friction</b><span class="d">From a 32-node Pong to a Blueprint someone pasted online, every node lighting up as it runs.</span></a></li>
+        <li><a class="docrow" href="blueprint/ergonomics/"><span class="kind">Guide</span><b>Human ergonomics</b><span class="d">Objects you can see, commands you can say, the whole code, and watching it run.</span></a></li>
+        <li><a class="docrow" href="blueprint/code/"><span class="kind">Reference</span><b>The whole Blueprint as code</b><span class="d">Every sample Blueprint read back as the classes it is.</span></a></li>
+        <li><a class="docrow" href="blueprint/review/"><span class="kind">Record</span><b>The record</b><span class="d">The experiment as it stood on 28 October, and what came after.</span></a></li>
+        <li><a class="docrow" href="blueprint/skills/"><span class="kind">Guide</span><b>The skills behind the loop</b><span class="d">The five plain-text playbooks the AI agents worked by.</span></a></li>
+        <li><a class="docrow" href="blueprint/city/"><span class="kind">Live</span><b>Blueprint City</b><span class="d">Fly the Blueprints as a 3D city, and play Pong and the asteroid shooter.</span></a></li>
+      </ul>
+    </section>
+    <section id="docs-loop" class="shelf spy" style="--c:var(--c-tools)" aria-labelledby="h-docs-loop">
+      <h3 id="h-docs-loop"><i></i>Closed loop</h3>
+      <p>Requirements first, tested by AI, so nothing is a guess.</p>
+      <ul class="docs">
+        <li><a class="docrow" href="harness/fly/"><span class="kind">Manual</span><b>The fly-through manual</b><span class="d">A tree of everything you can fly to, the slides standing in the graph, and a page for each thing.</span></a></li>
+        <li><a class="docrow" href="harness/"><span class="kind">Overview</span><b>The harness at a glance</b><span class="d">One self-improving requirements and code-writing harness.</span></a></li>
+        <li><a class="docrow" href="harness/deck/"><span class="kind">Deck</span><b>How to use AI for games</b><span class="d">The method in 26 slides, each fault beside the public page that shows it.</span></a></li>
+        <li><a class="docrow" href="harness/manual/"><span class="kind">Manual</span><b>How to use AI for games: the manual</b><span class="d">The closed loop as a training manual.</span></a></li>
+        <li><a class="docrow" href="harness/osu/"><span class="kind">Example</span><b>osu! scoring, with its names on</b><span class="d">A shipped open-source game's real graph, from its own doc comments.</span></a></li>
+      </ul>
+      <p class="chipsh">One page per concept</p>
+      <ul class="chips">
+        <li><a href="harness/requirements/">Requirements first</a></li>
+        <li><a href="harness/chains/">Claude's reasoning</a></li>
+        <li><a href="harness/breaks/">Breaking the code</a></li>
+        <li><a href="harness/node-graph/">The node graph</a></li>
+        <li><a href="harness/gnn/">The graph neural networks</a></li>
+        <li><a href="harness/gnn-on-itself/">The tool on its own networks</a></li>
+        <li><a href="harness/limits/">The limits</a></li>
+        <li><a href="harness/public-code/">Code you can read yourself</a></li>
+        <li><a href="harness/self-improvement/">Self-improvement</a></li>
+        <li><a href="harness/growth/">Growth</a></li>
+        <li><a href="harness/benchmark/">Benchmark</a></li>
+        <li><a href="harness/accuracy/">The key is accuracy</a></li>
+        <li><a href="harness/telemetry/">Telemetry</a></li>
+        <li><a href="harness/blueprint/">Harness Blueprint</a></li>
+        <li><a href="harness/goals/">Goals list</a></li>
+        <li><a href="harness/stats/">Stats list</a></li>
+      </ul>
+    </section>
+    <section id="docs-research" class="shelf spy" style="--c:var(--c-research)" aria-labelledby="h-docs-research">
+      <h3 id="h-docs-research"><i></i>AI research</h3>
+      <p>The knowledge engine's written record, and the public papers and data.</p>
+      <ul class="docs">
+        <li><a class="docrow" href="WHITEPAPER.html"><span class="kind">Paper</span><b>Verified knowledge extraction from language models</b><span class="d">The engine's whitepaper: what was measured, and the corrections it makes to its own earlier claims.</span></a></li>
+        <li><a class="docrow" href="engine.html#law"><span class="kind">Finding</span><b>The anchor law</b><span class="d">How much more to believe a fact when a second, unrelated source says it too, measured over 66.4 million facts.</span></a></li>
+        <li><a class="docrow" href="engine.html#papers"><span class="kind">Index</span><b>Papers and data</b><span class="d">The engine's written record: the typeset paper with its DOI, and the datasets and source it refers to.</span></a></li>
+        <li><a class="docrow" href="https://zenodo.org/api/records/20221916/files/main.pdf/content" rel="noopener"><span class="kind">Paper</span><b>The BossBench paper</b><span class="d">The preprint on Zenodo, with its DOI and its own correction.</span></a></li>
+        <li><a class="docrow" href="https://huggingface.co/datasets/RJ45Thompson/bossbench-v1" rel="noopener"><span class="kind">Data</span><b>BossBench dataset card</b><span class="d">The 100 adversarial problems, CC0.</span></a></li>
+        <li><a class="docrow" href="https://huggingface.co/datasets/RJ45Thompson/WarShip" rel="noopener"><span class="kind">Data</span><b>WarShip dataset card</b><span class="d">8,124 conversations with their reasoning traces, Apache-2.0.</span></a></li>
+      </ul>
+    </section>
+  </div>
+</section>
+
 <section id="repos" class="group" style="--c:var(--c-repos)" aria-labelledby="h-repos">
   <header class="ghead">
-    <p class="kick">05 · Code and data</p>
+    <p class="kick">07 · Code and data</p>
     <h2 id="h-repos">Code and data</h2>
     <p class="gsub">The public repositories, datasets and paper behind the projects above.</p>
   </header>
   <ul class="list">
     <li><a class="item" href="https://github.com/rj45Thompson/anchor-demo" rel="noopener"><b>anchor-demo</b><small>GitHub</small><span>This site: every page listed here.</span></a></li>
-    <li><a class="item" href="https://github.com/rj45Thompson/closed-loop-kit" rel="noopener"><b>closed-loop-kit</b><small>GitHub · MIT</small><span>The kit behind the closed loop fly-through. A prototype.</span></a></li>
     <li><a class="item" href="https://github.com/rj45Thompson/blueprint-view-source" rel="noopener"><b>blueprint-view-source</b><small>GitHub · MIT</small><span>The Blueprint View prototype.</span></a></li>
+    <li><a class="item" href="https://github.com/rj45Thompson/closed-loop-kit" rel="noopener"><b>closed-loop-kit</b><small>GitHub · MIT</small><span>The kit behind the closed loop fly-through. A prototype.</span></a></li>
     <li><a class="item" href="https://github.com/rj45Thompson/starfighter" rel="noopener"><b>starfighter</b><small>GitHub</small><span>Star Fighter's source.</span></a></li>
     <li><a class="item" href="https://huggingface.co/datasets/RJ45Thompson/bossbench-v1" rel="noopener"><b>bossbench-v1</b><small>Hugging Face · CC0</small><span>The 100-problem BossBench benchmark.</span></a></li>
     <li><a class="item" href="https://huggingface.co/datasets/RJ45Thompson/WarShip" rel="noopener"><b>WarShip</b><small>Hugging Face · Apache-2.0</small><span>8,124 conversations with their reasoning traces.</span></a></li>
@@ -506,7 +808,7 @@ h3 a:hover{color:var(--accent)}
 
 <section id="contact" class="group" style="--c:var(--c-contact)" aria-labelledby="h-contact">
   <header class="ghead">
-    <p class="kick">06 · Contact</p>
+    <p class="kick">08 · Contact</p>
     <h2 id="h-contact">Contact</h2>
     <p class="gsub">R.J. Thompson, senior C++ / C# engineer.</p>
   </header>
@@ -539,15 +841,16 @@ h3 a:hover{color:var(--accent)}
   var barSub = doc.getElementById("barSub"), bar = doc.getElementById("bar");
   var phone = window.matchMedia("(max-width: 760px)");
 
-  /* counts: read from the page, never typed */
+  /* counts: read from the page, never typed (projects are cards; documents are rows and chips) */
+  var COUNTED = ".card, .item, .docrow, .chips a";
   doc.querySelectorAll(".gr").forEach(function(li){
     var sec = doc.getElementById(li.getAttribute("data-sec"));
-    var n = sec ? sec.querySelectorAll(".card").length : 0;
+    var n = sec ? sec.querySelectorAll(COUNTED).length : 0;
     var out = li.querySelector(".n"); if(out && n) out.textContent = n;
   });
   doc.querySelectorAll("[data-count]").forEach(function(a){
     var sec = doc.getElementById(a.getAttribute("data-count"));
-    var n = sec ? sec.querySelectorAll(".card, .item").length : 0;
+    var n = sec ? sec.querySelectorAll(COUNTED).length : 0;
     var b = a.querySelector("b"); if(b && n) b.textContent = n;
   });
 
@@ -580,9 +883,9 @@ h3 a:hover{color:var(--accent)}
   doc.querySelector(".who").addEventListener("click", function(){ if(phone.matches) closeMenu(false); });
   phone.addEventListener && phone.addEventListener("change", function(){ if(!phone.matches) closeMenu(false); });
 
-  /* filter: each menu entry matches on the words of its own card */
+  /* filter: each menu entry matches on the words of its own card, panel or shelf */
   var leaves = [].slice.call(tree.querySelectorAll("li.leaf"));
-  function norm(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " "); }
+  function norm(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " "); }
   leaves.forEach(function(li){
     var a = li.querySelector("a.row"), id = a.getAttribute("href").slice(1), sec = doc.getElementById(id);
     li.setAttribute("data-hay", norm(a.textContent + " " + (sec ? sec.textContent : "")));
@@ -606,7 +909,7 @@ h3 a:hover{color:var(--accent)}
       var ok = !q || li.getAttribute("data-hay").indexOf(q) >= 0;
       li.hidden = !ok;
     });
-    found.textContent = !q ? "" : (shown ? shown + " of " + total + " projects match" : "No project matches");
+    found.textContent = !q ? "" : (shown ? shown + " of " + total + " entries match" : "Nothing matches");
   }
   filter.addEventListener("input", applyFilter);
   filter.addEventListener("keydown", function(e){
@@ -620,7 +923,7 @@ h3 a:hover{color:var(--accent)}
   /* the menu follows the scroll: the entry for what is at the top of the screen is lit */
   var rows = {};
   tree.querySelectorAll("a.row").forEach(function(a){ rows[a.getAttribute("href").slice(1)] = a; });
-  var spy = [].slice.call(doc.querySelectorAll("#top, section.group, .card, #about")).filter(function(el){ return rows[el.id]; });
+  var spy = [].slice.call(doc.querySelectorAll("#top, section.group, .card, .spy, #about")).filter(function(el){ return rows[el.id]; });
   var current = null;
   function label(el){
     var h = el.querySelector("h1, h2, h3"); return h ? h.textContent.trim() : "";
@@ -687,8 +990,8 @@ h3 a:hover{color:var(--accent)}
 
 /* the map: every project as a node, joined to its group, the groups joined in the middle. It is
    drawn from the sections above (data-map on a group, data-node on a card), so it cannot list a
-   project the page does not have, nor miss one it has. Decoration only past that: the dust is
-   seeded and means nothing. */
+   project the page does not have, nor miss one it has. The lead group (data-lead, u2ue) is drawn
+   larger. Decoration only past that: the dust is seeded and means nothing. */
 (function(){
   var cv = document.getElementById("map");
   if(!cv || !cv.getContext) return;
@@ -701,13 +1004,14 @@ h3 a:hover{color:var(--accent)}
   groups.forEach(function(g, i){
     var a = -Math.PI / 2 + i / groups.length * Math.PI * 2;
     var col = getComputedStyle(g).getPropertyValue("--c").trim() || "#7FB2E5";
-    var hub = { x:Math.cos(a) * 1.05, y:(i % 2 ? .17 : -.17), z:Math.sin(a) * 1.05, r:7.5, c:col, kind:"h",
+    var lead = g.hasAttribute("data-lead");
+    var hub = { x:Math.cos(a) * 1.05, y:(i % 2 ? .17 : -.17), z:Math.sin(a) * 1.05, r:lead ? 10.5 : 7.5, c:col, kind:"h", lead:lead,
                 label:g.getAttribute("data-map"), href:"#" + g.id };
     nodes.push(hub); edges.push([C, hub]);
     var kids = [].slice.call(g.querySelectorAll("[data-node]"));
     kids.forEach(function(k, j){
       var off = j - (kids.length - 1) / 2, b = a + off * .55, rr = 1.6 + (j % 2) * .32;
-      nodes.push({ x:Math.cos(b) * rr, y:hub.y * .6 + (j % 2 ? -.36 : .36) + off * .1, z:Math.sin(b) * rr, r:5,
+      nodes.push({ x:Math.cos(b) * rr, y:hub.y * .6 + (j % 2 ? -.36 : .36) + off * .1, z:Math.sin(b) * rr, r:lead ? 6 : 5,
                    c:col, kind:"p", label:k.getAttribute("data-node"), href:"#" + k.id });
       edges.push([hub, nodes[nodes.length - 1]]);
     });
@@ -719,7 +1023,8 @@ h3 a:hover{color:var(--accent)}
     dust.push({ x:Math.cos(t) * s * rad, y:u * rad * .5, z:Math.sin(t) * s * rad });
   }
   var W = 0, H = 0, rot = .5, tilt = .6, hover = null, last = 0, visible = true, raf = 0;
-  var fontHead = "600 12.5px 'Space Grotesk', system-ui, sans-serif", fontSmall = "500 12px 'IBM Plex Sans', system-ui, sans-serif";
+  var fontHead = "600 12.5px 'Space Grotesk', system-ui, sans-serif", fontLead = "700 14px 'Space Grotesk', system-ui, sans-serif",
+      fontSmall = "500 12px 'IBM Plex Sans', system-ui, sans-serif";
   function size(){
     var b = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = b.width; H = b.height;
@@ -762,19 +1067,20 @@ h3 a:hover{color:var(--accent)}
       glow.addColorStop(0, hex(n.c, on ? .55 : .38)); glow.addColorStop(1, hex(n.c, 0));
       ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(q.x, q.y, r * (on ? 5 : 3.6), 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = hex(n.c, Math.min(1, .55 + q.p * .35)); ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, Math.PI * 2); ctx.fill();
-      if(n.kind === "h"){ ctx.strokeStyle = hex(n.c, .9); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(q.x, q.y, r + 4 * q.p, 0, Math.PI * 2); ctx.stroke(); }
+      if(n.kind === "h"){ ctx.strokeStyle = hex(n.c, .9); ctx.lineWidth = n.lead ? 2 : 1.5; ctx.beginPath(); ctx.arc(q.x, q.y, r + 4 * q.p, 0, Math.PI * 2); ctx.stroke(); }
+      if(n.lead){ ctx.strokeStyle = hex(n.c, .45); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(q.x, q.y, r + 10 * q.p, 0, Math.PI * 2); ctx.stroke(); }
       if(on){ ctx.strokeStyle = "#F4F2EC"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(q.x, q.y, r + 6, 0, Math.PI * 2); ctx.stroke(); }
     });
-    /* labels: the one pointed at first, then the groups nearest first; each takes the first free
-       spot around its node, so two labels never sit on each other */
+    /* labels: the one pointed at first, then the lead group, then the groups nearest first; each
+       takes the first free spot around its node, so two labels never sit on each other */
     ctx.textBaseline = "middle";
     var want = order.filter(function(i){ return nodes[i].kind === "h" || nodes[i] === hover; })
-                    .sort(function(i, j){ return (nodes[j] === hover) - (nodes[i] === hover) || P[i].z - P[j].z; });
+                    .sort(function(i, j){ return (nodes[j] === hover) - (nodes[i] === hover) || (!!nodes[j].lead) - (!!nodes[i].lead) || P[i].z - P[j].z; });
     var placed = [];
     want.forEach(function(i){
       var n = nodes[i], q = P[i];
-      ctx.font = n.kind === "h" ? fontHead : fontSmall;
-      var w = ctx.measureText(n.label).width + 8, h = 18, gap = n.r * q.p + 7;
+      ctx.font = n.lead ? fontLead : n.kind === "h" ? fontHead : fontSmall;
+      var w = ctx.measureText(n.label).width + 8, h = n.lead ? 20 : 18, gap = n.r * q.p + (n.lead ? 13 : 7);
       var spots = [[q.x + gap, q.y - h / 2], [q.x - gap - w, q.y - h / 2], [q.x - w / 2, q.y - gap - h], [q.x - w / 2, q.y + gap],
                    [q.x + gap, q.y - h - 3], [q.x + gap, q.y + 3], [q.x - gap - w, q.y - h - 3], [q.x - gap - w, q.y + 3]];
       var spot = null;
@@ -787,7 +1093,7 @@ h3 a:hover{color:var(--accent)}
       if(!spot) return;
       placed.push(spot);
       ctx.fillStyle = "rgba(11,18,25,.8)"; ctx.fillRect(spot.x, spot.y, spot.w, spot.h);
-      ctx.fillStyle = n.kind === "h" ? "#F4F2EC" : "#C9D3DC"; ctx.fillText(n.label, spot.x + 4, spot.y + h / 2 + .5);
+      ctx.fillStyle = n.lead ? n.c : n.kind === "h" ? "#F4F2EC" : "#C9D3DC"; ctx.fillText(n.label, spot.x + 4, spot.y + h / 2 + .5);
     });
   }
   function frame(t){

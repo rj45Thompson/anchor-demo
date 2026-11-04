@@ -16,6 +16,11 @@ Every check prints PASS or FAIL with the value it measured, never a bare "ok":
   routes    the previous page's deep links (#think, #reqs, ...) open engine.html on the same tab;
             the names that became cards here (#resume, #space, ...) open those cards;
             ?view=games opens the Games group.
+  static    read from the files, no browser: every relative link lands on a file of the site, and
+            every link into u2ue's page on an id it holds; the u2ue chapter list is that page's
+            manual exactly (every chapter, in its order, under its own title); every figure the
+            front page quotes from u2ue's page (data-from="u2ue") is on that page word for word;
+            every share picture (og:image) a page names is a file of the site.
 
 Needs Playwright for Python and its Chromium (pip install playwright; playwright install chromium).
 
@@ -23,7 +28,8 @@ usage:  py -m http.server 8840            (from the site root, in another termin
         py test/home_page_check.py http://127.0.0.1:8840/ [out_dir]
 Exit 1 when any check fails. Screenshots go to out_dir (default: a temp folder, printed).
 """
-import json, os, re, sys, tempfile, time
+import html, io, json, os, re, sys, tempfile, time
+from urllib.parse import unquote
 from playwright.sync_api import sync_playwright
 
 try:
@@ -46,6 +52,72 @@ WIDEST = """()=>{const de=document.documentElement; let widest=0, who='';
 def check(name, ok, detail):
     results.append({"check": name, "pass": bool(ok), "detail": detail})
     print(("PASS " if ok else "FAIL ") + name + " :: " + str(detail))
+
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def text_of(fragment):
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", fragment))).strip()
+
+
+def site_file(path):
+    """the file of the site a relative link path names (a folder means its index.html), or None. A .html page with no file of
+    its own but a .md beside it is served by GitHub Pages, which builds every Markdown file in the repository with Jekyll
+    (the site has no .nojekyll); WHITEPAPER.html is that page."""
+    f = os.path.join(ROOT, *[p for p in path.split("/") if p])
+    if path == "" or path.endswith("/"):
+        f = os.path.join(f, "index.html")
+    if os.path.isfile(f):
+        return f
+    if f.endswith(".html") and os.path.isfile(f[:-5] + ".md") and not os.path.exists(os.path.join(ROOT, ".nojekyll")):
+        return f[:-5] + ".md"
+    return None
+
+
+def static():
+    front = io.open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+    u2 = io.open(os.path.join(ROOT, "u2ue", "index.html"), encoding="utf-8").read()
+    u2ids = set(re.findall(r'\sid="([^"]+)"', u2))
+    hrefs = sorted(set(re.findall(r'href="([^"]+)"', front)))
+    dead, n = [], 0
+    for href in hrefs:
+        if re.match(r"(https?:|mailto:|data:|#)", href):
+            continue
+        n += 1
+        path, _, frag = href.partition("#")
+        path = path.split("?")[0]
+        if not site_file(path):
+            dead.append(href)
+        elif frag and path in ("u2ue/", "./u2ue/") and unquote(frag) not in u2ids:
+            dead.append(href)
+    check("static every relative link lands", n and not dead, "%d relative links, dead: %s" % (n, dead))
+    # the chapter list against the manual's own chapters: u2ue's page gives each chapter an <h1 id>
+    chapters = [(m.group(1), text_of(m.group(2))) for m in re.finditer(r'<h1[^>]*\sid="([^"]+)"[^>]*>(.*?)</h1>', u2, re.S)]
+    box = front.split('<div id="u2ue-chapters"', 1)[-1].split('<article id="blueprint"', 1)[0] if 'id="u2ue-chapters"' in front else ""
+    listed = [(m.group(1), text_of(m.group(3))) for m in
+              re.finditer(r'<a href="u2ue/#([^"]+)"><span class="cn">([^<]*)</span>(.*?)</a>', box)]
+    def bare(t):
+        return re.sub(r"^(Appendix [A-Z]\s*\.\s*|\d+\s*\.\s*)", "", t)     # the heading's own number, which the list shows apart
+    want = [(i, bare(t)) for i, t in chapters]
+    check("static the chapter list is the manual's, in order", listed == want and len(want) > 0,
+          "%d chapters on u2ue's page, %d listed; first difference: %s" % (len(want), len(listed),
+          next(((a, b) for a, b in zip(listed + [None] * len(want), want) if a != b), None)))
+    # what the front page quotes from u2ue's page must be on it, word for word
+    u2text = text_of(u2)
+    quoted = re.findall(r'<a[^>]*data-from="u2ue"[^>]*>(.*?)</a>', front, re.S)
+    missing = [part for q in quoted for part in [text_of(p) for p in re.findall(r"<(?:b|span)>(.*?)</(?:b|span)>", q, re.S)]
+               if part not in u2text]
+    check("static every quoted u2ue figure is on u2ue's page", quoted and not missing,
+          "%d quoted blocks, not on the page: %s" % (len(quoted), missing))
+    pics, bad = 0, []
+    for name, src in (("index.html", front), ("u2ue/index.html", u2)):
+        for url in re.findall(r'<meta property="og:image" content="([^"]+)"', src):
+            pics += 1
+            rel = url.split("/anchor-demo/", 1)[-1] if "/anchor-demo/" in url else None
+            if not rel or not site_file(rel):
+                bad.append("%s: %s" % (name, url))
+    check("static every share picture is in the site", pics >= 2 and not bad, "%d named, missing: %s" % (pics, bad))
 
 
 def collect(page, sink):
@@ -133,7 +205,7 @@ def desktop(b):
     page.fill("#filter", "unreal")
     time.sleep(0.3)
     vis = page.evaluate("[...document.querySelectorAll('#tree li.gr li.leaf')].filter(li=>!li.hidden).map(li=>li.querySelector('a').getAttribute('href'))")
-    check("desktop filter 'unreal'", set(vis) >= {"#u2ue", "#blueprint", "#bpgames"} and "#starfighter" not in vis,
+    check("desktop filter 'unreal'", set(vis) >= {"#u2ue-kit", "#u2ue-chapters", "#blueprint", "#bpgames", "#docs-u2ue"} and "#starfighter" not in vis,
           "shown %s, says %r" % (vis, page.inner_text("#found")))
     page.screenshot(path=os.path.join(OUT, "desktop_1440_filter.png"))
     page.fill("#filter", "")
@@ -228,8 +300,9 @@ def routes(b):
     cases = [
         ("#reqs", "engine.html#reqs"), ("#think", "engine.html#think"), ("#law", "engine.html#law"),
         ("#audit", "engine.html#audit"), ("#papers", "engine.html#papers"), ("#inv", "engine.html#inv"),
-        ("#resume", "#breakout"), ("#space", "#starfighter"), ("#projects", "#tools"), ("#bench", "#bossbench"),
+        ("#resume", "#breakout"), ("#space", "#starfighter"), ("#projects", "#u2ue"), ("#bench", "#bossbench"),
         ("#u2ue-manual", "u2ue/#manual"), ("#fly", "#fly"), ("#u2ue", "#u2ue"), ("?view=games", "#games"),
+        ("#manual", "#u2ue-chapters"), ("#documentation", "#docs"), ("#docs-blueprint", "#docs-blueprint"),
         ("?view=games#space", "#starfighter"), ("#nonsense-name", "engine.html#nonsense-name"),
     ]
     for suffix, want in cases:
@@ -249,6 +322,7 @@ def routes(b):
         ctx.close()
 
 
+static()
 with sync_playwright() as p:
     b = p.chromium.launch(args=["--ignore-gpu-blocklist"])
     ids(b)
