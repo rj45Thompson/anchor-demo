@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src 'self' https://api.anthropic.com; object-src 'none'; base-uri 'none'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=2f66ef35b9"><style>
+<html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src 'self' https://api.anthropic.com; object-src 'none'; base-uri 'none'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The fly-through manual, by RJ’s TNT Tools</title><meta name="description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:title" content="The fly-through manual"><meta property="og:description" content="The fly-through is the manual: a tree of everything you can fly to, the slides standing in the graph, and the manual&#x27;s own page for each thing."><meta property="og:type" content="website"><link rel="icon" href="data:,"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"><link rel="stylesheet" href="pages.css?v=9e4ebf820d"><style>
 :root{--bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--treeW:320px;color-scheme:dark}
 *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;font-variant-numeric:tabular-nums}
 a{color:var(--blue)}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -114,6 +114,11 @@ const reducedQuery=matchMedia('(prefers-reduced-motion: reduce)'); const reduced
 const D_TITLE=document.title.split(',')[0], FOV=50*Math.PI/180, TAN=Math.tan(FOV/2), EXPOSURE=1.3, BG=[11/255,18/255,25/255], FAR_NODE=.16, FAR_EDGE=.05;     // a world you are not in stands dim, so you can see where the others are
 const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2], cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 const norm=(a)=>{ const l=Math.hypot(a[0],a[1],a[2])||1; return [a[0]/l,a[1]/l,a[2]/l]; };
+// a projected card's depth (w) at a pixel inside it: 1/w is linear across a projected plane, so it is read off the corner triangle that holds
+// the pixel (the one whose least barycentric weight is largest), not off the card's centre
+const depthAt=(c,x,y)=>{ let w=Infinity, top=-Infinity; for(const [i,j,k] of [[0,1,2],[0,2,3]]){ const a=c[i],b=c[j],d=c[k], den=(b.y-d.y)*(a.x-d.x)+(d.x-b.x)*(a.y-d.y); if(!den) continue;
+  const l1=((b.y-d.y)*(x-d.x)+(d.x-b.x)*(y-d.y))/den, l2=((d.y-a.y)*(x-d.x)+(a.x-d.x)*(y-d.y))/den, l3=1-l1-l2, m=Math.min(l1,l2,l3);
+  if(m>top){ top=m; w=1/(l1/a.w+l2/b.w+l3/d.w); } } return w; };
 const hex=(c)=>[parseInt(c.slice(1,3),16)/255,parseInt(c.slice(3,5),16)/255,parseInt(c.slice(5,7),16)/255];
 const ease=(t)=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function mul4(a,b){ const o=new Float32Array(16); for(let c=0;c<4;c++) for(let r=0;r<4;r++){ let s=0; for(let k=0;k<4;k++) s+=a[k*4+r]*b[c*4+k]; o[c*4+r]=s; } return o; }
@@ -310,6 +315,9 @@ class OrbitCamera {
   fitRect(w,h){ const m=.97; return Math.max(w*(this.h/2)/(TAN*this.w*m),h*(this.h/2)/(TAN*this.freeH()*m)); }
   fitRing(r,phi,tall){ const hor=r*this.h/(TAN*this.w), ver=Math.max((r*Math.cos(phi)+14)*1.3,tall||0)*this.h/(TAN*this.freeH()); return Math.max(hor,ver)*1.08; }
   fitSphere(r){ return r*this.h/(TAN*Math.min(this.w,this.freeH()))*1.08; }
+  /* the room a view will be seen in once the panels settle (the goals, not the blend), and where a view would put the eye and every point of the scene in it */
+  visible(){ return {l:0,t:this.topGoal,r:this.w,b:this.h-this.bottomGoal}; }
+  vpFor(v){ const s=Math.sin(v.phi), eye=[v.x+v.dist*s*Math.cos(v.theta),v.y+v.dist*Math.cos(v.phi),v.z+v.dist*s*Math.sin(v.theta)]; return {eye,m:mul4(perspective(this.w/this.h,1,9000,0,(this.bottomGoal-this.topGoal)/this.h,false),lookAt(eye,[v.x,v.y,v.z]))}; }
   fly(to,instant){ const t=Object.assign({},to); t.phi=Math.max(.08,Math.min(Math.PI-.08,t.phi)); if(instant||reduced()){ Object.assign(this.v,t); this.flight=null; return; }
     const from=Object.assign({},this.v), D=Math.hypot(t.x-from.x,t.y-from.y,t.z-from.z); t.theta=from.theta+((t.theta-from.theta+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
     const dur=Math.max(800,Math.min(2400,700+420*Math.log(1+D/30+Math.abs(t.dist-from.dist)/120))); this.flight={from,to:t,start:performance.now(),dur,bump:Math.min(D*.32,170)}; }
@@ -418,7 +426,28 @@ class App {
   /* ---- what each kind of item looks like from the camera */
   faceOn(p){ return {x:p.c[0],y:p.c[1],z:p.c[2],theta:p.a,phi:Math.PI/2,dist:this.cam.fitRect(p.w,p.h)}; }
   home(theta){ const c=this.cam; return {x:0,y:-10,z:0,dist:c.fitRing(c.w<c.h?226:258,1.26,186),theta:theta===undefined?.7:theta,phi:1.26}; }
-  viewFor(it){ const W=this.world, c=this.cam, D=this.D; switch(it.kind){
+  /* every path that frames something comes through here (a tour stop, a click in the scene, the tree, a deck link, a refit after a resize or the panel
+     opening): the view its kind asks for, moved round its subject when a slide card would stand in front of it, cut by the room. The views of a node, a
+     stop and a link are a fixed distance from their subject, so a card standing between the eye and it filled and cut a phone's room (11-04: the cover
+     slide across the tour's second stop). A slide's own view is face on and fitted to the room, so it is kept as it is */
+  viewFor(it){ const v=this.rawView(it); if(this.slidePanel(it)||!this.blocked(v)) return v;
+    let best=v, bs=Infinity; for(const dp of [0,-.22,.22]) for(const dt of [.45,-.45,.9,-.9,1.4,-1.4,2.2,-2.2,Math.PI]){ const t=Object.assign({},v,{theta:v.theta+dt,phi:Math.max(.2,Math.min(Math.PI-.2,v.phi+dp))}), s=this.blocked(t); if(!s) return t; if(s<bs){ bs=s; best=t; } }
+    return best; }
+  slidePanel(it){ for(let i=0;it&&i<4;i++){ if(it.kind==='slide') return this.world.panels[it.panel]; it=it.to&&this.D.items[it.to]; } return null; }
+  /* how much of the room a view gives to slide cards that stand in front of what it shows: a card facing the eye (the scene draws no other), clipped where
+     it passes behind the eye, not whole in the room, and nearer than the subject while it reaches into the middle third of the room (where the subject
+     is); a card clipped by the eye's plane that reaches into the room always counts. A card at the edges, or behind the subject, is scenery: the
+     neighbours of a slide peek in at the sides of a short room. 0 is a clear view */
+  blocked(v){ const c=this.cam, {eye,m}=c.vpFor(v), r=c.visible(), vw=r.r-r.l, vh=Math.max(1,r.b-r.t), Wof=(q)=>m[3]*q[0]+m[7]*q[1]+m[11]*q[2]+m[15], NEAR=.6, deep=Wof([v.x,v.y,v.z]), x1=r.l+vw/3, x2=r.r-vw/3, y1=r.t+vh/3, y2=r.b-vh/3; let worst=0;
+    for(const p of this.world.panels){ if(dot(p.n,sub(eye,p.c))<=0) continue;
+      const ring=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([sx,sy])=>[0,1,2].map((k)=>p.c[k]+sx*p.right[k]+sy*p.up[k])), pts=[];
+      for(let i=0;i<4;i++){ const P=ring[i], Q=ring[(i+1)%4], wp=Wof(P), wq=Wof(Q); if(wp>NEAR) pts.push(P); if((wp>NEAR)!==(wq>NEAR)){ const f=(wp-NEAR)/(wp-wq); pts.push([0,1,2].map((k)=>P[k]+(Q[k]-P[k])*f)); } }
+      if(!pts.length) continue; const clipped=ring.some((q)=>Wof(q)<=NEAR); let l=Infinity, rt=-Infinity, t=Infinity, b=-Infinity, near=Infinity;
+      for(const q of pts){ const W=Math.max(NEAR,Wof(q)), x=(m[0]*q[0]+m[4]*q[1]+m[8]*q[2]+m[12])/W*.5*c.w+c.w/2, y=-(m[1]*q[0]+m[5]*q[1]+m[9]*q[2]+m[13])/W*.5*c.h+c.h/2; near=Math.min(near,W); l=Math.min(l,x); rt=Math.max(rt,x); t=Math.min(t,y); b=Math.max(b,y); }
+      const ow=Math.min(rt,r.r)-Math.max(l,r.l), oh=Math.min(b,r.b)-Math.max(t,r.t); if(ow<=0||oh<=0||(l>=r.l&&rt<=r.r&&t>=r.t&&b<=r.b)) continue;
+      if(clipped||(near<deep*.98&&l<x2&&rt>x1&&t<y2&&b>y1)) worst=Math.max(worst,Math.max(.05,ow*oh/(vw*vh))); }
+    return worst; }
+  rawView(it){ const W=this.world, c=this.cam, D=this.D; switch(it.kind){
     case 'slide': return this.faceOn(W.panels[it.panel]);
     case 'layer': { const l=D.layers[it.layer], phi=.98; return {x:0,y:l.y,z:0,dist:Math.max(c.fitRing(l.r,phi),60),theta:.7+it.layer*.5,phi}; }
     case 'goal': { const r=W.readers[it.reader], a=Math.atan2(r.pos[2],r.pos[0]); return {x:r.pos[0]*.45,y:r.pos[1]*.45,z:r.pos[2]*.45,dist:c.fitRing(205,1.24,118),theta:a+.5,phi:1.24}; }
@@ -427,13 +456,13 @@ class App {
     case 'statgroup': { const g=D.statGroups.find((x)=>x.id===it.group); return {x:g.c[0],y:g.c[1],z:g.c[2],dist:Math.max(c.fitSphere(g.r*1.15),30),theta:g.a,phi:Math.PI/2}; }
     case 'stats': { const phi=1.05, a=D.statsAt; return {x:0,y:a.y,z:0,dist:c.fitRing(a.r+24,phi),theta:.2,phi}; }
     case 'node': { const p=W.P(it.node), a=Math.atan2(p[2],p[0]); return {x:p[0],y:p[1],z:p[2],dist:105,theta:a+.35,phi:1.22}; }
-    case 'stop': { const s=D.graph.stops[it.stop]; if(s.goal!==undefined) return this.viewFor({kind:'goal',reader:s.goal}); if(s.node===null||s.node===undefined) return s.view?this.viewFor({kind:'goals'}):this.home(); const p=W.P(s.node), a=Math.atan2(p[2],p[0]); return {x:p[0],y:p[1],z:p[2],dist:105,theta:a+.35,phi:1.22}; }
+    case 'stop': { const s=D.graph.stops[it.stop]; if(s.goal!==undefined) return this.rawView({kind:'goal',reader:s.goal}); if(s.node===null||s.node===undefined) return s.view?this.viewFor({kind:'goals'}):this.home(); const p=W.P(s.node), a=Math.atan2(p[2],p[0]); return {x:p[0],y:p[1],z:p[2],dist:105,theta:a+.35,phi:1.22}; }
     case 'view': { const n=D.graph.views.findIndex((v)=>v.id===it.view); return this.home(.7+n*.9); }
     case 'world': { const w=D.worlds[it.world]; if(it.world===0) return this.home(); const phi=1.05; return {x:w.c[0],y:w.c[1],z:w.c[2],dist:Math.max(c.fitRing(w.r,phi,w.tall||0),60),theta:.7+it.world*.9,phi}; }
     case 'worlds': { const a=D.worldsAll; return {x:a.c[0],y:a.c[1],z:a.c[2],dist:c.fitRect(a.w,a.h),theta:0,phi:Math.PI/2}; }
     case 'harmony': { const h=D.harmony; return {x:h.c[0],y:h.c[1],z:h.c[2],dist:c.fitSphere(h.r),theta:0,phi:Math.PI/2}; }
     case 'link': { const p=W.P(it.lnode), a=Math.atan2(p[2],p[0]); return {x:p[0],y:p[1],z:p[2],dist:130,theta:a+.4,phi:1.2}; }
-    case 'manual': case 'concept': case 'page': { if(it.to){ const t=D.items[it.to]; if(t) return this.viewFor(t); } return this.home(it.orbit===undefined?.7:it.orbit); }
+    case 'manual': case 'concept': case 'page': { if(it.to){ const t=D.items[it.to]; if(t) return this.rawView(t); } return this.home(it.orbit===undefined?.7:it.orbit); }
     default: return this.home(); } }
   /* ---- what is lit for each kind of item */
   lightsFor(it){ const g=this.world.g, on1=()=>({node:()=>1,edge:()=>1}); switch(it.kind){
@@ -480,7 +509,7 @@ class App {
       +'<h3>What it is joined to</h3>'+(rels.length?'<ul class="nodejoins">'+rels.map((r)=>'<li><b>'+h(r)+'</b> ('+joins[r].length+'): '+links(joins[r])+'</li>').join('')+'</ul>':'<p>Nothing.</p>')+'<h3>What this kind of thing is</h3>';
     const sec=D.kindSection[kind]; D.items[id]={kind:'node',node:i,title:title[0].toUpperCase()+title.slice(1),tip:words}; D.pages[id]={head,secs:sec&&D.sections[sec]?[sec]:[],foot:''}; }
   /* the Blueprint: a page of its own over the stage, this graph showing through behind its floors. One frame, moved from floor to floor by its address */
-  blueprint(it){ const on=!!it, fr=$('bpframe'); document.body.classList.toggle('bp-on',on); fr.hidden=!on; $('bpclose').hidden=!on; if(!on) return; if(fr.dataset.on) fr.contentWindow.location.hash='embed.'+it.frame; else { fr.dataset.on='1'; fr.src='../blueprint/index.html?v=2f66ef35b9#embed.'+it.frame; } }
+  blueprint(it){ const on=!!it, fr=$('bpframe'); document.body.classList.toggle('bp-on',on); fr.hidden=!on; $('bpclose').hidden=!on; if(!on) return; if(fr.dataset.on) fr.contentWindow.location.hash='embed.'+it.frame; else { fr.dataset.on='1'; fr.src='../blueprint/index.html?v=9e4ebf820d#embed.'+it.frame; } }
   setHere(it){ $('hereT').textContent=it.title; $('hereS').textContent=it.sub||it.tip||''; $('hereD').textContent=this.drawnNote(it); }
   roomChanged(){ const h=$('hud').getBoundingClientRect().height, v=$('view').getBoundingClientRect(), target=this.page.isOpen?this.openHeight():46, top=Math.min(h,v.height*.3), c=this.cam; if(Math.abs(c.w-v.width)<1&&Math.abs(c.h-v.height)<1&&Math.abs(c.topGoal-top)<1&&Math.abs(c.bottomGoal-target)<1) return; c.setRoom(v.width,v.height,top,target); clearTimeout(this.refit); if(this.cur&&!c.wandered) this.refit=setTimeout(()=>{ if(!c.wandered&&this.cur) c.fly(this.viewFor(this.D.items[this.cur]),reduced()); },30); else if(!this.cur&&!c.wandered) c.v.dist=this.home().dist; }
   openHeight(){ const cs=getComputedStyle(this.page.el).getPropertyValue('--pageH'); if(cs&&cs.trim()) return parseFloat(cs); const v=$('view').getBoundingClientRect(); return innerWidth<=760?v.height*.52:innerHeight*.38; }
@@ -528,12 +557,15 @@ class App {
     addEventListener('keyup',(e)=>{ this.keys[e.key.toLowerCase()]=false; }); addEventListener('blur',()=>{ this.keys={}; }); }
   stepItem(by){ if(!this.cur){ this.select('stop-1',{user:true}); return; } const n=this.tree.step(this.cur,by); if(n) this.select(n,{user:true,keep:true}); }
   pick(x,y){ const box=this.canvas.getBoundingClientRect(), ex=x-box.left, ey=y-box.top, cam=this.cam, W=this.world; let best=null,bd=26*26;
-    W.readers.forEach((r,i)=>{ const s=cam.project(r.pos[0],r.pos[1],r.pos[2]); if(!s) return; const d=(s.x-ex)**2+(s.y-ey)**2, lim=Math.max(14,r.R*(cam.h*.9)/s.w*.5)**2; if(d<lim&&d<bd){ bd=d; best={type:'reader',i}; } }); if(best) return best;
-    bd=14*14; W.statPos.forEach((p,i)=>{ const s=cam.project(p[0],p[1],p[2]); if(!s) return; const d=(s.x-ex)**2+(s.y-ey)**2; if(d<bd){ bd=d; best={type:'stat',i}; } }); if(best) return best;
     // a card is drawn from both sides (neither renderer culls), so it is picked from both sides: seen from behind, its corners wind the other
     // way, and a point is inside when every edge has it on the same side, whichever side that is (11-04: a card seen from behind let the click
     // fall through to a node, so the camera flew to the node and never to the card)
-    let near=Infinity; W.panels.forEach((p,i)=>{ const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>cam.project(p.c[0]+p.right[0]*a+p.up[0]*b,p.c[1]+p.up[1]*b,p.c[2]+p.right[2]*a+p.up[2]*b)); if(c.some((s)=>!s)) return; let pos=0,neg=0; for(let k=0;k<4;k++){ const q=c[k],r=c[(k+1)%4], s=(r.x-q.x)*(ey-q.y)-(r.y-q.y)*(ex-q.x); if(s>0) pos++; else if(s<0) neg++; } const inside=!(pos&&neg); const dist=Math.hypot(...sub(cam.eye,p.c)); if(inside&&dist<near){ near=dist; best={type:'panel',i}; } }); if(best) return best;
+    let card=null, cardW=Infinity; W.panels.forEach((p,i)=>{ const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>cam.project(p.c[0]+p.right[0]*a+p.up[0]*b,p.c[1]+p.up[1]*b,p.c[2]+p.right[2]*a+p.up[2]*b)); if(c.some((s)=>!s)) return; let pos=0,neg=0; for(let k=0;k<4;k++){ const q=c[k],r=c[(k+1)%4], s=(r.x-q.x)*(ey-q.y)-(r.y-q.y)*(ex-q.x); if(s>0) pos++; else if(s<0) neg++; } if(pos&&neg) return; const w=depthAt(c,ex,ey); if(w<cardW){ cardW=w; card={type:'panel',i}; } });
+    // readers and stats dots are drawn after the cards with the depth test on, so one behind a card is hidden by it and is not picked through it
+    // (11-04: a click on the middle of a card picked a stats dot 271 units behind it, with the page panel open)
+    W.readers.forEach((r,i)=>{ const s=cam.project(r.pos[0],r.pos[1],r.pos[2]); if(!s||s.w>=cardW) return; const d=(s.x-ex)**2+(s.y-ey)**2, lim=Math.max(14,r.R*(cam.h*.9)/s.w*.5)**2; if(d<lim&&d<bd){ bd=d; best={type:'reader',i}; } }); if(best) return best;
+    bd=14*14; W.statPos.forEach((p,i)=>{ const s=cam.project(p[0],p[1],p[2]); if(!s||s.w>=cardW) return; const d=(s.x-ex)**2+(s.y-ey)**2; if(d<bd){ bd=d; best={type:'stat',i}; } }); if(best) return best;
+    if(card) return card;
     bd=18*18; const g=W.g, gain=this.focusLit.node; for(let i=0;i<W.N;i++){ if(gain[2*i+1]<.05) continue; const s=cam.project(g.pos[3*i],g.pos[3*i+1],g.pos[3*i+2]); if(!s) continue; const d=(s.x-ex)**2+(s.y-ey)**2; if(d<bd){ bd=d; best={type:'node',i}; } } return best; }
   nodeWords(i){ const g=this.world.g, D=this.D, kind=g.kinds[g.kind[i]], row=D.nodeRows[i], fw=(D.flagWords||{})[kind]||{};
     if(kind==='link'){ const k=D.harmony.nodes.indexOf(i); return 'Link '+(k+1)+' of 10, '+D.harmony.names[k].toLowerCase()+': '+D.harmony.status[k]+'. Its kind: link.'; }
@@ -566,7 +598,7 @@ class App {
 }
 
 (async function(){ const forced=Q.get('renderer'), bad=(msg)=>{ const f=$('fail'); f.hidden=false; f.textContent=msg; console.error(msg); };
-  let D; try { const r=await fetch('data.json?v=2f66ef35b9'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
+  let D; try { const r=await fetch('data.json?v=9e4ebf820d'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The fly-through could not load its data ('+e.message+'). The manual is at ../manual/.'); return; }
   const started=await startScene($('c'),forced); const app=new App(D,started); window.__fly={renderer:started.scene.name,why:started.why,app,settle:()=>new Promise((res)=>app.settleWaiters.push(res)),state:()=>({cur:app.cur,pageOpen:app.page.isOpen,pageId:app.page.id,playing:app.playing,eye:app.cam.eye.slice(),view:Object.assign({},app.cam.v),fps:app.fps.v})};
 })();
 </script><script>/* dictation.js - speech to text beside a page, and Claude to tidy the words or answer from the page.
