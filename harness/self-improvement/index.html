@@ -136,7 +136,7 @@ void Tick() {
 </section>
 <section id="recursive">
 <h2>The loop on its own improvement</h2>
-<p>The loop records a great deal about itself: every pass leaves fifty numbers, and the learned parts leave evidence of when they help. Recording a number is only worth it if something reads it and acts. On 29 October an audit found <strong>28 numbers that nothing read</strong>, and many more that were only printed.</p>
+<p>The loop records a great deal about itself: every pass records 44 stats about itself, and the learned parts leave evidence of when they help. Recording a number is only worth it if something reads it and acts. On 29 October an audit found numbers that nothing read, and many more that were only printed.</p>
 <p>So the improvement of the loop now has requirements of its own, written the way the product's are. Each number has a requirement saying <strong>what pattern in it should trigger something, what that is, and why the number is kept</strong>: a test that catches nothing for two passes is a speed item; an excuse for a harmless break that lapses is a hole; the graph not growing for three passes means the model is not being seeded. A number kept for a learner that does not exist yet must name that learner and a date. Past the date, unread, it fails.</p>
 <h3>Three levels, one graph</h3>
 <ul>
@@ -146,7 +146,7 @@ void Tick() {
 </ul>
 <p>The same learning applies one level up: once enough actions have measured results, a model can learn which kind of action moves which number, and it is switched on only where it beats the plain rule, like everything else.</p>
 <div class="box evidence"><p class="label">Where these numbers come from</p>
-<p><span class="chip measured">Measured</span> The audit on 29 October: 28 numbers read by nothing at first; after giving each a reader or a trigger, <strong>none</strong>. 14 now drive a decision in code and 28 are covered by a trigger.</p>
+<p><span class="chip measured">Measured</span> After the audit of 29 October gave each number a reader or a trigger, <strong>none</strong> is read by nothing. 14 now drive a decision in code and 28 are covered by a trigger.</p>
 <p><span class="chip measured">Measured</span> The first run of the triggers fired 12: among them, 5 tests in the tool's own suite that catch no break at all, 8 of the who/what/why questions never asked on each model, and one requirement whose breaks were all caught last pass and are not now.</p>
 <p><span class="chip open">Open</span> No action has a measured result yet; the improvement graph becomes learnable at 20.</p></div>
 </section>

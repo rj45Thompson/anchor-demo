@@ -101,19 +101,15 @@ details.mtoc { display: none }
 
 <section id="accuracy">
 <h2>The key is accuracy</h2>
-<p>Accuracy boosts productivity across the board. In our view it makes AI, in some cases, thousands of times smarter. That multiplier is our view, not a measurement: no multiplier of that size has been measured.</p>
+<p>Every value an AI guesses is one somebody has to check later. A value read from a source, with the source named, is one they can check.</p>
 <p>The gap between what AI guesses and what is true is what people deem AI slop. At TNT Tools the standard is no slop: every value is either read from a source, with a note of where, or marked absent with the reason. There is no third kind.</p>
-<div class="box evidence"><p class="label">Where these numbers come from: our knowledge graph, on facts</p>
-<p><span class="chip measured">Measured</span> <strong>99.03%</strong> of 35,951 derivations it had never seen were right, using reasoning rules guarded by type, on a verified-or-abstain knowledge graph of 60.33 million facts, each carrying which sources state it.</p>
-<p><span class="chip measured">Measured</span> <strong>616 of 616</strong> of its top-tier facts were right against an outside truth (cached Wikidata), on a frozen test population of 2,714 entities, with the bars declared before the run.</p>
-<p><span class="chip measured">Measured</span> <strong>99.2%</strong> right on 209 held-out questions, answering 61% of them and abstaining on the rest. Asked the same questions on the same facts, a local language model answered 95% at 98.0%, with 4 confident wrong answers. The accuracy comes from being allowed to say "I don't know".</p></div>
-<p>Those are facts, not code. On code, the numbers are in <a href="#publiccode">three trials on code you can read for yourself</a>, and the target for agents writing code using the loop is still <a href="#targets">a target</a>.</p>
+<p>The numbers on code are in <a href="#publiccode">three trials on code you can read for yourself</a>, and the target for agents writing code using the loop is still <a href="#targets">a target</a>.</p>
 </section>
 
 <section id="waterfall">
 <h2>Back to 1999: requirements first</h2>
-<p>This is how we review our code: we pour the effort into requirements first. It is time to learn systems analysis and design again. Agile is, for the most part, dead. Long live waterfall.</p>
-<p>The reason is mechanical. The more requirements you have, the more of the loop closes, so that nothing is left to a guess. That is what gets you slopless code. We want hand-crafted quality on an IKEA budget.</p>
+<p>This is how we review our code: we pour the effort into requirements first, review them before any code, then iterate on milestones like everything else. It is time to learn systems analysis and design again.</p>
+<p>The reason is mechanical. The more requirements you have, the more of the loop closes, so that nothing is left to a guess. That is what gets you slopless code.</p>
 <div class="box evidence"><p class="label">Where this comes from</p>
 <p><span class="chip measured">Measured</span> On Unreal Engine’s SemVer parser the requirements were written first, from the public Semantic Versioning 2.0.0 spec: 16 requirements, every numbered rule mapped to one or excluded with a reason. Writing them against the code found 4 faults that fail when run, before any break was made, and 7 of the 16 have no test about them. See <a href="#publiccode">on code you can read for yourself</a>. The requirements and the reading found those faults; the breaks add the count of what no test holds.</p></div>
 </section>
@@ -201,13 +197,14 @@ details.mtoc { display: none }
 <h2>Seed it first, then it flies</h2>
 <p>The loop learns from what is already written down. Give it a model with a handful of requirements and it can check those few, but it has little to reason from when new code arrives. Give it many, with their code claimed, and it starts to see the patterns: which requirement a new branch most likely belongs to, which questions follow from which. So the order of work is: <strong>seed the model with as many sourced requirements as you can, then let the loop carry it.</strong></p>
 <h3>How full is full enough</h3>
+<p>Measured while the network ran, before it was switched off on 3 November because a plain rule beat it on the tool's own code. Whether the same order of writing helps the owner head that replaced it has not been measured.</p>
 <p>We measured this for the part that learns, the graph neural network (GNN). For each graph it was allowed to see only a share of the known links between code and the requirements that own it (a tenth, a quarter, half, three quarters, all of them), always tested on methods it had never seen, and compared with a plain rule that does not learn: “suggest the requirements whose effects already sit in this method”.</p>
 <div class="box evidence"><p class="label">Where these numbers come from</p>
 <p><span class="chip measured">Measured</span> <strong>The two kit examples</strong> (4 requirements each): the plain rule wins at every fullness, 0.90 and 0.86 against the graph neural network (GNN)’s best of 0.78 and 0.85.</p>
 <p><span class="chip measured">Measured</span> <strong>The tool’s own model</strong> (20 requirements): the graph neural network (GNN) wins only at half and falls back after, so it has no dependable crossover yet.</p>
 <p><span class="chip measured">Measured</span> <strong>The largest graph measured, a game feature of ours that is not public:</strong> the GNN lost below half the links and won from half on, against the same plain rule. No count is given because the feature is not public, and the curve has not been drawn on the public targets here.</p>
 <p>Two seeds each, five folds by method, 29 October. That is thin: read it as a first shape, not a law.</p></div>
-<p>So on a small model the GNN stays quiet and the plain rule does the work. Where it has earned its place, it did so only on the largest graph, and only once about half of its code was claimed.</p>
+<p>So on a small model the GNN stayed quiet and the plain rule did the work. Where it has earned its place, it did so only on the largest graph, and only once about half of its code was claimed.</p>
 <h3>Some requirements are pillars</h3>
 <p>Which requirements are written matters as much as how many. A few carry most of the code. On osu!’s scoring rules, 13 of its 30 requirements own 80% of the branches a requirement owns, and the top three own 28%; on SemVer 11 of 19 own 80% and the top three 37%; on JsonObject 9 of 27 own 80% and the top three 46%. On the tool’s own model, 7 of the 12 requirements that own any code own 80% of it, and one of them runs through 16 methods. Seed those first: a rule that runs through many methods gives the rest of the graph something to attach to.</p>
 <p>The same curve was then seeded by requirement instead of by method: only some requirements' claims were seen, added in three orders.</p>
@@ -219,7 +216,7 @@ details.mtoc { display: none }
 <h3>The smallest seed that grows into the whole loop</h3>
 <p>The loop already grows requirements. It walks each step, asks what the step needs, and every need nobody wrote becomes a new requirement for the owner to settle. On SemVer, 3 of the 19 requirements are marked inferred that way, on top of the 16 that cite the spec. So the open question is how small the written set can be and still grow into the full model. A small, well-chosen seed would mean less to write up front, and a structure that is easier to keep consistent.</p>
 <p><span class="chip open">Open</span> The experiment for it: give an agent only the problem story and a few pillar requirements, let it grow the model using the loop, and count how many of the full model’s requirements it arrives at, and at what cost.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-26" data-slide="gnn">slide 26</a>.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-24" data-slide="switchedoff">slide 24</a>.</p>
 </section>
 
 <section id="how">
@@ -246,7 +243,7 @@ It breaks your code every way it knows, runs your tests against every break, bui
 <li><strong>Three trials on code you can read:</strong> breaks caught and bugs run. <a href="#publiccode">More</a></li>
 <li><strong>Equivalents:</strong> a break that changes nothing is proven or explained, never waved away. <a href="#equivalents">More</a></li>
 <li><strong>The test subjects:</strong> a published spec, a JSON object and a shipped game’s scoring rules, each chosen for a reason. <a href="#feature">More</a></li>
-<li><strong>The GNN:</strong> a learning model that suggests which requirement owns new code. <a href="#gnn">More</a></li>
+<li><strong>The GNN:</strong> a learning model that suggested which requirement owns new code, switched off on 3 November, because a plain rule beat it. <a href="#gnn">More</a></li>
 <li><strong>A fresh reviewer each pass:</strong> a new agent hunts for ways a check could pass wrongly. <a href="#reviewers">More</a></li>
 </ol>
 <p class="seen">On the slides: <a href="../deck/#slide-5" data-slide="numbers">slide 5</a>.</p>
@@ -283,7 +280,7 @@ It breaks your code every way it knows, runs your tests against every break, bui
 
 <section id="breaks">
 <h2>Breaking the code on purpose</h2>
-<p>The usual name is <strong>mutation testing</strong>, and each broken copy is a <strong>mutant</strong>. This manual calls them <strong>breaks</strong>. A break that makes some test fail is <strong>caught</strong> (or “killed”). A break that every test still passes <strong>got past</strong> (or “survived”), and that points at a missing test.</p>
+<p>The usual name is <strong>mutation testing</strong>, and each broken copy is a <strong>mutant</strong>. This manual calls them <strong>breaks</strong>, and the slides call them <strong>planted bugs</strong>. A break that makes some test fail is <strong>caught</strong> (or “killed”). A break that every test still passes <strong>got past</strong> (or “survived”), and that points at a missing test.</p>
 <div class="box plain"><p class="label">A small example</p>
 <pre><code>if (wallet.Money &gt;= price)   // the real code: exact money is enough
 if (wallet.Money &gt;  price)   // a break: paying the exact price now fails</code></pre>
@@ -408,16 +405,17 @@ method Pay        is claimed by   requirement W-1</code></pre>
 
 <section id="map">
 <h2>The requirements map to the code, and the map finds mistakes</h2>
-<p>This is an early prototype. Every requirement links to the code it owns, in one graph. The graph's criteria and the breaks do most of the finding so far. A graph neural network (GNN) learns on the same map, proposes which requirement owns new code, and is set to learn what does not fit; using it as a second opinion on every claim is planned and not yet measured.</p>
+<p>This is an early prototype. Every requirement links to the code it owns, in one graph. The graph's criteria and the breaks do most of the finding so far. A graph neural network (GNN) was tried on the same map and switched off on 3 November, because a plain rule beat it; the owner head does its job now (<a href="#gnn">the GNN</a>).</p>
 <div class="box evidence"><p class="label">What the map has found</p>
 <p><span class="chip measured">Measured</span> <strong>7 of the 16 requirements</strong> taken from the SemVer spec have no test about them, including every rule about which strings are valid. Which test is about what was our reading of each test, written down before any break ran.</p>
 <p><span class="chip measured">Measured</span> <strong>110 of the 191 branches</strong> of osu!’s scoring rules have a break that got past the three test files that were run, and every one of the 191 is claimed by a requirement, so those 110 are tests missing, not requirements missing. Read it as what those three files hold.</p>
-<p><span class="chip measured">Measured</span> <strong>On public code:</strong> a public asteroid game's document modelled as 48 requirements. 10 rest on a function's behaviour with no value behind them, and the parse check caught a document row missing a column. Language-neutral parts only, with no breaks, since there is no JavaScript adapter; a thin graph, where a green result means little.</p>
+<p><span class="chip measured">Measured</span> <strong>On public code:</strong> a public asteroid game's document modelled as 48 requirements. 10 rest on a function's behaviour with no constant behind them, and the parse check caught a document row missing a column. Language-neutral parts only, with no breaks, since there is no JavaScript adapter; a thin graph, where a green result means little.</p>
 <p><span class="chip measured">Measured</span> <strong>On the toolkit's own code:</strong> 885 of the 1,532 breaks caught. See <a href="#self">the tool on itself</a>.</p>
 <p><span class="chip open">Open</span> That trial is done, on C#: see <a href="#publiccode">code you can read yourself</a>. There is no C++ adapter, so on C++ it would run the language-neutral parts only.</p></div>
 </section>
 
 <section id="gnnhow">
+<div class="box plain"><p class="label">Switched off on 3 November</p><p>On the tool’s own code the network lost to a plain rule, so it is off. It wakes when a project’s graph reaches 5,000 entities, and must then win by more than 0.02 on code it has not seen. Its jobs are done by two small checking heads and by reading the test runs; this section is the record of what it did while it ran.</p></div>
 <h2>How the GNN works, what it records, and how it tries to improve</h2>
 <h3>How it works</h3>
 <ol>
@@ -446,17 +444,17 @@ method Pay        is claimed by   requirement W-1</code></pre>
 
 <section id="gnn">
 <h2>The GNN: who owns new code?</h2>
-<p>When someone adds code, the loop needs to know which requirement it belongs to. The GNN (a graph neural network, a learning model that reads the graph) suggests an answer. It looks at what is already linked around that code and ranks the requirements from most to least likely owner.</p>
+<p>When someone adds code, the loop needs to know which requirement it belongs to. The GNN (a graph neural network, a learning model that reads the graph) suggested an answer, until it was switched off on 3 November, because a plain rule beat it. It looked at what was already linked around that code and ranked the requirements from most to least likely owner.</p>
 <h3>How it was tested fairly</h3>
-<p>It was trained on part of a project’s graph, with whole methods hidden from it. Then it was asked to rank owners for the hidden methods, code it had never seen. It was compared against simple rankers that do not learn, such as “the requirements already linked to this method” or “the requirement whose words overlap the code’s names most”. It is only allowed to make suggestions if it beats them.</p>
+<p>It was trained on part of a project’s graph, with whole methods hidden from it. Then it was asked to rank owners for the hidden methods, code it had never seen. It was compared against simple rankers that do not learn, such as “the requirements already linked to this method” or “the requirement whose words overlap the code’s names most”. It was only allowed to make suggestions if it beat them.</p>
 <h3>What the numbers mean</h3>
 <p><strong>MRR</strong> (mean reciprocal rank) scores a ranking: the right owner ranked first scores 1, second scores ½, third ⅓, and so on, averaged over every test case. An MRR of 0.75 means the right owner is usually first, sometimes second.</p>
 <div class="box evidence"><p class="label">Where these numbers come from</p>
 <p><span class="chip measured">Measured</span> On the tool’s own code, with whole methods held out and a mean over five seeds, the GNN scored <strong>MRR 0.65</strong> against <strong>0.72</strong> for the best ranker that does not learn: it loses, and is switched off there. Runs differ by about a tenth, so a single number is never the whole story.</p>
 <p><span class="chip measured">Measured</span> It only wins on a large enough graph that is about half claimed: see <a href="#seed">Seed it first, then it flies</a>.</p>
 <p><span class="chip measured">Measured</span> The design is to abstain: below 70% sure the GNN says “not sure” and asks. How often it is right at 70% and on how much of the new code was measured on one project of ours, and is not repeated here because that project is not public.</p></div>
-<p>Its suggestions are always questions for a person, never verdicts. One lesson from building it: the first version did worse than the simple rankers, because the links it was asked to predict were also links it could read. Separating the two fixed it.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-5" data-slide="numbers">slide 5</a>, <a href="../deck/#slide-26" data-slide="gnn">slide 26</a>.</p>
+<p>Its suggestions were always questions for a person, never verdicts. One lesson from building it: the first version did worse than the simple rankers, because the links it was asked to predict were also links it could read. Separating the two fixed it.</p>
+<p class="seen">On the slides: <a href="../deck/#slide-5" data-slide="numbers">slide 5</a>, <a href="../deck/#slide-24" data-slide="switchedoff">slide 24</a>.</p>
 </section>
 
 <section id="goalslist">
@@ -562,8 +560,9 @@ method Pay        is claimed by   requirement W-1</code></pre>
 
 <section id="tuner">
 <h2>Shaping the graph for the GNN</h2>
+<p>Not run since the network was switched off on 3 November, because a plain rule beat it. This is the record of what the tunes found.</p>
 <p>The GNN learns from the graph’s links, and not every kind of link helps it. A tuning pass tries leaving out one kind of link at a time (for example the link from every branch to the one shared “space” node, which ties everything to everything) and measures the GNN again on code it never saw. A change is kept only if it helps on the tuning runs <em>and</em> again on a separate run it was not chosen on, so that a lucky result is not mistaken for a real one. The kept choice is written beside the graph, and the GNN reads it from then on.</p>
-<p>The stats decide when to tune: when the GNN’s lead over the simple rankers stops growing, or every five passes otherwise (<a href="#choose">how the stats choose</a>).</p>
+<p>The stats decided when to tune: when the GNN’s lead over the simple rankers stopped growing, or every five passes otherwise (<a href="#choose">how the stats choose</a>).</p>
 <div class="box evidence"><p class="label">The first tune, on the graph the network was built on</p>
 <p><span class="chip measured">Measured</span> The full graph set the score to beat, and run-to-run noise alone was about 0.02. Six variants were tried. None beat the full graph by the required 0.02, so <strong>nothing was changed</strong>. The best, leaving out the use-case structure links, gained a little; leaving out the shared “space” node gained less.</p>
 <p><span class="chip measured">Measured</span> The links the GNN relied on most were “binds requirement” and “is at”, which ties a branch to its method.</p></div>
@@ -589,7 +588,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <section id="flatter">
 <h2>Breaking code one way flatters it</h2>
 <p>A coverage tool said SemVer was <strong>90% covered</strong> by lines run, and 85% by branches. Breaking every decision every way the tool knows made 246 breaks, 236 of them live, and <strong>30 got past every test</strong>. 14 of those 30 sit on lines the coverage tool marks as covered.</p>
-<p>Nothing about the code changed. Only how hard it was tried: a line that runs is not a line that is held.</p>
+<p>Nothing about the code changed. Only how hard it was tried: a line that runs is not a line that is checked. Coverage says a test ran the line; only a planted bug on that line says whether any test would notice it being wrong. This is a known result, not only ours: <a href="https://cs.ubc.ca/~rtholmes/papers/icse_2014_inozemtseva.pdf">Inozemtseva and Holmes, ICSE 2014</a>, found coverage only low to moderately tied to how many planted bugs a suite catches, once its size is allowed for. The 30, by line, are <a href="#publiccode">in the public-code trial</a>.</p>
 <p>That is why every pass records how wide the net was beside what got through it, and why a score from a narrow net, or from lines run, should never be trusted on its own.</p>
 <p class="seen">On the slides: <a href="../deck/#slide-4" data-slide="flatter">slide 4</a>.</p>
 </section>
@@ -599,9 +598,9 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <p>The loop’s own requirements are written as a model too, from the author’s own words with their dates: <strong>8 use cases, 18 authored requirements and 2 inferred ones</strong>, and the model passes the 19 rules. A Python adapter breaks the loop’s own decision code the same way the C# adapter breaks a game’s, and the loop’s selftests are the tests.</p>
 <p>The model is expected to stay open in places, and to say so: it must report that the installer is the newest piece, that the two targets are not measured, and that a reviewer every pass is still a practice rather than a check.</p>
 <div class="box evidence"><p class="label">The first pass on its own code (29 October, 65 minutes)</p>
-<p><span class="chip measured">Measured</span> <strong>1,626 breaks</strong> of the tool’s own decision code. Its selftests caught <strong>885 (54%)</strong>; <strong>647 got past</strong> every test; 94 were proven to change nothing by comparing compiled bytecode. <strong>174 of 392 statements</strong> are held by a test (44%).</p>
+<p><span class="chip measured">Measured</span> <strong>1,626 breaks</strong> of the tool’s own decision code. 94 were proven to change nothing by comparing compiled bytecode. Of the 1,532 that changed the program, its selftests caught <strong>885 (58%)</strong> and <strong>647 got past</strong> every test. <strong>174 of 392 statements</strong> are held by a test (44%).</p>
 <p>So the tool is less tested than SemVer (71% of its statements held, against its own 44%) and than JsonObject (61%), and about as tested as osu!’s scoring rules under three test files (42%). Its tests are planted mistakes that each prove one rule; they were never written to catch every break of every line. That gap is the next work, and these numbers are on code you will hold: the kit ships this source.</p>
-<p><span class="chip measured">Measured</span> The model passes all 19 rules; its graph holds 2,335 nodes and 6,259 edges; 2 questions stay open for the owner.</p></div>
+<p><span class="chip measured">Measured</span> The model passes all 19 rules; after that first pass its graph held 2,335 nodes and 6,259 edges; 2 questions stay open for the owner.</p></div>
 <div class="box plain"><p class="label">Two lessons from getting it to run</p>
 <p>The first attempt ran all 1,626 breaks, then crashed while writing the summary, and the hour of runs was lost. The tool now saves every verdict before it builds the summary, and reuses them when the code and tests are unchanged. The second attempt refused to start, correctly, because a tool’s own test was failing while it was being edited. Rule since: never edit a tool while a run is using it.</p></div>
 <p class="seen">On the slides: <a href="../deck/#slide-23" data-slide="selfstats">slide 23</a>.</p>
@@ -617,27 +616,56 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <li><strong>osu!, a shipped rhythm game (ppy/osu, MIT, commit 845336e), <code>ScoreProcessor.cs</code> and <code>HitResult.cs</code>.</strong> Requirements: their own doc comments. Tests: the 151 test cases in <code>osu.Game.Tests/Rulesets/Scoring</code>. The project has many more, which this pass did not run per break: see below.</li>
 </ul>
 <p>Unreal's source is available to anyone with an Unreal licence, not to the general public, so this file gives counts, method names and calls we wrote, and no engine code.</p>
+<div class="box evidence"><p class="label">Check it yourself: three faults, each against a rule anyone can read</p>
+<ul>
+<li><strong>Unreal's SemVer class</strong> (<code>Engine/Source/Programs/Shared/EpicGames.Core/SemVer.cs</code>): <code>var v = SemVer.Parse("1.0.0-x-y-z.--"); v.CompareTo(v);</code> throws <code>ArgumentOutOfRangeException</code>. <a href="https://semver.org/">The SemVer spec</a>, rule 9, lists that version among its valid examples. Re-run on the installed 5.7 source on 3 November.</li>
+<li><strong>Unreal's JsonObject</strong>: <code>x.Equals(x)</code> on <code>{"a":null}</code> throws <code>NullReferenceException</code>. <a href="https://learn.microsoft.com/en-us/dotnet/api/system.object.equals">Microsoft's Object.Equals contract</a> says <code>x.Equals(x)</code> returns true and that Equals must not throw. Re-run on the installed 5.7 source on 3 November.</li>
+<li><strong>osu!'s ScoreProcessor</strong>: before anything is judged, <code>TotalScoreWithoutMods</code> reads 1,000,000 while <code>TotalScore</code> reads 0. <a href="https://github.com/ppy/osu/blob/845336e/osu.Game/Rulesets/Scoring/ScoreProcessor.cs#L60">Its own doc comment</a> says it is the points awarded. Re-run on a fresh clone at that commit on 3 November.</li>
+</ul></div>
 <h3>The numbers</h3>
-<p>"Live" leaves out breaks that did not compile and breaks whose compiled code was proven identical to the original.</p>
-<p><strong>SemVer</strong>
-- Coverage tool, for comparison: 90% of lines, 85% of branches.
-- 246 breaks made; 236 live; 206 caught (87.3%); 30 got past every test.
-- 14 of those 30 sit on lines the coverage tool marks as covered.
-- 48 of 68 statements held by a test; 18 have a break that gets past.
-- 7 of the 16 requirements taken from the spec have no test about them, including every rule about which strings are valid. Which test is about what was our reading of each test, written before any break ran.</p>
-<p><strong>JsonObject</strong>
-- Coverage tool: 77% of lines, 69% of branches.
-- 582 breaks made; 429 live; 299 caught (69.7%); 130 got past every test.
-- 67 of those 130 sit on lines the coverage tool marks as covered.
-- 176 of 289 statements held by a test; 82 have a break that gets past.
-- 6 questions only the class's owner can answer.</p>
-<p><strong>osu! scoring</strong>
-- Coverage tool, from those 151 tests: 72% of lines, 78% of branches.
-- 563 breaks made; 536 live; 286 caught (53.4%); 250 got past those 151 tests.
-- 145 of those 250 sit on lines the coverage tool marks as covered.
-- 81 of 191 statements held by those tests; 110 have a break that gets past.
-- Read 53.4% as what those three test files hold, and as low for the game as a whole. We applied 7 of the surviving breaks by hand and ran the rest of <code>osu.Game.Tests</code>: <code>TestFailScore</code>, <code>TestResetFromReplayFrame</code> and <code>AccuracyRankAndTotalScoreOfLazerScorePreserved</code> catch some of them. We could not finish that project on this machine: its test host crashed on the clean copy and the broken one, at different points, with and without the visual tests, so what the rest of it would catch is unknown.
-- This pass ran before property bodies were walked, so 5 statements in property bodies got no break.</p>
+<p>A <strong>break</strong> here is a <strong>planted bug</strong>: one small change to the code on purpose, a mutant in mutation testing, made on its own copy and run against the tests. "Live" leaves out breaks that did not compile and breaks whose compiled code was proven identical to the original. "Caught" means a test failed; "got past" means every test still passed.</p>
+<p><strong>SemVer</strong></p>
+<ul>
+<li>Coverage tool, for comparison: 90% of lines, 85% of branches.</li>
+<li>246 breaks made; 236 live; 206 caught (87.3%); 30 got past every test.</li>
+<li>14 of those 30 sit on lines the coverage tool marks as covered.</li>
+<li>48 of 68 statements held by a test; 18 have a break that gets past.</li>
+<li>7 of the 16 requirements taken from the spec have no test about them, including every rule about which strings are valid. Which test is about what was our reading of each test, written before any break ran.</li>
+</ul>
+<!-- t7:semver-survivors:begin -->
+<h3>The 30 planted bugs no test caught, by line</h3>
+<p>Every one is in <code>Engine/Source/Programs/Shared/EpicGames.Core/SemVer.cs</code> as it ships in Unreal Engine 5.7, and every line number below was matched against that file. Each was one change, on its own copy, and the class's 2 tests (<code>PrecedenceTests</code> and <code>PrereleaseTests</code>, in <code>EpicGames.Core.Tests</code>) still passed. To check one, make that change in your own copy and run those tests: none fails. No engine code is printed here, only where each bug was and what changed.</p>
+<ul>
+<li><strong><code>Parse</code></strong>: line 54: argument 1 of the call to <code>ArgumentException</code> replaced by its default value; line 54: the statement deleted.</li>
+<li><strong><code>TryParse</code></strong>: line 68: the <code>if</code> condition forced to true; line 76: <code>false</code> changed to <code>true</code>.</li>
+<li><strong><code>GetHashCode</code></strong>: line 81: argument 2 of the call to <code>AsSpan</code> replaced by its default value; line 81: argument 1 of the call to <code>GetHashCode</code> replaced by its default value; line 81: argument 2 of the call to <code>GetHashCode</code> replaced by its default value; line 81: the constant 0 changed to 1; line 81: the value it returns replaced by its type's default.</li>
+<li><strong><code>Equals</code></strong>: line 84: argument 1 of the call to <code>Equals</code> replaced by its default value; line 84: the value it returns replaced by its type's default.</li>
+<li><strong><code>CompareTo</code></strong>: line 90: argument 1 of the call to <code>Compare</code> replaced by its default value; line 90: argument 2 of the call to <code>Compare</code> replaced by its default value; line 90: the value it returns replaced by its type's default.</li>
+<li><strong><code>ToString</code></strong>: line 93: the value it returns replaced by its type's default.</li>
+<li><strong><code>Compare</code></strong>: line 106: argument 2 of the call to <code>GetField</code> replaced by its default value; line 107: argument 2 of the call to <code>GetField</code> replaced by its default value; line 142: the second <code>&lt;</code> on the line changed to <code>&lt;=</code>; line 155: the constant 1 changed to 2.</li>
+<li><strong><code>CompareFields</code></strong>: line 175: argument 1 of the call to <code>IsNumeric</code> replaced by its default value; line 175: the <code>if</code> condition forced to true; line 177: argument 1 of the call to <code>IsNumeric</code> replaced by its default value; line 177: the constant 1 changed to 2; line 181: the constant 1 changed to 2.</li>
+<li><strong><code>IsNumeric</code></strong>: line 192: the constant 0 changed to 1; line 194: the first <code>&lt;</code> on the line changed to <code>&lt;=</code>; line 194: the first <code>&gt;</code> on the line changed to <code>&gt;=</code>.</li>
+<li><strong><code>operator!=</code></strong>: line 210: argument 1 of the call to <code>Equals</code> replaced by its default value; line 210: the value it returns replaced by its type's default.</li>
+<li><strong><code>operator&lt;=</code></strong>: line 220: the constant 0 changed to 1.</li>
+</ul>
+<!-- t7:semver-survivors:end -->
+<p><strong>JsonObject</strong></p>
+<ul>
+<li>Coverage tool: 77% of lines, 69% of branches.</li>
+<li>582 breaks made; 429 live; 299 caught (69.7%); 130 got past every test.</li>
+<li>67 of those 130 sit on lines the coverage tool marks as covered.</li>
+<li>176 of 289 statements held by a test; 82 have a break that gets past.</li>
+<li>6 questions only the class's owner can answer.</li>
+</ul>
+<p><strong>osu! scoring</strong></p>
+<ul>
+<li>Coverage tool, from those 151 tests: 72% of lines, 78% of branches.</li>
+<li>563 breaks made; 536 live; 286 caught (53.4%); 250 got past those 151 tests.</li>
+<li>145 of those 250 sit on lines the coverage tool marks as covered.</li>
+<li>81 of 191 statements held by those tests; 110 have a break that gets past.</li>
+<li>Read 53.4% as what those three test files hold, and as low for the game as a whole. We applied 7 of the surviving breaks by hand and ran the rest of <code>osu.Game.Tests</code>: <code>TestFailScore</code>, <code>TestResetFromReplayFrame</code> and <code>AccuracyRankAndTotalScoreOfLazerScorePreserved</code> catch some of them. We could not finish that project on this machine: its test host crashed on the clean copy and the broken one, at different points, with and without the visual tests, so what the rest of it would catch is unknown.</li>
+<li>This pass ran before property bodies were walked, so 5 statements in property bodies got no break.</li>
+</ul>
 <h3>Checking the tool's verdicts without the tool</h3>
 <p>We applied breaks the tool said no test notices, by hand, to clean copies, and ran the tests ourselves.</p>
 <ul>
@@ -648,24 +676,32 @@ method Pay        is claimed by   requirement W-1</code></pre>
 </ul>
 <h3>What it found</h3>
 <p>Each of these fails when run, on the code as shipped.</p>
-<p><strong>SemVer against the spec</strong>
-- <code>Compare</code> throws <code>ArgumentOutOfRangeException</code> on valid versions, including the spec's own example compared with itself: <code>v = SemVer.Parse("1.0.0-x-y-z.--"); v.CompareTo(v);</code>. Any pre-release ending in a hyphen does the same.
-- A hyphen is treated as a separator, but the spec separates identifiers only at dots. <code>1.0.0-alpha-10</code> sorts above <code>1.0.0-alpha-9</code> (the spec says below). <code>1.0.0-2</code> sorts above <code>1.0.0-1-2</code> (below).
-- <code>1.0.0-a.b</code> and <code>1.0.0-a-b</code> compare as equal while <code>Equals</code> says they differ.
-- It accepts strings the spec rules out: <code>"1.0.0\n"</code>, and non-ASCII digits such as an Arabic-Indic zero in <code>1٠.0.0</code>. Both come from .NET's meaning of <code>$</code> and <code>\d</code> in the spec's regular expression.
-- <strong>Reach:</strong> no other C# file under the install's <code>Source/Programs</code> or <code>Plugins</code> names this class, so nothing in that tree is hurt today.</p>
-<p><strong>JsonObject against Microsoft's contract</strong>
-- <code>Equals</code> throws <code>NullReferenceException</code> on any object with a null field, even <code>x.Equals(x)</code>. The contract says it must not throw, and that <code>x.Equals(x)</code> is true.
-- Two objects that compare equal have different hash codes, which the contract forbids. A <code>HashSet</code> of two equal objects holds 2. We found no <code>HashSet&lt;JsonObject&gt;</code> or <code>Dictionary&lt;JsonObject, ...&gt;</code> in the engine's C#.</p>
-<p><strong>osu! against its doc comments</strong>
-- <code>TotalScoreWithoutMods</code> reads 1,000,000 right after <code>ApplyBeatmap</code>, while <code>TotalScore</code> reads 0, and <code>PopulateScore</code> before the first hit copies that 1,000,000 into the score. The field's doc says "The total number of points awarded for the score without including mod multipliers", and <code>Reset</code>'s doc says "Resets this ScoreProcessor to a default state", but <code>Reset</code> never clears it. We did not trace what the game does with the value afterwards.
-- After a second <code>ApplyBeatmap</code> on one processor, <code>MinimumAccuracy</code> reads 1 before any hit. We did not check whether the game ever applies a beatmap twice.</p>
-<p><strong>JsonObject: the owner's questions, not defects we can call</strong>
-- <code>Equals</code> answers false for two parses of the same text when it holds an array or an object.
-- A repeated name keeps the last value at the top level and throws one level down. <code>{"A":1,"a":2}</code> silently keeps one field, and throws one level down. RFC 8259 only says duplicates are unpredictable between programs.
-- <code>Read</code> accepts comments and <code>Parse</code> refuses them. A root that is not an object throws <code>InvalidOperationException</code> from <code>Read</code> and <code>JsonException</code> from <code>Parse</code>.
-- <code>{"a":1e999}</code> parses, then <code>ToJsonString</code> throws. <code>{"id":9007199254740993}</code> writes back as <code>...992</code>, which RFC 8259 allows.
-- <code>TryGetIntegerField</code> accepts the string <code>"12"</code>. <code>TryGetEnumField&lt;DayOfWeek&gt;</code> accepts <code>"99"</code>. On a German machine <code>TryGetDoubleField</code> reads the string <code>"1.5"</code> as 15.</p>
+<p><strong>SemVer against the spec</strong></p>
+<ul>
+<li><code>Compare</code> throws <code>ArgumentOutOfRangeException</code> on valid versions, including the spec's own example compared with itself: <code>v = SemVer.Parse("1.0.0-x-y-z.--"); v.CompareTo(v);</code>. Any pre-release ending in a hyphen does the same.</li>
+<li>A hyphen is treated as a separator, but the spec separates identifiers only at dots. <code>1.0.0-alpha-10</code> sorts above <code>1.0.0-alpha-9</code> (the spec says below). <code>1.0.0-2</code> sorts above <code>1.0.0-1-2</code> (below).</li>
+<li><code>1.0.0-a.b</code> and <code>1.0.0-a-b</code> compare as equal while <code>Equals</code> says they differ.</li>
+<li>It accepts strings the spec rules out: <code>"1.0.0\n"</code>, and non-ASCII digits such as an Arabic-Indic zero in <code>1٠.0.0</code>. Both come from .NET's meaning of <code>$</code> and <code>\d</code> in the spec's regular expression.</li>
+<li><strong>Reach:</strong> no other C# file under the install's <code>Source/Programs</code> or <code>Plugins</code> names this class, so nothing in that tree is hurt today.</li>
+</ul>
+<p><strong>JsonObject against Microsoft's contract</strong></p>
+<ul>
+<li><code>Equals</code> throws <code>NullReferenceException</code> on any object with a null field, even <code>x.Equals(x)</code>. The contract says it must not throw, and that <code>x.Equals(x)</code> is true.</li>
+<li>Two objects that compare equal have different hash codes, which the contract forbids. A <code>HashSet</code> of two equal objects holds 2. We found no <code>HashSet&lt;JsonObject&gt;</code> or <code>Dictionary&lt;JsonObject, ...&gt;</code> in the engine's C#.</li>
+</ul>
+<p><strong>osu! against its doc comments</strong></p>
+<ul>
+<li><code>TotalScoreWithoutMods</code> reads 1,000,000 right after <code>ApplyBeatmap</code>, while <code>TotalScore</code> reads 0, and <code>PopulateScore</code> before the first hit copies that 1,000,000 into the score. The field's doc says "The total number of points awarded for the score without including mod multipliers", and <code>Reset</code>'s doc says "Resets this ScoreProcessor to a default state", but <code>Reset</code> never clears it. We did not trace what the game does with the value afterwards.</li>
+<li>After a second <code>ApplyBeatmap</code> on one processor, <code>MinimumAccuracy</code> reads 1 before any hit. We did not check whether the game ever applies a beatmap twice.</li>
+</ul>
+<p><strong>JsonObject: the owner's questions, not defects we can call</strong></p>
+<ul>
+<li><code>Equals</code> answers false for two parses of the same text when it holds an array or an object.</li>
+<li>A repeated name keeps the last value at the top level and throws one level down. <code>{"A":1,"a":2}</code> silently keeps one field, and throws one level down. RFC 8259 only says duplicates are unpredictable between programs.</li>
+<li><code>Read</code> accepts comments and <code>Parse</code> refuses them. A root that is not an object throws <code>InvalidOperationException</code> from <code>Read</code> and <code>JsonException</code> from <code>Parse</code>.</li>
+<li><code>{"a":1e999}</code> parses, then <code>ToJsonString</code> throws. <code>{"id":9007199254740993}</code> writes back as <code>...992</code>, which RFC 8259 allows.</li>
+<li><code>TryGetIntegerField</code> accepts the string <code>"12"</code>. <code>TryGetEnumField&lt;DayOfWeek&gt;</code> accepts <code>"99"</code>. On a German machine <code>TryGetDoubleField</code> reads the string <code>"1.5"</code> as 15.</li>
+</ul>
 <h3>What it found nothing on</h3>
 <ul>
 <li><strong>SemVer:</strong> 13 valid strings taken from the spec, 15 of the 19 invalid strings we tried, the printed precedence chain, and build metadata were all correct. All 21 breaks of <code>GetField</code> and all 6 of <code>CompareNumericFields</code> were caught.</li>
@@ -674,13 +710,15 @@ method Pay        is claimed by   requirement W-1</code></pre>
 </ul>
 <h3>Who found what</h3>
 <p>Be accurate about this. The defects above were found by an agent reading the code against each rule while writing the model: the requirements step. The breaks did not find them. The breaks measured how much the tests hold, and showed where no test looks: 9 breaks of <code>JsonObject.Equals</code> got past every test, and that is where the crash was. No graph neural network (GNN) played a part in any finding here.</p>
-<p><strong>More faults, found by reading the code carefully</strong>, each proven by the harness on the code as shipped:
-- <code>Read</code> and <code>TryRead</code> parse a file over 128 KiB from a pooled buffer they have already returned. A valid 173 KB file with a very long name came back with other fields silently replaced, while <code>Parse</code> of the same text read it correctly, and a second file made <code>Read</code> throw <code>FormatException</code>.
-- Name matching uses a culture comparer, so names that are different strings can count as one field.
-- <code>RemoveField</code> and <code>AddOrSetFieldValue</code> ignore the empty name, which RFC 8259 allows.
-- <code>NaN</code> and infinity can be set, and then <code>ToJsonString</code> cannot write them. An object parsed 64 levels deep cannot be written either: it reports a cycle that is not there.
-- <code>TryGetEnumField</code> throws on a struct that is not an enum.
-- <code>CreateDeepCopy</code> shares reference values it does not know how to copy, and throws on keys that differ by case and on a multi-dimensional array.</p>
+<p><strong>More faults, found by reading the code carefully</strong>, each proven by the harness on the code as shipped:</p>
+<ul>
+<li><code>Read</code> and <code>TryRead</code> parse a file over 128 KiB from a pooled buffer they have already returned. A valid 173 KB file with a very long name came back with other fields silently replaced, while <code>Parse</code> of the same text read it correctly, and a second file made <code>Read</code> throw <code>FormatException</code>.</li>
+<li>Name matching uses a culture comparer, so names that are different strings can count as one field.</li>
+<li><code>RemoveField</code> and <code>AddOrSetFieldValue</code> ignore the empty name, which RFC 8259 allows.</li>
+<li><code>NaN</code> and infinity can be set, and then <code>ToJsonString</code> cannot write them. An object parsed 64 levels deep cannot be written either: it reports a cycle that is not there.</li>
+<li><code>TryGetEnumField</code> throws on a struct that is not an enum.</li>
+<li><code>CreateDeepCopy</code> shares reference values it does not know how to copy, and throws on keys that differ by case and on a multi-dimensional array.</li>
+</ul>
 <h3>What went badly</h3>
 <p>The trial's biggest finding was in our own tool. Real code broke it five ways on the first attempts, and a sixth way on osu!, none of which our own examples had shown:</p>
 <ul>
@@ -707,7 +745,7 @@ method Pay        is claimed by   requirement W-1</code></pre>
 <p><span class="chip measured">Measured</span> Of the checks that need no code: 10 requirements with no source standing behind them, 34 resting on a single source, 4 open questions, and none carried by nothing or ending nowhere. Buzzsaw ranks the owner’s first question as “which collision applies ramming damage?”: five later steps rest on it.</p>
 <p><span class="chip measured">Measured</span> The tool’s own cross-check found a row in the document with a missing column before anything else ran.</p></div>
 <div class="box plain"><p class="label">A thin graph, on purpose</p>
-<p>The graph holds 186 nodes and 396 edges, with no code and no tests in it. That is the thin case this manual warns about (<a href="#thin">why</a>): the checks that ran are real, but a clean result here would mean little, and the GNN has nothing to learn from.</p></div>
+<p>The graph holds 186 nodes and 396 edges, with no code and no tests in it. That is the thin case this manual warns about (<a href="#thin">why</a>): the checks that ran are real, but a clean result here would mean little, and a learned part would have nothing to learn from.</p></div>
 </section>
 
 <section id="selfimprove">
@@ -789,7 +827,7 @@ void Tick() {
 <section id="choose">
 <h2>How the stats choose what to improve next</h2>
 <p>Every pass, each stat in the morph log is read as a trend over the passes and given one word: <strong>improving</strong>, <strong>worsening</strong>, <strong>stalled</strong> (the last three values barely moved), <strong>done</strong> (an open count stuck at zero), or <strong>too few</strong> (fewer than three passes have it). The word compares the stat to the way its kind should move: the net and what was caught should rise, what is open should fall.</p>
-<p>The next improvement is then chosen by the stats, not by a person’s feeling. Each area of the tool (tests, the GNN, the kinds of break, speed, the owner’s questions, assumptions, coverage) names the stats that speak for it. A worsening stat scores 3, a stalled one 2, and an area scores its worst stat. The GNN tune is also due every five passes. The pick, and the trend lines that chose it, are printed after every pass.</p>
+<p>The next improvement is then chosen by the stats, not by a person’s feeling. Each area of the tool (tests, the GNN, the kinds of break, speed, the owner’s questions, assumptions, coverage) names the stats that speak for it. A worsening stat scores 3, a stalled one 2, and an area scores its worst stat. The GNN tune was also due every five passes, until the network was switched off on 3 November, because a plain rule beat it. The pick, and the trend lines that chose it, are printed after every pass.</p>
 <div class="box evidence"><p class="label">What the first picks were</p>
 <p><span class="chip measured">Measured</span> Over its first recorded passes the graph grew, and the stats’ first pick was the GNN tune, because it had never been run (<a href="#tuner">the tune</a>).</p>
 <p><span class="chip measured">Measured</span> A bug the selftest caught while building this: adding up an area’s stats ranked two related GNN stats, both stalled, above a survivor count that was getting worse. An area now scores its single worst stat.</p></div>
@@ -803,23 +841,23 @@ void Tick() {
 
 <section id="learn">
 <h2>What it can learn from its own stats</h2>
-<p>Every pass leaves a verdict for every break: which kind of break, on which statement, in which method, and whether a test caught it. That is training data. A small model trained on it ranks the breaks most likely to get past the tests first, so a pass can show its holes early, and an agent writing new code can be told where its tests are likely to be weak before anything runs.</p>
+<p>Every pass leaves a verdict for every break: which kind of break, on which statement, in which method, and whether a test caught it. That is training data. A small model trained on it ranked the breaks most likely to get past the tests first (retired on 3 November: the break-order head now does that job), so a pass can show its holes early, and an agent writing new code can be told where its tests are likely to be weak before anything runs.</p>
 <h3>The test that lets it improve</h3>
 <p>It is only scored on code it never saw: whole methods are held out, and the score is how many of the real survivors it finds in the first fifth of its ranking. Random order finds a fifth; the plain rule to beat ranks each kind of break by how often that kind survived before.</p>
 <div class="box evidence"><p class="label">Where these numbers come from</p>
 <p><span class="chip measured">Measured</span> <strong>Within one game feature of ours,</strong> the learner found more of the survivors in the first fifth than the plain rule did, at every one of ten seeds; no count is given because the feature is not public.</p>
 <p><span class="chip measured">Measured</span> <strong>Within the tool's own code:</strong> 30% over ten seeds, against the plain rule's 25% (random 20%). It won at nine of the ten, and the first seed happened to be the one it lost.</p>
 <p><span class="chip measured">Measured</span> <strong>Across projects</strong> it is worse than random: the words it learns belong to one project. Only the plain rule carries over. So, again: seed first, then it flies.</p></div>
-<p>The real test of learning is over time: trained on the earlier passes, scored on the next pass's new code. That needs every pass's verdicts kept; until 29 October each pass overwrote the last, so the loop now archives them, and that test starts with the next passes.</p>
+<p>The real test of learning is over time: trained on the earlier passes, scored on the next pass's new code. That needs every pass's verdicts kept; until 29 October each pass overwrote the last, so the loop now archives them.</p>
 <h3>Planned rounds of improvement</h3>
 <p>The standing loop works in <strong>epochs</strong> of twelve ticks. The first tick of an epoch is a brainstorm: a fresh agent reads the stats, the tick log and the results, and ranks ideas by the one stat each should move. The last tick is a benchmark: the same fixed measures every time, on inputs no tick may change. An epoch counts as an improvement only if a number moved the right way and none moved the wrong way.</p>
 <h3>The code-writing side</h3>
-<p><span class="chip open">Planned</span> Connect what it learns to the agent that writes the code: before it writes tests, hand it the statements of its change most likely to get past them, and the requirement the GNN thinks its new method belongs to.</p>
+<p><span class="chip open">Planned</span> Connect what it learns to the agent that writes the code: before it writes tests, hand it the statements of its change most likely to get past them, and the requirement the owner head thinks its new method belongs to.</p>
 </section>
 
 <section id="recursive">
 <h2>The loop on its own improvement</h2>
-<p>The loop records a great deal about itself: every pass leaves fifty numbers, and the learned parts leave evidence of when they help. Recording a number is only worth it if something reads it and acts. On 29 October an audit found <strong>28 numbers that nothing read</strong>, and many more that were only printed.</p>
+<p>The loop records a great deal about itself: every pass records 44 stats about itself, and the learned parts leave evidence of when they help. Recording a number is only worth it if something reads it and acts. On 29 October an audit found numbers that nothing read, and many more that were only printed.</p>
 <p>So the improvement of the loop now has requirements of its own, written the way the product's are. Each number has a requirement saying <strong>what pattern in it should trigger something, what that is, and why the number is kept</strong>: a test that catches nothing for two passes is a speed item; an excuse for a harmless break that lapses is a hole; the graph not growing for three passes means the model is not being seeded. A number kept for a learner that does not exist yet must name that learner and a date. Past the date, unread, it fails.</p>
 <h3>Three levels, one graph</h3>
 <ul>
@@ -829,7 +867,7 @@ void Tick() {
 </ul>
 <p>The same learning applies one level up: once enough actions have measured results, a model can learn which kind of action moves which number, and it is switched on only where it beats the plain rule, like everything else.</p>
 <div class="box evidence"><p class="label">Where these numbers come from</p>
-<p><span class="chip measured">Measured</span> The audit on 29 October: 28 numbers read by nothing at first; after giving each a reader or a trigger, <strong>none</strong>. 14 now drive a decision in code and 28 are covered by a trigger.</p>
+<p><span class="chip measured">Measured</span> After the audit of 29 October gave each number a reader or a trigger, <strong>none</strong> is read by nothing. 14 now drive a decision in code and 28 are covered by a trigger.</p>
 <p><span class="chip measured">Measured</span> The first run of the triggers fired 12: among them, 5 tests in the tool's own suite that catch no break at all, 8 of the who/what/why questions never asked on each model, and one requirement whose breaks were all caught last pass and are not now.</p>
 <p><span class="chip open">Open</span> No action has a measured result yet; the improvement graph becomes learnable at 20.</p></div>
 </section>
@@ -923,7 +961,6 @@ void Tick() {
 <p><span class="chip open">Open</span> <strong>The scorer is not independent for one row.</strong> The kit was scored by the lane that built it, by the same anchors, which is why the order is also shown with a point taken off each of our scores. Seven of the seventeen criteria are the ones this kit was designed to do well on, so equal weights favour it; the team list and the list of what it lacks are the corrective.</p>
 <p><span class="chip open">Open</span> <strong>What is not verified.</strong> Documentation only: nothing was installed or run, so a feature a page does not mention scores as not found, and a tool may do more than its pages say. Star counts are as the pages showed them on the day. Where a first-party page could not be fetched, a search summary or a third-party page was used, and it is marked and capped. Tools change, so each score is a reading of a page on one day.</p>
 <p>The abilities in the list above are on the work plan, each with a done-when. Where an idea comes from an MIT-licensed tool it is credited and no code is copied; an idea from a proprietary tool is an idea only, and nothing proprietary is used.</p>
-<p class="seen">On the slides: <a href="../deck/#slide-24" data-slide="landscape">slide 24</a>.</p>
 </section>
 
 <section id="limits">
@@ -957,7 +994,7 @@ void Tick() {
 <div class="box"><p class="label" style="color:var(--orange)">What is next: from a rough epic to code that is right</p>
 <p>The tool’s main intent is to take the requirements for a game from a rough epic use case and grow them into a larger set, so that the code written from them is as accurate as it can be. The question behind it is a question and not a result: if the requirements for something very difficult are complete and checked, how far does that move what an AI can build? The direction is better tools for making video games.</p>
 <p><span class="chip measured">Measured</span> How much of existing code its tests hold, on three public targets (<a href="#publiccode">on code you can read for yourself</a>).</p>
-<p><span class="chip open">Open</span> The epic-to-code test has run, and its results will be published with the benchmark. The test starts from one rough epic for a small game whose right answers come from an independent published source. Agents write the code from the grown requirements, and hidden tests written from that source, never from our model, grade it blind. Tokens are recorded, with how many requirements the epic grew into and how many the hidden tests needed that it missed.</p></div>
+<p><span class="chip open">Open</span> The epic-to-code test has run, and its results are held for a paper and are not on these pages, so nothing here rests on them. The test starts from one rough epic for a small game whose right answers come from an independent published source. Agents write the code from the grown requirements, and hidden tests written from that source, never from our model, grade it blind. Tokens are recorded, with how many requirements the epic grew into and how many the hidden tests needed that it missed.</p></div>
 <p class="seen">On the slides: <a href="../deck/#slide-15" data-slide="limits">slide 15</a>, <a href="../deck/#slide-18" data-slide="next">slide 18</a>.</p>
 </section>
 
@@ -969,7 +1006,7 @@ void Tick() {
 <pre><code>python install.py              # install for this user
 python install.py --check      # check only, copy nothing
 python install.py --uninstall  # remove what it put down, nothing else</code></pre>
-<p>It puts the skill where Claude Code finds it and the tools beside it. It needs Python 3.10 or newer and PyYAML. PyTorch (for the GNN), the .NET SDK (for the C# adapter and the example) and PowerShell 7 (for the IL comparison) are optional; if one is missing it says what that piece would have done, and never pretends it ran.</p>
+<p>It puts the skill where Claude Code finds it and the tools beside it. It needs Python 3.10 or newer and PyYAML. PyTorch (for the graph network, which is switched off), the .NET SDK (for the C# adapter and the example) and PowerShell 7 (for the IL comparison) are optional; if one is missing it says what that piece would have done, and never pretends it ran.</p>
 <p>Then it runs every selftest in the installed copy, and the whole loop on the example: a small wallet and store in C#, with NUnit tests that each name the requirement they check. The example must <strong>hold</strong>: everything closed except one question that only its owner can answer.</p>
 <div class="box evidence"><p class="label">What a clean install showed</p>
 <p><span class="chip measured">Measured</span> Installing the built kit into an empty folder on 29 October: <strong>every selftest passes with PyTorch, scikit-learn and the .NET SDK (14 of 20 on Python and PyYAML alone, the rest named as skipped)</strong>, and the loop over the example’s <strong>58 breaks</strong> reported <strong>HOLDS</strong>.</p></div>
@@ -978,7 +1015,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 
 <section id="adapters">
 <h2>Other languages</h2>
-<p>The model, the graph, the checks, the GNN and the telemetry do not care what language the code is in. Only the part that breaks code does:</p>
+<p>The model, the graph, the checks and the telemetry do not care what language the code is in. Only the part that breaks code does:</p>
 <ul>
 <li><strong>C#</strong>: any .NET project, through <code>dotnet test</code>.</li>
 <li><strong>Python</strong>: breaks code through its syntax tree; the tests are commands.</li>
@@ -1002,7 +1039,7 @@ python install.py --uninstall  # remove what it put down, nothing else</code></p
 <section id="glossary">
 <h2>Words used here</h2>
 <dl class="terms">
-<dt>Break (mutant)</dt><dd>A copy of the code changed on purpose so it is wrong.</dd>
+<dt>Break, planted bug (mutant)</dt><dd>A copy of the code changed on purpose so it is wrong: one small change, run against the tests.</dd>
 <dt>Caught (killed)</dt><dd>A break that made at least one test fail. Good.</dd>
 <dt>Got past (survived)</dt><dd>A break every test still passed. A missing test, unless it is equivalent.</dd>
 <dt>Equivalent</dt><dd>A break that does not change what the program does.</dd>
