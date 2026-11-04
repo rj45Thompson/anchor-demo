@@ -71,6 +71,7 @@
 <li><a href="goals/">Goals</a></li>
 <li><a href="stats/">Stats</a></li>
 <li><a href="growth/">Growth</a></li>
+<li><a href="telemetry/">Telemetry</a></li>
 <li><a href="gnn/">The graph network</a></li>
 <li><a href="breaks/">Breaks</a></li>
 <li><a href="node-graph/">The node graph</a></li>
@@ -78,7 +79,6 @@
 <li><a href="self-improvement/">Self-improvement</a></li>
 <li><a href="accuracy/">Accuracy</a></li>
 <li><a href="requirements/">Requirements</a></li>
-<li><a href="on-vs-off/">On against off</a></li>
 <li><a href="limits/">Limits</a></li>
 </ul>
 </nav>
@@ -149,32 +149,8 @@
 </div>
 
 <div class="group">
-<div><h3>With the loop and without</h3><p class="scope">Same task, two agents. The loop is this harness at work on the task.</p></div>
+<div><h3>Where it comes from</h3></div>
 <div class="tiles">
-<article class="tile">
-<p class="fig">7 of 11</p>
-<p class="say">task pairs went to the loop, 3 to the agent without it, 1 split, three blind graders each.</p>
-<div class="units" aria-hidden="true"><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--loop)"></i><i style="background:var(--without)"></i><i style="background:var(--without)"></i><i style="background:var(--without)"></i><i style="background:var(--left)"></i></div>
-<ul class="key"><li><i style="background:var(--loop)"></i>7 the loop</li><li><i style="background:var(--without)"></i>3 without it</li><li><i style="background:var(--left)"></i>1 split</li></ul>
-</article>
-<article class="tile">
-<p class="fig">Half</p>
-<p class="say">the work left unfinished: blind graders counted 9 items with the loop, 18 without.</p>
-<div class="bars" aria-hidden="true">
-<div class="row"><span>with the loop</span><span class="track"><i style="width:50%;background:var(--loop)"></i></span><span class="val">9</span></div>
-<div class="row"><span>without</span><span class="track"><i style="width:100%;background:var(--without)"></i></span><span class="val">18</span></div>
-</div>
-</article>
-</div>
-</div>
-
-<div class="group">
-<div><h3>Its reasoning, and where it comes from</h3></div>
-<div class="tiles">
-<article class="tile">
-<p class="fig">102</p>
-<p class="say">reasoning steps checked, every citation resolved by the end, 4 the graph would not join.</p>
-</article>
 <article class="tile">
 <p class="fig">31 of 63</p>
 <p class="say">ARC3 lineage: its best agent reached 31 of 63 games where random reached 14.</p>
@@ -191,11 +167,11 @@
 <h2 id="limits-title">What it costs, and its limits</h2>
 <div class="costs">
 <div><h3>Costs</h3><ul>
-<li>1.2 to 2.3 times the tokens, 3 to 55 times the time, on small tasks.</li>
 <li>23 minutes for a full pass of 1,104 breaks.</li>
 </ul></div>
 <div><h3>Limits</h3><ul>
 <li>Prototype 0.1.</li>
+<li>Built for large, complicated systems. To build something simple, do not use it. It has not been measured on large systems yet.</li>
 <li>A green result on a thin model means little.</li>
 <li>95% accuracy on code is a target, not a measurement.</li>
 <li>On Unreal's SemVer.cs the C# adapter saw 35 of 68 statements, and its report did not say so. Fixed, with planted tests.</li>
