@@ -10,7 +10,28 @@ section table{border-collapse:collapse;width:100%}section td,section th{padding:
 details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color:#A9B7C4}details p{margin:8px 0 0}</style></head><body>
 <header class="top"><h1>How to use AI for games</h1><span><a href="../">The fly-through</a></span><span><a href="../manual/">The manual</a></span></header>
 <main class="deck">
-<article id="slide-1"><div class="frame"><section id="newtool" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<article id="slide-1"><div class="frame"><section id="cover" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:96px 128px 72px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<img src="img/whole.jpg" alt="The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">TNT Tools · internal training manual</p>
+<h1 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:120px;font-weight:700;line-height:1.02;width:1200px;color:#F4F2EC">How to use AI for games</h1>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;line-height:1.2;width:1000px;color:#F4F2EC">Adapted for Heavy Iron. Requirements first, tested by AI, so nothing is a guess.</p>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:2px solid #F08A3C;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#F08A3C">30</p>
+<p style="font-size:28px;line-height:1.3;color:#F4F2EC">breaks got past every test of Unreal’s SemVer parser, at 90% line coverage. Breaking every decision found them.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#7FB2E5">3 of 3</p>
+<p style="font-size:28px;line-height:1.3;color:#F4F2EC">public targets, a version parser, a JSON object and a game’s scoring rules, each held a fault we could run</p>
+</div>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:24px;color:#7FB2E5"><a href="../manual/#top">The full manual, in plain words: every claim here, and the test behind it</a></p>
+</section>
+</div><details><summary>Slide 1: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. Two measured numbers to start, both on code you can read for yourself. The first: a coverage tool called Unreal’s SemVer parser 90% covered, and when every decision in it was broken every way, 30 of the breaks got past every test. The second is from three trials: Unreal Engine’s version-string class, its JSON object and the scoring rules of the open-source game osu!. Each held a fault against its own spec or docs, and each was shown by calling the code as shipped; slide 4 has them. Behind this slide: The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote.</p></details></article>
+<article id="slide-2"><div class="frame"><section id="newtool" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:40px">
 <div style="display:flex;flex-direction:column;gap:14px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">The new tool</p>
 <h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:68px;font-weight:600;line-height:1.1;color:#F4F2EC">A skill that installs itself, and puts requirements first on every build</h2>
@@ -55,28 +76,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#install">Install it, in plain words</a></p>
 </div>
 </section>
-</div><details><summary>Slide 1: what the speaker says</summary><p></p></details></article>
-<article id="slide-2"><div class="frame"><section id="cover" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:96px 128px 72px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
-<img src="img/whole.jpg" alt="The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
-<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
-<div style="display:flex;flex-direction:column;gap:24px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">TNT Tools · internal training manual</p>
-<h1 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:120px;font-weight:700;line-height:1.02;width:1200px;color:#F4F2EC">How to use AI for games</h1>
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;line-height:1.2;width:1000px;color:#F4F2EC">Adapted for Heavy Iron. Requirements first, tested by AI, so nothing is a guess.</p>
-</div>
-<div style="display:flex;gap:24px">
-<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:2px solid #F08A3C;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#F08A3C">99%</p>
-<p style="font-size:28px;line-height:1.3;color:#F4F2EC">accurate: 99.03% of 35,951 blind derivations, from a graph that abstains rather than guesses</p>
-</div>
-<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#7FB2E5">3 of 3</p>
-<p style="font-size:28px;line-height:1.3;color:#F4F2EC">public targets, a version parser, a JSON object and a game’s scoring rules, each held a fault we could run</p>
-</div>
-</div>
-<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:24px;color:#7FB2E5"><a href="../manual/#top">The full manual, in plain words: every claim here, and the test behind it</a></p>
-</section>
-</div><details><summary>Slide 2: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. Two measured numbers to start. The 99% is from our knowledge graph, on facts: 99.03% of 35,951 derivations it had never seen were right, and when it cannot back an answer it abstains. The second is from three trials on code you can read for yourself: Unreal Engine’s version-string class, its JSON object and the scoring rules of the open-source game osu!. Each held a fault against its own spec or docs, and each was shown by calling the code as shipped; slide 4 has them. Behind this slide: The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote.</p></details></article>
+</div><details><summary>Slide 2: what the speaker says</summary><p></p></details></article>
 <article id="slide-3"><div class="frame"><section id="flatter" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
 <img src="img/proof.jpg" alt="Every break of osu!’s scoring rules and the test that caught it. Red: no test caught it, and each one has to be explained." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
