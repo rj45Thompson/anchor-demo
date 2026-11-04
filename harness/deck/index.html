@@ -10,166 +10,185 @@ section table{border-collapse:collapse;width:100%}section td,section th{padding:
 details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color:#A9B7C4}details p{margin:8px 0 0}</style></head><body>
 <header class="top"><h1>How to use AI for games</h1><span><a href="../">The fly-through</a></span><span><a href="../manual/">The manual</a></span></header>
 <main class="deck">
-<article id="slide-1"><div class="frame"><section id="cover" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:96px 128px 72px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<article id="slide-1"><div class="frame"><section id="cover" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:88px 128px 64px;display:flex;flex-direction:column;justify-content:space-between;gap:24px">
 <img src="img/whole.jpg" alt="The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
-<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
-<div style="display:flex;flex-direction:column;gap:24px">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.97) 0%, rgba(11,18,25,.9) 46%, rgba(11,18,25,.32) 72%, rgba(11,18,25,.12) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:20px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">TNT Tools · internal training manual</p>
-<h1 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:120px;font-weight:700;line-height:1.02;width:1200px;color:#F4F2EC">How to use AI for games</h1>
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;line-height:1.2;width:1000px;color:#F4F2EC">Adapted for Heavy Iron. Requirements first, tested by AI, so nothing is a guess.</p>
+<h1 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:112px;font-weight:700;line-height:1.02;width:1200px;color:#F4F2EC">How to use AI for games</h1>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:40px;line-height:1.2;width:1080px;color:#F4F2EC">Adapted for Heavy Iron. Requirements first, tested by AI, so nothing is a guess.</p>
 </div>
-<div style="display:flex;gap:24px">
-<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:2px solid #F08A3C;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#F08A3C">30</p>
-<p style="font-size:28px;line-height:1.3;color:#F4F2EC">breaks got past every test of Unreal’s SemVer parser, at 90% line coverage. Breaking every decision found them.</p>
+<div style="width:1280px;background:rgba(9,14,20,.94);border:2px solid #2E4052;border-left:6px solid #F08A3C;border-radius:14px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.5)">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 30px;background:rgba(240,138,60,.1);border-bottom:1px solid rgba(240,138,60,.4)">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:4px;color:#F08A3C">BUG REPORT · FOUND BY AI · CHECK IT YOURSELF</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#A9B7C4">UNREAL ENGINE 5.7</p>
 </div>
-<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:96px;font-weight:700;line-height:1.05;color:#7FB2E5">3 of 3</p>
-<p style="font-size:28px;line-height:1.3;color:#F4F2EC">public targets, a version parser, a JSON object and a game’s scoring rules, each held a fault we could run</p>
+<div style="padding:22px 30px 26px;display:flex;flex-direction:column;gap:14px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:40px;font-weight:600;line-height:1.2;color:#F4F2EC">Unreal’s own SemVer class throws on the SemVer spec’s own example.</p>
+<div style="display:grid;grid-template-columns:120px 1fr;row-gap:8px;column-gap:20px;font-size:25px;line-height:1.35">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:21px;color:#7FB2E5;padding-top:3px">SPEC</p>
+<p style="color:#C9D3DC"><a href="https://semver.org/">semver.org</a>, rule 9, lists <span style="font-family:'JetBrains Mono', 'Courier New', monospace;color:#F4F2EC">1.0.0-x-y-z.--</span> as a valid version</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:21px;color:#7FB2E5;padding-top:3px">CODE</p>
+<p style="color:#C9D3DC"><span style="font-family:'JetBrains Mono', 'Courier New', monospace;color:#F4F2EC">Engine/Source/Programs/Shared/EpicGames.Core/SemVer.cs</span>, in the 5.7 install</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:21px;color:#7FB2E5;padding-top:3px">TRY</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px;color:#F4F2EC">var v = SemVer.Parse("1.0.0-x-y-z.--"); v.CompareTo(v); <span style="color:#F08A3C">// ArgumentOutOfRangeException</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:21px;color:#7FB2E5;padding-top:3px">TESTS</p>
+<p style="color:#C9D3DC">The class has 2 tests, and both pass.</p>
 </div>
 </div>
-<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:24px;color:#7FB2E5"><a href="../manual/#top">The full manual, in plain words: every claim here, and the test behind it</a></p>
+</div>
+<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:24px;color:#7FB2E5"><a href="../manual/#publiccode">Three faults like this one, in code you can read, and how to check each</a></p>
 </section>
-</div><details><summary>Slide 1: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. Two measured numbers to start, both on code you can read for yourself. The first: a coverage tool called Unreal’s SemVer parser 90% covered, and when every decision in it was broken every way, 30 of the breaks got past every test. The second is from three trials: Unreal Engine’s version-string class, its JSON object and the scoring rules of the open-source game osu!. Each held a fault against its own spec or docs, and each was shown by calling the code as shipped; slide 4 has them. Behind this slide: The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote.</p></details></article>
-<article id="slide-2"><div class="frame"><section id="newtool" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 160px;display:flex;flex-direction:column;gap:40px">
+</div><details><summary>Slide 1: what the speaker says</summary><p>This is how we use AI at TNT Tools: our internal training manual, adapted for you. It opens on one fault you can check in a couple of minutes with the engine you already have. The SemVer spec, rule 9, lists 1.0.0-x-y-z.-- among its valid versions. Unreal Engine 5.7’s own SemVer class, in EpicGames.Core, parses it, and then throws ArgumentOutOfRangeException when it compares that version with itself. Any pre-release ending in a hyphen does the same. The class has 2 tests, and both pass. An AI agent found it by reading the class against the spec, rule by rule, while writing down what the class must do; re-run on the installed 5.7 source on 3 November. Slide 3 has three faults like it, each with the public page that shows it. Behind this slide: The real graph of osu!’s scoring rules: 1,062 nodes, drawn from the store the loop wrote.</p></details></article>
+<article id="slide-2"><div class="frame"><section id="newtool" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:104px 128px 150px;display:flex;flex-direction:column;gap:56px">
 <div style="display:flex;flex-direction:column;gap:14px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">The new tool</p>
-<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:68px;font-weight:600;line-height:1.1;color:#F4F2EC">A skill that installs itself, and puts requirements first on every build</h2>
-<p style="font-size:30px;line-height:1.4;color:#C9D3DC">Claude installs it. From then on, every time you ask it to build something, it starts with the requirements, not the code.</p>
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:66px;font-weight:600;line-height:1.1;color:#F4F2EC">A skill that installs itself, and puts requirements first on every build</h2>
+<p style="font-size:30px;line-height:1.4;color:#C9D3DC">You ask Claude to build something. Before any code, it writes down what the thing must do, and you sign that off.</p>
 </div>
-<div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:22px">
-<div style="background:rgba(16,26,36,.9);border:1px solid #2E4052;border-radius:16px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#7FB2E5">PHASE 1</p>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:600;line-height:1.15;color:#F4F2EC">Requirements</h3>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">Feed it everything you have. It drafts the requirements, each citing its source, then runs a gap check.</p>
+<div style="position:relative;display:grid;grid-template-columns:repeat(6, 1fr);column-gap:20px">
+<div style="position:absolute;left:4%;right:4%;top:35px;height:4px;background:linear-gradient(90deg, #7FB2E5 0%, #7FB2E5 30%, #F08A3C 34%, #7FB2E5 38%, #7FB2E5 64%, #F08A3C 68%, #7FB2E5 72%, #F4F2EC 100%);border-radius:2px;opacity:.7"></div>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+<p style="position:relative;width:74px;height:74px;border-radius:50%;background:#101A24;border:3px solid #7FB2E5;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:700;color:#7FB2E5">1</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#7FB2E5">REQUIREMENTS</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:35px;font-weight:600;line-height:1.15;color:#F4F2EC">Write it down</h3>
+<p style="font-size:27px;line-height:1.38;color:#C9D3DC">What it must do, each line saying where it came from. Anything missing becomes a question for you.</p>
 </div>
-<div style="background:rgba(16,26,36,.9);border:1px solid #2E4052;border-radius:16px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#7FB2E5">PHASE 2</p>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:600;line-height:1.15;color:#F4F2EC">Use cases and epics</h3>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">A condensed epic holds the sub-epics. At least the happy path, so you can see the whole problem is solved.</p>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+<p style="position:relative;width:74px;height:74px;border-radius:50%;background:#101A24;border:3px solid #7FB2E5;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:700;color:#7FB2E5">2</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#7FB2E5">USE CASES</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:35px;font-weight:600;line-height:1.15;color:#F4F2EC">Plan the play</h3>
+<p style="font-size:27px;line-height:1.38;color:#C9D3DC">Who does what, step by step, and what should happen at each step. The main path at least.</p>
 </div>
-<div style="background:rgba(16,26,36,.9);border:1px solid #F08A3C;border-radius:16px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#F08A3C">REVIEW 1</p>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:600;line-height:1.15;color:#F4F2EC">I reviewed it</h3>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">One screen of requirements, gaps and epics, and one button. No code until this exact version is approved.</p>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+<p style="position:relative;width:74px;height:74px;border-radius:14px;background:#2A1A0E;border:3px solid #F08A3C;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px;font-weight:600;color:#F08A3C">GATE</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#F08A3C">REVIEW 1</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:35px;font-weight:600;line-height:1.15;color:#F4F2EC">I reviewed it</h3>
+<p style="font-size:27px;line-height:1.38;color:#C9D3DC">You read one page and press one button. No code is written before that, for that exact version.</p>
 </div>
-<div style="background:rgba(16,26,36,.9);border:1px solid #2E4052;border-radius:16px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#7FB2E5">CODE</p>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:600;line-height:1.15;color:#F4F2EC">Step by step</h3>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">Every change states its intent and names the use case step it serves. Code links only to steps, found by running each step's own tests: on the shops, 73 of 82 code places.</p>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+<p style="position:relative;width:74px;height:74px;border-radius:50%;background:#101A24;border:3px solid #7FB2E5;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:700;color:#7FB2E5">3</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#7FB2E5">CODE</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:35px;font-weight:600;line-height:1.15;color:#F4F2EC">Build, step by step</h3>
+<p style="font-size:27px;line-height:1.38;color:#C9D3DC">Each change says which step it serves, and why.</p>
 </div>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+<p style="position:relative;width:74px;height:74px;border-radius:14px;background:#2A1A0E;border:3px solid #F08A3C;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px;font-weight:600;color:#F08A3C">GATE</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#F08A3C">REVIEW 2</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:35px;font-weight:600;line-height:1.15;color:#F4F2EC">Read the intent, not the diff</h3>
+<p style="font-size:27px;line-height:1.38;color:#C9D3DC">What it meant to do at each step, and the problem each change solves. A change that serves no step is flagged.</p>
 </div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
-<div style="background:rgba(16,26,36,.9);border:1px solid #F08A3C;border-radius:16px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#F08A3C">REVIEW 2</p>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:600;line-height:1.15;color:#F4F2EC">Review the intentions, not the code</h3>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">Claude's intentions, step by step, each with the problem it solves, down to its root. Flags for a step with no intent, a change with no step, and a change that solves no problem.</p>
-</div>
-<div style="background:rgba(16,26,36,.9);border:1px solid #2E4052;border-radius:16px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#7FB2E5">EVERY RUN</p>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:600;line-height:1.15;color:#F4F2EC">A fly-through at the end</h3>
-<p style="font-size:24px;line-height:1.35;color:#C9D3DC">The run's requirements, steps and code as a graph you can fly through, so you see what was built and why.</p>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+<p style="position:relative;width:74px;height:74px;border-radius:50%;background:#101A24;border:3px solid #F4F2EC;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk', Arial, sans-serif;font-size:34px;font-weight:700;color:#F4F2EC">4</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#F4F2EC">EVERY RUN</p>
+<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:35px;font-weight:600;line-height:1.15;color:#F4F2EC">Fly through it</h3>
+<p style="font-size:27px;line-height:1.38;color:#C9D3DC">A 3D map of what was built and why: requirements, steps and code, to fly through at the end.</p>
 </div>
 </div>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#install">Install it, in plain words</a></p>
+<p style="font-size:24px;color:#A9B7C4">2</p>
 </div>
 </section>
-</div><details><summary>Slide 2: what the speaker says</summary><p></p></details></article>
-<article id="slide-3"><div class="frame"><section id="flatter" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
-<img src="img/proof.jpg" alt="Every break of osu!’s scoring rules and the test that caught it. Red: no test caught it, and each one has to be explained." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
-<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
-<div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Same code, two measures</p>
-<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">90% coverage hid 30 uncaught breaks</h2>
+</div><details><summary>Slide 2: what the speaker says</summary><p>This is the tool. Claude installs it as a skill, and from then on every time you ask it to build something it starts with the requirements, not the code. First it writes down what the thing must do, each line citing where it came from, and turns every gap into a question for you. Then it writes the use cases: who does what, step by step, and what should happen, the main path at least. You read that one page and press I reviewed it; no code is written for any other version. While it codes, every change names the use case step it serves and says why. The second review is of those intentions, not the diff: a step with no intent, a change with no step and a change that solves no problem are each flagged. At the end of every run there is a fly-through, a 3D map of the requirements, the steps and the code.</p></details></article>
+<article id="slide-3"><div class="frame"><section id="onpublic" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:104px 128px 150px;display:flex;flex-direction:column;gap:30px">
+<img src="img/osu.jpg" alt="The real graph of a shipped open-source game's scoring rules" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.93) 0%, rgba(11,18,25,.84) 42%, rgba(11,18,25,.84) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">Check each one yourself</p>
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:64px;font-weight:600;line-height:1.1;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)">Three faults an AI found by reading code against its own spec</h2>
 </div>
-<div style="display:flex;gap:32px">
-<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:rgba(16,26,36,.86);padding:48px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-size:32px;line-height:1.3;color:#C9D3DC">A coverage tool said</p>
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#F4F2EC">90%</p>
-<p style="font-size:32px;line-height:1.3;color:#F4F2EC">of lines run, 85% of branches. Unreal’s SemVer parser, with the 2 tests it has.</p>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:22px">
+<div style="background:rgba(9,14,20,.94);border:1px solid #2E4052;border-top:5px solid #F08A3C;border-radius:14px;padding:26px 28px;display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#A9B7C4">UNREAL ENGINE 5.7 · SemVer.cs</p>
+<p style="font-size:30px;line-height:1.3;color:#F4F2EC">Comparing the spec’s own example version with itself throws.</p>
+<p style="font-size:27px;line-height:1.3;color:#C9D3DC"><span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:21px">1.0.0-alpha-10</span> sorts above <span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:21px">1.0.0-alpha-9</span>. The spec says below.</p>
+<p style="margin-top:auto;font-size:23px;line-height:1.35;color:#7FB2E5;border-top:1px solid #2E4052;padding-top:10px">The rule: <a href="https://semver.org/">semver.org</a>, rules 9 and 11</p>
 </div>
-<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:rgba(16,26,36,.86);padding:48px;border:2px solid #F08A3C;border-radius:16px">
-<p style="font-size:32px;line-height:1.3;color:#C9D3DC">Break every decision, every way</p>
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:160px;font-weight:700;line-height:1.05;color:#F08A3C">30</p>
-<p style="font-size:32px;line-height:1.3;color:#F4F2EC">of 236 live breaks got past every test. 14 sat on lines coverage calls covered.</p>
+<div style="background:rgba(9,14,20,.94);border:1px solid #2E4052;border-top:5px solid #F08A3C;border-radius:14px;padding:26px 28px;display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#A9B7C4">UNREAL ENGINE 5.7 · JsonObject.cs</p>
+<p style="font-size:30px;line-height:1.3;color:#F4F2EC"><span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px">Equals</span> throws NullReferenceException on any object with a null field, even <span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px">x.Equals(x)</span>.</p>
+<p style="font-size:27px;line-height:1.3;color:#C9D3DC">Try <span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:21px">{"a":null}</span>.</p>
+<p style="margin-top:auto;font-size:23px;line-height:1.35;color:#7FB2E5;border-top:1px solid #2E4052;padding-top:10px">The rule: <a href="https://learn.microsoft.com/en-us/dotnet/api/system.object.equals">Microsoft’s Object.Equals</a>: x.Equals(x) is true, and Equals must not throw</p>
+</div>
+<div style="background:rgba(9,14,20,.94);border:1px solid #2E4052;border-top:5px solid #F08A3C;border-radius:14px;padding:26px 28px;display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:19px;letter-spacing:2px;color:#A9B7C4">OSU!, OPEN SOURCE · ScoreProcessor.cs</p>
+<p style="font-size:30px;line-height:1.3;color:#F4F2EC"><span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px">TotalScoreWithoutMods</span> reads 1,000,000 before the first hit, while <span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px">TotalScore</span> reads 0.</p>
+<p style="font-size:27px;line-height:1.3;color:#C9D3DC">Its doc says it is the points awarded.</p>
+<p style="margin-top:auto;font-size:23px;line-height:1.35;color:#7FB2E5;border-top:1px solid #2E4052;padding-top:10px">The rule: <a href="https://github.com/ppy/osu/blob/845336e/osu.Game/Rulesets/Scoring/ScoreProcessor.cs#L60">its own doc comment, on GitHub</a></p>
 </div>
 </div>
-<p style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-size:32px;line-height:1.4;color:#C9D3DC">Nothing about the code changed. Only how hard it was tried.</p>
-<p style="position:absolute;right:128px;bottom:108px;width:1200px;text-align:right;font-size:24px;line-height:1.3;color:#C9D3DC;text-shadow:0 2px 10px rgba(11,18,25,1)">Behind: every break of osu!’s scoring rules. Red: no test caught it.</p>
+<p style="font-size:28px;line-height:1.4;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>How:</b> an AI agent read each class against its spec or its docs, rule by rule, while writing down what the class must do. Each fault was then run on the code as shipped. Nothing in the targets was changed or added.</p>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
-<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#flatter">What was tested, and how</a></p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#publiccode">Each fault, and how to re-run it</a></p>
 <p style="font-size:24px;color:#A9B7C4">3</p>
 </div>
 </section>
-</div><details><summary>Slide 3: what the speaker says</summary><p>On Unreal Engine 5.7’s SemVer parser, a class that follows the public Semantic Versioning 2.0.0 spec and has 2 tests, a coverage tool reported 90% of lines and 85% of branches. Breaking every decision every way the tool knows made 246 breaks. 236 were live (the rest did not compile, or were proven by their compiled code to be the same program): 206 were caught and 30 got past every test, and 14 of those 30 sit on lines the coverage tool calls covered. A measure that counts lines run, or breaks code one way, flatters it; that is why the tool breaks every decision every way it knows. The picture is another target, osu!’s scoring rules, where 250 of 536 live breaks got past the three test files that were run. Behind this slide: every break of osu!’s scoring rules and the test that caught it. Red: no test caught it, and each one has to be explained.</p></details></article>
-<article id="slide-4"><div class="frame"><section id="numbers" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
-<img src="img/under.jpg" alt="osu!’s scoring graph from below: the ring of tests nearest, the requirements furthest." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
-<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
+</div><details><summary>Slide 3: what the speaker says</summary><p>Three faults on code outside our own project, each against a rule anyone can read. Unreal Engine 5.7’s SemVer class, in EpicGames.Core under Engine/Source/Programs, throws ArgumentOutOfRangeException when it compares 1.0.0-x-y-z.--, a version the spec lists as valid in rule 9, with itself; and it treats a hyphen as a separator, so 1.0.0-alpha-10 sorts above 1.0.0-alpha-9 where rule 11 puts it below. Its JsonObject’s Equals throws NullReferenceException on any object holding a null field, even when compared with itself, where Microsoft’s published contract says x.Equals(x) is true and Equals must not throw. Both were re-run on the installed 5.7 source on 3 November. osu! is a shipped open-source rhythm game: at commit 845336e, TotalScoreWithoutMods reads 1,000,000 right after ApplyBeatmap while TotalScore reads 0, and the field’s doc comment says it is the points awarded without mod multipliers; that one is from our 30 October trial and was not re-run today. An agent found all three by reading each class against its rules while writing the requirements; the planted bugs on the next slide did not find them. Behind this slide: osu!’s real graph.</p></details></article>
+<article id="slide-4"><div class="frame"><section id="flatter" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:36px">
+<img src="img/proof.jpg" alt="Every break of osu!’s scoring rules and the test that caught it. Red: no test caught it, and each one has to be explained." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.96) 0%, rgba(11,18,25,.9) 50%, rgba(11,18,25,.4) 74%, rgba(11,18,25,.14) 100%)"></div>
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Measured · every number has its test</p>
-<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC">What it does on real code</h2>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Why the tests did not catch it</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:64px;font-weight:600;line-height:1.1;width:1500px;color:#F4F2EC">A line that runs is not a line that is checked</h2>
 </div>
-<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:24px">
-<div style="display:flex;grid-column:span 2;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">87.3%</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">of 236 live breaks of Unreal’s SemVer parser caught by a test. 30 got past. JsonObject 69.7%, osu! 53.4%.</p>
+<div style="display:flex;gap:28px;width:1500px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.9);padding:30px 34px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#A9B7C4">COVERAGE</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:104px;font-weight:700;line-height:1;color:#F4F2EC">90%</p>
+<p style="font-size:26px;line-height:1.38;color:#C9D3DC">of SemVer.cs’s lines run when its 2 tests run. Coverage counts lines run. It cannot tell whether a test would notice that a line is wrong.</p>
 </div>
-<div style="display:flex;grid-column:span 2;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">48 of 68</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">statements held by a test: breaking one fails a test. 7 of the 16 requirements taken from the spec have no test about them.</p>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:rgba(16,26,36,.9);padding:30px 34px;border:2px solid #F08A3C;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#F08A3C">PLANT A BUG, RUN THE TESTS</p>
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:104px;font-weight:700;line-height:1;color:#F08A3C">30</p>
+<p style="font-size:26px;line-height:1.38;color:#F4F2EC">of the 236 planted bugs that compiled and changed the program left every test green, each tried alone. Our count, by mutation testing: change one thing, like a <span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-variant-ligatures:none">&lt;</span> into <span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-variant-ligatures:none">&lt;=</span>, and see if any test fails.</p>
 </div>
-<div style="display:flex;grid-column:span 2;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">3</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">requirements the spec leaves unsaid, marked inferred and put to the owner as questions, beside the 16 it states.</p>
 </div>
-<div style="display:flex;grid-column:span 3;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">13 min</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">for a full pass over SemVer: 246 breaks, each run alone in a copy, never in the live project. osu!’s 563 took 74: each break of a constructor rebuilds the game.</p>
+<div style="width:1500px;display:flex;flex-direction:column;gap:10px;background:rgba(9,14,20,.9);padding:20px 30px;border-left:5px solid #7FB2E5;border-radius:10px">
+<p style="font-size:25px;line-height:1.38;color:#F4F2EC"><b>Try one yourself:</b> make <span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px">JsonObject.Equals</span> answer true for anything. No test that passed before fails, in either test project that uses the class.</p>
+<p style="font-size:23px;line-height:1.38;color:#C9D3DC">Published, not ours: coverage is only weakly tied to how many planted bugs tests catch, once suite size is allowed for. <a href="https://cs.ubc.ca/~rtholmes/papers/icse_2014_inozemtseva.pdf">Inozemtseva and Holmes, ICSE 2014</a>.</p>
 </div>
-<div style="display:flex;grid-column:span 3;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:28px 32px;border:1px solid #2E4052;border-radius:16px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">18</p>
-<p style="font-size:28px;line-height:1.35;color:#C9D3DC">ways of being wrong the graph checks, each proven by a planted mistake it must catch.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
+<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
+<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#flatter">What was tested, and how</a></p>
+<p style="font-size:24px;color:#A9B7C4">4</p>
+</div>
+</section>
+</div><details><summary>Slide 4: what the speaker says</summary><p>The faults were found by reading. This slide is about why the tests let them through. On Unreal Engine 5.7’s SemVer class, which follows the public Semantic Versioning 2.0.0 spec and has 2 tests, a coverage tool reported 90% of lines and 85% of branches run. Coverage only says a line ran. So we planted bugs, the standard way called mutation testing: change one thing in the code, such as a less-than into a less-than-or-equal, a check removed, or a method made to answer a constant, then run the tests and see if any fails. We made 246 such changes, one at a time, each in its own copy. 236 counted (the rest did not compile, or compiled to the same program as the original): the tests caught 206 and left 30 green, and 14 of those 30 were on lines the coverage tool counts as run. That count is ours, and the recipe to re-run it is in the manual. The example on the slide you can check with the engine you have: we made JsonObject’s Equals answer true for anything, and no test that passed on the clean copy failed, in EpicGames.Core.Tests or in UnrealBuildTool.Tests. The general point is not ours: Inozemtseva and Holmes measured it on large Java projects and found coverage only low to moderately tied to how many planted bugs a suite catches once its size is allowed for. Behind this slide: every planted bug in osu!’s scoring rules. Red: no test caught it.</p></details></article>
+<article id="slide-5"><div class="frame"><section id="numbers" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:36px">
+<img src="img/under.jpg" alt="osu!’s scoring graph from below: the ring of tests nearest, the requirements furthest." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
+<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.9) 0%, rgba(11,18,25,.62) 45%, rgba(11,18,25,.62) 100%)"></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase">Measured, in plain words</p>
+<h2 style="text-shadow:0 2px 14px rgba(11,18,25,.95);font-family:'Space Grotesk', Arial, sans-serif;font-size:64px;font-weight:600;line-height:1.1;color:#F4F2EC">What one run found about the tests themselves</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(9,14,20,.92);padding:26px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:68px;font-weight:700;line-height:1.05;color:#F08A3C">7 of 16</p>
+<p style="font-size:26px;line-height:1.38;color:#C9D3DC">rules we took from the SemVer spec for this class have no test about them, including every rule on which strings are valid. Read its 2 tests in SemVerTests.cs beside semver.org.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(9,14,20,.92);padding:26px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:68px;font-weight:700;line-height:1.05;color:#F08A3C">3 questions</p>
+<p style="font-size:26px;line-height:1.38;color:#C9D3DC">the spec leaves unsaid, such as how the class should refuse a bad string. They go to the code’s owner as questions. The tool never answers them itself.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(9,14,20,.92);padding:26px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:68px;font-weight:700;line-height:1.05;color:#7FB2E5">206 of 236</p>
+<p style="font-size:26px;line-height:1.38;color:#C9D3DC">planted bugs in SemVer.cs made a test fail, counting those that compiled and changed the program. In JsonObject.cs, 299 of 429. In osu!’s scoring, 286 of 536, against the 151 tests we ran. Our counts.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:rgba(9,14,20,.92);padding:26px 32px;border:1px solid #2E4052;border-radius:16px">
+<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:68px;font-weight:700;line-height:1.05;color:#7FB2E5">13 min</p>
+<p style="font-size:26px;line-height:1.38;color:#C9D3DC">for the whole SemVer run, each planted bug built and tested in its own copy, never in the live project. osu! took 74: a change to a constructor rebuilds the game.</p>
 </div>
 </div>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
 <p style="font-size:24px;color:#7FB2E5"><a href="../manual/#publiccode">Where each number comes from</a></p>
-<p style="font-size:24px;color:#A9B7C4">4</p>
-</div>
-</section>
-</div><details><summary>Slide 4: what the speaker says</summary><p>The first four are the three public trials of 30 October, mostly on SemVer: Unreal Engine 5.7’s version-string class, held to the public Semantic Versioning 2.0.0 spec, with the 2 tests that exist on it. 246 breaks were made and 236 were live; the 87.3% is 206 caught, and 30 got past. The JsonObject and osu! figures are on slide 4, where osu!’s 53.4% is what three test files hold and is low for the game as a whole. A statement is held when breaking it makes some test fail. The 3 inferred requirements are the model’s own: the spec says what is valid, not how a class refuses, and nobody has said which; they go to the owner, never settled by the tool. The pass took 764 seconds on SemVer, about 13 minutes, at low priority on a busy machine. The 18 are the graph’s criteria: each stops one way of being wrong, and a selftest plants that mistake and must catch it. Behind this slide: osu!’s scoring graph from below: the ring of tests nearest, the requirements furthest.</p></details></article>
-<article id="slide-5"><div class="frame"><section id="onpublic" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:20px">
-<img src="img/osu.jpg" alt="The real graph of a shipped open-source game's scoring rules" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
-<div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.9) 0%, rgba(11,18,25,.76) 42%, rgba(11,18,25,.76) 100%)"></div>
-<div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;color:#F08A3C;text-transform:uppercase;text-shadow:0 2px 14px rgba(11,18,25,.95)">On code you can read for yourself</p>
-<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)">Unreal’s own C# and a shipped game: real bugs, every one run</h2>
-</div>
-<div style="display:flex;gap:20px">
-<table style="flex:1.15;font-size:24px;background:rgba(16,26,36,.86);border-radius:12px">
-<tr><th style="width:34%">Code</th><th style="width:22%">Coverage tool</th><th style="width:20%">Breaks caught</th><th style="width:24%">Got past on “covered” lines</th></tr>
-<tr><td>Unreal SemVer</td><td>90%</td><td>87.3%</td><td>14 of 30</td></tr>
-<tr><td>Unreal JsonObject</td><td>77%</td><td>69.7%</td><td>67 of 130</td></tr>
-<tr><td>osu! scoring</td><td>72%</td><td>53.4%</td><td>145 of 250</td></tr>
-</table>
-<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:rgba(16,26,36,.86);padding:18px 24px;border:1px solid #2E4052;border-radius:16px">
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:28px;font-weight:600;color:#F08A3C">Fails when you run it</h3>
-<p style="font-size:24px;line-height:1.3;color:#F4F2EC">SemVer’s compare throws on the spec’s own example.</p>
-<p style="font-size:24px;line-height:1.3;color:#F4F2EC">JsonObject’s Equals throws on a null field, even x.Equals(x).</p>
-<p style="font-size:24px;line-height:1.3;color:#F4F2EC">osu!’s TotalScoreWithoutMods reads 1,000,000 before the first hit.</p>
-</div>
-</div>
-<p style="font-size:26px;line-height:1.35;color:#F4F2EC;text-shadow:0 2px 14px rgba(11,18,25,.95)"><b>Who found what:</b> an agent reading the code against each rule found the bugs, while writing the requirements. The breaks showed where no test looks. No graph neural network (GNN) played a part.</p>
-<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
-<p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
-<p style="font-size:24px;color:#7FB2E5"><a href="../manual/#publiccode">The numbers, the bugs, and how to re-run it</a></p>
 <p style="font-size:24px;color:#A9B7C4">5</p>
 </div>
 </section>
-</div><details><summary>Slide 5: what the speaker says</summary><p>These are the first numbers a reader can check. Three trials on code outside our own project: two parts of Unreal Engine's own C# and the scoring rules of a shipped open-source game, with requirements from public specs and the code's own doc comments, and no test or product code written. The table's last column is the point for a team that trusts coverage: nearly half of what got past sits on lines a coverage tool calls covered. Read osu!'s 53.4% as what three test files hold, and as low for the game as a whole: its full test project crashed on this machine on the clean copy too. The trials' biggest finding was in our own tool, which silently skipped overloads, operators and property bodies, and failed five other ways on real code. All are fixed with planted tests. Re-run on an earlier target of ours that has no overloads, they changed no verdict and found one real gap, now closed by a test. The budget did not hold either: about 100 minutes and 260,000 tokens against 45 and 150,000 per trial, mostly on those bugs. Behind this slide: osu!'s real graph.</p></details></article>
+</div><details><summary>Slide 5: what the speaker says</summary><p>These are the three public trials of 30 October, read in plain words. The first number you can check by reading: Unreal Engine 5.7’s SemVer class has 2 tests, and of the 16 requirements we took from the Semantic Versioning 2.0.0 spec for it, 7 have no test about them, including every rule about which strings are valid; which test is about what was our reading of each test, written before any bug was planted. The 3 questions are the model’s own: the spec says what is valid, not how a class refuses a bad string, and nobody has said which; they go to the owner, never settled by the tool. The planted-bug counts leave out changes that did not compile or compiled to the same program as the original. osu!’s count is what three test files hold, 151 tests, and reads low for the game as a whole: its full test project crashed on this machine on the clean copy too. The SemVer pass took 765 seconds, about 13 minutes, at low priority on a busy machine. The faults themselves are on slide 3. Behind this slide: osu!’s scoring graph from below: the ring of tests nearest, the requirements furthest.</p></details></article>
 <article id="slide-6"><div class="frame"><section id="slop" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
 <img src="img/inside.jpg" alt="Inside the graph, among the methods." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
@@ -191,19 +210,9 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:28px;line-height:1.35;color:#F4F2EC">That is the standard. Every value is read from a source, or marked absent with its reason.</p>
 </div>
 </div>
-<div style="display:flex;gap:24px">
-<div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:8px 28px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">616 of 616</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC">top-tier facts right against outside truth</p>
-</div>
-<div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:8px 28px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">99.2%</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC">right on 209 held-out questions, answering 61% and abstaining on the rest</p>
-</div>
-<div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:8px 28px">
-<p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.1;color:#F08A3C">60M</p>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC">facts in the graph it reasons over, each carrying its sources</p>
-</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:rgba(9,14,20,.9);padding:22px 30px;border-left:5px solid #F08A3C;border-radius:10px">
+<p style="font-size:28px;line-height:1.4;color:#F4F2EC"><b>What that means in this deck:</b> every fault on the opening slides links to the public page that shows it, and every count that is only ours says so.</p>
+<p style="font-size:24px;line-height:1.4;color:#C9D3DC">A value is either read from a source, which it names, or proven absent, with the search that proved it. There is no third kind: a gap is never filled with a plausible number.</p>
 </div>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
 <p style="font-size:24px;color:#A9B7C4">TNT Tools · closed loop prototype 0.1</p>
@@ -211,7 +220,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">6</p>
 </div>
 </section>
-</div><details><summary>Slide 6: what the speaker says</summary><p>The key is accuracy. It boosts productivity across the board, and in our view it makes AI, in some cases, thousands of times smarter; that multiplier is our view, not a measurement, and no multiplier of that size has been measured. The gap between what AI guesses and what is true is what people deem AI slop. These three numbers are from our knowledge-graph work, on facts rather than code, against cached Wikidata as the outside truth, with bars declared before each run. The precision comes from abstaining: asked the same 209 questions, a local language model answered 95% at 98.0%. The numbers on code are on slide 3. Behind this slide: Inside the graph, among the methods.</p></details></article>
+</div><details><summary>Slide 6: what the speaker says</summary><p>The key is accuracy. It boosts productivity across the board, and in our view it makes AI, in some cases, thousands of times smarter; that multiplier is our view, not a measurement, and no multiplier of that size has been measured. The gap between what AI guesses and what is true is what people deem AI slop. So the rule here: every value is read from a source, which it names, or proven absent, with the search that proved it, and a gap is never filled with a plausible number. For this deck that means every fault on the opening slides links to the public page that shows it, and every count that is only ours says so. The numbers on code are on slide 5. Behind this slide: Inside the graph, among the methods.</p></details></article>
 <article id="slide-7"><div class="frame"><section id="waterfall" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <img src="img/maps.jpg" alt="Requirements at the top, code below, in osu!’s scoring rules: the orange lines are the links that say which requirement owns which decision. It does look like a waterfall." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.86) 0%, rgba(11,18,25,.64) 45%, rgba(11,18,25,.64) 100%)"></div>
@@ -271,7 +280,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">8</p>
 </div>
 </section>
-</div><details><summary>Slide 8: what the speaker says</summary><p>The tool’s main intent is to take the requirements for a game from a rough epic use case and grow them into a larger set, so that the code written from them is as accurate as it can be. The first card is the mechanism: it walks each use case, and when a step needs a condition that nothing provides, it marks an inferred requirement and sends it to the owner as a question, never as a decision. The second card is our judgment from building with it; no run has measured it directly. The third is the honest state. The trials on public code started from a published spec or from a game’s own doc comments, so their requirements were written from existing words: on osu! all 30 were written and none inferred, and on SemVer 3 of 19 are marked inferred. The end-to-end test, a rough epic grown into requirements and code written from them, graded by tests from an independent source, has run, and its results will be published with the benchmark: the last slide says what it takes. One earlier try gives no number to lean on: when two features of ours were joined, the walk did not find the places they meet. Behind this slide: osu!’s requirements and use cases.</p></details></article>
+</div><details><summary>Slide 8: what the speaker says</summary><p>The tool’s main intent is to take the requirements for a game from a rough epic use case and grow them into a larger set, so that the code written from them is as accurate as it can be. The first card is the mechanism: it walks each use case, and when a step needs a condition that nothing provides, it marks an inferred requirement and sends it to the owner as a question, never as a decision. The second card is our judgment from building with it; no run has measured it directly. The third is the honest state. The trials on public code started from a published spec or from a game’s own doc comments, so their requirements were written from existing words: on osu! all 30 were written and none inferred, and on SemVer 3 of 19 are marked inferred. The end-to-end test, a rough epic grown into requirements and code written from them, graded by tests from an independent source, has run, and its results will be published with the benchmark: slide 18 says what it takes. One earlier try gives no number to lean on: when two features of ours were joined, the walk did not find the places they meet. Behind this slide: osu!’s requirements and use cases.</p></details></article>
 <article id="slide-9"><div class="frame"><section id="how" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
 <img src="img/whole2.jpg" alt="The graph one pass leaves behind." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.88) 0%, rgba(11,18,25,.72) 42%, rgba(11,18,25,.72) 100%)"></div>
@@ -359,7 +368,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">10</p>
 </div>
 </section>
-</div><details><summary>Slide 10: what the speaker says</summary><p>Up to 24 breaks a statement, one of each kind first. One limit on every: until this week the C# adapter skipped overloads, operators and property bodies without saying so, and it still does not walk a field's value or an indexer, which the report now names; slide 14 has the numbers. A break that survives every test is either a missing test or the same program. Same program is proven by comparing compiled code, Trivial Compiler Equivalence from Papadakis and others, 2015. Anything else needs a reason in writing, and a declared equivalent that a test ever kills is a hole, not a pass. Behind this slide: One stretch of the breaks up close: each point is one way of breaking one decision.</p></details></article>
+</div><details><summary>Slide 10: what the speaker says</summary><p>Up to 24 breaks a statement, one of each kind first. One limit on every: until this week the C# adapter skipped overloads, operators and property bodies without saying so, and it still does not walk a field's value or an indexer, which the report now names; slide 15 has the numbers. A break that survives every test is either a missing test or the same program. Same program is proven by comparing compiled code, Trivial Compiler Equivalence from Papadakis and others, 2015. Anything else needs a reason in writing, and a declared equivalent that a test ever kills is a hole, not a pass. Behind this slide: One stretch of the breaks up close: each point is one way of breaking one decision.</p></details></article>
 <article id="slide-11"><div class="frame"><section id="chain" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:18px">
 <img src="img/thread.jpg" alt="One real thread through the graph of the kit’s example: a requirement, Claude’s step citing it and the code, a branch of that code, a break of the branch and the test that caught it" style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(90deg, rgba(11,18,25,.95) 0%, rgba(11,18,25,.86) 40%, rgba(11,18,25,.28) 66%, rgba(11,18,25,.1) 100%)"></div>
@@ -491,7 +500,7 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <p style="font-size:24px;color:#A9B7C4">14</p>
 </div>
 </section>
-</div><details><summary>Slide 14: what the speaker says</summary><p>It is an early prototype, and it has already found a lot of problems by mapping code to the graph. Be accurate about who found what: so far it is the graph's criteria and the breaks. The graph neural network proposes which requirement owns new code, and using it to flag a claim that does not fit is planned, not measured; slide 24 shows where a plain rule still beats it. The first number is a hole in the map itself: on SemVer, 7 of the 16 requirements taken from the spec have no test about them, found by reading each test against the requirements, before any break ran. The second is osu!’s scoring rules: all 191 branches the tests cover are claimed by a requirement, and 110 of them have a break that got past the three test files that were run, so those are tests missing, not requirements missing. Read it as what those three files hold, and as low for the game as a whole. The asteroid run is public code, language-neutral parts only, with no breaks, because there is no JavaScript adapter yet. The next slide is the three trials on source your team can read, on the same terms. Behind this slide: only the links from code to requirements.</p></details></article>
+</div><details><summary>Slide 14: what the speaker says</summary><p>It is an early prototype, and it has already found a lot of problems by mapping code to the graph. Be accurate about who found what: so far it is the graph's criteria and the breaks. The graph neural network proposes which requirement owns new code, and using it to flag a claim that does not fit is planned, not measured; slide 26 shows where a plain rule still beats it. The first number is a hole in the map itself: on SemVer, 7 of the 16 requirements taken from the spec have no test about them, found by reading each test against the requirements, before any break ran. The second is osu!’s scoring rules: all 191 branches the tests cover are claimed by a requirement, and 110 of them have a break that got past the three test files that were run, so those are tests missing, not requirements missing. Read it as what those three files hold, and as low for the game as a whole. The asteroid run is public code, language-neutral parts only, with no breaks, because there is no JavaScript adapter yet. Slide 3 is the three trials on source your team can read, on the same terms. Behind this slide: only the links from code to requirements.</p></details></article>
 <article id="slide-15"><div class="frame"><section id="limits" data-transition="fade" style="background:#0B1219;color:#F4F2EC;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
 <img src="img/thin.jpg" alt="A thin graph: the public asteroid game's, 186 nodes against osu!'s scoring rules, 1,062. Green on this much says little." style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;object-fit:cover">
 <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:linear-gradient(180deg, rgba(11,18,25,.84) 0%, rgba(11,18,25,.5) 45%, rgba(11,18,25,.5) 100%)"></div>
@@ -896,11 +905,11 @@ details{margin-top:8px;color:#C9D3DC;max-width:80ch}summary{cursor:pointer;color
 <div style="display:flex;gap:20px">
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:16px 22px;border:1px solid #2E4052;border-radius:16px">
 <h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:28px;font-weight:600;color:#F08A3C">Next on the list</h3>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC">A second opinion on every claim; what a change will break, before the run; which methods change together; which action moves which stat.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">What a change will break, before the run; which methods change together; which action moves which stat.</p>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:6px;background:rgba(16,26,36,.86);padding:16px 22px;border:1px solid #2E4052;border-radius:16px">
 <h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:28px;font-weight:600;color:#F08A3C">The graph offers more</h3>
-<p style="font-size:24px;line-height:1.3;color:#C9D3DC">Links it holds that nothing predicts yet: checked by, asserts, next step, stated by, cites.</p>
+<p style="font-size:24px;line-height:1.3;color:#C9D3DC">Links it holds that nothing predicts yet: documented in, checked by, links to, asserts, stated by, next step, infers requirement.</p>
 </div>
 </div>
 <div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between">
