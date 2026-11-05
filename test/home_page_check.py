@@ -295,6 +295,13 @@ def phone(b, w=390, h=844):
     collect(page, msgs)
     page.goto(BASE, wait_until="load")
     time.sleep(1.5)
+    st0 = page.evaluate("""()=>({open:document.body.classList.contains('menuOpen'), x:Math.round(document.getElementById('menu').getBoundingClientRect().left),
+        first:(document.querySelector('#tree > ul > li.gr > .rowwrap .l') || {}).textContent})""")
+    check("phone %d contents open with the page, Highlights the first group" % w, st0["open"] and st0["x"] >= 0 and st0["first"] == "Highlights",
+          "drawer open %(open)s, left edge %(x)s, first group %(first)r" % st0)
+    page.screenshot(path=os.path.join(OUT, "phone_%d_opened.png" % w))
+    page.keyboard.press("Escape")
+    time.sleep(0.5)
     page.screenshot(path=os.path.join(OUT, "phone_%d_top.png" % w))
     m = page.evaluate(WIDEST)
     check("phone %d viewport no sideways scroll" % w, m["sw"] <= m["cw"] and m["widest"] <= m["cw"],
@@ -331,6 +338,14 @@ def phone(b, w=390, h=844):
     time.sleep(0.4)
     sc = page.evaluate("document.body.classList.contains('menuOpen')")
     check("phone %d scrim tap closes drawer" % w, sc is False, "open after tap: %s" % sc)
+    deep = ctx.new_page()
+    collect(deep, msgs)
+    deep.goto(BASE + "#bossbench", wait_until="load")
+    settle(deep)       # the page scrolls to the card smoothly: measured mid-scroll it reads 161 to 232 px, settled 64 px under a 52 px bar
+    dl = deep.evaluate("[document.body.classList.contains('menuOpen'), Math.round(document.getElementById('bossbench').getBoundingClientRect().top), Math.round(document.getElementById('bar').getBoundingClientRect().bottom)]")
+    check("phone %d a link to one card opens on the card, the contents shut" % w, dl[0] is False and dl[2] <= dl[1] <= 120,
+          "drawer open %s, card top %spx under a %spx bar" % tuple(dl))
+    deep.close()
     check("phone %d console clean" % w, not msgs, msgs[:8])
     ctx.close()
 

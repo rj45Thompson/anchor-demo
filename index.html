@@ -95,6 +95,21 @@ h1,h2,h3,h4{font-family:var(--head);font-weight:600;line-height:1.15;text-wrap:b
 .view3d::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
 .view3d:hover{border-color:var(--accent)}
 .btn.to3d{border-color:var(--accent)}
+.g.star{width:12px;height:12px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+li.gr.best>.rowwrap .row{color:var(--accent)}
+.claude{margin:12px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--well)}
+.claude>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:9px 12px;font:600 13.5px/1.2 var(--head);color:var(--fg)}
+.claude>summary::-webkit-details-marker{display:none}
+.claude>summary::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.claude>summary:hover{color:var(--accent)}
+.claude[open]>summary{border-bottom:1px solid var(--line)}
+.claude .cin{padding:10px 12px 12px;font-size:13.5px;line-height:1.5;color:var(--soft)}
+.claude .cin p{margin:0 0 8px}
+.claude .cmd{display:flex;gap:8px;align-items:flex-start;margin:0 0 8px}
+.claude code{flex:1;min-width:0;display:block;white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 var(--mono);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.claude .copy{flex:none;min-height:34px;padding:6px 12px;border-radius:8px;border:1px solid var(--accent);background:#1D2C3A;color:var(--fg);font:600 13px/1 var(--head);cursor:pointer}
+.claude .copy:hover{background:var(--accent);color:#0B1219}
+.claude .note{font-size:12.5px;color:var(--muted)}
 #findRow{margin-top:12px}
 #filter{width:100%;background:var(--well);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:16px;line-height:1.2}
 #filter::placeholder{color:#8C9BA9}
@@ -357,6 +372,13 @@ h3 a:hover{color:var(--accent)}
   <nav id="tree" aria-label="Projects">
     <ul>
       <li class="leaf top"><div class="rowwrap"><span class="sp"></span><a class="row" href="#top"><span class="g ring" style="--c:#F4F2EC"></span><span class="l">Start here</span></a></div></li>
+      <li class="gr best"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Highlights"><span>&#9656;</span></button><span class="row"><span class="g star" style="--c:var(--accent)"></span><span class="l">Highlights</span></span></div>
+        <ul>
+          <li class="leaf also"><a class="row" href="#u2ue-kit"><span class="g dot" style="--c:var(--c-u2ue)"></span><span class="l">u2ue: Unity to Unreal</span></a></li>
+          <li class="leaf also"><a class="row" href="#fly"><span class="g dot" style="--c:var(--c-tools)"></span><span class="l">Closed loop fly-through</span></a></li>
+          <li class="leaf also"><a class="row" href="#blueprint"><span class="g dot" style="--c:var(--c-u2ue)"></span><span class="l">Blueprint View</span></a></li>
+          <li class="leaf also"><a class="row" href="#starfighter"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Star Fighter</span></a></li>
+        </ul></li>
       <li class="gr lead" data-sec="u2ue"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide u2ue"><span>&#9656;</span></button><a class="row" href="#u2ue"><span class="g" style="--c:var(--c-u2ue)"></span><span class="l">u2ue: Unity to Unreal</span><span class="pill">Main</span></a></div>
         <ul>
           <li class="leaf"><a class="row" href="#u2ue-kit"><span class="g dot" style="--c:var(--c-u2ue)"></span><span class="l">The porting toolkit</span></a></li>
@@ -378,6 +400,7 @@ h3 a:hover{color:var(--accent)}
           <li class="leaf"><a class="row" href="#engine"><span class="g dot" style="--c:var(--c-research)"></span><span class="l">Knowledge engine</span></a></li>
           <li class="leaf"><a class="row" href="#bossbench"><span class="g dot" style="--c:var(--c-research)"></span><span class="l">BossBench</span></a></li>
           <li class="leaf"><a class="row" href="#warship"><span class="g dot" style="--c:var(--c-research)"></span><span class="l">WarShip</span></a></li>
+          <li class="leaf also"><a class="row" href="#fly"><span class="g dot" style="--c:var(--c-tools)"></span><span class="l">Closed loop fly-through</span></a></li>
         </ul></li>
       <li class="gr" data-sec="apps"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Other tools"><span>&#9656;</span></button><a class="row" href="#apps"><span class="g" style="--c:var(--c-apps)"></span><span class="l">Other tools</span><span class="n"></span></a></div>
         <ul>
@@ -567,6 +590,14 @@ h3 a:hover{color:var(--accent)}
         <p class="more">Four public Blueprints from blueprintue.com, from a 32-node Pong to a 1,009-node enemy AI. Built in under 24 hours on top of the u2ue toolkit; its source is public.</p>
         <ul class="tags"><li>Unreal Blueprints</li><li>Code conversion</li><li>WebGPU</li></ul>
         <p class="links"><a class="go" href="blueprint/">Open Blueprint View</a><a href="blueprint/deck/">The deck</a><a href="blueprint/doc/">How it works</a><a href="blueprint/code/">The whole code</a><a href="https://github.com/rj45Thompson/blueprint-view-source" rel="noopener">Source, MIT</a></p>
+        <details class="claude">
+          <summary>Have Claude install it</summary>
+          <div class="cin">
+            <p>Paste this into a terminal, in the folder you want it in. It starts Claude Code with the build as its first task. Building needs Python with PyYAML, Node.js, a .NET 8 SDK and Unreal Engine 5 (it reads the engine's own headers), so Claude checks for those first and tells you what is missing.</p>
+            <div class="cmd"><code>claude "Set up Blueprint View from https://github.com/rj45Thompson/blueprint-view-source: clone it here, check what the Run it section of its README needs and tell me anything missing, then build and serve the Pong sample and give me the address to open."</code><button type="button" class="copy">Copy</button></div>
+            <p class="note">No Claude Code yet? <a href="https://code.claude.com/docs/en/setup" rel="noopener">Set it up first</a>, then paste the line.</p>
+          </div>
+        </details>
       </div>
     </article>
   </div>
@@ -588,6 +619,14 @@ h3 a:hover{color:var(--accent)}
         <p class="more">The closed loop tests the requirements an AI agent acts on, then holds them to the code and the tests it writes. Drawn with WebGPU, with a WebGL 2 fallback.</p>
         <ul class="tags"><li>WebGPU</li><li>Requirements</li><li>Test coverage</li><li>AI agents</li></ul>
         <p class="links"><a class="go" href="harness/fly/">Open the fly-through</a><a href="harness/osu/">The same loop on osu!</a><a href="https://github.com/rj45Thompson/closed-loop-kit" rel="noopener">Source, MIT</a></p>
+        <details class="claude">
+          <summary>Have Claude install it</summary>
+          <div class="cin">
+            <p>Paste this into a terminal, in the folder you want the kit in. It starts Claude Code with the install as its first task: clone the kit, install it by its README (Python 3.10 or newer and PyYAML), and show you the installer's own proof run.</p>
+            <div class="cmd"><code>claude "Install the closed-loop kit from https://github.com/rj45Thompson/closed-loop-kit: clone it here, follow the Install section of its README, then show me what its proof run passed and what it could not run."</code><button type="button" class="copy">Copy</button></div>
+            <p class="note">No Claude Code yet? <a href="https://code.claude.com/docs/en/setup" rel="noopener">Set it up first</a>, then paste the line.</p>
+          </div>
+        </details>
       </div>
     </article>
   </div>
@@ -876,6 +915,20 @@ h3 a:hover{color:var(--accent)}
   });
   doc.querySelector(".who").addEventListener("click", function(){ if(phone.matches) closeMenu(false); });
   phone.addEventListener && phone.addEventListener("change", function(){ if(!phone.matches) closeMenu(false); });
+  /* on a phone the contents open with the page, so the first thing a visitor sees is what is here,
+     the highlights first; a link to one card (an address with #) goes straight to that card instead */
+  if(phone.matches && !location.hash) openMenu();
+
+  /* Have Claude install it: the button beside a command puts that command on the clipboard; where
+     the clipboard cannot be written, the command is selected so it can be copied by hand */
+  doc.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("button.copy"); if(!b) return;
+    var code = b.parentNode.querySelector("code"); if(!code) return;
+    function said(t){ b.textContent = t; setTimeout(function(){ b.textContent = "Copy"; }, 1800); }
+    function select(){ var r = doc.createRange(); r.selectNodeContents(code); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); said("Selected"); }
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code.textContent).then(function(){ said("Copied"); }, select);
+    else select();
+  });
 
   /* filter: each menu entry matches on the words of its own card, panel or shelf */
   var leaves = [].slice.call(tree.querySelectorAll("li.leaf"));
@@ -915,8 +968,11 @@ h3 a:hover{color:var(--accent)}
   });
 
   /* the menu follows the scroll: the entry for what is at the top of the screen is lit */
+  /* a card can be listed twice (Highlights, and a second group it also belongs to): every row that
+     names it lights, and the menu scrolls to its own row, the one in its own group */
   var rows = {};
-  tree.querySelectorAll("a.row").forEach(function(a){ rows[a.getAttribute("href").slice(1)] = a; });
+  tree.querySelectorAll("a.row").forEach(function(a){ var id = a.getAttribute("href").slice(1); (rows[id] = rows[id] || []).push(a); });
+  function ownRow(list){ for(var i = 0; i < list.length; i++){ if(!list[i].closest("li.also")) return list[i]; } return list[0]; }
   var spy = [].slice.call(doc.querySelectorAll("#top, section.group, .card, .spy, #about")).filter(function(el){ return rows[el.id]; });
   var current = null;
   function label(el){
@@ -925,9 +981,9 @@ h3 a:hover{color:var(--accent)}
   function setCurrent(el){
     if(el === current) return; current = el;
     tree.querySelectorAll('.row[aria-current="true"]').forEach(function(r){ r.removeAttribute("aria-current"); });
-    var r = rows[el.id]; if(!r) return;
-    r.setAttribute("aria-current", "true");
-    var tb = tree.getBoundingClientRect(), rb = r.getBoundingClientRect();
+    var list = rows[el.id]; if(!list) return;
+    list.forEach(function(x){ x.setAttribute("aria-current", "true"); });
+    var r = ownRow(list), tb = tree.getBoundingClientRect(), rb = r.getBoundingClientRect();
     if(rb.top < tb.top + 8 || rb.bottom > tb.bottom - 8) tree.scrollTop += (rb.top - tb.top) - tb.height / 3;
     var g = el.closest("section.group");
     barSub.textContent = el.id === "top" ? "Sample work and experiments" : (g && g !== el ? label(g) + " · " + label(el) : label(el));

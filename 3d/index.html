@@ -104,6 +104,15 @@ body.bp-on #hud,body.bp-on #page,body.bp-on #labels,body.bp-on #callout{display:
 #pageBody .s-play{color:#47D1A0}#pageBody .s-proto{color:#F7C873}#pageBody .s-data{color:#7FB2E5}#pageBody .s-app{color:#C3A8F5}#pageBody .s-lead{color:#F08A3C}
 #pageBody .state{font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px}
 #pageBody .chapterText{margin-top:8px}#pageBody .chapterText.wait{color:var(--muted)}
+#pageBody .claude{margin:12px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--panel2);max-width:640px}
+#pageBody .claude>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:9px 12px;font:600 13.5px/1.2 'Space Grotesk',system-ui,sans-serif;color:var(--fg)}
+#pageBody .claude>summary::-webkit-details-marker{display:none}
+#pageBody .claude>summary::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+#pageBody .claude[open]>summary{border-bottom:1px solid var(--line)}
+#pageBody .claude .cin{padding:10px 12px 12px;font-size:13.5px;color:var(--soft)}#pageBody .claude .cin p{margin:0 0 8px}
+#pageBody .claude .cmd{display:flex;gap:8px;align-items:flex-start;margin:0 0 8px}
+#pageBody .claude code{flex:1;min-width:0;display:block;white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 'JetBrains Mono',monospace;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+#pageBody .claude .copy{flex:none;border-color:var(--accent)}#pageBody .claude .note{font-size:12.5px;color:var(--muted)}
 #pageIn .u2ue section{border:0;margin:0;padding:0}#pageIn .u2ue pre{overflow-x:auto;max-width:100%}#pageIn .u2ue table{display:block;max-width:100%;overflow-x:auto}
 
 #pageIn .u2ue{--bg: #0f1318; --paper: #151a21; --fg: #dde3ea; --muted: #93a0ae; --rule: #262d37; --rule-strong: #353e4b; --accent: #6ea8fe; --accent-soft: #17263b; --warm: #f0a35e; --code-bg: #1b222b; --code-fg: #d5dde6; --th-bg: #1b222b; --nav-bg: #12171d; --nav-active: #1d2733; color-scheme: dark;;color:var(--fg);font-family:'IBM Plex Sans',system-ui,sans-serif}
@@ -556,7 +565,15 @@ class SiteApp {
     this.renderNotice(started); this.loadThumbs(); this.bindView(); this.bindControls(); this.resize();
     new ResizeObserver(()=>this.resize()).observe($('view')); new ResizeObserver(()=>this.roomChanged()).observe(this.page.el);
     addEventListener('popstate',()=>this.fromAddress(false)); addEventListener('hashchange',()=>this.fromAddress(false)); this.scene.onLost=(why)=>this.lost(why);
-    this.fromAddress(true); requestAnimationFrame((t)=>this.frame(t)); }
+    this.markAlso(); this.fromAddress(true);
+    if(innerWidth<=760&&!this.cur){ document.body.classList.add('treeOpen'); $('menu').setAttribute('aria-expanded','true'); }     // on a phone the contents open with the page; a link to one item opens on that item instead
+    requestAnimationFrame((t)=>this.frame(t)); }
+  /* a row that names an item listed in its own group too (Highlights, or a second group): the tree builds one row per entry, in order, so the k-th
+     row is the k-th entry; those rows are marked, and the item's own row is the one the tree keeps for it */
+  markAlso(){ const flat=[], walk=(ns)=>{ for(const n of ns){ flat.push(n); if(n.children) walk(n.children); } }; walk(this.D.tree); const lis=[...$('treeRoot').querySelectorAll('li')];
+    if(lis.length!==flat.length){ console.error('The tree drew '+lis.length+' rows for '+flat.length+' entries'); return; }
+    lis.forEach((li,k)=>{ if(flat[k].also) li.classList.add('also'); }); for(const li of lis) if(li.dataset.item&&!li.classList.contains('also')) this.tree.byItem.set(li.dataset.item,li); }
+  markAlsoCurrent(id){ for(const li of $('treeRoot').querySelectorAll('li.also')) li.setAttribute('aria-selected',String(!!id&&li.dataset.item===id)); }
   renderNotice(s){ const g=$('gl'); g.textContent=s.scene.name==='none'?'No 3D':s.scene.name; g.dataset.tip=s.why; g.classList.toggle('off',s.scene.name!=='WebGPU'); g.setAttribute('aria-label','Renderer: '+s.why); if(s.scene.name==='none'){ $('fail').hidden=false; $('fail').textContent=s.why; } }
   lost(why){ console.error('The renderer stopped: '+why); $('fail').hidden=false; $('fail').textContent='The graphics stopped working ('+why+'). The tree and the pages still work. Reload to draw the world again.'; this.scene=new NoScene(); $('gl').textContent='No 3D'; $('gl').classList.add('off'); }
   async image(url){ const r=await fetch(url); if(!r.ok) throw new Error(url+' answered '+r.status); return createImageBitmap(await r.blob()); }
@@ -582,9 +599,9 @@ class SiteApp {
       const shift=((top-room.t)-(room.b-bottom))/2; if(Math.abs(shift)<4) break; y-=shift*(2*worst*TAN/cam.h)/Math.sin(v.phi); }
     this.fitKey=key; this.fitDist=worst; this.fitY=y; return worst; }
   select(id,o){ o=o||{}; const it=this.D.items[id]; if(!it){ console.error('Nothing on this page is called '+id); this.goHome(); return; }
-    this.cur=id; this.tree.setCurrent(id); this.page.show(id,it); this.cam.wandered=false; this.cam.fly(this.viewOf(id),!!o.instant); if(o.open!==false&&!(innerWidth<=760&&o.tour)) this.page.open(); this.light(id); this.hud(it);
+    this.cur=id; this.tree.setCurrent(id); this.markAlsoCurrent(id); this.page.show(id,it); this.cam.wandered=false; this.cam.fly(this.viewOf(id),!!o.instant); if(o.open!==false&&!(innerWidth<=760&&o.tour)) this.page.open(); this.light(id); this.hud(it);
     this.loadFull(id); if(it.slideOf) this.loadFull(it.slideOf); this.address(id,o); $('pageView').href=it.pageView; document.body.classList.add('chosen'); if(o.user&&this.playing&&!o.tour) this.stopTour(); if(o.user) this.closeDrawer(); }
-  goHome(o){ o=o||{}; this.cur=null; this.homeTheta=undefined; this.tree.setCurrent(null); this.cam.wandered=false; this.cam.fly(this.viewOf(null),!!o.instant); this.light(null); $('hereT').textContent=this.D.title; $('hereS').textContent=this.D.said; $('hereD').textContent=''; $('pageView').href='../';
+  goHome(o){ o=o||{}; this.cur=null; this.homeTheta=undefined; this.tree.setCurrent(null); this.markAlsoCurrent(null); this.cam.wandered=false; this.cam.fly(this.viewOf(null),!!o.instant); this.light(null); $('hereT').textContent=this.D.title; $('hereS').textContent=this.D.said; $('hereD').textContent=''; $('pageView').href='../';
     if(o.address!==false) history.replaceState(null,'',location.pathname+location.search); }
   hud(it){ $('hereT').textContent=it.title; $('hereS').textContent=it.sub||''; $('hereD').textContent=''; $('sr').textContent=it.title; }
   address(id,o){ const url=location.pathname+location.search+'#'+encodeURIComponent(id); if(o.fromAddress) return; if(o.tour||o.instant) history.replaceState(null,'',url); else history.pushState(null,'',url); }
@@ -626,7 +643,11 @@ class SiteApp {
     $('pagePrev').onclick=()=>{ const t=this.cur&&this.tree.step(this.cur,-1); if(t) this.select(t,{user:true}); }; $('pageNext').onclick=()=>{ const t=this.cur&&this.tree.step(this.cur,1); if(t) this.select(t,{user:true}); };
     $('pageCopy').onclick=()=>{ const url=location.href; (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject(new Error('no clipboard'))).then(()=>{ $('sr').textContent='Link copied'; $('pageCopy').textContent='Copied'; setTimeout(()=>{ $('pageCopy').textContent='Copy link'; },1600); }).catch((e)=>{ console.error('The link was not copied: '+e.message); $('pageCopy').textContent='Copy failed'; }); };
     $('filter').addEventListener('input',(e)=>this.tree.filter(e.target.value)); $('filter').addEventListener('keydown',(e)=>{ if(e.key==='ArrowDown'){ e.preventDefault(); const f=this.tree.visible()[0]; if(f) this.tree.focus(f); } });
-    addEventListener('keydown',(e)=>{ if(e.key==='Escape'&&b.classList.contains('treeOpen')) this.closeDrawer(); }); }
+    addEventListener('keydown',(e)=>{ if(e.key==='Escape'&&b.classList.contains('treeOpen')) this.closeDrawer(); });
+    /* Have Claude install it, in a card's page: the button beside a command puts the command on the clipboard, or selects it to copy by hand */
+    this.page.inner.addEventListener('click',(e)=>{ const bt=e.target.closest('button.copy'); if(!bt) return; const code=bt.parentNode.querySelector('code'); if(!code) return;
+      const said=(t)=>{ bt.textContent=t; setTimeout(()=>{ bt.textContent='Copy'; },1800); }, select=()=>{ const r=document.createRange(); r.selectNodeContents(code); const s=getSelection(); s.removeAllRanges(); s.addRange(r); said('Selected'); };
+      if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(code.textContent).then(()=>said('Copied'),select); else select(); }); }
   resize(){ const v=$('view').getBoundingClientRect(), dpr=Math.min(devicePixelRatio||1,2), w=Math.max(2,Math.round(v.width*dpr)), h=Math.max(2,Math.round(v.height*dpr)); this.dpr=dpr; this.scene.resize(w,h); this.deviceH=h; this.roomChanged(); }
   roomChanged(){ const v=$('view').getBoundingClientRect(), hud=$('hud').getBoundingClientRect(), pg=this.page.el.getBoundingClientRect(); this.cam.setRoom(v.width,v.height,Math.max(0,Math.min(v.height*.4,hud.bottom-v.top-18)),Math.max(0,v.bottom-pg.top));
     if(this.cam.wandered) return; const want=this.viewOf(this.cur); if(this.cam.flight) this.cam.flight.to.dist=want.dist; else this.cam.fly(want,true); }
@@ -641,7 +662,7 @@ class SiteApp {
 }
 
 (async function(){ const forced=Q.get('renderer'), bad=(msg)=>{ const f=$('fail'); f.hidden=false; f.textContent=msg; console.error(msg); };
-  let D; try { const r=await fetch('data.json?v=a4515d65ce'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The 3D view could not load its data ('+e.message+'). Every project is on the page view: ../'); return; }
+  let D; try { const r=await fetch('data.json?v=279a07f3a2'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The 3D view could not load its data ('+e.message+'). Every project is on the page view: ../'); return; }
   const started=await startScene($('c'),forced); const app=new SiteApp(D,started);
   window.__fly={renderer:started.scene.name,why:started.why,app,settle:()=>new Promise((res)=>app.settleWaiters.push(res)),state:()=>({cur:app.cur,pageOpen:app.page.isOpen,pageId:app.page.id,playing:app.playing,eye:app.cam.eye.slice(),view:Object.assign({},app.cam.v),fps:app.fps.v})};
 })();
