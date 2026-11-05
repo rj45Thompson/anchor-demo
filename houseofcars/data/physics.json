@@ -1,0 +1,6 @@
+{
+ "gravity_z": {
+  "value": -980.0,
+  "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+ }
+}

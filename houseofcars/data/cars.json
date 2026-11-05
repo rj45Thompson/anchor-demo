@@ -1,0 +1,2589 @@
+{
+ "engine": "5.7.1-48512491+++UE5+Release-5.7",
+ "cars": {
+  "SportsCar": {
+   "blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+   "movement_class": "ChaosWheeledVehicleMovementComponent",
+   "movement": {
+    "mass": {
+     "value": 1500.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .mass"
+    },
+    "enable_center_of_mass_override": {
+     "value": false,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .enable_center_of_mass_override"
+    },
+    "center_of_mass_override": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .center_of_mass_override"
+    },
+    "chassis_width": {
+     "value": 180.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .chassis_width"
+    },
+    "chassis_height": {
+     "value": 144.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .chassis_height"
+    },
+    "drag_coefficient": {
+     "value": 0.3100000023841858,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .drag_coefficient"
+    },
+    "downforce_coefficient": {
+     "value": 0.30000001192092896,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .downforce_coefficient"
+    },
+    "inertia_tensor_scale": {
+     "value": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .inertia_tensor_scale"
+    },
+    "sleep_threshold": {
+     "value": 10.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .sleep_threshold"
+    },
+    "sleep_slope_limit": {
+     "value": 0.8659999966621399,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .sleep_slope_limit"
+    },
+    "idle_brake_input": {
+     "value": 0.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .idle_brake_input"
+    },
+    "stop_threshold": {
+     "value": 10.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .stop_threshold"
+    },
+    "wrong_direction_threshold": {
+     "value": 100.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .wrong_direction_threshold"
+    },
+    "suspension_enabled": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .suspension_enabled"
+    },
+    "wheel_friction_enabled": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .wheel_friction_enabled"
+    },
+    "mechanical_sim_enabled": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .mechanical_sim_enabled"
+    },
+    "throttle_input_rate": {
+     "rise_rate": {
+      "value": 6.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .rise_rate"
+     },
+     "fall_rate": {
+      "value": 10.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .fall_rate"
+     },
+     "input_curve_function": {
+      "value": "LINEAR_FUNCTION",
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .input_curve_function"
+     }
+    },
+    "brake_input_rate": {
+     "rise_rate": {
+      "value": 6.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .rise_rate"
+     },
+     "fall_rate": {
+      "value": 10.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .fall_rate"
+     },
+     "input_curve_function": {
+      "value": "LINEAR_FUNCTION",
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .input_curve_function"
+     }
+    },
+    "steering_input_rate": {
+     "rise_rate": {
+      "value": 2.5,
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .rise_rate"
+     },
+     "fall_rate": {
+      "value": 5.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .fall_rate"
+     },
+     "input_curve_function": {
+      "value": "SQUARED_FUNCTION",
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .input_curve_function"
+     }
+    },
+    "handbrake_input_rate": {
+     "rise_rate": {
+      "value": 12.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .rise_rate"
+     },
+     "fall_rate": {
+      "value": 12.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .fall_rate"
+     },
+     "input_curve_function": {
+      "value": "LINEAR_FUNCTION",
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .input_curve_function"
+     }
+    }
+   },
+   "engine": {
+    "max_torque": {
+     "value": 750.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .max_torque"
+    },
+    "max_rpm": {
+     "value": 7000.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .max_rpm"
+    },
+    "engine_idle_rpm": {
+     "value": 900.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_idle_rpm"
+    },
+    "engine_brake_effect": {
+     "value": 0.20000000298023224,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_brake_effect"
+    },
+    "engine_rev_up_moi": {
+     "value": 5.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_rev_up_moi"
+    },
+    "engine_rev_down_rate": {
+     "value": 600.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_rev_down_rate"
+    },
+    "torque_curve": {
+     "external": "/Game/VehicleTemplate/Blueprints/SportsCar/FC_Torque_SportsCar.FC_Torque_SportsCar",
+     "range": [
+      1000.0,
+      7000.0
+     ],
+     "samples": [
+      [
+       1000.0,
+       0.5
+      ],
+      [
+       1093.75,
+       0.546875
+      ],
+      [
+       1187.5,
+       0.59375
+      ],
+      [
+       1281.25,
+       0.640625
+      ],
+      [
+       1375.0,
+       0.6875000596046448
+      ],
+      [
+       1468.75,
+       0.7343750596046448
+      ],
+      [
+       1562.5,
+       0.7812500596046448
+      ],
+      [
+       1656.25,
+       0.8281251192092896
+      ],
+      [
+       1750.0,
+       0.8750001192092896
+      ],
+      [
+       1843.75,
+       0.9025736451148987
+      ],
+      [
+       1937.5,
+       0.9080883264541626
+      ],
+      [
+       2031.25,
+       0.9136030077934265
+      ],
+      [
+       2125.0,
+       0.9191177487373352
+      ],
+      [
+       2218.75,
+       0.9246324300765991
+      ],
+      [
+       2312.5,
+       0.930147111415863
+      ],
+      [
+       2406.25,
+       0.9356618523597717
+      ],
+      [
+       2500.0,
+       0.9411765336990356
+      ],
+      [
+       2593.75,
+       0.9466912150382996
+      ],
+      [
+       2687.5,
+       0.9522059559822083
+      ],
+      [
+       2781.25,
+       0.9577206373214722
+      ],
+      [
+       2875.0,
+       0.9632353186607361
+      ],
+      [
+       2968.75,
+       0.96875
+      ],
+      [
+       3062.5,
+       0.9742647409439087
+      ],
+      [
+       3156.25,
+       0.9797794222831726
+      ],
+      [
+       3250.0,
+       0.9852941036224365
+      ],
+      [
+       3343.75,
+       0.9908088445663452
+      ],
+      [
+       3437.5,
+       0.9963235259056091
+      ],
+      [
+       3531.25,
+       0.9975000023841858
+      ],
+      [
+       3625.0,
+       0.9900000095367432
+      ],
+      [
+       3718.75,
+       0.9825000166893005
+      ],
+      [
+       3812.5,
+       0.9750000238418579
+      ],
+      [
+       3906.25,
+       0.9675000309944153
+      ],
+      [
+       4000.0,
+       0.9599999785423279
+      ],
+      [
+       4093.75,
+       0.9524999856948853
+      ],
+      [
+       4187.5,
+       0.9449999928474426
+      ],
+      [
+       4281.25,
+       0.9375
+      ],
+      [
+       4375.0,
+       0.9300000071525574
+      ],
+      [
+       4468.75,
+       0.9225000143051147
+      ],
+      [
+       4562.5,
+       0.9150000214576721
+      ],
+      [
+       4656.25,
+       0.9075000286102295
+      ],
+      [
+       4750.0,
+       0.8999999761581421
+      ],
+      [
+       4843.75,
+       0.8924999833106995
+      ],
+      [
+       4937.5,
+       0.8849999904632568
+      ],
+      [
+       5031.25,
+       0.8774999976158142
+      ],
+      [
+       5125.0,
+       0.8700000047683716
+      ],
+      [
+       5218.75,
+       0.862500011920929
+      ],
+      [
+       5312.5,
+       0.8550000190734863
+      ],
+      [
+       5406.25,
+       0.8475000262260437
+      ],
+      [
+       5500.0,
+       0.8400000333786011
+      ],
+      [
+       5593.75,
+       0.8324999809265137
+      ],
+      [
+       5687.5,
+       0.8250000476837158
+      ],
+      [
+       5781.25,
+       0.8174999952316284
+      ],
+      [
+       5875.0,
+       0.8100000023841858
+      ],
+      [
+       5968.75,
+       0.8025000095367432
+      ],
+      [
+       6062.5,
+       0.75
+      ],
+      [
+       6156.25,
+       0.675000011920929
+      ],
+      [
+       6250.0,
+       0.6000000238418579
+      ],
+      [
+       6343.75,
+       0.5249999761581421
+      ],
+      [
+       6437.5,
+       0.45000001788139343
+      ],
+      [
+       6531.25,
+       0.375
+      ],
+      [
+       6625.0,
+       0.30000001192092896
+      ],
+      [
+       6718.75,
+       0.2250000238418579
+      ],
+      [
+       6812.5,
+       0.1499999761581421
+      ],
+      [
+       6906.25,
+       0.07499998807907104
+      ],
+      [
+       7000.0,
+       0.0
+      ]
+     ],
+     "t3d": "Begin Object Class=/Script/Engine.CurveFloat Name=\"FC_Torque_SportsCar\" ExportPath=\"/Script/Engine.CurveFloat'/Game/VehicleTemplate/Blueprints/SportsCar/FC_Torque_SportsCar.FC_Torque_SportsCar'\"\r\n   Begin Object Class=/Script/Engine.AssetImportData Name=\"AssetImportData\" ExportPath=\"/Script/Engine.AssetImportData'/Game/VehicleTemplate/Blueprints/SportsCar/FC_Torque_SportsCar.FC_Torque_SportsCar:AssetImportData'\"\r\n   End Object\r\n   Begin Object Name=\"AssetImportData\" ExportPath=\"/Script/Engine.AssetImportData'/Game/VehicleTemplate/Blueprints/SportsCar/FC_Torque_SportsCar.FC_Torque_SportsCar:AssetImportData'\"\r\n   End Object\r\n   FloatCurve=(Keys=((Time=1000.000000,Value=0.500000),(Time=1800.000000,Value=0.900000),(Time=3500.000000,Value=1.000000),(Time=6000.000000,Value=0.800000),(Time=7000.000000)))\r\n   AssetImportData=\"/Script/Engine.AssetImportData'AssetImportData'\"\r\nEnd Object\r\n",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup.torque_curve -> /Game/VehicleTemplate/Blueprints/SportsCar/FC_Torque_SportsCar.FC_Torque_SportsCar (CurveFloat: keys from its T3D, samples from UCurveFloat::GetFloatValue)"
+    }
+   },
+   "transmission": {
+    "use_automatic_gears": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .use_automatic_gears"
+    },
+    "use_auto_reverse": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .use_auto_reverse"
+    },
+    "final_ratio": {
+     "value": 2.809999942779541,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .final_ratio"
+    },
+    "forward_gear_ratios": {
+     "value": [
+      4.25,
+      2.5199999809265137,
+      1.659999966621399,
+      1.2200000286102295,
+      1.0
+     ],
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .forward_gear_ratios"
+    },
+    "reverse_gear_ratios": {
+     "value": [
+      4.039999961853027
+     ],
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .reverse_gear_ratios"
+    },
+    "change_up_rpm": {
+     "value": 6000.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .change_up_rpm"
+    },
+    "change_down_rpm": {
+     "value": 2000.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .change_down_rpm"
+    },
+    "gear_change_time": {
+     "value": 0.20000000298023224,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .gear_change_time"
+    },
+    "transmission_efficiency": {
+     "value": 0.8999999761581421,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .transmission_efficiency"
+    }
+   },
+   "differential": {
+    "differential_type": {
+     "value": "REAR_WHEEL_DRIVE",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.differential_setup .differential_type"
+    },
+    "front_rear_split": {
+     "value": 0.5,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.differential_setup .front_rear_split"
+    }
+   },
+   "steering": {
+    "steering_type": {
+     "value": "ACKERMANN",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup .steering_type"
+    },
+    "angle_ratio": {
+     "value": 0.699999988079071,
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup .angle_ratio"
+    },
+    "steering_curve": {
+     "t3d_value": "SteeringCurve=(EditorCurveData=())",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup.steering_curve (T3D text of the owner)"
+    }
+   },
+   "skeletal_mesh": {
+    "value": "/Game/Vehicles/SportsCar/SKM_SportsCar.SKM_SportsCar",
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar .Mesh.SkeletalMeshAsset"
+   },
+   "wheels": [
+    {
+     "index": 0,
+     "class": "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C",
+     "bone": "Phys_Wheel_FL",
+     "additional_offset": {
+      "value": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[0] .additional_offset"
+     },
+     "bone_location": {
+      "value": [
+       135.0,
+       -90.0,
+       25.0
+      ],
+      "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar .Mesh socket Phys_Wheel_FL (actor space)"
+     },
+     "setup": {
+      "axle_type": {
+       "value": "FRONT",
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .axle_type"
+      },
+      "offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .offset"
+      },
+      "wheel_radius": {
+       "value": 39.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_radius"
+      },
+      "wheel_width": {
+       "value": 35.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_width"
+      },
+      "wheel_mass": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_mass"
+      },
+      "cornering_stiffness": {
+       "value": 1000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .cornering_stiffness"
+      },
+      "friction_force_multiplier": {
+       "value": 3.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .friction_force_multiplier"
+      },
+      "side_slip_modifier": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .side_slip_modifier"
+      },
+      "slip_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .slip_threshold"
+      },
+      "skid_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .skid_threshold"
+      },
+      "max_steer_angle": {
+       "value": 40.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_steer_angle"
+      },
+      "affected_by_steering": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_steering"
+      },
+      "affected_by_brake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_brake"
+      },
+      "affected_by_handbrake": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_handbrake"
+      },
+      "affected_by_engine": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_engine"
+      },
+      "abs_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .abs_enabled"
+      },
+      "traction_control_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .traction_control_enabled"
+      },
+      "max_wheelspin_rotation": {
+       "value": 30.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_wheelspin_rotation"
+      },
+      "suspension_axis": {
+       "value": [
+        0.0,
+        0.0,
+        -1.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_axis"
+      },
+      "suspension_force_offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_force_offset"
+      },
+      "suspension_max_raise": {
+       "value": 10.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_max_raise"
+      },
+      "suspension_max_drop": {
+       "value": 10.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_max_drop"
+      },
+      "suspension_damping_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_damping_ratio"
+      },
+      "wheel_load_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_load_ratio"
+      },
+      "spring_rate": {
+       "value": 250.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .spring_rate"
+      },
+      "spring_preload": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .spring_preload"
+      },
+      "suspension_smoothing": {
+       "value": 0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_smoothing"
+      },
+      "rollbar_scaling": {
+       "value": 0.15000000596046448,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .rollbar_scaling"
+      },
+      "max_brake_torque": {
+       "value": 4500.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_brake_torque"
+      },
+      "max_hand_brake_torque": {
+       "value": 6000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_hand_brake_torque"
+      }
+     }
+    },
+    {
+     "index": 1,
+     "class": "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C",
+     "bone": "Phys_Wheel_FR",
+     "additional_offset": {
+      "value": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[1] .additional_offset"
+     },
+     "bone_location": {
+      "value": [
+       135.0,
+       90.0,
+       25.0
+      ],
+      "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar .Mesh socket Phys_Wheel_FR (actor space)"
+     },
+     "setup": {
+      "axle_type": {
+       "value": "FRONT",
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .axle_type"
+      },
+      "offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .offset"
+      },
+      "wheel_radius": {
+       "value": 39.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_radius"
+      },
+      "wheel_width": {
+       "value": 35.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_width"
+      },
+      "wheel_mass": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_mass"
+      },
+      "cornering_stiffness": {
+       "value": 1000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .cornering_stiffness"
+      },
+      "friction_force_multiplier": {
+       "value": 3.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .friction_force_multiplier"
+      },
+      "side_slip_modifier": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .side_slip_modifier"
+      },
+      "slip_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .slip_threshold"
+      },
+      "skid_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .skid_threshold"
+      },
+      "max_steer_angle": {
+       "value": 40.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_steer_angle"
+      },
+      "affected_by_steering": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_steering"
+      },
+      "affected_by_brake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_brake"
+      },
+      "affected_by_handbrake": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_handbrake"
+      },
+      "affected_by_engine": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_engine"
+      },
+      "abs_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .abs_enabled"
+      },
+      "traction_control_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .traction_control_enabled"
+      },
+      "max_wheelspin_rotation": {
+       "value": 30.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_wheelspin_rotation"
+      },
+      "suspension_axis": {
+       "value": [
+        0.0,
+        0.0,
+        -1.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_axis"
+      },
+      "suspension_force_offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_force_offset"
+      },
+      "suspension_max_raise": {
+       "value": 10.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_max_raise"
+      },
+      "suspension_max_drop": {
+       "value": 10.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_max_drop"
+      },
+      "suspension_damping_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_damping_ratio"
+      },
+      "wheel_load_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_load_ratio"
+      },
+      "spring_rate": {
+       "value": 250.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .spring_rate"
+      },
+      "spring_preload": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .spring_preload"
+      },
+      "suspension_smoothing": {
+       "value": 0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_smoothing"
+      },
+      "rollbar_scaling": {
+       "value": 0.15000000596046448,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .rollbar_scaling"
+      },
+      "max_brake_torque": {
+       "value": 4500.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_brake_torque"
+      },
+      "max_hand_brake_torque": {
+       "value": 6000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_hand_brake_torque"
+      }
+     }
+    },
+    {
+     "index": 2,
+     "class": "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C",
+     "bone": "Phys_Wheel_BL",
+     "additional_offset": {
+      "value": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[2] .additional_offset"
+     },
+     "bone_location": {
+      "value": [
+       -129.20001220703125,
+       -90.0,
+       26.499998092651367
+      ],
+      "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar .Mesh socket Phys_Wheel_BL (actor space)"
+     },
+     "setup": {
+      "axle_type": {
+       "value": "REAR",
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .axle_type"
+      },
+      "offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .offset"
+      },
+      "wheel_radius": {
+       "value": 40.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_radius"
+      },
+      "wheel_width": {
+       "value": 40.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_width"
+      },
+      "wheel_mass": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_mass"
+      },
+      "cornering_stiffness": {
+       "value": 1000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .cornering_stiffness"
+      },
+      "friction_force_multiplier": {
+       "value": 4.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .friction_force_multiplier"
+      },
+      "side_slip_modifier": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .side_slip_modifier"
+      },
+      "slip_threshold": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .slip_threshold"
+      },
+      "skid_threshold": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .skid_threshold"
+      },
+      "max_steer_angle": {
+       "value": 0.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_steer_angle"
+      },
+      "affected_by_steering": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_steering"
+      },
+      "affected_by_brake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_brake"
+      },
+      "affected_by_handbrake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_handbrake"
+      },
+      "affected_by_engine": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_engine"
+      },
+      "abs_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .abs_enabled"
+      },
+      "traction_control_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .traction_control_enabled"
+      },
+      "max_wheelspin_rotation": {
+       "value": 30.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_wheelspin_rotation"
+      },
+      "suspension_axis": {
+       "value": [
+        0.0,
+        0.0,
+        -1.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_axis"
+      },
+      "suspension_force_offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_force_offset"
+      },
+      "suspension_max_raise": {
+       "value": 10.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_max_raise"
+      },
+      "suspension_max_drop": {
+       "value": 10.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_max_drop"
+      },
+      "suspension_damping_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_damping_ratio"
+      },
+      "wheel_load_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_load_ratio"
+      },
+      "spring_rate": {
+       "value": 250.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .spring_rate"
+      },
+      "spring_preload": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .spring_preload"
+      },
+      "suspension_smoothing": {
+       "value": 0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_smoothing"
+      },
+      "rollbar_scaling": {
+       "value": 0.15000000596046448,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .rollbar_scaling"
+      },
+      "max_brake_torque": {
+       "value": 1500.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_brake_torque"
+      },
+      "max_hand_brake_torque": {
+       "value": 6000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_hand_brake_torque"
+      }
+     }
+    },
+    {
+     "index": 3,
+     "class": "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C",
+     "bone": "Phys_Wheel_BR",
+     "additional_offset": {
+      "value": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[3] .additional_offset"
+     },
+     "bone_location": {
+      "value": [
+       -129.20001220703125,
+       90.0,
+       26.499998092651367
+      ],
+      "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar .Mesh socket Phys_Wheel_BR (actor space)"
+     },
+     "setup": {
+      "axle_type": {
+       "value": "REAR",
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .axle_type"
+      },
+      "offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .offset"
+      },
+      "wheel_radius": {
+       "value": 40.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_radius"
+      },
+      "wheel_width": {
+       "value": 40.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_width"
+      },
+      "wheel_mass": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_mass"
+      },
+      "cornering_stiffness": {
+       "value": 1000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .cornering_stiffness"
+      },
+      "friction_force_multiplier": {
+       "value": 4.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .friction_force_multiplier"
+      },
+      "side_slip_modifier": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .side_slip_modifier"
+      },
+      "slip_threshold": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .slip_threshold"
+      },
+      "skid_threshold": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .skid_threshold"
+      },
+      "max_steer_angle": {
+       "value": 0.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_steer_angle"
+      },
+      "affected_by_steering": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_steering"
+      },
+      "affected_by_brake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_brake"
+      },
+      "affected_by_handbrake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_handbrake"
+      },
+      "affected_by_engine": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_engine"
+      },
+      "abs_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .abs_enabled"
+      },
+      "traction_control_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .traction_control_enabled"
+      },
+      "max_wheelspin_rotation": {
+       "value": 30.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_wheelspin_rotation"
+      },
+      "suspension_axis": {
+       "value": [
+        0.0,
+        0.0,
+        -1.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_axis"
+      },
+      "suspension_force_offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_force_offset"
+      },
+      "suspension_max_raise": {
+       "value": 10.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_max_raise"
+      },
+      "suspension_max_drop": {
+       "value": 10.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_max_drop"
+      },
+      "suspension_damping_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_damping_ratio"
+      },
+      "wheel_load_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_load_ratio"
+      },
+      "spring_rate": {
+       "value": 250.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .spring_rate"
+      },
+      "spring_preload": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .spring_preload"
+      },
+      "suspension_smoothing": {
+       "value": 0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_smoothing"
+      },
+      "rollbar_scaling": {
+       "value": 0.15000000596046448,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .rollbar_scaling"
+      },
+      "max_brake_torque": {
+       "value": 1500.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_brake_torque"
+      },
+      "max_hand_brake_torque": {
+       "value": 6000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_hand_brake_torque"
+      }
+     }
+    }
+   ],
+   "parts": [
+    {
+     "component": "Chasis_Main",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar.SM_SportsCar",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "None",
+     "location": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 0.0,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component Chasis_Main (actor space)"
+    },
+    {
+     "component": "FR_Wheel_0",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Phys_Wheel_FR",
+     "location": [
+      135.0,
+      90.0,
+      25.0
+     ],
+     "rotation": {
+      "pitch": -90.0,
+      "yaw": 6.971731068006193e-07,
+      "roll": 0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component FR_Wheel_0 (actor space)"
+    },
+    {
+     "component": "FL_Wheel_0",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Phys_Wheel_FL",
+     "location": [
+      135.0,
+      -90.0,
+      25.0
+     ],
+     "rotation": {
+      "pitch": 90.0,
+      "yaw": -179.99999930282712,
+      "roll": 0.0
+     },
+     "scale": [
+      -1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component FL_Wheel_0 (actor space)"
+    },
+    {
+     "component": "BR_Wheel_0",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Phys_Wheel_BR",
+     "location": [
+      -129.20001220703125,
+      90.0,
+      26.499998092651367
+     ],
+     "rotation": {
+      "pitch": -90.0,
+      "yaw": 6.971727657401061e-07,
+      "roll": 0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component BR_Wheel_0 (actor space)"
+    },
+    {
+     "component": "BL_Wheel_0",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Phys_Wheel_BL",
+     "location": [
+      -129.20001220703125,
+      -90.0,
+      26.499998092651367
+     ],
+     "rotation": {
+      "pitch": 90.0,
+      "yaw": -179.99999930282718,
+      "roll": 0.0
+     },
+     "scale": [
+      -1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component BL_Wheel_0 (actor space)"
+    },
+    {
+     "component": "Chasis_Glass",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Glass.SM_SportsCar_Glass",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Root",
+     "location": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 0.0,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component Chasis_Glass (actor space)"
+    }
+   ],
+   "bounds_cm": {
+    "value": {
+     "origin": [
+      12.092376708984375,
+      8.526512829121202e-14,
+      53.34112723058206
+     ],
+     "box_extent": [
+      235.42372131347656,
+      117.12815523243685,
+      67.60802285485988
+     ]
+    },
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar .GetActorBounds(all components): origin in actor space, half extents"
+   },
+   "glb": {
+    "/Game/Vehicles/SportsCar/SM_SportsCar.SM_SportsCar": "D:/_houseofcars/ue_out/meshes/SM_SportsCar.glb",
+    "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Wheel.glb",
+    "/Game/Vehicles/SportsCar/SM_SportsCar_Glass.SM_SportsCar_Glass": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Glass.glb"
+   }
+  },
+  "OffroadCar": {
+   "blueprint": "/Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar",
+   "movement_class": "ChaosWheeledVehicleMovementComponent",
+   "movement": {
+    "mass": {
+     "value": 1500.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .mass"
+    },
+    "enable_center_of_mass_override": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .enable_center_of_mass_override"
+    },
+    "center_of_mass_override": {
+     "value": [
+      0.0,
+      0.0,
+      75.0
+     ],
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .center_of_mass_override"
+    },
+    "chassis_width": {
+     "value": 180.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .chassis_width"
+    },
+    "chassis_height": {
+     "value": 160.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .chassis_height"
+    },
+    "drag_coefficient": {
+     "value": 0.10000000149011612,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .drag_coefficient"
+    },
+    "downforce_coefficient": {
+     "value": 0.10000000149011612,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .downforce_coefficient"
+    },
+    "inertia_tensor_scale": {
+     "value": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .inertia_tensor_scale"
+    },
+    "sleep_threshold": {
+     "value": 10.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .sleep_threshold"
+    },
+    "sleep_slope_limit": {
+     "value": 0.8659999966621399,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .sleep_slope_limit"
+    },
+    "idle_brake_input": {
+     "value": 0.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .idle_brake_input"
+    },
+    "stop_threshold": {
+     "value": 10.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .stop_threshold"
+    },
+    "wrong_direction_threshold": {
+     "value": 100.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .wrong_direction_threshold"
+    },
+    "suspension_enabled": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .suspension_enabled"
+    },
+    "wheel_friction_enabled": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .wheel_friction_enabled"
+    },
+    "mechanical_sim_enabled": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .mechanical_sim_enabled"
+    },
+    "throttle_input_rate": {
+     "rise_rate": {
+      "value": 6.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .rise_rate"
+     },
+     "fall_rate": {
+      "value": 10.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .fall_rate"
+     },
+     "input_curve_function": {
+      "value": "LINEAR_FUNCTION",
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .input_curve_function"
+     }
+    },
+    "brake_input_rate": {
+     "rise_rate": {
+      "value": 6.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .rise_rate"
+     },
+     "fall_rate": {
+      "value": 10.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .fall_rate"
+     },
+     "input_curve_function": {
+      "value": "LINEAR_FUNCTION",
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .input_curve_function"
+     }
+    },
+    "steering_input_rate": {
+     "rise_rate": {
+      "value": 2.5,
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .rise_rate"
+     },
+     "fall_rate": {
+      "value": 5.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .fall_rate"
+     },
+     "input_curve_function": {
+      "value": "SQUARED_FUNCTION",
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .input_curve_function"
+     }
+    },
+    "handbrake_input_rate": {
+     "rise_rate": {
+      "value": 12.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .rise_rate"
+     },
+     "fall_rate": {
+      "value": 12.0,
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .fall_rate"
+     },
+     "input_curve_function": {
+      "value": "LINEAR_FUNCTION",
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .input_curve_function"
+     }
+    }
+   },
+   "engine": {
+    "max_torque": {
+     "value": 750.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .max_torque"
+    },
+    "max_rpm": {
+     "value": 7000.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .max_rpm"
+    },
+    "engine_idle_rpm": {
+     "value": 900.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_idle_rpm"
+    },
+    "engine_brake_effect": {
+     "value": 0.20000000298023224,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_brake_effect"
+    },
+    "engine_rev_up_moi": {
+     "value": 5.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_rev_up_moi"
+    },
+    "engine_rev_down_rate": {
+     "value": 600.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_rev_down_rate"
+    },
+    "torque_curve": {
+     "external": "/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_TorqueCurve.OffroadCar_TorqueCurve",
+     "range": [
+      0.0,
+      5000.0
+     ],
+     "samples": [
+      [
+       0.0,
+       0.5000000596046448
+      ],
+      [
+       78.125,
+       0.5390625596046448
+      ],
+      [
+       156.25,
+       0.5781250596046448
+      ],
+      [
+       234.375,
+       0.6171875596046448
+      ],
+      [
+       312.5,
+       0.65625
+      ],
+      [
+       390.625,
+       0.6953125
+      ],
+      [
+       468.75,
+       0.734375
+      ],
+      [
+       546.875,
+       0.7734375
+      ],
+      [
+       625.0,
+       0.8125
+      ],
+      [
+       703.125,
+       0.8515625
+      ],
+      [
+       781.25,
+       0.890625
+      ],
+      [
+       859.375,
+       0.9049478769302368
+      ],
+      [
+       937.5,
+       0.9114583134651184
+      ],
+      [
+       1015.625,
+       0.91796875
+      ],
+      [
+       1093.75,
+       0.9244791269302368
+      ],
+      [
+       1171.875,
+       0.9309895634651184
+      ],
+      [
+       1250.0,
+       0.9374999403953552
+      ],
+      [
+       1328.125,
+       0.9440103769302368
+      ],
+      [
+       1406.25,
+       0.9505208134651184
+      ],
+      [
+       1484.375,
+       0.9570311903953552
+      ],
+      [
+       1562.5,
+       0.9635416269302368
+      ],
+      [
+       1640.625,
+       0.9700520038604736
+      ],
+      [
+       1718.75,
+       0.9765624403953552
+      ],
+      [
+       1796.875,
+       0.9830728769302368
+      ],
+      [
+       1875.0,
+       0.9895832538604736
+      ],
+      [
+       1953.125,
+       0.9960936903953552
+      ],
+      [
+       2031.25,
+       0.9984374642372131
+      ],
+      [
+       2109.375,
+       0.9945312142372131
+      ],
+      [
+       2187.5,
+       0.9906249642372131
+      ],
+      [
+       2265.625,
+       0.9867187142372131
+      ],
+      [
+       2343.75,
+       0.9828124642372131
+      ],
+      [
+       2421.875,
+       0.9789061546325684
+      ],
+      [
+       2500.0,
+       0.9749999046325684
+      ],
+      [
+       2578.125,
+       0.9710936546325684
+      ],
+      [
+       2656.25,
+       0.9671874046325684
+      ],
+      [
+       2734.375,
+       0.9632811546325684
+      ],
+      [
+       2812.5,
+       0.9593749046325684
+      ],
+      [
+       2890.625,
+       0.9554686546325684
+      ],
+      [
+       2968.75,
+       0.9515624046325684
+      ],
+      [
+       3046.875,
+       0.9476561546325684
+      ],
+      [
+       3125.0,
+       0.9437499046325684
+      ],
+      [
+       3203.125,
+       0.9398436546325684
+      ],
+      [
+       3281.25,
+       0.9359374046325684
+      ],
+      [
+       3359.375,
+       0.9320311546325684
+      ],
+      [
+       3437.5,
+       0.9281249046325684
+      ],
+      [
+       3515.625,
+       0.9242186546325684
+      ],
+      [
+       3593.75,
+       0.9203124046325684
+      ],
+      [
+       3671.875,
+       0.9164061546325684
+      ],
+      [
+       3750.0,
+       0.9124999046325684
+      ],
+      [
+       3828.125,
+       0.9085936546325684
+      ],
+      [
+       3906.25,
+       0.9046874046325684
+      ],
+      [
+       3984.375,
+       0.9007811546325684
+      ],
+      [
+       4062.5,
+       0.8437499403953552
+      ],
+      [
+       4140.625,
+       0.7734374403953552
+      ],
+      [
+       4218.75,
+       0.7031249403953552
+      ],
+      [
+       4296.875,
+       0.6328124403953552
+      ],
+      [
+       4375.0,
+       0.5624999403953552
+      ],
+      [
+       4453.125,
+       0.4921874403953552
+      ],
+      [
+       4531.25,
+       0.4218749701976776
+      ],
+      [
+       4609.375,
+       0.3515624403953552
+      ],
+      [
+       4687.5,
+       0.28125
+      ],
+      [
+       4765.625,
+       0.2109375
+      ],
+      [
+       4843.75,
+       0.140625
+      ],
+      [
+       4921.875,
+       0.0703125
+      ],
+      [
+       5000.0,
+       0.0
+      ]
+     ],
+     "t3d": "Begin Object Class=/Script/Engine.CurveFloat Name=\"OffroadCar_TorqueCurve\" ExportPath=\"/Script/Engine.CurveFloat'/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_TorqueCurve.OffroadCar_TorqueCurve'\"\r\n   Begin Object Class=/Script/Engine.AssetImportData Name=\"AssetImportData\" ExportPath=\"/Script/Engine.AssetImportData'/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_TorqueCurve.OffroadCar_TorqueCurve:AssetImportData'\"\r\n   End Object\r\n   Begin Object Name=\"AssetImportData\" ExportPath=\"/Script/Engine.AssetImportData'/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_TorqueCurve.OffroadCar_TorqueCurve:AssetImportData'\"\r\n   End Object\r\n   FloatCurve=(Keys=((Value=0.500000),(Time=800.000000,Value=0.900000),(Time=2000.000000,Value=1.000000),(Time=4000.000000,Value=0.900000),(Time=5000.000000)))\r\n   AssetImportData=\"/Script/Engine.AssetImportData'AssetImportData'\"\r\nEnd Object\r\n",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup.torque_curve -> /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_TorqueCurve.OffroadCar_TorqueCurve (CurveFloat: keys from its T3D, samples from UCurveFloat::GetFloatValue)"
+    }
+   },
+   "transmission": {
+    "use_automatic_gears": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .use_automatic_gears"
+    },
+    "use_auto_reverse": {
+     "value": true,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .use_auto_reverse"
+    },
+    "final_ratio": {
+     "value": 2.809999942779541,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .final_ratio"
+    },
+    "forward_gear_ratios": {
+     "value": [
+      4.25,
+      2.5199999809265137,
+      1.659999966621399,
+      1.2200000286102295,
+      1.0
+     ],
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .forward_gear_ratios"
+    },
+    "reverse_gear_ratios": {
+     "value": [
+      4.039999961853027
+     ],
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .reverse_gear_ratios"
+    },
+    "change_up_rpm": {
+     "value": 6000.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .change_up_rpm"
+    },
+    "change_down_rpm": {
+     "value": 2000.0,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .change_down_rpm"
+    },
+    "gear_change_time": {
+     "value": 0.20000000298023224,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .gear_change_time"
+    },
+    "transmission_efficiency": {
+     "value": 0.8999999761581421,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .transmission_efficiency"
+    }
+   },
+   "differential": {
+    "differential_type": {
+     "value": "ALL_WHEEL_DRIVE",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.differential_setup .differential_type"
+    },
+    "front_rear_split": {
+     "value": 0.5,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.differential_setup .front_rear_split"
+    }
+   },
+   "steering": {
+    "steering_type": {
+     "value": "ACKERMANN",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup .steering_type"
+    },
+    "angle_ratio": {
+     "value": 0.699999988079071,
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup .angle_ratio"
+    },
+    "steering_curve": {
+     "t3d_value": "SteeringCurve=(EditorCurveData=())",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup.steering_curve (T3D text of the owner)"
+    }
+   },
+   "skeletal_mesh": {
+    "value": "/Game/Vehicles/OffroadCar/SKM_Offroad.SKM_Offroad",
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar .Mesh.SkeletalMeshAsset"
+   },
+   "wheels": [
+    {
+     "index": 0,
+     "class": "/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C",
+     "bone": "PhysWheel_FL",
+     "additional_offset": {
+      "value": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[0] .additional_offset"
+     },
+     "bone_location": {
+      "value": [
+       168.1999969482422,
+       -124.0999984741211,
+       51.10000228881836
+      ],
+      "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar .Mesh socket PhysWheel_FL (actor space)"
+     },
+     "setup": {
+      "axle_type": {
+       "value": "FRONT",
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .axle_type"
+      },
+      "offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .offset"
+      },
+      "wheel_radius": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .wheel_radius"
+      },
+      "wheel_width": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .wheel_width"
+      },
+      "wheel_mass": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .wheel_mass"
+      },
+      "cornering_stiffness": {
+       "value": 750.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .cornering_stiffness"
+      },
+      "friction_force_multiplier": {
+       "value": 4.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .friction_force_multiplier"
+      },
+      "side_slip_modifier": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .side_slip_modifier"
+      },
+      "slip_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .slip_threshold"
+      },
+      "skid_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .skid_threshold"
+      },
+      "max_steer_angle": {
+       "value": 40.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_steer_angle"
+      },
+      "affected_by_steering": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .affected_by_steering"
+      },
+      "affected_by_brake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .affected_by_brake"
+      },
+      "affected_by_handbrake": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .affected_by_handbrake"
+      },
+      "affected_by_engine": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .affected_by_engine"
+      },
+      "abs_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .abs_enabled"
+      },
+      "traction_control_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .traction_control_enabled"
+      },
+      "max_wheelspin_rotation": {
+       "value": 30.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_wheelspin_rotation"
+      },
+      "suspension_axis": {
+       "value": [
+        0.0,
+        0.0,
+        -1.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_axis"
+      },
+      "suspension_force_offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_force_offset"
+      },
+      "suspension_max_raise": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_max_raise"
+      },
+      "suspension_max_drop": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_max_drop"
+      },
+      "suspension_damping_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_damping_ratio"
+      },
+      "wheel_load_ratio": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .wheel_load_ratio"
+      },
+      "spring_rate": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .spring_rate"
+      },
+      "spring_preload": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .spring_preload"
+      },
+      "suspension_smoothing": {
+       "value": 0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_smoothing"
+      },
+      "rollbar_scaling": {
+       "value": 0.15000000596046448,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .rollbar_scaling"
+      },
+      "max_brake_torque": {
+       "value": 3000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_brake_torque"
+      },
+      "max_hand_brake_torque": {
+       "value": 6000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_hand_brake_torque"
+      }
+     }
+    },
+    {
+     "index": 1,
+     "class": "/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C",
+     "bone": "PhysWheel_FR",
+     "additional_offset": {
+      "value": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[1] .additional_offset"
+     },
+     "bone_location": {
+      "value": [
+       168.1999969482422,
+       124.0999984741211,
+       51.10000228881836
+      ],
+      "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar .Mesh socket PhysWheel_FR (actor space)"
+     },
+     "setup": {
+      "axle_type": {
+       "value": "FRONT",
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .axle_type"
+      },
+      "offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .offset"
+      },
+      "wheel_radius": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .wheel_radius"
+      },
+      "wheel_width": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .wheel_width"
+      },
+      "wheel_mass": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .wheel_mass"
+      },
+      "cornering_stiffness": {
+       "value": 750.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .cornering_stiffness"
+      },
+      "friction_force_multiplier": {
+       "value": 4.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .friction_force_multiplier"
+      },
+      "side_slip_modifier": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .side_slip_modifier"
+      },
+      "slip_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .slip_threshold"
+      },
+      "skid_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .skid_threshold"
+      },
+      "max_steer_angle": {
+       "value": 40.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_steer_angle"
+      },
+      "affected_by_steering": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .affected_by_steering"
+      },
+      "affected_by_brake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .affected_by_brake"
+      },
+      "affected_by_handbrake": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .affected_by_handbrake"
+      },
+      "affected_by_engine": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .affected_by_engine"
+      },
+      "abs_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .abs_enabled"
+      },
+      "traction_control_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .traction_control_enabled"
+      },
+      "max_wheelspin_rotation": {
+       "value": 30.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_wheelspin_rotation"
+      },
+      "suspension_axis": {
+       "value": [
+        0.0,
+        0.0,
+        -1.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_axis"
+      },
+      "suspension_force_offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_force_offset"
+      },
+      "suspension_max_raise": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_max_raise"
+      },
+      "suspension_max_drop": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_max_drop"
+      },
+      "suspension_damping_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_damping_ratio"
+      },
+      "wheel_load_ratio": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .wheel_load_ratio"
+      },
+      "spring_rate": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .spring_rate"
+      },
+      "spring_preload": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .spring_preload"
+      },
+      "suspension_smoothing": {
+       "value": 0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .suspension_smoothing"
+      },
+      "rollbar_scaling": {
+       "value": 0.15000000596046448,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .rollbar_scaling"
+      },
+      "max_brake_torque": {
+       "value": 3000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_brake_torque"
+      },
+      "max_hand_brake_torque": {
+       "value": 6000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_hand_brake_torque"
+      }
+     }
+    },
+    {
+     "index": 2,
+     "class": "/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C",
+     "bone": "PhysWheel_BL",
+     "additional_offset": {
+      "value": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[2] .additional_offset"
+     },
+     "bone_location": {
+      "value": [
+       -135.1999969482422,
+       -139.8000030517578,
+       50.79999923706055
+      ],
+      "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar .Mesh socket PhysWheel_BL (actor space)"
+     },
+     "setup": {
+      "axle_type": {
+       "value": "REAR",
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .axle_type"
+      },
+      "offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .offset"
+      },
+      "wheel_radius": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .wheel_radius"
+      },
+      "wheel_width": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .wheel_width"
+      },
+      "wheel_mass": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .wheel_mass"
+      },
+      "cornering_stiffness": {
+       "value": 750.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .cornering_stiffness"
+      },
+      "friction_force_multiplier": {
+       "value": 4.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .friction_force_multiplier"
+      },
+      "side_slip_modifier": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .side_slip_modifier"
+      },
+      "slip_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .slip_threshold"
+      },
+      "skid_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .skid_threshold"
+      },
+      "max_steer_angle": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .max_steer_angle"
+      },
+      "affected_by_steering": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .affected_by_steering"
+      },
+      "affected_by_brake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .affected_by_brake"
+      },
+      "affected_by_handbrake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .affected_by_handbrake"
+      },
+      "affected_by_engine": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .affected_by_engine"
+      },
+      "abs_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .abs_enabled"
+      },
+      "traction_control_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .traction_control_enabled"
+      },
+      "max_wheelspin_rotation": {
+       "value": 30.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .max_wheelspin_rotation"
+      },
+      "suspension_axis": {
+       "value": [
+        0.0,
+        0.0,
+        -1.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_axis"
+      },
+      "suspension_force_offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_force_offset"
+      },
+      "suspension_max_raise": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_max_raise"
+      },
+      "suspension_max_drop": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_max_drop"
+      },
+      "suspension_damping_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_damping_ratio"
+      },
+      "wheel_load_ratio": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .wheel_load_ratio"
+      },
+      "spring_rate": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .spring_rate"
+      },
+      "spring_preload": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .spring_preload"
+      },
+      "suspension_smoothing": {
+       "value": 0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_smoothing"
+      },
+      "rollbar_scaling": {
+       "value": 0.15000000596046448,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .rollbar_scaling"
+      },
+      "max_brake_torque": {
+       "value": 3000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .max_brake_torque"
+      },
+      "max_hand_brake_torque": {
+       "value": 6000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .max_hand_brake_torque"
+      }
+     }
+    },
+    {
+     "index": 3,
+     "class": "/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C",
+     "bone": "PhysWheel_BR",
+     "additional_offset": {
+      "value": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[3] .additional_offset"
+     },
+     "bone_location": {
+      "value": [
+       -135.1999969482422,
+       139.8000030517578,
+       50.79999923706055
+      ],
+      "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar .Mesh socket PhysWheel_BR (actor space)"
+     },
+     "setup": {
+      "axle_type": {
+       "value": "REAR",
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .axle_type"
+      },
+      "offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .offset"
+      },
+      "wheel_radius": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .wheel_radius"
+      },
+      "wheel_width": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .wheel_width"
+      },
+      "wheel_mass": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .wheel_mass"
+      },
+      "cornering_stiffness": {
+       "value": 750.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .cornering_stiffness"
+      },
+      "friction_force_multiplier": {
+       "value": 4.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .friction_force_multiplier"
+      },
+      "side_slip_modifier": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .side_slip_modifier"
+      },
+      "slip_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .slip_threshold"
+      },
+      "skid_threshold": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .skid_threshold"
+      },
+      "max_steer_angle": {
+       "value": 50.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .max_steer_angle"
+      },
+      "affected_by_steering": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .affected_by_steering"
+      },
+      "affected_by_brake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .affected_by_brake"
+      },
+      "affected_by_handbrake": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .affected_by_handbrake"
+      },
+      "affected_by_engine": {
+       "value": true,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .affected_by_engine"
+      },
+      "abs_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .abs_enabled"
+      },
+      "traction_control_enabled": {
+       "value": false,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .traction_control_enabled"
+      },
+      "max_wheelspin_rotation": {
+       "value": 30.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .max_wheelspin_rotation"
+      },
+      "suspension_axis": {
+       "value": [
+        0.0,
+        0.0,
+        -1.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_axis"
+      },
+      "suspension_force_offset": {
+       "value": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_force_offset"
+      },
+      "suspension_max_raise": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_max_raise"
+      },
+      "suspension_max_drop": {
+       "value": 20.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_max_drop"
+      },
+      "suspension_damping_ratio": {
+       "value": 0.5,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_damping_ratio"
+      },
+      "wheel_load_ratio": {
+       "value": 1.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .wheel_load_ratio"
+      },
+      "spring_rate": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .spring_rate"
+      },
+      "spring_preload": {
+       "value": 100.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .spring_preload"
+      },
+      "suspension_smoothing": {
+       "value": 0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .suspension_smoothing"
+      },
+      "rollbar_scaling": {
+       "value": 0.15000000596046448,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .rollbar_scaling"
+      },
+      "max_brake_torque": {
+       "value": 3000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .max_brake_torque"
+      },
+      "max_hand_brake_torque": {
+       "value": 6000.0,
+       "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear.OffroadCar_WheelsRear_C (CDO) .max_hand_brake_torque"
+      }
+     }
+    }
+   ],
+   "parts": [
+    {
+     "component": "Tire FL",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "VisWheel_FL",
+     "location": [
+      168.1999969482422,
+      -124.10000610351562,
+      51.10000228881836
+     ],
+     "rotation": {
+      "pitch": -0.0,
+      "yaw": -180.0,
+      "roll": 0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Tire FL (actor space)"
+    },
+    {
+     "component": "Tire BL",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "VisWheel_BL",
+     "location": [
+      -135.1999969482422,
+      -139.8000030517578,
+      50.79999923706055
+     ],
+     "rotation": {
+      "pitch": -90.0,
+      "yaw": -179.99999999999997,
+      "roll": 0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Tire BL (actor space)"
+    },
+    {
+     "component": "Tire FR",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "VisWheel_FR",
+     "location": [
+      168.1999969482422,
+      124.0999984741211,
+      51.10000228881836
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 3.061761231566592e-22,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Tire FR (actor space)"
+    },
+    {
+     "component": "Tire BR",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "VisWheel_BR",
+     "location": [
+      -135.1999969482422,
+      139.8000030517578,
+      50.79999923706055
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 3.061761231566592e-22,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      0.9999999403953552,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Tire BR (actor space)"
+    },
+    {
+     "component": "Chassis",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Body.SM_Offroad_Body",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "None",
+     "location": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 0.0,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Chassis (actor space)"
+    }
+   ],
+   "bounds_cm": {
+    "value": {
+     "origin": [
+      16.809432983398438,
+      0.0,
+      79.1332662027562
+     ],
+     "box_extent": [
+      203.19056701660156,
+      189.8000030517578,
+      79.52731729333027
+     ]
+    },
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar .GetActorBounds(all components): origin in actor space, half extents"
+   },
+   "glb": {
+    "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire": "D:/_houseofcars/ue_out/meshes/SM_Offroad_Tire.glb",
+    "/Game/Vehicles/OffroadCar/SM_Offroad_Body.SM_Offroad_Body": "D:/_houseofcars/ue_out/meshes/SM_Offroad_Body.glb"
+   }
+  }
+ },
+ "showroom_only": {
+  "ConceptCar": {
+   "mesh": "/Game/ConceptCar/Car/SM_AutomotiveTP_Car",
+   "glb": "D:/_houseofcars/ue_out/meshes/SM_AutomotiveTP_Car.glb",
+   "bounds_cm": {
+    "value": {
+     "origin": [
+      12.498855590820312,
+      0.0,
+      74.11061715334654
+     ],
+     "box_extent": [
+      219.32382202148438,
+      102.442626953125,
+      74.01822806149721
+     ]
+    },
+    "src": "READ /Game/ConceptCar/Car/SM_AutomotiveTP_Car .GetBounds()"
+   },
+   "vehicle": {
+    "absent": "a static mesh with no vehicle Blueprint, so no engine, gears or wheels to read",
+    "src": "ABSENT /Game/ConceptCar/Car/SM_AutomotiveTP_Car (StaticMesh, not a WheeledVehiclePawn)"
+   },
+   "materials": [
+    "/Game/ConceptCar/Car/Assets/M_TireRubber.M_TireRubber",
+    "/Game/ConceptCar/Car/Assets/MI_CarPaint.MI_CarPaint",
+    "/Game/ConceptCar/Car/Assets/M_Glass.M_Glass",
+    "/Game/ConceptCar/Car/Assets/M_Metal.M_Metal",
+    "/Game/ConceptCar/Car/Assets/M_TireRubber.M_TireRubber"
+   ]
+  }
+ },
+ "errors": [],
+ "track_glb": "D:/_houseofcars/ue_out/track.glb"
+}

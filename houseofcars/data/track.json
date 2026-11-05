@@ -1,0 +1,645 @@
+{
+ "level": "/Game/Variant_Timetrial/Maps/Lvl_Timetrial",
+ "gates": [
+  {
+   "index": 0,
+   "label": "BP_TrackGate2",
+   "finish": false,
+   "object": "BP_TrackGate_C_UAID_F4A475FF15A3926A02_1376895128",
+   "center_cm": [
+    9380.0,
+    -8420.0,
+    560.0
+   ],
+   "yaw_deg": 0.0,
+   "pitch_deg": 0.0,
+   "roll_deg": -0.0,
+   "half_extent_cm": [
+    4000.0,
+    1000.0,
+    2250.0
+   ],
+   "src": "READ level.t3d BP_TrackGate_C_UAID_F4A475FF15A3926A02_1376895128 (Next Marker chain, Is Finish Line) + track.json BoxComponent world transform x box_extent"
+  },
+  {
+   "index": 1,
+   "label": "BP_TrackGate3",
+   "finish": false,
+   "object": "BP_TrackGate_C_UAID_F4A475FF15A3926A02_1384077129",
+   "center_cm": [
+    -2220.0,
+    -20.0,
+    -830.0
+   ],
+   "yaw_deg": -29.999999767609047,
+   "pitch_deg": -0.0,
+   "roll_deg": 0.0,
+   "half_extent_cm": [
+    2000.0,
+    1000.0,
+    1250.0
+   ],
+   "src": "READ level.t3d BP_TrackGate_C_UAID_F4A475FF15A3926A02_1384077129 (Next Marker chain, Is Finish Line) + track.json BoxComponent world transform x box_extent"
+  },
+  {
+   "index": 2,
+   "label": "BP_TrackGate4",
+   "finish": false,
+   "object": "BP_TrackGate_C_UAID_F4A475FF15A3926A02_1403711130",
+   "center_cm": [
+    10270.0,
+    -880.0,
+    830.0
+   ],
+   "yaw_deg": 0.0,
+   "pitch_deg": 0.0,
+   "roll_deg": -0.0,
+   "half_extent_cm": [
+    2000.0,
+    1000.0,
+    1250.0
+   ],
+   "src": "READ level.t3d BP_TrackGate_C_UAID_F4A475FF15A3926A02_1403711130 (Next Marker chain, Is Finish Line) + track.json BoxComponent world transform x box_extent"
+  },
+  {
+   "index": 3,
+   "label": "BP_TrackGate5",
+   "finish": false,
+   "object": "BP_TrackGate_C_UAID_F4A475FF15A3926A02_1413960131",
+   "center_cm": [
+    -1140.0,
+    8390.0,
+    830.0
+   ],
+   "yaw_deg": 89.99999930282718,
+   "pitch_deg": 0.0,
+   "roll_deg": -0.0,
+   "half_extent_cm": [
+    2000.0,
+    1000.0,
+    1250.0
+   ],
+   "src": "READ level.t3d BP_TrackGate_C_UAID_F4A475FF15A3926A02_1413960131 (Next Marker chain, Is Finish Line) + track.json BoxComponent world transform x box_extent"
+  },
+  {
+   "index": 4,
+   "label": "BP_TrackGate",
+   "finish": true,
+   "object": "BP_TrackGate_C_UAID_F4A475FF15A3926A02_1348828127",
+   "center_cm": [
+    -8440.0,
+    30.0,
+    560.0
+   ],
+   "yaw_deg": 0.0,
+   "pitch_deg": 0.0,
+   "roll_deg": -0.0,
+   "half_extent_cm": [
+    4000.0,
+    1000.0,
+    2250.0
+   ],
+   "src": "READ level.t3d BP_TrackGate_C_UAID_F4A475FF15A3926A02_1348828127 (Next Marker chain, Is Finish Line) + track.json BoxComponent world transform x box_extent"
+  }
+ ],
+ "player_start": {
+  "location_cm": [
+   -8190.00000365039,
+   969.9999987832034,
+   755.9345384338303
+  ],
+  "yaw_deg": -89.99999930282691,
+  "src": "READ /Game/Variant_Timetrial/Maps/Lvl_Timetrial actor PlayerStart"
+ },
+ "ground": {
+  "grid": {
+   "origin_cm": [
+    -12600.0,
+    -12600.0
+   ],
+   "step_cm": 50.0,
+   "nx": 505,
+   "ny": 505,
+   "src": "READ /Game/Variant_Timetrial/Maps/Lvl_Timetrial Landscape actor location + scale, tiles' bounds (4 LandscapeStreamingProxy)"
+  },
+  "height_range_cm": [
+   -1576.5625,
+   4110.9375
+  ],
+  "files": [
+   "ground_height.bin",
+   "ground_normal.bin"
+  ],
+  "src": "READ SystemLibrary.line_trace_single (Visibility, complex) at every vertex, ignoring every actor but the landscape tiles"
+ },
+ "landscape_material": {
+  "road_col": [
+   1.0,
+   0.095177,
+   0.0
+  ],
+  "ground_col": [
+   0.260417,
+   0.260417,
+   0.260417
+  ],
+  "slope_exponent": 4.0,
+  "slope_axis": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "roughness": 0.8,
+  "graph": "BaseColor = LayerBlend(Road: RoadCol (alpha blend), Ground: lerp(RoadCol, GroundCol, pow(dot(VertexNormalWS, slope_axis), slope_exponent)))",
+  "road_layer_weight": {
+   "absent": "the Road layer's weightmap is not read: Kismet traces return no physical material (all 255025 None) and the weightmap textures were not exported; where the road MESH lies it covers the layer anyway",
+   "src": "ABSENT ground.json surface"
+  },
+  "src": "READ ue_out/t3d/M_Landscape.t3d (the material graph: VectorParameter RoadCol/GroundCol, Power ConstExponent, Constant3Vector, Constant roughness)"
+ },
+ "physical_materials": {
+  "/Game/Vehicles/PhysicsMaterials/Slippery.Slippery": {
+   "friction": {
+    "value": 1.0,
+    "src": "READ /Game/Vehicles/PhysicsMaterials/Slippery.Slippery .friction"
+   },
+   "static_friction": {
+    "value": 0.0,
+    "src": "READ /Game/Vehicles/PhysicsMaterials/Slippery.Slippery .static_friction"
+   },
+   "friction_combine_mode": {
+    "value": "<FrictionCombineMode.MULTIPLY: 2>",
+    "src": "READ /Game/Vehicles/PhysicsMaterials/Slippery.Slippery .friction_combine_mode"
+   },
+   "restitution": {
+    "value": 0.4000000059604645,
+    "src": "READ /Game/Vehicles/PhysicsMaterials/Slippery.Slippery .restitution"
+   },
+   "restitution_combine_mode": {
+    "value": "<FrictionCombineMode.AVERAGE: 0>",
+    "src": "READ /Game/Vehicles/PhysicsMaterials/Slippery.Slippery .restitution_combine_mode"
+   },
+   "density": {
+    "value": 1.0,
+    "src": "READ /Game/Vehicles/PhysicsMaterials/Slippery.Slippery .density"
+   }
+  },
+  "/Game/Vehicles/PhysicsMaterials/NonSlippery.NonSlippery": {
+   "friction": {
+    "value": 1.0,
+    "src": "READ /Game/Vehicles/PhysicsMaterials/NonSlippery.NonSlippery .friction"
+   },
+   "static_friction": {
+    "value": 0.0,
+    "src": "READ /Game/Vehicles/PhysicsMaterials/NonSlippery.NonSlippery .static_friction"
+   },
+   "friction_combine_mode": {
+    "value": "<FrictionCombineMode.MULTIPLY: 2>",
+    "src": "READ /Game/Vehicles/PhysicsMaterials/NonSlippery.NonSlippery .friction_combine_mode"
+   },
+   "restitution": {
+    "value": 0.0,
+    "src": "READ /Game/Vehicles/PhysicsMaterials/NonSlippery.NonSlippery .restitution"
+   },
+   "restitution_combine_mode": {
+    "value": "<FrictionCombineMode.AVERAGE: 0>",
+    "src": "READ /Game/Vehicles/PhysicsMaterials/NonSlippery.NonSlippery .restitution_combine_mode"
+   },
+   "density": {
+    "value": 1.0,
+    "src": "READ /Game/Vehicles/PhysicsMaterials/NonSlippery.NonSlippery .density"
+   }
+  }
+ },
+ "gate_surface": {
+  "rows": [
+   {
+    "gate": "BP_TrackGate",
+    "hit": true,
+    "z": 606.4640563253897,
+    "component": "SplineMeshComponent_39",
+    "actor": "LandscapeSplineActor2",
+    "phys_mat": null
+   },
+   {
+    "gate": "BP_TrackGate2",
+    "hit": true,
+    "z": -80.7853341725795,
+    "component": "LandscapeHeightfieldCollisionComponent_14",
+    "actor": "LandscapeStreamingProxy_1_0_0",
+    "phys_mat": null
+   },
+   {
+    "gate": "BP_TrackGate3",
+    "hit": true,
+    "z": -1327.0947167483514,
+    "component": "SplineMeshComponent_16",
+    "actor": "LandscapeSplineActor2",
+    "phys_mat": null
+   },
+   {
+    "gate": "BP_TrackGate4",
+    "hit": true,
+    "z": 210.6498414570708,
+    "component": "SplineMeshComponent_26",
+    "actor": "LandscapeSplineActor2",
+    "phys_mat": null
+   },
+   {
+    "gate": "BP_TrackGate5",
+    "hit": true,
+    "z": 33.12195296406503,
+    "component": "LandscapeHeightfieldCollisionComponent_51",
+    "actor": "LandscapeStreamingProxy_0_1_0",
+    "phys_mat": null
+   }
+  ],
+  "src": "READ line_trace_single down through each BP_TrackGate, gates ignored"
+ },
+ "collide_meshes": {
+  "road": "SplineMeshComponent_*",
+  "tunnel": "NODE_AddSplineMeshComponent-0*",
+  "walls": "Cube",
+  "not_collided": {
+   "SM_Cone": "physics props in Unreal (BP_SplineSpawn); drawn, not simulated here",
+   "SM_SkySphere": "the sky"
+  },
+  "src": "READ track.glb mesh names (exported by GLTFExporter from the level's actors)"
+ },
+ "glb": "track.glb",
+ "collision": {
+  "file": "collision.bin",
+  "triangles": 94240,
+  "runs": [
+   {
+    "kind": "walls",
+    "node": "Cube9",
+    "first": 0,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube3",
+    "first": 48,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube",
+    "first": 96,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube7",
+    "first": 144,
+    "count": 48
+   },
+   {
+    "kind": "tunnel",
+    "node": "NODE_AddSplineMeshComponent-0",
+    "first": 192,
+    "count": 8192
+   },
+   {
+    "kind": "tunnel",
+    "node": "NODE_AddSplineMeshComponent-0_0",
+    "first": 8384,
+    "count": 8192
+   },
+   {
+    "kind": "walls",
+    "node": "Cube12",
+    "first": 16576,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube2",
+    "first": 16624,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube10",
+    "first": 16672,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube5",
+    "first": 16720,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube11",
+    "first": 16768,
+    "count": 48
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_0",
+    "first": 16816,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_1",
+    "first": 18656,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_10",
+    "first": 20496,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_11",
+    "first": 22336,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_12",
+    "first": 24176,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_13",
+    "first": 26016,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_14",
+    "first": 27856,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_15",
+    "first": 29696,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_16",
+    "first": 31536,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_17",
+    "first": 33376,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_18",
+    "first": 35216,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_19",
+    "first": 37056,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_2",
+    "first": 38896,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_20",
+    "first": 40736,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_21",
+    "first": 42576,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_22",
+    "first": 44416,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_23",
+    "first": 46256,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_24",
+    "first": 48096,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_25",
+    "first": 49936,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_26",
+    "first": 51776,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_27",
+    "first": 53616,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_28",
+    "first": 55456,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_29",
+    "first": 57296,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_3",
+    "first": 59136,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_30",
+    "first": 60976,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_31",
+    "first": 62816,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_32",
+    "first": 64656,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_33",
+    "first": 66496,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_34",
+    "first": 68336,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_35",
+    "first": 70176,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_36",
+    "first": 72016,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_37",
+    "first": 73856,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_38",
+    "first": 75696,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_39",
+    "first": 77536,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_4",
+    "first": 79376,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_40",
+    "first": 81216,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_41",
+    "first": 83056,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_5",
+    "first": 84896,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_6",
+    "first": 86736,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_7",
+    "first": 88576,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_8",
+    "first": 90416,
+    "count": 1840
+   },
+   {
+    "kind": "road",
+    "node": "SplineMeshComponent_9",
+    "first": 92256,
+    "count": 1840
+   },
+   {
+    "kind": "walls",
+    "node": "Cube8",
+    "first": 94096,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube4",
+    "first": 94144,
+    "count": 48
+   },
+   {
+    "kind": "walls",
+    "node": "Cube6",
+    "first": 94192,
+    "count": 48
+   }
+  ],
+  "by_kind": {
+   "road": 77280,
+   "tunnel": 16384,
+   "walls": 576
+  },
+  "src": "READ track.glb render triangles (GLTFExporter, spline meshes deformed); AUTHORED: render triangles stand in for Unreal's simple collision shapes, which were not exported"
+ },
+ "surface_friction": {
+  "road": 1.0,
+  "landscape": 1.0,
+  "src": "READ road: READ /Game/VehicleTemplate/Meshes/SM_Track_10M.SM_Track_10M .BodySetup.PhysMaterial (wheels sweep SIMPLE, ChaosWheeledVehicleMovementComponent.cpp:395 bTraceComplex only for ComplexSweep); landscape: Slippery and NonSlippery both 1, so the per-vertex layer does not change grip"
+ },
+ "wheel_sweep": {
+  "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront": {
+   "sweep_type": "<SweepType.SIMPLE_SWEEP: 0>",
+   "sweep_shape": "<SweepShape.RAYCAST: 0>",
+   "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront (CDO) .SweepType .SweepShape"
+  },
+  "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear": {
+   "sweep_type": "<SweepType.SIMPLE_SWEEP: 0>",
+   "sweep_shape": "<SweepShape.RAYCAST: 0>",
+   "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear (CDO) .SweepType .SweepShape"
+  },
+  "/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront": {
+   "sweep_type": "<SweepType.SIMPLE_SWEEP: 0>",
+   "sweep_shape": "<SweepShape.SHAPECAST: 2>",
+   "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront (CDO) .SweepType .SweepShape"
+  },
+  "/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear": {
+   "sweep_type": "<SweepType.SIMPLE_SWEEP: 0>",
+   "sweep_shape": "<SweepShape.SHAPECAST: 2>",
+   "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsRear (CDO) .SweepType .SweepShape"
+  }
+ }
+}

@@ -1,0 +1,10 @@
+{
+ "directional": {
+  "rotation": {
+   "pitch": -60.77915199999994,
+   "yaw": -14.98816099999997,
+   "roll": 25.555013999999957
+  },
+  "src": "READ /Game/Variant_Timetrial/Maps/Lvl_Timetrial actor DirectionalLight .rotation"
+ }
+}

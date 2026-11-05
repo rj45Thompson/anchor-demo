@@ -1,0 +1,217 @@
+{
+ "cars": {
+  "SportsCar": {
+   "FrontSpringArm": {
+    "target_arm_length": 0.0,
+    "socket_offset": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "target_offset": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "enable_camera_lag": false,
+    "enable_camera_rotation_lag": false,
+    "camera_lag_speed": 10.0,
+    "camera_rotation_lag_speed": 10.0,
+    "camera_lag_max_distance": 0.0,
+    "do_collision_test": false,
+    "use_pawn_control_rotation": false,
+    "inherit_pitch": true,
+    "inherit_yaw": true,
+    "inherit_roll": true,
+    "relative_location": [
+     30.0,
+     0.0,
+     120.0
+    ],
+    "relative_rotation": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0
+    },
+    "attach_parent": "VehicleMesh",
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component FrontSpringArm"
+   },
+   "BackSpringArm": {
+    "target_arm_length": 381.0200500488281,
+    "socket_offset": [
+     0.0,
+     0.0,
+     71.798057
+    ],
+    "target_offset": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "enable_camera_lag": true,
+    "enable_camera_rotation_lag": true,
+    "camera_lag_speed": 10.0,
+    "camera_rotation_lag_speed": 2.0,
+    "camera_lag_max_distance": 50.0,
+    "do_collision_test": false,
+    "use_pawn_control_rotation": false,
+    "inherit_pitch": false,
+    "inherit_yaw": true,
+    "inherit_roll": false,
+    "relative_location": [
+     0.0,
+     0.0,
+     75.0
+    ],
+    "relative_rotation": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0
+    },
+    "attach_parent": "VehicleMesh",
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component BackSpringArm"
+   },
+   "FrontCamera": {
+    "field_of_view": 90.0,
+    "relative_location": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "relative_rotation": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0
+    },
+    "auto_activate": false,
+    "attach_parent": "FrontSpringArm",
+    "is_active": false,
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component FrontCamera"
+   },
+   "BackCamera": {
+    "field_of_view": 110.0,
+    "relative_location": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "relative_rotation": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0
+    },
+    "auto_activate": true,
+    "attach_parent": "BackSpringArm",
+    "is_active": true,
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component BackCamera"
+   }
+  },
+  "OffroadCar": {
+   "FrontSpringArm": {
+    "target_arm_length": 0.0,
+    "socket_offset": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "target_offset": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "enable_camera_lag": false,
+    "enable_camera_rotation_lag": false,
+    "camera_lag_speed": 10.0,
+    "camera_rotation_lag_speed": 10.0,
+    "camera_lag_max_distance": 0.0,
+    "do_collision_test": false,
+    "use_pawn_control_rotation": false,
+    "inherit_pitch": true,
+    "inherit_yaw": true,
+    "inherit_roll": true,
+    "relative_location": [
+     -5.0,
+     -30.0,
+     150.0
+    ],
+    "relative_rotation": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0
+    },
+    "attach_parent": "VehicleMesh",
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component FrontSpringArm"
+   },
+   "BackSpringArm": {
+    "target_arm_length": 650.0,
+    "socket_offset": [
+     0.0,
+     0.0,
+     150.0
+    ],
+    "target_offset": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "enable_camera_lag": true,
+    "enable_camera_rotation_lag": true,
+    "camera_lag_speed": 10.0,
+    "camera_rotation_lag_speed": 2.0,
+    "camera_lag_max_distance": 50.0,
+    "do_collision_test": false,
+    "use_pawn_control_rotation": false,
+    "inherit_pitch": false,
+    "inherit_yaw": true,
+    "inherit_roll": false,
+    "relative_location": [
+     0.0,
+     0.0,
+     75.0
+    ],
+    "relative_rotation": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0
+    },
+    "attach_parent": "VehicleMesh",
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component BackSpringArm"
+   },
+   "FrontCamera": {
+    "field_of_view": 90.0,
+    "relative_location": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "relative_rotation": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0
+    },
+    "auto_activate": false,
+    "attach_parent": "FrontSpringArm",
+    "is_active": false,
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component FrontCamera"
+   },
+   "BackCamera": {
+    "field_of_view": 90.0,
+    "relative_location": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "relative_rotation": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0
+    },
+    "auto_activate": true,
+    "attach_parent": "BackSpringArm",
+    "is_active": true,
+    "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component BackCamera"
+   }
+  }
+ },
+ "errors": []
+}

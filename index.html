@@ -30,7 +30,7 @@
    OWN is checked against the page's real ids by test/home_page_check.py (every id here exists,
    and every section id is here). */
 (function(){
-  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","games","starfighter","breakout","bpgames",
+  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","games","starfighter","houseofcars","breakout","bpgames",
              "research","engine","bossbench","warship","apps","casement","docs","docs-u2ue","docs-blueprint","docs-loop",
              "docs-research","repos","contact","about"];
   var ALIAS = { projects:"u2ue", resume:"breakout", space:"starfighter", bench:"bossbench", manual:"u2ue-chapters", documentation:"docs" };
@@ -392,6 +392,7 @@ h3 a:hover{color:var(--accent)}
       <li class="gr" data-sec="games"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Games"><span>&#9656;</span></button><a class="row" href="#games"><span class="g" style="--c:var(--c-games)"></span><span class="l">Games</span><span class="n"></span></a></div>
         <ul>
           <li class="leaf"><a class="row" href="#starfighter"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Star Fighter</span></a></li>
+          <li class="leaf"><a class="row" href="#houseofcars"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">House of Cars 3D lot</span></a></li>
           <li class="leaf"><a class="row" href="#breakout"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Résumé Breakout</span></a></li>
           <li class="leaf"><a class="row" href="#bpgames"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Blueprint games</span></a></li>
         </ul></li>
@@ -648,6 +649,17 @@ h3 a:hover{color:var(--accent)}
         <p class="more">The game shows its controls before you fly; type help in its terminal for the rest.</p>
         <ul class="tags"><li>WebGL</li><li>Game AI</li><li>3D</li></ul>
         <p class="links"><a class="go" href="https://rj45thompson.github.io/starfighter/">Play Star Fighter</a><a href="https://github.com/rj45Thompson/starfighter" rel="noopener">Source</a></p>
+      </div>
+    </article>
+    <article id="houseofcars" class="card" data-node="House of Cars 3D lot">
+      <a class="shot" href="houseofcars/" tabindex="-1" aria-hidden="true"><img src="thumbs/houseofcars.jpg" width="640" height="400" loading="lazy" alt=""></a>
+      <div class="body">
+        <p class="meta"><span class="state s-play">Playable</span><span>Runs in the browser</span></p>
+        <h3><a href="houseofcars/">House of Cars 3D lot</a></h3>
+        <p class="line">A 3D lot concept for an Edmonton car dealer: fly through it, read each car's real numbers, then take one for a test drive. The cars and the Time Trial lap come straight out of Unreal Engine, and the car runs on Chaos's vehicle physics ported to WebGPU.</p>
+        <p class="more">Arrow keys or a swipe fly the lot, and W, A, S, D drive. An unofficial concept, not affiliated with House of Cars.</p>
+        <ul class="tags"><li>WebGPU</li><li>Unreal Engine port</li><li>three.js</li></ul>
+        <p class="links"><a class="go" href="houseofcars/">Fly the lot</a></p>
       </div>
     </article>
     <article id="breakout" class="card" data-node="Résumé Breakout">

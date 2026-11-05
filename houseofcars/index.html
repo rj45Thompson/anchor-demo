@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>House of Cars 3D Lot</title>
+<meta name="description" content="An unofficial 3D lot concept for House of Cars, Edmonton: fly through the lot, read each car's real numbers out of Unreal Engine, and take a test drive in the browser on WebGPU.">
+<meta property="og:title" content="House of Cars 3D Lot (concept)">
+<meta property="og:description" content="Fly through the lot, read each car's real numbers, take a test drive. Unreal Engine cars on WebGPU. Unofficial concept.">
+<meta property="og:image" content="https://rj45thompson.github.io/anchor-demo/thumbs/houseofcars.jpg">
+<style>
+:root{--bg:#0d0f12;--panel:rgba(16,19,24,.86);--line:rgba(255,255,255,.12);--ink:#eef1f5;--dim:#9aa3ae;--accent:#ff6a1a;--read:#3fb27f;--derived:#d9a441;--absent:#d9534f;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+canvas#view{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none}
+header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;padding:12px 16px;pointer-events:none}
+header h1{margin:0;font-size:18px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+header h1 b{color:var(--accent)}
+.pill{font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:99px;background:var(--panel);color:var(--dim)}
+#showroom .nav{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:10px;align-items:center}
+button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer}
+button:hover{border-color:rgba(255,255,255,.35)}
+button.go{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700;letter-spacing:.06em}
+button:disabled{opacity:.45;cursor:not-allowed}
+#card{position:fixed;top:64px;right:16px;width:min(340px,calc(100vw - 32px));max-height:calc(100vh - 160px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 10px;backdrop-filter:blur(6px)}
+#card h2{margin:0 0 2px;font-size:22px}
+#card .sub{color:var(--dim);font-size:13px;margin-bottom:10px}
+#card dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+#card dt{color:var(--dim);font-size:13px;padding:5px 0;border-top:1px solid var(--line)}
+#card dd{margin:0;text-align:right;padding:5px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+#card dd button.src{all:unset;cursor:pointer;margin-left:6px;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;vertical-align:1px}
+.k-READ{background:var(--read);color:#062}
+.k-DERIVED{background:var(--derived);color:#430}
+.k-ABSENT{background:var(--absent);color:#fff}
+#srcline{font-size:12px;color:var(--dim);margin-top:10px;word-break:break-word;min-height:3em}
+#card .kick{margin:0 0 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#ffb07f}
+#card p{margin:8px 0;color:#cfd5dc;font-size:14px}
+#card .picks,#card .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#card .pick,#card .act{font-size:13px;padding:8px 12px;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:9px}
+#card .act{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
+#foot{position:fixed;left:16px;bottom:10px;max-width:calc(50vw - 120px);font-size:11px;color:var(--dim)}
+#foot a{color:#ffb07f}
+#back{position:fixed;top:52px;left:16px;padding:8px 12px;font-size:13px}
+#loading{background:var(--bg);z-index:5}
+#loading>div{text-align:center}
+#bar{width:min(320px,70vw);height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin:12px auto 6px;overflow:hidden}
+#bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+#lmb{font-size:12px}
+@media (max-width:720px){#foot{display:none}}
+#race{display:none}
+#hud-time{position:fixed;top:56px;left:50%;transform:translateX(-50%);text-align:center;font-variant-numeric:tabular-nums}
+#hud-time .t{font-size:34px;font-weight:700;letter-spacing:.04em}
+#hud-time .b{font-size:14px;color:var(--dim)}
+#hud-speed{position:fixed;right:20px;bottom:20px;text-align:right;font-variant-numeric:tabular-nums}
+#hud-speed .s{font-size:56px;font-weight:800;line-height:1}
+#hud-speed .u{font-size:14px;color:var(--dim)}
+#hud-speed .g{font-size:26px;font-weight:700;color:var(--accent)}
+#countdown{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%);font-size:min(22vw,160px);font-weight:900;text-shadow:0 6px 30px rgba(0,0,0,.6);pointer-events:none}
+#hint{position:fixed;left:16px;bottom:16px;font-size:12px;color:var(--dim);max-width:52vw}
+#touch{position:fixed;inset:auto 0 0 0;display:none;justify-content:space-between;padding:16px;gap:12px;pointer-events:none}
+#touch div{display:flex;gap:10px;pointer-events:auto}
+#touch button{width:74px;height:74px;border-radius:50%;font-size:22px;user-select:none;-webkit-user-select:none;touch-action:none}
+#nogpu{position:fixed;inset:0;display:none;place-items:center;padding:24px;text-align:center;background:var(--bg)}
+#loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--dim);pointer-events:none}
+@media (max-width:720px){#card{top:auto;bottom:84px;max-height:30vh;padding:12px 12px 6px}#card h2{font-size:18px}#hint{display:none}#hud-speed .s{font-size:40px}header .pill+.pill{display:none}header h1{font-size:15px}}
+@media (pointer:coarse){#touch{display:flex}}
+button,.pill{white-space:nowrap}
+@media (max-width:720px){#showroom .nav{gap:6px;bottom:16px}#showroom .nav button{padding:9px 12px}#pos{font-size:11px;padding:2px 6px}}
+@media (pointer:coarse){#touch{padding:12px}#touch div{gap:8px}#touch button{width:60px;height:60px;font-size:19px}#hud-speed{bottom:96px;right:14px}}
+
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.webgpu.js",
+  "three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.webgpu.js",
+  "three/tsl":"https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.tsl.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span></header>
+<div id="loading"><div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i></div><div id="lmb"></div></div></div>
+
+<section id="showroom">
+  <aside id="card" aria-live="polite"></aside>
+  <div class="nav">
+    <button id="prev" aria-label="Previous car">◀</button>
+    <button id="drive" class="go">TEST DRIVE</button>
+    <button id="next" aria-label="Next car">▶</button>
+    <span class="pill" id="pos"></span>
+  </div>
+  <footer id="foot">Unofficial concept, not affiliated with or endorsed by House of Cars. Vehicles and track: Epic Games' Unreal Engine 5.7 Vehicle template, ported to WebGPU. <a href="../">RJ Thompson's projects</a></footer>
+</section>
+
+<section id="race">
+  <button id="back" aria-label="Back to the lot">◀ Lot</button>
+  <div id="hud-time"><div class="t" id="t-now">---:---:---</div><div class="b">Best <span id="t-best">—</span></div></div>
+  <div id="countdown"></div>
+  <div id="hud-speed"><span class="s" id="speed">000</span> <span class="u" id="unit">Km/h</span><div class="g" id="gear">N</div></div>
+  <div id="hint">W / ↑ throttle · S / ↓ brake · A D / ← → steer · Space handbrake · Backspace reset · Tab camera · G show gates · Esc showroom</div>
+  <div id="touch">
+    <div><button data-k="left">◀</button><button data-k="right">▶</button></div>
+    <div><button data-k="reset">↺</button><button data-k="brake">B</button><button data-k="throttle">▲</button></div>
+  </div>
+</section>
+
+<div id="nogpu"><div><h2>This page needs WebGPU or WebGL 2</h2><p>Your browser offers neither, so there is nothing to draw with. Chrome, Edge and Safari 26 have WebGPU; most browsers have WebGL 2.</p></div></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

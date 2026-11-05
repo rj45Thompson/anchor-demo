@@ -1,0 +1,602 @@
+{
+ "cars": [
+  {
+   "name": "SportsCar",
+   "drivable": true,
+   "blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+   "specs": [
+    {
+     "label": "Mass",
+     "value": "1500",
+     "unit": "kg",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .mass"
+    },
+    {
+     "label": "Max torque",
+     "value": "750",
+     "unit": "N\u00b7m",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .max_torque"
+    },
+    {
+     "label": "Redline",
+     "value": "7000",
+     "unit": "rpm",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .max_rpm"
+    },
+    {
+     "label": "Idle",
+     "value": "900",
+     "unit": "rpm",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_idle_rpm"
+    },
+    {
+     "label": "Torque peak",
+     "value": "750 at 3500",
+     "unit": "N\u00b7m at rpm",
+     "kind": "DERIVED",
+     "src": "DERIVED max key of /Game/VehicleTemplate/Blueprints/SportsCar/FC_Torque_SportsCar.FC_Torque_SportsCar (keys from its T3D) x Max torque"
+    },
+    {
+     "label": "Peak power",
+     "value": "376 kW (504 hp) at 5968.75",
+     "unit": "",
+     "kind": "DERIVED",
+     "src": "DERIVED max over GetFloatValue samples of curve x Max torque x rpm / 9549"
+    },
+    {
+     "label": "Final drive",
+     "value": "2.81",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .final_ratio"
+    },
+    {
+     "label": "Gears",
+     "value": "4.25 / 2.52 / 1.66 / 1.22 / 1.00",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .forward_gear_ratios"
+    },
+    {
+     "label": "Automatic",
+     "value": "True",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .use_automatic_gears"
+    },
+    {
+     "label": "Shift up / down",
+     "value": "6000 / 2000",
+     "unit": "rpm",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .change_up_rpm"
+    },
+    {
+     "label": "Drive",
+     "value": "rear wheel drive",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.differential_setup .differential_type"
+    },
+    {
+     "label": "Top gear at redline",
+     "value": "376",
+     "unit": "km/h",
+     "kind": "DERIVED",
+     "src": "DERIVED redline / (top gear x final drive) x 2 pi x driven wheel radius 40 cm (no drag, no slip)"
+    },
+    {
+     "label": "Drag coefficient",
+     "value": "0.31",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .drag_coefficient"
+    },
+    {
+     "label": "Front steer angle",
+     "value": "40",
+     "unit": "\u00b0",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_steer_angle"
+    },
+    {
+     "label": "Length x width x height",
+     "value": "4.71 x 2.34 x 1.35",
+     "unit": "m",
+     "kind": "DERIVED",
+     "src": "DERIVED 2 x box extent of READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar .GetActorBounds(all components): origin in actor space, half extents"
+    }
+   ],
+   "parts": [
+    {
+     "component": "Chasis_Main",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar.SM_SportsCar",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "None",
+     "location": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 0.0,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component Chasis_Main (actor space)"
+    },
+    {
+     "component": "FR_Wheel_0",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Phys_Wheel_FR",
+     "location": [
+      135.0,
+      90.0,
+      25.0
+     ],
+     "rotation": {
+      "pitch": -90.0,
+      "yaw": 6.971731068006193e-07,
+      "roll": 0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component FR_Wheel_0 (actor space)"
+    },
+    {
+     "component": "FL_Wheel_0",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Phys_Wheel_FL",
+     "location": [
+      135.0,
+      -90.0,
+      25.0
+     ],
+     "rotation": {
+      "pitch": 90.0,
+      "yaw": -179.99999930282712,
+      "roll": 0.0
+     },
+     "scale": [
+      -1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component FL_Wheel_0 (actor space)"
+    },
+    {
+     "component": "BR_Wheel_0",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Phys_Wheel_BR",
+     "location": [
+      -129.20001220703125,
+      90.0,
+      26.499998092651367
+     ],
+     "rotation": {
+      "pitch": -90.0,
+      "yaw": 6.971727657401061e-07,
+      "roll": 0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component BR_Wheel_0 (actor space)"
+    },
+    {
+     "component": "BL_Wheel_0",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Phys_Wheel_BL",
+     "location": [
+      -129.20001220703125,
+      -90.0,
+      26.499998092651367
+     ],
+     "rotation": {
+      "pitch": 90.0,
+      "yaw": -179.99999930282718,
+      "roll": 0.0
+     },
+     "scale": [
+      -1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component BL_Wheel_0 (actor space)"
+    },
+    {
+     "component": "Chasis_Glass",
+     "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Glass.SM_SportsCar_Glass",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "Root",
+     "location": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 0.0,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component Chasis_Glass (actor space)"
+    }
+   ],
+   "wheels": [
+    {
+     "bone": "Phys_Wheel_FL",
+     "bone_location": [
+      135.0,
+      -90.0,
+      25.0
+     ],
+     "radius": 39.0
+    },
+    {
+     "bone": "Phys_Wheel_FR",
+     "bone_location": [
+      135.0,
+      90.0,
+      25.0
+     ],
+     "radius": 39.0
+    },
+    {
+     "bone": "Phys_Wheel_BL",
+     "bone_location": [
+      -129.20001220703125,
+      -90.0,
+      26.499998092651367
+     ],
+     "radius": 40.0
+    },
+    {
+     "bone": "Phys_Wheel_BR",
+     "bone_location": [
+      -129.20001220703125,
+      90.0,
+      26.499998092651367
+     ],
+     "radius": 40.0
+    }
+   ]
+  },
+  {
+   "name": "OffroadCar",
+   "drivable": true,
+   "blueprint": "/Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar",
+   "specs": [
+    {
+     "label": "Mass",
+     "value": "1500",
+     "unit": "kg",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .mass"
+    },
+    {
+     "label": "Max torque",
+     "value": "750",
+     "unit": "N\u00b7m",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .max_torque"
+    },
+    {
+     "label": "Redline",
+     "value": "7000",
+     "unit": "rpm",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .max_rpm"
+    },
+    {
+     "label": "Idle",
+     "value": "900",
+     "unit": "rpm",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_idle_rpm"
+    },
+    {
+     "label": "Torque peak",
+     "value": "750 at 2000",
+     "unit": "N\u00b7m at rpm",
+     "kind": "DERIVED",
+     "src": "DERIVED max key of /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_TorqueCurve.OffroadCar_TorqueCurve (keys from its T3D) x Max torque"
+    },
+    {
+     "label": "Peak power",
+     "value": "282 kW (378 hp) at 3984.38",
+     "unit": "",
+     "kind": "DERIVED",
+     "src": "DERIVED max over GetFloatValue samples of curve x Max torque x rpm / 9549"
+    },
+    {
+     "label": "Final drive",
+     "value": "2.81",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .final_ratio"
+    },
+    {
+     "label": "Gears",
+     "value": "4.25 / 2.52 / 1.66 / 1.22 / 1.00",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .forward_gear_ratios"
+    },
+    {
+     "label": "Automatic",
+     "value": "True",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .use_automatic_gears"
+    },
+    {
+     "label": "Shift up / down",
+     "value": "6000 / 2000",
+     "unit": "rpm",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .change_up_rpm"
+    },
+    {
+     "label": "Drive",
+     "value": "all wheel drive",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.differential_setup .differential_type"
+    },
+    {
+     "label": "Top gear at redline",
+     "value": "470",
+     "unit": "km/h",
+     "kind": "DERIVED",
+     "src": "DERIVED redline / (top gear x final drive) x 2 pi x driven wheel radius 50 cm (no drag, no slip)"
+    },
+    {
+     "label": "Drag coefficient",
+     "value": "0.10",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .drag_coefficient"
+    },
+    {
+     "label": "Front steer angle",
+     "value": "40",
+     "unit": "\u00b0",
+     "kind": "READ",
+     "src": "READ /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_WheelsFront.OffroadCar_WheelsFront_C (CDO) .max_steer_angle"
+    },
+    {
+     "label": "Length x width x height",
+     "value": "4.06 x 3.80 x 1.59",
+     "unit": "m",
+     "kind": "DERIVED",
+     "src": "DERIVED 2 x box extent of READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar .GetActorBounds(all components): origin in actor space, half extents"
+    }
+   ],
+   "parts": [
+    {
+     "component": "Tire FL",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "VisWheel_FL",
+     "location": [
+      168.1999969482422,
+      -124.10000610351562,
+      51.10000228881836
+     ],
+     "rotation": {
+      "pitch": -0.0,
+      "yaw": -180.0,
+      "roll": 0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Tire FL (actor space)"
+    },
+    {
+     "component": "Tire BL",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "VisWheel_BL",
+     "location": [
+      -135.1999969482422,
+      -139.8000030517578,
+      50.79999923706055
+     ],
+     "rotation": {
+      "pitch": -90.0,
+      "yaw": -179.99999999999997,
+      "roll": 0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Tire BL (actor space)"
+    },
+    {
+     "component": "Tire FR",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "VisWheel_FR",
+     "location": [
+      168.1999969482422,
+      124.0999984741211,
+      51.10000228881836
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 3.061761231566592e-22,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Tire FR (actor space)"
+    },
+    {
+     "component": "Tire BR",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Tire.SM_Offroad_Tire",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "VisWheel_BR",
+     "location": [
+      -135.1999969482422,
+      139.8000030517578,
+      50.79999923706055
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 3.061761231566592e-22,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      0.9999999403953552,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Tire BR (actor space)"
+    },
+    {
+     "component": "Chassis",
+     "mesh": "/Game/Vehicles/OffroadCar/SM_Offroad_Body.SM_Offroad_Body",
+     "visible": true,
+     "attach_parent": "VehicleMesh",
+     "attach_socket": "None",
+     "location": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": {
+      "pitch": 0.0,
+      "yaw": 0.0,
+      "roll": -0.0
+     },
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "src": "READ spawned /Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar component Chassis (actor space)"
+    }
+   ],
+   "wheels": [
+    {
+     "bone": "PhysWheel_FL",
+     "bone_location": [
+      168.1999969482422,
+      -124.0999984741211,
+      51.10000228881836
+     ],
+     "radius": 50.0
+    },
+    {
+     "bone": "PhysWheel_FR",
+     "bone_location": [
+      168.1999969482422,
+      124.0999984741211,
+      51.10000228881836
+     ],
+     "radius": 50.0
+    },
+    {
+     "bone": "PhysWheel_BL",
+     "bone_location": [
+      -135.1999969482422,
+      -139.8000030517578,
+      50.79999923706055
+     ],
+     "radius": 50.0
+    },
+    {
+     "bone": "PhysWheel_BR",
+     "bone_location": [
+      -135.1999969482422,
+      139.8000030517578,
+      50.79999923706055
+     ],
+     "radius": 50.0
+    }
+   ]
+  },
+  {
+   "name": "ConceptCar",
+   "drivable": false,
+   "mesh": "/Game/ConceptCar/Car/SM_AutomotiveTP_Car",
+   "specs": [
+    {
+     "label": "Length x width x height",
+     "value": "4.39 x 2.05 x 1.48",
+     "unit": "m",
+     "kind": "DERIVED",
+     "src": "DERIVED 2 x box extent of READ /Game/ConceptCar/Car/SM_AutomotiveTP_Car .GetBounds()"
+    },
+    {
+     "label": "Materials",
+     "value": "M_TireRubber, MI_CarPaint, M_Glass, M_Metal, M_TireRubber",
+     "unit": "",
+     "kind": "READ",
+     "src": "READ /Game/ConceptCar/Car/SM_AutomotiveTP_Car .StaticMaterials"
+    },
+    {
+     "label": "Engine, gears, wheels",
+     "value": "not in the asset",
+     "unit": "",
+     "kind": "ABSENT",
+     "src": "ABSENT /Game/ConceptCar/Car/SM_AutomotiveTP_Car (StaticMesh, not a WheeledVehiclePawn): a static mesh with no vehicle Blueprint, so no engine, gears or wheels to read"
+    }
+   ],
+   "bounds_cm": {
+    "origin": [
+     12.498855590820312,
+     0.0,
+     74.11061715334654
+    ],
+    "box_extent": [
+     219.32382202148438,
+     102.442626953125,
+     74.01822806149721
+    ]
+   }
+  }
+ ],
+ "engine": "5.7.1-48512491+++UE5+Release-5.7"
+}
