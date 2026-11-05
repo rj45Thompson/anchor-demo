@@ -80,6 +80,7 @@
     <div class="grp">
       <button id="play">&#10074;&#10074;</button>
       <button id="rays">rays</button>
+      <button id="sky">sky</button>
       <button id="solo" class="on">solo</button>
       <button id="prev">&#9664;</button>
       <button id="next">next &#9654;</button>
@@ -138,7 +139,7 @@
   // SOLO is the default because the zoo laid out all 18 side by side and the one you
   // picked was lost in the pile. RJ: "I can't see what's going on". One experiment fills
   // the screen; "all" still gives the overview.
-  var solo = true;
+  var solo = true, showSky = false;
 
   var MATERIALS = [
     { n:"film / mylar", cost:2, refl:0.85, deg:0.08,
@@ -241,9 +242,20 @@
   var sunGroup = new THREE.Group(); scene.add(sunGroup);
   var sunBall = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 18),
     new THREE.MeshBasicMaterial({ color:0xfff0c2 }));
-  var sunHalo = new THREE.Mesh(new THREE.SphereGeometry(2.2, 20, 14),
-    new THREE.MeshBasicMaterial({ color:0xffb347, transparent:true, opacity:0.15,
-      blending:THREE.AdditiveBlending, depthWrite:false }));
+  // A GLOW IS A BILLBOARD, NOT A SPHERE. The additive sphere drew as a dark disc around the
+  // sun - it reads as a hole punched in the sky. A radial-gradient sprite cannot do that.
+  var glowCv = document.createElement("canvas"); glowCv.width = glowCv.height = 128;
+  (function(){
+    var g = glowCv.getContext("2d");
+    var rg = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+    rg.addColorStop(0.00, "rgba(255,236,180,0.95)");
+    rg.addColorStop(0.28, "rgba(255,179,71,0.38)");
+    rg.addColorStop(1.00, "rgba(255,179,71,0)");
+    g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
+  })();
+  var sunHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: new THREE.CanvasTexture(glowCv), transparent:true, depthWrite:false, depthTest:false,
+    blending:THREE.AdditiveBlending }));
   var sunBeam = new THREE.Line(new THREE.BufferGeometry().setFromPoints(
       [new THREE.Vector3(), new THREE.Vector3()]),
     new THREE.LineBasicMaterial({ color:0xffd479, transparent:true, opacity:0.5 }));
@@ -271,26 +283,27 @@
   var binMax = 1; BINS.forEach(function(b){ if (b[2] > binMax) binMax = b[2]; });
   var binDots = BINS.map(function(){
     var m = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8),
-      new THREE.MeshBasicMaterial({ color:0xffb347, transparent:true, opacity:0.45 }));
+      new THREE.MeshBasicMaterial({ color:0xffb347, transparent:true, opacity:0.38 }));
     sunGroup.add(m); return m;
   });
   // Cardinals, so "az 210" is something you can SEE rather than read off a toolbar.
   var CARD = [["N",0],["E",90],["S",180],["W",270]];
   var cardSprites = CARD.map(function(c){
-    var sp = makeLabel(c[0], "#8598ae", 72, 48); sunGroup.add(sp); return sp;
+    var sp = makeLabel(c[0], "#b9c9dc", 72, 54); sunGroup.add(sp); return sp;
   });
   var sunLabel = makeLabel("", "#ffd479", 256, 40); sunGroup.add(sunLabel);
 
   var labelFor = -1, sunCentre = new THREE.Vector3(), sunR = 8;
+  window.__sun = { ball:sunBall, halo:sunHalo, label:sunLabel, beam:sunBeam, group:sunGroup, scene:scene };
   // The dome is sized off the ARRAY, not the camera: a camera-relative sun slides out
   // of shot the moment it climbs, and the whole point is watching it move.
-  function sunRadius(span) { return Math.max(4, span*0.85); }
+  function sunRadius(span) { return Math.max(3.5, span*0.70); }
   function placeSun(centre, R) {
     var s = D.sunList[sunIdx] || [180, 30];
     var p = sunDir(s[0], s[1]).multiplyScalar(R).add(centre);
     var sc = R*0.05;
     sunBall.position.copy(p); sunBall.scale.setScalar(sc);
-    sunHalo.position.copy(p); sunHalo.scale.setScalar(sc);
+    sunHalo.position.copy(p); sunHalo.scale.setScalar(sc*7.0);
     sunBeam.geometry.setFromPoints([p, centre]);
     sunLabel.position.copy(p).y += sc*2.6;
     var sh = R*0.055; sunLabel.scale.set(sh*sunLabel.userData.aspect, sh, 1);
@@ -304,13 +317,15 @@
       sunLabel.material.map.needsUpdate = true;
     }
     BINS.forEach(function(b, i){
+      binDots[i].visible = showSky;
+      if (!showSky) return;
       binDots[i].position.copy(sunDir(b[0], b[1]).multiplyScalar(R).add(centre));
-      binDots[i].scale.setScalar(R*(0.006 + 0.020*(b[2]/binMax)));
+      binDots[i].scale.setScalar(R*(0.005 + 0.016*(b[2]/binMax)));
     });
     cardSprites.forEach(function(sp, i){
       sp.position.copy(sunDir(CARD[i][1], 0).multiplyScalar(R*1.02).add(centre));
       sp.position.y = centre.y;
-      var ch = R*0.05; sp.scale.set(ch*sp.userData.aspect, ch, 1);
+      var ch = R*0.085; sp.scale.set(ch*sp.userData.aspect, ch, 1);
     });
   }
 
@@ -589,7 +604,7 @@
     var c = b.getCenter(new THREE.Vector3()).add(g.holder.position);
     var sz = b.getSize(new THREE.Vector3()), span = Math.max(sz.x, sz.y, sz.z);
     // Include the sun dome, or the sun is out of shot exactly when it climbs.
-    span = Math.max(span, sunRadius(span)*1.75);
+    span = Math.max(span, sunRadius(span)*2.0);
     // 1.15, not 1.5: the bounds already include the ray launch plane well above the
     // hardware, so a generous margin on top of that parked the rig in the far distance.
     var dist = Math.max(3, (span*0.5)/Math.tan(camera.fov*Math.PI/360)*1.15);
@@ -698,6 +713,9 @@
   });
   document.getElementById("rays").addEventListener("click", function(){
     this.blur(); showRays = !showRays; this.classList.toggle("on", !showRays); refresh();
+  });
+  document.getElementById("sky").addEventListener("click", function(){
+    this.blur(); showSky = !showSky; this.classList.toggle("on", showSky);
   });
   document.getElementById("solo").addEventListener("click", function(){
     this.blur(); solo = !solo; this.classList.toggle("on", solo);
