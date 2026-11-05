@@ -613,7 +613,6 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     <div class="paper"><h4><a href="harness/fly/">Closed loop fly-through</a></h4><p>Requirements, code and tests as one graph you fly through, with a guided tour and dictation beside it.</p><a href="harness/fly/">Open &rarr;</a></div>
     <div class="paper"><h4><a href="blueprint/">Blueprint View</a></h4><p>Code and Unreal Blueprints as two views of one source, with a 3D city you can fly and games that run on their converted Blueprints.</p><a href="blueprint/">Open &rarr;</a> &nbsp;·&nbsp; <a href="blueprint/deck/">The deck</a> &nbsp;·&nbsp; <a href="blueprint/doc/">How it works</a> &nbsp;·&nbsp; <a href="blueprint/code/">The code</a></div>
     <div class="paper"><h4><a href="u2ue/">u2ue: Unity to Unreal</a></h4><p>A toolkit for porting a Unity game to Unreal, with its whole manual on the page.</p><a href="u2ue/">Open &rarr;</a></div>
-    <div class="paper"><h4><a href="solar/">Solar setup</a></h4><p>A 3D ray-traced zoo of solar panel configurations.</p><a href="solar/">Open &rarr;</a></div>
   </div>
   <div class="papers-sub">Games</div>
   <div class="papers">
@@ -767,7 +766,6 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     <button class="subtab" data-s="s-warship" data-aud="ai">WarShip</button>
     <button class="subtab" data-s="s-synth" data-aud="ai">Program search</button>
     <button class="subtab" data-s="s-cart" data-aud="">CART</button>
-    <button class="subtab" data-s="s-solar" data-aud="ai,games">Solar setup</button>
     <button class="subtab" data-s="s-papers" data-aud="ai">Papers &amp; data</button>
   </div>
 
@@ -856,61 +854,6 @@ font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
     <p class="small"><a href="https://github.com/rj45Thompson/correlation-anchor-theory" target="_blank" rel="noopener">correlation-anchor-theory on GitHub</a></p>
   </div>
 
-  <div class="sub" id="s-solar">
-    <h4>Solar setup - a ray-traced configuration zoo</h4>
-    <p class="lede">Every solar quote tells you kilowatts. None of them tell you kilowatt-hours
-    per dollar on <em>your</em> ground. This does.</p>
-    <p>A 3D ray tracer fires light at each candidate arrangement - fixed panel, tracked panel,
-    mirror troughs, four-sided boxes, adjustable louvres, a heliostat ring, and ganged platforms
-    where one worm gear swivels a dozen panels and a second drives tilt through a scissor. It
-    counts what actually lands on the cell, including the rays that shade a neighbour, bounce
-    back out of the aperture, or miss entirely. The sun is followed along its real path in both
-    azimuth and elevation, and the optics are weighted by a measured year of hourly satellite
-    weather for the site (NASA POWER 2023, 53.63&deg;N in Alberta).</p>
-    <p>Then the awkward part: what it costs. The inverter is sized to each design rather than
-    assumed, mirrors defocus when the cell or the inverter would be overrun, and output is
-    decayed year by year - faster for designs that lean on reflectors, because reflectors weather
-    faster than silicon. Every box carries its peak power, year 1 and year 10 output, build cost,
-    payback year, and the number that settles an argument: <strong>dollars per kWh over
-    25 years</strong>.</p>
-    <p class="why">Five findings that contradict the obvious move. An actuator on the <em>tilt</em>
-    axis is worth <strong>+0.1%</strong> - it is the <em>azimuth</em> axis that carries the gain.
-    A cheap ram with only &plusmn;60&deg; of swing keeps <strong>90%</strong> of the tracking
-    prize, so nothing needs a slew drive. Pointing unlimited mirrors at one panel does not scale:
-    silicon peaks near <strong>2.4&times;</strong> and cooks itself well before that, so the limit
-    is cooling, not optics. And the cheapest mirror loses - <strong>$2/m&sup2; film is very nearly
-    free and still cannot pay for the structure to hold it</strong>, because it hazes at ~8% a
-    year until the array is just a bare panel you overpaid to mount. Durable anodised aluminium
-    is the only material here that makes mirrors worth building. And the one that decides a real
-    build, which turned on a single line in the cost model: <strong>what does it cost to hold a
-    mirror up?</strong> Charge it panel racking - rails and a footing stiff enough for a 20 kg
-    glass module - and side mirrors lose. Charge a plastic sheet on plywood what plywood actually
-    costs, and on the same twelve-panel platform they win: <strong>$0.0369/kWh against $0.0378
-    bare, with 15% more output</strong> (729 kWh against 631). The break-even is $68/m² all in
-    and the build comes to about $50, so the verdict holds but it is not comfortable. The top of
-    the table is now a five-way tie inside the &plusmn;5% sampling noise - a four-sided mirror
-    box, a double row with side mirrors, a bare tracked panel, a bare sixteen-panel wing - and
-    what separates them is not price but <em>output per mounting position</em>: the mirrored
-    designs deliver 729 to 902 kWh where the bare ones deliver 631 to 665. Mirrors buy energy on
-    ground you have already paid for. The platform's <em>shape</em> - one long wing, a double
-    row, a square block - changes the instantaneous gain but lands within 3% annually, also
-    inside the noise, so build whatever the pole and the wind want.</p>
-    <p class="small">What it does not do, stated plainly: it models one panel, or one ganged
-    platform - not a whole roof. In a real array the interior panels have no room for reflectors,
-    so mirror benefit scales with the perimeter rather than the area, and adjacent panels share
-    structure. Panel and racking prices are read from real listings; reflector, structure and
-    actuator costs are estimates and are labelled as such in the model. Ray sampling carries about
-    &plusmn;5%, so gaps narrower than that are not real differences.</p>
-    <div style="border:1px solid var(--x-line);border-radius:8px;overflow:hidden;margin:14px 0">
-      <iframe id="solarFrame" data-src="./solar/index.html" title="Solar configuration zoo"
-        style="width:100%;height:min(88vh,920px);border:0;display:block;background:#0a0d12"
-        loading="lazy"></iframe>
-    </div>
-    <p class="small">It opens on one experiment at a time - <em>next</em> and <em>cycle</em> step
-    through them, <em>solo</em> off shows the whole zoo side by side. Fly with <b>WASD</b>, up and
-    down on <b>Q</b>/<b>E</b>, drag to look, and click any panel or mirror to jump to its row in
-    the table. Scrub the sun along its path and toggle the rays to watch light land.</p>
-  </div>
 
   <div class="hire">
     <strong>R.J. Thompson</strong> - senior C++ / C# engineer, 30 years shipping.
@@ -5486,10 +5429,6 @@ renderCode();
     document.querySelectorAll("#p-inv .sub").forEach(function(s){
       s.classList.toggle("on", s.id===b.dataset.s);
     });
-    /* The solar zoo pulls three.js and ~200 KB of traced geometry. Same rule the games
-       panel follows: a visitor who never opens this tab never downloads any of it. */
-    var fr=document.getElementById("solarFrame");
-    if(fr && !fr.src && b.dataset.s==="s-solar") fr.src=fr.dataset.src;
   });
 })();
 </script>

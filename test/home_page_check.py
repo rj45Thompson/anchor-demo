@@ -110,14 +110,67 @@ def static():
                if part not in u2text]
     check("static every quoted u2ue figure is on u2ue's page", quoted and not missing,
           "%d quoted blocks, not on the page: %s" % (len(quoted), missing))
+    three = io.open(os.path.join(ROOT, "3d", "index.html"), encoding="utf-8").read()
     pics, bad = 0, []
-    for name, src in (("index.html", front), ("u2ue/index.html", u2)):
+    for name, src in (("index.html", front), ("u2ue/index.html", u2), ("3d/index.html", three)):
         for url in re.findall(r'<meta property="og:image" content="([^"]+)"', src):
             pics += 1
             rel = url.split("/anchor-demo/", 1)[-1] if "/anchor-demo/" in url else None
             if not rel or not site_file(rel):
                 bad.append("%s: %s" % (name, url))
-    check("static every share picture is in the site", pics >= 2 and not bad, "%d named, missing: %s" % (pics, bad))
+    check("static every share picture is in the site", pics >= 3 and not bad, "%d named, missing: %s" % (pics, bad))
+    three_d(front)
+
+
+def three_d(front):
+    """the 3D view (3d/, built from this page by the fly-through builder) against this page: the same cards, groups, shelves, chapters,
+    documents and repositories, both ways; every link of its pages lands; every slide it stands up has its two pictures"""
+    data = json.load(io.open(os.path.join(ROOT, "3d", "data.json"), encoding="utf-8"))
+    items = data["items"]
+    kinds = {}
+    for iid, it in items.items():
+        kinds.setdefault(it["kind"], set()).add(iid)
+    body = front.split('<main', 1)[-1]
+    want = {"card": set(re.findall(r'<article id="([^"]+)" class="card', body)),
+            "group": set(re.findall(r'<section id="([^"]+)" class="group', body)),
+            "shelf": set(re.findall(r'<section id="([^"]+)" class="shelf', body))}
+    for kind, ids in want.items():
+        check("static 3D the same %ss as the page" % kind, ids and ids == kinds.get(kind, set()),
+              "%d on the page, %d in 3D; only on the page: %s; only in 3D: %s" % (len(ids), len(kinds.get(kind, ())), sorted(ids - kinds.get(kind, set())), sorted(kinds.get(kind, set()) - ids)))
+    box = front.split('<div id="u2ue-chapters"', 1)[-1].split('<article id="blueprint"', 1)[0]
+    chapters = set(re.findall(r'<a href="u2ue/#([^"]+)"><span class="cn">', box))
+    in_3d = {items[i]["anchor"] for i in kinds.get("chapter", ())}
+    check("static 3D every chapter of the manual, and no other", chapters and chapters == in_3d,
+          "%d on the page, %d in 3D; missing: %s; extra: %s" % (len(chapters), len(in_3d), sorted(chapters - in_3d), sorted(in_3d - chapters)))
+    docs = 0
+    for shelf in re.findall(r'<section id="docs-[^"]+" class="shelf.*?</section>', body, re.S):
+        docs += len(re.findall(r'class="docrow"', shelf))
+        for chips in re.findall(r'<ul class="chips">(.*?)</ul>', shelf, re.S):
+            docs += len(re.findall(r"<a\s", chips))
+    repos = len(re.findall(r'<a class="item"', body.split('<section id="repos"', 1)[1].split("</section>", 1)[0]))
+    check("static 3D every document and repository", docs == len(kinds.get("doc", ())) and repos == len(kinds.get("repo", ())),
+          "documents %d on the page, %d in 3D; repositories %d, %d" % (docs, len(kinds.get("doc", ())), repos, len(kinds.get("repo", ()))))
+    dead, n = [], 0
+    for iid, page in data["pages"].items():
+        for href in re.findall(r'href="([^"]+)"', page["head"] + page["foot"]):
+            n += 1
+            if href.startswith("#"):
+                if href[1:] not in items:
+                    dead.append("%s: %s" % (iid, href))
+            elif href.startswith("../"):
+                path = href[3:].split("#")[0].split("?")[0]
+                if not site_file(path):
+                    dead.append("%s: %s" % (iid, href))
+            elif not re.match(r"(https?:|mailto:)", href):
+                dead.append("%s: %s (neither ../ nor an item)" % (iid, href))
+    for iid, it in items.items():
+        n += 1
+        path = it["pageView"][3:].split("#")[0] if it["pageView"].startswith("../") else None
+        if path is None or not site_file(path):
+            dead.append("%s: page view %s" % (iid, it["pageView"]))
+    check("static 3D every link of its pages lands", n and not dead, "%d links, dead: %s" % (n, dead[:8]))
+    missing = [s for s in data["stops"] for ext in (".webp", ".thumb.webp") if not os.path.isfile(os.path.join(ROOT, "3d", "slides", s + ext))]
+    check("static 3D every slide has both its pictures", data["stops"] and not missing, "%d slides, missing: %s" % (len(data["stops"]), missing))
 
 
 def collect(page, sink):

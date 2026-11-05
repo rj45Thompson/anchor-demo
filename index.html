@@ -31,7 +31,7 @@
    and every section id is here). */
 (function(){
   var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","games","starfighter","breakout","bpgames",
-             "research","engine","bossbench","warship","apps","casement","solar","docs","docs-u2ue","docs-blueprint","docs-loop",
+             "research","engine","bossbench","warship","apps","casement","docs","docs-u2ue","docs-blueprint","docs-loop",
              "docs-research","repos","contact","about"];
   var ALIAS = { projects:"u2ue", resume:"breakout", space:"starfighter", bench:"bossbench", manual:"u2ue-chapters", documentation:"docs" };
   function route(){
@@ -91,6 +91,10 @@ h1,h2,h3,h4{font-family:var(--head);font-weight:600;line-height:1.15;text-wrap:b
 .who{display:block;font:600 19px/1.2 var(--head);color:var(--fg);text-decoration:none}
 .who:hover{color:var(--accent)}
 .by{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+.view3d{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;color:var(--fg);text-decoration:none;font:500 12.5px/1.2 var(--mono)}
+.view3d::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.view3d:hover{border-color:var(--accent)}
+.btn.to3d{border-color:var(--accent)}
 #findRow{margin-top:12px}
 #filter{width:100%;background:var(--well);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:16px;line-height:1.2}
 #filter::placeholder{color:#8C9BA9}
@@ -343,6 +347,7 @@ h3 a:hover{color:var(--accent)}
   <div id="menuHead">
     <a class="who" href="#top">R.J. Thompson</a>
     <p class="by">Tools, games and research</p>
+    <a class="view3d" href="3d/">3D fly-through view</a>
     <div id="findRow">
       <label class="vh" for="filter">Filter projects and documents</label>
       <input id="filter" type="search" placeholder="Filter" autocomplete="off" spellcheck="false">
@@ -377,7 +382,6 @@ h3 a:hover{color:var(--accent)}
       <li class="gr" data-sec="apps"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Other tools"><span>&#9656;</span></button><a class="row" href="#apps"><span class="g" style="--c:var(--c-apps)"></span><span class="l">Other tools</span><span class="n"></span></a></div>
         <ul>
           <li class="leaf"><a class="row" href="#casement"><span class="g dot" style="--c:var(--c-apps)"></span><span class="l">Casement Sheet</span></a></li>
-          <li class="leaf"><a class="row" href="#solar"><span class="g dot" style="--c:var(--c-apps)"></span><span class="l">Solar setup</span></a></li>
         </ul></li>
       <li class="gr" data-sec="docs"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Documentation"><span>&#9656;</span></button><a class="row" href="#docs"><span class="g" style="--c:var(--c-docs)"></span><span class="l">Documentation</span><span class="n"></span></a></div>
         <ul>
@@ -415,6 +419,7 @@ h3 a:hover{color:var(--accent)}
       <a class="btn" href="games/RJ_Thompson_Resume.pdf" target="_blank" rel="noopener">PDF résumé</a>
       <a class="btn" href="https://www.linkedin.com/in/r-j-thompson-9531588/" target="_blank" rel="noopener">LinkedIn</a>
       <a class="btn" href="https://github.com/rj45Thompson" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn to3d" href="3d/">See it all in 3D</a>
     </div>
     <ul class="jump" aria-label="Groups">
       <li><a href="#u2ue" style="--c:var(--c-u2ue)" data-count="u2ue"><i></i>u2ue <b></b></a></li>
@@ -689,17 +694,6 @@ h3 a:hover{color:var(--accent)}
         <p class="more">Taped, photo-read and calculated figures stay apart on screen and in the PDF. Exports PDF, CSV and DXF. Works without a key; corner finding, dictation and the chat box use your own Anthropic key.</p>
         <ul class="tags"><li>Web app</li><li>3D view</li><li>PDF and DXF</li></ul>
         <p class="links"><a class="go" href="casement/">Open Casement Sheet</a></p>
-      </div>
-    </article>
-    <article id="solar" class="card" data-node="Solar setup">
-      <a class="shot" href="solar/" tabindex="-1" aria-hidden="true"><img src="thumbs/solar.jpg" width="640" height="400" loading="lazy" alt=""></a>
-      <div class="body">
-        <p class="meta"><span class="state s-app">Experiment</span><span>Runs in the browser</span></p>
-        <h3><a href="solar/">Solar setup</a></h3>
-        <p class="line">A 3D ray-traced zoo of solar panel and mirror layouts, each scored on build cost and dollars per kWh over 25 years, against a measured year of hourly weather.</p>
-        <p class="more">Fly with WASD, scrub the sun along its path, and click any panel for its row in the table.</p>
-        <ul class="tags"><li>Ray tracing</li><li>three.js</li><li>Cost model</li></ul>
-        <p class="links"><a class="go" href="solar/">Open the zoo</a></p>
       </div>
     </article>
   </div>
