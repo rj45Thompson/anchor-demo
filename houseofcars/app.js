@@ -11,6 +11,7 @@ import { loadWorld } from './world.js';
 import { rotatorAxes, threeMatrix, threeMatrixFromAxes, toThreePoint, verticalFovDeg } from './ue_space.js';
 import { makeRig, updateRig } from './camera_rig.js';
 import { SLIDES } from './slides.js';
+import { svgIcon, drawIcon } from './icons.js';
 
 // AUTHORED for the page itself (look and layout, never presented as Unreal's): see AUTHORED in the report
 export const AUTHORED = [
@@ -23,6 +24,9 @@ export const AUTHORED = [
 ];
 
 const $ = (id) => document.getElementById(id);
+const CSSV = (n) => { const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); if (!v) throw new Error('index.html :root lacks ' + n); return v; };
+const PAL = { accent: CSSV('--accent'), soft: CSSV('--accent-soft'), ink: CSSV('--ink'), bg: CSSV('--bg'), bg2: CSSV('--bg2'), slate: CSSV('--slate') };   // UC-6.1
+await Promise.all(['800 88px "Open Sans"', '700 32px "Open Sans"', '600 40px "Open Sans"'].map((f) => document.fonts.load(f)));   // the panels are drawn once, so wait for the face
 const fetchJson = (f) => fetch('data/' + f).then((r) => { if (!r.ok) throw new Error('data/' + f + ': ' + r.status); return r.json(); });
 const fetchBin = (f) => fetch('data/' + f).then((r) => { if (!r.ok) throw new Error('data/' + f + ': ' + r.status); return r.arrayBuffer(); });
 const canvas = $('view');
@@ -121,29 +125,36 @@ show.scene.add(key);
 const RING = 15;                                      // m (layout, AUTHORED): ten slides round the ring
 const floor = new THREE.Mesh(new THREE.CircleGeometry(80, 128), new THREE.MeshStandardNodeMaterial({ color: 0x0a0c0f, roughness: 0.14, metalness: 0.7 }));
 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; show.scene.add(floor);
-const ringLight = new THREE.Mesh(new THREE.TorusGeometry(RING, 0.05, 8, 256), new THREE.MeshBasicNodeMaterial({ color: 0xff6a1a }));
+const ringLight = new THREE.Mesh(new THREE.TorusGeometry(RING, 0.05, 8, 256), new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(PAL.accent) }));
 ringLight.rotation.x = Math.PI / 2; ringLight.position.y = 0.03; show.scene.add(ringLight);
 const showCam = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
 
 function panelTexture(def, car) {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 576;
   const g = c.getContext('2d');
-  const grd = g.createLinearGradient(0, 0, 0, 576); grd.addColorStop(0, '#171b22'); grd.addColorStop(1, '#0e1116');
+  const grd = g.createLinearGradient(0, 0, 1024, 576); grd.addColorStop(0, PAL.bg2); grd.addColorStop(1, PAL.bg);
   g.fillStyle = grd; g.fillRect(0, 0, 1024, 576);
-  g.strokeStyle = 'rgba(255,106,26,.75)'; g.lineWidth = 6; g.strokeRect(6, 6, 1012, 564);
-  g.fillStyle = '#ff6a1a'; g.fillRect(48, 70, 12, 132);
+  g.fillStyle = PAL.slate; g.globalAlpha = 0.35; g.fillRect(0, 520, 1024, 56); g.globalAlpha = 1;
+  g.strokeStyle = PAL.accent; g.lineWidth = 6; g.strokeRect(6, 6, 1012, 564);
+  g.fillStyle = PAL.accent; g.fillRect(48, 70, 12, 132);
   const kicker = car ? (car.drivable ? 'On the lot · drivable' : 'On the lot · showroom only') : def.kicker;
   const title = car ? car.name.replace(/([a-z])([A-Z])/g, '$1 $2') : def.title;
-  g.fillStyle = '#ffb07f'; g.font = '600 34px system-ui, sans-serif'; g.fillText(kicker.toUpperCase(), 80, 102);
-  g.fillStyle = '#eef1f5'; g.font = '800 88px system-ui, sans-serif'; g.fillText(title, 78, 190);
+  const icon = car ? (car.drivable ? (car.name === 'OffroadCar' ? 'offroad' : 'coupe') : 'concept') : def.icon;
+  drawIcon(g, icon, 868, 62, 108, PAL.accent);
+  g.fillStyle = PAL.soft; g.font = '700 32px "Open Sans", sans-serif'; g.fillText(kicker.toUpperCase(), 80, 102);
+  let tsize = 84;                                  // the title fits left of the icon (measured: 'Pick your body style' ran into it)
+  do { g.font = '800 ' + tsize + 'px "Open Sans", sans-serif'; tsize -= 2; } while (g.measureText(title).width > 770 && tsize > 48);
+  g.fillStyle = PAL.ink; g.fillText(title, 76, 188);
   let lines = def.lines;
   if (car) {
     const pick = (l) => car.specs.find((s) => s.label === l);
     lines = (car.drivable ? ['Max torque', 'Peak power', 'Top gear at redline', 'Drive'] : ['Length x width x height', 'Engine, gears, wheels'])
       .map((l) => { const s = pick(l); return s ? l + ': ' + s.value + (s.unit ? ' ' + s.unit : '') : null; }).filter(Boolean);
   }
-  g.font = '500 40px system-ui, sans-serif'; g.fillStyle = '#d7dde5';
-  lines.forEach((l, i) => g.fillText(l, 80, 290 + i * 62));
+  g.font = '600 40px "Open Sans", sans-serif'; g.fillStyle = '#d9dddf';
+  if (def.picks) def.picks.forEach((p, i) => { drawIcon(g, p.icon, 80, 252 + i * 74, 44, PAL.accent); g.fillText(p.label + '  →  ' + p.car.replace(/([a-z])([A-Z])/g, '$1 $2'), 146, 290 + i * 74); });
+  else lines.forEach((l, i) => g.fillText(l, 80, 290 + i * 62));
+  g.fillStyle = PAL.soft; g.font = '600 24px "Open Sans", sans-serif'; g.fillText('HOUSE OF CARS · 3D LOT CONCEPT · UNOFFICIAL', 80, 556);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 
@@ -162,7 +173,7 @@ for (let i = 0; i < SLIDES.length; i++) {
   if (car) {
     const ped = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.3, 0.3, 64), new THREE.MeshStandardNodeMaterial({ color: 0x23272e, roughness: 0.3, metalness: 0.6 }));
     ped.position.y = 0.15; ped.receiveShadow = true; stand.add(ped);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.03, 8, 128), new THREE.MeshBasicNodeMaterial({ color: 0xff6a1a }));
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.03, 8, 128), new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(PAL.accent) }));
     rim.rotation.x = Math.PI / 2; rim.position.y = 0.31; stand.add(rim);
     const spot = new THREE.SpotLight(0xffffff, 140, 18, 0.55, 0.6, 1.6);
     spot.position.set(0, 9, 3); spot.target.position.set(0, 0.6, 0); stand.add(spot, spot.target);
@@ -190,10 +201,12 @@ function renderCard() {
       '</h2><div class="sub">' + esc(e.drivable ? e.blueprint : e.mesh) + '</div><dl>' + rows + '</dl><div id="srcline">Press a badge to see where the number came from.</div>';
     card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = e.specs[+b.dataset.k].src; }));
   } else {
-    const picks = (d.picks || []).map((p) => '<button class="pick" data-car="' + p.car + '">' + esc(p.label) + ' &rarr; ' + esc(p.car.replace(/([a-z])([A-Z])/g, '$1 $2')) + '</button>').join('');
+    const picks = (d.picks || []).map((p) => '<button class="pick" data-car="' + p.car + '">' + svgIcon(p.icon, 30) + '<b>' + esc(p.label) + '</b><small>' + esc(p.car.replace(/([a-z])([A-Z])/g, '$1 $2')) + '</small></button>').join('');
+    const pts = (d.points || []).map((q) => '<li>' + svgIcon(q.icon, 22) + '<div><b>' + esc(q.title) + '</b><span>' + esc(q.text) + '</span></div></li>').join('');
     let acts = (d.actions || []).map((a, k) => a.href ? '<a class="act" href="' + esc(a.href) + '">' + esc(a.label) + '</a>' : '<button class="act" data-a="' + k + '">' + esc(a.label) + '</button>').join('');
     if (d.drives) acts += SHOW.cars.filter((c) => c.drivable).map((c) => '<button class="act" data-car="' + c.name + '">Drive the ' + esc(c.name.replace(/([a-z])([A-Z])/g, '$1 $2')) + '</button>').join('');
-    card.innerHTML = '<p class="kick">' + esc(d.kicker) + '</p><h2>' + esc(d.title) + '</h2>' + d.body.map((p) => '<p>' + esc(p) + '</p>').join('') +
+    card.innerHTML = '<p class="kick">' + esc(d.kicker) + '</p><h2>' + svgIcon(d.icon, 22) + esc(d.title) + '</h2>' + (d.body || []).map((p) => '<p>' + esc(p) + '</p>').join('') +
+      (pts ? '<ul class="pts">' + pts + '</ul>' : '') +
       (picks ? '<div class="picks">' + picks + '</div>' : '') + (acts ? '<div class="acts">' + acts + '</div>' : '');
     card.querySelectorAll('button.pick').forEach((b) => b.addEventListener('click', () => select(show.slides.findIndex((x) => x.car && x.car.name === b.dataset.car))));
     card.querySelectorAll('button.act').forEach((b) => b.addEventListener('click', () => {
@@ -310,7 +323,7 @@ async function buildTrack() {
   for (const g of TRACK.gates) {
     const he = g.half_extent_cm;
     const box = new THREE.Mesh(new THREE.BoxGeometry(2 * he[0] / 100, 2 * he[2] / 100, 2 * he[1] / 100),
-      new THREE.MeshBasicNodeMaterial({ color: g.finish ? 0xffffff : 0xff6a1a, transparent: true, opacity: 0.18, depthWrite: false }));
+      new THREE.MeshBasicNodeMaterial({ color: g.finish ? 0xffffff : new THREE.Color(PAL.accent), transparent: true, opacity: 0.18, depthWrite: false }));
     box.matrixAutoUpdate = false;
     box.matrix.fromArray(threeMatrix({ pitch: g.pitch_deg, yaw: g.yaw_deg, roll: g.roll_deg }, [1, 1, 1], g.center_cm));
     gates.add(box);

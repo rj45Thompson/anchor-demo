@@ -8,10 +8,14 @@
 <meta property="og:title" content="House of Cars 3D Lot (concept)">
 <meta property="og:description" content="Fly through the lot, read each car's real numbers, take a test drive. Unreal Engine cars on WebGPU. Unofficial concept.">
 <meta property="og:image" content="https://rj45thompson.github.io/anchor-demo/thumbs/houseofcars.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d0f12;--panel:rgba(16,19,24,.86);--line:rgba(255,255,255,.12);--ink:#eef1f5;--dim:#9aa3ae;--accent:#ff6a1a;--read:#3fb27f;--derived:#d9a441;--absent:#d9534f;color-scheme:dark}
+/* palette: the dealer's site's own colours, READ 2026-11-05 from houseofcars.com theme CSS (hstyles_minify.css: #f25827 x47, #c0370b x19, #0a0a0a x33, #101010 x46, #32393b x31, #fefefe x120); the tints (--accent-soft, --dim, --line, --panel) are the page's */
+:root{--accent:#f25827;--accent-dark:#c0370b;--bg:#0a0a0a;--bg2:#101010;--slate:#32393b;--ink:#fefefe;--accent-soft:#ff9b74;--panel:rgba(16,16,16,.9);--line:rgba(254,254,254,.13);--dim:#a3abb0;--read:#3fb27f;--derived:#d9a441;--absent:#d9534f;color-scheme:dark}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 "Open Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
 canvas#view{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none}
 header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;padding:12px 16px;pointer-events:none}
 header h1{margin:0;font-size:18px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
@@ -20,7 +24,7 @@ header h1 b{color:var(--accent)}
 #showroom .nav{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:10px;align-items:center}
 button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer}
 button:hover{border-color:rgba(255,255,255,.35)}
-button.go{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700;letter-spacing:.06em}
+button.go{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800;letter-spacing:.08em}
 button:disabled{opacity:.45;cursor:not-allowed}
 #card{position:fixed;top:64px;right:16px;width:min(340px,calc(100vw - 32px));max-height:calc(100vh - 160px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 10px;backdrop-filter:blur(6px)}
 #card h2{margin:0 0 2px;font-size:22px}
@@ -33,13 +37,21 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .k-DERIVED{background:var(--derived);color:#430}
 .k-ABSENT{background:var(--absent);color:#fff}
 #srcline{font-size:12px;color:var(--dim);margin-top:10px;word-break:break-word;min-height:3em}
-#card .kick{margin:0 0 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#ffb07f}
+#card .kick{margin:0 0 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-soft);font-weight:700}
 #card p{margin:8px 0;color:#cfd5dc;font-size:14px}
 #card .picks,#card .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #card .pick,#card .act{font-size:13px;padding:8px 12px;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:9px}
-#card .act{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
+#card .act{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+#card .act:hover,button.go:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+#card .picks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#card .pick{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;text-align:center}
+#card .pick .ico{color:var(--accent)}#card .pick b{font-size:14px}#card .pick small{color:var(--dim);font-size:11px}
+#card .pick:hover{border-color:var(--accent)}
+#card ul.pts{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px}#card ul.pts li{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start}
+#card ul.pts .ico{color:var(--accent);margin-top:2px}#card ul.pts b{display:block;font-size:14px}#card ul.pts span{color:#cfd4d6;font-size:13px}
+#card h2 .ico{color:var(--accent);vertical-align:-3px;margin-right:6px}
 #foot{position:fixed;left:16px;bottom:10px;max-width:calc(50vw - 120px);font-size:11px;color:var(--dim)}
-#foot{pointer-events:none}#foot a{color:#ffb07f;pointer-events:auto}
+#foot{pointer-events:none}#foot a{color:var(--accent-soft);pointer-events:auto}
 #back{position:fixed;top:52px;left:16px;padding:8px 12px;font-size:13px}
 #loading{background:var(--bg);z-index:5}
 #loading>div{text-align:center}
