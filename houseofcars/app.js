@@ -21,7 +21,8 @@ import { makeRecorder, record, saveGhost, loadGhost, ghostPose } from './ghost.j
 import { overlapsGate, carAxes } from './gates.js';   // one gate test for the page and the sim (tools/sim_ghost.mjs)
 import { loadHoles, withHoles } from './ground_holes.js';
 import * as AI from './ai_driver.js';
-import { lotCars, leadsFor, compareHTML, priceVsPace } from './sale.js';                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
+import { lotCars, leadsFor, compareHTML, priceVsPace } from './sale.js';
+import { knowHTML, knownSpecsHTML } from './know.js';                                                   // UC-14: Know this car (know.js)                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
 
 // AUTHORED for the page itself (look and layout, never presented as Unreal's): see AUTHORED in the report
 export const AUTHORED = [
@@ -94,6 +95,7 @@ const [SHOW, TRACK, RULES, CAMS, INPUT, LISTINGS, MODELS] = await Promise.all([f
   fetchJson('camera.json'), fetchJson('input.json'), fetchJson('listings.json'), fetchJson('models.json')]);
 const GHOSTS = await fetchJson('ghosts/index.json');      // UC-9.3: the simulated laps (tools/ghost_index.py)
 const SALE_SPECS = await fetchJson('sale_specs.json');    // UC-9.1: each car for sale's factory numbers, READ with sources (tools/sale_specs.py)
+const [REVIEWS, RECALLS] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
 // UC-8: the lot's slides, with `listings` expanded into one slide per car for sale (data/listings.json) and per pick the site lacks
 const LOT = SLIDES.flatMap((d) => d.kind !== 'listings' ? [d]
   : [...LISTINGS.cars.map((l) => ({ kind: 'listing', listing: l })), ...LISTINGS.absent.map((x) => ({ kind: 'unlisted', unlisted: x }))]);
@@ -348,7 +350,8 @@ function saleCard(s, card) {
       '<p>houseofcars.com lists no Audi S7 on ' + esc(readDay) + ', so this page shows no price for it: it never types one in.</p>' +
       (d.model ? '<div class="acts"><button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button></div>' : '') +
       '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) + ' Length: ' + esc(d.model.length_m.src) + '<br>' : '3D model not made yet.<br>') +
-      d.unlisted.searched.map(esc).join('<br>') + '</div>';
+      d.unlisted.searched.map(esc).join('<br>') + '</div>' + knownSpecsHTML(d.unlisted.key, REVIEWS) + knowHTML(d.unlisted.key, REVIEWS, RECALLS);
+    card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = b.title; }));
     if ($('aropen')) $('aropen').addEventListener('click', () => openAR(d.unlisted.key, 'Audi S7'));
     return;
   }
@@ -366,6 +369,7 @@ function saleCard(s, card) {
     '<a class="act" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + svgIcon('link', 16) + ' See it on houseofcars.com</a></div>' +
     '<div class="sell"><button class="pick2" id="cmpopen">' + svgIcon('numbers', 16) + ' Compare the lot</button><button class="pick2" id="share">' + svgIcon('link', 16) + ' Share this car</button>' +
     (MODELS.models[l.key] ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') + '</div>' +
+    knowHTML(l.key, REVIEWS, RECALLS) +
     '<div class="qr" id="qr"></div>' +
     '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) : '3D model not made yet.') + ' Listing: ' + esc(l.name.src) + '</div>';
   card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = SALE_SPECS.cars[l.key].rows[+b.dataset.k].src; }));

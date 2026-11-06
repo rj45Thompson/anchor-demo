@@ -1,0 +1,409 @@
+{
+ "about": "recalls for each car's model year, READ from Transport Canada's recalls database (https://tc.canada.ca/en/road-transportation/motor-vehicle-safety/motor-vehicle-safety-recalls-database) by tools/recalls.py",
+ "read_at": "2026-11-06T08:28:54-0600",
+ "cars": {
+  "bentley_flying_spur_2018": {
+   "kind": "READ",
+   "make": "BENTLEY",
+   "model_name": "FLYING SPUR",
+   "year": 2018,
+   "count": 0,
+   "recalls": [],
+   "proof_of_name": "22 recall rows for BENTLEY FLYING SPUR in 2012-2024 (the name exists in the database)",
+   "rows_read": "0 of the 0 rows its count reports, paged",
+   "covers": "every BENTLEY FLYING SPUR of 2018 (Transport Canada lists the model, not the trim): a recall may not cover this trim; this car's VIN decides",
+   "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/BENTLEY/model-name/FLYING%20SPUR/year-range/2018-2018",
+   "site": "https://tc.canada.ca/en/road-transportation/motor-vehicle-safety/motor-vehicle-safety-recalls-database"
+  },
+  "rolls_royce_wraith_2017": {
+   "kind": "READ",
+   "make": "ROLLS-ROYCE",
+   "model_name": "WRAITH",
+   "year": 2017,
+   "count": 1,
+   "recalls": [
+    {
+     "number": "2024544",
+     "date": "8/15/2024",
+     "system": "Label",
+     "kind": "Inconsequential",
+     "units_affected": "587250",
+     "summary": "Issue: On certain vehicles, the tire and loading information label does not list that there is no spare tire in both official languages. The label reads as \"NONE\" when it should read as \"NONE / AUCUN\". Canadian regulations require the information to be listed on the label in both English and French. Safety Risk: This error does not affect vehicle safety. Corrective Actions: This is not a recall. The company has corrected the tire and loading information label for all new vehicles.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024544"
+    }
+   ],
+   "proof_of_name": "8 recall rows for ROLLS-ROYCE WRAITH in 2011-2023 (the name exists in the database)",
+   "rows_read": "1 of the 1 rows its count reports, paged",
+   "covers": "every ROLLS-ROYCE WRAITH of 2017 (Transport Canada lists the model, not the trim): a recall may not cover this trim; this car's VIN decides",
+   "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/ROLLS-ROYCE/model-name/WRAITH/year-range/2017-2017",
+   "site": "https://tc.canada.ca/en/road-transportation/motor-vehicle-safety/motor-vehicle-safety-recalls-database"
+  },
+  "rolls_royce_ghost_2014": {
+   "kind": "READ",
+   "make": "ROLLS-ROYCE",
+   "model_name": "GHOST",
+   "year": 2014,
+   "count": 1,
+   "recalls": [
+    {
+     "number": "2024544",
+     "date": "8/15/2024",
+     "system": "Label",
+     "kind": "Inconsequential",
+     "units_affected": "587250",
+     "summary": "Issue: On certain vehicles, the tire and loading information label does not list that there is no spare tire in both official languages. The label reads as \"NONE\" when it should read as \"NONE / AUCUN\". Canadian regulations require the information to be listed on the label in both English and French. Safety Risk: This error does not affect vehicle safety. Corrective Actions: This is not a recall. The company has corrected the tire and loading information label for all new vehicles.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024544"
+    }
+   ],
+   "proof_of_name": "17 recall rows for ROLLS-ROYCE GHOST in 2008-2020 (the name exists in the database)",
+   "rows_read": "1 of the 1 rows its count reports, paged",
+   "covers": "every ROLLS-ROYCE GHOST of 2014 (Transport Canada lists the model, not the trim): a recall may not cover this trim; this car's VIN decides",
+   "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/ROLLS-ROYCE/model-name/GHOST/year-range/2014-2014",
+   "site": "https://tc.canada.ca/en/road-transportation/motor-vehicle-safety/motor-vehicle-safety-recalls-database"
+  },
+  "mercedes_amg_e63s_2021": {
+   "kind": "READ",
+   "make": "MERCEDES-BENZ",
+   "model_name": "E CLASS",
+   "year": 2021,
+   "count": 27,
+   "recalls": [
+    {
+     "number": "2020522",
+     "date": "11/3/2020",
+     "system": "Seats And Restraints",
+     "kind": "Safety Mfr",
+     "units_affected": "6263",
+     "summary": "Issue: On certain vehicles, the seat belt buckle for the second-row middle seat may be pushed into the gap between the vehicle body and the seat cushion. If this happens, the seat occupant would not be able to latch the seat belt. Safety Risk: Being unable to latch your seat belt can increase the risk of injury in a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealer to adjust the positioning of the second-row middle seat belt buckle. Note: Passengers should hold the seat belt buckle with one hand when fastening the seat belt.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2020522"
+    },
+    {
+     "number": "2021041",
+     "date": "2/1/2021",
+     "system": "Accessories",
+     "kind": "Safety Mfr",
+     "units_affected": "41731",
+     "summary": "Issue: On certain vehicles, a software problem could cause the rearview camera image not to appear on the central display. Canadian regulations require the rearview image to display when the transmission is shifted into reverse gear. Safety Risk: A rearview camera image that does not display could reduce a driver's ability to see behind the vehicle while backing up. This could increase the risk of a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealer to update the head unit software.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2021041"
+    },
+    {
+     "number": "2021064",
+     "date": "2/12/2021",
+     "system": "Electrical",
+     "kind": "Safety Mfr",
+     "units_affected": "75231",
+     "summary": "Issue: On certain vehicles equipped with the emergency calling (eCall) system, the communications module may temporarily lose power during a crash. If this happens, the wrong vehicle location may be transmitted through the eCall system. This could cause emergency responders to be sent to the wrong location. Safety Risk: If the eCall system sends out the wrong location after a crash, there could be a delay in response from emergency services. Corrective Actions: Mercedes-Benz will notify owners by mail and send a wireless over-the-air update to each vehicle. If the update cannot be completed successfully, you will be notified to schedule an appointment to have the update performed by a dealer.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2021064"
+    },
+    {
+     "number": "2021207",
+     "date": "4/7/2021",
+     "system": "Airbag",
+     "kind": "Safety Mfr",
+     "units_affected": "1082",
+     "summary": "Issue: On certain vehicles, there may be a problem with the front seat position switches. As a result, the airbags and seat belt force limiters may not work properly in a crash. Safety Risk: Airbags or seat belts that do not work properly could create an increased risk of injury in a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealer to replace the seat position switches.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2021207"
+    },
+    {
+     "number": "2021291",
+     "date": "5/14/2021",
+     "system": "Visual System",
+     "kind": "Safety Mfr",
+     "units_affected": "40646",
+     "summary": "Issue: On certain vehicles, a software problem could cause the rearview camera image not to appear on the central display. Canadian regulations require the rearview image to display when the transmission is shifted into reverse gear. Safety Risk: A rearview camera image that does not display could reduce a driver's ability to see behind the vehicle while backing up. This could increase the risk of a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and send a wireless over-the-air software update to each vehicle. If the update cannot be completed successfully, you will be notified to schedule an appointment to have the update performed by a dealer.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2021291"
+    },
+    {
+     "number": "2021340",
+     "date": "6/1/2021",
+     "system": "Seats And Restraints",
+     "kind": "Safety Mfr",
+     "units_affected": "74",
+     "summary": "Issue: On certain C and E-Class convertible models, the head restraints on the rear seats may not have been properly assembled. As a result, the head restraints may not latch properly, and could move or detach from the seat in a crash. Safety Risk: Head restraints that move or detach in a crash could increase the risk of an injury. Corrective Action: Mercedes-Benz will contact owners by mail and instruct you to take your car to a dealer to inspect and replace the rear seat head restraints, as required. To reduce the safety risk, Mercedes-Benz recommends that you should remove the rear seat head restraints and not use the rear seats until the recall repairs are completed.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2021340"
+    },
+    {
+     "number": "2021415",
+     "date": "7/5/2021",
+     "system": "Lights And Instruments",
+     "kind": "Compliance Mfr",
+     "units_affected": "200",
+     "summary": "Issue: On certain vehicles, a label on the headlamp assembly may contain incorrect information for a service technician. As a result, the headlamps may not get adjusted correctly after a repair. This could cause glare and/or confusion for oncoming drivers. Note: This recall only affects certain vehicles equipped with LED headlamps. Safety Risk: Headlamps that cause glare or confusion for oncoming drivers could increase the risk of a crash. Corrective Action: Mercedez-Benz will notify owners by mail and instruct you to take your vehicle to a dealer to replace the headlamps.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2021415"
+    },
+    {
+     "number": "2021493",
+     "date": "8/6/2021",
+     "system": "Seats And Restraints",
+     "kind": "Compliance Mfr",
+     "units_affected": "361",
+     "summary": "Issue: On certain vehicles, the passenger seat belt assemblies may contain defective automatic locking retractors (ALR). As a result, the seat belts may not properly lock to secure a child seat. Note: The vehicle's lower universal anchorage system (UAS) is not affected by this defect and may still be used to secure a child seat. Safety Risk: A seat belt that is used to secure a child restraint but is not properly locked could increase the risk of injury in a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealer to inspect the seat belts. They will be replaced, if necessary.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2021493"
+    },
+    {
+     "number": "2022140",
+     "date": "3/25/2022",
+     "system": "Accessories",
+     "kind": "Safety Mfr",
+     "units_affected": "1815",
+     "summary": "Issue: On certain vehicles, the DISTRONIC driver assistance system might not detect when the driver removes their hands from the steering wheel. If the driver has a medical emergency (and is unable to drive or loses consciousness), the active emergency stop assist and emergency call functions would not activate. Note: This recall only affects vehicles equipped with a heated leather steering wheel. Safety Risk: If the active emergency stop and emergency call features do not work in an emergency situation, there could be an increased risk of a crash, and there could be a delay in response from emergency services. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealership to update the software for the hand detection system.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022140"
+    },
+    {
+     "number": "2022173",
+     "date": "4/8/2022",
+     "system": "Electrical",
+     "kind": "Safety Mfr",
+     "units_affected": "3261",
+     "summary": "Issue: On certain vehicles, a ground connection under the front passenger seat may not have been properly tightened. As a result, the connection and wiring could overheat. Safety Risk: A loose or overheated wire connection could create the risk of a fire. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealership to inspect, and if necessary, tighten the ground connection for the 48 V electrical system under the front passenger seat.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022173"
+    },
+    {
+     "number": "2022177",
+     "date": "4/12/2022",
+     "system": "Visual System",
+     "kind": "Compliance Mfr",
+     "units_affected": "10556",
+     "summary": "Issue: On certain vehicles, a software problem could cause the rearview camera image not to appear on the central display. Canadian regulations require the rearview image to display when the transmission is shifted into reverse gear. Safety Risk: A rearview camera image that does not display could reduce a driver's ability to see behind the vehicle while backing up. This could increase the risk of a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealership to update the rearview camera software.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022177"
+    },
+    {
+     "number": "2022263",
+     "date": "5/20/2022",
+     "system": "Other",
+     "kind": "Safety Mfr",
+     "units_affected": "49728",
+     "summary": "Issue: On certain vehicles equipped with the emergency calling (eCall) system, the SIM card for the communications module could disable itself. If this happens, the eCall system would not work properly when there is a crash or when the SOS button is pressed. Safety Risk: If the eCall system does not work in an emergency situation, there could be a delay in response from emergency services. Corrective Actions: Mercedes-Benz will notify owners by mail and send a wireless over-the-air software update to each vehicle. If the update cannot be completed successfully, you will be notified to schedule an appointment to have the update performed by a dealer.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022263"
+    },
+    {
+     "number": "2022359",
+     "date": "7/6/2022",
+     "system": "Label",
+     "kind": "Inconsequential",
+     "units_affected": "4816",
+     "summary": "Issue: On certain vehicles equipped with Michelin Primacy Tour A/S tires, the maximum tire pressure listed on the sidewall of the tire is lower than the maximum tire pressure specified on the tire loading and information label and on the gas tank cap. The placard lists a maximum pressure of 320 kPa (47 psi) instead of 300 kPa (44 psi). Canadian regulations require this information to be consistent on both the labels and tires. Safety Risk: This error does not affect vehicle safety. Michelin has indicated that the tires can be operated safely up to a maximum pressure of 350 kPa (51 psi). Corrective Actions: This is not a recall. Mercedes-Benz has corrected the tire loading and information label on all new vehicles.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022359"
+    },
+    {
+     "number": "2022397",
+     "date": "7/22/2022",
+     "system": "Electrical",
+     "kind": "Safety Mfr",
+     "units_affected": "2747",
+     "summary": "Issue: On certain vehicles equipped with 4-wheel drive (4Matic), the transmission wiring harness might not be routed correctly. As a result, water could enter the wiring harness connector and cause a short circuit. Safety Risk: A short circuit can create the risk of a fire, even while the vehicle is parked and turned off. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealership to inspect the connector on the transmission wiring harness, and repair it if necessary. Additionally, the dealer will install a bracket to improve the routing of the transmission wiring harness.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022397"
+    },
+    {
+     "number": "2022509",
+     "date": "9/9/2022",
+     "system": "Structure",
+     "kind": "Safety Mfr",
+     "units_affected": "17387",
+     "summary": "Issue: On certain vehicles, the window trim on the rear doors may not be properly attached. As a result, the window trim could loosen and separate from the vehicle. Safety Risk: Window trim that detaches from the vehicle could create a road hazard for others and increase the risk of a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealership to inspect the window trim on the rear doors and repair them, if necessary.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022509"
+    },
+    {
+     "number": "2022547",
+     "date": "9/29/2022",
+     "system": "Electrical",
+     "kind": "Safety Mfr",
+     "units_affected": "2630",
+     "summary": "Issue: On certain vehicles, the 12 V battery (in the trunk) could move in a crash. As a result, the battery electrical connexions could detach. If this happens, the post-crash safety systems (like the emergency calling (eCall) system, electric seat adjustment, hazard warning lights, and automatic door unlocking) may not work. Safety Risk: Safety systems that don't work correctly could increase the risk of injury. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealership to add a bracket to better secure the battery.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022547"
+    },
+    {
+     "number": "2022724",
+     "date": "12/16/2022",
+     "system": "Steering",
+     "kind": "Safety Mfr",
+     "units_affected": "6",
+     "summary": "Issue: On certain vehicles, the screw that attaches the steering coupling may not have been properly tightened. As a result, the steering coupling could detach from the steering shaft and cause a loss of steering control. Note: This problem may cause looseness in the steering or noises while driving on rough roads. Safety Risk: A loss of steering control could increase the risk of a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealership to replace the steering coupling locking screw.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2022724"
+    },
+    {
+     "number": "2023150",
+     "date": "3/17/2023",
+     "system": "Heater And Defroster",
+     "kind": "Safety Mfr",
+     "units_affected": "6522",
+     "summary": "Issue: On certain vehicles, the air conditioning drain hose might be installed incorrectly. This could allow water to leak inside the vehicle. If this happens, electrical components could short circuit. This could affect different parts, such as the door locks and emergency call (eCall) system. It could also result in reduced engine power or cause the vehicle not to start. Note: If this issue is present in your vehicle, you might notice wet carpets in the driver or passenger footwell and fogged windows. This is an expansion of Transport Canada Recall 2021-247. Safety Risk: A loss of engine power could increase the risk of a crash. If the doors cannot be unlocked in an emergency situation, it may be difficult to exit the vehicle. Corrective Actions: Mercedes-Benz will notify owners by mail and instruct you to take your vehicle to a dealership to inspect how the air conditioning hose is installed and correct it, if necessary. Mercedes-Benz recommends that you should not use the air conditioning until the vehicle is inspected.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2023150"
+    },
+    {
+     "number": "2023353",
+     "date": "6/23/2023",
+     "system": "Fuel System",
+     "kind": "Safety Mfr",
+     "units_affected": "18461",
+     "summary": "Issue: On certain vehicles, the fuel delivery module could fail. If this happens, the engine may run rough or may not start. This could also result in a sudden loss of engine power while driving. Safety Risk: A sudden loss of engine power could increase the risk of a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to replace the fuel delivery module.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2023353"
+    },
+    {
+     "number": "2023651",
+     "date": "12/8/2023",
+     "system": "Electrical",
+     "kind": "Safety Mfr",
+     "units_affected": "17",
+     "summary": "Issue: On certain vehicles, the bolt for the 12V ground connection under the driver seat may not have been properly tightened. As a result, the connection could loosen and overheat. Safety Risk: A loose or overheated ground connection could create the risk of a fire. Corrective Actions: Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to inspect and, if necessary, repair the 12V ground connection.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2023651"
+    },
+    {
+     "number": "2023672",
+     "date": "12/15/2023",
+     "system": "Fuel System",
+     "kind": "Safety Mfr",
+     "units_affected": "7531",
+     "summary": "Issue: On certain vehicles, the fuel delivery module could fail. If this happens, the engine may run rough or may not start. This could also result in a sudden loss of engine power while driving. Note: This is an expansion of Transport Canada recall 2023-353. Safety Risk: A sudden loss of engine power could increase the risk of a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to replace the fuel delivery module.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2023672"
+    },
+    {
+     "number": "2024081",
+     "date": "2/9/2024",
+     "system": "Electrical",
+     "kind": "Safety Mfr",
+     "units_affected": "1784",
+     "summary": "Issue: On certain vehicles, the bolt for the 48 V ground connection may not have been tightened properly. As a result, the wiring could overheat and melt. Safety Risk: Wiring that overheats and melts can create the risk of a fire. Corrective Actions: Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to inspect and, if necessary, tighten the ground connection.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024081"
+    },
+    {
+     "number": "2024103",
+     "date": "2/16/2024",
+     "system": "Powertrain",
+     "kind": "Safety Mfr",
+     "units_affected": "18062",
+     "summary": "Issue: Under certain conditions, a software problem could cause the engine to stall during a downshift. As a result, there could be a sudden loss of power to the wheels. Note: This recall only affects vehicles equipped with a V6 engine and a 9-speed automatic transmission. Safety Risk: A sudden loss of power to the wheels could increase the risk of a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to update the transmission control unit software.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024103"
+    },
+    {
+     "number": "2024171",
+     "date": "3/15/2024",
+     "system": "Electrical",
+     "kind": "Safety Mfr",
+     "units_affected": "17820",
+     "summary": "Issue: On certain vehicles, the bolt for the 48 V ground connection under the passenger seat may not have been tightened properly. As a result, the wiring could overheat and melt. Safety Risk: Wiring that overheats and melts can create the risk of a fire. Corrective Actions: Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to inspect and, if necessary, tighten the ground connection.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024171"
+    },
+    {
+     "number": "2024342",
+     "date": "6/14/2024",
+     "system": "Electrical",
+     "kind": "Safety Mfr",
+     "units_affected": "2691",
+     "summary": "Issue: On certain vehicles, the recall repairs completed by a Mercedes-Benz dealer during recall 5491309 (Transport Canada recall no. 2022-397) may not have been done correctly. As a result, a second repair is required. On certain vehicles equipped with 4-wheel drive (4Matic), the transmission wiring harness may not be routed correctly. As a result, water could enter the wiring harness connector and cause a short circuit. Note: This recall replaces Transport Canada recall no. 2022-397. Safety Risk: A short circuit can create the risk of a fire, even while the vehicle is parked and turned off. Corrective Actions: Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to replace the transmission wiring harness.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024342"
+    },
+    {
+     "number": "2024567",
+     "date": "9/27/2024",
+     "system": "Airbag",
+     "kind": "Compliance Mfr",
+     "units_affected": "1253",
+     "summary": "Issue: On certain vehicles, the wiring harness for an acceleration sensor may not have been routed properly. As a result, the wiring could become damaged in a crash and cause the driver- and passenger-front airbags to deploy with too much force. Safety Risk: An airbag that inflates with too much force could create an increased risk of injury in a crash. Corrective Actions: Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to inspect and, if necessary, re-route the wiring harness.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024567"
+    },
+    {
+     "number": "2026364",
+     "date": "7/24/2026",
+     "system": "Structure",
+     "kind": "Safety Mfr",
+     "units_affected": "36862",
+     "summary": "Issue: On certain vehicles, moisture could enter the driver-side door lock microswitch and cause it to corrode. As a result, the microswitch may fail to automatically engage the parking brake and/or the auto park feature when the door is opened. If this happens, the vehicle could roll away. Note: This problem could also cause the radio and/or interior lights to remain on after exiting the vehicle. Safety Risk: A parked vehicle that rolls away could create the risk of an injury or a crash. Corrective Actions: To reduce the safety risk, Mercedes-Benz recommends that you should always use the parking brake when you park. Mercedes-Benz will notify owners by mail and advise you to take your vehicle to a dealership to replace the driver-side door lock.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2026364"
+    }
+   ],
+   "proof_of_name": "250 recall rows for MERCEDES-BENZ E CLASS in 2015-2027 (the name exists in the database)",
+   "rows_read": "33 of the 33 rows its count reports, paged",
+   "covers": "every MERCEDES-BENZ E CLASS of 2021 (Transport Canada lists the model, not the trim): a recall may not cover this trim; this car's VIN decides",
+   "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/MERCEDES-BENZ/model-name/E%20CLASS/year-range/2021-2021",
+   "site": "https://tc.canada.ca/en/road-transportation/motor-vehicle-safety/motor-vehicle-safety-recalls-database"
+  },
+  "porsche_911_c4_2012": {
+   "kind": "READ",
+   "make": "PORSCHE",
+   "model_name": "911",
+   "year": 2012,
+   "count": 3,
+   "recalls": [
+    {
+     "number": "2011293",
+     "date": "8/12/2011",
+     "system": "Seats And Restraints",
+     "kind": "Safety Mfr",
+     "units_affected": "16",
+     "summary": "On certain vehicles, the seatbelt anchors were manufactured incorrectly and, as a result, may not rotate as designed. Failure of the seatbelt anchorage to restrain the occupant as intended would increase the risk of personal injury during a crash. Correction: Dealers will inspect and, if necessary, replace the seatbelt anchors.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2011293"
+    },
+    {
+     "number": "2012102",
+     "date": "3/20/2012",
+     "system": "Fuel System",
+     "kind": "Safety Mfr",
+     "units_affected": "104",
+     "summary": "On certain vehicles, a fuel line quick connector could uncouple as a result of contact with a coolant pipe. Fuel leakage, in the presence of an ignition source, could result in a fire. Fuel leakage could also cause the engine to misfire and stall. Engine stalling would result in lost vehicle propulsion which, in conjunction with traffic and road condition, and the driver's reactions, could increase the risk of a crash. These issues could result in property damage and/or personal injury. Correction: Dealers will install a spacer ring to prevent contact between the fuel line quick connector and the coolant pipe.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2012102"
+    },
+    {
+     "number": "2013061",
+     "date": "2/22/2013",
+     "system": "Other",
+     "kind": "Safety Mfr",
+     "units_affected": "111",
+     "summary": "On certain vehicles, exhaust tailpipes can fracture and detach from mufflers. A tailpipe separating from the vehicle could strike another vehicle, a stationary object, or a bystander, causing property damage and/or personal injury. Correction: Dealers will replace both muffler assemblies.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2013061"
+    }
+   ],
+   "proof_of_name": "46 recall rows for PORSCHE 911 in 2006-2018 (the name exists in the database)",
+   "rows_read": "5 of the 5 rows its count reports, paged",
+   "covers": "every PORSCHE 911 of 2012 (Transport Canada lists the model, not the trim): a recall may not cover this trim; this car's VIN decides",
+   "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/PORSCHE/model-name/911/year-range/2012-2012",
+   "site": "https://tc.canada.ca/en/road-transportation/motor-vehicle-safety/motor-vehicle-safety-recalls-database"
+  },
+  "bmw_i8_2016": {
+   "kind": "READ",
+   "make": "BMW",
+   "model_name": "I8",
+   "year": 2016,
+   "count": 1,
+   "recalls": [
+    {
+     "number": "2024544",
+     "date": "8/15/2024",
+     "system": "Label",
+     "kind": "Inconsequential",
+     "units_affected": "587250",
+     "summary": "Issue: On certain vehicles, the tire and loading information label does not list that there is no spare tire in both official languages. The label reads as \"NONE\" when it should read as \"NONE / AUCUN\". Canadian regulations require the information to be listed on the label in both English and French. Safety Risk: This error does not affect vehicle safety. Corrective Actions: This is not a recall. The company has corrected the tire and loading information label for all new vehicles.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024544"
+    }
+   ],
+   "proof_of_name": "10 recall rows for BMW I8 in 2010-2022 (the name exists in the database)",
+   "rows_read": "1 of the 1 rows its count reports, paged",
+   "covers": "every BMW I8 of 2016 (Transport Canada lists the model, not the trim): a recall may not cover this trim; this car's VIN decides",
+   "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/BMW/model-name/I8/year-range/2016-2016",
+   "site": "https://tc.canada.ca/en/road-transportation/motor-vehicle-safety/motor-vehicle-safety-recalls-database"
+  },
+  "audi_s7": {
+   "kind": "READ",
+   "make": "AUDI",
+   "model_name": "S7",
+   "year": 2024,
+   "count": 1,
+   "recalls": [
+    {
+     "number": "2025713",
+     "date": "12/19/2025",
+     "system": "Visual System",
+     "kind": "Compliance Mfr",
+     "units_affected": "30276",
+     "summary": "Issue: On certain vehicles, a software problem could cause the rearview camera image not to appear on the display. Canadian regulations require the rearview image to display when the transmission is shifted into reverse gear. Safety Risk: A rearview camera image that doesn't display could reduce a driver's ability to see behind the vehicle while backing up. This could increase the risk of a crash. Corrective Actions: Audi will notify owners by mail and advise you to take your vehicle to a dealership to update the rearview camera software.",
+     "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2025713"
+    }
+   ],
+   "proof_of_name": "20 recall rows for AUDI S7 in 2018-2030 (the name exists in the database)",
+   "rows_read": "1 of the 1 rows its count reports, paged",
+   "covers": "every AUDI S7 of 2024 (Transport Canada lists the model, not the trim): a recall may not cover this trim; this car's VIN decides",
+   "src": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/AUDI/model-name/S7/year-range/2024-2024",
+   "site": "https://tc.canada.ca/en/road-transportation/motor-vehicle-safety/motor-vehicle-safety-recalls-database"
+  }
+ }
+}

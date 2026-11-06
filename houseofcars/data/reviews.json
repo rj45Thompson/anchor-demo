@@ -1,0 +1,2214 @@
+{
+ "about": "each car's ratings, owner-reported issues, mods and clubs, READ from the linked pages (research/reviews/*.json, checked by tools/reviews.py); the summaries are AI-written from those pages",
+ "cars": {
+  "audi_s7": {
+   "car": "2024 Audi S7 Sportback 2.9 TFSI quattro (trim unknown: in the showroom, not listed online, no VIN)",
+   "generation": "C8 A7/S7 (AudiWorld's C8 board covers A7, S7 and RS 7 from 2017 on). Canadian S7 uses the 2.9 TFSI twin-turbo V6 (EA839, per the APR file WCT Performance sells) with a 48V mild-hybrid system (Audi TSB 2073284); the UK/European S7 of this generation is a TDI diesel",
+   "retrieved": "2026-11-06",
+   "ratings": [],
+   "ratings_held": [
+    {
+     "by": "YallaMotor (UAE)",
+     "value": "4.3 out of 5.0",
+     "rates": "overall expert rating for the 2024 Audi S7 (sub-scores: Performance 4.7, Design 4.5, Value for Money 4.3, Interior & Comfort 4.2, Reliability 4.1, Safety and Driver Assistance 4.0). CAUTION: the same page calls the gearbox a 7-speed dual-clutch, which contradicts the 8-speed automatic other sources list",
+     "url": "https://www.yallamotor.com/expert-car-ratings/2024-audi-s7-review",
+     "applies_to_year": true,
+     "hold": "misdescribes the car: its own page calls the gearbox a 7-speed dual-clutch, against the 8-speed automatic the Canadian references read (held at review 11-06)",
+     "held": "misdescribes the car: its own page calls the gearbox a 7-speed dual-clutch, against the 8-speed automatic the Canadian references read (held at review 11-06)"
+    },
+    {
+     "by": "CarExpert (Australia)",
+     "value": "Very Good",
+     "rates": "verdict label for the 2021 Audi S7 Sportback (new-generation 2.9 twin-turbo V6 petrol), converted from CarExpert's previous rating system; no numeric score. Same generation, earlier model year",
+     "url": "https://www.carexpert.com.au/car-reviews/2021-audi-s7-review",
+     "applies_to_year": false,
+     "held": "not for this model year: verdict label for the 2021 Audi S7 Sportback (new-generation 2.9 twin-turbo V6 petrol), converted from CarExpert's previous rating system; no numeric score. Same generation, earlier model year"
+    },
+    {
+     "by": "Carbuyer (UK)",
+     "value": "3.5 out of 5",
+     "rates": "overall rating for the UK S7 Sportback, review dated 12 February 2021. Same C8 generation but the UK car is the TDI diesel mild hybrid, not the Canadian 2.9 petrol V6",
+     "url": "https://www.carbuyer.co.uk/audi/a7/s7-sportback-hatchback",
+     "applies_to_year": false,
+     "held": "not for this model year: overall rating for the UK S7 Sportback, review dated 12 February 2021. Same C8 generation but the UK car is the TDI diesel mild hybrid, not the Canadian 2.9 petrol V6"
+    }
+   ],
+   "ratings_absent": "none of the 3 found rates this model year of this car: YallaMotor (UAE) (misdescribes the car); CarExpert (Australia) (not for this model year); Carbuyer (UK) (not for this model year)",
+   "summary": "Autotrader.ca lists the 2024 S7 Sportback in Canada with a 2.9 TFSI six-cylinder rated 444 hp and 442 lb-ft, an automatic gearbox and all-wheel drive, and AutoDeal Canada specifies the automatic as an 8-speed. Reviewers praise the styling, the quality cabin and the hatchback's cargo room, but mention tight rear headroom and a noticeable lag pulling away from a stop. Audi service bulletins covering the S7 deal with 48V mild-hybrid electrical faults and coolant leaks from the V6 TFSI coolant pump. NHTSA lists the 2024 S7 as not crash-rated, and one US recall, for rear-camera software, is on record for the 2024 model year.",
+   "summary_sources": [
+    "https://www.autotrader.ca/research/audi/s7%20sportback/2024/",
+    "https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique",
+    "https://www.cars.com/research/audi-s7-2024/",
+    "https://audiworld.com/how-tos/slideshows/everything-we-love-and-hate-about-the-2024-audi-s7-978250",
+    "https://www.carexpert.com.au/car-reviews/2021-audi-s7-review",
+    "https://static.nhtsa.gov/odi/tsbs/2024/MC-10251623-0001.pdf",
+    "https://static.nhtsa.gov/odi/tsbs/2024/MC-11007304-0001.pdf",
+    "https://api.nhtsa.gov/SafetyRatings/VehicleId/19495",
+    "https://api.nhtsa.gov/recalls/recallsByVehicle?make=AUDI&model=S7&modelYear=2024"
+   ],
+   "issues": [
+    {
+     "issue": "48V mild-hybrid electrical fault: the battery can drain until power is lost; replacing the starter-generator does not fix it.",
+     "years": "S7 2020-2025 (TSB 2073284) and 2020-2023 (TSB 2058831)",
+     "sources": [
+      {
+       "url": "https://static.nhtsa.gov/odi/tsbs/2024/MC-10251623-0001.pdf",
+       "says": "Audi TSB 2073284/1 (9 Mar 2024): electrical fault in the cluster, risk of power loss; root cause is often other CAN-bus sensor faults"
+      },
+      {
+       "url": "https://static.nhtsa.gov/odi/tsbs/2023/MC-10233377-0001.pdf",
+       "says": "Audi TSB 2058831/6 (23 Mar 2023): 48V system warning with DTC P0CA700/U046900 on S7 2020-2023"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Coolant leaks from the V6 TFSI coolant pump; the coolant can reach the N649 switch valve and log P0299 underboost.",
+     "years": "S7 2020-2024 per Audi TSB 2070349/4",
+     "sources": [
+      {
+       "url": "https://static.nhtsa.gov/odi/tsbs/2024/MC-11007304-0001.pdf",
+       "says": "Audi TSB 2070349/4 (30 Aug 2024) for S7 2020-2024: coolant loss, coolant and engine lamps; the pump is the source"
+      },
+      {
+       "url": "https://store.ngpracing.com/blogs/guides/audi-b9-b9-5-s4-s5-rs5-sq5-ea839-2-9t-3-0t-water-pump-failure-guide",
+       "says": "parts seller lists the 2019+ C8 S7 2.9T; the pump leaks internally into the vacuum system; Audi has a revised pump"
+      },
+      {
+       "url": "https://www.carcomplaints.com/Audi/S7/2021/tsb/tsb-a1923462070349-3.shtml",
+       "says": "lists the V6 TFSI coolant-pump TSB for the 2021 Audi S7 (NHTSA TSB 10247198, 12 Dec 2023)"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Recall: a software fault can stop the rear-camera image appearing in reverse; dealers update the software free.",
+     "years": "2024 (US campaign covers 2019-2026 Audi vehicles)",
+     "sources": [
+      {
+       "url": "https://api.nhtsa.gov/recalls/recallsByVehicle?make=AUDI&model=S7&modelYear=2024",
+       "says": "1 recall for the 2024 S7: 25V900000, rear camera image may not display; dealer software update"
+      },
+      {
+       "url": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/audi/model-name/s7/year-range/2024-2024",
+       "says": "Transport Canada returns recall 2025713 (19 Dec 2025) for a 2024 Audi S7 query; its summary describes the rear camera software fault"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Noticeable lag pulling away from a stop and occasional jerky low-speed gear changes from the turbo V6 and 8-speed automatic.",
+     "years": "2020-2024 (reviews of 2021 and 2024 cars; a 2020 owner in Canada)",
+     "sources": [
+      {
+       "url": "https://www.carexpert.com.au/car-reviews/2021-audi-s7-review",
+       "says": "2021 S7: occasional throttle lag and jerky low-speed gear changes noted as drawbacks"
+      },
+      {
+       "url": "https://audiworld.com/how-tos/slideshows/everything-we-love-and-hate-about-the-2024-audi-s7-978250",
+       "says": "2024 S7 test car: noticeable lag from a stop or after a downshift makes it feel jerky"
+      },
+      {
+       "url": "https://www.audiworld.com/forums/s7-225/ro-delay-accelaration-3094834/",
+       "says": "a 2020 S7 at about 60,000 km in Canada shows a noticeable delay when accelerating; no replies or fix"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Earlier C8 S7s carry many recalls: ten NHTSA campaigns list the 2021 S7, from seat-belt retractors to instrument-display software.",
+     "years": "2021 (generation context; the 2024 query returns one)",
+     "sources": [
+      {
+       "url": "https://api.nhtsa.gov/recalls/recallsByVehicle?make=AUDI&model=S7&modelYear=2021",
+       "says": "Count 10, incl. 21V295000 rear trailing-arm lock nut, 22V155000 fuel level sender, 25V201000 instrument display software"
+      }
+     ],
+     "n_sources": 1
+    }
+   ],
+   "mods": [
+    {
+     "mod": "APR ECU software upgrade (Stage 1) for the 2.9T EA839, flashed through the OBD-II port",
+     "why": "More power and torque across the rev range; an S7 C8 owner says it made a large difference",
+     "sources": [
+      {
+       "url": "https://www.audiworld.com/forums/s7-225/s7-c8-3051538/",
+       "says": "S7 C8 owner runs the APR tune and says it made a big difference; links APR's EA839 C8 software"
+      },
+      {
+       "url": "https://wctperformance.ca/apr-ecu-upgrade-2-9t-ea839-mhev-v6-c8-for-s6-s7",
+       "says": "Canadian shop lists the APR ECU upgrade for the S7 (C8): OBD-port flash, several octane files, E60-E85 support"
+      }
+     ],
+     "caveat": "WCT's listing offers 'APR Plus', described as a limited powertrain warranty matched to the factory term; it says nothing on emissions legality."
+    },
+    {
+     "mod": "Air suspension controller (CETE) to lower or raise the car per Drive Select mode",
+     "why": "Use the full range of the factory air suspension, with set heights per mode and by speed, and a 'show mode' low setting",
+     "sources": [
+      {
+       "url": "https://www.audiworld.com/forums/s7-225/new-product-c8-cete-air-suspension-controller-2967082/",
+       "says": "vendor post: CETE controller for C8 A6/S6/A7/S7 with factory air suspension, app-controlled, per-mode and speed settings"
+      },
+      {
+       "url": "https://www.audiworld.com/forums/s6-c8-platform-discussion-230/s6-modded-3055113/",
+       "says": "a 2020 C8 S6 build lists a CETE suspension module (S6 and S7 share the APR file and the Audi TSBs)"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Bolt-ons on one C8 S6 build: aftermarket intake, resonator delete, forged 21x10 wheels, front lip and RS-style grille",
+     "why": "Sound (the owner posted clips of the resonator delete) and looks; the owner gives no other reason",
+     "sources": [
+      {
+       "url": "https://www.audiworld.com/forums/s6-c8-platform-discussion-230/s6-modded-3055113/",
+       "says": "2020 S6: APR Stage 1 on 93 octane, Roc Euro intake, resonator delete, BC Forged 21x10 wheels, OBD11 flashing tool"
+      }
+     ],
+     "caveat": null
+    }
+   ],
+   "quote": null,
+   "quote_held": {
+    "text": "Replacing the 48V Starter/Generator will not fix this problem.",
+    "url": "https://static.nhtsa.gov/odi/tsbs/2024/MC-10251623-0001.pdf",
+    "held": "its review is not of this model year (its page is not one of the shown ratings)"
+   },
+   "clubs": [
+    {
+     "name": "AudiWorld forum: S7 (under Audi A7 / S7 / RS 7 (C8))",
+     "kind": "forum",
+     "where": "online",
+     "url": "https://www.audiworld.com/forums/s7-225/"
+    },
+    {
+     "name": "AudiWorld forum: Audi A7 / S7 / RS 7 (C8)",
+     "kind": "forum",
+     "where": "online",
+     "url": "https://www.audiworld.com/forums/audi-a7-s7-rs-7-c8-223/"
+    },
+    {
+     "name": "AudiWorld forum: Canadian Discussion",
+     "kind": "forum",
+     "where": "Canada",
+     "url": "https://www.audiworld.com/forums/canadian-discussion-43/"
+    },
+    {
+     "name": "Audi Club North America (32 chapters across the U.S. and Canada)",
+     "kind": "club",
+     "where": "Canada",
+     "url": "https://audiclubna.org/about-audi-club/"
+    },
+    {
+     "name": "Audi Club Western Canada (Audi Club North America chapter; covers AB, BC, SK, MB, NT, NU, YT)",
+     "kind": "chapter",
+     "where": "Alberta",
+     "url": "https://audiclubna.org/about-audi-club/chapters-groups/"
+    }
+   ],
+   "absent": [
+    {
+     "what": "Expert scores from Car and Driver, MotorTrend, Edmunds, Kelley Blue Book and J.D. Power for the 2024 S7",
+     "searched": [
+      "https://www.caranddriver.com/audi/s7-2024 (domain refuses the fetch tool)",
+      "MotorTrend: domain refuses the fetch tool (tried https://www.motortrend.com/cars/mercedes-benz/e-class/2021/ in this task)",
+      "Edmunds and KBB: both domains returned HTTP 403 in this task; a web-search snippet mentioned KBB and Edmunds OWNER ratings for the 2024 S7, not cited because the pages could not be opened",
+      "https://www.jdpower.com/cars/2024/audi/s7 (HTTP 403)",
+      "Could not open; not proven absent"
+     ]
+    },
+    {
+     "what": "U.S. News score for the 2024 S7",
+     "searched": [
+      "https://cars.usnews.com/cars-trucks/audi/s7/2024 (timed out twice)",
+      "Could not open; not proven absent"
+     ]
+    },
+    {
+     "what": "Autotrader.ca or Driving.ca expert review/score of a C8 (2019+) S7",
+     "searched": [
+      "web search 'Audi S7 Sportback review autotrader.ca OR driving.ca 2.9 TFSI' and 'autotrader.ca expert review Audi S7 2020-2024': no C8 review found (only a 2017 C7 test drive)",
+      "https://www.autotrader.ca/research/audi/s7%20sportback/2024/ (opened: research page, no rating)",
+      "Not found; not proven absent"
+     ]
+    },
+    {
+     "what": "Cars.com and CarGurus scores for the 2024 S7",
+     "searched": [
+      "https://www.cars.com/research/audi-s7-2024/ (opened: no expert score, 'No reviews yet')",
+      "https://www.cargurus.com/research/2024-Audi-S7-c32958 (opened: no expert rating, 'There are no reviews on this car')",
+      "PROVEN ABSENT on those pages"
+     ]
+    },
+    {
+     "what": "NHTSA crash rating for the 2024 S7",
+     "searched": [
+      "https://api.nhtsa.gov/SafetyRatings/modelyear/2024/make/AUDI/model/S7 (1 variant: 2024 Audi S7 4 DR AWD, VehicleId 19495)",
+      "https://api.nhtsa.gov/SafetyRatings/VehicleId/19495 (Overall, Front, Side and Rollover all 'Not Rated'). PROVEN ABSENT"
+     ]
+    },
+    {
+     "what": "IIHS rating that names the S7",
+     "searched": [
+      "https://www.iihs.org/ratings/vehicle/audi/a7-4-door-hatchback/2024 (rates the 2024 A7, no award; tests run on a 2019 A6; the page never mentions the S7), not attributed"
+     ]
+    },
+    {
+     "what": "RepairPal reliability rating",
+     "searched": [
+      "web-search snippet gave RepairPal 2/5 for the Audi S7, but it is pooled across all S7 years (not this generation) and the page was not opened, so it is not used"
+     ]
+    },
+    {
+     "what": "Audizine forum (C8 S6/S7/A7 sections)",
+     "searched": [
+      "https://www.audizine.com/forum/ (HTTP 403)",
+      "https://www.audizine.com/threads/long-term-concerns-with-the-c8-s6.1000995/ (HTTP 403)",
+      "https://audizine.com/threads/exhaust-help.998630/ (HTTP 403)",
+      "Could not open; not listed as a forum and not cited"
+     ]
+    },
+    {
+     "what": "Aftermarket exhaust product pages (AWE C8 S6/S7) and APR's own product page",
+     "searched": [
+      "https://awe-tuning.com/collections/audi/products/awe-exhaust-suite-audi-c8-s6-s7 (HTTP 429, twice)",
+      "https://urotuning.com/products/awe-exhaust-for-c8-audi-s6-s7-2-9t and https://es-performance.com/products/awe-exhaust-suite-audi-c8-s6-s7-2-9tt (HTTP 429)",
+      "https://www.goapr.com/products/software/ecu_upgrade/parts/ECU-29T-EA839-C8 (HTTP 403)",
+      "Could not open; not cited"
+     ]
+    },
+    {
+     "what": "Owner forum evidence of TCU (ZF 8-speed) tunes on the C8 S7",
+     "searched": [
+      "https://www.audiworld.com/forums/s7-225/tuning-now-possible-locked-zf8-transmissions-al552-al952-gen-2-a-3092002/ (opened: a tuning-tool vendor's post that never names the S7; no owner replies), not used as a mod"
+     ]
+    }
+   ],
+   "src": "research/reviews/audi_s7.json",
+   "specs": [
+    {
+     "label": "Power",
+     "kind": "READ",
+     "value": "444 hp",
+     "src": "READ https://www.autotrader.ca/research/audi/s7%20sportback/2024/ (Autotrader.ca 2024 S7 Sportback research page lists 'Horsepower 444 hp' on each trim row; no kW and no rpm stated)"
+    },
+    {
+     "label": "Torque",
+     "kind": "READ",
+     "value": "442 lb-ft",
+     "src": "READ https://www.autotrader.ca/research/audi/s7%20sportback/2024/ (same page lists 'Torque 442 ft-lb' (one trim row shows '442 ft-lb - 443 ft-lb'); no Nm and no rpm stated)"
+    },
+    {
+     "label": "Engine",
+     "kind": "READ",
+     "value": "2.9 L twin-turbo gas/electric (mild hybrid) V6",
+     "src": "READ https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (AutoDeal Canada 2024 S7 spec page: 2.9L 'Twin Turbo Gas/Electric V-6', 6 cylinders (Autotrader.ca calls it '2.9 TFSI 6-Cylinder'))"
+    },
+    {
+     "label": "Gearbox",
+     "kind": "READ",
+     "value": "automatic, 8 speeds",
+     "src": "READ https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (AutoDeal Canada lists an 8-speed automatic with overdrive (Autotrader.ca says only 'Automatic'))"
+    },
+    {
+     "label": "Drive",
+     "kind": "READ",
+     "value": "all-wheel drive",
+     "src": "READ https://www.autotrader.ca/research/audi/s7%20sportback/2024/ (Autotrader.ca lists 'All Wheel Drive' for every 2024 S7 Sportback trim)"
+    },
+    {
+     "label": "Weight",
+     "kind": "READ",
+     "value": "2,085 kg (4597 lb at the source, converted)",
+     "src": "READ https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (AutoDeal Canada spec page, base column: curb weight 4,597 lbs; the page cites no original data source)"
+    },
+    {
+     "label": "0-100 km/h",
+     "kind": "ABSENT",
+     "value": "not published",
+     "src": "ABSENT: https://www.autotrader.ca/research/comparison/2024_audi_s7-vs-2022_audi_s7/ (0-100 km/h 'Not listed'); https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (0-100 km/h not listed); https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html (HTTP 403)"
+    },
+    {
+     "label": "0-60 mph",
+     "kind": "READ",
+     "value": "4.5 s",
+     "src": "READ https://www.cargurus.com/research/2024-Audi-S7-c32958 (CarGurus 2024 Audi S7 research page (US market) lists 0-60 mph in 4.5 seconds)"
+    },
+    {
+     "label": "Top speed",
+     "kind": "ABSENT",
+     "value": "not published",
+     "src": "ABSENT: https://www.autotrader.ca/research/comparison/2024_audi_s7-vs-2022_audi_s7/ (top speed not listed); https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (top speed not listed); https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html and https://www.audi.ca/ca/web/fr/modeles/a7/s7-sportback.html (HTTP 403); https://www.caranddriver.com/audi/s7-2024 (domain refuses the fetch tool)"
+    },
+    {
+     "label": "Length",
+     "kind": "READ",
+     "value": "4978 mm",
+     "src": "READ https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (AutoDeal Canada spec page: length 4,978 mm)"
+    },
+    {
+     "label": "New, from (MSRP)",
+     "kind": "ABSENT",
+     "value": "not published",
+     "src": "ABSENT: https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html and the French page (HTTP 403); web search for an Audi Canada 2024 S7 Sportback pricing release (none found); https://www.autotrader.ca/research/audi/s7%20sportback/2024/ (shows $107,215 on the Premium Plus 2.9 TFSI row only, other trims 'Price N/A', not labelled a starting MSRP, so not used as the base price); https://specs2.auto123.com/en/specs/audi/a7/audi-a7-2024-29-tfsi-442577 (connection refused, twice); Could not read a 2024 Canadian starting MSRP; not proven absent"
+    }
+   ]
+  },
+  "bentley_flying_spur_2018": {
+   "car": "2018 Bentley Flying Spur V8",
+   "generation": "second generation Flying Spur, 2013-2019; 4.0 L twin-turbo V8 (not the W12, not the V8 S)",
+   "retrieved": "2026-11-06",
+   "ratings": [
+    {
+     "by": "The Car Guide (Guide de l'auto, Canada)",
+     "value": "3.5/5 (66%)",
+     "rates": "overall Car Guide rating, 2018 Bentley Flying Spur, not tied to a trim. Detailed ratings on the same page: fuel economy 3/10, reliability 6/10, safety 8/10, infotainment 7/10, driving 6/10, overall 7/10. Pro listed: phenomenal power; con: fuel consumption",
+     "url": "https://www.guideautoweb.com/en/makes/bentley/flying-spur/2018/ratings/",
+     "applies_to_year": true
+    }
+   ],
+   "ratings_held": [
+    {
+     "by": "CarBuzz",
+     "value": "8.9/10",
+     "rates": "CarBuzz Buzzscore, 2018 Bentley Flying Spur. Category scores: interior and cargo 10, infotainment and features 10, value 10, performance 9, reliability 9, safety 9, exterior design 8, fuel efficiency 6. The page shows the scores with no written review text and no user reviews",
+     "url": "https://carbuzz.com/cars/bentley/flying-spur/2018",
+     "applies_to_year": true,
+     "held": "a score with no written review behind it"
+    },
+    {
+     "by": "RAC (UK)",
+     "value": "6.9/10",
+     "rates": "used-car verdict for the whole MK2 Flying Spur, 2013-2019, V8 and W12 scored together (value 7, interior and tech 8, practicality 7, performance 9, ride and handling 8, safety 9, running costs 3)",
+     "url": "https://www.rac.co.uk/drive/car-reviews/bentley/flying-spur/flying-spur-2013-2019/",
+     "applies_to_year": false,
+     "held": "not for this model year: used-car verdict for the whole MK2 Flying Spur, 2013-2019, V8 and W12 scored together (value 7, interior and tech 8, practicality 7, performance 9, ride and handling 8, safety 9, running costs 3)"
+    }
+   ],
+   "ratings_absent": null,
+   "summary": "Reviewers of this generation praise the build quality, the cabin materials and the effortless, smooth V8, and the RAC calls the car very reliable. The criticisms are a ride that is less smooth than expected, light and vague steering with plenty of body roll, a heavy car, and sat-nav and technology that trail the Mercedes S-Class (evo, 2014). Fuel use and running costs are the common complaint: The Car Guide lists fuel consumption as its con and the RAC scores running costs 3/10. On the repair side, Bentley's own bulletins cover leaking air springs and turbocharger damage caused by a clogged oil strainer on the V8. NHTSA lists no owner complaints filed for the 2018 Flying Spur.",
+   "summary_sources": [
+    "https://www.evo.co.uk/bentley/flying-spur/14671/bentley-flying-spur-v8-review-and-pictures",
+    "https://www.rac.co.uk/drive/car-reviews/bentley/flying-spur/flying-spur-2013-2019/",
+    "https://www.guideautoweb.com/en/makes/bentley/flying-spur/2018/ratings/",
+    "https://static.nhtsa.gov/odi/tsbs/2019/MC-10153789-9999.pdf",
+    "https://static.nhtsa.gov/odi/tsbs/2019/MC-10161855-9999.pdf",
+    "https://api.nhtsa.gov/complaints/complaintsByVehicle?make=bentley&model=flying%20spur&modelYear=2018"
+   ],
+   "issues": [
+    {
+     "issue": "Air springs (air suspension struts) leak, so a corner sags or the suspension faults; Bentley issued a fault-finding procedure for it.",
+     "years": "2014-2018 Flying Spur per the Bentley bulletin; Continental and Flying Spur generally per the parts supplier",
+     "sources": [
+      {
+       "url": "https://static.nhtsa.gov/odi/tsbs/2019/MC-10153789-9999.pdf",
+       "says": "Bentley technical product information 2030217/5 'Air spring fault finding' lists leaking shock absorbers/air springs at each corner and covers Flying Spur model years 2014-2018 (filed with NHTSA)"
+      },
+      {
+       "url": "https://www.flyingspares.com/news/homepage-featured/air-suspension-bentley-gt-gtc-flying-spur.html",
+       "says": "a UK Bentley parts supplier says air leaking from the damper is the most common Continental GT/Flying Spur suspension fault it sees; bellows dry out and tear with age (promotional page, no years given)"
+      },
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/bentley-flying-spur-ph-used-buying-guide/48491",
+       "says": "a buying guide for the 2020-on Flying Spur says leaking air chambers that overwork the pump affect Flying Spurs past and present"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Turbocharger damage and hard starting when carbon clogs the oil strainer feeding the turbos; Bentley fitted a larger strainer.",
+     "years": "2014-2018 Flying Spur V8 (and 2012-2018 Continental V8)",
+     "sources": [
+      {
+       "url": "https://static.nhtsa.gov/odi/tsbs/2019/MC-10161855-9999.pdf",
+       "says": "Bentley TSB 2052085/2 (May 2019), V8 4.0TFSI: hard starting, noise and low power from damaged turbos; carbon and soot build up in the turbo oil strainer; repair replaces both turbos plus the strainer and non-return valve"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "Front anti-roll bar drop links wear and start to knock.",
+     "years": "2013-2019 Flying Spur",
+     "sources": [
+      {
+       "url": "https://www.rac.co.uk/drive/car-reviews/bentley/flying-spur/flying-spur-2013-2019/",
+       "says": "the front anti-roll bar drop links often wear and knock (about GBP 50 each); the variable dampers rarely give trouble"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "Tyre-pressure sensor batteries run out at about five years, and the sensors are costly to replace.",
+     "years": "2013-2019 Flying Spur",
+     "sources": [
+      {
+       "url": "https://www.rac.co.uk/drive/car-reviews/bentley/flying-spur/flying-spur-2013-2019/",
+       "says": "the tyre-pressure sensors' built-in batteries die at around five years; about GBP 142 each, around GBP 900 plus VAT with fitting"
+      }
+     ],
+     "n_sources": 1
+    }
+   ],
+   "mods": [],
+   "quote": null,
+   "quote_held": {
+    "text": "The Flying Spur, like its cousin the Continental GT, is an extremely reliable car.",
+    "url": "https://www.rac.co.uk/drive/car-reviews/bentley/flying-spur/flying-spur-2013-2019/",
+    "held": "its review is not of this model year (not for this model year: used-car verdict for the whole MK2 Flying Spur, 2013-2019, V8 and W12 scored together (value 7, interior and tech 8, practicality 7, performance 9, ride and handling 8, safety 9, running costs 3))"
+   },
+   "clubs": [
+    {
+     "name": "Bentley Drivers Club",
+     "kind": "club",
+     "where": "UK-based, international (regions in the UK, USA, Europe, Oceania and elsewhere; no Canadian region listed)",
+     "url": "https://www.bdcl.org"
+    },
+    {
+     "name": "Rolls-Royce Owners' Club (RROC)",
+     "kind": "club",
+     "where": "North America (Bentley and Rolls-Royce, all eras; 26 regions across North America)",
+     "url": "https://www.rroc.org/"
+    },
+    {
+     "name": "Rolls-Royce Enthusiasts' Club (RREC)",
+     "kind": "club",
+     "where": "UK-based, international (Rolls-Royce and Bentley)",
+     "url": "https://rrec.org.uk/about"
+    },
+    {
+     "name": "PistonHeads Gassing Station: Bentley & Rolls Royce",
+     "kind": "forum",
+     "where": "online (UK)",
+     "url": "https://www.pistonheads.com/gassing/forum.asp?h=0&f=162"
+    },
+    {
+     "name": "RROC Discussion Forum",
+     "kind": "forum",
+     "where": "online, sign-in required",
+     "url": "https://rroc.hoop.la/"
+    }
+   ],
+   "absent": [
+    {
+     "what": "NHTSA crash-test rating",
+     "searched": [
+      "https://api.nhtsa.gov/SafetyRatings/VehicleId/12573 (2018 Bentley Flying Spur V8 4 DR AWD): every rating field reads Not Rated. PROVEN ABSENT"
+     ]
+    },
+    {
+     "what": "IIHS rating",
+     "searched": [
+      "https://www.iihs.org/ratings (no make list in the text)",
+      "https://www.iihs.org/ratings/vehicle/bentley/flying-spur-4-door-sedan/2018 (HTTP 404). Not found; not proven absent"
+     ]
+    },
+    {
+     "what": "Edmunds rating",
+     "searched": [
+      "https://www.edmunds.com/bentley/flying-spur/2018/review/ (HTTP 403)",
+      "https://www.edmunds.com/bentley/flying-spur/2018/st-401743557/review/ (HTTP 403)"
+     ]
+    },
+    {
+     "what": "Kelley Blue Book rating",
+     "searched": [
+      "https://www.kbb.com/bentley/flying-spur/2018/ (HTTP 403)"
+     ]
+    },
+    {
+     "what": "Car and Driver and MotorTrend ratings",
+     "searched": [
+      "https://www.caranddriver.com/bentley/flying-spur-2018 (the fetch tool cannot reach caranddriver.com)",
+      "web search 'motortrend 2018 Bentley Flying Spur V8 review' (no MotorTrend result)"
+     ]
+    },
+    {
+     "what": "J.D. Power rating",
+     "searched": [
+      "https://www.jdpower.com/cars/2018/bentley/flying-spur (HTTP 403)"
+     ]
+    },
+    {
+     "what": "Consumer Reports",
+     "searched": [
+      "paywalled; no public page with a number was found or opened"
+     ]
+    },
+    {
+     "what": "Cars.com owner rating",
+     "searched": [
+      "https://www.cars.com/research/bentley-flying_spur-2018/ (no consumer reviews yet; no expert score)"
+     ]
+    },
+    {
+     "what": "A star rating for the plain V8 of this generation from UK outlets",
+     "searched": [
+      "https://www.evo.co.uk/bentley/flying-spur/14671/bentley-flying-spur-v8-review-and-pictures (Nov 2014 review of the V8; the score is not in the page text)",
+      "https://www.autoexpress.co.uk/bentley/continental-flying-spur/87326/bentley-flying-spur-v8-review (now serves the 2021 third-generation V8 review, 5/5: wrong generation, excluded)",
+      "https://www.autoexpress.co.uk/bentley/flying-spur/97436/bentley-flying-spur-v8-s-review (4/5, but it is the V8 S: wrong trim, excluded)",
+      "https://www.topgear.com/car-reviews/bentley/flying-spur/40-v8-4dr-auto/road-test (HTTP 403)",
+      "https://whatcar.com/bentley/flying-spur/saloon/40-v8-a-4dr-auto/104732 and the What Car? used review (HTTP 402)",
+      "https://theaa.com/car-reviews/bentley/flying-spur/v-8 (serves a review index, no Flying Spur review)"
+     ]
+    },
+    {
+     "what": "NHTSA recall list for the 2018 Flying Spur",
+     "searched": [
+      "https://api.nhtsa.gov/recalls/recallsByVehicle with make bentley / model flying spur / year 2018, several spellings (HTTP 400 every time)",
+      "NHTSA safety-ratings record VehicleId 12573 lists 0 recalls, 0 complaints and 0 investigations, and The Car Guide 2018 page lists recalls as none; the recall database itself was not read"
+     ]
+    },
+    {
+     "what": "Car Checker report on the Flying Spur Mk2 4.0 V8",
+     "searched": [
+      "https://www.carchecker.pro/reports/bentley_flying_spur_mk2_4.0_v8.html (HTTP 429 twice; not cited)"
+     ]
+    },
+    {
+     "what": "Alberta or Western Canada chapter of a Bentley club",
+     "searched": [
+      "https://www.bdcl.org/regions (UK, USA, Europe, Oceania, rest of world; no Canadian region)",
+      "https://www.bdcl.org/Regions/United-States-of-America/North-West-USA (does not say it covers Canada)",
+      "https://www.rroc.org/regions and https://www.rroc.org/content.asp?admin=Y&contentid=133 (region names are behind login or in a map image)",
+      "https://rrec.org.uk/about/worldwide-sections and https://app.sheepcrm.com/rrec/sections/ (section list did not render)",
+      "web searches 'Rolls-Royce Owners' Club region Alberta OR Western Canada' and 'Can-Am Prairie Region Rolls-Royce Owners' Club': a news hit about an RROC prairie region could not be opened (https://www.stettlerindependent.com/news/rolls-royce-club-rolls-into-town/ returned the site's news index), so it is not cited"
+     ]
+    }
+   ],
+   "src": "research/reviews/bentley_flying_spur_2018.json"
+  },
+  "bmw_i8_2016": {
+   "car": "2016 BMW i8 Coupe",
+   "generation": "I12 plug-in hybrid, before the 2018 facelift (1.5 L three-cylinder turbo plus an electric front axle)",
+   "retrieved": "2026-11-06",
+   "ratings": [
+    {
+     "by": "The Car Guide (Guide de l'auto, Canada)",
+     "value": "4.0/5 (83%)",
+     "rates": "overall Car Guide rating, 2016 BMW i8 coupe. Detailed ratings (global): fuel economy 6/10, safety 7/10, infotainment 8/10, driving 8/10, overall 9/10; reliability N/A. Pros and cons listed as N/A",
+     "url": "https://www.guideautoweb.com/en/makes/bmw/i8/2016/ratings/",
+     "applies_to_year": true
+    }
+   ],
+   "ratings_held": [
+    {
+     "by": "CarBuzz",
+     "value": "8.6/10",
+     "rates": "CarBuzz Buzzscore, 2016 BMW i8 coupe. Category scores: exterior design 10, fuel efficiency 10, performance 9, reliability 9, safety 9, infotainment and features 8, interior and cargo 7, value for money 7. No review text in the part of the page read",
+     "url": "https://carbuzz.com/cars/bmw/i8/2016",
+     "applies_to_year": true,
+     "held": "a score with no written review behind it"
+    },
+    {
+     "by": "Cars.com (owner reviews)",
+     "value": "4.5/5 (6 reviews)",
+     "rates": "average owner rating, 2016 BMW i8. Sub-scores: exterior 4.8, comfort 4.7, interior 4.5, reliability 4.5, performance 4.3, value 4.3; 83% recommend",
+     "url": "https://www.cars.com/research/bmw-i8-2016/",
+     "applies_to_year": true,
+     "held": "an owner average of 6 reviews (fewer than 10)"
+    },
+    {
+     "by": "CarGurus (owner reviews)",
+     "value": "4.0/5 (5 reviews)",
+     "rates": "average owner rating, 2016 BMW i8 (2 five-star, 1 four-star, 2 three-star). The expert review on the page carries no score",
+     "url": "https://www.cargurus.com/research/2016-BMW-i8-c25383",
+     "applies_to_year": true,
+     "held": "an owner average of 5 reviews (fewer than 10)"
+    }
+   ],
+   "ratings_absent": null,
+   "summary": "Cars.com's review, written for the 2015 car and stated to apply to the largely unchanged 2016, praises the supercar styling, brisk acceleration, efficiency against exotic rivals and interior quality, but finds the car heavy-feeling, hard to get into and out of, and short on rear-seat room. CarGurus credits strong performance and efficiency for the price but criticises a firm ride, numb electric steering, poor rear visibility and little luggage space. Owners in a Rennlist thread like the looks, the instant electric torque and the comfortable highway cruising, but dislike the piped-in engine sound and an electric range of roughly 21 miles. BMW service bulletins for the 2016 car concern the drive electronics (EME) and the fuel filler flap, owners report costly electric A/C compressor failures, and a UK used-car guide calls total high-voltage battery failures rare.",
+   "summary_sources": [
+    "https://www.cars.com/research/bmw-i8-2016/",
+    "https://www.cargurus.com/research/2016-BMW-i8-c25383",
+    "https://rennlist.com/forums/997-forum/1323052-any-bmw-i8-owners-here.html",
+    "https://carcomplaints.com/BMW/i8/2016/tsbs/tsb-b122815.shtml",
+    "https://carcomplaints.com/BMW/i8/2016/tsbs/tsb-b511715.shtml",
+    "https://www.theautopian.com/how-the-black-death-can-destroy-a-bmw-i3-instantly-and-with-no-warning/",
+    "https://www.ma-bmw.com/forum/viewtopic.php?t=53132",
+    "https://www.pistonheads.com/regulars/ph-ev/bmw-i8--ph-used-buying-guide/42664"
+   ],
+   "issues": [
+    {
+     "issue": "Drive electronics (EME) faults bring up a 'Drivetrain fault' message or engine light; fixes range from software to EME replacement.",
+     "years": "bulletins filed for the 2016 i8 (dated 2015-2017)",
+     "sources": [
+      {
+       "url": "https://carcomplaints.com/BMW/i8/2016/tsbs/tsb-b122815.shtml",
+       "says": "TSB B122815: 'Drivetrain fault' message with EME drive-position and parking-lock codes, caused by EME software"
+      },
+      {
+       "url": "https://m.carcomplaints.com/BMW/i8/2016/tsbs/tsb-b122215.shtml",
+       "says": "TSB B122215: intermittent engine light with an inverter current-sensor code, caused by an EME software error"
+      },
+      {
+       "url": "https://carcomplaints.com/BMW/i8/2016/tsbs/tsb-b612916.shtml",
+       "says": "TSB B612916: engine light from an internal EME fault; remedy is replacing the EME"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Fuel filler flap can fail to unlock or set a 'Fuel tank system faulty' message.",
+     "years": "2016 (bulletin); the UK guide does not split by year",
+     "sources": [
+      {
+       "url": "https://carcomplaints.com/BMW/i8/2016/tsbs/tsb-b511715.shtml",
+       "says": "TSB B511715: the filler-flap locking rod disconnects from central locking, storing a jammed-button code"
+      },
+      {
+       "url": "https://www.pistonheads.com/regulars/ph-ev/bmw-i8--ph-used-buying-guide/42664",
+       "says": "the flap can fail to unlock, more often on hot days; the fix may mean a pressure sensor and dropping the tank"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Electric A/C compressor can fail internally and spread metal debris through the refrigerant circuit that also cools the battery.",
+     "years": "i8 generally; sources do not single out a year",
+     "sources": [
+      {
+       "url": "https://www.theautopian.com/how-the-black-death-can-destroy-a-bmw-i3-instantly-and-with-no-warning/",
+       "says": "the i8's battery is refrigerant-cooled, and owners have reported compressor failures with metal in the lines"
+      },
+      {
+       "url": "https://www.ma-bmw.com/forum/viewtopic.php?t=53132",
+       "says": "owners warn a failing compressor can contaminate the cooling circuit; full repair put near 15,000 euros"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "High-voltage battery: total failures described as rare and wear as low, but ask for a recent battery health check.",
+     "years": "all I12 i8s (the 2018 update brought a larger pack)",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/regulars/ph-ev/bmw-i8--ph-used-buying-guide/42664",
+       "says": "liquid-cooled lithium-ion pack from the i3; total failures are rare"
+      },
+      {
+       "url": "https://www.ma-bmw.com/forum/viewtopic.php?t=53132",
+       "says": "owners near 200,000 km report under 10% capacity loss; get a recent battery diagnostic before buying"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Rear window heater elements can fail.",
+     "years": "2014-2020 per the guide (not split by year)",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/regulars/ph-ev/bmw-i8--ph-used-buying-guide/42664",
+       "says": "rear glass heater elements can fail, usually sorted under warranty"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "Turbocharger coolant-pump signal fault sets a 'Drive Check' message while the car drives normally.",
+     "years": "2016 (bulletin)",
+     "sources": [
+      {
+       "url": "https://carcomplaints.com/BMW/i8/2016/tsbs/tsb-b170215.shtml",
+       "says": "TSB B170215: fault code for an implausible turbo coolant pump signal, no drivability problem"
+      }
+     ],
+     "n_sources": 1
+    }
+   ],
+   "mods": [
+    {
+     "mod": "Lowering springs (AC Schnitzer and H&R named), sometimes with extra negative camber.",
+     "why": "Flatter cornering and a sharper front end, with the ride said to stay pliant when cruising; also stance.",
+     "sources": [
+      {
+       "url": "https://www.evo.co.uk/bmw/i8/19699/ac-schnitzer-acs8-review-do-carbon-upgrades-and-new-shoes-improve-the-bmw-i8",
+       "says": "Schnitzer springs drop the car 25 mm front, 20 mm rear; livelier handling, ride hard to tell from stock"
+      },
+      {
+       "url": "https://gtspirit.com/2015/09/07/custom-yellow-bmw-i8-turner-motorsport-sale/",
+       "says": "H&R springs lower the car 0.75 in front and 0.6 in rear, with BMW upper A-arms for camber"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Aftermarket forged or larger wheels (AC Schnitzer, Forgeline and Savini named).",
+     "why": "Lower weight and looks; one forged set was about 4.4 kg lighter than stock despite being bigger.",
+     "sources": [
+      {
+       "url": "https://www.evo.co.uk/bmw/i8/19699/ac-schnitzer-acs8-review-do-carbon-upgrades-and-new-shoes-improve-the-bmw-i8",
+       "says": "AC1 forged wheels about 4.4 kg lighter overall, on wider Michelin Pilot Super Sport tyres"
+      },
+      {
+       "url": "https://www.bmwblog.com/2017/03/28/bmw-i8-camouflage-wrap-gets-performance-upgrades/",
+       "says": "a build on 22-inch Savini wheels with H&R springs, said to improve stance and ride"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Full vinyl wraps over the factory paint.",
+     "why": "Visual impact; the stock colour stays underneath.",
+     "sources": [
+      {
+       "url": "https://www.bmwblog.com/2017/03/28/bmw-i8-camouflage-wrap-gets-performance-upgrades/",
+       "says": "a camouflage wrap over a satin black base; a similar design is estimated at $3,000-5,000"
+      },
+      {
+       "url": "https://gtspirit.com/2015/09/07/custom-yellow-bmw-i8-turner-motorsport-sale/",
+       "says": "a bright yellow wrap fitted by the tuner"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Carbon-fibre aero and body kits (spoilers, canards, diffuser, wing).",
+     "why": "Looks; the reviewer felt most parts suit the car but the rear wing looks out of place.",
+     "sources": [
+      {
+       "url": "https://www.evo.co.uk/bmw/i8/19699/ac-schnitzer-acs8-review-do-carbon-upgrades-and-new-shoes-improve-the-bmw-i8",
+       "says": "full AC Schnitzer conversion quoted at 34,995 pounds excluding wrap; large carbon parts over 3,000 pounds each"
+      },
+      {
+       "url": "https://gulfnews.com/auto/news/our-poor-eyes-police-ticket-bmw-i8-wrapped-in-black-velvet-1.1578482012286",
+       "says": "a UK i8 with a velvet wrap and carbon add-ons was ticketed by police"
+      }
+     ],
+     "caveat": "Police in Manchester ticketed one modified i8 for bodywork add-ons judged likely to cause injury (and a cracked windscreen)."
+    },
+    {
+     "mod": "Aftermarket titanium exhaust.",
+     "why": "The stock car is quiet and much of the cabin sound is piped in; owners want real exhaust noise and less weight.",
+     "sources": [
+      {
+       "url": "https://www.bmwblog.com/2015/05/20/bmw-i8-gets-a-new-titanium-exhaust/",
+       "says": "an Arqray titanium exhaust weighs 18 lb vs 36 lb stock and adds pops on lift-off; fitting needs undertrays removed"
+      },
+      {
+       "url": "https://gtspirit.com/2015/09/07/custom-yellow-bmw-i8-turner-motorsport-sale/",
+       "says": "a titanium exhaust about 50% lighter makes the car much louder from outside"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Switching off the Active Sound Design (the synthetic engine sound).",
+     "why": "Owners find the piped-in sound fake; BMW gives no setting to turn it off.",
+     "sources": [
+      {
+       "url": "https://insideevs.com/news/453568/bmw-i8-active-sound-disabled-video/",
+       "says": "no factory switch, but the car can be modified to remove it; the three-cylinder sounds better than expected"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/1323052-any-bmw-i8-owners-here.html",
+       "says": "owners call the piped-in engine sound fake and unpleasant"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Apple CarPlay added through an aftermarket interface box.",
+     "why": "Some owners see the stock infotainment as basic; the box needs no coding and is reversible.",
+     "sources": [
+      {
+       "url": "https://www.ma-bmw.com/forum/viewtopic.php?t=47337",
+       "says": "an owner fitted a CarPlay box in about 4.5 hours, hidden under the glovebox, with no software change"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Fitting the later, larger 11.7 kWh high-voltage battery to a pre-2018 car (discussed, rarely worth it).",
+     "why": "More electric range, but posters say it adds only about 10-12 km and call it uneconomic.",
+     "sources": [
+      {
+       "url": "https://www.ma-bmw.com/forum/viewtopic.php?t=53132",
+       "says": "reportedly dealer-only work estimated at 15,000-20,000 euros; replacing a healthy pack is not economical"
+      }
+     ],
+     "caveat": "Posters say the 8-year/100,000 km battery warranty may be refused if scheduled maintenance was missed or charge capacity is low."
+    }
+   ],
+   "quote": null,
+   "quote_held": {
+    "text": "the i8 is effective, but not exemplary, in either role.",
+    "url": "https://www.cars.com/research/bmw-i8-2016/",
+    "held": "its review is not of this model year (an owner average of 6 reviews (fewer than 10))"
+   },
+   "clubs": [
+    {
+     "name": "BMW Club Southern Alberta (member of BMW Clubs Canada; registered in Alberta in 2008)",
+     "kind": "chapter",
+     "where": "Alberta",
+     "url": "https://bmwcsa.ca/"
+    },
+    {
+     "name": "BMW Car Club of British Columbia (member club of the BMW Club of Canada)",
+     "kind": "chapter",
+     "where": "Canada",
+     "url": "https://bmwccbc.org/about"
+    },
+    {
+     "name": "Forum MA-BMW, 'BMW i8' section (I12 and I15 Roadster; French language)",
+     "kind": "forum",
+     "where": "online",
+     "url": "https://www.ma-bmw.com/forum/viewforum.php?f=122"
+    }
+   ],
+   "absent": [
+    {
+     "what": "Expert scores from Edmunds, Kelley Blue Book, J.D. Power, Car and Driver and MotorTrend",
+     "searched": [
+      "https://www.edmunds.com/bmw/i8/2016/review/ and https://edmunds.com/bmw/i8/2016/review (HTTP 403)",
+      "https://www.kbb.com/bmw/i8/2016/ (HTTP 403)",
+      "https://www.jdpower.com/cars/2016/bmw/i8 (HTTP 403)",
+      "https://www.caranddriver.com/bmw/i8-2016 and https://www.motortrend.com/cars/bmw/i8/2016/ (domains refuse the fetch tool)",
+      "a BMWBlog post (search result only, not opened) says Car and Driver gave the i8 4/5 stars; year unclear, not counted",
+      "Could not open; not proven absent"
+     ]
+    },
+    {
+     "what": "NHTSA crash-test rating",
+     "searched": [
+      "https://api.nhtsa.gov/SafetyRatings/VehicleId/10496 (2016 BMW I8 2 DR AWD): every rating field reads Not Rated. PROVEN ABSENT"
+     ]
+    },
+    {
+     "what": "IIHS rating",
+     "searched": [
+      "https://www.iihs.org/ratings (no make list in the text)",
+      "https://www.iihs.org/ratings/vehicle/bmw (HTTP 404). Not found; not proven absent"
+     ]
+    },
+    {
+     "what": "Safety recall for the 2016 model year",
+     "searched": [
+      "NHTSA recallsByVehicle make=BMW model=i8 modelYear=2016: Count 0 (read with curl; the fetch tool got HTTP 400 on that endpoint). The 2014 and 2015 i8 recalls are filed under those years only",
+      "https://www.carcomplaints.com/BMW/i8/2016/ (no recalls listed for 2016)",
+      "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2024544 (Transport Canada indexes the 2016 i8 here, but the record names only X5 and 8 Series and says it is not a recall: an inconsequential tire-label notice)"
+     ]
+    },
+    {
+     "what": "BimmerPost BMW i forum, i8 section",
+     "searched": [
+      "https://bmwi.bimmerpost.com/forums/ (HTTP 403)",
+      "https://bmwi.bimmerpost.com/forums/showthread.php?p=22442756 (HTTP 403)",
+      "Exists per search results but could not be opened; not listed"
+     ]
+    },
+    {
+     "what": "Edmonton / Northern Alberta BMW club",
+     "searched": [
+      "web search '\"BMW Club of Northern Alberta\" Edmonton' (only a 2018 BimmerPost post, u11.bimmerpost.com showthread p=22697637, not opened since BimmerPost returns 403; no club website found)",
+      "https://www.bmwccbc.org/links/ (connection refused)",
+      "https://www.bmwclubs.ca/ (domain not found)",
+      "Not confirmed"
+     ]
+    },
+    {
+     "what": "Window tint, PPF and exhaust valve controllers as owner mods",
+     "searched": [
+      "web search 'i8 window tint thread owners front windows tint percentage BMW i8 forum' (no i8 owner thread; only precut-film retail listings)",
+      "web search 'BMW i8 paint protection film PPF ceramic tint i8 owner' (shop marketing only)",
+      "web search 'BMW i8 aftermarket exhaust titanium valve sound' (vendor listings for valved systems, none opened)",
+      "No owner source opened"
+     ]
+    },
+    {
+     "what": "Driving.ca or Autotrader.ca review of the i8",
+     "searched": [
+      "web search '\"i8\" BMW review site:driving.ca' (no driving.ca result)",
+      "web search 'driving.ca used car review BMW i8' (listings only)"
+     ]
+    },
+    {
+     "what": "UK used-car guides that would add issue sources",
+     "searched": [
+      "https://www.autocar.co.uk/node/105169 (HTTP 402)",
+      "https://www.whatcar.com/bmw/i8/coupe/used-review/n876/reliability (HTTP 402)",
+      "https://www.parkers.co.uk/bmw/i8/review/ (HTTP 402)",
+      "https://www.honestjohn.co.uk/carbycar/bmw/i8-2014/ (redirects to drive.co.uk home)",
+      "https://autos.yahoo.com//used-bmw-i8-2014-2020-110844977.html (HTTP 403)",
+      "Not cited"
+     ]
+    }
+   ],
+   "src": "research/reviews/bmw_i8_2016.json"
+  },
+  "mercedes_amg_e63s_2021": {
+   "car": "2021 Mercedes-AMG E 63 S 4MATIC+ Sedan",
+   "generation": "W213 E-Class (evo dates the W213 E63 2017-2023; mid-cycle update with new nose, after which only the S was offered). 2021 is the facelift car Mercedes-Benz Canada announced for early 2021. 4.0 L V8 biturbo (M177, the engine code MBWorld owners use), AMG SPEEDSHIFT MCT 9-speed, AMG Performance 4MATIC+",
+   "retrieved": "2026-11-06",
+   "ratings": [
+    {
+     "by": "CarsGuide (Australia)",
+     "value": "8.4",
+     "rates": "overall expert rating in the review 'Mercedes-AMG E 63 S 2021 review', variant 'Mercedes-Benz E63 2021: S 4Matic+' sedan. Sub-scores as printed: Price and features 8, Design 8, Practicality 8, Under the bonnet 9, Efficiency 7, Safety 10, Ownership 8, Driving 9",
+     "url": "https://www.carsguide.com.au/car-reviews/mercedes-amg-e-63-s-82459",
+     "applies_to_year": true
+    },
+    {
+     "by": "CarExpert (Australia)",
+     "value": "Very Good",
+     "rates": "verdict label for the 2021 Mercedes-AMG E63 S 4Matic+ sedan; the page says the label was converted from CarExpert's previous rating system and shows no numeric score",
+     "url": "https://www.carexpert.com.au/car-reviews/2021-mercedes-amg-e63-s-review",
+     "applies_to_year": true
+    }
+   ],
+   "ratings_held": [
+    {
+     "by": "Autotrader.ca (Trader score)",
+     "value": "8.3",
+     "rates": "overall Trader score for the 2021 Mercedes-AMG E 63 S WAGON (same model year, generation and 603 hp V8 as the sedan; body style differs). Category scores: Design 9.0, User Friendliness 6.5, Comfort 7.5, Everyday Usability 8.5, Driving dynamics 9.5, Powertrain 9.5, Efficiency 7.0, Value for money 8.5, Equipment 9.0, Safety 8.0",
+     "url": "https://www.autotrader.ca/editorial/expert-reviews/mercedes-benz/e-class/2021-mercedes-amg-e-63-s-wagon-review/",
+     "applies_to_year": true,
+     "hold": "another body style: it rates the 2021 E 63 S wagon; this car is the sedan (held at review 11-06)",
+     "held": "another body style: it rates the 2021 E 63 S wagon; this car is the sedan (held at review 11-06)"
+    }
+   ],
+   "ratings_absent": null,
+   "summary": "Mercedes-Benz Canada lists the 2021 AMG E 63 S Sedan with a 603 hp, 627 lb-ft 4.0 L V8 biturbo, a 9-speed MCT, fully variable 4MATIC+ with a Drift Mode, air suspension and 0-100 km/h in 3.4 s. Reviewers score it highly for acceleration and handling (CarsGuide 8.4, CarExpert 'Very Good', Autotrader.ca 8.3 for the wagon) while noting a firm ride, heavy fuel use and fiddly steering-wheel controls. evo reports no serious W213 E63 reliability problems so far, but says some owners get jerky MCT shifts and the car can crab near full lock at low speed. Owners on MBWorld describe rear main seal leaks blamed on clogged oil vapour separators, mostly on 2018-2020 cars, and dynamic engine mount replacements, including one on a 2021 wagon.",
+   "summary_sources": [
+    "https://mercedes-benz.ca/en/future-vehicles/2021-amg-e-63-s-sedan",
+    "https://www.carsguide.com.au/car-reviews/mercedes-amg-e-63-s-82459",
+    "https://www.carexpert.com.au/car-reviews/2021-mercedes-amg-e63-s-review",
+    "https://www.autotrader.ca/editorial/expert-reviews/mercedes-benz/e-class/2021-mercedes-amg-e-63-s-wagon-review/",
+    "https://evo.co.uk/mercedes/e63-amg/21199/mercedes-amg-e63-review-bmw-m5-rival-is-better-than-ever",
+    "https://mbworld.org/forums/w213-amg/861217-w213-e63s-rms-leak.html",
+    "https://mbworld.org/forums/w213-amg/841851-motor-mount-replacement.html"
+   ],
+   "issues": [
+    {
+     "issue": "Rear main seal leaks, which owners blame on clogged oil vapour separators; the fix usually renews the seal and both separators.",
+     "years": "Owner reports are 2018-2020 E63 S (M177); 2021 owners asked whether they are next, but no 2021 case appears in the threads read",
+     "sources": [
+      {
+       "url": "https://mbworld.org/forums/w213-amg/861217-w213-e63s-rms-leak.html",
+       "says": "2018 and 2019 E63 S owners report RMS leaks from about 18k miles; separators suspected; repairs took days to a month on parts"
+      },
+      {
+       "url": "https://mbworld.org/forums/w213-amg/926341-2018-e63s-rms-leak-prevention.html",
+       "says": "owners of 2018-2020 cars discuss renewing the separators; a shop invoice cites a Xentry tip to replace them with the seal"
+      },
+      {
+       "url": "https://mbworld.org/forums/c63-c63s-amg/881455-rear-main-seal-leak-impacting-all-m177-motors-3.html",
+       "says": "M177 thread: most reports are 2018-2019 E63/E63 S near 38-44k miles; separators and seal replaced together; a poster says there is no recall"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Dynamic (active) engine mounts fail or log an 'Active Engine Mount Fault'; replacement means dropping the subframe and a realignment.",
+     "years": "2018-2021 W213 E63 S; one 2021 wagon at about 2,500 miles",
+     "sources": [
+      {
+       "url": "https://mbworld.org/forums/w213-amg/841851-motor-mount-replacement.html",
+       "says": "2021 E63 S wagon had a mount replaced under warranty at about 2,500 miles; subframe removed, alignment after"
+      },
+      {
+       "url": "https://mbworld.org/forums/w213-amg/911950-active-engine-mount-fault.html",
+       "says": "2019 wagon shows an Active Engine Mount Fault near 59k miles; a 2018 wagon had both mounts done at about 10k"
+      },
+      {
+       "url": "https://mbworld.org/forums/w213-amg/902034-e63s-2018-a.html",
+       "says": "2018 E63 S buyer thread lists a failed motor mount replaced under warranty after a long parts wait"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Jerky or clunky low-speed shifts from the 9-speed MCT; software updates or a re-adaptation sometimes help.",
+     "years": "W213 E63 generally; the forum case is a 2018 car; Cars.com lists the gearbox as a 2021 con",
+     "sources": [
+      {
+       "url": "https://evo.co.uk/mercedes/e63-amg/21199/mercedes-amg-e63-review-bmw-m5-rival-is-better-than-ever",
+       "says": "some owners report jerky shifts from the nine-speed MCT; a software update can sometimes cure it"
+      },
+      {
+       "url": "https://mbworld.org/forums/w213-amg/918116-clunky-shifting-after-tcu-update.html",
+       "says": "2018 E63 shifted clunkier, especially 2-1, after a dealer TCU update; replies suggest Xentry re-adaptation"
+      },
+      {
+       "url": "https://www.cars.com/research/mercedes_benz-amg_e_63-2021/",
+       "says": "lists the AMG nine-speed transmission (E63 S) among the 2021 car's cons"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Tyres crab or clunk at low speed near full lock, worse when cold; Mercedes calls it normal and suggests winter tyres.",
+     "years": "W213 E63 (4MATIC+); forum case is a 2018 E63 S",
+     "sources": [
+      {
+       "url": "https://evo.co.uk/mercedes/e63-amg/21199/mercedes-amg-e63-review-bmw-m5-rival-is-better-than-ever",
+       "says": "E63 crabs and shimmies at low speed near full lock; Mercedes does not call it a fault and suggests winter tyres"
+      },
+      {
+       "url": "https://forums.mbclub.co.uk/threads/w213-e63s-4matic-clunking-anyone-else.231772",
+       "says": "2018 E63 S owners report a cold-weather clunk at full and partial lock; dealer blamed tyre skip"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Six NHTSA recalls list the 2021 AMG E63; the gravest: the fuel pump may shut off, losing drive power.",
+     "years": "2021",
+     "sources": [
+      {
+       "url": "https://api.nhtsa.gov/recalls/recallsByVehicle?make=MERCEDES-BENZ&model=AMG%20E63&modelYear=2021",
+       "says": "Count 6: 23V880000 fuel pump, 21V228000 rear camera/parking unit, 21V058000 and 22V365000 emergency-call software, 21V483000 rear belt retractor, 20V673000 passenger seat stop"
+      }
+     ],
+     "n_sources": 1
+    }
+   ],
+   "mods": [
+    {
+     "mod": "ECU tune, often with TCU and CPC flashes, sometimes paired with downpipes and intakes",
+     "why": "More power from the twin-turbo V8; owners say injectors are not needed and intakes add some gain but are optional",
+     "sources": [
+      {
+       "url": "https://mbworld.org/forums/w213-amg/898597-w213-e63s-tune-reliability.html",
+       "says": "owner plans an ECU/TCU/CPC flash plus downpipes; replies advise more frequent plugs, coils and oil changes"
+      },
+      {
+       "url": "https://mbworld.org/forums/w213-amg/852946-jerky-gearbox-rpm-after-stage-1-remap.html",
+       "says": "after a custom Stage 1 remap with no TCU/CPC tune, owners got delayed upshifts, high idle and jerky pull-offs"
+      }
+     ],
+     "caveat": "A reply in the tune thread warns tuning adds engine stress and will shorten engine life; whether the car is still under warranty after an RMS repair is raised but not settled."
+    },
+    {
+     "mod": "Aftermarket or modified downpipes (catless 70 mm stainless pipes, or cutting/gutting the factory converters)",
+     "why": "Owners see the stock downpipes, which contain two catalytic converters, as restrictive",
+     "sources": [
+      {
+       "url": "https://mbworld.org/forums/w213-amg/693571-downpipes.html",
+       "says": "owner calls stock downpipes very restrictive; installers usually cut the OEM pipes at the second converter; one reply calls it wasted money"
+      },
+      {
+       "url": "https://www.ctsturbo.com/?p=177505",
+       "says": "CTS Turbo 70 mm stainless downpipe for the M177 W213 E63 S replaces the factory converter; fitment years on the page conflict"
+      }
+     ],
+     "caveat": "CTS Turbo says a check-engine light will likely appear and stage 2 software is needed to clear it; neither page addresses emissions legality."
+    },
+    {
+     "mod": "Cat-back or valved exhaust (AWE, Akrapovic, Renntech EVM valve controller named), or catless downpipes with the stock valved exhaust",
+     "why": "More sound and more 'pops' than the already loud stock system",
+     "sources": [
+      {
+       "url": "https://mbworld.org/forums/w213-amg/896662-whatis-best-full-w213-e63s-exhaust.html",
+       "says": "owners compare AWE (kept stock cats), Akrapovic and Renntech EVM; several suggest catless downpipes or high-flow cats with the stock exhaust"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Lowering on the factory air suspension with an electronic module (CETE, MWMods named) or cheaper mechanical lowering links",
+     "why": "A lower stance (the thread's owner planned about an inch); a module adjusts front and rear height by the millimetre without tools",
+     "sources": [
+      {
+       "url": "https://mbworld.org/forums/w213-amg/878865-what-you-lowered-has-anyone-used-these-lowering-links.html",
+       "says": "most replies favour a module over links, which they call imprecise and prone to failing; several detailed replies are from vendors"
+      }
+     ],
+     "caveat": "Owners warn of heavy tyre wear when lowered; the thread does not discuss warranty."
+    },
+    {
+     "mod": "Tyre changes: replacing the factory Michelin Pilot Sport 4S with all-season tyres, and winter tyres for the cold",
+     "why": "Quieter, softer ride and better wet and light-snow grip; Mercedes suggests winter tyres to reduce low-speed crabbing in cold weather",
+     "sources": [
+      {
+       "url": "https://mbworld.org/forums/w213-amg/819833-tires-make-big-difference.html",
+       "says": "2021 E63 owner swapped PS4S for Pilot Sport All Season 4: less dry grip, quieter and smoother; others weigh Continental DWS 06 Plus"
+      },
+      {
+       "url": "https://evo.co.uk/mercedes/e63-amg/21199/mercedes-amg-e63-review-bmw-m5-rival-is-better-than-ever",
+       "says": "Mercedes suggests owners switch to winter tyres to mitigate low-speed crabbing in cold weather"
+      }
+     ],
+     "caveat": null
+    }
+   ],
+   "quote": null,
+   "quote_held": {
+    "text": "The W213 E63 hasn’t sprung any serious reliability issues to speak of just yet.",
+    "url": "https://evo.co.uk/mercedes/e63-amg/21199/mercedes-amg-e63-review-bmw-m5-rival-is-better-than-ever",
+    "held": "its review is not of this model year (its page is not one of the shown ratings)"
+   },
+   "clubs": [
+    {
+     "name": "MBWorld forum: W213/S213/C238/A238 E - from 2017-2023: E 43, E 53, E 63, E 63S Sedan, Wagon, Coupe, Cab",
+     "kind": "forum",
+     "where": "online",
+     "url": "https://mbworld.org/forums/w213-s213-c238-a238-e-2017-2023-e-43-e-53-e-63-e-63s-sedan-wagon-coupe-cab-214/"
+    },
+    {
+     "name": "MBWorld forum: Canada (regional area)",
+     "kind": "forum",
+     "where": "Canada",
+     "url": "https://mbworld.org/forums/canada-113/"
+    }
+   ],
+   "absent": [
+    {
+     "what": "Expert scores from Car and Driver, MotorTrend, Edmunds, Kelley Blue Book and J.D. Power for the 2021 E63 S",
+     "searched": [
+      "https://www.caranddriver.com/mercedes-amg/e63-s-e63-s-wagon-2021 (domain refuses the fetch tool)",
+      "https://www.motortrend.com/cars/mercedes-benz/e-class/2021/ (domain refuses the fetch tool)",
+      "https://www.edmunds.com/mercedes-benz/e-class/2021/amg-e-63-s/ (HTTP 403)",
+      "https://www.kbb.com/mercedes-benz/e-class/2021/ (HTTP 403)",
+      "https://www.jdpower.com/cars/2021/mercedes-benz/e-class (HTTP 403)",
+      "Could not open; not proven absent"
+     ]
+    },
+    {
+     "what": "Driving.ca review or score for the 2021 E63 S",
+     "searched": [
+      "web search 'driving.ca 2021 Mercedes-AMG E63 S sedan review' and 'site:driving.ca Mercedes-AMG E63 S 2021': no driving.ca page returned",
+      "Not found; not proven absent"
+     ]
+    },
+    {
+     "what": "Cars.com expert or owner score for the 2021 AMG E 63",
+     "searched": [
+      "https://www.cars.com/research/mercedes_benz-amg_e_63-2021/ (opened: no numeric expert score, 'No reviews yet', 0 consumer reviews; the NHTSA 5/5 it shows is stated as based on the base trim). PROVEN ABSENT on that page"
+     ]
+    },
+    {
+     "what": "NHTSA crash rating that names the E 63 S",
+     "searched": [
+      "https://api.nhtsa.gov/SafetyRatings/modelyear/2021/make/MERCEDES-BENZ/model/E-CLASS (6 variants, none names AMG or E 63)",
+      "https://api.nhtsa.gov/SafetyRatings/VehicleId/15650 (2021 E-Class 4 DR 4WD: 5 stars overall), not attributed because the record does not say it covers the E 63 S"
+     ]
+    },
+    {
+     "what": "IIHS rating that names the E 63 S",
+     "searched": [
+      "https://www.iihs.org/ratings/vehicle/mercedes-benz/e-class-4-door-sedan/2021 (2021 E-Class sedan is a Top Safety Pick+ for cars built after November 2020 with optional front crash prevention; tested car was a 2017 E 300; the page never mentions AMG or E 63), not attributed"
+     ]
+    },
+    {
+     "what": "Numeric scores from evo and Practical Motoring",
+     "searched": [
+      "https://evo.co.uk/mercedes/e63-amg/21199/mercedes-amg-e63-review-bmw-m5-rival-is-better-than-ever (opened: verdict bullets only, no star or number in the page text)",
+      "https://practicalmotoring.com.au/car-reviews/2021-mercedes-amg-e63-s-4matic-review (opened: no numeric score)"
+     ]
+    },
+    {
+     "what": "Mercedes-Benz Club of America section for Alberta / Edmonton",
+     "searched": [
+      "https://500section.mbca.org/local-clubs-sections (host not found)",
+      "https://vancouverisland.mbca.org/sections-by-region and https://lonestar.mbca.org/sections-by-region (host not found)",
+      "https://mbca.org/about and https://www.mbca.org/about-us (HTTP 403)",
+      "https://mbworld.org/forums/canada/602315-calgary-alberta-based-enthusiast-clubs.html (opened: 2015 post says the Alberta section may have been rolled into the BC section; 2017 post points to an unaffiliated Facebook group; no current status)",
+      "Could not confirm; not listed as a club"
+     ]
+    },
+    {
+     "what": "AMG Private Lounge (official AMG owners' community)",
+     "searched": [
+      "https://www.mercedes-amg.com/en/amg-private-lounge-groups (HTTP 403)",
+      "Could not open; not listed"
+     ]
+    },
+    {
+     "what": "Transport Canada recall list specific to the AMG E 63 S",
+     "searched": [
+      "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall/make-name/mercedes-benz/model-name/e/year-range/2021-2021 (lists 'E CLASS' recalls only, no trim), not attributed"
+     ]
+    }
+   ],
+   "src": "research/reviews/mercedes_amg_e63s_2021.json"
+  },
+  "porsche_911_c4_2012": {
+   "car": "2012 Porsche 911 Carrera 4 Coupe",
+   "generation": "997.2 (2009-2012); 3.6 L direct-injection flat-six (9A1), all-wheel drive. Not a 991, not a 997.1",
+   "retrieved": "2026-11-06",
+   "ratings": [
+    {
+     "by": "The Car Guide (Guide de l'auto, Canada)",
+     "value": "4.0/5 (77%)",
+     "rates": "overall Car Guide rating for the 2012 Porsche 911 range, not tied to a trim. The page's spec link is the 997 Carrera coupe and it says the new generation arrives in early 2012. Detailed ratings: driving 10/10, safety 10/10, reliability 8/10, interior 6/10, winter driving 6/10, comfort 6/10",
+     "url": "https://www.guideautoweb.com/en/makes/porsche/911/2012/ratings/",
+     "applies_to_year": true
+    }
+   ],
+   "ratings_held": [
+    {
+     "by": "Cars.com (owner reviews)",
+     "value": "4.8/5 (38 reviews)",
+     "rates": "average owner rating for all 2012 Porsche 911 versions; the page notes both the outgoing and the redesigned generation were sold as 2012s, so it is pooled, not Carrera 4 only. Sub-scores: reliability 4.8, performance 4.9, exterior 4.9, interior 4.7, comfort 4.6, value 4.6; 100% recommend [set not-this-car 11-06 at review: the 2012 model year pools the 997 and the redesigned 991, so this is not the 997.2 Carrera 4 alone]",
+     "url": "https://www.cars.com/research/porsche-911-2012/",
+     "applies_to_year": false,
+     "held": "not for this model year: average owner rating for all 2012 Porsche 911 versions; the page notes both the outgoing and the redesigned generation were sold as 2012s, so it is pooled, not Carrera 4 only. Sub-scores: reliability 4.8, performance 4.9, exterior 4.9, interior 4.7, comfort 4.6, value 4.6; 100% recommend [set not-this-car 11-06 at review: the 2012 model year pools the 997 and the redesigned 991, so this is not the 997.2 Carrera 4 alone]"
+    },
+    {
+     "by": "CarGurus Canada (owner reviews)",
+     "value": "4.7/5 (11 reviews)",
+     "rates": "average owner rating for the 2012 Porsche 911, not split by generation or trim (8 five-star, 3 four-star). No expert score on the page [set not-this-car 11-06 at review: the 2012 model year pools the 997 and the redesigned 991, so this is not the 997.2 Carrera 4 alone]",
+     "url": "https://www.cargurus.ca/research/2012-Porsche-911-c22961",
+     "applies_to_year": false,
+     "held": "not for this model year: average owner rating for the 2012 Porsche 911, not split by generation or trim (8 five-star, 3 four-star). No expert score on the page [set not-this-car 11-06 at review: the 2012 model year pools the 997 and the redesigned 991, so this is not the 997.2 Carrera 4 alone]"
+    }
+   ],
+   "ratings_absent": null,
+   "summary": "A Canadian test of the 2012 Carrera 4, the last of the 997 line, praised its all-wheel-drive grip on snow and ice and the long options list; its one stated drawback was keeping the 997 styling just as the 991 arrived, and Auto123 likewise pitched the Carrera 4 as a Porsche suited to Canada. The Car Guide scores the 2012 911 10/10 for driving and safety and 8/10 for reliability, and lists high prices, costly options, running costs and limited cargo space as its cons. Owners on CarGurus praise the handling, power and timeless looks but note limited space, cabin noise at speed and rear seats fit only for children. Specialists say the 9A1 engine has no IMS bearing and is less prone to bore scoring than the 997.1, though cold-start piston seizures are still reported, and owner forums name the water pump, air-oil separator and high-pressure fuel pump as the usual repair items.",
+   "summary_sources": [
+    "https://tractionlife.com/test-drive-2012-porsche-911-carrera-4/",
+    "https://www.auto123.com/en/multimedia/news/2012-porsche-911-carrera-4-review/255010",
+    "https://www.guideautoweb.com/en/makes/porsche/911/2012/ratings/",
+    "https://www.cargurus.ca/research/2012-Porsche-911-c22961",
+    "https://flat6innovations.com/?p=19453",
+    "https://www.hartech.org/images/downloads/4-main-problems-with-porsche-engines.pdf",
+    "https://rennlist.com/forums/997-forum/907579-was-my-2009-when-the-ims-was-done-away-with-completely.html",
+    "https://rennlist.com/forums/997-forum/1128938-gen-2-9a1-bore-scoring-smoking-gun-article.html",
+    "https://rennlist.com/forums/997-forum/1022936-help-from-my-future-997-brethren.html"
+   ],
+   "issues": [
+    {
+     "issue": "Cylinder bore scoring or piston seizure: still possible on the 9A1, but reported far less often than on the 997.1.",
+     "years": "997.2, 2009-2012 (9A1 engine)",
+     "sources": [
+      {
+       "url": "https://flat6innovations.com/?p=19453",
+       "says": "bore-scoring risk drops on the 997.2 but is not zero; confirm suspect noises with a borescope"
+      },
+      {
+       "url": "https://www.hartech.org/images/downloads/4-main-problems-with-porsche-engines.pdf",
+       "says": "cylinder scoring and seizing is the one main 9A1 Gen 2 failure the shop reports, described as very minor"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/931305-poll-scored-cylinder-failure-for-your-997-y-or-n-tell-us-yr-997-1-or-997-2-a.html",
+       "says": "self-selected owner poll: 18 yes vs 305 no for 997.2 engines, against 146 yes vs 543 no for 997.1"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Cold seizure: the lower bore warms slowly, so hard driving before full warm-up can seize a piston.",
+     "years": "9A1 Gen 2 engines, 2009-2012",
+     "sources": [
+      {
+       "url": "https://www.hartech.org/images/downloads/4-main-problems-with-porsche-engines.pdf",
+       "says": "the 9A1 lower bore expands more slowly than older engines, so allow longer warm-up before high revs"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/1128938-gen-2-9a1-bore-scoring-smoking-gun-article.html",
+       "says": "the documented seized engines reportedly all failed in winter after short, fast drives from cold"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "High-pressure fuel pump failure, causing limp mode or a no-start.",
+     "years": "997.2, 2009-2012 (direct injection)",
+     "sources": [
+      {
+       "url": "https://flat6innovations.com/?p=19453",
+       "says": "the HPFP can fail and cause limp mode or no-start; check fuel trims and rail pressure"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/1022936-help-from-my-future-997-brethren.html",
+       "says": "HPFP failure is on the owners' 997.2 problem list, often fixed under warranty for first owners"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Water pump failure; warning signs are a new grumble, play in the pulley or a coolant smell.",
+     "years": "997.2, 2009-2012",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1022936-help-from-my-future-997-brethren.html",
+       "says": "water pump failure listed among the main 997.2 problem areas; pump and reservoir may be due near 40K"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/976371-997-2-c4s-purchase-ppi-questions.html",
+       "says": "posters advise replacing the pump once it leaks or gets noisy rather than waiting for total failure"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Air-oil separator failure.",
+     "years": "997.2, 2009-2012",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1022936-help-from-my-future-997-brethren.html",
+       "says": "AOS failure is named on the owners' 997.2 problem list, frequency not given"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "Direct injection can dilute the engine oil with fuel; shorter oil intervals with DI-rated oil are advised.",
+     "years": "997.2, 2009-2012",
+     "sources": [
+      {
+       "url": "https://flat6innovations.com/?p=19453",
+       "says": "suggests about 6 months or 5,000 miles between oil changes and DI-specific oils"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "Road debris clogs the front radiators and A/C condensers and restricts airflow.",
+     "years": "all 997s, 2005-2012",
+     "sources": [
+      {
+       "url": "https://flat6innovations.com/?p=19453",
+       "says": "recommends removing the bumper yearly to clean the radiators and condensers"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "Coolant crossover pipes and hoses age and leak.",
+     "years": "all 997s, 2005-2012",
+     "sources": [
+      {
+       "url": "https://flat6innovations.com/?p=19453",
+       "says": "inspect the joints and replace pipes and hoses when they show swelling or residue"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "PDK gearbox needs scheduled fluid and filter service; harsh engagement or fault codes point to the mechatronic unit.",
+     "years": "997.2 cars with PDK, 2009-2012",
+     "sources": [
+      {
+       "url": "https://flat6innovations.com/?p=19453",
+       "says": "heat is the PDK's main enemy and Porsche often prefers replacing the unit to repairing it"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/1022936-help-from-my-future-997-brethren.html",
+       "says": "PDK is costly to replace; confirm it has been serviced, interval said to be about 60K miles"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Unexplained electrical faults that often clear after a new 12 V battery.",
+     "years": "997.2, 2009-2012",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1022936-help-from-my-future-997-brethren.html",
+       "says": "electrical gremlins listed by owners, often resolved by replacing the battery"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "Recall: seat belt anchor plate holes may be too small, so the belt may not route or hold as designed.",
+     "years": "MY2012 911 Carrera 4 built May 31 to June 10, 2011",
+     "sources": [
+      {
+       "url": "https://api.nhtsa.gov/recalls/campaignNumber?campaignNumber=11V409000",
+       "says": "NHTSA 11V409000 covers 2012 Carrera 4 among others; dealers inspect and replace belts free"
+      },
+      {
+       "url": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2011293",
+       "says": "Transport Canada 2011293 lists the 2012 911 Carrera; dealers inspect and replace anchors"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Recall: the standard (non-sport) exhaust tailpipe may crack and separate from the rear muffler; check the VIN.",
+     "years": "MY2012-2013 Carrera and Carrera 4 built March 7 to November 12, 2012",
+     "sources": [
+      {
+       "url": "https://api.nhtsa.gov/recalls/campaignNumber?campaignNumber=13V058000",
+       "says": "NHTSA 13V058000 lists the 2012 Carrera 4; the record does not say which generation; mufflers replaced free"
+      },
+      {
+       "url": "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2013061",
+       "says": "Transport Canada 2013061 lists the 2012-2013 911 Carrera, 111 units; both mufflers replaced"
+      }
+     ],
+     "n_sources": 2
+    }
+   ],
+   "mods": [
+    {
+     "mod": "Aftermarket exhaust: centre-muffler bypass or delete, cross-pipes or full cat-back systems (Tubi, Fabspeed and SharkWerks named).",
+     "why": "More sound under hard throttle while staying close to stock at idle and cruise; posters call the .2 cars quiet.",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1094884-what-are-the-top-10-mods.html",
+       "says": "exhaust is called likely the top mod, especially for the quieter .2 cars"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/504317-997-2-exhaust.html",
+       "says": "owners compare Tubi, Fabspeed and SharkWerks options; one reports drone at 2,000-2,400 rpm cruising"
+      }
+     ],
+     "caveat": "Warranty is the main worry in the 997.2 exhaust thread: posters say Porsche can deny claims regardless, and removing more of the exhaust changes backpressure."
+    },
+    {
+     "mod": "ECU software (tune) flashed through the OBD port; Softronic, GIAC, FVD Brombacher and EVOMS are named.",
+     "why": "Modest gains; several posters expect little difference on the street, though a track driver valued 15-20 hp/lb-ft.",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/536337-997-2-anyone-chipped-already.html",
+       "says": "owners discuss DFI 997.2 tunes, small seat-of-the-pants gains and OBD flashing over ECU removal"
+      }
+     ],
+     "caveat": "Some owners wait until the factory warranty ends because the ECU records a lot; one tuner claims its flash is not visible to dealer tools and supplies the original file."
+    },
+    {
+     "mod": "Lowering springs or coilovers, often with wheel spacers and a realignment with more negative camber.",
+     "why": "Stance and handling; a 997.2 owner fitted H&R springs lowered 20 mm.",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1094884-what-are-the-top-10-mods.html",
+       "says": "lowering springs, coilovers and spacers suggested, plus a full realignment with added negative camber"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/751226-mod-men-how-did-you-modified-your-carrera.html",
+       "says": "997.2 builds list H&R springs, and coilovers with toe links on a track-leaning car"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Aftermarket or lightweight wheels with stickier tyres.",
+     "why": "Handling and grip.",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1094884-what-are-the-top-10-mods.html",
+       "says": "aftermarket and lightweight wheels and stickier tyres cited for handling and grip"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/751226-mod-men-how-did-you-modified-your-carrera.html",
+       "says": "a 997.2 owner fitted 20-inch wheels with 325-section rear tyres"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Semi-solid or stiffer engine mounts.",
+     "why": "Sharper response and handling.",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1094884-what-are-the-top-10-mods.html",
+       "says": "semi-solid engine mounts mentioned by several posters"
+      },
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guide-contents/porsche-997-911-buying-guide-powertrain/32794",
+       "says": "stiffer replacement mounts offered for better response and handling; the guide does not split by generation"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Brake pads, lines and fluid.",
+     "why": "Listed by owners as an upgrade, no reason given; a specialist doubts stainless lines help much.",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1094884-what-are-the-top-10-mods.html",
+       "says": "brake pads, lines and fluid listed among upgrades"
+      },
+      {
+       "url": "https://rennlist.com/forums/997-forum/727702-sharkwerks-997-2-tuning-and-modification-guide.html",
+       "says": "SharkWerks says the lines are so short that stainless ones make little noticeable difference"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Radiator screen guards in the front intakes.",
+     "why": "Front radiators and condensers clog with road debris on all 997s.",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/1094884-what-are-the-top-10-mods.html",
+       "says": "radiator screen guards listed among owner mods"
+      },
+      {
+       "url": "https://flat6innovations.com/?p=19453",
+       "says": "debris builds up in the front radiators and condensers and restricts airflow"
+      }
+     ],
+     "caveat": null
+    },
+    {
+     "mod": "Lightweight flywheel with an upgraded clutch.",
+     "why": "Quicker revs.",
+     "sources": [
+      {
+       "url": "https://rennlist.com/forums/997-forum/751226-mod-men-how-did-you-modified-your-carrera.html",
+       "says": "a 997.2 track build reports quicker revs but a clatter at idle and light throttle"
+      }
+     ],
+     "caveat": null
+    }
+   ],
+   "quote": null,
+   "quote_held": {
+    "text": "a very minor one with the 9A1 Gen 2 engines",
+    "url": "https://www.hartech.org/images/downloads/4-main-problems-with-porsche-engines.pdf",
+    "held": "its review is not of this model year (its page is not one of the shown ratings)"
+   },
+   "clubs": [
+    {
+     "name": "Rennlist 997 Forum (2005-2012)",
+     "kind": "forum",
+     "where": "online",
+     "url": "https://rennlist.com/forums/997-forum-113/"
+    },
+    {
+     "name": "Rennlist Canada (with its Sandor Region sub-forum for BC, Alberta, Saskatchewan, Yukon and NWT)",
+     "kind": "forum",
+     "where": "Canada",
+     "url": "https://rennlist.com/forums/rennlist-canada-98/"
+    },
+    {
+     "name": "Porsche Club of America, Polar Region (Northern Alberta and Northwest Territories; Edmonton sponsors)",
+     "kind": "chapter",
+     "where": "Alberta",
+     "url": "https://www.pcapolarregion.com/"
+    },
+    {
+     "name": "Porsche Club of America, Wild Rose Region (Calgary and Southern Alberta)",
+     "kind": "chapter",
+     "where": "Alberta",
+     "url": "https://www.porsche.ab.ca/"
+    }
+   ],
+   "absent": [
+    {
+     "what": "Expert scores from Edmunds, Kelley Blue Book, J.D. Power, Car and Driver and MotorTrend",
+     "searched": [
+      "https://www.edmunds.com/porsche/911/2012/review/ (HTTP 403)",
+      "https://www.kbb.com/porsche/911/2012/carrera-4-coupe-2d (HTTP 403)",
+      "https://www.jdpower.com/cars/2012/porsche/911 (HTTP 403)",
+      "web search '2012 Porsche 911 Carrera 4 review rating' (Car and Driver, MotorTrend: no page opened; both domains refuse the fetch tool)",
+      "Could not open; not proven absent"
+     ]
+    },
+    {
+     "what": "NHTSA crash-test rating",
+     "searched": [
+      "https://api.nhtsa.gov/SafetyRatings/modelyear/2012/make/PORSCHE/model/911 (Count 0, no rated vehicle). PROVEN ABSENT"
+     ]
+    },
+    {
+     "what": "IIHS rating",
+     "searched": [
+      "https://www.iihs.org/ratings (no make list in the text)",
+      "https://www.iihs.org/ratings/vehicle/porsche (HTTP 404). Not found; not proven absent"
+     ]
+    },
+    {
+     "what": "CarBuzz score for the 997.2",
+     "searched": [
+      "https://carbuzz.com/cars/porsche/911-carrera/2012 (Buzzscore 8.9, but its 'New For 2012' text describes the 991: another generation, not counted)",
+      "https://carbuzz.com/cars/porsche/911/2012 (HTTP 404)"
+     ]
+    },
+    {
+     "what": "RepairPal reliability rating for the 2012 model year",
+     "searched": [
+      "https://repairpal.com/reviews/2012-porsche-911 (0 reviews for 2012; the 2.0/5 shown is model-wide across years, not counted)"
+     ]
+    },
+    {
+     "what": "Autotrader.ca or Driving.ca review of the 2012 Carrera 4",
+     "searched": [
+      "web search 'autotrader.ca review 2012 Porsche 911 Carrera 4 997' (no such review found)"
+     ]
+    },
+    {
+     "what": "IMS bearing failure on this engine",
+     "searched": [
+      "https://rennlist.com/forums/997-forum/907579-was-my-2009-when-the-ims-was-done-away-with-completely.html (posters agree the 2009-on 9A1 has no intermediate shaft, so no IMS bearing)",
+      "https://flat6innovations.com/?p=19453 (the 997.2 has no IMS bearing)",
+      "https://www.hartech.org/images/downloads/4-main-problems-with-porsche-engines.pdf (IMS failure listed only among the M96/7 engines' problems). PROVEN ABSENT for the 9A1"
+     ]
+    },
+    {
+     "what": "6SpeedOnline 997 forum and 911uk 997 forum (club list and owner reports)",
+     "searched": [
+      "https://www.6speedonline.com/forums/997/159927-09-997-2-exhaust-mods-review.html (HTTP 403)",
+      "https://911uk.com/porsche/997-2-engine-seizures.129060/ (HTTP 403)",
+      "Could not confirm; not listed"
+     ]
+    },
+    {
+     "what": "Specialist tuner and buying-guide pages that would add sources",
+     "searched": [
+      "https://sharkwerks.com/tuning-guides/997.2-carrera-s-4-4s-gts-2009-2012 (HTTP 403)",
+      "https://www.forzamotorworks.com/products/softronic-ecu-tune-porsche-997-2-carrera-2009-2012 (HTTP 429)",
+      "https://www.design911.co.uk/porsche/997-mkii--911--carrera-2009/ecu-re-mapping-diy/ (HTTP 402)",
+      "https://docs.lnengineering.com/article/130-are-porsche-997-2-and-991-1-9a1-ma1-engines-susceptible-to-bore-scoring (HTTP 403)",
+      "https://www.elferspot.com/en/magazine/porsche-997-2-carrera-s-buying-guide/ (HTTP 403)",
+      "https://evo.co.uk/porsche/911/14068/porsche-997-carrera-buying-checkpoints (HTTP 410)",
+      "Not cited"
+     ]
+    },
+    {
+     "what": "Transport Canada recall 2012102 (fuel line quick connector) as an issue for this car",
+     "searched": [
+      "https://data.tc.gc.ca/v1.3/api/eng/vehicle-recall-database/recall-summary/recall-number/2012102 (names the 911 Carrera, recall date 2012, no model years, Carrera 4 not named; could not tie it to this car, so not listed)"
+     ]
+    }
+   ],
+   "src": "research/reviews/porsche_911_c4_2012.json"
+  },
+  "rolls_royce_ghost_2014": {
+   "car": "2014 Rolls-Royce Ghost (standard wheelbase)",
+   "generation": "first generation Ghost (RR4), sold 2010-2020, standard wheelbase, 6.6 L V12",
+   "retrieved": "2026-11-06",
+   "ratings": [
+    {
+     "by": "The Car Guide (Guide de l'auto, Canada)",
+     "value": "4.0/5 (77%)",
+     "rates": "overall Car Guide rating, 2014 Rolls-Royce Ghost (page covers regular and long wheelbase). Detailed ratings on the same page: driving 4/10, safety 9/10, interior 10/10, reliability 8/10, winter driving 5/10, comfort 10/10",
+     "url": "https://www.guideautoweb.com/en/makes/rolls-royce/ghost/2014/ratings/",
+     "applies_to_year": true
+    }
+   ],
+   "ratings_held": [
+    {
+     "by": "CarBuzz",
+     "value": "9.3",
+     "rates": "CarBuzz Buzzscore (category scores out of 10), 2014 Rolls-Royce Ghost: exterior 9, performance 9, fuel efficiency 7, interior and cargo 10, infotainment and features 10, reliability 10, safety 9, value 10. The page shows the scores with no written review text and no user reviews",
+     "url": "https://carbuzz.com/cars/rolls-royce/ghost/2014",
+     "applies_to_year": true,
+     "held": "a score with no written review behind it"
+    },
+    {
+     "by": "Cars.com owner reviews",
+     "value": "5.0/5 (3 reviews)",
+     "rates": "consumer rating, 2014 Ghost; comfort 5.0, interior 5.0, performance 5.0, value 4.0, exterior 5.0, reliability 4.7; 100% recommend. Sample of three",
+     "url": "https://www.cars.com/research/rolls_royce-ghost-2014/",
+     "applies_to_year": true,
+     "held": "an owner average of 3 reviews (fewer than 10)"
+    },
+    {
+     "by": "CarGurus owner reviews",
+     "value": "5.0 (2 reviews)",
+     "rates": "user rating on the 2014 Ghost page; no expert rating. Neither review names a year and one reads as a comment on the purchase, so it says little about the car",
+     "url": "https://www.cargurus.ca/research/2014-Rolls-Royce-Ghost-c24296",
+     "applies_to_year": true,
+     "held": "an owner average of 2 reviews (fewer than 10)"
+    },
+    {
+     "by": "Exchange and Mart (UK)",
+     "value": "6.1/10",
+     "rates": "used-car guide rating for the first-generation Ghost, 2010-2020",
+     "url": "https://www.exchangeandmart.co.uk/reviews/rolls-royce/ghost/2010/212406",
+     "applies_to_year": false,
+     "held": "not for this model year: used-car guide rating for the first-generation Ghost, 2010-2020"
+    },
+    {
+     "by": "Auto Express (UK)",
+     "value": "4.0/5",
+     "rates": "overall rating for the Ghost Series II (the 2014 mid-life update of this generation), standard short-wheelbase test car, review dated 22 September 2014. Whether this particular 2014 car is pre- or post-update is not established",
+     "url": "https://www.autoexpress.co.uk/rolls-royce/ghost/88661/rolls-royce-ghost-series-ii-2014-review",
+     "applies_to_year": false,
+     "held": "not for this model year: overall rating for the Ghost Series II (the 2014 mid-life update of this generation), standard short-wheelbase test car, review dated 22 September 2014. Whether this particular 2014 car is pre- or post-update is not established"
+    }
+   ],
+   "ratings_absent": null,
+   "summary": "Reviewers praise the deep soundproofing, the lavish interior and its leatherwork, the strong V12 and the smooth eight-speed gearbox, and the comfort on smooth roads. The criticisms are steering that is light and inert, a car that feels big and heavy, body lean and a nose that rises under hard acceleration, a ride that loosens at high speed and large wheels that thump over potholes; The Car Guide also lists low resale value as a con. The few owners who rated the 2014 car on Cars.com give it 5/5, with reliability at 4.7/5. Used-car guides to this generation tell buyers to check for failing injectors, carbon build-up, oil and coolant leaks, air suspension faults and water getting into the cabin. NHTSA lists no owner complaints for the 2014 Ghost.",
+   "summary_sources": [
+    "https://www.guideautoweb.com/en/makes/rolls-royce/ghost/2014/ratings/",
+    "https://www.autoexpress.co.uk/rolls-royce/ghost/88661/rolls-royce-ghost-series-ii-2014-review",
+    "https://www.cars.com/research/rolls_royce-ghost-2014/",
+    "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+    "https://www.exchangeandmart.co.uk/reviews/rolls-royce/ghost/2010/212406",
+    "https://api.nhtsa.gov/complaints/complaintsByVehicle?make=rolls-royce&model=ghost&modelYear=2014"
+   ],
+   "issues": [
+    {
+     "issue": "Fuel injectors fail, giving a rough idle or misfire; renewing them with coils and plugs is expensive.",
+     "years": "2010-2020 Ghost (first generation)",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+       "says": "injector trouble can cost five figures once plugs and coils are done too; worn plugs and coils cause misfires and rough idle"
+      },
+      {
+       "url": "https://www.exchangeandmart.co.uk/reviews/rolls-royce/ghost/2010/212406",
+       "says": "a rough idle can point to failing injectors, a known weak spot; about GBP 5,000 with coils and plugs"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Carbon build-up from direct injection degrades the valve seats and causes a rough idle.",
+     "years": "2010-2020 Ghost",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+       "says": "direct injection can cause carbon build-up and rough idling from degraded valve seats"
+      },
+      {
+       "url": "https://www.exchangeandmart.co.uk/reviews/rolls-royce/ghost/2010/212406",
+       "says": "poor idle can also come from carbon build-up on the valve seats"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Oil leaks from the turbo oil feed pipes and the engine-to-gearbox (rear main) seal, plus coolant leaks.",
+     "years": "2010-2020 Ghost",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+       "says": "coolant leaks occur; oil can leak from the turbo feed pipes or the main seal between engine and gearbox"
+      },
+      {
+       "url": "https://www.exchangeandmart.co.uk/reviews/rolls-royce/ghost/2010/212406",
+       "says": "have the turbo oil and cooling pipes checked for leaks and look for oil at the rear main seal"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Air suspension faults from a failed strut or air bag, the compressor or the height control module.",
+     "years": "2010-2020 Ghost",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+       "says": "the four air struts and compressor can fail: odd stance, harsh ride, dead ride-height button, level control warning"
+      },
+      {
+       "url": "https://www.exchangeandmart.co.uk/reviews/rolls-royce/ghost/2010/212406",
+       "says": "confirm the car sits properly on its air suspension"
+      },
+      {
+       "url": "https://europeanautospares.com/blogs/news/rolls-royce-common-problems-fixes-detailed-owners-guide",
+       "says": "a parts retailer's blog names air suspension failures among Ghost problems (generation not stated)"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Water gets in through poorly fitted screens, causing condensation and loosened seat leather; blocked sunroof drains wet the footwell.",
+     "years": "2010-2020 Ghost",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+       "says": "badly fitted rear screens let water in, giving condensation and seat glue failure that makes leather baggy; blocked panoramic roof drains flood the passenger footwell"
+      },
+      {
+       "url": "https://www.exchangeandmart.co.uk/reviews/rolls-royce/ghost/2010/212406",
+       "says": "check for water entering through poorly fitted front and rear screens: condensation and baggy seat leather from dissolved glue"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Some faults need software updates that earlier owners may have skipped.",
+     "years": "2010-2020 Ghost",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+       "says": "some issues may be fixed by software updates previous owners may not have had done"
+      },
+      {
+       "url": "https://www.exchangeandmart.co.uk/reviews/rolls-royce/ghost/2010/212406",
+       "says": "make sure all electrical software updates have been carried out"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "The self-closing door motors and the Spirit of Ecstasy retraction motor can fail.",
+     "years": "2010-2020 Ghost",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+       "says": "motors for the self-closing doors are known to fail; the mascot's automatic retraction or its motor can stop working"
+      }
+     ],
+     "n_sources": 1
+    },
+    {
+     "issue": "Cold-start problems traced to a blocked fuel filter, low fuel pressure, an injector relay or the fuel pump.",
+     "years": "2010-2020 Ghost",
+     "sources": [
+      {
+       "url": "https://www.pistonheads.com/news/ph-buying-guides/rolls-royce-ghost-ph-used-buying-guide/45798",
+       "says": "cold-start problems come from a blocked fuel filter, low fuel pressure, a faulty injector relay or a failing fuel pump"
+      }
+     ],
+     "n_sources": 1
+    }
+   ],
+   "mods": [],
+   "quote": null,
+   "quote_held": {
+    "text": "a luxury car with an unrivalled sense of occasion",
+    "url": "https://www.autoexpress.co.uk/rolls-royce/ghost/88661/rolls-royce-ghost-series-ii-2014-review",
+    "held": "its review is not of this model year (not for this model year: overall rating for the Ghost Series II (the 2014 mid-life update of this generation), standard short-wheelbase test car, review dated 22 September 2014. Whether this particular 2014 car is pre- or post-update is not established)"
+   },
+   "clubs": [
+    {
+     "name": "Rolls-Royce Owners' Club (RROC)",
+     "kind": "club",
+     "where": "North America (Rolls-Royce and Bentley, all eras; 26 regions across North America)",
+     "url": "https://www.rroc.org/"
+    },
+    {
+     "name": "Rolls-Royce Enthusiasts' Club (RREC)",
+     "kind": "club",
+     "where": "UK-based, international (Rolls-Royce and Bentley)",
+     "url": "https://rrec.org.uk/about"
+    },
+    {
+     "name": "PistonHeads Gassing Station: Bentley & Rolls Royce",
+     "kind": "forum",
+     "where": "online (UK)",
+     "url": "https://www.pistonheads.com/gassing/forum.asp?h=0&f=162"
+    },
+    {
+     "name": "RROC Discussion Forum",
+     "kind": "forum",
+     "where": "online, sign-in required",
+     "url": "https://rroc.hoop.la/"
+    }
+   ],
+   "absent": [
+    {
+     "what": "NHTSA crash-test rating",
+     "searched": [
+      "https://api.nhtsa.gov/SafetyRatings/VehicleId/8761 (2014 Rolls-Royce Ghost 4 DR RWD): overall, frontal, side and rollover all read Not Rated. PROVEN ABSENT"
+     ]
+    },
+    {
+     "what": "IIHS rating",
+     "searched": [
+      "https://www.iihs.org/ratings/vehicle/rolls-royce (HTTP 404). Not found; not proven absent"
+     ]
+    },
+    {
+     "what": "Edmunds, Kelley Blue Book, Car and Driver, MotorTrend, J.D. Power ratings for the 2014 Ghost",
+     "searched": [
+      "https://www.motortrend.com/cars/rolls-royce/ghost/2014/ (the fetch tool cannot reach motortrend.com)",
+      "edmunds.com, kbb.com and jdpower.com returned HTTP 403 for every page tried in this task, and caranddriver.com cannot be reached; the 2014 Ghost pages on those sites were not opened"
+     ]
+    },
+    {
+     "what": "Consumer Reports",
+     "searched": [
+      "paywalled; no public page with a number was found or opened"
+     ]
+    },
+    {
+     "what": "Other UK scores for the first-generation Ghost",
+     "searched": [
+      "https://www.autotrader.co.uk/content/car-reviews/rolls-royce-ghost-saloon-2010-expert-review (HTTP 403)",
+      "https://www.autocar.co.uk/node/108329 used buying guide (HTTP 402)",
+      "https://www.rac.co.uk/drive/car-reviews/rolls-royce/ghost/ghost/ (6.5/10, but it reviews the second-generation 2020-on Ghost: wrong generation, excluded)"
+     ]
+    },
+    {
+     "what": "NHTSA recall list for the 2014 Ghost",
+     "searched": [
+      "https://api.nhtsa.gov/recalls/recallsByVehicle?make=rolls-royce&model=ghost&modelYear=2014 (HTTP 400)",
+      "NHTSA safety-ratings record VehicleId 8761 lists 0 recalls, 0 complaints, 0 investigations; https://www.carsguide.com.au/rolls-royce/ghost/problems/2014 lists only a turbo cooling pump recall for Ghosts sold September 2009 to June 2011, which by its dates does not reach a 2014 car. Recall database itself not read"
+     ]
+    },
+    {
+     "what": "Alberta or Western Canada chapter of a Rolls-Royce club",
+     "searched": [
+      "https://www.rroc.org/regions and https://www.rroc.org/content.asp?admin=Y&contentid=133 (region names are behind login or in a map image)",
+      "https://rrec.org.uk/about/worldwide-sections and https://app.sheepcrm.com/rrec/sections/ (section list did not render)",
+      "web searches 'Rolls-Royce Owners' Club region Alberta OR Western Canada', 'RREC Western Canada section', 'Can-Am Prairie Region Rolls-Royce Owners' Club': a news hit about an RROC prairie region could not be opened (https://www.stettlerindependent.com/news/rolls-royce-club-rolls-into-town/ returned the site's news index), so it is not cited"
+     ]
+    }
+   ],
+   "src": "research/reviews/rolls_royce_ghost_2014.json"
+  },
+  "rolls_royce_wraith_2017": {
+   "car": "2017 Rolls-Royce Wraith coupe",
+   "generation": "Rolls-Royce Wraith coupe, 2013-2023; standard car, not Black Badge",
+   "retrieved": "2026-11-06",
+   "ratings": [
+    {
+     "by": "The Car Guide (Guide de l'auto, Canada)",
+     "value": "3.5/5 (66%)",
+     "rates": "overall Car Guide rating, 2017 Rolls-Royce Wraith, not tied to a trim. Detailed ratings on the same page: fuel economy 4/10, reliability N/A, safety 7/10, infotainment 7/10, driving 6/10, overall 7/10",
+     "url": "https://www.guideautoweb.com/en/makes/rolls-royce/wraith/2017/ratings/",
+     "applies_to_year": true
+    }
+   ],
+   "ratings_held": [
+    {
+     "by": "CarBuzz",
+     "value": "9.1",
+     "rates": "CarBuzz Buzzscore (category scores out of 10), 2017 Rolls-Royce Wraith: exterior 9, performance 9, fuel efficiency 7, interior and cargo 10, infotainment and features 10, reliability 10, safety 9, value 9. The page shows the scores with no written review text and no user reviews",
+     "url": "https://carbuzz.com/cars/rolls-royce/wraith/2017",
+     "applies_to_year": true,
+     "held": "a score with no written review behind it"
+    },
+    {
+     "by": "Cars.com owner reviews",
+     "value": "5.0/5 (2 reviews)",
+     "rates": "consumer rating, 2017 Wraith; comfort, interior, performance, value, exterior and reliability each 5.0; 100% recommend. Sample of two",
+     "url": "https://www.cars.com/research/rolls_royce-wraith-2017/",
+     "applies_to_year": true,
+     "held": "an owner average of 2 reviews (fewer than 10)"
+    },
+    {
+     "by": "Exchange and Mart (UK)",
+     "value": "6.4/10",
+     "rates": "used-car guide rating for the whole Wraith run, 2013-2023 (build quality 10/10, value 3/10, insurance 4/10, economy 5/10)",
+     "url": "https://exchangeandmart.co.uk/reviews/rolls-royce/rolls-royce-wraith/2013/214221",
+     "applies_to_year": false,
+     "held": "not for this model year: used-car guide rating for the whole Wraith run, 2013-2023 (build quality 10/10, value 3/10, insurance 4/10, economy 5/10)"
+    },
+    {
+     "by": "Auto Express (UK)",
+     "value": "4.0/5",
+     "rates": "overall rating, first review of the Wraith at launch (9 September 2013)",
+     "url": "https://www.autoexpress.co.uk/rolls-royce/wraith/65943/rolls-royce-wraith-review",
+     "applies_to_year": false,
+     "held": "not for this model year: overall rating, first review of the Wraith at launch (9 September 2013)"
+    },
+    {
+     "by": "RAC (UK)",
+     "value": "5.7/10",
+     "rates": "new-car verdict on the launch Wraith (18 October 2013): value 1, interior and tech 8, practicality 6, performance 7, ride and handling 5, safety 9, running costs 3",
+     "url": "https://www.rac.co.uk/drive/car-reviews/rolls-royce/wraith/wraith/",
+     "applies_to_year": false,
+     "held": "not for this model year: new-car verdict on the launch Wraith (18 October 2013): value 1, interior and tech 8, practicality 6, performance 7, ride and handling 5, safety 9, running costs 3"
+    }
+   ],
+   "ratings_absent": null,
+   "summary": "Reviewers praise the 624 bhp twin-turbo V12, which makes the Wraith the fastest Rolls-Royce of its time, along with a very quiet cabin and the materials and craftsmanship inside. The criticisms are light steering with little feedback, a car that is not really a driver's car, poor visibility, a narrow boot and a ride that suffers at speed; evo felt the BMW-derived infotainment dilutes the hand-built feel, though the RAC rated its controller among the best. Running costs and value score lowest with the RAC, and Auto Express felt it does not quite justify its price. Used guides tell buyers to check the injectors, carbon build-up, oil and coolant pipes and the air suspension, while PistonHeads (2024) calls the V12 solid but thirsty. The two Cars.com owners rate it 5/5, and NHTSA lists no owner complaints for the 2017 model year.",
+   "summary_sources": [
+    "https://www.autoexpress.co.uk/rolls-royce/wraith/65943/rolls-royce-wraith-review",
+    "https://www.rac.co.uk/drive/car-reviews/rolls-royce/wraith/wraith/",
+    "https://www.evo.co.uk/rolls-royce/wraith/15102/rolls-royce-wraith-review-price-and-specs",
+    "https://exchangeandmart.co.uk/reviews/rolls-royce/rolls-royce-wraith/2013/214221",
+    "https://www.pistonheads.com/news/ph-spottedykywt/sub-100k-rolls-royce-wraith-for-sale/48150",
+    "https://www.cars.com/research/rolls_royce-wraith-2017/",
+    "https://api.nhtsa.gov/complaints/complaintsByVehicle?make=rolls-royce&model=wraith&modelYear=2017"
+   ],
+   "issues": [
+    {
+     "issue": "Rough idle or misfires from failing fuel injectors or ignition coils; the repair often renews injectors, coils and plugs together.",
+     "years": "2013-2023 Wraith (no single year singled out)",
+     "sources": [
+      {
+       "url": "https://exchangeandmart.co.uk/reviews/rolls-royce/rolls-royce-wraith/2013/214221",
+       "says": "rough tickover can mean injector failure, a known issue; about GBP 5,000 including coils and plugs"
+      },
+      {
+       "url": "https://www.exoticcarhacks.com/buyers-guides/rolls-royce-wraith-buyers-guide/",
+       "says": "buyers' guide lists ignition coil failures, shown by misfires, hesitation and rough running"
+      },
+      {
+       "url": "https://europeanautospares.com/blogs/news/rolls-royce-common-problems-fixes-detailed-owners-guide",
+       "says": "a parts retailer's blog names a faulty ignition coil among Wraith problems (no years given)"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Carbon builds up on the intake valves of the direct-injection V12, causing poor idle, misfires and lost power.",
+     "years": "2013-2023 Wraith",
+     "sources": [
+      {
+       "url": "https://exchangeandmart.co.uk/reviews/rolls-royce/rolls-royce-wraith/2013/214221",
+       "says": "poor tickover can also come from carbon fouling of the valve seats"
+      },
+      {
+       "url": "https://www.exoticcarhacks.com/buyers-guides/rolls-royce-wraith-buyers-guide/",
+       "says": "intake valve carbon build-up causes misfires and low power; suggests walnut blasting about every 60,000 miles"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Oil and coolant leaks: turbo oil and cooling pipes, the engine-to-gearbox rear main seal, gaskets and coolant pipes.",
+     "years": "2013-2023 Wraith",
+     "sources": [
+      {
+       "url": "https://exchangeandmart.co.uk/reviews/rolls-royce/rolls-royce-wraith/2013/214221",
+       "says": "have an expert check the turbo oil and cooling pipes for leaks and look for an oil leak at the rear main seal"
+      },
+      {
+       "url": "https://www.exoticcarhacks.com/buyers-guides/rolls-royce-wraith-buyers-guide/",
+       "says": "check valve cover, timing cover and oil pan gaskets for leaks, and the coolant pipe under the intake manifold"
+      },
+      {
+       "url": "https://carscounsel.com/rolls-royce-wraith-best-worst-years/",
+       "says": "lists oil and coolant leaks from valve cover gaskets, oil filter housing seals and coolant transfer pipes (no specific source cited)"
+      }
+     ],
+     "n_sources": 3
+    },
+    {
+     "issue": "Air suspension trouble: the car not sitting level, from failing struts, leaking lines or a weak compressor.",
+     "years": "2013-2023 Wraith",
+     "sources": [
+      {
+       "url": "https://exchangeandmart.co.uk/reviews/rolls-royce/rolls-royce-wraith/2013/214221",
+       "says": "confirm the car sits properly on its air suspension"
+      },
+      {
+       "url": "https://carscounsel.com/rolls-royce-wraith-best-worst-years/",
+       "says": "owners report failing air struts, leaking air lines and weak compressors; says early 2014-2016 cars had calibration issues later addressed"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Rear-view camera or central display fails to work, usually a software fault.",
+     "years": "2016 Wraith (NHTSA complaints); 2013-2022 per the buyers' guide",
+     "sources": [
+      {
+       "url": "https://api.nhtsa.gov/complaints/complaintsByVehicle?make=rolls-royce&model=wraith&modelYear=2016",
+       "says": "two NHTSA complaints (2020) that the 2016 Wraith's backup camera does not come on in reverse"
+      },
+      {
+       "url": "https://www.exoticcarhacks.com/buyers-guides/rolls-royce-wraith-buyers-guide/",
+       "says": "rear camera and central display faults are often software-related and usually fixed by an update"
+      }
+     ],
+     "n_sources": 2
+    },
+    {
+     "issue": "Electronic glitches such as frozen screens, false warnings and power door-closing faults; software updates should be up to date.",
+     "years": "2013-2023 Wraith",
+     "sources": [
+      {
+       "url": "https://carscounsel.com/rolls-royce-wraith-best-worst-years/",
+       "says": "owners report frozen displays, faulty sensor warnings and power-closing door problems"
+      },
+      {
+       "url": "https://exchangeandmart.co.uk/reviews/rolls-royce/rolls-royce-wraith/2013/214221",
+       "says": "confirm all electrical software updates have been carried out and that all screen functions work"
+      },
+      {
+       "url": "https://europeanautospares.com/blogs/news/rolls-royce-common-problems-fixes-detailed-owners-guide",
+       "says": "names electrical system glitches and battery drainage among Wraith problems"
+      }
+     ],
+     "n_sources": 3
+    }
+   ],
+   "mods": [],
+   "quote": null,
+   "quote_held": {
+    "text": "never quite feels special enough to justify its eye-watering price tag",
+    "url": "https://www.autoexpress.co.uk/rolls-royce/wraith/65943/rolls-royce-wraith-review",
+    "held": "its review is not of this model year (not for this model year: overall rating, first review of the Wraith at launch (9 September 2013))"
+   },
+   "clubs": [
+    {
+     "name": "Rolls-Royce Owners' Club (RROC)",
+     "kind": "club",
+     "where": "North America (Rolls-Royce and Bentley, all eras; 26 regions across North America)",
+     "url": "https://www.rroc.org/"
+    },
+    {
+     "name": "Rolls-Royce Enthusiasts' Club (RREC)",
+     "kind": "club",
+     "where": "UK-based, international (Rolls-Royce and Bentley)",
+     "url": "https://rrec.org.uk/about"
+    },
+    {
+     "name": "PistonHeads Gassing Station: Bentley & Rolls Royce",
+     "kind": "forum",
+     "where": "online (UK)",
+     "url": "https://www.pistonheads.com/gassing/forum.asp?h=0&f=162"
+    },
+    {
+     "name": "RROC Discussion Forum",
+     "kind": "forum",
+     "where": "online, sign-in required",
+     "url": "https://rroc.hoop.la/"
+    }
+   ],
+   "absent": [
+    {
+     "what": "NHTSA crash-test rating",
+     "searched": [
+      "https://api.nhtsa.gov/SafetyRatings/VehicleId/11487 (2017 Rolls-Royce Wraith 2 DR RWD): overall, frontal, side and rollover all read Not Rated. PROVEN ABSENT"
+     ]
+    },
+    {
+     "what": "IIHS rating",
+     "searched": [
+      "https://www.iihs.org/ratings/vehicle/rolls-royce (HTTP 404). Not found; not proven absent"
+     ]
+    },
+    {
+     "what": "Edmunds rating",
+     "searched": [
+      "https://edmunds.com/rolls-royce/wraith/2017/review (HTTP 403)"
+     ]
+    },
+    {
+     "what": "Kelley Blue Book rating and common-problems list",
+     "searched": [
+      "https://www.kbb.com/rolls-royce/wraith/2017/common-problems/ (HTTP 403)"
+     ]
+    },
+    {
+     "what": "Car and Driver and MotorTrend ratings",
+     "searched": [
+      "https://www.motortrend.com/cars/rolls-royce/wraith/2017/ (the fetch tool cannot reach motortrend.com)",
+      "Car and Driver: caranddriver.com cannot be reached by the fetch tool (failed for the Flying Spur page in this task; not retried here)"
+     ]
+    },
+    {
+     "what": "J.D. Power rating",
+     "searched": [
+      "https://www.jdpower.com/cars/2017/rolls-royce/wraith (HTTP 403)"
+     ]
+    },
+    {
+     "what": "Consumer Reports",
+     "searched": [
+      "paywalled; no public page with a number was found or opened"
+     ]
+    },
+    {
+     "what": "Other UK scores for this generation",
+     "searched": [
+      "https://www.evo.co.uk/rolls-royce/wraith/15102/rolls-royce-wraith-review-price-and-specs (Jan 2015 review; the score is not in the page text)",
+      "https://www.parkers.co.uk/rolls-royce/wraith/review (HTTP 402)",
+      "https://www.honestjohn.co.uk/rolls-royce/wraith/2013/ (redirects to the drive.co.uk home page)"
+     ]
+    },
+    {
+     "what": "NHTSA recall list for the 2017 Wraith",
+     "searched": [
+      "https://api.nhtsa.gov/recalls/recallsByVehicle?make=ROLLS-ROYCE&model=WRAITH&modelYear=2017 and lower-case forms (HTTP 400 every time)",
+      "NHTSA safety-ratings record VehicleId 11487 lists 0 recalls, 0 complaints, 0 investigations; https://forcar.org/car-reliability/rolls-royce/wraith/ links to '1 campaigns' for the Wraith with no years. Unresolved"
+     ]
+    },
+    {
+     "what": "Wraith-specific owner fault reports on forums",
+     "searched": [
+      "https://www.pistonheads.com/gassing/topic.asp?f=162&h=0&t=1572342 (no Wraith owner faults; one test-drive critique)",
+      "https://www.pistonheads.com/gassing/topic.asp?t=1479923 (2015; no Wraith faults reported)",
+      "web search 'Rolls-Royce Wraith owner problems forum injector coach door air suspension' (only aggregator pages)"
+     ]
+    },
+    {
+     "what": "Alberta or Western Canada chapter of a Rolls-Royce club",
+     "searched": [
+      "https://www.rroc.org/regions and https://www.rroc.org/content.asp?admin=Y&contentid=133 (region names are behind login or in a map image)",
+      "https://rrec.org.uk/about/worldwide-sections and https://app.sheepcrm.com/rrec/sections/ (section list did not render)",
+      "web searches 'Rolls-Royce Owners' Club region Alberta OR Western Canada', 'RREC Western Canada section', 'Can-Am Prairie Region Rolls-Royce Owners' Club': a news hit about an RROC prairie region could not be opened (https://www.stettlerindependent.com/news/rolls-royce-club-rolls-into-town/ returned the site's news index), so it is not cited"
+     ]
+    }
+   ],
+   "src": "research/reviews/rolls_royce_wraith_2017.json"
+  }
+ }
+}
