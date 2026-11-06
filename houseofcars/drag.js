@@ -15,6 +15,7 @@ export const MARKS = { rollout: 1 * FT, sixty: 60 * FT, eighth: 660 * FT, quarte
 export const TREE = { prestage: 1.0, stage: 1.0, amber_gap: 0.5, green_after: 0.5, src: 'https://en.wikipedia.org/wiki/Christmas_tree_(drag_racing)' };
 export const GRADE = { perfect_below: 250, perfect_above: 150, limiter_s: 0.15 };   // rpm either side of the best shift point; s on the limiter
 export const LIGHT_SPAN_RPM = 1500;                                                  // the shift light fills over the last 1500 rpm
+export const MOVE_M = 0.01;                                                          // AUTHORED: moved 1 cm = the car has started (Dragy's standstill start)
 
 /** the strip's ground for the physics: a flat plane at z = 0 (cm) under the whole run, with the track's own road grip */
 export function flatStrip(friction) {
@@ -66,7 +67,7 @@ export function shiftLight(rpm, best) {
 
 /** one run: the tree, the launch, the timing marks, the shifts. tick() is fed the physics' own distance and speed each step */
 export function makeRun() {
-  return { t: 0, phase: 'prestage', green: null, foul: false, leave: null, marks: {}, speeds: {}, kmh100: null, shifts: [], limiter: 0,
+  return { t: 0, phase: 'prestage', green: null, foul: false, leave: null, move: null, marks: {}, speeds: {}, kmh100: null, kmh100s: null, quarterAt: null, shifts: [], limiter: 0,
            tree: { prestage: false, stage: false, ambers: 0, green: false, red: false }, done: false, dist0: null };
 }
 export function treeAt(run) {                               // what the tree shows at the run's clock
@@ -88,6 +89,7 @@ export function tick(run, s) {
   if (run.green === null && run.t >= greenAt) { run.green = greenAt; if (!run.foul) ev.push('green'); }
   if (run.dist0 === null) run.dist0 = s.distM;
   const d = s.distM - run.dist0;
+  if (run.move === null && d >= MOVE_M) run.move = run.t;                 // the first motion: where Dragy starts its 0-100
   if (run.leave === null && d >= MARKS.rollout) {
     run.leave = run.t;
     if (run.green === null || run.t < run.green) { run.foul = true; run.tree.red = true; run.tree.green = false; ev.push('red'); }
@@ -96,9 +98,9 @@ export function tick(run, s) {
   if (run.leave !== null && !run.done) {
     const et = run.t - run.leave;
     for (const k of ['sixty', 'eighth', 'quarter']) {
-      if (run.marks[k] === undefined && d >= MARKS[k]) { run.marks[k] = et; run.speeds[k] = s.speedKmh; ev.push(k); }
+      if (run.marks[k] === undefined && d >= MARKS[k]) { run.marks[k] = et; run.speeds[k] = s.speedKmh; ev.push(k); if (k === 'quarter') run.quarterAt = run.t - run.move; }
     }
-    if (run.kmh100 === null && s.speedKmh >= 100) { run.kmh100 = et; ev.push('100'); }
+    if (run.kmh100 === null && s.speedKmh >= 100) { run.kmh100 = et; run.kmh100s = run.t - run.move; ev.push('100'); }
     if (s.rpm >= s.maxRPM - 1) run.limiter += s.dt; else if (s.gear !== run.lastGear) run.limiter = 0;
     if (run.marks.quarter !== undefined) { run.done = true; run.phase = 'finished'; ev.push('finish'); }
   }
@@ -115,8 +117,8 @@ export function noteShift(run, gear, rpm, best, maxRPM) {
 /** the slip's lines, as a drag strip prints them */
 export function slip(run) {
   const rt = run.leave !== null && run.greenAt !== undefined ? run.leave - run.greenAt : null;   // negative: left before the green
-  return { reaction_s: rt, foul: run.foul, sixty_s: run.marks.sixty ?? null, kmh100_s: run.kmh100, eighth_s: run.marks.eighth ?? null, eighth_kmh: run.speeds.eighth ?? null,
-           quarter_s: run.marks.quarter ?? null, quarter_kmh: run.speeds.quarter ?? null, shifts: run.shifts };
+  return { reaction_s: rt, foul: run.foul, sixty_s: run.marks.sixty ?? null, kmh100_s: run.kmh100, kmh100_standing_s: run.kmh100s, eighth_s: run.marks.eighth ?? null, eighth_kmh: run.speeds.eighth ?? null,
+           quarter_s: run.marks.quarter ?? null, quarter_standing_s: run.quarterAt, quarter_kmh: run.speeds.quarter ?? null, shifts: run.shifts };
 }
 
 /** the sim's own best run: on green, full throttle, every upshift at its derived point, one press each, on the port's physics

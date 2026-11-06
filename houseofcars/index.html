@@ -83,6 +83,8 @@ button:focus-visible,#card .pick:focus-visible,#card .act:focus-visible{outline:
 #card p{margin:8px 0;color:#cfd5dc;font-size:14px}
 #card .picks,#card .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #card .pick,#card .act{font-size:13px;padding:8px 12px;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:9px}
+#dslip .act{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;padding:8px 12px;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:9px;cursor:pointer}
+#card .act.go,#dslip .act.go{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800;letter-spacing:.02em}   /* UC-23.1: the drag race leads */
 #card .act{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
 #card .act:hover,button.go:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
 #card .picks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -128,6 +130,11 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #dslip tr:first-child td{font:700 10.5px 'Open Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-soft)}#dslip tr td:nth-child(2){color:#5dffa9}
 #dslip .foul{color:#ff5a4f;font-weight:800}#dslip .grades{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}#dslip .grades span{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(255,255,255,.06)}
 #dslip .g-perfect{color:#5dffa9}#dslip .g-early{color:#ffd27a}#dslip .g-late{color:#ff7a5c}#dslip .dimp{font-size:11.5px;color:var(--dim)}#dslip a{color:var(--accent-soft)}#dslip .acts{display:flex;gap:8px;flex-wrap:wrap}
+#dslip .fit{font-size:11.5px;color:#9fdcbb;margin:6px 0}#dslip .fit b{color:#ffd27a}
+#dslip .sellbox{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;padding:10px 12px;border-radius:10px;background:rgba(242,88,39,.1);border:1px solid rgba(242,88,39,.4)}
+#dslip .sellbox b{font-size:18px}#dslip .newbest{margin:8px 0 0;font-weight:800;color:#5dffa9;letter-spacing:.04em}
+#dslip ol.board{list-style:none;margin:6px 0 12px;padding:0;font-size:12.5px}#dslip ol.board li{display:grid;grid-template-columns:22px 1fr auto auto;gap:8px;align-items:center;padding:4px 6px;border-radius:7px}
+#dslip ol.board li.me{background:rgba(93,255,169,.08)}#dslip ol.board .n{color:var(--dim);font-weight:800}#dslip ol.board b{font:700 12.5px ui-monospace,Consolas,monospace;color:#5dffa9}#dslip ol.board button{padding:3px 9px;font-size:11.5px}
 #dhelp{position:fixed;left:16px;bottom:16px;font-size:12px;color:var(--dim)}
 #dtouch{display:none;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);gap:10px;pointer-events:auto}#dtouch button{height:64px;padding:0 18px;border-radius:14px;font-weight:800;font-size:16px}
 @media (pointer:coarse){#dtouch{display:flex}#dhelp{display:none}}

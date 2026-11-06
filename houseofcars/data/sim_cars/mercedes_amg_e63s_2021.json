@@ -212,8 +212,8 @@
    "src": "STAND-IN template SportsCar transmission.gear_change_time (ABSENT for the car); was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .gear_change_time"
   },
   "transmission_efficiency": {
-   "value": 0.8999999761581421,
-   "src": "STAND-IN template SportsCar transmission.transmission_efficiency (ABSENT for the car); was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .transmission_efficiency"
+   "value": 0.9525,
+   "src": "DERIVED fitted to Dragy owners' runs (no mods listed: 0-100 km/h (s, from a standstill) 3.21 (109 runs); 1/8 mile trap (km/h) 164 (18 runs); 1/4 mile trap (km/h) 207.2 (72 runs)) so the sim's best run gives their medians (research/drag_fit/mercedes_amg_e63s_2021.json, tools/drag_fit.mjs); was STAND-IN template SportsCar transmission.transmission_efficiency (ABSENT for the car); was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .transmission_efficiency"
   }
  },
  "differential": {
@@ -295,8 +295,8 @@
      "src": "STAND-IN template SportsCar wheels[0].setup.cornering_stiffness; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .cornering_stiffness"
     },
     "friction_force_multiplier": {
-     "value": 3.0,
-     "src": "STAND-IN template SportsCar wheels[0].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .friction_force_multiplier"
+     "value": 2.607,
+     "src": "DERIVED fitted to Dragy owners' runs (no mods listed: 0-100 km/h (s, from a standstill) 3.21 (109 runs); 1/8 mile trap (km/h) 164 (18 runs); 1/4 mile trap (km/h) 207.2 (72 runs)) so the sim's best run gives their medians (research/drag_fit/mercedes_amg_e63s_2021.json, tools/drag_fit.mjs); was STAND-IN template SportsCar wheels[0].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .friction_force_multiplier (x0.869 on the template value of this wheel)"
     },
     "side_slip_modifier": {
      "value": 1.0,
@@ -450,8 +450,8 @@
      "src": "STAND-IN template SportsCar wheels[1].setup.cornering_stiffness; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .cornering_stiffness"
     },
     "friction_force_multiplier": {
-     "value": 3.0,
-     "src": "STAND-IN template SportsCar wheels[1].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .friction_force_multiplier"
+     "value": 2.607,
+     "src": "DERIVED fitted to Dragy owners' runs (no mods listed: 0-100 km/h (s, from a standstill) 3.21 (109 runs); 1/8 mile trap (km/h) 164 (18 runs); 1/4 mile trap (km/h) 207.2 (72 runs)) so the sim's best run gives their medians (research/drag_fit/mercedes_amg_e63s_2021.json, tools/drag_fit.mjs); was STAND-IN template SportsCar wheels[1].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .friction_force_multiplier (x0.869 on the template value of this wheel)"
     },
     "side_slip_modifier": {
      "value": 1.0,
@@ -605,8 +605,8 @@
      "src": "STAND-IN template SportsCar wheels[2].setup.cornering_stiffness; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .cornering_stiffness"
     },
     "friction_force_multiplier": {
-     "value": 4.0,
-     "src": "STAND-IN template SportsCar wheels[2].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .friction_force_multiplier"
+     "value": 3.476,
+     "src": "DERIVED fitted to Dragy owners' runs (no mods listed: 0-100 km/h (s, from a standstill) 3.21 (109 runs); 1/8 mile trap (km/h) 164 (18 runs); 1/4 mile trap (km/h) 207.2 (72 runs)) so the sim's best run gives their medians (research/drag_fit/mercedes_amg_e63s_2021.json, tools/drag_fit.mjs); was STAND-IN template SportsCar wheels[2].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .friction_force_multiplier (x0.869 on the template value of this wheel)"
     },
     "side_slip_modifier": {
      "value": 1.0,
@@ -760,8 +760,8 @@
      "src": "STAND-IN template SportsCar wheels[3].setup.cornering_stiffness; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .cornering_stiffness"
     },
     "friction_force_multiplier": {
-     "value": 4.0,
-     "src": "STAND-IN template SportsCar wheels[3].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .friction_force_multiplier"
+     "value": 3.476,
+     "src": "DERIVED fitted to Dragy owners' runs (no mods listed: 0-100 km/h (s, from a standstill) 3.21 (109 runs); 1/8 mile trap (km/h) 164 (18 runs); 1/4 mile trap (km/h) 207.2 (72 runs)) so the sim's best run gives their medians (research/drag_fit/mercedes_amg_e63s_2021.json, tools/drag_fit.mjs); was STAND-IN template SportsCar wheels[3].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .friction_force_multiplier (x0.869 on the template value of this wheel)"
     },
     "side_slip_modifier": {
      "value": 1.0,
@@ -1026,6 +1026,73 @@
   "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Wheel.glb",
   "/Game/Vehicles/SportsCar/SM_SportsCar_Glass.SM_SportsCar_Glass": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Glass.glb"
  },
+ "drag_fit": {
+  "fitted": true,
+  "accepted": true,
+  "why": null,
+  "targets": [
+   {
+    "name": "0-100 km/h (s, from a standstill)",
+    "dragy_median": 3.21,
+    "runs": 109
+   },
+   {
+    "name": "1/8 mile trap (km/h)",
+    "dragy_median": 164,
+    "runs": 18
+   },
+   {
+    "name": "1/4 mile trap (km/h)",
+    "dragy_median": 207.2,
+    "runs": 72
+   }
+  ],
+  "residuals": [
+   {
+    "name": "0-100 km/h (s, from a standstill)",
+    "dragy_median": 3.21,
+    "sim": 3.25,
+    "off": 0.04
+   },
+   {
+    "name": "1/8 mile trap (km/h)",
+    "dragy_median": 164,
+    "sim": 167.568,
+    "off": 3.568
+   },
+   {
+    "name": "1/4 mile trap (km/h)",
+    "dragy_median": 207.2,
+    "sim": 208.367,
+    "off": 1.167
+   }
+  ],
+  "check_quarter": {
+   "dragy_median_s": 10.82,
+   "runs": 72,
+   "sim_with_1ft_rollout_s": 10.825,
+   "sim_from_standstill_s": 11.042,
+   "why": "not a target: Dragy does not say whether its 1/4 includes a 1 ft roll-out"
+  },
+  "best": {
+   "efficiency": 0.9525,
+   "friction": 0.869,
+   "wheels": [
+    2.607,
+    2.607,
+    3.476,
+    3.476
+   ]
+  },
+  "at_bound": {
+   "efficiency": false,
+   "friction": false
+  },
+  "near_bound": {
+   "efficiency": false,
+   "friction": false
+  }
+ },
  "sim_car": true,
  "name": "mercedes_amg_e63s_2021",
  "listing": {
@@ -1066,7 +1133,6 @@
   "steering.angle_ratio",
   "steering.steering_type",
   "transmission.gear_change_time",
-  "transmission.transmission_efficiency",
   "transmission.use_auto_reverse",
   "transmission.use_automatic_gears",
   "wheels.* other setup (cornering stiffness, friction, suspension travel, damping, steering)",
@@ -1169,7 +1235,9 @@
  ],
  "derived": [
   "engine.torque_curve",
-  "movement.chassis_height"
+  "movement.chassis_height",
+  "transmission.transmission_efficiency",
+  "wheels.*.friction_force_multiplier"
  ],
  "authored": [
   "transmission.change_down_rpm",

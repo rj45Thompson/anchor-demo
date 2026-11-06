@@ -1025,6 +1025,17 @@
   "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Wheel.glb",
   "/Game/Vehicles/SportsCar/SM_SportsCar_Glass.SM_SportsCar_Glass": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Glass.glb"
  },
+ "drag_fit": {
+  "fitted": false,
+  "accepted": null,
+  "why": "not fitted: Dragy has too few runs that list no mods (0-100: 1, 1/8: 0, 1/4: 0; 5 needed for two targets)",
+  "targets": [],
+  "residuals": null,
+  "check_quarter": null,
+  "best": null,
+  "at_bound": null,
+  "near_bound": null
+ },
  "sim_car": true,
  "name": "bentley_flying_spur_2018",
  "listing": {

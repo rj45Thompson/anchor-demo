@@ -5,8 +5,8 @@
 // Car slides come from data/showroom.json (READ out of Unreal); `car:` names one. Serves UC-5.1..5.5, UC-6.2, UC-6.3.
 export const SLIDES = [
   { kind: 'welcome', icon: 'lot', kicker: 'Edmonton · 3D lot concept', title: 'House of Cars',
-    lines: ['Your next car, in 3D.', 'Fly the lot. Check the numbers.', 'Take it for a spin.'],
-    body: ['Your next car, in 3D. Fly the lot, open any car to see its real numbers, then take it for a spin.',
+    lines: ['Race it before you buy it.', 'A quarter mile in every car on the lot.', 'Shift on the light. Drive the winner home.'],
+    body: ['Every car for sale here runs the quarter mile on its own numbers; where its owners have posted enough Dragy runs, it is set to what their cars really run. Shift on the light, beat the time, then go see the car.',
            'Arrow keys, the buttons, a swipe or a click on any slide: you\'re in the driver\'s seat.'],
     actions: [{ label: 'Start the tour', go: +1 }] },
   { kind: 'reasons', icon: 'numbers', kicker: 'Why this lot', title: 'No guesswork',

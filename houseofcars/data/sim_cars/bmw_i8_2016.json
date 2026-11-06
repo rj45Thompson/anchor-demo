@@ -1023,6 +1023,62 @@
   "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Wheel.glb",
   "/Game/Vehicles/SportsCar/SM_SportsCar_Glass.SM_SportsCar_Glass": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Glass.glb"
  },
+ "drag_fit": {
+  "fitted": true,
+  "accepted": false,
+  "why": "fit rejected: it needed driveline efficiency 0.708 and tyre grip x0.51, at the edge of what real parts do; the sim car is kept as built",
+  "targets": [
+   {
+    "name": "0-100 km/h (s, from a standstill)",
+    "dragy_median": 4.43,
+    "runs": 10
+   },
+   {
+    "name": "1/4 mile trap (km/h)",
+    "dragy_median": 183,
+    "runs": 5
+   }
+  ],
+  "residuals": [
+   {
+    "name": "0-100 km/h (s, from a standstill)",
+    "dragy_median": 4.43,
+    "sim": 4.425,
+    "off": -0.005
+   },
+   {
+    "name": "1/4 mile trap (km/h)",
+    "dragy_median": 183,
+    "sim": 179.987,
+    "off": -3.013
+   }
+  ],
+  "check_quarter": {
+   "dragy_median_s": 12.22,
+   "runs": 5,
+   "sim_with_1ft_rollout_s": 12.358,
+   "sim_from_standstill_s": 12.617,
+   "why": "not a target: Dragy does not say whether its 1/4 includes a 1 ft roll-out"
+  },
+  "best": {
+   "efficiency": 0.7075,
+   "friction": 0.507,
+   "wheels": [
+    1.521,
+    1.521,
+    2.028,
+    2.028
+   ]
+  },
+  "at_bound": {
+   "efficiency": false,
+   "friction": false
+  },
+  "near_bound": {
+   "efficiency": true,
+   "friction": true
+  }
+ },
  "sim_car": true,
  "name": "bmw_i8_2016",
  "listing": {

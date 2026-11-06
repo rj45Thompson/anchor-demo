@@ -345,7 +345,7 @@ function render(D) {
     const r = f[id], m = r && r.kind === 'READ' ? SPLIT.exec(String(r.value)) : null;
     return m ? '<button data-open="fig-' + id + '"><span class="gl">' + t + '</span><b>' + esc(m[1]) + (m[2] ? '<i>' + esc(m[2]) + '</i>' : '') + '</b></button>' : '';
   }).filter(Boolean);
-  const ctas = (drivable ? '<a class="cta go" href="' + esc(lot) + '">' + svgIcon('wheel', 16) + ' Test drive it</a>' : '') +
+  const ctas = (drivable ? '<a class="cta go" href="' + esc(lot) + '&drag">' + svgIcon('wheel', 16) + ' Drag race it</a><a class="cta" href="' + esc(lot) + '">Lap the track</a>' : '') +   // UC-23.1
     (l && isWeb(l.url) ? '<a class="cta" href="' + esc(l.url) + '"' + ext + '>' + svgIcon('link', 16) + ' See it on houseofcars.com</a>' : '') +
     '<a class="cta" href="' + esc(lot) + '">' + svgIcon('lot', 16) + ' Back to the lot</a>';
 

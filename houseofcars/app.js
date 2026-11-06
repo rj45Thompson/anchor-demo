@@ -391,7 +391,7 @@ function saleCard(s, card) {
     '<dl>' + row('Kilometres', l.km, (v) => v.toLocaleString('en-CA') + ' km') + row('Engine', l.engine) + row('Colour', COLOURS.cars[l.key] || l.colour) + row('Interior', l.interior) +
     row('VIN', l.vin) + row('Stock', l.stock) + '</dl>' +
     specRows(l.key) + simLine(l.key) +
-    '<div class="acts">' + (MODELS.models[l.key] && SIMS.has(l.key) ? '<button class="act" data-drive="' + l.key + '">Test drive it</button><button class="act" data-drag="' + l.key + '">Drag race</button>' : '') +
+    '<div class="acts">' + (MODELS.models[l.key] && SIMS.has(l.key) ? '<button class="act go" data-drag="' + l.key + '">Drag race it</button><button class="act" data-drive="' + l.key + '">Lap the track</button>' : '') +
     (GHOSTS.ghosts.some((g) => g.car === l.key) ? '<button class="act" data-race="' + l.key + '">Race its ghost</button>' : '') +
     '<a class="act" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + svgIcon('link', 16) + ' See it on houseofcars.com</a>' +
     '<a class="act" href="details.html#car=' + esc(l.key) + '">Full details</a>' +      // UC-16.1: the car's own page (details.js)
@@ -479,7 +479,7 @@ function renderCard() {
   const saleDrive = d.kind === 'listing' && MODELS.models[d.listing.key] && SIMS.has(d.listing.key);
   const drivable = sale ? !!saleDrive : s.car ? s.car.drivable : s.def.kind === 'drive';
   $('drive').disabled = !drivable;
-  $('drive').textContent = sale && !saleDrive ? 'FOR SALE' : s.car && !s.car.drivable ? 'SHOWROOM ONLY' : 'TEST DRIVE';
+  $('drive').textContent = sale && !saleDrive ? 'FOR SALE' : sale ? 'DRAG RACE' : s.car && !s.car.drivable ? 'SHOWROOM ONLY' : 'TEST DRIVE';
   $('drive').title = drivable ? 'Race the Time Trial lap in ' + (s.car ? s.car.name : show.lastCar) : 'This car is a static mesh in Unreal: nothing to drive';
   $('pos').textContent = (show.index + 1) + ' / ' + show.slides.length;
   card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
@@ -499,7 +499,7 @@ $('prev').onclick = () => select(show.index - 1);
 $('next').onclick = () => select(show.index + 1);
 $('drive').onclick = () => {
   const s = show.slides[show.index];
-  if (s.def.kind === 'listing') { startRace({ name: s.def.listing.key, sim: true, drivable: true }); return; }
+  if (s.def.kind === 'listing') { startDrag({ name: s.def.listing.key, sim: true, drivable: true }).catch((e) => reportError(e)); return; }   // UC-23.1: a car for sale races the strip
   startRace(s.car ? s.car : carEntry(show.lastCar));
 };
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -969,7 +969,7 @@ async function startDrag(entry) {
   const best = Drag.bestRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip);   // the sim's own best run, for the slip (DERIVED)
   const camKey = entry.sim ? 'SportsCar' : entry.name;
   const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
-  race = { kind: 'drag', entry, car, v, strip, best, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
+  race = { kind: 'drag', entry, car, carJson, v, strip, best, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {} };
   const tachEl = $('hud-speed'); tachEl.querySelector('svg.tach')?.remove();
   race.tach = buildTach(tachEl, v.cfg.engine.maxRPM, Math.min(...race.pts));   // the red band from the earliest derived shift point
@@ -1057,6 +1057,33 @@ function tickDrag(dt) {
   driveSound(audio, { rpm: v.engineRPM, throttle: r.throttle, speedCmS: v.forwardSpeedCmS, slide, gear: v.gear, running: true });
   r.post.render();
 }
+// UC-23.3 the slip sells: this car's own listing (price, kilometres, where it is) and your best quarter mile in every car on the lot,
+// ranked, each one a race away. The bests are this device's own (localStorage), as the lap record (hud.js readRecord)
+const DRAG_BEST = (k) => 'hoc.drag.best.' + k;
+function readDragBest(k) { try { const v = localStorage.getItem(DRAG_BEST(k)); return v === null ? null : +v; } catch (e) { return null; } }
+function writeDragBest(k, t) { try { const b = readDragBest(k); if (b === null || t < b) { localStorage.setItem(DRAG_BEST(k), String(t)); return true; } } catch (e) { /* a private window keeps none */ } return false; }
+function sellHTML(r, s) {
+  const key = r.entry.name, L = LISTINGS.cars.find((c) => c.key === key);
+  const isBest = !s.foul && s.quarter_s !== null && writeDragBest(key, s.quarter_s);
+  const cars = LOT_CARS.filter((c) => SIMS.has(c.key) && MODELS.models[c.key]);
+  const board = cars.map((c) => ({ c, t: readDragBest(c.key) })).sort((a, b) => (a.t === null) - (b.t === null) || (a.t || 0) - (b.t || 0));
+  const listing = L ? '<div class="sellbox"><div><p class="kick">This car is for sale</p><b>' + esc(V(L.price) !== null ? money(V(L.price), V(L.currency)) : 'Price not listed') + '</b>' +
+    (V(L.km) !== null ? ' · ' + esc(V(L.km).toLocaleString('en-CA')) + ' km' : '') + (V(L.store) ? ' · ' + esc(V(L.store)) : '') + '</div>' +
+    '<div class="acts"><a class="act go" href="' + esc(L.url) + '" target="_blank" rel="noopener">See it at House of Cars</a><a class="act" href="details.html#car=' + esc(key) + '">Full details</a></div></div>' : '';
+  const rows = board.map((x, i) => '<li class="' + (x.c.key === key ? 'me' : '') + '"><span class="n">' + (x.t === null ? '-' : i + 1) + '</span><span class="nm">' + esc(x.c.title) + '</span>' +
+    '<b>' + (x.t === null ? 'not run yet' : x.t.toFixed(3) + ' s') + '</b>' + (x.c.key === key ? '' : '<button class="act" data-dragto="' + esc(x.c.key) + '">Race it</button>') + '</li>').join('');
+  return (isBest ? '<p class="newbest">Your best in this car</p>' : '') + listing + '<p class="kick">Your quarter mile, every car on the lot</p><ol class="board">' + rows + '</ol>';
+}
+// UC-23.2 how near the sim car is to the real one: fitted to its owners' Dragy runs (tools/drag_fit.mjs), or why it is not
+function fitHTML(r) {
+  const f = r.carJson && r.carJson.drag_fit;
+  if (!f) return '<p class="fit">This car is not fitted to its owners&#39; runs: it is the sim car as built.</p>';
+  if (!f.fitted) return '<p class="fit">Not fitted to its owners&#39; runs: ' + esc(f.why.replace(/^not fitted: /, '')) + '. Its driveline and tyres are the template&#39;s.</p>';
+  if (f.accepted === false) return '<p class="fit"><b>Fit rejected:</b> ' + esc(f.why.replace(/^fit rejected: /, '')) + '. The real car runs slower than this sim one; the owners&#39; times beside it show by how much.</p>';
+  const res = f.residuals.map((x) => { const kmh = /km\/h/.test(x.name); return esc(x.name.replace(/ \(.*\)/, '')) + ' ' + (x.off >= 0 ? '+' : '') + x.off.toFixed(kmh ? 1 : 2) + (kmh ? ' km/h' : ' s'); }).join(', ');
+  return '<p class="fit">Sim fitted to its owners&#39; Dragy runs: driveline efficiency ' + f.best.efficiency + ', tyre grip x' + f.best.friction + ' (off by ' + res + ')' +
+    (f.near_bound && (f.near_bound.efficiency || f.near_bound.friction) ? '. <b>Near the edge of the search:</b> the fit stretches a stand-in to cover something the sim lacks' : '') + '.</p>';
+}
 function showDragSlip(r) {
   const s = Drag.slip(r.run), b = r.best.slip;
   const dg = DRAGY.cars[r.entry.name], q = dg && dg.tests['1/4 mile'], e8 = dg && dg.tests['1/8 mile'], z = dg && dg.tests['0-100 km/h'];
@@ -1070,15 +1097,18 @@ function showDragSlip(r) {
     '<table><tr><th></th><td>You</td><td>Sim, best shifts</td><td>Dragy owners</td></tr>' +
     row('Reaction', s.reaction_s === null ? '--' : (s.reaction_s >= 0 ? '+' : '') + fmt(s.reaction_s), fmt(b.reaction_s), '') +
     row('60 ft', fmt(s.sixty_s), fmt(b.sixty_s), '') +
-    row('0-100 km/h', fmt(s.kmh100_s, 2), fmt(b.kmh100_s, 2), ownZ ? fmt(ownZ.median_s, 2) : '--') +
+    row('0-100 km/h', fmt(s.kmh100_standing_s, 2), fmt(b.kmh100_standing_s, 2), ownZ ? fmt(ownZ.median_s, 2) : '--') +   // from a standstill, as Dragy's board times it
     row('1/8 mile', fmt(s.eighth_s) + kmh(s.eighth_kmh), fmt(b.eighth_s) + kmh(b.eighth_kmh), own8 ? fmt(own8.median_s, 2) + kmh(own8.median_trap_kmh) : '--') +
     row('1/4 mile', fmt(s.quarter_s) + kmh(s.quarter_kmh), fmt(b.quarter_s) + kmh(b.quarter_kmh), ownQ ? fmt(ownQ.median_s, 2) + kmh(ownQ.median_trap_kmh) : '--') + '</table>' +
     '<div class="grades">' + (grades || '<span>no shifts</span>') + '</div>' +
     '<p class="dimp">Sim: the same car and physics, every shift at its best point (from the car\'s own torque curve and gear ratios). Dragy owners: the median of the runs ' +
-    'Dragy users uploaded that list no mods' + (dg ? ' (<a href="' + esc(dg.board) + '" target="_blank" rel="noopener">their leaderboard</a>)' : '') + '. Times from 1 ft of roll-out.</p>' +
+    'Dragy users uploaded that list no mods' + (dg ? ' (<a href="' + esc(dg.board) + '" target="_blank" rel="noopener">their leaderboard</a>)' : '') + '. 0-100 from a standstill, as Dragy times it; 60 ft, 1/8 and 1/4 from 1 ft of roll-out, as a strip times them (Dragy does not say which its 1/4 uses).</p>' +
+    fitHTML(r) +
+    sellHTML(r, s) +
     '<div class="acts"><button class="act go" id="drerun">Run again (R)</button><button class="act" id="dlot">Back to the lot (Esc)</button></div>';
   $('dslip').hidden = false;
   $('drerun').onclick = dragRerun; $('dlot').onclick = () => backToShowroom();
+  $('dslip').querySelectorAll('button[data-dragto]').forEach((b) => { b.onclick = () => startDrag({ name: b.dataset.dragto, sim: true, drivable: true }).catch((e) => reportError(e)); });   // UC-23.3
 }
 
 // ---------------------------------------------------------------- the ghost picker (UC-9.3)
@@ -1145,8 +1175,9 @@ select(0);
 // the page is already open and only the link's #car= changes (a second QR scan in the same tab): select() itself rewrites the
 // hash with replaceState, which fires no hashchange, so this follows only links from outside
 function openCarLink(hash) {
-  const m = /^#car=([\w-]+)$/.exec(hash);
+  const m = /^#car=([\w-]+)(&drag)?$/.exec(hash);
   if (!m) return;
+  if (m[2] && SIMS.has(m[1]) && MODELS.models[m[1]]) { startDrag({ name: m[1], sim: true, drivable: true }).catch((e) => reportError(e)); return; }   // UC-23.1
   const k = show.slides.findIndex((x) => (x.def.kind === 'listing' && x.def.listing.key === m[1]) || (x.def.kind === 'unlisted' && x.def.unlisted.key === m[1]));
   if (k >= 0) select(k);
   else { select(show.slides.findIndex((x) => x.def.kind === 'sale')); $('card').insertAdjacentHTML('afterbegin', '<p class="gone">That car is no longer on this lot\'s list (read ' + esc(readDay) + ').</p>'); }
