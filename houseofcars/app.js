@@ -20,7 +20,8 @@ import { makeGamepad, readGamepad, readPadRaw } from './gamepad.js';
 import { makeRecorder, record, saveGhost, loadGhost, ghostPose } from './ghost.js';
 import { overlapsGate, carAxes } from './gates.js';   // one gate test for the page and the sim (tools/sim_ghost.mjs)
 import { loadHoles, withHoles } from './ground_holes.js';
-import * as AI from './ai_driver.js';                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
+import * as AI from './ai_driver.js';
+import { lotCars, leadsFor, compareHTML, priceVsPace } from './sale.js';                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
 
 // AUTHORED for the page itself (look and layout, never presented as Unreal's): see AUTHORED in the report
 export const AUTHORED = [
@@ -39,6 +40,7 @@ export const AUTHORED = [
   'showroom light beams (fx.js lightBeam) and the save-picture button are the page\'s own',
   'intro: the camera sweep onto the lot and the card motion are the page\'s own (none when the OS asks for reduced motion)',
   'cars for sale: their physics are tools/sim_car.py (READ factory numbers on the template SportsCar, every stand-in named in data/sim_cars); their bodies are Meshy models; they ride the SportsCar\'s cameras',
+  'selling tools (sale.js): the leads-the-lot badges, compare table and price-vs-pace chart are DERIVED from READ figures and the sim laps; the share link, QR code and kiosk tour are the page\'s own',
   'paint picker: the colours are the page\'s own; Factory is the colour Unreal\'s glTF export baked. Dragging a car turns it on its pedestal',
   'resolution: the page picks its own pixel ratio from the frame time (the Resolution pill says which)',
   'physics runs at a fixed 120 Hz on the page (Unreal ticks Chaos with the engine\'s own substepping)',
@@ -97,6 +99,8 @@ const LOT = SLIDES.flatMap((d) => d.kind !== 'listings' ? [d]
   : [...LISTINGS.cars.map((l) => ({ kind: 'listing', listing: l })), ...LISTINGS.absent.map((x) => ({ kind: 'unlisted', unlisted: x }))]);
 const pad = makeGamepad(INPUT);                                    // UC-7.5a: the IMC's gamepad bindings (gamepad.js)
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;   // UC-7.2b
+const START_HASH = decodeURIComponent(location.hash);     // read once: select() rewrites the hash to follow the slide
+const KIOSK = START_HASH === '#kiosk';                     // UC-11.5
 window.HOC = { BACKEND, SHOW, TRACK, RULES, state: null, paint };   // for the page check (test/page_check.mjs) and for review in devtools
 
 // ---------------------------------------------------------------- a car out of its Unreal parts (UC-1.2)
@@ -252,10 +256,8 @@ async function saleModel(m) {
   const g = (await loadGlb('data/meshes/' + m.glb)).scene.clone(true);
   g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   if (m.yaw_deg) g.rotation.y = m.yaw_deg * Math.PI / 180;
-  const box = new THREE.Box3().setFromObject(g), size = box.getSize(new THREE.Vector3());
-  const k = m.length_m.value / Math.max(size.x, size.z);
-  g.scale.setScalar(k);
-  const b2 = new THREE.Box3().setFromObject(g), c = b2.getCenter(new THREE.Vector3());
+  const b2 = new THREE.Box3().setFromObject(g), c = b2.getCenter(new THREE.Vector3()), size = b2.getSize(new THREE.Vector3());
+  if (Math.abs(Math.max(size.x, size.z) - m.length_m.value) > 0.02) throw new Error(m.glb + ' is ' + Math.max(size.x, size.z).toFixed(3) + ' m long, not its READ ' + m.length_m.value + ' m: re-run tools/import_models.py');
   g.position.set(-c.x, -b2.min.y, -c.z);
   const wrap = new THREE.Group(); wrap.add(g); return wrap;
 }
@@ -305,6 +307,35 @@ for (let i = 0; i < LOT.length; i++) {
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SIMS = new Set(GHOSTS.ghosts.map((g) => g.car));
+// ---------------------------------------------------------------- the salesperson's tools (UC-11): leaders, compare, share, QR, kiosk
+const LOT_CARS = lotCars(LISTINGS, SALE_SPECS, GHOSTS, { money: (v) => money(v, 'CAD'), time: (v) => Rules.formatTime(v, RULES) });
+const carLink = (key) => location.origin + location.pathname + '#car=' + key;
+function openCompare(focus) {
+  $('cmpbody').innerHTML = compareHTML(LOT_CARS, focus) + priceVsPace(LOT_CARS, focus, PAL.accent);
+  $('compare').hidden = false; $('cmpclose').focus();
+}
+$('cmpclose').addEventListener('click', () => { $('compare').hidden = true; });
+$('compare').addEventListener('click', (e) => { if (e.target.id === 'compare') $('compare').hidden = true; });
+async function shareCar(key, btn) {
+  const url = carLink(key), title = (LOT_CARS.find((c) => c.key === key) || {}).title;
+  if (navigator.share) { try { await navigator.share({ title: title + ' · House of Cars 3D lot (concept)', url }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+  await navigator.clipboard.writeText(url);
+  btn.textContent = 'Link copied'; setTimeout(() => { btn.innerHTML = svgIcon('link', 16) + ' Share this car'; }, 2200);
+}
+async function openAR(key) {
+  const m = MODELS.models[key]; if (!m) return;
+  if (!customElements.get('model-viewer')) await import('model-viewer');
+  const t = (LOT_CARS.find((c) => c.key === key) || {}).title || key;
+  $('arbody').innerHTML = '<model-viewer src="data/meshes/' + esc(m.glb) + '" alt="' + esc(t) + ', 3D model" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" camera-controls auto-rotate shadow-intensity="1" exposure="1.1" environment-image="neutral"><button slot="ar-button" class="act">See it in your driveway</button></model-viewer>' +
+    '<p class="cmpnote">' + esc(t) + ' at its real length (' + esc(String(m.length_m.value)) + ' m, ' + esc(m.length_m.src) + '). On a phone, the button puts it in your driveway; on a computer, drag to turn it.</p>';
+  $('ar').hidden = false; $('arclose').focus();
+}
+$('arclose').addEventListener('click', () => { $('ar').hidden = true; $('arbody').innerHTML = ''; });
+async function drawQR(key, el) {                          // a QR code of the car's own link, for a buyer's phone (qrcode-generator, MIT)
+  const { default: qrcode } = await import('qrcode-generator');
+  const q = qrcode(0, 'M'); q.addData(carLink(key)); q.make();
+  el.innerHTML = q.createSvgTag({ cellSize: 3, margin: 2, scalable: true }) + '<span>Scan for this car</span>';
+}
 let pendingGhost = null;                                  // the ghost a 'Race its ghost' press asked for (localStorage may be off)
 function saleCard(s, card) {
   const d = s.def;
@@ -316,7 +347,9 @@ function saleCard(s, card) {
   }
   const l = d.listing;
   const row = (label, f, fmt) => '<dt>' + esc(label) + '</dt><dd>' + (V(f) === null ? '<span class="abs" title="' + esc(f.why) + '">not listed</span>' : esc(fmt ? fmt(V(f)) : V(f))) + '</dd>';
+  const leads = leadsFor(l.key, LOT_CARS);
   card.innerHTML = '<p class="kick">For sale · ' + esc(V(l.city)) + (V(l.store) !== V(l.city) ? ' · ' + esc(V(l.store)) : '') + ' store</p><h2>' + esc(saleTitle(l)) + '</h2>' +
+    (leads.length ? '<div class="leads" title="Best of the ' + LOT_CARS.length + ' cars for sale on this lot, from their published figures and simulated laps">' + leads.map((x) => '<span>' + esc(x) + '</span>').join('') + '</div>' : '') +
     (V(l.trim) ? '<div class="sub">' + esc(V(l.trim)) + '</div>' : '') + '<div class="price">' + (V(l.price) !== null ? esc(money(V(l.price), V(l.currency))) : 'Price not listed') + '<small>as listed on houseofcars.com, ' + esc(readDay) + '</small></div>' +
     '<dl>' + row('Kilometres', l.km, (v) => v.toLocaleString('en-CA') + ' km') + row('Engine', l.engine) + row('Colour', l.colour) + row('Interior', l.interior) +
     row('VIN', l.vin) + row('Stock', l.stock) + '</dl>' +
@@ -324,6 +357,9 @@ function saleCard(s, card) {
     '<div class="acts">' + (MODELS.models[l.key] && SIMS.has(l.key) ? '<button class="act" data-drive="' + l.key + '">Test drive it</button>' : '') +
     (GHOSTS.ghosts.some((g) => g.car === l.key) ? '<button class="act" data-race="' + l.key + '">Race its ghost</button>' : '') +
     '<a class="act" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + svgIcon('link', 16) + ' See it on houseofcars.com</a></div>' +
+    '<div class="sell"><button class="pick2" id="cmpopen">' + svgIcon('numbers', 16) + ' Compare the lot</button><button class="pick2" id="share">' + svgIcon('link', 16) + ' Share this car</button>' +
+    (MODELS.models[l.key] ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') + '</div>' +
+    '<div class="qr" id="qr"></div>' +
     '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) : '3D model not made yet.') + ' Listing: ' + esc(l.name.src) + '</div>';
   card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = SALE_SPECS.cars[l.key].rows[+b.dataset.k].src; }));
   card.querySelectorAll('button[data-race]').forEach((b) => b.addEventListener('click', () => {
@@ -331,6 +367,10 @@ function saleCard(s, card) {
     pendingGhost = b.dataset.race + '.json'; startRace(carEntry('SportsCar'));
   }));
   card.querySelectorAll('button[data-drive]').forEach((b) => b.addEventListener('click', () => startRace({ name: b.dataset.drive, sim: true, drivable: true })));
+  $('cmpopen').addEventListener('click', () => openCompare(l.key));
+  if ($('aropen')) $('aropen').addEventListener('click', () => openAR(l.key));
+  $('share').addEventListener('click', (e) => shareCar(l.key, e.currentTarget));
+  drawQR(l.key, $('qr'));
 }
 function specRows(key) {
   const sp = SALE_SPECS.cars[key];
@@ -374,6 +414,7 @@ function renderCard() {
     card.innerHTML = '<p class="kick">' + esc(d.kicker) + '</p><h2>' + svgIcon(d.icon, 22) + esc(d.title) + '</h2>' + (d.body || []).map((p) => '<p>' + esc(p) + '</p>').join('') +
       (pts ? '<ul class="pts">' + pts + '</ul>' : '') +
       (picks ? '<div class="picks">' + picks + '</div>' : '') + (acts ? '<div class="acts">' + acts + '</div>' : '');
+    if (d.kind === 'sale') { card.insertAdjacentHTML('beforeend', '<div class="sell"><button class="pick2" id="cmpopen">' + svgIcon('numbers', 16) + ' Compare the lot</button></div>'); $('cmpopen').addEventListener('click', () => openCompare(null)); }
     card.querySelectorAll('button.pick').forEach((b) => b.addEventListener('click', () => select(show.slides.findIndex((x) =>
       b.dataset.sale ? x.def.kind === 'listing' && x.def.listing.key === b.dataset.sale : x.car && x.car.name === b.dataset.car))));
     card.querySelectorAll('button.act').forEach((b) => b.addEventListener('click', () => {
@@ -395,6 +436,8 @@ function renderCard() {
 function select(i) {
   show.index = (i + show.slides.length) % show.slides.length;
   const s = show.slides[show.index];
+  const h = s.def.kind === 'listing' ? '#car=' + s.def.listing.key : KIOSK ? '#kiosk' : '';
+  if (location.hash !== h) history.replaceState(null, '', location.pathname + location.search + h);
   if (s.car && s.car.drivable) show.lastCar = s.car.name;
   let d = s.angle - show.targetAngle;
   d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -822,6 +865,25 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 select(0);
+// UC-11.1: a link to one car opens the lot on it; a car no longer listed opens 'For sale now' and says so (UC-11.1a)
+{
+  const m = /^#car=([\w-]+)$/.exec(START_HASH);
+  if (m) {
+    const k = show.slides.findIndex((x) => x.def.kind === 'listing' && x.def.listing.key === m[1]);
+    if (k >= 0) select(k);
+    else { select(show.slides.findIndex((x) => x.def.kind === 'sale')); $('card').insertAdjacentHTML('afterbegin', '<p class="gone">That car is no longer on this lot\'s list (read ' + esc(readDay) + ').</p>'); }
+  }
+}
+// UC-11.5 kiosk (#kiosk): an unattended tour of the cars for sale, one every 9 s; a touch or key pauses it for 45 s
+if (KIOSK) {
+  const sale = show.slides.map((x, k) => (x.def.kind === 'listing' ? k : -1)).filter((k) => k >= 0);
+  let hold = 0, at = 0;
+  const poke = () => { hold = performance.now() + 45000; };
+  addEventListener('pointerdown', poke); addEventListener('keydown', poke);
+  select(sale[0]);
+  setInterval(() => { if (mode === 'show' && performance.now() > hold) { at = (at + 1) % sale.length; select(sale[at]); } }, 9000);
+  document.body.classList.add('kiosk');
+}
 setTimeout(() => prepareTrack().catch((e) => { console.error(e); }), 1500);   // behind the lot; startRace awaits the same promise and shows any error
 $('loading').style.display = 'none';
 // UC-7.2a: the page lowers its own resolution when frames run slow, raises it again when they are quick, and says which it chose

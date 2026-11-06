@@ -8,48 +8,64 @@
      "label": "Power",
      "kind": "READ",
      "value": "373 kW (500 hp) at 6000 rpm",
+     "num": 373,
+     "field": "power_kw",
      "src": "READ Wikipedia, Bentley Flying Spur, section Second generation (2013-2019): \"507 PS (373 kW; 500 hp) at 6,000\" https://en.wikipedia.org/wiki/Bentley_Flying_Spur_(2005)"
     },
     {
      "label": "Torque",
      "kind": "READ",
      "value": "660 N·m at 1700 rpm",
+     "num": 660,
+     "field": "torque_nm",
      "src": "READ Bentley Motors, history-and-heritage Flying Spur page, Wayback copy 2024-04-12: \"660 Nm of torque from 1,700 rpm\" https://web.archive.org/web/20240412101932/https://www.bentleymotors.com/en/about-bentley/history-and-heritage/flying-spur.html"
     },
     {
      "label": "Weight",
      "kind": "READ",
      "value": "2,423 kg (5341 lb at the source, converted)",
+     "num": 2422.6,
+     "field": "curb_weight_kg",
      "src": "READ carspecs.us, 2018 Bentley Flying Spur V8 Sedan (US-market database): \"Curb weight 5,341 lbs.\" https://www.carspecs.us/cars/2018/bentley/flying-spur/69069"
     },
     {
      "label": "Drive",
      "kind": "READ",
      "value": "AWD (permanent)",
+     "num": null,
+     "field": "drivetrain",
      "src": "READ supercars.net, 2014 Bentley Flying Spur V8 spec block: \"driven wheels Continuous AWD\" https://www.supercars.net/blog/2014-bentley-flying-spur-v8/"
     },
     {
      "label": "Gearbox",
      "kind": "READ",
      "value": "automatic, ZF 8-speed with Quickshift, 8 gears",
+     "num": null,
+     "field": "transmission",
      "src": "READ Bentley Motors, history-and-heritage Flying Spur page, Wayback copy 2024-04-12: \"smooth 8-speed Quickshift transmission\" https://web.archive.org/web/20240412101932/https://www.bentleymotors.com/en/about-bentley/history-and-heritage/flying-spur.html"
     },
     {
      "label": "0-100 km/h",
      "kind": "READ",
      "value": "5.2 s",
+     "num": 5.2,
+     "field": "zero_to_100_kmh_s",
      "src": "READ Bentley Motors, history-and-heritage Flying Spur page, Wayback copy 2024-04-12: \"0 to 100 km/h in 5.2 secs\" https://web.archive.org/web/20240412101932/https://www.bentleymotors.com/en/about-bentley/history-and-heritage/flying-spur.html"
     },
     {
      "label": "Top speed",
      "kind": "READ",
      "value": "295 km/h",
+     "num": 295,
+     "field": "top_speed_kmh",
      "src": "READ Bentley Motors, history-and-heritage Flying Spur page, Wayback copy 2024-04-12: \"top speed of 183 mph [295 km/h]\" https://web.archive.org/web/20240412101932/https://www.bentleymotors.com/en/about-bentley/history-and-heritage/flying-spur.html"
     },
     {
      "label": "Length",
      "kind": "READ",
      "value": "5,299 mm",
+     "num": 5299,
+     "field": "length_mm",
      "src": "READ Wikipedia, Bentley Flying Spur, section Second generation (2013-2019): \"Length | 5,299 mm (208.6 in)\" https://en.wikipedia.org/wiki/Bentley_Flying_Spur_(2005)"
     }
    ]
@@ -61,48 +77,64 @@
      "label": "Power",
      "kind": "READ",
      "value": "465 kW (624 hp) at 5600 rpm",
+     "num": 465,
+     "field": "power_kw",
      "src": "READ Rolls-Royce Motor Cars, Wraith Technical specification (figures as at July 2016, MY2017), Wayback copy 2017-02-12: \"624 bhp / 632 PS (DIN) / 465 kW @ 5600 rpm\" https://web.archive.org/web/20170212001810/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/World_2017/Models/Wraith/technical-specifications/Rolls-Royce_Wraith_Technical_Specifiaction_2017.pdf"
     },
     {
      "label": "Torque",
      "kind": "READ",
      "value": "800 N·m at 1500-5500 rpm",
+     "num": 800,
+     "field": "torque_nm",
      "src": "READ Rolls-Royce Motor Cars, Wraith Technical specification (figures as at July 2016, MY2017), Wayback copy 2017-02-12: \"800 Nm / 590 lb ft @ 1500-5500 rpm\" https://web.archive.org/web/20170212001810/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/World_2017/Models/Wraith/technical-specifications/Rolls-Royce_Wraith_Technical_Specifiaction_2017.pdf"
     },
     {
      "label": "Weight",
      "kind": "READ",
      "value": "2,440 kg",
+     "num": 2440,
+     "field": "curb_weight_kg",
      "src": "READ Rolls-Royce Motor Cars, Wraith Technical specification (figures as at July 2016, MY2017), Wayback copy 2017-02-12: \"Curb weight (USA) 2440 kg / 5380 lb\" https://web.archive.org/web/20170212001810/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/World_2017/Models/Wraith/technical-specifications/Rolls-Royce_Wraith_Technical_Specifiaction_2017.pdf"
     },
     {
      "label": "Drive",
      "kind": "READ",
      "value": "RWD (front engine, rear-wheel drive)",
+     "num": null,
+     "field": "drivetrain",
      "src": "READ auto-data.net, Rolls-Royce Wraith 6.6 V12 (632 Hp) Automatic: \"Drive wheel Rear wheel drive\" https://www.auto-data.net/en/rolls-royce-wraith-6.6-v12-632hp-automatic-24307"
     },
     {
      "label": "Gearbox",
      "kind": "READ",
      "value": "automatic, ZF 8HP90, 8 gears",
+     "num": null,
+     "field": "transmission",
      "src": "READ Wikipedia, Rolls-Royce Wraith (2013): \"Wraith | 2013– | 8-speed automatic (ZF 8HP90)\" https://en.wikipedia.org/wiki/Rolls-Royce_Wraith_(2013)"
     },
     {
      "label": "0-100 km/h",
      "kind": "READ",
      "value": "4.6 s",
+     "num": 4.6,
+     "field": "zero_to_100_kmh_s",
      "src": "READ Rolls-Royce Motor Cars, Wraith Technical specification (figures as at July 2016, MY2017), Wayback copy 2017-02-12: \"Acceleration 0-100 km/h 4.6 sec\" https://web.archive.org/web/20170212001810/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/World_2017/Models/Wraith/technical-specifications/Rolls-Royce_Wraith_Technical_Specifiaction_2017.pdf"
     },
     {
      "label": "Top speed",
      "kind": "READ",
      "value": "250 km/h",
+     "num": 250,
+     "field": "top_speed_kmh",
      "src": "READ Rolls-Royce Motor Cars, Wraith Technical specification (figures as at July 2016, MY2017), Wayback copy 2017-02-12: \"Top speed 155 mph / 250 km/h\" https://web.archive.org/web/20170212001810/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/World_2017/Models/Wraith/technical-specifications/Rolls-Royce_Wraith_Technical_Specifiaction_2017.pdf"
     },
     {
      "label": "Length",
      "kind": "READ",
      "value": "5,269 mm",
+     "num": 5269,
+     "field": "length_mm",
      "src": "READ Rolls-Royce Motor Cars, Wraith Technical specification (figures as at July 2016, MY2017), Wayback copy 2017-02-12: \"Vehicle length 5269 mm / 207.4 in\" https://web.archive.org/web/20170212001810/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/World_2017/Models/Wraith/technical-specifications/Rolls-Royce_Wraith_Technical_Specifiaction_2017.pdf"
     }
    ]
@@ -114,48 +146,64 @@
      "label": "Power",
      "kind": "READ",
      "value": "420 kW (563 hp) at 5250 rpm",
+     "num": 420,
+     "field": "power_kw",
      "src": "READ Rolls-Royce Motor Cars Wraith press kit (2013 launch): \"563 bhp / 420kW and 0-60 in 4.7 seconds for Ghost\" https://newsroom.rolls-roycemotorcars.com/wraith-press-kit"
     },
     {
      "label": "Torque",
      "kind": "READ",
      "value": "780 N·m at 1500 rpm",
+     "num": 780,
+     "field": "torque_nm",
      "src": "READ Rolls-Royce Motor Cars Wraith press kit (2013 launch): \"From 1,500 rpm 800 Nm of torque is available (780 Nm for Ghost)\" https://newsroom.rolls-roycemotorcars.com/wraith-press-kit"
     },
     {
      "label": "Weight",
      "kind": "READ",
      "value": "2,490 kg (5490 lb at the source, converted)",
+     "num": 2490.2,
+     "field": "curb_weight_kg",
      "src": "READ DecodeThis VIN record for SCA664S59EUX52456 (VIN-level database page): \"Curb Weight-automatic 5490\" https://decodethis.com/web/vin/SCA664S59EUX52456"
     },
     {
      "label": "Drive",
      "kind": "READ",
      "value": "RWD (front engine, rear-wheel drive)",
+     "num": null,
+     "field": "drivetrain",
      "src": "READ House of Cars listing page text for the Ghost (equipment feed), fetched 2026-11-06: \"Rear-Wheel Drive\" https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/"
     },
     {
      "label": "Gearbox",
      "kind": "READ",
      "value": "automatic, ZF 8HP90, 8 gears",
+     "num": null,
+     "field": "transmission",
      "src": "READ Wikipedia, Rolls-Royce Ghost (first generation: Series I 2009-2014, Series II 2014-2020; tables by model year): \"Ghost (780Nm) | 2014–2020 | 8-speed automatic (ZF 8HP90)\" https://en.wikipedia.org/wiki/Rolls-Royce_Ghost"
     },
     {
      "label": "0-100 km/h",
      "kind": "READ",
      "value": "4.9 s",
+     "num": 4.9,
+     "field": "zero_to_100_kmh_s",
      "src": "READ What Car?, 'Rolls-Royce reveals Ghost's figures' (21 July 2009), reproducing Rolls-Royce's Ghost fact file (Series I launch): \"0-100km/h: 4.9 seconds\" https://www.whatcar.com/news/rolls-royce-reveals-ghosts-figures/"
     },
     {
      "label": "Top speed",
      "kind": "READ",
      "value": "250 km/h",
+     "num": 250,
+     "field": "top_speed_kmh",
      "src": "READ Rolls-Royce Motor Cars, Ghost Technical specification, World Version (figures as at May 2016: Series II, 820 Nm, ZF 8HP95), Wayback copy 2017-02-12: \"Top speed 155 mph / 250 km/h (governed)\" https://web.archive.org/web/20170212001813/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/world_2016/World_Updated/Ghost_SWB_Spec_World.pdf"
     },
     {
      "label": "Length",
      "kind": "READ",
      "value": "5,399 mm",
+     "num": 5399,
+     "field": "length_mm",
      "src": "READ Rolls-Royce Motor Cars, Ghost Technical specification, World Version (figures as at May 2016: Series II, 820 Nm, ZF 8HP95), Wayback copy 2017-02-12: \"Vehicle length 5399 mm / 212.6 in\" https://web.archive.org/web/20170212001813/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/world_2016/World_Updated/Ghost_SWB_Spec_World.pdf"
     }
    ]
@@ -167,48 +215,64 @@
      "label": "Power",
      "kind": "READ",
      "value": "450 kW (603 hp) at 5750-6500 rpm",
+     "num": 450,
+     "field": "power_kw",
      "src": "READ Daimler Global Media Site, Technical data E 63 4MATIC+ and E 63 S 4MATIC+ (EU, pre-facelift launch data), Wayback copy 2018-02-07: \"Rated output kW/hp 450 (612) at 5750–6500 rpm\" https://web.archive.org/web/20180207065922/http://media.daimler.com/marsMediaSite/en/instance/ko/Technical-data-E-63-4MATIC-and-E-63-S-4MATIC.xhtml?oid=14794375"
     },
     {
      "label": "Torque",
      "kind": "READ",
      "value": "850 N·m at 2500-4500 rpm",
+     "num": 850,
+     "field": "torque_nm",
      "src": "READ Daimler Global Media Site, Technical data E 63 4MATIC+ and E 63 S 4MATIC+ (EU, pre-facelift launch data), Wayback copy 2018-02-07: \"Rated torque Nm 850 at 2500–4500 rpm\" https://web.archive.org/web/20180207065922/http://media.daimler.com/marsMediaSite/en/instance/ko/Technical-data-E-63-4MATIC-and-E-63-S-4MATIC.xhtml?oid=14794375"
     },
     {
      "label": "Weight",
      "kind": "READ",
      "value": "2,040 kg (4497 lb at the source, converted)",
+     "num": 2039.8,
+     "field": "curb_weight_kg",
      "src": "READ Mercedes-Benz USA, 2021 Mercedes-AMG E 63 S Sedan specifications sheet: \"Curb Weight (lbs) 4,497\" https://media.mbusa.com/storage/media/api/1/technical-specifications/f263b73b74ccd81a68d0f509780e2a97-specs-2021-mercedes-amg-e63-s-sedan.pdf"
     },
     {
      "label": "Drive",
      "kind": "READ",
      "value": "AWD (AMG Performance 4MATIC+), variable front/rear torque distribution, with a drift mode",
+     "num": null,
+     "field": "drivetrain",
      "src": "READ Mercedes-Benz USA, 2021 Mercedes-AMG E 63 S Sedan specifications sheet: \"permanent all-wheel drive with Drive Configuration variable torque distribution and drift mode\" https://media.mbusa.com/storage/media/api/1/technical-specifications/f263b73b74ccd81a68d0f509780e2a97-specs-2021-mercedes-amg-e63-s-sedan.pdf"
     },
     {
      "label": "Gearbox",
      "kind": "READ",
      "value": "automatic, AMG SPEEDSHIFT MCT (automatic with wet multiple-disc start-off clutch), 9 gears",
+     "num": null,
+     "field": "transmission",
      "src": "READ Mercedes-Benz USA, 2021 Mercedes-AMG E 63 S Sedan specifications sheet: \"Transmission Type AMG SPEEDSHIFT® MCT 9-Speed\" https://media.mbusa.com/storage/media/api/1/technical-specifications/f263b73b74ccd81a68d0f509780e2a97-specs-2021-mercedes-amg-e63-s-sedan.pdf"
     },
     {
      "label": "0-100 km/h",
      "kind": "READ",
      "value": "3.4 s",
+     "num": 3.4,
+     "field": "zero_to_100_kmh_s",
      "src": "READ Daimler Global Media Site, Technical data E 63 4MATIC+ and E 63 S 4MATIC+ (EU, pre-facelift launch data), Wayback copy 2018-02-07: \"Acceleration 0–100 km/h s 3.4\" https://web.archive.org/web/20180207065922/http://media.daimler.com/marsMediaSite/en/instance/ko/Technical-data-E-63-4MATIC-and-E-63-S-4MATIC.xhtml?oid=14794375"
     },
     {
      "label": "Top speed",
      "kind": "READ",
      "value": "299.3 km/h (186 mph at the source, converted)",
+     "num": 299.3,
+     "field": "top_speed_kmh",
      "src": "READ Mercedes-Benz USA, 2021 Mercedes-AMG E 63 S Sedan specifications sheet: \"Top Speed (mph) 186 (electronically limited)\" https://media.mbusa.com/storage/media/api/1/technical-specifications/f263b73b74ccd81a68d0f509780e2a97-specs-2021-mercedes-amg-e63-s-sedan.pdf"
     },
     {
      "label": "Length",
      "kind": "READ",
      "value": "4,989 mm (196.4 in at the source, converted)",
+     "num": 4988.6,
+     "field": "length_mm",
      "src": "READ Mercedes-Benz USA, 2021 Mercedes-AMG E 63 S Sedan specifications sheet: \"Length 196.4\" https://media.mbusa.com/storage/media/api/1/technical-specifications/f263b73b74ccd81a68d0f509780e2a97-specs-2021-mercedes-amg-e63-s-sedan.pdf"
     }
    ]
@@ -220,48 +284,64 @@
      "label": "Power",
      "kind": "READ",
      "value": "266 kW (357 hp)",
+     "num": 266,
+     "field": "power_kw",
      "src": "READ Wikipedia, BMW i8: \"Combined | 362 PS (266 kW; 357 hp)\" https://en.wikipedia.org/wiki/BMW_i8"
     },
     {
      "label": "Torque",
      "kind": "READ",
      "value": "570 N·m",
+     "num": 570,
+     "field": "torque_nm",
      "src": "READ Wikipedia, BMW i8: \"Combined | 362 PS (266 kW; 357 hp) | 570\" https://en.wikipedia.org/wiki/BMW_i8"
     },
     {
      "label": "Weight",
      "kind": "READ",
      "value": "1,485 kg",
+     "num": 1485,
+     "field": "curb_weight_kg",
      "src": "READ Wikipedia, BMW i8: \"The i8 had a vehicle weight of 1,485 kg (3,274 lb) (DIN kerb weight)\" https://en.wikipedia.org/wiki/BMW_i8"
     },
     {
      "label": "Drive",
      "kind": "READ",
      "value": "AWD hybrid: engine drives the rear axle, electric motor drives the front axle (the two axles are driven by separate sources)",
+     "num": null,
+     "field": "drivetrain",
      "src": "READ BMW Media Information 4/2018, Specifications BMW i8 Coupe (MY2018 facelift sheet; the MY2016 sheet could not be retrieved), Wayback copy 2025-01-19: \"['Hybrid-specific all-wheel drive: combustion engine sends power to the rear wheels,', 'electric motor sends power to the front wheels']\" https://web.archive.org/web/20250119192946/https://www.press.bmwgroup.com/global/article/attachment/T0279413EN/404750"
     },
     {
      "label": "Gearbox",
      "kind": "READ",
      "value": "automatic; 6-speed on the combustion engine (rear axle) plus a separate 2-speed automatic on the electric motor (front axle), 6 gears",
+     "num": null,
+     "field": "transmission",
      "src": "READ BMW Media Information 4/2018, Specifications BMW i8 Coupe (MY2018 facelift sheet; the MY2016 sheet could not be retrieved), Wayback copy 2025-01-19: \"['Type of transmission: combustion 6-speed automatic', 'Type of transmission: electric 2-speed automatic']\" https://web.archive.org/web/20250119192946/https://www.press.bmwgroup.com/global/article/attachment/T0279413EN/404750"
     },
     {
      "label": "0-100 km/h",
      "kind": "READ",
      "value": "4.4 s",
+     "num": 4.4,
+     "field": "zero_to_100_kmh_s",
      "src": "READ Wikipedia, BMW i8: \"could accelerate from 0 to 100 km/h (62 mph) in 4.4 seconds\" https://en.wikipedia.org/wiki/BMW_i8"
     },
     {
      "label": "Top speed",
      "kind": "READ",
      "value": "250 km/h",
+     "num": 250,
+     "field": "top_speed_kmh",
      "src": "READ BMW Media Information 4/2018, Specifications BMW i8 Coupe (MY2018 facelift sheet; the MY2016 sheet could not be retrieved), Wayback copy 2025-01-19: \"Top speed km/h 250 (electronically governed)\" https://web.archive.org/web/20250119192946/https://www.press.bmwgroup.com/global/article/attachment/T0279413EN/404750"
     },
     {
      "label": "Length",
      "kind": "READ",
      "value": "4,689 mm",
+     "num": 4689,
+     "field": "length_mm",
      "src": "READ BMW Media Information 4/2018, Specifications BMW i8 Coupe (MY2018 facelift sheet; the MY2016 sheet could not be retrieved), Wayback copy 2025-01-19: \"Length/width/height (unladen) mm 4689 / 1942 / 1293\" https://web.archive.org/web/20250119192946/https://www.press.bmwgroup.com/global/article/attachment/T0279413EN/404750"
     }
    ]
@@ -273,48 +353,64 @@
      "label": "Power",
      "kind": "READ",
      "value": "254 kW (341 hp) at 6500 rpm",
+     "num": 254,
+     "field": "power_kw",
      "src": "READ Wikipedia, Porsche 911 (997): \"345 PS (254 kW; 340 bhp) at 6,500 rpm\" https://en.wikipedia.org/wiki/Porsche_911_(997)"
     },
     {
      "label": "Torque",
      "kind": "READ",
      "value": "390.5 N·m at 4400 rpm (288 lb-ft at the source, converted)",
+     "num": 390.5,
+     "field": "torque_nm",
      "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found): \"288 lb.ft. at 4400 rpm\" https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf"
     },
     {
      "label": "Weight",
      "kind": "READ",
      "value": "1,500 kg",
+     "num": 1500,
+     "field": "curb_weight_kg",
      "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found): \"3307 lbs. (1500 kg)\" https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf"
     },
     {
      "label": "Drive",
      "kind": "READ",
      "value": "AWD: engine drives the rear wheels directly; torque reaches the front wheels through a viscous multi-plate coupling",
+     "num": null,
+     "field": "drivetrain",
      "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found): \"['Drivetrain All-wheel drive', 'driveshaft and viscous multi-plate coupling to front wheels']\" https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf"
     },
     {
      "label": "Gearbox",
      "kind": "READ",
      "value": "PDK, 7-speed dual-clutch (Porsche Doppelkupplung), 7 gears",
+     "num": null,
+     "field": "transmission",
      "src": "READ House of Cars listing, listings_top40_read_2026-11-06.json: \"smooth-shifting 7-speed dual-clutch transmission\" https://www.houseofcars.com/"
     },
     {
      "label": "0-100 km/h",
      "kind": "READ",
      "value": "4.8 s",
+     "num": 4.8,
+     "field": "zero_to_100_kmh_s",
      "src": "READ auto-data.net, Porsche 911 (997, facelift 2008) Carrera 4 3.6 (345 Hp) PDK: \"Acceleration 0 - 100 km/h 4.8 sec\" https://www.auto-data.net/en/porsche-911-997-facelift-2008-carrera-4-3.6-345hp-pdk-36760"
     },
     {
      "label": "Top speed",
      "kind": "READ",
      "value": "282 km/h",
+     "num": 282,
+     "field": "top_speed_kmh",
      "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found): \"175mph (282 km/h) 175 mph (282 km/h)\" https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf"
     },
     {
      "label": "Length",
      "kind": "READ",
      "value": "4,466 mm",
+     "num": 4466,
+     "field": "length_mm",
      "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found): \"Length 175.83 in. (4466 mm)\" https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf"
     }
    ]
