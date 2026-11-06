@@ -326,9 +326,9 @@
     },
     {
      "label": "0-100 km/h",
-     "kind": "ABSENT",
-     "value": "not published",
-     "src": "ABSENT: https://www.autotrader.ca/research/comparison/2024_audi_s7-vs-2022_audi_s7/ (0-100 km/h 'Not listed'); https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (0-100 km/h not listed); https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html (HTTP 403)"
+     "kind": "UNRESOLVED",
+     "value": "not read",
+     "src": "UNRESOLVED: https://www.autotrader.ca/research/comparison/2024_audi_s7-vs-2022_audi_s7/ (0-100 km/h 'Not listed'); https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (0-100 km/h not listed); https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html (HTTP 403) (not read: https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html (HTTP 403))"
     },
     {
      "label": "0-60 mph",
@@ -338,9 +338,9 @@
     },
     {
      "label": "Top speed",
-     "kind": "ABSENT",
-     "value": "not published",
-     "src": "ABSENT: https://www.autotrader.ca/research/comparison/2024_audi_s7-vs-2022_audi_s7/ (top speed not listed); https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (top speed not listed); https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html and https://www.audi.ca/ca/web/fr/modeles/a7/s7-sportback.html (HTTP 403); https://www.caranddriver.com/audi/s7-2024 (domain refuses the fetch tool)"
+     "kind": "UNRESOLVED",
+     "value": "not read",
+     "src": "UNRESOLVED: https://www.autotrader.ca/research/comparison/2024_audi_s7-vs-2022_audi_s7/ (top speed not listed); https://autodealcanada.com/en/brand/audi/s7/2024/fiche-technique (top speed not listed); https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html and https://www.audi.ca/ca/web/fr/modeles/a7/s7-sportback.html (HTTP 403); https://www.caranddriver.com/audi/s7-2024 (domain refuses the fetch tool) (not read: https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html and https://www.audi.ca/ca/web/fr/modeles/a7/s7-sportback.html (HTTP 403); https://www.caranddriver.com/audi/s7-2024 (domain refuses the fetch tool))"
     },
     {
      "label": "Length",
@@ -350,9 +350,9 @@
     },
     {
      "label": "New, from (MSRP)",
-     "kind": "ABSENT",
-     "value": "not published",
-     "src": "ABSENT: https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html and the French page (HTTP 403); web search for an Audi Canada 2024 S7 Sportback pricing release (none found); https://www.autotrader.ca/research/audi/s7%20sportback/2024/ (shows $107,215 on the Premium Plus 2.9 TFSI row only, other trims 'Price N/A', not labelled a starting MSRP, so not used as the base price); https://specs2.auto123.com/en/specs/audi/a7/audi-a7-2024-29-tfsi-442577 (connection refused, twice); Could not read a 2024 Canadian starting MSRP; not proven absent"
+     "kind": "UNRESOLVED",
+     "value": "not read",
+     "src": "UNRESOLVED: https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html and the French page (HTTP 403); web search for an Audi Canada 2024 S7 Sportback pricing release (none found); https://www.autotrader.ca/research/audi/s7%20sportback/2024/ (shows $107,215 on the Premium Plus 2.9 TFSI row only, other trims 'Price N/A', not labelled a starting MSRP, so not used as the base price); https://specs2.auto123.com/en/specs/audi/a7/audi-a7-2024-29-tfsi-442577 (connection refused, twice); Could not read a 2024 Canadian starting MSRP; not proven absent (not read: https://www.audi.ca/ca/web/en/models/a7/s7-sportback.html and the French page (HTTP 403); https://specs2.auto123.com/en/specs/audi/a7/audi-a7-2024-29-tfsi-442577 (connection refused, twice); Could not read a 2024 Canadian starting MSRP; not proven absent)"
     }
    ]
   },

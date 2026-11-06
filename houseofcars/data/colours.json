@@ -1,0 +1,40 @@
+{
+ "about": "each car's exterior colour: the listing's own Colour field where it states one, else what the listing's own photos show (looked at, with the photo named); tools: none, written at review 2026-11-06",
+ "read_at": "2026-11-06T10:43:10-0600",
+ "cars": {
+  "bentley_flying_spur_2018": {
+   "kind": "READ",
+   "value": "White",
+   "detail": "white body; black and red interior",
+   "src": "READ from the listing's own photos (its Colour field is blank): https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (first photo https://content.homenetiol.com/640x480/375dc88ca46d4ca0be1d2ee0b5ec86e6.jpg), looked at 2026-11-06"
+  },
+  "rolls_royce_wraith_2017": {
+   "kind": "READ",
+   "value": "Black",
+   "detail": "black body, black grille surround and black multi-spoke wheels; black and orange interior",
+   "src": "READ from the listing's own photos (its Colour field is blank): https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (first photo https://content.homenetiol.com/640x480/6bbd0d4ed9424e729e9b95e4fa859574.jpg), looked at 2026-11-06"
+  },
+  "rolls_royce_ghost_2014": {
+   "kind": "READ",
+   "value": "Black",
+   "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+  },
+  "mercedes_amg_e63s_2021": {
+   "kind": "READ",
+   "value": "Black",
+   "detail": "black body and black wheels; black interior",
+   "src": "READ from the listing's own photos (its Colour field is blank): https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (first photo https://content.homenetiol.com/640x480/c0466931993d4f6e8c85824997467161.jpg), looked at 2026-11-06"
+  },
+  "bmw_i8_2016": {
+   "kind": "READ",
+   "value": "White",
+   "detail": "white body with the black roof and bonnet bands and BMW i blue accents; ivory/brown and black interior",
+   "src": "READ from the listing's own photos (its Colour field is blank): https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (first photo https://content.homenetiol.com/640x480/3f58a224039548ce9129304249361fb0.jpg), looked at 2026-11-06"
+  },
+  "porsche_911_c4_2012": {
+   "kind": "READ",
+   "value": "Cream White",
+   "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+  }
+ }
+}

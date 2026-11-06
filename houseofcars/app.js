@@ -95,7 +95,7 @@ const [SHOW, TRACK, RULES, CAMS, INPUT, LISTINGS, MODELS] = await Promise.all([f
   fetchJson('camera.json'), fetchJson('input.json'), fetchJson('listings.json'), fetchJson('models.json')]);
 const GHOSTS = await fetchJson('ghosts/index.json');      // UC-9.3: the simulated laps (tools/ghost_index.py)
 const SALE_SPECS = await fetchJson('sale_specs.json');    // UC-9.1: each car for sale's factory numbers, READ with sources (tools/sale_specs.py)
-const [REVIEWS, RECALLS] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
+const [REVIEWS, RECALLS, COLOURS, PHOTOS] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json'), fetchJson('colours.json'), fetchJson('photos.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
 // UC-8: the lot's slides, with `listings` expanded into one slide per car for sale (data/listings.json) and per pick the site lacks
 const LOT = SLIDES.flatMap((d) => d.kind !== 'listings' ? [d]
   : [...LISTINGS.cars.map((l) => ({ kind: 'listing', listing: l })), ...LISTINGS.absent.map((x) => ({ kind: 'unlisted', unlisted: x }))]);
@@ -133,6 +133,12 @@ async function buildCar(entry) {
 
 // wheel pose: the READ rest transform, spun about the car's Y (the axle) and steered about its Z, at the bone + suspension offset
 function poseWheel(w, steerDeg, spinRad, suspensionCm) {
+  if (w.sale) {   // a car for sale's cut-out wheel (simBody): in the body's frame +X is forward, +Y up, +Z right (ue_space)
+    w.steer.rotation.y = w.steers ? -steerDeg * Math.PI / 180 : 0;   // Unreal yaw + is a right turn; about three's +Y that is -
+    w.spin.rotation.z = -spinRad;                                    // rolling forward turns the top forward: clockwise seen from +Z
+    w.steer.position.y = w.restY + suspensionCm / 100;
+    return;
+  }
   const rest = rotatorAxes(w.part.rotation).map((a, i) => a.map((v) => v * w.part.scale[i]));
   const spin = rotatorAxes({ pitch: -spinRad * 180 / Math.PI, yaw: 0, roll: 0 });
   const steer = rotatorAxes({ pitch: 0, yaw: steerDeg, roll: 0 });
@@ -250,7 +256,23 @@ async function simBody(key, carJson) {
   const cx = w.reduce((a, p) => a + p[0], 0) / w.length;
   body.position.set(cx / 100, ground / 100, 0);
   const g = new THREE.Group(); g.add(body);
-  return { group: g, wheels: [] };
+  // UC-15.4: the wheels import_models.py cut out of the Meshy body (models.json wheels: the node, its sim wheel, its centre in
+  // the model's real-size frame); each hangs on a steer pivot (about up) holding a spin pivot (about the axle, the body's Z),
+  // both at the wheel's centre, so the physics turns them as it turns the template cars' wheels. No wheels = the reason is
+  // models.json wheels_why, and none are drawn turning.
+  const wheels = [];
+  g.updateMatrixWorld(true);
+  const scene = body.children[0];
+  for (const w of m.wheels || []) {
+    const mesh = scene.getObjectByName(w.node);
+    if (!mesh) throw new Error(m.glb + ' has no node ' + w.node + ', which data/models.json names as a wheel: re-run tools/import_models.py');
+    const c = body.worldToLocal(scene.localToWorld(new THREE.Vector3(...w.centre_m)));
+    const steer = new THREE.Group(), spin = new THREE.Group();
+    steer.position.copy(c); body.add(steer); steer.add(spin); g.updateMatrixWorld(true);
+    spin.attach(mesh);
+    wheels[w.sim_wheel] = { sale: true, steer, spin, steers: w.steers, restY: c.y };
+  }
+  return { group: g, wheels };
 }
 // a Meshy model of a car for sale, on its pedestal: scaled so its length is the car's READ length (data/models.json says where
 // the length came from), its lowest point on the pedestal top, its nose along +X like the Unreal cars
@@ -348,7 +370,8 @@ function saleCard(s, card) {
   if (d.kind === 'unlisted') {
     card.innerHTML = '<p class="kick">In the showroom · not listed online</p><h2>' + svgIcon('tag', 22) + 'Audi S7</h2>' +
       '<p>houseofcars.com lists no Audi S7 on ' + esc(readDay) + ', so this page shows no price for it: it never types one in.</p>' +
-      (d.model ? '<div class="acts"><button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button></div>' : '') +
+      '<div class="acts">' + (d.model ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') +
+      '<a class="act" href="details.html#car=' + esc(d.unlisted.key) + '">Full details</a></div>' +      // UC-16.1: the car's own page (details.js)
       '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) + ' Length: ' + esc(d.model.length_m.src) + '<br>' : '3D model not made yet.<br>') +
       d.unlisted.searched.map(esc).join('<br>') + '</div>' + knownSpecsHTML(d.unlisted.key, REVIEWS) + knowHTML(d.unlisted.key, REVIEWS, RECALLS);
     card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = b.title; }));
@@ -361,14 +384,16 @@ function saleCard(s, card) {
   card.innerHTML = '<p class="kick">For sale · ' + esc(V(l.city)) + (V(l.store) !== V(l.city) ? ' · ' + esc(V(l.store)) : '') + ' store</p><h2>' + esc(saleTitle(l)) + '</h2>' +
     (leads.length ? '<div class="leads" title="Best of the ' + LOT_CARS.length + ' cars for sale on this lot, from their published figures and simulated laps">' + leads.map((x) => '<span>' + esc(x) + '</span>').join('') + '</div>' : '') +
     (V(l.trim) ? '<div class="sub">' + esc(V(l.trim)) + '</div>' : '') + '<div class="price">' + (V(l.price) !== null ? esc(money(V(l.price), V(l.currency))) : 'Price not listed') + '<small>as listed on houseofcars.com, ' + esc(readDay) + '</small></div>' +
-    '<dl>' + row('Kilometres', l.km, (v) => v.toLocaleString('en-CA') + ' km') + row('Engine', l.engine) + row('Colour', l.colour) + row('Interior', l.interior) +
+    '<dl>' + row('Kilometres', l.km, (v) => v.toLocaleString('en-CA') + ' km') + row('Engine', l.engine) + row('Colour', COLOURS.cars[l.key] || l.colour) + row('Interior', l.interior) +
     row('VIN', l.vin) + row('Stock', l.stock) + '</dl>' +
     specRows(l.key) + simLine(l.key) +
     '<div class="acts">' + (MODELS.models[l.key] && SIMS.has(l.key) ? '<button class="act" data-drive="' + l.key + '">Test drive it</button>' : '') +
     (GHOSTS.ghosts.some((g) => g.car === l.key) ? '<button class="act" data-race="' + l.key + '">Race its ghost</button>' : '') +
-    '<a class="act" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + svgIcon('link', 16) + ' See it on houseofcars.com</a></div>' +
+    '<a class="act" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + svgIcon('link', 16) + ' See it on houseofcars.com</a>' +
+    '<a class="act" href="details.html#car=' + esc(l.key) + '">Full details</a></div>' +      // UC-16.1: the car's own page (details.js)
     '<div class="sell"><button class="pick2" id="cmpopen">' + svgIcon('numbers', 16) + ' Compare the lot</button><button class="pick2" id="share">' + svgIcon('link', 16) + ' Share this car</button>' +
     (MODELS.models[l.key] ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') + '</div>' +
+    photoStrip(l.key) +
     knowHTML(l.key, REVIEWS, RECALLS) +
     '<div class="qr" id="qr"></div>' +
     '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) : '3D model not made yet.') + ' Listing: ' + esc(l.name.src) + '</div>';
@@ -382,6 +407,15 @@ function saleCard(s, card) {
   if ($('aropen')) $('aropen').addEventListener('click', () => openAR(l.key));
   $('share').addEventListener('click', (e) => shareCar(l.key, e.currentTarget));
   drawQR(l.key, $('qr'));
+}
+// UC-18: the car's own listing photos (data/photos.json, tools/photos.py), shown from the dealer's image server and credited;
+// each opens the details page's gallery
+function photoStrip(key) {
+  const p = PHOTOS.cars[key];
+  if (!p) return '';
+  return '<p class="kick" style="margin-top:12px">This car&#39;s photos</p><div class="pstrip">' +
+    p.photos.slice(0, 8).map((x, i) => '<a href="details.html#car=' + key + '" title="Listing photo ' + (i + 1) + ' of ' + p.count + '"><img loading="lazy" src="' + esc(x.thumb) + '" alt="Listing photo ' + (i + 1) + ' of ' + p.count + '"></a>').join('') +
+    '</div><p class="pcred"><a href="details.html#car=' + key + '">All ' + p.count + ' photos</a> · <a href="' + esc(p.listing) + '" target="_blank" rel="noopener">' + esc(p.credit) + '</a></p>';
 }
 function specRows(key) {
   const sp = SALE_SPECS.cars[key];
@@ -704,7 +738,9 @@ addEventListener('keydown', (e) => {
   }
   if (e.key === 'Escape') { backToShowroom(); return; }
   if (e.key === 'p' || e.key === 'P') { savePicture(race.entry.name + '-drive'); return; }
-  if (e.key === 'Tab') { e.preventDefault(); race.front = !race.front; return; }
+  // Tab: the template's FrontSpringArm. A car for sale is a Meshy shell with no cabin, and that camera sits inside it (11-06:
+  // the view was the inside of the body), so it keeps the chase camera
+  if (e.key === 'Tab') { e.preventDefault(); if (!race.entry.sim) race.front = !race.front; return; }
   if (e.key === 'g' || e.key === 'G') { trackView.gates.visible = !trackView.gates.visible; return; }
   if (e.key === 'Backspace') { e.preventDefault(); doReset(); return; }
   keys.add(e.code);
@@ -729,7 +765,7 @@ function readInput() {
   $('padpill').style.display = pad.id || pad.nonstandard ? '' : 'none';
   if (!g) return k;
   if (g.pressed.has('IA_Reset')) doReset();
-  if (g.pressed.has('IA_ToggleCamera')) race.front = !race.front;
+  if (g.pressed.has('IA_ToggleCamera') && !race.entry.sim) race.front = !race.front;   // as Tab: no cabin camera in a car for sale
   const big = (a, b) => (Math.abs(a) >= Math.abs(b) ? a : b);
   return { throttle: Math.max(k.throttle, g.throttle), brake: Math.max(k.brake, g.brake), steering: big(k.steering, g.steering), handbrake: Math.max(k.handbrake, g.handbrake) };
 }
