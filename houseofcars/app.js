@@ -101,7 +101,7 @@ const pad = makeGamepad(INPUT);                                    // UC-7.5a: t
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;   // UC-7.2b
 const START_HASH = decodeURIComponent(location.hash);     // read once: select() rewrites the hash to follow the slide
 const KIOSK = START_HASH === '#kiosk';                     // UC-11.5
-window.HOC = { BACKEND, SHOW, TRACK, RULES, state: null, paint };   // for the page check (test/page_check.mjs) and for review in devtools
+window.HOC = { BACKEND, SHOW, TRACK, RULES, state: null, paint, saleModels: { want: [], on: [] } };   // for the page check (test/page_check.py) and for review in devtools; saleModels: the Meshy models asked for and those on their pedestals
 
 // ---------------------------------------------------------------- a car out of its Unreal parts (UC-1.2)
 // Each part's mesh is the glTF Unreal exported; it hangs at the transform READ off the spawned pawn (actor space).
@@ -270,6 +270,8 @@ for (let i = 0; i < LOT.length; i++) {
   stand.rotation.y = a;
   const car = def.kind === 'car' ? carEntry(def.car) : null;
   const onPed = car || def.kind === 'listing' || def.kind === 'unlisted';       // a slide with a pedestal (a car, or a car for sale)
+  const saleKey = def.kind === 'listing' ? def.listing.key : def.kind === 'unlisted' ? def.unlisted.key : null;
+  if (saleKey) def.model = MODELS.models[saleKey] || null;   // UC-8.3: a model of THAT car, or none; looked up before its panel says which
   const panel = new THREE.Mesh(new THREE.PlaneGeometry(onPed ? 5.0 : 6.2, onPed ? 2.8 : 3.5), new THREE.MeshBasicNodeMaterial({ map: car || !onPed ? panelTexture(def, car) : salePanel(def) }));
   panel.position.set(0, onPed ? 4.0 : 2.6, onPed ? -4.2 : 0);
   stand.add(panel);
@@ -291,10 +293,12 @@ for (let i = 0; i < LOT.length; i++) {
       else turn.position.y = 0.3 - (car.bounds_cm.origin[2] - car.bounds_cm.box_extent[2]) / 100;
       turn.add(group);
     } else {
-      const key = def.kind === 'listing' ? def.listing.key : def.unlisted.key;
-      const model = MODELS.models[key];                    // UC-8.3: a model of THAT car, or none (UC-8.3a: the panel says so)
-      if (model) { const g = await saleModel(model); turn.position.y = 0.3; turn.add(g); }
-      def.model = model || null;
+      // UC-8.3a: none, and the panel says so. A model loads behind the lot (about 4-6 MB each, seven of them): the lot opens at
+      // once and each car rolls onto its pedestal as it arrives; a model that fails is a page error, never a silent empty pedestal
+      if (def.model) {
+        turn.position.y = 0.3; const t = turn; HOC.saleModels.want.push(saleKey);
+        saleModel(def.model).then((g) => { t.add(g); HOC.saleModels.on.push(saleKey); }, (e) => reportError(e));
+      }
     }
     stand.add(turn);
   } else {
@@ -322,10 +326,10 @@ async function shareCar(key, btn) {
   await navigator.clipboard.writeText(url);
   btn.textContent = 'Link copied'; setTimeout(() => { btn.innerHTML = svgIcon('link', 16) + ' Share this car'; }, 2200);
 }
-async function openAR(key) {
+async function openAR(key, title) {
   const m = MODELS.models[key]; if (!m) return;
   if (!customElements.get('model-viewer')) await import('model-viewer');
-  const t = (LOT_CARS.find((c) => c.key === key) || {}).title || key;
+  const t = title || LOT_CARS.find((c) => c.key === key).title;
   $('arbody').innerHTML = '<model-viewer src="data/meshes/' + esc(m.glb) + '" alt="' + esc(t) + ', 3D model" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" camera-controls auto-rotate shadow-intensity="1" exposure="1.1" environment-image="neutral"><button slot="ar-button" class="act">See it in your driveway</button></model-viewer>' +
     '<p class="cmpnote">' + esc(t) + ' at its real length (' + esc(String(m.length_m.value)) + ' m, ' + esc(m.length_m.src) + '). On a phone, the button puts it in your driveway; on a computer, drag to turn it.</p>';
   $('ar').hidden = false; $('arclose').focus();
@@ -342,7 +346,10 @@ function saleCard(s, card) {
   if (d.kind === 'unlisted') {
     card.innerHTML = '<p class="kick">In the showroom · not listed online</p><h2>' + svgIcon('tag', 22) + 'Audi S7</h2>' +
       '<p>houseofcars.com lists no Audi S7 on ' + esc(readDay) + ', so this page shows no price for it: it never types one in.</p>' +
-      '<div id="srcline">' + d.unlisted.searched.map(esc).join('<br>') + '</div>';
+      (d.model ? '<div class="acts"><button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button></div>' : '') +
+      '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) + ' Length: ' + esc(d.model.length_m.src) + '<br>' : '3D model not made yet.<br>') +
+      d.unlisted.searched.map(esc).join('<br>') + '</div>';
+    if ($('aropen')) $('aropen').addEventListener('click', () => openAR(d.unlisted.key, 'Audi S7'));
     return;
   }
   const l = d.listing;
@@ -436,7 +443,7 @@ function renderCard() {
 function select(i) {
   show.index = (i + show.slides.length) % show.slides.length;
   const s = show.slides[show.index];
-  const h = s.def.kind === 'listing' ? '#car=' + s.def.listing.key : KIOSK ? '#kiosk' : '';
+  const h = s.def.kind === 'listing' ? '#car=' + s.def.listing.key : s.def.kind === 'unlisted' ? '#car=' + s.def.unlisted.key : KIOSK ? '#kiosk' : '';
   if (location.hash !== h) history.replaceState(null, '', location.pathname + location.search + h);
   if (s.car && s.car.drivable) show.lastCar = s.car.name;
   let d = s.angle - show.targetAngle;
@@ -865,15 +872,18 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 select(0);
-// UC-11.1: a link to one car opens the lot on it; a car no longer listed opens 'For sale now' and says so (UC-11.1a)
-{
-  const m = /^#car=([\w-]+)$/.exec(START_HASH);
-  if (m) {
-    const k = show.slides.findIndex((x) => x.def.kind === 'listing' && x.def.listing.key === m[1]);
-    if (k >= 0) select(k);
-    else { select(show.slides.findIndex((x) => x.def.kind === 'sale')); $('card').insertAdjacentHTML('afterbegin', '<p class="gone">That car is no longer on this lot\'s list (read ' + esc(readDay) + ').</p>'); }
-  }
+// UC-11.1: a link to one car opens the lot on it; a car no longer listed opens 'For sale now' and says so (UC-11.1a). Also when
+// the page is already open and only the link's #car= changes (a second QR scan in the same tab): select() itself rewrites the
+// hash with replaceState, which fires no hashchange, so this follows only links from outside
+function openCarLink(hash) {
+  const m = /^#car=([\w-]+)$/.exec(hash);
+  if (!m) return;
+  const k = show.slides.findIndex((x) => (x.def.kind === 'listing' && x.def.listing.key === m[1]) || (x.def.kind === 'unlisted' && x.def.unlisted.key === m[1]));
+  if (k >= 0) select(k);
+  else { select(show.slides.findIndex((x) => x.def.kind === 'sale')); $('card').insertAdjacentHTML('afterbegin', '<p class="gone">That car is no longer on this lot\'s list (read ' + esc(readDay) + ').</p>'); }
 }
+openCarLink(START_HASH);
+window.addEventListener('hashchange', () => { if (mode === 'show') openCarLink(decodeURIComponent(location.hash)); });
 // UC-11.5 kiosk (#kiosk): an unattended tour of the cars for sale, one every 9 s; a touch or key pauses it for 45 s
 if (KIOSK) {
   const sale = show.slides.map((x, k) => (x.def.kind === 'listing' ? k : -1)).filter((k) => k >= 0);
