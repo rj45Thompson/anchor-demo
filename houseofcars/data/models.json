@@ -1,0 +1,4 @@
+{
+ "about": "the 3D models of the cars for sale (UC-8.3): one per listing key, made in Meshy by RJ's account; length_m READ from research/specs.json; tools/import_models.py writes this",
+ "models": {}
+}

@@ -102,7 +102,9 @@ function makeReader(carJson, unexported) {
       if (leaf === null || typeof leaf !== 'object' || !('value' in leaf) || 'error' in leaf || !('src' in leaf)) {
         throw new Error('chaos_vehicle: input field ' + path + ' is not a READ {value, src} leaf: ' + JSON.stringify(leaf).slice(0, 200));
       }
-      if (!/^READ|^native default/.test(leaf.src)) throw new Error('chaos_vehicle: input field ' + path + ' is not READ: ' + leaf.src);
+      // a car for sale (tools/sim_car.py, sim_car: true) also carries DERIVED, STAND-IN and AUTHORED leaves, each saying so in its src
+      const ok = carJson.sim_car === true ? /^READ|^native default|^DERIVED |^STAND-IN |^AUTHORED / : /^READ|^native default/;
+      if (!ok.test(leaf.src)) throw new Error('chaos_vehicle: input field ' + path + ' is not READ: ' + leaf.src);
       src[path] = leaf.src;
       return leaf.value;
     },

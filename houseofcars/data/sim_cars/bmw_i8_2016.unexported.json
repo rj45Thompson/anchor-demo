@@ -1,0 +1,139 @@
+{
+ "movement.reverse_as_brake": {
+  "value": true,
+  "src": "STAND-IN template SportsCar (unexported) movement.reverse_as_brake; was native default: ChaosVehicleMovementComponent.cpp:601 (constructor); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset does not write bReverseAsBrake (FName absent from its name table); Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write bReverseAsBrake (FName absent from its name table)"
+ },
+ "movement.throttle_as_brake": {
+  "value": false,
+  "src": "STAND-IN template SportsCar (unexported) movement.throttle_as_brake; was native default: not assigned in the constructor (ChaosVehicleMovementComponent.cpp:598-661), so the zeroed UObject memory (UObjectGlobals.cpp:3881 Memzero); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset does not write bThrottleAsBrake (FName absent from its name table); Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write bThrottleAsBrake (FName absent from its name table)"
+ },
+ "movement.park_enabled": {
+  "value": false,
+  "src": "STAND-IN template SportsCar (unexported) movement.park_enabled; was native default: ChaosVehicleMovementComponent.cpp:602 (constructor); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset does not write bParkEnabled (FName absent from its name table); Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write bParkEnabled (FName absent from its name table)"
+ },
+ "movement.legacy_wheel_friction_position": {
+  "value": true,
+  "src": "STAND-IN template SportsCar (unexported) movement.legacy_wheel_friction_position; was READ Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset tag bLegacyWheelFrictionPosition @byte 169926 = true; Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write bLegacyWheelFrictionPosition (FName absent from its name table)"
+ },
+ "movement.torque_control_enabled": {
+  "value": false,
+  "src": "STAND-IN template SportsCar (unexported) movement.torque_control_enabled; was native default: ChaosVehicleMovementComponent.h:131 FVehicleTorqueControlConfig::InitDefaults (called at .cpp:612); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset does not write TorqueControl (FName absent from its name table); Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write TorqueControl (FName absent from its name table)"
+ },
+ "movement.target_rotation_control_enabled": {
+  "value": false,
+  "src": "STAND-IN template SportsCar (unexported) movement.target_rotation_control_enabled; was native default: ChaosVehicleMovementComponent.h:217 FVehicleTargetRotationControlConfig::InitDefaults (called at .cpp:613); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset does not write TargetRotationControl (FName absent from its name table); Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write TargetRotationControl (FName absent from its name table)"
+ },
+ "movement.stabilize_control_enabled": {
+  "value": false,
+  "src": "STAND-IN template SportsCar (unexported) movement.stabilize_control_enabled; was native default: ChaosVehicleMovementComponent.h:285 FVehicleStabilizeControlConfig::InitDefaults (called at .cpp:614); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset does not write StabilizeControl (FName absent from its name table); Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write StabilizeControl (FName absent from its name table)"
+ },
+ "movement.aerofoil_count": {
+  "value": 0,
+  "src": "STAND-IN template SportsCar (unexported) movement.aerofoil_count; was native default: TArray Aerofoils, never filled by the constructor (ChaosVehicleMovementComponent.cpp:598-661); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset does not write Aerofoils (FName absent from its name table); Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write Aerofoils (FName absent from its name table)"
+ },
+ "movement.thruster_count": {
+  "value": 0,
+  "src": "STAND-IN template SportsCar (unexported) movement.thruster_count; was native default: TArray Thrusters, never filled by the constructor (ChaosVehicleMovementComponent.cpp:598-661); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset does not write Thrusters (FName absent from its name table); Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset does not write Thrusters (FName absent from its name table)"
+ },
+ "steering.steering_curve.keys": {
+  "value": [
+   [
+    0,
+    1
+   ],
+   [
+    0,
+    1
+   ],
+   [
+    20,
+    0.8
+   ],
+   [
+    20,
+    0.8
+   ],
+   [
+    60,
+    0.4
+   ],
+   [
+    60,
+    0.4
+   ],
+   [
+    120,
+    0.3
+   ],
+   [
+    120,
+    0.3
+   ]
+  ],
+  "src": "STAND-IN template SportsCar (unexported) steering.steering_curve.keys; was native default: FVehicleSteeringConfig::InitDefaults AddKey x4 (ChaosWheeledVehicleMovementComponent.h:479-482), run twice: struct constructor (.h:448) and component constructor (.cpp:1113); Content/VehicleTemplate/Blueprints/BP_VehicleAdvPawnBase.uasset @171685 EditorCurveData writes no members (only its transient key handles differed): keys inherited; Content/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar.uasset @60862 EditorCurveData writes no members (only its transient key handles differed): keys inherited"
+ },
+ "wheels[0].setup.external_torque_combine_method": {
+  "value": "None",
+  "src": "STAND-IN template SportsCar (unexported) wheels[0].setup.external_torque_combine_method; was native default: ChaosVehicleWheel.cpp:53 (constructor); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.uasset does not write ExternalTorqueCombineMethod (FName absent from its name table)"
+ },
+ "wheels[0].setup.sweep_type": {
+  "value": "SimpleSweep",
+  "src": "STAND-IN template SportsCar (unexported) wheels[0].setup.sweep_type; was native default: ChaosVehicleWheel.cpp:52 (constructor); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.uasset does not write SweepType (FName absent from its name table)"
+ },
+ "wheels[0].setup.sweep_shape": {
+  "value": "Raycast",
+  "src": "STAND-IN template SportsCar (unexported) wheels[0].setup.sweep_shape; was native default: not assigned in the constructor (ChaosVehicleWheel.cpp:19-54): zeroed memory = the first enumerator, ESweepShape::Raycast (ChaosVehicleWheel.h:31); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.uasset does not write SweepShape (FName absent from its name table)"
+ },
+ "wheels[0].setup.lateral_slip_graph_keys": {
+  "value": [],
+  "src": "STAND-IN template SportsCar (unexported) wheels[0].setup.lateral_slip_graph_keys; was native default: FRuntimeFloatCurve LateralSlipGraph, no keys added by the constructor (ChaosVehicleWheel.cpp:19-54); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.uasset does not write LateralSlipGraph (FName absent from its name table)"
+ },
+ "wheels[1].setup.external_torque_combine_method": {
+  "value": "None",
+  "src": "STAND-IN template SportsCar (unexported) wheels[1].setup.external_torque_combine_method; was native default: ChaosVehicleWheel.cpp:53 (constructor); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.uasset does not write ExternalTorqueCombineMethod (FName absent from its name table)"
+ },
+ "wheels[1].setup.sweep_type": {
+  "value": "SimpleSweep",
+  "src": "STAND-IN template SportsCar (unexported) wheels[1].setup.sweep_type; was native default: ChaosVehicleWheel.cpp:52 (constructor); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.uasset does not write SweepType (FName absent from its name table)"
+ },
+ "wheels[1].setup.sweep_shape": {
+  "value": "Raycast",
+  "src": "STAND-IN template SportsCar (unexported) wheels[1].setup.sweep_shape; was native default: not assigned in the constructor (ChaosVehicleWheel.cpp:19-54): zeroed memory = the first enumerator, ESweepShape::Raycast (ChaosVehicleWheel.h:31); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.uasset does not write SweepShape (FName absent from its name table)"
+ },
+ "wheels[1].setup.lateral_slip_graph_keys": {
+  "value": [],
+  "src": "STAND-IN template SportsCar (unexported) wheels[1].setup.lateral_slip_graph_keys; was native default: FRuntimeFloatCurve LateralSlipGraph, no keys added by the constructor (ChaosVehicleWheel.cpp:19-54); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.uasset does not write LateralSlipGraph (FName absent from its name table)"
+ },
+ "wheels[2].setup.external_torque_combine_method": {
+  "value": "None",
+  "src": "STAND-IN template SportsCar (unexported) wheels[2].setup.external_torque_combine_method; was native default: ChaosVehicleWheel.cpp:53 (constructor); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.uasset does not write ExternalTorqueCombineMethod (FName absent from its name table)"
+ },
+ "wheels[2].setup.sweep_type": {
+  "value": "SimpleSweep",
+  "src": "STAND-IN template SportsCar (unexported) wheels[2].setup.sweep_type; was native default: ChaosVehicleWheel.cpp:52 (constructor); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.uasset does not write SweepType (FName absent from its name table)"
+ },
+ "wheels[2].setup.sweep_shape": {
+  "value": "Raycast",
+  "src": "STAND-IN template SportsCar (unexported) wheels[2].setup.sweep_shape; was native default: not assigned in the constructor (ChaosVehicleWheel.cpp:19-54): zeroed memory = the first enumerator, ESweepShape::Raycast (ChaosVehicleWheel.h:31); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.uasset does not write SweepShape (FName absent from its name table)"
+ },
+ "wheels[2].setup.lateral_slip_graph_keys": {
+  "value": [],
+  "src": "STAND-IN template SportsCar (unexported) wheels[2].setup.lateral_slip_graph_keys; was native default: FRuntimeFloatCurve LateralSlipGraph, no keys added by the constructor (ChaosVehicleWheel.cpp:19-54); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.uasset does not write LateralSlipGraph (FName absent from its name table)"
+ },
+ "wheels[3].setup.external_torque_combine_method": {
+  "value": "None",
+  "src": "STAND-IN template SportsCar (unexported) wheels[3].setup.external_torque_combine_method; was native default: ChaosVehicleWheel.cpp:53 (constructor); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.uasset does not write ExternalTorqueCombineMethod (FName absent from its name table)"
+ },
+ "wheels[3].setup.sweep_type": {
+  "value": "SimpleSweep",
+  "src": "STAND-IN template SportsCar (unexported) wheels[3].setup.sweep_type; was native default: ChaosVehicleWheel.cpp:52 (constructor); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.uasset does not write SweepType (FName absent from its name table)"
+ },
+ "wheels[3].setup.sweep_shape": {
+  "value": "Raycast",
+  "src": "STAND-IN template SportsCar (unexported) wheels[3].setup.sweep_shape; was native default: not assigned in the constructor (ChaosVehicleWheel.cpp:19-54): zeroed memory = the first enumerator, ESweepShape::Raycast (ChaosVehicleWheel.h:31); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.uasset does not write SweepShape (FName absent from its name table)"
+ },
+ "wheels[3].setup.lateral_slip_graph_keys": {
+  "value": [],
+  "src": "STAND-IN template SportsCar (unexported) wheels[3].setup.lateral_slip_graph_keys; was native default: FRuntimeFloatCurve LateralSlipGraph, no keys added by the constructor (ChaosVehicleWheel.cpp:19-54); Content/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.uasset does not write LateralSlipGraph (FName absent from its name table)"
+ }
+}

@@ -1,0 +1,1263 @@
+{
+ "blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+ "movement_class": "ChaosWheeledVehicleMovementComponent",
+ "movement": {
+  "mass": {
+   "value": 1500.0,
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "enable_center_of_mass_override": {
+   "value": false,
+   "src": "STAND-IN template SportsCar movement.enable_center_of_mass_override; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .enable_center_of_mass_override"
+  },
+  "center_of_mass_override": {
+   "value": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "src": "STAND-IN template SportsCar movement.center_of_mass_override; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .center_of_mass_override"
+  },
+  "chassis_width": {
+   "value": 185.2,
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "chassis_height": {
+   "value": 131.0,
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf) (Chaos models the drag area as width x height)"
+  },
+  "drag_coefficient": {
+   "value": 0.3,
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "downforce_coefficient": {
+   "value": 0.30000001192092896,
+   "src": "STAND-IN template SportsCar movement.downforce_coefficient; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .downforce_coefficient"
+  },
+  "inertia_tensor_scale": {
+   "value": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "src": "STAND-IN template SportsCar movement.inertia_tensor_scale; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .inertia_tensor_scale"
+  },
+  "sleep_threshold": {
+   "value": 10.0,
+   "src": "STAND-IN template SportsCar movement.sleep_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .sleep_threshold"
+  },
+  "sleep_slope_limit": {
+   "value": 0.8659999966621399,
+   "src": "STAND-IN template SportsCar movement.sleep_slope_limit; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .sleep_slope_limit"
+  },
+  "idle_brake_input": {
+   "value": 0.0,
+   "src": "STAND-IN template SportsCar movement.idle_brake_input; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .idle_brake_input"
+  },
+  "stop_threshold": {
+   "value": 10.0,
+   "src": "STAND-IN template SportsCar movement.stop_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .stop_threshold"
+  },
+  "wrong_direction_threshold": {
+   "value": 100.0,
+   "src": "STAND-IN template SportsCar movement.wrong_direction_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .wrong_direction_threshold"
+  },
+  "suspension_enabled": {
+   "value": true,
+   "src": "STAND-IN template SportsCar movement.suspension_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .suspension_enabled"
+  },
+  "wheel_friction_enabled": {
+   "value": true,
+   "src": "STAND-IN template SportsCar movement.wheel_friction_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .wheel_friction_enabled"
+  },
+  "mechanical_sim_enabled": {
+   "value": true,
+   "src": "STAND-IN template SportsCar movement.mechanical_sim_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent> .mechanical_sim_enabled"
+  },
+  "throttle_input_rate": {
+   "rise_rate": {
+    "value": 6.0,
+    "src": "STAND-IN template SportsCar movement.throttle_input_rate.rise_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .rise_rate"
+   },
+   "fall_rate": {
+    "value": 10.0,
+    "src": "STAND-IN template SportsCar movement.throttle_input_rate.fall_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .fall_rate"
+   },
+   "input_curve_function": {
+    "value": "LINEAR_FUNCTION",
+    "src": "STAND-IN template SportsCar movement.throttle_input_rate.input_curve_function; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.throttle_input_rate .input_curve_function"
+   }
+  },
+  "brake_input_rate": {
+   "rise_rate": {
+    "value": 6.0,
+    "src": "STAND-IN template SportsCar movement.brake_input_rate.rise_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .rise_rate"
+   },
+   "fall_rate": {
+    "value": 10.0,
+    "src": "STAND-IN template SportsCar movement.brake_input_rate.fall_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .fall_rate"
+   },
+   "input_curve_function": {
+    "value": "LINEAR_FUNCTION",
+    "src": "STAND-IN template SportsCar movement.brake_input_rate.input_curve_function; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.brake_input_rate .input_curve_function"
+   }
+  },
+  "steering_input_rate": {
+   "rise_rate": {
+    "value": 2.5,
+    "src": "STAND-IN template SportsCar movement.steering_input_rate.rise_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .rise_rate"
+   },
+   "fall_rate": {
+    "value": 5.0,
+    "src": "STAND-IN template SportsCar movement.steering_input_rate.fall_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .fall_rate"
+   },
+   "input_curve_function": {
+    "value": "SQUARED_FUNCTION",
+    "src": "STAND-IN template SportsCar movement.steering_input_rate.input_curve_function; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_input_rate .input_curve_function"
+   }
+  },
+  "handbrake_input_rate": {
+   "rise_rate": {
+    "value": 12.0,
+    "src": "STAND-IN template SportsCar movement.handbrake_input_rate.rise_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .rise_rate"
+   },
+   "fall_rate": {
+    "value": 12.0,
+    "src": "STAND-IN template SportsCar movement.handbrake_input_rate.fall_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .fall_rate"
+   },
+   "input_curve_function": {
+    "value": "LINEAR_FUNCTION",
+    "src": "STAND-IN template SportsCar movement.handbrake_input_rate.input_curve_function; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.handbrake_input_rate .input_curve_function"
+   }
+  }
+ },
+ "engine": {
+  "max_torque": {
+   "value": 390.5,
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "max_rpm": {
+   "value": 7500.0,
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "engine_idle_rpm": {
+   "value": 900.0,
+   "src": "STAND-IN template SportsCar engine.engine_idle_rpm; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_idle_rpm"
+  },
+  "engine_brake_effect": {
+   "value": 0.20000000298023224,
+   "src": "STAND-IN template SportsCar engine.engine_brake_effect; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_brake_effect"
+  },
+  "engine_rev_up_moi": {
+   "value": 5.0,
+   "src": "STAND-IN template SportsCar engine.engine_rev_up_moi; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_rev_up_moi"
+  },
+  "engine_rev_down_rate": {
+   "value": 600.0,
+   "src": "STAND-IN template SportsCar engine.engine_rev_down_rate; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.engine_setup .engine_rev_down_rate"
+  },
+  "torque_curve": {
+   "external": "sim_car porsche_911_c4_2012",
+   "t3d": "FloatCurve=(Keys=((Time=900.000000,Value=0.500000),(Time=4400.000000,Value=1.000000),(Time=6500.000000,Value=0.955558),(Time=7500.000000,Value=0.000000)))",
+   "src": "DERIVED keys: idle 900 -> 0.5 (STAND-IN: the template curve's value at 1000 rpm), plateau 4400 rpm -> 1.0 (READ torque_rpm), 6500 rpm -> 0.9556 = 254 kW x 9549 / 6500 rpm / 390.5 Nm (READ power, power_rpm, torque), redline -> 0 (AUTHORED, as the template curve)",
+   "range": [
+    900.0,
+    7500.0
+   ]
+  }
+ },
+ "transmission": {
+  "use_automatic_gears": {
+   "value": true,
+   "src": "STAND-IN template SportsCar transmission.use_automatic_gears (ABSENT for the car); was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .use_automatic_gears"
+  },
+  "use_auto_reverse": {
+   "value": true,
+   "src": "STAND-IN template SportsCar transmission.use_auto_reverse (ABSENT for the car); was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .use_auto_reverse"
+  },
+  "final_ratio": {
+   "value": 3.44,
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "forward_gear_ratios": {
+   "value": [
+    3.91,
+    2.29,
+    1.65,
+    1.3,
+    1.08,
+    0.88,
+    0.62
+   ],
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "reverse_gear_ratios": {
+   "value": [
+    3.55
+   ],
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "change_up_rpm": {
+   "value": 7000,
+   "src": "AUTHORED shift up halfway from peak power to the redline (no maker publishes its gearbox map)"
+  },
+  "change_down_rpm": {
+   "value": 2143,
+   "src": "AUTHORED the template's 2000 of 7000 rpm, scaled to this redline"
+  },
+  "gear_change_time": {
+   "value": 0.20000000298023224,
+   "src": "STAND-IN template SportsCar transmission.gear_change_time (ABSENT for the car); was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .gear_change_time"
+  },
+  "transmission_efficiency": {
+   "value": 0.8999999761581421,
+   "src": "STAND-IN template SportsCar transmission.transmission_efficiency (ABSENT for the car); was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.transmission_setup .transmission_efficiency"
+  }
+ },
+ "differential": {
+  "differential_type": {
+   "value": "ALL_WHEEL_DRIVE",
+   "src": "READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)"
+  },
+  "front_rear_split": {
+   "value": 0.5,
+   "src": "STAND-IN template SportsCar differential.front_rear_split (no source states the split); was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.differential_setup .front_rear_split"
+  }
+ },
+ "steering": {
+  "steering_type": {
+   "value": "ACKERMANN",
+   "src": "STAND-IN template SportsCar steering.steering_type; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup .steering_type"
+  },
+  "angle_ratio": {
+   "value": 0.699999988079071,
+   "src": "STAND-IN template SportsCar steering.angle_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup .angle_ratio"
+  },
+  "steering_curve": {
+   "t3d_value": "SteeringCurve=(EditorCurveData=())",
+   "src": "READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.steering_setup.steering_curve (T3D text of the owner)"
+  }
+ },
+ "skeletal_mesh": {
+  "value": "/Game/Vehicles/SportsCar/SKM_SportsCar.SKM_SportsCar",
+  "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar .Mesh.SkeletalMeshAsset"
+ },
+ "wheels": [
+  {
+   "index": 0,
+   "class": "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C",
+   "bone": "Phys_Wheel_FL",
+   "additional_offset": {
+    "value": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "src": "STAND-IN template SportsCar wheels[0].additional_offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[0] .additional_offset"
+   },
+   "bone_location": {
+    "value": [
+     120.39999389648438,
+     -77.85,
+     18.260000000000005
+    ],
+    "src": "DERIVED x = template wheelbase centre +- READ wheelbase / 2 (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)); y AUTHORED = body width / 2 - tyre width / 2 - 3 cm; z = the template ground line + this radius"
+   },
+   "setup": {
+    "axle_type": {
+     "value": "FRONT",
+     "src": "STAND-IN template SportsCar wheels[0].setup.axle_type; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .axle_type"
+    },
+    "offset": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[0].setup.offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .offset"
+    },
+    "wheel_radius": {
+     "value": 32.26,
+     "src": "DERIVED from the READ tyre 235/40 R18: rim x 25.4 / 2 + width x aspect (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf))"
+    },
+    "wheel_width": {
+     "value": 23.5,
+     "src": "DERIVED tyre section width of 235/40 R18"
+    },
+    "wheel_mass": {
+     "value": 20.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.wheel_mass; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_mass"
+    },
+    "cornering_stiffness": {
+     "value": 1000.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.cornering_stiffness; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .cornering_stiffness"
+    },
+    "friction_force_multiplier": {
+     "value": 3.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .friction_force_multiplier"
+    },
+    "side_slip_modifier": {
+     "value": 1.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.side_slip_modifier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .side_slip_modifier"
+    },
+    "slip_threshold": {
+     "value": 20.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.slip_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .slip_threshold"
+    },
+    "skid_threshold": {
+     "value": 20.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.skid_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .skid_threshold"
+    },
+    "max_steer_angle": {
+     "value": 40.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.max_steer_angle; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_steer_angle"
+    },
+    "affected_by_steering": {
+     "value": true,
+     "src": "STAND-IN template SportsCar wheels[0].setup.affected_by_steering; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_steering"
+    },
+    "affected_by_brake": {
+     "value": true,
+     "src": "STAND-IN template SportsCar wheels[0].setup.affected_by_brake; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_brake"
+    },
+    "affected_by_handbrake": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[0].setup.affected_by_handbrake; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_handbrake"
+    },
+    "affected_by_engine": {
+     "value": true,
+     "src": "DERIVED all four wheels driven: READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf) (as the template OffroadCar's AWD)"
+    },
+    "abs_enabled": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[0].setup.abs_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .abs_enabled"
+    },
+    "traction_control_enabled": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[0].setup.traction_control_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .traction_control_enabled"
+    },
+    "max_wheelspin_rotation": {
+     "value": 30.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.max_wheelspin_rotation; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_wheelspin_rotation"
+    },
+    "suspension_axis": {
+     "value": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[0].setup.suspension_axis; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_axis"
+    },
+    "suspension_force_offset": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[0].setup.suspension_force_offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_force_offset"
+    },
+    "suspension_max_raise": {
+     "value": 10.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.suspension_max_raise; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_max_raise"
+    },
+    "suspension_max_drop": {
+     "value": 10.0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.suspension_max_drop; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_max_drop"
+    },
+    "suspension_damping_ratio": {
+     "value": 0.5,
+     "src": "STAND-IN template SportsCar wheels[0].setup.suspension_damping_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_damping_ratio"
+    },
+    "wheel_load_ratio": {
+     "value": 0.5,
+     "src": "STAND-IN template SportsCar wheels[0].setup.wheel_load_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_load_ratio"
+    },
+    "spring_rate": {
+     "value": 250.0,
+     "src": "AUTHORED the template's spring_rate x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "spring_preload": {
+     "value": 50.0,
+     "src": "AUTHORED the template's spring_preload x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "suspension_smoothing": {
+     "value": 0,
+     "src": "STAND-IN template SportsCar wheels[0].setup.suspension_smoothing; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_smoothing"
+    },
+    "rollbar_scaling": {
+     "value": 0.15000000596046448,
+     "src": "STAND-IN template SportsCar wheels[0].setup.rollbar_scaling; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .rollbar_scaling"
+    },
+    "max_brake_torque": {
+     "value": 4500.0,
+     "src": "AUTHORED the template's max_brake_torque x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "max_hand_brake_torque": {
+     "value": 6000.0,
+     "src": "AUTHORED the template's max_hand_brake_torque x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    }
+   }
+  },
+  {
+   "index": 1,
+   "class": "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C",
+   "bone": "Phys_Wheel_FR",
+   "additional_offset": {
+    "value": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "src": "STAND-IN template SportsCar wheels[1].additional_offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[1] .additional_offset"
+   },
+   "bone_location": {
+    "value": [
+     120.39999389648438,
+     77.85,
+     18.260000000000005
+    ],
+    "src": "DERIVED x = template wheelbase centre +- READ wheelbase / 2 (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)); y AUTHORED = body width / 2 - tyre width / 2 - 3 cm; z = the template ground line + this radius"
+   },
+   "setup": {
+    "axle_type": {
+     "value": "FRONT",
+     "src": "STAND-IN template SportsCar wheels[1].setup.axle_type; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .axle_type"
+    },
+    "offset": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[1].setup.offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .offset"
+    },
+    "wheel_radius": {
+     "value": 32.26,
+     "src": "DERIVED from the READ tyre 235/40 R18: rim x 25.4 / 2 + width x aspect (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf))"
+    },
+    "wheel_width": {
+     "value": 23.5,
+     "src": "DERIVED tyre section width of 235/40 R18"
+    },
+    "wheel_mass": {
+     "value": 20.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.wheel_mass; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_mass"
+    },
+    "cornering_stiffness": {
+     "value": 1000.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.cornering_stiffness; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .cornering_stiffness"
+    },
+    "friction_force_multiplier": {
+     "value": 3.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .friction_force_multiplier"
+    },
+    "side_slip_modifier": {
+     "value": 1.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.side_slip_modifier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .side_slip_modifier"
+    },
+    "slip_threshold": {
+     "value": 20.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.slip_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .slip_threshold"
+    },
+    "skid_threshold": {
+     "value": 20.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.skid_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .skid_threshold"
+    },
+    "max_steer_angle": {
+     "value": 40.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.max_steer_angle; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_steer_angle"
+    },
+    "affected_by_steering": {
+     "value": true,
+     "src": "STAND-IN template SportsCar wheels[1].setup.affected_by_steering; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_steering"
+    },
+    "affected_by_brake": {
+     "value": true,
+     "src": "STAND-IN template SportsCar wheels[1].setup.affected_by_brake; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_brake"
+    },
+    "affected_by_handbrake": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[1].setup.affected_by_handbrake; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .affected_by_handbrake"
+    },
+    "affected_by_engine": {
+     "value": true,
+     "src": "DERIVED all four wheels driven: READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf) (as the template OffroadCar's AWD)"
+    },
+    "abs_enabled": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[1].setup.abs_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .abs_enabled"
+    },
+    "traction_control_enabled": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[1].setup.traction_control_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .traction_control_enabled"
+    },
+    "max_wheelspin_rotation": {
+     "value": 30.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.max_wheelspin_rotation; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .max_wheelspin_rotation"
+    },
+    "suspension_axis": {
+     "value": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[1].setup.suspension_axis; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_axis"
+    },
+    "suspension_force_offset": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[1].setup.suspension_force_offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_force_offset"
+    },
+    "suspension_max_raise": {
+     "value": 10.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.suspension_max_raise; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_max_raise"
+    },
+    "suspension_max_drop": {
+     "value": 10.0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.suspension_max_drop; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_max_drop"
+    },
+    "suspension_damping_ratio": {
+     "value": 0.5,
+     "src": "STAND-IN template SportsCar wheels[1].setup.suspension_damping_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_damping_ratio"
+    },
+    "wheel_load_ratio": {
+     "value": 0.5,
+     "src": "STAND-IN template SportsCar wheels[1].setup.wheel_load_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .wheel_load_ratio"
+    },
+    "spring_rate": {
+     "value": 250.0,
+     "src": "AUTHORED the template's spring_rate x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "spring_preload": {
+     "value": 50.0,
+     "src": "AUTHORED the template's spring_preload x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "suspension_smoothing": {
+     "value": 0,
+     "src": "STAND-IN template SportsCar wheels[1].setup.suspension_smoothing; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .suspension_smoothing"
+    },
+    "rollbar_scaling": {
+     "value": 0.15000000596046448,
+     "src": "STAND-IN template SportsCar wheels[1].setup.rollbar_scaling; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsFront.SportsCar_WheelsFront_C (CDO) .rollbar_scaling"
+    },
+    "max_brake_torque": {
+     "value": 4500.0,
+     "src": "AUTHORED the template's max_brake_torque x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "max_hand_brake_torque": {
+     "value": 6000.0,
+     "src": "AUTHORED the template's max_hand_brake_torque x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    }
+   }
+  },
+  {
+   "index": 2,
+   "class": "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C",
+   "bone": "Phys_Wheel_BL",
+   "additional_offset": {
+    "value": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "src": "STAND-IN template SportsCar wheels[2].additional_offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[2] .additional_offset"
+   },
+   "bone_location": {
+    "value": [
+     -114.60000610351562,
+     -74.85,
+     19.68499809265137
+    ],
+    "src": "DERIVED x = template wheelbase centre +- READ wheelbase / 2 (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)); y AUTHORED = body width / 2 - tyre width / 2 - 3 cm; z = the template ground line + this radius"
+   },
+   "setup": {
+    "axle_type": {
+     "value": "REAR",
+     "src": "STAND-IN template SportsCar wheels[2].setup.axle_type; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .axle_type"
+    },
+    "offset": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[2].setup.offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .offset"
+    },
+    "wheel_radius": {
+     "value": 33.185,
+     "src": "DERIVED from the READ tyre 295/35 R18: rim x 25.4 / 2 + width x aspect (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf))"
+    },
+    "wheel_width": {
+     "value": 29.5,
+     "src": "DERIVED tyre section width of 295/35 R18"
+    },
+    "wheel_mass": {
+     "value": 20.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.wheel_mass; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_mass"
+    },
+    "cornering_stiffness": {
+     "value": 1000.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.cornering_stiffness; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .cornering_stiffness"
+    },
+    "friction_force_multiplier": {
+     "value": 4.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .friction_force_multiplier"
+    },
+    "side_slip_modifier": {
+     "value": 1.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.side_slip_modifier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .side_slip_modifier"
+    },
+    "slip_threshold": {
+     "value": 100.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.slip_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .slip_threshold"
+    },
+    "skid_threshold": {
+     "value": 100.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.skid_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .skid_threshold"
+    },
+    "max_steer_angle": {
+     "value": 0.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.max_steer_angle; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_steer_angle"
+    },
+    "affected_by_steering": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[2].setup.affected_by_steering; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_steering"
+    },
+    "affected_by_brake": {
+     "value": true,
+     "src": "STAND-IN template SportsCar wheels[2].setup.affected_by_brake; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_brake"
+    },
+    "affected_by_handbrake": {
+     "value": true,
+     "src": "STAND-IN template SportsCar wheels[2].setup.affected_by_handbrake; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_handbrake"
+    },
+    "affected_by_engine": {
+     "value": true,
+     "src": "DERIVED all four wheels driven: READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf) (as the template OffroadCar's AWD)"
+    },
+    "abs_enabled": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[2].setup.abs_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .abs_enabled"
+    },
+    "traction_control_enabled": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[2].setup.traction_control_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .traction_control_enabled"
+    },
+    "max_wheelspin_rotation": {
+     "value": 30.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.max_wheelspin_rotation; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_wheelspin_rotation"
+    },
+    "suspension_axis": {
+     "value": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[2].setup.suspension_axis; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_axis"
+    },
+    "suspension_force_offset": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[2].setup.suspension_force_offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_force_offset"
+    },
+    "suspension_max_raise": {
+     "value": 10.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.suspension_max_raise; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_max_raise"
+    },
+    "suspension_max_drop": {
+     "value": 10.0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.suspension_max_drop; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_max_drop"
+    },
+    "suspension_damping_ratio": {
+     "value": 0.5,
+     "src": "STAND-IN template SportsCar wheels[2].setup.suspension_damping_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_damping_ratio"
+    },
+    "wheel_load_ratio": {
+     "value": 0.5,
+     "src": "STAND-IN template SportsCar wheels[2].setup.wheel_load_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_load_ratio"
+    },
+    "spring_rate": {
+     "value": 250.0,
+     "src": "AUTHORED the template's spring_rate x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "spring_preload": {
+     "value": 50.0,
+     "src": "AUTHORED the template's spring_preload x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "suspension_smoothing": {
+     "value": 0,
+     "src": "STAND-IN template SportsCar wheels[2].setup.suspension_smoothing; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_smoothing"
+    },
+    "rollbar_scaling": {
+     "value": 0.15000000596046448,
+     "src": "STAND-IN template SportsCar wheels[2].setup.rollbar_scaling; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .rollbar_scaling"
+    },
+    "max_brake_torque": {
+     "value": 1500.0,
+     "src": "AUTHORED the template's max_brake_torque x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "max_hand_brake_torque": {
+     "value": 6000.0,
+     "src": "AUTHORED the template's max_hand_brake_torque x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    }
+   }
+  },
+  {
+   "index": 3,
+   "class": "/Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C",
+   "bone": "Phys_Wheel_BR",
+   "additional_offset": {
+    "value": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "src": "STAND-IN template SportsCar wheels[3].additional_offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar (CDO) .VehicleMovementComponent<ChaosWheeledVehicleMovementComponent>.wheel_setups[3] .additional_offset"
+   },
+   "bone_location": {
+    "value": [
+     -114.60000610351562,
+     74.85,
+     19.68499809265137
+    ],
+    "src": "DERIVED x = template wheelbase centre +- READ wheelbase / 2 (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)); y AUTHORED = body width / 2 - tyre width / 2 - 3 cm; z = the template ground line + this radius"
+   },
+   "setup": {
+    "axle_type": {
+     "value": "REAR",
+     "src": "STAND-IN template SportsCar wheels[3].setup.axle_type; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .axle_type"
+    },
+    "offset": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[3].setup.offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .offset"
+    },
+    "wheel_radius": {
+     "value": 33.185,
+     "src": "DERIVED from the READ tyre 295/35 R18: rim x 25.4 / 2 + width x aspect (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf))"
+    },
+    "wheel_width": {
+     "value": 29.5,
+     "src": "DERIVED tyre section width of 295/35 R18"
+    },
+    "wheel_mass": {
+     "value": 20.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.wheel_mass; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_mass"
+    },
+    "cornering_stiffness": {
+     "value": 1000.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.cornering_stiffness; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .cornering_stiffness"
+    },
+    "friction_force_multiplier": {
+     "value": 4.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.friction_force_multiplier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .friction_force_multiplier"
+    },
+    "side_slip_modifier": {
+     "value": 1.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.side_slip_modifier; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .side_slip_modifier"
+    },
+    "slip_threshold": {
+     "value": 100.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.slip_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .slip_threshold"
+    },
+    "skid_threshold": {
+     "value": 100.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.skid_threshold; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .skid_threshold"
+    },
+    "max_steer_angle": {
+     "value": 0.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.max_steer_angle; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_steer_angle"
+    },
+    "affected_by_steering": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[3].setup.affected_by_steering; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_steering"
+    },
+    "affected_by_brake": {
+     "value": true,
+     "src": "STAND-IN template SportsCar wheels[3].setup.affected_by_brake; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_brake"
+    },
+    "affected_by_handbrake": {
+     "value": true,
+     "src": "STAND-IN template SportsCar wheels[3].setup.affected_by_handbrake; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .affected_by_handbrake"
+    },
+    "affected_by_engine": {
+     "value": true,
+     "src": "DERIVED all four wheels driven: READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf) (as the template OffroadCar's AWD)"
+    },
+    "abs_enabled": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[3].setup.abs_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .abs_enabled"
+    },
+    "traction_control_enabled": {
+     "value": false,
+     "src": "STAND-IN template SportsCar wheels[3].setup.traction_control_enabled; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .traction_control_enabled"
+    },
+    "max_wheelspin_rotation": {
+     "value": 30.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.max_wheelspin_rotation; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .max_wheelspin_rotation"
+    },
+    "suspension_axis": {
+     "value": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[3].setup.suspension_axis; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_axis"
+    },
+    "suspension_force_offset": {
+     "value": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "src": "STAND-IN template SportsCar wheels[3].setup.suspension_force_offset; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_force_offset"
+    },
+    "suspension_max_raise": {
+     "value": 10.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.suspension_max_raise; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_max_raise"
+    },
+    "suspension_max_drop": {
+     "value": 10.0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.suspension_max_drop; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_max_drop"
+    },
+    "suspension_damping_ratio": {
+     "value": 0.5,
+     "src": "STAND-IN template SportsCar wheels[3].setup.suspension_damping_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_damping_ratio"
+    },
+    "wheel_load_ratio": {
+     "value": 0.5,
+     "src": "STAND-IN template SportsCar wheels[3].setup.wheel_load_ratio; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .wheel_load_ratio"
+    },
+    "spring_rate": {
+     "value": 250.0,
+     "src": "AUTHORED the template's spring_rate x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "spring_preload": {
+     "value": 50.0,
+     "src": "AUTHORED the template's spring_preload x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "suspension_smoothing": {
+     "value": 0,
+     "src": "STAND-IN template SportsCar wheels[3].setup.suspension_smoothing; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .suspension_smoothing"
+    },
+    "rollbar_scaling": {
+     "value": 0.15000000596046448,
+     "src": "STAND-IN template SportsCar wheels[3].setup.rollbar_scaling; was READ /Game/VehicleTemplate/Blueprints/SportsCar/SportsCar_WheelsRear.SportsCar_WheelsRear_C (CDO) .rollbar_scaling"
+    },
+    "max_brake_torque": {
+     "value": 1500.0,
+     "src": "AUTHORED the template's max_brake_torque x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    },
+    "max_hand_brake_torque": {
+     "value": 6000.0,
+     "src": "AUTHORED the template's max_hand_brake_torque x the READ mass ratio 1.000 (same sag and stopping per kg; the car's own are ABSENT)"
+    }
+   }
+  }
+ ],
+ "parts": [
+  {
+   "component": "Chasis_Main",
+   "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar.SM_SportsCar",
+   "visible": true,
+   "attach_parent": "VehicleMesh",
+   "attach_socket": "None",
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": {
+    "pitch": 0.0,
+    "yaw": 0.0,
+    "roll": -0.0
+   },
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component Chasis_Main (actor space)"
+  },
+  {
+   "component": "FR_Wheel_0",
+   "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+   "visible": true,
+   "attach_parent": "VehicleMesh",
+   "attach_socket": "Phys_Wheel_FR",
+   "location": [
+    135.0,
+    90.0,
+    25.0
+   ],
+   "rotation": {
+    "pitch": -90.0,
+    "yaw": 6.971731068006193e-07,
+    "roll": 0.0
+   },
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component FR_Wheel_0 (actor space)"
+  },
+  {
+   "component": "FL_Wheel_0",
+   "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+   "visible": true,
+   "attach_parent": "VehicleMesh",
+   "attach_socket": "Phys_Wheel_FL",
+   "location": [
+    135.0,
+    -90.0,
+    25.0
+   ],
+   "rotation": {
+    "pitch": 90.0,
+    "yaw": -179.99999930282712,
+    "roll": 0.0
+   },
+   "scale": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component FL_Wheel_0 (actor space)"
+  },
+  {
+   "component": "BR_Wheel_0",
+   "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+   "visible": true,
+   "attach_parent": "VehicleMesh",
+   "attach_socket": "Phys_Wheel_BR",
+   "location": [
+    -129.20001220703125,
+    90.0,
+    26.499998092651367
+   ],
+   "rotation": {
+    "pitch": -90.0,
+    "yaw": 6.971727657401061e-07,
+    "roll": 0.0
+   },
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component BR_Wheel_0 (actor space)"
+  },
+  {
+   "component": "BL_Wheel_0",
+   "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel",
+   "visible": true,
+   "attach_parent": "VehicleMesh",
+   "attach_socket": "Phys_Wheel_BL",
+   "location": [
+    -129.20001220703125,
+    -90.0,
+    26.499998092651367
+   ],
+   "rotation": {
+    "pitch": 90.0,
+    "yaw": -179.99999930282718,
+    "roll": 0.0
+   },
+   "scale": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component BL_Wheel_0 (actor space)"
+  },
+  {
+   "component": "Chasis_Glass",
+   "mesh": "/Game/Vehicles/SportsCar/SM_SportsCar_Glass.SM_SportsCar_Glass",
+   "visible": true,
+   "attach_parent": "VehicleMesh",
+   "attach_socket": "Root",
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": {
+    "pitch": 0.0,
+    "yaw": 0.0,
+    "roll": -0.0
+   },
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "src": "READ spawned /Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar component Chasis_Glass (actor space)"
+  }
+ ],
+ "bounds_cm": {
+  "value": {
+   "origin": [
+    2.899993896484375,
+    0.0,
+    51.50000000000001
+   ],
+   "box_extent": [
+    223.3,
+    92.6,
+    65.5
+   ]
+  },
+  "src": "DERIVED half of the READ length, width, height (READ Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found) (https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf)); origin AUTHORED: centred on the wheelbase, on the ground line"
+ },
+ "glb": {
+  "/Game/Vehicles/SportsCar/SM_SportsCar.SM_SportsCar": "D:/_houseofcars/ue_out/meshes/SM_SportsCar.glb",
+  "/Game/Vehicles/SportsCar/SM_SportsCar_Wheel.SM_SportsCar_Wheel": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Wheel.glb",
+  "/Game/Vehicles/SportsCar/SM_SportsCar_Glass.SM_SportsCar_Glass": "D:/_houseofcars/ue_out/meshes/SM_SportsCar_Glass.glb"
+ },
+ "sim_car": true,
+ "name": "porsche_911_c4_2012",
+ "listing": {
+  "title": "2012 Porsche 911 Carrera 4",
+  "vin": "WP0AA2A93CS706169",
+  "url": "https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/"
+ },
+ "stand_ins": [
+  "differential.front_rear_split",
+  "engine.engine_brake_effect",
+  "engine.engine_idle_rpm",
+  "engine.engine_rev_down_rate",
+  "engine.engine_rev_up_moi",
+  "movement.brake_input_rate.fall_rate",
+  "movement.brake_input_rate.input_curve_function",
+  "movement.brake_input_rate.rise_rate",
+  "movement.center_of_mass_override",
+  "movement.downforce_coefficient",
+  "movement.enable_center_of_mass_override",
+  "movement.handbrake_input_rate.fall_rate",
+  "movement.handbrake_input_rate.input_curve_function",
+  "movement.handbrake_input_rate.rise_rate",
+  "movement.idle_brake_input",
+  "movement.inertia_tensor_scale",
+  "movement.mechanical_sim_enabled",
+  "movement.sleep_slope_limit",
+  "movement.sleep_threshold",
+  "movement.steering_input_rate.fall_rate",
+  "movement.steering_input_rate.input_curve_function",
+  "movement.steering_input_rate.rise_rate",
+  "movement.stop_threshold",
+  "movement.suspension_enabled",
+  "movement.throttle_input_rate.fall_rate",
+  "movement.throttle_input_rate.input_curve_function",
+  "movement.throttle_input_rate.rise_rate",
+  "movement.wheel_friction_enabled",
+  "movement.wrong_direction_threshold",
+  "steering.angle_ratio",
+  "steering.steering_type",
+  "transmission.gear_change_time",
+  "transmission.transmission_efficiency",
+  "transmission.use_auto_reverse",
+  "transmission.use_automatic_gears",
+  "wheels.* other setup (cornering stiffness, friction, suspension travel, damping, steering)",
+  "wheels[0].additional_offset",
+  "wheels[0].setup.abs_enabled",
+  "wheels[0].setup.affected_by_brake",
+  "wheels[0].setup.affected_by_handbrake",
+  "wheels[0].setup.affected_by_steering",
+  "wheels[0].setup.axle_type",
+  "wheels[0].setup.cornering_stiffness",
+  "wheels[0].setup.friction_force_multiplier",
+  "wheels[0].setup.max_steer_angle",
+  "wheels[0].setup.max_wheelspin_rotation",
+  "wheels[0].setup.offset",
+  "wheels[0].setup.rollbar_scaling",
+  "wheels[0].setup.side_slip_modifier",
+  "wheels[0].setup.skid_threshold",
+  "wheels[0].setup.slip_threshold",
+  "wheels[0].setup.suspension_axis",
+  "wheels[0].setup.suspension_damping_ratio",
+  "wheels[0].setup.suspension_force_offset",
+  "wheels[0].setup.suspension_max_drop",
+  "wheels[0].setup.suspension_max_raise",
+  "wheels[0].setup.suspension_smoothing",
+  "wheels[0].setup.traction_control_enabled",
+  "wheels[0].setup.wheel_load_ratio",
+  "wheels[0].setup.wheel_mass",
+  "wheels[1].additional_offset",
+  "wheels[1].setup.abs_enabled",
+  "wheels[1].setup.affected_by_brake",
+  "wheels[1].setup.affected_by_handbrake",
+  "wheels[1].setup.affected_by_steering",
+  "wheels[1].setup.axle_type",
+  "wheels[1].setup.cornering_stiffness",
+  "wheels[1].setup.friction_force_multiplier",
+  "wheels[1].setup.max_steer_angle",
+  "wheels[1].setup.max_wheelspin_rotation",
+  "wheels[1].setup.offset",
+  "wheels[1].setup.rollbar_scaling",
+  "wheels[1].setup.side_slip_modifier",
+  "wheels[1].setup.skid_threshold",
+  "wheels[1].setup.slip_threshold",
+  "wheels[1].setup.suspension_axis",
+  "wheels[1].setup.suspension_damping_ratio",
+  "wheels[1].setup.suspension_force_offset",
+  "wheels[1].setup.suspension_max_drop",
+  "wheels[1].setup.suspension_max_raise",
+  "wheels[1].setup.suspension_smoothing",
+  "wheels[1].setup.traction_control_enabled",
+  "wheels[1].setup.wheel_load_ratio",
+  "wheels[1].setup.wheel_mass",
+  "wheels[2].additional_offset",
+  "wheels[2].setup.abs_enabled",
+  "wheels[2].setup.affected_by_brake",
+  "wheels[2].setup.affected_by_handbrake",
+  "wheels[2].setup.affected_by_steering",
+  "wheels[2].setup.axle_type",
+  "wheels[2].setup.cornering_stiffness",
+  "wheels[2].setup.friction_force_multiplier",
+  "wheels[2].setup.max_steer_angle",
+  "wheels[2].setup.max_wheelspin_rotation",
+  "wheels[2].setup.offset",
+  "wheels[2].setup.rollbar_scaling",
+  "wheels[2].setup.side_slip_modifier",
+  "wheels[2].setup.skid_threshold",
+  "wheels[2].setup.slip_threshold",
+  "wheels[2].setup.suspension_axis",
+  "wheels[2].setup.suspension_damping_ratio",
+  "wheels[2].setup.suspension_force_offset",
+  "wheels[2].setup.suspension_max_drop",
+  "wheels[2].setup.suspension_max_raise",
+  "wheels[2].setup.suspension_smoothing",
+  "wheels[2].setup.traction_control_enabled",
+  "wheels[2].setup.wheel_load_ratio",
+  "wheels[2].setup.wheel_mass",
+  "wheels[3].additional_offset",
+  "wheels[3].setup.abs_enabled",
+  "wheels[3].setup.affected_by_brake",
+  "wheels[3].setup.affected_by_handbrake",
+  "wheels[3].setup.affected_by_steering",
+  "wheels[3].setup.axle_type",
+  "wheels[3].setup.cornering_stiffness",
+  "wheels[3].setup.friction_force_multiplier",
+  "wheels[3].setup.max_steer_angle",
+  "wheels[3].setup.max_wheelspin_rotation",
+  "wheels[3].setup.offset",
+  "wheels[3].setup.rollbar_scaling",
+  "wheels[3].setup.side_slip_modifier",
+  "wheels[3].setup.skid_threshold",
+  "wheels[3].setup.slip_threshold",
+  "wheels[3].setup.suspension_axis",
+  "wheels[3].setup.suspension_damping_ratio",
+  "wheels[3].setup.suspension_force_offset",
+  "wheels[3].setup.suspension_max_drop",
+  "wheels[3].setup.suspension_max_raise",
+  "wheels[3].setup.suspension_smoothing",
+  "wheels[3].setup.traction_control_enabled",
+  "wheels[3].setup.wheel_load_ratio",
+  "wheels[3].setup.wheel_mass"
+ ],
+ "derived": [
+  "engine.torque_curve"
+ ],
+ "authored": [
+  "transmission.change_down_rpm",
+  "transmission.change_up_rpm",
+  "wheels.*.max_brake_torque",
+  "wheels.*.max_hand_brake_torque",
+  "wheels.*.spring_preload",
+  "wheels.*.spring_rate",
+  "wheels.*.y"
+ ],
+ "factory": {
+  "top_speed_kmh": {
+   "kind": "READ",
+   "value": 282,
+   "unit": "km/h",
+   "canonical": 282,
+   "canonical_unit": "km/h",
+   "src": "https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf",
+   "src_id": "PORSCHE_2011",
+   "source_class": "manufacturer",
+   "src_label": "Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found)",
+   "quote": "175mph (282 km/h) 175 mph (282 km/h)",
+   "note": "Carrera 4 columns of the 'Top Track Speed' row are Manual 177 mph (284 km/h), PDK 175 mph (282 km/h), PDK with Sport Chrono 175 mph (282 km/h); the PDK value is used.",
+   "alternates": [
+    {
+     "src_id": "AD_P997",
+     "quote": "Maximum speed 282 km/h 175 mph",
+     "value": 282,
+     "unit": "km/h",
+     "label": "auto-data.net Carrera 4 PDK",
+     "src": "https://www.auto-data.net/en/porsche-911-997-facelift-2008-carrera-4-3.6-345hp-pdk-36760",
+     "source_class": "database"
+    }
+   ]
+  },
+  "zero_to_100_kmh_s": {
+   "kind": "READ",
+   "value": 4.8,
+   "unit": "s",
+   "canonical": 4.8,
+   "canonical_unit": "s",
+   "src": "https://www.auto-data.net/en/porsche-911-997-facelift-2008-carrera-4-3.6-345hp-pdk-36760",
+   "src_id": "AD_P997",
+   "source_class": "database",
+   "src_label": "auto-data.net, Porsche 911 (997, facelift 2008) Carrera 4 3.6 (345 Hp) PDK",
+   "quote": "Acceleration 0 - 100 km/h 4.8 sec",
+   "note": "PDK; the same value is in Wikipedia's 997 performance table (PDK 0-100: 4.8, with Sport Plus 4.6). Manual is 5.0."
+  },
+  "zero_to_60_mph_s": {
+   "kind": "READ",
+   "value": 4.6,
+   "unit": "s",
+   "canonical": 4.6,
+   "canonical_unit": "s",
+   "src": "https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf",
+   "src_id": "PORSCHE_2011",
+   "source_class": "manufacturer",
+   "src_label": "Porsche Cars North America, 2011 911 Carrera 4 / Carrera 4S Specifications (997.2, US market; no MY2012 sheet found)",
+   "quote": "4.8 sec. 4.6 sec. 4.4 sec. 4.5 sec. 4.3 sec. 4.1 sec.",
+   "note": "columns are Carrera 4 Manual 4.8 / PDK 4.6 / PDK with Sport Chrono Package Plus 4.4, then the same three for the 4S. 4.6 s is the plain PDK; the 4.4 s needs the Sport Chrono Package, which the listing does not mention. Recorded as 0-60 mph."
+  },
+  "power_kw": {
+   "kind": "READ",
+   "value": 254,
+   "unit": "kW",
+   "canonical": 254,
+   "canonical_unit": "kW",
+   "src": "https://en.wikipedia.org/wiki/Porsche_911_(997)",
+   "src_id": "WP_997",
+   "source_class": "reference",
+   "src_label": "Wikipedia, Porsche 911 (997)",
+   "quote": "345 PS (254 kW; 340 bhp) at 6,500 rpm",
+   "note": "Porsche's US sheet prints '345 hp', which is the metric 345 PS (254 kW), not SAE hp (that would be 257 kW); the Wikipedia row gives all three.",
+   "alternates": [
+    {
+     "src_id": "PORSCHE_2011",
+     "quote": "345 hp at 6500 rpm",
+     "value": "345 hp (SAE)",
+     "label": "Porsche US sheet",
+     "src": "https://newsroom.porsche.com/dam/jcr:4a41d864-04a7-4cfd-b166-77d548baa675/2011_911_Carrera_4_Specifications.pdf",
+     "source_class": "manufacturer"
+    },
+    {
+     "src_id": "VIN_WP0AA2A93CS706169",
+     "quote": "\"EngineHP\":\"345\"",
+     "value": "345 hp",
+     "label": "NHTSA decode of this VIN",
+     "src": "https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/WP0AA2A93CS706169?format=json",
+     "source_class": "government_vin_decode"
+    }
+   ]
+  }
+ }
+}

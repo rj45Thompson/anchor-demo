@@ -22,6 +22,12 @@ export const SLIDES = [
     lines: ['Thrill', 'Adventure', 'Luxury'],
     body: ['Family hauler, work truck or daily commuter? Not on this lot: it holds the template\'s three cars.'],
     picks: [{ label: 'Thrill', icon: 'thrill', car: 'SportsCar' }, { label: 'Adventure', icon: 'adventure', car: 'OffroadCar' }, { label: 'Luxury', icon: 'luxury', car: 'ConceptCar' }] },
+  // UC-8: the dealer's own cars for sale, read off houseofcars.com (data/listings.json, tools/listings.py); app.js expands
+  // `listings` into one slide per listing, then one per pick the site does not list
+  { kind: 'sale', icon: 'tag', kicker: 'On the lot now', title: 'For sale now',
+    lines: ['The chain\'s most expensive cars,', 'read off houseofcars.com.', 'Prices as listed, with the date.'],
+    body: ['The most expensive cars House of Cars lists right now, the Edmonton store\'s first. Each one is read off its own listing page: price, kilometres, store and VIN, with the date it was read.'] },
+  { kind: 'listings' },
   { kind: 'car', car: 'SportsCar' },
   { kind: 'car', car: 'OffroadCar' },
   { kind: 'car', car: 'ConceptCar' },

@@ -1,0 +1,396 @@
+{
+ "ghosts": [
+  {
+   "file": "OffroadCar.json",
+   "car": "OffroadCar",
+   "lap": 43.28328326542982,
+   "label": "Offroad Car",
+   "physics_src": {
+    "car": "site/data/cars.json cars.OffroadCar",
+    "car_blueprint": "/Game/VehicleTemplate/Blueprints/OffroadCar/BP_VehicleAdvOffroadCar",
+    "unexported": "site/data/chaos_unexported.json cars.OffroadCar",
+    "gravity_z": {
+     "value": -980,
+     "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+    },
+    "angular_damping": {
+     "on_ground": 0,
+     "in_air": 3,
+     "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
+    },
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
+   },
+   "made_with": {
+    "tool": "tools/sim_ghost.mjs",
+    "step_s": "1/120",
+    "frame": "one frame = one physics step of 1/120 s, so the countdown and the flip check tick on 1/120 s frames (the page ticks them on its frame time; its physics step is the same)",
+    "line": "READ ue_out/level.t3d:16798-17438 LandscapeSplineActor_0 (ActorLabel LandscapeSplineActor2): LandscapeSplineSegment Poin...; evaluated with FInterpCurve CIM_CurveUser (InterpCurve.h:374), against Unreal's chain order, from the point 454 cm from the READ player start (see AUTHORED: line)",
+    "node": "v25.9.0",
+    "sha256_16": {
+     "site/ai_driver.js": "307a085504244ec1",
+     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/rules.js": "542bc81e872fc945",
+     "site/gates.js": "4f8843e86be5942a",
+     "site/ghost.js": "489d53d9fb3b316f",
+     "site/world.js": "43f8fdff61e92661",
+     "tools/sim_ghost.mjs": "d4ba1be799f60ac9",
+     "site/ground_holes.js": "ce45596a3c696123",
+     "site/data/track.json": "42aa27705108c637",
+     "site/data/road_spline.json": "e51c887ccd717b0c",
+     "site/data/timetrial_rules.json": "ee31e9cf58ac6843",
+     "site/data/physics.json": "df9ec08bbbddfbf1",
+     "site/data/collision.bin": "c65f4b62c6c703e9",
+     "site/data/ground_height.bin": "764c1e44ce03ba20",
+     "site/data/ground_normal.bin": "6ce5b7894e4ab37d",
+     "site/data/ground_holes.bin": "c2d29f3747c6e50b",
+     "site/data/cars.json": "32edd0f0788bad3c",
+     "site/data/chaos_unexported.json": "1321901adf24e2d1"
+    }
+   }
+  },
+  {
+   "file": "SportsCar.json",
+   "car": "SportsCar",
+   "lap": 38.58328326543009,
+   "label": "Sports Car",
+   "physics_src": {
+    "car": "site/data/cars.json cars.SportsCar",
+    "car_blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+    "unexported": "site/data/chaos_unexported.json cars.SportsCar",
+    "gravity_z": {
+     "value": -980,
+     "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+    },
+    "angular_damping": {
+     "on_ground": 0,
+     "in_air": 3,
+     "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
+    },
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
+   },
+   "made_with": {
+    "tool": "tools/sim_ghost.mjs",
+    "step_s": "1/120",
+    "frame": "one frame = one physics step of 1/120 s, so the countdown and the flip check tick on 1/120 s frames (the page ticks them on its frame time; its physics step is the same)",
+    "line": "READ ue_out/level.t3d:16798-17438 LandscapeSplineActor_0 (ActorLabel LandscapeSplineActor2): LandscapeSplineSegment Poin...; evaluated with FInterpCurve CIM_CurveUser (InterpCurve.h:374), against Unreal's chain order, from the point 454 cm from the READ player start (see AUTHORED: line)",
+    "node": "v25.9.0",
+    "sha256_16": {
+     "site/ai_driver.js": "307a085504244ec1",
+     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/rules.js": "542bc81e872fc945",
+     "site/gates.js": "4f8843e86be5942a",
+     "site/ghost.js": "489d53d9fb3b316f",
+     "site/world.js": "43f8fdff61e92661",
+     "tools/sim_ghost.mjs": "d4ba1be799f60ac9",
+     "site/ground_holes.js": "ce45596a3c696123",
+     "site/data/track.json": "42aa27705108c637",
+     "site/data/road_spline.json": "e51c887ccd717b0c",
+     "site/data/timetrial_rules.json": "ee31e9cf58ac6843",
+     "site/data/physics.json": "df9ec08bbbddfbf1",
+     "site/data/collision.bin": "c65f4b62c6c703e9",
+     "site/data/ground_height.bin": "764c1e44ce03ba20",
+     "site/data/ground_normal.bin": "6ce5b7894e4ab37d",
+     "site/data/ground_holes.bin": "c2d29f3747c6e50b",
+     "site/data/cars.json": "32edd0f0788bad3c",
+     "site/data/chaos_unexported.json": "1321901adf24e2d1"
+    }
+   }
+  },
+  {
+   "file": "bentley_flying_spur_2018.json",
+   "car": "bentley_flying_spur_2018",
+   "lap": 41.82494993209657,
+   "label": "2018 Bentley Flying Spur V8",
+   "physics_src": {
+    "car": "site/data/sim_cars/bentley_flying_spur_2018.json",
+    "car_blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+    "unexported": "site/data/sim_cars/bentley_flying_spur_2018.unexported.json",
+    "gravity_z": {
+     "value": -980,
+     "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+    },
+    "angular_damping": {
+     "on_ground": 0,
+     "in_air": 3,
+     "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
+    },
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
+   },
+   "made_with": {
+    "tool": "tools/sim_ghost.mjs",
+    "step_s": "1/120",
+    "frame": "one frame = one physics step of 1/120 s, so the countdown and the flip check tick on 1/120 s frames (the page ticks them on its frame time; its physics step is the same)",
+    "line": "READ ue_out/level.t3d:16798-17438 LandscapeSplineActor_0 (ActorLabel LandscapeSplineActor2): LandscapeSplineSegment Poin...; evaluated with FInterpCurve CIM_CurveUser (InterpCurve.h:374), against Unreal's chain order, from the point 454 cm from the READ player start (see AUTHORED: line)",
+    "node": "v25.9.0",
+    "sha256_16": {
+     "site/ai_driver.js": "307a085504244ec1",
+     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/rules.js": "542bc81e872fc945",
+     "site/gates.js": "4f8843e86be5942a",
+     "site/ghost.js": "489d53d9fb3b316f",
+     "site/world.js": "43f8fdff61e92661",
+     "tools/sim_ghost.mjs": "d4ba1be799f60ac9",
+     "site/ground_holes.js": "ce45596a3c696123",
+     "site/data/track.json": "42aa27705108c637",
+     "site/data/road_spline.json": "e51c887ccd717b0c",
+     "site/data/timetrial_rules.json": "ee31e9cf58ac6843",
+     "site/data/physics.json": "df9ec08bbbddfbf1",
+     "site/data/collision.bin": "c65f4b62c6c703e9",
+     "site/data/ground_height.bin": "764c1e44ce03ba20",
+     "site/data/ground_normal.bin": "6ce5b7894e4ab37d",
+     "site/data/ground_holes.bin": "c2d29f3747c6e50b",
+     "site/data/sim_cars/bentley_flying_spur_2018.json": "1d8db0b9305e536a",
+     "site/data/sim_cars/bentley_flying_spur_2018.unexported.json": "1b5ae1ffda25e3ce"
+    }
+   }
+  },
+  {
+   "file": "bmw_i8_2016.json",
+   "car": "bmw_i8_2016",
+   "lap": 38.95828326543007,
+   "label": "2016 BMW i8",
+   "physics_src": {
+    "car": "site/data/sim_cars/bmw_i8_2016.json",
+    "car_blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+    "unexported": "site/data/sim_cars/bmw_i8_2016.unexported.json",
+    "gravity_z": {
+     "value": -980,
+     "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+    },
+    "angular_damping": {
+     "on_ground": 0,
+     "in_air": 3,
+     "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
+    },
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
+   },
+   "made_with": {
+    "tool": "tools/sim_ghost.mjs",
+    "step_s": "1/120",
+    "frame": "one frame = one physics step of 1/120 s, so the countdown and the flip check tick on 1/120 s frames (the page ticks them on its frame time; its physics step is the same)",
+    "line": "READ ue_out/level.t3d:16798-17438 LandscapeSplineActor_0 (ActorLabel LandscapeSplineActor2): LandscapeSplineSegment Poin...; evaluated with FInterpCurve CIM_CurveUser (InterpCurve.h:374), against Unreal's chain order, from the point 454 cm from the READ player start (see AUTHORED: line)",
+    "node": "v25.9.0",
+    "sha256_16": {
+     "site/ai_driver.js": "307a085504244ec1",
+     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/rules.js": "542bc81e872fc945",
+     "site/gates.js": "4f8843e86be5942a",
+     "site/ghost.js": "489d53d9fb3b316f",
+     "site/world.js": "43f8fdff61e92661",
+     "tools/sim_ghost.mjs": "d4ba1be799f60ac9",
+     "site/ground_holes.js": "ce45596a3c696123",
+     "site/data/track.json": "42aa27705108c637",
+     "site/data/road_spline.json": "e51c887ccd717b0c",
+     "site/data/timetrial_rules.json": "ee31e9cf58ac6843",
+     "site/data/physics.json": "df9ec08bbbddfbf1",
+     "site/data/collision.bin": "c65f4b62c6c703e9",
+     "site/data/ground_height.bin": "764c1e44ce03ba20",
+     "site/data/ground_normal.bin": "6ce5b7894e4ab37d",
+     "site/data/ground_holes.bin": "c2d29f3747c6e50b",
+     "site/data/sim_cars/bmw_i8_2016.json": "b303c54b36e6cdc6",
+     "site/data/sim_cars/bmw_i8_2016.unexported.json": "1b5ae1ffda25e3ce"
+    }
+   }
+  },
+  {
+   "file": "mercedes_amg_e63s_2021.json",
+   "car": "mercedes_amg_e63s_2021",
+   "lap": 39.183283265430056,
+   "label": "2021 Mercedes-Benz E-Class AMG E 63 S 4MATIC+",
+   "physics_src": {
+    "car": "site/data/sim_cars/mercedes_amg_e63s_2021.json",
+    "car_blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+    "unexported": "site/data/sim_cars/mercedes_amg_e63s_2021.unexported.json",
+    "gravity_z": {
+     "value": -980,
+     "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+    },
+    "angular_damping": {
+     "on_ground": 0,
+     "in_air": 3,
+     "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
+    },
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
+   },
+   "made_with": {
+    "tool": "tools/sim_ghost.mjs",
+    "step_s": "1/120",
+    "frame": "one frame = one physics step of 1/120 s, so the countdown and the flip check tick on 1/120 s frames (the page ticks them on its frame time; its physics step is the same)",
+    "line": "READ ue_out/level.t3d:16798-17438 LandscapeSplineActor_0 (ActorLabel LandscapeSplineActor2): LandscapeSplineSegment Poin...; evaluated with FInterpCurve CIM_CurveUser (InterpCurve.h:374), against Unreal's chain order, from the point 454 cm from the READ player start (see AUTHORED: line)",
+    "node": "v25.9.0",
+    "sha256_16": {
+     "site/ai_driver.js": "307a085504244ec1",
+     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/rules.js": "542bc81e872fc945",
+     "site/gates.js": "4f8843e86be5942a",
+     "site/ghost.js": "489d53d9fb3b316f",
+     "site/world.js": "43f8fdff61e92661",
+     "tools/sim_ghost.mjs": "d4ba1be799f60ac9",
+     "site/ground_holes.js": "ce45596a3c696123",
+     "site/data/track.json": "42aa27705108c637",
+     "site/data/road_spline.json": "e51c887ccd717b0c",
+     "site/data/timetrial_rules.json": "ee31e9cf58ac6843",
+     "site/data/physics.json": "df9ec08bbbddfbf1",
+     "site/data/collision.bin": "c65f4b62c6c703e9",
+     "site/data/ground_height.bin": "764c1e44ce03ba20",
+     "site/data/ground_normal.bin": "6ce5b7894e4ab37d",
+     "site/data/ground_holes.bin": "c2d29f3747c6e50b",
+     "site/data/sim_cars/mercedes_amg_e63s_2021.json": "4684c0e1c4ed92f1",
+     "site/data/sim_cars/mercedes_amg_e63s_2021.unexported.json": "1b5ae1ffda25e3ce"
+    }
+   }
+  },
+  {
+   "file": "porsche_911_c4_2012.json",
+   "car": "porsche_911_c4_2012",
+   "lap": 41.38328326542993,
+   "label": "2012 Porsche 911 Carrera 4",
+   "physics_src": {
+    "car": "site/data/sim_cars/porsche_911_c4_2012.json",
+    "car_blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+    "unexported": "site/data/sim_cars/porsche_911_c4_2012.unexported.json",
+    "gravity_z": {
+     "value": -980,
+     "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+    },
+    "angular_damping": {
+     "on_ground": 0,
+     "in_air": 3,
+     "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
+    },
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
+   },
+   "made_with": {
+    "tool": "tools/sim_ghost.mjs",
+    "step_s": "1/120",
+    "frame": "one frame = one physics step of 1/120 s, so the countdown and the flip check tick on 1/120 s frames (the page ticks them on its frame time; its physics step is the same)",
+    "line": "READ ue_out/level.t3d:16798-17438 LandscapeSplineActor_0 (ActorLabel LandscapeSplineActor2): LandscapeSplineSegment Poin...; evaluated with FInterpCurve CIM_CurveUser (InterpCurve.h:374), against Unreal's chain order, from the point 454 cm from the READ player start (see AUTHORED: line)",
+    "node": "v25.9.0",
+    "sha256_16": {
+     "site/ai_driver.js": "307a085504244ec1",
+     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/rules.js": "542bc81e872fc945",
+     "site/gates.js": "4f8843e86be5942a",
+     "site/ghost.js": "489d53d9fb3b316f",
+     "site/world.js": "43f8fdff61e92661",
+     "tools/sim_ghost.mjs": "d4ba1be799f60ac9",
+     "site/ground_holes.js": "ce45596a3c696123",
+     "site/data/track.json": "42aa27705108c637",
+     "site/data/road_spline.json": "e51c887ccd717b0c",
+     "site/data/timetrial_rules.json": "ee31e9cf58ac6843",
+     "site/data/physics.json": "df9ec08bbbddfbf1",
+     "site/data/collision.bin": "c65f4b62c6c703e9",
+     "site/data/ground_height.bin": "764c1e44ce03ba20",
+     "site/data/ground_normal.bin": "6ce5b7894e4ab37d",
+     "site/data/ground_holes.bin": "c2d29f3747c6e50b",
+     "site/data/sim_cars/porsche_911_c4_2012.json": "d5e5178544dea071",
+     "site/data/sim_cars/porsche_911_c4_2012.unexported.json": "1b5ae1ffda25e3ce"
+    }
+   }
+  },
+  {
+   "file": "rolls_royce_ghost_2014.json",
+   "car": "rolls_royce_ghost_2014",
+   "lap": 40.88328326542996,
+   "label": "2014 Rolls-Royce Ghost",
+   "physics_src": {
+    "car": "site/data/sim_cars/rolls_royce_ghost_2014.json",
+    "car_blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+    "unexported": "site/data/sim_cars/rolls_royce_ghost_2014.unexported.json",
+    "gravity_z": {
+     "value": -980,
+     "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+    },
+    "angular_damping": {
+     "on_ground": 0,
+     "in_air": 3,
+     "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
+    },
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
+   },
+   "made_with": {
+    "tool": "tools/sim_ghost.mjs",
+    "step_s": "1/120",
+    "frame": "one frame = one physics step of 1/120 s, so the countdown and the flip check tick on 1/120 s frames (the page ticks them on its frame time; its physics step is the same)",
+    "line": "READ ue_out/level.t3d:16798-17438 LandscapeSplineActor_0 (ActorLabel LandscapeSplineActor2): LandscapeSplineSegment Poin...; evaluated with FInterpCurve CIM_CurveUser (InterpCurve.h:374), against Unreal's chain order, from the point 454 cm from the READ player start (see AUTHORED: line)",
+    "node": "v25.9.0",
+    "sha256_16": {
+     "site/ai_driver.js": "307a085504244ec1",
+     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/rules.js": "542bc81e872fc945",
+     "site/gates.js": "4f8843e86be5942a",
+     "site/ghost.js": "489d53d9fb3b316f",
+     "site/world.js": "43f8fdff61e92661",
+     "tools/sim_ghost.mjs": "d4ba1be799f60ac9",
+     "site/ground_holes.js": "ce45596a3c696123",
+     "site/data/track.json": "42aa27705108c637",
+     "site/data/road_spline.json": "e51c887ccd717b0c",
+     "site/data/timetrial_rules.json": "ee31e9cf58ac6843",
+     "site/data/physics.json": "df9ec08bbbddfbf1",
+     "site/data/collision.bin": "c65f4b62c6c703e9",
+     "site/data/ground_height.bin": "764c1e44ce03ba20",
+     "site/data/ground_normal.bin": "6ce5b7894e4ab37d",
+     "site/data/ground_holes.bin": "c2d29f3747c6e50b",
+     "site/data/sim_cars/rolls_royce_ghost_2014.json": "1ef8927c1c636f06",
+     "site/data/sim_cars/rolls_royce_ghost_2014.unexported.json": "1b5ae1ffda25e3ce"
+    }
+   }
+  },
+  {
+   "file": "rolls_royce_wraith_2017.json",
+   "car": "rolls_royce_wraith_2017",
+   "lap": 40.49994993209665,
+   "label": "2017 Rolls-Royce Wraith",
+   "physics_src": {
+    "car": "site/data/sim_cars/rolls_royce_wraith_2017.json",
+    "car_blueprint": "/Game/VehicleTemplate/Blueprints/SportsCar/BP_VehicleAdvSportsCar",
+    "unexported": "site/data/sim_cars/rolls_royce_wraith_2017.unexported.json",
+    "gravity_z": {
+     "value": -980,
+     "src": "READ D:/Program Files/Epic Games/UE_5.7/Engine/Config/BaseEngine.ini [/Script/Engine.PhysicsSettings] DefaultGravityZ (the project's DefaultEngine.ini does not override it)"
+    },
+    "angular_damping": {
+     "on_ground": 0,
+     "in_air": 3,
+     "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
+    },
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
+   },
+   "made_with": {
+    "tool": "tools/sim_ghost.mjs",
+    "step_s": "1/120",
+    "frame": "one frame = one physics step of 1/120 s, so the countdown and the flip check tick on 1/120 s frames (the page ticks them on its frame time; its physics step is the same)",
+    "line": "READ ue_out/level.t3d:16798-17438 LandscapeSplineActor_0 (ActorLabel LandscapeSplineActor2): LandscapeSplineSegment Poin...; evaluated with FInterpCurve CIM_CurveUser (InterpCurve.h:374), against Unreal's chain order, from the point 454 cm from the READ player start (see AUTHORED: line)",
+    "node": "v25.9.0",
+    "sha256_16": {
+     "site/ai_driver.js": "307a085504244ec1",
+     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/rules.js": "542bc81e872fc945",
+     "site/gates.js": "4f8843e86be5942a",
+     "site/ghost.js": "489d53d9fb3b316f",
+     "site/world.js": "43f8fdff61e92661",
+     "tools/sim_ghost.mjs": "d4ba1be799f60ac9",
+     "site/ground_holes.js": "ce45596a3c696123",
+     "site/data/track.json": "42aa27705108c637",
+     "site/data/road_spline.json": "e51c887ccd717b0c",
+     "site/data/timetrial_rules.json": "ee31e9cf58ac6843",
+     "site/data/physics.json": "df9ec08bbbddfbf1",
+     "site/data/collision.bin": "c65f4b62c6c703e9",
+     "site/data/ground_height.bin": "764c1e44ce03ba20",
+     "site/data/ground_normal.bin": "6ce5b7894e4ab37d",
+     "site/data/ground_holes.bin": "c2d29f3747c6e50b",
+     "site/data/sim_cars/rolls_royce_wraith_2017.json": "b98afd653f850158",
+     "site/data/sim_cars/rolls_royce_wraith_2017.unexported.json": "1b5ae1ffda25e3ce"
+    }
+   }
+  }
+ ]
+}

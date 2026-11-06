@@ -18,6 +18,9 @@ import { buildTach, updateTach, popCountdown, lapBanner, readRecord, writeRecord
 import { makeSkids, clearSkids, laySkids, slideAmount } from './effects.js';
 import { makeGamepad, readGamepad, readPadRaw } from './gamepad.js';
 import { makeRecorder, record, saveGhost, loadGhost, ghostPose } from './ghost.js';
+import { overlapsGate, carAxes } from './gates.js';   // one gate test for the page and the sim (tools/sim_ghost.mjs)
+import { loadHoles, withHoles } from './ground_holes.js';
+import * as AI from './ai_driver.js';                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
 
 // AUTHORED for the page itself (look and layout, never presented as Unreal's): see AUTHORED in the report
 export const AUTHORED = [
@@ -35,6 +38,7 @@ export const AUTHORED = [
   'gamepad: the bindings and dead zones are READ (data/input.json); the W3C standard layout they are matched to is the browser\'s. In the showroom (no Unreal binding): the d-pad or stick browses, A drives',
   'showroom light beams (fx.js lightBeam) and the save-picture button are the page\'s own',
   'intro: the camera sweep onto the lot and the card motion are the page\'s own (none when the OS asks for reduced motion)',
+  'cars for sale: their physics are tools/sim_car.py (READ factory numbers on the template SportsCar, every stand-in named in data/sim_cars); their bodies are Meshy models; they ride the SportsCar\'s cameras',
   'paint picker: the colours are the page\'s own; Factory is the colour Unreal\'s glTF export baked. Dragging a car turns it on its pedestal',
   'resolution: the page picks its own pixel ratio from the frame time (the Resolution pill says which)',
   'physics runs at a fixed 120 Hz on the page (Unreal ticks Chaos with the engine\'s own substepping)',
@@ -84,7 +88,13 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;      // the track's
 const studioTex = studioEnvironment(renderer, PAL.accent);                  // the showroom's (fx.js)
 
-const [SHOW, TRACK, RULES, CAMS, INPUT] = await Promise.all([fetchJson('showroom.json'), fetchJson('track.json'), fetchJson('timetrial_rules.json'), fetchJson('camera.json'), fetchJson('input.json')]);
+const [SHOW, TRACK, RULES, CAMS, INPUT, LISTINGS, MODELS] = await Promise.all([fetchJson('showroom.json'), fetchJson('track.json'), fetchJson('timetrial_rules.json'),
+  fetchJson('camera.json'), fetchJson('input.json'), fetchJson('listings.json'), fetchJson('models.json')]);
+const GHOSTS = await fetchJson('ghosts/index.json');      // UC-9.3: the simulated laps (tools/ghost_index.py)
+const SALE_SPECS = await fetchJson('sale_specs.json');    // UC-9.1: each car for sale's factory numbers, READ with sources (tools/sale_specs.py)
+// UC-8: the lot's slides, with `listings` expanded into one slide per car for sale (data/listings.json) and per pick the site lacks
+const LOT = SLIDES.flatMap((d) => d.kind !== 'listings' ? [d]
+  : [...LISTINGS.cars.map((l) => ({ kind: 'listing', listing: l })), ...LISTINGS.absent.map((x) => ({ kind: 'unlisted', unlisted: x }))]);
 const pad = makeGamepad(INPUT);                                    // UC-7.5a: the IMC's gamepad bindings (gamepad.js)
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;   // UC-7.2b
 window.HOC = { BACKEND, SHOW, TRACK, RULES, state: null, paint };   // for the page check (test/page_check.mjs) and for review in devtools
@@ -149,7 +159,7 @@ const key = new THREE.DirectionalLight(0xffffff, 1.8);
 key.position.set(10, 22, 14); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
 Object.assign(key.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30, far: 90 });
 show.scene.add(key);
-const RING = 15;                                      // m (layout, AUTHORED): ten slides round the ring
+const RING = Math.max(15, LOT.length * 9.4 / (2 * Math.PI));   // m (layout, AUTHORED): ~9.4 m of ring per slide, so pedestals never touch
 const floor = new THREE.Mesh(new THREE.CircleGeometry(80, 128), new THREE.MeshStandardNodeMaterial({ color: 0x07080a, roughness: 0.55, metalness: 0.0 }));
 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; show.scene.add(floor);
 const tops = polishedTops(0.301, 0x0a0b0d);                   // every pedestal top shares one reflector (fx.js)
@@ -188,19 +198,81 @@ function panelTexture(def, car) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 
+// ---------------------------------------------------------------- the cars for sale (UC-8)
+const V = (f) => (f && (f.kind === 'READ' || f.kind === 'DERIVED') ? f.value : null);   // a listing field's value (READ, or DERIVED from READ), or null when ABSENT
+const money = (n, cur) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: cur || 'CAD', maximumFractionDigits: 0 }).format(n);
+const readDay = new Date(LISTINGS.read_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+const saleTitle = (l) => V(l.display) || [V(l.year), V(l.make), V(l.model)].filter(Boolean).join(' ');
+function salePanel(def) {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 576;
+  const g = c.getContext('2d');
+  const grd = g.createLinearGradient(0, 0, 1024, 576); grd.addColorStop(0, PAL.bg2); grd.addColorStop(1, PAL.bg);
+  g.fillStyle = grd; g.fillRect(0, 0, 1024, 576);
+  g.strokeStyle = PAL.accent; g.lineWidth = 6; g.strokeRect(6, 6, 1012, 564);
+  g.fillStyle = PAL.accent; g.fillRect(48, 70, 12, 132);
+  drawIcon(g, 'tag', 868, 62, 108, PAL.accent);
+  let kicker, title, lines;
+  if (def.kind === 'listing') {
+    const l = def.listing;
+    kicker = 'For sale · ' + (V(l.store) === V(l.city) ? V(l.city) : V(l.city) + ', ' + V(l.store));
+    title = saleTitle(l);
+    lines = [V(l.price) !== null ? money(V(l.price), V(l.currency)) + (V(l.km) !== null ? '  ·  ' + V(l.km).toLocaleString('en-CA') + ' km' : '') : 'Price not listed',
+             [V(l.trim), V(l.engine)].filter(Boolean).join(' · '), 'As listed on houseofcars.com, ' + readDay];
+  } else {
+    kicker = 'In the showroom · not listed online'; title = def.unlisted.key === 'audi_s7' ? 'Audi S7' : def.unlisted.key;
+    lines = ['No listing on houseofcars.com', 'on ' + readDay + ': no price shown.', ''];
+  }
+  g.fillStyle = PAL.soft; g.font = '700 32px "Open Sans", sans-serif'; g.fillText(kicker.toUpperCase(), 80, 102);
+  let ts = 76; do { g.font = '800 ' + ts + 'px "Open Sans", sans-serif'; ts -= 2; } while (g.measureText(title).width > 770 && ts > 44);
+  g.fillStyle = PAL.ink; g.fillText(title, 76, 188);
+  g.font = '800 46px "Open Sans", sans-serif'; g.fillStyle = PAL.ink; g.fillText(lines[0], 80, 290);
+  g.font = '600 34px "Open Sans", sans-serif'; g.fillStyle = '#d9dddf';
+  let el = lines[1]; while (g.measureText(el).width > 860 && el.length > 8) el = el.slice(0, -2);
+  g.fillText(el === lines[1] ? el : el + '…', 80, 350); g.fillText(lines[2], 80, 404);
+  if (!def.model && def.kind === 'listing') { g.fillStyle = PAL.soft; g.font = '600 28px "Open Sans", sans-serif'; g.fillText('3D model not made yet', 80, 470); }
+  g.fillStyle = PAL.soft; g.font = '600 24px "Open Sans", sans-serif'; g.fillText('HOUSE OF CARS · 3D LOT CONCEPT · UNOFFICIAL', 80, 556);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+// a car for sale in the race: its Meshy model, nose along the body's X, standing on the car's ground line and centred on its
+// wheelbase (data/sim_cars: the wheels are the physics', not drawn separately; the model carries its own)
+async function simBody(key, carJson) {
+  const m = MODELS.models[key];
+  if (!m) throw new Error('no 3D model of ' + key + ' yet: it can be raced as a ghost, not driven');
+  const body = await saleModel(m);
+  const w = carJson.wheels.map((x) => x.bone_location.value);
+  const ground = Math.min(...carJson.wheels.map((x, i) => w[i][2] - x.setup.wheel_radius.value));
+  const cx = w.reduce((a, p) => a + p[0], 0) / w.length;
+  body.position.set(cx / 100, ground / 100, 0);
+  const g = new THREE.Group(); g.add(body);
+  return { group: g, wheels: [] };
+}
+// a Meshy model of a car for sale, on its pedestal: scaled so its length is the car's READ length (data/models.json says where
+// the length came from), its lowest point on the pedestal top, its nose along +X like the Unreal cars
+async function saleModel(m) {
+  const g = (await loadGlb('data/meshes/' + m.glb)).scene.clone(true);
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  if (m.yaw_deg) g.rotation.y = m.yaw_deg * Math.PI / 180;
+  const box = new THREE.Box3().setFromObject(g), size = box.getSize(new THREE.Vector3());
+  const k = m.length_m.value / Math.max(size.x, size.z);
+  g.scale.setScalar(k);
+  const b2 = new THREE.Box3().setFromObject(g), c = b2.getCenter(new THREE.Vector3());
+  g.position.set(-c.x, -b2.min.y, -c.z);
+  const wrap = new THREE.Group(); wrap.add(g); return wrap;
+}
 const carEntry = (name) => { const e = SHOW.cars.find((c) => c.name === name); if (!e) throw new Error('slides.js names a car showroom.json lacks: ' + name); return e; };
-for (let i = 0; i < SLIDES.length; i++) {
-  const def = SLIDES[i];
-  const a = (i / SLIDES.length) * Math.PI * 2;
+for (let i = 0; i < LOT.length; i++) {
+  const def = LOT[i];
+  const a = (i / LOT.length) * Math.PI * 2;
   const stand = new THREE.Group();
   stand.position.set(Math.sin(a) * RING, 0, Math.cos(a) * RING);
   stand.rotation.y = a;
   const car = def.kind === 'car' ? carEntry(def.car) : null;
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(car ? 5.0 : 6.2, car ? 2.8 : 3.5), new THREE.MeshBasicNodeMaterial({ map: panelTexture(def, car) }));
-  panel.position.set(0, car ? 4.0 : 2.6, car ? -4.2 : 0);
+  const onPed = car || def.kind === 'listing' || def.kind === 'unlisted';       // a slide with a pedestal (a car, or a car for sale)
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(onPed ? 5.0 : 6.2, onPed ? 2.8 : 3.5), new THREE.MeshBasicNodeMaterial({ map: car || !onPed ? panelTexture(def, car) : salePanel(def) }));
+  panel.position.set(0, onPed ? 4.0 : 2.6, onPed ? -4.2 : 0);
   stand.add(panel);
   let turn = null;
-  if (car) {
+  if (onPed) {
     const ped = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.3, 0.3, 64), new THREE.MeshStandardNodeMaterial({ color: 0x14161a, roughness: 0.45, metalness: 0.3 }));
     ped.position.y = 0.15; ped.receiveShadow = true; stand.add(ped);
     const top = new THREE.Mesh(new THREE.CircleGeometry(3.1, 64), tops.material);
@@ -210,11 +282,19 @@ for (let i = 0; i < SLIDES.length; i++) {
     const spot = new THREE.SpotLight(0xffffff, 140, 18, 0.55, 0.6, 1.6);
     spot.position.set(0, 9, 3); spot.target.position.set(0, 0.6, 0); stand.add(spot, spot.target);
     stand.add(lightBeam(spot.position, spot.target.position, 3.4, 0xfff4e6, 0.09));             // its beam in the air (fx.js)
-    const { group } = await buildCar(car);
     turn = new THREE.Group();
-    if (car.drivable) turn.position.y = 0.3 - Math.min(...car.wheels.map((w) => w.bone_location[2] - w.radius)) / 100;   // wheels on the pedestal
-    else turn.position.y = 0.3 - (car.bounds_cm.origin[2] - car.bounds_cm.box_extent[2]) / 100;
-    turn.add(group); stand.add(turn);
+    if (car) {
+      const { group } = await buildCar(car);
+      if (car.drivable) turn.position.y = 0.3 - Math.min(...car.wheels.map((w) => w.bone_location[2] - w.radius)) / 100;   // wheels on the pedestal
+      else turn.position.y = 0.3 - (car.bounds_cm.origin[2] - car.bounds_cm.box_extent[2]) / 100;
+      turn.add(group);
+    } else {
+      const key = def.kind === 'listing' ? def.listing.key : def.unlisted.key;
+      const model = MODELS.models[key];                    // UC-8.3: a model of THAT car, or none (UC-8.3a: the panel says so)
+      if (model) { const g = await saleModel(model); turn.position.y = 0.3; turn.add(g); }
+      def.model = model || null;
+    }
+    stand.add(turn);
   } else {
     const plinth = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.12, 0.9), new THREE.MeshStandardNodeMaterial({ color: 0x14161a, roughness: 0.22, metalness: 0.25 }));
     plinth.position.set(0, 0.06, 0); stand.add(plinth);
@@ -224,9 +304,51 @@ for (let i = 0; i < SLIDES.length; i++) {
 }
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const SIMS = new Set(GHOSTS.ghosts.map((g) => g.car));
+let pendingGhost = null;                                  // the ghost a 'Race its ghost' press asked for (localStorage may be off)
+function saleCard(s, card) {
+  const d = s.def;
+  if (d.kind === 'unlisted') {
+    card.innerHTML = '<p class="kick">In the showroom · not listed online</p><h2>' + svgIcon('tag', 22) + 'Audi S7</h2>' +
+      '<p>houseofcars.com lists no Audi S7 on ' + esc(readDay) + ', so this page shows no price for it: it never types one in.</p>' +
+      '<div id="srcline">' + d.unlisted.searched.map(esc).join('<br>') + '</div>';
+    return;
+  }
+  const l = d.listing;
+  const row = (label, f, fmt) => '<dt>' + esc(label) + '</dt><dd>' + (V(f) === null ? '<span class="abs" title="' + esc(f.why) + '">not listed</span>' : esc(fmt ? fmt(V(f)) : V(f))) + '</dd>';
+  card.innerHTML = '<p class="kick">For sale · ' + esc(V(l.city)) + (V(l.store) !== V(l.city) ? ' · ' + esc(V(l.store)) : '') + ' store</p><h2>' + esc(saleTitle(l)) + '</h2>' +
+    (V(l.trim) ? '<div class="sub">' + esc(V(l.trim)) + '</div>' : '') + '<div class="price">' + (V(l.price) !== null ? esc(money(V(l.price), V(l.currency))) : 'Price not listed') + '<small>as listed on houseofcars.com, ' + esc(readDay) + '</small></div>' +
+    '<dl>' + row('Kilometres', l.km, (v) => v.toLocaleString('en-CA') + ' km') + row('Engine', l.engine) + row('Colour', l.colour) + row('Interior', l.interior) +
+    row('VIN', l.vin) + row('Stock', l.stock) + '</dl>' +
+    specRows(l.key) + simLine(l.key) +
+    '<div class="acts">' + (MODELS.models[l.key] && SIMS.has(l.key) ? '<button class="act" data-drive="' + l.key + '">Test drive it</button>' : '') +
+    (GHOSTS.ghosts.some((g) => g.car === l.key) ? '<button class="act" data-race="' + l.key + '">Race its ghost</button>' : '') +
+    '<a class="act" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + svgIcon('link', 16) + ' See it on houseofcars.com</a></div>' +
+    '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) : '3D model not made yet.') + ' Listing: ' + esc(l.name.src) + '</div>';
+  card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = SALE_SPECS.cars[l.key].rows[+b.dataset.k].src; }));
+  card.querySelectorAll('button[data-race]').forEach((b) => b.addEventListener('click', () => {
+    try { localStorage.setItem(GHOST_KEY, b.dataset.race + '.json'); } catch (e) { /* the picker still shows it in the race */ }
+    pendingGhost = b.dataset.race + '.json'; startRace(carEntry('SportsCar'));
+  }));
+  card.querySelectorAll('button[data-drive]').forEach((b) => b.addEventListener('click', () => startRace({ name: b.dataset.drive, sim: true, drivable: true })));
+}
+function specRows(key) {
+  const sp = SALE_SPECS.cars[key];
+  if (!sp || !sp.rows) return '<p class="abs">Factory figures not read yet.</p>';
+  return '<p class="kick" style="margin-top:12px">Factory figures</p><dl>' + sp.rows.map((r, k) => '<dt>' + esc(r.label) + '</dt><dd>' + esc(r.value) +
+    '<button class="src k-' + r.kind + '" data-k="' + k + '" title="' + r.kind + ': where this came from">' + r.kind + '</button></dd>').join('') + '</dl>';
+}
+function simLine(key) {
+  const g = GHOSTS.ghosts.find((x) => x.car === key);
+  if (!g) return '';
+  const sports = GHOSTS.ghosts.find((x) => x.car === 'SportsCar');
+  return '<div class="simlap"><b>' + esc(Rules.formatTime(g.lap, RULES)) + '</b><span>simulated Time Trial lap: its own weight, power, torque, gears and drag, on the template\'s tyres, the page\'s driver' +
+    (sports ? ' (template Sports Car: ' + esc(Rules.formatTime(sports.lap, RULES)) + ')' : '') + '</span></div>';
+}
 function renderCard() {
   const s = show.slides[show.index], d = s.def, card = $('card');
-  if (s.car) {
+  if (d.kind === 'listing' || d.kind === 'unlisted') saleCard(s, card);
+  else if (s.car) {
     const e = s.car;
     const rows = e.specs.map((sp, k) => '<dt>' + esc(sp.label) + '</dt><dd>' + esc(sp.value) + (sp.unit ? ' ' + esc(sp.unit) : '') +
       '<button class="src k-' + sp.kind + '" data-k="' + k + '" title="' + sp.kind + ': where this came from">' + sp.kind + '</button></dd>').join('');
@@ -244,14 +366,16 @@ function renderCard() {
       card.querySelectorAll('button.sw').forEach((x) => x.classList.toggle('on', x === b)); $('pname').textContent = 'Paint · ' + c.name;
     }));
   } else {
-    const picks = (d.picks || []).map((p) => '<button class="pick" data-car="' + p.car + '">' + svgIcon(p.icon, 30) + '<b>' + esc(p.label) + '</b><small>' + esc(p.car.replace(/([a-z])([A-Z])/g, '$1 $2')) + '</small></button>').join('');
+    if (d.kind === 'sale') d.picks = LISTINGS.cars.map((l) => ({ label: V(l.make), icon: 'tag', sale: l.key, sub: V(l.price) !== null ? money(V(l.price), V(l.currency)) : '' }));
+    const picks = (d.picks || []).map((p) => p.sale ? '<button class="pick" data-sale="' + p.sale + '">' + svgIcon(p.icon, 26) + '<b>' + esc(p.label) + '</b><small>' + esc(p.sub) + '</small></button>' : '<button class="pick" data-car="' + p.car + '">' + svgIcon(p.icon, 30) + '<b>' + esc(p.label) + '</b><small>' + esc(p.car.replace(/([a-z])([A-Z])/g, '$1 $2')) + '</small></button>').join('');
     const pts = (d.points || []).map((q) => '<li>' + svgIcon(q.icon, 22) + '<div><b>' + esc(q.title) + '</b><span>' + esc(q.text) + '</span></div></li>').join('');
     let acts = (d.actions || []).map((a, k) => a.href ? '<a class="act" href="' + esc(a.href) + '">' + esc(a.label) + '</a>' : '<button class="act" data-a="' + k + '">' + esc(a.label) + '</button>').join('');
     if (d.drives) acts += SHOW.cars.filter((c) => c.drivable).map((c) => '<button class="act" data-car="' + c.name + '">Drive the ' + esc(c.name.replace(/([a-z])([A-Z])/g, '$1 $2')) + '</button>').join('');
     card.innerHTML = '<p class="kick">' + esc(d.kicker) + '</p><h2>' + svgIcon(d.icon, 22) + esc(d.title) + '</h2>' + (d.body || []).map((p) => '<p>' + esc(p) + '</p>').join('') +
       (pts ? '<ul class="pts">' + pts + '</ul>' : '') +
       (picks ? '<div class="picks">' + picks + '</div>' : '') + (acts ? '<div class="acts">' + acts + '</div>' : '');
-    card.querySelectorAll('button.pick').forEach((b) => b.addEventListener('click', () => select(show.slides.findIndex((x) => x.car && x.car.name === b.dataset.car))));
+    card.querySelectorAll('button.pick').forEach((b) => b.addEventListener('click', () => select(show.slides.findIndex((x) =>
+      b.dataset.sale ? x.def.kind === 'listing' && x.def.listing.key === b.dataset.sale : x.car && x.car.name === b.dataset.car))));
     card.querySelectorAll('button.act').forEach((b) => b.addEventListener('click', () => {
       if (b.dataset.car) { startRace(carEntry(b.dataset.car)); return; }
       const a = d.actions[+b.dataset.a];
@@ -259,9 +383,11 @@ function renderCard() {
       if (a.drive) startRace(carEntry(show.lastCar));
     }));
   }
-  const drivable = s.car ? s.car.drivable : s.def.kind === 'drive';
+  const sale = d.kind === 'listing' || d.kind === 'unlisted';
+  const saleDrive = d.kind === 'listing' && MODELS.models[d.listing.key] && SIMS.has(d.listing.key);
+  const drivable = sale ? !!saleDrive : s.car ? s.car.drivable : s.def.kind === 'drive';
   $('drive').disabled = !drivable;
-  $('drive').textContent = s.car && !s.car.drivable ? 'SHOWROOM ONLY' : 'TEST DRIVE';
+  $('drive').textContent = sale && !saleDrive ? 'FOR SALE' : s.car && !s.car.drivable ? 'SHOWROOM ONLY' : 'TEST DRIVE';
   $('drive').title = drivable ? 'Race the Time Trial lap in ' + (s.car ? s.car.name : show.lastCar) : 'This car is a static mesh in Unreal: nothing to drive';
   $('pos').textContent = (show.index + 1) + ' / ' + show.slides.length;
   card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
@@ -277,7 +403,11 @@ function select(i) {
 }
 $('prev').onclick = () => select(show.index - 1);
 $('next').onclick = () => select(show.index + 1);
-$('drive').onclick = () => { const s = show.slides[show.index]; startRace(s.car ? s.car : carEntry(show.lastCar)); };
+$('drive').onclick = () => {
+  const s = show.slides[show.index];
+  if (s.def.kind === 'listing') { startRace({ name: s.def.listing.key, sim: true, drivable: true }); return; }
+  startRace(s.car ? s.car : carEntry(show.lastCar));
+};
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 canvas.addEventListener('click', (ev) => {
   if (suppressClick) { suppressClick = false; return; }
@@ -309,6 +439,7 @@ canvas.addEventListener('pointerup', (e) => {
 });
 let suppressClick = false;
 window.HOC.show = show;
+window.HOC.autopilot = () => { race.auto = AI.makeDriver(trackView.line, race.v); };   // the page check drives a lap with the sim's driver
 // the page check drives a lap's RULES without driving skill: it puts the car in each gate in turn (the rules decide the rest)
 window.HOC.teleport = (i) => { const p = trackView.gateGroundUe[i]; Chaos.resetVehicle(race.v, [p[0], p[1], p[2] + 60], TRACK.gates[i].yaw_deg + 90); };
 window.HOC.carScreen = () => {                           // the current car's centre on screen, CSS px (page check: drag-turn)
@@ -375,12 +506,16 @@ async function buildTrack() {
     const a = Math.pow(Math.max(up, 0), M.slope_exponent);              // lerp(RoadCol, GroundCol, pow(dot(N, axis), exponent))
     for (let c = 0; c < 3; c++) col[3 * k + c] = M.road_col[c] + (M.ground_col[c] - M.road_col[c]) * a;
   }
-  const idx = new Uint32Array((G.nx - 1) * (G.ny - 1) * 6);
+  // the landscape's holes (the tunnel mouths, READ from Unreal's game collision: ground_holes.js) are not drawn either
+  const holes = await loadHoles(fetchBin, fetchJson, G);
+  const idxAll = new Uint32Array((G.nx - 1) * (G.ny - 1) * 6);
   let q = 0;
   for (let j = 0; j < G.ny - 1; j++) for (let i = 0; i < G.nx - 1; i++) {
+    if (holes.isHole(G.origin_cm[0] + (i + 0.5) * G.step_cm, G.origin_cm[1] + (j + 0.5) * G.step_cm)) continue;
     const a = j * G.nx + i, b = a + 1, c = a + G.nx, d = c + 1;
-    idx.set([a, c, b, b, c, d], q); q += 6;
+    idxAll.set([a, c, b, b, c, d], q); q += 6;
   }
+  const idx = idxAll.subarray(0, q);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
@@ -437,7 +572,8 @@ let trackReady = null;
 function prepareTrack() {                               // once: the physics module, the track, the world, the minimap, the gate points
   if (!trackReady) trackReady = (async () => {
     Chaos = await import('./chaos_vehicle.js');
-    const tv = await buildTrack(); world = await loadWorld(fetchBin, TRACK); trackView = tv;
+    const tv = await buildTrack(); trackView = tv;
+    world = withHoles(await loadWorld(fetchBin, TRACK), await loadHoles(fetchBin, fetchJson, TRACK.ground.grid));   // the tunnel mouths are holes (UC-2.2)
     trackView.minimap = buildMinimap($('minimap'), world, TRACK.gates);
     trackView.gateGroundUe = TRACK.gates.map((g) => {          // where each gate's marker stands: the ground under its centre (UE cm)
       const c = g.center_cm, hit = world.trace([c[0], c[1], c[2] + g.half_extent_cm[2]], [c[0], c[1], c[2] - g.half_extent_cm[2]]);
@@ -445,6 +581,7 @@ function prepareTrack() {                               // once: the physics mod
       return hit.point;
     });
     trackView.gateGround = trackView.gateGroundUe.map(toThreePoint);
+    trackView.line = AI.buildRacingLine(await fetchJson('road_spline.json'), TRACK);   // the road's own spline (READ), as the sim drives it
     await Promise.all(['cars.json', 'physics.json', 'chaos_unexported.json'].map(fetchJson));
     window.HOC.trackPreloaded = true;
   })();
@@ -456,28 +593,27 @@ async function startRace(entry) {
   clearSkids(trackView.skids);
   window.HOC.track = trackView;
   if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); }
-  const carJson = (await fetchJson('cars.json')).cars[entry.name];
-  const car = await buildCar(entry);
+  mode = 'show';                                          // (a ghost pick in flight must not draw a half-built race)
+  const carJson = entry.sim ? await fetchJson('sim_cars/' + entry.name + '.json') : (await fetchJson('cars.json')).cars[entry.name];
+  const car = entry.sim ? await simBody(entry.name, carJson) : await buildCar(entry);
   trackView.scene.add(car.group);
   car.group.matrixAutoUpdate = false;
   const gravity = (await fetchJson('physics.json')).gravity_z.value;
-  const unexported = (await fetchJson('chaos_unexported.json')).cars[entry.name];   // tools/ue_unexported.mjs: the .uasset chain
+  const unexported = entry.sim ? await fetchJson('sim_cars/' + entry.name + '.unexported.json') : (await fetchJson('chaos_unexported.json')).cars[entry.name];   // tools/ue_unexported.mjs: the .uasset chain
   const v = Chaos.makeVehicle(carJson, { gravityZ: gravity, unexported, angularDampingOnGround: RULES.angular_damping.on_ground, angularDampingInAir: RULES.angular_damping.in_air });
   const start = TRACK.player_start;
   Chaos.resetVehicle(v, start.location_cm, start.yaw_deg);
-  const arm = CAMS.cars[entry.name].BackSpringArm, cam = CAMS.cars[entry.name].BackCamera;
+  const camKey = entry.sim ? 'SportsCar' : entry.name;    // a car for sale rides the template SportsCar's cameras (STAND-IN: AUTHORED list)
+  const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
   race = { entry, car, v, rules: Rules.makeRace(TRACK.gates, RULES), now: 0, rig: makeRig(arm), fov: cam.field_of_view,
            inside: TRACK.gates.map(() => false), carBox: carJson.bounds_cm.value, front: false,
-           wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0 };
+           wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey };
   const tachEl = $('hud-speed'); tachEl.querySelector('svg.tach')?.remove();
   race.tach = buildTach(tachEl, carJson.engine.max_rpm.value, carJson.transmission.change_up_rpm.value);   // READ scale and red band
-  // the ghost: a see-through copy of this car, replaying the device's best lap (ghost.js)
-  if (race.ghostCar) trackView.scene.remove(race.ghostCar);
-  const ghostMat = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(PAL.soft), transparent: true, opacity: 0.26, depthWrite: false });
-  race.ghostCar = car.group.clone(true); race.ghostCar.traverse((o) => { if (o.isMesh) { o.material = ghostMat; o.castShadow = false; o.receiveShadow = false; } });
-  race.ghostCar.matrixAutoUpdate = false; race.ghostCar.visible = false; trackView.scene.add(race.ghostCar);
-  race.ghost = loadGhost(entry.name); race.rec = makeRecorder();
-  $('t-ghost').textContent = race.ghost ? ' · Ghost ' + Rules.formatTime(race.ghost.lap, RULES) : '';
+  // the ghost (ghost.js, UC-9.3): the device's best lap in this car, or a car's simulated lap (data/ghosts, tools/sim_ghost.mjs)
+  race.rec = makeRecorder();
+  fillGhostPicker();
+  await applyGhostPick();
   const rec = readRecord(entry.name);
   $('t-rec').textContent = rec === null ? '—' : Rules.formatTime(rec, RULES);
   $('lapb').classList.remove('show');
@@ -543,29 +679,10 @@ function readInput() {
   const big = (a, b) => (Math.abs(a) >= Math.abs(b) ? a : b);
   return { throttle: Math.max(k.throttle, g.throttle), brake: Math.max(k.brake, g.brake), steering: big(k.steering, g.steering), handbrake: Math.max(k.handbrake, g.handbrake) };
 }
-// chaos_vehicle.js v.rot: a nested 3x3, row i = world axis i, column j = the body's axis j (X forward, Y right, Z up) in world
-function carAxes(v) { const r = v.rot; return [0, 1, 2].map((j) => [r[0][j], r[1][j], r[2][j]]); }
 function doReset() {                                   // IA_Reset / Manual_Reset (rules.resetPose): here, +offset, yaw only, stopped
   const [X] = carAxes(race.v);
   const p = Rules.resetPose(race.v.pos, Math.atan2(X[1], X[0]) * 180 / Math.PI, RULES);
   Chaos.resetVehicle(race.v, p.pos, p.yawDeg);
-}
-
-// the car's box (READ bounds) against each gate's box: separating axes on the X/Y plane and Z (gates stand upright)
-function overlapsGate(v, box, g) {
-  const [X, Y] = carAxes(v);
-  const c = [0, 1, 2].map((k) => v.pos[k] + X[k] * box.origin[0] + Y[k] * box.origin[1]);
-  const gy = g.yaw_deg * Math.PI / 180, GX = [Math.cos(gy), Math.sin(gy)], GY = [-Math.sin(gy), Math.cos(gy)];
-  const d = [c[0] - g.center_cm[0], c[1] - g.center_cm[1]];
-  if (Math.abs(v.pos[2] + box.origin[2] - g.center_cm[2]) > box.box_extent[2] + g.half_extent_cm[2]) return false;
-  const axes = [GX, GY, [X[0], X[1]], [Y[0], Y[1]]];
-  for (const a of axes) {
-    const L = Math.hypot(a[0], a[1]); const u = [a[0] / L, a[1] / L];
-    const rCar = box.box_extent[0] * Math.abs(X[0] * u[0] + X[1] * u[1]) + box.box_extent[1] * Math.abs(Y[0] * u[0] + Y[1] * u[1]);
-    const rGate = g.half_extent_cm[0] * Math.abs(GX[0] * u[0] + GX[1] * u[1]) + g.half_extent_cm[1] * Math.abs(GY[0] * u[0] + GY[1] * u[1]);
-    if (Math.abs(d[0] * u[0] + d[1] * u[1]) > rCar + rGate) return false;
-  }
-  return true;
 }
 
 const STEP = 1 / 120;
@@ -578,7 +695,7 @@ function tickRace(dt) {
   r.lastInput = input;                                   // for the page check (gamepad dead zone)
   acc += Math.min(dt, 0.1);
   while (acc >= STEP) {
-    Chaos.stepVehicle(r.v, input, STEP, world);
+    Chaos.stepVehicle(r.v, r.auto && Rules.inputEnabled(r.rules) ? AI.drive(r.auto, r.v, STEP) : input, STEP, world);   // the page check's autopilot: one decision a step, as the sim
     r.now += STEP; acc -= STEP;
     TRACK.gates.forEach((g, i) => {
       const inNow = overlapsGate(r.v, r.carBox, g);
@@ -597,8 +714,8 @@ function tickRace(dt) {
   if (r.rules.startTimer) {
     const tLap = r.now - r.rules.timeOffset;
     record(r.rec, tLap, r.v.pos, [X, Y, Z]);
-    const gp = r.ghost && ghostPose(r.ghost, tLap);
-    r.ghostCar.visible = !!gp;
+    const gp = r.ghost && r.ghostCar && ghostPose(r.ghost, tLap);
+    if (r.ghostCar) r.ghostCar.visible = !!gp;
     if (gp) r.ghostCar.matrix.fromArray(threeMatrixFromAxes(gp.axes, [1, 1, 1], gp.pos));
   }
   // draw the car
@@ -607,11 +724,11 @@ function tickRace(dt) {
   // the camera: BackSpringArm (or FrontSpringArm on Tab)
   const cam = r.camera;
   if (r.front) {
-    const fa = CAMS.cars[r.entry.name].FrontSpringArm.relative_location;
+    const fa = CAMS.cars[r.camKey].FrontSpringArm.relative_location;
     const e = [0, 1, 2].map((k) => r.v.pos[k] + X[k] * fa[0] + Y[k] * fa[1] + Z[k] * fa[2]);
     const l = [0, 1, 2].map((k) => e[k] + X[k] * 1000);
     cam.position.fromArray(toThreePoint(e)); cam.up.fromArray([Z[0], Z[2], Z[1]]); cam.lookAt(...toThreePoint(l));
-    cam.fov = verticalFovDeg(CAMS.cars[r.entry.name].FrontCamera.field_of_view, cam.aspect);
+    cam.fov = verticalFovDeg(CAMS.cars[r.camKey].FrontCamera.field_of_view, cam.aspect);
   } else {
     const rig = updateRig(r.rig, r.v.pos, [X, Y, Z], dt);
     cam.position.fromArray(toThreePoint(rig.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(rig.look));
@@ -645,14 +762,54 @@ function tickRace(dt) {
   r.post.render();
 }
 
+// ---------------------------------------------------------------- the ghost picker (UC-9.3)
+const GHOST_KEY = 'hoc.ghostpick';
+function fillGhostPicker() {
+  const sel = $('ghostpick'), keep = (() => { try { return localStorage.getItem(GHOST_KEY); } catch (e) { return null; } })() || 'mine';
+  sel.innerHTML = '<option value="mine">Ghost: your best lap</option>' + GHOSTS.ghosts.map((g) =>
+    '<option value="' + esc(g.file) + '">Ghost: ' + esc(g.label) + ' (sim, ' + esc(Rules.formatTime(g.lap, RULES)) + ')</option>').join('') + '<option value="none">No ghost</option>';
+  const want = pendingGhost || keep; pendingGhost = null;
+  sel.value = [...sel.options].some((o) => o.value === want) ? want : 'mine';
+}
+async function ghostBody(name) {                         // the ghost looks like ITS car when the page has that car's model
+  const e = SHOW.cars.find((c) => c.name === name);
+  if (e) return (await buildCar(e)).group;
+  const l = LISTINGS.cars.find((c) => c.key === name), m = MODELS.models[name];
+  if (l && m) return saleModel(m);
+  return race.car.group.clone(true);                    // no model of that car on the page: the driven car's shape, and the label says whose lap it is
+}
+async function applyGhostPick() {
+  const r = race, pick = $('ghostpick').value;
+  try { localStorage.setItem(GHOST_KEY, pick); } catch (e) { /* a per-viewer convenience */ }
+  r.ghostPick = pick;
+  if (r.ghostCar) trackView.scene.remove(r.ghostCar);
+  r.ghostCar = null; r.ghost = null; r.ghostLabel = '';
+  if (pick === 'none') { showGhostLine(r); return; }
+  let body;
+  if (pick === 'mine') { r.ghost = loadGhost(r.entry.name); r.ghostLabel = 'your best'; body = r.car.group.clone(true); }
+  else {
+    const g = GHOSTS.ghosts.find((x) => x.file === pick);
+    r.ghost = await fetchJson('ghosts/' + g.file); r.ghostLabel = g.label; body = await ghostBody(g.car);
+  }
+  const mat = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(PAL.soft), transparent: true, opacity: 0.26, depthWrite: false });
+  body.traverse((o) => { if (o.isMesh) { o.material = mat; o.castShadow = false; o.receiveShadow = false; } });
+  const holder = new THREE.Group(); holder.add(body);
+  holder.matrixAutoUpdate = false; holder.visible = false; trackView.scene.add(holder);
+  r.ghostCar = holder;
+  showGhostLine(r);
+}
+function showGhostLine(r) { $('t-ghost').textContent = r.ghost ? ' · Ghost ' + Rules.formatTime(r.ghost.lap, RULES) + (r.ghostPick !== 'mine' ? ' (' + r.ghostLabel + ')' : '') : ''; }
+$('ghostpick').addEventListener('change', () => { applyGhostPick(); $('ghostpick').blur(); });
+
 // a lap is done (Increment_Lap_Count ran): the banner, the chime, and the device record (hud.js)
 function lapDone(r, lapS, bestBefore) {
   const isBest = lapS < bestBefore;
   const rec = readRecord(r.entry.name), isRecord = rec === null || lapS < rec;
   if (isRecord && writeRecord(r.entry.name, lapS)) $('t-rec').textContent = Rules.formatTime(lapS, RULES);
-  if (isRecord) { r.ghost = saveGhost(r.entry.name, r.rec, lapS); $('t-ghost').textContent = ' · Ghost ' + Rules.formatTime(lapS, RULES); }
+  if (isRecord) { const g = saveGhost(r.entry.name, r.rec, lapS); if (r.ghostPick === 'mine') { r.ghost = g; showGhostLine(r); } }
   r.rec = makeRecorder();                                // the next lap starts on the clock the rules just restarted
-  lapBanner($('lapb'), Rules.formatTime(lapS, RULES), bestBefore !== RULES.best_time_default.value ? lapS - bestBefore : null, isBest, isRecord ? 'Record on this device' : null);
+  const vs = r.ghost && r.ghostPick !== 'mine' ? (lapS <= r.ghost.lap ? 'You beat the ' : 'The ') + r.ghostLabel + (lapS <= r.ghost.lap ? ' by ' : ' was faster by ') + Math.abs(lapS - r.ghost.lap).toFixed(3) + ' s' : null;
+  lapBanner($('lapb'), Rules.formatTime(lapS, RULES), bestBefore !== RULES.best_time_default.value ? lapS - bestBefore : null, isBest, [isRecord ? 'Record on this device' : null, vs].filter(Boolean).join(' · ') || null);
   blip(audio, isBest ? 'best' : 'lap');
 }
 

@@ -1,0 +1,32 @@
+{
+ "level": "/Game/Variant_Timetrial/Maps/Lvl_Timetrial",
+ "errors": [],
+ "grid": {
+  "origin_cm": [
+   -12600,
+   -12600
+  ],
+  "step_cm": 50,
+  "nx": 505,
+  "ny": 505,
+  "cells": [
+   504,
+   504
+  ],
+  "src": "READ /Game/Variant_Timetrial/Maps/Lvl_Timetrial Landscape actor location + scale, tiles' bounds (4 LandscapeStreamingProxy) (as ue_ground.py)"
+ },
+ "holes": {
+  "file": "ground_holes.bin",
+  "count": 2207,
+  "of": 254016,
+  "layout": "uint8 per quad, row-major j*(nx-1)+i, 1 = hole",
+  "src": "READ SystemLibrary.line_trace_single_for_objects (WorldStatic, complex) down through every quad centre, ignoring every actor but the landscape tiles: a miss where the Visibility-channel trace hits is a hole"
+ },
+ "control": {
+  "visibility_misses": 0,
+  "game_hit_visibility_miss": 0,
+  "max_dz_where_both_hit_cm": 0,
+  "src": "the same quads traced on the Visibility channel, as ue_ground.py traced its vertices"
+ },
+ "copied_from": "ue_out/ground_holes.json + ue_out/ground_holes.bin (tools/ue_holes.py; build_site.py does not copy them yet)"
+}

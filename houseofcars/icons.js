@@ -15,6 +15,8 @@ export const ICONS = {
   info: 'M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM12 11v6M12 7.5v.5',
   lot: 'M3 21V9l9-6 9 6v12M7 21v-6h10v6M7 17h10',
   camera: 'M3 8h4l2-3h6l2 3h4v12H3zM12 10a4 4 0 1 0 0 8 4 4 0 1 0 0-8z',
+  tag: 'M3 12V4h8l10 10-8 8zM7.5 7.5h.01',
+  link: 'M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1',
 };
 
 export function svgIcon(name, size = 22) {

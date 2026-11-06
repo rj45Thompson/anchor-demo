@@ -1,0 +1,601 @@
+{
+ "read_at": "2026-11-05T20:07:17-06:00",
+ "source": "houseofcars.com listing pages (schema.org Car JSON-LD + page title)",
+ "cars": [
+  {
+   "display": {
+    "value": "2018 Bentley Flying Spur V8",
+    "kind": "DERIVED",
+    "src": "DERIVED year, make, model and the trim up to its body style (from the listing name)"
+   },
+   "key": "bentley_flying_spur_2018",
+   "url": "https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/",
+   "name": {
+    "value": "2018 Bentley Flying Spur V8 V8 Sedan Twin Turbo Premium Unleaded V-8 4.0 L/244",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "year": {
+    "value": "2018",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "make": {
+    "value": "Bentley",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model": {
+    "value": "Flying Spur",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model_as_listed": {
+    "value": "Flying Spur",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "price": {
+    "value": 87980,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "currency": {
+    "value": "CAD",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "availability": {
+    "value": "https://schema.org/InStock",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km": {
+    "value": 50988,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km_unit": {
+    "value": "KMT",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "colour": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "interior": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "vin": {
+    "value": "SCBET9ZA8JC066912",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "stock": {
+    "value": "PS-0864-E",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "engine": {
+    "value": "Twin Turbo Premium Unleaded V-8 4.0 L/244",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "trim": {
+    "value": "V8 Sedan",
+    "kind": "DERIVED",
+    "src": "DERIVED from the listing name \"2018 Bentley Flying Spur V8 V8 Sedan Twin Turbo Premium Unleaded V-8 4.0 L/244\" (year, make, model, engine and **tags** removed)"
+   },
+   "store": {
+    "value": "Edmonton",
+    "kind": "READ",
+    "src": "READ the listing page title: \"2018 Bentley Flying Spur for sale in Edmonton at Edmonton | VIN: SCBET9ZA8JC066912\""
+   },
+   "city": {
+    "value": "Edmonton",
+    "kind": "READ",
+    "src": "READ the listing page title"
+   }
+  },
+  {
+   "display": {
+    "value": "2017 Rolls-Royce Wraith",
+    "kind": "DERIVED",
+    "src": "DERIVED year, make, model and the trim up to its body style (from the listing name)"
+   },
+   "key": "rolls_royce_wraith_2017",
+   "url": "https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/",
+   "name": {
+    "value": "2017 Rolls-Royce Wraith Coupe Twin Turbo Premium Unleaded V-12 6.6 L/402",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "year": {
+    "value": "2017",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "make": {
+    "value": "Rolls-Royce",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model": {
+    "value": "Wraith",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model_as_listed": {
+    "value": "Wraith",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "price": {
+    "value": 279888,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "currency": {
+    "value": "CAD",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "availability": {
+    "value": "https://schema.org/InStock",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km": {
+    "value": 35000,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km_unit": {
+    "value": "KMT",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "colour": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "interior": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "vin": {
+    "value": "SCA665C58HUX86865",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "stock": {
+    "value": "SCA665C58HUX86865",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "engine": {
+    "value": "Twin Turbo Premium Unleaded V-12 6.6 L/402",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2017-Rolls--Royce-Wraith-SCA665C58HUX86865/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "trim": {
+    "value": "Coupe",
+    "kind": "DERIVED",
+    "src": "DERIVED from the listing name \"2017 Rolls-Royce Wraith Coupe Twin Turbo Premium Unleaded V-12 6.6 L/402\" (year, make, model, engine and **tags** removed)"
+   },
+   "store": {
+    "value": "52 Street",
+    "kind": "READ",
+    "src": "READ the listing page title: \"2017 Rolls-Royce Wraith for sale in Calgary at 52 Street | VIN: SCA665C58HUX86865\""
+   },
+   "city": {
+    "value": "Calgary",
+    "kind": "READ",
+    "src": "READ the listing page title"
+   }
+  },
+  {
+   "display": {
+    "value": "2014 Rolls-Royce Ghost",
+    "kind": "DERIVED",
+    "src": "DERIVED year, make, model and the trim up to its body style (from the listing name)"
+   },
+   "key": "rolls_royce_ghost_2014",
+   "url": "https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/",
+   "name": {
+    "value": "2014 Rolls-Royce Ghost 4dr Sdn Twin Turbo Premium Unleaded V-12 6.6 L/402",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "year": {
+    "value": "2014",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "make": {
+    "value": "Rolls-Royce",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model": {
+    "value": "Ghost",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model_as_listed": {
+    "value": "Ghost",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "price": {
+    "value": 169888,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "currency": {
+    "value": "CAD",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "availability": {
+    "value": "https://schema.org/InStock",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km": {
+    "value": 53000,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km_unit": {
+    "value": "KMT",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "colour": {
+    "value": "BLACK",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "interior": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "vin": {
+    "value": "SCA664S59EUX52456",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "stock": {
+    "value": "PS-0440-10",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "engine": {
+    "value": "Twin Turbo Premium Unleaded V-12 6.6 L/402",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "trim": {
+    "value": "4dr Sdn",
+    "kind": "DERIVED",
+    "src": "DERIVED from the listing name \"2014 Rolls-Royce Ghost 4dr Sdn Twin Turbo Premium Unleaded V-12 6.6 L/402\" (year, make, model, engine and **tags** removed)"
+   },
+   "store": {
+    "value": "Deerfoot Meadows",
+    "kind": "READ",
+    "src": "READ the listing page title: \"2014 Rolls-Royce Ghost for sale in Calgary at Deerfoot Meadows | VIN: SCA664S59EUX52456\""
+   },
+   "city": {
+    "value": "Calgary",
+    "kind": "READ",
+    "src": "READ the listing page title"
+   }
+  },
+  {
+   "display": {
+    "value": "2021 Mercedes-Benz E-Class AMG E 63 S 4MATIC+",
+    "kind": "DERIVED",
+    "src": "DERIVED year, make, model and the trim up to its body style (from the listing name)"
+   },
+   "key": "mercedes_amg_e63s_2021",
+   "url": "https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/",
+   "name": {
+    "value": "2021 Mercedes-Benz E-Class AMG E 63 S AMG E 63 S 4MATIC+ Sedan Twin Turbo Premium Gasoline V-8 4.0 L/243",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "year": {
+    "value": "2021",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "make": {
+    "value": "Mercedes-Benz",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model": {
+    "value": "E-Class",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model_as_listed": {
+    "value": "E-Class",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "price": {
+    "value": 108888,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "currency": {
+    "value": "CAD",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "availability": {
+    "value": "https://schema.org/InStock",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km": {
+    "value": 49000,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km_unit": {
+    "value": "KMT",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "colour": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "interior": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "vin": {
+    "value": "W1KZF8KB5MA954803",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "stock": {
+    "value": "PS-0908-3",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "engine": {
+    "value": "Twin Turbo Premium Gasoline V-8 4.0 L/243",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2021-Mercedes--Benz-E--Class-AMG_E_63_S-W1KZF8KB5MA954803/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "trim": {
+    "value": "AMG E 63 S 4MATIC+ Sedan",
+    "kind": "DERIVED",
+    "src": "DERIVED from the listing name \"2021 Mercedes-Benz E-Class AMG E 63 S AMG E 63 S 4MATIC+ Sedan Twin Turbo Premium Gasoline V-8 4.0 L/243\" (year, make, model, engine and **tags** removed)"
+   },
+   "store": {
+    "value": "MacLeod Trail",
+    "kind": "READ",
+    "src": "READ the listing page title: \"2021 Mercedes-Benz E-Class for sale in Calgary at MacLeod Trail | VIN: W1KZF8KB5MA954803\""
+   },
+   "city": {
+    "value": "Calgary",
+    "kind": "READ",
+    "src": "READ the listing page title"
+   }
+  },
+  {
+   "display": {
+    "value": "2016 BMW i8",
+    "kind": "DERIVED",
+    "src": "DERIVED year, make, model and the trim up to its body style (from the listing name)"
+   },
+   "key": "bmw_i8_2016",
+   "url": "https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/",
+   "name": {
+    "value": "2016 BMW i8 **SUPER LOW KM'S** 2dr Cpe Intercooled Turbo Gas/Electric I-3 1.5 L/91",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "year": {
+    "value": "2016",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "make": {
+    "value": "BMW",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model": {
+    "value": "i8",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model_as_listed": {
+    "value": "i8 **SUPER LOW KM'S**",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "price": {
+    "value": 98888,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "currency": {
+    "value": "CAD",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "availability": {
+    "value": "https://schema.org/InStock",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km": {
+    "value": 14395,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km_unit": {
+    "value": "KMT",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "colour": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "interior": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "vin": {
+    "value": "WBY2Z2C56GV675977",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "stock": {
+    "value": "PS-0864-6",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "engine": {
+    "value": "Intercooled Turbo Gas/Electric I-3 1.5 L/91",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2016-BMW-i8_%2A%2ASUPER_LOW_KM%27S%2A%2A-WBY2Z2C56GV675977/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "trim": {
+    "value": "2dr Cpe",
+    "kind": "DERIVED",
+    "src": "DERIVED from the listing name \"2016 BMW i8 **SUPER LOW KM'S** 2dr Cpe Intercooled Turbo Gas/Electric I-3 1.5 L/91\" (year, make, model, engine and **tags** removed)"
+   },
+   "store": {
+    "value": "Olympic Park",
+    "kind": "READ",
+    "src": "READ the listing page title: \"2016 BMW i8 **SUPER LOW KM&#039;S** for sale in Calgary at Olympic Park | VIN: WBY2Z2C56GV675977\""
+   },
+   "city": {
+    "value": "Calgary",
+    "kind": "READ",
+    "src": "READ the listing page title"
+   }
+  },
+  {
+   "display": {
+    "value": "2012 Porsche 911 Carrera 4",
+    "kind": "DERIVED",
+    "src": "DERIVED year, make, model and the trim up to its body style (from the listing name)"
+   },
+   "key": "porsche_911_c4_2012",
+   "url": "https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/",
+   "name": {
+    "value": "2012 Porsche 911 Carrera 4 2dr Cpe Carrera 4 Gas Flat 6 3.6L/221",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "year": {
+    "value": "2012",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "make": {
+    "value": "Porsche",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model": {
+    "value": "911",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "model_as_listed": {
+    "value": "911",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "price": {
+    "value": 99888,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "currency": {
+    "value": "CAD",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "availability": {
+    "value": "https://schema.org/InStock",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km": {
+    "value": 67004,
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "km_unit": {
+    "value": "KMT",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "colour": {
+    "value": "Cream White",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "interior": {
+    "kind": "ABSENT",
+    "why": "the listing's Car record has no such field"
+   },
+   "vin": {
+    "value": "WP0AA2A93CS706169",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "stock": {
+    "value": "PS-0607-A",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "engine": {
+    "value": "Gas Flat 6 3.6L/221",
+    "kind": "READ",
+    "src": "READ https://www.houseofcars.com/inventory/Used-2012-Porsche-911-Carrera_4-WP0AA2A93CS706169/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   },
+   "trim": {
+    "value": "Carrera 4 2dr Cpe",
+    "kind": "DERIVED",
+    "src": "DERIVED from the listing name \"2012 Porsche 911 Carrera 4 2dr Cpe Carrera 4 Gas Flat 6 3.6L/221\" (year, make, model, engine and **tags** removed)"
+   },
+   "store": {
+    "value": "Airdrie",
+    "kind": "READ",
+    "src": "READ the listing page title: \"2012 Porsche 911 for sale in Airdrie at Airdrie | VIN: WP0AA2A93CS706169\""
+   },
+   "city": {
+    "value": "Airdrie",
+    "kind": "READ",
+    "src": "READ the listing page title"
+   }
+  }
+ ],
+ "absent": [
+  {
+   "key": "audi_s7",
+   "named_by": "RJ 2026-11-06: \"they have a bentley and a s7 in the showroom\"",
+   "searched": [
+    "https://www.houseofcars.com/inventory/used-audi-s7/ (redirects to the general used list: no S7 page)",
+    "https://www.houseofcars.com/inventory/used-audi/ (29 used Audis, none an S7)",
+    "https://www.houseofcars.com/inventory/?make=audi&model=s7 (the site ignores the filter and lists all 1209 used)"
+   ]
+  }
+ ]
+}
