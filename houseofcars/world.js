@@ -108,7 +108,7 @@ export function makeWorld({ grid, heights, normals, tris, kinds, friction }) {
     if (!b) return a;
     return a.distance <= b.distance ? a : b;
   }
-  return { trace, ground, triangles: nTri };
+  return { trace, ground, triangles: nTri, tris, kinds };   // tris/kinds: the page's minimap draws the road from them
 }
 
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }

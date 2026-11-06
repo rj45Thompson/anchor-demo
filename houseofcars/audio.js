@@ -1,0 +1,117 @@
+// audio.js - the drive's sound, synthesised in Web Audio (no recordings are shipped). The engine note's pitch follows the ported
+// engine RPM (chaos_vehicle.js v.engineRPM, from the READ torque curve and gearbox) and its weight follows the throttle; the tyre
+// noise follows Unreal's own IsSlipping / IsSkidding (v.wheels[i].slipping / .skidding, WheelSystem.h). The harmonics, filters,
+// levels and the UI sounds are the page's own (AUTHORED: Unreal's template sounds are not ported). Serves UC-7.4, UC-7.4a.
+const STORE = 'hoc.muted';
+const readMuted = () => { try { return localStorage.getItem(STORE) === '1'; } catch (e) { return false; } };
+
+export function makeAudio() {
+  const A = { ctx: null, muted: readMuted(), nodes: null, lastGear: null };
+  A.start = () => {                                         // browsers allow sound only after a press (UC-7.4a)
+    if (A.ctx) { if (A.ctx.state === 'suspended') A.ctx.resume(); return; }
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;                                       // no Web Audio: the page stays silent and says so on the button
+    A.ctx = new Ctx();
+    build(A);
+  };
+  A.setMuted = (m) => {
+    A.muted = m;
+    try { localStorage.setItem(STORE, m ? '1' : '0'); } catch (e) { /* per-viewer convenience only */ }
+    if (A.nodes) A.nodes.master.gain.setTargetAtTime(m ? 0 : 0.8, A.ctx.currentTime, 0.05);
+  };
+  A.available = () => !!(window.AudioContext || window.webkitAudioContext);
+  return A;
+}
+
+function noiseBuffer(ctx) {
+  const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+
+function build(A) {
+  const c = A.ctx;
+  const master = c.createGain(); master.gain.value = A.muted ? 0 : 0.8;
+  const comp = c.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+  master.connect(comp).connect(c.destination);
+  // engine: a sawtooth at the firing pitch, a square an octave below, through a drive shaper and a throttle-opened low-pass
+  const engineBus = c.createGain(); engineBus.gain.value = 0;
+  const shaper = c.createWaveShaper();
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; curve[i] = Math.tanh(2.4 * x); }
+  shaper.curve = curve;
+  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
+  const saw = c.createOscillator(); saw.type = 'sawtooth';
+  const sub = c.createOscillator(); sub.type = 'square';
+  const sawG = c.createGain(); sawG.gain.value = 0.5;
+  const subG = c.createGain(); subG.gain.value = 0.35;
+  saw.connect(sawG).connect(shaper); sub.connect(subG).connect(shaper);
+  shaper.connect(lp).connect(engineBus).connect(master);
+  // intake: band-passed noise that rises with throttle and RPM
+  const noise = noiseBuffer(c);
+  const intake = c.createBufferSource(); intake.buffer = noise; intake.loop = true;
+  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.8;
+  const intakeG = c.createGain(); intakeG.gain.value = 0;
+  intake.connect(bp).connect(intakeG).connect(master);
+  // tyres: a resonant squeal band and a broad scrub, each gated by Unreal's slip rules
+  const tyre = c.createBufferSource(); tyre.buffer = noise; tyre.loop = true;
+  const sq = c.createBiquadFilter(); sq.type = 'bandpass'; sq.frequency.value = 1150; sq.Q.value = 9;
+  const sqG = c.createGain(); sqG.gain.value = 0;
+  tyre.connect(sq).connect(sqG).connect(master);
+  const scrub = c.createBiquadFilter(); scrub.type = 'lowpass'; scrub.frequency.value = 700;
+  const scrubG = c.createGain(); scrubG.gain.value = 0;
+  tyre.connect(scrub).connect(scrubG).connect(master);
+  // wind: low noise that grows with speed
+  const wind = c.createBufferSource(); wind.buffer = noise; wind.loop = true;
+  const wl = c.createBiquadFilter(); wl.type = 'lowpass'; wl.frequency.value = 380;
+  const windG = c.createGain(); windG.gain.value = 0;
+  wind.connect(wl).connect(windG).connect(master);
+  for (const o of [saw, sub, intake, tyre, wind]) o.start();
+  A.nodes = { master, engineBus, lp, saw, sub, bp, intakeG, sqG, scrubG, windG };
+}
+
+// every frame of the drive: rpm (READ engine model), throttle 0..1, speed (cm/s), slide 0..1, gear
+export function driveSound(A, s) {
+  if (!A.ctx || !A.nodes) return;
+  const n = A.nodes, t = A.ctx.currentTime, k = 0.03;
+  const f = Math.max(28, s.rpm / 60 * 2);                     // firing pitch: two pulses a turn (AUTHORED voicing)
+  n.saw.frequency.setTargetAtTime(f, t, k);
+  n.sub.frequency.setTargetAtTime(f / 2, t, k);
+  n.lp.frequency.setTargetAtTime(300 + 2600 * s.throttle + f * 2, t, 0.05);
+  if (A.lastGear !== null && s.gear !== A.lastGear && s.gear > 0 && A.lastGear > 0) A.shiftUntil = t + 0.12;   // a gear change
+  A.lastGear = s.gear;
+  const dip = t < (A.shiftUntil || 0);                        // the shift's dip in the note
+  const level = (0.16 + 0.22 * s.throttle) * (dip ? 0.25 : 1);
+  n.engineBus.gain.setTargetAtTime(s.running ? level : 0, t, dip ? 0.01 : 0.06);
+  n.bp.frequency.setTargetAtTime(500 + f * 4, t, 0.05);
+  n.intakeG.gain.setTargetAtTime(s.running ? 0.05 * s.throttle : 0, t, 0.08);
+  const kmh = Math.abs(s.speedCmS) * 0.036;
+  // s.slide: the wheels' mean slide (effects.js slideAmount: zero unless IsSkidding / IsSlipping)
+  n.sqG.gain.setTargetAtTime(kmh > 8 ? 0.3 * s.slide : 0, t, 0.05);
+  n.scrubG.gain.setTargetAtTime(kmh > 3 ? 0.22 * s.slide : 0, t, 0.06);
+  n.windG.gain.setTargetAtTime(Math.min(0.2, kmh / 900), t, 0.2);
+}
+
+export function silence(A) {
+  if (!A.nodes) return;
+  const t = A.ctx.currentTime, n = A.nodes;
+  for (const g of [n.engineBus.gain, n.intakeG.gain, n.sqG.gain, n.scrubG.gain, n.windG.gain]) g.setTargetAtTime(0, t, 0.05);
+}
+
+// short UI sounds: the countdown's beeps (a higher one on GO), a gate tick, the lap chime
+export function blip(A, kind) {
+  if (!A.ctx || !A.nodes) return;
+  const c = A.ctx, t = c.currentTime;
+  const tone = (freq, dur, vol, type = 'sine', at = 0) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t + at); g.gain.linearRampToValueAtTime(vol, t + at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
+    o.connect(g).connect(A.nodes.master); o.start(t + at); o.stop(t + at + dur + 0.02);
+  };
+  if (kind === 'count') tone(660, 0.18, 0.35, 'triangle');
+  else if (kind === 'go') { tone(990, 0.45, 0.4, 'triangle'); tone(1485, 0.35, 0.15, 'sine'); }
+  else if (kind === 'gate') tone(1320, 0.12, 0.18, 'sine');
+  else if (kind === 'lap') { tone(784, 0.25, 0.3, 'triangle'); tone(988, 0.25, 0.3, 'triangle', 0.12); tone(1319, 0.5, 0.3, 'triangle', 0.24); }
+  else if (kind === 'best') { [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.4, 0.28, 'triangle', i * 0.1)); }
+  else throw new Error('audio.js: no sound called ' + kind);
+}

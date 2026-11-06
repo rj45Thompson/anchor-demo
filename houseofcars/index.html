@@ -36,6 +36,12 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .k-READ{background:var(--read);color:#062}
 .k-DERIVED{background:var(--derived);color:#430}
 .k-ABSENT{background:var(--absent);color:#fff}
+#card .paint{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03)}
+#card .paint span{font-size:12px;color:var(--dim);white-space:nowrap}
+#card .paint div{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#card button.sw{all:unset;cursor:pointer;width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:inset 0 -3px 6px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.25);transition:transform .15s}
+#card button.sw:hover{transform:scale(1.15)}#card button.sw.on{box-shadow:inset 0 -3px 6px rgba(0,0,0,.35),0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+#card button.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #srcline{font-size:12px;color:var(--dim);margin-top:10px;word-break:break-word;min-height:3em}
 #card .kick{margin:0 0 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-soft);font-weight:700}
 #card p{margin:8px 0;color:#cfd5dc;font-size:14px}
@@ -58,28 +64,63 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #bar{width:min(320px,70vw);height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin:12px auto 6px;overflow:hidden}
 #bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
 #lmb{font-size:12px}
+#loading .brand{font-size:clamp(26px,5vw,44px);font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);animation:rise .9s ease both}
+#loading .brand b{color:var(--accent)}
+#loading .tag{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent-soft);margin:6px 0 22px;animation:rise .9s .15s ease both}
+#bar i{background:linear-gradient(90deg,var(--accent-dark),var(--accent),var(--accent-soft));box-shadow:0 0 12px rgba(242,88,39,.6)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#card.in{animation:cardin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes cardin{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#card.in,#loading .brand,#loading .tag{animation:none}}
 @media (max-width:1100px){#foot{left:50%;transform:translateX(-50%);bottom:4px;max-width:calc(100vw - 32px);text-align:center;font-size:10px}#showroom .nav{bottom:46px}}
 @media (max-width:720px){body #card{bottom:134px;max-height:26vh}}
 #race{display:none}
 #hud-time{position:fixed;top:56px;left:50%;transform:translateX(-50%);text-align:center;font-variant-numeric:tabular-nums}
 #hud-time .t{font-size:34px;font-weight:700;letter-spacing:.04em}
 #hud-time .b{font-size:14px;color:var(--dim)}
-#hud-speed{position:fixed;right:20px;bottom:20px;text-align:right;font-variant-numeric:tabular-nums}
-#hud-speed .s{font-size:56px;font-weight:800;line-height:1}
-#hud-speed .u{font-size:14px;color:var(--dim)}
-#hud-speed .g{font-size:26px;font-weight:700;color:var(--accent)}
+#hud-speed{position:fixed;right:18px;bottom:14px;width:220px;height:220px;font-variant-numeric:tabular-nums;filter:drop-shadow(0 4px 18px rgba(0,0,0,.55))}
+#hud-speed svg.tach{position:absolute;inset:0;width:100%;height:100%}
+.tach .t-track{fill:none;stroke:rgba(10,10,10,.62);stroke-width:16}
+.tach .t-red{fill:none;stroke:var(--accent-dark);stroke-width:16;opacity:.9}
+.tach .t-fill{fill:none;stroke:var(--accent);stroke-width:5;stroke-linecap:round}
+.tach .t-tick{stroke:rgba(254,254,254,.55);stroke-width:1.5}.tach .t-tick.major{stroke:var(--ink);stroke-width:2.5}.tach .t-tick.red{stroke:#ffb59c}
+.tach .t-num{fill:var(--ink);font:700 13px "Open Sans",sans-serif;text-anchor:middle}
+.tach .t-x{fill:var(--dim);font:600 10px "Open Sans",sans-serif;text-anchor:middle;letter-spacing:.08em}
+.tach .t-needle{stroke:var(--accent);stroke-width:3.5;stroke-linecap:round}.tach .t-hub{fill:var(--ink)}
+#hud-speed .read{position:absolute;left:0;right:0;top:112px;text-align:center;line-height:1}
+#hud-speed .s{display:block;font-size:44px;font-weight:800;letter-spacing:.02em}
+#hud-speed .u{display:block;font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+#hud-speed .g{display:inline-block;margin-top:6px;min-width:34px;padding:2px 8px;border-radius:7px;background:var(--accent);color:#fff;font-size:20px;font-weight:800}
+#shift{position:absolute;left:50%;top:62px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#3a1a12;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}
+#shift.on{background:#ff6a3d;box-shadow:0 0 14px 4px rgba(255,90,40,.85);animation:blink .12s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+#minimap{position:fixed;left:16px;bottom:58px;width:180px;height:180px;border-radius:50%;background:radial-gradient(rgba(10,10,10,.72),rgba(10,10,10,.5));border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,0,0,.45)}
+#lapb{position:fixed;top:20%;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0}
+#lapb.show{animation:lapin 3.6s ease forwards}
+#lapb small{display:block;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-soft);font-weight:800}
+#lapb b{display:block;font-size:52px;font-weight:800;letter-spacing:.03em;text-shadow:0 6px 30px rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
+#lapb .split{display:inline-block;margin-top:4px;padding:3px 12px;border-radius:99px;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+#lapb .split.faster{background:#1f8f5f}#lapb .split.slower{background:#a33a2a}
+#lapb em{display:block;margin-top:8px;font-style:normal;font-size:13px;color:var(--ink);opacity:.85}
+#lapb.best b{color:var(--accent-soft)}
+@keyframes lapin{0%{opacity:0;transform:translate(-50%,-14px) scale(.96)}10%{opacity:1;transform:translate(-50%,0) scale(1)}82%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
 #countdown{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%);font-size:min(22vw,160px);font-weight:900;text-shadow:0 6px 30px rgba(0,0,0,.6);pointer-events:none}
-#hint{position:fixed;left:16px;bottom:16px;font-size:12px;color:var(--dim);max-width:52vw}
+#countdown.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}#countdown.go{color:var(--accent);letter-spacing:.04em}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(1.9);opacity:0}45%{opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
+header #mute{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){#countdown.pop,#lapb.show{animation-duration:.01s}#lapb.show{opacity:1}#shift.on{animation:none}}
+#hint{position:fixed;left:212px;bottom:16px;font-size:12px;color:var(--dim);max-width:52vw}
 #touch{position:fixed;inset:auto 0 0 0;display:none;justify-content:space-between;padding:16px;gap:12px;pointer-events:none}
 #touch div{display:flex;gap:10px;pointer-events:auto}
 #touch button{width:74px;height:74px;border-radius:50%;font-size:22px;user-select:none;-webkit-user-select:none;touch-action:none}
 #nogpu{position:fixed;inset:0;display:none;place-items:center;padding:24px;text-align:center;background:var(--bg)}
 #loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--dim);pointer-events:none}
-@media (max-width:720px){#card{top:auto;bottom:84px;max-height:30vh;padding:12px 12px 6px}#card h2{font-size:18px}#hint{display:none}#hud-speed .s{font-size:40px}header .pill+.pill{display:none}header h1{font-size:15px}}
+@media (max-width:720px){#card{top:auto;bottom:84px;max-height:30vh;padding:12px 12px 6px}#card h2{font-size:18px}#hint{display:none}#hud-speed{transform:scale(.6);transform-origin:right bottom}#minimap{left:auto;right:12px;bottom:auto;top:96px;width:112px;height:112px}#lapb b{font-size:38px}header .pill+.pill{display:none}header h1{font-size:15px}}
 @media (pointer:coarse){#touch{display:flex}}
 button,.pill{white-space:nowrap}
 @media (max-width:720px){#showroom .nav{gap:6px;bottom:78px}#showroom .nav button{padding:9px 12px}#pos{font-size:11px;padding:2px 6px}}
 @media (pointer:coarse){#touch{padding:12px}#touch div{gap:8px}#touch button{width:60px;height:60px;font-size:19px}#hud-speed{bottom:96px;right:14px}}
+@media (max-width:720px){header #mute{display:inline-block}}
 
 </style>
 <script type="importmap">
@@ -93,8 +134,8 @@ button,.pill{white-space:nowrap}
 </head>
 <body>
 <canvas id="view"></canvas>
-<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span></header>
-<div id="loading"><div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i></div><div id="lmb"></div></div></div>
+<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button></header>
+<div id="loading"><div><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i></div><div id="lmb"></div></div></div>
 
 <section id="showroom">
   <aside id="card" aria-live="polite"></aside>
@@ -109,9 +150,11 @@ button,.pill{white-space:nowrap}
 
 <section id="race">
   <button id="back" aria-label="Back to the lot">◀ Lot</button>
-  <div id="hud-time"><div class="t" id="t-now">---:---:---</div><div class="b">Best <span id="t-best">—</span></div></div>
+  <div id="hud-time"><div class="t" id="t-now">---:---:---</div><div class="b">Best <span id="t-best">—</span> · Record <span id="t-rec" title="The best lap driven on this device">—</span></div></div>
   <div id="countdown"></div>
-  <div id="hud-speed"><span class="s" id="speed">000</span> <span class="u" id="unit">Km/h</span><div class="g" id="gear">N</div></div>
+  <div id="lapb" aria-live="polite"></div>
+  <canvas id="minimap" width="440" height="440" aria-label="Track map: the road, the gates, your car"></canvas>
+  <div id="hud-speed"><div class="read"><span class="s" id="speed">000</span><span class="u" id="unit">Km/h</span><span class="g" id="gear">N</span></div><i id="shift" title="Shift light: the READ change-up RPM"></i></div>
   <div id="hint">W / ↑ throttle · S / ↓ brake · A D / ← → steer · Space handbrake · Backspace reset · Tab camera · G show gates · Esc showroom</div>
   <div id="touch">
     <div><button data-k="left">◀</button><button data-k="right">▶</button></div>

@@ -984,6 +984,11 @@ function publish(v, suspensionOffsets) {
     bone: cw.bone, steerDeg: v.w[i].steer, spinRad: v.w[i].angPos, suspensionOffsetCm: suspensionOffsets[i], inContact: v.w[i].inContact,
     omega: v.w[i].omega, springForce: v.s[i].force, load: v.w[i].load, driveTorqueNm: TorqueCmToM(v.w[i].drive), brakeTorqueNm: TorqueCmToM(v.w[i].brake),
     engineEnabled: v.w[i].engine, torqueRatio: cw.torqueRatio,
+    // GetSlipMagnitude / GetSkidMagnitude and IsSlipping / IsSkidding, UE: Core/Public/WheelSystem.h:319-327, 386-404 (read by the
+    // page's tyre sound and skid marks; Unreal's template shows neither), and the wheel trace's hit point (cm, world)
+    slipCmS: v.w[i].omega * v.w[i].Re - v.w[i].ground[0], skidCmS: v.w[i].ground[1],
+    slipping: Math.abs(v.w[i].omega * v.w[i].Re - v.w[i].ground[0]) > cw.slipThreshold, skidding: Math.abs(v.w[i].ground[1]) > cw.skidThreshold,
+    contactCm: v.hits && v.hits[i] ? v.hits[i].point : null,
   }));
 }
 

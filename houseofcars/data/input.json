@@ -1,0 +1,231 @@
+{
+ "mappings": {
+  "value": [
+   {
+    "action": "IA_Throttle",
+    "key": "W",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Brake",
+    "key": "S",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Handbrake",
+    "key": "SpaceBar",
+    "modifiers": []
+   },
+   {
+    "action": "IA_ToggleCamera",
+    "key": "Tab",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Reset",
+    "key": "BackSpace",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Throttle",
+    "key": "Up",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Throttle",
+    "key": "Gamepad_FaceButton_Left",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Throttle",
+    "key": "Gamepad_RightTriggerAxis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Throttle",
+    "key": "Vive_Right_Trigger_Axis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Throttle",
+    "key": "MixedReality_Right_Trigger_Axis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Throttle",
+    "key": "OculusTouch_Right_Trigger_Axis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Throttle",
+    "key": "ValveIndex_Right_Trigger_Axis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Brake",
+    "key": "Down",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Brake",
+    "key": "Gamepad_FaceButton_Bottom",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Brake",
+    "key": "Gamepad_LeftTriggerAxis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Brake",
+    "key": "Vive_Left_Trigger_Axis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Brake",
+    "key": "MixedReality_Left_Trigger_Axis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Brake",
+    "key": "OculusTouch_Left_Trigger_Axis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Brake",
+    "key": "ValveIndex_Left_Trigger_Axis",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Handbrake",
+    "key": "Gamepad_LeftShoulder",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Handbrake",
+    "key": "Vive_Right_Grip_Click",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Handbrake",
+    "key": "MixedReality_Right_Grip_Click",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Handbrake",
+    "key": "OculusTouch_Right_Grip_Click",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Handbrake",
+    "key": "ValveIndex_Right_A_Click",
+    "modifiers": []
+   },
+   {
+    "action": "IA_ToggleCamera",
+    "key": "Gamepad_Special_Left",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Reset",
+    "key": "Gamepad_Special_Right",
+    "modifiers": []
+   },
+   {
+    "action": "IA_LookAround",
+    "key": "Gamepad_RightX",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "D",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "Right",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "Gamepad_LeftX",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "Vive_Left_Trackpad_X",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "Vive_Right_Trackpad_X",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "MixedReality_Left_Thumbstick_X",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "MixedReality_Right_Thumbstick_X",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "OculusTouch_Left_Thumbstick_X",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "OculusTouch_Right_Thumbstick_X",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "ValveIndex_Left_Thumbstick_X",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Steering",
+    "key": "ValveIndex_Right_Thumbstick_X",
+    "modifiers": []
+   },
+   {
+    "action": "IA_Headlights",
+    "key": "L",
+    "modifiers": []
+   }
+  ],
+  "src": "READ D:/_houseofcars/ue_out/bp/IMC_Vehicle_Default.t3d Mappings (IMC_Vehicle_Default), modifier classes from its Begin Object blocks"
+ },
+ "axis_config": {
+  "value": {
+   "Gamepad_LeftTriggerAxis": {
+    "dead_zone": 0.0,
+    "exponent": 1.0,
+    "sensitivity": 1.0,
+    "invert": false
+   },
+   "Gamepad_LeftX": {
+    "dead_zone": 0.25,
+    "exponent": 1.0,
+    "sensitivity": 1.0,
+    "invert": false
+   },
+   "Gamepad_RightTriggerAxis": {
+    "dead_zone": 0.0,
+    "exponent": 1.0,
+    "sensitivity": 1.0,
+    "invert": false
+   },
+   "Gamepad_RightX": {
+    "dead_zone": 0.25,
+    "exponent": 1.0,
+    "sensitivity": 1.0,
+    "invert": false
+   }
+  },
+  "src": "READ D:/_houseofcars/ue/HouseOfCars/Config/DefaultInput.ini +AxisConfig (last wins); applied as UPlayerInput::MassageAxisInput, Engine/Source/Runtime/Engine/Private/UserInterface/PlayerInput.cpp:2186-2224"
+ }
+}
