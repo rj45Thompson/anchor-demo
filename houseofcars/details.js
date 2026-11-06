@@ -8,6 +8,7 @@
 // Data: listings.json, sale_specs.json, reviews.json (cars.<key>.specs for a car with no listing: the S7), recalls.json,
 // models.json, ghosts/index.json, timetrial_rules.json (the lap's format). Serves UC-16.1 to UC-16.6, UC-16.1a, UC-16.3a.
 import { formatTime } from './rules.js';
+import { dragyHUD } from './dragstats.js';                                // UC-21: Dragy owners' runs
 import { svgIcon } from './icons.js';
 
 const $ = (id) => document.getElementById(id);
@@ -46,11 +47,11 @@ async function fetchJson(f) {
   try { return await r.json(); } catch (e) { throw new Error('data/' + f + ' is not valid JSON: ' + e.message); }
 }
 async function loadAll() {
-  const files = ['listings.json', 'sale_specs.json', 'reviews.json', 'recalls.json', 'models.json', 'ghosts/index.json', 'timetrial_rules.json', 'photos.json', 'colours.json'];
-  const [LISTINGS, SALE_SPECS, REVIEWS, RECALLS, MODELS, GHOSTS, RULES, PHOTOS, COLOURS] = await Promise.all(files.map(fetchJson));
+  const files = ['listings.json', 'sale_specs.json', 'reviews.json', 'recalls.json', 'models.json', 'ghosts/index.json', 'timetrial_rules.json', 'photos.json', 'colours.json', 'dragy.json'];
+  const [LISTINGS, SALE_SPECS, REVIEWS, RECALLS, MODELS, GHOSTS, RULES, PHOTOS, COLOURS, DRAGY] = await Promise.all(files.map(fetchJson));
   // the colour: the listing's own field where it states one, else what its photos show (data/colours.json, each with its photo)
   for (const c of LISTINGS.cars) if (COLOURS.cars[c.key]) c.colour = COLOURS.cars[c.key];
-  return { LISTINGS, SALE_SPECS, REVIEWS, RECALLS, MODELS, GHOSTS, RULES, PHOTOS };
+  return { LISTINGS, SALE_SPECS, REVIEWS, RECALLS, MODELS, GHOSTS, RULES, PHOTOS, DRAGY };
 }
 
 // the day the listings were read, as it is written in read_at (not shifted to the visitor's time zone)
@@ -294,14 +295,15 @@ function listingHTML(car, D, day) {
 function modelHTML(m) {
   if (!m) return '<div class="card"><h3>The 3D model</h3><p>3D model not made yet.</p></div>';
   return '<div class="card" id="model3d"><h3>The 3D model</h3><p class="meta" style="color:#cfd5dc">' + linkify(m.src) + '</p>' +
-    (m.length_m ? '<p class="meta">Length: ' + esc(m.length_m.value) + ' m. ' + linkify(m.length_m.src) + '</p>' : '') + '</div>';
+    (m.length_m ? '<p class="meta">Length: ' + esc(m.length_m.value) + ' m. ' + linkify(m.length_m.src) + '</p>' : '') +
+    '<p class="meta">Inside: ' + (m.interior ? 'the cabin as the model has it, from the driver&#39;s seat (' + esc(m.interior.src) + ')' : 'this model has no cabin to look into') + '.</p></div>';
 }
 
 // ---------------------------------------------------------------- the page
 function render(D) {
   lbClose();
   const main = $('main');
-  const hm = /^#car=([\w-]+)$/.exec(decodeURIComponent(location.hash));
+  const hm = /^#car=([\w-]+)(&inside)?$/.exec(decodeURIComponent(location.hash));   // &inside: open in the cabin (UC-17)
   const key = hm ? hm[1] : null;
   const car = key ? carFor(key, D) : null;
   const day = readDay(D.LISTINGS.read_at);
@@ -351,7 +353,8 @@ function render(D) {
     (model ? '<model-viewer id="mv" src="data/meshes/' + esc(model.glb) + '" alt="' + esc(car.name) + ', 3D model" camera-controls auto-rotate auto-rotate-delay="1500" rotation-per-second="12deg" ' +
       'touch-action="pan-y" shadow-intensity="1" shadow-softness="0.9" exposure="1.05" environment-image="neutral" camera-orbit="-35deg 76deg auto" interaction-prompt="none" ' +
       'ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed"><button slot="ar-button" class="arbtn">' + svgIcon('lot', 15) + ' See it in your driveway</button></model-viewer>' +
-      '<div class="bar" id="mvbar"><i></i></div><p class="hint">Drag to turn · pinch to zoom</p><button class="about" data-go="model3d">About this model</button>'
+      '<div class="bar" id="mvbar"><i></i></div><p class="hint" id="mvhint">Drag to turn · pinch to zoom</p><button class="about" data-go="model3d">About this model</button>' +
+      (model.interior ? '<button class="inside" id="mvinside" type="button" aria-pressed="false" disabled>' + svgIcon('wheel', 15) + ' <span>Look inside</span></button>' : '')
       : '<p class="nomodel">3D model not made yet.</p>') + '</div>';
 
   main.innerHTML =
@@ -367,6 +370,9 @@ function render(D) {
     '<section class="blk" id="figures"><div class="sh"><p class="kick">Performance</p><h2>Engine and figures</h2>' +
       '<p class="note">Factory figures for this model, each from a named source: tap a tile to see where it came from.</p></div>' +
       '<div class="tiles">' + FIGS.map((x, i) => tileHTML(x.id, x.label, f[x.id], i, car.rowsFrom)).join('') + perTonneHTML(pt, FIGS.length) + '</div></section>' +
+
+    (D.DRAGY.cars[key] ? '<section class="blk" id="dragstrip"><div class="sh"><p class="kick">On the drag strip</p><h2>What owners run</h2>' +
+      '<p class="note">Dragy users&#39; own GPS runs of this car, from Dragy&#39;s public leaderboard.</p></div>' + dragyHUD(key, D.DRAGY, 'page') + '</section>' : '') +   // UC-21
 
     '<section class="blk" id="driveline"><div class="duo"><div><div class="sh"><p class="kick">Driveline</p><h2>Engine, gearbox and drive</h2></div><div class="rows">' +
       rowHTML('Engine', car.engine) + DRIVELINE.slice(1).map((x) => rowHTML(x.label, findRow(car.rows, x))).join('') + '</div>' + moreRowsHTML(car) + '</div>' +
@@ -387,7 +393,7 @@ function render(D) {
 
   document.title = car.name + ' · House of Cars 3D Lot (concept)';
   wire(main);
-  if (model) startModel();
+  if (model) startModel(model, !!(hm && hm[2]));
   document.documentElement.dataset.state = 'ready';
   document.documentElement.dataset.car = key;
 }
@@ -422,7 +428,7 @@ function wire(root) {
 }
 
 // the 3D model: model-viewer from the importmap (as the lot's AR view); its progress, its arrival, or its error on the stage
-async function startModel() {
+async function startModel(model, inside) {
   const mv = $('mv'), bar = $('mvbar'), st = $('stage');
   // a wide stage (a desktop) frames the car a little closer than model-viewer's auto radius, which fits it at every angle; a tall
   // one (a phone) keeps auto, or the long side of the car would leave the frame as it turns
@@ -439,6 +445,31 @@ async function startModel() {
     throw e;
   }
   if (mv.loaded) mv.classList.add('on');
+  if (model.interior) wireInside(mv, model.interior, inside);
+}
+// UC-17 look inside: model-viewer's camera moved to the driver's eye (models.json interior: behind the model's own steering wheel)
+// on an orbit of 2 cm, so a drag turns the head round the cabin; out again, the stage's own framing comes back
+function wireInside(mv, cabin, start) {
+  const btn = $('mvinside'), outside = { orbit: mv.getAttribute('camera-orbit'), fov: mv.getAttribute('field-of-view') || 'auto' };
+  const set = (on) => {
+    btn.setAttribute('aria-pressed', String(on)); btn.querySelector('span').textContent = on ? 'Back outside' : 'Look inside';
+    $('mvhint').textContent = on ? 'Drag to look round the cabin' : 'Drag to turn · pinch to zoom';
+    $('stage').classList.toggle('cabin', on);
+    if (on) {
+      mv.autoRotate = false;
+      mv.setAttribute('min-camera-orbit', 'auto 20deg 0.01m'); mv.setAttribute('max-camera-orbit', 'auto 160deg 0.05m');
+      mv.setAttribute('max-field-of-view', '80deg');      // model-viewer's own cap (about 45 deg) would zoom the cabin in to the wheel
+      mv.cameraTarget = cabin.eye_m.map((x) => x + 'm').join(' ');
+      mv.fieldOfView = '70deg'; mv.cameraOrbit = '-90deg 86deg 0.02m';
+    } else {
+      mv.removeAttribute('min-camera-orbit'); mv.removeAttribute('max-camera-orbit'); mv.removeAttribute('max-field-of-view');
+      mv.cameraTarget = 'auto auto auto'; mv.fieldOfView = outside.fov; mv.cameraOrbit = outside.orbit || '-35deg 76deg auto';
+    }
+    mv.jumpCameraToGoal && !on && mv.jumpCameraToGoal();
+  };
+  btn.addEventListener('click', () => set(btn.getAttribute('aria-pressed') !== 'true'));
+  btn.disabled = false;                                 // drawn disabled: a click before model-viewer is here would do nothing
+  if (start) { const go = () => set(true); if (mv.loaded) go(); else mv.addEventListener('load', go, { once: true }); }
 }
 
 function showError(e) {

@@ -17,7 +17,9 @@
   "rolls_royce_ghost_2014": {
    "kind": "READ",
    "value": "Black",
-   "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)"
+   "src": "READ https://www.houseofcars.com/inventory/Used-2014-Rolls--Royce-Ghost-SCA664S59EUX52456/ (schema.org Car, read 2026-11-05T20:07:17-06:00)",
+   "detail": "black body and bonnet, black grille and trim, black multi-spoke wheels; the mascot chrome",
+   "detail_src": "READ from the listing photos 2026-11-06 (first photo https://content.homenetiol.com/640x480/566b8a84e05e46b892f72f71df1b8cc0.jpg)"
   },
   "mercedes_amg_e63s_2021": {
    "kind": "READ",

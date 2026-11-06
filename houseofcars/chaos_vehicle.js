@@ -20,6 +20,7 @@ export const AUTHORED = [
   'A6 body frame = actor frame: wheel rest positions are the READ bone_location (actor space) + offset + additional_offset; Chaos measures them relative to the physics asset root body bone (ABSENT), equal only if that bone sits at the actor origin',
   'A7 chassis-vs-ground contact: 8 corners of a box (READ bounds_cm X/Y and top, bottom at the highest READ wheel-centre height), each traced from the centre of mass with world.trace; velocity impulse with restitution 0, Coulomb friction using the hit\'s friction, and a position push-out of the deepest corner; Chaos collides the physics asset shapes (ABSENT)',
   'A8 vehicle sleeping (ProcessSleeping, sleep_threshold, sleep_slope_limit) is not simulated: the body never sleeps',
+  'A10 a gear press (input.gearUp / gearDown) reaches the gearbox once, on the next substep; Unreal applies GearUpInput on every physics tick it is held (ChaosWheeledVehicleMovementComponent.cpp:769-779)',
   'A9 suspension hard stop: when a wheel compresses past suspension_max_raise, a frictionless contact at the wheel stops the approach and pushes the body out (push-out capped at the READ Chaos CVars min(MaxPushout 5 cm, MaxPushoutVelocity 100 cm/s * dt)), with the constraint geometry; it stands in for the hard-stop manifold of FPBDSuspensionConstraints (PBDSuspensionConstraints.cpp:213-293), which the PBD solver iterates',
 ];
 
@@ -592,6 +593,7 @@ export function resetVehicle(v, position, yawDegrees) {
   v.s = c.wheels.map(() => ({ disp: 0, lastDisp: 0, springDisp: 0, force: 0, avg: new Array(NUM_SUS_AVERAGING).fill(0), avgCount: 0, avgNum: 0 }));   // UE: SuspensionSystem.h:105-119
   v.hits = c.wheels.map(() => null);
   v.out = { currentGear: 0, targetGear: 0 };
+  v.pendingGear = { up: 0, down: 0 };                               // gear presses waiting for the next substep (A10 in AUTHORED)
   publish(v, c.wheels.map(() => 0));
 }
 
@@ -742,6 +744,13 @@ export function stepVehicle(v, input, dt, world) {
   num(dt, 'dt'); if (dt < 0) throw new Error('chaos_vehicle: dt < 0');
   if (!world || typeof world.trace !== 'function') throw new Error('chaos_vehicle: world.trace(start, end) is required');
   // AUTHORED: A8 no ProcessSleeping: the body is simulated every substep
+  // the gearbox inputs (UC-22 drag mode): input.transmission 'manual' | 'automatic' (UE's FControlInputs TransmissionType, set
+  // by SetUseAutomaticGears) and input.gearUp / gearDown (SetChangeUpInput / SetChangeDownInput).
+  // AUTHORED: A10 a press reaches the gearbox ONCE, on the next substep, where Unreal applies it on every physics tick the key is
+  // held (a held key would run through the gears); the page sends a press, not a hold
+  if (input.transmission !== undefined && input.transmission !== 'manual' && input.transmission !== 'automatic') throw new Error('chaos_vehicle: input.transmission must be manual or automatic');
+  if (input.gearUp) v.pendingGear.up++;
+  if (input.gearDown) v.pendingGear.down++;
   v.accum += dt;
   const n = Math.floor(v.accum / SUBSTEP + 1e-9);        // dt = 1/120 is exactly one substep; the remainder carries to the next call
   v.accum = Math.max(0, v.accum - n * SUBSTEP);
@@ -840,6 +849,11 @@ function substep(v, input, dt, world) {
 
   // ApplyInput, UE: ChaosWheeledVehicleMovementComponent.cpp:750-823
   let engineBraking = 0;
+  if (v.engine && v.trans) {
+    if (input.transmission !== undefined) v.trans.automatic = input.transmission === 'automatic';   // UE: .cpp:764-767
+    if (v.pendingGear.up) { setGear(v, v.trans.target + 1); v.pendingGear.up--; }      // ChangeUp = SetGear(TargetGear + 1), UE: .cpp:769-773 + Core/Public/TransmissionSystem.h:103-106
+    if (v.pendingGear.down) { setGear(v, v.trans.target - 1); v.pendingGear.down--; }  // ChangeDown, UE: .cpp:775-779 + Core/Public/TransmissionSystem.h:109-112
+  }
   if (v.engine) {
     v.engine.throttle = clamp(ci.throttle * ci.throttle, 0, 1);              // SetThrottle(T*T), UE: .cpp:789 + Core/Public/EngineSystem.h:75-79
     engineBraking = (v.engine.started ? v.engine.rpm : 0) * c.engine.brakeEffect;   // UE: .cpp:792

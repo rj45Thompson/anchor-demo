@@ -22,7 +22,10 @@ import { overlapsGate, carAxes } from './gates.js';   // one gate test for the p
 import { loadHoles, withHoles } from './ground_holes.js';
 import * as AI from './ai_driver.js';
 import { lotCars, leadsFor, compareHTML, priceVsPace } from './sale.js';
+import { loadingShow, loadingDone } from './loading.js';
+import * as Drag from './drag.js';                                                          // UC-22: the drag strip's rules
 import { knowHTML, knownSpecsHTML } from './know.js';                                                   // UC-14: Know this car (know.js)                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
+import { dragyHUD } from './dragstats.js';                                                  // UC-21: Dragy owners' runs (dragstats.js)
 
 // AUTHORED for the page itself (look and layout, never presented as Unreal's): see AUTHORED in the report
 export const AUTHORED = [
@@ -40,7 +43,8 @@ export const AUTHORED = [
   'gamepad: the bindings and dead zones are READ (data/input.json); the W3C standard layout they are matched to is the browser\'s. In the showroom (no Unreal binding): the d-pad or stick browses, A drives',
   'showroom light beams (fx.js lightBeam) and the save-picture button are the page\'s own',
   'intro: the camera sweep onto the lot and the card motion are the page\'s own (none when the OS asks for reduced motion)',
-  'cars for sale: their physics are tools/sim_car.py (READ factory numbers on the template SportsCar, every stand-in named in data/sim_cars); their bodies are Meshy models; they ride the SportsCar\'s cameras',
+  'cars for sale: their physics are tools/sim_car.py (READ factory numbers on the template SportsCar, every stand-in named in data/sim_cars); their bodies are 3D models, made in Meshy or hand-made by Sketchfab artists (each credited on its card, data/models.json) and painted the car\'s own colour; they ride the SportsCar\'s cameras',
+  'loading screen (loading.js): the photo is the listing\'s own (shown from the dealer\'s image server); the rock shooter and its numbers are the page\'s own',
   'selling tools (sale.js): the leads-the-lot badges, compare table and price-vs-pace chart are DERIVED from READ figures and the sim laps; the share link, QR code and kiosk tour are the page\'s own',
   'paint picker: the colours are the page\'s own; Factory is the colour Unreal\'s glTF export baked. Dragging a car turns it on its pedestal',
   'resolution: the page picks its own pixel ratio from the frame time (the Resolution pill says which)',
@@ -95,7 +99,7 @@ const [SHOW, TRACK, RULES, CAMS, INPUT, LISTINGS, MODELS] = await Promise.all([f
   fetchJson('camera.json'), fetchJson('input.json'), fetchJson('listings.json'), fetchJson('models.json')]);
 const GHOSTS = await fetchJson('ghosts/index.json');      // UC-9.3: the simulated laps (tools/ghost_index.py)
 const SALE_SPECS = await fetchJson('sale_specs.json');    // UC-9.1: each car for sale's factory numbers, READ with sources (tools/sale_specs.py)
-const [REVIEWS, RECALLS, COLOURS, PHOTOS] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json'), fetchJson('colours.json'), fetchJson('photos.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
+const [REVIEWS, RECALLS, COLOURS, PHOTOS, DRAGY] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json'), fetchJson('colours.json'), fetchJson('photos.json'), fetchJson('dragy.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
 // UC-8: the lot's slides, with `listings` expanded into one slide per car for sale (data/listings.json) and per pick the site lacks
 const LOT = SLIDES.flatMap((d) => d.kind !== 'listings' ? [d]
   : [...LISTINGS.cars.map((l) => ({ kind: 'listing', listing: l })), ...LISTINGS.absent.map((x) => ({ kind: 'unlisted', unlisted: x }))]);
@@ -245,7 +249,7 @@ function salePanel(def) {
   g.fillStyle = PAL.soft; g.font = '600 24px "Open Sans", sans-serif'; g.fillText('HOUSE OF CARS · 3D LOT CONCEPT · UNOFFICIAL', 80, 556);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
-// a car for sale in the race: its Meshy model, nose along the body's X, standing on the car's ground line and centred on its
+// a car for sale in the race: its 3D model (Meshy's or hand-made), nose along the body's X, standing on the car's ground line and centred on its
 // wheelbase (data/sim_cars: the wheels are the physics', not drawn separately; the model carries its own)
 async function simBody(key, carJson) {
   const m = MODELS.models[key];
@@ -256,7 +260,7 @@ async function simBody(key, carJson) {
   const cx = w.reduce((a, p) => a + p[0], 0) / w.length;
   body.position.set(cx / 100, ground / 100, 0);
   const g = new THREE.Group(); g.add(body);
-  // UC-15.4: the wheels import_models.py cut out of the Meshy body (models.json wheels: the node, its sim wheel, its centre in
+  // UC-15.4: the wheels import_models.py cut out of a Meshy body or took from a hand-made model's own parts (models.json wheels: the node, its sim wheel, its centre in
   // the model's real-size frame); each hangs on a steer pivot (about up) holding a spin pivot (about the axle, the body's Z),
   // both at the wheel's centre, so the physics turns them as it turns the template cars' wheels. No wheels = the reason is
   // models.json wheels_why, and none are drawn turning.
@@ -274,7 +278,7 @@ async function simBody(key, carJson) {
   }
   return { group: g, wheels };
 }
-// a Meshy model of a car for sale, on its pedestal: scaled so its length is the car's READ length (data/models.json says where
+// a 3D model of a car for sale (Meshy's or hand-made), on its pedestal: scaled so its length is the car's READ length (data/models.json says where
 // the length came from), its lowest point on the pedestal top, its nose along +X like the Unreal cars
 async function saleModel(m) {
   const g = (await loadGlb('data/meshes/' + m.glb)).scene.clone(true);
@@ -373,7 +377,7 @@ function saleCard(s, card) {
       '<div class="acts">' + (d.model ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') +
       '<a class="act" href="details.html#car=' + esc(d.unlisted.key) + '">Full details</a></div>' +      // UC-16.1: the car's own page (details.js)
       '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) + ' Length: ' + esc(d.model.length_m.src) + '<br>' : '3D model not made yet.<br>') +
-      d.unlisted.searched.map(esc).join('<br>') + '</div>' + knownSpecsHTML(d.unlisted.key, REVIEWS) + knowHTML(d.unlisted.key, REVIEWS, RECALLS);
+      d.unlisted.searched.map(esc).join('<br>') + '</div>' + knownSpecsHTML(d.unlisted.key, REVIEWS) + dragyHUD(d.unlisted.key, DRAGY, 'card') + knowHTML(d.unlisted.key, REVIEWS, RECALLS);
     card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = b.title; }));
     if ($('aropen')) $('aropen').addEventListener('click', () => openAR(d.unlisted.key, 'Audi S7'));
     return;
@@ -387,14 +391,15 @@ function saleCard(s, card) {
     '<dl>' + row('Kilometres', l.km, (v) => v.toLocaleString('en-CA') + ' km') + row('Engine', l.engine) + row('Colour', COLOURS.cars[l.key] || l.colour) + row('Interior', l.interior) +
     row('VIN', l.vin) + row('Stock', l.stock) + '</dl>' +
     specRows(l.key) + simLine(l.key) +
-    '<div class="acts">' + (MODELS.models[l.key] && SIMS.has(l.key) ? '<button class="act" data-drive="' + l.key + '">Test drive it</button>' : '') +
+    '<div class="acts">' + (MODELS.models[l.key] && SIMS.has(l.key) ? '<button class="act" data-drive="' + l.key + '">Test drive it</button><button class="act" data-drag="' + l.key + '">Drag race</button>' : '') +
     (GHOSTS.ghosts.some((g) => g.car === l.key) ? '<button class="act" data-race="' + l.key + '">Race its ghost</button>' : '') +
     '<a class="act" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + svgIcon('link', 16) + ' See it on houseofcars.com</a>' +
-    '<a class="act" href="details.html#car=' + esc(l.key) + '">Full details</a></div>' +      // UC-16.1: the car's own page (details.js)
+    '<a class="act" href="details.html#car=' + esc(l.key) + '">Full details</a>' +      // UC-16.1: the car's own page (details.js)
+    (MODELS.models[l.key] && MODELS.models[l.key].interior ? '<a class="act" href="details.html#car=' + esc(l.key) + '&inside">Look inside</a>' : '') + '</div>' +   // UC-17: a model with a cabin
     '<div class="sell"><button class="pick2" id="cmpopen">' + svgIcon('numbers', 16) + ' Compare the lot</button><button class="pick2" id="share">' + svgIcon('link', 16) + ' Share this car</button>' +
     (MODELS.models[l.key] ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') + '</div>' +
     photoStrip(l.key) +
-    knowHTML(l.key, REVIEWS, RECALLS) +
+    dragyHUD(l.key, DRAGY, 'card') + knowHTML(l.key, REVIEWS, RECALLS) +
     '<div class="qr" id="qr"></div>' +
     '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) : '3D model not made yet.') + ' Listing: ' + esc(l.name.src) + '</div>';
   card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = SALE_SPECS.cars[l.key].rows[+b.dataset.k].src; }));
@@ -403,6 +408,7 @@ function saleCard(s, card) {
     pendingGhost = b.dataset.race + '.json'; startRace(carEntry('SportsCar'));
   }));
   card.querySelectorAll('button[data-drive]').forEach((b) => b.addEventListener('click', () => startRace({ name: b.dataset.drive, sim: true, drivable: true })));
+  card.querySelectorAll('button[data-drag]').forEach((b) => b.addEventListener('click', () => startDrag({ name: b.dataset.drag, sim: true, drivable: true }).catch((e) => reportError(e))));   // UC-22
   $('cmpopen').addEventListener('click', () => openCompare(l.key));
   if ($('aropen')) $('aropen').addEventListener('click', () => openAR(l.key));
   $('share').addEventListener('click', (e) => shareCar(l.key, e.currentTarget));
@@ -641,7 +647,7 @@ async function buildTrack() {
   beam.position.y = 20; marker.add(beam);
   scene.add(marker);
   const skids = makeSkids(scene);
-  return { scene, sun, sunDir: dir, gates, sky: sky.mesh, marker, chev, skids, gateGround: [] };
+  return { scene, sun, sunDir: dir, gates, sky: sky.mesh, marker, chev, skids, gateGround: [], ground, track: t };   // ground and track: hidden on the drag strip
 }
 
 let trackView = null, world = null, Chaos = null;
@@ -676,8 +682,9 @@ function prepareTrack() {                               // once: the physics mod
   return trackReady;
 }
 async function startRace(entry) {
-  $('loading').style.display = 'grid'; $('lt').textContent = 'Rolling the car out to the track…';
+  loadingShow('Rolling the car out to the track…', entry.name);   // UC-20: the car's own listing photo, and the game
   await prepareTrack();
+  if (dragView) setDragScene(false);                      // back from the strip: the track as it was
   clearSkids(trackView.skids);
   window.HOC.track = trackView;
   if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); }
@@ -705,16 +712,18 @@ async function startRace(entry) {
   const rec = readRecord(entry.name);
   $('t-rec').textContent = rec === null ? '—' : Rules.formatTime(rec, RULES);
   $('lapb').classList.remove('show');
+  await loadingDone();                                    // UC-20.3: a game in play ends when its player says, not under a countdown
   audio.start();
   window.HOC.state = race;
   race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
   race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.25, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45 });
   mode = 'race';
-  $('showroom').style.display = 'none'; $('race').style.display = 'block'; $('loading').style.display = 'none';
+  $('showroom').style.display = 'none'; $('race').style.display = 'block';
   $('t-best').textContent = '—';
 }
 function backToShowroom() {
   mode = 'show';
+  if (dragView && trackView) setDragScene(false);
   silence(audio);
   $('showroom').style.display = ''; $('race').style.display = 'none';
 }
@@ -735,6 +744,14 @@ addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') select(show.index + 1);
     if (e.key === 'Enter' && !$('drive').disabled) $('drive').click();
     return;
+  }
+  if (mode === 'drag') {                                  // UC-22 the strip's keys (the page's own: Unreal's template has no manual gears)
+    if (e.key === 'Escape') { backToShowroom(); return; }
+    if (e.key === 'e' || e.key === 'E' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { e.preventDefault(); if (!e.repeat) dragPress('up'); return; }
+    if (e.key === 'q' || e.key === 'Q') { if (!e.repeat) dragPress('down'); return; }
+    if ((e.key === 'r' || e.key === 'R' || e.key === 'Enter') && race.run.done) { dragRerun(); return; }
+    if (e.key === 'p' || e.key === 'P') { savePicture(race.entry.name + '-drag'); return; }
+    keys.add(e.code); return;
   }
   if (e.key === 'Escape') { backToShowroom(); return; }
   if (e.key === 'p' || e.key === 'P') { savePicture(race.entry.name + '-drive'); return; }
@@ -764,7 +781,7 @@ function readInput() {
   $('padpill').textContent = pad.id ? 'Gamepad' : pad.nonstandard ? 'Gamepad: unknown layout' : '';
   $('padpill').style.display = pad.id || pad.nonstandard ? '' : 'none';
   if (!g) return k;
-  if (g.pressed.has('IA_Reset')) doReset();
+  if (g.pressed.has('IA_Reset') && mode !== 'drag') doReset();          // the strip has no reset: Run again
   if (g.pressed.has('IA_ToggleCamera') && !race.entry.sim) race.front = !race.front;   // as Tab: no cabin camera in a car for sale
   const big = (a, b) => (Math.abs(a) >= Math.abs(b) ? a : b);
   return { throttle: Math.max(k.throttle, g.throttle), brake: Math.max(k.brake, g.brake), steering: big(k.steering, g.steering), handbrake: Math.max(k.handbrake, g.handbrake) };
@@ -852,6 +869,218 @@ function tickRace(dt) {
   r.post.render();
 }
 
+// ---------------------------------------------------------------- the drag strip (UC-22): a quarter mile, the tree, shift by hand
+// drag.js holds the strip's rules (the marks, the tree, the timing, the shift points); this draws the strip in the track's own scene
+// (its sky, sun and haze; the track itself hidden while it is shown), runs the car on drag.js flatStrip with the gearbox in manual,
+// and shows the tree, the shift lights and the slip. The strip's look is the page's own (AUTHORED): two lanes, 24 m wide, 700 m
+// of shut-down after the quarter mile, the landscape's own ground colour for the grass.
+const DRAG_LANE_Y_CM = -600;                                 // the left lane's centre (UE Y, cm): the strip is 24 m wide, two lanes
+let dragView = null;
+function dragBoard(text, w, h, bg, fg) {                    // a sign on the strip: a canvas texture, the page's own lettering
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  g.fillStyle = fg; g.font = '800 ' + Math.round(h * 0.52) + 'px "Open Sans", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, w / 2, h / 2);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+function buildDragStrip(scene) {
+  const g = new THREE.Group(); g.visible = false; g.name = 'drag-strip';
+  const Q = Drag.MARKS.quarter, END = Q + 700, W = 24, behind = 30;     // 700 m to coast down from 200+ km/h on the idle brake
+  const mat = (color, rough) => new THREE.MeshStandardNodeMaterial({ color: new THREE.Color(color), roughness: rough, metalness: 0 });
+  const M = TRACK.landscape_material;
+  const grass = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), mat(new THREE.Color(...M.ground_col), 1));   // the landscape's READ ground colour
+  grass.rotation.x = -Math.PI / 2; grass.position.set(END / 2, -0.03, 0); grass.receiveShadow = true; g.add(grass);
+  // the asphalt: a fine noise of the page's own, tiled every 4 m (fx.js groundDetail is the landscape's, and 11-06 it went white
+  // this far from the track's own ground)
+  const grain = document.createElement('canvas'); grain.width = grain.height = 256;
+  { const c = grain.getContext('2d'), im = c.createImageData(256, 256); for (let i = 0; i < 256 * 256; i++) { const n = 38 + Math.random() * 22; im.data.set([n, n + 1, n + 3, 255], 4 * i); } c.putImageData(im, 0, 0); }
+  const gt = new THREE.CanvasTexture(grain); gt.colorSpace = THREE.SRGBColorSpace; gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set((END + behind) / 4, W / 4); gt.anisotropy = 8;
+  const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(END + behind, W), new THREE.MeshStandardNodeMaterial({ map: gt, roughness: 0.88, metalness: 0 }));
+  asphalt.rotation.x = -Math.PI / 2; asphalt.position.set((END - behind) / 2, 0, 0); asphalt.receiveShadow = true; g.add(asphalt);
+  const pad = new THREE.Mesh(new THREE.PlaneGeometry(110, W), mat(0x47494c, 0.8));   // the launch pad: the first 100 m, lighter
+  pad.rotation.x = -Math.PI / 2; pad.position.set(45, 0.005, 0); pad.receiveShadow = true; g.add(pad);
+  const line = (x0, x1, z, w, color = 0xf2f2f2) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, w), mat(color, 0.6)); m.rotation.x = -Math.PI / 2; m.position.set((x0 + x1) / 2, 0.01, z); g.add(m); };
+  line(-behind, END, -W / 2 + 0.3, 0.2); line(-behind, END, W / 2 - 0.3, 0.2); line(-behind, END, 0, 0.18, 0xffd400);   // the lane edges and the centre line
+  line(-0.15, 0.15, -W / 4, W / 2 - 0.8); line(-0.15, 0.15, W / 4, W / 2 - 0.8);                                       // the start line, both lanes
+  line(Drag.MARKS.eighth - 0.15, Drag.MARKS.eighth + 0.15, 0, W - 0.8, 0xd9d9d9);                                     // the 1/8 mile
+  const check = document.createElement('canvas'); check.width = 64; check.height = 512;
+  { const c = check.getContext('2d'); for (let j = 0; j < 32; j++) for (let i = 0; i < 4; i++) { c.fillStyle = (i + j) % 2 ? '#111' : '#f4f4f4'; c.fillRect(i * 16, j * 16, 16, 16); } }
+  const ct = new THREE.CanvasTexture(check); ct.colorSpace = THREE.SRGBColorSpace;
+  const fin = new THREE.Mesh(new THREE.PlaneGeometry(2, W - 0.8), new THREE.MeshStandardNodeMaterial({ map: ct, roughness: 0.7 }));
+  fin.rotation.x = -Math.PI / 2; fin.position.set(Q, 0.012, 0); g.add(fin);                                           // the finish, checkered
+  // the finish gantry and the distance boards
+  const post = (x, z, h) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, h, 10), mat(0x9aa0a6, 0.4)); p.position.set(x, h / 2, z); p.castShadow = true; g.add(p); };
+  post(Q, -W / 2 - 1, 7); post(Q, W / 2 + 1, 7);
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.6, W + 2.4), [mat(0x222, 0.5), mat(0x222, 0.5), mat(0x222, 0.5), mat(0x222, 0.5),
+    new THREE.MeshBasicNodeMaterial({ map: dragBoard('FINISH · 1/4 MILE', 1024, 96, '#0a0a0a', PAL.accent) }), new THREE.MeshBasicNodeMaterial({ map: dragBoard('HOUSE OF CARS', 1024, 96, '#0a0a0a', '#fefefe') })]);
+  bar.position.set(Q, 6.6, 0); g.add(bar);
+  for (const [x, label] of [[Drag.MARKS.sixty, '60 FT'], [Drag.MARKS.eighth, '1/8 MILE'], [Q - 0.5, '1/4 MILE']]) {
+    post(x, W / 2 + 2.2, 2.6);
+    const b = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.9), new THREE.MeshBasicNodeMaterial({ map: dragBoard(label, 512, 176, '#f4f4f4', '#0a0a0a'), side: THREE.DoubleSide }));
+    b.position.set(x, 2.8, W / 2 + 2.2); b.rotation.y = -Math.PI / 2; g.add(b);
+  }
+  // the tree: a post between the lanes behind the start line; each lamp an unlit and a lit material, swapped by the run
+  const tree = new THREE.Group(); tree.position.set(5, 0, 0); g.add(tree);          // just past the start line, facing the cars, as on a strip
+  const pole = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.4, 0.5), mat(0x15171a, 0.6)); pole.position.y = 1.7; tree.add(pole);
+  const lamps = {}, off = new THREE.MeshStandardNodeMaterial({ color: 0x1b1b1b, roughness: 0.3 });
+  const lamp = (name, y, color, r) => {
+    const on = glowMaterial(color, 7), list = [];
+    for (const z of [-0.42, 0.42]) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), off); m.position.set(-0.12, y, z); tree.add(m); list.push(m); }
+    const housing = new THREE.Mesh(new THREE.BoxGeometry(0.2, r * 2.6, 1.4), mat(0x0d0e10, 0.5)); housing.position.set(0, y, 0); tree.add(housing);
+    lamps[name] = { list, on, off };
+  };
+  lamp('prestage', 3.5, '#ffd27a', 0.09); lamp('stage', 3.3, '#ffd27a', 0.09);
+  lamp('a1', 2.9, '#ffb020', 0.15); lamp('a2', 2.5, '#ffb020', 0.15); lamp('a3', 2.1, '#ffb020', 0.15);
+  lamp('green', 1.6, '#3dff7a', 0.16); lamp('red', 1.15, '#ff3b30', 0.16);
+  scene.add(g);
+  return { group: g, lamps };
+}
+function setLamp(dv, name, lit) { const L = dv.lamps[name]; for (const m of L.list) m.material = lit ? L.on : L.off; }
+// the track's own pieces hide while the strip shows, and come back as they were
+function setDragScene(on) {
+  const parts = [trackView.ground, trackView.track, trackView.gates, trackView.marker];
+  if (on) { trackView.beforeDrag = parts.map((o) => o.visible); parts.forEach((o) => { o.visible = false; }); }
+  else if (trackView.beforeDrag) { parts.forEach((o, i) => { o.visible = trackView.beforeDrag[i]; }); trackView.beforeDrag = null; }
+  if (dragView) dragView.group.visible = on;
+  document.body.classList.toggle('dragmode', on);
+  $('drag').hidden = !on;
+}
+const dragTimeRows = [['rt', 'Reaction'], ['sixty', '60 ft'], ['kmh100', '0-100 km/h'], ['eighth', '1/8 mile'], ['quarter', '1/4 mile']];
+async function startDrag(entry) {
+  loadingShow('Rolling the car to the strip…', entry.name);
+  await prepareTrack();
+  if (!dragView) dragView = buildDragStrip(trackView.scene);
+  window.HOC.track = trackView;
+  if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); }
+  mode = 'show';
+  setDragScene(true);
+  clearSkids(trackView.skids);
+  const carJson = entry.sim ? await fetchJson('sim_cars/' + entry.name + '.json') : (await fetchJson('cars.json')).cars[entry.name];
+  const car = entry.sim ? await simBody(entry.name, carJson) : await buildCar(entry);
+  trackView.scene.add(car.group);
+  car.group.matrixAutoUpdate = false;
+  const gravity = (await fetchJson('physics.json')).gravity_z.value;
+  const unexported = entry.sim ? await fetchJson('sim_cars/' + entry.name + '.unexported.json') : (await fetchJson('chaos_unexported.json')).cars[entry.name];
+  const opts = { gravityZ: gravity, unexported, angularDampingOnGround: RULES.angular_damping.on_ground, angularDampingInAir: RULES.angular_damping.in_air };
+  const strip = Drag.flatStrip(TRACK.surface_friction.road);                // the template road's READ grip
+  const front = carJson.bounds_cm.value.origin[0] + carJson.bounds_cm.value.box_extent[0];   // the nose, ahead of the car's origin (cm)
+  const stage = [-front, DRAG_LANE_Y_CM, 60];
+  const settle = (v) => { Chaos.resetVehicle(v, stage, 0); for (let i = 0; i < 240; i++) Chaos.stepVehicle(v, { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' }, STEP, strip); return v; };
+  const v = settle(Chaos.makeVehicle(carJson, opts));
+  const best = Drag.bestRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip);   // the sim's own best run, for the slip (DERIVED)
+  const camKey = entry.sim ? 'SportsCar' : entry.name;
+  const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
+  race = { kind: 'drag', entry, car, v, strip, best, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
+           wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {} };
+  const tachEl = $('hud-speed'); tachEl.querySelector('svg.tach')?.remove();
+  race.tach = buildTach(tachEl, v.cfg.engine.maxRPM, Math.min(...race.pts));   // the red band from the earliest derived shift point
+  $('dslip').hidden = true; $('dgrade').textContent = '';
+  $('dtimes').innerHTML = dragTimeRows.map(([k, l]) => '<div data-k="' + k + '"><span>' + l + '</span><b>--</b></div>').join('');
+  $('dcar').textContent = entry.sim ? (LOT_CARS.find((c) => c.key === entry.name) || {}).title || entry.name : entry.name;
+  await loadingDone();
+  audio.start();
+  window.HOC.state = race;
+  race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
+  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.35, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45 });
+  mode = 'drag';
+  $('showroom').style.display = 'none'; $('race').style.display = 'block';
+}
+document.querySelectorAll('#dtouch button').forEach((b) => b.addEventListener('pointerdown', (e) => { e.preventDefault(); dragPress(b.dataset.d); }));   // a phone's shift buttons
+window.HOC.dragBot = () => { if (race && race.kind === 'drag') race.bot = true; };   // the page check: gas on the green, every shift at its derived point, through the same presses
+window.HOC.dragTick = (dt) => tickDrag(dt);                                      // the page check steps frames itself (a background page draws few)
+function dragPress(dir) { if (mode === 'drag' && race && race.kind === 'drag' && !race.run.done) race.presses.push(dir); }
+function dragRerun() { if (race && race.kind === 'drag') startDrag(race.entry).catch((e) => reportError(e)); }
+function fmt(s, d = 3) { return s === null || s === undefined ? '--' : s.toFixed(d); }
+function tickDrag(dt) {
+  const r = race, v = r.v, c = v.cfg, run = r.run;
+  const raw = readInput();
+  // the pad's shift buttons, edges only: RB up, Y down (no Unreal binding: the page's own)
+  const pad = navigator.getGamepads ? [...navigator.getGamepads()].find((p) => p && p.connected && p.mapping === 'standard') : null;
+  if (pad) { for (const [b, dir] of [[5, 'up'], [3, 'down']]) { const d = !!(pad.buttons[b] && pad.buttons[b].pressed); if (d && !r.padPrev[b]) dragPress(dir); r.padPrev[b] = d; } }
+  const finished = run.done;
+  if (r.bot && run.green !== null && !finished) { raw.throttle = 1; const gg = v.trans.target; if (gg >= 1 && gg < c.trans.forward.length && v.trans.current === gg && v.trans.engineRPM >= r.pts[gg - 1] && !r.presses.length) dragPress('up'); }
+  // past the line the car shuts down: off the gas, coasting on its own READ idle brake and engine braking, and only below 30 km/h
+  // the brake (AUTHORED): a brake press at speed is a FULL brake in Unreal's reverse-as-brake model, the wheels locked (no ABS) and
+  // the tyre smoke filled the screen (11-06)
+  const shut = finished && v.forwardSpeedCmS * 0.036 < 30;
+  const input = { throttle: finished ? 0 : raw.throttle, brake: finished ? (shut ? 1 : 0) : raw.brake, steering: raw.steering, handbrake: 0, transmission: 'manual' };
+  acc += Math.min(dt, 0.1);
+  while (acc >= STEP) {
+    const p = r.presses.shift(), gear = v.trans.target, rpm = v.trans.engineRPM;
+    if (p === 'up' && gear >= 1 && gear < c.trans.forward.length) {
+      const grade = Drag.noteShift(run, gear, rpm, r.pts[gear - 1], c.engine.maxRPM);
+      const el = $('dgrade'); el.textContent = grade === 'PERFECT' ? 'PERFECT SHIFT' : grade === 'EARLY' ? 'EARLY · ' + Math.round(rpm) + ' rpm' : 'LATE · ' + Math.round(rpm) + ' rpm';
+      el.className = 'g-' + grade.toLowerCase(); void el.offsetWidth; el.classList.add('pop');
+      blip(audio, grade === 'PERFECT' ? 'go' : 'gate');
+    }
+    Chaos.stepVehicle(v, Object.assign({}, input, { gearUp: p === 'up', gearDown: p === 'down' }), STEP, r.strip);
+    const ev = Drag.tick(run, { dt: STEP, distM: (v.pos[0] - r.x0) / 100, speedKmh: v.forwardSpeedCmS * 0.036, rpm: v.trans.engineRPM, gear: v.trans.target, maxRPM: c.engine.maxRPM });
+    for (const e of ev) {
+      if (e === 'green') blip(audio, 'go');
+      if (e === 'red') blip(audio, 'count');
+    }
+    r.now += STEP; acc -= STEP;
+  }
+  // the tree
+  const T = run.tree;
+  setLamp(dragView, 'prestage', T.prestage); setLamp(dragView, 'stage', T.stage);
+  setLamp(dragView, 'a1', T.ambers >= 1 && !T.green); setLamp(dragView, 'a2', T.ambers >= 2 && !T.green); setLamp(dragView, 'a3', T.ambers >= 3 && !T.green);
+  setLamp(dragView, 'green', T.green); setLamp(dragView, 'red', T.red);
+  document.querySelectorAll('#dtree i').forEach((el) => { const k = el.dataset.l; el.classList.toggle('on', k === 'prestage' ? T.prestage : k === 'stage' ? T.stage : k === 'green' ? T.green : k === 'red' ? T.red : T.ambers >= +k.slice(1) && !T.green); });
+  // the times as they come
+  const s = Drag.slip(run);
+  const val = { rt: s.reaction_s, sixty: s.sixty_s, kmh100: s.kmh100_s, eighth: s.eighth_s, quarter: s.quarter_s };
+  for (const [k] of dragTimeRows) { const el = document.querySelector('#dtimes [data-k="' + k + '"] b'); const t = val[k]; el.textContent = t === null || t === undefined ? '--' : (k === 'rt' && t >= 0 ? '+' : '') + t.toFixed(3); el.parentNode.classList.toggle('foul', k === 'rt' && run.foul); }
+  // the car, the camera, the sun
+  const [X, Y, Z] = carAxes(v);
+  r.car.group.matrix.fromArray(threeMatrixFromAxes([X, Y, Z], [1, 1, 1], v.pos));
+  r.car.wheels.forEach((w, i) => { if (w) { const ws = v.wheels[i]; poseWheel(w, ws.steerDeg, ws.spinRad, ws.suspensionOffsetCm); } });
+  const cam = r.camera, rig = updateRig(r.rig, v.pos, [X, Y, Z], dt);
+  cam.position.fromArray(toThreePoint(rig.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(rig.look));
+  cam.fov = verticalFovDeg(r.fov, cam.aspect); cam.updateProjectionMatrix();
+  const cp = toThreePoint(v.pos);
+  trackView.sky.position.copy(cam.position);
+  trackView.sun.target.position.set(cp[0], cp[1], cp[2]);
+  trackView.sun.position.set(cp[0] - trackView.sunDir[0] * 1.5, cp[1] - trackView.sunDir[1] * 1.5, cp[2] - trackView.sunDir[2] * 1.5);
+  // the cluster: speed, gear, tach, and the shift light for the gear the car is in
+  $('speed').textContent = Rules.speedText(v.forwardSpeedCmS, RULES); $('unit').textContent = RULES.speed.unit;
+  $('gear').textContent = Rules.gearText(v.gear, RULES);
+  updateTach(r.tach, v.engineRPM);
+  const g = v.trans.target, sl = g >= 1 && g < c.trans.forward.length ? Drag.shiftLight(v.engineRPM, r.pts[g - 1]) : { fill: 0, shift: false };
+  const leds = document.querySelectorAll('#dleds i'), lit = Math.round(sl.fill * leds.length);
+  leds.forEach((el, i) => { el.classList.toggle('on', i < lit); el.classList.toggle('flash', sl.shift); });
+  $('hud-speed').querySelector('#shift').classList.toggle('on', sl.shift);
+  // the slip, once, at the line
+  if (run.done && !r.slipShown) { r.slipShown = true; showDragSlip(r); }
+  laySkids(trackView.skids, v, Y, r.wheelWidths, dt);
+  r.throttle += (input.throttle - r.throttle) * Math.min(1, dt * 8);
+  const slide = v.wheels.reduce((a, w) => a + slideAmount(w), 0) / v.wheels.length;
+  driveSound(audio, { rpm: v.engineRPM, throttle: r.throttle, speedCmS: v.forwardSpeedCmS, slide, gear: v.gear, running: true });
+  r.post.render();
+}
+function showDragSlip(r) {
+  const s = Drag.slip(r.run), b = r.best.slip;
+  const dg = DRAGY.cars[r.entry.name], q = dg && dg.tests['1/4 mile'], e8 = dg && dg.tests['1/8 mile'], z = dg && dg.tests['0-100 km/h'];
+  const own = (rec) => rec && rec.kind === 'READ' ? (rec.no_mods_listed || rec.all) : null;
+  const ownQ = own(q), own8 = own(e8), ownZ = own(z);
+  const row = (label, you, sim, owners) => '<tr><th>' + label + '</th><td>' + you + '</td><td>' + sim + '</td><td>' + owners + '</td></tr>';
+  const kmh = (x) => (x === null || x === undefined ? '' : ' @ ' + Math.round(x) + ' km/h');
+  const grades = s.shifts.map((x) => '<span class="g-' + x.grade.toLowerCase() + '">' + x.from + '→' + (x.from + 1) + ' ' + x.grade.toLowerCase() + '</span>').join('');
+  $('dslip').innerHTML = '<p class="kick">Time slip</p><h3>' + esc($('dcar').textContent) + '</h3>' +
+    (s.foul ? '<p class="foul">RED LIGHT: left ' + fmt(-s.reaction_s) + ' s before the green</p>' : '') +
+    '<table><tr><th></th><td>You</td><td>Sim, best shifts</td><td>Dragy owners</td></tr>' +
+    row('Reaction', s.reaction_s === null ? '--' : (s.reaction_s >= 0 ? '+' : '') + fmt(s.reaction_s), fmt(b.reaction_s), '') +
+    row('60 ft', fmt(s.sixty_s), fmt(b.sixty_s), '') +
+    row('0-100 km/h', fmt(s.kmh100_s, 2), fmt(b.kmh100_s, 2), ownZ ? fmt(ownZ.median_s, 2) : '--') +
+    row('1/8 mile', fmt(s.eighth_s) + kmh(s.eighth_kmh), fmt(b.eighth_s) + kmh(b.eighth_kmh), own8 ? fmt(own8.median_s, 2) + kmh(own8.median_trap_kmh) : '--') +
+    row('1/4 mile', fmt(s.quarter_s) + kmh(s.quarter_kmh), fmt(b.quarter_s) + kmh(b.quarter_kmh), ownQ ? fmt(ownQ.median_s, 2) + kmh(ownQ.median_trap_kmh) : '--') + '</table>' +
+    '<div class="grades">' + (grades || '<span>no shifts</span>') + '</div>' +
+    '<p class="dimp">Sim: the same car and physics, every shift at its best point (from the car\'s own torque curve and gear ratios). Dragy owners: the median of the runs ' +
+    'Dragy users uploaded that list no mods' + (dg ? ' (<a href="' + esc(dg.board) + '" target="_blank" rel="noopener">their leaderboard</a>)' : '') + '. Times from 1 ft of roll-out.</p>' +
+    '<div class="acts"><button class="act go" id="drerun">Run again (R)</button><button class="act" id="dlot">Back to the lot (Esc)</button></div>';
+  $('dslip').hidden = false;
+  $('drerun').onclick = dragRerun; $('dlot').onclick = () => backToShowroom();
+}
+
 // ---------------------------------------------------------------- the ghost picker (UC-9.3)
 const GHOST_KEY = 'hoc.ghostpick';
 function fillGhostPicker() {
@@ -908,7 +1137,7 @@ let mode = 'show', last = performance.now();
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
   showCam.aspect = innerWidth / innerHeight; showCam.updateProjectionMatrix();
-  if (race) { race.camera.aspect = innerWidth / innerHeight; }
+  if (race && race.camera) { race.camera.aspect = innerWidth / innerHeight; }   // a race being built has no camera yet (the loading screen may be up)
 }
 addEventListener('resize', resize); resize();
 select(0);
@@ -935,7 +1164,7 @@ if (KIOSK) {
   document.body.classList.add('kiosk');
 }
 setTimeout(() => prepareTrack().catch((e) => { console.error(e); }), 1500);   // behind the lot; startRace awaits the same promise and shows any error
-$('loading').style.display = 'none';
+loadingDone();                                          // UC-20.3: closes now, or when a player in the game says
 // UC-7.2a: the page lowers its own resolution when frames run slow, raises it again when they are quick, and says which it chose
 const DPR = [0.75, 0.85, 1, 1.25, 1.5, 2].filter((x) => x <= Math.min(devicePixelRatio, 2) + 1e-6);
 let dprI = DPR.length - 1;
@@ -952,7 +1181,7 @@ function adapt(dt) {
 setQuality();
 renderer.setAnimationLoop(() => {
   const t = performance.now(), dt = Math.min(0.1, (t - last) / 1000); last = t;
-  if (mode === 'show') { padShow(); tickShow(dt); } else tickRace(dt);
+  if (mode === 'show') { padShow(); tickShow(dt); } else if (mode === 'drag') tickDrag(dt); else tickRace(dt);
   if (photoReq) takePicture();
   adapt(dt);
 });

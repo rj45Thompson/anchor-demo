@@ -1,6 +1,6 @@
 {
  "about": "each car for sale's own photos, in its listing's order, shown from the dealer's image server and credited to the listing (tools/photos.py)",
- "read_at": "2026-11-06T10:35:12-0600",
+ "read_at": "2026-11-06T14:30:34-0600",
  "cars": {
   "bentley_flying_spur_2018": {
    "listing": "https://www.houseofcars.com/inventory/Used-2018-Bentley-Flying_Spur-V8-SCBET9ZA8JC066912/",
@@ -8,63 +8,93 @@
    "photos": [
     {
      "thumb": "https://content.homenetiol.com/640x480/375dc88ca46d4ca0be1d2ee0b5ec86e6.jpg",
-     "full": "https://content.homenetiol.com/640x480/375dc88ca46d4ca0be1d2ee0b5ec86e6.jpg"
+     "full": "https://content.homenetiol.com/640x480/375dc88ca46d4ca0be1d2ee0b5ec86e6.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/375dc88ca46d4ca0be1d2ee0b5ec86e6.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/8ff41e629be8421e832a659eb89be205.jpg",
-     "full": "https://content.homenetiol.com/640x480/8ff41e629be8421e832a659eb89be205.jpg"
+     "full": "https://content.homenetiol.com/640x480/8ff41e629be8421e832a659eb89be205.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/8ff41e629be8421e832a659eb89be205.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/22d0bca5d1b1420982adb75e6b2c45d7.jpg",
-     "full": "https://content.homenetiol.com/640x480/22d0bca5d1b1420982adb75e6b2c45d7.jpg"
+     "full": "https://content.homenetiol.com/640x480/22d0bca5d1b1420982adb75e6b2c45d7.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/22d0bca5d1b1420982adb75e6b2c45d7.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/dde80216947c43d69dd29a798dbb56ec.jpg",
-     "full": "https://content.homenetiol.com/640x480/dde80216947c43d69dd29a798dbb56ec.jpg"
+     "full": "https://content.homenetiol.com/640x480/dde80216947c43d69dd29a798dbb56ec.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/dde80216947c43d69dd29a798dbb56ec.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/4a45e9c2972346d49e7c176b2d0e23fe.jpg",
-     "full": "https://content.homenetiol.com/640x480/4a45e9c2972346d49e7c176b2d0e23fe.jpg"
+     "full": "https://content.homenetiol.com/640x480/4a45e9c2972346d49e7c176b2d0e23fe.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/4a45e9c2972346d49e7c176b2d0e23fe.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/1e730f40844f4fd0a154067044702664.jpg",
-     "full": "https://content.homenetiol.com/640x480/1e730f40844f4fd0a154067044702664.jpg"
+     "full": "https://content.homenetiol.com/640x480/1e730f40844f4fd0a154067044702664.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/1e730f40844f4fd0a154067044702664.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/37f9041c6e184bd9823cbe36e95dedb4.jpg",
-     "full": "https://content.homenetiol.com/640x480/37f9041c6e184bd9823cbe36e95dedb4.jpg"
+     "full": "https://content.homenetiol.com/640x480/37f9041c6e184bd9823cbe36e95dedb4.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/37f9041c6e184bd9823cbe36e95dedb4.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/ebc2503160f442b1a987b617478979d4.jpg",
-     "full": "https://content.homenetiol.com/640x480/ebc2503160f442b1a987b617478979d4.jpg"
+     "full": "https://content.homenetiol.com/640x480/ebc2503160f442b1a987b617478979d4.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/ebc2503160f442b1a987b617478979d4.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/3f6e28faf3e9486f8cbb3f1a296e0780.jpg",
-     "full": "https://content.homenetiol.com/640x480/3f6e28faf3e9486f8cbb3f1a296e0780.jpg"
+     "full": "https://content.homenetiol.com/640x480/3f6e28faf3e9486f8cbb3f1a296e0780.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/3f6e28faf3e9486f8cbb3f1a296e0780.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/e27f9c42f7f34ec6b15da33bfb14fb11.jpg",
-     "full": "https://content.homenetiol.com/640x480/e27f9c42f7f34ec6b15da33bfb14fb11.jpg"
+     "full": "https://content.homenetiol.com/640x480/e27f9c42f7f34ec6b15da33bfb14fb11.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/e27f9c42f7f34ec6b15da33bfb14fb11.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/d68809326dcc44e2b4a010d8b0ac0606.jpg",
-     "full": "https://content.homenetiol.com/640x480/d68809326dcc44e2b4a010d8b0ac0606.jpg"
+     "full": "https://content.homenetiol.com/640x480/d68809326dcc44e2b4a010d8b0ac0606.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/d68809326dcc44e2b4a010d8b0ac0606.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/3379c34d99924b8b85d3963437f2cb1a.jpg",
-     "full": "https://content.homenetiol.com/640x480/3379c34d99924b8b85d3963437f2cb1a.jpg"
+     "full": "https://content.homenetiol.com/640x480/3379c34d99924b8b85d3963437f2cb1a.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/3379c34d99924b8b85d3963437f2cb1a.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/e99400f712554a03bb8303b9ec5d9a8d.jpg",
-     "full": "https://content.homenetiol.com/640x480/e99400f712554a03bb8303b9ec5d9a8d.jpg"
+     "full": "https://content.homenetiol.com/640x480/e99400f712554a03bb8303b9ec5d9a8d.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/e99400f712554a03bb8303b9ec5d9a8d.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/450286e7270e4908a552b4d129742a61.jpg",
-     "full": "https://content.homenetiol.com/640x480/450286e7270e4908a552b4d129742a61.jpg"
+     "full": "https://content.homenetiol.com/640x480/450286e7270e4908a552b4d129742a61.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/450286e7270e4908a552b4d129742a61.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/3b5fa085fa394026950c30f4f9ea96dc.jpg",
-     "full": "https://content.homenetiol.com/640x480/3b5fa085fa394026950c30f4f9ea96dc.jpg"
+     "full": "https://content.homenetiol.com/640x480/3b5fa085fa394026950c30f4f9ea96dc.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/3b5fa085fa394026950c30f4f9ea96dc.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     }
    ],
    "credit": "Photos: the houseofcars.com listing"
@@ -75,79 +105,117 @@
    "photos": [
     {
      "thumb": "https://content.homenetiol.com/640x480/6bbd0d4ed9424e729e9b95e4fa859574.jpg",
-     "full": "https://content.homenetiol.com/640x480/6bbd0d4ed9424e729e9b95e4fa859574.jpg"
+     "full": "https://content.homenetiol.com/640x480/6bbd0d4ed9424e729e9b95e4fa859574.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/6bbd0d4ed9424e729e9b95e4fa859574.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/c67a5ead361e4793b69c63c1c894d2e1.jpg",
-     "full": "https://content.homenetiol.com/640x480/c67a5ead361e4793b69c63c1c894d2e1.jpg"
+     "full": "https://content.homenetiol.com/640x480/c67a5ead361e4793b69c63c1c894d2e1.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/c67a5ead361e4793b69c63c1c894d2e1.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/92b66669f4764b75b00fd102681d8599.jpg",
-     "full": "https://content.homenetiol.com/640x480/92b66669f4764b75b00fd102681d8599.jpg"
+     "full": "https://content.homenetiol.com/640x480/92b66669f4764b75b00fd102681d8599.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/92b66669f4764b75b00fd102681d8599.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/cbb1027b50ec4897ba8020e7cb83a7eb.jpg",
-     "full": "https://content.homenetiol.com/640x480/cbb1027b50ec4897ba8020e7cb83a7eb.jpg"
+     "full": "https://content.homenetiol.com/640x480/cbb1027b50ec4897ba8020e7cb83a7eb.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/cbb1027b50ec4897ba8020e7cb83a7eb.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/53f63b66ab184637801b1bd60a39457b.jpg",
-     "full": "https://content.homenetiol.com/640x480/53f63b66ab184637801b1bd60a39457b.jpg"
+     "full": "https://content.homenetiol.com/640x480/53f63b66ab184637801b1bd60a39457b.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/53f63b66ab184637801b1bd60a39457b.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/6a9ca83412404f498886ca0a1fb972d6.jpg",
-     "full": "https://content.homenetiol.com/640x480/6a9ca83412404f498886ca0a1fb972d6.jpg"
+     "full": "https://content.homenetiol.com/640x480/6a9ca83412404f498886ca0a1fb972d6.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/6a9ca83412404f498886ca0a1fb972d6.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/f5d507dda22e48eca7c0fa19fe621858.jpg",
-     "full": "https://content.homenetiol.com/640x480/f5d507dda22e48eca7c0fa19fe621858.jpg"
+     "full": "https://content.homenetiol.com/640x480/f5d507dda22e48eca7c0fa19fe621858.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/f5d507dda22e48eca7c0fa19fe621858.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/732315a890ab4b578d1c2ae86c1291ae.jpg",
-     "full": "https://content.homenetiol.com/640x480/732315a890ab4b578d1c2ae86c1291ae.jpg"
+     "full": "https://content.homenetiol.com/640x480/732315a890ab4b578d1c2ae86c1291ae.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/732315a890ab4b578d1c2ae86c1291ae.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/8cc87bd3d5e042809616be629e2517db.jpg",
-     "full": "https://content.homenetiol.com/640x480/8cc87bd3d5e042809616be629e2517db.jpg"
+     "full": "https://content.homenetiol.com/640x480/8cc87bd3d5e042809616be629e2517db.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/8cc87bd3d5e042809616be629e2517db.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/ce39b815002d45a3ba9f0cc6b161a6f8.jpg",
-     "full": "https://content.homenetiol.com/640x480/ce39b815002d45a3ba9f0cc6b161a6f8.jpg"
+     "full": "https://content.homenetiol.com/640x480/ce39b815002d45a3ba9f0cc6b161a6f8.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/ce39b815002d45a3ba9f0cc6b161a6f8.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/82e606939cee4472b66792275b7ea212.jpg",
-     "full": "https://content.homenetiol.com/640x480/82e606939cee4472b66792275b7ea212.jpg"
+     "full": "https://content.homenetiol.com/640x480/82e606939cee4472b66792275b7ea212.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/82e606939cee4472b66792275b7ea212.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/1d1b725c68a4473b90bc7e2b4496b68a.jpg",
-     "full": "https://content.homenetiol.com/640x480/1d1b725c68a4473b90bc7e2b4496b68a.jpg"
+     "full": "https://content.homenetiol.com/640x480/1d1b725c68a4473b90bc7e2b4496b68a.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/1d1b725c68a4473b90bc7e2b4496b68a.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/6c86ab7771b545028f8152911790d50c.jpg",
-     "full": "https://content.homenetiol.com/640x480/6c86ab7771b545028f8152911790d50c.jpg"
+     "full": "https://content.homenetiol.com/640x480/6c86ab7771b545028f8152911790d50c.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/6c86ab7771b545028f8152911790d50c.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/75e7707b643c43099e49ee77355070d9.jpg",
-     "full": "https://content.homenetiol.com/640x480/75e7707b643c43099e49ee77355070d9.jpg"
+     "full": "https://content.homenetiol.com/640x480/75e7707b643c43099e49ee77355070d9.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/75e7707b643c43099e49ee77355070d9.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/6e548dfa07614b408c58d9c97e7e8002.jpg",
-     "full": "https://content.homenetiol.com/640x480/6e548dfa07614b408c58d9c97e7e8002.jpg"
+     "full": "https://content.homenetiol.com/640x480/6e548dfa07614b408c58d9c97e7e8002.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/6e548dfa07614b408c58d9c97e7e8002.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/e6ecd44d13864a71b0ab020486914e62.jpg",
-     "full": "https://content.homenetiol.com/640x480/e6ecd44d13864a71b0ab020486914e62.jpg"
+     "full": "https://content.homenetiol.com/640x480/e6ecd44d13864a71b0ab020486914e62.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/e6ecd44d13864a71b0ab020486914e62.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/5afa7f545b844f29a862a77b6aa90331.jpg",
-     "full": "https://content.homenetiol.com/640x480/5afa7f545b844f29a862a77b6aa90331.jpg"
+     "full": "https://content.homenetiol.com/640x480/5afa7f545b844f29a862a77b6aa90331.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/5afa7f545b844f29a862a77b6aa90331.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/fc7917409b3e40e0bb26979469231f95.jpg",
-     "full": "https://content.homenetiol.com/640x480/fc7917409b3e40e0bb26979469231f95.jpg"
+     "full": "https://content.homenetiol.com/640x480/fc7917409b3e40e0bb26979469231f95.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/fc7917409b3e40e0bb26979469231f95.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/092e550eb62d4c3ea0f3b8b78b630c15.jpg",
-     "full": "https://content.homenetiol.com/640x480/092e550eb62d4c3ea0f3b8b78b630c15.jpg"
+     "full": "https://content.homenetiol.com/640x480/092e550eb62d4c3ea0f3b8b78b630c15.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/092e550eb62d4c3ea0f3b8b78b630c15.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     }
    ],
    "credit": "Photos: the houseofcars.com listing"
@@ -158,43 +226,63 @@
    "photos": [
     {
      "thumb": "https://content.homenetiol.com/640x480/566b8a84e05e46b892f72f71df1b8cc0.jpg",
-     "full": "https://content.homenetiol.com/640x480/566b8a84e05e46b892f72f71df1b8cc0.jpg"
+     "full": "https://content.homenetiol.com/640x480/566b8a84e05e46b892f72f71df1b8cc0.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/566b8a84e05e46b892f72f71df1b8cc0.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/357a417dc28a4c488d198e9a97871127.jpg",
-     "full": "https://content.homenetiol.com/640x480/357a417dc28a4c488d198e9a97871127.jpg"
+     "full": "https://content.homenetiol.com/640x480/357a417dc28a4c488d198e9a97871127.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/357a417dc28a4c488d198e9a97871127.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/6e887910ea954eff8fafdf28986c7c65.jpg",
-     "full": "https://content.homenetiol.com/640x480/6e887910ea954eff8fafdf28986c7c65.jpg"
+     "full": "https://content.homenetiol.com/640x480/6e887910ea954eff8fafdf28986c7c65.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/6e887910ea954eff8fafdf28986c7c65.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/3da144dfc1824bbc9de58acf114413f9.jpg",
-     "full": "https://content.homenetiol.com/640x480/3da144dfc1824bbc9de58acf114413f9.jpg"
+     "full": "https://content.homenetiol.com/640x480/3da144dfc1824bbc9de58acf114413f9.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/3da144dfc1824bbc9de58acf114413f9.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/595e2fd65d044a3fb019bd06f0ace49c.jpg",
-     "full": "https://content.homenetiol.com/640x480/595e2fd65d044a3fb019bd06f0ace49c.jpg"
+     "full": "https://content.homenetiol.com/640x480/595e2fd65d044a3fb019bd06f0ace49c.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/595e2fd65d044a3fb019bd06f0ace49c.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/7b1114c4b5eb44ae9b3994a52cfb6aca.jpg",
-     "full": "https://content.homenetiol.com/640x480/7b1114c4b5eb44ae9b3994a52cfb6aca.jpg"
+     "full": "https://content.homenetiol.com/640x480/7b1114c4b5eb44ae9b3994a52cfb6aca.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/7b1114c4b5eb44ae9b3994a52cfb6aca.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/1e80833c33684d4d8f80e0cf98975e00.jpg",
-     "full": "https://content.homenetiol.com/640x480/1e80833c33684d4d8f80e0cf98975e00.jpg"
+     "full": "https://content.homenetiol.com/640x480/1e80833c33684d4d8f80e0cf98975e00.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/1e80833c33684d4d8f80e0cf98975e00.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/b9a555c07450464fbc771e0d4b323745.jpg",
-     "full": "https://content.homenetiol.com/640x480/b9a555c07450464fbc771e0d4b323745.jpg"
+     "full": "https://content.homenetiol.com/640x480/b9a555c07450464fbc771e0d4b323745.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/b9a555c07450464fbc771e0d4b323745.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/bf84fc2574bc4fc7825dc9a01abd735f.jpg",
-     "full": "https://content.homenetiol.com/640x480/bf84fc2574bc4fc7825dc9a01abd735f.jpg"
+     "full": "https://content.homenetiol.com/640x480/bf84fc2574bc4fc7825dc9a01abd735f.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/bf84fc2574bc4fc7825dc9a01abd735f.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/d747c5908bc446c48ea77b1ae7c99055.jpg",
-     "full": "https://content.homenetiol.com/640x480/d747c5908bc446c48ea77b1ae7c99055.jpg"
+     "full": "https://content.homenetiol.com/640x480/d747c5908bc446c48ea77b1ae7c99055.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/d747c5908bc446c48ea77b1ae7c99055.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     }
    ],
    "credit": "Photos: the houseofcars.com listing"
@@ -205,63 +293,93 @@
    "photos": [
     {
      "thumb": "https://content.homenetiol.com/640x480/c0466931993d4f6e8c85824997467161.jpg",
-     "full": "https://content.homenetiol.com/640x480/c0466931993d4f6e8c85824997467161.jpg"
+     "full": "https://content.homenetiol.com/640x480/c0466931993d4f6e8c85824997467161.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/c0466931993d4f6e8c85824997467161.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/44d7b3d15ef84359a44b4ca97d7d0160.jpg",
-     "full": "https://content.homenetiol.com/640x480/44d7b3d15ef84359a44b4ca97d7d0160.jpg"
+     "full": "https://content.homenetiol.com/640x480/44d7b3d15ef84359a44b4ca97d7d0160.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/44d7b3d15ef84359a44b4ca97d7d0160.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/af05baa35bb649559d1f1740d0faa761.jpg",
-     "full": "https://content.homenetiol.com/640x480/af05baa35bb649559d1f1740d0faa761.jpg"
+     "full": "https://content.homenetiol.com/640x480/af05baa35bb649559d1f1740d0faa761.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/af05baa35bb649559d1f1740d0faa761.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/8d175cc503364407be34158acc430238.jpg",
-     "full": "https://content.homenetiol.com/640x480/8d175cc503364407be34158acc430238.jpg"
+     "full": "https://content.homenetiol.com/640x480/8d175cc503364407be34158acc430238.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/8d175cc503364407be34158acc430238.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/13bba2ad62fb49f9a21f31892fe49731.jpg",
-     "full": "https://content.homenetiol.com/640x480/13bba2ad62fb49f9a21f31892fe49731.jpg"
+     "full": "https://content.homenetiol.com/640x480/13bba2ad62fb49f9a21f31892fe49731.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/13bba2ad62fb49f9a21f31892fe49731.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/ec21a8e290d045d6a5e1908504c04a43.jpg",
-     "full": "https://content.homenetiol.com/640x480/ec21a8e290d045d6a5e1908504c04a43.jpg"
+     "full": "https://content.homenetiol.com/640x480/ec21a8e290d045d6a5e1908504c04a43.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/ec21a8e290d045d6a5e1908504c04a43.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/9f2684d361ac48deb4de97af1ed17ca4.jpg",
-     "full": "https://content.homenetiol.com/640x480/9f2684d361ac48deb4de97af1ed17ca4.jpg"
+     "full": "https://content.homenetiol.com/640x480/9f2684d361ac48deb4de97af1ed17ca4.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/9f2684d361ac48deb4de97af1ed17ca4.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/6cd4f57834a24aaab712f0423c4108b5.jpg",
-     "full": "https://content.homenetiol.com/640x480/6cd4f57834a24aaab712f0423c4108b5.jpg"
+     "full": "https://content.homenetiol.com/640x480/6cd4f57834a24aaab712f0423c4108b5.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/6cd4f57834a24aaab712f0423c4108b5.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/4d74a6ab52b34d3a8b7ba11dc213f1a3.jpg",
-     "full": "https://content.homenetiol.com/640x480/4d74a6ab52b34d3a8b7ba11dc213f1a3.jpg"
+     "full": "https://content.homenetiol.com/640x480/4d74a6ab52b34d3a8b7ba11dc213f1a3.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/4d74a6ab52b34d3a8b7ba11dc213f1a3.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/168b4bd268a94d1ebe32281447ae2e84.jpg",
-     "full": "https://content.homenetiol.com/640x480/168b4bd268a94d1ebe32281447ae2e84.jpg"
+     "full": "https://content.homenetiol.com/640x480/168b4bd268a94d1ebe32281447ae2e84.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/168b4bd268a94d1ebe32281447ae2e84.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/9a44e86cff44476ca66808f39253764a.jpg",
-     "full": "https://content.homenetiol.com/640x480/9a44e86cff44476ca66808f39253764a.jpg"
+     "full": "https://content.homenetiol.com/640x480/9a44e86cff44476ca66808f39253764a.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/9a44e86cff44476ca66808f39253764a.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/3e117b459c114f63bdfcd65cdf5a7600.jpg",
-     "full": "https://content.homenetiol.com/640x480/3e117b459c114f63bdfcd65cdf5a7600.jpg"
+     "full": "https://content.homenetiol.com/640x480/3e117b459c114f63bdfcd65cdf5a7600.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/3e117b459c114f63bdfcd65cdf5a7600.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/36df19504e8f43fc96d727bb0af6662f.jpg",
-     "full": "https://content.homenetiol.com/640x480/36df19504e8f43fc96d727bb0af6662f.jpg"
+     "full": "https://content.homenetiol.com/640x480/36df19504e8f43fc96d727bb0af6662f.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/36df19504e8f43fc96d727bb0af6662f.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/16341df1f21743ca9c1e6e58b40815c8.jpg",
-     "full": "https://content.homenetiol.com/640x480/16341df1f21743ca9c1e6e58b40815c8.jpg"
+     "full": "https://content.homenetiol.com/640x480/16341df1f21743ca9c1e6e58b40815c8.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/16341df1f21743ca9c1e6e58b40815c8.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/93b674000e4f45bc8ea064624f591aeb.jpg",
-     "full": "https://content.homenetiol.com/640x480/93b674000e4f45bc8ea064624f591aeb.jpg"
+     "full": "https://content.homenetiol.com/640x480/93b674000e4f45bc8ea064624f591aeb.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/93b674000e4f45bc8ea064624f591aeb.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     }
    ],
    "credit": "Photos: the houseofcars.com listing"
@@ -272,63 +390,93 @@
    "photos": [
     {
      "thumb": "https://content.homenetiol.com/640x480/3f58a224039548ce9129304249361fb0.jpg",
-     "full": "https://content.homenetiol.com/640x480/3f58a224039548ce9129304249361fb0.jpg"
+     "full": "https://content.homenetiol.com/640x480/3f58a224039548ce9129304249361fb0.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/3f58a224039548ce9129304249361fb0.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/7d4423444a914a0cb82bafedb74de6b0.jpg",
-     "full": "https://content.homenetiol.com/640x480/7d4423444a914a0cb82bafedb74de6b0.jpg"
+     "full": "https://content.homenetiol.com/640x480/7d4423444a914a0cb82bafedb74de6b0.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/7d4423444a914a0cb82bafedb74de6b0.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/45ec48cc8fd24be09bfdd045f37474d0.jpg",
-     "full": "https://content.homenetiol.com/640x480/45ec48cc8fd24be09bfdd045f37474d0.jpg"
+     "full": "https://content.homenetiol.com/640x480/45ec48cc8fd24be09bfdd045f37474d0.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/45ec48cc8fd24be09bfdd045f37474d0.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/d2473ba11e8946debed9c8adea55c575.jpg",
-     "full": "https://content.homenetiol.com/640x480/d2473ba11e8946debed9c8adea55c575.jpg"
+     "full": "https://content.homenetiol.com/640x480/d2473ba11e8946debed9c8adea55c575.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/d2473ba11e8946debed9c8adea55c575.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/6a6781a39b834322830544ff3f85950c.jpg",
-     "full": "https://content.homenetiol.com/640x480/6a6781a39b834322830544ff3f85950c.jpg"
+     "full": "https://content.homenetiol.com/640x480/6a6781a39b834322830544ff3f85950c.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/6a6781a39b834322830544ff3f85950c.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/75e771830d50439d9f4b349058481a1e.jpg",
-     "full": "https://content.homenetiol.com/640x480/75e771830d50439d9f4b349058481a1e.jpg"
+     "full": "https://content.homenetiol.com/640x480/75e771830d50439d9f4b349058481a1e.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/75e771830d50439d9f4b349058481a1e.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/e9049f6cd98541ccb14539177eeef972.jpg",
-     "full": "https://content.homenetiol.com/640x480/e9049f6cd98541ccb14539177eeef972.jpg"
+     "full": "https://content.homenetiol.com/640x480/e9049f6cd98541ccb14539177eeef972.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/e9049f6cd98541ccb14539177eeef972.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/4567f84bbb2347a19a38cede88fe9899.jpg",
-     "full": "https://content.homenetiol.com/640x480/4567f84bbb2347a19a38cede88fe9899.jpg"
+     "full": "https://content.homenetiol.com/640x480/4567f84bbb2347a19a38cede88fe9899.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/4567f84bbb2347a19a38cede88fe9899.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/9261444b9c7e4ebf80df9e55233ade78.jpg",
-     "full": "https://content.homenetiol.com/640x480/9261444b9c7e4ebf80df9e55233ade78.jpg"
+     "full": "https://content.homenetiol.com/640x480/9261444b9c7e4ebf80df9e55233ade78.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/9261444b9c7e4ebf80df9e55233ade78.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/399aa61c7fd642aead080385158aa8a2.jpg",
-     "full": "https://content.homenetiol.com/640x480/399aa61c7fd642aead080385158aa8a2.jpg"
+     "full": "https://content.homenetiol.com/640x480/399aa61c7fd642aead080385158aa8a2.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/399aa61c7fd642aead080385158aa8a2.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/9c5c29b0d9084e84a3e6b4586b811d8a.jpg",
-     "full": "https://content.homenetiol.com/640x480/9c5c29b0d9084e84a3e6b4586b811d8a.jpg"
+     "full": "https://content.homenetiol.com/640x480/9c5c29b0d9084e84a3e6b4586b811d8a.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/9c5c29b0d9084e84a3e6b4586b811d8a.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/d9ea988ea334439687537a75c250b4bd.jpg",
-     "full": "https://content.homenetiol.com/640x480/d9ea988ea334439687537a75c250b4bd.jpg"
+     "full": "https://content.homenetiol.com/640x480/d9ea988ea334439687537a75c250b4bd.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/d9ea988ea334439687537a75c250b4bd.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/42af430967c7494197f278ca768fa5e1.jpg",
-     "full": "https://content.homenetiol.com/640x480/42af430967c7494197f278ca768fa5e1.jpg"
+     "full": "https://content.homenetiol.com/640x480/42af430967c7494197f278ca768fa5e1.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/42af430967c7494197f278ca768fa5e1.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/7af175354cbe4dd4a8364b18f4b9f016.jpg",
-     "full": "https://content.homenetiol.com/640x480/7af175354cbe4dd4a8364b18f4b9f016.jpg"
+     "full": "https://content.homenetiol.com/640x480/7af175354cbe4dd4a8364b18f4b9f016.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/7af175354cbe4dd4a8364b18f4b9f016.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/ad36f76f355147c398a86ad72371b78a.jpg",
-     "full": "https://content.homenetiol.com/640x480/ad36f76f355147c398a86ad72371b78a.jpg"
+     "full": "https://content.homenetiol.com/640x480/ad36f76f355147c398a86ad72371b78a.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/ad36f76f355147c398a86ad72371b78a.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     }
    ],
    "credit": "Photos: the houseofcars.com listing"
@@ -339,63 +487,93 @@
    "photos": [
     {
      "thumb": "https://content.homenetiol.com/640x480/b54de3ec3c91408b913db7e51e454b97.jpg",
-     "full": "https://content.homenetiol.com/640x480/b54de3ec3c91408b913db7e51e454b97.jpg"
+     "full": "https://content.homenetiol.com/640x480/b54de3ec3c91408b913db7e51e454b97.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/b54de3ec3c91408b913db7e51e454b97.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/54ab6c376ccb4b82b751e0f34311298c.jpg",
-     "full": "https://content.homenetiol.com/640x480/54ab6c376ccb4b82b751e0f34311298c.jpg"
+     "full": "https://content.homenetiol.com/640x480/54ab6c376ccb4b82b751e0f34311298c.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/54ab6c376ccb4b82b751e0f34311298c.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/62ed8e4a4d174bd98ddc631108310720.jpg",
-     "full": "https://content.homenetiol.com/640x480/62ed8e4a4d174bd98ddc631108310720.jpg"
+     "full": "https://content.homenetiol.com/640x480/62ed8e4a4d174bd98ddc631108310720.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/62ed8e4a4d174bd98ddc631108310720.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/0ab4d144fcfb4a65ace6ea80653626c8.jpg",
-     "full": "https://content.homenetiol.com/640x480/0ab4d144fcfb4a65ace6ea80653626c8.jpg"
+     "full": "https://content.homenetiol.com/640x480/0ab4d144fcfb4a65ace6ea80653626c8.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/0ab4d144fcfb4a65ace6ea80653626c8.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/c12073d22ee94be080c3f28e64d905e9.jpg",
-     "full": "https://content.homenetiol.com/640x480/c12073d22ee94be080c3f28e64d905e9.jpg"
+     "full": "https://content.homenetiol.com/640x480/c12073d22ee94be080c3f28e64d905e9.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/c12073d22ee94be080c3f28e64d905e9.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/9bf999c5c50e493ea6a6a31adfc93221.jpg",
-     "full": "https://content.homenetiol.com/640x480/9bf999c5c50e493ea6a6a31adfc93221.jpg"
+     "full": "https://content.homenetiol.com/640x480/9bf999c5c50e493ea6a6a31adfc93221.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/9bf999c5c50e493ea6a6a31adfc93221.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/69f7c7661b824722b4acb1fdfaea8b99.jpg",
-     "full": "https://content.homenetiol.com/640x480/69f7c7661b824722b4acb1fdfaea8b99.jpg"
+     "full": "https://content.homenetiol.com/640x480/69f7c7661b824722b4acb1fdfaea8b99.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/69f7c7661b824722b4acb1fdfaea8b99.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/9879323908104893b09c7dd5f633caa4.jpg",
-     "full": "https://content.homenetiol.com/640x480/9879323908104893b09c7dd5f633caa4.jpg"
+     "full": "https://content.homenetiol.com/640x480/9879323908104893b09c7dd5f633caa4.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/9879323908104893b09c7dd5f633caa4.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/c7440dc71fef4faba61f8920ce721f02.jpg",
-     "full": "https://content.homenetiol.com/640x480/c7440dc71fef4faba61f8920ce721f02.jpg"
+     "full": "https://content.homenetiol.com/640x480/c7440dc71fef4faba61f8920ce721f02.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/c7440dc71fef4faba61f8920ce721f02.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/bd9d5dddaa4e4d52a65c1e155e19758f.jpg",
-     "full": "https://content.homenetiol.com/640x480/bd9d5dddaa4e4d52a65c1e155e19758f.jpg"
+     "full": "https://content.homenetiol.com/640x480/bd9d5dddaa4e4d52a65c1e155e19758f.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/bd9d5dddaa4e4d52a65c1e155e19758f.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/49dd6213fd8946f1a6bee308e2b7d673.jpg",
-     "full": "https://content.homenetiol.com/640x480/49dd6213fd8946f1a6bee308e2b7d673.jpg"
+     "full": "https://content.homenetiol.com/640x480/49dd6213fd8946f1a6bee308e2b7d673.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/49dd6213fd8946f1a6bee308e2b7d673.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/09b4f4a57e434452bd0fa4de420f3e2f.jpg",
-     "full": "https://content.homenetiol.com/640x480/09b4f4a57e434452bd0fa4de420f3e2f.jpg"
+     "full": "https://content.homenetiol.com/640x480/09b4f4a57e434452bd0fa4de420f3e2f.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/09b4f4a57e434452bd0fa4de420f3e2f.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/1d4a23afebb449e18ff4abdecdff8559.jpg",
-     "full": "https://content.homenetiol.com/640x480/1d4a23afebb449e18ff4abdecdff8559.jpg"
+     "full": "https://content.homenetiol.com/640x480/1d4a23afebb449e18ff4abdecdff8559.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/1d4a23afebb449e18ff4abdecdff8559.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/0ba6d8e33bc847a18494cb0e680317ae.jpg",
-     "full": "https://content.homenetiol.com/640x480/0ba6d8e33bc847a18494cb0e680317ae.jpg"
+     "full": "https://content.homenetiol.com/640x480/0ba6d8e33bc847a18494cb0e680317ae.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/0ba6d8e33bc847a18494cb0e680317ae.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     },
     {
      "thumb": "https://content.homenetiol.com/640x480/1684f90f44c74ef79ee8441c9bb22498.jpg",
-     "full": "https://content.homenetiol.com/640x480/1684f90f44c74ef79ee8441c9bb22498.jpg"
+     "full": "https://content.homenetiol.com/640x480/1684f90f44c74ef79ee8441c9bb22498.jpg",
+     "large": "https://content.homenetiol.com/1920x1440/1684f90f44c74ef79ee8441c9bb22498.jpg",
+     "large_src": "asked of the image server 2026-11-06: HTTP 206 image/jpeg, JPEG"
     }
    ],
    "credit": "Photos: the houseofcars.com listing"

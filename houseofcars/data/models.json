@@ -78,18 +78,88 @@
     "value": 5.269,
     "src": "READ research/specs.json length_mm: https://web.archive.org/web/20170212001810/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/World_2017/Models/Wraith/technical-specifications/Rolls-Royce_Wraith_Technical_Specifiaction_2017.pdf (5269 mm at the source, converted)"
    },
-   "yaw_deg": 180.0,
-   "src": "Made in Meshy from a Meshy Image picture: Meshy 7.1 image-to-3D with texture, remeshed to 100,113 triangles. A model of this make and model, not a scan of this car: its colour is Meshy's and its wheels do not turn. (AUTHORED: an AI model, made 2026-11-06)",
-   "finish": "AUTHORED clear coat (KHR_materials_clearcoat, coat roughness 0.04 as the Unreal paint): full where Meshy's own roughness map is under 0.35, none over 0.65; none where its metal map is over 0.4; covers 75% of the texture",
-   "emission": "none in the model",
+   "yaw_deg": 0.0,
+   "interior": null,
+   "src": "A hand-made 3D model of a Rolls-Royce Wraith by Blue3D on Sketchfab (CC BY 4.0), repainted black as this car is (\"Rolls Royce Wraith\" by Blue3D, https://sketchfab.com/3d-models/rolls-royce-wraith-1bdf60fd949049659c22d41afd80b300; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
+   "credit": {
+    "title": "Rolls Royce Wraith",
+    "author": "Blue3D",
+    "author_url": "https://sketchfab.com/Blueberry12",
+    "url": "https://sketchfab.com/3d-models/rolls-royce-wraith-1bdf60fd949049659c22d41afd80b300",
+    "licence": "CC Attribution",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "src": "READ https://api.sketchfab.com/v3/models/1bdf60fd949049659c22d41afd80b300 (license.label), and the GLB asset.extras.license"
+   },
+   "finish": [
+    {
+     "materials": [
+      "paintjob_4",
+      "paintjob_4.001"
+     ],
+     "finish": "gloss_black_paint",
+     "shade": {
+      "base": [
+       0.01,
+       0.01,
+       0.012
+      ],
+      "metallic": 0.0,
+      "roughness": 0.2,
+      "coat": [
+       1.0,
+       0.04
+      ]
+     },
+     "finish_why": "solid black paint under a clear coat",
+     "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/6bbd0d4ed9424e729e9b95e4fa859574.jpg and the side views): the body is black all over (site/data/colours.json Black); the model is blue under white"
+    },
+    {
+     "materials": [
+      "rims"
+     ],
+     "finish": "satin_black_wheel",
+     "shade": {
+      "base": [
+       0.025,
+       0.025,
+       0.025
+      ],
+      "metallic": 0.6,
+      "roughness": 0.45,
+      "coat": null
+     },
+     "finish_why": "satin black alloy, as the photos show the wheels (no mirror shine)",
+     "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/6bbd0d4ed9424e729e9b95e4fa859574.jpg and the side views): black multi-spoke wheels; the model has white seven-spoke wheels (the spokes stay as modelled)"
+    },
+    {
+     "materials": [
+      "chrome.001",
+      "chrome"
+     ],
+     "finish": "gloss_black_trim",
+     "shade": {
+      "base": [
+       0.02,
+       0.02,
+       0.022
+      ],
+      "metallic": 1.0,
+      "roughness": 0.25,
+      "coat": null
+     },
+     "finish_why": "blacked-out chrome: the grille and trim are black on the car, where the model has chrome",
+     "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/6bbd0d4ed9424e729e9b95e4fa859574.jpg and the side views): the grille vanes, window line and mascot are black; the model has them chrome"
+    }
+   ],
+   "emission": "the model's own lamps, kept",
    "wheels": [
     {
      "node": "wheel_Phys_Wheel_FL",
      "sim_wheel": 0,
      "centre_m": [
-      -1.7095,
-      0.3732,
-      0.8432
+      1.7561,
+      0.3682,
+      -0.779
      ],
      "radius_m": 0.36875,
      "steers": true
@@ -98,9 +168,9 @@
      "node": "wheel_Phys_Wheel_FR",
      "sim_wheel": 1,
      "centre_m": [
-      -1.709,
-      0.3687,
-      -0.8361
+      1.7561,
+      0.3682,
+      0.779
      ],
      "radius_m": 0.36875,
      "steers": true
@@ -109,9 +179,9 @@
      "node": "wheel_Phys_Wheel_BL",
      "sim_wheel": 2,
      "centre_m": [
-      1.5076,
-      0.3758,
-      0.8501
+      -1.3642,
+      0.3682,
+      -0.779
      ],
      "radius_m": 0.368,
      "steers": false
@@ -120,26 +190,83 @@
      "node": "wheel_Phys_Wheel_BR",
      "sim_wheel": 3,
      "centre_m": [
-      1.5048,
-      0.3792,
-      -0.8478
+      -1.3642,
+      0.3682,
+      0.779
      ],
      "radius_m": 0.368,
      "steers": false
     }
    ],
    "wheels_why": null,
-   "meshy": {
-    "model": "Meshy 7.1 Flagship (High Detail, Ultra 2K) image-to-3D with texture (Meshy 7, 2K); Remesh to 100K triangles (100,113)",
-    "how": "a picture made in Meshy Image (Nano Banana Pro) from the prompt below, then image-to-3D with texture and remesh, all in the author's Meshy account",
+   "sketchfab": {
+    "source": "sketchfab",
+    "model": "Rolls Royce Wraith",
+    "uid": "1bdf60fd949049659c22d41afd80b300",
+    "url": "https://sketchfab.com/3d-models/rolls-royce-wraith-1bdf60fd949049659c22d41afd80b300",
+    "author": "Blue3D",
+    "author_url": "https://sketchfab.com/Blueberry12",
+    "licence": {
+     "label": "CC Attribution",
+     "slug": "by",
+     "url": "https://creativecommons.org/licenses/by/4.0/",
+     "src": "READ https://api.sketchfab.com/v3/models/1bdf60fd949049659c22d41afd80b300 (license.label), and the GLB asset.extras.license"
+    },
+    "faces_published": 714272,
+    "published": "2024-01-05T10:13:58.962212",
+    "downloaded": {
+     "when": "2026-11-06",
+     "how": "the signed-in Download dialog, \"GLB, Texture size 1k\"",
+     "bytes": 24854620
+    },
+    "key": "rolls_royce_wraith_2017",
+    "vetting": {
+     "shape": "READ by eye 11-06 (test/model_look.html): a two-door fastback coupe with the Wraith grille, lamps and coach door, as the listing photos",
+     "rip_check": "its own description says it was modelled (\"highly detailed exterior model ... materials attached in blender ... applied subdivision\"); no other uploader has its face count",
+     "interior": "none: the author says exterior only (the windows show a few seat shapes)"
+    },
+    "nose": {
+     "axis": "+Z",
+     "src": "READ by eye 11-06: the grille is at +Z in test/model_look.html"
+    },
+    "card": "A hand-made 3D model of a Rolls-Royce Wraith by Blue3D on Sketchfab (CC BY 4.0), repainted black as this car is",
+    "how": "downloaded from Sketchfab; reduced by tools/reduce_glb.mjs (meshoptimizer, normals weighted); repainted and its wheels split by tools/prep_sketchfab.py",
     "made": "2026-11-06",
-    "prompt": "Photorealistic studio photo of a 2017 Rolls-Royce Wraith, the two-door fastback grand touring coupe, its real design: tall Pantheon grille with Spirit of Ecstasy, slim horizontal headlamps, long bonnet, rear-hinged coach doors, sweeping fastback roofline, alloy wheels. Front three-quarter view from the left side, the whole car in frame with space around it, plain light grey seamless studio background, soft even lighting, no people, no text, plain license plate.",
-    "picture_task": "01a1b0b7-f5ff-7538-a1c9-77802ebaac58 (output 4 of 4: 788ac6720b3c)",
-    "model_task": "01a1b0cd-62c6-7520-ae48-36c5c85a0086 (the remesh; downloaded as GLB 2026-11-06)",
-    "colour": "grey is Meshy's choice: the listing states no colour (listings.json colour ABSENT), so the page claims none",
-    "wheels": "one mesh: the wheels are part of the body and do not turn",
-    "card": "Made in Meshy from a Meshy Image picture: Meshy 7.1 image-to-3D with texture, remeshed to 100,113 triangles. A model of this make and model, not a scan of this car: its colour is Meshy's and its wheels do not turn."
-   }
+    "wheels": {
+     "spin": "^(tyre|rims|Material\\.01[34])$",
+     "why": "tyre, rim and the centre cap (Material.013/.014, 7 cm discs on the axle line) turn; the brake discs and calipers (brake*) stay on the body"
+    },
+    "paint": [
+     {
+      "match": "^paintjob_4(\\.001)?$",
+      "finish": "gloss_black_paint",
+      "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/6bbd0d4ed9424e729e9b95e4fa859574.jpg and the side views): the body is black all over (site/data/colours.json Black); the model is blue under white"
+     },
+     {
+      "match": "^rims$",
+      "finish": "satin_black_wheel",
+      "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/6bbd0d4ed9424e729e9b95e4fa859574.jpg and the side views): black multi-spoke wheels; the model has white seven-spoke wheels (the spokes stay as modelled)"
+     },
+     {
+      "match": "^chrome(\\.001)?$",
+      "finish": "gloss_black_trim",
+      "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/6bbd0d4ed9424e729e9b95e4fa859574.jpg and the side views): the grille vanes, window line and mascot are black; the model has them chrome"
+     }
+    ]
+   },
+   "reduce": [
+    {
+     "match": "^(tyre|rims|brake|brake_dark|brake_caliper|Material\\.01[34])$",
+     "error": 0.002,
+     "why": "tyre, rim and brake parts: tread and spokes show no reflection to dent"
+    },
+    {
+     "match": ".*",
+     "error": 0.0002,
+     "normal_weight": 1.0,
+     "why": "paint, glass, chrome and trim: a reflection shows any dent"
+    }
+   ]
   },
   "rolls_royce_ghost_2014": {
    "glb": "listing_rolls_royce_ghost_2014.glb",
@@ -147,29 +274,115 @@
     "value": 5.399,
     "src": "READ research/specs.json length_mm: https://web.archive.org/web/20170212001813/https://www.rolls-roycemotorcars.com/content/dam/rollsroyce-website/Brochures/world_2016/World_Updated/Ghost_SWB_Spec_World.pdf (5399 mm at the source, converted)"
    },
-   "yaw_deg": 180.0,
-   "src": "Made in Meshy from a Meshy Image picture and the side and rear views Meshy drew from it: Meshy 7.1 multi-view image-to-3D with texture, remeshed to 98,153 triangles. A model of this make and model, not a scan of this car: its colour is the listing's and its wheels do not turn. (AUTHORED: an AI model, made 2026-11-06)",
-   "finish": "AUTHORED clear coat (KHR_materials_clearcoat, coat roughness 0.04 as the Unreal paint): full where Meshy's own roughness map is under 0.35, none over 0.65; none where its metal map is over 0.4; covers 80% of the texture",
-   "emission": "none in the model",
+   "yaw_deg": 0.0,
+   "interior": null,
+   "src": "A hand-made 3D model of a Rolls-Royce Ghost by kurojishi on Sketchfab (CC BY 4.0), repainted black as this car is (\"Rolls Royce Ghost\" by kurojishi, https://sketchfab.com/3d-models/rolls-royce-ghost-1f614e803fc24946b83bdc2dd9926d62; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
+   "credit": {
+    "title": "Rolls Royce Ghost",
+    "author": "kurojishi",
+    "author_url": "https://sketchfab.com/kurojishi",
+    "url": "https://sketchfab.com/3d-models/rolls-royce-ghost-1f614e803fc24946b83bdc2dd9926d62",
+    "licence": "CC Attribution",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "src": "READ https://api.sketchfab.com/v3/models/1f614e803fc24946b83bdc2dd9926d62 (license.label), and the GLB asset.extras.license"
+   },
+   "finish": [
+    {
+     "materials": [
+      "secondary_paint_shad"
+     ],
+     "finish": "gloss_black_paint",
+     "shade": {
+      "base": [
+       0.01,
+       0.01,
+       0.012
+      ],
+      "metallic": 0.0,
+      "roughness": 0.2,
+      "coat": [
+       1.0,
+       0.04
+      ]
+     },
+     "finish_why": "solid black paint under a clear coat",
+     "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): the bonnet and the whole body are black (site/data/colours.json Black); the model has a silver bonnet"
+    },
+    {
+     "materials": [
+      "primary_paint_shad"
+     ],
+     "finish": "coat_only",
+     "shade": {
+      "coat": [
+       1.0,
+       0.04
+      ]
+     },
+     "finish_why": "the model's own colour kept; a clear coat added as on the other cars",
+     "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): the body is black, as the model's own paint already is"
+    },
+    {
+     "materials": [
+      "rim_shad"
+     ],
+     "finish": "satin_black_wheel",
+     "shade": {
+      "base": [
+       0.025,
+       0.025,
+       0.025
+      ],
+      "metallic": 0.6,
+      "roughness": 0.45,
+      "coat": null
+     },
+     "finish_why": "satin black alloy, as the photos show the wheels (no mirror shine)",
+     "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): black multi-spoke wheels; the model has silver wheels (the spokes stay as modelled)"
+    },
+    {
+     "materials": [
+      "ext_chrome_shad"
+     ],
+     "finish": "gloss_black_trim",
+     "shade": {
+      "base": [
+       0.02,
+       0.02,
+       0.022
+      ],
+      "metallic": 1.0,
+      "roughness": 0.25,
+      "coat": null
+     },
+     "finish_why": "blacked-out chrome: the grille and trim are black on the car, where the model has chrome",
+     "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): the grille, its vanes and the trim are black; the model has them chrome"
+    }
+   ],
+   "emission": "the model's own lamps, kept",
    "wheels": [
     {
      "node": "wheel_Phys_Wheel_FL",
      "sim_wheel": 0,
      "centre_m": [
-      -1.8554,
-      0.3768,
-      0.8832
+      1.7838,
+      0.372,
+      -0.8282
      ],
      "radius_m": 0.3688,
-     "steers": true
+     "steers": true,
+     "moved_m": {
+      "y": 0.0478,
+      "why": "the model has this wheel off the height the sim car (site/data/sim_cars) gives it beside the other three"
+     }
     },
     {
      "node": "wheel_Phys_Wheel_FR",
      "sim_wheel": 1,
      "centre_m": [
-      -1.8549,
-      0.3777,
-      -0.8691
+      1.7838,
+      0.377,
+      0.8282
      ],
      "radius_m": 0.3688,
      "steers": true
@@ -178,9 +391,9 @@
      "node": "wheel_Phys_Wheel_BL",
      "sim_wheel": 2,
      "centre_m": [
-      1.5246,
-      0.3698,
-      0.8494
+      -1.5006,
+      0.377,
+      -0.8282
      ],
      "radius_m": 0.3688,
      "steers": false
@@ -189,27 +402,88 @@
      "node": "wheel_Phys_Wheel_BR",
      "sim_wheel": 3,
      "centre_m": [
-      1.5286,
-      0.3688,
-      -0.8764
+      -1.5006,
+      0.377,
+      0.8282
      ],
      "radius_m": 0.3688,
      "steers": false
     }
    ],
    "wheels_why": null,
-   "meshy": {
-    "model": "Meshy 7.1 Flagship (High Detail, Ultra 2K) MULTI-VIEW image-to-3D (main view: the picture; the left, back and right views drawn by Meshy from it) with texture (Meshy 7, 2K); Remesh to 100K triangles (98,153)",
-    "how": "a picture made in Meshy Image (Nano Banana Pro) from the prompt below, its other three views generated by Meshy's multi-view, then image-to-3D with texture and remesh, all in the author's Meshy account",
+   "sketchfab": {
+    "source": "sketchfab",
+    "model": "Rolls Royce Ghost",
+    "uid": "1f614e803fc24946b83bdc2dd9926d62",
+    "url": "https://sketchfab.com/3d-models/rolls-royce-ghost-1f614e803fc24946b83bdc2dd9926d62",
+    "author": "kurojishi",
+    "author_url": "https://sketchfab.com/kurojishi",
+    "licence": {
+     "label": "CC Attribution",
+     "slug": "by",
+     "url": "https://creativecommons.org/licenses/by/4.0/",
+     "src": "READ https://api.sketchfab.com/v3/models/1f614e803fc24946b83bdc2dd9926d62 (license.label), and the GLB asset.extras.license"
+    },
+    "faces_published": 256286,
+    "published": "2018-06-11T02:45:38.521684",
+    "downloaded": {
+     "when": "2026-11-06",
+     "how": "the signed-in Download dialog, \"GLB, Texture size 1k\"",
+     "bytes": 11892568
+    },
+    "key": "rolls_royce_ghost_2014",
+    "vetting": {
+     "shape": "READ by eye 11-06 (test/model_look.html): a four-door Ghost (Series I) saloon with rear-hinged rear doors, as the listing photos",
+     "rip_check": "its description says \"modeled in maya textured in substance painter\"; its 89 textures are painted maps, not a game atlas; no other uploader has its face count",
+     "interior": "a dark blocking shell only (int_blocking_shad): no seats or dashboard"
+    },
+    "nose": {
+     "axis": "+Z",
+     "src": "READ by eye 11-06: the grille is at +Z in test/model_look.html"
+    },
+    "card": "A hand-made 3D model of a Rolls-Royce Ghost by kurojishi on Sketchfab (CC BY 4.0), repainted black as this car is",
+    "how": "downloaded from Sketchfab; reduced by tools/reduce_glb.mjs (meshoptimizer, normals weighted); repainted and its wheels split by tools/prep_sketchfab.py",
     "made": "2026-11-06",
-    "prompt": "Photorealistic studio photo of a black 2014 Rolls-Royce Ghost, the first-generation (2010-2020) four-door full-size luxury saloon, its real design: tall Pantheon grille with Spirit of Ecstasy, rectangular headlamps, long bonnet, rear-hinged rear coach doors, upright formal roofline, alloy wheels. Front three-quarter view from the left side, the whole car in frame with space around it, plain light grey seamless studio background, soft even lighting, no people, no text, plain license plate.",
-    "picture_task": "01a1b0bc-6b9b-73d2-b9cc-185fabe34cfa (output 3 of 4: 08dead227df0)",
-    "model_task": "01a1b0e6-4cf3-730c-a36f-5315624ee326 (the remesh; downloaded as GLB 2026-11-06)",
-    "colour": "black, as the listing states (listings.json colour READ BLACK)",
-    "wheels": "one mesh: the wheels are part of the body and do not turn",
-    "card": "Made in Meshy from a Meshy Image picture and the side and rear views Meshy drew from it: Meshy 7.1 multi-view image-to-3D with texture, remeshed to 98,153 triangles. A model of this make and model, not a scan of this car: its colour is the listing's and its wheels do not turn.",
-    "why_multiview": "the single-picture model's back was guessed (grey tail lamps, a smeared plate) and the chase camera looks at the back all lap; kept as meshy_in/rolls_royce_ghost_2014_single.glb"
-   }
+    "wheels": {
+     "spin": "^(rim_shad|wheel_rubber_shad)$",
+     "why": "the rim and tyre turn; the brake (brake_shad) stays on the body"
+    },
+    "paint": [
+     {
+      "match": "^secondary_paint_shad$",
+      "finish": "gloss_black_paint",
+      "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): the bonnet and the whole body are black (site/data/colours.json Black); the model has a silver bonnet"
+     },
+     {
+      "match": "^primary_paint_shad$",
+      "finish": "coat_only",
+      "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): the body is black, as the model's own paint already is"
+     },
+     {
+      "match": "^rim_shad$",
+      "finish": "satin_black_wheel",
+      "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): black multi-spoke wheels; the model has silver wheels (the spokes stay as modelled)"
+     },
+     {
+      "match": "^ext_chrome_shad$",
+      "finish": "gloss_black_trim",
+      "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): the grille, its vanes and the trim are black; the model has them chrome"
+     }
+    ]
+   },
+   "reduce": [
+    {
+     "match": "^(rim_shad|wheel_rubber_shad|brake_shad)$",
+     "error": 0.002,
+     "why": "tyre, rim and brake parts: tread and spokes show no reflection to dent"
+    },
+    {
+     "match": ".*",
+     "error": 0.0002,
+     "normal_weight": 1.0,
+     "why": "paint, glass, chrome and trim: a reflection shows any dent"
+    }
+   ]
   },
   "mercedes_amg_e63s_2021": {
    "glb": "listing_mercedes_amg_e63s_2021.glb",
@@ -356,18 +630,55 @@
     "value": 4.689,
     "src": "READ research/specs.json length_mm: https://web.archive.org/web/20250119192946/https://www.press.bmwgroup.com/global/article/attachment/T0279413EN/404750 (4689 mm at the source, converted)"
    },
-   "yaw_deg": 180.0,
-   "src": "Made in Meshy from a Meshy Image picture and the side and rear views Meshy drew from it: Meshy 7.1 multi-view image-to-3D with texture, remeshed to 99,553 triangles. A model of this make and model, not a scan of this car: its colour is Meshy's and its wheels do not turn. (AUTHORED: an AI model, made 2026-11-06)",
-   "finish": "AUTHORED clear coat (KHR_materials_clearcoat, coat roughness 0.04 as the Unreal paint): full where Meshy's own roughness map is under 0.35, none over 0.65; none where its metal map is over 0.4; covers 60% of the texture",
-   "emission": "none in the model",
+   "yaw_deg": 0.0,
+   "interior": {
+    "eye_m": [
+     0.08,
+     0.967,
+     -0.422
+    ],
+    "steering_wheel_m": [
+     0.53,
+     0.767,
+     -0.422
+    ],
+    "src": "the eye 0.45 m behind and 0.20 m above the centre of the model's own steering wheel (Material__129, READ by eye: Material__129 is the steering wheel rim and spokes, 0.39 m across at real size, on the left ahead of the driver seat (test/model_look.html 11-06)); the offsets AUTHORED, a seated driver's eye"
+   },
+   "src": "A hand-made 3D model of a BMW i8 by salza on Sketchfab (CC BY 4.0), white with the black bands as this car is (\"BMW I8\" by salza, https://sketchfab.com/3d-models/bmw-i8-c884666736f049c296044992107e12a7; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
+   "credit": {
+    "title": "BMW I8",
+    "author": "salza",
+    "author_url": "https://sketchfab.com/salza",
+    "url": "https://sketchfab.com/3d-models/bmw-i8-c884666736f049c296044992107e12a7",
+    "licence": "CC Attribution",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "src": "READ https://api.sketchfab.com/v3/models/c884666736f049c296044992107e12a7 (license.label), and the GLB asset.extras.license"
+   },
+   "finish": [
+    {
+     "materials": [
+      "Material__121"
+     ],
+     "finish": "coat_only",
+     "shade": {
+      "coat": [
+       1.0,
+       0.04
+      ]
+     },
+     "finish_why": "the model's own colour kept; a clear coat added as on the other cars",
+     "why": "the body paint (its texture holds the white and the black bands, READ from the listing photos as this car's); only a clear coat added"
+    }
+   ],
+   "emission": "the model's own lamps, kept",
    "wheels": [
     {
      "node": "wheel_Phys_Wheel_FL",
      "sim_wheel": 0,
      "centre_m": [
-      -1.4459,
-      0.3507,
-      0.8835
+      1.4275,
+      0.3388,
+      -0.788
      ],
      "radius_m": 0.35075,
      "steers": true
@@ -376,9 +687,9 @@
      "node": "wheel_Phys_Wheel_FR",
      "sim_wheel": 1,
      "centre_m": [
-      -1.4427,
-      0.3507,
-      -0.8965
+      1.4275,
+      0.3388,
+      0.788
      ],
      "radius_m": 0.35075,
      "steers": true
@@ -387,9 +698,9 @@
      "node": "wheel_Phys_Wheel_BL",
      "sim_wheel": 2,
      "centre_m": [
-      1.3533,
-      0.352,
-      0.8985
+      -1.4321,
+      0.3388,
+      -0.788
      ],
      "radius_m": 0.35200000000000004,
      "steers": false
@@ -398,28 +709,78 @@
      "node": "wheel_Phys_Wheel_BR",
      "sim_wheel": 3,
      "centre_m": [
-      1.3425,
-      0.352,
-      -0.8861
+      -1.4321,
+      0.3388,
+      0.788
      ],
      "radius_m": 0.35200000000000004,
      "steers": false
     }
    ],
    "wheels_why": null,
-   "meshy": {
-    "model": "Meshy 7.1 Flagship (High Detail, Ultra 2K) MULTI-VIEW image-to-3D (main view: the picture; the left, back and right views drawn by Meshy from it) with texture (Meshy 7, 2K); Remesh to 100K triangles (99,553)",
-    "how": "a picture made in Meshy Image (Nano Banana Pro) from the prompt below, its other three views generated by Meshy's multi-view, then image-to-3D with texture and remesh, all in the author's Meshy account",
+   "sketchfab": {
+    "source": "sketchfab",
+    "model": "BMW I8",
+    "uid": "c884666736f049c296044992107e12a7",
+    "url": "https://sketchfab.com/3d-models/bmw-i8-c884666736f049c296044992107e12a7",
+    "author": "salza",
+    "author_url": "https://sketchfab.com/salza",
+    "licence": {
+     "label": "CC Attribution",
+     "slug": "by",
+     "url": "https://creativecommons.org/licenses/by/4.0/",
+     "src": "READ https://api.sketchfab.com/v3/models/c884666736f049c296044992107e12a7 (license.label), and the GLB asset.extras.license"
+    },
+    "faces_published": 382769,
+    "published": "2017-01-21T13:34:08.241997",
+    "downloaded": {
+     "when": "2026-11-06",
+     "how": "the signed-in Download dialog, \"GLB, Texture size 1k\"",
+     "bytes": 22915668
+    },
+    "key": "bmw_i8_2016",
+    "vetting": {
+     "shape": "READ by eye 11-06 (test/model_look.html): the i8 coupe, white with the black roof and bonnet bands and the blue accents, as the listing photos",
+     "rip_check": "no description; but no other uploader has its face count (searched \"bmw i8\" and \"i8\" 11-06), and its materials carry 3ds Max default names (Material__102, 8___Default), not a game's shader names (the 3DMAN i8 was rejected for GTA San Andreas texture names: cheetah, vehiclelights, remap)",
+     "interior": "modelled: seats, dashboard, steering wheel, door cards"
+    },
+    "nose": {
+     "axis": "+Z",
+     "src": "READ by eye 11-06: the kidney grille is at +Z in test/model_look.html"
+    },
+    "card": "A hand-made 3D model of a BMW i8 by salza on Sketchfab (CC BY 4.0), white with the black bands as this car is",
+    "how": "downloaded from Sketchfab; reduced by tools/reduce_glb.mjs (meshoptimizer, normals weighted); its wheels split by tools/prep_sketchfab.py; a clear coat on the body paint",
     "made": "2026-11-06",
-    "prompt": "Photorealistic studio photo of a 2016 BMW i8 coupe, the I12 plug-in hybrid sports car before its 2018 facelift, its real design: closed butterfly doors, BMW kidney grille, slim headlamps, layered floating body panels with contrasting black sections, low wide stance, aerodynamic alloy wheels. Front three-quarter view from the left side, the whole car in frame with space around it, plain light grey seamless studio background, soft even lighting, no people, no text, plain license plate.",
-    "picture_task": "01a1b0c9-f519-71fc-9f83-7af8afc340b2 (output 4 of 4: 66d414e274c6)",
-    "model_task": "01a1b0f5-c05f-716a-9bc4-6301f3224d65 (the remesh; downloaded as GLB 2026-11-06)",
-    "colour": "silver is Meshy's choice: the listing states no colour (listings.json colour ABSENT), so the page claims none",
-    "wheels": "one mesh: the wheels are part of the body and do not turn",
-    "card": "Made in Meshy from a Meshy Image picture and the side and rear views Meshy drew from it: Meshy 7.1 multi-view image-to-3D with texture, remeshed to 99,553 triangles. A model of this make and model, not a scan of this car: its colour is Meshy's and its wheels do not turn.",
-    "why_multiview": "the single-picture model's back was guessed (grey tail lamps, made-up lettering on the diffuser) and the chase camera looks at the back all lap; kept as meshy_in/bmw_i8_2016_single.glb",
-    "meshy6_retexture_rejected": "tried 11-06 (task 01a1b0fe-b0e0-732b-99ea-9bbecaf54a25, kept as meshy_in/bmw_i8_2016_m6_rejected.glb): the paint came out even, but Meshy 6 textures from the front picture only and the back got a front-style face; the Meshy 7 multi-view texture keeps the real back"
-   }
+    "wheels": {
+     "spin": "^(Material__102|Material__89|Material__90|Material__91)$",
+     "why": "READ by eye 11-06: Material__89 is the tyre, __102 and __90 the rim, __91 the 5 cm centre cap; the arch liner (1___Default) and the brake disc (7___Default) stay on the body"
+    },
+    "paint": [
+     {
+      "match": "^Material__121$",
+      "finish": "coat_only",
+      "why": "the body paint (its texture holds the white and the black bands, READ from the listing photos as this car's); only a clear coat added"
+     }
+    ],
+    "interior": {
+     "steering_wheel": "^Material__129$",
+     "why": "Material__129 is the steering wheel rim and spokes, 0.39 m across at real size, on the left ahead of the driver seat (test/model_look.html 11-06)"
+    }
+   },
+   "reduce": [
+    {
+     "match": "^(Material__121|8___Default1|8___Default|8___Default0|4___Default0|4___Default1|chrome0|Material__34)$",
+     "error": 0.0002,
+     "normal_weight": 1.0,
+     "why": "the body paint, the black bands, the glass and the bright trim: a reflection shows any dent"
+    },
+    {
+     "match": ".*",
+     "error": 0.001,
+     "normal_weight": 1.0,
+     "why": "the cabin, the tyres, rims and brakes, the black plastics: seen through glass or with no mirror finish"
+    }
+   ]
   },
   "audi_s7": {
    "glb": "listing_audi_s7.glb",

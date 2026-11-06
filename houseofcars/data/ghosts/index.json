@@ -18,7 +18,7 @@
      "in_air": 3,
      "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
     },
-    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A10,A9)",
     "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
    },
    "made_with": {
@@ -29,7 +29,7 @@
     "node": "v25.9.0",
     "sha256_16": {
      "site/ai_driver.js": "307a085504244ec1",
-     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/chaos_vehicle.js": "86f2e7c2788ba806",
      "site/rules.js": "542bc81e872fc945",
      "site/gates.js": "4f8843e86be5942a",
      "site/ghost.js": "489d53d9fb3b316f",
@@ -67,7 +67,7 @@
      "in_air": 3,
      "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
     },
-    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A10,A9)",
     "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
    },
    "made_with": {
@@ -78,7 +78,7 @@
     "node": "v25.9.0",
     "sha256_16": {
      "site/ai_driver.js": "307a085504244ec1",
-     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/chaos_vehicle.js": "86f2e7c2788ba806",
      "site/rules.js": "542bc81e872fc945",
      "site/gates.js": "4f8843e86be5942a",
      "site/ghost.js": "489d53d9fb3b316f",
@@ -116,7 +116,7 @@
      "in_air": 3,
      "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
     },
-    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A10,A9)",
     "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
    },
    "made_with": {
@@ -127,7 +127,7 @@
     "node": "v25.9.0",
     "sha256_16": {
      "site/ai_driver.js": "307a085504244ec1",
-     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/chaos_vehicle.js": "86f2e7c2788ba806",
      "site/rules.js": "542bc81e872fc945",
      "site/gates.js": "4f8843e86be5942a",
      "site/ghost.js": "489d53d9fb3b316f",
@@ -165,7 +165,7 @@
      "in_air": 3,
      "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
     },
-    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A10,A9)",
     "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
    },
    "made_with": {
@@ -176,7 +176,7 @@
     "node": "v25.9.0",
     "sha256_16": {
      "site/ai_driver.js": "307a085504244ec1",
-     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/chaos_vehicle.js": "86f2e7c2788ba806",
      "site/rules.js": "542bc81e872fc945",
      "site/gates.js": "4f8843e86be5942a",
      "site/ghost.js": "489d53d9fb3b316f",
@@ -214,7 +214,7 @@
      "in_air": 3,
      "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
     },
-    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A10,A9)",
     "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
    },
    "made_with": {
@@ -225,7 +225,7 @@
     "node": "v25.9.0",
     "sha256_16": {
      "site/ai_driver.js": "307a085504244ec1",
-     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/chaos_vehicle.js": "86f2e7c2788ba806",
      "site/rules.js": "542bc81e872fc945",
      "site/gates.js": "4f8843e86be5942a",
      "site/ghost.js": "489d53d9fb3b316f",
@@ -263,7 +263,7 @@
      "in_air": 3,
      "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
     },
-    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A10,A9)",
     "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
    },
    "made_with": {
@@ -274,7 +274,7 @@
     "node": "v25.9.0",
     "sha256_16": {
      "site/ai_driver.js": "307a085504244ec1",
-     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/chaos_vehicle.js": "86f2e7c2788ba806",
      "site/rules.js": "542bc81e872fc945",
      "site/gates.js": "4f8843e86be5942a",
      "site/ghost.js": "489d53d9fb3b316f",
@@ -312,7 +312,7 @@
      "in_air": 3,
      "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
     },
-    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A10,A9)",
     "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
    },
    "made_with": {
@@ -323,7 +323,7 @@
     "node": "v25.9.0",
     "sha256_16": {
      "site/ai_driver.js": "307a085504244ec1",
-     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/chaos_vehicle.js": "86f2e7c2788ba806",
      "site/rules.js": "542bc81e872fc945",
      "site/gates.js": "4f8843e86be5942a",
      "site/ghost.js": "489d53d9fb3b316f",
@@ -361,7 +361,7 @@
      "in_air": 3,
      "src": "READ ue_out/bp_code/BP_VehicleAdvPawnBase.ngl:2 (angular damping (A when moving on ground, B when not))"
     },
-    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A9)",
+    "vehicle": "site/chaos_vehicle.js (Chaos port; its stand-ins: AUTHORED A1,A2,A3,A4,A5,A6,A7,A8,A10,A9)",
     "world": "site/world.js (2 AUTHORED stand-ins) over site/data/track.json, with the landscape holes of site/ground_holes.js (2207 quads READ from the game collision; 2 AUTHORED rules)"
    },
    "made_with": {
@@ -372,7 +372,7 @@
     "node": "v25.9.0",
     "sha256_16": {
      "site/ai_driver.js": "307a085504244ec1",
-     "site/chaos_vehicle.js": "12a46f6188819661",
+     "site/chaos_vehicle.js": "86f2e7c2788ba806",
      "site/rules.js": "542bc81e872fc945",
      "site/gates.js": "4f8843e86be5942a",
      "site/ghost.js": "489d53d9fb3b316f",

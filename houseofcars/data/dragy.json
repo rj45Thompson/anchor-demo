@@ -1,0 +1,341 @@
+{
+ "about": "Dragy users' own GPS runs per car, from Dragy's public leaderboard (tools/dragy.py): counts, best and median times; 'no mods listed' means the run lists none. Self-reported uploads, not a road test.",
+ "source": "https://www.godragy.com/leaderboards/",
+ "read_at": "2026-11-06T15:08:39-0600",
+ "cars": {
+  "bentley_flying_spur_2018": {
+   "board": "https://www.godragy.com/leaderboards/ALL%20CARS-1/",
+   "search": {
+    "board": "ALL CARS",
+    "brand": "Bentley",
+    "model_text": "Flying Spur"
+   },
+   "match": "flying\\s*spur",
+   "years": [
+    2014,
+    2019
+   ],
+   "why": "the second-generation Flying Spur (2014-2019 model years: the W12 and the V8)",
+   "tests": {
+    "0-100 km/h": {
+     "searched": 4,
+     "matched": 1,
+     "all": {
+      "runs": 1,
+      "best_s": 4.34,
+      "median_s": 4.34
+     },
+     "no_mods_listed": {
+      "runs": 1,
+      "best_s": 4.34,
+      "median_s": 4.34
+     },
+     "kind": "READ"
+    },
+    "1/8 mile": {
+     "searched": 0,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 0 runs on the ALL CARS board for Bentley matches flying\\s*spur in 2014-2019"
+    },
+    "1/4 mile": {
+     "searched": 0,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 0 runs on the ALL CARS board for Bentley matches flying\\s*spur in 2014-2019"
+    }
+   }
+  },
+  "rolls_royce_wraith_2017": {
+   "board": "https://www.godragy.com/leaderboards/ALL%20CARS-1/",
+   "search": {
+    "board": "ALL CARS",
+    "brand": "Rolls-Royce",
+    "model_text": null
+   },
+   "match": "^\\s*(wraith|wreath)\\b",
+   "years": [
+    2014,
+    2023
+   ],
+   "why": "every Wraith (2014-2023: one 6.6 V12; \"Wreath\" is how one Dragy user spelled it)",
+   "tests": {
+    "0-100 km/h": {
+     "searched": 3,
+     "matched": 1,
+     "all": {
+      "runs": 1,
+      "best_s": 4.91,
+      "median_s": 4.91
+     },
+     "no_mods_listed": null,
+     "kind": "READ"
+    },
+    "1/8 mile": {
+     "searched": 0,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 0 runs on the ALL CARS board for Rolls-Royce matches ^\\s*(wraith|wreath)\\b in 2014-2023"
+    },
+    "1/4 mile": {
+     "searched": 3,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 3 runs on the ALL CARS board for Rolls-Royce matches ^\\s*(wraith|wreath)\\b in 2014-2023"
+    }
+   }
+  },
+  "rolls_royce_ghost_2014": {
+   "board": "https://www.godragy.com/leaderboards/ALL%20CARS-1/",
+   "search": {
+    "board": "ALL CARS",
+    "brand": "Rolls-Royce",
+    "model_text": null
+   },
+   "match": "^\\s*ghost\\b",
+   "years": [
+    2010,
+    2016
+   ],
+   "why": "the first-generation Ghost (2010-2016 model years)",
+   "tests": {
+    "0-100 km/h": {
+     "searched": 3,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 3 runs on the ALL CARS board for Rolls-Royce matches ^\\s*ghost\\b in 2010-2016"
+    },
+    "1/8 mile": {
+     "searched": 0,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 0 runs on the ALL CARS board for Rolls-Royce matches ^\\s*ghost\\b in 2010-2016"
+    },
+    "1/4 mile": {
+     "searched": 3,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 3 runs on the ALL CARS board for Rolls-Royce matches ^\\s*ghost\\b in 2010-2016"
+    }
+   }
+  },
+  "mercedes_amg_e63s_2021": {
+   "board": "https://www.godragy.com/leaderboards/Mercedes-6/",
+   "search": {
+    "board": "Mercedes",
+    "brand": null,
+    "model_text": "E63"
+   },
+   "match": "^\\s*(amg\\s*)?e\\s*63\\s*-?\\s*s\\b|^\\s*e63s",
+   "years": [
+    2017,
+    2023
+   ],
+   "why": "the W213 E 63 S (2017-2023 model years, one 4.0 V8 biturbo at 603 hp); the E 63 without the S, and the W212, are not counted",
+   "tests": {
+    "0-100 km/h": {
+     "searched": 515,
+     "matched": 258,
+     "all": {
+      "runs": 258,
+      "best_s": 2.4,
+      "median_s": 3.08
+     },
+     "no_mods_listed": {
+      "runs": 109,
+      "best_s": 2.61,
+      "median_s": 3.21
+     },
+     "kind": "READ"
+    },
+    "1/8 mile": {
+     "searched": 158,
+     "matched": 69,
+     "all": {
+      "runs": 69,
+      "best_s": 6.19,
+      "median_s": 6.82,
+      "median_trap_kmh": 168.5
+     },
+     "no_mods_listed": {
+      "runs": 18,
+      "best_s": 6.36,
+      "median_s": 6.98,
+      "median_trap_kmh": 164.0
+     },
+     "kind": "READ"
+    },
+    "1/4 mile": {
+     "searched": 380,
+     "matched": 185,
+     "all": {
+      "runs": 185,
+      "best_s": 9.29,
+      "median_s": 10.61,
+      "median_trap_kmh": 211.1
+     },
+     "no_mods_listed": {
+      "runs": 72,
+      "best_s": 9.59,
+      "median_s": 10.82,
+      "median_trap_kmh": 207.2
+     },
+     "kind": "READ"
+    }
+   }
+  },
+  "bmw_i8_2016": {
+   "board": "https://www.godragy.com/leaderboards/BMW-2/",
+   "search": {
+    "board": "BMW",
+    "brand": null,
+    "model_text": "i8"
+   },
+   "match": "^\\s*(bmw\\s*)?i\\s*8\\b",
+   "years": [
+    2014,
+    2017
+   ],
+   "why": "the first i8 (2014-2017 model years, 357 hp); the 2018+ facelift (369 hp) is not counted",
+   "tests": {
+    "0-100 km/h": {
+     "searched": 21,
+     "matched": 17,
+     "all": {
+      "runs": 17,
+      "best_s": 2.42,
+      "median_s": 4.28
+     },
+     "no_mods_listed": {
+      "runs": 10,
+      "best_s": 2.42,
+      "median_s": 4.43
+     },
+     "kind": "READ"
+    },
+    "1/8 mile": {
+     "searched": 3,
+     "matched": 3,
+     "all": {
+      "runs": 3,
+      "best_s": 6.06,
+      "median_s": 8.06,
+      "median_trap_kmh": 142.4
+     },
+     "no_mods_listed": {
+      "runs": 3,
+      "best_s": 6.06,
+      "median_s": 8.06,
+      "median_trap_kmh": 142.4
+     },
+     "kind": "READ"
+    },
+    "1/4 mile": {
+     "searched": 5,
+     "matched": 5,
+     "all": {
+      "runs": 5,
+      "best_s": 12.1,
+      "median_s": 12.22,
+      "median_trap_kmh": 183.0
+     },
+     "no_mods_listed": {
+      "runs": 5,
+      "best_s": 12.1,
+      "median_s": 12.22,
+      "median_trap_kmh": 183.0
+     },
+     "kind": "READ"
+    }
+   }
+  },
+  "porsche_911_c4_2012": {
+   "board": "https://www.godragy.com/leaderboards/Porsche-11/",
+   "search": {
+    "board": "Porsche",
+    "brand": null,
+    "model_text": "Carrera 4"
+   },
+   "match": "carrera\\s*4(?!\\s*(s|gts))\\b|\\bc4\\b(?!\\s*s)",
+   "years": [
+    2009,
+    2012
+   ],
+   "why": "the 997.2 Carrera 4 (2009-2012 model years, 3.6 at 345 hp); the 4S and GTS are not counted",
+   "tests": {
+    "0-100 km/h": {
+     "searched": 47,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 47 runs on the Porsche board for Carrera 4 matches carrera\\s*4(?!\\s*(s|gts))\\b|\\bc4\\b(?!\\s*s) in 2009-2012"
+    },
+    "1/8 mile": {
+     "searched": 12,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 12 runs on the Porsche board for Carrera 4 matches carrera\\s*4(?!\\s*(s|gts))\\b|\\bc4\\b(?!\\s*s) in 2009-2012"
+    },
+    "1/4 mile": {
+     "searched": 27,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 27 runs on the Porsche board for Carrera 4 matches carrera\\s*4(?!\\s*(s|gts))\\b|\\bc4\\b(?!\\s*s) in 2009-2012"
+    }
+   }
+  },
+  "audi_s7": {
+   "board": "https://www.godragy.com/leaderboards/Audi-3/",
+   "search": {
+    "board": "Audi",
+    "brand": null,
+    "model_text": "S7"
+   },
+   "match": "^\\s*(audi\\s*)?s\\s*7\\b",
+   "years": [
+    2020,
+    2025
+   ],
+   "why": "the C8 S7 (2020-2025 model years, 2.9 V6 biturbo); every RS7 is left out",
+   "tests": {
+    "0-100 km/h": {
+     "searched": 356,
+     "matched": 4,
+     "all": {
+      "runs": 4,
+      "best_s": 3.92,
+      "median_s": 4.22
+     },
+     "no_mods_listed": {
+      "runs": 3,
+      "best_s": 3.92,
+      "median_s": 3.98
+     },
+     "kind": "READ"
+    },
+    "1/8 mile": {
+     "searched": 125,
+     "matched": 0,
+     "kind": "ABSENT",
+     "why": "none of the 125 runs on the Audi board for S7 matches ^\\s*(audi\\s*)?s\\s*7\\b in 2020-2025"
+    },
+    "1/4 mile": {
+     "searched": 259,
+     "matched": 2,
+     "all": {
+      "runs": 2,
+      "best_s": 11.92,
+      "median_s": 12.29,
+      "median_trap_kmh": 177.3
+     },
+     "no_mods_listed": {
+      "runs": 2,
+      "best_s": 11.92,
+      "median_s": 12.29,
+      "median_trap_kmh": 177.3
+     },
+     "kind": "READ"
+    }
+   }
+  }
+ }
+}
