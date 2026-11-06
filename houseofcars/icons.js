@@ -14,6 +14,7 @@ export const ICONS = {
   plug: 'M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5',
   info: 'M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20zM12 11v6M12 7.5v.5',
   lot: 'M3 21V9l9-6 9 6v12M7 21v-6h10v6M7 17h10',
+  camera: 'M3 8h4l2-3h6l2 3h4v12H3zM12 10a4 4 0 1 0 0 8 4 4 0 1 0 0-8z',
 };
 
 export function svgIcon(name, size = 22) {

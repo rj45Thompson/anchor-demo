@@ -35,17 +35,17 @@
     },
     {
      "label": "Torque peak",
-     "value": "750 at 3500",
-     "unit": "N\u00b7m at rpm",
+     "value": "750 N\u00b7m at 3500 rpm",
+     "unit": "",
      "kind": "DERIVED",
      "src": "DERIVED max key of /Game/VehicleTemplate/Blueprints/SportsCar/FC_Torque_SportsCar.FC_Torque_SportsCar (keys from its T3D) x Max torque"
     },
     {
      "label": "Peak power",
-     "value": "376 kW (504 hp) at 5968.75",
+     "value": "376 kW (504 hp) at 5969 rpm",
      "unit": "",
      "kind": "DERIVED",
-     "src": "DERIVED max over GetFloatValue samples of curve x Max torque x rpm / 9549"
+     "src": "DERIVED max over GetFloatValue samples of curve x Max torque x rpm / 9549 (the peak sample: 5968.75 rpm)"
     },
     {
      "label": "Final drive",
@@ -325,17 +325,17 @@
     },
     {
      "label": "Torque peak",
-     "value": "750 at 2000",
-     "unit": "N\u00b7m at rpm",
+     "value": "750 N\u00b7m at 2000 rpm",
+     "unit": "",
      "kind": "DERIVED",
      "src": "DERIVED max key of /Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_TorqueCurve.OffroadCar_TorqueCurve (keys from its T3D) x Max torque"
     },
     {
      "label": "Peak power",
-     "value": "282 kW (378 hp) at 3984.38",
+     "value": "282 kW (378 hp) at 3984 rpm",
      "unit": "",
      "kind": "DERIVED",
-     "src": "DERIVED max over GetFloatValue samples of curve x Max torque x rpm / 9549"
+     "src": "DERIVED max over GetFloatValue samples of curve x Max torque x rpm / 9549 (the peak sample: 3984.38 rpm)"
     },
     {
      "label": "Final drive",

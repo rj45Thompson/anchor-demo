@@ -31,6 +31,12 @@ export function makeGamepad(input) {
   return { binds, prev: {}, id: null, nonstandard: null };
 }
 
+// the first connected pad of the W3C standard layout, or null (the showroom reads its buttons directly)
+export function readPadRaw() {
+  const pads = (navigator.getGamepads ? navigator.getGamepads() : []) || [];
+  return [...pads].find((p) => p && p.connected && p.mapping === 'standard') || null;
+}
+
 // the action values this frame from the first standard-layout pad: { throttle, brake, steering, handbrake, pressed: Set }
 export function readGamepad(G) {
   const pads = (navigator.getGamepads ? navigator.getGamepads() : []) || [];

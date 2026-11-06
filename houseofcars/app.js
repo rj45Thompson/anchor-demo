@@ -12,11 +12,12 @@ import { rotatorAxes, threeMatrix, threeMatrixFromAxes, toThreePoint, verticalFo
 import { makeRig, updateRig } from './camera_rig.js';
 import { SLIDES } from './slides.js';
 import { svgIcon, drawIcon } from './icons.js';
-import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, setPaint, paint } from './fx.js';
+import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, setPaint, paint, groundDetail, lightBeam } from './fx.js';
 import { makeAudio, driveSound, silence, blip } from './audio.js';
 import { buildTach, updateTach, popCountdown, lapBanner, readRecord, writeRecord, buildMinimap, drawMinimap } from './hud.js';
 import { makeSkids, clearSkids, laySkids, slideAmount } from './effects.js';
-import { makeGamepad, readGamepad } from './gamepad.js';
+import { makeGamepad, readGamepad, readPadRaw } from './gamepad.js';
+import { makeRecorder, record, saveGhost, loadGhost, ghostPose } from './ghost.js';
 
 // AUTHORED for the page itself (look and layout, never presented as Unreal's): see AUTHORED in the report
 export const AUTHORED = [
@@ -27,9 +28,12 @@ export const AUTHORED = [
   'gates are invisible in Unreal (a BoxComponent each); the G key draws them for review only. The floating marker over the NEXT gate (the rules\' target) is the page\'s own',
   'sound (audio.js): a synthesised engine note on the ported RPM and throttle, tyre noise on Unreal\'s IsSkidding / IsSlipping, wind, beeps and chimes; the voicing is the page\'s own (no Unreal sound is ported)',
   'instruments (hud.js): the tachometer drawing (its scale and red band are the READ max and change-up RPM), the countdown motion, the lap banner with its split, the minimap, and the device record (the Blueprint\'s Best Time lasts one play)',
-  'skid marks and tyre smoke (effects.js): laid where Unreal\'s IsSkidding / IsSlipping hold, at the wheel trace hit, READ wheel_width wide; their darkness and amount are the page\'s',
+  'skid marks and tyre smoke (effects.js): laid where Unreal\'s IsSkidding / IsSlipping hold, at the wheel trace hit, READ wheel_width wide; their darkness, soft edges, fading and amount are the page\'s',
+  'ghost (ghost.js): the best lap driven on this device, recorded on the rules\' lap clock and replayed as a see-through car; the page\'s own',
+  'ground detail (fx.js groundDetail): a two-scale noise over M_Landscape\'s READ colours, the page\'s own (Unreal\'s landscape layers are not ported)',
   'touch controls: on-screen buttons of the page\'s own (Unreal\'s UI_Touch_Vehicle widget is not ported)',
-  'gamepad: the bindings and dead zones are READ (data/input.json); the W3C standard layout they are matched to is the browser\'s',
+  'gamepad: the bindings and dead zones are READ (data/input.json); the W3C standard layout they are matched to is the browser\'s. In the showroom (no Unreal binding): the d-pad or stick browses, A drives',
+  'showroom light beams (fx.js lightBeam) and the save-picture button are the page\'s own',
   'intro: the camera sweep onto the lot and the card motion are the page\'s own (none when the OS asks for reduced motion)',
   'paint picker: the colours are the page\'s own; Factory is the colour Unreal\'s glTF export baked. Dragging a car turns it on its pedestal',
   'resolution: the page picks its own pixel ratio from the frame time (the Resolution pill says which)',
@@ -40,7 +44,11 @@ const $ = (id) => document.getElementById(id);
 const CSSV = (n) => { const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); if (!v) throw new Error('index.html :root lacks ' + n); return v; };
 const PAL = { accent: CSSV('--accent'), soft: CSSV('--accent-soft'), ink: CSSV('--ink'), bg: CSSV('--bg'), bg2: CSSV('--bg2'), slate: CSSV('--slate') };   // UC-6.1
 await Promise.all(['800 88px "Open Sans"', '700 32px "Open Sans"', '600 40px "Open Sans"'].map((f) => document.fonts.load(f)));   // the panels are drawn once, so wait for the face
-const fetchJson = (f) => fetch('data/' + f).then((r) => { if (!r.ok) throw new Error('data/' + f + ': ' + r.status); return r.json(); });
+const jsonCache = new Map();                            // each data file is fetched once (the track preloads them behind the lot)
+const fetchJson = (f) => {
+  if (!jsonCache.has(f)) jsonCache.set(f, fetch('data/' + f).then((r) => { if (!r.ok) throw new Error('data/' + f + ': ' + r.status); return r.json(); }));
+  return jsonCache.get(f);
+};
 const fetchBin = (f) => fetch('data/' + f).then((r) => { if (!r.ok) throw new Error('data/' + f + ': ' + r.status); return r.arrayBuffer(); });
 const canvas = $('view');
 const loader = new GLTFLoader();
@@ -123,7 +131,7 @@ function poseWheel(w, steerDeg, spinRad, suspensionCm) {
 const show = { scene: new THREE.Scene(), slides: [], index: 0, angle: 0, targetAngle: 0, lastCar: 'SportsCar', paint: {}, drag: null, holdSpin: 0 };
 // the paint picker's colours (AUTHORED; Factory = the baked colour of Unreal's export, see fx.js)
 const PAINTS = [{ name: 'Factory', hex: null }, { name: 'Arctic white', hex: '#e9ecef' }, { name: 'Obsidian', hex: '#15171b' }, { name: 'Graphite', hex: '#545b63' },
-  { name: 'Racing blue', hex: '#1d4fd8' }, { name: 'Crimson', hex: '#b0102c' }, { name: 'Lime', hex: '#8cd23f' }, { name: 'Sunburst', hex: '#f2a516' }];
+  { name: 'Racing blue', hex: '#2766ee' }, { name: 'Crimson', hex: '#b0102c' }, { name: 'Lime', hex: '#8cd23f' }, { name: 'Sunburst', hex: '#f2a516' }];
 show.scene.environment = studioTex;
 show.scene.background = new THREE.Color(0x07090c);
 { // the room (AUTHORED look): a dark dome, a glossy floor, an orange light ring, a key light and soft fill
@@ -201,6 +209,7 @@ for (let i = 0; i < SLIDES.length; i++) {
     rim.rotation.x = Math.PI / 2; rim.position.y = 0.31; stand.add(rim);
     const spot = new THREE.SpotLight(0xffffff, 140, 18, 0.55, 0.6, 1.6);
     spot.position.set(0, 9, 3); spot.target.position.set(0, 0.6, 0); stand.add(spot, spot.target);
+    stand.add(lightBeam(spot.position, spot.target.position, 3.4, 0xfff4e6, 0.09));             // its beam in the air (fx.js)
     const { group } = await buildCar(car);
     turn = new THREE.Group();
     if (car.drivable) turn.position.y = 0.3 - Math.min(...car.wheels.map((w) => w.bone_location[2] - w.radius)) / 100;   // wheels on the pedestal
@@ -226,7 +235,9 @@ function renderCard() {
       '" style="--c:' + (c.hex ?? '#' + paint[e.name].factory.toString(16).padStart(6, '0')) + '"></button>').join('');
     card.innerHTML = '<p class="kick">' + (e.drivable ? 'On the lot · drivable' : 'On the lot · showroom only') + '</p><h2>' + esc(e.name.replace(/([a-z])([A-Z])/g, '$1 $2')) +
       '</h2><div class="sub">' + esc(e.drivable ? e.blueprint : e.mesh) + '</div><div class="paint"><span id="pname">Paint · ' + esc((PAINTS.find((c) => (c.hex ?? null) === chosen) || PAINTS[0]).name) +
-      '</span><div>' + sw + '</div></div><dl>' + rows + '</dl><div id="srcline">Press a badge to see where the number came from. Drag the car to turn it.</div>';
+      '</span><div>' + sw + '</div></div><dl>' + rows + '</dl><div id="srcline">Press a badge to see where the number came from. Drag the car to turn it.</div>' +
+      '<button class="photo" id="photo" title="Save what the 3D view shows as a PNG (P)">' + svgIcon('camera', 16) + ' Save a picture</button>';
+    $('photo').addEventListener('click', () => savePicture(e.name));
     card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = e.specs[+b.dataset.k].src; }));
     card.querySelectorAll('button.sw').forEach((b) => b.addEventListener('click', () => {
       const c = PAINTS[+b.dataset.p]; show.paint[e.name] = c.hex; setPaint(e.name, c.hex);
@@ -298,12 +309,23 @@ canvas.addEventListener('pointerup', (e) => {
 });
 let suppressClick = false;
 window.HOC.show = show;
+// the page check drives a lap's RULES without driving skill: it puts the car in each gate in turn (the rules decide the rest)
+window.HOC.teleport = (i) => { const p = trackView.gateGroundUe[i]; Chaos.resetVehicle(race.v, [p[0], p[1], p[2] + 60], TRACK.gates[i].yaw_deg + 90); };
 window.HOC.carScreen = () => {                           // the current car's centre on screen, CSS px (page check: drag-turn)
   const t = show.slides[show.index].turn; if (!t) return null;
   const p = new THREE.Vector3(0, 0.6, 0); t.localToWorld(p); p.project(showCam);
   return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight];
 };
 
+const padMenu = { prev: {} };
+function padShow() {                                    // edges only: one press, one slide
+  const p = readPadRaw(); if (!p) return;
+  const on = { left: p.buttons[14]?.pressed || p.axes[0] < -0.5, right: p.buttons[15]?.pressed || p.axes[0] > 0.5, a: p.buttons[0]?.pressed };
+  if (on.left && !padMenu.prev.left) select(show.index - 1);
+  if (on.right && !padMenu.prev.right) select(show.index + 1);
+  if (on.a && !padMenu.prev.a && !$('drive').disabled) $('drive').click();
+  padMenu.prev = on;
+}
 let intro = REDUCED ? 1 : 0;
 const ease = (t) => 1 - Math.pow(1 - t, 3);
 function tickShow(dt) {
@@ -364,7 +386,7 @@ async function buildTrack() {
   geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.setIndex(new THREE.BufferAttribute(idx, 1));
-  const ground = new THREE.Mesh(geo, new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: M.roughness, metalness: 0, side: THREE.DoubleSide }));
+  const ground = new THREE.Mesh(geo, groundDetail(new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: M.roughness, metalness: 0, side: THREE.DoubleSide })));
   ground.receiveShadow = true;
   scene.add(ground);
   // the road, tunnel, cones, walls and sky, as Unreal's glTF exporter wrote them
@@ -400,21 +422,40 @@ async function buildTrack() {
 }
 
 let trackView = null, world = null, Chaos = null;
-async function startRace(entry) {
-  $('loading').style.display = 'grid'; $('lt').textContent = 'Rolling the car out to the track…';
-  if (!Chaos) Chaos = await import('./chaos_vehicle.js');
-  if (!trackView) {
-    trackView = await buildTrack(); world = await loadWorld(fetchBin, TRACK);
+// the save-picture button (AUTHORED): the 3D view as a PNG, read off the canvas right after the frame that drew it
+let photoReq = null;
+function savePicture(carName) { photoReq = 'house-of-cars-concept-' + carName.toLowerCase() + '.png'; }
+function takePicture() {
+  const name = photoReq; photoReq = null;
+  canvas.toBlob((b) => {
+    if (!b) throw new Error('the canvas gave no picture');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+}
+let trackReady = null;
+function prepareTrack() {                               // once: the physics module, the track, the world, the minimap, the gate points
+  if (!trackReady) trackReady = (async () => {
+    Chaos = await import('./chaos_vehicle.js');
+    const tv = await buildTrack(); world = await loadWorld(fetchBin, TRACK); trackView = tv;
     trackView.minimap = buildMinimap($('minimap'), world, TRACK.gates);
-    trackView.gateGround = TRACK.gates.map((g) => {            // where each gate's marker stands: the ground under its centre
+    trackView.gateGroundUe = TRACK.gates.map((g) => {          // where each gate's marker stands: the ground under its centre (UE cm)
       const c = g.center_cm, hit = world.trace([c[0], c[1], c[2] + g.half_extent_cm[2]], [c[0], c[1], c[2] - g.half_extent_cm[2]]);
       if (!hit) throw new Error('no ground under gate ' + g.label);
-      return toThreePoint(hit.point);
+      return hit.point;
     });
-  }
+    trackView.gateGround = trackView.gateGroundUe.map(toThreePoint);
+    await Promise.all(['cars.json', 'physics.json', 'chaos_unexported.json'].map(fetchJson));
+    window.HOC.trackPreloaded = true;
+  })();
+  return trackReady;
+}
+async function startRace(entry) {
+  $('loading').style.display = 'grid'; $('lt').textContent = 'Rolling the car out to the track…';
+  await prepareTrack();
   clearSkids(trackView.skids);
   window.HOC.track = trackView;
-  if (race && race.car) trackView.scene.remove(race.car.group);
+  if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); }
   const carJson = (await fetchJson('cars.json')).cars[entry.name];
   const car = await buildCar(entry);
   trackView.scene.add(car.group);
@@ -430,6 +471,13 @@ async function startRace(entry) {
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0 };
   const tachEl = $('hud-speed'); tachEl.querySelector('svg.tach')?.remove();
   race.tach = buildTach(tachEl, carJson.engine.max_rpm.value, carJson.transmission.change_up_rpm.value);   // READ scale and red band
+  // the ghost: a see-through copy of this car, replaying the device's best lap (ghost.js)
+  if (race.ghostCar) trackView.scene.remove(race.ghostCar);
+  const ghostMat = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(PAL.soft), transparent: true, opacity: 0.26, depthWrite: false });
+  race.ghostCar = car.group.clone(true); race.ghostCar.traverse((o) => { if (o.isMesh) { o.material = ghostMat; o.castShadow = false; o.receiveShadow = false; } });
+  race.ghostCar.matrixAutoUpdate = false; race.ghostCar.visible = false; trackView.scene.add(race.ghostCar);
+  race.ghost = loadGhost(entry.name); race.rec = makeRecorder();
+  $('t-ghost').textContent = race.ghost ? ' · Ghost ' + Rules.formatTime(race.ghost.lap, RULES) : '';
   const rec = readRecord(entry.name);
   $('t-rec').textContent = rec === null ? '—' : Rules.formatTime(rec, RULES);
   $('lapb').classList.remove('show');
@@ -465,6 +513,7 @@ addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'Escape') { backToShowroom(); return; }
+  if (e.key === 'p' || e.key === 'P') { savePicture(race.entry.name + '-drive'); return; }
   if (e.key === 'Tab') { e.preventDefault(); race.front = !race.front; return; }
   if (e.key === 'g' || e.key === 'G') { trackView.gates.visible = !trackView.gates.visible; return; }
   if (e.key === 'Backspace') { e.preventDefault(); doReset(); return; }
@@ -544,6 +593,14 @@ function tickRace(dt) {
   }
   const [X, Y, Z] = carAxes(r.v);
   if (Rules.tickFlipCheck(r.rules, dt, Z[2])) doReset();
+  // the ghost: record this lap, replay the best one at the same lap time
+  if (r.rules.startTimer) {
+    const tLap = r.now - r.rules.timeOffset;
+    record(r.rec, tLap, r.v.pos, [X, Y, Z]);
+    const gp = r.ghost && ghostPose(r.ghost, tLap);
+    r.ghostCar.visible = !!gp;
+    if (gp) r.ghostCar.matrix.fromArray(threeMatrixFromAxes(gp.axes, [1, 1, 1], gp.pos));
+  }
   // draw the car
   r.car.group.matrix.fromArray(threeMatrixFromAxes([X, Y, Z], [1, 1, 1], r.v.pos));
   r.car.wheels.forEach((w, i) => { if (w) { const s = r.v.wheels[i]; poseWheel(w, s.steerDeg, s.spinRad, s.suspensionOffsetCm); } });
@@ -593,6 +650,8 @@ function lapDone(r, lapS, bestBefore) {
   const isBest = lapS < bestBefore;
   const rec = readRecord(r.entry.name), isRecord = rec === null || lapS < rec;
   if (isRecord && writeRecord(r.entry.name, lapS)) $('t-rec').textContent = Rules.formatTime(lapS, RULES);
+  if (isRecord) { r.ghost = saveGhost(r.entry.name, r.rec, lapS); $('t-ghost').textContent = ' · Ghost ' + Rules.formatTime(lapS, RULES); }
+  r.rec = makeRecorder();                                // the next lap starts on the clock the rules just restarted
   lapBanner($('lapb'), Rules.formatTime(lapS, RULES), bestBefore !== RULES.best_time_default.value ? lapS - bestBefore : null, isBest, isRecord ? 'Record on this device' : null);
   blip(audio, isBest ? 'best' : 'lap');
 }
@@ -606,6 +665,7 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 select(0);
+setTimeout(() => prepareTrack().catch((e) => { console.error(e); }), 1500);   // behind the lot; startRace awaits the same promise and shows any error
 $('loading').style.display = 'none';
 // UC-7.2a: the page lowers its own resolution when frames run slow, raises it again when they are quick, and says which it chose
 const DPR = [0.75, 0.85, 1, 1.25, 1.5, 2].filter((x) => x <= Math.min(devicePixelRatio, 2) + 1e-6);
@@ -623,6 +683,7 @@ function adapt(dt) {
 setQuality();
 renderer.setAnimationLoop(() => {
   const t = performance.now(), dt = Math.min(0.1, (t - last) / 1000); last = t;
-  if (mode === 'show') tickShow(dt); else tickRace(dt);
+  if (mode === 'show') { padShow(); tickShow(dt); } else tickRace(dt);
+  if (photoReq) takePicture();
   adapt(dt);
 });

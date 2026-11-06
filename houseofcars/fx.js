@@ -2,7 +2,7 @@
 // a polished showroom floor, and the post chain (bloom on the accent lights, a vignette, multisampled edges). All of it is
 // AUTHORED (app.js AUTHORED lists it); none of it changes a car or track number. Serves UC-7.2, UC-7.3, UC-7.5.
 import * as THREE from 'three/webgpu';
-import { nodeObject, pass, uniform, uv, float, vec2, vec3, vec4, color as tslColor, texture, mix, max, min, smoothstep, luminance, length, reflector, positionWorld, cameraPosition, normalize, dot, pow, oneMinus, normalWorld } from 'three/tsl';
+import { positionLocal, positionView, normalView, abs, vertexColor, mx_fractal_noise_float, mx_noise_float, nodeObject, pass, uniform, uv, float, vec2, vec3, vec4, color as tslColor, texture, mix, max, min, smoothstep, luminance, length, reflector, positionWorld, cameraPosition, normalize, dot, pow, oneMinus, normalWorld } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js';
 
@@ -104,6 +104,36 @@ export function polishedTops(y, hex) {
   });
   mat.emissiveNode = taps.reduce((a, t) => a.add(t)).mul(0.2).mul(fres);
   return { material: mat, target: reflection.target };
+}
+
+// ---------------------------------------------------------------- ground detail (UC-7.5)
+// M_Landscape's colours (READ, as vertex colours) times a two-scale noise: broad patches (~6 m) and a fine grain (~0.4 m).
+// The noise is the page's own (AUTHORED); Unreal's landscape layers are not ported.
+export function groundDetail(mat) {
+
+  const broad = mx_fractal_noise_float(positionWorld.mul(0.16), 3, 2.0, 0.5).mul(0.5).add(0.5);
+  const fine = mx_noise_float(positionWorld.mul(2.6)).mul(0.5).add(0.5);
+  const k = float(0.82).add(broad.mul(0.26)).add(fine.mul(0.1));
+  mat.colorNode = vertexColor(0).rgb.mul(k);
+  mat.roughnessNode = float(mat.roughness).mul(float(0.9).add(fine.mul(0.2)));
+  return mat;
+}
+
+// ---------------------------------------------------------------- a spot light's visible beam (UC-7.2)
+// An open cone from the lamp to the floor, added on top of the scene: brightest near the lamp, soft at its rim (the view-facing
+// term), so the light reads as light in a dark room. AUTHORED, like the spot it belongs to.
+export function lightBeam(from, to, radius, hex, k) {
+  const h = from.distanceTo(to);
+  const geo = new THREE.ConeGeometry(radius, h, 48, 1, true); geo.translate(0, -h / 2, 0);   // apex at the origin, opening down
+  const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false });
+  const along = smoothstep(-h, 0, positionLocal.y);                                          // 1 at the lamp, 0 at the floor
+  const rim = pow(abs(dot(normalize(normalView), normalize(positionView.negate()))), 2.0);  // faint where the cone is seen edge-on
+  mat.colorNode = vec3(tslColor(new THREE.Color(hex))).mul(along.mul(along).mul(rim).mul(k));
+  const m = new THREE.Mesh(geo, mat);
+  m.position.copy(from);                                                                      // in the parent's space: lookAt would read world space
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), to.clone().sub(from).normalize());   // the cone opens toward the target
+  m.renderOrder = 2;
+  return m;
 }
 
 // an emissive accent: values above 1 so the bloom picks it up
