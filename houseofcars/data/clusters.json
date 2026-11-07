@@ -171,7 +171,7 @@
       -135,
       135
      ],
-     "red_from": "derived",
+     "red_from": 7500,
      "num_size": 0.15,
      "unit": "1/min x 1000",
      "unit_y": -0.32
@@ -215,7 +215,7 @@
    ],
    "authored": [
     "the 991's cluster (2013) drawn for a car listed as a 2012 Carrera 4: the 991 Carrera 4 came in September 2012, so a 2012 Carrera 4 is a 997, whose cluster was not read (Wikipedia, Porsche 911 (991))",
-    "the rev counter's red band: from the car's own derived shift point (the red start on the 3.4 was not legible)",
+    "the rev counter's red band from 7500: the photo's ticks turn orange-red at about 7.5 to 8 (not legible exactly), and 7500 is the sim's own limit",
     "minor ticks (not legible); the TFT shows the run's time (its pages were not read)",
     "oil temperature, oil pressure, coolant and fuel rest where the page puts them: the sim has none of them",
     "the fuel dial's orange reserve mark at 0 is not drawn"
@@ -300,6 +300,7 @@
     },
     {
      "id": "temp",
+     "tip": false,
      "x": 788,
      "y": 172,
      "r": 128,
@@ -328,6 +329,7 @@
     },
     {
      "id": "fuel",
+     "tip": false,
      "x": 788,
      "y": 172,
      "r": 128,
@@ -456,6 +458,7 @@
     },
     {
      "id": "temp",
+     "tip": false,
      "x": 788,
      "y": 172,
      "r": 128,
@@ -484,6 +487,7 @@
     },
     {
      "id": "fuel",
+     "tip": false,
      "x": 788,
      "y": 172,
      "r": 128,
@@ -582,6 +586,7 @@
       135
      ],
      "red_from": 6000,
+     "red_numerals": false,
      "num_size": 0.12,
      "labels": [
       {
@@ -794,8 +799,8 @@
      "from": 0,
      "to": 260,
      "sweep": [
-      -135,
-      135
+      150,
+      390
      ],
      "labels": [
       0,
@@ -817,8 +822,8 @@
      "from": 0,
      "to": 7000,
      "sweep": [
-      -135,
-      135
+      210,
+      -30
      ],
      "div": 1000,
      "labels": [

@@ -61,7 +61,7 @@ export function stepDirector(dir, s, dt) {
  *  hfovDeg (horizontal, as Unreal's cameras), mounted (rides with the car: the speed's widening and shake apply), fixedAt (a camera
  *  standing still on the strip, or null) } */
 export function framing(dir, car, ctx) {
-  const id = SHOTS[dir.i].id, c = car.c, t = dir.since, L = car.len;
+  const id = SHOTS[dir.i].id, c = car.c, t = dir.since, L = car.len, upright = (ctx.aspect || 16 / 9) < 1;
   const ease = (x) => { const u = Math.max(0, Math.min(1, x)); return u * u * (3 - 2 * u); };
   const wallIn = (STRIP.wall_y_m - STRIP.wall_thick_m / 2) * 100 - 60;   // the nearest a camera on the strip stands to a wall (cm)
   const wallOut = (STRIP.wall_y_m + STRIP.wall_thick_m / 2) * 100 + 150;  // a camera outside the near wall
@@ -71,10 +71,18 @@ export function framing(dir, car, ctx) {
     const k = (ctx.aspect || 16 / 9) >= 1 ? 0.5 : 0.15;   // upright the frame is narrow: it looks at the car, the tree beside it
     look = [c[0] + (TREE_X_CM - c[0]) * k, ctx.laneY * (1 - k), 60];
     fill = 0.3; lens = 64;
+  } else if (id === 'launch' && upright) {              // upright (11-07, the lightweight loop: a car side-on overflowed the narrow
+    eye = [4500, ctx.laneY + 260, 70];                   // frame): low and far down the strip, the car coming head-on, cut before it arrives
+    look = [c[0], c[1], c[2] - 10];
+    fill = 0.5; lens = 20; fixed = true;
   } else if (id === 'launch') {                          // low beside the strip 14 m down it: the car comes at it and past it
     eye = [1400, ctx.laneY - 560, 42];
     look = [c[0], c[1], c[2] - 10];
     fill = 0.5; lens = 40; fixed = true;
+  } else if (id === 'side' && upright) {                // upright: riding behind and above the car's outer quarter, so its length
+    eye = [c[0] - L / 2 - 520 + 160 * ease(t / 3.5), c[1] - 260, 175];   // runs into the picture instead of across it
+    look = [c[0] + 60, c[1], c[2]];
+    fill = 0.6; mounted = true;
   } else if (id === 'side') {                            // riding beside the car, the car slowly pulling ahead of it
     eye = [c[0] + 260 - 320 * ease(t / 3.5), c[1] - 520, 72];
     look = [c[0], c[1], c[2] - 5];
@@ -91,9 +99,9 @@ export function framing(dir, car, ctx) {
     eye = [ctx.quarterX + FINISH_CAM_PAST_LINE_M * 100, ctx.laneY - 500, 140];
     look = [c[0], c[1], c[2] - 10];
     fill = 0.3; lens = 10; fixed = true;
-  } else {                                               // the roll-down: a slow orbit from behind and outside
-    const R = Math.min(580, wallIn - Math.abs(ctx.laneY)), th = -2.2 + ORBIT_RAD_S * t;
-    eye = [c[0] + R * Math.cos(th), c[1] + R * Math.sin(th), 230];
+  } else {                                               // the roll-down: a slow orbit from behind and outside (upright: higher and
+    const R = Math.min(upright ? 560 : 580, wallIn - Math.abs(ctx.laneY)), th = -2.2 + ORBIT_RAD_S * t;   // looking down, so the
+    eye = [c[0] + R * Math.cos(th), c[1] + R * Math.sin(th), upright ? 640 : 230];                        // car fits the narrow frame
     look = [c[0], c[1], c[2]];
     fill = 0.55;
   }

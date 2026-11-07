@@ -31,6 +31,7 @@ import * as Drag from './drag.js';                                              
 import { STRIP, makeDirector, stepDirector, framing, shotId, verticalFor } from './drag_cam.js';   // UC-35: the filmed run
 import * as Sim from './drag_sim.js';                                                       // UC-34: the clutch pedal, the H gate
 import { clusterSVG, bindCluster, powerReserve } from './gauges.js';                          // UC-36: each car's own cluster
+import { buildScenery } from './scenery.js';                                                  // UC-37.4: grass, trees and hills past the walls
 import { knowHTML, knownSpecsHTML } from './know.js';                                                   // UC-14: Know this car (know.js)                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
 import { dragyHUD } from './dragstats.js';                                                  // UC-21: Dragy owners' runs (dragstats.js)
 import { ScoreBoard, HOUSE_NAME, checkName, ranked, qualifies, boardHTML, lastName, keepName } from './scores.js';   // UC-25: the shared boards
@@ -887,6 +888,7 @@ function prepareTrack() {                               // once: the physics mod
   return trackReady;
 }
 async function startRace(entry) {
+  onLot = false; if (window.HOC_SALES) window.HOC_SALES.hide();                      // not over a race (its corner is the minimap's)
   loadingShow('Rolling the car out to the track…', entry.name);   // UC-20: the car's own listing photo, and the game
   await prepareTrack();
   if (dragView) setDragScene(false);                      // back from the strip: the track as it was
@@ -927,8 +929,11 @@ async function startRace(entry) {
   $('showroom').style.display = 'none'; $('race').style.display = 'block';
   $('t-best').textContent = '—';
 }
+// the visitor is on the lot (not leaving it for a race or the strip, which may still be loading): the sales chat's moment
+let onLot = true;
 function backToShowroom() {
-  mode = 'show';
+  mode = 'show'; onLot = true;
+  window.dispatchEvent(new CustomEvent('hoc:lot-open'));              // the sales chat belongs to the lot: it greets the first time, shows its tab after
   if (dragView && trackView) setDragScene(false);
   silence(audio);
   $('showroom').style.display = ''; $('race').style.display = 'none';
@@ -1128,6 +1133,9 @@ function buildDragStrip(scene) {
   const M = TRACK.landscape_material;
   const grass = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), mat(new THREE.Color(...M.ground_col), 1));   // the landscape's READ ground colour
   grass.rotation.x = -Math.PI / 2; grass.position.set(END / 2, -0.03, 0); grass.receiveShadow = true; g.add(grass);
+  // UC-37.4 past the walls: mown grass, groves and hills in the haze (scenery.js; low on a phone or without WebGPU, where it costs most)
+  const scenery = buildScenery(THREE, { quality: BACKEND !== 'WebGPU' || matchMedia('(pointer: coarse)').matches ? 'low' : 'high', seed: 1107, anisotropy: 8, fog: scene.fog, groundColour: M.ground_col });
+  grass.material = scenery.grassMaterial; g.add(scenery.group);
   // the asphalt: a fine noise of the page's own, tiled every 4 m (fx.js groundDetail is the landscape's, and 11-06 it went white
   // this far from the track's own ground)
   const grain = document.createElement('canvas'); grain.width = grain.height = 256;
@@ -1205,6 +1213,7 @@ function setDragScene(on) {
 }
 const dragTimeRows = [['rt', 'Reaction'], ['sixty', '60 ft'], ['kmh100', '0-100 km/h'], ['eighth', '1/8 mile'], ['quarter', '1/4 mile']];
 async function startDrag(entry) {
+  onLot = false; if (window.HOC_SALES) window.HOC_SALES.hide();                      // not over the strip's dials
   if (entry.sim) wantModel(entry.name);                  // UC-32.3
   loadingShow('Rolling the car to the strip…', entry.name);
   await prepareTrack();
@@ -1418,7 +1427,7 @@ function tickDrag(dt) {
   r.post.render();
 }
 // UC-36 the car's own cluster (data/clusters.json: its facts READ, its drawing the page's): built at the start, its red band from the car's
-// own derived shift points where its redline was not read, the Power Reserve against the engine's most power (its READ torque curve)
+// own derived shift points where its redline was not read, the Power Reserve the share of the power not in use (gauges.js)
 let CLUSTERS = null;
 async function buildCluster(entry, v, pts) {
   if (!CLUSTERS) CLUSTERS = (await fetchJson('clusters.json')).cars;
@@ -1429,16 +1438,13 @@ async function buildCluster(entry, v, pts) {
   for (const d of spec.dials) if (d.red_from === 'derived') d.red_from = Math.min(...pts);
   el.innerHTML = clusterSVG(spec, 'c' + entry.name.length);
   el.title = 'Drawn after this car\'s own cluster. Read from: ' + spec.read_from.join(' ; ') + '. The page\'s own: ' + spec.authored.join(' ; ');
-  let pmax = 0;
-  for (let rpm = v.cfg.engine.idleRPM; rpm <= v.cfg.engine.maxRPM - 1; rpm += 25) pmax = Math.max(pmax, Chaos._internal.engineTorqueFromRPM(v, rpm, true) * rpm * Math.PI / 30);
   requestAnimationFrame(() => document.body.style.setProperty('--clh', Math.round(el.getBoundingClientRect().height) + 'px'));
-  return { spec, b: bindCluster(el, spec), pmax };
+  return { spec, b: bindCluster(el, spec) };
 }
 addEventListener('resize', () => { const el = document.getElementById('dcluster'); if (el && el.firstChild) document.body.style.setProperty('--clh', Math.round(el.getBoundingClientRect().height) + 'px'); });
 function updateCluster(r) {
   const v = r.v, kmh = v.forwardSpeedCmS * 0.036, run = r.run, cl = r.cluster;
-  const torque = v.engine.started ? v.engine.throttle * Chaos._internal.engineTorqueFromRPM(v, v.engine.rpm, true) : 0;
-  const st = { rpm: v.engineRPM, speed: Math.max(0, kmh), speed_mph: Math.max(0, kmh) / 1.609344, reserve: 100 * powerReserve(torque, v.engine.omega, cl.pmax) };
+  const st = { rpm: v.engineRPM, speed: Math.max(0, kmh), speed_mph: Math.max(0, kmh) / 1.609344, reserve: 100 * powerReserve(v.engine.throttle, v.engine.started) };
   const et = run.leave === null ? 0 : run.done ? run.marks.quarter : run.t - run.leave, gear = Rules.gearText(v.gear, RULES), now = new Date();
   for (const t of cl.spec.texts || []) {
     const f = t.fmt;
@@ -1621,7 +1627,7 @@ if (KIOSK) {
 setTimeout(() => prepareTrack().catch((e) => { console.error(e); }), 1500);   // behind the lot; startRace awaits the same promise and shows any error
 await warmLot();                                         // UC-30: behind the loading screen
 mark('lot warmed');
-loadingDone().then(() => { mark('lot open'); modelQ.open = true; pumpModels(); if (BACKEND !== 'WebGPU') gpuNotice().catch((e) => reportError(e)); });   // UC-20.3: closes now, or when a player says; UC-31 then the notice, once the lot is in view
+loadingDone().then(() => { mark('lot open'); modelQ.open = true; pumpModels(); if (BACKEND !== 'WebGPU') gpuNotice().catch((e) => reportError(e)); if (onLot) window.dispatchEvent(new CustomEvent('hoc:lot-open')); });   // the sales chat (sales_chat.js) greets once the lot is open (a race or the strip opened by a link: when the visitor reaches the lot)   // UC-20.3: closes now, or when a player says; UC-31 then the notice, once the lot is in view
 // UC-7.2a: the page lowers its own resolution when frames run slow, raises it again when they are quick, and says which it chose
 const DPR = [0.75, 0.85, 1, 1.25, 1.5, 2].filter((x) => x <= Math.min(devicePixelRatio, 2) + 1e-6);
 let dprI = DPR.length - 1;

@@ -33,9 +33,11 @@ export function majors(d) {
   return out;
 }
 const labelText = (d, i, v) => { const l = d.labels && d.labels[i]; return l && typeof l === 'object' ? l.t : (d.div ? v / d.div : v); };
-/** UC-36.2 a Rolls-Royce's Power Reserve: the share of the engine's power still unused, 1 at rest, 0 at full power at the speed it
- *  makes the most. torqueNm the engine's output now, omega its speed (rad/s), pmax its most power (W) over its rpm range */
-export const powerReserve = (torqueNm, omega, pmax) => Math.max(0, Math.min(1, 1 - (torqueNm * omega) / pmax));
+/** UC-36.2 a Rolls-Royce's Power Reserve: the share of the power the engine can make at this moment that it is not making: 1 at
+ *  rest, 0 with the pedal floored, whatever the revs (11-07, the lightweight loop: measured against the engine's most power over all
+ *  its revs, a floored pedal read 25 % at the shift point). In the sim the power made is the throttle's share of the full-throttle
+ *  torque at this speed, so the reserve is 1 - throttle; a stalled engine has none to give: 0 */
+export const powerReserve = (throttle, running) => (running ? Math.max(0, Math.min(1, 1 - throttle)) : 0);
 
 const pol = (cx, cy, r, deg) => { const a = (deg - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
 function arc(cx, cy, r, a0, a1) {
@@ -76,14 +78,14 @@ function roundDial(p, L, d) {
   }
   majors(d).forEach((v, i) => {
     const [x, y] = pol(cx, cy, ri * (d.num_r || 0.63), needleDeg(d, v));
-    s += '<text x="' + f1(x) + '" y="' + f1(y + ri * (d.num_size || 0.15) * 0.36) + '" class="num" fill="' + (red(v) ? L.red : L.numerals) + '" font-size="' + f1(ri * (d.num_size || 0.15)) + '" font-weight="' + (L.num_weight || 600) + '" filter="url(#' + p + 'lit)">' + esc(labelText(d, i, v)) + '</text>';
+    s += '<text x="' + f1(x) + '" y="' + f1(y + ri * (d.num_size || 0.15) * 0.36) + '" class="num" fill="' + (red(v) && d.red_numerals !== false ? L.red : L.numerals) + '" font-size="' + f1(ri * (d.num_size || 0.15)) + '" font-weight="' + (L.num_weight || 600) + '" filter="url(#' + p + 'lit)">' + esc(labelText(d, i, v)) + '</text>';
   });
   if (d.label) s += '<text x="' + cx + '" y="' + f1(cy + ri * (d.label_y ?? 0.4)) + '" class="lab" fill="' + L.label + '" font-size="' + f1(ri * (d.label_size || 0.085)) + '">' + esc(d.label) + '</text>';
   if (d.unit) s += '<text x="' + cx + '" y="' + f1(cy + ri * (d.unit_y ?? -0.3)) + '" class="lab" fill="' + L.label + '" font-size="' + f1(ri * 0.075) + '">' + esc(d.unit) + '</text>';
   const nl = ri * (d.needle_len || 0.86), nw = ri * (d.needle_w || 0.045), tail = ri * 0.14;
   const body = 'M' + f1(cx - nw) + ' ' + f1(cy + tail) + 'L' + f1(cx - nw * 0.3) + ' ' + f1(cy - nl) + 'L' + f1(cx + nw * 0.3) + ' ' + f1(cy - nl) + 'L' + f1(cx + nw) + ' ' + f1(cy + tail) + 'Z';
   s += '<g class="needle" data-needle="' + d.id + '" transform="rotate(' + f1(needleDeg(d, d.rest ?? (d.marks ? d.marks[0] : d.from))) + ' ' + cx + ' ' + cy + ')" filter="url(#' + p + 'sh)"><path d="' + body + '" fill="url(#' + p + 'nd)"/>';
-  if (L.needle_tip) { const t0 = cy - nl * 0.68; s += '<path d="M' + f1(cx - nw * 0.52) + ' ' + f1(t0) + 'L' + f1(cx - nw * 0.3) + ' ' + f1(cy - nl) + 'L' + f1(cx + nw * 0.3) + ' ' + f1(cy - nl) + 'L' + f1(cx + nw * 0.52) + ' ' + f1(t0) + 'Z" fill="' + L.needle_tip + '"/>'; }
+  if (L.needle_tip && d.tip !== false) { const t0 = cy - nl * 0.68; s += '<path d="M' + f1(cx - nw * 0.52) + ' ' + f1(t0) + 'L' + f1(cx - nw * 0.3) + ' ' + f1(cy - nl) + 'L' + f1(cx + nw * 0.3) + ' ' + f1(cy - nl) + 'L' + f1(cx + nw * 0.52) + ' ' + f1(t0) + 'Z" fill="' + L.needle_tip + '"/>'; }
   if (L.needle_glow) s += '<path d="' + body + '" fill="' + L.needle + '" opacity=".55" filter="url(#' + p + 'lit)"/>';
   s += '</g>';
   if (d.cap !== false) s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + f1(ri * (d.cap_r || 0.085)) + '" fill="url(#' + p + 'cap)" filter="url(#' + p + 'sh)"/>';
