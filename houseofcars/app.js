@@ -12,7 +12,7 @@ import { rotatorAxes, threeMatrix, threeMatrixFromAxes, toThreePoint, verticalFo
 import { makeRig, updateRig } from './camera_rig.js';
 import { SLIDES } from './slides.js';
 import { svgIcon, drawIcon } from './icons.js';
-import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, setPaint, paint, groundDetail, lightBeam } from './fx.js';
+import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, setPaint, paint, groundDetail, lightBeam, asphaltRoad, concreteWall } from './fx.js';
 import { makeAudio, driveSound, silence, blip } from './audio.js';
 import { Radio } from './radio.js';                                                       // UC-27: the car radio
 import { makeWalker, stepWalker, facing, EYE_M } from './walk.js';                        // UC-28: walking the lot
@@ -807,6 +807,11 @@ async function buildTrack() {
     if (/SkySphere/i.test(o.name) || /SkySphere/i.test(o.material?.name || '')) { o.visible = false; return; }   // see AUTHORED: sky
     o.castShadow = true; o.receiveShadow = true;
     for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap']) if (o.material && o.material[k]) o.material[k].anisotropy = renderer.getMaxAnisotropy();   // UC-33.3
+    if (o.material && !o.material.userData.restyled) {                    // UC-33: the template's grid road and tinted walls, restyled (fx.js)
+      if (o.material.name === 'MI_TrackEdge_Inst') { asphaltRoad(o.material, false); o.material.userData.restyled = 'asphalt'; }
+      else if (o.material.name === 'MI_TrackEdge') { asphaltRoad(o.material, true); o.material.userData.restyled = 'shoulder'; }
+      else if (o.material.name === 'M_TintCol') { concreteWall(o.material); o.material.userData.restyled = 'concrete'; }
+    }
   });
   scene.add(t);
   // the gates (G toggles; invisible in Unreal)

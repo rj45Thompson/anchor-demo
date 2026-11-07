@@ -119,6 +119,32 @@ export function groundDetail(mat) {
   return mat;
 }
 
+// ---------------------------------------------------------------- the track's surfaces restyled (UC-33)
+// RJ 11-07: "It's very game jam looking let's shoot for aaa". The Unreal template's track (data/track.glb) is drawn in prototype
+// checkers: MI_TrackEdge_Inst a dark grey checker (the road) and MI_TrackEdge an orange and grey one (its borders), both 1024 px
+// textures looked at 11-07, and one flat tint on its walls (M_TintCol, base colour 1, 0.1, 0). All three restyled here, AUTHORED:
+// Epic's art is not changed in the file, only how the page draws it. 11-07, tried first and dropped: keeping the texture's coloured
+// texels as markings, which turned the borders into an orange-and-black checker. The markings now come from the dressing (dress.js:
+// edge lines and kerbs on the road's own spline). Asphalt: a near-black base (the road) or a lighter worn shoulder (the borders),
+// a fine aggregate grain and a broad patchiness, world-space noise; concrete walls the same two scales on a mid grey.
+export function asphaltRoad(mat, shoulder) {
+  const grain = mx_noise_float(positionWorld.mul(9.0)).mul(0.5).add(0.5);
+  const patch = mx_fractal_noise_float(positionWorld.mul(0.08), 3, 2.0, 0.5).mul(0.5).add(0.5);
+  const base = shoulder ? vec3(0.085, 0.083, 0.08) : vec3(0.03, 0.031, 0.034);   // 11-07: lighter read as concrete under the sky's light
+  mat.colorNode = base.mul(float(0.75).add(grain.mul(0.35)).add(patch.mul(0.25)));
+  mat.roughnessNode = float(0.78).add(grain.mul(0.18));
+  mat.metalnessNode = float(0);
+  return mat;
+}
+export function concreteWall(mat) {
+  const grain = mx_noise_float(positionWorld.mul(6.0)).mul(0.5).add(0.5);
+  const patch = mx_fractal_noise_float(positionWorld.mul(0.12), 3, 2.0, 0.5).mul(0.5).add(0.5);
+  mat.colorNode = vec3(0.46, 0.47, 0.48).mul(float(0.78).add(grain.mul(0.14)).add(patch.mul(0.2)));
+  mat.roughnessNode = float(0.82).add(grain.mul(0.12));
+  mat.metalnessNode = float(0);
+  return mat;
+}
+
 // ---------------------------------------------------------------- a spot light's visible beam (UC-7.2)
 // An open cone from the lamp to the floor, added on top of the scene: brightest near the lamp, soft at its rim (the view-facing
 // term), so the light reads as light in a dark room. AUTHORED, like the spot it belongs to.
