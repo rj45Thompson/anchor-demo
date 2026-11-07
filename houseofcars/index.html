@@ -110,18 +110,19 @@ button:focus-visible,#card .pick:focus-visible,#card .act:focus-visible{outline:
 /* UC-22 the drag strip: the tree, the times, the shift lights, the grade, the slip (app.js tickDrag) */
 body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dragmode #hint,body.dragmode #lapb,body.dragmode #countdown{display:none}
 #drag{position:fixed;inset:0;pointer-events:none;z-index:3}
-#dtree{position:fixed;left:18px;top:96px;display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 9px;border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line)}
-#dtree i{display:block;width:30px;height:30px;border-radius:50%;background:#1c1c1c;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
-#dtree i.s{width:16px;height:16px}#dtree i.on{background:#ffb020;box-shadow:0 0 16px 4px rgba(255,176,32,.8)}#dtree i.s.on{background:#ffd27a}
+#dtree{position:fixed;left:14px;top:96px;display:flex;flex-direction:column;align-items:center;gap:clamp(5px,1.1vmin,12px);padding:clamp(8px,1.4vmin,16px);border-radius:16px;background:rgba(10,10,10,.72);border:1px solid var(--line);transition:opacity .5s}
+#drag.running #dtree{opacity:.4}
+#dtree i{display:block;width:clamp(24px,6vmin,66px);height:clamp(24px,6vmin,66px);border-radius:50%;background:#1c1c1c;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
+#dtree i.s{width:clamp(12px,3vmin,34px);height:clamp(12px,3vmin,34px)}#dtree i.on{background:#ffb020;box-shadow:0 0 16px 4px rgba(255,176,32,.8)}#dtree i.s.on{background:#ffd27a}
 #dtree i.gr.on{background:#3dff7a;box-shadow:0 0 18px 6px rgba(61,255,122,.85)}#dtree i.rd.on{background:#ff3b30;box-shadow:0 0 18px 6px rgba(255,59,48,.85)}
-#dpanel{position:fixed;left:72px;top:96px;min-width:190px;padding:10px 12px;border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);font-variant-numeric:tabular-nums}
-#dcar{margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-soft)}
-#dtimes div{display:flex;justify-content:space-between;gap:16px;font-size:13px;line-height:1.7}#dtimes span{color:var(--dim)}#dtimes b{font:700 15px ui-monospace,Consolas,monospace;color:#5dffa9}#dtimes div.foul b{color:#ff5a4f}
-#dleds{position:fixed;right:28px;bottom:240px;width:200px;display:flex;gap:4px;justify-content:center}
-#dleds i{flex:1;height:12px;border-radius:3px;background:#1d1d1d;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+#dpanel{position:fixed;right:14px;bottom:14px;max-width:min(40vw,400px);min-width:clamp(170px,27vmin,320px);padding:clamp(10px,1.4vmin,16px) clamp(12px,1.8vmin,20px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+#dcar{margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(12px,2.2vmin,20px);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-soft)}
+#dtimes div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;font-size:clamp(13px,2.3vmin,22px);line-height:1.6}#dtimes span{color:var(--dim)}#dtimes b{font:700 clamp(15px,3vmin,32px) ui-monospace,Consolas,monospace;color:#5dffa9}#dtimes div.foul b{color:#ff5a4f}
+#dleds{position:fixed;left:50%;top:54px;transform:translateX(-50%);width:min(58vw,820px);display:flex;gap:clamp(3px,.7vmin,8px);justify-content:center}
+#dleds i{flex:1;height:clamp(14px,3.6vmin,34px);border-radius:clamp(3px,.8vmin,8px);background:#1d1d1d;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
 #dleds i:nth-child(-n+4).on{background:#3dff7a;box-shadow:0 0 8px #3dff7a}#dleds i:nth-child(n+5):nth-child(-n+8).on{background:#ffb020;box-shadow:0 0 8px #ffb020}#dleds i:nth-child(n+9).on{background:#ff3b30;box-shadow:0 0 8px #ff3b30}
 #dleds i.flash{background:#4aa8ff!important;box-shadow:0 0 12px #4aa8ff!important;animation:blink .12s steps(2) infinite}
-#dgrade{position:fixed;top:26%;left:50%;transform:translateX(-50%);font-size:clamp(22px,4vw,40px);font-weight:800;letter-spacing:.06em;text-shadow:0 4px 18px rgba(0,0,0,.7);opacity:0}
+#dgrade{position:fixed;top:24%;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:clamp(34px,8vmin,96px);font-weight:800;letter-spacing:.06em;text-shadow:0 4px 18px rgba(0,0,0,.7);opacity:0}
 #dgrade.pop{animation:gradepop 1.1s ease-out both}#dgrade.g-perfect{color:#5dffa9}#dgrade.g-early{color:#ffd27a}#dgrade.g-late{color:#ff7a5c}
 @keyframes gradepop{0%{opacity:0;transform:translate(-50%,10px) scale(.9)}15%{opacity:1;transform:translate(-50%,0) scale(1.05)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-8px)}}
 #dslip{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 140px);overflow:auto;pointer-events:auto;padding:16px 18px;border-radius:14px;background:rgba(12,12,12,.94);border:1px solid var(--accent);box-shadow:0 18px 60px rgba(0,0,0,.6)}
@@ -138,9 +139,22 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #dslip ol.board{list-style:none;margin:6px 0 12px;padding:0;font-size:12.5px}#dslip ol.board li{display:grid;grid-template-columns:22px 1fr auto auto;gap:8px;align-items:center;padding:4px 6px;border-radius:7px}
 #dslip ol.board li.me{background:rgba(93,255,169,.08)}#dslip ol.board .n{color:var(--dim);font-weight:800}#dslip ol.board b{font:700 12.5px ui-monospace,Consolas,monospace;color:#5dffa9}#dslip ol.board button{padding:3px 9px;font-size:11.5px}
 #dhelp{position:fixed;left:16px;bottom:16px;font-size:12px;color:var(--dim)}
-#dtouch{display:none;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);gap:10px;pointer-events:auto}#dtouch button{height:64px;padding:0 18px;border-radius:14px;font-weight:800;font-size:16px}
-@media (pointer:coarse){#dtouch{display:flex}#dhelp{display:none}}
-@media (max-width:720px){#dtree{top:auto;bottom:250px;left:10px;transform:scale(.8);transform-origin:left bottom}#dpanel{left:auto;right:12px;top:96px;min-width:160px}#dleds{bottom:180px;right:16px;width:150px}}
+body.dragmode #hud-speed{left:50%;right:auto;bottom:12px;width:clamp(200px,46vmin,500px);height:clamp(200px,46vmin,500px);transform:translateX(-50%)}
+body.dragmode #touch{display:none}
+/* UC-35 6b a phone: the gas held on the left, the shift on the right, both big (UC-34 builds its pedals and gate into these places) */
+#dtouch{display:none;position:fixed;inset:auto 0 0 0;justify-content:space-between;align-items:flex-end;padding:16px;pointer-events:none}
+#dtouch>*{pointer-events:auto}#dtouch .shiftcol{display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}#dtouch .shiftcol>*{pointer-events:auto}
+#dtouch button{width:clamp(84px,24vmin,150px);height:clamp(84px,24vmin,150px);padding:0;border-radius:22px;font-weight:800;font-size:clamp(17px,4vmin,28px);user-select:none;-webkit-user-select:none;touch-action:none}
+#dtouch button.down{height:clamp(46px,11vmin,80px);font-size:clamp(15px,3vmin,22px)}#dgas{background:#16351f;border-color:#3dff7a;color:#c9ffd9}
+@media (pointer:coarse){#dtouch{display:flex}#dhelp{display:none}#dpanel{bottom:calc(clamp(84px,24vmin,150px) + 30px)}}
+#dslip:not([hidden]) ~ #dtouch{display:none}   /* the slip open: nothing left to press but its own buttons */
+@media (max-width:1000px){body.dragmode header #renderer,body.dragmode header #quality{display:none}}
+/* a phone on its side: the times top right beside a shorter shift-light bar, clear of the buttons and of the car's band */
+@media (pointer:coarse) and (orientation:landscape){#dpanel{top:54px;bottom:auto;min-width:150px;max-width:210px}#dleds{width:min(46vw,820px)}#dtimes div{line-height:1.35}}
+/* the grade just above the tach on a screen on its side, where the car is not */
+@media (orientation:landscape){#dgrade{top:auto;bottom:calc(clamp(200px,46vmin,500px) + 16px);font-size:clamp(28px,6vmin,72px)}}   /* the strip's header: room for the dials */
+/* upright: the tach above the buttons, the grade below the times */
+@media (orientation:portrait){body.dragmode #hud-speed{bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}#dgrade{top:34%}#dpanel{top:96px;bottom:auto;left:96px;max-width:none;min-width:0}}
 /* UC-20 the loading screen: a car for sale in its own listing photo (loading.js), and a shooter to play while it loads */
 #lphoto{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transition:opacity 1.2s ease}
 #lphoto.on{opacity:.55;animation:drift 18s ease-out both}
@@ -182,7 +196,7 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #hud-time .b{color:#d5dadd}
 #hud-time .t{font-size:34px;font-weight:700;letter-spacing:.04em}
 #hud-time .b{font-size:14px;color:var(--dim)}
-#hud-speed{position:fixed;right:18px;bottom:14px;width:220px;height:220px;font-variant-numeric:tabular-nums;filter:drop-shadow(0 4px 18px rgba(0,0,0,.55))}
+#hud-speed{position:fixed;right:18px;bottom:14px;width:220px;height:220px;container-type:size;font-variant-numeric:tabular-nums;filter:drop-shadow(0 4px 18px rgba(0,0,0,.55))}
 #hud-speed svg.tach{position:absolute;inset:0;width:100%;height:100%}
 .tach .t-track{fill:none;stroke:rgba(10,10,10,.62);stroke-width:16}
 .tach .t-red{fill:none;stroke:var(--accent-dark);stroke-width:16;opacity:.9}
@@ -191,11 +205,11 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 .tach .t-num{fill:var(--ink);font:700 13px "Open Sans",sans-serif;text-anchor:middle}
 .tach .t-x{fill:var(--dim);font:600 10px "Open Sans",sans-serif;text-anchor:middle;letter-spacing:.08em}
 .tach .t-needle{stroke:var(--accent);stroke-width:3.5;stroke-linecap:round}.tach .t-hub{fill:var(--ink)}
-#hud-speed .read{position:absolute;left:0;right:0;top:112px;text-align:center;line-height:1}
-#hud-speed .s{display:block;font-size:44px;font-weight:800;letter-spacing:.02em}
-#hud-speed .u{display:block;font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
-#hud-speed .g{display:inline-block;margin-top:6px;min-width:34px;padding:2px 8px;border-radius:7px;background:var(--accent);color:#fff;font-size:20px;font-weight:800}
-#shift{position:absolute;left:50%;top:62px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#3a1a12;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}
+#hud-speed .read{position:absolute;left:0;right:0;top:50.91cqw;text-align:center;line-height:1}
+#hud-speed .s{display:block;font-size:20cqw;font-weight:800;letter-spacing:.02em}
+#hud-speed .u{display:block;font-size:5cqw;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:.91cqw}
+#hud-speed .g{display:inline-block;margin-top:2.73cqw;min-width:15.45cqw;padding:.91cqw 3.64cqw;border-radius:3.18cqw;background:var(--accent);color:#fff;font-size:9.09cqw;font-weight:800}
+#shift{position:absolute;left:50%;top:28.18cqw;width:6.36cqw;height:6.36cqw;margin-left:-3.18cqw;border-radius:50%;background:#3a1a12;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}
 #shift.on{background:#ff6a3d;box-shadow:0 0 14px 4px rgba(255,90,40,.85);animation:blink .12s steps(2) infinite}
 @keyframes blink{50%{opacity:.35}}
 #minimap{position:fixed;left:16px;bottom:58px;width:180px;height:180px;border-radius:50%;background:radial-gradient(rgba(10,10,10,.72),rgba(10,10,10,.5));border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,0,0,.45)}
@@ -224,7 +238,8 @@ body.walking #card,body.walking #showroom .nav,body.walking #foot{display:none}
 #walklabel span{display:block;font-size:12px;color:var(--accent-soft);margin-top:3px}
 .walkbtn{font:inherit;font-size:12px;font-weight:800;letter-spacing:.06em;padding:8px 12px;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;cursor:pointer}
 @media (pointer:coarse){#walkhud span{display:none}}
-header #mute,header #radio,header #motion{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}
+header #dcam{display:none}body.dragmode header #dcam{display:inline-block}
+header #mute,header #radio,header #motion,header #dcam{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}
 #rbanner{position:fixed;z-index:6;left:0;right:0;top:64px;text-align:center;pointer-events:none;opacity:0}#rbanner.on{animation:station 3.2s ease both}
 #rbanner b{display:block;font-size:clamp(26px,4.5vw,46px);font-weight:800;font-style:italic;letter-spacing:.02em;color:#fff;text-shadow:0 3px 0 var(--accent-dark),0 0 24px rgba(242,88,39,.6)}
 #rbanner span{display:block;margin-top:4px;font-size:14px;font-style:italic;color:var(--accent-soft);text-shadow:0 1px 4px #000}
@@ -258,7 +273,7 @@ button,.pill{white-space:nowrap}
 </head>
 <body>
 <canvas id="view"></canvas>
-<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button></header>
+<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button></header>
 <div id="rbanner" aria-live="polite"></div>
 <div id="loading"><div id="lbox"><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i><span id="lmb"></span></div></div></div>
 
@@ -298,8 +313,8 @@ button,.pill{white-space:nowrap}
   <div id="dleds" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div id="dgrade" aria-live="polite"></div>
   <div id="dslip" hidden role="dialog" aria-label="Time slip"></div>
-  <div id="dhelp">Wait for the green · W / ↑ gas · E or Shift: shift up · Q: down · R: run again · Esc: the lot</div>
-  <div id="dtouch"><button data-d="down">▼</button><button data-d="up">SHIFT ▲</button></div>
+  <div id="dhelp">Wait for the green · W / ↑ gas · E or Shift: shift up · Q: down · C: camera · R: run again · Esc: the lot</div>
+  <div id="dtouch"><button id="dgas" aria-label="Gas: hold it down">GAS</button><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>
 </div>
 <div id="compare" hidden role="dialog" aria-modal="true" aria-label="Compare the cars for sale"><div class="cmpbox"><button id="cmpclose" aria-label="Close">✕</button>
   <p class="kick">For sale now · side by side</p><h2>Compare the lot</h2><div id="cmpbody"></div></div></div>

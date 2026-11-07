@@ -28,6 +28,7 @@ import * as AI from './ai_driver.js';
 import { lotCars, leadsFor, compareHTML, priceVsPace } from './sale.js';
 import { loadingShow, loadingDone } from './loading.js';
 import * as Drag from './drag.js';                                                          // UC-22: the drag strip's rules
+import { STRIP, makeDirector, stepDirector, framing, shotId, verticalFor } from './drag_cam.js';   // UC-35: the filmed run
 import { knowHTML, knownSpecsHTML } from './know.js';                                                   // UC-14: Know this car (know.js)                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
 import { dragyHUD } from './dragstats.js';                                                  // UC-21: Dragy owners' runs (dragstats.js)
 import { ScoreBoard, HOUSE_NAME, checkName, ranked, qualifies, boardHTML, lastName, keepName } from './scores.js';   // UC-25: the shared boards
@@ -162,6 +163,8 @@ const modelOf = (key) => { const m = MODELS.models[key]; return m && !m.withheld
 const SOON = 'No model yet · coming soon';
 // UC-33.4a / 1a the Motion switch: the speed widening and the shake on or off, kept on this device
 const MOTION = { on: (() => { try { return localStorage.getItem('hoc.motion') !== 'off'; } catch (e) { return true; } })() };
+// UC-35.3a the strip's camera: filmed (drag_cam.js, the default) or the chase camera, kept on this device
+const DRAGCAM = { film: (() => { try { return localStorage.getItem('hoc.dragcam') !== 'chase'; } catch (e) { return true; } })() };
 const DEG = Math.PI / 180;
 const SALE_SPECS = await fetchJson('sale_specs.json');    // UC-9.1: each car for sale's factory numbers, READ with sources (tools/sale_specs.py)
 const [REVIEWS, RECALLS, COLOURS, PHOTOS, DRAGY] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json'), fetchJson('colours.json'), fetchJson('photos.json'), fetchJson('dragy.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
@@ -935,6 +938,10 @@ $('radio').addEventListener('click', () => radio.next());
 function syncMotion() { $('motion').textContent = 'Motion ' + (MOTION.on ? 'on' : 'off'); $('motion').setAttribute('aria-pressed', String(MOTION.on)); }
 function toggleMotion() { MOTION.on = !MOTION.on; try { localStorage.setItem('hoc.motion', MOTION.on ? 'on' : 'off'); } catch (e) { /* not kept */ } syncMotion(); }
 $('motion').addEventListener('click', toggleMotion); syncMotion();
+function syncDragCam() { $('dcam').textContent = 'Camera: ' + (DRAGCAM.film ? 'filmed' : 'chase'); $('dcam').setAttribute('aria-pressed', String(DRAGCAM.film)); }
+function toggleDragCam() { DRAGCAM.film = !DRAGCAM.film; try { localStorage.setItem('hoc.dragcam', DRAGCAM.film ? 'film' : 'chase'); } catch (e) { /* not kept */ } syncDragCam(); }
+$('dcam').addEventListener('click', toggleDragCam); syncDragCam();
+window.HOC.dragCam = DRAGCAM;
 window.HOC.motion = MOTION;
 function syncMute() { $('mute').textContent = !audio.available() ? 'No sound' : audio.muted ? 'Sound off' : 'Sound on'; $('mute').setAttribute('aria-pressed', String(!audio.muted)); if (audio.muted && typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }   // UC-27.4: the talk station's voice too
 $('mute').addEventListener('click', () => { audio.start(); audio.setMuted(!audio.muted); syncMute(); });
@@ -966,6 +973,7 @@ addEventListener('keydown', (e) => {
     if (e.key === 'q' || e.key === 'Q') { if (!e.repeat) dragPress('down'); return; }
     if ((e.key === 'r' || e.key === 'R' || e.key === 'Enter') && race.run.done) { dragRerun(); return; }
     if (e.key === 'p' || e.key === 'P') { savePicture(race.entry.name + '-drag'); return; }
+    if (e.key === 'c' || e.key === 'C') { toggleDragCam(); return; }   // UC-35.3a
     keys.add(e.code); return;
   }
   if (e.key === 'Escape') { backToShowroom(); return; }
@@ -1101,7 +1109,7 @@ function dragBoard(text, w, h, bg, fg) {                    // a sign on the str
 }
 function buildDragStrip(scene) {
   const g = new THREE.Group(); g.visible = false; g.name = 'drag-strip';
-  const Q = Drag.MARKS.quarter, END = Q + 700, W = 24, behind = 30;     // 700 m to coast down from 200+ km/h on the idle brake
+  const Q = Drag.MARKS.quarter, END = Q + 700, W = STRIP.width_m, behind = 30;     // 700 m to coast down from 200+ km/h on the idle brake
   const mat = (color, rough) => new THREE.MeshStandardNodeMaterial({ color: new THREE.Color(color), roughness: rough, metalness: 0 });
   const M = TRACK.landscape_material;
   const grass = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), mat(new THREE.Color(...M.ground_col), 1));   // the landscape's READ ground colour
@@ -1135,6 +1143,26 @@ function buildDragStrip(scene) {
     const b = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.9), new THREE.MeshBasicNodeMaterial({ map: dragBoard(label, 512, 176, '#f4f4f4', '#0a0a0a'), side: THREE.DoubleSide }));
     b.position.set(x, 2.8, W / 2 + 2.2); b.rotation.y = -Math.PI / 2; g.add(b);
   }
+  // UC-35.5 walls along both sides and light poles outside them, so the speed shows as things flashing past (drag_cam.js STRIP;
+  // AUTHORED, the page's own): concrete with the page's orange band and its name every 12 m, readable from inside the strip
+  const wc = document.createElement('canvas'); wc.width = 1024; wc.height = 128;
+  { const c = wc.getContext('2d'), im = c.createImageData(1024, 128);
+    for (let i = 0; i < 1024 * 128; i++) { const n = 150 + Math.random() * 26; im.data.set([n, n - 2, n - 6, 255], 4 * i); }
+    c.putImageData(im, 0, 0); c.fillStyle = PAL.accent; c.fillRect(0, 0, 1024, 22);
+    c.fillStyle = 'rgba(20,20,20,.82)'; c.font = '800 54px "Open Sans", sans-serif'; c.textBaseline = 'middle'; c.fillText('HOUSE OF CARS', 40, 78); c.fillText('HOUSE OF CARS', 552, 78); }
+  const wt = new THREE.CanvasTexture(wc); wt.colorSpace = THREE.SRGBColorSpace; wt.wrapS = THREE.RepeatWrapping; wt.anisotropy = 8; wt.repeat.set((END + behind) / 24, 1);
+  for (const side of [-1, 1]) {
+    const w = new THREE.Mesh(new THREE.BoxGeometry(END + behind, STRIP.wall_top_m, STRIP.wall_thick_m), new THREE.MeshStandardNodeMaterial({ map: wt, roughness: 0.9, metalness: 0 }));
+    w.position.set((END - behind) / 2, STRIP.wall_top_m / 2, side * STRIP.wall_y_m); w.castShadow = w.receiveShadow = true; g.add(w);
+  }
+  const nPoles = Math.floor(END / STRIP.pole_every_m) + 1, poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.11, 0.16, STRIP.pole_h_m, 8), mat(0x8d9399, 0.45), nPoles * 2);
+  const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.22, 1.6), glowMaterial('#fff4dc', 2.5), nPoles * 2), m4 = new THREE.Matrix4();
+  for (let i = 0; i < nPoles; i++) for (const [j, side] of [[0, -1], [1, 1]]) {
+    const x = i * STRIP.pole_every_m, z = side * STRIP.pole_y_m;
+    poles.setMatrixAt(i * 2 + j, m4.makeTranslation(x, STRIP.pole_h_m / 2, z));
+    heads.setMatrixAt(i * 2 + j, m4.makeTranslation(x, STRIP.pole_h_m - 0.1, z - side * 0.7));   // the lamp leans out over the strip
+  }
+  poles.castShadow = true; g.add(poles, heads);
   // the tree: a post between the lanes behind the start line; each lamp an unlit and a lit material, swapped by the run
   const tree = new THREE.Group(); tree.position.set(5, 0, 0); g.add(tree);          // just past the start line, facing the cars, as on a strip
   const pole = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.4, 0.5), mat(0x15171a, 0.6)); pole.position.y = 1.7; tree.add(pole);
@@ -1189,7 +1217,8 @@ async function startDrag(entry) {
   const camKey = entry.sim ? 'SportsCar' : entry.name;
   const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
   race = { kind: 'drag', entry, car, carJson, v, strip, best, house, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
-           wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {} };
+           wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {},
+           director: makeDirector(), body: carJson.bounds_cm.value };   // UC-35: the filmed run, framed on the car's own READ bounds
   const tachEl = $('hud-speed'); tachEl.querySelector('svg.tach')?.remove();
   race.tach = buildTach(tachEl, v.cfg.engine.maxRPM, Math.min(...race.pts));   // the red band from the earliest derived shift point
   $('dslip').hidden = true; $('dgrade').textContent = '';
@@ -1204,7 +1233,10 @@ async function startDrag(entry) {
   mode = 'drag';
   $('showroom').style.display = 'none'; $('race').style.display = 'block';
 }
-document.querySelectorAll('#dtouch button').forEach((b) => b.addEventListener('pointerdown', (e) => { e.preventDefault(); dragPress(b.dataset.d); }));   // a phone's shift buttons
+document.querySelectorAll('#dtouch button[data-d]').forEach((b) => b.addEventListener('pointerdown', (e) => { e.preventDefault(); dragPress(b.dataset.d); }));   // a phone's shift buttons
+{ const gas = $('dgas');                                     // UC-35 6b: the strip's gas, on the left, held as the race's own gas button
+  gas.addEventListener('pointerdown', (e) => { e.preventDefault(); touch.throttle = true; });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) gas.addEventListener(ev, () => { touch.throttle = false; }); }
 window.HOC.dragBot = () => { if (race && race.kind === 'drag') race.bot = true; };   // the page check: gas on the green, every shift at its derived point, through the same presses
 window.HOC.dragTick = (dt) => tickDrag(dt);                                      // the page check steps frames itself (a background page draws few)
 function dragPress(dir) { if (mode === 'drag' && race && race.kind === 'drag' && !race.run.done) race.presses.push(dir); }
@@ -1254,11 +1286,22 @@ function tickDrag(dt) {
   const [X, Y, Z] = carAxes(v);
   r.car.group.matrix.fromArray(threeMatrixFromAxes([X, Y, Z], [1, 1, 1], v.pos));
   r.car.wheels.forEach((w, i) => { if (w) { const ws = v.wheels[i]; poseWheel(w, ws.steerDeg, ws.spinRad, ws.suspensionOffsetCm); } });
-  const cam = r.camera, rig = updateRig(r.rig, v.pos, [X, Y, Z], dt);
-  cam.position.fromArray(toThreePoint(rig.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(rig.look));
+  const cam = r.camera, rig = updateRig(r.rig, v.pos, [X, Y, Z], dt);     // the chase rig runs either way, so C switches back to it settled
   const sf = stepSpeedFx(r.speedfx || (r.speedfx = makeSpeedFx()), v.forwardSpeedCmS * 0.036, dt, MOTION.on);   // UC-33.1 / 33.4
-  cam.fov = verticalFovDeg(r.fov + sf.fovDeg, cam.aspect); cam.rotateX(sf.pitchDeg * DEG); cam.rotateZ(sf.rollDeg * DEG); cam.rotateY(sf.yawDeg * DEG);
+  const B = r.body, centre = [0, 1, 2].map((k) => v.pos[k] + X[k] * B.origin[0] + Y[k] * B.origin[1] + Z[k] * B.origin[2]);
+  stepDirector(r.director, { left: run.leave !== null, distM: (v.pos[0] - r.x0) / 100, carX: centre[0], quarterX: Drag.MARKS.quarter * 100 }, dt);   // UC-35.1-4
+  r.shot = DRAGCAM.film ? shotId(r.director) : 'chase';
+  if (DRAGCAM.film) {
+    const f = framing(r.director, { c: centre, len: B.box_extent[0] * 2, halfWidth: B.box_extent[1], height: B.box_extent[2] * 2 }, { laneY: DRAG_LANE_Y_CM, quarterX: Drag.MARKS.quarter * 100, aspect: cam.aspect });
+    cam.position.fromArray(toThreePoint(f.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(f.look));
+    cam.fov = verticalFor(f.hfovDeg + (f.mounted ? sf.fovDeg : 0), cam.aspect);   // UC-35.3b: a camera riding with the car widens and shakes with it
+    if (f.mounted) { cam.rotateX(sf.pitchDeg * DEG); cam.rotateZ(sf.rollDeg * DEG); cam.rotateY(sf.yawDeg * DEG); }
+  } else {
+    cam.position.fromArray(toThreePoint(rig.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(rig.look));
+    cam.fov = verticalFovDeg(r.fov + sf.fovDeg, cam.aspect); cam.rotateX(sf.pitchDeg * DEG); cam.rotateZ(sf.rollDeg * DEG); cam.rotateY(sf.yawDeg * DEG);
+  }
   cam.updateProjectionMatrix();
+  $('drag').classList.toggle('running', run.leave !== null);   // UC-35.6: the tree steps back once the car has left
   const cp = toThreePoint(v.pos);
   trackView.sky.position.copy(cam.position);
   trackView.sun.target.position.set(cp[0], cp[1], cp[2]);
@@ -1272,7 +1315,8 @@ function tickDrag(dt) {
   leds.forEach((el, i) => { el.classList.toggle('on', i < lit); el.classList.toggle('flash', sl.shift); });
   $('hud-speed').querySelector('#shift').classList.toggle('on', sl.shift);
   // the slip, once, at the line
-  if (run.done && !r.slipShown) { r.slipShown = true; showDragSlip(r); }
+  // filmed, it waits for the finish camera to see the car through the line and past it (about a second, UC-35.4)
+  if (run.done && !r.slipShown && (!DRAGCAM.film || r.shot === 'roll')) { r.slipShown = true; showDragSlip(r); }
   laySkids(trackView.skids, v, Y, r.wheelWidths, dt);
   r.throttle += (input.throttle - r.throttle) * Math.min(1, dt * 8);
   const slide = v.wheels.reduce((a, w) => a + slideAmount(w), 0) / v.wheels.length;
