@@ -1,0 +1,25 @@
+{
+ "_meta": {
+  "made_by": "tools/glb_sizes.py",
+  "what": "bytes on disk = bytes the browser receives unpacked"
+ },
+ "bytes": {
+  "data/meshes/fight/buyer.glb": 3470128,
+  "data/meshes/fight/docfee.glb": 3535576,
+  "data/meshes/fight/sidekick.glb": 3401852,
+  "data/meshes/listing_audi_s7.glb": 3194912,
+  "data/meshes/listing_bentley_flying_spur_2018.glb": 3452420,
+  "data/meshes/listing_bmw_i8_2016.glb": 6141096,
+  "data/meshes/listing_mercedes_amg_e63s_2021.glb": 3392044,
+  "data/meshes/listing_porsche_911_c4_2012.glb": 2932108,
+  "data/meshes/listing_rolls_royce_ghost_2014.glb": 3447596,
+  "data/meshes/listing_rolls_royce_wraith_2017.glb": 3068820,
+  "data/meshes/SM_AutomotiveTP_Car.glb": 3295780,
+  "data/meshes/SM_Offroad_Body.glb": 2325980,
+  "data/meshes/SM_Offroad_Tire.glb": 1132540,
+  "data/meshes/SM_SportsCar.glb": 1342416,
+  "data/meshes/SM_SportsCar_Glass.glb": 13876,
+  "data/meshes/SM_SportsCar_Wheel.glb": 274280,
+  "data/track.glb": 1358664
+ }
+}

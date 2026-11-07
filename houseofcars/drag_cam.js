@@ -23,12 +23,16 @@ export const SHOTS = [
   { id: 'stage' },                                      // until the car leaves (UC-35.1): no cut at the green
   { id: 'launch', to_m: 30 },                           // UC-35.2
   { id: 'side', to_m: 110 },                            // UC-35.3
-  { id: 'trackside', to_m: 215, at_m: 200 },            // a fixed camera at 200 m, just past the eighth-mile board
+  { id: 'trackside', to_m: 215, at_m: 210 },            // a fixed camera at 210 m, past the eighth-mile board, between two poles
   { id: 'nose', to_m: 320 },
-  { id: 'finish', past_m: 32 },                         // a fixed camera 25 m past the line; holds until the car is this far past it
+  { id: 'finish', cut_before_m: 20 },                   // a fixed camera FINISH_CAM_PAST_LINE_M past the line; cut this far before the car reaches it
   { id: 'roll' },                                       // UC-35.4
 ];
-export const FINISH_CAM_PAST_LINE_M = 25;
+export const FINISH_CAM_PAST_LINE_M = 45;
+// the trackside camera's stand: 24 m out from the centre line and 4 m up. 11-07 (RJ: "camera popping") a camera a few metres from a car
+// at 200 km/h has to swing 10 degrees a frame as it passes: a pop, not a pan. So the cameras that watch the car come stand far out,
+// and the one it heads straight for is cut before the car reaches it (test/drag_cam.test.mjs holds every shot to 4 degrees a frame)
+export const STAND = { y_m: 24, z_m: 4 };
 const ORBIT_RAD_S = 0.22;
 
 export function makeDirector() { return { i: 0, since: 0 }; }
@@ -42,7 +46,7 @@ export function stepDirector(dir, s, dt) {
     const cur = SHOTS[dir.i];
     if (dir.i === SHOTS.length - 1) break;
     const done = cur.id === 'stage' ? s.left
-      : cur.id === 'finish' ? s.carX > s.quarterX + (FINISH_CAM_PAST_LINE_M + cur.past_m) * 100
+      : cur.id === 'finish' ? s.carX > s.quarterX + (FINISH_CAM_PAST_LINE_M - cur.cut_before_m) * 100
       : s.distM >= cur.to_m;
     if (!done) break;
     dir.i++;
@@ -75,8 +79,8 @@ export function framing(dir, car, ctx) {
     eye = [c[0] + 260 - 320 * ease(t / 3.5), c[1] - 520, 72];
     look = [c[0], c[1], c[2] - 5];
     fill = 0.62; mounted = true;
-  } else if (id === 'trackside') {                       // outside the near wall at 200 m, high enough to see over it: zooms on the car
-    eye = [SHOTS.find((x) => x.id === 'trackside').at_m * 100, -wallOut, 175];
+  } else if (id === 'trackside') {                       // on a stand far outside the near wall, over it: zooms on the car
+    eye = [SHOTS.find((x) => x.id === 'trackside').at_m * 100, -STAND.y_m * 100, STAND.z_m * 100];
     look = [c[0], c[1], c[2] - 10];
     fill = 0.32; fixed = true;
   } else if (id === 'nose') {                            // ahead of the car looking back at it, the car gaining on the camera
@@ -96,14 +100,16 @@ export function framing(dir, car, ctx) {
   // compose (UC-35.6): the camera pitched down so what it looks at sits RISE of the half-height above the frame's centre, clear of
   // the dials along the bottom, the lens opened until the whole car is inside the frame
   const aspect = ctx.aspect || 16 / 9, rise = riseFor(aspect);
-  let hfov = fitHfov(eye, look, car, fill, lens), aim = look;
-  for (let k = 0; k < 16; k++) {
-    const v = verticalFor(hfov, aspect);
-    aim = pitched(eye, look, rise * v / 2);
-    if (hfov >= HFOV_MAX || boxInFrame(eye, aim, hfov, aspect, car, 0.94)) break;
-    hfov = Math.min(HFOV_MAX, hfov * 1.07);
+  // the smallest lens from the fit up that holds the whole car, by bisection: continuous from one frame to the next (11-07: opened
+  // in 7 % steps, the lens jumped between frames as the car neared the frame's edge)
+  const aimFor = (h) => pitched(eye, look, rise * verticalFor(h, aspect) / 2), fits = (h) => boxInFrame(eye, aimFor(h), h, aspect, car, 0.94);
+  let lo = fitHfov(eye, look, car, fill, lens), hfov = lo;
+  if (!fits(lo)) {
+    let hi = HFOV_MAX;
+    if (fits(hi)) { for (let k = 0; k < 18; k++) { const mid = (lo + hi) / 2; if (fits(mid)) hi = mid; else lo = mid; } }
+    hfov = hi;
   }
-  return { eye, look: aim, hfovDeg: hfov, mounted, fixedAt: fixed ? eye.slice() : null };
+  return { eye, look: aimFor(hfov), hfovDeg: hfov, mounted, fixedAt: fixed ? eye.slice() : null };
 }
 // the tree stands 5 m past the start line between the lanes (app.js buildDragStrip)
 export const TREE_X_CM = 500;

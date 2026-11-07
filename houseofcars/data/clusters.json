@@ -1,0 +1,1053 @@
+{
+ "_meta": {
+  "made_by": "tools/clusters.py",
+  "facts_from": "research/clusters.json (READ 2026-11-07, sources per car below)",
+  "drawing": "AUTHORED"
+ },
+ "cars": {
+  "porsche_911_c4_2012": {
+   "w": 1000,
+   "h": 310,
+   "aspect_note": "five overlapping round dials, the largest in the centre",
+   "look": {
+    "font": "'Open Sans', system-ui, sans-serif",
+    "face": "#0a0b0d",
+    "face_hi": "#1e2024",
+    "numerals": "#f4f4f4",
+    "tick": "#e9e9e9",
+    "label": "#8d939a",
+    "needle": "#ff4a1c",
+    "needle_lo": "#b5300c",
+    "needle_glow": true,
+    "bezel_hi": "#3d4045",
+    "bezel_mid": "#17181b",
+    "bezel_lo": "#050506",
+    "cap_mid": "#26282c",
+    "cap_lo": "#000",
+    "red": "#ff5a28",
+    "screen": "#04060a",
+    "num_weight": 600
+   },
+   "dials": [
+    {
+     "id": "oil_t",
+     "x": 120,
+     "y": 172,
+     "r": 100,
+     "from": 60,
+     "to": 150,
+     "step": 30,
+     "minor": 15,
+     "sweep": [
+      -56,
+      56
+     ],
+     "num_r": 0.6,
+     "num_size": 0.16,
+     "rest": 100,
+     "title": "Not simulated: the page rests it at a warm engine's oil temperature (100)"
+    },
+    {
+     "id": "oil_p",
+     "x": 120,
+     "y": 172,
+     "r": 100,
+     "bezel": false,
+     "cap": true,
+     "from": 0,
+     "to": 5,
+     "step": 1,
+     "sweep": [
+      232,
+      128
+     ],
+     "num_r": 0.6,
+     "num_size": 0.16,
+     "rest": 3,
+     "title": "Not simulated: the page rests it at a running engine's oil pressure (3)"
+    },
+    {
+     "id": "speed",
+     "x": 302,
+     "y": 160,
+     "r": 124,
+     "from": 0,
+     "to": 330,
+     "step": 50,
+     "minor": 10,
+     "sweep": [
+      -135,
+      135
+     ],
+     "labels": [
+      0,
+      50,
+      100,
+      150,
+      200,
+      250,
+      300,
+      330
+     ],
+     "num_size": 0.13,
+     "unit": "km/h"
+    },
+    {
+     "id": "tft",
+     "kind": "screen",
+     "round": true,
+     "x": 698,
+     "y": 160,
+     "r": 124
+    },
+    {
+     "id": "coolant",
+     "x": 880,
+     "y": 172,
+     "r": 100,
+     "from": 60,
+     "to": 130,
+     "step": 30,
+     "minor": 10,
+     "sweep": [
+      -62,
+      62
+     ],
+     "labels": [
+      60,
+      90,
+      120
+     ],
+     "red_from": 125,
+     "num_r": 0.62,
+     "num_size": 0.16,
+     "rest": 90,
+     "title": "Not simulated: the page rests it at a warm engine's coolant (90)"
+    },
+    {
+     "id": "fuel",
+     "x": 880,
+     "y": 172,
+     "r": 100,
+     "bezel": false,
+     "from": 0,
+     "to": 1,
+     "step": 0.5,
+     "minor": 0.25,
+     "sweep": [
+      238,
+      122
+     ],
+     "labels": [
+      {
+       "v": 0,
+       "t": "0"
+      },
+      {
+       "v": 0.5,
+       "t": "2/4"
+      },
+      {
+       "v": 1,
+       "t": "4/4"
+      }
+     ],
+     "num_r": 0.6,
+     "num_size": 0.14,
+     "rest": 1,
+     "title": "Not simulated: the page rests it at a full tank"
+    },
+    {
+     "id": "rpm",
+     "x": 500,
+     "y": 156,
+     "r": 150,
+     "from": 0,
+     "to": 9000,
+     "step": 1000,
+     "minor": 250,
+     "div": 1000,
+     "sweep": [
+      -135,
+      135
+     ],
+     "red_from": "derived",
+     "num_size": 0.15,
+     "unit": "1/min x 1000",
+     "unit_y": -0.32
+    }
+   ],
+   "texts": [
+    {
+     "id": "speed",
+     "fmt": "speed",
+     "x": 500,
+     "y": 212,
+     "size": 30,
+     "glow": true
+    },
+    {
+     "id": "gear",
+     "fmt": "gear",
+     "x": 500,
+     "y": 252,
+     "size": 26,
+     "fill": "#ff7a3c"
+    },
+    {
+     "id": "tlab",
+     "text": "TIME",
+     "x": 698,
+     "y": 128,
+     "size": 13,
+     "cls": "lab",
+     "fill": "#8d939a",
+     "weight": 600
+    },
+    {
+     "id": "time",
+     "fmt": "time",
+     "x": 698,
+     "y": 172,
+     "size": 34,
+     "fill": "#e9f2ff"
+    }
+   ],
+   "authored": [
+    "the 991's cluster (2013) drawn for a car listed as a 2012 Carrera 4: the 991 Carrera 4 came in September 2012, so a 2012 Carrera 4 is a 997, whose cluster was not read (Wikipedia, Porsche 911 (991))",
+    "the rev counter's red band: from the car's own derived shift point (the red start on the 3.4 was not legible)",
+    "minor ticks (not legible); the TFT shows the run's time (its pages were not read)",
+    "oil temperature, oil pressure, coolant and fuel rest where the page puts them: the sim has none of them",
+    "the fuel dial's orange reserve mark at 0 is not drawn"
+   ],
+   "read_from": [
+    "https://cdn.elferspot.com/wp-content/uploads/2021/02/DSC08128.jpg",
+    "https://www.netcarshow.com/porsche/2013-911_carrera_s/"
+   ],
+   "absent": [
+    "Canadian-market speedometer (km/h primary with mph inner, or not)",
+    "owner's manual instrument page for the 991.1",
+    "exact red-zone start on the 3.4 Carrera 4 tach",
+    "speedometer minor-tick step"
+   ]
+  },
+  "rolls_royce_ghost_2014": {
+   "w": 1000,
+   "h": 330,
+   "aspect_note": "Power Reserve left, the speedometer the largest in the centre, fuel and temperature right",
+   "look": {
+    "font": "'Open Sans', system-ui, sans-serif",
+    "face": "#e8eaeb",
+    "face_hi": "#ffffff",
+    "numerals": "#121418",
+    "tick": "#1c1e22",
+    "label": "#5a5f66",
+    "needle": "#16181b",
+    "needle_lo": "#000000",
+    "bezel_hi": "#ffffff",
+    "bezel_mid": "#a9aeb5",
+    "bezel_lo": "#4e535a",
+    "cap_mid": "#cdd2d8",
+    "cap_lo": "#686d74",
+    "red": "#a8201a",
+    "screen": "#111",
+    "rim_shadow": 0.35,
+    "glow": 0.35,
+    "num_weight": 500
+   },
+   "dials": [
+    {
+     "id": "reserve",
+     "x": 212,
+     "y": 172,
+     "r": 128,
+     "from": 0,
+     "to": 100,
+     "step": 20,
+     "minor": 10,
+     "sweep": [
+      -125,
+      125
+     ],
+     "labels": [
+      20,
+      40,
+      60,
+      80,
+      100
+     ],
+     "num_size": 0.15,
+     "rest": 100,
+     "label": "POWER RESERVE",
+     "unit": "%",
+     "title": "Power Reserve: the share of the engine's power not in use (the sim's own torque and speed against its most power)"
+    },
+    {
+     "id": "speed",
+     "x": 500,
+     "y": 168,
+     "r": 160,
+     "from": 0,
+     "to": 260,
+     "step": 20,
+     "minor": 10,
+     "sweep": [
+      -135,
+      135
+     ],
+     "num_size": 0.105,
+     "unit": "km/h"
+    },
+    {
+     "id": "temp",
+     "x": 788,
+     "y": 172,
+     "r": 128,
+     "from": 0,
+     "to": 1,
+     "step": 1,
+     "minor": 0.25,
+     "sweep": [
+      -58,
+      58
+     ],
+     "labels": [
+      {
+       "v": 0,
+       "t": "C"
+      },
+      {
+       "v": 1,
+       "t": "H"
+      }
+     ],
+     "num_r": 0.6,
+     "num_size": 0.14,
+     "rest": 0.5,
+     "title": "Not read: this dial's scales were not found. Drawn by the page; not simulated, it rests at a warm engine"
+    },
+    {
+     "id": "fuel",
+     "x": 788,
+     "y": 172,
+     "r": 128,
+     "bezel": false,
+     "from": 0,
+     "to": 1,
+     "step": 1,
+     "minor": 0.25,
+     "sweep": [
+      238,
+      122
+     ],
+     "labels": [
+      {
+       "v": 0,
+       "t": "E"
+      },
+      {
+       "v": 1,
+       "t": "F"
+      }
+     ],
+     "num_r": 0.6,
+     "num_size": 0.14,
+     "rest": 1,
+     "title": "Not read: this dial's scales were not found. Drawn by the page; not simulated, it rests at a full tank"
+    }
+   ],
+   "texts": [
+    {
+     "id": "gear",
+     "fmt": "gear",
+     "x": 500,
+     "y": 258,
+     "size": 20,
+     "fill": "#2a2d33"
+    }
+   ],
+   "authored": [
+    "the speedometer's face: the European km/h one (the Canadian face was not read)",
+    "the Power Reserve numerals from 20 (0 was not legible; cars.co.za gives its scale as 0 to 100)",
+    "the fuel and temperature dial's scales (not read): C to H over E to F, the page's",
+    "the gear readout's place (the Ghost shows its gear elsewhere; not read)",
+    "the speedometer cap is plain: the maker's engraved badge is not drawn"
+   ],
+   "read_from": [
+    "https://www.netcarshow.com/rolls-royce/2010-ghost/#pic-83",
+    "https://www.automotiverhythms.com/2011-rolls-royce-ghost-british-driving-machine/"
+   ],
+   "absent": [
+    "Canadian-market speedometer face (km/h only or dual) and its top numeral",
+    "fuel/temperature dial scales and which arc is which",
+    "owner's manual instrument page",
+    "night illumination colour",
+    "Power Reserve minor-tick step"
+   ]
+  },
+  "rolls_royce_wraith_2017": {
+   "w": 1000,
+   "h": 330,
+   "aspect_note": "the Ghost's three in a black horseshoe sweep",
+   "look": {
+    "font": "'Open Sans', system-ui, sans-serif",
+    "face": "#e8eaeb",
+    "face_hi": "#ffffff",
+    "numerals": "#121418",
+    "tick": "#1c1e22",
+    "label": "#5a5f66",
+    "needle": "#16181b",
+    "needle_lo": "#000000",
+    "bezel_hi": "#9ba1a9",
+    "bezel_mid": "#2b2e33",
+    "bezel_lo": "#0b0c0e",
+    "cap_mid": "#3a3d42",
+    "cap_lo": "#0b0c0e",
+    "red": "#a8201a",
+    "screen": "#111",
+    "rim_shadow": 0.35,
+    "glow": 0.35,
+    "num_weight": 500,
+    "needle_tip": "#e2561f"
+   },
+   "deco": [
+    {
+     "d": "M40 40 Q40 10 70 10 L930 10 Q960 10 960 40 L960 230 Q960 322 860 322 L140 322 Q40 322 40 230 Z",
+     "fill": "#08090a",
+     "stroke": "#26282c",
+     "sw": 2
+    }
+   ],
+   "dials": [
+    {
+     "id": "reserve",
+     "x": 212,
+     "y": 172,
+     "r": 128,
+     "from": 0,
+     "to": 100,
+     "step": 20,
+     "minor": 10,
+     "sweep": [
+      -125,
+      125
+     ],
+     "num_size": 0.15,
+     "rest": 100,
+     "label": "POWER RESERVE",
+     "unit": "%",
+     "title": "Power Reserve: the share of the engine's power not in use (the sim's own torque and speed against its most power)"
+    },
+    {
+     "id": "speed_mph",
+     "x": 500,
+     "y": 168,
+     "r": 160,
+     "from": 0,
+     "to": 150,
+     "step": 30,
+     "minor": 10,
+     "sweep": [
+      -135,
+      135
+     ],
+     "num_size": 0.12,
+     "unit": "MPH"
+    },
+    {
+     "id": "temp",
+     "x": 788,
+     "y": 172,
+     "r": 128,
+     "from": 0,
+     "to": 1,
+     "step": 1,
+     "minor": 0.25,
+     "sweep": [
+      -58,
+      58
+     ],
+     "labels": [
+      {
+       "v": 0,
+       "t": "C"
+      },
+      {
+       "v": 1,
+       "t": "H"
+      }
+     ],
+     "num_r": 0.6,
+     "num_size": 0.14,
+     "rest": 0.5,
+     "title": "Not read: this dial's scales were not found. Drawn by the page; not simulated, it rests at a warm engine"
+    },
+    {
+     "id": "fuel",
+     "x": 788,
+     "y": 172,
+     "r": 128,
+     "bezel": false,
+     "from": 0,
+     "to": 1,
+     "step": 1,
+     "minor": 0.25,
+     "sweep": [
+      238,
+      122
+     ],
+     "labels": [
+      {
+       "v": 0,
+       "t": "E"
+      },
+      {
+       "v": 1,
+       "t": "F"
+      }
+     ],
+     "num_r": 0.6,
+     "num_size": 0.14,
+     "rest": 1,
+     "title": "Not read: this dial's scales were not found. Drawn by the page; not simulated, it rests at a full tank"
+    }
+   ],
+   "texts": [
+    {
+     "id": "gear",
+     "fmt": "gear",
+     "x": 500,
+     "y": 258,
+     "size": 20,
+     "fill": "#2a2d33"
+    }
+   ],
+   "authored": [
+    "the speedometer: to 150 mph, as the UK car a review read (the Canadian km/h face was not read); its numeral step (every 30) is the page's",
+    "the Power Reserve's numerals and step (not legible: the Ghost's 20s)",
+    "the fuel and temperature dial's scales (not read): C to H over E to F, the page's",
+    "the numerals' colour and typeface (not read); the gear readout's place",
+    "the needle tips' blood orange is a hex the page chose for the press text's words"
+   ],
+   "read_from": [
+    "https://www.autotrader.ca/editorial/expert-reviews/rolls-royce/wraith/first-drive-2018-rolls-royce-wraith-black-badge/",
+    "https://www.theregister.com/2015/09/27/rolls_royce_wraith_review/?page=2",
+    "https://www.autoevolution.com/rolls-royce/wraith/",
+    "https://www.netcarshow.com/rolls-royce/2014-wraith/"
+   ],
+   "absent": [
+    "Power Reserve numerals and tick step",
+    "speedometer scale start, step and the Canadian unit (km/h)",
+    "fuel/temperature dial scales",
+    "owner's manual instrument page",
+    "numeral typeface and night illumination",
+    "first-hand read of autoevolution and Parkers wording"
+   ]
+  },
+  "bentley_flying_spur_2018": {
+   "w": 1000,
+   "h": 330,
+   "aspect_note": "two large dials flanking a centre screen",
+   "look": {
+    "font": "'Open Sans', system-ui, sans-serif",
+    "face": "#050506",
+    "face_hi": "#191a1d",
+    "numerals": "#f6f6f6",
+    "tick": "#f2f2f2",
+    "label": "#9399a1",
+    "needle": "#ff9418",
+    "needle_lo": "#c25d00",
+    "needle_glow": true,
+    "bezel_hi": "#ffffff",
+    "bezel_mid": "#bbc0c6",
+    "bezel_lo": "#575c63",
+    "cap_mid": "#30333a",
+    "cap_lo": "#050506",
+    "red": "#d8352a",
+    "screen": "#03060b",
+    "num_weight": 500
+   },
+   "dials": [
+    {
+     "id": "rpm",
+     "x": 250,
+     "y": 166,
+     "r": 160,
+     "from": 0,
+     "to": 7000,
+     "step": 1000,
+     "minor": 500,
+     "sweep": [
+      -135,
+      135
+     ],
+     "red_from": 6000,
+     "num_size": 0.12,
+     "labels": [
+      {
+       "v": 1000,
+       "t": "10"
+      },
+      {
+       "v": 2000,
+       "t": "20"
+      },
+      {
+       "v": 3000,
+       "t": "30"
+      },
+      {
+       "v": 4000,
+       "t": "40"
+      },
+      {
+       "v": 5000,
+       "t": "50"
+      },
+      {
+       "v": 6000,
+       "t": "60"
+      }
+     ]
+    },
+    {
+     "id": "speed",
+     "x": 750,
+     "y": 166,
+     "r": 160,
+     "marks": [
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      130,
+      160,
+      190,
+      220,
+      250,
+      280,
+      310
+     ],
+     "sweep": [
+      -135,
+      135
+     ],
+     "num_size": 0.1,
+     "labels": [
+      40,
+      60,
+      80,
+      100,
+      130,
+      160,
+      190,
+      220,
+      250,
+      280,
+      310
+     ]
+    },
+    {
+     "id": "screen",
+     "kind": "screen",
+     "x": 425,
+     "y": 58,
+     "w": 150,
+     "h": 216,
+     "rx": 14,
+     "stroke": "#2a2d33"
+    },
+    {
+     "id": "fuel",
+     "kind": "bar",
+     "x": 452,
+     "y": 246,
+     "w": 110,
+     "h": 8,
+     "from": 0,
+     "to": 1,
+     "segments": 10,
+     "rest": 1,
+     "color": "#f2f2f2",
+     "label": "F",
+     "title": "Not simulated: the page rests it at a full tank (the gauge's look was not read)"
+    },
+    {
+     "id": "coolant",
+     "kind": "bar",
+     "x": 452,
+     "y": 228,
+     "w": 110,
+     "h": 8,
+     "from": 0,
+     "to": 1,
+     "segments": 10,
+     "rest": 0.5,
+     "color": "#f2f2f2",
+     "label": "C",
+     "title": "Not simulated: the page rests it at a warm engine (the gauge's look was not read)"
+    }
+   ],
+   "texts": [
+    {
+     "id": "gear",
+     "fmt": "gear",
+     "x": 500,
+     "y": 140,
+     "size": 62,
+     "fill": "#ff9418",
+     "glow": true
+    },
+    {
+     "id": "speed",
+     "fmt": "speed",
+     "x": 500,
+     "y": 196,
+     "size": 30
+    },
+    {
+     "id": "kmh",
+     "text": "km/h",
+     "x": 500,
+     "y": 214,
+     "size": 11,
+     "cls": "lab",
+     "fill": "#9399a1",
+     "weight": 600
+    }
+   ],
+   "authored": [
+    "the rev counter read as hundreds of rpm (its legend was not legible: the other large dial is the speedometer); its end, 7000, the sim's own limit",
+    "the speedometer's 0 and 20 (under the steering wheel in the photo) and its unit, km/h (not legible)",
+    "the centre screen's pages (not read): the gear, the speed",
+    "the fuel and coolant gauges' look (not distinguishable): two small bars in the screen, resting where the page puts them",
+    "the 2016 update may have changed a 2018 car's dials (not verified)"
+   ],
+   "read_from": [
+    "https://www.netcarshow.com/Bentley-Flying_Spur_V8-2015-1280-bb054c29649171cfb3f4d86c00a5e941bf.jpg",
+    "https://www.autoevolution.com/bentley/flying-spur-1/"
+   ],
+   "absent": [
+    "owner's handbook instrument page (gauge list and scales)",
+    "Canadian-market speedometer unit and scale",
+    "tach redline value and the tach's end numeral",
+    "night illumination colour",
+    "2018 (post-2016 update) cluster photo"
+   ]
+  },
+  "bmw_i8_2016": {
+   "w": 1000,
+   "h": 300,
+   "aspect_note": "one screen: the speedometer ring left, the rev ring right (Sport), the road between",
+   "look": {
+    "font": "'Open Sans', system-ui, sans-serif",
+    "face": "#000",
+    "face_hi": "#000",
+    "numerals": "#f2f2f2",
+    "tick": "#888",
+    "label": "#8a9099",
+    "track": "#25272b",
+    "needle": "#ff5a1f",
+    "needle_lo": "#ff5a1f",
+    "bezel_hi": "#333",
+    "bezel_mid": "#111",
+    "bezel_lo": "#000",
+    "cap_mid": "#222",
+    "cap_lo": "#000",
+    "red": "#ff2a14",
+    "screen": "#000",
+    "num_weight": 300,
+    "glow": 2.2
+   },
+   "deco": [
+    {
+     "d": "M10 30 Q10 10 30 10 L970 10 Q990 10 990 30 L990 270 Q990 290 970 290 L30 290 Q10 290 10 270 Z",
+     "fill": "#020203",
+     "stroke": "#2a2c30",
+     "sw": 2
+    },
+    {
+     "d": "M430 250 L485 128 L515 128 L570 250 Z",
+     "fill": "#0c0d10"
+    },
+    {
+     "d": "M470 160 L530 160 M455 192 L545 192 M440 224 L560 224",
+     "stroke": "#26282d",
+     "sw": 2
+    },
+    {
+     "d": "M380 128 L620 128",
+     "stroke": "#ff3b14",
+     "sw": 3,
+     "opacity": 0.85
+    }
+   ],
+   "dials": [
+    {
+     "id": "speed",
+     "kind": "ring",
+     "x": 250,
+     "y": 158,
+     "r": 118,
+     "from": 0,
+     "to": 260,
+     "sweep": [
+      -135,
+      135
+     ],
+     "labels": [
+      0,
+      50,
+      100,
+      150,
+      200,
+      260
+     ],
+     "unit": "km/h",
+     "num_size": 0.1
+    },
+    {
+     "id": "rpm",
+     "kind": "ring",
+     "x": 750,
+     "y": 158,
+     "r": 118,
+     "from": 0,
+     "to": 7000,
+     "sweep": [
+      -135,
+      135
+     ],
+     "div": 1000,
+     "labels": [
+      0,
+      1000,
+      2000,
+      3000,
+      4000,
+      5000,
+      6000,
+      7000
+     ],
+     "red_from": "derived",
+     "unit": "1/min x 1000",
+     "num_size": 0.1
+    },
+    {
+     "id": "fuel",
+     "kind": "bar",
+     "x": 300,
+     "y": 266,
+     "w": 120,
+     "h": 8,
+     "from": 0,
+     "to": 1,
+     "segments": 12,
+     "rest": 1,
+     "color": "#f2f2f2",
+     "label": "FUEL",
+     "title": "Not simulated: the page rests it at a full tank"
+    },
+    {
+     "id": "battery",
+     "kind": "bar",
+     "x": 520,
+     "y": 266,
+     "w": 120,
+     "h": 8,
+     "from": 0,
+     "to": 1,
+     "segments": 12,
+     "rest": 1,
+     "color": "#3fa9ff",
+     "label": "BATT",
+     "title": "Not simulated: the sim's i8 has one engine; the page rests the battery full"
+    }
+   ],
+   "texts": [
+    {
+     "id": "speed",
+     "fmt": "speed",
+     "x": 250,
+     "y": 178,
+     "size": 56,
+     "weight": 300
+    },
+    {
+     "id": "gear",
+     "fmt": "gear_s",
+     "x": 750,
+     "y": 176,
+     "size": 40,
+     "weight": 300,
+     "fill": "#ff7a45"
+    },
+    {
+     "id": "clock",
+     "fmt": "clock",
+     "x": 540,
+     "y": 44,
+     "size": 18,
+     "weight": 400,
+     "fill": "#cfd3d8"
+    },
+    {
+     "id": "otemp",
+     "text": "-- °C",
+     "x": 460,
+     "y": 44,
+     "size": 18,
+     "weight": 400,
+     "fill": "#cfd3d8"
+    }
+   ],
+   "authored": [
+    "the rev ring's red band: from the car's own derived shift point (the red start was not printed)",
+    "the road between the rings and its glowing horizon: the page's drawing of what the press photo shows",
+    "the fuel and battery bars rest where the page puts them (the sim has neither); the outside temperature is not known, so it reads --",
+    "km/h on the speedometer from the European press photo and manual (the Canadian unit was not read)"
+   ],
+   "read_from": [
+    "https://www.netcarshow.com/bmw/2015-i8/#pic-179",
+    "https://www.netcarshow.com/bmw/2015-i8/#pic-180",
+    "https://manualshive.com/en/manual/bmw/i8-coupe/2780364?page=124",
+    "https://manualshive.com/en/manual/bmw/i8-coupe/2780364?page=118",
+    "https://manualshive.com/en/manual/bmw/i8-coupe/2780364?page=113"
+   ],
+   "absent": [
+    "Canadian-market units on the speedometer",
+    "tachometer red-zone start in rpm",
+    "exact typeface name",
+    "2016 edition of the owner's manual"
+   ]
+  },
+  "mercedes_amg_e63s_2021": {
+   "w": 1000,
+   "h": 300,
+   "aspect_note": "one screen: the rev counter in the centre, a blue perspective panel either side, the speed large on the left",
+   "look": {
+    "font": "'Open Sans', system-ui, sans-serif",
+    "face": "#000",
+    "face_hi": "#0d0e11",
+    "numerals": "#ffffff",
+    "tick": "#d8dbe0",
+    "label": "#7e8792",
+    "needle": "#ff3b1f",
+    "needle_lo": "#c2230c",
+    "needle_glow": true,
+    "bezel_hi": "#ffffff",
+    "bezel_mid": "#7b8089",
+    "bezel_lo": "#1c1e22",
+    "cap_mid": "#2a2d33",
+    "cap_lo": "#000",
+    "red": "#ff2b1c",
+    "screen": "#000",
+    "num_weight": 600,
+    "glow": 1.6
+   },
+   "deco": [
+    {
+     "d": "M10 30 Q10 10 30 10 L970 10 Q990 10 990 30 L990 270 Q990 290 970 290 L30 290 Q10 290 10 270 Z",
+     "fill": "#010102",
+     "stroke": "#23252a",
+     "sw": 2
+    },
+    {
+     "d": "M40 70 L345 100 L345 220 L40 250 Z",
+     "fill": "#0a2a55",
+     "opacity": 0.85
+    },
+    {
+     "d": "M960 70 L655 100 L655 220 L960 250 Z",
+     "fill": "#0a2a55",
+     "opacity": 0.85
+    },
+    {
+     "d": "M60 112 L340 122 M60 148 L340 150 M60 184 L340 178 M60 220 L340 206 M940 112 L660 122 M940 148 L660 150 M940 184 L660 178 M940 220 L660 206",
+     "stroke": "#2f7de6",
+     "sw": 1.5,
+     "opacity": 0.7
+    }
+   ],
+   "dials": [
+    {
+     "id": "rpm",
+     "x": 500,
+     "y": 158,
+     "r": 136,
+     "bezel_w": 0.035,
+     "from": 0,
+     "to": 7000,
+     "step": 1000,
+     "minor": 500,
+     "div": 1000,
+     "sweep": [
+      -135,
+      135
+     ],
+     "red_from": 6500,
+     "num_size": 0.15
+    }
+   ],
+   "texts": [
+    {
+     "id": "speed",
+     "fmt": "speed",
+     "x": 195,
+     "y": 182,
+     "size": 74,
+     "weight": 300
+    },
+    {
+     "id": "kmh",
+     "text": "km/h",
+     "x": 195,
+     "y": 210,
+     "size": 15,
+     "cls": "lab",
+     "fill": "#7e8792",
+     "weight": 600
+    },
+    {
+     "id": "gear",
+     "fmt": "gear",
+     "x": 805,
+     "y": 186,
+     "size": 74,
+     "weight": 300,
+     "fill": "#ff5a3c"
+    },
+    {
+     "id": "glab",
+     "text": "GEAR",
+     "x": 805,
+     "y": 212,
+     "size": 13,
+     "cls": "lab",
+     "fill": "#7e8792",
+     "weight": 600
+    }
+   ],
+   "authored": [
+    "the rev counter's 0 and its end at 7 (numerals 1 to 7 READ; the end value not legible); its red from 6500, so that only the 7 is red, as the photo shows (the start is not legible)",
+    "the gear readout on the right panel (its place was not legible)",
+    "the blue panels: the page's drawing of the press photo's perspective panels; km/h under the speed (the legend was not legible)"
+   ],
+   "read_from": [
+    "https://www.netcarshow.com/Mercedes-Benz-E63_S_AMG-2021-1280-f2967b4090662bb80e33258a43766fa785.jpg",
+    "https://www.netcarshow.com/mercedes-benz/2021-e63_s_amg/",
+    "https://www.netcarshow.com/mercedes-benz/2021-e63_s_amg/#pic-62"
+   ],
+   "absent": [
+    "rev counter end value and red-zone start (rpm)",
+    "which style the two-dial photo shows (Modern Classic or Sport)",
+    "owner's manual page for the display styles",
+    "gear indicator and digital speed position in Supersport",
+    "night illumination / colour options",
+    "Canadian-market units"
+   ]
+  }
+ }
+}

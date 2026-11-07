@@ -21,6 +21,7 @@ export const AUTHORED = [
   'A7 chassis-vs-ground contact: 8 corners of a box (READ bounds_cm X/Y and top, bottom at the highest READ wheel-centre height), each traced from the centre of mass with world.trace; velocity impulse with restitution 0, Coulomb friction using the hit\'s friction, and a position push-out of the deepest corner; Chaos collides the physics asset shapes (ABSENT)',
   'A8 vehicle sleeping (ProcessSleeping, sleep_threshold, sleep_slope_limit) is not simulated: the body never sleeps',
   'A10 a gear press (input.gearUp / gearDown) reaches the gearbox once, on the next substep; Unreal applies GearUpInput on every physics tick it is held (ChaosWheeledVehicleMovementComponent.cpp:769-779)',
+  'A11 a friction clutch between the engine and the gearbox (UC-34), only when the input names one (input.clutch: 0 the pedal up .. 1 the floor; input.gear: the gate\'s gear, set at once by the driver\'s hand; without them every step is as before). Locked, the step is Unreal\'s own. Slipping, it passes its hold (CLUTCH_STRENGTH x (1 - clutch) x the engine\'s maximum torque, from ClutchModule.cpp:30\'s ClutchValue) signed by which side spins faster: that torque loads the free-running engine (EngineSystem.cpp\'s free branch) and drives the wheels through the gearbox (TorqueSimModule.cpp:40). It locks when the two speeds meet with the engine\'s torque within its hold, and slips when the pedal takes the hold under the torque. An engine dragged under STALL_FRACTION of its idle stalls (Wikipedia, Stall (engine), rev 1349070313). Unreal\'s wheeled path, the template\'s, has no clutch: this is its modular system\'s clutch, ported onto that path',
   'A9 suspension hard stop: when a wheel compresses past suspension_max_raise, a frictionless contact at the wheel stops the approach and pushes the body out (push-out capped at the READ Chaos CVars min(MaxPushout 5 cm, MaxPushoutVelocity 100 cm/s * dt)), with the constraint geometry; it stands in for the hard-stop manifold of FPBDSuspensionConstraints (PBDSuspensionConstraints.cpp:213-293), which the PBD solver iterates',
 ];
 
@@ -594,6 +595,7 @@ export function resetVehicle(v, position, yawDegrees) {
   v.hits = c.wheels.map(() => null);
   v.out = { currentGear: 0, targetGear: 0 };
   v.pendingGear = { up: 0, down: 0 };                               // gear presses waiting for the next substep (A10 in AUTHORED)
+  v.clutch = { locked: true, slip: 0 }; v.stalled = false;           // A11: read only when the input names a clutch
   publish(v, c.wheels.map(() => 0));
 }
 
@@ -614,6 +616,19 @@ function engineTorqueFromRPM(v, rpm, limitToIdle = true) {           // UE: Engi
   return normalisedGraphValue(c.graph, rpm, c.maxRPM, e.maxTorque);
 }
 const engineTorque = (v) => (v.engine.started ? v.engine.throttle * engineTorqueFromRPM(v, v.engine.rpm) : 0);   // UE: EngineSystem.h:99-107
+// AUTHORED: A11 (UC-34) the clutch's numbers. CLUTCH_STRENGTH: FClutchSettings' default (ClutchModule.h:18, READ). LOCK_RPM: the slip under
+// which the plates grip (AUTHORED: an rpm reading's own grain). STALL_FRACTION: how far under its idle an engine dies (AUTHORED: the
+// source says an engine stalls when it turns too slowly to keep running, not how slowly)
+// GOV_BAND_RPM: under its idle an engine's governor opens the throttle, fully this far under (AUTHORED; its authority, the engine's
+// own full torque at idle, is READ off the car's torque curve: a car pulls away on a slowly let-out clutch without gas, Wikipedia
+// Stall (engine), and one that cannot hold its idle stalls)
+// ENGINE_MOI: the engine's turning mass with the clutch (11-07, RJ: "fix the simulation controls"). Every car carries the template's
+// EngineRevUpMOI 5.0, about twenty times a real engine's: free it revved 1,000 rpm a second and a dropped clutch never stalled. No
+// figure was READ for these engines (research/ENGINE_INERTIA.md); this is the largest READ for a named production engine, a 2.0
+// TDI's crank, rods and dual-mass flywheel with clutch: Ubysz A., 'Problems of rotational mass in passenger vehicles', Transport
+// Problems 5(1) 2010, p.35 Table 1 row 6 (https://delibra.bg.polsl.pl//Content/27480/BCPS_31096_-_Problems-of-rotation_0000.pdf).
+// A STAND-IN still (another engine's), used only with a clutch: without one the step is Unreal's, at the car's own 5.0
+export const CLUTCH = { CLUTCH_STRENGTH: 1.0, LOCK_RPM: 30, STALL_FRACTION: 0.5, GOV_BAND_RPM: 150, ENGINE_MOI: 0.246 };
 function engineSimulate(v, dt) {                                      // UE: EngineSystem.cpp:44-76
   const e = v.engine, c = v.cfg.engine;
   if (!e.started) return;
@@ -627,6 +642,44 @@ function engineSimulate(v, dt) {                                      // UE: Eng
   if (e.omega < e.idleSpeed) e.omega = e.idleSpeed;
   e.rpm = OmegaToRPM(e.omega);
 }
+// A11 the clutch before the engine steps: locked (Unreal's path), or slipping with the torque it passes. pedal 0..1, fromWheel the
+// engine rpm the driven wheels mean in the current gear
+function clutchState(v, pedal, fromWheel) {
+  const e = v.engine, cl = v.clutch;
+  const hold = (1 - pedal) * CLUTCH.CLUTCH_STRENGTH * e.maxTorque;          // ClutchValue x the engine's torque, UE: ClutchModule.cpp:30
+  if (outOfGear(v.trans) || !e.started) { cl.locked = false; cl.slip = 0; return { locked: false, torque: 0, hold }; }
+  if (cl.locked && (hold <= 0 || Math.abs(engineTorque(v)) > hold)) cl.locked = false;   // the pedal down past what the torque needs
+  if (cl.locked) return { locked: true, torque: 0, hold };
+  cl.slip = e.omega - RPMToOmega(Math.abs(fromWheel));                      // the engine's side less the gearbox's (rad/s)
+  return { locked: false, torque: Math.sign(cl.slip) * hold, hold };
+}
+// A11 the idle governor: the torque it adds under idle, from none at idle to the engine's full torque at idle GOV_BAND_RPM below it
+function governor(v, rpm) {
+  const c = v.cfg.engine, u = clamp((c.idleRPM - rpm) / CLUTCH.GOV_BAND_RPM, 0, 1);
+  return u > 0 ? u * engineTorqueFromRPM(v, c.idleRPM) : 0;
+}
+// A11 the engine while the clutch slips: free-running (EngineSystem.cpp's free branch) with the clutch's torque as its load and the
+// governor under idle; no idle floor while a load drags it, so a load the governor cannot carry stalls it
+function slipEngine(v, dt, load) {
+  const e = v.engine, c = v.cfg.engine;
+  if (!e.started) return;
+  const T = Math.max(engineTorque(v), governor(v, e.rpm));
+  e.omega += (T - load) * dt / CLUTCH.ENGINE_MOI;
+  e.omega -= c.revDownRate * Sqr((e.omega - 0.5 * e.idleSpeed) / e.maxSpeed) * dt;
+  if (load === 0 && e.omega < e.idleSpeed) e.omega = e.idleSpeed;
+  if (e.omega > e.maxSpeed) e.omega = e.maxSpeed;                          // the fuel cut at the car's READ limit (a light flywheel overshoots it in a step)
+  e.rpm = OmegaToRPM(e.omega);
+}
+// A11 the clutch after the engine stepped: grips when the speeds meet (or cross) with the torque within its hold; a stall
+function clutchAfter(v, st, fromWheel) {
+  const e = v.engine, cl = v.clutch, g = RPMToOmega(Math.abs(fromWheel)), now = e.omega - g;
+  if (!e.started) return;                                                   // a stalled engine grips nothing
+  if (st.hold > 0 && Math.max(Math.abs(engineTorque(v)), governor(v, e.rpm)) <= st.hold && (Math.sign(now) !== Math.sign(cl.slip) || Math.abs(now) < RPMToOmega(CLUTCH.LOCK_RPM))) {
+    cl.locked = true; e.omega = Math.max(g, e.idleSpeed); e.rpm = OmegaToRPM(e.omega);
+  }
+  if (e.omega < CLUTCH.STALL_FRACTION * e.idleSpeed) stall(v);
+}
+function stall(v) { const e = v.engine; e.started = false; e.omega = 0; e.rpm = 0; v.clutch.locked = false; v.stalled = true; }
 
 // FSimpleTransmissionSim, UE: Core/Private/TransmissionSystem.cpp + Core/Public/TransmissionSystem.h
 const correctGear = (v, g) => clamp(g, -v.cfg.trans.reverse.length, v.cfg.trans.forward.length);   // UE: TransmissionSystem.h:220-223
@@ -751,6 +804,8 @@ export function stepVehicle(v, input, dt, world) {
   if (input.transmission !== undefined && input.transmission !== 'manual' && input.transmission !== 'automatic') throw new Error('chaos_vehicle: input.transmission must be manual or automatic');
   if (input.gearUp) v.pendingGear.up++;
   if (input.gearDown) v.pendingGear.down++;
+  if (input.clutch !== undefined && !(input.clutch >= 0 && input.clutch <= 1)) throw new Error('chaos_vehicle: input.clutch must be 0 (the pedal up) to 1 (the floor)');
+  if (input.gear !== undefined && (input.clutch === undefined || !Number.isInteger(input.gear))) throw new Error('chaos_vehicle: input.gear is a whole gear, and only with a clutch (A11)');
   v.accum += dt;
   const n = Math.floor(v.accum / SUBSTEP + 1e-9);        // dt = 1/120 is exactly one substep; the remainder carries to the next call
   v.accum = Math.max(0, v.accum - n * SUBSTEP);
@@ -780,7 +835,9 @@ function substep(v, input, dt, world) {
     if (v.trans && g !== v.out.targetGear) return;
     v.gtTargetGear = g;
   };
-  if (c.reverseAsBrake) {                                                    // UE: .cpp:1183-1198
+  if (input.gear !== undefined && v.trans) {                               // A11: the gate's gear, by the driver's hand, at once
+    if (input.gear !== v.trans.target) setTargetGear(input.gear, true);
+  } else if (c.reverseAsBrake) {                                             // UE: .cpp:1183-1198
     if (raw.brake > KINDA_SMALL_NUMBER && currentGear >= 0 && v.gtTargetGear >= 0) setTargetGear(-1, true);
     else if (raw.throttle > KINDA_SMALL_NUMBER && currentGear <= 0 && v.gtTargetGear <= 0) setTargetGear(1, true);
   } else if (c.trans.automatic) {                                            // UE: .cpp:1199-1211
@@ -815,6 +872,7 @@ function substep(v, input, dt, world) {
   const ci = {
     throttle: controlFn(c.rates.throttle, v.input.throttle), brake: controlFn(c.rates.brake, v.input.brake),
     steering: controlFn(c.rates.steering, v.input.steering), handbrake: v.input.handbrake, parking: c.parkEnabled,
+    clutch: input.clutch,                                                    // A11 (UC-34): a pedal, not rate-limited
   };
 
   // ---------------- physics thread: TickVehicle -> UpdateState, ApplyInput, UpdateSimulation (Glue/Private/ChaosVehicleMovementComponent.cpp:164-177)
@@ -862,6 +920,7 @@ function substep(v, input, dt, world) {
     const w = v.w[i];
     let ebf = 0;
     if (ci.throttle < SMALL_NUMBER && Math.abs(forwardSpeed) > SMALL_NUMBER && w.engine) ebf = engineBraking;   // UE: .cpp:799-803
+    if (ci.clutch !== undefined && (!v.clutch.locked || outOfGear(v.trans))) ebf = 0;   // A11: an open clutch passes no engine braking (its slip torque does)
     if (cw.brake) {
       const bf = cw.maxBrake * ci.brake;
       w.brake = TorqueMToCm(bf + ebf); w.engineBraking = Math.abs(ebf) > Math.abs(bf);   // UE: .cpp:805-809
@@ -885,13 +944,19 @@ function substep(v, input, dt, world) {
     v.w.forEach((w) => { if (w.engine) wheelRPM = Math.abs(OmegaToRPM(w.omega)); });   // UE: .cpp:852-859
     const fromWheel = wheelRPM * gearRatio(v, v.trans.current);               // GetEngineRPMFromWheelRPM, UE: TransmissionSystem.h:208-211
     const wheelSpeedRPM = Math.abs(fromWheel);
-    v.engine.freeRunning = outOfGear(v.trans);                               // SetEngineRPM, UE: Core/Public/EngineSystem.h:85-92
+    const cl = ci.clutch === undefined ? null : clutchState(v, ci.clutch, fromWheel);   // A11: null = no clutch, Unreal's own step
+    const slipping = cl !== null && !cl.locked && !outOfGear(v.trans);
+    v.engine.freeRunning = outOfGear(v.trans) || slipping;                   // SetEngineRPM, UE: Core/Public/EngineSystem.h:85-92
     if (!v.engine.freeRunning) v.engine.targetSpeed = RPMToOmega(clamp(Math.abs(fromWheel), c.engine.idleRPM, c.engine.maxRPM));
-    engineSimulate(v, dt);
+    if (slipping) { slipEngine(v, dt, cl.torque); clutchAfter(v, cl, fromWheel); }   // A11
+    else if (cl !== null && outOfGear(v.trans)) slipEngine(v, dt, 0);       // A11: with a clutch, free in neutral at the clutch's inertia too
+    else engineSimulate(v, dt);
+    if (cl && cl.locked && v.engine.started && Math.abs(fromWheel) < CLUTCH.STALL_FRACTION * c.engine.idleRPM) stall(v);   // A11: a locked engine turns with the wheels
     v.trans.engineRPM = v.engine.started ? v.engine.rpm : 0;                 // UE: .cpp:865
     v.trans.allowed = !v.inAir && !v.w.some((w, i) => wheelIsSlipping(w, c.wheels[i]));   // UE: .cpp:866 + IsWheelSpinning .cpp:825-840
     transmissionSimulate(v, dt);                                             // UE: .cpp:869
-    let tt = engineTorque(v) * gearRatio(v, v.trans.current) * c.trans.efficiency;   // GetTransmissionTorque, UE: TransmissionSystem.h:196-199
+    const locked = cl !== null && cl.locked && !outOfGear(v.trans) && v.engine.started;
+    let tt = (slipping ? cl.torque : locked ? Math.max(engineTorque(v), governor(v, Math.abs(fromWheel))) : engineTorque(v)) * gearRatio(v, v.trans.current) * c.trans.efficiency;   // GetTransmissionTorque, UE: TransmissionSystem.h:196-199; A11 slipping: the clutch's torque
     if (wheelSpeedRPM > c.engine.maxRPM) tt = 0;                             // UE: .cpp:872-875
     c.wheels.forEach((cw, i) => { v.w[i].drive = v.w[i].engine ? TorqueMToCm(tt) * cw.torqueRatio : 0; });   // UE: .cpp:878-889
   }

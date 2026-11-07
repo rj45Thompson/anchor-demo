@@ -12,7 +12,7 @@ import { rotatorAxes, threeMatrix, threeMatrixFromAxes, toThreePoint, verticalFo
 import { makeRig, updateRig } from './camera_rig.js';
 import { SLIDES } from './slides.js';
 import { svgIcon, drawIcon } from './icons.js';
-import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, setPaint, paint, groundDetail, lightBeam, asphaltRoad, concreteWall } from './fx.js';
+import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, setPaint, paint, groundDetail, lightBeam, asphaltRoad, concreteWall, contactShadow } from './fx.js';
 import { makeAudio, driveSound, silence, blip } from './audio.js';
 import { Radio } from './radio.js';                                                       // UC-27: the car radio
 import { makeWalker, stepWalker, facing, EYE_M } from './walk.js';                        // UC-28: walking the lot
@@ -29,6 +29,8 @@ import { lotCars, leadsFor, compareHTML, priceVsPace } from './sale.js';
 import { loadingShow, loadingDone } from './loading.js';
 import * as Drag from './drag.js';                                                          // UC-22: the drag strip's rules
 import { STRIP, makeDirector, stepDirector, framing, shotId, verticalFor } from './drag_cam.js';   // UC-35: the filmed run
+import * as Sim from './drag_sim.js';                                                       // UC-34: the clutch pedal, the H gate
+import { clusterSVG, bindCluster, powerReserve } from './gauges.js';                          // UC-36: each car's own cluster
 import { knowHTML, knownSpecsHTML } from './know.js';                                                   // UC-14: Know this car (know.js)                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
 import { dragyHUD } from './dragstats.js';                                                  // UC-21: Dragy owners' runs (dragstats.js)
 import { ScoreBoard, HOUSE_NAME, checkName, ranked, qualifies, boardHTML, lastName, keepName } from './scores.js';   // UC-25: the shared boards
@@ -74,6 +76,9 @@ const canvas = $('view');
 const loader = new GLTFLoader();
 const glbCache = new Map();
 const prog = new Map();                          // UC-4.2b: the loading bar shows real bytes, per file, as they arrive
+// UC-20 against each model's own size (data/glb_bytes.json, tools/glb_sizes.py): GitHub Pages sends models gzipped, and a progress
+// event counts the unpacked bytes loaded against the packed length, so the bar passed 100 % (READ 11-07: the i8's 6.1 MB as 4.4)
+let GLB_BYTES = null;
 function showProgress() {
   let l = 0, t = 0;
   for (const v of prog.values()) { l += v.l; t += v.t; }
@@ -81,7 +86,9 @@ function showProgress() {
   if (bar && t) { bar.style.width = (100 * l / t).toFixed(0) + '%'; $('lmb').textContent = (100 * l / t).toFixed(0) + ' % · ' + (l / 1e6).toFixed(1) + ' / ' + (t / 1e6).toFixed(1) + ' MB'; }
 }
 const loadGlb = (url) => {
-  if (!glbCache.has(url)) { mark('glb asked', url); glbCache.set(url, loader.loadAsync(url, (e) => { prog.set(url, { l: e.loaded, t: e.total || e.loaded }); showProgress(); }).then((g) => { mark('glb parsed', url); upgradePaint(g.scene); return g; })); }
+  const size = GLB_BYTES[url];
+  if (size === undefined) throw new Error(url + ' is not in data/glb_bytes.json: run py tools/glb_sizes.py');
+  if (!glbCache.has(url)) { mark('glb asked', url); glbCache.set(url, loader.loadAsync(url, (e) => { prog.set(url, { l: e.loaded, t: size }); showProgress(); }).then((g) => { mark('glb parsed', url); upgradePaint(g.scene); return g; })); }
   return glbCache.get(url);
 };
 const meshUrl = (assetPath) => 'data/meshes/' + assetPath.split('/').pop().split('.').pop() + '.glb';   // "/Game/X/SM_A.SM_A" or "/Game/X/SM_A"
@@ -146,15 +153,16 @@ async function gpuNotice() {
   $('gpunoteok').onclick = () => { $('gpunote').hidden = true; try { localStorage.setItem('hoc.gpunote', BACKEND); } catch (e) { /* not kept */ } };
 }
 $('renderer').textContent = BACKEND;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMapping = THREE.NeutralToneMapping;              // UC-37.1 (AUTHORED): Khronos PBR Neutral: a hot highlight rolls off to its own colour (ACES bleached it white; AgX left the picture grey)
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const pmrem = new THREE.PMREMGenerator(renderer);
 const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;      // the track's
 const studioTex = studioEnvironment(renderer, PAL.accent);                  // the showroom's (fx.js)
 
-const [SHOW, TRACK, RULES, CAMS, INPUT, LISTINGS, MODELS] = await Promise.all([fetchJson('showroom.json'), fetchJson('track.json'), fetchJson('timetrial_rules.json'),
-  fetchJson('camera.json'), fetchJson('input.json'), fetchJson('listings.json'), fetchJson('models.json')]);
+const [SHOW, TRACK, RULES, CAMS, INPUT, LISTINGS, MODELS, GLBS] = await Promise.all([fetchJson('showroom.json'), fetchJson('track.json'), fetchJson('timetrial_rules.json'),
+  fetchJson('camera.json'), fetchJson('input.json'), fetchJson('listings.json'), fetchJson('models.json'), fetchJson('glb_bytes.json')]);
+GLB_BYTES = GLBS.bytes;
 const GHOSTS = await fetchJson('ghosts/index.json');      // UC-9.3: the simulated laps (tools/ghost_index.py)
 const SCORES = new ScoreBoard(await fetchJson('scores.json'));   // UC-25: where the shared boards live (null: not set up, and said)
 // UC-26 a car's model, or null when it has none or its model is withdrawn ("withheld": why, a model that cannot be fixed). Every
@@ -165,6 +173,8 @@ const SOON = 'No model yet · coming soon';
 const MOTION = { on: (() => { try { return localStorage.getItem('hoc.motion') !== 'off'; } catch (e) { return true; } })() };
 // UC-35.3a the strip's camera: filmed (drag_cam.js, the default) or the chase camera, kept on this device
 const DRAGCAM = { film: (() => { try { return localStorage.getItem('hoc.dragcam') !== 'chase'; } catch (e) { return true; } })() };
+// UC-34 the strip's gearbox: the clutch and the H gate (the default), or the paddles of UC-22, kept on this device
+const DRAGBOX = { clutch: (() => { try { return localStorage.getItem('hoc.gearbox') !== 'paddles'; } catch (e) { return true; } })() };
 const DEG = Math.PI / 180;
 const SALE_SPECS = await fetchJson('sale_specs.json');    // UC-9.1: each car for sale's factory numbers, READ with sources (tools/sale_specs.py)
 const [REVIEWS, RECALLS, COLOURS, PHOTOS, DRAGY] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json'), fetchJson('colours.json'), fetchJson('photos.json'), fetchJson('dragy.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
@@ -328,6 +338,8 @@ async function simBody(key, carJson) {
   const cx = w.reduce((a, p) => a + p[0], 0) / w.length;
   body.position.set(cx / 100, ground / 100, 0);
   const g = new THREE.Group(); g.add(body);
+  const B = carJson.bounds_cm.value, cs = contactShadow(B.box_extent[0] * 2 / 100, B.box_extent[1] * 2 / 100);   // UC-37.3
+  cs.position.set((B.origin[0]) / 100, ground / 100 + 0.012, 0); g.add(cs);
   // UC-15.4: the wheels import_models.py cut out of a Meshy body or took from a hand-made model's own parts (models.json wheels: the node, its sim wheel, its centre in
   // the model's real-size frame); each hangs on a steer pivot (about up) holding a spin pivot (about the axle, the body's Z),
   // both at the wheel's centre, so the physics turns them as it turns the template cars' wheels. No wheels = the reason is
@@ -761,7 +773,7 @@ async function buildTrack() {
   // the sun: Unreal's DirectionalLight shines along its rotator's X axis (READ: track actors)
   const L = (await fetchJson('track_lights.json')).directional;
   const dir = toThreePoint(rotatorAxes(L.rotation)[0].map((v) => v * 100));
-  const sky = physicalSky(renderer, dir);                                  // fx.js; see AUTHORED: sky
+  const sky = physicalSky(renderer, dir, 0.32, TRACK.landscape_material.ground_col);   // fx.js; see AUTHORED: sky; UC-37.2 the ground in the probe
   sky.mesh.name = 'page-sky'; sky.mesh.frustumCulled = false; sky.mesh.renderOrder = -1;
   scene.add(sky.mesh);
   scene.environment = sky.env; scene.environmentIntensity = 0.8;
@@ -906,7 +918,7 @@ async function startRace(entry) {
   $('t-rec').textContent = rec === null ? '—' : Rules.formatTime(rec, RULES);
   $('lapb').classList.remove('show');
   race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
-  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.25, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45 });
+  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.25, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45, bloomCap: 6, saturation: 1.08 });   // UC-37.5
   await warmPieces(trackView.scene, () => race.post.render(), 'track');   // UC-30: behind the loading screen
   await loadingDone();                                    // UC-20.3: a game in play ends when its player says, not under a countdown
   audio.start();
@@ -970,8 +982,10 @@ addEventListener('keydown', (e) => {
   if (mode === 'drag') {                                  // UC-22 the strip's keys (the page's own: Unreal's template has no manual gears)
     if (e.key === 'Escape') { backToShowroom(); return; }
     if (e.key === 'e' || e.key === 'E' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { e.preventDefault(); if (!e.repeat) dragPress('up'); return; }
+    if (race.clutchMode && !e.repeat && (/^Digit[0-9]$/.test(e.code) || e.key === 'n' || e.key === 'N')) { requestGear(race, /^Digit/.test(e.code) ? +e.code.slice(5) : 0); return; }   // UC-34.1a the gate on keys: 1..7, N or 0 neutral
+    if (e.key === 'g' || e.key === 'G') { toggleDragBox(); return; }
     if (e.key === 'q' || e.key === 'Q') { if (!e.repeat) dragPress('down'); return; }
-    if ((e.key === 'r' || e.key === 'R' || e.key === 'Enter') && race.run.done) { dragRerun(); return; }
+    if ((e.key === 'r' || e.key === 'R' || e.key === 'Enter') && (race.run.done || race.v.stalled)) { dragRerun(); return; }
     if (e.key === 'p' || e.key === 'P') { savePicture(race.entry.name + '-drag'); return; }
     if (e.key === 'c' || e.key === 'C') { toggleDragCam(); return; }   // UC-35.3a
     keys.add(e.code); return;
@@ -1219,13 +1233,17 @@ async function startDrag(entry) {
   race = { kind: 'drag', entry, car, carJson, v, strip, best, house, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {},
            director: makeDirector(), body: carJson.bounds_cm.value };   // UC-35: the filmed run, framed on the car's own READ bounds
+  race.clutchMode = DRAGBOX.clutch;                                    // UC-34: in neutral, the pedal up, the gate drawn
+  if (race.clutchMode) { const layout = Sim.gateLayout(v.cfg.trans.forward.length); race.gate = { layout, knob: Sim.knobFor(0, layout), gear: 0 }; race.pedal = { depth: 0, held: false, anchor: 0, prev: 0 }; race.cut = null; }
+  document.body.classList.toggle('clutchmode', race.clutchMode); $('dagain').hidden = true; drawGate(race); drawPedal(race);
+  race.cluster = await buildCluster(entry, v, race.pts);              // UC-36: the car's own cluster, or the page's tach (36.1a)
   const tachEl = $('hud-speed'); tachEl.querySelector('svg.tach')?.remove();
   race.tach = buildTach(tachEl, v.cfg.engine.maxRPM, Math.min(...race.pts));   // the red band from the earliest derived shift point
   $('dslip').hidden = true; $('dgrade').textContent = '';
   $('dtimes').innerHTML = dragTimeRows.map(([k, l]) => '<div data-k="' + k + '"><span>' + l + '</span><b>--</b></div>').join('');
   $('dcar').textContent = entry.sim ? (LOT_CARS.find((c) => c.key === entry.name) || {}).title || entry.name : entry.name;
   race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
-  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.35, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45 });
+  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.35, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45, bloomCap: 6, saturation: 1.08 });
   await warmPieces(trackView.scene, () => race.post.render(), 'strip');   // UC-30: behind the loading screen
   await loadingDone();
   audio.start();
@@ -1239,7 +1257,79 @@ document.querySelectorAll('#dtouch button[data-d]').forEach((b) => b.addEventLis
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) gas.addEventListener(ev, () => { touch.throttle = false; }); }
 window.HOC.dragBot = () => { if (race && race.kind === 'drag') race.bot = true; };   // the page check: gas on the green, every shift at its derived point, through the same presses
 window.HOC.dragTick = (dt) => tickDrag(dt);                                      // the page check steps frames itself (a background page draws few)
-function dragPress(dir) { if (mode === 'drag' && race && race.kind === 'drag' && !race.run.done) race.presses.push(dir); }
+function dragPress(dir) {
+  if (!(mode === 'drag' && race && race.kind === 'drag' && !race.run.done)) return;
+  if (race.clutchMode) requestGear(race, race.gate.gear + (dir === 'up' ? 1 : -1)); else race.presses.push(dir);   // UC-34: through the gate
+}
+function gradePop(text, kind) { const el = $('dgrade'); el.textContent = text; el.className = 'g-' + kind; void el.offsetWidth; el.classList.add('pop'); }
+function gradeShift(r, gear, rpm) {                                   // UC-22.3 an upshift graded against the gear it leaves
+  const grade = Drag.noteShift(r.run, gear, rpm, r.pts[gear - 1], r.v.cfg.engine.maxRPM);
+  gradePop(grade === 'PERFECT' ? 'PERFECT SHIFT' : (grade === 'EARLY' ? 'EARLY · ' : 'LATE · ') + Math.round(rpm) + ' rpm', grade.toLowerCase());
+  blip(audio, grade === 'PERFECT' ? 'go' : 'gate');
+}
+// UC-34.4 a gear asked for through the gate: in, if the clutch is down (or the revs match); a grind, and the gear stays, if not
+function requestGear(r, g) {
+  const v = r.v, n = v.cfg.trans.forward.length; g = Math.max(0, Math.min(n, g));
+  if (g === r.gate.gear || r.run.done) return true;
+  const wheel = v.w.find((w) => w.engine), wheelRpm = wheel ? Math.abs(wheel.omega) * 30 / Math.PI : 0;
+  const out = Sim.shiftOutcome(g, r.pedal.depth, v.engine.rpm, g ? wheelRpm * Math.abs(Chaos.gearRatio(v, g)) : 0);
+  if (!out.ok) { gradePop('GRIND · clutch in to shift', 'late'); blip(audio, 'count'); r.gate.knob = Sim.knobFor(r.gate.gear, r.gate.layout); drawGate(r); return false; }
+  const from = r.gate.gear; r.gate.gear = g; r.gate.knob = Sim.knobFor(g, r.gate.layout);
+  if (from >= 1 && g === from + 1 && from < n && r.cut && r.cut.gear === from) gradeShift(r, from, r.cut.rpm);   // graded at the rpm the drive was cut
+  drawGate(r); return true;
+}
+// the page check's driver for the clutch (as HOC.dragBot for the paddles): revs up with the clutch in, lets it out over 1.2 s on the
+// green, and shifts at the car's derived points through the clutch: in, the next gear, out over 0.25 s. AUTHORED, its timings
+function botClutch(r, raw, dt) {
+  const v = r.v, b = r.botState || (r.botState = { phase: 'stage', t: 0 }), n = v.cfg.trans.forward.length;
+  b.t += dt; raw.throttle = 1;
+  if (b.phase === 'stage') { r.pedal.depth = 1; raw.throttle = 0.7; if (r.gate.gear === 0) requestGear(r, 1); if (r.run.green !== null) { b.phase = 'launch'; b.t = 0; } }
+  else if (b.phase === 'launch' || b.phase === 'engage') { r.pedal.depth = Math.max(0, 1 - b.t / (b.phase === 'launch' ? 1.2 : 0.25)); if (r.pedal.depth === 0 && v.clutch.locked) { b.phase = 'run'; b.t = 0; } }
+  else if (b.phase === 'run') { const g = r.gate.gear; if (g < n && v.clutch.locked && v.engine.rpm >= r.pts[g - 1]) { b.phase = 'shift'; b.t = 0; r.pedal.depth = 1; raw.throttle = 0; } }
+  else if (b.phase === 'shift') { r.pedal.depth = 1; raw.throttle = 0; if (b.t >= 0.08) { requestGear(r, r.gate.gear + 1); b.phase = 'engage'; b.t = 0; } }
+}
+// the gate, drawn: its slots, the gears at their ends, the knob where it is (a phone drags it; a computer shows it)
+function drawGate(r) {
+  const el = $('dgate'); if (!r.clutchMode) { el.innerHTML = ''; return; }
+  const L = r.gate.layout, X = (x) => (8 + x * 84).toFixed(1), Y = (y) => (8 + y * 84).toFixed(1), k = r.gate.knob;
+  let s = '<svg viewBox="0 0 100 100" aria-label="Shift gate: gear ' + (r.gate.gear || 'N') + '"><path class="slot" d="M' + X(L.slots[0].x) + ' ' + Y(L.row.mid) + 'H' + X(L.slots[L.slots.length - 1].x);
+  for (const q of L.slots) s += 'M' + X(q.x) + ' ' + Y(L.row.top) + 'V' + Y(q.down ? L.row.bottom : L.row.mid);
+  s += '"/>';
+  for (const q of L.slots) { s += '<text x="' + X(q.x) + '" y="' + (+Y(L.row.top) - 1.5) + '" class="' + (r.gate.gear === q.up ? 'on' : '') + '">' + q.up + '</text>'; if (q.down) s += '<text x="' + X(q.x) + '" y="' + (+Y(L.row.bottom) + 7.5) + '" class="' + (r.gate.gear === q.down ? 'on' : '') + '">' + q.down + '</text>'; }
+  s += '<circle class="knob" cx="' + X(k.x) + '" cy="' + Y(k.y) + '" r="7"/><text class="kn" x="' + X(k.x) + '" y="' + (+Y(k.y) + 3) + '">' + (r.gate.gear || 'N') + '</text></svg>';
+  el.innerHTML = s;
+}
+function drawPedal(r) {                                              // the clutch pedal, as far down as it is (a computer's and a phone's)
+  const d = r.clutchMode ? r.pedal.depth : 0;
+  for (const el of document.querySelectorAll('.clutchdepth')) el.style.setProperty('--d', d.toFixed(3));
+  $('dpedal').setAttribute('aria-valuenow', String(Math.round(d * 100)));
+}
+// UC-34.1b the mouse pushes the clutch: held anywhere on the strip's picture and pulled down; let go, it springs up
+addEventListener('pointerdown', (e) => {
+  if (!(mode === 'drag' && race && race.clutchMode) || e.pointerType !== 'mouse' || e.button !== 0) return;
+  if (e.target.closest && e.target.closest('button, a, input, #dslip, #dgate, header')) return;
+  race.pedal.held = true; race.pedal.anchor = Sim.pedalGrab(race.pedal.depth, e.clientY); e.preventDefault();
+});
+addEventListener('pointermove', (e) => { if (mode === 'drag' && race && race.clutchMode && race.pedal.held && e.pointerType === 'mouse') race.pedal.depth = Sim.pedalDrag(race.pedal.anchor, e.clientY); });
+for (const ev of ['pointerup', 'pointercancel', 'blur']) addEventListener(ev, (e) => { if (race && race.pedal && (ev === 'blur' || e.pointerType === 'mouse')) race.pedal.held = false; });
+// UC-34.1c a phone's clutch: a slider on the left beside the gas, held where the finger is, springing up when it lifts
+{ const sl = $('dslider');
+  const at = (e) => { const b = sl.getBoundingClientRect(); race.pedal.depth = Sim.sliderDepth(e.clientY, b.top, b.bottom); };
+  sl.addEventListener('pointerdown', (e) => { if (!(race && race.clutchMode)) return; e.preventDefault(); sl.setPointerCapture(e.pointerId); race.pedal.held = true; at(e); });
+  sl.addEventListener('pointermove', (e) => { if (race && race.clutchMode && race.pedal.held) at(e); });
+  for (const ev of ['pointerup', 'pointercancel']) sl.addEventListener(ev, () => { if (race && race.pedal) race.pedal.held = false; }); }
+// UC-34.1 a phone's gate: the knob dragged along the slots; a gear the gearbox refuses leaves it where it was
+{ const gt = $('dgate'); let dragging = false;
+  const at = (e) => { const b = gt.getBoundingClientRect(), r = race, want = { x: ((e.clientX - b.left) / b.width * 100 - 8) / 84, y: ((e.clientY - b.top) / b.height * 100 - 8) / 84 };
+    r.gate.knob = Sim.moveKnob(r.gate.knob, want, r.gate.layout); const g = Sim.gearAt(r.gate.knob, r.gate.layout);
+    if (g !== r.gate.gear && (g !== 0 || Math.abs(r.gate.knob.y - r.gate.layout.row.mid) < 0.02)) { if (!requestGear(r, g)) dragging = false; } drawGate(r); };
+  gt.addEventListener('pointerdown', (e) => { if (!(race && race.clutchMode) || race.run.done) return; e.preventDefault(); gt.setPointerCapture(e.pointerId); dragging = true; at(e); });
+  gt.addEventListener('pointermove', (e) => { if (dragging) at(e); });
+  for (const ev of ['pointerup', 'pointercancel']) gt.addEventListener(ev, () => { dragging = false; if (race && race.gate) { race.gate.knob = Sim.knobFor(race.gate.gear, race.gate.layout); drawGate(race); } }); }
+function syncDragBox() { $('dbox').textContent = DRAGBOX.clutch ? 'Clutch on' : 'Clutch off'; $('dbox').setAttribute('aria-pressed', String(DRAGBOX.clutch)); }
+function toggleDragBox() { DRAGBOX.clutch = !DRAGBOX.clutch; try { localStorage.setItem('hoc.gearbox', DRAGBOX.clutch ? 'clutch' : 'paddles'); } catch (e) { /* not kept */ } syncDragBox(); dragRerun(); }   // a new run with the other gearbox
+$('dbox').addEventListener('click', toggleDragBox); syncDragBox(); $('dagain').addEventListener('click', () => dragRerun());
+window.HOC.dragBox = DRAGBOX;
 function dragRerun() { if (race && race.kind === 'drag') startDrag(race.entry).catch((e) => reportError(e)); }
 function fmt(s, d = 3) { return s === null || s === undefined ? '--' : s.toFixed(d); }
 function tickDrag(dt) {
@@ -1249,21 +1339,24 @@ function tickDrag(dt) {
   const pad = navigator.getGamepads ? [...navigator.getGamepads()].find((p) => p && p.connected && p.mapping === 'standard') : null;
   if (pad) { for (const [b, dir] of [[5, 'up'], [3, 'down']]) { const d = !!(pad.buttons[b] && pad.buttons[b].pressed); if (d && !r.padPrev[b]) dragPress(dir); r.padPrev[b] = d; } }
   const finished = run.done;
-  if (r.bot && run.green !== null && !finished) { raw.throttle = 1; const gg = v.trans.target; if (gg >= 1 && gg < c.trans.forward.length && v.trans.current === gg && v.trans.engineRPM >= r.pts[gg - 1] && !r.presses.length) dragPress('up'); }
+  if (r.bot && !r.clutchMode && run.green !== null && !finished) { raw.throttle = 1; const gg = v.trans.target; if (gg >= 1 && gg < c.trans.forward.length && v.trans.current === gg && v.trans.engineRPM >= r.pts[gg - 1] && !r.presses.length) dragPress('up'); }
+  if (r.clutchMode) {                                                  // UC-34: the pedal springs up when let go; the bot drives it
+    if (r.bot && !finished) botClutch(r, raw, dt); else if (!r.pedal.held) r.pedal.depth = Sim.pedalRelease(r.pedal.depth, dt);
+    if (finished) r.pedal.depth = 1;                                   // past the line the clutch goes in: it coasts, it cannot stall
+    if (r.pedal.depth >= 0.5 && r.pedal.prev < 0.5 && r.gate.gear >= 1) r.cut = { gear: r.gate.gear, rpm: v.engine.rpm };   // the drive cut: the shift's rpm
+    r.pedal.prev = r.pedal.depth; drawPedal(r);
+    if (v.stalled && !r.stallShown) { r.stallShown = true; gradePop('STALLED', 'late'); $('dagain').hidden = false; blip(audio, 'count'); }   // UC-34.3a a lost run
+  }
   // past the line the car shuts down: off the gas, coasting on its own READ idle brake and engine braking, and only below 30 km/h
   // the brake (AUTHORED): a brake press at speed is a FULL brake in Unreal's reverse-as-brake model, the wheels locked (no ABS) and
   // the tyre smoke filled the screen (11-06)
   const shut = finished && v.forwardSpeedCmS * 0.036 < 30;
   const input = { throttle: finished ? 0 : raw.throttle, brake: finished ? (shut ? 1 : 0) : raw.brake, steering: raw.steering, handbrake: 0, transmission: 'manual' };
+  if (r.clutchMode) { input.clutch = r.pedal.depth; input.gear = r.gate.gear; }   // UC-34 (chaos_vehicle.js A11)
   acc += Math.min(dt, 0.1);
   while (acc >= STEP) {
     const p = r.presses.shift(), gear = v.trans.target, rpm = v.trans.engineRPM;
-    if (p === 'up' && gear >= 1 && gear < c.trans.forward.length) {
-      const grade = Drag.noteShift(run, gear, rpm, r.pts[gear - 1], c.engine.maxRPM);
-      const el = $('dgrade'); el.textContent = grade === 'PERFECT' ? 'PERFECT SHIFT' : grade === 'EARLY' ? 'EARLY · ' + Math.round(rpm) + ' rpm' : 'LATE · ' + Math.round(rpm) + ' rpm';
-      el.className = 'g-' + grade.toLowerCase(); void el.offsetWidth; el.classList.add('pop');
-      blip(audio, grade === 'PERFECT' ? 'go' : 'gate');
-    }
+    if (p === 'up' && gear >= 1 && gear < c.trans.forward.length) gradeShift(r, gear, rpm);
     Chaos.stepVehicle(v, Object.assign({}, input, { gearUp: p === 'up', gearDown: p === 'down' }), STEP, r.strip);
     const ev = Drag.tick(run, { dt: STEP, distM: (v.pos[0] - r.x0) / 100, speedKmh: v.forwardSpeedCmS * 0.036, rpm: v.trans.engineRPM, gear: v.trans.target, maxRPM: c.engine.maxRPM });
     for (const e of ev) {
@@ -1310,6 +1403,7 @@ function tickDrag(dt) {
   $('speed').textContent = Rules.speedText(v.forwardSpeedCmS, RULES); $('unit').textContent = RULES.speed.unit;
   $('gear').textContent = Rules.gearText(v.gear, RULES);
   updateTach(r.tach, v.engineRPM);
+  if (r.cluster) updateCluster(r);                                      // UC-36
   const g = v.trans.target, sl = g >= 1 && g < c.trans.forward.length ? Drag.shiftLight(v.engineRPM, r.pts[g - 1]) : { fill: 0, shift: false };
   const leds = document.querySelectorAll('#dleds i'), lit = Math.round(sl.fill * leds.length);
   leds.forEach((el, i) => { el.classList.toggle('on', i < lit); el.classList.toggle('flash', sl.shift); });
@@ -1322,6 +1416,39 @@ function tickDrag(dt) {
   const slide = v.wheels.reduce((a, w) => a + slideAmount(w), 0) / v.wheels.length;
   driveSound(audio, { rpm: v.engineRPM, throttle: r.throttle, speedCmS: v.forwardSpeedCmS, slide, gear: v.gear, running: true });
   r.post.render();
+}
+// UC-36 the car's own cluster (data/clusters.json: its facts READ, its drawing the page's): built at the start, its red band from the car's
+// own derived shift points where its redline was not read, the Power Reserve against the engine's most power (its READ torque curve)
+let CLUSTERS = null;
+async function buildCluster(entry, v, pts) {
+  if (!CLUSTERS) CLUSTERS = (await fetchJson('clusters.json')).cars;
+  const src = entry.sim && CLUSTERS[entry.name], el = $('dcluster');
+  document.body.classList.toggle('hascluster', !!src);
+  if (!src) { el.innerHTML = ''; return null; }
+  const spec = JSON.parse(JSON.stringify(src));
+  for (const d of spec.dials) if (d.red_from === 'derived') d.red_from = Math.min(...pts);
+  el.innerHTML = clusterSVG(spec, 'c' + entry.name.length);
+  el.title = 'Drawn after this car\'s own cluster. Read from: ' + spec.read_from.join(' ; ') + '. The page\'s own: ' + spec.authored.join(' ; ');
+  let pmax = 0;
+  for (let rpm = v.cfg.engine.idleRPM; rpm <= v.cfg.engine.maxRPM - 1; rpm += 25) pmax = Math.max(pmax, Chaos._internal.engineTorqueFromRPM(v, rpm, true) * rpm * Math.PI / 30);
+  requestAnimationFrame(() => document.body.style.setProperty('--clh', Math.round(el.getBoundingClientRect().height) + 'px'));
+  return { spec, b: bindCluster(el, spec), pmax };
+}
+addEventListener('resize', () => { const el = document.getElementById('dcluster'); if (el && el.firstChild) document.body.style.setProperty('--clh', Math.round(el.getBoundingClientRect().height) + 'px'); });
+function updateCluster(r) {
+  const v = r.v, kmh = v.forwardSpeedCmS * 0.036, run = r.run, cl = r.cluster;
+  const torque = v.engine.started ? v.engine.throttle * Chaos._internal.engineTorqueFromRPM(v, v.engine.rpm, true) : 0;
+  const st = { rpm: v.engineRPM, speed: Math.max(0, kmh), speed_mph: Math.max(0, kmh) / 1.609344, reserve: 100 * powerReserve(torque, v.engine.omega, cl.pmax) };
+  const et = run.leave === null ? 0 : run.done ? run.marks.quarter : run.t - run.leave, gear = Rules.gearText(v.gear, RULES), now = new Date();
+  for (const t of cl.spec.texts || []) {
+    const f = t.fmt;
+    if (f === 'speed') st['text:' + t.id] = String(Math.round(Math.max(0, cl.spec.dials.some((d) => d.id === 'speed_mph') ? st.speed_mph : kmh)));
+    else if (f === 'gear') st['text:' + t.id] = gear;
+    else if (f === 'gear_s') st['text:' + t.id] = (/^\d/.test(gear) ? 'S ' : '') + gear;
+    else if (f === 'time') st['text:' + t.id] = et.toFixed(3);
+    else if (f === 'clock') st['text:' + t.id] = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  }
+  cl.b.update(st);
 }
 // UC-23.3 the slip sells: this car's own listing (price, kilometres, where it is) and your best quarter mile in every car on the lot,
 // ranked, each one a race away. The bests are this device's own (localStorage), as the lap record (hud.js readRecord)

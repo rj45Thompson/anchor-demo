@@ -148,13 +148,34 @@ body.dragmode #touch{display:none}
 #dtouch button.down{height:clamp(46px,11vmin,80px);font-size:clamp(15px,3vmin,22px)}#dgas{background:#16351f;border-color:#3dff7a;color:#c9ffd9}
 @media (pointer:coarse){#dtouch{display:flex}#dhelp{display:none}#dpanel{bottom:calc(clamp(84px,24vmin,150px) + 30px)}}
 #dslip:not([hidden]) ~ #dtouch{display:none}   /* the slip open: nothing left to press but its own buttons */
+/* UC-36 the car's own cluster in the tach's place, as wide as the screen allows between the left column and the gate */
+#dcluster{display:none}body.dragmode.hascluster #hud-speed{display:none}
+body.dragmode.hascluster #dcluster{display:block;position:fixed;left:50%;bottom:30px;transform:translateX(-50%);width:min(calc(100vw - 460px),1060px);filter:drop-shadow(0 10px 28px rgba(0,0,0,.6))}
+#dcluster svg{display:block;width:100%;height:auto}
+body.dragmode.hascluster #dpanel{bottom:calc(var(--clh,300px) + 44px)}
+@media (orientation:landscape){body.dragmode.hascluster #dgrade{bottom:calc(var(--clh,300px) + 46px)}}
+@media (pointer:coarse) and (orientation:landscape){body.dragmode.hascluster #dcluster{bottom:12px;width:calc(100vw - 2 * (16px + clamp(84px,24vmin,150px) + 12px + clamp(54px,12vmin,90px) + 14px))}body.dragmode.hascluster #dpanel{bottom:auto}}
+@media (orientation:portrait){body.dragmode.hascluster #dcluster{width:calc(100vw - 24px);bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}body.dragmode.clutchmode.hascluster #dcluster{bottom:calc(clamp(150px,40vmin,320px) + 30px)}body.dragmode.hascluster #dpanel{bottom:auto}}
+/* UC-34 the clutch and the gate: a computer's pedal (the mouse pulls it down) and gate (on keys), a phone's slider and gate (dragged) */
+#dpedal,#dgate,#dslider{display:none}#dhelp .cp{display:none}body.clutchmode #dhelp .cp{display:inline}body.clutchmode #dhelp .np{display:none}
+.clutchdepth{--d:0}
+body.clutchmode #dpedal{display:block;position:fixed;left:110px;top:96px;width:clamp(44px,6vmin,64px);height:clamp(180px,34vmin,320px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);overflow:hidden}
+#dpedal i,#dslider i{position:absolute;left:0;right:0;top:0;height:calc(var(--d) * 100%);background:linear-gradient(180deg,rgba(255,176,32,.15),rgba(255,176,32,.65));border-bottom:4px solid #ffb020}
+#dpedal b,#dslider b{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;letter-spacing:.12em;color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto;height:70%}
+body.clutchmode #dgate{display:block;position:fixed;left:14px;bottom:44px;width:clamp(120px,20vmin,190px);height:clamp(120px,20vmin,190px);border-radius:16px;background:rgba(10,10,10,.72);border:1px solid var(--line);touch-action:none}
+#dgate svg{width:100%;height:100%}#dgate .slot{fill:none;stroke:#3a3f45;stroke-width:6;stroke-linecap:round}#dgate text{fill:var(--dim);font:800 8px 'Open Sans',sans-serif;text-anchor:middle}#dgate text.on{fill:var(--accent-soft)}
+#dgate .knob{fill:var(--accent);stroke:#fff;stroke-width:1.2}#dgate .kn{fill:#fff;font-size:7px}
+#dagain{position:fixed;left:50%;top:40%;transform:translateX(-50%);pointer-events:auto;font-size:18px;padding:12px 22px}
+@media (pointer:coarse){body.clutchmode #dpedal{display:none}body.clutchmode #dtouch .shiftcol{display:none}
+  body.clutchmode #dslider{display:block;position:relative;align-self:flex-end;margin-right:auto;margin-left:12px;width:clamp(54px,12vmin,90px);height:clamp(150px,40vmin,320px);border-radius:18px;background:rgba(10,10,10,.8);border:1px solid #ffb020;overflow:hidden;pointer-events:auto;touch-action:none}
+  body.clutchmode #dgate{left:auto;right:16px;bottom:16px;width:clamp(130px,32vmin,220px);height:clamp(130px,32vmin,220px);pointer-events:auto}}
 @media (max-width:1000px){body.dragmode header #renderer,body.dragmode header #quality{display:none}}
 /* a phone on its side: the times top right beside a shorter shift-light bar, clear of the buttons and of the car's band */
 @media (pointer:coarse) and (orientation:landscape){#dpanel{top:54px;bottom:auto;min-width:150px;max-width:210px}#dleds{width:min(46vw,820px)}#dtimes div{line-height:1.35}}
 /* the grade just above the tach on a screen on its side, where the car is not */
 @media (orientation:landscape){#dgrade{top:auto;bottom:calc(clamp(200px,46vmin,500px) + 16px);font-size:clamp(28px,6vmin,72px)}}   /* the strip's header: room for the dials */
 /* upright: the tach above the buttons, the grade below the times */
-@media (orientation:portrait){body.dragmode #hud-speed{bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}#dgrade{top:34%}#dpanel{top:96px;bottom:auto;left:96px;max-width:none;min-width:0}}
+@media (orientation:portrait){body.dragmode #hud-speed{bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}body.dragmode.clutchmode #hud-speed{bottom:calc(clamp(150px,40vmin,320px) + 30px)}#dgrade{top:34%}#dpanel{top:96px;bottom:auto;left:96px;max-width:none;min-width:0}}
 /* UC-20 the loading screen: a car for sale in its own listing photo (loading.js), and a shooter to play while it loads */
 #lphoto{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transition:opacity 1.2s ease}
 #lphoto.on{opacity:.55;animation:drift 18s ease-out both}
@@ -238,8 +259,8 @@ body.walking #card,body.walking #showroom .nav,body.walking #foot{display:none}
 #walklabel span{display:block;font-size:12px;color:var(--accent-soft);margin-top:3px}
 .walkbtn{font:inherit;font-size:12px;font-weight:800;letter-spacing:.06em;padding:8px 12px;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;cursor:pointer}
 @media (pointer:coarse){#walkhud span{display:none}}
-header #dcam{display:none}body.dragmode header #dcam{display:inline-block}
-header #mute,header #radio,header #motion,header #dcam{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}
+header #dcam,header #dbox{display:none}body.dragmode header #dcam,body.dragmode header #dbox{display:inline-block}
+header #mute,header #radio,header #motion,header #dcam,header #dbox{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}
 #rbanner{position:fixed;z-index:6;left:0;right:0;top:64px;text-align:center;pointer-events:none;opacity:0}#rbanner.on{animation:station 3.2s ease both}
 #rbanner b{display:block;font-size:clamp(26px,4.5vw,46px);font-weight:800;font-style:italic;letter-spacing:.02em;color:#fff;text-shadow:0 3px 0 var(--accent-dark),0 0 24px rgba(242,88,39,.6)}
 #rbanner span{display:block;margin-top:4px;font-size:14px;font-style:italic;color:var(--accent-soft);text-shadow:0 1px 4px #000}
@@ -273,7 +294,7 @@ button,.pill{white-space:nowrap}
 </head>
 <body>
 <canvas id="view"></canvas>
-<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button></header>
+<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button><button class="pill" id="dbox" aria-pressed="true" title="The strip's gearbox: a clutch and an H gate, or paddles (G)">Clutch on</button></header>
 <div id="rbanner" aria-live="polite"></div>
 <div id="loading"><div id="lbox"><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i><span id="lmb"></span></div></div></div>
 
@@ -313,8 +334,12 @@ button,.pill{white-space:nowrap}
   <div id="dleds" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div id="dgrade" aria-live="polite"></div>
   <div id="dslip" hidden role="dialog" aria-label="Time slip"></div>
-  <div id="dhelp">Wait for the green · W / ↑ gas · E or Shift: shift up · Q: down · C: camera · R: run again · Esc: the lot</div>
-  <div id="dtouch"><button id="dgas" aria-label="Gas: hold it down">GAS</button><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>
+  <div id="dhelp"><span class="np">Wait for the green · W / ↑ gas · E or Shift: shift up · Q: down</span><span class="cp">Hold the mouse and pull down: the clutch · W / ↑ gas · 1-7: the gate, N neutral (E / Q: next, back)</span> · C: camera · G: clutch on/off · R: run again · Esc: the lot</div>
+  <div id="dpedal" class="clutchdepth" role="meter" aria-label="Clutch pedal, percent down" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i><b>CLUTCH</b></div>
+  <div id="dgate" aria-label="Shift gate"></div>
+  <div id="dcluster" aria-label="The car's instrument cluster"></div>
+  <button id="dagain" class="act go" hidden>Stalled: run again (R)</button>
+  <div id="dtouch"><button id="dgas" aria-label="Gas: hold it down">GAS</button><div id="dslider" class="clutchdepth" aria-label="Clutch: slide down to press it"><i></i><b>CLUTCH</b></div><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>
 </div>
 <div id="compare" hidden role="dialog" aria-modal="true" aria-label="Compare the cars for sale"><div class="cmpbox"><button id="cmpclose" aria-label="Close">✕</button>
   <p class="kick">For sale now · side by side</p><h2>Compare the lot</h2><div id="cmpbody"></div></div></div>

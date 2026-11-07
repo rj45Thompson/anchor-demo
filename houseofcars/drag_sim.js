@@ -63,3 +63,16 @@ export function shiftOutcome(gear, clutch, rpm, rpmInGear) {
   if (rpmInGear > 0 && Math.abs(rpm - rpmInGear) <= MATCH_RPM * rpmInGear) return { ok: true, why: 'revs matched' };
   return { ok: false, why: 'grind: the clutch is not fully in and the revs do not match' };
 }
+
+// R2's pedal from a pointer (UC-34 1b / 1c). AUTHORED, the page's own: the mouse held and pulled down TRAVEL_PX takes the pedal
+// to the floor and it holds wherever the mouse holds it; let go, it springs up over RETURN_S (a foot lifted off); a phone's slider
+// maps its track to the same travel. Depth 0 the pedal up (engaged), 1 the floor (R2)
+export const PEDAL = { TRAVEL_PX: 220, RETURN_S: 0.12 };
+/** where the drag starts from so the pedal carries on from its depth (no jump when it is grabbed while springing up) */
+export const pedalGrab = (depth, y) => y - depth * PEDAL.TRAVEL_PX;
+/** the depth for the pointer at y, grabbed at anchor */
+export const pedalDrag = (anchor, y) => Math.max(0, Math.min(1, (y - anchor) / PEDAL.TRAVEL_PX));
+/** let go: the pedal comes up */
+export const pedalRelease = (depth, dt) => Math.max(0, depth - (dt > 0 ? dt : 0) / PEDAL.RETURN_S);
+/** a slider's depth for a finger at y on a track from top (the pedal up) to bottom (the floor) */
+export const sliderDepth = (y, top, bottom) => Math.max(0, Math.min(1, (y - top) / (bottom - top)));

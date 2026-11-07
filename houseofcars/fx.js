@@ -166,14 +166,32 @@ export function lightBeam(from, to, radius, hex, k) {
 export const glowMaterial = (hex, k) => new THREE.MeshBasicNodeMaterial({ colorNode: tslColor(new THREE.Color(hex)).mul(k) });
 
 // ---------------------------------------------------------------- the post chain (UC-7.2, UC-7.5)
+// UC-37.3 a car's contact shadow: a soft dark patch on the road under it, darkest under the middle, so it sits on the road; the
+// sun's shadow map draws the shadow it casts, this the light the body blocks from the sky (AUTHORED: its falloff and strength)
+let contactTex = null;
+export function contactShadow(lengthM, widthM, strength = 0.72) {
+  if (!contactTex) {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d'), r = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+    r.addColorStop(0, 'rgba(0,0,0,1)'); r.addColorStop(0.45, 'rgba(0,0,0,0.75)'); r.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+    contactTex = new THREE.CanvasTexture(c);
+  }
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(lengthM * 1.18, widthM * 1.35), new THREE.MeshBasicNodeMaterial({ map: contactTex, transparent: true, opacity: strength, depthWrite: false, color: 0x000000 }));
+  m.rotation.x = -Math.PI / 2; m.renderOrder = 1; m.name = 'contact-shadow';
+  return m;
+}
 export function makePost(renderer, scene, camera, o) {
   const post = new THREE.PostProcessing(renderer);
   const scenePass = pass(scene, camera, { samples: 4 });
   const col = scenePass.getTextureNode('output');
-  const b = bloom(col, o.bloomStrength, o.bloomRadius, o.bloomThreshold);
+  // UC-37.5 (AUTHORED): what feeds the bloom is capped, so a sun glint on a clear coat glows instead of swelling into a white blob
+  // over the windscreen (11-07, the strip's head-on shots); the picture graded a touch more saturated (o.saturation, 1 = none)
+  const b = bloom(min(col, vec4(o.bloomCap ?? 6, o.bloomCap ?? 6, o.bloomCap ?? 6, 1)), o.bloomStrength, o.bloomRadius, o.bloomThreshold);
   const d = length(uv().sub(0.5));
   const vig = oneMinus(smoothstep(0.35, 0.85, d).mul(o.vignette));
-  post.outputNode = vec4(col.rgb.add(b.rgb).mul(vig), 1);
+  const lit = col.rgb.add(b.rgb), grey = luminance(lit);
+  post.outputNode = vec4(mix(vec3(grey, grey, grey), lit, o.saturation ?? 1).mul(vig), 1);
   return { post, scenePass, bloomNode: b, render: () => post.render() };
 }
 
@@ -181,7 +199,11 @@ export function makePost(renderer, scene, camera, o) {
 // A physical sky (three.js SkyMesh: Rayleigh + Mie scattering) lit from the level's DirectionalLight direction (READ, passed in
 // as the direction the light travels, in three.js space). Unreal draws SkyAtmosphere + VolumetricCloud, which glTF cannot carry;
 // this is the page's stand-in, and the same sky, rendered into a light probe, is what the car's paint reflects.
-export function physicalSky(renderer, lightDir, gain = 0.32) {
+// UC-37.2 the probe has the ground under its horizon (groundRGB, the level's READ landscape colour, at GROUND_RADIANCE of it: AUTHORED):
+// clear-coated paint reflecting only a sky dome reads as a flat sheen; with the ground in it, every glossy side carries the line
+// where the ground meets the sky, which is what makes paint read as wet
+const GROUND_RADIANCE = 0.42;
+export function physicalSky(renderer, lightDir, gain = 0.32, groundRGB = null) {
   const toSun = new THREE.Vector3(-lightDir[0], -lightDir[1], -lightDir[2]).normalize();
   const make = (scale) => {
     const sky = new SkyMesh();
@@ -193,6 +215,10 @@ export function physicalSky(renderer, lightDir, gain = 0.32) {
     return sky;
   };
   const probe = new THREE.Scene(); probe.add(make(100));
+  if (groundRGB) {
+    const g = new THREE.Mesh(new THREE.CircleGeometry(95, 48), new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(...groundRGB).multiplyScalar(GROUND_RADIANCE), fog: false }));
+    g.rotation.x = -Math.PI / 2; g.position.y = -1.2; probe.add(g);
+  }
   const env = new THREE.PMREMGenerator(renderer).fromScene(probe, 0.0).texture;
   return { mesh: make(2800), env, toSun };
 }
