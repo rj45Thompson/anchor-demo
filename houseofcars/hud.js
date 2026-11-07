@@ -62,28 +62,27 @@ export function writeRecord(car, s) { try { localStorage.setItem(KEY(car), Strin
 // ---------------------------------------------------------------- the minimap: the road, the gates, the car, from above
 // The road is drawn from the collision triangles (world.tris, kind 'road' and 'tunnel': track.glb's own triangles), the gates
 // from track.json (READ). Unreal space: X forward is up on the map, Y right is right.
-export function buildMinimap(canvas, world, gates) {
-  const T = world.tris, K = world.kinds;
+// the map's road: the landscape spline's own left and right edges (data/road_spline.json, READ out of Unreal's level), one quad
+// between each pair of points. 11-07 (UC-30, ?perf): drawn from every road and tunnel triangle of the collision mesh, the map took
+// 17.8 s in one task while the lot was open; the spline's 188 points draw the same road in a few milliseconds
+export function buildMinimap(canvas, spline, gates) {
+  const L = spline.left, R = spline.right;
+  if (!(L && R && L.length === R.length && L.length > 2)) throw new Error('hud.js: road_spline.json has no left and right edges to map');
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (let t = 0; t < K.length; t++) {
-    if (K[t] !== 'road' && K[t] !== 'tunnel') continue;
-    for (let v = 0; v < 3; v++) { const x = T[9 * t + 3 * v], y = T[9 * t + 3 * v + 1]; minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-  }
+  for (const p of L.concat(R)) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]); }
   const W = canvas.width, H = canvas.height, pad = 10;
   const s = Math.min((W - 2 * pad) / (maxY - minY), (H - 2 * pad) / (maxX - minX));
   const ox = (W - s * (maxY - minY)) / 2, oy = (H - s * (maxX - minX)) / 2;
   const px = (x, y) => [ox + (y - minY) * s, oy + (maxX - x) * s];
   const base = document.createElement('canvas'); base.width = W; base.height = H;
   const g = base.getContext('2d');
-  for (const [kind, col] of [['road', 'rgba(254,254,254,.55)'], ['tunnel', 'rgba(254,254,254,.3)']]) {
-    g.fillStyle = col; g.strokeStyle = col; g.lineWidth = 0.6; g.beginPath();
-    for (let t = 0; t < K.length; t++) {
-      if (K[t] !== kind) continue;
-      const a = px(T[9 * t], T[9 * t + 1]), b = px(T[9 * t + 3], T[9 * t + 4]), c = px(T[9 * t + 6], T[9 * t + 7]);
-      g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(c[0], c[1]); g.closePath();
-    }
-    g.fill(); g.stroke();
+  g.fillStyle = 'rgba(254,254,254,.55)'; g.beginPath();
+  const n = L.length, quads = spline.loop ? n : n - 1;
+  for (let i = 0; i < quads; i++) {
+    const j = (i + 1) % n, a = px(L[i][0], L[i][1]), b = px(L[j][0], L[j][1]), c = px(R[j][0], R[j][1]), d = px(R[i][0], R[i][1]);
+    g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(c[0], c[1]); g.lineTo(d[0], d[1]); g.closePath();
   }
+  g.fill();
   return { canvas, base, px, gates, s };
 }
 

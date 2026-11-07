@@ -293,7 +293,7 @@ function listingHTML(car, D, day) {
     (car.x.searched && car.x.searched.length ? '<p class="meta">Searched:</p><ul class="meta">' + car.x.searched.map((s) => '<li>' + linkify(s) + '</li>').join('') + '</ul>' : '') + '</div>';
 }
 function modelHTML(m) {
-  if (!m) return '<div class="card"><h3>The 3D model</h3><p>3D model not made yet.</p></div>';
+  if (!m) return '<div class="card"><h3>The 3D model</h3><p class="soon">No model yet · coming soon</p></div>';   // UC-26
   return '<div class="card" id="model3d"><h3>The 3D model</h3><p class="meta" style="color:#cfd5dc">' + linkify(m.src) + '</p>' +
     (m.length_m ? '<p class="meta">Length: ' + esc(m.length_m.value) + ' m. ' + linkify(m.length_m.src) + '</p>' : '') +
     '<p class="meta">Inside: ' + (m.interior ? 'the cabin as the model has it, from the driver&#39;s seat (' + esc(m.interior.src) + ')' : 'this model has no cabin to look into') + '.</p></div>';
@@ -319,7 +319,7 @@ function render(D) {
     document.documentElement.dataset.state = key ? 'gone' : 'pick';
     return;
   }
-  const rv = D.REVIEWS.cars[key] || null, rc = D.RECALLS.cars[key] || null, model = D.MODELS.models[key] || null;
+  const rv = D.REVIEWS.cars[key] || null, rc = D.RECALLS.cars[key] || null, model = (D.MODELS.models[key] && !D.MODELS.models[key].withheld) ? D.MODELS.models[key] : null;   // UC-26: none, or withdrawn
   const drivable = !!model && D.GHOSTS.ghosts.some((g) => g.car === key);   // as the lot's card: a model and a simulated car
   const lot = 'index.html#car=' + encodeURIComponent(key);
   const hasMods = !!(rv && rv.mods && rv.mods.length);
@@ -355,7 +355,7 @@ function render(D) {
       'ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed"><button slot="ar-button" class="arbtn">' + svgIcon('lot', 15) + ' See it in your driveway</button></model-viewer>' +
       '<div class="bar" id="mvbar"><i></i></div><p class="hint" id="mvhint">Drag to turn · pinch to zoom</p><button class="about" data-go="model3d">About this model</button>' +
       (model.interior ? '<button class="inside" id="mvinside" type="button" aria-pressed="false" disabled>' + svgIcon('wheel', 15) + ' <span>Look inside</span></button>' : '')
-      : '<p class="nomodel">3D model not made yet.</p>') + '</div>';
+      : '<p class="nomodel soon">No model yet · coming soon</p>') + '</div>';   // UC-26
 
   main.innerHTML =
     '<section class="hero"><div class="wrap" style="padding:0">' + stage +

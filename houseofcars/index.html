@@ -100,9 +100,9 @@ button:focus-visible,#card .pick:focus-visible,#card .act:focus-visible{outline:
 #ghostpick{position:fixed;top:96px;left:16px;max-width:min(300px,44vw);font:inherit;font-size:12px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 8px}
 #loading{background:var(--bg);z-index:5}
 #loading>div{text-align:center}
-#bar{width:min(320px,70vw);height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin:12px auto 6px;overflow:hidden}
+#bar{position:relative;width:min(640px,86vw);height:24px;border-radius:12px;background:rgba(255,255,255,.12);margin:14px auto 6px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 #bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
-#lmb{font-size:12px}
+#lmb{position:absolute;inset:0;line-height:24px;font-size:13px;font-weight:800;letter-spacing:.06em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 #loading .brand{font-size:clamp(26px,5vw,44px);font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);animation:rise .9s ease both}
 #loading .brand b{color:var(--accent)}
 #loading .tag{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent-soft);margin:6px 0 22px;animation:rise .9s .15s ease both}
@@ -133,6 +133,8 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #dslip .fit{font-size:11.5px;color:#9fdcbb;margin:6px 0}#dslip .fit b{color:#ffd27a}
 #dslip .sellbox{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;padding:10px 12px;border-radius:10px;background:rgba(242,88,39,.1);border:1px solid rgba(242,88,39,.4)}
 #dslip .sellbox b{font-size:18px}#dslip .newbest{margin:8px 0 0;font-weight:800;color:#5dffa9;letter-spacing:.04em}
+#dboard{margin:10px 0 12px;padding:10px 12px;border:1px solid var(--accent);border-radius:12px;background:rgba(242,88,39,.06)}#dboard form label{display:block;font-size:12px;color:var(--dim);margin:10px 0 4px}#dboard form div{display:flex;gap:8px}
+#dbname{flex:1;min-width:0;padding:8px 10px;font:inherit;font-size:14px;color:#fff;background:#1c1f23;border:1px solid #3a3f45;border-radius:8px}#dbmsg{min-height:1.2em;font-size:12px;color:var(--accent-soft);margin:6px 0 0}
 #dslip ol.board{list-style:none;margin:6px 0 12px;padding:0;font-size:12.5px}#dslip ol.board li{display:grid;grid-template-columns:22px 1fr auto auto;gap:8px;align-items:center;padding:4px 6px;border-radius:7px}
 #dslip ol.board li.me{background:rgba(93,255,169,.08)}#dslip ol.board .n{color:var(--dim);font-weight:800}#dslip ol.board b{font:700 12.5px ui-monospace,Consolas,monospace;color:#5dffa9}#dslip ol.board button{padding:3px 9px;font-size:11.5px}
 #dhelp{position:fixed;left:16px;bottom:16px;font-size:12px;color:var(--dim)}
@@ -151,11 +153,22 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #lcap{position:absolute;left:0;right:0;bottom:18px;text-align:center;font-size:12px;color:var(--dim);padding:0 16px}#lcap b{color:var(--ink)}#lcap a{color:var(--accent-soft);pointer-events:auto}
 #loading.playing #lphoto.on{opacity:.2}
 #loading.playing #lgame{display:block}
-#loading.playing #lbox{position:absolute;top:56px;left:0;right:0;transform:scale(.62);transform-origin:50% 0}
+#loading.playing #lbox{position:absolute;top:36px;left:0;right:0}
+#loading.playing #lbox .brand{font-size:18px;letter-spacing:.2em}
+#loading.playing #lt{font-size:13px}
 #loading.playing #lbox .tag{display:none}
 #loading.playing #lcap{bottom:auto;top:12px}
 #loading.ready #lbox{transform:none;top:auto;bottom:22%}
 #loading.ready #lgame{opacity:.35;pointer-events:none}
+#lhs{position:absolute;z-index:3;left:50%;top:54%;transform:translate(-50%,-50%);width:min(380px,90vw);padding:16px 18px;border-radius:14px;background:rgba(14,15,17,.94);border:1px solid var(--accent);box-shadow:0 12px 40px rgba(0,0,0,.6);pointer-events:auto;text-align:center}
+#lhs[hidden]{display:none}#lhst{display:block;font-size:20px;font-weight:800;letter-spacing:.04em;margin-bottom:8px}
+#lhs form label{display:block;font-size:12px;color:var(--dim);margin:10px 0 4px}#lhs form div{display:flex;gap:8px}
+#lhsname{flex:1;min-width:0;padding:8px 10px;font:inherit;font-size:15px;color:#fff;background:#1c1f23;border:1px solid #3a3f45;border-radius:8px}
+#lhs form button,#lhsagain{padding:8px 14px;font:inherit;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--accent);border:0;border-radius:8px;cursor:pointer}
+#lhsagain{margin-top:10px;background:rgba(242,88,39,.18);border:1px solid var(--accent)}#lhsmsg{min-height:1.2em;font-size:12px;color:var(--accent-soft);margin:8px 0 0}
+.hiscores{list-style:none;margin:0;padding:0;text-align:left;font-size:14px}.hiscores li{display:flex;gap:10px;padding:4px 6px;border-radius:6px}
+.hiscores li:nth-child(odd){background:rgba(255,255,255,.04)}.hiscores .n{width:1.6em;color:var(--dim);text-align:right}.hiscores .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hiscores b{font-variant-numeric:tabular-nums}.hiscores li.house .nm{color:var(--accent-soft)}.hiscores li.me{background:rgba(242,88,39,.25)}
 @keyframes drift{from{transform:scale(1.08)}to{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#lphoto.on{animation:none}}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -198,7 +211,24 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #countdown{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%);font-size:min(22vw,160px);font-weight:900;text-shadow:0 6px 30px rgba(0,0,0,.6);pointer-events:none}
 #countdown.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}#countdown.go{color:var(--accent);letter-spacing:.04em}
 @keyframes pop{0%{transform:translate(-50%,-50%) scale(1.9);opacity:0}45%{opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
-header #mute{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}
+/* UC-31 not on WebGPU: the notice */
+#gpunote{position:fixed;z-index:7;left:50%;top:52px;transform:translateX(-50%);width:min(640px,calc(100vw - 24px));display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(16,16,16,.95);border:1px solid var(--accent);box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:13px;color:var(--dim)}
+@media (min-width:900px){#gpunote{left:16px;transform:none;width:min(600px,calc(100vw - 420px))}}   /* beside the car card, not over it */
+#gpunote[hidden]{display:none}#gpunote b{color:var(--ink)}#gpunote a{color:var(--accent-soft)}#gpunote p{margin:0;flex:1}
+#gpunoteok{font:inherit;font-weight:800;color:#fff;background:var(--accent);border:0;border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+/* UC-28 walking the lot */
+body.walking #card,body.walking #showroom .nav,body.walking #foot{display:none}
+#walkhud{position:fixed;z-index:5;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:12px;align-items:center;padding:8px 12px;border-radius:12px;background:rgba(10,10,10,.75);border:1px solid var(--line);font-size:12.5px;color:var(--dim);max-width:calc(100vw - 32px)}
+#walkhud[hidden],#walklabel[hidden]{display:none}#walkhud button{font:inherit;font-weight:800;color:#fff;background:var(--accent);border:0;border-radius:8px;padding:6px 10px;cursor:pointer;white-space:nowrap}
+#walklabel{position:fixed;z-index:5;left:50%;bottom:78px;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(10,10,10,.82);border:1px solid var(--accent);color:var(--ink);font:inherit;font-size:15px;cursor:pointer;text-align:center}
+#walklabel span{display:block;font-size:12px;color:var(--accent-soft);margin-top:3px}
+.walkbtn{font:inherit;font-size:12px;font-weight:800;letter-spacing:.06em;padding:8px 12px;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+@media (pointer:coarse){#walkhud span{display:none}}
+header #mute,header #radio,header #motion{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}
+#rbanner{position:fixed;z-index:6;left:0;right:0;top:64px;text-align:center;pointer-events:none;opacity:0}#rbanner.on{animation:station 3.2s ease both}
+#rbanner b{display:block;font-size:clamp(26px,4.5vw,46px);font-weight:800;font-style:italic;letter-spacing:.02em;color:#fff;text-shadow:0 3px 0 var(--accent-dark),0 0 24px rgba(242,88,39,.6)}
+#rbanner span{display:block;margin-top:4px;font-size:14px;font-style:italic;color:var(--accent-soft);text-shadow:0 1px 4px #000}
+@keyframes station{0%{opacity:0;transform:translateY(-8px)}12%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){#countdown.pop,#lapb.show{animation-duration:.01s}#lapb.show{opacity:1}#shift.on{animation:none}}
 #hint{position:fixed;left:212px;bottom:16px;font-size:12px;color:var(--dim);max-width:52vw}
 #touch{position:fixed;inset:auto 0 0 0;display:none;justify-content:space-between;padding:16px;gap:12px;pointer-events:none}
@@ -213,6 +243,7 @@ button,.pill{white-space:nowrap}
 @media (pointer:coarse){#touch{padding:12px}#touch div{gap:8px}#touch button{width:60px;height:60px;font-size:19px}#hud-speed{bottom:96px;right:14px}}
 @media (max-width:720px){header #mute{display:inline-block}}
 
+.soon{display:inline-block;margin:6px 0;padding:6px 12px;border-radius:8px;background:rgba(242,88,39,.18);border:1px solid var(--accent);color:#fff;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:12.5px}   /* UC-26 */
 </style>
 <script type="importmap">
 {"imports":{
@@ -227,17 +258,22 @@ button,.pill{white-space:nowrap}
 </head>
 <body>
 <canvas id="view"></canvas>
-<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button></header>
-<div id="loading"><div id="lbox"><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i></div><div id="lmb"></div></div></div>
+<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button></header>
+<div id="rbanner" aria-live="polite"></div>
+<div id="loading"><div id="lbox"><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i><span id="lmb"></span></div></div></div>
 
 <section id="showroom">
+  <div id="gpunote" role="status" hidden><p id="gpunotetext"></p><button id="gpunoteok" type="button">Got it</button></div>   <!-- UC-31: the lot's, gone with it in a race -->
   <aside id="card" aria-live="polite"></aside>
   <div class="nav">
     <button id="prev" aria-label="Previous car">◀</button>
     <button id="drive" class="go">TEST DRIVE</button>
     <button id="next" aria-label="Next car">▶</button>
     <span class="pill" id="pos"></span>
+    <button id="walk" class="walkbtn" title="Walk the lot (K)">WALK THE LOT</button>
   </div>
+  <div id="walkhud" hidden><span>W A S D or the arrows to walk · drag to look · Shift to walk faster · Enter on a car to see it</span><button id="walkexit" type="button">Leave (Esc)</button></div>
+  <button id="walklabel" type="button" hidden></button>
   <footer id="foot">Unofficial concept, not affiliated with or endorsed by House of Cars. Vehicles and track: Epic Games' Unreal Engine 5.7 Vehicle template, ported to WebGPU. <a href="../">RJ Thompson's projects</a></footer>
 </section>
 
@@ -270,6 +306,7 @@ button,.pill{white-space:nowrap}
 <div id="ar" hidden role="dialog" aria-modal="true" aria-label="The car at its real size"><div class="cmpbox"><button id="arclose" aria-label="Close">✕</button>
   <p class="kick">At its real size</p><h2>In your driveway</h2><div id="arbody"></div></div></div>
 <div id="nogpu"><div><h2>This page needs WebGPU or WebGL 2</h2><p>Your browser offers neither, so there is nothing to draw with. Chrome, Edge and Safari 26 have WebGPU; most browsers have WebGL 2.</p></div></div>
+<script type="module" src="perf.js"></script>
 <script type="module" src="loading.js"></script>
 <script type="module" src="app.js"></script>
 </body>

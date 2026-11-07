@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fight the Manager · House of Cars 3D Lot (concept)</title>
+<meta name="description" content="A joke side-scroller: brawl a made-up sales manager, Doc Fee, to knock the fees off a car. An unofficial concept.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#f25827;--accent-dark:#c0370b;--accent-soft:#ff9b74;--bg:#0a0a0a;--ink:#fefefe;--dim:#a3abb0;--line:rgba(254,254,254,.13);--good:#5dffa9;--bad:#ff5c5c;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 "Open Sans",system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+canvas#view{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none}
+#hud[hidden]{display:none}
+#hud{position:fixed;left:0;right:0;top:0;display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;padding:14px 18px;pointer-events:none}
+.bar{height:18px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-dark),var(--accent),var(--accent-soft));transition:width .15s}
+#bossbar i{background:linear-gradient(90deg,#7a1010,#c62828,#ff6b6b);margin-left:auto}
+.who{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:13px;margin-bottom:4px}
+#bosswho{text-align:right}
+#deal{text-align:center;min-width:260px}#deal .car{font-size:12px;color:var(--dim)}#deal .price{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+#deal .off{font-size:13px;color:var(--good);font-weight:700;font-variant-numeric:tabular-nums}
+.pop{position:fixed;transform:translate(-50%,-100%);font-weight:800;font-style:italic;font-size:20px;color:var(--good);text-shadow:0 2px 0 #000,0 0 12px rgba(0,0,0,.8);pointer-events:none;white-space:nowrap;animation:pop 1.4s ease-out forwards}
+.pop small{display:block;font-size:12px;font-style:normal;color:#fff}
+@keyframes pop{0%{opacity:0;margin-top:0}10%{opacity:1}100%{opacity:0;margin-top:-70px}}
+.say{position:fixed;transform:translate(-50%,-100%);max-width:240px;padding:8px 12px;border-radius:12px;background:#fff;color:#111;font-weight:700;font-size:13px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.say::after{content:"";position:absolute;left:50%;bottom:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0;transform:translateX(-50%)}
+.say.pal{background:var(--accent);color:#fff}.say.pal::after{border-top-color:var(--accent)}
+.panel{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(10,10,10,.55),rgba(10,10,10,.92));z-index:5;padding:16px}
+.panel[hidden]{display:none}
+.card{width:min(520px,100%);padding:22px 24px;border-radius:16px;background:rgba(16,16,16,.95);border:1px solid var(--accent);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.card h1{margin:0 0 6px;font-size:clamp(26px,5vw,40px);font-weight:800;font-style:italic;line-height:1.05;text-shadow:0 3px 0 var(--accent-dark)}
+.card p{margin:8px 0;color:var(--dim)}.card .joke{font-size:12px;color:#8a9196}
+.card .keys{font-size:13px;color:var(--ink)}.card kbd{display:inline-block;min-width:22px;padding:1px 6px;border-radius:5px;border:1px solid var(--line);background:#1c1f23;font:700 12px ui-monospace,Consolas,monospace}
+.btn{margin:10px 4px 0;padding:10px 18px;font:inherit;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--accent);border:0;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:rgba(242,88,39,.15);border:1px solid var(--accent)}
+.big{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}
+#endrows{margin:12px 0 4px}#endform[hidden]{display:none}#endform label{display:block;font-size:12px;color:var(--dim);margin:8px 0 4px}#endform div{display:flex;gap:8px}
+#endname{flex:1;min-width:0;padding:8px 10px;font:inherit;font-size:15px;color:#fff;background:#1c1f23;border:1px solid #3a3f45;border-radius:8px}
+#endmsg{min-height:1.2em;font-size:12px;color:var(--accent-soft)}
+.hiscores{list-style:none;margin:0;padding:0;text-align:left;font-size:14px}.hiscores li{display:flex;gap:10px;padding:4px 6px;border-radius:6px}
+.hiscores li:nth-child(odd){background:rgba(255,255,255,.04)}.hiscores .n{width:1.6em;color:var(--dim);text-align:right}.hiscores .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hiscores b{font-variant-numeric:tabular-nums}.hiscores li.house .nm{color:var(--accent-soft)}.hiscores li.me{background:rgba(242,88,39,.25)}
+#loadbar{width:min(480px,80vw);height:20px;margin:14px auto 4px}#loadtxt{font-size:12px;color:var(--dim)}
+#touch{position:fixed;left:0;right:0;bottom:14px;display:none;justify-content:space-between;padding:0 14px;pointer-events:none}
+#touch div{display:flex;gap:10px}#touch button{pointer-events:auto;width:64px;height:64px;border-radius:50%;border:1px solid var(--line);background:rgba(16,16,16,.7);color:#fff;font:800 12px "Open Sans",sans-serif;touch-action:none}
+#touch button.hit{background:rgba(242,88,39,.55)}
+@media (pointer:coarse){#touch{display:flex}}
+#back{position:fixed;right:14px;bottom:10px;font-size:12px;color:var(--dim);z-index:4}#back a{color:var(--accent-soft)}
+@media (pointer:coarse){#back{top:auto;bottom:96px}}
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.webgpu.js",
+  "three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.webgpu.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="hud" hidden>
+  <div><div class="who">You · and Torque</div><div class="bar" id="youbar"><i style="width:100%"></i></div></div>
+  <div id="deal"><div class="car" id="dealcar"></div><div class="price" id="dealprice"></div><div class="off" id="dealoff"></div></div>
+  <div><div class="who" id="bosswho">Doc Fee · sales manager</div><div class="bar" id="bossbar"><i style="width:100%"></i></div></div>
+</div>
+<div class="panel" id="start">
+  <div class="card">
+    <h1>Fight the manager<br>for a deal</h1>
+    <p id="startcar">Loading the showroom…</p>
+    <div class="bar" id="loadbar"><i style="width:0"></i></div><div id="loadtxt"></div>
+    <p class="keys"><kbd>A</kbd> <kbd>D</kbd> or <kbd>←</kbd> <kbd>→</kbd> move · <kbd>J</kbd> punch · <kbd>K</kbd> kick · <kbd>L</kbd> read the fine print · <kbd>S</kbd> block</p>
+    <button class="btn" id="go" disabled>Fight (Enter)</button>
+    <p class="joke">A joke. Doc Fee and every fee here are made up: they are nobody&rsquo;s real staff or fees, and the price is the listing&rsquo;s, not won in a fight. Fighters made in Meshy.</p>
+  </div>
+</div>
+<div class="panel" id="end" hidden>
+  <div class="card">
+    <h1 id="endtitle"></h1>
+    <p id="endsub"></p>
+    <div class="big" id="endscore"></div>
+    <div id="endrows"></div>
+    <form id="endform" hidden><label for="endname">Your name for the board</label><div><input id="endname" maxlength="16" autocomplete="nickname" spellcheck="false"><button class="btn" type="submit" style="margin:0">Save</button></div></form>
+    <p id="endmsg" aria-live="polite"></p>
+    <button class="btn" id="again">Rematch (Enter)</button> <a class="btn ghost" id="seecar" href="../">See the car</a>
+  </div>
+</div>
+<div id="touch"><div><button data-k="left">◀</button><button data-k="right">▶</button><button data-k="block">BLOCK</button></div><div><button data-k="punch" class="hit">PUNCH</button><button data-k="kick" class="hit">KICK</button><button data-k="special" class="hit">FINE PRINT</button></div></div>
+<div id="back"><a href="../">Back to the lot</a> · unofficial concept, a joke</div>
+<script type="module" src="fight.js"></script>
+</body>
+</html>

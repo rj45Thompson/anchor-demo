@@ -125,17 +125,33 @@ export function slip(run) {
  *  (the page shows it beside the visitor's run, the test holds it to the marks). Chaos is the port module; v a fresh vehicle on
  *  the strip, settled; returns the slip and the shift points */
 export function bestRun(Chaos, v, world) {
+  const best = carShiftPoints(Chaos, v);
+  return { slip: runShiftingAt(Chaos, v, world, best, best), points: best };
+}
+/** the house run every car's board starts with (UC-25.2): the same car and physics as bestRun, every upshift at the late edge of
+ *  PERFECT (the light's point plus GRADE.perfect_above, at most the redline), so a run shifted on the light beats it. Not the
+ *  early edge: 11-07 a sweep found shifting EARLY quicker than the light on the E 63 S, the i8 and the 911 (the E 63 S 500 rpm
+ *  early: 10.750 s against 10.825 s), so an early-edge house run beat the light on those three. DERIVED from the car's own torque
+ *  curve and gear ratios; GRADE's margin is AUTHORED (above) */
+export function houseRun(Chaos, v, world) {
+  const best = carShiftPoints(Chaos, v), at = best.map((p) => Math.min(p + GRADE.perfect_above, v.cfg.engine.maxRPM));
+  return { slip: runShiftingAt(Chaos, v, world, at, best), points: at };
+}
+function carShiftPoints(Chaos, v) {
   const c = v.cfg, torque = (r) => Chaos._internal.engineTorqueFromRPM(v, r, true);
-  const pts = shiftPoints(torque, c.trans.forward, c.engine.idleRPM, c.engine.maxRPM);
-  const DT = Chaos._internal.SUBSTEP, idle = { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' };
+  return shiftPoints(torque, c.trans.forward, c.engine.idleRPM, c.engine.maxRPM);
+}
+/** on green, full throttle, one press per upshift as the rpm reaches at[gear-1]; each shift graded against best[gear-1] */
+function runShiftingAt(Chaos, v, world, at, best) {
+  const c = v.cfg, DT = Chaos._internal.SUBSTEP, idle = { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' };
   const run = makeRun(), x0 = v.pos[0];
   for (let i = 0; i < 120 * 60 && !run.done; i++) {
     const green = run.green !== null, gear = v.trans.target, rpm = v.trans.engineRPM;
-    const up = green && gear >= 1 && gear < c.trans.forward.length && v.trans.current === gear && rpm >= pts[gear - 1];
-    if (up) noteShift(run, gear, rpm, pts[gear - 1], c.engine.maxRPM);
+    const up = green && gear >= 1 && gear < c.trans.forward.length && v.trans.current === gear && rpm >= at[gear - 1];
+    if (up) noteShift(run, gear, rpm, best[gear - 1], c.engine.maxRPM);
     Chaos.stepVehicle(v, Object.assign({}, idle, { throttle: green ? 1 : 0, gearUp: up }), DT, world);
     tick(run, { dt: DT, distM: (v.pos[0] - x0) / 100, speedKmh: v.forwardSpeedCmS * 0.036, rpm: v.trans.engineRPM, gear: v.trans.target, maxRPM: c.engine.maxRPM });
   }
-  if (!run.done) throw new Error('drag.js: the best run did not reach the quarter mile in 60 s');
-  return { slip: slip(run), points: pts };
+  if (!run.done) throw new Error('drag.js: the run did not reach the quarter mile in 60 s');
+  return slip(run);
 }

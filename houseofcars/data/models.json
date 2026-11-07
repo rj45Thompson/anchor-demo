@@ -16,7 +16,7 @@
      "node": "wheel_Phys_Wheel_FL",
      "sim_wheel": 0,
      "centre_m": [
-      -1.661,
+      -1.6606,
       0.3668,
       0.8728
      ],
@@ -27,9 +27,9 @@
      "node": "wheel_Phys_Wheel_FR",
      "sim_wheel": 1,
      "centre_m": [
-      -1.6611,
+      -1.6608,
       0.3671,
-      -0.8687
+      -0.8659
      ],
      "radius_m": 0.36505000000000004,
      "steers": true
@@ -38,9 +38,9 @@
      "node": "wheel_Phys_Wheel_BL",
      "sim_wheel": 2,
      "centre_m": [
-      1.4737,
+      1.4731,
       0.3657,
-      0.8662
+      0.8663
      ],
      "radius_m": 0.36505000000000004,
      "steers": false
@@ -51,7 +51,7 @@
      "centre_m": [
       1.4626,
       0.365,
-      -0.8717
+      -0.8728
      ],
      "radius_m": 0.36505000000000004,
      "steers": false
@@ -69,6 +69,86 @@
     "replaces": "meshy_in/bentley_flying_spur_2018_wrongcolour.glb (dark blue, Meshy's own choice before the colour was read from the photos)",
     "why_flat_lit": "Meshy 7 bakes the picture's own lighting into the texture; a flat-lit picture gives even paint and dark glass, and the page's clear coat adds the highlights",
     "card": "Made in Meshy from a flat-lit Meshy Image picture of a white Flying Spur and the rear view Meshy drew from it: Meshy 7.1 multi-view image-to-3D with texture, remeshed to 100,957 triangles. A model of this make and model, not a scan of this car: its white paint matches the listing's photos."
+   },
+   "shrink": {
+    "bytes": 3452420,
+    "bytes_before": {
+     "value": 4225728,
+     "src": "READ meshes_before_optimize/listing_bentley_flying_spur_2018.glb, the file the lot had before the 11-07 shrink"
+    },
+    "reduce": {
+     "rules": "tools/meshy_reduce.json",
+     "triangles": [
+      100957,
+      91888
+     ],
+     "error_m": 0.00264,
+     "tool": "tools/reduce_glb.mjs"
+    },
+    "textures": [
+     {
+      "slots": [
+       "normalTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 254140
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 289809
+     },
+     {
+      "slots": [
+       "metallicRoughnessTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 225132
+     },
+     {
+      "slots": [
+       "clearcoatTexture"
+      ],
+      "px_source": null,
+      "px": [
+       512,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 122784,
+      "made": "here, from the metal/roughness map"
+     }
+    ],
+    "tex_px": 1024,
+    "tangents": "none in the model",
+    "indices": "uint16 (at most 65534 vertices a primitive): every primitive whole",
+    "not_done": "EXT_meshopt_compression (needs a decoder in the page and in the AR viewers) and WebP (Android Scene Viewer documents JPEG and PNG only): measured, not used; a 512 px metal/roughness map: tried, it changed the paint (the comment at the texture step)"
    }
   },
   "rolls_royce_wraith_2017": {
@@ -79,7 +159,7 @@
    },
    "yaw_deg": 0.0,
    "interior": null,
-   "src": "A hand-made 3D model of a Rolls-Royce Wraith by Blue3D on Sketchfab (CC BY 4.0), repainted black as this car is (\"Rolls Royce Wraith\" by Blue3D, https://sketchfab.com/3d-models/rolls-royce-wraith-1bdf60fd949049659c22d41afd80b300; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
+   "src": "A hand-made 3D model of a Rolls-Royce Wraith by Blue3D on Sketchfab (CC BY 4.0); reduced for the web and repainted black, as this car is (\"Rolls Royce Wraith\" by Blue3D, https://sketchfab.com/3d-models/rolls-royce-wraith-1bdf60fd949049659c22d41afd80b300; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
    "credit": {
     "title": "Rolls Royce Wraith",
     "author": "Blue3D",
@@ -228,7 +308,7 @@
      "axis": "+Z",
      "src": "READ by eye 11-06: the grille is at +Z in test/model_look.html"
     },
-    "card": "A hand-made 3D model of a Rolls-Royce Wraith by Blue3D on Sketchfab (CC BY 4.0), repainted black as this car is",
+    "card": "A hand-made 3D model of a Rolls-Royce Wraith by Blue3D on Sketchfab (CC BY 4.0); reduced for the web and repainted black, as this car is",
     "how": "downloaded from Sketchfab; reduced by tools/reduce_glb.mjs (meshoptimizer, normals weighted); repainted and its wheels split by tools/prep_sketchfab.py",
     "made": "2026-11-06",
     "wheels": {
@@ -251,7 +331,8 @@
       "finish": "gloss_black_trim",
       "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/6bbd0d4ed9424e729e9b95e4fa859574.jpg and the side views): the grille vanes, window line and mascot are black; the model has them chrome"
      }
-    ]
+    ],
+    "changes": "CC BY 4.0 asks that changes be said: reduced (tools/reduce_glb.mjs), the wheels split from the body, repainted where meta.json paint says, scaled to the car's READ length"
    },
    "reduce": [
     {
@@ -265,7 +346,111 @@
      "normal_weight": 1.0,
      "why": "paint, glass, chrome and trim: a reflection shows any dent"
     }
-   ]
+   ],
+   "shrink": {
+    "bytes": 3068820,
+    "bytes_before": {
+     "value": 3068804,
+     "src": "READ meshes_before_optimize/listing_rolls_royce_wraith_2017.glb, the file the lot had before the 11-07 shrink"
+    },
+    "reduce": "by its own per-part rules, before tools/prep_sketchfab.py (\"reduce\" below)",
+    "textures": [
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       512,
+       512
+      ],
+      "px": [
+       512,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 37746
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       512,
+       512
+      ],
+      "px": [
+       512,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 47489
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       512,
+       512
+      ],
+      "px": [
+       512,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 28100
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       256,
+       256
+      ],
+      "px": [
+       256,
+       256
+      ],
+      "mime": "image/jpeg",
+      "bytes": 13762
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       512
+      ],
+      "px": [
+       1024,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 51755
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       512
+      ],
+      "px": [
+       1024,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 146007
+     }
+    ],
+    "tex_px": 1024,
+    "tangents": "none in the model",
+    "indices": "uint16 (at most 65534 vertices a primitive): every primitive whole",
+    "not_done": "EXT_meshopt_compression (needs a decoder in the page and in the AR viewers) and WebP (Android Scene Viewer documents JPEG and PNG only): measured, not used; a 512 px metal/roughness map: tried, it changed the paint (the comment at the texture step)"
+   }
   },
   "rolls_royce_ghost_2014": {
    "glb": "listing_rolls_royce_ghost_2014.glb",
@@ -275,7 +460,7 @@
    },
    "yaw_deg": 0.0,
    "interior": null,
-   "src": "A hand-made 3D model of a Rolls-Royce Ghost by kurojishi on Sketchfab (CC BY 4.0), repainted black as this car is (\"Rolls Royce Ghost\" by kurojishi, https://sketchfab.com/3d-models/rolls-royce-ghost-1f614e803fc24946b83bdc2dd9926d62; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
+   "src": "A hand-made 3D model of a Rolls-Royce Ghost by kurojishi on Sketchfab (CC BY 4.0); reduced for the web and repainted black, as this car is (\"Rolls Royce Ghost\" by kurojishi, https://sketchfab.com/3d-models/rolls-royce-ghost-1f614e803fc24946b83bdc2dd9926d62; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
    "credit": {
     "title": "Rolls Royce Ghost",
     "author": "kurojishi",
@@ -440,7 +625,7 @@
      "axis": "+Z",
      "src": "READ by eye 11-06: the grille is at +Z in test/model_look.html"
     },
-    "card": "A hand-made 3D model of a Rolls-Royce Ghost by kurojishi on Sketchfab (CC BY 4.0), repainted black as this car is",
+    "card": "A hand-made 3D model of a Rolls-Royce Ghost by kurojishi on Sketchfab (CC BY 4.0); reduced for the web and repainted black, as this car is",
     "how": "downloaded from Sketchfab; reduced by tools/reduce_glb.mjs (meshoptimizer, normals weighted); repainted and its wheels split by tools/prep_sketchfab.py",
     "made": "2026-11-06",
     "wheels": {
@@ -468,7 +653,8 @@
       "finish": "gloss_black_trim",
       "why": "READ from the listing photos 11-06 (https://content.homenetiol.com/2000x1500/566b8a84e05e46b892f72f71df1b8cc0.jpg and the side views): the grille, its vanes and the trim are black; the model has them chrome"
      }
-    ]
+    ],
+    "changes": "CC BY 4.0 asks that changes be said: reduced (tools/reduce_glb.mjs), the wheels split from the body, repainted where meta.json paint says, scaled to the car's READ length"
    },
    "reduce": [
     {
@@ -482,7 +668,126 @@
      "normal_weight": 1.0,
      "why": "paint, glass, chrome and trim: a reflection shows any dent"
     }
-   ]
+   ],
+   "shrink": {
+    "bytes": 3447596,
+    "bytes_before": {
+     "value": 5122444,
+     "src": "READ meshes_before_optimize/listing_rolls_royce_ghost_2014.glb, the file the lot had before the 11-07 shrink"
+    },
+    "reduce": "by its own per-part rules, before tools/prep_sketchfab.py (\"reduce\" below)",
+    "textures": [
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 76352
+     },
+     {
+      "slots": [
+       "normalTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 57557
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 31847
+     },
+     {
+      "slots": [
+       "metallicRoughnessTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 8094
+     },
+     {
+      "slots": [
+       "normalTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 78406
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 7589
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 59026
+     }
+    ],
+    "tex_px": 1024,
+    "tangents": "dropped on 103244 vertices (no normal map reads them), kept float32 on 5031 (a normal map does)",
+    "indices": "uint16 (at most 65534 vertices a primitive): every primitive whole",
+    "not_done": "EXT_meshopt_compression (needs a decoder in the page and in the AR viewers) and WebP (Android Scene Viewer documents JPEG and PNG only): measured, not used; a 512 px metal/roughness map: tried, it changed the paint (the comment at the texture step)"
+   }
   },
   "mercedes_amg_e63s_2021": {
    "glb": "listing_mercedes_amg_e63s_2021.glb",
@@ -499,9 +804,9 @@
      "node": "wheel_Phys_Wheel_FL",
      "sim_wheel": 0,
      "centre_m": [
-      -1.6014,
+      -1.6024,
       0.3482,
-      0.7954
+      0.7959
      ],
      "radius_m": 0.34674999999999995,
      "steers": true
@@ -510,9 +815,9 @@
      "node": "wheel_Phys_Wheel_FR",
      "sim_wheel": 1,
      "centre_m": [
-      -1.6085,
+      -1.6086,
       0.3481,
-      -0.7974
+      -0.7987
      ],
      "radius_m": 0.34674999999999995,
      "steers": true
@@ -521,9 +826,9 @@
      "node": "wheel_Phys_Wheel_BL",
      "sim_wheel": 2,
      "centre_m": [
-      1.3617,
+      1.3627,
       0.3426,
-      0.7929
+      0.7921
      ],
      "radius_m": 0.3425,
      "steers": false
@@ -532,9 +837,9 @@
      "node": "wheel_Phys_Wheel_BR",
      "sim_wheel": 3,
      "centre_m": [
-      1.36,
+      1.3605,
       0.3425,
-      -0.7949
+      -0.7944
      ],
      "radius_m": 0.3425,
      "steers": false
@@ -552,6 +857,86 @@
     "replaces": "meshy_in/mercedes_amg_e63s_2021_wrongcolour.glb (silver, Meshy's own choice before the colour was read from the photos)",
     "why_flat_lit": "Meshy 7 bakes the picture's own lighting into the texture; a flat-lit picture gives even paint and dark glass, and the page's clear coat adds the highlights",
     "card": "Made in Meshy from a flat-lit Meshy Image picture of a black E 63 S and the side and rear views Meshy drew from it: Meshy 7.1 multi-view image-to-3D with texture, remeshed to 99,811 triangles. A model of this make and model, not a scan of this car: its black paint matches the listing's photos."
+   },
+   "shrink": {
+    "bytes": 3392044,
+    "bytes_before": {
+     "value": 4076680,
+     "src": "READ meshes_before_optimize/listing_mercedes_amg_e63s_2021.glb, the file the lot had before the 11-07 shrink"
+    },
+    "reduce": {
+     "rules": "tools/meshy_reduce.json",
+     "triangles": [
+      99811,
+      95325
+     ],
+     "error_m": 0.00249,
+     "tool": "tools/reduce_glb.mjs"
+    },
+    "textures": [
+     {
+      "slots": [
+       "normalTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 233215
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 129855
+     },
+     {
+      "slots": [
+       "metallicRoughnessTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 143452
+     },
+     {
+      "slots": [
+       "clearcoatTexture"
+      ],
+      "px_source": null,
+      "px": [
+       512,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 29215,
+      "made": "here, from the metal/roughness map"
+     }
+    ],
+    "tex_px": 1024,
+    "tangents": "none in the model",
+    "indices": "uint16 (at most 65534 vertices a primitive): output_unwrapped 48676 triangles in 2 pieces",
+    "not_done": "EXT_meshopt_compression (needs a decoder in the page and in the AR viewers) and WebP (Android Scene Viewer documents JPEG and PNG only): measured, not used; a 512 px metal/roughness map: tried, it changed the paint (the comment at the texture step)"
    }
   },
   "porsche_911_c4_2012": {
@@ -569,9 +954,9 @@
      "node": "wheel_Phys_Wheel_FL",
      "sim_wheel": 0,
      "centre_m": [
-      -1.2151,
-      0.3226,
-      0.7785
+      -1.2182,
+      0.3234,
+      0.7845
      ],
      "radius_m": 0.3226,
      "steers": true
@@ -580,9 +965,9 @@
      "node": "wheel_Phys_Wheel_FR",
      "sim_wheel": 1,
      "centre_m": [
-      -1.2186,
-      0.3226,
-      -0.767
+      -1.2172,
+      0.3232,
+      -0.7712
      ],
      "radius_m": 0.3226,
      "steers": true
@@ -591,9 +976,9 @@
      "node": "wheel_Phys_Wheel_BL",
      "sim_wheel": 2,
      "centre_m": [
-      1.1645,
-      0.3319,
-      0.7817
+      1.1619,
+      0.3324,
+      0.7791
      ],
      "radius_m": 0.33185000000000003,
      "steers": false
@@ -602,9 +987,9 @@
      "node": "wheel_Phys_Wheel_BR",
      "sim_wheel": 3,
      "centre_m": [
-      1.1612,
+      1.1631,
       0.3319,
-      -0.7794
+      -0.779
      ],
      "radius_m": 0.33185000000000003,
      "steers": false
@@ -622,6 +1007,86 @@
     "wheels": "one mesh: the wheels are part of the body and do not turn",
     "card": "Made in Meshy from a Meshy Image picture and the side and rear views Meshy drew from it: Meshy 7.1 multi-view image-to-3D with texture, remeshed to 99,775 triangles. A model of this make and model, not a scan of this car: its colour is the listing's and its wheels do not turn.",
     "why_multiview": "the single-picture model's back was guessed (grey tail lamps, a smeared plate) and the chase camera looks at the back all lap; kept as meshy_in/porsche_911_c4_2012_single.glb"
+   },
+   "shrink": {
+    "bytes": 2932108,
+    "bytes_before": {
+     "value": 3773100,
+     "src": "READ meshes_before_optimize/listing_porsche_911_c4_2012.glb, the file the lot had before the 11-07 shrink"
+    },
+    "reduce": {
+     "rules": "tools/meshy_reduce.json",
+     "triangles": [
+      99775,
+      86804
+     ],
+     "error_m": 0.00223,
+     "tool": "tools/reduce_glb.mjs"
+    },
+    "textures": [
+     {
+      "slots": [
+       "normalTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 219219
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 287754
+     },
+     {
+      "slots": [
+       "metallicRoughnessTexture"
+      ],
+      "px_source": [
+       2048,
+       2048
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 210694
+     },
+     {
+      "slots": [
+       "clearcoatTexture"
+      ],
+      "px_source": null,
+      "px": [
+       512,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 117232,
+      "made": "here, from the metal/roughness map"
+     }
+    ],
+    "tex_px": 1024,
+    "tangents": "none in the model",
+    "indices": "uint16 (at most 65534 vertices a primitive): every primitive whole",
+    "not_done": "EXT_meshopt_compression (needs a decoder in the page and in the AR viewers) and WebP (Android Scene Viewer documents JPEG and PNG only): measured, not used; a 512 px metal/roughness map: tried, it changed the paint (the comment at the texture step)"
    }
   },
   "bmw_i8_2016": {
@@ -644,7 +1109,7 @@
     ],
     "src": "the eye 0.45 m behind and 0.20 m above the centre of the model's own steering wheel (Material__129, READ by eye: Material__129 is the steering wheel rim and spokes, 0.39 m across at real size, on the left ahead of the driver seat (test/model_look.html 11-06)); the offsets AUTHORED, a seated driver's eye"
    },
-   "src": "A hand-made 3D model of a BMW i8 by salza on Sketchfab (CC BY 4.0), white with the black bands as this car is (\"BMW I8\" by salza, https://sketchfab.com/3d-models/bmw-i8-c884666736f049c296044992107e12a7; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
+   "src": "A hand-made 3D model of a BMW i8 by salza on Sketchfab (CC BY 4.0); reduced for the web, white with the black bands as this car is (\"BMW I8\" by salza, https://sketchfab.com/3d-models/bmw-i8-c884666736f049c296044992107e12a7; CC Attribution, https://creativecommons.org/licenses/by/4.0/).",
    "credit": {
     "title": "BMW I8",
     "author": "salza",
@@ -748,7 +1213,7 @@
      "axis": "+Z",
      "src": "READ by eye 11-06: the kidney grille is at +Z in test/model_look.html"
     },
-    "card": "A hand-made 3D model of a BMW i8 by salza on Sketchfab (CC BY 4.0), white with the black bands as this car is",
+    "card": "A hand-made 3D model of a BMW i8 by salza on Sketchfab (CC BY 4.0); reduced for the web, white with the black bands as this car is",
     "how": "downloaded from Sketchfab; reduced by tools/reduce_glb.mjs (meshoptimizer, normals weighted); its wheels split by tools/prep_sketchfab.py; a clear coat on the body paint",
     "made": "2026-11-06",
     "wheels": {
@@ -765,7 +1230,8 @@
     "interior": {
      "steering_wheel": "^Material__129$",
      "why": "Material__129 is the steering wheel rim and spokes, 0.39 m across at real size, on the left ahead of the driver seat (test/model_look.html 11-06)"
-    }
+    },
+    "changes": "CC BY 4.0 asks that changes be said: reduced (tools/reduce_glb.mjs), the wheels split from the body, repainted where meta.json paint says, scaled to the car's READ length"
    },
    "reduce": [
     {
@@ -780,7 +1246,126 @@
      "normal_weight": 1.0,
      "why": "the cabin, the tyres, rims and brakes, the black plastics: seen through glass or with no mirror finish"
     }
-   ]
+   ],
+   "shrink": {
+    "bytes": 6141096,
+    "bytes_before": {
+     "value": 6140908,
+     "src": "READ meshes_before_optimize/listing_bmw_i8_2016.glb, the file the lot had before the 11-07 shrink"
+    },
+    "reduce": "by its own per-part rules, before tools/prep_sketchfab.py (\"reduce\" below)",
+    "textures": [
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 294396
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 569127
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 103820
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 23577
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 95448
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 57531
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       1024,
+       1024
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 75992
+     }
+    ],
+    "tex_px": 1024,
+    "tangents": "none in the model",
+    "indices": "uint16 (at most 65534 vertices a primitive): every primitive whole",
+    "not_done": "EXT_meshopt_compression (needs a decoder in the page and in the AR viewers) and WebP (Android Scene Viewer documents JPEG and PNG only): measured, not used; a 512 px metal/roughness map: tried, it changed the paint (the comment at the texture step)"
+   }
   },
   "audi_s7": {
    "glb": "listing_audi_s7.glb",
@@ -810,6 +1395,86 @@
     },
     "card": "Made in Meshy from an uploaded photo of an S7, remeshed to 99,705 triangles. A model of the S7 Sportback, not a scan of the showroom car: its colour is the photo's and its wheels do not turn.",
     "named": "the Meshy task is named 'audi s7 2024 car' in the author's account (the downloaded file: Meshy_AI_audi_s7_2024_car_1106124349_image-to-3d-texture.glb)"
+   },
+   "shrink": {
+    "bytes": 3194912,
+    "bytes_before": {
+     "value": 3889732,
+     "src": "READ meshes_before_optimize/listing_audi_s7.glb, the file the lot had before the 11-07 shrink"
+    },
+    "reduce": {
+     "rules": "tools/meshy_reduce.json",
+     "triangles": [
+      99705,
+      95002
+     ],
+     "error_m": 0.00243,
+     "tool": "tools/reduce_glb.mjs"
+    },
+    "textures": [
+     {
+      "slots": [
+       "normalTexture"
+      ],
+      "px_source": [
+       4096,
+       4096
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 199254
+     },
+     {
+      "slots": [
+       "baseColorTexture"
+      ],
+      "px_source": [
+       4096,
+       4096
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 123188
+     },
+     {
+      "slots": [
+       "metallicRoughnessTexture"
+      ],
+      "px_source": [
+       4096,
+       4096
+      ],
+      "px": [
+       1024,
+       1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 157842
+     },
+     {
+      "slots": [
+       "clearcoatTexture"
+      ],
+      "px_source": null,
+      "px": [
+       512,
+       512
+      ],
+      "mime": "image/jpeg",
+      "bytes": 42821,
+      "made": "here, from the metal/roughness map"
+     }
+    ],
+    "tex_px": 1024,
+    "tangents": "none in the model",
+    "indices": "uint16 (at most 65534 vertices a primitive): output_unwrapped 95002 triangles in 3 pieces",
+    "not_done": "EXT_meshopt_compression (needs a decoder in the page and in the AR viewers) and WebP (Android Scene Viewer documents JPEG and PNG only): measured, not used; a 512 px metal/roughness map: tried, it changed the paint (the comment at the texture step)"
    }
   }
  }

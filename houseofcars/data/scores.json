@@ -1,0 +1,5 @@
+{
+ "about": "The shared high-score boards (UC-24, UC-25): the web app that keeps their rows. null = not set up; the boards then say so and keep nothing (scores.js).",
+ "endpoint": null,
+ "why": ""
+}

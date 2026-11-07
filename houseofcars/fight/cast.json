@@ -1,0 +1,23 @@
+{
+ "about": "UC-29 the fighters: each a Meshy model, rigged and animated in Meshy (Animate, Mixamo skeleton), prepared by tools/prep_fighter.py into data/meshes/fight/<key>.glb. 'clips' maps a state of fight/rules.js to the Meshy motion played for it. A JOKE: Doc Fee is made up.",
+ "fighters": {
+  "buyer": {
+   "name": "You", "glb": "buyer.glb",
+   "made": "Meshy Image (Nano Banana Pro, A-pose) then Image to 3D (Meshy 7.1, texture Meshy 7 2K), remesh 30K triangles, Animate (humanoid rig) 2026-11-07",
+   "prompt": "Full-body 3D game character, A-pose, front view, head to toe in frame: an everyday car buyer turned street fighter, a determined man in his thirties with short dark hair and stubble, a grey zip hoodie over a white t-shirt, dark blue jeans, white sneakers, a car key on a lanyard round his neck, stylized fighting-game proportions, plain light grey background, soft even lighting, no text.",
+   "clips": { "idle": "Combat_Stance", "walk": "Casual_Walk", "punch": "Boxing_Guard_Prep_Straight_Punch", "kick": "Boxing_Guard_Right_Straight_Kick", "special": "Flying_Fist_Kick", "hit": "Face_Punch_Reaction", "block": "Block1", "down": "Fall_Down", "win": "Cheer_with_Both_Hands" }
+  },
+  "sidekick": {
+   "name": "Torque", "glb": "sidekick.glb",
+   "made": "Meshy Image (Nano Banana Pro, A-pose) then Image to 3D (Meshy 7.1, texture Meshy 7 2K), remesh 30K triangles, Animate (humanoid rig) 2026-11-07",
+   "prompt": "Full-body 3D game character, A-pose, front view, head to toe in frame: a confident female street-fighter sidekick, a stylized fighting-game heroine with exaggerated comic-book proportions and a very curvy hourglass figure, fully clothed in a cropped orange racing jacket zipped over a black fitted top, black cargo trousers, chunky combat boots, fingerless gloves, a high ponytail, a cheeky grin, plain light grey background, soft even lighting, no text.",
+   "clips": { "idle": "Combat_Stance", "walk": "Casual_Walk", "assist": "Flying_Fist_Kick", "kick": "Boxing_Guard_Right_Straight_Kick", "taunt": "Chest_Pound_Taunt", "hit": "Face_Punch_Reaction", "win": "Cheer_with_Both_Hands" }
+  },
+  "docfee": {
+   "name": "Doc Fee", "glb": "docfee.glb",
+   "made": "Meshy Image (Nano Banana Pro, A-pose) then Image to 3D (Meshy 7.1, untextured), Texture (Meshy 7, from the same picture), remesh 30K triangles, Animate (humanoid rig) 2026-11-07",
+   "prompt": "Full-body 3D game character, A-pose, front view, head to toe in frame: a lame cartoon villain who is a car-dealership sales manager, a smug middle-aged man with a comb-over and a thin moustache, short-sleeved white dress shirt, an extra-wide shiny red tie, pleated khaki trousers, brown loafers, a name badge reading DOC FEE, stylized fighting-game proportions, plain light grey background, soft even lighting, no text other than the badge.",
+   "clips": { "idle": "Combat_Stance", "walk": "Casual_Walk", "swing": "Boxing_Guard_Prep_Straight_Punch", "throw": "baseball_pitching", "spray": "Charged_Spell_Cast", "away": "Running", "hit": "Face_Punch_Reaction", "down": "dying_backwards", "win": "Chest_Pound_Taunt", "taunt": "Finger_Wag_No" }
+  }
+ }
+}

@@ -14,6 +14,10 @@ import { SLIDES } from './slides.js';
 import { svgIcon, drawIcon } from './icons.js';
 import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, setPaint, paint, groundDetail, lightBeam } from './fx.js';
 import { makeAudio, driveSound, silence, blip } from './audio.js';
+import { Radio } from './radio.js';                                                       // UC-27: the car radio
+import { makeWalker, stepWalker, facing, EYE_M } from './walk.js';                        // UC-28: walking the lot
+import { buildDressing } from './dress.js';                                                // UC-33: kerbs, lines, posts, gantries
+import { makeSpeedFx, stepSpeedFx } from './speedfx.js';                                   // UC-33: the view widens with speed, a shake when fast
 import { buildTach, updateTach, popCountdown, lapBanner, readRecord, writeRecord, buildMinimap, drawMinimap } from './hud.js';
 import { makeSkids, clearSkids, laySkids, slideAmount } from './effects.js';
 import { makeGamepad, readGamepad, readPadRaw } from './gamepad.js';
@@ -26,6 +30,10 @@ import { loadingShow, loadingDone } from './loading.js';
 import * as Drag from './drag.js';                                                          // UC-22: the drag strip's rules
 import { knowHTML, knownSpecsHTML } from './know.js';                                                   // UC-14: Know this car (know.js)                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
 import { dragyHUD } from './dragstats.js';                                                  // UC-21: Dragy owners' runs (dragstats.js)
+import { ScoreBoard, HOUSE_NAME, checkName, ranked, qualifies, boardHTML, lastName, keepName } from './scores.js';   // UC-25: the shared boards
+import { mark, timed } from './perf.js';                                                   // UC-30: ?perf logs where the time goes
+mark('app.js running');
+const perfFirst = [];                                   // UC-30: the models just added, marked again once a frame has drawn them (declared first: a model can arrive while the page is still setting up)
 
 // AUTHORED for the page itself (look and layout, never presented as Unreal's): see AUTHORED in the report
 export const AUTHORED = [
@@ -69,10 +77,10 @@ function showProgress() {
   let l = 0, t = 0;
   for (const v of prog.values()) { l += v.l; t += v.t; }
   const bar = document.querySelector('#bar i');
-  if (bar && t) { bar.style.width = (100 * l / t).toFixed(0) + '%'; $('lmb').textContent = (l / 1e6).toFixed(1) + ' / ' + (t / 1e6).toFixed(1) + ' MB'; }
+  if (bar && t) { bar.style.width = (100 * l / t).toFixed(0) + '%'; $('lmb').textContent = (100 * l / t).toFixed(0) + ' % · ' + (l / 1e6).toFixed(1) + ' / ' + (t / 1e6).toFixed(1) + ' MB'; }
 }
 const loadGlb = (url) => {
-  if (!glbCache.has(url)) glbCache.set(url, loader.loadAsync(url, (e) => { prog.set(url, { l: e.loaded, t: e.total || e.loaded }); showProgress(); }).then((g) => { upgradePaint(g.scene); return g; }));
+  if (!glbCache.has(url)) { mark('glb asked', url); glbCache.set(url, loader.loadAsync(url, (e) => { prog.set(url, { l: e.loaded, t: e.total || e.loaded }); showProgress(); }).then((g) => { mark('glb parsed', url); upgradePaint(g.scene); return g; })); }
   return glbCache.get(url);
 };
 const meshUrl = (assetPath) => 'data/meshes/' + assetPath.split('/').pop().split('.').pop() + '.glb';   // "/Game/X/SM_A.SM_A" or "/Game/X/SM_A"
@@ -87,6 +95,55 @@ if (!navigator.gpu && !webgl2Available()) {
 const renderer = new THREE.WebGPURenderer({ canvas, antialias: true });
 await renderer.init();
 const BACKEND = renderer.backend.isWebGPUBackend ? 'WebGPU' : 'WebGL 2';
+mark('renderer ready', BACKEND);
+// UC-30 the first full frame builds every shader it meets: 11-07 ?perf on WebGL 2, the lot's first frame took 8.3 s, and with one
+// frame drawn behind the loading screen first, the next took 26 ms. So the lot is drawn behind the loading screen a piece at a time
+// (each piece's shaders in a frame of their own, the loading game drawn in between), and the cars' models join it one at a time
+// (UC-32). Tried first and dropped: renderer.compileAsync, aimed at the canvas and then at the post pass's target; the real frame
+// did not reuse what it built (the pedestal tops' reflection and the shadow map draw the scene again, each with its own shaders)
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));   // a timer, not a frame: it still runs in a tab in the background
+const drawables = (o) => { const m = []; o.traverse((x) => { if (x.isMesh || x.isSprite || x.isLine || x.isPoints) m.push(x); }); return m; };
+// a scene drawn behind its loading screen a piece at a time, so its first visible frame builds nothing; a piece drawn once is not
+// drawn again (the track and the strip are warmed on the first race only, the car of each race on its own). 11-07: the strip's first
+// frame froze the page for longer than the page check's 30 s click wait, the lot's had for 8.3 s
+const warmed = new WeakSet();
+const WARM_STEPS = 8;                                             // AUTHORED: at most 8 frames per warm-up (11-07: the strip's 56 pieces, one a frame, took 60 s in software)
+async function warmPieces(scene, render, label, before) {
+  const pieces = scene.children.filter((p) => !warmed.has(p) && drawables(p).length), was = new Map();
+  if (!pieces.length) return;
+  for (const piece of pieces) for (const m of drawables(piece)) { was.set(m, [m.visible, m.frustumCulled]); m.visible = false; }   // the lights stay on: shaders depend on them
+  if (before) before();
+  const per = Math.ceil(pieces.length / WARM_STEPS);
+  for (let i = 0; i < pieces.length; i += per) {
+    const step = pieces.slice(i, i + per), ms = step.flatMap(drawables);
+    for (const p of step) warmed.add(p);
+    for (const m of ms) { m.visible = was.get(m)[0]; m.frustumCulled = false; }   // unculled, so a piece out of view is built too
+    await timed('warmed ' + label, step.length + ' pieces', () => { render(); });
+    for (const m of ms) m.frustumCulled = was.get(m)[1];
+    await pause(16);
+  }
+}
+const warmLot = () => warmPieces(show.scene, () => showPost.render(), 'lot', () => tickShow(0));   // tickShow: the camera where the lot opens
+// UC-31 not on WebGPU: say so, with the reason the browser gives and what would run it (Chrome's own release notes, linked)
+async function gpuNotice() {
+  try { if (localStorage.getItem('hoc.gpunote') === BACKEND) return; } catch (e) { /* a private window: shown each visit */ }
+  let why;
+  if (!navigator.gpu) why = 'this browser has no WebGPU';
+  else {
+    let adapter = null;
+    try { adapter = await navigator.gpu.requestAdapter(); } catch (e) { why = 'WebGPU refused the page (' + e.message + ')'; }
+    if (!why) why = adapter ? 'WebGPU would not start with this graphics adapter' : 'this browser has WebGPU but gave the page no graphics adapter: Chrome keeps WebGPU off on graphics chips it has not cleared';
+  }
+  const android = /Android/i.test(navigator.userAgent), chromium = /Chrome\/|Edg\//.test(navigator.userAgent);
+  const fix = android
+    ? 'On Android, WebGPU runs in Chrome 121 or newer on Android 12 or newer with a Qualcomm or ARM graphics chip (<a href="https://developer.chrome.com/blog/new-in-webgpu-121" target="_blank" rel="noopener">Chrome&rsquo;s notes</a>): update Chrome, or open the lot on a computer in Chrome or Edge.'
+    : navigator.gpu && chromium
+      ? 'This browser can run WebGPU, so the graphics chip, its driver or the browser&rsquo;s hardware acceleration is holding it back: type chrome://gpu in the address bar to see which, update the graphics driver, or open the lot on another computer.'
+      : 'WebGPU runs in Chrome or Edge 113 or newer on Windows, macOS and ChromeOS (<a href="https://developer.chrome.com/blog/webgpu-release" target="_blank" rel="noopener">Chrome&rsquo;s notes</a>): open the lot there.';
+  $('gpunotetext').innerHTML = '<b>You are not seeing the best version of this page.</b> It is built for WebGPU and is running on ' + BACKEND + ' here, because ' + esc(why) + '. ' + fix;
+  $('gpunote').hidden = false;
+  $('gpunoteok').onclick = () => { $('gpunote').hidden = true; try { localStorage.setItem('hoc.gpunote', BACKEND); } catch (e) { /* not kept */ } };
+}
 $('renderer').textContent = BACKEND;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
@@ -98,6 +155,14 @@ const studioTex = studioEnvironment(renderer, PAL.accent);                  // t
 const [SHOW, TRACK, RULES, CAMS, INPUT, LISTINGS, MODELS] = await Promise.all([fetchJson('showroom.json'), fetchJson('track.json'), fetchJson('timetrial_rules.json'),
   fetchJson('camera.json'), fetchJson('input.json'), fetchJson('listings.json'), fetchJson('models.json')]);
 const GHOSTS = await fetchJson('ghosts/index.json');      // UC-9.3: the simulated laps (tools/ghost_index.py)
+const SCORES = new ScoreBoard(await fetchJson('scores.json'));   // UC-25: where the shared boards live (null: not set up, and said)
+// UC-26 a car's model, or null when it has none or its model is withdrawn ("withheld": why, a model that cannot be fixed). Every
+// lookup goes through here, so a withdrawn model leaves the whole page at once and its car says SOON instead of showing it
+const modelOf = (key) => { const m = MODELS.models[key]; return m && !m.withheld ? m : null; };
+const SOON = 'No model yet · coming soon';
+// UC-33.4a / 1a the Motion switch: the speed widening and the shake on or off, kept on this device
+const MOTION = { on: (() => { try { return localStorage.getItem('hoc.motion') !== 'off'; } catch (e) { return true; } })() };
+const DEG = Math.PI / 180;
 const SALE_SPECS = await fetchJson('sale_specs.json');    // UC-9.1: each car for sale's factory numbers, READ with sources (tools/sale_specs.py)
 const [REVIEWS, RECALLS, COLOURS, PHOTOS, DRAGY] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json'), fetchJson('colours.json'), fetchJson('photos.json'), fetchJson('dragy.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
 // UC-8: the lot's slides, with `listings` expanded into one slide per car for sale (data/listings.json) and per pick the site lacks
@@ -107,7 +172,7 @@ const pad = makeGamepad(INPUT);                                    // UC-7.5a: t
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;   // UC-7.2b
 const START_HASH = decodeURIComponent(location.hash);     // read once: select() rewrites the hash to follow the slide
 const KIOSK = START_HASH === '#kiosk';                     // UC-11.5
-window.HOC = { BACKEND, SHOW, TRACK, RULES, state: null, paint, saleModels: { want: [], on: [] } };   // for the page check (test/page_check.py) and for review in devtools; saleModels: the Meshy models asked for and those on their pedestals
+window.HOC = { BACKEND, SHOW, TRACK, RULES, state: null, paint, saleModels: { want: [], on: [], soon: [] } };   // saleModels.on: in the order they joined (UC-32)   // for the page check (test/page_check.py) and for review in devtools; saleModels: the Meshy models asked for and those on their pedestals
 
 // ---------------------------------------------------------------- a car out of its Unreal parts (UC-1.2)
 // Each part's mesh is the glTF Unreal exported; it hangs at the transform READ off the spawned pawn (actor space).
@@ -245,14 +310,14 @@ function salePanel(def) {
   g.font = '600 34px "Open Sans", sans-serif'; g.fillStyle = '#d9dddf';
   let el = lines[1]; while (g.measureText(el).width > 860 && el.length > 8) el = el.slice(0, -2);
   g.fillText(el === lines[1] ? el : el + '…', 80, 350); g.fillText(lines[2], 80, 404);
-  if (!def.model && def.kind === 'listing') { g.fillStyle = PAL.soft; g.font = '600 28px "Open Sans", sans-serif'; g.fillText('3D model not made yet', 80, 470); }
+  if (!def.model && def.kind === 'listing') { g.fillStyle = PAL.accent; g.font = '800 30px "Open Sans", sans-serif'; g.fillText(SOON.toUpperCase(), 80, 470); }   // UC-26
   g.fillStyle = PAL.soft; g.font = '600 24px "Open Sans", sans-serif'; g.fillText('HOUSE OF CARS · 3D LOT CONCEPT · UNOFFICIAL', 80, 556);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 // a car for sale in the race: its 3D model (Meshy's or hand-made), nose along the body's X, standing on the car's ground line and centred on its
 // wheelbase (data/sim_cars: the wheels are the physics', not drawn separately; the model carries its own)
 async function simBody(key, carJson) {
-  const m = MODELS.models[key];
+  const m = modelOf(key);
   if (!m) throw new Error('no 3D model of ' + key + ' yet: it can be raced as a ghost, not driven');
   const body = await saleModel(m);
   const w = carJson.wheels.map((x) => x.bone_location.value);
@@ -289,7 +354,57 @@ async function saleModel(m) {
   g.position.set(-c.x, -b2.min.y, -c.z);
   const wrap = new THREE.Group(); wrap.add(g); return wrap;
 }
+// UC-26 the sign on the pedestal of a car with no model: SOON on a lit card standing where the car would
+function soonSign() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(10,10,10,.82)'; g.fillRect(0, 0, 1024, 256);
+  g.strokeStyle = PAL.accent; g.lineWidth = 10; g.strokeRect(5, 5, 1014, 246);
+  g.textAlign = 'center'; g.fillStyle = '#fefefe'; g.font = '800 96px "Open Sans", sans-serif'; g.fillText('NO MODEL YET', 512, 120);
+  g.fillStyle = PAL.accent; g.font = '800 64px "Open Sans", sans-serif'; g.fillText('COMING SOON', 512, 210);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicNodeMaterial({ map: t, transparent: true, side: THREE.DoubleSide }));
+  m.position.set(0, 1.4, 0); m.name = 'soon_sign'; return m;
+}
 const carEntry = (name) => { const e = SHOW.cars.find((c) => c.name === name); if (!e) throw new Error('slides.js names a car showroom.json lacks: ' + name); return e; };
+// UC-32 the cars' models join the lot one at a time, the car on show first, then those beside it round the ring; a car the visitor
+// heads for (select, a link, walking up to it, a drive) goes to the front. Every model downloads at once; only the joining is
+// queued, so no two cars' shaders are built in one frame. Until its model joins, a car stands as its own first listing photo
+const modelQ = { items: [], busy: false };
+const ringGap = (i) => { const n = show.slides.length, d = Math.abs(i - show.index); return Math.min(d, n - d); };
+function wantModel(key) { const it = modelQ.items.find((x) => x.key === key); if (it) it.urgent = performance.now(); pumpModels(); }
+async function pumpModels() {
+  if (modelQ.busy || !modelQ.open) return;
+  const next = modelQ.items.filter((x) => x.state === 'wait').sort((a, b) => (b.urgent || 0) - (a.urgent || 0) || ringGap(a.i) - ringGap(b.i))[0];
+  if (!next) return;
+  modelQ.busy = true; next.state = 'joining';
+  const got = await next.ready;                                  // { g } or { e }
+  if (got.e) { next.state = 'failed'; if (next.caption) { next.caption.material.map = captionTex('3D model did not load'); next.caption.material.needsUpdate = true; } reportError(got.e); }
+  else {
+    next.turn.add(got.g);
+    if (next.card) { next.stand.remove(next.card, next.caption); next.card.material.map.dispose(); }
+    next.state = 'on'; HOC.saleModels.on.push(next.key); mark('model on its pedestal', next.key); perfFirst.push(next.key);
+  }
+  await pause(120);                                              // the frame that builds its shaders, and one more, before the next
+  modelQ.busy = false; pumpModels();
+}
+function captionTex(text) {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 96; const g = c.getContext('2d');
+  g.fillStyle = 'rgba(10,10,10,.8)'; g.fillRect(0, 0, 1024, 96); g.fillStyle = PAL.soft; g.font = '700 46px "Open Sans", sans-serif'; g.textAlign = 'center'; g.fillText(text, 512, 64);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+// the car's own first listing photo (UC-18: the dealer's image server, which serves it to any page: Access-Control-Allow-Origin *)
+function photoCard(key) {
+  const ph = PHOTOS.cars[key] && PHOTOS.cars[key].photos[0];
+  const caption = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 0.41), new THREE.MeshBasicNodeMaterial({ map: captionTex('3D model on its way'), transparent: true, side: THREE.DoubleSide }));
+  caption.position.set(0, 0.62, 0.02);
+  if (!ph) return { card: null, caption };                       // UC-32.1a: no photo, the line alone
+  const tex = new THREE.TextureLoader().setCrossOrigin('anonymous').load(ph.full, undefined, undefined, () => reportError(new Error('the listing photo did not load: ' + ph.full)));
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const card = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 3.3), new THREE.MeshBasicNodeMaterial({ map: tex, side: THREE.DoubleSide }));   // both faces: across the ring it is seen from behind
+  card.position.set(0, 2.5, 0); card.name = 'photo_' + key;
+  return { card, caption };
+}
 for (let i = 0; i < LOT.length; i++) {
   const def = LOT[i];
   const a = (i / LOT.length) * Math.PI * 2;
@@ -299,7 +414,7 @@ for (let i = 0; i < LOT.length; i++) {
   const car = def.kind === 'car' ? carEntry(def.car) : null;
   const onPed = car || def.kind === 'listing' || def.kind === 'unlisted';       // a slide with a pedestal (a car, or a car for sale)
   const saleKey = def.kind === 'listing' ? def.listing.key : def.kind === 'unlisted' ? def.unlisted.key : null;
-  if (saleKey) def.model = MODELS.models[saleKey] || null;   // UC-8.3: a model of THAT car, or none; looked up before its panel says which
+  if (saleKey) def.model = modelOf(saleKey);   // UC-8.3: a model of THAT car, or none; looked up before its panel says which
   const panel = new THREE.Mesh(new THREE.PlaneGeometry(onPed ? 5.0 : 6.2, onPed ? 2.8 : 3.5), new THREE.MeshBasicNodeMaterial({ map: car || !onPed ? panelTexture(def, car) : salePanel(def) }));
   panel.position.set(0, onPed ? 4.0 : 2.6, onPed ? -4.2 : 0);
   stand.add(panel);
@@ -324,9 +439,12 @@ for (let i = 0; i < LOT.length; i++) {
       // UC-8.3a: none, and the panel says so. A model loads behind the lot (about 4-6 MB each, seven of them): the lot opens at
       // once and each car rolls onto its pedestal as it arrives; a model that fails is a page error, never a silent empty pedestal
       if (def.model) {
-        turn.position.y = 0.3; const t = turn; HOC.saleModels.want.push(saleKey);
-        saleModel(def.model).then((g) => { t.add(g); HOC.saleModels.on.push(saleKey); }, (e) => reportError(e));
-      }
+        turn.position.y = 0.3; HOC.saleModels.want.push(saleKey);
+        const { card, caption } = photoCard(saleKey);
+        if (card) stand.add(card); stand.add(caption);
+        modelQ.items.push({ i, key: saleKey, turn, stand, card, caption, state: 'wait',
+          ready: saleModel(def.model).then((g) => { g.name = saleKey; return { g }; }, (e) => ({ e })) });   // an error is reported when its turn comes
+      } else { turn.add(soonSign()); HOC.saleModels.soon.push(saleKey); }   // UC-26: the empty pedestal says why
     }
     stand.add(turn);
   } else {
@@ -355,7 +473,7 @@ async function shareCar(key, btn) {
   btn.textContent = 'Link copied'; setTimeout(() => { btn.innerHTML = svgIcon('link', 16) + ' Share this car'; }, 2200);
 }
 async function openAR(key, title) {
-  const m = MODELS.models[key]; if (!m) return;
+  const m = modelOf(key); if (!m) return;
   if (!customElements.get('model-viewer')) await import('model-viewer');
   const t = title || LOT_CARS.find((c) => c.key === key).title;
   $('arbody').innerHTML = '<model-viewer src="data/meshes/' + esc(m.glb) + '" alt="' + esc(t) + ', 3D model" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" camera-controls auto-rotate shadow-intensity="1" exposure="1.1" environment-image="neutral"><button slot="ar-button" class="act">See it in your driveway</button></model-viewer>' +
@@ -376,7 +494,8 @@ function saleCard(s, card) {
       '<p>houseofcars.com lists no Audi S7 on ' + esc(readDay) + ', so this page shows no price for it: it never types one in.</p>' +
       '<div class="acts">' + (d.model ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') +
       '<a class="act" href="details.html#car=' + esc(d.unlisted.key) + '">Full details</a></div>' +      // UC-16.1: the car's own page (details.js)
-      '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) + ' Length: ' + esc(d.model.length_m.src) + '<br>' : '3D model not made yet.<br>') +
+      (d.model ? '' : '<p class="soon">' + SOON + '</p>') +   // UC-26
+      '<div id="srcline">' + (d.model ? '3D model: ' + esc(d.model.src) + ' Length: ' + esc(d.model.length_m.src) + '<br>' : '') +
       d.unlisted.searched.map(esc).join('<br>') + '</div>' + knownSpecsHTML(d.unlisted.key, REVIEWS) + dragyHUD(d.unlisted.key, DRAGY, 'card') + knowHTML(d.unlisted.key, REVIEWS, RECALLS);
     card.querySelectorAll('button.src').forEach((b) => b.addEventListener('click', () => { $('srcline').textContent = b.title; }));
     if ($('aropen')) $('aropen').addEventListener('click', () => openAR(d.unlisted.key, 'Audi S7'));
@@ -387,17 +506,17 @@ function saleCard(s, card) {
   const leads = leadsFor(l.key, LOT_CARS);
   card.innerHTML = '<p class="kick">For sale · ' + esc(V(l.city)) + (V(l.store) !== V(l.city) ? ' · ' + esc(V(l.store)) : '') + ' store</p><h2>' + esc(saleTitle(l)) + '</h2>' +
     (leads.length ? '<div class="leads" title="Best of the ' + LOT_CARS.length + ' cars for sale on this lot, from their published figures and simulated laps">' + leads.map((x) => '<span>' + esc(x) + '</span>').join('') + '</div>' : '') +
-    (V(l.trim) ? '<div class="sub">' + esc(V(l.trim)) + '</div>' : '') + '<div class="price">' + (V(l.price) !== null ? esc(money(V(l.price), V(l.currency))) : 'Price not listed') + '<small>as listed on houseofcars.com, ' + esc(readDay) + '</small></div>' +
+    (V(l.trim) ? '<div class="sub">' + esc(V(l.trim)) + '</div>' : '') + (modelOf(l.key) ? '' : '<p class="soon">' + SOON + '</p>') + '<div class="price">' + (V(l.price) !== null ? esc(money(V(l.price), V(l.currency))) : 'Price not listed') + '<small>as listed on houseofcars.com, ' + esc(readDay) + '</small></div>' +
     '<dl>' + row('Kilometres', l.km, (v) => v.toLocaleString('en-CA') + ' km') + row('Engine', l.engine) + row('Colour', COLOURS.cars[l.key] || l.colour) + row('Interior', l.interior) +
     row('VIN', l.vin) + row('Stock', l.stock) + '</dl>' +
     specRows(l.key) + simLine(l.key) +
-    '<div class="acts">' + (MODELS.models[l.key] && SIMS.has(l.key) ? '<button class="act go" data-drag="' + l.key + '">Drag race it</button><button class="act" data-drive="' + l.key + '">Lap the track</button>' : '') +
+    '<div class="acts">' + (modelOf(l.key) && SIMS.has(l.key) ? '<button class="act go" data-drag="' + l.key + '">Drag race it</button><button class="act" data-drive="' + l.key + '">Lap the track</button>' : '') +
     (GHOSTS.ghosts.some((g) => g.car === l.key) ? '<button class="act" data-race="' + l.key + '">Race its ghost</button>' : '') +
     '<a class="act" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + svgIcon('link', 16) + ' See it on houseofcars.com</a>' +
     '<a class="act" href="details.html#car=' + esc(l.key) + '">Full details</a>' +      // UC-16.1: the car's own page (details.js)
-    (MODELS.models[l.key] && MODELS.models[l.key].interior ? '<a class="act" href="details.html#car=' + esc(l.key) + '&inside">Look inside</a>' : '') + '</div>' +   // UC-17: a model with a cabin
+    (modelOf(l.key) && modelOf(l.key).interior ? '<a class="act" href="details.html#car=' + esc(l.key) + '&inside">Look inside</a>' : '') + '</div>' +   // UC-17: a model with a cabin
     '<div class="sell"><button class="pick2" id="cmpopen">' + svgIcon('numbers', 16) + ' Compare the lot</button><button class="pick2" id="share">' + svgIcon('link', 16) + ' Share this car</button>' +
-    (MODELS.models[l.key] ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') + '</div>' +
+    (modelOf(l.key) ? '<button class="pick2" id="aropen">' + svgIcon('lot', 16) + ' In your driveway (AR)</button>' : '') + '</div>' +
     photoStrip(l.key) +
     dragyHUD(l.key, DRAGY, 'card') + knowHTML(l.key, REVIEWS, RECALLS) +
     '<div class="qr" id="qr"></div>' +
@@ -476,7 +595,7 @@ function renderCard() {
     }));
   }
   const sale = d.kind === 'listing' || d.kind === 'unlisted';
-  const saleDrive = d.kind === 'listing' && MODELS.models[d.listing.key] && SIMS.has(d.listing.key);
+  const saleDrive = d.kind === 'listing' && modelOf(d.listing.key) && SIMS.has(d.listing.key);
   const drivable = sale ? !!saleDrive : s.car ? s.car.drivable : s.def.kind === 'drive';
   $('drive').disabled = !drivable;
   $('drive').textContent = sale && !saleDrive ? 'FOR SALE' : sale ? 'DRAG RACE' : s.car && !s.car.drivable ? 'SHOWROOM ONLY' : 'TEST DRIVE';
@@ -494,6 +613,7 @@ function select(i) {
   d = Math.atan2(Math.sin(d), Math.cos(d));
   show.targetAngle += d;
   renderCard();
+  pumpModels();                                          // UC-32.3: the queue reorders round the car now on show
 }
 $('prev').onclick = () => select(show.index - 1);
 $('next').onclick = () => select(show.index + 1);
@@ -553,6 +673,67 @@ function padShow() {                                    // edges only: one press
 }
 let intro = REDUCED ? 1 : 0;
 const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+// ---------------------------------------------------------------- walking the lot (UC-28, walk.js): the lot's own camera at a standing
+// eye height, among the same pedestals; the pedestals' radius is the one built above (CylinderGeometry 3.3 at its foot)
+const PED_R = 3.3;
+const walk = { w: null, faced: -1, lastFaced: -1, stick: { x: 0, y: 0 }, dyaw: 0, dpitch: 0, look: null, move: null, fov: 40 };
+const walkTargets = () => show.slides.map((c) => (c.turn && (c.car || c.def.model) ? { x: c.stand.position.x, z: c.stand.position.z } : null));
+const walkObstacles = () => show.slides.filter((c) => c.turn).map((c) => ({ x: c.stand.position.x, z: c.stand.position.z, r: PED_R }));
+function slideName(i) {
+  const d = show.slides[i].def;
+  if (d.kind === 'listing') { const l = d.listing; return '<b>' + esc(saleTitle(l)) + '</b>' + (V(l.price) !== null ? ' · ' + esc(money(V(l.price), V(l.currency))) : ''); }
+  if (d.kind === 'unlisted') return '<b>' + esc(saleTitle(d.unlisted)) + '</b>';
+  return '<b>' + esc(show.slides[i].car ? show.slides[i].car.name : '') + '</b> · Unreal Engine 5.7 template car';
+}
+function startWalk() {
+  if (mode !== 'show') return;
+  const a = show.slides[show.index].angle, out = RING + 7.5;           // just outside the ring, facing the car on show
+  walk.w = makeWalker(Math.sin(a) * out, Math.cos(a) * out, a);
+  walk.fov = showCam.fov; showCam.fov = 70; showCam.updateProjectionMatrix();
+  walk.faced = -1; walk.lastFaced = show.index; walk.stick = { x: 0, y: 0 }; keys.clear();
+  mode = 'walk'; document.body.classList.add('walking'); $('walkhud').hidden = false; $('walklabel').hidden = true;
+}
+function endWalk(open) {
+  showCam.fov = walk.fov; showCam.updateProjectionMatrix();
+  mode = 'show'; document.body.classList.remove('walking'); $('walkhud').hidden = true; $('walklabel').hidden = true; keys.clear();
+  intro = 1; select(open >= 0 ? open : walk.lastFaced);                // UC-28.3 / 28.4: that car's card, or the one last looked at
+}
+function tickWalk(dt) {
+  const k = (c) => keys.has(c);
+  const fwd = (k('KeyW') || k('ArrowUp') ? 1 : 0) - (k('KeyS') || k('ArrowDown') ? 1 : 0) - walk.stick.y;
+  const side = (k('KeyD') ? 1 : 0) - (k('KeyA') ? 1 : 0) + walk.stick.x;
+  const turn = ((k('ArrowLeft') ? 1 : 0) - (k('ArrowRight') ? 1 : 0)) * 1.8 * dt;   // AUTHORED: a turn of about 100 degrees a second
+  stepWalker(walk.w, { fwd, side, fast: k('ShiftLeft') || k('ShiftRight'), turn: turn + walk.dyaw, lift: walk.dpitch }, dt, walkObstacles(), { r: RING + 16 });
+  walk.dyaw = 0; walk.dpitch = 0;
+  showCam.position.set(walk.w.x, EYE_M, walk.w.z);
+  showCam.rotation.set(walk.w.pitch, walk.w.yaw, 0, 'YXZ');
+  const i = facing(walk.w, walkTargets());
+  if (i !== walk.faced) {
+    walk.faced = i; if (i >= 0) { walk.lastFaced = i; const d = show.slides[i].def; if (d.kind === 'listing' || d.kind === 'unlisted') wantModel((d.listing || d.unlisted).key); }   // UC-32.3
+    const el = $('walklabel'); el.hidden = i < 0;
+    if (i >= 0) el.innerHTML = slideName(i) + '<span>' + (matchMedia('(pointer:coarse)').matches ? 'Tap to see this car' : 'Enter: see this car') + '</span>';
+  }
+  showPost.render();
+}
+$('walk').onclick = () => startWalk();
+$('walkexit').onclick = () => endWalk(-1);
+$('walklabel').onclick = () => { if (walk.faced >= 0) endWalk(walk.faced); };
+// looking: a drag (a mouse anywhere, a finger on the right half); walking on a phone: a finger on the left half is a thumb stick
+canvas.addEventListener('pointerdown', (e) => {
+  if (mode !== 'walk') return;
+  if (e.pointerType === 'touch' && e.clientX < innerWidth / 2) walk.move = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  else walk.look = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (mode !== 'walk') return;
+  if (walk.look && e.pointerId === walk.look.id) { walk.dyaw -= (e.clientX - walk.look.x) * 0.005; walk.dpitch -= (e.clientY - walk.look.y) * 0.004; walk.look.x = e.clientX; walk.look.y = e.clientY; }
+  if (walk.move && e.pointerId === walk.move.id) walk.stick = { x: Math.max(-1, Math.min(1, (e.clientX - walk.move.x) / 60)), y: Math.max(-1, Math.min(1, (e.clientY - walk.move.y) / 60)) };
+});
+const walkUp = (e) => { if (walk.look && e.pointerId === walk.look.id) walk.look = null; if (walk.move && e.pointerId === walk.move.id) { walk.move = null; walk.stick = { x: 0, y: 0 }; } };
+canvas.addEventListener('pointerup', walkUp); canvas.addEventListener('pointercancel', walkUp);
+window.HOC.walk = walk; window.HOC.startWalk = startWalk; window.HOC.walkTick = (dt) => tickWalk(dt);   // the page check steps the walk by its own clock
 function tickShow(dt) {
   show.angle += (show.targetAngle - show.angle) * Math.min(1, dt * 2.6);
   intro = Math.min(1, intro + dt / 3.2);
@@ -625,6 +806,7 @@ async function buildTrack() {
     if (!o.isMesh) return;
     if (/SkySphere/i.test(o.name) || /SkySphere/i.test(o.material?.name || '')) { o.visible = false; return; }   // see AUTHORED: sky
     o.castShadow = true; o.receiveShadow = true;
+    for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap']) if (o.material && o.material[k]) o.material[k].anisotropy = renderer.getMaxAnisotropy();   // UC-33.3
   });
   scene.add(t);
   // the gates (G toggles; invisible in Unreal)
@@ -665,10 +847,11 @@ function takePicture() {
 let trackReady = null;
 function prepareTrack() {                               // once: the physics module, the track, the world, the minimap, the gate points
   if (!trackReady) trackReady = (async () => {
-    Chaos = await import('./chaos_vehicle.js');
-    const tv = await buildTrack(); trackView = tv;
-    world = withHoles(await loadWorld(fetchBin, TRACK), await loadHoles(fetchBin, fetchJson, TRACK.ground.grid));   // the tunnel mouths are holes (UC-2.2)
-    trackView.minimap = buildMinimap($('minimap'), world, TRACK.gates);
+    mark('track: start');
+    Chaos = await timed('track: physics module', 'chaos_vehicle.js', () => import('./chaos_vehicle.js'));
+    const tv = await timed('track: scene', 'buildTrack', () => buildTrack()); trackView = tv;
+    world = await timed('track: world', 'collision + ground', async () => withHoles(await loadWorld(fetchBin, TRACK), await loadHoles(fetchBin, fetchJson, TRACK.ground.grid)));   // the tunnel mouths are holes (UC-2.2)
+    trackView.minimap = await timed('track: minimap', '', async () => buildMinimap($('minimap'), await fetchJson('road_spline.json'), TRACK.gates));
     trackView.gateGroundUe = TRACK.gates.map((g) => {          // where each gate's marker stands: the ground under its centre (UE cm)
       const c = g.center_cm, hit = world.trace([c[0], c[1], c[2] + g.half_extent_cm[2]], [c[0], c[1], c[2] - g.half_extent_cm[2]]);
       if (!hit) throw new Error('no ground under gate ' + g.label);
@@ -676,6 +859,8 @@ function prepareTrack() {                               // once: the physics mod
     });
     trackView.gateGround = trackView.gateGroundUe.map(toThreePoint);
     trackView.line = AI.buildRacingLine(await fetchJson('road_spline.json'), TRACK);   // the road's own spline (READ), as the sim drives it
+    trackView.dressing = await timed('track: dressing', '', async () => buildDressing(THREE, toThreePoint, await fetchJson('road_spline.json'), await fetchJson('track_dress.json'), TRACK.gates, trackView.gateGroundUe, renderer.getMaxAnisotropy()));
+    trackView.scene.add(trackView.dressing);                // UC-33.2 / 33.3
     await Promise.all(['cars.json', 'physics.json', 'chaos_unexported.json'].map(fetchJson));
     window.HOC.trackPreloaded = true;
   })();
@@ -712,11 +897,12 @@ async function startRace(entry) {
   const rec = readRecord(entry.name);
   $('t-rec').textContent = rec === null ? '—' : Rules.formatTime(rec, RULES);
   $('lapb').classList.remove('show');
+  race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
+  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.25, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45 });
+  await warmPieces(trackView.scene, () => race.post.render(), 'track');   // UC-30: behind the loading screen
   await loadingDone();                                    // UC-20.3: a game in play ends when its player says, not under a countdown
   audio.start();
   window.HOC.state = race;
-  race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
-  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.25, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45 });
   mode = 'race';
   $('showroom').style.display = 'none'; $('race').style.display = 'block';
   $('t-best').textContent = '—';
@@ -732,14 +918,38 @@ function backToShowroom() {
 const keys = new Set();
 const touch = { throttle: false, brake: false, left: false, right: false };
 const audio = makeAudio();
-function syncMute() { $('mute').textContent = !audio.available() ? 'No sound' : audio.muted ? 'Sound off' : 'Sound on'; $('mute').setAttribute('aria-pressed', String(!audio.muted)); }
+// UC-27 the radio: the button names the station, a change puts its name across the top for a moment, as a car game shows one
+const radio = new Radio(audio, (st, note) => {
+  $('radio').textContent = st ? 'Radio: ' + st.name : note === 'no sound' ? 'Radio: no sound' : 'Radio off';
+  $('radio').setAttribute('aria-pressed', String(!!st));
+  const b = $('rbanner'); b.innerHTML = st ? '<b>' + esc(st.name) + '</b><span>' + esc(note || st.tag) + '</span>' : '<b>Radio off</b>';
+  b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+});
+window.HOC.radio = radio; window.HOC.modelQ = modelQ;   // UC-32: the page check reads the queue
+$('radio').addEventListener('click', () => radio.next());
+function syncMotion() { $('motion').textContent = 'Motion ' + (MOTION.on ? 'on' : 'off'); $('motion').setAttribute('aria-pressed', String(MOTION.on)); }
+function toggleMotion() { MOTION.on = !MOTION.on; try { localStorage.setItem('hoc.motion', MOTION.on ? 'on' : 'off'); } catch (e) { /* not kept */ } syncMotion(); }
+$('motion').addEventListener('click', toggleMotion); syncMotion();
+window.HOC.motion = MOTION;
+function syncMute() { $('mute').textContent = !audio.available() ? 'No sound' : audio.muted ? 'Sound off' : 'Sound on'; $('mute').setAttribute('aria-pressed', String(!audio.muted)); if (audio.muted && typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }   // UC-27.4: the talk station's voice too
 $('mute').addEventListener('click', () => { audio.start(); audio.setMuted(!audio.muted); syncMute(); });
 syncMute();
 addEventListener('pointerdown', () => audio.start(), { once: true });
 addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;   // a name being typed (UC-25.3) drives nothing: R would rerun, E shift
   audio.start();
   if (e.key === 'm' || e.key === 'M') { audio.setMuted(!audio.muted); syncMute(); return; }
+  if (e.key === 'n' || e.key === 'N') { radio.next(); return; }
+  if (e.key === 'v' || e.key === 'V') { toggleMotion(); return; }   // UC-33.4a   // UC-27.2: the next station, or the one before
+  if (e.key === 'b' || e.key === 'B') { radio.back(); return; }
+  if (mode === 'walk') {                                  // UC-28: walking keys; Enter opens the car faced, Esc leaves
+    if (e.key === 'Escape') { endWalk(-1); return; }
+    if (e.key === 'Enter') { if (walk.faced >= 0) endWalk(walk.faced); return; }
+    if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
+    keys.add(e.code); return;
+  }
   if (mode === 'show') {
+    if (e.key === 'k' || e.key === 'K') { startWalk(); return; }
     if (e.key === 'ArrowLeft') select(show.index - 1);
     if (e.key === 'ArrowRight') select(show.index + 1);
     if (e.key === 'Enter' && !$('drive').disabled) $('drive').click();
@@ -839,7 +1049,9 @@ function tickRace(dt) {
   } else {
     const rig = updateRig(r.rig, r.v.pos, [X, Y, Z], dt);
     cam.position.fromArray(toThreePoint(rig.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(rig.look));
-    cam.fov = verticalFovDeg(r.fov, cam.aspect);
+    const sf = stepSpeedFx(r.speedfx || (r.speedfx = makeSpeedFx()), r.v.forwardSpeedCmS * 0.036, dt, MOTION.on);   // UC-33.1 / 33.4
+    cam.fov = verticalFovDeg(r.fov + sf.fovDeg, cam.aspect);
+    cam.rotateX(sf.pitchDeg * DEG); cam.rotateZ(sf.rollDeg * DEG); cam.rotateY(sf.yawDeg * DEG);
   }
   cam.updateProjectionMatrix();
   // the sun's shadow and the sky follow the car
@@ -937,7 +1149,7 @@ function buildDragStrip(scene) {
 function setLamp(dv, name, lit) { const L = dv.lamps[name]; for (const m of L.list) m.material = lit ? L.on : L.off; }
 // the track's own pieces hide while the strip shows, and come back as they were
 function setDragScene(on) {
-  const parts = [trackView.ground, trackView.track, trackView.gates, trackView.marker];
+  const parts = [trackView.ground, trackView.track, trackView.gates, trackView.marker, trackView.dressing];   // the dressing is the track's, not the strip's
   if (on) { trackView.beforeDrag = parts.map((o) => o.visible); parts.forEach((o) => { o.visible = false; }); }
   else if (trackView.beforeDrag) { parts.forEach((o, i) => { o.visible = trackView.beforeDrag[i]; }); trackView.beforeDrag = null; }
   if (dragView) dragView.group.visible = on;
@@ -946,6 +1158,7 @@ function setDragScene(on) {
 }
 const dragTimeRows = [['rt', 'Reaction'], ['sixty', '60 ft'], ['kmh100', '0-100 km/h'], ['eighth', '1/8 mile'], ['quarter', '1/4 mile']];
 async function startDrag(entry) {
+  if (entry.sim) wantModel(entry.name);                  // UC-32.3
   loadingShow('Rolling the car to the strip…', entry.name);
   await prepareTrack();
   if (!dragView) dragView = buildDragStrip(trackView.scene);
@@ -967,20 +1180,22 @@ async function startDrag(entry) {
   const settle = (v) => { Chaos.resetVehicle(v, stage, 0); for (let i = 0; i < 240; i++) Chaos.stepVehicle(v, { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' }, STEP, strip); return v; };
   const v = settle(Chaos.makeVehicle(carJson, opts));
   const best = Drag.bestRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip);   // the sim's own best run, for the slip (DERIVED)
+  const house = Drag.houseRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip); // UC-25.2: R.J.Thompson's run on this car's board (DERIVED)
   const camKey = entry.sim ? 'SportsCar' : entry.name;
   const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
-  race = { kind: 'drag', entry, car, carJson, v, strip, best, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
+  race = { kind: 'drag', entry, car, carJson, v, strip, best, house, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {} };
   const tachEl = $('hud-speed'); tachEl.querySelector('svg.tach')?.remove();
   race.tach = buildTach(tachEl, v.cfg.engine.maxRPM, Math.min(...race.pts));   // the red band from the earliest derived shift point
   $('dslip').hidden = true; $('dgrade').textContent = '';
   $('dtimes').innerHTML = dragTimeRows.map(([k, l]) => '<div data-k="' + k + '"><span>' + l + '</span><b>--</b></div>').join('');
   $('dcar').textContent = entry.sim ? (LOT_CARS.find((c) => c.key === entry.name) || {}).title || entry.name : entry.name;
+  race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
+  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.35, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45 });
+  await warmPieces(trackView.scene, () => race.post.render(), 'strip');   // UC-30: behind the loading screen
   await loadingDone();
   audio.start();
   window.HOC.state = race;
-  race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
-  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.35, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45 });
   mode = 'drag';
   $('showroom').style.display = 'none'; $('race').style.display = 'block';
 }
@@ -1036,7 +1251,9 @@ function tickDrag(dt) {
   r.car.wheels.forEach((w, i) => { if (w) { const ws = v.wheels[i]; poseWheel(w, ws.steerDeg, ws.spinRad, ws.suspensionOffsetCm); } });
   const cam = r.camera, rig = updateRig(r.rig, v.pos, [X, Y, Z], dt);
   cam.position.fromArray(toThreePoint(rig.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(rig.look));
-  cam.fov = verticalFovDeg(r.fov, cam.aspect); cam.updateProjectionMatrix();
+  const sf = stepSpeedFx(r.speedfx || (r.speedfx = makeSpeedFx()), v.forwardSpeedCmS * 0.036, dt, MOTION.on);   // UC-33.1 / 33.4
+  cam.fov = verticalFovDeg(r.fov + sf.fovDeg, cam.aspect); cam.rotateX(sf.pitchDeg * DEG); cam.rotateZ(sf.rollDeg * DEG); cam.rotateY(sf.yawDeg * DEG);
+  cam.updateProjectionMatrix();
   const cp = toThreePoint(v.pos);
   trackView.sky.position.copy(cam.position);
   trackView.sun.target.position.set(cp[0], cp[1], cp[2]);
@@ -1065,7 +1282,7 @@ function writeDragBest(k, t) { try { const b = readDragBest(k); if (b === null |
 function sellHTML(r, s) {
   const key = r.entry.name, L = LISTINGS.cars.find((c) => c.key === key);
   const isBest = !s.foul && s.quarter_s !== null && writeDragBest(key, s.quarter_s);
-  const cars = LOT_CARS.filter((c) => SIMS.has(c.key) && MODELS.models[c.key]);
+  const cars = LOT_CARS.filter((c) => SIMS.has(c.key) && modelOf(c.key));
   const board = cars.map((c) => ({ c, t: readDragBest(c.key) })).sort((a, b) => (a.t === null) - (b.t === null) || (a.t || 0) - (b.t || 0));
   const listing = L ? '<div class="sellbox"><div><p class="kick">This car is for sale</p><b>' + esc(V(L.price) !== null ? money(V(L.price), V(L.currency)) : 'Price not listed') + '</b>' +
     (V(L.km) !== null ? ' · ' + esc(V(L.km).toLocaleString('en-CA')) + ' km' : '') + (V(L.store) ? ' · ' + esc(V(L.store)) : '') + '</div>' +
@@ -1101,6 +1318,7 @@ function showDragSlip(r) {
     row('1/8 mile', fmt(s.eighth_s) + kmh(s.eighth_kmh), fmt(b.eighth_s) + kmh(b.eighth_kmh), own8 ? fmt(own8.median_s, 2) + kmh(own8.median_trap_kmh) : '--') +
     row('1/4 mile', fmt(s.quarter_s) + kmh(s.quarter_kmh), fmt(b.quarter_s) + kmh(b.quarter_kmh), ownQ ? fmt(ownQ.median_s, 2) + kmh(ownQ.median_trap_kmh) : '--') + '</table>' +
     '<div class="grades">' + (grades || '<span>no shifts</span>') + '</div>' +
+    '<div id="dboard"></div>' +
     '<p class="dimp">Sim: the same car and physics, every shift at its best point (from the car\'s own torque curve and gear ratios). Dragy owners: the median of the runs ' +
     'Dragy users uploaded that list no mods' + (dg ? ' (<a href="' + esc(dg.board) + '" target="_blank" rel="noopener">their leaderboard</a>)' : '') + '. 0-100 from a standstill, as Dragy times it; 60 ft, 1/8 and 1/4 from 1 ft of roll-out, as a strip times them (Dragy does not say which its 1/4 uses).</p>' +
     fitHTML(r) +
@@ -1109,6 +1327,36 @@ function showDragSlip(r) {
   $('dslip').hidden = false;
   $('drerun').onclick = dragRerun; $('dlot').onclick = () => backToShowroom();
   $('dslip').querySelectorAll('button[data-dragto]').forEach((b) => { b.onclick = () => startDrag({ name: b.dataset.dragto, sim: true, drivable: true }).catch((e) => reportError(e)); });   // UC-23.3
+  quarterBoard(r, s);
+}
+// UC-25 this car's quarter-mile board, shared by everyone (scores.js): R.J.Thompson's house run first, then the names people save.
+// A board that cannot be reached says so and keeps the run nowhere else (UC-25.3a); a red light never goes on it (UC-25.1a)
+function quarterBoard(r, s) {
+  const run = r.run, id = 'drag.' + r.entry.name, el = $('dboard');
+  const house = { name: HOUSE_NAME, score: r.house.slip.quarter_s, kmh: r.house.slip.quarter_kmh, at: '' };
+  const fmt = (x) => x.score.toFixed(3) + ' s' + (x.kmh ? ' @ ' + Math.round(x.kmh) + ' km/h' : '');
+  const show = (rows, mine) => { $('dbrows').innerHTML = boardHTML(ranked(rows, house, true), fmt, mine); };
+  const live = () => race === r && r.run === run;       // the slip still shows this run (not a rerun or another car)
+  el.innerHTML = '<p class="kick">Quarter-mile board: everyone in this car</p><div id="dbrows"></div>' +
+    '<form id="dbform" hidden><label for="dbname">Your name for the board</label><div><input id="dbname" maxlength="16" autocomplete="nickname" spellcheck="false"><button class="act go" type="submit">Save</button></div></form><p id="dbmsg" aria-live="polite">Reading the board…</p>';
+  show([]);
+  const msg = (t) => { $('dbmsg').textContent = t; };
+  SCORES.top(id).then((rows) => {
+    if (!live()) return;
+    show(rows);
+    if (s.foul || s.quarter_s === null) { msg(s.foul ? 'A red light does not go on the board.' : ''); return; }
+    if (!qualifies(rows, house, true, s.quarter_s)) { msg(s.quarter_s < house.score ? '' : 'Beat ' + HOUSE_NAME + '’s ' + house.score.toFixed(3) + ' s: every shift on the light.'); return; }
+    msg('You made the top ten.'); $('dbform').hidden = false;
+    const box = $('dbname'); box.value = lastName(); box.focus(); box.select();
+    $('dbform').onsubmit = (e) => {
+      e.preventDefault();
+      const c = checkName(box.value); if (!c.ok) { msg(c.why); return; }
+      const entry = { name: c.name, score: Math.round(s.quarter_s * 1000) / 1000, kmh: Math.round(s.quarter_kmh * 10) / 10, at: new Date().toISOString() };
+      $('dbform').hidden = true; msg('Saving…');
+      SCORES.submit(id, entry).then((after) => { if (!live()) return; keepName(c.name); show(after, entry); msg('Saved. You are on the board.'); },
+        (err) => { if (!live()) return; $('dbform').hidden = false; msg(err.message + '. Not saved: try again.'); });
+    };
+  }, (e) => { if (live()) msg(e.message + '. Your run is not on it.'); });
 }
 
 // ---------------------------------------------------------------- the ghost picker (UC-9.3)
@@ -1123,7 +1371,7 @@ function fillGhostPicker() {
 async function ghostBody(name) {                         // the ghost looks like ITS car when the page has that car's model
   const e = SHOW.cars.find((c) => c.name === name);
   if (e) return (await buildCar(e)).group;
-  const l = LISTINGS.cars.find((c) => c.key === name), m = MODELS.models[name];
+  const l = LISTINGS.cars.find((c) => c.key === name), m = modelOf(name);
   if (l && m) return saleModel(m);
   return race.car.group.clone(true);                    // no model of that car on the page: the driven car's shape, and the label says whose lap it is
 }
@@ -1177,7 +1425,7 @@ select(0);
 function openCarLink(hash) {
   const m = /^#car=([\w-]+)(&drag)?$/.exec(hash);
   if (!m) return;
-  if (m[2] && SIMS.has(m[1]) && MODELS.models[m[1]]) { startDrag({ name: m[1], sim: true, drivable: true }).catch((e) => reportError(e)); return; }   // UC-23.1
+  if (m[2] && SIMS.has(m[1]) && modelOf(m[1])) { startDrag({ name: m[1], sim: true, drivable: true }).catch((e) => reportError(e)); return; }   // UC-23.1
   const k = show.slides.findIndex((x) => (x.def.kind === 'listing' && x.def.listing.key === m[1]) || (x.def.kind === 'unlisted' && x.def.unlisted.key === m[1]));
   if (k >= 0) select(k);
   else { select(show.slides.findIndex((x) => x.def.kind === 'sale')); $('card').insertAdjacentHTML('afterbegin', '<p class="gone">That car is no longer on this lot\'s list (read ' + esc(readDay) + ').</p>'); }
@@ -1195,7 +1443,9 @@ if (KIOSK) {
   document.body.classList.add('kiosk');
 }
 setTimeout(() => prepareTrack().catch((e) => { console.error(e); }), 1500);   // behind the lot; startRace awaits the same promise and shows any error
-loadingDone();                                          // UC-20.3: closes now, or when a player in the game says
+await warmLot();                                         // UC-30: behind the loading screen
+mark('lot warmed');
+loadingDone().then(() => { mark('lot open'); modelQ.open = true; pumpModels(); if (BACKEND !== 'WebGPU') gpuNotice().catch((e) => reportError(e)); });   // UC-20.3: closes now, or when a player says; UC-31 then the notice, once the lot is in view
 // UC-7.2a: the page lowers its own resolution when frames run slow, raises it again when they are quick, and says which it chose
 const DPR = [0.75, 0.85, 1, 1.25, 1.5, 2].filter((x) => x <= Math.min(devicePixelRatio, 2) + 1e-6);
 let dprI = DPR.length - 1;
@@ -1212,7 +1462,8 @@ function adapt(dt) {
 setQuality();
 renderer.setAnimationLoop(() => {
   const t = performance.now(), dt = Math.min(0.1, (t - last) / 1000); last = t;
-  if (mode === 'show') { padShow(); tickShow(dt); } else if (mode === 'drag') tickDrag(dt); else tickRace(dt);
+  if (mode === 'show') { padShow(); tickShow(dt); } else if (mode === 'walk') tickWalk(dt); else if (mode === 'drag') tickDrag(dt); else tickRace(dt);
+  while (perfFirst.length) mark('first frame drawn with', perfFirst.shift() + ' (' + Math.round(performance.now() - t) + ' ms frame)');
   if (photoReq) takePicture();
   adapt(dt);
 });
