@@ -98,6 +98,33 @@ export function silence(A) {
   for (const g of [n.engineBus.gain, n.intakeG.gain, n.sqG.gain, n.scrubG.gain, n.windG.gain]) g.setTargetAtTime(0, t, 0.05);
 }
 
+// UC-34 4b the stick's recorded sounds (data/sfx, cut by tools/sfx.py from CC0 recordings; data/sfx/CREDITS.json names them):
+// fetched and decoded once the audio has started, played through the master like everything else
+export const SFX = ['gear_in_1', 'gear_in_2', 'gear_in_3', 'gear_out', 'gate', 'clutch_floor'];
+export async function loadSfx(A) {
+  if (!A.ctx || A.sfx) return;
+  const got = {};
+  await Promise.all(SFX.map(async (n) => { const r = await fetch('data/sfx/' + n + '.wav'); if (!r.ok) throw new Error('data/sfx/' + n + '.wav: ' + r.status); got[n] = await A.ctx.decodeAudioData(await r.arrayBuffer()); }));
+  A.sfx = got;
+}
+export function sfx(A, name, gain = 0.8, rate = 1) {
+  if (!A.ctx || !A.nodes || !A.sfx) return;
+  const b = A.sfx[name]; if (!b) throw new Error('audio.js: no recorded sound called ' + name);
+  const s = A.ctx.createBufferSource(), g = A.ctx.createGain(); s.buffer = b; s.playbackRate.value = rate; g.gain.value = gain;
+  s.connect(g).connect(A.nodes.master); s.start();
+}
+// a gear the synchromesh refuses: no free recording of one was found, so the page's own (AUTHORED): a noise band buzzing at the
+// rate the dog teeth hit each other, 0.4 s
+export function grind(A) {
+  if (!A.ctx || !A.nodes) return;
+  const c = A.ctx, t = c.currentTime, src = c.createBufferSource(), bp = c.createBiquadFilter(), am = c.createGain(), lfo = c.createOscillator(), depth = c.createGain(), out = c.createGain();
+  src.buffer = noiseBuffer(c); bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 3;
+  lfo.type = 'square'; lfo.frequency.value = 170; depth.gain.value = 0.5; am.gain.value = 0.5;
+  out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(0.5, t + 0.02); out.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+  lfo.connect(depth).connect(am.gain); src.connect(bp).connect(am).connect(out).connect(A.nodes.master);
+  src.start(t); lfo.start(t); src.stop(t + 0.42); lfo.stop(t + 0.42);
+}
+
 // short UI sounds: the countdown's beeps (a higher one on GO), a gate tick, the lap chime
 export function blip(A, kind) {
   if (!A.ctx || !A.nodes) return;

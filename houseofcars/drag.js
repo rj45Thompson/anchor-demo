@@ -133,19 +133,24 @@ export function bestRun(Chaos, v, world) {
  *  early edge: 11-07 a sweep found shifting EARLY quicker than the light on the E 63 S, the i8 and the 911 (the E 63 S 500 rpm
  *  early: 10.750 s against 10.825 s), so an early-edge house run beat the light on those three. DERIVED from the car's own torque
  *  curve and gear ratios; GRADE's margin is AUTHORED (above) */
-export function houseRun(Chaos, v, world) {
+export function houseRun(Chaos, v, world, rec = null) {
   const best = carShiftPoints(Chaos, v), at = best.map((p) => Math.min(p + GRADE.perfect_above, v.cfg.engine.maxRPM));
-  return { slip: runShiftingAt(Chaos, v, world, at, best), points: at };
+  return { slip: runShiftingAt(Chaos, v, world, at, best, rec), points: at };
 }
 function carShiftPoints(Chaos, v) {
   const c = v.cfg, torque = (r) => Chaos._internal.engineTorqueFromRPM(v, r, true);
   return shiftPoints(torque, c.trans.forward, c.engine.idleRPM, c.engine.maxRPM);
 }
 /** on green, full throttle, one press per upshift as the rpm reaches at[gear-1]; each shift graded against best[gear-1] */
-function runShiftingAt(Chaos, v, world, at, best) {
+// rec (UC-38): an array that gets the car's pose every other substep (1/60 s) on the run's own clock, and on for REC_COAST_S past
+// the line as the page coasts its car down (off the gas, the brake under 30 km/h), so the page can replay the run as a second car
+const REC_COAST_S = 7;
+function runShiftingAt(Chaos, v, world, at, best, rec = null) {
   const c = v.cfg, DT = Chaos._internal.SUBSTEP, idle = { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' };
   const run = makeRun(), x0 = v.pos[0];
+  const pose = (t) => { const r = v.rot; rec.push({ t, pos: v.pos.slice(), axes: [0, 1, 2].map((j) => [r[0][j], r[1][j], r[2][j]]), w: v.wheels.map((w) => [w.steerDeg, w.spinRad, w.suspensionOffsetCm]) }); };
   for (let i = 0; i < 120 * 60 && !run.done; i++) {
+    if (rec && i % 2 === 0) pose(run.t);
     const green = run.green !== null, gear = v.trans.target, rpm = v.trans.engineRPM;
     const up = green && gear >= 1 && gear < c.trans.forward.length && v.trans.current === gear && rpm >= at[gear - 1];
     if (up) noteShift(run, gear, rpm, best[gear - 1], c.engine.maxRPM);
@@ -153,5 +158,12 @@ function runShiftingAt(Chaos, v, world, at, best) {
     tick(run, { dt: DT, distM: (v.pos[0] - x0) / 100, speedKmh: v.forwardSpeedCmS * 0.036, rpm: v.trans.engineRPM, gear: v.trans.target, maxRPM: c.engine.maxRPM });
   }
   if (!run.done) throw new Error('drag.js: the run did not reach the quarter mile in 60 s');
-  return slip(run);
+  const s = slip(run);
+  if (rec) {
+    for (let i = 0, t = run.t; i < REC_COAST_S * 120; i++, t += DT) {
+      if (i % 2 === 0) pose(t);
+      Chaos.stepVehicle(v, Object.assign({}, idle, { brake: v.forwardSpeedCmS * 0.036 < 30 ? 1 : 0 }), DT, world);
+    }
+  }
+  return s;
 }

@@ -13,7 +13,7 @@ import { makeRig, updateRig } from './camera_rig.js';
 import { SLIDES } from './slides.js';
 import { svgIcon, drawIcon } from './icons.js';
 import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, setPaint, paint, groundDetail, lightBeam, asphaltRoad, concreteWall, contactShadow } from './fx.js';
-import { makeAudio, driveSound, silence, blip } from './audio.js';
+import { makeAudio, driveSound, silence, blip, loadSfx, sfx, grind } from './audio.js';
 import { Radio } from './radio.js';                                                       // UC-27: the car radio
 import { makeWalker, stepWalker, facing, EYE_M } from './walk.js';                        // UC-28: walking the lot
 import { buildDressing } from './dress.js';                                                // UC-33: kerbs, lines, posts, gantries
@@ -894,7 +894,7 @@ async function startRace(entry) {
   if (dragView) setDragScene(false);                      // back from the strip: the track as it was
   clearSkids(trackView.skids);
   window.HOC.track = trackView;
-  if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); }
+  if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); if (race.opp) trackView.scene.remove(race.opp.car.group); }
   mode = 'show';                                          // (a ghost pick in flight must not draw a half-built race)
   const carJson = entry.sim ? await fetchJson('sim_cars/' + entry.name + '.json') : (await fetchJson('cars.json')).cars[entry.name];
   const car = entry.sim ? await simBody(entry.name, carJson) : await buildCar(entry);
@@ -1219,7 +1219,7 @@ async function startDrag(entry) {
   await prepareTrack();
   if (!dragView) dragView = buildDragStrip(trackView.scene);
   window.HOC.track = trackView;
-  if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); }
+  if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); if (race.opp) trackView.scene.remove(race.opp.car.group); }
   mode = 'show';
   setDragScene(true);
   clearSkids(trackView.skids);
@@ -1236,12 +1236,17 @@ async function startDrag(entry) {
   const settle = (v) => { Chaos.resetVehicle(v, stage, 0); for (let i = 0; i < 240; i++) Chaos.stepVehicle(v, { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' }, STEP, strip); return v; };
   const v = settle(Chaos.makeVehicle(carJson, opts));
   const best = Drag.bestRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip);   // the sim's own best run, for the slip (DERIVED)
-  const house = Drag.houseRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip); // UC-25.2: R.J.Thompson's run on this car's board (DERIVED)
+  const houseRec = [];
+  const house = Drag.houseRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip, houseRec); // UC-25.2: R.J.Thompson's run on this car's board (DERIVED)
+  // UC-38 that run is the car in the other lane: the same car, replayed from its recording (no second physics), 12 m to the right
+  const oppCar = entry.sim ? await simBody(entry.name, carJson) : null;
+  if (oppCar) { oppCar.group.matrixAutoUpdate = false; trackView.scene.add(oppCar.group); }
   const camKey = entry.sim ? 'SportsCar' : entry.name;
   const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
   race = { kind: 'drag', entry, car, carJson, v, strip, best, house, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {},
            director: makeDirector(), body: carJson.bounds_cm.value };   // UC-35: the filmed run, framed on the car's own READ bounds
+  race.opp = oppCar ? { car: oppCar, rec: houseRec, i: 0, laneShift: -2 * DRAG_LANE_Y_CM } : null;   // UC-38
   race.clutchMode = DRAGBOX.clutch;                                    // UC-34: in neutral, the pedal up, the gate drawn
   if (race.clutchMode) { const layout = Sim.gateLayout(v.cfg.trans.forward.length); race.gate = { layout, knob: Sim.knobFor(0, layout), gear: 0 }; race.pedal = { depth: 0, held: false, anchor: 0, prev: 0 }; race.cut = null; }
   document.body.classList.toggle('clutchmode', race.clutchMode); $('dagain').hidden = true; drawGate(race); drawPedal(race);
@@ -1256,6 +1261,7 @@ async function startDrag(entry) {
   await warmPieces(trackView.scene, () => race.post.render(), 'strip');   // UC-30: behind the loading screen
   await loadingDone();
   audio.start();
+  loadSfx(audio).catch((e) => reportError(e));                         // UC-34 4b the stick's sounds
   window.HOC.state = race;
   mode = 'drag';
   $('showroom').style.display = 'none'; $('race').style.display = 'block';
@@ -1282,8 +1288,9 @@ function requestGear(r, g) {
   if (g === r.gate.gear || r.run.done) return true;
   const wheel = v.w.find((w) => w.engine), wheelRpm = wheel ? Math.abs(wheel.omega) * 30 / Math.PI : 0;
   const out = Sim.shiftOutcome(g, r.pedal.depth, v.engine.rpm, g ? wheelRpm * Math.abs(Chaos.gearRatio(v, g)) : 0);
-  if (!out.ok) { gradePop('GRIND · clutch in to shift', 'late'); blip(audio, 'count'); r.gate.knob = Sim.knobFor(r.gate.gear, r.gate.layout); drawGate(r); return false; }
+  if (!out.ok) { gradePop('GRIND · clutch in to shift', 'late'); grind(audio); r.gate.knob = Sim.knobFor(r.gate.gear, r.gate.layout); drawGate(r); return false; }
   const from = r.gate.gear; r.gate.gear = g; r.gate.knob = Sim.knobFor(g, r.gate.layout);
+  if (g === 0) sfx(audio, 'gear_out', 0.7); else { sfx(audio, 'gate', 0.35); sfx(audio, 'gear_in_' + (1 + Math.floor(Math.random() * 3)), 0.85); }   // UC-34 4b
   if (from >= 1 && g === from + 1 && from < n && r.cut && r.cut.gear === from) gradeShift(r, from, r.cut.rpm);   // graded at the rpm the drive was cut
   drawGate(r); return true;
 }
@@ -1301,16 +1308,31 @@ function botClutch(r, raw, dt) {
 function drawGate(r) {
   const el = $('dgate'); if (!r.clutchMode) { el.innerHTML = ''; return; }
   const L = r.gate.layout, X = (x) => (8 + x * 84).toFixed(1), Y = (y) => (8 + y * 84).toFixed(1), k = r.gate.knob;
-  let s = '<svg viewBox="0 0 100 100" aria-label="Shift gate: gear ' + (r.gate.gear || 'N') + '"><path class="slot" d="M' + X(L.slots[0].x) + ' ' + Y(L.row.mid) + 'H' + X(L.slots[L.slots.length - 1].x);
-  for (const q of L.slots) s += 'M' + X(q.x) + ' ' + Y(L.row.top) + 'V' + Y(q.down ? L.row.bottom : L.row.mid);
-  s += '"/>';
+  // UC-34 1d a shift plate: brushed metal, the slots cut into it (a dark groove with a lit lower lip), and a knob: a polished
+  // ball on a leather boot, a black top insert with the gear in the car's orange (AUTHORED, the page's drawing)
+  let path = 'M' + X(L.slots[0].x) + ' ' + Y(L.row.mid) + 'H' + X(L.slots[L.slots.length - 1].x);
+  for (const q of L.slots) path += 'M' + X(q.x) + ' ' + Y(L.row.top) + 'V' + Y(q.down ? L.row.bottom : L.row.mid);
+  let s = '<svg viewBox="0 0 100 100" aria-label="Shift gate: gear ' + (r.gate.gear || 'N') + '"><defs>' +
+    '<linearGradient id="gplate" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b3f46"/><stop offset=".5" stop-color="#1d2025"/><stop offset="1" stop-color="#2c3036"/></linearGradient>' +
+    '<pattern id="gbrush" width="100" height="1.4" patternUnits="userSpaceOnUse"><rect width="100" height=".5" fill="#fff" opacity=".035"/></pattern>' +
+    '<radialGradient id="gknob" cx=".36" cy=".3" r=".75"><stop offset="0" stop-color="#ffffff"/><stop offset=".18" stop-color="#d9dde3"/><stop offset=".55" stop-color="#7d838c"/><stop offset="1" stop-color="#2a2d32"/></radialGradient>' +
+    '<radialGradient id="gboot" cx=".5" cy=".45" r=".55"><stop offset=".55" stop-color="#121315"/><stop offset="1" stop-color="#050505" stop-opacity="0"/></radialGradient>' +
+    '<filter id="gsh" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="1" dy="2.2" stdDeviation="1.6" flood-color="#000" flood-opacity=".75"/></filter></defs>' +
+    '<rect x="2" y="2" width="96" height="96" rx="12" fill="url(#gplate)"/><rect x="2" y="2" width="96" height="96" rx="12" fill="url(#gbrush)"/>' +
+    '<path d="' + path + '" class="lip"/><path d="' + path + '" class="slot"/>';
   for (const q of L.slots) { s += '<text x="' + X(q.x) + '" y="' + (+Y(L.row.top) - 1.5) + '" class="' + (r.gate.gear === q.up ? 'on' : '') + '">' + q.up + '</text>'; if (q.down) s += '<text x="' + X(q.x) + '" y="' + (+Y(L.row.bottom) + 7.5) + '" class="' + (r.gate.gear === q.down ? 'on' : '') + '">' + q.down + '</text>'; }
-  s += '<circle class="knob" cx="' + X(k.x) + '" cy="' + Y(k.y) + '" r="7"/><text class="kn" x="' + X(k.x) + '" y="' + (+Y(k.y) + 3) + '">' + (r.gate.gear || 'N') + '</text></svg>';
+  const kx = X(k.x), ky = Y(k.y);
+  s += '<ellipse cx="' + kx + '" cy="' + (+ky + 2.5) + '" rx="12" ry="10" fill="url(#gboot)"/>' +
+    '<g filter="url(#gsh)"><circle cx="' + kx + '" cy="' + ky + '" r="9.5" fill="url(#gknob)"/>' +
+    '<circle cx="' + kx + '" cy="' + ky + '" r="5.6" fill="#0b0c0e" stroke="#9aa0a8" stroke-width=".5"/></g>' +
+    '<text class="kn" x="' + kx + '" y="' + (+ky + 2.4) + '">' + (r.gate.gear || 'N') + '</text>' +
+    '<ellipse cx="' + (+kx - 3) + '" cy="' + (+ky - 4.2) + '" rx="3.2" ry="1.6" fill="#fff" opacity=".55"/></svg>';
   el.innerHTML = s;
 }
 function drawPedal(r) {                                              // the clutch pedal, as far down as it is (a computer's and a phone's)
   const d = r.clutchMode ? r.pedal.depth : 0;
   for (const el of document.querySelectorAll('.clutchdepth')) el.style.setProperty('--d', d.toFixed(3));
+  $('dgasm').style.setProperty('--d', (r.throttle || 0).toFixed(3));                 // the gas meter, right of the clutch (UC-34 1d)
   $('dpedal').setAttribute('aria-valuenow', String(Math.round(d * 100)));
 }
 // UC-34.1b the mouse pushes the clutch: held anywhere on the strip's picture and pulled down; let go, it springs up
@@ -1339,6 +1361,7 @@ function syncDragBox() { $('dbox').textContent = DRAGBOX.clutch ? 'Clutch on' : 
 function toggleDragBox() { DRAGBOX.clutch = !DRAGBOX.clutch; try { localStorage.setItem('hoc.gearbox', DRAGBOX.clutch ? 'clutch' : 'paddles'); } catch (e) { /* not kept */ } syncDragBox(); dragRerun(); }   // a new run with the other gearbox
 $('dbox').addEventListener('click', toggleDragBox); syncDragBox(); $('dagain').addEventListener('click', () => dragRerun());
 window.HOC.dragBox = DRAGBOX;
+window.HOC.audio = audio;                                                     // the page check: the stick's sounds loaded (UC-34 4b)
 function dragRerun() { if (race && race.kind === 'drag') startDrag(race.entry).catch((e) => reportError(e)); }
 function fmt(s, d = 3) { return s === null || s === undefined ? '--' : s.toFixed(d); }
 function tickDrag(dt) {
@@ -1353,6 +1376,7 @@ function tickDrag(dt) {
     if (r.bot && !finished) botClutch(r, raw, dt); else if (!r.pedal.held) r.pedal.depth = Sim.pedalRelease(r.pedal.depth, dt);
     if (finished) r.pedal.depth = 1;                                   // past the line the clutch goes in: it coasts, it cannot stall
     if (r.pedal.depth >= 0.5 && r.pedal.prev < 0.5 && r.gate.gear >= 1) r.cut = { gear: r.gate.gear, rpm: v.engine.rpm };   // the drive cut: the shift's rpm
+    if (r.pedal.depth >= 0.98 && r.pedal.prev < 0.98 && !finished) sfx(audio, 'clutch_floor', 0.45, 0.7);   // UC-34 4b the pedal at the floor
     r.pedal.prev = r.pedal.depth; drawPedal(r);
     if (v.stalled && !r.stallShown) { r.stallShown = true; gradePop('STALLED', 'late'); $('dagain').hidden = false; blip(audio, 'count'); }   // UC-34.3a a lost run
   }
@@ -1365,7 +1389,7 @@ function tickDrag(dt) {
   acc += Math.min(dt, 0.1);
   while (acc >= STEP) {
     const p = r.presses.shift(), gear = v.trans.target, rpm = v.trans.engineRPM;
-    if (p === 'up' && gear >= 1 && gear < c.trans.forward.length) gradeShift(r, gear, rpm);
+    if (p === 'up' && gear >= 1 && gear < c.trans.forward.length) { gradeShift(r, gear, rpm); sfx(audio, 'gear_in_' + (1 + Math.floor(Math.random() * 3)), 0.7); }
     Chaos.stepVehicle(v, Object.assign({}, input, { gearUp: p === 'up', gearDown: p === 'down' }), STEP, r.strip);
     const ev = Drag.tick(run, { dt: STEP, distM: (v.pos[0] - r.x0) / 100, speedKmh: v.forwardSpeedCmS * 0.036, rpm: v.trans.engineRPM, gear: v.trans.target, maxRPM: c.engine.maxRPM });
     for (const e of ev) {
@@ -1388,13 +1412,15 @@ function tickDrag(dt) {
   const [X, Y, Z] = carAxes(v);
   r.car.group.matrix.fromArray(threeMatrixFromAxes([X, Y, Z], [1, 1, 1], v.pos));
   r.car.wheels.forEach((w, i) => { if (w) { const ws = v.wheels[i]; poseWheel(w, ws.steerDeg, ws.spinRad, ws.suspensionOffsetCm); } });
+  if (r.opp) placeOpponent(r);                                          // UC-38
   const cam = r.camera, rig = updateRig(r.rig, v.pos, [X, Y, Z], dt);     // the chase rig runs either way, so C switches back to it settled
   const sf = stepSpeedFx(r.speedfx || (r.speedfx = makeSpeedFx()), v.forwardSpeedCmS * 0.036, dt, MOTION.on);   // UC-33.1 / 33.4
   const B = r.body, centre = [0, 1, 2].map((k) => v.pos[k] + X[k] * B.origin[0] + Y[k] * B.origin[1] + Z[k] * B.origin[2]);
   stepDirector(r.director, { left: run.leave !== null, distM: (v.pos[0] - r.x0) / 100, carX: centre[0], quarterX: Drag.MARKS.quarter * 100 }, dt);   // UC-35.1-4
   r.shot = DRAGCAM.film ? shotId(r.director) : 'chase';
   if (DRAGCAM.film) {
-    const f = framing(r.director, { c: centre, len: B.box_extent[0] * 2, halfWidth: B.box_extent[1], height: B.box_extent[2] * 2 }, { laneY: DRAG_LANE_Y_CM, quarterX: Drag.MARKS.quarter * 100, aspect: cam.aspect });
+    const f = framing(r.director, { c: centre, len: B.box_extent[0] * 2, halfWidth: B.box_extent[1], height: B.box_extent[2] * 2 }, { laneY: DRAG_LANE_Y_CM, quarterX: Drag.MARKS.quarter * 100, aspect: cam.aspect,
+      other: r.opp && r.opp.centre ? { c: r.opp.centre, len: B.box_extent[0] * 2, halfWidth: B.box_extent[1], height: B.box_extent[2] * 2 } : undefined });   // UC-38.3: both cars while near
     cam.position.fromArray(toThreePoint(f.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(f.look));
     cam.fov = verticalFor(f.hfovDeg + (f.mounted ? sf.fovDeg : 0), cam.aspect);   // UC-35.3b: a camera riding with the car widens and shakes with it
     if (f.mounted) { cam.rotateX(sf.pitchDeg * DEG); cam.rotateZ(sf.rollDeg * DEG); cam.rotateY(sf.yawDeg * DEG); }
@@ -1425,6 +1451,18 @@ function tickDrag(dt) {
   const slide = v.wheels.reduce((a, w) => a + slideAmount(w), 0) / v.wheels.length;
   driveSound(audio, { rpm: v.engineRPM, throttle: r.throttle, speedCmS: v.forwardSpeedCmS, slide, gear: v.gear, running: true });
   r.post.render();
+}
+// UC-38 the other lane's car at the run's clock: between the two recorded poses either side of it (positions blended, the axes and
+// the wheels the nearer one's), moved to the other lane; the last pose once the recording ends
+function placeOpponent(r) {
+  const o = r.opp, rec = o.rec, t = r.run.t;
+  while (o.i < rec.length - 2 && rec[o.i + 1].t <= t) o.i++;
+  const a = rec[o.i], b = rec[Math.min(o.i + 1, rec.length - 1)], u = b.t > a.t ? Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t))) : 0, n = u < 0.5 ? a : b;
+  const pos = [0, 1, 2].map((k) => a.pos[k] + (b.pos[k] - a.pos[k]) * u + (k === 1 ? o.laneShift : 0));
+  o.car.group.matrix.fromArray(threeMatrixFromAxes(n.axes, [1, 1, 1], pos));
+  o.car.wheels.forEach((w, i) => { if (w) poseWheel(w, n.w[i][0], n.w[i][1], n.w[i][2]); });
+  const B = r.body, X = n.axes[0], Y = n.axes[1], Z = n.axes[2];
+  o.centre = [0, 1, 2].map((k) => pos[k] + X[k] * B.origin[0] + Y[k] * B.origin[1] + Z[k] * B.origin[2]);
 }
 // UC-36 the car's own cluster (data/clusters.json: its facts READ, its drawing the page's): built at the start, its red band from the car's
 // own derived shift points where its redline was not read, the Power Reserve the share of the power not in use (gauges.js)

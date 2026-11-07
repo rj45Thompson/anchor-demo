@@ -157,21 +157,25 @@ body.dragmode.hascluster #dpanel{bottom:calc(var(--clh,300px) + 44px)}
 @media (pointer:coarse) and (orientation:landscape){body.dragmode.hascluster #dcluster{bottom:12px;width:calc(100vw - 2 * (16px + clamp(84px,24vmin,150px) + 12px + clamp(54px,12vmin,90px) + 14px))}body.dragmode.hascluster #dpanel{bottom:auto}}
 @media (orientation:portrait){body.dragmode.hascluster #dcluster{width:calc(100vw - 24px);bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}body.dragmode.clutchmode.hascluster #dcluster{bottom:calc(clamp(150px,40vmin,320px) + 30px)}body.dragmode.hascluster #dpanel{bottom:auto}}
 /* UC-34 the clutch and the gate: a computer's pedal (the mouse pulls it down) and gate (on keys), a phone's slider and gate (dragged) */
-#dpedal,#dgate,#dslider{display:none}#dhelp .cp{display:none}body.clutchmode #dhelp .cp{display:inline}body.clutchmode #dhelp .np{display:none}
+#dpedal,#dgate,#dslider,#dgasm{display:none}body.clutchmode #dgas{margin-right:auto}
+body.clutchmode #dgasm{display:block;position:fixed;left:calc(110px + clamp(44px,6vmin,64px) + 10px);top:96px;width:clamp(44px,6vmin,64px);height:clamp(180px,34vmin,320px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);overflow:hidden;--d:0}
+#dgasm i{position:absolute;left:0;right:0;top:0;height:calc(var(--d) * 100%);background:linear-gradient(180deg,rgba(61,255,122,.12),rgba(61,255,122,.6));border-bottom:4px solid #3dff7a}
+#dgasm b{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;letter-spacing:.12em;color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto;height:70%}
+@media (pointer:coarse){body.clutchmode #dgasm{display:none}}#dhelp .cp{display:none}body.clutchmode #dhelp .cp{display:inline}body.clutchmode #dhelp .np{display:none}
 .clutchdepth{--d:0}
 body.clutchmode #dpedal{display:block;position:fixed;left:110px;top:96px;width:clamp(44px,6vmin,64px);height:clamp(180px,34vmin,320px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);overflow:hidden}
 #dpedal i,#dslider i{position:absolute;left:0;right:0;top:0;height:calc(var(--d) * 100%);background:linear-gradient(180deg,rgba(255,176,32,.15),rgba(255,176,32,.65));border-bottom:4px solid #ffb020}
 #dpedal b,#dslider b{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;letter-spacing:.12em;color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto;height:70%}
 body.clutchmode #dgate{display:block;position:fixed;left:14px;bottom:44px;width:clamp(120px,20vmin,190px);height:clamp(120px,20vmin,190px);border-radius:16px;background:rgba(10,10,10,.72);border:1px solid var(--line);touch-action:none}
-#dgate svg{width:100%;height:100%}#dgate .slot{fill:none;stroke:#3a3f45;stroke-width:6;stroke-linecap:round}#dgate text{fill:var(--dim);font:800 8px 'Open Sans',sans-serif;text-anchor:middle}#dgate text.on{fill:var(--accent-soft)}
-#dgate .knob{fill:var(--accent);stroke:#fff;stroke-width:1.2}#dgate .kn{fill:#fff;font-size:7px}
+#dgate svg{width:100%;height:100%}#dgate .slot{fill:none;stroke:#07080a;stroke-width:6.5;stroke-linecap:round}#dgate .lip{fill:none;stroke:#5c636c;stroke-width:8;stroke-linecap:round;transform:translateY(.9px)}#dgate text{fill:var(--dim);font:800 8px 'Open Sans',sans-serif;text-anchor:middle}#dgate text.on{fill:var(--accent-soft)}
+#dgate .kn{fill:var(--accent);font-size:6.5px;font-weight:800}
 #dagain{position:fixed;left:50%;top:40%;transform:translateX(-50%);pointer-events:auto;font-size:18px;padding:12px 22px}
 @media (pointer:coarse){body.clutchmode #dpedal{display:none}body.clutchmode #dtouch .shiftcol{display:none}
-  body.clutchmode #dslider{display:block;position:relative;align-self:flex-end;margin-right:auto;margin-left:12px;width:clamp(54px,12vmin,90px);height:clamp(150px,40vmin,320px);border-radius:18px;background:rgba(10,10,10,.8);border:1px solid #ffb020;overflow:hidden;pointer-events:auto;touch-action:none}
+  body.clutchmode #dslider{display:block;position:relative;align-self:flex-end;margin-right:12px;margin-left:0;width:clamp(54px,12vmin,90px);height:clamp(150px,40vmin,320px);border-radius:18px;background:rgba(10,10,10,.8);border:1px solid #ffb020;overflow:hidden;pointer-events:auto;touch-action:none}
   body.clutchmode #dgate{left:auto;right:16px;bottom:16px;width:clamp(130px,32vmin,220px);height:clamp(130px,32vmin,220px);pointer-events:auto}}
 @media (max-width:1000px){body.dragmode header #renderer,body.dragmode header #quality{display:none}}
 /* a phone on its side: the times top right beside a shorter shift-light bar, clear of the buttons and of the car's band */
-@media (pointer:coarse) and (orientation:landscape){#dpanel{top:54px;bottom:auto;min-width:150px;max-width:210px}#dleds{width:min(46vw,820px)}#dtimes div{line-height:1.35}}
+@media (pointer:coarse) and (orientation:landscape){body.clutchmode #dslider{height:clamp(84px,24vmin,150px)}#dpanel{top:54px;bottom:auto;min-width:150px;max-width:210px}#dleds{width:min(46vw,820px)}#dtimes div{line-height:1.35}}
 /* the grade just above the tach on a screen on its side, where the car is not */
 @media (orientation:landscape){#dgrade{top:auto;bottom:calc(clamp(200px,46vmin,500px) + 16px);font-size:clamp(28px,6vmin,72px)}}   /* the strip's header: room for the dials */
 /* upright: the tach above the buttons, the grade below the times */
@@ -336,10 +340,11 @@ button,.pill{white-space:nowrap}
   <div id="dslip" hidden role="dialog" aria-label="Time slip"></div>
   <div id="dhelp"><span class="np">Wait for the green · W / ↑ gas · E or Shift: shift up · Q: down</span><span class="cp">Hold the mouse and pull down: the clutch · W / ↑ gas · 1-7: the gate, N neutral (E / Q: next, back)</span> · C: camera · G: clutch on/off · R: run again · Esc: the lot</div>
   <div id="dpedal" class="clutchdepth" role="meter" aria-label="Clutch pedal, percent down" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i><b>CLUTCH</b></div>
+  <div id="dgasm" aria-hidden="true"><i></i><b>GAS</b></div>
   <div id="dgate" aria-label="Shift gate"></div>
   <div id="dcluster" aria-label="The car's instrument cluster"></div>
   <button id="dagain" class="act go" hidden>Stalled: run again (R)</button>
-  <div id="dtouch"><button id="dgas" aria-label="Gas: hold it down">GAS</button><div id="dslider" class="clutchdepth" aria-label="Clutch: slide down to press it"><i></i><b>CLUTCH</b></div><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>
+  <div id="dtouch"><div id="dslider" class="clutchdepth" aria-label="Clutch: slide down to press it"><i></i><b>CLUTCH</b></div><button id="dgas" aria-label="Gas: hold it down">GAS</button><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>
 </div>
 <div id="compare" hidden role="dialog" aria-modal="true" aria-label="Compare the cars for sale"><div class="cmpbox"><button id="cmpclose" aria-label="Close">✕</button>
   <p class="kick">For sale now · side by side</p><h2>Compare the lot</h2><div id="cmpbody"></div></div></div>

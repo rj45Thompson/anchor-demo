@@ -1,0 +1,62 @@
+{
+ "_meta": {
+  "made_by": "tools/sfx.py",
+  "what": "the strip's stick and clutch sounds (UC-34 4b)"
+ },
+ "clips": {
+  "gear_in_1": {
+   "from": "gear10.wav",
+   "title": "Some sounds",
+   "author": "Ziph",
+   "licence": "CC0",
+   "url": "https://opengameart.org/node/166538",
+   "file": "all-in-one_0.zip",
+   "seconds": 0.41
+  },
+  "gear_in_2": {
+   "from": "gear11.wav",
+   "title": "Some sounds",
+   "author": "Ziph",
+   "licence": "CC0",
+   "url": "https://opengameart.org/node/166538",
+   "file": "all-in-one_0.zip",
+   "seconds": 0.41
+  },
+  "gear_in_3": {
+   "from": "gear06.wav",
+   "title": "Some sounds",
+   "author": "Ziph",
+   "licence": "CC0",
+   "url": "https://opengameart.org/node/166538",
+   "file": "all-in-one_0.zip",
+   "seconds": 0.41
+  },
+  "gear_out": {
+   "from": "gear07.wav",
+   "title": "Some sounds",
+   "author": "Ziph",
+   "licence": "CC0",
+   "url": "https://opengameart.org/node/166538",
+   "file": "all-in-one_0.zip",
+   "seconds": 0.35
+  },
+  "gate": {
+   "from": "switch_003.ogg",
+   "title": "Interface Sounds",
+   "author": "Kenney (www.kenney.nl)",
+   "licence": "CC0",
+   "url": "https://opengameart.org/content/interface-sounds",
+   "file": "kenney_interfaceSounds.zip",
+   "seconds": 0.164
+  },
+  "clutch_floor": {
+   "from": "drop_002.ogg",
+   "title": "Interface Sounds",
+   "author": "Kenney (www.kenney.nl)",
+   "licence": "CC0",
+   "url": "https://opengameart.org/content/interface-sounds",
+   "file": "kenney_interfaceSounds.zip",
+   "seconds": 0.18
+  }
+ }
+}
