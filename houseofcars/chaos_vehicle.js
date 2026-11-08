@@ -22,6 +22,8 @@ export const AUTHORED = [
   'A8 vehicle sleeping (ProcessSleeping, sleep_threshold, sleep_slope_limit) is not simulated: the body never sleeps',
   'A10 a gear press (input.gearUp / gearDown) reaches the gearbox once, on the next substep; Unreal applies GearUpInput on every physics tick it is held (ChaosWheeledVehicleMovementComponent.cpp:769-779)',
   'A11 a friction clutch between the engine and the gearbox (UC-34), only when the input names one (input.clutch: 0 the pedal up .. 1 the floor; input.gear: the gate\'s gear, set at once by the driver\'s hand; without them every step is as before). Locked, the step is Unreal\'s own. Slipping, it passes its hold (CLUTCH_STRENGTH x (1 - clutch) x the engine\'s maximum torque, from ClutchModule.cpp:30\'s ClutchValue) signed by which side spins faster: that torque loads the free-running engine (EngineSystem.cpp\'s free branch) and drives the wheels through the gearbox (TorqueSimModule.cpp:40). It locks when the two speeds meet with the engine\'s torque within its hold, and slips when the pedal takes the hold under the torque. An engine dragged under STALL_FRACTION of its idle stalls (Wikipedia, Stall (engine), rev 1349070313). Unreal\'s wheeled path, the template\'s, has no clutch: this is its modular system\'s clutch, ported onto that path',
+  'A12 a longitudinal slip curve for the driven tyres (UC-39), only when the input names a clutch (input.clutch; without one every step is as before). Its shape is READ: Pacejka\'s Magic Formula with the constant coefficients MathWorks prints for dry tarmac (TYRE below, research/TYRE_CURVE.md; with input.road named, the dry or wet row and the curve\'s own peak, A13), its slip k = (Omega Re - Vx) / max(|Vx|, VXLOW) held within KPUMIN..KPUMAX, all READ from the same page. AUTHORED: its peak is the wheel\'s own grip G (WheelSystem.cpp:84, load x friction x FrictionForceMultiplier) in place of the curve\'s D x Fz, so each car keeps its tuned grip; the wheel\'s spin is integrated over the step (backward Euler on Chaos\'s own wheel inertia, I dOmega/dt = drive - Re Fx(k), the first balance met the way the net torque turns the wheel; on the curve\'s rising side the wheel settles in microseconds, far inside a 1/120 s step) and held within Chaos\'s MaxWheelspinRotation of rolling (WheelSystem.cpp:209-210); it runs on a driven wheel on the ground that is not braking (brake > |drive|, the model\'s own test, WheelSystem.cpp:92), every other wheel and step staying Chaos\'s; traction control holds the drive as Chaos does (WheelSystem.cpp:114-125); the friction circle and SideSlipModifier follow it as in Chaos (the spin balances the curve\'s force before that clip, which only a sideways force engages); the page\'s smoothing of the slip over Vth is not ported (it prints no blend), the saturation is used as printed; on the curve a driven tyre is published as slipping (IsSlipping, read by the page\'s squeal and skid marks) past the curve\'s peak slip, not past SlipThreshold, which a hooked tyre\'s few per cent of slip crosses on the 20 cm/s fronts',
+  'A13 the road under the slip curve (UC-40.2), only when a clutch step also names input.road: \'dry\' or \'wet\' picks the row of the same MathWorks table (TYRES: Dry tarmac B 10 C 1.9 D 1 E 0.97, Wet tarmac B 12 C 2.3 D 0.82 E 1, READ), and the driven tyre\'s grip, the curve\'s peak, becomes the curve\'s OWN, D x Fz x the road\'s friction (hit.friction, data/track.json surface_friction.road), in place of A12\'s load x friction x FrictionForceMultiplier. CHANGED 2026-11-07 by the owner\'s call (RJ: "default it to rain with godrays so there will be a little more slip", "Extra slipping makes it much more challenging"; rain on by default, the race stays fair): the multiplier is the template\'s stand-in 3 front / 4 rear (2.607 / 3.476 fitted on the E 63 S), a tyre gripping three to four times its load, under which five of the six cars could not spin on a dropped clutch at all (research/TYRE_CURVE.md). That grip is the one TCS, ABS and the friction circle then read, as A12\'s G; a wheel the engine does not drive keeps Chaos\'s. Without input.road a clutch step is A12 as it was (the dry row, peak G), so a caller that names no road is unchanged; without a clutch, input.road is refused',
   'A9 suspension hard stop: when a wheel compresses past suspension_max_raise, a frictionless contact at the wheel stops the approach and pushes the body out (push-out capped at the READ Chaos CVars min(MaxPushout 5 cm, MaxPushoutVelocity 100 cm/s * dt)), with the constraint geometry; it stands in for the hard-stop manifold of FPBDSuspensionConstraints (PBDSuspensionConstraints.cpp:213-293), which the PBD solver iterates',
 ];
 
@@ -477,7 +479,7 @@ export function makeVehicle(carJson, opts) {
   cfg.chassisCorners = [];                                                                  // AUTHORED: A7 contact box
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const z of [bottom, origin[2] + ext[2]]) cfg.chassisCorners.push([origin[0] + sx * ext[0], origin[1] + sy * ext[1], z]);
 
-  const v = { cfg, src: R.src, name: carJson.blueprint };
+  const v = { cfg, src: R.src, name: carJson.blueprint, tyre: TYRE };   // tyre: A12's curve, for readers of the step (traction.js)
   resetVehicle(v, [0, 0, 0], 0);
   return v;
 }
@@ -596,6 +598,8 @@ export function resetVehicle(v, position, yawDegrees) {
   v.out = { currentGear: 0, targetGear: 0 };
   v.pendingGear = { up: 0, down: 0 };                               // gear presses waiting for the next substep (A10 in AUTHORED)
   v.clutch = { locked: true, slip: 0 }; v.stalled = false;           // A11: read only when the input names a clutch
+  v.tyreCurve = false;                                               // A12: whether the last step's driven tyres ran on the slip curve
+  v.road = null; v.tyre = TYRE;                                      // A13: the road the last clutch step named, and its row
   publish(v, c.wheels.map(() => 0));
 }
 
@@ -739,14 +743,90 @@ function calculateSlipAngle(y, x) {                                   // UE: Cor
   return val;
 }
 function setWheelLoadForce(w, f) { w.load = f; w.inContact = f > SMALL_NUMBER; }   // UE: Core/Public/WheelSystem.h:228-240
-function wheelSimulate(w, cw, dt) {
+
+// A12 (UC-39) the driven tyre's longitudinal slip curve, with the clutch only. READ from MathWorks, Simscape Driveline reference page
+// 'Tire-Road Interaction (Magic Formula)' (https://www.mathworks.com/help/sdl/ref/tireroadinteractionmagicformula.html, read
+// 2026-11-07): Fx = Fz D sin(C arctan{B k - E [B k - arctan(B k)]}); its table of typical constant coefficients, row 'Dry tarmac':
+// B 10, C 1.9, D 1, E 0.97 (the block's own defaults are the same four); the slip k = -Vsx / |Vx|, Vsx = Vx - rw Omega, with |Vx|
+// saturated at VXLOW ('Lower boundary of slip denominator', default 1 m/s) and k held within KPUMIN..KPUMAX ('Minimum / Maximum valid
+// wheel slip', defaults -1.5 / 1.5). The page cites no source for the table (it says 'based on empirical tire data'); the formula's
+// reference there is Pacejka, Tire and Vehicle Dynamics, 2005. research/TYRE_CURVE.md has the quotes and a cross-check.
+const MF_PAGE = 'MathWorks, Tire-Road Interaction (Magic Formula), https://www.mathworks.com/help/sdl/ref/tireroadinteractionmagicformula.html (read 2026-11-07)';
+export const TYRE = {
+  road: 'dry', B: 10, C: 1.9, D: 1, E: 0.97, VXLOW_CMS: MToCm(1), KPUMIN: -1.5, KPUMAX: 1.5,
+  src: 'READ ' + MF_PAGE + ': table row Dry tarmac B 10 C 1.9 D 1 E 0.97; VXLOW 1 m/s, KPUMIN -1.5, KPUMAX 1.5 (block defaults)',
+};
+// A13 (UC-40.2) the same page's table, row 'Wet tarmac': B 12, C 2.3, D 0.82, E 1 (re-read 2026-11-07, research/TYRE_CURVE.md). The
+// slip's definition, VXLOW and KPUMIN..KPUMAX are the block's parameters, not the table's, so they are the dry row's (one block)
+export const TYRE_WET = {
+  road: 'wet', B: 12, C: 2.3, D: 0.82, E: 1, VXLOW_CMS: TYRE.VXLOW_CMS, KPUMIN: TYRE.KPUMIN, KPUMAX: TYRE.KPUMAX,
+  src: 'READ ' + MF_PAGE + ': table row Wet tarmac B 12 C 2.3 D 0.82 E 1; VXLOW 1 m/s, KPUMIN -1.5, KPUMAX 1.5 (block defaults)',
+};
+/** A13: the road a clutch step's input.road names -> its row of the page's table */
+export const TYRES = Object.freeze({ dry: TYRE, wet: TYRE_WET });
+/** the curve's shape, Fx / (D Fz): it peaks at exactly 1 (C > 1 carries C arctan past pi/2); row: TYRE (dry) or TYRE_WET */
+export function magicShape(k, row = TYRE) {
+  const Bk = row.B * k;
+  return Math.sin(row.C * Math.atan(Bk - row.E * (Bk - Math.atan(Bk))));
+}
+/** the slip as the page defines it: (Omega Re - Vx) / max(|Vx|, VXLOW), held within KPUMIN..KPUMAX (cm, cm/s, rad/s) */
+export function slipRatio(omega, Re, vx) {
+  return clamp((omega * Re - vx) / Math.max(Math.abs(vx), TYRE.VXLOW_CMS), TYRE.KPUMIN, TYRE.KPUMAX);
+}
+// the curve's peak slip, DERIVED from the READ B, C, E: the shape is 1 where C arctan(phi) = pi/2, phi = B k (1 - E) + E arctan(B k),
+// which rises with k for 0 <= E <= 1; found by bisection to the float's grain
+function peakSlip(row) {
+  if (!(row.C > 1) || !(row.E >= 0 && row.E <= 1)) throw new Error('chaos_vehicle: the ' + row.road + ' tyre curve has no interior peak (C <= 1 or E outside 0..1)');
+  const want = Math.tan(HALF_PI / row.C), phi = (k) => row.B * k * (1 - row.E) + row.E * Math.atan(row.B * k);
+  if (!(phi(row.KPUMAX) > want)) throw new Error('chaos_vehicle: the ' + row.road + ' tyre curve peaks past KPUMAX');
+  let lo = 0, hi = row.KPUMAX;
+  for (let i = 0; i < 200 && hi - lo > 0; i++) { const m = (lo + hi) / 2; if (m === lo || m === hi) break; if (phi(m) < want) lo = m; else hi = m; }
+  return (lo + hi) / 2;
+}
+TYRE.kPeak = peakSlip(TYRE);
+TYRE_WET.kPeak = peakSlip(TYRE_WET);
+// A12 one step of a driven wheel's spin on the curve, backward Euler: I (om - om0) / dt = T - Re G shape(k(om)), the first balance met
+// going from om0 the way the net torque turns the wheel; the spin over rolling held within +-maxSpin (Chaos's clamp, WheelSystem.cpp:209-210).
+// meet (A11b): while the clutch slips, the wheel speed at which its side of the clutch turns with the engine; the wheel stops there
+// when it reaches it before a balance (the speeds met, the clutch grips), and that speed is returned as it is
+function tyreSpin(om0, T, I, Re, vx, G, maxSpin, dt, row, meet = null) {
+  const roll = vx / Re, lo = roll - maxSpin, hi = roll + maxSpin;
+  const h = (om) => T - Re * G * magicShape(slipRatio(om, Re, vx), row) - I * (om - om0) / dt;
+  const start = clamp(om0, lo, hi), h0 = h(start);
+  if (h0 === 0) return start;
+  const s = h0 > 0 ? 1 : -1, den = Math.max(Math.abs(vx), row.VXLOW_CMS);
+  const clampEnd = s > 0 ? hi : lo, end = meet !== null && (meet - start) * s >= 0 && (clampEnd - meet) * s >= 0 ? meet : clampEnd;
+  // the curve's turning points on the way (k = +-kPeak: rising to falling; k = +-KPUMAX: held), om = (vx + k den) / Re
+  const marks = [-row.KPUMAX, -row.kPeak, row.kPeak, row.KPUMAX].map((k) => (vx + k * den) / Re)
+    .filter((om) => (om - start) * s > 0 && (end - om) * s > 0).sort((a, b) => (a - b) * s);
+  let a = start;
+  for (const b of [...marks, end]) {
+    // a falling stretch (kPeak < |k| < KPUMAX) can hold more than one balance: walk it in 32 steps to meet the first; elsewhere h is
+    // monotone along the way (rising curve or held slip, against the wheel's inertia), so its end decides
+    const kMid = Math.abs(slipRatio((a + b) / 2, Re, vx)), pieces = kMid > row.kPeak && kMid < row.KPUMAX ? 32 : 1;
+    for (let j = 1; j <= pieces; j++) {
+      const c = j === pieces ? b : a + (b - a) * j / pieces, hc = h(c);
+      if (hc * s <= 0) {                                       // the balance lies between a and c: bisect to the float's grain
+        let x0 = a, x1 = c;
+        for (let it = 0; it < 200; it++) { const m = (x0 + x1) / 2; if (m === x0 || m === x1) break; if (h(m) * s > 0) x0 = m; else x1 = m; }
+        return (x0 + x1) / 2;
+      }
+      a = c;
+    }
+  }
+  return end;                                                    // no balance within the clamp: held at MaxWheelspinRotation, or at meet
+}
+
+// curve: null (Chaos's tyre), or A12's { row, own }: the row of the page's table the driven tyres follow, and own = A13 (a road named)
+function wheelSimulate(w, cw, dt, curve = null) {
   const K = 0.4, TCS = 0.98;                                          // UE: WheelSystem.cpp:56-57
   w.slipAngle = calculateSlipAngle(w.ground[1], w.ground[0]);         // UE: WheelSystem.cpp:60
   let drive = w.drive / w.Re, brake = w.brake / w.Re;                 // UE: WheelSystem.cpp:80-81
-  w.grip = w.load * w.friction * cw.frictionMult;                     // UE: WheelSystem.cpp:84
-  let lon = 0, excess = 0, lat = 0;
+  if (curve && curve.own && w.engine) w.grip = curve.row.D * w.load * w.friction;   // AUTHORED: A13 the curve's own peak, D x Fz x the road's friction
+  else w.grip = w.load * w.friction * cw.frictionMult;                // UE: WheelSystem.cpp:84
+  let lon = 0, excess = 0, lat = 0, spin = null;                      // spin: A12's wheel speed for this step, when the curve ran
   const braking = w.brake > Math.abs(w.drive);                        // UE: WheelSystem.cpp:92
-  let locked = false; w.abs = false;
+  let locked = false; w.abs = false; w.met = false;
   if (w.load > SMALL_NUMBER) {                                        // UE: WheelSystem.cpp:98
     if (cw.abs && braking && Math.abs(brake) > w.grip) {              // UE: WheelSystem.cpp:101-112
       if ((braking && cw.abs) || (!braking && cw.tc)) {
@@ -762,6 +842,11 @@ function wheelSimulate(w, cw, dt) {
       const stop = w.massPerWheel * K * w.ground[0] / dt;
       lon = clamp(brake, -Math.abs(stop), Math.abs(stop));
       if (w.ground[0] > 0) lon = -lon;
+    } else if (curve && w.engine) {                                   // AUTHORED: A12 the slip curve (a driven wheel, with the clutch)
+      const meet = curve.meet;                                        // A11b: no driven wheel is carried past the engine's speed
+      spin = tyreSpin(w.omega, drive * w.Re, w.inertia, w.Re, w.ground[0], w.grip, cw.maxSpin, dt, curve.row, meet);   // drive as TCS left it, UE: WheelSystem.cpp:114-125
+      w.met = meet !== null && spin === meet;                         // A11b: the clutch's side reached the engine's speed
+      lon = w.grip * magicShape(slipRatio(spin, w.Re, w.ground[0]), curve.row);
     } else lon = drive;                                               // UE: WheelSystem.cpp:145-148
     const stopLat = -(w.massPerWheel * K * w.ground[1]) / dt;         // UE: WheelSystem.cpp:150
     if (cw.lateralGraph.pts.length === 0) lat = Math.abs(w.slipAngle) * cw.cornering;   // UE: WheelSystem.cpp:153-158 (the clipped angle is computed and unused)
@@ -782,7 +867,8 @@ function wheelSimulate(w, cw, dt) {
   } else if (Math.abs(w.omega) < cw.maxSpin) excess = w.drive;        // UE: WheelSystem.cpp:200-207
   let slipOmega = excess / w.inertia * dt;                            // UE: WheelSystem.cpp:209-210
   slipOmega = clamp(slipOmega, -cw.maxSpin, cw.maxSpin);
-  if (locked) w.omega *= 0.9;                                         // UE: WheelSystem.cpp:212-215
+  if (spin !== null) w.omega = spin;                                  // A12: the wheel turns as its own torque balance left it
+  else if (locked) w.omega *= 0.9;                                    // UE: WheelSystem.cpp:212-215
   else if (w.inContact) w.omega += (w.ground[0] / Math.max(w.Re, KINDA_SMALL_NUMBER) - w.omega + slipOmega);   // UE: WheelSystem.cpp:218-222
   else w.omega += slipOmega;                                          // UE: WheelSystem.cpp:225
   w.angPos += w.omega * dt;                                           // UE: WheelSystem.cpp:230
@@ -806,6 +892,7 @@ export function stepVehicle(v, input, dt, world) {
   if (input.gearDown) v.pendingGear.down++;
   if (input.clutch !== undefined && !(input.clutch >= 0 && input.clutch <= 1)) throw new Error('chaos_vehicle: input.clutch must be 0 (the pedal up) to 1 (the floor)');
   if (input.gear !== undefined && (input.clutch === undefined || !Number.isInteger(input.gear))) throw new Error('chaos_vehicle: input.gear is a whole gear, and only with a clutch (A11)');
+  if (input.road !== undefined && (input.clutch === undefined || !Object.hasOwn(TYRES, input.road))) throw new Error('chaos_vehicle: input.road is \'dry\' or \'wet\', and only with a clutch (A13)');
   v.accum += dt;
   const n = Math.floor(v.accum / SUBSTEP + 1e-9);        // dt = 1/120 is exactly one substep; the remainder carries to the next call
   v.accum = Math.max(0, v.accum - n * SUBSTEP);
@@ -873,7 +960,12 @@ function substep(v, input, dt, world) {
     throttle: controlFn(c.rates.throttle, v.input.throttle), brake: controlFn(c.rates.brake, v.input.brake),
     steering: controlFn(c.rates.steering, v.input.steering), handbrake: v.input.handbrake, parking: c.parkEnabled,
     clutch: input.clutch,                                                    // A11 (UC-34): a pedal, not rate-limited
+    road: input.road,                                                        // A13 (UC-40.2): the road under the curve, only with a clutch
   };
+  v.tyreCurve = ci.clutch !== undefined;                                     // A12: the driven tyres on the slip curve this step
+  v.road = ci.road === undefined ? null : ci.road;                           // A13: the road named this step (null: A12 as it was)
+  v.tyre = v.road === null ? TYRE : TYRES[v.road];                           // the row the curve follows this step (traction.js reads it)
+  const curve = v.tyreCurve ? { row: v.tyre, own: v.road !== null, meet: null, hold: 0, meetWheel: null } : null;   // meet, hold, meetWheel: A11b, set by the clutch below
 
   // ---------------- physics thread: TickVehicle -> UpdateState, ApplyInput, UpdateSimulation (Glue/Private/ChaosVehicleMovementComponent.cpp:164-177)
   const T = { rot: v.rot, pos: sub(v.comPos, mulMV(v.rot, c.com)) };        // FTransform(R, X): the actor (body) frame
@@ -959,6 +1051,17 @@ function substep(v, input, dt, world) {
     let tt = (slipping ? cl.torque : locked ? Math.max(engineTorque(v), governor(v, Math.abs(fromWheel))) : engineTorque(v)) * gearRatio(v, v.trans.current) * c.trans.efficiency;   // GetTransmissionTorque, UE: TransmissionSystem.h:196-199; A11 slipping: the clutch's torque
     if (wheelSpeedRPM > c.engine.maxRPM) tt = 0;                             // UE: .cpp:872-875
     c.wheels.forEach((cw, i) => { v.w[i].drive = v.w[i].engine ? TorqueMToCm(tt) * cw.torqueRatio : 0; });   // UE: .cpp:878-889
+    // A11b the speeds meeting on the wheels' side: on the curve a driven wheel turns on its own inertia (A12), so the clutch's torque
+    // can carry it past the engine's speed inside one step, and the next step's torque reverses (measured 11-08: the E 63 S, the pedal
+    // dropped at idle on the dry row, the wheels flipped 0 / 12.5 rad/s every step, the car shook in place at +-4,350 N and never
+    // stalled). A11 locks when the speeds meet: a slipping clutch drags its plate up to the engine's speed and never past it, and every
+    // driven wheel is geared to that plate, so each stops at the meeting speed; the clutch grips when the wheel this block reads
+    // (wheelRPM above, the last driven wheel) got there (below). Held on that one wheel alone, its axle's other wheel pushed harder and
+    // every car yawed off its lane (measured 11-08: the house runs 0.2-30 m sideways by the quarter, always the same way; 0 cm held on all)
+    if (curve) {
+      curve.meet = slipping && v.engine.started && gearRatio(v, v.trans.current) !== 0 ? v.engine.omega / gearRatio(v, v.trans.current) : null;
+      curve.hold = cl ? cl.hold : 0; curve.meetWheel = null; v.w.forEach((w) => { if (w.engine) curve.meetWheel = w; });
+    }
   }
 
   // ApplySuspensionForces, UE: ChaosWheeledVehicleMovementComponent.cpp:583-706 
@@ -1020,7 +1123,7 @@ function substep(v, input, dt, world) {
     if (w.inContact) {
       w.friction = hit.friction;                                              // HitResult.PhysMaterial->Friction, UE: .cpp:512-515
       w.ground = unrotateYaw(w.steer, ws[i].local);                           // UE: .cpp:518-522
-      wheelSimulate(w, cw, dt);
+      wheelSimulate(w, cw, dt, curve);                                       // A12: the slip curve only with a clutch; A13 its row and peak
       const fl = rotateYaw(w.steer, w.force);                                 // UE: .cpp:526-527
       const gz = hit.normal, gx = cross(right, gz), gy = cross(gz, gx);       // UE: .cpp:529-531
       const f = add(add(scl(gx, fl[0]), scl(gy, fl[1])), scl(gz, fl[2]));    // FMatrix(X,Y,Z,W).TransformVector, UE: Math/Matrix.inl:37-43, 204-207
@@ -1029,6 +1132,10 @@ function substep(v, input, dt, world) {
       w.ground = v3(); setWheelLoadForce(w, 0); wheelSimulate(w, cw, dt);    // UE: .cpp:575-577
     }
   });
+  // A11b the wheel the engine reads (the last driven one, as ProcessMechanicalSimulation reads it) met the engine's speed: the clutch
+  // grips, on clutchAfter's own condition (the engine's torque within the hold)
+  if (curve && curve.meet !== null && v.engine.started && curve.meetWheel && curve.meetWheel.met
+      && Math.max(Math.abs(engineTorque(v)), governor(v, v.engine.rpm)) <= curve.hold) v.clutch.locked = true;
 
   // ---------------- integration. AUTHORED: A1 semi-implicit Euler
   let F = [0, 0, c.mass * c.gravityZ], Tq = v3();
@@ -1062,13 +1169,18 @@ function publish(v, suspensionOffsets) {
   v.gear = v.out.currentGear;
   if (v.inAir === undefined) v.inAir = true;
   v.wheels = c.wheels.map((cw, i) => ({
+    // A12: a driven tyre's slip as the curve reads it, on the curve's steps only (null otherwise)
+    slipRatio: v.tyreCurve && v.w[i].engine ? slipRatio(v.w[i].omega, v.w[i].Re, v.w[i].ground[0]) : null,
     bone: cw.bone, steerDeg: v.w[i].steer, spinRad: v.w[i].angPos, suspensionOffsetCm: suspensionOffsets[i], inContact: v.w[i].inContact,
     omega: v.w[i].omega, springForce: v.s[i].force, load: v.w[i].load, driveTorqueNm: TorqueCmToM(v.w[i].drive), brakeTorqueNm: TorqueCmToM(v.w[i].brake),
     engineEnabled: v.w[i].engine, torqueRatio: cw.torqueRatio,
     // GetSlipMagnitude / GetSkidMagnitude and IsSlipping / IsSkidding, UE: Core/Public/WheelSystem.h:319-327, 386-404 (read by the
     // page's tyre sound and skid marks; Unreal's template shows neither), and the wheel trace's hit point (cm, world)
     slipCmS: v.w[i].omega * v.w[i].Re - v.w[i].ground[0], skidCmS: v.w[i].ground[1],
-    slipping: Math.abs(v.w[i].omega * v.w[i].Re - v.w[i].ground[0]) > cw.slipThreshold, skidding: Math.abs(v.w[i].ground[1]) > cw.skidThreshold,
+    // AUTHORED: A12 on the slip curve a driven tyre is slipping past the curve's peak slip; a hooked tyre always slips a little
+    // there, and the template's SlipThreshold (20 cm/s front) would call it slipping, the page's squeal and skid marks with it
+    slipping: v.tyreCurve && v.w[i].engine ? Math.abs(slipRatio(v.w[i].omega, v.w[i].Re, v.w[i].ground[0])) > v.tyre.kPeak   // = |slipRatio| > the step's row's kPeak
+      : Math.abs(v.w[i].omega * v.w[i].Re - v.w[i].ground[0]) > cw.slipThreshold, skidding: Math.abs(v.w[i].ground[1]) > cw.skidThreshold,
     contactCm: v.hits && v.hits[i] ? v.hits[i].point : null,
   }));
 }

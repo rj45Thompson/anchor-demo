@@ -662,7 +662,7 @@ class SiteApp {
 }
 
 (async function(){ const forced=Q.get('renderer'), bad=(msg)=>{ const f=$('fail'); f.hidden=false; f.textContent=msg; console.error(msg); };
-  let D; try { const r=await fetch('data.json?v=e999009a7f'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The 3D view could not load its data ('+e.message+'). Every project is on the page view: ../'); return; }
+  let D; try { const r=await fetch('data.json?v=32eed2756f'); if(!r.ok) throw new Error('data.json answered '+r.status); D=await r.json(); } catch(e){ bad('The 3D view could not load its data ('+e.message+'). Every project is on the page view: ../'); return; }
   const started=await startScene($('c'),forced); const app=new SiteApp(D,started);
   window.__fly={renderer:started.scene.name,why:started.why,app,settle:()=>new Promise((res)=>app.settleWaiters.push(res)),state:()=>({cur:app.cur,pageOpen:app.page.isOpen,pageId:app.page.id,playing:app.playing,eye:app.cam.eye.slice(),view:Object.assign({},app.cam.v),fps:app.fps.v})};
 })();

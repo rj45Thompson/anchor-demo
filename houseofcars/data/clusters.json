@@ -366,9 +366,18 @@
      "y": 258,
      "size": 20,
      "fill": "#2a2d33"
+    },
+    {
+     "id": "rpm",
+     "fmt": "rpm",
+     "x": 212,
+     "y": 266,
+     "size": 22,
+     "fill": "#2a2d33"
     }
    ],
    "authored": [
+    "the RPM readout under the Power Reserve: the page's own. The car has no tachometer (its Power Reserve is in that place), and a drag run needs the revs (11-08, RJ: \"the rpm gauge didn't seem to work\")",
     "the speedometer's face: the European km/h one (the Canadian face was not read)",
     "the Power Reserve numerals from 20 (0 was not legible; cars.co.za gives its scale as 0 to 100)",
     "the fuel and temperature dial's scales (not read): C to H over E to F, the page's",
@@ -524,9 +533,18 @@
      "y": 258,
      "size": 20,
      "fill": "#2a2d33"
+    },
+    {
+     "id": "rpm",
+     "fmt": "rpm",
+     "x": 212,
+     "y": 266,
+     "size": 22,
+     "fill": "#2a2d33"
     }
    ],
    "authored": [
+    "the RPM readout under the Power Reserve: the page's own. The car has no tachometer (its Power Reserve is in that place), and a drag run needs the revs (11-08, RJ: \"the rpm gauge didn't seem to work\")",
     "the speedometer: to 150 mph, as the UK car a review read (the Canadian km/h face was not read); its numeral step (every 30) is the page's",
     "the Power Reserve's numerals and step (not legible: the Ghost's 20s)",
     "the fuel and temperature dial's scales (not read): C to H over E to F, the page's",

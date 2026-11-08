@@ -9,13 +9,21 @@
 //   the road grip is READ (data/track.json surface_friction.road, the template's own road);
 //   the best shift point of each gear is DERIVED from the car's own torque curve and gear ratios (shiftPoints);
 //   AUTHORED: the 1 ft roll-out before the clock starts (Dragy reports a "(1ft)" roll-out time beside its 0-100), the shift
-//   grades' margins (GRADE), the shift light's span (LIGHT_SPAN_RPM), the pre-stage and stage times and the strip's width.
+//   grades' margins (GRADE), the shift light's span (LIGHT_SPAN_RPM), the pre-stage and stage times and the strip's width;
+//   the house driver's hand on the clutch, when the house run drives the clutch tyres (HOUSE_CLUTCH, UC-40.2).
+import { traction } from './traction.js';
 export const FT = 0.3048;
 export const MARKS = { rollout: 1 * FT, sixty: 60 * FT, eighth: 660 * FT, quarter: 1320 * FT };   // metres
-export const TREE = { prestage: 1.0, stage: 1.0, amber_gap: 0.5, green_after: 0.5, src: 'https://en.wikipedia.org/wiki/Christmas_tree_(drag_racing)' };
+// AUTHORED prestage and stage 1.5 s each (11-08, RJ: "Make the race at the start a little bit slower to start"; were 1.0 s): the
+// READ part, the ambers 0.5 s apart and the green 0.5 s after, is unchanged
+export const TREE = { prestage: 1.5, stage: 1.5, amber_gap: 0.5, green_after: 0.5, src: 'https://en.wikipedia.org/wiki/Christmas_tree_(drag_racing)' };
 export const GRADE = { perfect_below: 250, perfect_above: 150, limiter_s: 0.15 };   // rpm either side of the best shift point; s on the limiter
 export const LIGHT_SPAN_RPM = 1500;                                                  // the shift light fills over the last 1500 rpm
 export const MOVE_M = 0.01;                                                          // AUTHORED: moved 1 cm = the car has started (Dragy's standstill start)
+// AUTHORED (UC-40.2): the house driver's hand on the clutch, when its run drives the clutch tyres (opts.road): the pedal moves
+// pedal_step a substep (2.4 of its travel a second), the step test/traction.test.mjs's band driver moves it; the revs held on the
+// line with the clutch on the floor at full gas (stage_throttle), as that driver holds them
+export const HOUSE_CLUTCH = { pedal_step: 0.02, stage_throttle: 1 };
 
 /** the strip's ground for the physics: a flat plane at z = 0 (cm) under the whole run, with the track's own road grip */
 export function flatStrip(friction) {
@@ -101,7 +109,9 @@ export function tick(run, s) {
       if (run.marks[k] === undefined && d >= MARKS[k]) { run.marks[k] = et; run.speeds[k] = s.speedKmh; ev.push(k); if (k === 'quarter') run.quarterAt = run.t - run.move; }
     }
     if (run.kmh100 === null && s.speedKmh >= 100) { run.kmh100 = et; run.kmh100s = run.t - run.move; ev.push('100'); }
-    if (s.rpm >= s.maxRPM - 1) run.limiter += s.dt; else if (s.gear !== run.lastGear) run.limiter = 0;
+    // s.clutchSlipping (optional, UC-40.2): the clutch slipping this step (chaos_vehicle.js A11); the engine on its limiter then is a
+    // launch or a re-engage at full gas, not a gear held too long, so that time is not the shift grade's limiter time
+    if (s.rpm >= s.maxRPM - 1 && !s.clutchSlipping) run.limiter += s.dt; else if (s.gear !== run.lastGear) run.limiter = 0;
     if (run.marks.quarter !== undefined) { run.done = true; run.phase = 'finished'; ev.push('finish'); }
   }
   run.lastGear = s.gear;
@@ -133,9 +143,12 @@ export function bestRun(Chaos, v, world) {
  *  early edge: 11-07 a sweep found shifting EARLY quicker than the light on the E 63 S, the i8 and the 911 (the E 63 S 500 rpm
  *  early: 10.750 s against 10.825 s), so an early-edge house run beat the light on those three. DERIVED from the car's own torque
  *  curve and gear ratios; GRADE's margin is AUTHORED (above) */
-export function houseRun(Chaos, v, world, rec = null) {
+// opts (UC-40.2, "the house car runs the same tyres"): null, the paddles as above (the boards and the ghosts, bit for bit), or
+// { road: 'wet' | 'dry' }: the same shift points driven through the clutch (chaos_vehicle.js A11), so the driven tyres run on that
+// road's slip curve with its own peak (A12, A13), the pedal worked by the house driver (clutchDriver below)
+export function houseRun(Chaos, v, world, rec = null, opts = null) {
   const best = carShiftPoints(Chaos, v), at = best.map((p) => Math.min(p + GRADE.perfect_above, v.cfg.engine.maxRPM));
-  return { slip: runShiftingAt(Chaos, v, world, at, best, rec), points: at };
+  return { slip: runShiftingAt(Chaos, v, world, at, best, rec, opts), points: at };
 }
 function carShiftPoints(Chaos, v) {
   const c = v.cfg, torque = (r) => Chaos._internal.engineTorqueFromRPM(v, r, true);
@@ -145,10 +158,12 @@ function carShiftPoints(Chaos, v) {
 // rec (UC-38): an array that gets the car's pose every other substep (1/60 s) on the run's own clock, and on for REC_COAST_S past
 // the line as the page coasts its car down (off the gas, the brake under 30 km/h), so the page can replay the run as a second car
 const REC_COAST_S = 7;
-function runShiftingAt(Chaos, v, world, at, best, rec = null) {
+const poseOf = (v, t) => { const r = v.rot; return { t, pos: v.pos.slice(), axes: [0, 1, 2].map((j) => [r[0][j], r[1][j], r[2][j]]), w: v.wheels.map((w) => [w.steerDeg, w.spinRad, w.suspensionOffsetCm]) }; };
+function runShiftingAt(Chaos, v, world, at, best, rec = null, opts = null) {
+  if (opts !== null) return runClutchAt(Chaos, v, world, at, best, rec, opts);
   const c = v.cfg, DT = Chaos._internal.SUBSTEP, idle = { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' };
   const run = makeRun(), x0 = v.pos[0];
-  const pose = (t) => { const r = v.rot; rec.push({ t, pos: v.pos.slice(), axes: [0, 1, 2].map((j) => [r[0][j], r[1][j], r[2][j]]), w: v.wheels.map((w) => [w.steerDeg, w.spinRad, w.suspensionOffsetCm]) }); };
+  const pose = (t) => rec.push(poseOf(v, t));
   for (let i = 0; i < 120 * 60 && !run.done; i++) {
     if (rec && i % 2 === 0) pose(run.t);
     const green = run.green !== null, gear = v.trans.target, rpm = v.trans.engineRPM;
@@ -166,4 +181,52 @@ function runShiftingAt(Chaos, v, world, at, best, rec = null) {
     }
   }
   return s;
+}
+
+/** UC-40.2 the house driver's clutch, one step: the next { phase, pedal, throttle, gear, t, shifted } from the step before's and the
+ *  traction bar it left (traction.js: the driven tyres' slip against the road's own peak slip; null before any reading).
+ *  'stage' (before the green): the clutch on the floor in first, the revs held (HOUSE_CLUTCH.stage_throttle).
+ *  'drive': full gas; the pedal pressed pedal_step while the bar reads past its band, let out pedal_step otherwise, so the tyres
+ *    ride the curve's peak; an upshift as the rpm reaches at[gear-1] once the pedal is up and the clutch grips.
+ *  'shift': the clutch on the floor, off the gas, the next gear by hand at once (chaos_vehicle.js A11), held in for the gearbox's own
+ *    gear_change_time (the time a paddle shift spends out of gear), then 'drive' from the floor. */
+export function clutchDriver(Chaos, v, s, green, at, bar) {
+  const c = v.cfg, step = HOUSE_CLUTCH.pedal_step, DT = Chaos._internal.SUBSTEP;
+  if (s.phase === 'stage' && !green) return { phase: 'stage', pedal: 1, throttle: HOUSE_CLUTCH.stage_throttle, gear: 1, t: 0, shifted: false };
+  if (s.phase === 'shift' && s.t < c.trans.gearChangeTime) return { phase: 'shift', pedal: 1, throttle: 0, gear: s.gear, t: s.t + DT, shifted: false };
+  if (s.phase === 'drive' && s.pedal === 0 && v.clutch.locked && s.gear < c.trans.forward.length && v.trans.engineRPM >= at[s.gear - 1]) {
+    return { phase: 'shift', pedal: 1, throttle: 0, gear: s.gear + 1, t: DT, shifted: true };
+  }
+  const from = s.phase === 'drive' ? s.pedal : 1;
+  const pedal = Math.min(1, Math.max(0, from + (bar !== null && bar > 1 ? step : -step)));
+  return { phase: 'drive', pedal, throttle: 1, gear: s.gear, t: 0, shifted: false };
+}
+// the run through the clutch on opts.road (houseRun with opts): as runShiftingAt, each shift graded at the rpm the clutch went in;
+// past the line the clutch goes in and the car coasts, as the page does (it cannot stall there)
+function runClutchAt(Chaos, v, world, at, best, rec, opts) {
+  if (!opts || typeof opts !== 'object' || Object.keys(opts).join() !== 'road') throw new Error('drag.js: opts is { road: \'wet\' | \'dry\' }, not ' + JSON.stringify(opts));
+  if (!Chaos.TYRES || !Object.hasOwn(Chaos.TYRES, opts.road)) throw new Error('drag.js: opts.road ' + JSON.stringify(opts.road) + ' is not a road of chaos_vehicle.js TYRES (A13)');
+  const c = v.cfg, DT = Chaos._internal.SUBSTEP, idle = { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' };
+  const run = makeRun(), x0 = v.pos[0], road = opts.road;
+  const pose = (t) => rec.push(poseOf(v, t));
+  let s = { phase: 'stage', pedal: 1, throttle: 0, gear: 1, t: 0 }, bar = null;
+  for (let i = 0; i < 120 * 60 && !run.done; i++) {
+    if (rec && i % 2 === 0) pose(run.t);
+    const rpm = v.trans.engineRPM;
+    s = clutchDriver(Chaos, v, s, run.green !== null, at, bar);
+    if (s.shifted) noteShift(run, s.gear - 1, rpm, best[s.gear - 2], c.engine.maxRPM);
+    Chaos.stepVehicle(v, Object.assign({}, idle, { throttle: s.throttle, clutch: s.pedal, gear: s.gear, road }), DT, world);
+    if (v.stalled) throw new Error('drag.js: the house car stalled on the ' + road + ' road at ' + run.t.toFixed(3) + ' s (' + s.phase + ', gear ' + s.gear + ')');
+    bar = traction(v).bar;
+    tick(run, { dt: DT, distM: (v.pos[0] - x0) / 100, speedKmh: v.forwardSpeedCmS * 0.036, rpm: v.trans.engineRPM, gear: v.trans.target, maxRPM: c.engine.maxRPM, clutchSlipping: !v.clutch.locked });
+  }
+  if (!run.done) throw new Error('drag.js: the run did not reach the quarter mile in 60 s');
+  const out = slip(run);
+  if (rec) {
+    for (let i = 0, t = run.t; i < REC_COAST_S * 120; i++, t += DT) {
+      if (i % 2 === 0) pose(t);
+      Chaos.stepVehicle(v, Object.assign({}, idle, { clutch: 1, gear: s.gear, road, brake: v.forwardSpeedCmS * 0.036 < 30 ? 1 : 0 }), DT, world);
+    }
+  }
+  return out;
 }

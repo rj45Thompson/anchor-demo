@@ -115,6 +115,8 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #dtree i{display:block;width:clamp(24px,6vmin,66px);height:clamp(24px,6vmin,66px);border-radius:50%;background:#1c1c1c;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
 #dtree i.s{width:clamp(12px,3vmin,34px);height:clamp(12px,3vmin,34px)}#dtree i.on{background:#ffb020;box-shadow:0 0 16px 4px rgba(255,176,32,.8)}#dtree i.s.on{background:#ffd27a}
 #dtree i.gr.on{background:#3dff7a;box-shadow:0 0 18px 6px rgba(61,255,122,.85)}#dtree i.rd.on{background:#ff3b30;box-shadow:0 0 18px 6px rgba(255,59,48,.85)}
+/* a phone on its side: the tree's lamps a size smaller, so it ends above the clutch slider and gas (an 844 x 390 phone ran 8 px into them) */
+@media (pointer:coarse) and (orientation:landscape){#dtree{gap:clamp(3px,.9vmin,12px);padding:clamp(6px,1.2vmin,16px)}#dtree i{width:clamp(16px,5.4vmin,66px);height:clamp(16px,5.4vmin,66px)}#dtree i.s{width:clamp(9px,2.7vmin,34px);height:clamp(9px,2.7vmin,34px)}}
 #dpanel{position:fixed;right:14px;bottom:14px;max-width:min(40vw,400px);min-width:clamp(170px,27vmin,320px);padding:clamp(10px,1.4vmin,16px) clamp(12px,1.8vmin,20px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);font-variant-numeric:tabular-nums}
 #dcar{margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(12px,2.2vmin,20px);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-soft)}
 #dtimes div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;font-size:clamp(13px,2.3vmin,22px);line-height:1.6}#dtimes span{color:var(--dim)}#dtimes b{font:700 clamp(15px,3vmin,32px) ui-monospace,Consolas,monospace;color:#5dffa9}#dtimes div.foul b{color:#ff5a4f}
@@ -125,7 +127,7 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #dgrade{position:fixed;top:24%;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:clamp(34px,8vmin,96px);font-weight:800;letter-spacing:.06em;text-shadow:0 4px 18px rgba(0,0,0,.7);opacity:0}
 #dgrade.pop{animation:gradepop 1.1s ease-out both}#dgrade.g-perfect{color:#5dffa9}#dgrade.g-early{color:#ffd27a}#dgrade.g-late{color:#ff7a5c}
 @keyframes gradepop{0%{opacity:0;transform:translate(-50%,10px) scale(.9)}15%{opacity:1;transform:translate(-50%,0) scale(1.05)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-8px)}}
-#dslip{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 140px);overflow:auto;pointer-events:auto;padding:16px 18px;border-radius:14px;background:rgba(12,12,12,.94);border:1px solid var(--accent);box-shadow:0 18px 60px rgba(0,0,0,.6)}
+#dslip{position:fixed;top:calc(50% + 26px);left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 150px);overflow:auto;pointer-events:auto;padding:16px 18px;border-radius:14px;background:rgba(12,12,12,.94);border:1px solid var(--accent);box-shadow:0 18px 60px rgba(0,0,0,.6)}
 #dslip h3{margin:2px 0 8px}#dslip .kick{margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-soft);font-weight:700}
 #dslip table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px}#dslip th{text-align:left;color:var(--dim);font-weight:600;padding:4px 6px 4px 0}#dslip td{padding:4px 6px;font:600 13px ui-monospace,Consolas,monospace}
 #dslip tr:first-child td{font:700 10.5px 'Open Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-soft)}#dslip tr td:nth-child(2){color:#5dffa9}
@@ -149,13 +151,27 @@ body.dragmode #touch{display:none}
 @media (pointer:coarse){#dtouch{display:flex}#dhelp{display:none}#dpanel{bottom:calc(clamp(84px,24vmin,150px) + 30px)}}
 #dslip:not([hidden]) ~ #dtouch{display:none}   /* the slip open: nothing left to press but its own buttons */
 /* UC-36 the car's own cluster in the tach's place, as wide as the screen allows between the left column and the gate */
+/* UC-39 the traction bar: under the shift lights for the launch; amber bogging, the green band where the tyres grip, red spinning */
+#dtrac{position:fixed;left:50%;top:calc(54px + clamp(14px,3.6vmin,34px) + 10px);transform:translateX(-50%);width:min(46vw,640px);height:clamp(20px,3.2vmin,30px);border-radius:99px;
+  background:linear-gradient(90deg,rgba(255,176,32,.55),rgba(255,176,32,.12) 30%,rgba(20,20,20,.7) 45%,rgba(20,20,20,.7) 60%,rgba(255,59,48,.18) 75%,rgba(255,59,48,.6));
+  border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 2px 6px rgba(0,0,0,.6),0 6px 18px rgba(0,0,0,.4);opacity:0;transition:opacity .4s;pointer-events:none;--x:.5;--lo:.45;--hi:.6}
+body.dragmode #dtrac.on{opacity:1}
+#dtrac .band{position:absolute;top:2px;bottom:2px;left:calc(var(--lo) * 100%);width:calc((var(--hi) - var(--lo)) * 100%);border-radius:99px;background:linear-gradient(180deg,#5dffa9,#1fae5f);box-shadow:0 0 14px rgba(61,255,122,.55)}
+#dtrac .mk{position:absolute;top:-5px;bottom:-5px;width:4px;margin-left:-2px;left:calc(var(--x) * 100%);border-radius:3px;background:#fff;box-shadow:0 0 10px #fff,0 0 22px rgba(255,255,255,.6);transition:left .06s linear}
+#dtrac span{position:absolute;top:50%;transform:translateY(-50%);font-size:clamp(9px,1.4vmin,12px);font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75)}#dtrac .bog{left:10px}#dtrac .spin{right:10px}
+#dtrac b{position:absolute;left:50%;top:calc(100% + 4px);transform:translateX(-50%);font-size:clamp(12px,2vmin,18px);font-weight:800;letter-spacing:.12em;color:#cfd3d8;text-shadow:0 2px 6px #000}
+#dtrac[data-state=grip] b{color:#5dffa9}#dtrac[data-state=spin] b{color:#ff5a4f}#dtrac[data-state=bog] b{color:#ffb020}
+#dtrac[data-state=spin] .mk{background:#ff5a4f;box-shadow:0 0 14px #ff3b30}#dtrac[data-state=bog] .mk{background:#ffb020;box-shadow:0 0 14px #ffb020}
 #dcluster{display:none}body.dragmode.hascluster #hud-speed{display:none}
-body.dragmode.hascluster #dcluster{display:block;position:fixed;left:50%;bottom:30px;transform:translateX(-50%);width:min(calc(100vw - 460px),1060px);filter:drop-shadow(0 10px 28px rgba(0,0,0,.6))}
+body.dragmode.hascluster #dcluster{display:block;position:fixed;left:50%;bottom:38px;transform:translateX(-50%);width:min(calc(100vw - 460px),1060px);filter:drop-shadow(0 10px 28px rgba(0,0,0,.6))}
 #dcluster svg{display:block;width:100%;height:auto}
+@media (pointer:fine) and (orientation:landscape){body.dragmode.clutchmode.hascluster #dcluster{width:min(calc(100vw - 2 * (clamp(180px,28vmin,280px) + 44px)),1060px)}}
 body.dragmode.hascluster #dpanel{bottom:calc(var(--clh,300px) + 44px)}
 @media (orientation:landscape){body.dragmode.hascluster #dgrade{bottom:calc(var(--clh,300px) + 46px)}}
-@media (pointer:coarse) and (orientation:landscape){body.dragmode.hascluster #dcluster{bottom:12px;width:calc(100vw - 2 * (16px + clamp(84px,24vmin,150px) + 12px + clamp(54px,12vmin,90px) + 14px))}body.dragmode.hascluster #dpanel{bottom:auto}}
-@media (orientation:portrait){body.dragmode.hascluster #dcluster{width:calc(100vw - 24px);bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}body.dragmode.clutchmode.hascluster #dcluster{bottom:calc(clamp(150px,40vmin,320px) + 30px)}body.dragmode.hascluster #dpanel{bottom:auto}}
+@media (pointer:coarse) and (orientation:landscape){body.dragmode.hascluster #dcluster{bottom:12px;width:calc(100vw - 2 * (16px + clamp(84px,24vmin,150px) + 12px + clamp(54px,12vmin,90px) + 14px))}body.dragmode.hascluster #dpanel{bottom:auto}
+  /* with the clutch: between the slider and gas on the left and the gate on the right, whichever side is wider */
+  body.dragmode.clutchmode.hascluster #dcluster{width:calc(100vw - 2 * max(16px + clamp(72px,17vmin,116px) + 12px + clamp(84px,24vmin,150px) + 14px, 16px + clamp(150px,42vmin,300px) + 14px))}}
+@media (orientation:portrait){body.dragmode.hascluster #dcluster{width:calc(100vw - 24px);bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}body.dragmode.clutchmode.hascluster #dcluster{bottom:calc(clamp(180px,48vmin,360px) + 30px)}body.dragmode.hascluster #dpanel{bottom:auto}}
 /* UC-34 the clutch and the gate: a computer's pedal (the mouse pulls it down) and gate (on keys), a phone's slider and gate (dragged) */
 #dpedal,#dgate,#dslider,#dgasm{display:none}body.clutchmode #dgas{margin-right:auto}
 body.clutchmode #dgasm{display:block;position:fixed;left:calc(110px + clamp(44px,6vmin,64px) + 10px);top:96px;width:clamp(44px,6vmin,64px);height:clamp(180px,34vmin,320px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);overflow:hidden;--d:0}
@@ -164,22 +180,39 @@ body.clutchmode #dgasm{display:block;position:fixed;left:calc(110px + clamp(44px
 @media (pointer:coarse){body.clutchmode #dgasm{display:none}}#dhelp .cp{display:none}body.clutchmode #dhelp .cp{display:inline}body.clutchmode #dhelp .np{display:none}
 .clutchdepth{--d:0}
 body.clutchmode #dpedal{display:block;position:fixed;left:110px;top:96px;width:clamp(44px,6vmin,64px);height:clamp(180px,34vmin,320px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);overflow:hidden}
+/* UC-34 1d the clutch behind the slider, see-through: the pedal swings down with the depth, the pressure plate and disc pull off the
+   flywheel (a gap when pressed, closed when let out). AUTHORED: the drawing and its travel */
+#dslider .cpic{position:absolute;inset:6% 8%;width:84%;height:88%;opacity:.42;pointer-events:none}
+#dslider .cpic .pedal{transform-box:view-box;transform-origin:30px 8px;transform:rotate(calc(var(--d) * 26deg))}
+#dslider .cpic .plate{transform-box:view-box;transform:translateX(calc(var(--d) * 9px))}
 #dpedal i,#dslider i{position:absolute;left:0;right:0;top:0;height:calc(var(--d) * 100%);background:linear-gradient(180deg,rgba(255,176,32,.15),rgba(255,176,32,.65));border-bottom:4px solid #ffb020}
 #dpedal b,#dslider b{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;letter-spacing:.12em;color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto;height:70%}
-body.clutchmode #dgate{display:block;position:fixed;left:14px;bottom:44px;width:clamp(120px,20vmin,190px);height:clamp(120px,20vmin,190px);border-radius:16px;background:rgba(10,10,10,.72);border:1px solid var(--line);touch-action:none}
+body.clutchmode #dgate{display:block;position:fixed;left:14px;bottom:44px;width:clamp(180px,28vmin,280px);height:clamp(180px,28vmin,280px);border-radius:16px;background:rgba(10,10,10,.28);border:1px solid var(--line);touch-action:none}
 #dgate svg{width:100%;height:100%}#dgate .slot{fill:none;stroke:#07080a;stroke-width:6.5;stroke-linecap:round}#dgate .lip{fill:none;stroke:#5c636c;stroke-width:8;stroke-linecap:round;transform:translateY(.9px)}#dgate text{fill:var(--dim);font:800 8px 'Open Sans',sans-serif;text-anchor:middle}#dgate text.on{fill:var(--accent-soft)}
 #dgate .kn{fill:var(--accent);font-size:6.5px;font-weight:800}
-#dagain{position:fixed;left:50%;top:40%;transform:translateX(-50%);pointer-events:auto;font-size:18px;padding:12px 22px}
+/* UC-22.1b the tree waits for START; UC-22.5 a failed run is FAIL and one RESTART; a finished one the slip with RACE AGAIN on top.
+   Once the run is over the driving HUD goes: the slip or FAIL is the only thing up (RJ 11-08: "Not to many menus up at one time") */
+#dstart,.bigact{display:block;pointer-events:auto;cursor:pointer;font:900 clamp(26px,5.4vmin,52px)/1 'Open Sans',sans-serif;letter-spacing:.12em;color:#fff;background:var(--accent);border:2px solid #ffb38f;border-radius:999px;padding:clamp(16px,2.6vmin,26px) clamp(34px,6vmin,64px);box-shadow:0 0 0 6px rgba(242,88,39,.25),0 12px 40px rgba(0,0,0,.55);animation:dpulse 1.6s ease-in-out infinite}
+#dstart small,.bigact small{display:block;margin-top:6px;font-size:.3em;letter-spacing:.24em;opacity:.85}
+@keyframes dpulse{50%{box-shadow:0 0 0 14px rgba(242,88,39,.08),0 12px 40px rgba(0,0,0,.55)}}
+#dstart{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:30}#dstart[hidden],#dfail[hidden]{display:none}
+#dfail{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:30;display:flex;flex-direction:column;align-items:center;text-align:center}
+#dfail b{font:900 clamp(72px,17vmin,190px)/1 'Open Sans',sans-serif;letter-spacing:.08em;color:#ff3b30;text-shadow:0 0 34px rgba(255,59,48,.6),0 6px 24px rgba(0,0,0,.85)}
+#dfail p{margin:8px 0 22px;font-size:clamp(12px,2vmin,16px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#ffb4ad;text-shadow:0 2px 8px #000}
+body.dragover #dcluster,body.dragover #hud-speed,body.dragover #dgate,body.dragover #dpedal,body.dragover #dgasm,body.dragover #dtouch,body.dragover #dtrac,body.dragover #dleds,body.dragover #dpanel,body.dragover #dtree,body.dragover #dgrade,body.dragover #dhelp{display:none!important}
+#dslip .slipgo{position:sticky;top:-16px;z-index:2;display:flex;gap:10px;align-items:stretch;margin:-16px -18px 12px;padding:14px 18px;background:rgba(12,12,12,.97);border-bottom:1px solid var(--line)}
+#dslip .slipgo .act{flex-direction:column;justify-content:center;font-size:15px;padding:10px 16px}#dslip .slipgo .act small{font-size:10px;letter-spacing:.2em;opacity:.8}
+#dslip .slipgo .act.go{flex:1;font-size:clamp(20px,3.4vmin,30px);font-weight:900;letter-spacing:.12em;padding:14px 18px;box-shadow:0 0 0 4px rgba(242,88,39,.25),0 0 24px rgba(242,88,39,.45)}
 @media (pointer:coarse){body.clutchmode #dpedal{display:none}body.clutchmode #dtouch .shiftcol{display:none}
-  body.clutchmode #dslider{display:block;position:relative;align-self:flex-end;margin-right:12px;margin-left:0;width:clamp(54px,12vmin,90px);height:clamp(150px,40vmin,320px);border-radius:18px;background:rgba(10,10,10,.8);border:1px solid #ffb020;overflow:hidden;pointer-events:auto;touch-action:none}
-  body.clutchmode #dgate{left:auto;right:16px;bottom:16px;width:clamp(130px,32vmin,220px);height:clamp(130px,32vmin,220px);pointer-events:auto}}
+  body.clutchmode #dslider{display:block;position:relative;align-self:flex-end;margin-right:12px;margin-left:0;width:clamp(72px,17vmin,116px);height:clamp(180px,48vmin,360px);border-radius:18px;background:rgba(10,10,10,.8);border:1px solid #ffb020;overflow:hidden;pointer-events:auto;touch-action:none}
+  body.clutchmode #dgate{left:auto;right:16px;bottom:16px;width:clamp(150px,42vmin,300px);height:clamp(150px,42vmin,300px);pointer-events:auto}}
 @media (max-width:1000px){body.dragmode header #renderer,body.dragmode header #quality{display:none}}
 /* a phone on its side: the times top right beside a shorter shift-light bar, clear of the buttons and of the car's band */
-@media (pointer:coarse) and (orientation:landscape){body.clutchmode #dslider{height:clamp(84px,24vmin,150px)}#dpanel{top:54px;bottom:auto;min-width:150px;max-width:210px}#dleds{width:min(46vw,820px)}#dtimes div{line-height:1.35}}
+@media (pointer:coarse) and (orientation:landscape){body.clutchmode #dslider{height:clamp(84px,24vmin,150px)}#dpanel{top:54px;bottom:auto;min-width:150px;max-width:210px}#dleds{width:min(46vw,820px,calc(100vw - 480px))}#dtrac{width:min(46vw,640px,calc(100vw - 480px))}#dtimes div{line-height:1.35}}
 /* the grade just above the tach on a screen on its side, where the car is not */
 @media (orientation:landscape){#dgrade{top:auto;bottom:calc(clamp(200px,46vmin,500px) + 16px);font-size:clamp(28px,6vmin,72px)}}   /* the strip's header: room for the dials */
 /* upright: the tach above the buttons, the grade below the times */
-@media (orientation:portrait){body.dragmode #hud-speed{bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}body.dragmode.clutchmode #hud-speed{bottom:calc(clamp(150px,40vmin,320px) + 30px)}#dgrade{top:34%}#dpanel{top:96px;bottom:auto;left:96px;max-width:none;min-width:0}}
+@media (orientation:portrait){body.dragmode #hud-speed{bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}body.dragmode.clutchmode #hud-speed{bottom:calc(clamp(180px,48vmin,360px) + 30px)}#dgrade{top:34%}#dpanel{top:calc(54px + clamp(14px,3.6vmin,34px) + 10px + clamp(20px,3.2vmin,30px) + 30px);bottom:auto;left:96px;max-width:none;min-width:0}}
 /* UC-20 the loading screen: a car for sale in its own listing photo (loading.js), and a shooter to play while it loads */
 #lphoto{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transition:opacity 1.2s ease}
 #lphoto.on{opacity:.55;animation:drift 18s ease-out both}
@@ -264,7 +297,10 @@ body.walking #card,body.walking #showroom .nav,body.walking #foot{display:none}
 .walkbtn{font:inherit;font-size:12px;font-weight:800;letter-spacing:.06em;padding:8px 12px;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;cursor:pointer}
 @media (pointer:coarse){#walkhud span{display:none}}
 header #dcam,header #dbox{display:none}body.dragmode header #dcam,body.dragmode header #dbox{display:inline-block}
-header #mute,header #radio,header #motion,header #dcam,header #dbox{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}
+header #rain{display:none}body.inrun header #rain{display:inline-block}   /* UC-40.3: the Rain pill, in a race and on the strip */
+@media (max-width:1000px){body.inrun header{gap:6px}body.inrun header #mute,body.inrun header #radio,body.inrun header #motion,body.inrun header #dcam,body.inrun header #dbox,body.inrun header #rain{font-size:11px;padding:3px 6px}}   /* the Rain pill made the strip's row of pills too wide for a phone (412 px upright, 915 on its side): tighter */
+@media (max-width:720px){body.inrun header{padding:12px 10px}}
+header #mute,header #radio,header #motion,header #dcam,header #dbox,header #rain{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}
 #rbanner{position:fixed;z-index:6;left:0;right:0;top:64px;text-align:center;pointer-events:none;opacity:0}#rbanner.on{animation:station 3.2s ease both}
 #rbanner b{display:block;font-size:clamp(26px,4.5vw,46px);font-weight:800;font-style:italic;letter-spacing:.02em;color:#fff;text-shadow:0 3px 0 var(--accent-dark),0 0 24px rgba(242,88,39,.6)}
 #rbanner span{display:block;margin-top:4px;font-size:14px;font-style:italic;color:var(--accent-soft);text-shadow:0 1px 4px #000}
@@ -298,7 +334,7 @@ button,.pill{white-space:nowrap}
 </head>
 <body>
 <canvas id="view"></canvas>
-<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button><button class="pill" id="dbox" aria-pressed="true" title="The strip's gearbox: a clutch and an H gate, or paddles (G)">Clutch on</button></header>
+<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button><button class="pill" id="dbox" aria-pressed="true" title="The strip's gearbox: a clutch and an H gate, or paddles (G)">Clutch on</button><button class="pill" id="rain" aria-pressed="true" title="Rain on the circuit and the strip: a wet road, a grey sky and light shafts (U). It changes from the next run; on the strip, a new run at once">Rain on</button></header>
 <div id="rbanner" aria-live="polite"></div>
 <div id="loading"><div id="lbox"><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i><span id="lmb"></span></div></div></div>
 
@@ -343,8 +379,10 @@ button,.pill{white-space:nowrap}
   <div id="dgasm" aria-hidden="true"><i></i><b>GAS</b></div>
   <div id="dgate" aria-label="Shift gate"></div>
   <div id="dcluster" aria-label="The car's instrument cluster"></div>
-  <button id="dagain" class="act go" hidden>Stalled: run again (R)</button>
-  <div id="dtouch"><div id="dslider" class="clutchdepth" aria-label="Clutch: slide down to press it"><i></i><b>CLUTCH</b></div><button id="dgas" aria-label="Gas: hold it down">GAS</button><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>
+  <div id="dtrac" aria-live="off"><span class="bog">BOG</span><span class="spin">SPIN</span><i class="band"></i><i class="mk"></i><b id="dtracw">TRACTION</b></div>
+  <button id="dstart" hidden aria-label="Start the tree">START<small>Space</small></button>
+  <div id="dfail" hidden role="dialog" aria-label="The run failed"><b>FAIL</b><p id="dfailw"></p><button id="dfailr" class="bigact">RESTART<small>R</small></button></div>
+  <div id="dtouch"><div id="dslider" class="clutchdepth" aria-label="Clutch: slide down to press it"><svg class="cpic" viewBox="0 0 60 200" aria-hidden="true"><g class="pedal"><line x1="30" y1="8" x2="30" y2="66" stroke="#c9ced6" stroke-width="4" stroke-linecap="round"/><circle cx="30" cy="8" r="5" fill="#8d939b"/><rect x="12" y="62" width="36" height="16" rx="5" fill="#2b2f35" stroke="#c9ced6" stroke-width="1.5"/><path d="M16 67h28M16 70h28M16 73h28" stroke="#8d939b" stroke-width="1"/></g><rect x="10" y="112" width="12" height="80" rx="3" fill="#7d838c"/><g class="plate"><rect x="24" y="118" width="5" height="68" rx="1.5" fill="#c46b2b"/><path d="M25 124v56M27.5 124v56" stroke="#8a4518" stroke-width=".8"/><rect x="30" y="114" width="9" height="76" rx="2.5" fill="#a9aeb5"/><path d="M39 150h12" stroke="#a9aeb5" stroke-width="3"/></g></svg><i></i><b>CLUTCH</b></div><button id="dgas" aria-label="Gas: hold it down">GAS</button><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>
 </div>
 <div id="compare" hidden role="dialog" aria-modal="true" aria-label="Compare the cars for sale"><div class="cmpbox"><button id="cmpclose" aria-label="Close">✕</button>
   <p class="kick">For sale now · side by side</p><h2>Compare the lot</h2><div id="cmpbody"></div></div></div>

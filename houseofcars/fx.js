@@ -5,6 +5,7 @@ import * as THREE from 'three/webgpu';
 import { positionLocal, positionView, normalView, abs, vertexColor, mx_fractal_noise_float, mx_noise_float, nodeObject, pass, uniform, uv, float, vec2, vec3, vec4, color as tslColor, texture, mix, max, min, smoothstep, luminance, length, reflector, positionWorld, cameraPosition, normalize, dot, pow, oneMinus, normalWorld } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js';
+import { godRays } from './weather.js';                    // UC-40: the light shafts, put in front of the bloom (makePost o.godRays)
 
 // ---------------------------------------------------------------- studio environment (UC-7.2)
 // A dark room with softboxes: one long overhead strip, two side strips and a warm accent strip in the dealer's orange, so a
@@ -184,7 +185,10 @@ export function contactShadow(lengthM, widthM, strength = 0.72) {
 export function makePost(renderer, scene, camera, o) {
   const post = new THREE.PostProcessing(renderer);
   const scenePass = pass(scene, camera, { samples: 4 });
-  const col = scenePass.getTextureNode('output');
+  const raw = scenePass.getTextureNode('output');
+  // UC-40 o.godRays { sun: weather.js sunTracker, quality }: weather.js godRays (LSPP's light scattering) added to the scene's colour
+  // before the bloom, as test/weather_view.html draws it; without it the chain is the one below, unchanged (the lot's)
+  const col = o.godRays ? godRays(THREE, raw, o.godRays.sun, { depth: scenePass.getTextureNode('depth'), quality: o.godRays.quality }) : raw;
   // UC-37.5 (AUTHORED): what feeds the bloom is capped, so a sun glint on a clear coat glows instead of swelling into a white blob
   // over the windscreen (11-07, the strip's head-on shots); the picture graded a touch more saturated (o.saturation, 1 = none)
   const b = bloom(min(col, vec4(o.bloomCap ?? 6, o.bloomCap ?? 6, o.bloomCap ?? 6, 1)), o.bloomStrength, o.bloomRadius, o.bloomThreshold);
@@ -192,7 +196,7 @@ export function makePost(renderer, scene, camera, o) {
   const vig = oneMinus(smoothstep(0.35, 0.85, d).mul(o.vignette));
   const lit = col.rgb.add(b.rgb), grey = luminance(lit);
   post.outputNode = vec4(mix(vec3(grey, grey, grey), lit, o.saturation ?? 1).mul(vig), 1);
-  return { post, scenePass, bloomNode: b, render: () => post.render() };
+  return { post, scenePass, bloomNode: b, rays: o.godRays ? col : null, render: () => post.render() };
 }
 
 // ---------------------------------------------------------------- the track's sky (UC-7.5)
@@ -214,11 +218,15 @@ export function physicalSky(renderer, lightDir, gain = 0.32, groundRGB = null) {
     sky.material.fragmentNode = sky.material.fragmentNode.mul(vec4(gain, gain, gain, 1));   // SkyMesh is built for exposure ~0.3; the page keeps 1
     return sky;
   };
-  const probe = new THREE.Scene(); probe.add(make(100));
+  return { mesh: make(2800), env: skyEnv(renderer, make(100), groundRGB), toSun };
+}
+// the probe: a sky mesh 100 m across (the clear one above, or UC-40's overcast one: app.js hands a clone of the sky the camera sees,
+// which shares its material) with the ground under its horizon, rendered into the PMREM the paint and the wet road reflect
+export function skyEnv(renderer, skyMesh, groundRGB = null) {
+  const probe = new THREE.Scene(); probe.add(skyMesh);
   if (groundRGB) {
     const g = new THREE.Mesh(new THREE.CircleGeometry(95, 48), new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(...groundRGB).multiplyScalar(GROUND_RADIANCE), fog: false }));
     g.rotation.x = -Math.PI / 2; g.position.y = -1.2; probe.add(g);
   }
-  const env = new THREE.PMREMGenerator(renderer).fromScene(probe, 0.0).texture;
-  return { mesh: make(2800), env, toSun };
+  return new THREE.PMREMGenerator(renderer).fromScene(probe, 0.0).texture;
 }
