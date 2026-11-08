@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Options Bot Manual</title>
+<meta name="description" content="The options trader bot's manual: how to run it, every step and what can go wrong, what changed from the original, how it was checked and tested, and how others do the same.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#0B1219;--panel:#121C26;--line:#2E4052;--well:#0E1720;--fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--head:'Space Grotesk',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace;color-scheme:dark}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.65 var(--sans)}
+main{max-width:820px;margin:0 auto;padding:22px 16px 48px}a{color:var(--blue)}
+.crumb{font-size:13.5px;color:var(--muted);margin:0 0 18px}.crumb a{color:var(--muted)}
+h1{font:700 clamp(26px,4.6vw,36px)/1.2 var(--head);margin:0 0 12px}
+h2{font:600 22px/1.25 var(--head);margin:40px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+h3{font:600 16.5px/1.3 var(--head);margin:24px 0 6px}
+h2,h3{scroll-margin-top:12px}
+p{margin:0 0 14px;color:var(--soft)}strong{color:var(--fg)}
+ol,ul{color:var(--soft);padding-left:22px;margin:0 0 14px}li{margin:5px 0}
+code{font:13px var(--mono);background:var(--well);border:1px solid var(--line);border-radius:6px;padding:1px 5px;color:var(--fg);white-space:nowrap;font-variant-ligatures:none}
+pre{background:var(--well);border:1px solid var(--line);border-radius:12px;padding:14px;font:12.5px/1.55 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}
+pre code{border:0;padding:0;background:none}
+hr{border:0;border-top:1px solid var(--line);margin:30px 0 16px}
+.nav{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.nav a{font-size:13px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--soft)}
+.nav a:hover{border-color:var(--accent)}
+footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}footer p{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<p class="crumb"><a href="../">anchor-demo</a> / <a href="./">options trader bot</a> / manual</p>
+<h1 id="zdt-autopilot-spy-0dte-opening-range-breakout-on-interactive-brokers">ZDT autopilot: SPY 0DTE opening-range breakout on Interactive Brokers</h1>
+<nav class="nav"><a href="#run-it-on-a-paper-account-first">Run it on a paper account first</a><a href="#the-use-case-it-follows">The use case it follows</a><a href="#what-is-from-the-original-and-what-is-new">What is from the original and what is new</a><a href="#open-questions-for-the-owner">Open questions for the owner</a><a href="#the-light-loop">The light loop</a><a href="#epics-and-use-cases">Epics and use cases</a><a href="#tests">Tests</a><a href="#replay-on-real-sessions">Replay on real sessions</a><a href="#how-others-do-it">How others do it</a><a href="#ask-claude-about-it">Ask Claude about it</a></nav>
+
+<p>A trading script, finished and tested. The original arrived cut off mid-line at the PUT trigger check
+(<code>elif last_price &lt; orb_lo</code>); every change from it is listed below, and every value in <code>zdt_autopilot.py</code>
+that is not from the original says so beside it.</p>
+<h2 id="run-it-on-a-paper-account-first">Run it on a paper account first</h2>
+<ol>
+<li>Start TWS (or IB Gateway) logged in to the PAPER account. In TWS: Global Configuration, API, Settings:
+   tick "Enable ActiveX and Socket Clients", port 7497.</li>
+<li>The account needs live market data for SPY and for US options (OPRA). Without it the bot stops at
+   startup and says so.</li>
+<li><code>pip install -r requirements.txt</code></li>
+<li><code>py zdt_autopilot.py</code></li>
+</ol>
+<p>The bot refuses a live port (7496, 4001) or a live account (IBKR paper account IDs start with "D") unless you
+add <code>--live</code>.</p>
+<p><strong>It sends no orders until the two exit rules are set</strong> (<code>STOP_LOSS_PCT</code>, <code>TAKE_PROFIT_PCT</code> near the top of
+the file). The original stops before its exit rules, so they are not known. Until they are set it runs
+SIGNALS ONLY: it does everything else (opening range, signals, the contract it would buy, how many) and
+prints the order it would send.</p>
+<h2 id="the-use-case-it-follows">The use case it follows</h2>
+<p><strong>Actor:</strong> the trader, running the script on their own PC beside TWS or IB Gateway.
+<strong>Goal:</strong> on a trading day, buy a SPY 0DTE option when SPY breaks out of its first 15-minute range, sized to
+the balance, let IB hold the exits, write every trade to the CSV, and never leave an order or a position
+behind.
+<strong>Preconditions:</strong> TWS or IB Gateway is running with the API on <code>PORT</code>; the account has live SPY and OPRA data.</p>
+<p>Main path, each step with what you see:</p>
+<ol>
+<li>You start the script. It connects and prints PAPER or LIVE with the account ID.</li>
+<li>It reads the account's USD <code>TotalCashBalance</code> (the original's field) and its own budget: <code>STARTING_BUDGET_USD</code>
+   ($100) before its first trade, then the last ending balance in its log. It prints <code>[ACCOUNT]</code> and <code>[BUDGET]</code>.</li>
+<li>It reads today's session hours from IB, waits for the first 15-minute bar to close, and reads that
+   bar. It prints <code>[ORB ESTABLISHED]</code> and the two triggers (high + <code>ORB_BUFFER</code>, low - <code>ORB_BUFFER</code>).</li>
+<li>It streams SPY's last price and prints a status line every second.</li>
+<li>SPY trades above the CALL trigger or below the PUT trigger. It prints <code>[SIGNAL]</code>.</li>
+<li>It picks today's expiry and the listed strike nearest spot +/- 1.50 rounded to the dollar (the original's rule),
+   always out of the money, a tie going to the one nearer spot +/- 1.50. It prints <code>[CONTRACT]</code>.</li>
+<li>It reads that option's ask and sizes the order with the original's tier table, from its budget and never from more
+   than the account's cash. It prints <code>[ORDER]</code>.</li>
+<li>It buys with a limit at the ask and waits for the fill. It prints <code>[FILLED]</code>.</li>
+<li>It places the stop and the target at IB as one OCA pair, so they stay working even if the PC or the
+   script dies. It prints <code>[EXITS AT IB]</code>.</li>
+<li>One exit fills, or the flatten time arrives (10 minutes before the close) and it sells at market. It prints <code>[TRADE CLOSED]</code>.</li>
+<li>It writes one row to <code>trade_execution_log.csv</code> in the original's columns, with the net P/L after the
+    commissions IB reports.</li>
+<li>It waits for SPY to come back between the triggers before it takes another signal, and stops for
+    the day after <code>MAX_CONSECUTIVE_LOSSES</code> losses in a row. It prints <code>[REARMED]</code> or <code>[CIRCUIT BREAKER]</code>.</li>
+<li>At the flatten time, or on Ctrl+C, it cancels its own orders, sells what it bought, and disconnects.</li>
+</ol>
+<p>Alternate paths:</p>
+<ul>
+<li>1a. Live port or live account without <code>--live</code>: it refuses and exits.</li>
+<li>2a. IB reports no USD <code>TotalCashBalance</code>: it stops. The original carried on with $100 instead.</li>
+<li>2b. The log's last row says UNREPORTED: the budget is not known, and it stops.</li>
+<li>3a. Started after 9:45 ET: it still reads the 9:30 bar. The original read the latest 30 minutes, so
+  after about 10:15 its "opening range" was a later bar, and before 9:45 it was a bar still forming.</li>
+<li>3b. IB lists today as CLOSED: it does nothing. A half day closes early, and the flatten time moves with it.</li>
+<li>4a. No live SPY price within 15 seconds, or the data is delayed: it stops and says why.</li>
+<li>6a. Today's expiry is not listed: no trade today. The original switched to the next expiry, which is
+  not a 0DTE trade.</li>
+<li>6b. No out-of-the-money strike within $5 of the target is listed: no trade today. The original crashed here (<code>min()</code> of
+  an empty list), and it never checked that IB knew the contract it picked.</li>
+<li>7a. The option has no live bid and ask: this signal is skipped.</li>
+<li>7b. One contract costs more than the budget, or than the cash: no trade today. The original bought one anyway.</li>
+<li>8a. Not filled within 10 seconds: the rest is cancelled and only what filled is traded.</li>
+<li>9a. Exit rules not set: SIGNALS ONLY, no orders at all.</li>
+<li>10a. The connection drops while holding: the stop and target keep working at IB; the script says what
+  is still open.</li>
+<li>11a. IB never sends the commission: the row says UNREPORTED rather than an estimate, and the bot stops
+  for the day because the balance is no longer known.</li>
+</ul>
+<h2 id="what-is-from-the-original-and-what-is-new">What is from the original and what is new</h2>
+<p>Kept as the original wrote it: the configuration, the CSV columns, the tier table, the strike rule (spot +/- 1.50,
+nearest within $5), the ORB buffer and triggers, the consecutive-loss breaker, the prints.</p>
+<p>Changed, each one a defect in the original as it arrived:</p>
+<ul>
+<li><code>get_safe_tier_contracts</code> returned <code>max(1, cts)</code>, so it bought one contract it could not afford. It now
+  returns 0 and the bot does not trade (7b).</li>
+<li>The opening range was <code>bars[0]</code> of the last 30 minutes, which is the opening bar only between about 9:45
+  and 10:15 (3a).</li>
+<li>When the balance could not be read it used <code>STARTING_BUDGET_USD</code> ($100) as if it were real (2a).</li>
+<li>When today's expiry was missing it traded the next one (6a).</li>
+<li>An empty strike list crashed it, and neither <code>qualifyContracts</code> call was checked. ib_async reports a
+  failure as <code>None</code> inside a non-empty list, so the result has to be read, not just called (6b).</li>
+<li>The date came from the PC's clock in its own time zone; it now comes from New York time.</li>
+</ul>
+<p>New, because the file ends before them: steps 7 to 13, the live guard (1a), the session hours (3b), the
+re-arm rule (12), and the cleanup (13). Every value that is not from the original is marked in the file.</p>
+<p>From the owner's answer (2026-11-08): start it with $100 and trade 0DTE within that budget, buying cheap calls when
+the market is going up and cheap puts when it is going down. The bot now sizes from its own budget, <code>STARTING_BUDGET_USD</code>
+to start and the log's last ending balance after that, and never from more than the account holds (2, 7, 2b). Calls on
+an up move and puts on a down move is the breakout rule it already had (5).</p>
+<h2 id="open-questions-for-the-owner">Open questions for the owner</h2>
+<ol>
+<li>The original ends at the PUT check. Is there more of it? If not:</li>
+<li>What stop and target do you want (<code>STOP_LOSS_PCT</code>, <code>TAKE_PROFIT_PCT</code>)?</li>
+<li>What does <code>TIME_STOP_PCT = 0.25</code> do? The original sets it but uses it after the point where it ends, so
+   the bot does not use it yet.</li>
+<li>After a trade, should it trade again the same day? It now waits for SPY to come back inside the range
+   first, then takes the next breakout, until two losses in a row.</li>
+<li>The trend: the bot reads it as SPY breaking out of the first 15-minute range, up for calls and down for puts.
+   Is that the read you mean, or another one (VWAP, a moving average)?</li>
+<li>Cheap lotto options: the strike is the original's fixed $1.50 from spot (about 0.20 delta in its comment).
+   When that option costs more than the budget, should it go further out to a cheaper one, or skip the day?
+   And keep the fixed offset, or pick by the delta IB reports?</li>
+<li>Answered 2026-11-08: start with $100 and trade within it. The budget carries over from day to day in the
+   log; say if it should start again at $100 each day instead.</li>
+</ol>
+<h2 id="the-light-loop">The light loop</h2>
+<p><code>spec_check/</code> holds a check of the code against a written spec, <code>spec_check/SPEC.md</code>: the use case above,
+the original script's own comments, and ib_async's documentation, each copied word for word. Every rule in
+<code>rules.json</code> quotes it, every suspect in <code>suspects.json</code> names a rule and a code line, and a fault counts only
+when that suspect's repro (<code>repros/</code>) fails its own assertion on the code.</p>
+<p>It now holds 19 rules and 18 suspects. The first run proved 3 faults (<code>REPORT_before_fixes.md</code>): a tie between two listed strikes went to the one
+farther from spot +/- 1.50; with the strikes just above spot unlisted it could buy an in-the-money call,
+against the original's "slightly OTM"; and Ctrl+C while waiting for IB's commission report left a closed
+trade out of the CSV. All three are fixed and each has a test. The second run proved none (<code>REPORT.md</code>).</p>
+<p>Run any repro on its own: <code>python spec_check/run_repro.py S1</code>.</p>
+<h2 id="epics-and-use-cases">Epics and use cases</h2>
+<p><code>model/</code> is the bot written as two epics: trading one day (seven use cases) and getting it ready for real money (four).
+Each use case gives its actor, trigger, success and minimal guarantee, its steps, and every alternate path with
+where it leads. Requirements (<code>model/requirements.yaml</code>) never name code: each is carried by steps, and only the
+steps name code. <code>model/step_tests.yaml</code> names the tests that run each step and path; <code>py tests/step_trace.py</code>
+runs them under a tracer and writes the code each one ran (<code>model/step_trace.json</code>), and <code>tests/test_model.py</code>
+fails any step whose named code its tests never ran. <code>py make_epics_page.py OUT</code> writes the page that shows it all.
+The model also passes the closed-loop kit's use case checker (<code>usecase_model.py</code>, rules U1 to U19) with no holes;
+set <code>USECASE_MODEL</code> to that file and <code>tests/test_model.py</code> runs it too.</p>
+<h2 id="tests">Tests</h2>
+<p><code>pip install -r requirements-dev.txt</code>, then <code>py -m pytest tests</code> (84 tests) runs the bot through whole simulated
+trading days against an in-memory TWS (<code>tests/fake_ib_async.py</code>), with tests for every step and alternate path of
+the trading epic. No TWS, network or account is involved. <code>tests/test_api_contract.py</code> reads the real ib_async
+source and checks that every <code>ib.</code> call, keyword and field the bot uses exists there. It runs when ib_async is
+installed, or when <code>IB_ASYNC_SRC</code> points at its source, and is skipped otherwise.</p>
+<p><code>py tests/plant_check.py</code> plants 30 defects, one at a time, in copies of the bot and of the model (the original's
+five among them), and each must make a test fail. A check that has only ever passed cannot be told from one
+that is switched off.</p>
+<p>What the tests cannot show: how IB itself fills, prices and reports on a given day. The first paper run
+is that check.</p>
+<p><code>py tests/demo_day.py</code> prints one simulated day the way the terminal shows it (<code>tests/demo_day_signals_only.txt</code>);
+<code>py tests/demo_day.py --exits 0.5 1.0</code> does the same with a stop and a target set, test values only
+(<code>tests/demo_day_with_exits.txt</code>).</p>
+<h2 id="replay-on-real-sessions">Replay on real sessions</h2>
+<p><code>sim/</code> runs the bot's own code, unchanged, through SPY's real one-minute bars: <code>py sim/market_data.py</code> fetches the latest
+five sessions (Yahoo Finance's public chart data), <code>py sim/replay.py</code> replays them with the budget carried day to day
+(<code>--reset-daily</code> starts each at $100; <code>--stop</code> and <code>--target</code> set the test exits), and <code>py sim/make_replay_page.py OUT</code>
+writes the page that plays each day back. Option prices there are modeled (Black-Scholes, VIX as the volatility, the time
+left to the close), because past 0DTE quotes are not in free data; <code>sim/README.md</code> says what is real and what is modeled.
+The replay has its own light loop (<code>sim/spec_check/</code>): six rules from its use case, among them that no decision uses a
+price from the future, none broken, and a planted look-ahead caught.</p>
+<h2 id="how-others-do-it">How others do it</h2>
+<p>Searched on 2026-11-08. Each item links to a public page; where that page blocks readers, a readable summary is
+linked beside it. This is what others built and what their authors report, not advice.</p>
+<h3 id="on-hugging-face">On Hugging Face</h3>
+<p>A search of Hugging Face's model, dataset and Space names for "0dte", "opening range breakout" and "spy options" finds
+no model or dataset for this strategy: three Spaces have 0DTE in their names, and the two datasets it matches are
+unrelated. The nearest data:</p>
+<ul>
+<li><a href="https://huggingface.co/datasets/paperswithbacktest/Options-Daily-Price">paperswithbacktest/Options-Daily-Price</a>:
+  daily bars of every US-listed option that traded since June 2014, index weeklies included, with implied volatility
+  and greeks. Daily bars cannot test a 9:45 entry. Access needs the owner's approval.</li>
+<li><a href="https://huggingface.co/datasets/fabhaus/equities_5m_options">fabhaus/equities_5m_options</a>: 5-minute bars for
+  options on about 13,300 US underlyings, January 2024 to March 2026. Fine enough for an intraday replay; its card
+  does not list the underlyings, so check that SPY is among them first.</li>
+</ul>
+<h3 id="tools-that-run-this-kind-of-bot">Tools that run this kind of bot</h3>
+<ul>
+<li><a href="https://github.com/ib-api-reloaded/ib_async">ib_async</a>, the library this bot uses. It replaces ib_insync, which
+  many examples online still use.</li>
+<li><a href="https://www.quantconnect.com/docs/v2/writing-algorithms/securities/asset-classes/equity-options/requesting-data/universes">QuantConnect LEAN</a>
+  filters an option chain to today's expiry with <code>expiration(0, 0)</code> and picks strikes by delta with <code>delta(min, max)</code>.
+  It <a href="https://www.quantconnect.com/docs/v2/cloud-platform/live-trading/brokerages/interactive-brokers">trades equity and index options live through Interactive Brokers</a>,
+  with stop, limit, bracket and one-cancels-other orders.</li>
+<li><a href="https://nautilustrader.io/docs/latest/integrations/interactive_brokers/">NautilusTrader</a>: its Interactive Brokers
+  adapter trades through TWS or IB Gateway and loads option chains for a window of days from today.</li>
+</ul>
+<h3 id="the-same-signal-in-research">The same signal in research</h3>
+<ul>
+<li>Zarattini and Aziz (2023), <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4416622">Can Day Trading Really Be Profitable?</a>
+  (<a href="https://www.cxoadvisory.com/?p=44210">summary</a>): QQQ shares, a 5-minute opening range, entered in the direction
+  of the first bar, the stop at that bar's other end, the target 10 times the risk, out at the close. They report
+  33.2% a year against 14.9% for holding QQQ, January 2016 to February 2023, with commission charged but no bid-ask
+  spread or slippage.</li>
+<li>Zarattini, Barbon and Aziz (2024), <a href="https://ideas.repec.org/p/chf/rpseri/rp2498.html">A Profitable Day Trading Strategy For The U.S. Equity Market</a>:
+  the 5-minute range again (15, 30 and 60 minutes compared), traded only in stocks far more active than usual that
+  day, 2016 to 2023. They report a net Sharpe ratio of 2.81 for the top 20.</li>
+<li>Zarattini, Aziz and Barbon (2024), <a href="https://ideas.repec.org/p/chf/rpseri/rp2497.html">Beat the Market: An Effective Intraday Momentum Strategy for S&amp;P500 ETF (SPY)</a>:
+  trend entries on SPY when intraday demand looks abnormal, with trailing stops, 2007 to early 2024. They report
+  19.6% a year net of costs. The abstract does not mention options.</li>
+<li>Option Alpha (2025), <a href="https://optionalpha.com/blog/opening-range-breakout-0dte-options-trading-strategy-explained">Opening range breakout 0DTE options</a>:
+  the breakout on SPX, but on a break it sells a 0DTE credit spread (a put spread on an upside break) and holds it to
+  the close. Of the 15, 30 and 60-minute ranges it tested, its bot uses the 60-minute one.</li>
+</ul>
+<h3 id="0dte-options-and-their-costs-in-research">0DTE options and their costs in research</h3>
+<ul>
+<li>Beckmeyer, Branger and Gayda (2023), <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4404704">Retail Traders Love 0DTE Options... But Should They?</a>
+  (<a href="https://cxoadvisory.com/individual-investing/retail-0dte-option-trader-performance">summary</a>): retail traders lost
+  about $70 million in all on 0DTE S&amp;P 500 index options, January 2021 to February 2023, and their average daily net
+  loss rose from $184,000 to $358,000 after daily expiries began in May 2022.</li>
+<li>Almeida, Freire and Hizmeri (draft of May 2025), <a href="https://fmai.memberclicks.net/assets/docs/Derivatives2025/Almeida.pdf">0DTE Asset Pricing</a>:
+  0DTE options are now about half of all S&amp;P 500 option volume. In them, investors are paid mainly for bearing the
+  risk of the market rising rather than falling, and most 0DTEs look mispriced to a risk-averse investor; that was
+  highly profitable to exploit before 2022 and faded once 0DTEs were listed every day.</li>
+<li>Vilkov, <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4641356">0DTE Trading Rules: Tail Risk, Implementation, and Tactical Timing</a>,
+  with its code at <a href="https://github.com/vilkovgr/0dte-strategies">vilkovgr/0dte-strategies</a>: rule-based 0DTE option
+  strategies. Its August 2026 correction says the bid-ask half-spread had been charged at 1/100 of its true size;
+  with that fixed, no strategy or basket keeps a positive net Sharpe ratio.</li>
+</ul>
+<h3 id="ai-agents-that-trade">AI agents that trade</h3>
+<ul>
+<li><a href="https://github.com/TauricResearch/TradingAgents">TradingAgents</a>: a team of language-model agents (analysts, bull
+  and bear researchers, a trader, risk managers, a portfolio manager) deciding trades in stocks, ETFs and crypto. It
+  runs on Claude among many models, sends its orders to a simulated exchange, and says it is for research.</li>
+<li>Li, Kim, Cucuringu and Ma (2025), <a href="https://arxiv.org/abs/2505.07078">Can LLM-based Financial Investing Strategies Outperform the Market in Long Run?</a>:
+  over two decades and more than 100 symbols, the advantages earlier reported for LLM strategies shrink a lot; the
+  strategies were too cautious in rising markets and too aggressive in falling ones.</li>
+<li><a href="https://github.com/alpacahq/alpaca-mcp-server">Alpaca's MCP server</a> lets Claude (Desktop or Code) and other
+  assistants place single and multi-leg option orders at the broker Alpaca, on a paper account unless switched off.
+  A different broker, and no strategy of its own.</li>
+</ul>
+<h3 id="how-this-bot-differs">How this bot differs</h3>
+<ul>
+<li>Its range is the first 15 minutes and it enters $0.30 past it (<code>ORB_BUFFER</code>). The papers above use a 5-minute
+  range, compare 15, 30 and 60, and add filters such as trading only unusually active stocks.</li>
+<li>It buys one option a fixed $1.50 out of the money (about 0.20 delta, the original's comment says). QuantConnect
+  picks strikes by delta (open question 6), and Option Alpha's 0DTE version sells a spread instead of buying.</li>
+<li>The breakout papers trade shares and report gains. The 0DTE studies above report retail traders losing money, and
+  Vilkov's net results reversed once the spread was charged at its true size. The bot's replay prices options with a
+  model, so a paper run on real quotes is the check that counts.</li>
+</ul>
+<h2 id="ask-claude-about-it">Ask Claude about it</h2>
+<p>The bot's pages carry a chat panel (<code>site/bot_chat.js</code>) that answers questions about the bot and reads the answers aloud.
+It talks to a small Cloudflare Worker (<code>relay/</code>, the House of Cars sales relay's design) that holds the Claude key and gives
+Claude this README, the epics model and the bot's settings. Claude there can show a part of the pages and nothing else: it
+cannot change the site, the bot or an account, and it gives no trading advice. <code>relay/README.md</code> has its use case, its caps
+and its tests.</p>
+<hr />
+<p>Software, not financial advice. Options can lose their whole premium, and 0DTE options expire the same day.
+Run it on a paper account first.</p>
+<footer>
+<p>This is the bot's <a href="README.md">README.md</a>, also in the download. <a href="./">Back to the options trader bot</a>.</p>
+</footer>
+</main>
+</body>
+</html>

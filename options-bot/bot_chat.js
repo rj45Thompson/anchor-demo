@@ -23,7 +23,7 @@
 (function () {
   'use strict';
   const RELAY = document.currentScript && document.currentScript.dataset.relay;
-  const BOT_PARTS = ['run', 'does', 'day', 'fixed', 'light-loop', 'tested', 'replay', 'questions'];
+  const BOT_PARTS = ['run', 'does', 'fixed', 'light-loop', 'tested', 'replay', 'others', 'questions'];
   const ON_EPICS = /epics\.html$/.test(location.pathname);
   const KEY = 'optionsbot.chat';
 

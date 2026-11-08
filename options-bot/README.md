@@ -169,6 +169,89 @@ left to the close), because past 0DTE quotes are not in free data; `sim/README.m
 The replay has its own light loop (`sim/spec_check/`): six rules from its use case, among them that no decision uses a
 price from the future, none broken, and a planted look-ahead caught.
 
+## How others do it
+
+Searched on 2026-11-08. Each item links to a public page; where that page blocks readers, a readable summary is
+linked beside it. This is what others built and what their authors report, not advice.
+
+### On Hugging Face
+
+A search of Hugging Face's model, dataset and Space names for "0dte", "opening range breakout" and "spy options" finds
+no model or dataset for this strategy: three Spaces have 0DTE in their names, and the two datasets it matches are
+unrelated. The nearest data:
+
+- [paperswithbacktest/Options-Daily-Price](https://huggingface.co/datasets/paperswithbacktest/Options-Daily-Price):
+  daily bars of every US-listed option that traded since June 2014, index weeklies included, with implied volatility
+  and greeks. Daily bars cannot test a 9:45 entry. Access needs the owner's approval.
+- [fabhaus/equities_5m_options](https://huggingface.co/datasets/fabhaus/equities_5m_options): 5-minute bars for
+  options on about 13,300 US underlyings, January 2024 to March 2026. Fine enough for an intraday replay; its card
+  does not list the underlyings, so check that SPY is among them first.
+
+### Tools that run this kind of bot
+
+- [ib_async](https://github.com/ib-api-reloaded/ib_async), the library this bot uses. It replaces ib_insync, which
+  many examples online still use.
+- [QuantConnect LEAN](https://www.quantconnect.com/docs/v2/writing-algorithms/securities/asset-classes/equity-options/requesting-data/universes)
+  filters an option chain to today's expiry with `expiration(0, 0)` and picks strikes by delta with `delta(min, max)`.
+  It [trades equity and index options live through Interactive Brokers](https://www.quantconnect.com/docs/v2/cloud-platform/live-trading/brokerages/interactive-brokers),
+  with stop, limit, bracket and one-cancels-other orders.
+- [NautilusTrader](https://nautilustrader.io/docs/latest/integrations/interactive_brokers/): its Interactive Brokers
+  adapter trades through TWS or IB Gateway and loads option chains for a window of days from today.
+
+### The same signal in research
+
+- Zarattini and Aziz (2023), [Can Day Trading Really Be Profitable?](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4416622)
+  ([summary](https://www.cxoadvisory.com/?p=44210)): QQQ shares, a 5-minute opening range, entered in the direction
+  of the first bar, the stop at that bar's other end, the target 10 times the risk, out at the close. They report
+  33.2% a year against 14.9% for holding QQQ, January 2016 to February 2023, with commission charged but no bid-ask
+  spread or slippage.
+- Zarattini, Barbon and Aziz (2024), [A Profitable Day Trading Strategy For The U.S. Equity Market](https://ideas.repec.org/p/chf/rpseri/rp2498.html):
+  the 5-minute range again (15, 30 and 60 minutes compared), traded only in stocks far more active than usual that
+  day, 2016 to 2023. They report a net Sharpe ratio of 2.81 for the top 20.
+- Zarattini, Aziz and Barbon (2024), [Beat the Market: An Effective Intraday Momentum Strategy for S&P500 ETF (SPY)](https://ideas.repec.org/p/chf/rpseri/rp2497.html):
+  trend entries on SPY when intraday demand looks abnormal, with trailing stops, 2007 to early 2024. They report
+  19.6% a year net of costs. The abstract does not mention options.
+- Option Alpha (2025), [Opening range breakout 0DTE options](https://optionalpha.com/blog/opening-range-breakout-0dte-options-trading-strategy-explained):
+  the breakout on SPX, but on a break it sells a 0DTE credit spread (a put spread on an upside break) and holds it to
+  the close. Of the 15, 30 and 60-minute ranges it tested, its bot uses the 60-minute one.
+
+### 0DTE options and their costs in research
+
+- Beckmeyer, Branger and Gayda (2023), [Retail Traders Love 0DTE Options... But Should They?](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4404704)
+  ([summary](https://cxoadvisory.com/individual-investing/retail-0dte-option-trader-performance)): retail traders lost
+  about $70 million in all on 0DTE S&P 500 index options, January 2021 to February 2023, and their average daily net
+  loss rose from $184,000 to $358,000 after daily expiries began in May 2022.
+- Almeida, Freire and Hizmeri (draft of May 2025), [0DTE Asset Pricing](https://fmai.memberclicks.net/assets/docs/Derivatives2025/Almeida.pdf):
+  0DTE options are now about half of all S&P 500 option volume. In them, investors are paid mainly for bearing the
+  risk of the market rising rather than falling, and most 0DTEs look mispriced to a risk-averse investor; that was
+  highly profitable to exploit before 2022 and faded once 0DTEs were listed every day.
+- Vilkov, [0DTE Trading Rules: Tail Risk, Implementation, and Tactical Timing](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4641356),
+  with its code at [vilkovgr/0dte-strategies](https://github.com/vilkovgr/0dte-strategies): rule-based 0DTE option
+  strategies. Its August 2026 correction says the bid-ask half-spread had been charged at 1/100 of its true size;
+  with that fixed, no strategy or basket keeps a positive net Sharpe ratio.
+
+### AI agents that trade
+
+- [TradingAgents](https://github.com/TauricResearch/TradingAgents): a team of language-model agents (analysts, bull
+  and bear researchers, a trader, risk managers, a portfolio manager) deciding trades in stocks, ETFs and crypto. It
+  runs on Claude among many models, sends its orders to a simulated exchange, and says it is for research.
+- Li, Kim, Cucuringu and Ma (2025), [Can LLM-based Financial Investing Strategies Outperform the Market in Long Run?](https://arxiv.org/abs/2505.07078):
+  over two decades and more than 100 symbols, the advantages earlier reported for LLM strategies shrink a lot; the
+  strategies were too cautious in rising markets and too aggressive in falling ones.
+- [Alpaca's MCP server](https://github.com/alpacahq/alpaca-mcp-server) lets Claude (Desktop or Code) and other
+  assistants place single and multi-leg option orders at the broker Alpaca, on a paper account unless switched off.
+  A different broker, and no strategy of its own.
+
+### How this bot differs
+
+- Its range is the first 15 minutes and it enters $0.30 past it (`ORB_BUFFER`). The papers above use a 5-minute
+  range, compare 15, 30 and 60, and add filters such as trading only unusually active stocks.
+- It buys one option a fixed $1.50 out of the money (about 0.20 delta, the original's comment says). QuantConnect
+  picks strikes by delta (open question 6), and Option Alpha's 0DTE version sells a spread instead of buying.
+- The breakout papers trade shares and report gains. The 0DTE studies above report retail traders losing money, and
+  Vilkov's net results reversed once the spread was charged at its true size. The bot's replay prices options with a
+  model, so a paper run on real quotes is the check that counts.
+
 ## Ask Claude about it
 
 The bot's pages carry a chat panel (`site/bot_chat.js`) that answers questions about the bot and reads the answers aloud.
