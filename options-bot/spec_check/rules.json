@@ -1,0 +1,106 @@
+{
+  "rules": [
+    {
+      "id": "R1",
+      "section": "A 1a",
+      "says": "Without --live, a live port or a live account is refused",
+      "quote": "1a. Live port or live account without `--live`: it refuses and exits."
+    },
+    {
+      "id": "R2",
+      "section": "B",
+      "says": "7496 is a live port; 7497 and 4002 are paper ports",
+      "quote": "7497 = TWS Paper, 7496 = TWS Live, 4002 = IB Gateway Paper"
+    },
+    {
+      "id": "R3",
+      "section": "A 2a",
+      "says": "No USD TotalCashBalance from IB means the bot stops",
+      "quote": "IB reports no USD `TotalCashBalance`: it stops."
+    },
+    {
+      "id": "R4",
+      "section": "A 3a",
+      "says": "A late start still reads the 9:30 bar as the opening range",
+      "quote": "Started after 9:45 ET: it still reads the 9:30 bar."
+    },
+    {
+      "id": "R5",
+      "section": "A 6",
+      "says": "The strike is the listed one nearest spot +/- 1.50 rounded to the dollar",
+      "quote": "It picks today's expiry and the listed strike nearest spot +/- 1.50 rounded to the dollar"
+    },
+    {
+      "id": "R6",
+      "section": "B",
+      "says": "The option bought is slightly out of the money",
+      "quote": "Finds today's expiring SPY 0DTE option matching ~0.20 Delta / slightly OTM."
+    },
+    {
+      "id": "R7",
+      "section": "B",
+      "says": "CALL only strictly above high + buffer, PUT only strictly below low - buffer",
+      "quote": "CALL Breakout > ${orb_high + ORB_BUFFER:.2f} | PUT Breakdown < ${orb_low - ORB_BUFFER:.2f}"
+    },
+    {
+      "id": "R8",
+      "section": "A 7b",
+      "says": "No trade when one contract costs more than the balance",
+      "quote": "One contract costs more than the balance: no trade today."
+    },
+    {
+      "id": "R9",
+      "section": "A 11",
+      "says": "Every trade gets one CSV row, net of the commissions IB reports",
+      "quote": "It writes one row to `trade_execution_log.csv` in the original's columns, with the net P/L after the commissions IB reports."
+    },
+    {
+      "id": "R10",
+      "section": "A 13",
+      "says": "On Ctrl+C it cancels its orders, sells what it bought and disconnects",
+      "quote": "At the flatten time, or on Ctrl+C, it cancels its own orders, sells what it bought, and disconnects."
+    },
+    {
+      "id": "R11",
+      "section": "A 11a",
+      "says": "A missing commission report is logged as UNREPORTED, never an estimate",
+      "quote": "IB never sends the commission: the row says UNREPORTED rather than an estimate"
+    },
+    {
+      "id": "R12",
+      "section": "C",
+      "says": "Delays use IB.sleep, never time.sleep",
+      "quote": "For introducing a delay, never use time.sleep() but use :meth:`.sleep` instead."
+    },
+    {
+      "id": "R13",
+      "section": "C",
+      "says": "qualifyContracts reports a failure as None in its result, so the result must be read",
+      "quote": "If a contract cannot be qualified (bad values, ambiguous), the return value for the contract position in the result is None."
+    },
+    {
+      "id": "R14",
+      "section": "C",
+      "says": "With formatDate=2 bar dates are UTC-aware datetimes",
+      "quote": "setting to 2 will cause the returned date fields to be timezone-aware datetime.datetime with UTC timezone"
+    },
+    {
+      "id": "R15",
+      "section": "B",
+      "says": "MAX_CONSECUTIVE_LOSSES losses in a row stop the day",
+      "quote": "Max daily consecutive losses ({MAX_CONSECUTIVE_LOSSES}) reached. Stopping live execution for today."
+    },
+    {
+      "id": "R16",
+      "section": "A 4a",
+      "says": "No live price in 15 s, or delayed data, stops the bot",
+      "quote": "No live SPY price within 15 seconds, or the data is delayed: it stops and says why."
+    },
+    {
+      "id": "R17",
+      "section": "A 12",
+      "says": "After a signal, SPY must come back between the triggers before the next",
+      "quote": "It waits for SPY to come back between the triggers before it takes another signal"
+    }
+  ]
+}

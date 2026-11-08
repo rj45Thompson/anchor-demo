@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Options Trader Bot</title>
+<meta name="description" content="A SPY 0DTE opening-range breakout bot for Interactive Brokers: a script that arrived cut off, finished, checked against a written spec with the light loop, and tested through simulated trading days.">
+<meta property="og:title" content="Options Trader Bot">
+<meta property="og:description" content="SPY 0DTE opening-range breakout for Interactive Brokers. Safe by default: signals only until the exits are set, paper only unless told otherwise. 64 tests, 20 of 20 planted defects caught, 3 spec faults proven and fixed.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--well:#0E1720;
+  --fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--green:#47D1A0;--amber:#F7C873;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--head:'Space Grotesk',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.6 var(--sans)}
+main{max-width:920px;margin:0 auto;padding:22px 16px 48px}
+a{color:var(--blue)}
+.crumb{font-size:13.5px;color:var(--muted);margin:0 0 18px}
+.crumb a{color:var(--muted)}
+h1{font:700 clamp(28px,5vw,40px)/1.15 var(--head);margin:0 0 10px;letter-spacing:.01em}
+h1 b{color:var(--accent);font-weight:700}
+h2{font:600 22px/1.25 var(--head);margin:40px 0 10px}
+h3{font:600 16.5px/1.3 var(--head);margin:22px 0 6px}
+p{margin:0 0 14px;color:var(--soft)}
+.lede{font-size:17px;color:var(--soft);max-width:760px}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 6px}
+.btn{display:inline-block;padding:11px 18px;border-radius:999px;border:1px solid var(--line);color:var(--fg);text-decoration:none;font-weight:600;background:var(--panel)}
+.btn.go{background:var(--accent);border-color:var(--accent);color:#111}
+.btn:hover{border-color:var(--accent)}
+.safe{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:22px 0 0;padding:0;list-style:none}
+.safe li{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--soft);font-size:14.5px}
+.safe b{display:block;color:var(--fg);font-family:var(--head);font-size:15.5px;margin-bottom:2px}
+ol,ul{color:var(--soft);padding-left:22px;margin:0 0 14px}
+li{margin:4px 0}
+code{font:13.5px var(--mono);background:var(--well);border:1px solid var(--line);border-radius:6px;padding:1px 5px;color:var(--fg);white-space:nowrap;font-variant-ligatures:none}
+pre{margin:0 0 10px;background:var(--well);border:1px solid var(--line);border-radius:12px;padding:14px;font:12.5px/1.55 var(--mono);color:var(--soft);white-space:pre-wrap;overflow-wrap:anywhere;font-variant-ligatures:none}
+pre .ev{color:var(--fg)}
+.fault{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:10px;padding:12px 14px;margin:10px 0}
+.fault q{color:var(--fg);font-style:italic}
+.fault p{margin:6px 0 0}
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.nums div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.nums b{display:block;font:700 26px/1.1 var(--head);color:var(--green)}
+.nums span{color:var(--muted);font-size:13.5px}
+.note{font-size:13.5px;color:var(--muted)}
+footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+footer p{color:var(--muted)}
+@media (max-width:560px){body{font-size:15px}pre{font-size:11.5px;padding:12px}h2{margin-top:32px}}
+</style>
+</head>
+<body>
+<main>
+<p class="crumb"><a href="../">anchor-demo</a> / options trader bot</p>
+
+<h1>Options <b>trader</b> bot</h1>
+<p class="lede">A SPY 0DTE opening-range breakout bot for Interactive Brokers. It began as a script that arrived cut off
+mid-line. It is now finished, checked against a written spec with the light loop, and tested through simulated
+trading days.</p>
+
+<div class="btns">
+  <a class="btn go" href="options-bot.zip" download>Download the bot (zip)</a>
+  <a class="btn" href="zdt_autopilot.py">Read the code</a>
+  <a class="btn" href="README.md">README</a>
+</div>
+
+<ul class="safe">
+  <li><b>Signals only</b>Sends no order until you set its stop and target. Until then it shows each trade it would make.</li>
+  <li><b>Paper first</b>Refuses a live port or a live account unless you add <code>--live</code>.</li>
+  <li><b>Exits held at IB</b>The stop and target sit at Interactive Brokers as one OCA pair, so they keep working if the PC or the script dies.</li>
+  <li><b>Never left open</b>Sells what it bought 10 minutes before the close (earlier on half days), and on Ctrl+C.</li>
+</ul>
+
+<h2>Run it on a paper account</h2>
+<ol>
+  <li>Start TWS or IB Gateway logged in to the paper account, with the API on port 7497 (TWS: Global Configuration, API, Settings, "Enable ActiveX and Socket Clients").</li>
+  <li>The account needs live market data for SPY and for US options (OPRA). Without it the bot stops at startup and says so.</li>
+  <li><code>pip install -r requirements.txt</code> (it uses <code>ib_async</code> 2.1.0).</li>
+  <li><code>python zdt_autopilot.py</code></li>
+</ol>
+<p>To let it trade, set <code>STOP_LOSS_PCT</code> and <code>TAKE_PROFIT_PCT</code> near the top of the file. The original script stops before its exit rules, so the bot does not guess them.</p>
+
+<h2>What it does</h2>
+<ol>
+  <li>Connects and says PAPER or LIVE with the account ID.</li>
+  <li>Reads the account's USD cash balance, and stops if IB does not report one.</li>
+  <li>Reads today's session hours from IB, waits for the first 15-minute bar to close, and takes its high and low as the opening range.</li>
+  <li>Streams SPY's last price every second.</li>
+  <li>Signals a CALL when SPY trades more than $0.30 above the range, a PUT when it trades more than $0.30 below.</li>
+  <li>Picks today's expiry and the listed out-of-the-money strike nearest spot +/- $1.50.</li>
+  <li>Sizes the order from the original's tier table, never more than the balance covers.</li>
+  <li>Buys with a limit at the ask and waits for the fill. After 10 seconds the unfilled part is cancelled.</li>
+  <li>Places the stop and the target at IB as one OCA pair.</li>
+  <li>Waits for one of them to fill, or sells at market at the flatten time.</li>
+  <li>Writes one row to <code>trade_execution_log.csv</code>, with the net after the commissions IB reports.</li>
+  <li>Waits for SPY to come back inside the range before it takes another signal, and stops for the day after two losses in a row.</li>
+  <li>Cancels its own orders, sells what it bought, and disconnects.</li>
+</ol>
+<p class="note">Each step and every alternate path (holidays, delayed data, a missing expiry, an unaffordable contract, a dropped connection) is written out in the <a href="README.md">README</a>, and each has a test.</p>
+
+<h2>A simulated day</h2>
+<p>The bot's own console output for one day against the in-memory TWS used by the tests. The prices are made up, and the stop and target here (50% and 100%) are test values, not settings advice.</p>
+<pre><span class="ev">========================================================================================
+ ZDT &amp; SQUEEZE LIVE TRADING AUTOPILOT - IBKR ACTIVE - PAPER DU1234567
+========================================================================================</span>
+[ACCOUNT] Current Available Funds: $1,000.00 USD
+[INIT] Requesting first 15-minute bar to establish Opening Range (ORB)...
+[WAIT] The opening range closes at 09:45 ET, 0 min from now.
+<span class="ev">[ORB ESTABLISHED] 15-Min High: $581.00 | 15-Min Low: $579.00
+[ORB TRIGGERS] CALL Breakout &gt; $581.30 | PUT Breakdown &lt; $578.70</span>
+
+[MONITORING] Scanning real-time SPY price tick stream. Press Ctrl+C to stop.
+
+[09:50:00] SPY Spot: $581.50 | High: $581.00 | Low: $579.00
+<span class="ev">[SIGNAL] CALL: SPY $581.50
+[CONTRACT] SPY 20261109 583C (target strike 583)
+[ORDER] BUY 6 x SPY 20261109 583C at $0.61 (about $373.80 with fees)
+[FILLED] 6 x SPY 20261109 583C @ $0.61
+[EXITS AT IB] Stop $0.30 | Target $1.22 (one cancels the other)</span>
+[10:10:00] SPY 20261109 583C bid $1.84 | Entry $0.61 | Stop $0.30 | Target $1.22
+<span class="ev">[TRADE CLOSED] target | 6 x SPY 20261109 583C $0.61 -&gt; $1.22 | Net +$357.60 after $8.40 commission | Balance $1,357.60</span>
+[15:49:59] SPY Spot: $584.00 | High: $581.00 | Low: $579.00
+<span class="ev">[DONE] 15:50 ET: no new trades today.</span>
+
+trade_execution_log.csv
+Timestamp,PlayDirection,Contracts,EntryPrice,ExitPrice,NetPL,EndingBalance
+2026-11-09 10:10:01,SPY CALL,6,0.61,1.22,357.60,1357.60</pre>
+<p class="note">As shipped, the same day prints the order it would send and sends nothing: <a href="tests/demo_day_signals_only.txt">demo_day_signals_only.txt</a>. Run either yourself with <code>python tests/demo_day.py</code>.</p>
+
+<h2>Fixed from the original</h2>
+<ul>
+  <li>It bought one contract even when one cost more than the balance. It now does not trade.</li>
+  <li>Its opening range was the first bar of the last 30 minutes, which is the opening bar only between about 9:45 and 10:15. Started at 9:35 it was a bar still forming; started at 11:00 it was the 10:30 bar.</li>
+  <li>When the balance could not be read it carried on with $100 as if that were real.</li>
+  <li>When today's expiry was missing it switched to the next one, which is not a 0DTE trade.</li>
+  <li>It crashed when no strike was within $5 of its target, and never checked that IB knew the contract it picked.</li>
+  <li>It took the date from the PC's clock in the PC's own time zone, not New York time.</li>
+</ul>
+
+<h2>Checked with the light loop</h2>
+<p>The light loop checks code against a written spec. Every rule quotes the spec word for word, and a fault counts only when a small program run on the code proves it. The spec here, <a href="spec_check/SPEC.md">SPEC.md</a>, has three parts: the use case, the original script's own comments, and the ib_async library's documentation.</p>
+<div class="nums">
+  <div><b>17</b><span>rules, each quoting the spec</span></div>
+  <div><b>16</b><span>suspects, each with a repro</span></div>
+  <div><b>3</b><span>faults proven on the first run</span></div>
+  <div><b>0</b><span>proven after the fixes</span></div>
+</div>
+<div class="fault"><q>the listed strike nearest spot +/- 1.50</q>
+  <p>With 583 not listed and SPY at 581.90, it picked 582, $1.40 from 583.40, over 584, $0.60 from it. A tie now goes to the nearer strike.</p></div>
+<div class="fault"><q>matching ~0.20 Delta / slightly OTM</q> (the original's own docstring)
+  <p>With the strikes just above SPY unlisted, it could buy an in-the-money call. It now only looks on the out-of-the-money side.</p></div>
+<div class="fault"><q>It writes one row to trade_execution_log.csv</q>
+  <p>Ctrl+C while it waited for IB's commission report left a closed trade out of the log. The row is now written first, marked UNREPORTED if the report never came.</p></div>
+<p>The reports: <a href="spec_check/REPORT_before_fixes.md">first run</a>, <a href="spec_check/REPORT.md">after the fixes</a>. The <a href="spec_check/rules.json">rules</a>, <a href="spec_check/suspects.json">suspects</a> and <a href="spec_check/repros/">repros</a> are all here. Run any repro on its own with <code>python spec_check/run_repro.py S1</code>.</p>
+
+<h2>Tested</h2>
+<div class="nums">
+  <div><b>64</b><span>tests, one per step and alternate path</span></div>
+  <div><b>20 / 20</b><span>planted defects caught, including the original's five</span></div>
+</div>
+<p>The tests run whole simulated trading days against an in-memory TWS (<a href="tests/fake_ib_async.py">fake_ib_async.py</a>), so no test can reach TWS or an account. One more test reads the real ib_async 2.1.0 source and checks that every call, keyword and field the bot uses exists there.</p>
+<p>What the tests cannot show: how Interactive Brokers itself fills, prices and reports on a real day. The first paper run is that check.</p>
+
+<h2>Open questions before it trades</h2>
+<ol>
+  <li>The original ends at the PUT check. Is there more of it?</li>
+  <li>What stop and target should it use?</li>
+  <li>What does <code>TIME_STOP_PCT = 0.25</code> do? The original sets it but uses it after the point where it ends.</li>
+  <li>After a trade, should it trade again the same day? It now waits for SPY to come back inside the range, then takes the next breakout, until two losses in a row.</li>
+  <li>Size from the whole account, or never from more than a set budget? A paper account usually holds far more than $100.</li>
+  <li>The original aims at about 0.20 delta with a fixed $1.50 offset, which is a different delta at 9:45 than at 15:00. Keep the offset, or pick by the delta IB reports?</li>
+</ol>
+
+<footer>
+  <p>Software, not financial advice. Options can lose their whole premium, and 0DTE options expire the same day. Run it on a paper account first.</p>
+  <p>Built by RJ Thompson. <a href="../">More on anchor-demo</a>.</p>
+</footer>
+</main>
+</body>
+</html>

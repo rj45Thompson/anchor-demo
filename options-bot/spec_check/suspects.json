@@ -1,0 +1,132 @@
+{
+  "suspects": [
+    {
+      "id": "S1",
+      "rule": "R5",
+      "file": "zdt_autopilot.py",
+      "line": 145,
+      "repro": "repros/S1.py",
+      "claim": "Ties between listed strikes go to the first in list order, not to the one nearer spot +/- 1.50: with 583 unlisted and spot 581.90 it picks 582 (1.40 away) over 584 (0.60 away)."
+    },
+    {
+      "id": "S2",
+      "rule": "R6",
+      "file": "zdt_autopilot.py",
+      "line": 143,
+      "repro": "repros/S2.py",
+      "claim": "Candidates run $5 either side of the target, so when the strikes just above spot are unlisted it can buy an in-the-money call."
+    },
+    {
+      "id": "S3",
+      "rule": "R9",
+      "file": "zdt_autopilot.py",
+      "line": 363,
+      "repro": "repros/S3.py",
+      "claim": "Ctrl+C while it waits for IB's commission reports leaves a closed trade out of the CSV."
+    },
+    {
+      "id": "S4",
+      "rule": "R1",
+      "file": "zdt_autopilot.py",
+      "line": 386,
+      "repro": "repros/S4.py",
+      "claim": "Port 7496 might be let through without --live."
+    },
+    {
+      "id": "S5",
+      "rule": "R2",
+      "file": "zdt_autopilot.py",
+      "line": 386,
+      "repro": "repros/S5.py",
+      "claim": "Port 4002 might be treated as a live port."
+    },
+    {
+      "id": "S6",
+      "rule": "R3",
+      "file": "zdt_autopilot.py",
+      "line": 179,
+      "repro": "repros/S6.py",
+      "claim": "With no USD row it might size from the BASE-currency row instead of stopping."
+    },
+    {
+      "id": "S7",
+      "rule": "R4",
+      "file": "zdt_autopilot.py",
+      "line": 197,
+      "repro": "repros/S7.py",
+      "claim": "Started late, it might take a later bar as the opening range."
+    },
+    {
+      "id": "S8",
+      "rule": "R7",
+      "file": "zdt_autopilot.py",
+      "line": 480,
+      "repro": "repros/S8.py",
+      "claim": "A price exactly at a trigger might count as a breakout."
+    },
+    {
+      "id": "S9",
+      "rule": "R8",
+      "file": "zdt_autopilot.py",
+      "line": 101,
+      "repro": "repros/S9.py",
+      "claim": "Sizing might still return one contract the balance cannot cover."
+    },
+    {
+      "id": "S10",
+      "rule": "R11",
+      "file": "zdt_autopilot.py",
+      "line": 77,
+      "repro": "repros/S10.py",
+      "claim": "A missing commission might be filled in from the fee estimate."
+    },
+    {
+      "id": "S11",
+      "rule": "R12",
+      "file": "zdt_autopilot.py",
+      "line": 220,
+      "repro": "repros/S11.py",
+      "claim": "A wait might use time.sleep, which stops ib_async's event loop."
+    },
+    {
+      "id": "S12",
+      "rule": "R13",
+      "file": "zdt_autopilot.py",
+      "line": 108,
+      "repro": "repros/S12.py",
+      "claim": "ib_async's [None] for an unknown contract is a truthy list and might pass for success."
+    },
+    {
+      "id": "S13",
+      "rule": "R14",
+      "file": "zdt_autopilot.py",
+      "line": 197,
+      "repro": "repros/S13.py",
+      "claim": "UTC bar dates might fail to match the New York 9:30 open."
+    },
+    {
+      "id": "S14",
+      "rule": "R15",
+      "file": "zdt_autopilot.py",
+      "line": 502,
+      "repro": "repros/S14.py",
+      "claim": "The breaker might trip one loss late."
+    },
+    {
+      "id": "S15",
+      "rule": "R16",
+      "file": "zdt_autopilot.py",
+      "line": 207,
+      "repro": "repros/S15.py",
+      "claim": "Delayed prices (data type 3) might be traded on."
+    },
+    {
+      "id": "S16",
+      "rule": "R17",
+      "file": "zdt_autopilot.py",
+      "line": 472,
+      "repro": "repros/S16.py",
+      "claim": "After a trade it might take a new signal while SPY is still past the trigger."
+    }
+  ]
+}

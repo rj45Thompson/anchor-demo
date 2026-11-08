@@ -1,0 +1,25 @@
+========================================================================================
+ ZDT & SQUEEZE LIVE TRADING AUTOPILOT - IBKR ACTIVE - PAPER DU1234567
+========================================================================================
+[ACCOUNT] Current Available Funds: $1,000.00 USD
+[INIT] Requesting first 15-minute bar to establish Opening Range (ORB)...
+[WAIT] The opening range closes at 09:45 ET, 0 min from now.
+[ORB ESTABLISHED] 15-Min High: $581.00 | 15-Min Low: $579.00
+[ORB TRIGGERS] CALL Breakout > $581.30 | PUT Breakdown < $578.70
+
+[MONITORING] Scanning real-time SPY price tick stream. Press Ctrl+C to stop.
+
+[09:50:00] SPY Spot: $581.50 | High: $581.00 | Low: $579.00
+[SIGNAL] CALL: SPY $581.50
+[CONTRACT] SPY 20261109 583C (target strike 583)
+[ORDER] BUY 6 x SPY 20261109 583C at $0.61 (about $373.80 with fees)
+[FILLED] 6 x SPY 20261109 583C @ $0.61
+[EXITS AT IB] Stop $0.30 | Target $1.22 (one cancels the other)
+[10:10:00] SPY 20261109 583C bid $1.84 | Entry $0.61 | Stop $0.30 | Target $1.22
+[TRADE CLOSED] target | 6 x SPY 20261109 583C $0.61 -> $1.22 | Net +$357.60 after $8.40 commission | Balance $1,357.60
+[15:49:59] SPY Spot: $584.00 | High: $581.00 | Low: $579.00
+[DONE] 15:50 ET: no new trades today.
+
+(exit code 0; trade_execution_log.csv:)
+Timestamp,PlayDirection,Contracts,EntryPrice,ExitPrice,NetPL,EndingBalance
+2026-11-09 10:10:01,SPY CALL,6,0.61,1.22,357.60,1357.60
