@@ -119,8 +119,8 @@ footer p{color:var(--muted)}
 
 <h2 id="others">How others do it</h2>
 <ul>
-  <li><b>Hugging Face:</b> nothing for this strategy. The nearest data is <a href="https://huggingface.co/datasets/fabhaus/equities_5m_options">5-minute option bars</a>.</li>
-  <li><b>Tools:</b> <a href="https://www.quantconnect.com/docs/v2/cloud-platform/live-trading/brokerages/interactive-brokers">QuantConnect</a> and <a href="https://nautilustrader.io/docs/latest/integrations/interactive_brokers/">NautilusTrader</a> also trade options through IB.</li>
+  <li><b>Hugging Face:</b> no model or dataset for this strategy. The nearest data is <a href="https://huggingface.co/datasets/fabhaus/equities_5m_options">5-minute option bars</a>.</li>
+  <li><b>Tools:</b> <a href="https://www.quantconnect.com/docs/v2/cloud-platform/live-trading/brokerages/interactive-brokers">QuantConnect</a> trades options through IB; <a href="https://nautilustrader.io/docs/latest/integrations/interactive_brokers/">NautilusTrader</a> connects to IB and loads option chains.</li>
   <li><b>Research:</b> <a href="https://www.cxoadvisory.com/?p=44210">breakout studies on shares</a> report gains; <a href="https://optionalpha.com/blog/opening-range-breakout-0dte-options-trading-strategy-explained">a 0DTE version</a> sells spreads instead of buying.</li>
   <li><b>0DTE:</b> retail traders <a href="https://cxoadvisory.com/individual-investing/retail-0dte-option-trader-performance">lost about $70 million</a> in 2021 to 2023; <a href="https://github.com/vilkovgr/0dte-strategies">one study's profits</a> vanished once spreads were charged in full.</li>
   <li><b>AI agents:</b> <a href="https://github.com/TauricResearch/TradingAgents">research frameworks</a> trade in simulation; <a href="https://arxiv.org/abs/2505.07078">a 20-year test</a> found their reported edge shrinks.</li>
