@@ -119,13 +119,28 @@ trade out of the CSV. All three are fixed and each has a test. The second run pr
 
 Run any repro on its own: `python spec_check/run_repro.py S1`.
 
+## Epics and use cases
+
+`model/` is the bot written as two epics: trading one day (seven use cases) and getting it ready for real money (four).
+Each use case gives its actor, trigger, success and minimal guarantee, its steps, and every alternate path with
+where it leads. Requirements (`model/requirements.yaml`) never name code: each is carried by steps, and only the
+steps name code. `model/step_tests.yaml` names the tests that run each step and path; `py tests/step_trace.py`
+runs them under a tracer and writes the code each one ran (`model/step_trace.json`), and `tests/test_model.py`
+fails any step whose named code its tests never ran. `py make_epics_page.py OUT` writes the page that shows it all.
+The model also passes the closed-loop kit's use case checker (`usecase_model.py`, rules U1 to U19) with no holes;
+set `USECASE_MODEL` to that file and `tests/test_model.py` runs it too.
+
 ## Tests
 
-`py -m pytest tests` (64 tests) runs the bot through whole simulated trading days against an in-memory TWS
-(`tests/fake_ib_async.py`), one test per step and alternate path above. No TWS, network or account is
-involved. `tests/test_api_contract.py` reads the real ib_async source and checks that every `ib.` call,
-keyword and field the bot uses exists there. It runs when ib_async is installed, or when
-`IB_ASYNC_SRC` points at its source, and is skipped otherwise.
+`pip install -r requirements-dev.txt`, then `py -m pytest tests` (80 tests) runs the bot through whole simulated
+trading days against an in-memory TWS (`tests/fake_ib_async.py`), with tests for every step and alternate path of
+the trading epic. No TWS, network or account is involved. `tests/test_api_contract.py` reads the real ib_async
+source and checks that every `ib.` call, keyword and field the bot uses exists there. It runs when ib_async is
+installed, or when `IB_ASYNC_SRC` points at its source, and is skipped otherwise.
+
+`py tests/plant_check.py` plants 28 defects, one at a time, in copies of the bot and of the model (the original's
+five among them), and each must make a test fail. A check that has only ever passed cannot be told from one
+that is switched off.
 
 What the tests cannot show: how IB itself fills, prices and reports on a given day. The first paper run
 is that check.

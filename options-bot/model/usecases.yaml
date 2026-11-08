@@ -1,0 +1,325 @@
+# Each step: `do` (what happens, with its observable outcome), `reqs` (the requirements it carries) and `code` (the functions that
+# carry it out, file::function). Requirements never name code. A step done by a person or by IB has no code of the bot's.
+usecases:
+  - id: EPIC-1
+    name: Trade one day of SPY 0DTE opening-range breakouts
+    level: kite
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "the trader starts the bot before or during a trading day"
+    pre: "TWS or IB Gateway runs with the API on PORT; the account has live SPY and US options data"
+    minimal: "no order or position of the bot's is left behind, and every trade it made is in the log"
+    success: "each breakout of the day is traded within the trader's limits, its exits held at IB, and logged as one row"
+    why: "the original script's purpose: the 15-minute opening range breakout on SPY 0DTE options, sized to a small balance"
+    where: "zdt_autopilot.py run_live_execution, trade_the_day"
+    gulf:
+      exec: {text: "runs python zdt_autopilot.py, with --live for a live account, and presses Ctrl+C to stop", reqs: [IR-1, OB-9]}
+      eval: {text: "the console's tagged lines ([SIGNAL], [FILLED], [TRADE CLOSED]) and trade_execution_log.csv", reqs: [OB-8]}
+    steps:
+      - {do: "The trader starts the bot, and it connects to the right kind of account", reqs: [IR-1, OB-1]}
+      - {do: "The bot reads the opening range and prints the two triggers", reqs: [OB-2]}
+      - {do: "The bot watches SPY until it breaks out past a trigger", reqs: [OB-3]}
+      - {do: "The bot buys today's out-of-the-money option, sized to the balance", reqs: [OB-4, OB-5]}
+      - {do: "IB holds the stop and the target until one fills, or the bot flattens before the close", reqs: [IR-3, IR-4]}
+      - {do: "The bot logs the trade and decides whether to take another", reqs: [OB-8, OB-7]}
+      - {do: "The bot stops and leaves nothing of its own working or held", reqs: [IR-10]}
+    ext:
+      - {at: 1, when: "the exit rules are not set", do: ["the bot runs SIGNALS ONLY: steps 2 to 4 print the order it would send, and no order is sent"], out: end minimal, reqs: [IR-2]}
+      - {at: 2, when: "IB lists today as closed", do: ["the bot says so and stops"], out: end minimal, reqs: [IR-5]}
+
+  - id: UC-1
+    name: Start the bot on the right account
+    level: sea
+    parent: {uc: EPIC-1, step: 1}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "python zdt_autopilot.py, or with --live"
+    pre: "TWS or IB Gateway is running with the API on PORT"
+    minimal: "on any refusal nothing is sent to IB and the bot exits"
+    success: "connected; the banner says PAPER or LIVE with the account ID, and [ACCOUNT] shows the balance"
+    why: "a bot that can trade real money has to know which account it is on before anything else"
+    where: "connect, run_live_execution, read_cash_balance"
+    gulf:
+      exec: {text: "runs the script, adding --live only for a live account", reqs: [IR-1]}
+      eval: {text: "the banner's PAPER or LIVE and account ID, the [ACCOUNT] line, or a [REFUSED] line", reqs: [OB-6, IR-1]}
+    steps:
+      - {do: "The bot checks the exit rules are possible before anything else", reqs: [IR-15], code: ["zdt_autopilot.py::run_live_execution", "zdt_autopilot.py::exits_set"]}
+      - {do: "It refuses a live port unless --live was given", reqs: [IR-1, OB-1], code: ["zdt_autopilot.py::connect"]}
+      - {do: "It connects and reads the account IDs; an account that is not a paper account needs --live", reqs: [IR-1], code: ["zdt_autopilot.py::connect"]}
+      - {do: "It prints PAPER or LIVE with the account ID", reqs: [IR-1], code: ["zdt_autopilot.py::connect"]}
+      - {do: "It reads the account's USD TotalCashBalance and prints it as [ACCOUNT]", reqs: [OB-6, OB-10, IR-16], code: ["zdt_autopilot.py::read_cash_balance", "zdt_autopilot.py::trade_the_day"]}
+    ext:
+      - {at: 1, when: "the stop is not between 0 and 1, or the target is not above 0", do: ["[REFUSED] names both limits; nothing connects"], out: end minimal, reqs: [IR-15]}
+      - {at: 2, when: "PORT is 7496 or 4001 and --live was not given", do: ["[REFUSED] Port 7496 is a live port"], out: end minimal, reqs: [IR-1, OB-1]}
+      - {at: 3, when: "TWS cannot be reached", do: ["[CONNECTION ERROR] names the port and the error"], out: end minimal, reqs: [OB-14]}
+      - {at: 3, when: "the account is not a paper account and --live was not given", do: ["[REFUSED] names the account; the bot disconnects"], out: end minimal, reqs: [IR-1]}
+      - {at: 5, when: "IB reports no USD TotalCashBalance", do: ["[ERROR] says so, and the bot stops instead of using $100"], out: end minimal, reqs: [OB-10]}
+
+  - id: UC-2
+    name: Read the opening range
+    level: sea
+    parent: {uc: EPIC-1, step: 2}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "the bot has connected and read the balance"
+    pre: "the account is connected"
+    minimal: "no trigger is printed unless it came from today's first bar"
+    success: "[ORB ESTABLISHED] shows today's first bar's high and low, and [ORB TRIGGERS] the two prices that signal"
+    why: "the whole strategy is measured from this one bar"
+    where: "read_session, read_opening_range"
+    gulf:
+      exec: {text: "starts the bot any time before the close; nothing else to do", reqs: [OB-2]}
+      eval: {text: "[WAIT], then [ORB ESTABLISHED] and [ORB TRIGGERS]", reqs: [OB-2, OB-3]}
+    steps:
+      - {do: "The bot reads today's session hours from IB's liquid hours for SPY", reqs: [IR-5], code: ["zdt_autopilot.py::read_session"]}
+      - {do: "It waits, printing [WAIT], until the session's first 15-minute bar has closed", reqs: [OB-2, OB-11], code: ["zdt_autopilot.py::read_opening_range"]}
+      - {do: "It asks IB for the last two days of 15-minute bars, with UTC times", reqs: [OB-13], code: ["zdt_autopilot.py::read_opening_range"]}
+      - {do: "It takes the bar that starts at the session's open, and prints the range and the two triggers", reqs: [OB-2, OB-3], code: ["zdt_autopilot.py::read_opening_range", "zdt_autopilot.py::trade_the_day"]}
+    ext:
+      - {at: 1, when: "IB lists today as CLOSED", do: ["[CLOSED] says so, and the bot does nothing"], out: end minimal, reqs: [IR-5]}
+      - {at: 1, when: "the hours are in a form the bot cannot read", do: ["it stops with an error that quotes them"], out: end minimal, reqs: [OB-10]}
+      - {at: 2, when: "the bot starts after the first bar closed", do: ["it does not wait, and still reads the first bar"], out: rejoin 3, reqs: [OB-2]}
+      - {at: 4, when: "IB has no bar at the session's open", do: ["[ERROR] says so, and the bot stops"], out: end minimal, reqs: [OB-10]}
+
+  - id: UC-3
+    name: Watch SPY for a breakout
+    level: sea
+    parent: {uc: EPIC-1, step: 3}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "the triggers are printed"
+    pre: "the opening range is known"
+    minimal: "nothing is traded on a price that is not live"
+    success: "[SIGNAL] CALL or PUT with SPY's price"
+    why: "a breakout past the range is the strategy's entry"
+    where: "trade_the_day, live_last"
+    gulf:
+      exec: {text: "nothing: the bot watches by itself", reqs: [IR-8]}
+      eval: {text: "a status line every second, then [SIGNAL]", reqs: [OB-3]}
+    steps:
+      - {do: "The bot asks for live data and waits for SPY's first live price", reqs: [IR-8, OB-11], code: ["zdt_autopilot.py::trade_the_day", "zdt_autopilot.py::wait_for", "zdt_autopilot.py::live_last"]}
+      - {do: "Each second it reads SPY's last price and prints a status line", reqs: [IR-8], code: ["zdt_autopilot.py::trade_the_day", "zdt_autopilot.py::live_last"]}
+      - {do: "It compares the price with the two triggers", reqs: [OB-3], code: ["zdt_autopilot.py::trade_the_day"]}
+      - {do: "SPY trades strictly above the CALL trigger or below the PUT trigger, and it prints [SIGNAL]", reqs: [OB-3], code: ["zdt_autopilot.py::trade_the_day"]}
+    ext:
+      - {at: 1, when: "no live price arrives within PRICE_TIMEOUT_S, or the data is delayed", do: ["[ERROR] names the data type, and the bot stops"], out: end minimal, reqs: [IR-8]}
+      - {at: 2, when: "the flatten time arrives", do: ["[DONE] no new trades today"], out: end success, reqs: [IR-4]}
+      - {at: 2, when: "no tick comes for PRICE_TIMEOUT_S, or the data stops being live", do: ["[ERROR] says which, and the bot stops"], out: end minimal, reqs: [IR-8]}
+      - {at: 3, when: "a trade was taken since SPY was last between the triggers", do: ["no signal until SPY trades back between them; then [REARMED]"], out: rejoin 2, reqs: [IR-6]}
+
+  - id: UC-4
+    name: Enter a trade on the signal
+    level: sea
+    parent: {uc: EPIC-1, step: 4}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "[SIGNAL]"
+    pre: "a signal and the balance"
+    minimal: "no order is sent for a contract IB does not know, at no live price, or beyond the balance"
+    success: "[FILLED] with the contracts held and their price"
+    why: "the entry is where the money goes in"
+    where: "take_trade, get_0dte_contract, get_safe_tier_contracts, run_trade"
+    gulf:
+      exec: {text: "nothing: the bot enters by itself", reqs: [OB-4]}
+      eval: {text: "[CONTRACT], [ORDER] and [FILLED], or the [NO TRADE] or [NO FILL] reason", reqs: [OB-5, IR-7]}
+    steps:
+      - {do: "The bot finds today's expiry in IB's option chain", reqs: [OB-4, OB-10], code: ["zdt_autopilot.py::get_0dte_contract"]}
+      - {do: "It picks the listed out-of-the-money strike nearest spot plus or minus 1.50 rounded to the dollar, a tie going to the nearer, and checks IB knows it; [CONTRACT]", reqs: [OB-4, IR-13, OB-12, IR-18], code: ["zdt_autopilot.py::get_0dte_contract", "zdt_autopilot.py::qualify"]}
+      - {do: "It reads the option's live bid and ask", reqs: [IR-14], code: ["zdt_autopilot.py::take_trade", "zdt_autopilot.py::live_quote", "zdt_autopilot.py::wait_for"]}
+      - {do: "It sizes the order with the tier table, within the balance; [ORDER]", reqs: [OB-5, IR-11, IR-16], code: ["zdt_autopilot.py::get_safe_tier_contracts", "zdt_autopilot.py::take_trade"]}
+      - {do: "It buys with a limit at the ask and waits for the fill; [FILLED]", reqs: [IR-7], code: ["zdt_autopilot.py::run_trade", "zdt_autopilot.py::place", "zdt_autopilot.py::wait_until", "zdt_autopilot.py::held"]}
+    ext:
+      - {at: 1, when: "today's expiry is not listed", do: ["[NO TRADE] says so; no later expiry is used, and the day ends"], out: end minimal, reqs: [OB-10]}
+      - {at: 2, when: "no out-of-the-money strike within $5 of the target is listed", do: ["[NO TRADE] says so, and the day ends"], out: end minimal, reqs: [OB-4]}
+      - {at: 3, when: "the option has no live bid and ask", do: ["[NO TRADE] says so; this signal is skipped"], out: end minimal, reqs: [IR-14]}
+      - {at: 4, when: "one contract costs more than the balance", do: ["[NO TRADE] gives both figures, and the day ends"], out: end minimal, reqs: [IR-11]}
+      - {at: 4, when: "the exit rules are not set", do: ["[SIGNALS ONLY] No order sent"], out: end minimal, reqs: [IR-2]}
+      - {at: 5, when: "nothing fills within ENTRY_FILL_TIMEOUT_S", do: ["the order is cancelled; [NO FILL]"], out: end minimal, reqs: [IR-7]}
+      - {at: 5, when: "part of the order fills within ENTRY_FILL_TIMEOUT_S", do: ["the rest is cancelled, and only what filled goes on"], out: end success, reqs: [IR-7]}
+
+  - id: UC-5
+    name: Exit the trade
+    level: sea
+    parent: {uc: EPIC-1, step: 5}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "[FILLED]"
+    pre: "the bot holds the option"
+    minimal: "whatever happens, the stop and the target work at IB until the close"
+    success: "the bot holds none of the option; the stop, the target or the flatten sold it"
+    why: "the exit decides the trade, and a 0DTE option expires the same day"
+    where: "run_trade, close_out"
+    gulf:
+      exec: {text: "nothing, or Ctrl+C to stop", reqs: [OB-9]}
+      eval: {text: "[EXITS AT IB], a status line with the bid, then [TRADE CLOSED] with the reason", reqs: [IR-3]}
+    steps:
+      - {do: "The bot places the stop and the target at IB as one OCA pair, priced from the entry fill; [EXITS AT IB]", reqs: [IR-3], code: ["zdt_autopilot.py::run_trade", "zdt_autopilot.py::place"]}
+      - {do: "Each second while it holds the option it checks the connection and the clock, and prints the bid", reqs: [IR-4, IR-12, OB-11], code: ["zdt_autopilot.py::run_trade", "zdt_autopilot.py::held"]}
+      - {do: "The stop or the target fills, and IB shrinks or cancels the other", reqs: [IR-3], code: ["zdt_autopilot.py::run_trade", "zdt_autopilot.py::held"]}
+    ext:
+      - {at: 2, when: "the flatten time arrives", do: ["both exits are cancelled", "what the bot holds is sold at market"], out: end success, reqs: [IR-4]}
+      - {at: 2, when: "the trader presses Ctrl+C", do: ["both exits are cancelled", "what the bot holds is sold at market", "the trade is logged, then the bot stops"], out: end minimal, reqs: [OB-9, IR-10]}
+      - {at: 2, when: "the connection to TWS drops", do: ["[CONNECTION LOST]; [STILL OPEN] says what the bot holds, and the exits keep working at IB"], out: end minimal, reqs: [IR-12]}
+      - {at: 1, when: "the stop rounds to under one cent", do: ["the bot sells at market at once"], out: end success, reqs: [IR-3]}
+
+  - id: UC-6
+    name: Log the trade and decide whether to go on
+    level: sea
+    parent: {uc: EPIC-1, step: 6}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "the bot holds none of the option"
+    pre: "the trade's fills"
+    minimal: "a closed trade always gets its row"
+    success: "one row with IB's net, and the bot is watching SPY again or stopped for the day"
+    why: "the log is the trader's record, and the breaker is the original's limit on a bad day"
+    where: "run_trade, commissions, log_trade, trade_the_day"
+    gulf:
+      exec: {text: "nothing: the bot logs by itself", reqs: [OB-8]}
+      eval: {text: "[TRADE CLOSED] with the net and the balance, the CSV row, then [REARMED] or [CIRCUIT BREAKER]", reqs: [OB-8, OB-7]}
+    steps:
+      - {do: "The bot waits for IB's commission report on every fill", reqs: [OB-10, IR-9, OB-11], code: ["zdt_autopilot.py::commissions", "zdt_autopilot.py::wait_until"]}
+      - {do: "It writes one row: time, direction, contracts, entry, exit, the net after IB's commissions, the ending balance", reqs: [OB-8, OB-10], code: ["zdt_autopilot.py::run_trade", "zdt_autopilot.py::avg_price", "zdt_autopilot.py::log_trade", "zdt_autopilot.py::money"]}
+      - {do: "It counts the losses in a row", reqs: [OB-7], code: ["zdt_autopilot.py::trade_the_day"]}
+      - {do: "It watches SPY again once SPY is back between the triggers", reqs: [IR-6], code: ["zdt_autopilot.py::trade_the_day"]}
+    ext:
+      - {at: 1, when: "a report never arrives", do: ["the row's NetPL and EndingBalance say UNREPORTED", "the bot stops for the day"], out: end minimal, reqs: [IR-9]}
+      - {at: 1, when: "the trader presses Ctrl+C while it waits", do: ["the row is still written, marked UNREPORTED, then the bot stops"], out: end minimal, reqs: [OB-8, IR-9]}
+      - {at: 3, when: "that makes MAX_CONSECUTIVE_LOSSES in a row", do: ["[CIRCUIT BREAKER], and no more trades today"], out: end success, reqs: [OB-7]}
+
+  - id: UC-7
+    name: Stop and leave nothing behind
+    level: sea
+    parent: {uc: EPIC-1, step: 7}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "the flatten time, the breaker, an error, or Ctrl+C"
+    pre: "the orders this run placed"
+    minimal: "the bot says what it could not close"
+    success: "no order of the bot's working, none of its options held, and the bot disconnected"
+    why: "an unattended 0DTE position can expire, and anything else in the account is the trader's"
+    where: "make_flat, close_out, report_open, run_live_execution"
+    gulf:
+      exec: {text: "Ctrl+C, or nothing", reqs: [OB-9]}
+      eval: {text: "[CLEANUP] lines, or none; [STILL OPEN] if something could not be closed", reqs: [IR-10, IR-12]}
+    steps:
+      - {do: "On Ctrl+C, or when the day is done, the bot cancels each order it placed that is still working", reqs: [IR-10, OB-9], code: ["zdt_autopilot.py::make_flat", "zdt_autopilot.py::close_out"]}
+      - {do: "It sells at market what its own fills say it still holds", reqs: [IR-10], code: ["zdt_autopilot.py::close_out", "zdt_autopilot.py::held", "zdt_autopilot.py::place"]}
+      - {do: "It disconnects from TWS", reqs: [IR-10], code: ["zdt_autopilot.py::run_live_execution"]}
+      - {do: "It says what is still open, if anything is", reqs: [IR-12], code: ["zdt_autopilot.py::report_open"]}
+    ext:
+      - {at: 1, when: "the connection is already lost", do: ["nothing can be cancelled; it goes straight to saying what is open"], out: rejoin 4, reqs: [IR-12]}
+      - {at: 2, when: "an order will not cancel or a sale will not fill", do: ["it stops with that error, still disconnects, and says what is open"], out: end minimal, reqs: [IR-12]}
+
+  - id: EPIC-2
+    name: Get the bot ready to trade real money
+    level: kite
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "the trader has the bot and wants it trading"
+    pre: "the bot as shipped: signals only"
+    minimal: "no real order is sent before the trader adds --live"
+    success: "the bot trades the trader's own exit rules on the live account, after a clean check and a paper run"
+    why: "the original arrived without its exits, and the bot cannot be run against a broker here"
+    where: "README.md, tests/, spec_check/"
+    gulf:
+      exec: {text: "edits STOP_LOSS_PCT and TAKE_PROFIT_PCT, runs on paper, adds --live", reqs: [IR-2, IR-1]}
+      eval: {text: "the test results, the light loop's report, the paper day's console and CSV", reqs: [DV-1, DV-3, OB-8]}
+    steps:
+      - {do: "The developer checks the bot without a broker", reqs: [DV-1]}
+      - {do: "The trader sets the exit rules", reqs: [IR-2]}
+      - {do: "The trader runs a day on the paper account and reads the log", reqs: [OB-8]}
+      - {do: "The trader goes live", reqs: [IR-1]}
+    ext:
+      - {at: 2, when: "the trader has not chosen the exit rules", do: ["the paper day runs signals only"], out: rejoin 3, reqs: [IR-2]}
+
+  - id: UC-8
+    name: Check the bot without a broker
+    level: sea
+    parent: {uc: EPIC-2, step: 1}
+    actor: A2
+    trigger: "the developer has changed the bot"
+    pre: "Python 3.10 or newer and pytest; ib_async's source for the API check"
+    minimal: "nothing reaches TWS or an account"
+    success: "every test passes, every planted defect is caught, and the light loop proves no fault"
+    why: "a trading bot's mistakes cost money, and the bot cannot be run against IB here"
+    where: "tests/, spec_check/"
+    gulf:
+      exec: {text: "runs py -m pytest tests, py tests/plant_check.py and the light loop", reqs: [DV-1, DV-4]}
+      eval: {text: "the pytest summary, the plant table, spec_check/REPORT.md", reqs: [DV-3, DV-4]}
+    steps:
+      - {do: "The developer runs the tests: whole simulated trading days against an in-memory TWS; all pass", reqs: [DV-1], code: ["tests/test_zdt_autopilot.py", "tests/fake_ib_async.py"]}
+      - {do: "The API check reads ib_async's own source and finds every call, keyword and field the bot uses", reqs: [DV-2], code: ["tests/test_api_contract.py"]}
+      - {do: "The plant run breaks one guarded behaviour at a time in a copy, and a test fails each time", reqs: [DV-4], code: ["tests/plant_check.py"]}
+      - {do: "The light loop runs every repro against SPEC.md, and proves no fault", reqs: [DV-3], code: ["spec_check/run_repro.py", "spec_check/repro_kit.py"]}
+    ext:
+      - {at: 2, when: "ib_async's source is not on the machine", do: ["the API check is skipped, and says why"], out: rejoin 3, reqs: [DV-2]}
+      - {at: 3, when: "a plant is not caught", do: ["a test is written that catches it, and the run goes again"], out: rejoin 3, reqs: [DV-4]}
+      - {at: 4, when: "a repro proves a fault", do: ["the fault is fixed, a test is added for it, and the loop runs again"], out: rejoin 4, reqs: [DV-3]}
+
+  - id: UC-9
+    name: Set the exit rules
+    level: sea
+    parent: {uc: EPIC-2, step: 2}
+    actor: A1
+    trigger: "the trader has decided a stop and a target"
+    pre: "the bot runs signals only"
+    minimal: "an impossible value stops the bot before it connects"
+    success: "the banner no longer says SIGNALS ONLY, and signals become orders"
+    why: "the original's exit rules were never received, and only the trader can choose them"
+    where: "zdt_autopilot.py, the EXIT RULES lines"
+    gulf:
+      exec: {text: "sets STOP_LOSS_PCT and TAKE_PROFIT_PCT near the top of the file", reqs: [IR-2]}
+      eval: {text: "the banner without [SIGNALS ONLY], or [REFUSED]", reqs: [IR-15]}
+    steps:
+      - {do: "The trader sets STOP_LOSS_PCT and TAKE_PROFIT_PCT; TIME_STOP_PCT still does nothing", reqs: [IR-2, IR-17], code: ["zdt_autopilot.py::exits_set"]}
+      - {do: "The bot checks both values when it starts", reqs: [IR-15], code: ["zdt_autopilot.py::run_live_execution"]}
+      - {do: "The banner drops SIGNALS ONLY, and a signal now sends an order", reqs: [IR-2], code: ["zdt_autopilot.py::run_live_execution", "zdt_autopilot.py::take_trade"]}
+    ext:
+      - {at: 2, when: "a value is impossible", do: ["[REFUSED] names both limits"], out: end minimal, reqs: [IR-15]}
+
+  - id: UC-10
+    name: Run a day on the paper account
+    level: sea
+    parent: {uc: EPIC-2, step: 3}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "the trader wants to see the bot trade before any money is at stake"
+    pre: "TWS logged in to the paper account"
+    minimal: "nothing touches a live account"
+    success: "a day's console and trade_execution_log.csv, from IB's own fills and commissions"
+    why: "the tests cannot show how IB itself fills, prices and reports; a paper day is that check"
+    where: "README.md, Run it on a paper account"
+    gulf:
+      exec: {text: "logs TWS in to paper on port 7497 and runs python zdt_autopilot.py", reqs: [OB-1]}
+      eval: {text: "the console and the CSV", reqs: [OB-8]}
+    steps:
+      - {do: "The trader logs TWS in to the paper account with the API on port 7497", reqs: [OB-1]}
+      - {do: "The trader runs the bot without --live; the banner says PAPER", reqs: [IR-1], code: ["zdt_autopilot.py::connect"]}
+      - {do: "The bot trades the day as in EPIC-1", reqs: [OB-3, OB-7], code: ["zdt_autopilot.py::trade_the_day"]}
+      - {do: "The trader reads the console and trade_execution_log.csv", reqs: [OB-8], code: ["zdt_autopilot.py::log_trade"]}
+    ext:
+      - {at: 2, when: "the account is not a paper account", do: ["[REFUSED] names the account"], out: end minimal, reqs: [IR-1]}
+      - {at: 3, when: "the paper account holds far more than the trader's real budget", do: ["the tiers size up to MAX_ACTIVE_CONTRACTS; the trader sets the paper balance to match, or asks for a cap"], out: rejoin 4, reqs: [IR-16]}
+
+  - id: UC-11
+    name: Go live
+    level: sea
+    parent: {uc: EPIC-2, step: 4}
+    actor: A1
+    supporting: [SYS-IB]
+    trigger: "a clean paper day"
+    pre: "the exit rules set, TWS logged in to the live account"
+    minimal: "without --live, nothing is sent"
+    success: "the banner says LIVE with the account ID, and the bot trades the day"
+    why: "real money is the point, and only the trader can choose it"
+    where: "connect"
+    gulf:
+      exec: {text: "logs TWS in to the live account and runs python zdt_autopilot.py --live", reqs: [IR-1]}
+      eval: {text: "the banner's LIVE and account ID", reqs: [IR-1]}
+    steps:
+      - {do: "The trader logs TWS in to the live account, API on port 7496", reqs: [OB-1]}
+      - {do: "The trader runs python zdt_autopilot.py --live", reqs: [IR-1], code: ["zdt_autopilot.py::main", "zdt_autopilot.py::connect"]}
+      - {do: "The banner says LIVE with the account ID, and the bot trades the day", reqs: [IR-1, OB-7], code: ["zdt_autopilot.py::connect", "zdt_autopilot.py::trade_the_day"]}
+    ext:
+      - {at: 2, when: "--live is left off", do: ["[REFUSED] Port 7496 is a live port"], out: end minimal, reqs: [IR-1]}

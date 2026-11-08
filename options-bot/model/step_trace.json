@@ -1,0 +1,2061 @@
+{
+ "bot_sha256": "dd6bb0d9c52e204deba18500228ca7da343dd63bff058da114771c093138e13b",
+ "tests_run": 42,
+ "steps": {
+  "UC-1.1": {
+   "tests": [
+    "test_impossible_exit_rules_are_refused",
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-1.2": {
+   "tests": [
+    "test_live_port_is_refused_without_live_flag",
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-1.3": {
+   "tests": [
+    "test_live_account_is_refused_without_live_flag",
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-1.4": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_live_account_trades_with_live_flag"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-1.5": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-1.1a": {
+   "tests": [
+    "test_impossible_exit_rules_are_refused"
+   ],
+   "ran": [
+    "exits_set",
+    "run_live_execution"
+   ]
+  },
+  "UC-1.2a": {
+   "tests": [
+    "test_live_port_is_refused_without_live_flag"
+   ],
+   "ran": [
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "run_live_execution"
+   ]
+  },
+  "UC-1.3a": {
+   "tests": [
+    "test_unreachable_tws_says_so_and_exits"
+   ],
+   "ran": [
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "run_live_execution"
+   ]
+  },
+  "UC-1.3b": {
+   "tests": [
+    "test_live_account_is_refused_without_live_flag"
+   ],
+   "ran": [
+    "<genexpr>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "run_live_execution"
+   ]
+  },
+  "UC-1.5a": {
+   "tests": [
+    "test_no_usd_cash_balance_stops_instead_of_using_100"
+   ],
+   "ran": [
+    "<genexpr>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "make_flat",
+    "qualify",
+    "read_cash_balance",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "trade_the_day"
+   ]
+  },
+  "UC-2.1": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_closed_day_does_nothing",
+    "test_half_day_flattens_before_the_early_close"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "close_out",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-2.2": {
+   "tests": [
+    "test_early_start_waits_for_the_opening_bar_to_close"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-2.3": {
+   "tests": [
+    "test_early_start_waits_for_the_opening_bar_to_close"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-2.4": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_late_start_still_reads_the_0930_bar"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-2.1a": {
+   "tests": [
+    "test_closed_day_does_nothing"
+   ],
+   "ran": [
+    "<genexpr>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "make_flat",
+    "qualify",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "trade_the_day"
+   ]
+  },
+  "UC-2.1b": {
+   "tests": [
+    "test_unreadable_session_hours_fail_loudly"
+   ],
+   "ran": [
+    "<genexpr>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "make_flat",
+    "qualify",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "trade_the_day"
+   ]
+  },
+  "UC-2.2a": {
+   "tests": [
+    "test_late_start_still_reads_the_0930_bar"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "live_last",
+    "make_flat",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-2.4a": {
+   "tests": [
+    "test_no_bar_at_the_open_stops"
+   ],
+   "ran": [
+    "<genexpr>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "make_flat",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "trade_the_day"
+   ]
+  },
+  "UC-3.1": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-3.2": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-3.3": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_put_breakdown_stops_out"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-3.4": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_put_breakdown_stops_out"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-3.1a": {
+   "tests": [
+    "test_no_live_price_stops",
+    "test_delayed_data_stops"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "live_last",
+    "make_flat",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-3.2a": {
+   "tests": [
+    "test_late_start_still_reads_the_0930_bar"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "live_last",
+    "make_flat",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-3.2b": {
+   "tests": [
+    "test_a_feed_that_stops_mid_day_stops_the_bot"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "live_last",
+    "make_flat",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-3.3a": {
+   "tests": [
+    "test_no_new_trade_until_spy_comes_back_inside",
+    "test_put_breakdown_stops_out"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-4.1": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-4.2": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_a_tie_goes_to_the_strike_nearer_spot_plus_1_50",
+    "test_never_buys_an_in_the_money_option",
+    "test_unlisted_nearest_strike_takes_the_next_nearest_listed"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-4.3": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-4.4": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_original_tier_table"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-4.5": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-4.1a": {
+   "tests": [
+    "test_no_0dte_expiry_means_no_trade_today"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "initialize_csv_log",
+    "live_last",
+    "make_flat",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "take_trade",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-4.2a": {
+   "tests": [
+    "test_no_strike_within_5_dollars_means_no_trade"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "initialize_csv_log",
+    "live_last",
+    "make_flat",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "take_trade",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-4.3a": {
+   "tests": [
+    "test_an_option_with_no_quote_is_not_traded"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "make_flat",
+    "name",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "take_trade",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-4.4a": {
+   "tests": [
+    "test_cannot_afford_one_contract_means_no_trade",
+    "test_one_contract_it_cannot_afford_is_zero_not_one"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "make_flat",
+    "name",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "take_trade",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-4.4b": {
+   "tests": [
+    "test_signals_only_until_the_exit_rules_are_set"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "make_flat",
+    "name",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "take_trade",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-4.5a": {
+   "tests": [
+    "test_unfilled_entry_is_cancelled"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "make_flat",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-4.5b": {
+   "tests": [
+    "test_partial_fill_trades_only_what_filled"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-5.1": {
+   "tests": [
+    "test_exits_are_an_oca_pair_held_at_ib"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-5.2": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-5.3": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_put_breakdown_stops_out"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-5.2a": {
+   "tests": [
+    "test_flatten_ten_minutes_before_the_close",
+    "test_half_day_flattens_before_the_early_close"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "close_out",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-5.2b": {
+   "tests": [
+    "test_ctrl_c_mid_trade_sells_logs_and_stops"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "close_out",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-5.2c": {
+   "tests": [
+    "test_connection_lost_while_holding_says_what_is_open"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-5.1a": {
+   "tests": [
+    "test_a_stop_under_one_cent_sells_at_once"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "close_out",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-6.1": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-6.2": {
+   "tests": [
+    "test_call_breakout_reaches_target",
+    "test_pl_uses_ibs_commission_not_the_estimate"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-6.3": {
+   "tests": [
+    "test_two_losses_in_a_row_stop_the_day"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-6.4": {
+   "tests": [
+    "test_put_breakdown_stops_out"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-6.1a": {
+   "tests": [
+    "test_unreported_commission_is_logged_as_unreported_and_stops"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-6.1b": {
+   "tests": [
+    "test_ctrl_c_during_the_commission_wait_still_logs_the_trade"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-6.3a": {
+   "tests": [
+    "test_two_losses_in_a_row_stop_the_day"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-7.1": {
+   "tests": [
+    "test_a_crash_mid_trade_still_closes_everything"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "close_out",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "make_flat",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-7.2": {
+   "tests": [
+    "test_a_crash_mid_trade_still_closes_everything"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "close_out",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "make_flat",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-7.3": {
+   "tests": [
+    "test_a_crash_mid_trade_still_closes_everything",
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "close_out",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-7.4": {
+   "tests": [
+    "test_connection_lost_while_holding_says_what_is_open"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-7.1a": {
+   "tests": [
+    "test_connection_lost_while_holding_says_what_is_open"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-7.2a": {
+   "tests": [
+    "test_an_order_that_will_not_cancel_is_reported"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "close_out",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "make_flat",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-9.1": {
+   "tests": [
+    "test_signals_only_until_the_exit_rules_are_set"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "make_flat",
+    "name",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "take_trade",
+    "trade_the_day",
+    "wait_for"
+   ]
+  },
+  "UC-9.2": {
+   "tests": [
+    "test_impossible_exit_rules_are_refused"
+   ],
+   "ran": [
+    "exits_set",
+    "run_live_execution"
+   ]
+  },
+  "UC-9.3": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-9.2a": {
+   "tests": [
+    "test_impossible_exit_rules_are_refused"
+   ],
+   "ran": [
+    "exits_set",
+    "run_live_execution"
+   ]
+  },
+  "UC-10.2": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-10.3": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-10.4": {
+   "tests": [
+    "test_call_breakout_reaches_target"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-10.2a": {
+   "tests": [
+    "test_live_account_is_refused_without_live_flag"
+   ],
+   "ran": [
+    "<genexpr>",
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "run_live_execution"
+   ]
+  },
+  "UC-10.3a": {
+   "tests": [
+    "test_original_tier_table"
+   ],
+   "ran": [
+    "get_safe_tier_contracts"
+   ]
+  },
+  "UC-11.2": {
+   "tests": [
+    "test_the_live_flag_reaches_the_bot_from_the_command_line"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "main",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-11.3": {
+   "tests": [
+    "test_live_account_trades_with_live_flag"
+   ],
+   "ran": [
+    "<genexpr>",
+    "<lambda>",
+    "avg_price",
+    "commissions",
+    "connect",
+    "exits_set",
+    "get_0dte_contract",
+    "get_safe_tier_contracts",
+    "held",
+    "initialize_csv_log",
+    "live_last",
+    "live_quote",
+    "log_trade",
+    "make_flat",
+    "money",
+    "name",
+    "place",
+    "qualify",
+    "read_cash_balance",
+    "read_opening_range",
+    "read_session",
+    "report_open",
+    "run_live_execution",
+    "run_trade",
+    "take_trade",
+    "trade_the_day",
+    "wait_for",
+    "wait_until"
+   ]
+  },
+  "UC-11.2a": {
+   "tests": [
+    "test_live_port_is_refused_without_live_flag"
+   ],
+   "ran": [
+    "connect",
+    "exits_set",
+    "initialize_csv_log",
+    "run_live_execution"
+   ]
+  }
+ }
+}

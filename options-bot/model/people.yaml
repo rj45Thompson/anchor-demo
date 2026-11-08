@@ -1,0 +1,20 @@
+actors:
+  - {id: A1, name: Trader, kind: person, profile: "runs the bot on their own PC beside TWS or IB Gateway; wants each breakout traded within their limits, and nothing left open"}
+  - {id: A2, name: Developer, kind: person, profile: "changes the bot and checks it without a broker: the tests, the plant run, the light loop"}
+  - {id: SYS-IB, name: Interactive Brokers, kind: system, profile: "TWS or IB Gateway through ib_async: account values, market data, contract details, orders, fills, commission reports"}
+
+sources:
+  - {id: ORIG-PORTS, kind: quote, cite: "the original script as it arrived, 2026-11-08, its PORT setting", text: "7497 = TWS Paper, 7496 = TWS Live, 4002 = IB Gateway Paper"}
+  - {id: ORIG-ORB, kind: quote, cite: "the original script, its opening range and trigger lines", text: "1. Establish 15-Minute Opening Range ... [ORB TRIGGERS] CALL Breakout > ${orb_high + ORB_BUFFER:.2f} | PUT Breakdown < ${orb_low - ORB_BUFFER:.2f}"}
+  - {id: ORIG-STRIKE, kind: quote, cite: "the original script, get_0dte_contract", text: "Finds today's expiring SPY 0DTE option matching ~0.20 Delta / slightly OTM. ... target_strike = round(current_spot + 1.5, 0) ... # Find closest available strike"}
+  - {id: ORIG-TIERS, kind: standing, cite: "the original script, get_safe_tier_contracts", text: "contracts by balance: under 110 one, 250 two, 500 three, 1000 four, 2500 six, 5000 eight, else MAX_ACTIVE_CONTRACTS; cost a contract = price x 100 + 2 x IBKR_FEE_PER_LEG"}
+  - {id: ORIG-BALANCE, kind: quote, cite: "the original script, its balance read", text: "if item.tag == 'TotalCashBalance' and item.currency == 'USD':"}
+  - {id: ORIG-BREAKER, kind: quote, cite: "the original script, its circuit breaker", text: "[CIRCUIT BREAKER] Max daily consecutive losses ({MAX_CONSECUTIVE_LOSSES}) reached. Stopping live execution for today."}
+  - {id: ORIG-LOG, kind: quote, cite: "the original script, initialize_csv_log", text: "Timestamp, PlayDirection, Contracts, EntryPrice, ExitPrice, NetPL, EndingBalance"}
+  - {id: ORIG-MONITOR, kind: quote, cite: "the original script, its monitoring line", text: "Scanning real-time SPY price tick stream. Press Ctrl+C to stop."}
+  - {id: ORIG-CONNECT, kind: quote, cite: "the original script, its connection error", text: "[CONNECTION ERROR] Could not connect to TWS on Port {PORT}: {e}"}
+  - {id: IB-SLEEP, kind: quote, cite: "ib_async 2.1.0, ib.py, the IB class docstring", text: "For introducing a delay, never use time.sleep() but use :meth:`.sleep` instead."}
+  - {id: IB-QUALIFY, kind: quote, cite: "ib_async 2.1.0, ib.py, qualifyContractsAsync", text: "If a contract cannot be qualified (bad values, ambiguous), the return value for the contract position in the result is None."}
+  - {id: IB-FORMATDATE, kind: quote, cite: "ib_async 2.1.0, ib.py, reqHistoricalData", text: "formatDate: For an intraday request setting to 2 will cause the returned date fields to be timezone-aware datetime.datetime with UTC timezone"}
+  - {id: OWNER-ASK, kind: standing, cite: "the owner's request, 2026-11-08", text: "finish the trading script, run the light loop on it, test it, and publish it with its epics"}
+  - {id: OWNER-RULES, kind: standing, cite: "the owner's standing rules for this work", text: "every value is read or proven absent, never stood in for; every feature has a test; a check is proven by a defect planted for it to catch"}

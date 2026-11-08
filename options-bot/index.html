@@ -67,6 +67,7 @@ trading days.</p>
 
 <div class="btns">
   <a class="btn go" href="options-bot.zip" download>Download the bot (zip)</a>
+  <a class="btn" href="epics.html">Epics and use cases</a>
   <a class="btn" href="zdt_autopilot.py">Read the code</a>
   <a class="btn" href="README.md">README</a>
 </div>
@@ -103,7 +104,7 @@ trading days.</p>
   <li>Waits for SPY to come back inside the range before it takes another signal, and stops for the day after two losses in a row.</li>
   <li>Cancels its own orders, sells what it bought, and disconnects.</li>
 </ol>
-<p class="note">Each step and every alternate path (holidays, delayed data, a missing expiry, an unaffordable contract, a dropped connection) is written out in the <a href="README.md">README</a>, and each has a test.</p>
+<p class="note">Each step and every alternate path (holidays, delayed data, a missing expiry, an unaffordable contract, a dropped connection, a crash) is written out as <a href="epics.html">two epics and eleven use cases</a>, each step tied to the code its tests ran.</p>
 
 <h2>A simulated day</h2>
 <p>The bot's own console output for one day against the in-memory TWS used by the tests. The prices are made up, and the stop and target here (50% and 100%) are test values, not settings advice.</p>
@@ -162,8 +163,8 @@ Timestamp,PlayDirection,Contracts,EntryPrice,ExitPrice,NetPL,EndingBalance
 
 <h2>Tested</h2>
 <div class="nums">
-  <div><b>64</b><span>tests, one per step and alternate path</span></div>
-  <div><b>20 / 20</b><span>planted defects caught, including the original's five</span></div>
+  <div><b>80</b><span>tests, covering every step and alternate path</span></div>
+  <div><b>28 / 28</b><span>planted defects caught, in the bot and in its model, the original's five among them</span></div>
 </div>
 <p>The tests run whole simulated trading days against an in-memory TWS (<a href="tests/fake_ib_async.py">fake_ib_async.py</a>), so no test can reach TWS or an account. One more test reads the real ib_async 2.1.0 source and checks that every call, keyword and field the bot uses exists there.</p>
 <p>What the tests cannot show: how Interactive Brokers itself fills, prices and reports on a real day. The first paper run is that check.</p>

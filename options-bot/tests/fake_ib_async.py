@@ -202,6 +202,7 @@ class Day:
     accounts: tuple = ("DU1234567",)
     cash_usd: float = 1000.00                                 # None: no USD TotalCashBalance row
     market_data: int = 1                                      # 1 live, 3 delayed, 0 nothing at all
+    option_quotes: bool = True                                # False: options get no bid or ask
     expirations: tuple = None                                 # None: today and the next four days
     strikes: tuple = tuple(float(s) for s in range(560, 601))
     unlisted: frozenset = frozenset()                         # (strike, right) in the chain that IB will not qualify
@@ -210,6 +211,10 @@ class Day:
     connect_error: Exception = None
     drop_at: dt.time = None                                   # the connection is lost at this time
     interrupt_at: dt.time = None                              # Ctrl+C at this time (once)
+    crash_at: dt.time = None                                  # a RuntimeError at this time (once): a crash mid-run
+    feed_stops_at: dt.time = None                             # SPY ticks stop arriving at this time
+    no_open_bar: bool = False                                 # IB's bars lack the one at the session's open
+    stuck_cancels: bool = False                               # IB never confirms a cancel
 
 
 class FakeTWS:
@@ -226,6 +231,7 @@ class FakeTWS:
         self.order_ids = itertools.count(1)
         self.exec_ids = itertools.count(1)
         self.interrupted = False
+        self.crashed = False
 
     def _call(self, method, **kwargs):
         self.calls.append((self.now, method, kwargs))
@@ -261,6 +267,9 @@ class FakeTWS:
         if self.day.interrupt_at and not self.interrupted and self.now.time() >= self.day.interrupt_at:
             self.interrupted = True
             raise KeyboardInterrupt
+        if self.day.crash_at and not self.crashed and self.now.time() >= self.day.crash_at:
+            self.crashed = True
+            raise RuntimeError("simulated crash")
 
     def price_at(self, t):
         price = None
@@ -283,12 +292,14 @@ class FakeTWS:
         spy = self.spy_price()
         if spy is not None and self.day.market_data:
             for ticker in self.tickers.values():
+                if ticker.contract.secType == "STK":
+                    if self.day.feed_stops_at and self.now.time() >= self.day.feed_stops_at:
+                        continue                  # a dead feed: no tick, so neither the price nor its time moves
+                    ticker.last = spy
+                elif self.day.option_quotes:
+                    ticker.bid, ticker.ask = self.quote(ticker.contract, spy)
                 ticker.marketDataType = self.day.market_data
                 ticker.time = self.now
-                if ticker.contract.secType == "STK":
-                    ticker.last = spy
-                else:
-                    ticker.bid, ticker.ask = self.quote(ticker.contract, spy)
         if self.connected and spy is not None:
             self._match(spy)
         for report in [r for r in self.reports if r[0] <= self.now]:
@@ -402,6 +413,8 @@ class FakeTWS:
                 prices = [self.price_at(start.time())] + [p for when, p in self.day.path if start.time() < when < end]
                 high, low = max(prices) + 0.10, min(prices) - 0.10
             date = start.astimezone(UTC) if formatDate == 2 else start
+            if self.day.no_open_bar and not bars:
+                date -= dt.timedelta(minutes=1)   # IB's first bar not stamped at the open
             bars.append(BarData(date, low, high, low, high))
             start += dt.timedelta(minutes=15)
         return bars
@@ -428,7 +441,7 @@ class FakeTWS:
     def cancelOrder(self, order):
         self._call("cancelOrder", order=order)
         for trade in self.trades:
-            if trade.order is order and not trade.isDone():
+            if trade.order is order and not trade.isDone() and not self.day.stuck_cancels:
                 trade.orderStatus.status = "Cancelled"
 
     def open_orders(self):

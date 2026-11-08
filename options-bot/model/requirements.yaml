@@ -1,0 +1,97 @@
+# AUTHORED: the original script's own words, ib_async's documentation and the owner's standing rules.
+# INFERRED: what finishing the bot needed and no source says. Each is a question for the owner, and the page lists them as such.
+# No requirement names code: requirements link to steps (usecases.yaml), and steps link to code.
+requirements:
+  - {id: OB-1, kind: authored, sources: [ORIG-PORTS], text: "Port 7496 is a live port; 7497 and 4002 are paper ports.",
+     measure: "test_live_port_is_refused_without_live_flag; light loop repros S4 and S5"}
+  - {id: OB-2, kind: authored, sources: [ORIG-ORB], text: "The opening range is the high and the low of the first 15-minute bar of today's regular session.",
+     measure: "test_early_start_waits_for_the_opening_bar_to_close, test_late_start_still_reads_the_0930_bar; repro S7"}
+  - {id: OB-3, kind: authored, sources: [ORIG-ORB], text: "A CALL signal is SPY's last price strictly above the range's high plus ORB_BUFFER; a PUT signal is strictly below its low minus ORB_BUFFER.",
+     measure: "test_call_breakout_reaches_target, test_put_breakdown_stops_out; repro S8 (a price exactly at a trigger is no signal)"}
+  - {id: OB-4, kind: authored, sources: [ORIG-STRIKE], text: "The option bought expires today and is slightly out of the money, at the listed strike nearest spot plus or minus 1.50 rounded to the dollar.",
+     measure: "test_unlisted_nearest_strike_takes_the_next_nearest_listed, test_never_buys_an_in_the_money_option, test_no_strike_within_5_dollars_means_no_trade"}
+  - {id: OB-5, kind: authored, sources: [ORIG-TIERS], text: "The number of contracts follows the original's tier table, trimmed to what the balance covers at price x 100 + 2 x IBKR_FEE_PER_LEG a contract.",
+     measure: "test_original_tier_table (10 cases)"}
+  - {id: OB-6, kind: authored, sources: [ORIG-BALANCE], text: "The balance is the account's USD TotalCashBalance as IB reports it.",
+     measure: "test_call_breakout_reaches_target: [ACCOUNT] shows the fake account's $1,000.00"}
+  - {id: OB-7, kind: authored, sources: [ORIG-BREAKER], text: "After MAX_CONSECUTIVE_LOSSES losing trades in a row the bot takes no more trades that day.",
+     measure: "test_two_losses_in_a_row_stop_the_day; repro S14"}
+  - {id: OB-8, kind: authored, sources: [ORIG-LOG], text: "Each trade is one row of trade_execution_log.csv in the original's seven columns.",
+     measure: "test_call_breakout_reaches_target (the header and the row), test_ctrl_c_during_the_commission_wait_still_logs_the_trade"}
+  - {id: OB-9, kind: authored, sources: [ORIG-MONITOR], text: "Ctrl+C stops the bot.",
+     measure: "test_ctrl_c_mid_trade_sells_logs_and_stops"}
+  - {id: OB-10, kind: authored, sources: [OWNER-RULES], text: "No value stands in for one IB did not give: no $100 for a balance, no later expiry for today's, no fee estimate for a commission, no guessed bar.",
+     measure: "test_no_usd_cash_balance_stops_instead_of_using_100, test_no_0dte_expiry_means_no_trade_today, test_unreported_commission_is_logged_as_unreported_and_stops, test_unreadable_session_hours_fail_loudly"}
+  - {id: OB-11, kind: authored, sources: [IB-SLEEP], text: "Every wait uses IB.sleep, never time.sleep.",
+     measure: "light loop repro S11"}
+  - {id: OB-12, kind: authored, sources: [IB-QUALIFY], text: "A contract counts as known only when IB qualified it.",
+     measure: "light loop repro S12; test_unlisted_nearest_strike_takes_the_next_nearest_listed"}
+  - {id: OB-13, kind: authored, sources: [IB-FORMATDATE], text: "Bar times are asked for in UTC and compared with the session's open as instants.",
+     measure: "light loop repro S13; test_early_start_waits_for_the_opening_bar_to_close checks formatDate=2"}
+  - {id: OB-14, kind: authored, sources: [ORIG-CONNECT], text: "When TWS cannot be reached the bot says so and exits.",
+     measure: "test_unreachable_tws_says_so_and_exits"}
+
+  - {id: IR-1, kind: inferred, text: "Without --live the bot refuses a live port, and an account whose ID does not start with D (IBKR's paper accounts do).",
+     why: "the original connected to whatever port it was given; a bot that can trade real money must not do it by accident",
+     measure: "test_live_port_is_refused_without_live_flag, test_live_account_is_refused_without_live_flag, test_live_account_trades_with_live_flag"}
+  - {id: IR-2, kind: inferred, text: "Until STOP_LOSS_PCT and TAKE_PROFIT_PCT are set the bot sends no order, and prints each order it would send.",
+     why: "the original stops before its exit rules, and no exit may be guessed for someone else's money",
+     measure: "test_signals_only_until_the_exit_rules_are_set"}
+  - {id: IR-3, kind: inferred, text: "Right after the entry fills, the stop and the target go to IB as one OCA pair of DAY orders (type 2: a fill shrinks the other).",
+     why: "orders held at IB keep working if the PC or the script dies",
+     measure: "test_exits_are_an_oca_pair_held_at_ib"}
+  - {id: IR-4, kind: inferred, text: "Ten minutes before IB's listed close the bot sells at market whatever it holds, and takes no new trade.",
+     why: "a 0DTE option expires at the close; the ten minutes are a margin nobody has set",
+     measure: "test_flatten_ten_minutes_before_the_close, test_half_day_flattens_before_the_early_close"}
+  - {id: IR-5, kind: inferred, text: "The session's hours come from IB's liquid hours for SPY; a day IB lists as CLOSED is not traded.",
+     why: "holidays and early closes, which a fixed 9:30 to 16:00 gets wrong",
+     measure: "test_closed_day_does_nothing, test_half_day_flattens_before_the_early_close, test_unreadable_session_hours_fail_loudly"}
+  - {id: IR-6, kind: inferred, text: "After a signal the bot takes the next only once SPY has traded back between the two triggers.",
+     why: "otherwise it buys again the second its exit fills while SPY is still past the trigger",
+     measure: "test_no_new_trade_until_spy_comes_back_inside; repro S16"}
+  - {id: IR-7, kind: inferred, text: "An entry not filled within ENTRY_FILL_TIMEOUT_S seconds is cancelled, and only what filled is traded.",
+     why: "a working entry the bot lost track of could fill later with no exits",
+     measure: "test_unfilled_entry_is_cancelled, test_partial_fill_trades_only_what_filled"}
+  - {id: IR-8, kind: inferred, text: "No live SPY price within PRICE_TIMEOUT_S seconds, data that is not live, or no tick for that long, stops the bot.",
+     why: "it would otherwise trade on stale or delayed prices",
+     measure: "test_no_live_price_stops, test_delayed_data_stops; repro S15"}
+  - {id: IR-9, kind: inferred, text: "A commission IB never reports is logged as UNREPORTED, and the bot stops for the day.",
+     why: "the balance is then unknown, and the fee estimate is not IB's figure",
+     measure: "test_unreported_commission_is_logged_as_unreported_and_stops; repro S10"}
+  - {id: IR-10, kind: inferred, text: "When it stops, the bot cancels the orders it placed and sells what its own fills say it holds; it touches nothing it did not place.",
+     why: "an unattended 0DTE position can expire, and other positions are the trader's",
+     measure: "every whole-day test ends flat (assert_flat); test_ctrl_c_mid_trade_sells_logs_and_stops"}
+  - {id: IR-11, kind: inferred, text: "When one contract costs more than the balance there is no trade that day.",
+     why: "the original's own loop trims the count to the balance, then max(1, cts) bought one it could not cover; the trim is read as the intent",
+     measure: "test_one_contract_it_cannot_afford_is_zero_not_one, test_cannot_afford_one_contract_means_no_trade; repro S9"}
+  - {id: IR-12, kind: inferred, text: "When the connection drops, or the cleanup fails, the bot says what it still holds.",
+     why: "the exits keep working at IB, and the trader has to know what is open",
+     measure: "test_connection_lost_while_holding_says_what_is_open"}
+  - {id: IR-13, kind: inferred, text: "A tie between two listed strikes goes to the one nearer spot plus or minus 1.50 before rounding.",
+     why: "the light loop proved the list order picked the farther one (S1)",
+     measure: "test_a_tie_goes_to_the_strike_nearer_spot_plus_1_50; repro S1"}
+  - {id: IR-14, kind: inferred, text: "An option with no live bid and ask is not traded on that signal.",
+     why: "there is no price to size or buy at",
+     measure: "test_an_option_with_no_quote_is_not_traded"}
+  - {id: IR-15, kind: inferred, text: "STOP_LOSS_PCT must lie between 0 and 1 and TAKE_PROFIT_PCT above 0, or the bot refuses to start.",
+     why: "an impossible stop or target would never fill or fill at once",
+     measure: "test_impossible_exit_rules_are_refused (4 cases)"}
+  - {id: IR-16, kind: inferred, text: "The bot sizes from the whole USD cash balance; STARTING_BUDGET_USD caps nothing.",
+     why: "the original read the account's balance and used the budget only as a stand-in; a cap is the owner's call",
+     measure: "test_original_tier_table sizes from the balance given; no test sets a cap because none exists"}
+  - {id: IR-17, kind: inferred, text: "TIME_STOP_PCT has no effect until its rule is known.",
+     why: "the original sets it and uses it after the point where the file ends",
+     measure: "zdt_autopilot.py reads TIME_STOP_PCT nowhere (a search of the file)"}
+  - {id: IR-18, kind: inferred, text: "The strike is a fixed 1.50 from spot, not picked by delta.",
+     why: "the original's comment aims at about 0.20 delta with a fixed offset; picking by IB's delta is the owner's call",
+     measure: "get_0dte_contract reads no greeks (read in the code)"}
+
+  - {id: DV-1, kind: authored, sources: [OWNER-RULES], text: "Every step of the trading use cases has a test that runs it against a simulated TWS, with no TWS, network or account.",
+     measure: "step_tests.yaml names tests for every step; step_trace.json shows each step's code ran under them"}
+  - {id: DV-2, kind: inferred, text: "Every ib_async call, keyword and field the bot uses exists in ib_async 2.1.0's own source.",
+     why: "the bot cannot be run against a broker here; the library's source is the nearest check",
+     measure: "tests/test_api_contract.py, skipped (and saying so) without the source"}
+  - {id: DV-3, kind: authored, sources: [OWNER-ASK], text: "The light loop proves no fault against SPEC.md.",
+     measure: "spec_check/REPORT.md: 0 PROVEN"}
+  - {id: DV-4, kind: authored, sources: [OWNER-RULES], text: "A defect planted in any guarded behaviour fails a test.",
+     measure: "tests/plant_check.py: every plant caught"}

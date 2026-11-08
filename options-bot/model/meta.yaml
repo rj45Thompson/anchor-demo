@@ -1,0 +1,18 @@
+# The options trader bot - the use case model as DATA, checked by the closed-loop kit's usecase_model.py (rules U1-U19).
+# Two epics (kite): trading one day, and getting the bot ready for real money. Each holds user-goal use cases (sea).
+# Requirements link only to steps; only steps link to code (each step's `code`), and the code a step names is proven by
+# running that step's tests (step_tests.yaml) under a tracer (tests/step_trace.py -> step_trace.json).
+meta:
+  subject: the options trader bot - SPY 0DTE opening-range breakouts on Interactive Brokers, from a script that arrived cut off
+  mode: finish
+  story:
+    text: >-
+      A trader's SPY 0DTE opening-range breakout script arrived cut off mid-line, before its exit rules. Finished, it has to
+      trade a day on Interactive Brokers within the trader's limits, never leave an order or a position behind, and be checked
+      without IB, because the bot cannot be run against a broker here.
+    clauses:
+      - {text: "trade the 15-minute opening range breakout on SPY 0DTE options", source: ORIG-ORB}
+      - {text: "size from the account's cash with a tier table", source: ORIG-TIERS}
+      - {text: "stop after two losses in a row", source: ORIG-BREAKER}
+      - {text: "finish it, run the light loop on it, test it, and publish its epics", source: OWNER-ASK}
+      - {text: "no value stands in for one that could not be read", source: OWNER-RULES}

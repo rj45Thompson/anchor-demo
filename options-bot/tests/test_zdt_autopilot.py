@@ -25,6 +25,7 @@ class Result:
     tws: FakeTWS
     rows: list
     out: str
+    error: Exception = None
 
     @property
     def trades(self):
@@ -36,7 +37,9 @@ class Result:
 
 @pytest.fixture
 def simulate(tmp_path):
-    def run(day, stop=0.5, target=1.0, live=False, port=7497):
+    def run(day, stop=0.5, target=1.0, live=False, port=7497, via_main=False, raises=None):
+        """Runs the bot through the day. via_main: through main()'s command line. raises: the exception the run must
+        end with; the result still carries the fake TWS and the output, so what was left behind can be checked."""
         tws = FakeTWS(day)
         log = tmp_path / "trade_execution_log.csv"
         patches = dict(ib=tws, now_et=lambda: tws.now, LOG_FILENAME=str(log),
@@ -44,15 +47,21 @@ def simulate(tmp_path):
         saved = {k: getattr(bot, k) for k in patches}
         for k, v in patches.items():
             setattr(bot, k, v)
-        out = io.StringIO()
+        out, code, error = io.StringIO(), None, None
         try:
             with contextlib.redirect_stdout(out):
-                code = bot.run_live_execution(live=live)
+                code = bot.main(["--live"] if live else []) if via_main else bot.run_live_execution(live=live)
+        except Exception as e:
+            if raises is None or not isinstance(e, raises):
+                raise
+            error = e
         finally:
             for k, v in saved.items():
                 setattr(bot, k, v)
+        if raises is not None and error is None:
+            raise AssertionError(f"the run was to end with {raises.__name__}, and nothing was raised")
         rows = list(csv.reader(log.open(newline=""))) if log.exists() else []
-        return Result(code, tws, rows, out.getvalue())
+        return Result(code, tws, rows, out.getvalue(), error)
     return run
 
 
@@ -354,3 +363,67 @@ def test_ctrl_c_during_the_commission_wait_still_logs_the_trade(simulate):
     assert "[STOPPED] Ctrl+C." in r.out
     assert [row[1:] for row in r.trades] == [["SPY CALL", "6", "0.61", "1.22", "UNREPORTED", "UNREPORTED"]]
     assert_flat(r)
+
+
+def test_unreachable_tws_says_so_and_exits(simulate):
+    """UC-1 alternate 3a. TWS is not running: the original's own [CONNECTION ERROR], and nothing else happens."""
+    r = simulate(replace(CALL_TO_TARGET, connect_error=ConnectionRefusedError("the remote computer refused the connection")))
+    assert r.code == 1 and "[CONNECTION ERROR] Could not connect to TWS on Port 7497" in r.out
+    assert r.orders() == [] and r.tws.called("reqHistoricalData") == []
+
+
+def test_an_option_with_no_quote_is_not_traded(simulate):
+    """UC-4 alternate 3a. The option shows no live bid and ask: the signal is skipped, no order is sent."""
+    r = simulate(replace(CALL_TO_TARGET, option_quotes=False))
+    assert r.code == 0 and "[NO TRADE] SPY 20261109 583C has no live bid and ask after 5s." in r.out
+    assert r.orders() == [] and r.trades == []
+
+
+def test_no_bar_at_the_open_stops(simulate):
+    """UC-2 alternate 4a. None of IB's bars is stamped at the session's open: the bot stops rather than take another bar."""
+    r = simulate(replace(CALL_TO_TARGET, no_open_bar=True))
+    assert r.code == 1 and "[ERROR] IB has no 09:30 ET bar for today. Stopping." in r.out
+    assert r.orders() == []
+
+
+def test_a_feed_that_stops_mid_day_stops_the_bot(simulate):
+    """UC-3 alternate 2b. SPY's ticks stop at 11:00 with nothing held: once 15 s pass without one, the bot stops."""
+    r = simulate(Day(path=steps(("09:30", 580.00)), feed_stops_at=dt.time(11, 0)))
+    assert r.code == 1 and "[ERROR] No SPY tick for over 15s. Stopping." in r.out
+    assert dt.time(11, 0, 15) <= r.tws.now.time() < dt.time(11, 0, 20)
+
+
+def test_a_stop_under_one_cent_sells_at_once(simulate):
+    """UC-5 alternate 1a. A 99.5% stop under a $0.61 fill rounds to $0.00, so no stop can stand: it sells at once, at the
+    0.59 bid: (0.59 - 0.61) x 600 - 8.40 = -$20.40."""
+    r = simulate(CALL_TO_TARGET, stop=0.995, target=1.0)
+    assert "[EXIT] the stop under $0.61 rounds to under one cent: selling 6 at market." in r.out
+    assert [o.orderType for o in r.orders()] == ["LMT", "MKT"]
+    assert [row[1:] for row in r.trades] == [["SPY CALL", "6", "0.61", "0.59", "-20.40", "979.60"]]
+    assert_flat(r)
+
+
+def test_a_crash_mid_trade_still_closes_everything(simulate):
+    """UC-7 steps 1-3. A crash at 11:00 while holding: the cleanup cancels the stop and the target, sells at market and
+    disconnects, then the crash is raised as it was."""
+    r = simulate(replace(CALL_THEN_FLAT, crash_at=dt.time(11, 0)), raises=RuntimeError)
+    assert str(r.error) == "simulated crash"
+    assert "[CLEANUP] SPY 20261109 583C: cancelling this bot's orders, selling the 6 it holds." in r.out
+    assert r.orders()[-1].orderType == "MKT"
+    assert_flat(r)
+    assert not r.tws.connected
+
+
+def test_an_order_that_will_not_cancel_is_reported(simulate):
+    """UC-7 alternate 2a. After a crash IB never confirms the cancels: the cleanup stops with that error, still
+    disconnects, and says what is open."""
+    r = simulate(replace(CALL_THEN_FLAT, crash_at=dt.time(11, 0), stuck_cancels=True), raises=RuntimeError)
+    assert "would not cancel" in str(r.error)
+    assert "[STILL OPEN] 6 x SPY 20261109 583C" in r.out
+    assert not r.tws.connected
+
+
+def test_the_live_flag_reaches_the_bot_from_the_command_line(simulate):
+    """UC-11 step 2. python zdt_autopilot.py --live: main() hands --live to the bot, which then trades the live account."""
+    r = simulate(replace(CALL_TO_TARGET, accounts=("U1234567",)), live=True, via_main=True)
+    assert r.code == 0 and "LIVE U1234567" in r.out and len(r.trades) == 1
