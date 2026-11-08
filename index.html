@@ -30,7 +30,7 @@
    OWN is checked against the page's real ids by test/home_page_check.py (every id here exists,
    and every section id is here). */
 (function(){
-  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","games","starfighter","houseofcars","breakout","bpgames",
+  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","phonepad","games","starfighter","houseofcars","breakout","bpgames",
              "research","engine","bossbench","warship","apps","casement","docs","docs-u2ue","docs-blueprint","docs-loop",
              "docs-research","repos","contact","about"];
   var ALIAS = { projects:"u2ue", resume:"breakout", space:"starfighter", bench:"bossbench", manual:"u2ue-chapters", documentation:"docs" };
@@ -388,6 +388,7 @@ h3 a:hover{color:var(--accent)}
       <li class="gr" data-sec="tools"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Tools for game development"><span>&#9656;</span></button><a class="row" href="#tools"><span class="g" style="--c:var(--c-tools)"></span><span class="l">Tools for game development</span><span class="n"></span></a></div>
         <ul>
           <li class="leaf"><a class="row" href="#fly"><span class="g dot" style="--c:var(--c-tools)"></span><span class="l">Closed loop fly-through</span></a></li>
+          <li class="leaf"><a class="row" href="#phonepad"><span class="g dot" style="--c:var(--c-tools)"></span><span class="l">PhonePad</span></a></li>
         </ul></li>
       <li class="gr" data-sec="games"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Games"><span>&#9656;</span></button><a class="row" href="#games"><span class="g" style="--c:var(--c-games)"></span><span class="l">Games</span><span class="n"></span></a></div>
         <ul>
@@ -608,7 +609,7 @@ h3 a:hover{color:var(--accent)}
   <header class="ghead">
     <p class="kick">02 · Tools for game development</p>
     <h2 id="h-tools">Tools for game development</h2>
-    <p class="gsub">Requirements tools for building and checking large game code with AI agents.</p>
+    <p class="gsub">Requirements tools for building and checking large game code with AI agents, and phones as game controllers.</p>
   </header>
   <div class="cards">
     <article id="fly" class="card feature" data-node="Closed loop fly-through">
@@ -628,6 +629,17 @@ h3 a:hover{color:var(--accent)}
             <p class="note">No Claude Code yet? <a href="https://code.claude.com/docs/en/setup" rel="noopener">Set it up first</a>, then paste the line.</p>
           </div>
         </details>
+      </div>
+    </article>
+    <article id="phonepad" class="card" data-node="PhonePad">
+      <a class="shot" href="phonepad/" tabindex="-1" aria-hidden="true"><img src="thumbs/phonepad.jpg" width="640" height="400" loading="lazy" alt=""></a>
+      <div class="body">
+        <p class="meta"><span class="state s-proto">Beta</span><span>Web games and Unreal</span></p>
+        <h3><a href="phonepad/">PhonePad</a></h3>
+        <p class="line">Phones as gamepads. Players scan a QR code and their phone's browser becomes a controller; the game sees an ordinary gamepad, so its input code does not change. Try it live with your phone.</p>
+        <p class="more">A Cloudflare relay, a direct WebRTC link for web games, and an Unreal 5.7 input-device plugin. Checked end to end in a headless Unreal game with two scripted phones; the House of Cars lot drives with it.</p>
+        <ul class="tags"><li>Gamepad</li><li>WebRTC</li><li>Unreal plugin</li><li>Cloudflare Workers</li></ul>
+        <p class="links"><a class="go" href="phonepad/">Try it with your phone</a><a href="houseofcars/">Drive a car with it</a><a href="https://github.com/rj45Thompson/phonepad" rel="noopener">Source, MIT</a></p>
       </div>
     </article>
   </div>

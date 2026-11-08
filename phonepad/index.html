@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhonePad</title>
+<meta name="description" content="Phones as gamepads for web games and Unreal games: scan a QR code and the phone's browser becomes a controller. Try it live with your phone. Open source, MIT.">
+<meta property="og:title" content="PhonePad: your phone is the gamepad">
+<meta property="og:description" content="Scan a QR code and your phone's browser becomes a controller for a web game or an Unreal game. The game sees an ordinary gamepad. Try it live; MIT source.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://rj45thompson.github.io/anchor-demo/thumbs/phonepad.jpg">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#0B1219;--panel:#121C26;--line:#2E4052;--well:#0E1720;
+  --fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--green:#47D1A0;--red:#F2777A;--yellow:#F2C94C;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--head:'Space Grotesk',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.6 var(--sans)}
+main{max-width:980px;margin:0 auto;padding:22px 16px 48px}
+a{color:var(--blue)}
+.crumb{font-size:13.5px;color:var(--muted);margin:0 0 18px}
+.crumb a{color:var(--muted)}
+h1{font:700 clamp(28px,5vw,40px)/1.15 var(--head);margin:0 0 10px;letter-spacing:.01em}
+h1 b{color:var(--accent);font-weight:700}
+h2{font:600 21px/1.25 var(--head);margin:34px 0 8px;scroll-margin-top:12px}
+p{margin:0 0 10px;color:var(--soft)}
+.lede{font-size:17px;max-width:720px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 4px}
+.btn{display:inline-block;padding:10px 16px;border-radius:999px;border:1px solid var(--line);color:var(--fg);text-decoration:none;font-weight:600;background:var(--panel)}
+.btn.go{background:var(--accent);border-color:var(--accent);color:#111}
+.btn:hover{border-color:var(--accent)}
+ol,ul{color:var(--soft);padding-left:22px;margin:0 0 8px}
+li{margin:3px 0}
+code{font:13.5px var(--mono);background:var(--well);border:1px solid var(--line);border-radius:6px;padding:1px 5px;color:var(--fg);font-variant-ligatures:none}
+pre{background:var(--well);border:1px solid var(--line);border-radius:12px;padding:12px 14px;overflow:auto;margin:0 0 12px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+.nums{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}
+.nums div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;color:var(--muted);font-size:13.5px}
+.nums b{font:700 21px/1.1 var(--head);color:var(--green);margin-right:6px}
+.try{display:grid;grid-template-columns:minmax(240px,300px) 1fr;gap:16px;margin:22px 0 6px;align-items:start}
+.join,.seats{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.join{text-align:center}
+.join canvas{display:block;width:220px;height:220px;margin:4px auto 12px;border-radius:10px;image-rendering:pixelated;background:#fff}
+.join .code{font:700 30px/1 var(--mono);letter-spacing:.2em;color:var(--fg);margin:6px 0 8px}
+.join .small{font-size:13.5px;color:var(--muted);margin:0 0 6px}
+.join .err{color:var(--red)}
+.switch{display:flex;gap:6px;justify-content:center;margin:12px 0 0;flex-wrap:wrap}
+.switch button{font:600 13px var(--sans);padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--well);color:var(--soft);cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#111}
+.seats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.seat{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--well)}
+.seat h3{font:600 15px var(--head);margin:0 0 2px}
+.seat .st{font-size:12.5px;color:var(--muted);margin:0 0 6px;min-height:1.6em}
+.seat.on{border-color:var(--green)}
+.seat svg{display:block;width:100%;height:auto}
+.pad-body{fill:#18232E;stroke:var(--line);stroke-width:2}
+.k{fill:#223140;stroke:#3A4F63;stroke-width:1.5}
+.k.on{stroke:#fff}
+.lbl{font:600 11px var(--sans);fill:var(--soft);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.bar{fill:#223140}
+.fill{fill:var(--accent)}
+@media (max-width:760px){.try{grid-template-columns:1fr}.seats{grid-template-columns:1fr 1fr}}
+@media (max-width:420px){.seats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<p class="crumb"><a href="../">anchor-demo</a> / PhonePad</p>
+<h1>Your <b>phone</b> is the gamepad</h1>
+<p class="lede">Players scan a QR code and their phone's browser becomes a controller, for a web game or an Unreal game. Nothing to install on Android or iPhone. The game sees an ordinary gamepad, so a game that already reads gamepads needs no new input code.</p>
+<div class="btns">
+  <a class="btn go" href="#try">Try it with your phone</a>
+  <a class="btn" href="https://github.com/rj45Thompson/phonepad" rel="noopener">Source, MIT</a>
+  <a class="btn" href="../houseofcars/">Drive a car with it</a>
+</div>
+
+<section id="try" class="try" aria-label="Try it live">
+  <div class="join" id="join" aria-live="polite">
+    <p class="small">Point your phone's camera at this code</p>
+    <canvas id="qr" width="264" height="264" aria-label="QR code to join"></canvas>
+    <p class="small">or open <b id="host">the controller page</b> and type</p>
+    <p class="code" id="code">....</p>
+    <p class="small"><a id="here" href="#" target="_blank" rel="noopener">No phone? Open the controller in a new tab</a></p>
+    <div class="switch" role="group" aria-label="What the phones show">
+      <button type="button" data-layout="pad" aria-pressed="true">Gamepad</button>
+      <button type="button" data-layout="drive" aria-pressed="false">Driving</button>
+    </div>
+  </div>
+  <div class="seats" id="seats"></div>
+</section>
+<p class="small" style="color:var(--muted);font-size:13.5px">Up to four phones at once. Each drawing above is what the page reads from <code>navigator.getGamepads()</code>, the same call any web game makes.</p>
+
+<h2 id="measured">Measured</h2>
+<div class="nums">
+  <div><b>1 ms</b>round trip on the direct link (two browser tabs, one PC)</div>
+  <div><b>128 ms</b>median round trip through the relay (30 pings)</div>
+  <div><b>12/12</b>checks in a headless Unreal 5.7 game, two scripted phones</div>
+  <div><b>21/21</b>relay checks, local and deployed</div>
+</div>
+<p>A phone on Wi-Fi has not been timed yet. The join box above shows each phone's path and its measured round trip as you play.</p>
+
+<h2 id="how">How it works</h2>
+<ul>
+  <li><b>The relay</b> is a Cloudflare Worker. It opens a room for a game, gives it a 4-letter code and a QR code, serves the phone's controller page, and forwards between phones and the game. It keeps nothing once the room closes.</li>
+  <li><b>Web games get a direct link.</b> The relay introduces the phone and the page, then they talk straight to each other over WebRTC. If that link can't be made, input keeps going through the relay.</li>
+  <li><b>Unreal games</b> load an input-device plugin. Each phone becomes the usual <code>Gamepad_*</code> keys for local player N, with the engine's own button-repeat timing and stick thresholds.</li>
+  <li><b>On the phone:</b> a gamepad layout (stick, A/B/X/Y, shoulders, triggers) or a driving layout (gas and brake pedals, steering by tilting the phone or an on-screen slider). Buttons can carry the game's own names. A phone that drops gets its seat back within 30 s; a phone that sleeps lets go of everything.</li>
+</ul>
+
+<h2 id="use">Use it in your game</h2>
+<p>Deploy the relay once (<code>npx wrangler deploy</code> in <code>relay/</code>), then, in a web game:</p>
+<pre><code>import { PhonePad } from 'https://&lt;your relay&gt;/phonepad-host.js';
+const pads = await PhonePad.start({ relay: 'https://&lt;your relay&gt;', layout: 'pad', seats: 4 });
+pads.show();   // the QR box; phones now appear in navigator.getGamepads()</code></pre>
+<p>In Unreal 5.7, copy <code>unreal/PhonePad</code> into <code>Plugins/</code> and set the relay:</p>
+<pre><code>[/Script/PhonePad.PhonePadSettings]
+RelayUrl="https://&lt;your relay&gt;"
+Seats=4</code></pre>
+<p>The <a href="https://github.com/rj45Thompson/phonepad#readme" rel="noopener">README</a> has the rest: the options, the Blueprint functions, the tests and the protocol.</p>
+
+<h2 id="notes">Notes</h2>
+<ul>
+  <li>iPhone browsers cannot vibrate. Android phones buzz on each press and when the game asks.</li>
+  <li>Tilt steering needs one tap to allow motion (iPhone asks), then a short calibration: hold the phone as you will play, tap Centre, turn it a little right.</li>
+  <li>The relay stores no names, addresses or input. A room lasts while its game is open.</li>
+</ul>
+</main>
+<script type="module">
+const RELAY = 'https://phonepad-relay.tami-play.workers.dev';
+const $ = (id) => document.getElementById(id);
+const seatsEl = $('seats');
+const SEATS = 4;
+
+// one gamepad drawing per seat: what navigator.getGamepads() reports for that phone
+const NS = 'http://www.w3.org/2000/svg';
+const el = (name, attrs, parent) => { const e = document.createElementNS(NS, name); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.append(e); return e; };
+function drawing() {
+  const svg = el('svg', { viewBox: '0 0 300 170', role: 'img', 'aria-label': 'gamepad state' });
+  el('rect', { x: 6, y: 30, width: 288, height: 134, rx: 44, class: 'pad-body' }, svg);
+  const parts = { b: [], trig: [] };
+  const bar = (x, i, name) => {                   // the triggers as fill bars, the shoulders as keys under them
+    el('rect', { x, y: 2, width: 70, height: 10, rx: 5, class: 'bar' }, svg);
+    parts.trig[i] = el('rect', { x, y: 2, width: 0, height: 10, rx: 5, class: 'fill' }, svg);
+    el('text', { x: x + 35, y: 7, class: 'lbl', style: 'font-size:9px' }, svg).textContent = name;
+  };
+  bar(20, 0, 'LT'); bar(210, 1, 'RT');
+  const key = (i, shape, label) => { const k = el(shape.tag, Object.assign({ class: 'k' }, shape.at), svg); parts.b[i] = k; if (label) el('text', { x: shape.cx, y: shape.cy, class: 'lbl' }, svg).textContent = label; return k; };
+  key(4, { tag: 'rect', at: { x: 20, y: 16, width: 70, height: 14, rx: 7 }, cx: 55, cy: 23 }, 'LB');
+  key(5, { tag: 'rect', at: { x: 210, y: 16, width: 70, height: 14, rx: 7 }, cx: 245, cy: 23 }, 'RB');
+  const face = [[0, 230, 122, 'A', 'var(--green)'], [1, 256, 96, 'B', 'var(--red)'], [2, 204, 96, 'X', 'var(--blue)'], [3, 230, 70, 'Y', 'var(--yellow)']];
+  for (const [i, cx, cy, l, c] of face) { const k = key(i, { tag: 'circle', at: { cx, cy, r: 13 }, cx, cy }, l); k.dataset.c = c; }
+  key(8, { tag: 'rect', at: { x: 122, y: 70, width: 22, height: 12, rx: 6 }, cx: 133, cy: 76 }, '');
+  key(9, { tag: 'rect', at: { x: 156, y: 70, width: 22, height: 12, rx: 6 }, cx: 167, cy: 76 }, '');
+  const dpad = [[12, 92, 112], [13, 92, 148], [14, 74, 130], [15, 110, 130]];
+  for (const [i, cx, cy] of dpad) key(i, { tag: 'rect', at: { x: cx - 8, y: cy - 8, width: 16, height: 16, rx: 3 }, cx, cy }, '');
+  el('circle', { cx: 62, cy: 86, r: 26, class: 'bar' }, svg);
+  parts.stickL = el('circle', { cx: 62, cy: 86, r: 11, class: 'k' }, svg);
+  el('circle', { cx: 180, cy: 132, r: 20, class: 'bar' }, svg);
+  parts.stickR = el('circle', { cx: 180, cy: 132, r: 9, class: 'k' }, svg);
+  return { svg, parts };
+}
+const views = [];
+for (let s = 0; s < SEATS; s++) {
+  const box = document.createElement('div');
+  box.className = 'seat';
+  box.innerHTML = '<h3></h3><p class="st"></p>';
+  box.querySelector('h3').textContent = 'Player ' + (s + 1);
+  box.querySelector('.st').textContent = 'waiting for a phone';
+  const d = drawing();
+  box.append(d.svg);
+  seatsEl.append(box);
+  views.push({ box, st: box.querySelector('.st'), parts: d.parts });
+}
+
+function show(pads) {
+  const list = navigator.getGamepads();
+  for (let s = 0; s < SEATS; s++) {
+    const v = views[s];
+    const g = [...list].find((x) => x && x.connected && x.id.startsWith('PhonePad player ' + (s + 1) + ' '));
+    v.box.classList.toggle('on', !!g);
+    const rtt = pads.rtt.get(s);
+    v.st.textContent = g ? 'joined, ' + (pads.paths.get(s) === 'direct' ? 'direct link' : 'through the relay') + (rtt !== undefined ? ', ' + Math.round(rtt) + ' ms round trip' : '') : 'waiting for a phone';
+    const p = v.parts;
+    for (let i = 0; i < p.b.length; i++) {
+      if (!p.b[i]) continue;
+      const on = !!(g && g.buttons[i] && g.buttons[i].pressed);
+      p.b[i].classList.toggle('on', on);
+      p.b[i].style.fill = on ? (p.b[i].dataset.c || 'var(--accent)') : '';
+    }
+    for (let t = 0; t < 2; t++) p.trig[t].setAttribute('width', g ? 70 * g.buttons[6 + t].value : 0);
+    const ax = g ? g.axes : [0, 0, 0, 0];
+    p.stickL.setAttribute('cx', 62 + ax[0] * 15); p.stickL.setAttribute('cy', 86 + ax[1] * 15);
+    p.stickR.setAttribute('cx', 180 + ax[2] * 11); p.stickR.setAttribute('cy', 132 + ax[3] * 11);
+    p.stickL.style.fill = g && (ax[0] || ax[1]) ? 'var(--accent)' : '';
+  }
+}
+
+try {
+  const { PhonePad } = await import(RELAY + '/phonepad-host.js');
+  const pads = await PhonePad.start({ relay: RELAY, layout: 'pad', seats: SEATS });
+  pads.drawQR($('qr'), 8);
+  $('code').textContent = pads.code;
+  $('host').textContent = new URL(pads.join).host;
+  $('here').href = pads.join;
+  for (const b of document.querySelectorAll('.switch button')) {
+    b.addEventListener('click', () => {
+      for (const o of document.querySelectorAll('.switch button')) o.setAttribute('aria-pressed', String(o === b));
+      pads.layout(b.dataset.layout, {});         // this page has no game actions to name: the pedals and steering show as LT, RT and the left stick
+    });
+  }
+  window.addEventListener('pagehide', () => pads.close());
+  setInterval(() => show(pads), 33);             // a display, not a game: 30 redraws a second, on a timer, so it never waits for frames
+} catch (e) {
+  $('join').innerHTML = '';
+  const p = document.createElement('p');
+  p.className = 'err';
+  p.textContent = 'The PhonePad relay could not open a room: ' + e.message;
+  $('join').append(p);
+}
+</script>
+</body>
+</html>
