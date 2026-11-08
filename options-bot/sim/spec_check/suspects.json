@@ -1,0 +1,52 @@
+{
+  "suspects": [
+    {
+      "id": "S1",
+      "rule": "R1",
+      "file": "sim/market_data.py",
+      "line": 44,
+      "repro": "repros/S1.py",
+      "claim": "Bars outside 09:30-15:59, or with an empty price, might reach the bot."
+    },
+    {
+      "id": "S2",
+      "rule": "R2",
+      "file": "sim/replay.py",
+      "line": 66,
+      "repro": "repros/S2.py",
+      "claim": "The price at 10:00:30 might already be the 10:00 minute's close, a price from the future."
+    },
+    {
+      "id": "S3",
+      "rule": "R3",
+      "file": "sim/replay.py",
+      "line": 91,
+      "repro": "repros/S3.py",
+      "claim": "The 09:30 bar the bot reads might not be the real first 15 minutes' high and low."
+    },
+    {
+      "id": "S4",
+      "rule": "R4",
+      "file": "sim/replay.py",
+      "line": 37,
+      "repro": "repros/S4.py",
+      "claim": "A results file might not say its option prices are modeled."
+    },
+    {
+      "id": "S5",
+      "rule": "R5",
+      "file": "sim/replay.py",
+      "line": 118,
+      "repro": "repros/S5.py",
+      "claim": "The replay might change one of the bot's functions, not only stand in for TWS."
+    },
+    {
+      "id": "S6",
+      "rule": "R6",
+      "file": "sim/replay.py",
+      "line": 153,
+      "repro": "repros/S6.py",
+      "claim": "Each session might start from $100 again instead of the last session's ending balance."
+    }
+  ]
+}

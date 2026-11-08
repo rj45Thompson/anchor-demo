@@ -16,5 +16,6 @@ sources:
   - {id: IB-SLEEP, kind: quote, cite: "ib_async 2.1.0, ib.py, the IB class docstring", text: "For introducing a delay, never use time.sleep() but use :meth:`.sleep` instead."}
   - {id: IB-QUALIFY, kind: quote, cite: "ib_async 2.1.0, ib.py, qualifyContractsAsync", text: "If a contract cannot be qualified (bad values, ambiguous), the return value for the contract position in the result is None."}
   - {id: IB-FORMATDATE, kind: quote, cite: "ib_async 2.1.0, ib.py, reqHistoricalData", text: "formatDate: For an intraday request setting to 2 will cause the returned date fields to be timezone-aware datetime.datetime with UTC timezone"}
+  - {id: OWNER-1108, kind: standing, cite: "the owner's answer, relayed 2026-11-08", text: "start it with $100 and trade 0DTE within that budget; read the market's trend and buy cheap lotto calls when it is going up, cheap lotto puts when it is going down"}
   - {id: OWNER-ASK, kind: standing, cite: "the owner's request, 2026-11-08", text: "finish the trading script, run the light loop on it, test it, and publish it with its epics"}
   - {id: OWNER-RULES, kind: standing, cite: "the owner's standing rules for this work", text: "every value is read or proven absent, never stood in for; every feature has a test; a check is proven by a defect planted for it to catch"}

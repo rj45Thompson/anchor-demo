@@ -45,8 +45,8 @@
     {
       "id": "R8",
       "section": "A 7b",
-      "says": "No trade when one contract costs more than the balance",
-      "quote": "One contract costs more than the balance: no trade today."
+      "says": "No trade when one contract costs more than the budget or the cash",
+      "quote": "One contract costs more than the budget, or than the cash: no trade today."
     },
     {
       "id": "R9",
@@ -101,6 +101,18 @@
       "section": "A 12",
       "says": "After a signal, SPY must come back between the triggers before the next",
       "quote": "It waits for SPY to come back between the triggers before it takes another signal"
+    },
+    {
+      "id": "R18",
+      "section": "A 2, 7",
+      "says": "Sizing starts from the bot's own budget, $100 before its first trade, never more than the cash",
+      "quote": "sizes the order with the original's tier table, from its budget and never from more than the account's cash"
+    },
+    {
+      "id": "R19",
+      "section": "A 2",
+      "says": "Before its first trade the budget is STARTING_BUDGET_USD; after, the log's last ending balance",
+      "quote": "($100) before its first trade, then the last ending balance in its log"
     }
   ]
 }

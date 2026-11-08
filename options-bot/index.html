@@ -63,10 +63,11 @@ footer p{color:var(--muted)}
 <h1>Options <b>trader</b> bot</h1>
 <p class="lede">A SPY 0DTE opening-range breakout bot for Interactive Brokers. It began as a script that arrived cut off
 mid-line. It is now finished, checked against a written spec with the light loop, and tested through simulated
-trading days.</p>
+trading days, and replayed through five real sessions of SPY.</p>
 
 <div class="btns">
   <a class="btn go" href="options-bot.zip" download>Download the bot (zip)</a>
+  <a class="btn" href="replay.html">Watch it replay a real week</a>
   <a class="btn" href="epics.html">Epics and use cases</a>
   <a class="btn" href="zdt_autopilot.py">Read the code</a>
   <a class="btn" href="README.md">README</a>
@@ -79,7 +80,7 @@ trading days.</p>
   <li><b>Never left open</b>Sells what it bought 10 minutes before the close (earlier on half days), and on Ctrl+C.</li>
 </ul>
 
-<h2>Run it on a paper account</h2>
+<h2 id="run">Run it on a paper account</h2>
 <ol>
   <li>Start TWS or IB Gateway logged in to the paper account, with the API on port 7497 (TWS: Global Configuration, API, Settings, "Enable ActiveX and Socket Clients").</li>
   <li>The account needs live market data for SPY and for US options (OPRA). Without it the bot stops at startup and says so.</li>
@@ -88,15 +89,15 @@ trading days.</p>
 </ol>
 <p>To let it trade, set <code>STOP_LOSS_PCT</code> and <code>TAKE_PROFIT_PCT</code> near the top of the file. The original script stops before its exit rules, so the bot does not guess them.</p>
 
-<h2>What it does</h2>
+<h2 id="does">What it does</h2>
 <ol>
   <li>Connects and says PAPER or LIVE with the account ID.</li>
-  <li>Reads the account's USD cash balance, and stops if IB does not report one.</li>
+  <li>Reads the account's USD cash and its own budget: $100 to start (the owner's), then its log's last ending balance.</li>
   <li>Reads today's session hours from IB, waits for the first 15-minute bar to close, and takes its high and low as the opening range.</li>
   <li>Streams SPY's last price every second.</li>
   <li>Signals a CALL when SPY trades more than $0.30 above the range, a PUT when it trades more than $0.30 below.</li>
   <li>Picks today's expiry and the listed out-of-the-money strike nearest spot +/- $1.50.</li>
-  <li>Sizes the order from the original's tier table, never more than the balance covers.</li>
+  <li>Sizes the order from the original's tier table, from its budget and never from more than the account holds.</li>
   <li>Buys with a limit at the ask and waits for the fill. After 10 seconds the unfilled part is cancelled.</li>
   <li>Places the stop and the target at IB as one OCA pair.</li>
   <li>Waits for one of them to fill, or sells at market at the flatten time.</li>
@@ -106,36 +107,38 @@ trading days.</p>
 </ol>
 <p class="note">Each step and every alternate path (holidays, delayed data, a missing expiry, an unaffordable contract, a dropped connection, a crash) is written out as <a href="epics.html">two epics and eleven use cases</a>, each step tied to the code its tests ran.</p>
 
-<h2>A simulated day</h2>
+<h2 id="day">A simulated day</h2>
 <p>The bot's own console output for one day against the in-memory TWS used by the tests. The prices are made up, and the stop and target here (50% and 100%) are test values, not settings advice.</p>
-<pre><span class="ev">========================================================================================
- ZDT &amp; SQUEEZE LIVE TRADING AUTOPILOT - IBKR ACTIVE - PAPER DU1234567
-========================================================================================</span>
+<pre><span class="ev">========================================================================================</span>
+<span class="ev"> ZDT &amp; SQUEEZE LIVE TRADING AUTOPILOT - IBKR ACTIVE - PAPER DU1234567</span>
+<span class="ev">========================================================================================</span>
 [ACCOUNT] Current Available Funds: $1,000.00 USD
+<span class="ev">[BUDGET] $100.00 to trade with, from STARTING_BUDGET_USD.</span>
 [INIT] Requesting first 15-minute bar to establish Opening Range (ORB)...
 [WAIT] The opening range closes at 09:45 ET, 0 min from now.
-<span class="ev">[ORB ESTABLISHED] 15-Min High: $581.00 | 15-Min Low: $579.00
-[ORB TRIGGERS] CALL Breakout &gt; $581.30 | PUT Breakdown &lt; $578.70</span>
+<span class="ev">[ORB ESTABLISHED] 15-Min High: $581.00 | 15-Min Low: $579.00</span>
+<span class="ev">[ORB TRIGGERS] CALL Breakout &gt; $581.30 | PUT Breakdown &lt; $578.70</span>
 
 [MONITORING] Scanning real-time SPY price tick stream. Press Ctrl+C to stop.
 
 [09:50:00] SPY Spot: $581.50 | High: $581.00 | Low: $579.00
-<span class="ev">[SIGNAL] CALL: SPY $581.50
-[CONTRACT] SPY 20261109 583C (target strike 583)
-[ORDER] BUY 6 x SPY 20261109 583C at $0.61 (about $373.80 with fees)
-[FILLED] 6 x SPY 20261109 583C @ $0.61
-[EXITS AT IB] Stop $0.30 | Target $1.22 (one cancels the other)</span>
+<span class="ev">[SIGNAL] CALL: SPY $581.50</span>
+<span class="ev">[CONTRACT] SPY 20261109 583C (target strike 583)</span>
+<span class="ev">[ORDER] BUY 1 x SPY 20261109 583C at $0.61 (about $62.30 with fees)</span>
+<span class="ev">[FILLED] 1 x SPY 20261109 583C @ $0.61</span>
+<span class="ev">[EXITS AT IB] Stop $0.30 | Target $1.22 (one cancels the other)</span>
 [10:10:00] SPY 20261109 583C bid $1.84 | Entry $0.61 | Stop $0.30 | Target $1.22
-<span class="ev">[TRADE CLOSED] target | 6 x SPY 20261109 583C $0.61 -&gt; $1.22 | Net +$357.60 after $8.40 commission | Balance $1,357.60</span>
+<span class="ev">[TRADE CLOSED] target | 1 x SPY 20261109 583C $0.61 -&gt; $1.22 | Net +$59.00 after $2.00 commission | Balance $159.00</span>
 [15:49:59] SPY Spot: $584.00 | High: $581.00 | Low: $579.00
 <span class="ev">[DONE] 15:50 ET: no new trades today.</span>
 
+
 trade_execution_log.csv
 Timestamp,PlayDirection,Contracts,EntryPrice,ExitPrice,NetPL,EndingBalance
-2026-11-09 10:10:01,SPY CALL,6,0.61,1.22,357.60,1357.60</pre>
+2026-11-09 10:10:01,SPY CALL,1,0.61,1.22,59.00,159.00</pre>
 <p class="note">As shipped, the same day prints the order it would send and sends nothing: <a href="tests/demo_day_signals_only.txt">demo_day_signals_only.txt</a>. Run either yourself with <code>python tests/demo_day.py</code>.</p>
 
-<h2>Fixed from the original</h2>
+<h2 id="fixed">Fixed from the original</h2>
 <ul>
   <li>It bought one contract even when one cost more than the balance. It now does not trade.</li>
   <li>Its opening range was the first bar of the last 30 minutes, which is the opening bar only between about 9:45 and 10:15. Started at 9:35 it was a bar still forming; started at 11:00 it was the 10:30 bar.</li>
@@ -145,11 +148,11 @@ Timestamp,PlayDirection,Contracts,EntryPrice,ExitPrice,NetPL,EndingBalance
   <li>It took the date from the PC's clock in the PC's own time zone, not New York time.</li>
 </ul>
 
-<h2>Checked with the light loop</h2>
+<h2 id="light-loop">Checked with the light loop</h2>
 <p>The light loop checks code against a written spec. Every rule quotes the spec word for word, and a fault counts only when a small program run on the code proves it. The spec here, <a href="spec_check/SPEC.md">SPEC.md</a>, has three parts: the use case, the original script's own comments, and the ib_async library's documentation.</p>
 <div class="nums">
-  <div><b>17</b><span>rules, each quoting the spec</span></div>
-  <div><b>16</b><span>suspects, each with a repro</span></div>
+  <div><b>19</b><span>rules, each quoting the spec</span></div>
+  <div><b>18</b><span>suspects, each with a repro</span></div>
   <div><b>3</b><span>faults proven on the first run</span></div>
   <div><b>0</b><span>proven after the fixes</span></div>
 </div>
@@ -161,22 +164,35 @@ Timestamp,PlayDirection,Contracts,EntryPrice,ExitPrice,NetPL,EndingBalance
   <p>Ctrl+C while it waited for IB's commission report left a closed trade out of the log. The row is now written first, marked UNREPORTED if the report never came.</p></div>
 <p>The reports: <a href="spec_check/REPORT_before_fixes.md">first run</a>, <a href="spec_check/REPORT.md">after the fixes</a>. The <a href="spec_check/rules.json">rules</a>, <a href="spec_check/suspects.json">suspects</a> and <a href="spec_check/repros/">repros</a> are all here. Run any repro on its own with <code>python spec_check/run_repro.py S1</code>.</p>
 
-<h2>Tested</h2>
+<h2 id="tested">Tested</h2>
 <div class="nums">
-  <div><b>80</b><span>tests, covering every step and alternate path</span></div>
-  <div><b>28 / 28</b><span>planted defects caught, in the bot and in its model, the original's five among them</span></div>
+  <div><b>84</b><span>tests, covering every step and alternate path</span></div>
+  <div><b>30 / 30</b><span>planted defects caught, in the bot and in its model, the original's five among them</span></div>
 </div>
 <p>The tests run whole simulated trading days against an in-memory TWS (<a href="tests/fake_ib_async.py">fake_ib_async.py</a>), so no test can reach TWS or an account. One more test reads the real ib_async 2.1.0 source and checks that every call, keyword and field the bot uses exists there.</p>
 <p>What the tests cannot show: how Interactive Brokers itself fills, prices and reports on a real day. The first paper run is that check.</p>
 
-<h2>Open questions before it trades</h2>
+<h2 id="replay">Replayed on five real sessions</h2>
+<p>The bot's own code, unchanged, run through SPY's real minute bars for November 2 to 6, 2026, with a $100 budget and test exits.
+<a href="replay.html">Watch each day replay</a>: the price, the opening range, every signal and fill, and the console as it printed.
+Option prices there are modeled (Black-Scholes, VIX as the volatility), not real quotes.</p>
+<ul>
+  <li>Monday: three trades, one target and two stops; two losses in a row tripped the breaker. The budget went $100, $181, $110.40, $74.40.</li>
+  <li>Wednesday: one trade, stopped out; the budget fell to $35.40.</li>
+  <li>Tuesday, Thursday and Friday: a signal came, but the $1.50-out option cost $98 to $142, more than the budget. No trade.</li>
+  <li>With $100 again every morning instead, the week's trades net +$2.40. One week of one price model shows how the bot behaves, not how a strategy would do.</li>
+</ul>
+<p>The replay was itself checked with the light loop: six rules from <a href="sim/README.md">its use case</a> (no price from the future, the real opening range, the bot unchanged, prices labeled modeled), none broken, and a planted look-ahead caught.</p>
+
+<h2 id="questions">Open questions before it trades</h2>
 <ol>
   <li>The original ends at the PUT check. Is there more of it?</li>
   <li>What stop and target should it use?</li>
   <li>What does <code>TIME_STOP_PCT = 0.25</code> do? The original sets it but uses it after the point where it ends.</li>
   <li>After a trade, should it trade again the same day? It now waits for SPY to come back inside the range, then takes the next breakout, until two losses in a row.</li>
-  <li>Size from the whole account, or never from more than a set budget? A paper account usually holds far more than $100.</li>
-  <li>The original aims at about 0.20 delta with a fixed $1.50 offset, which is a different delta at 9:45 than at 15:00. Keep the offset, or pick by the delta IB reports?</li>
+  <li>The trend: the bot reads it as SPY breaking out of the first 15-minute range, up for calls, down for puts. Is that the read you mean, or another (VWAP, a moving average)?</li>
+  <li>Cheap lotto options: when the $1.50-out option costs more than the budget (three of the five replayed days), go further out to a cheaper one, or skip the day? And keep the fixed offset, or pick by the delta IB reports?</li>
+  <li>Answered: start with $100 and trade within it. The budget now carries from day to day in the log; should it go back to $100 each morning instead?</li>
 </ol>
 
 <footer>
@@ -184,5 +200,6 @@ Timestamp,PlayDirection,Contracts,EntryPrice,ExitPrice,NetPL,EndingBalance
   <p>Built by RJ Thompson. <a href="../">More on anchor-demo</a>.</p>
 </footer>
 </main>
+<script src="bot_chat.js" data-relay="https://options-bot-relay.tami-play.workers.dev"></script>
 </body>
 </html>

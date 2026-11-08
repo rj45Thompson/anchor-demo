@@ -230,6 +230,7 @@ It is checked by <code>usecase_model.py</code> from the <a href="https://github.
 <p><a href="./">Back to the options trader bot</a>. Software, not financial advice.</p>
 </footer>
 </main>
+<script src="bot_chat.js" data-relay="https://options-bot-relay.tami-play.workers.dev"></script>
 </body>
 </html>
 """

@@ -20,7 +20,7 @@
       "id": "S3",
       "rule": "R9",
       "file": "zdt_autopilot.py",
-      "line": 363,
+      "line": 384,
       "repro": "repros/S3.py",
       "claim": "Ctrl+C while it waits for IB's commission reports leaves a closed trade out of the CSV."
     },
@@ -28,7 +28,7 @@
       "id": "S4",
       "rule": "R1",
       "file": "zdt_autopilot.py",
-      "line": 386,
+      "line": 407,
       "repro": "repros/S4.py",
       "claim": "Port 7496 might be let through without --live."
     },
@@ -36,7 +36,7 @@
       "id": "S5",
       "rule": "R2",
       "file": "zdt_autopilot.py",
-      "line": 386,
+      "line": 407,
       "repro": "repros/S5.py",
       "claim": "Port 4002 might be treated as a live port."
     },
@@ -52,7 +52,7 @@
       "id": "S7",
       "rule": "R4",
       "file": "zdt_autopilot.py",
-      "line": 197,
+      "line": 212,
       "repro": "repros/S7.py",
       "claim": "Started late, it might take a later bar as the opening range."
     },
@@ -60,7 +60,7 @@
       "id": "S8",
       "rule": "R7",
       "file": "zdt_autopilot.py",
-      "line": 480,
+      "line": 507,
       "repro": "repros/S8.py",
       "claim": "A price exactly at a trigger might count as a breakout."
     },
@@ -84,7 +84,7 @@
       "id": "S11",
       "rule": "R12",
       "file": "zdt_autopilot.py",
-      "line": 220,
+      "line": 235,
       "repro": "repros/S11.py",
       "claim": "A wait might use time.sleep, which stops ib_async's event loop."
     },
@@ -100,7 +100,7 @@
       "id": "S13",
       "rule": "R14",
       "file": "zdt_autopilot.py",
-      "line": 197,
+      "line": 212,
       "repro": "repros/S13.py",
       "claim": "UTC bar dates might fail to match the New York 9:30 open."
     },
@@ -108,7 +108,7 @@
       "id": "S14",
       "rule": "R15",
       "file": "zdt_autopilot.py",
-      "line": 502,
+      "line": 529,
       "repro": "repros/S14.py",
       "claim": "The breaker might trip one loss late."
     },
@@ -116,7 +116,7 @@
       "id": "S15",
       "rule": "R16",
       "file": "zdt_autopilot.py",
-      "line": 207,
+      "line": 222,
       "repro": "repros/S15.py",
       "claim": "Delayed prices (data type 3) might be traded on."
     },
@@ -124,9 +124,25 @@
       "id": "S16",
       "rule": "R17",
       "file": "zdt_autopilot.py",
-      "line": 472,
+      "line": 499,
       "repro": "repros/S16.py",
       "claim": "After a trade it might take a new signal while SPY is still past the trigger."
+    },
+    {
+      "id": "S17",
+      "rule": "R18",
+      "file": "zdt_autopilot.py",
+      "line": 316,
+      "repro": "repros/S17.py",
+      "claim": "With $1,000 in the account and a $100 budget it might size from the account, buying six contracts instead of one."
+    },
+    {
+      "id": "S18",
+      "rule": "R19",
+      "file": "zdt_autopilot.py",
+      "line": 184,
+      "repro": "repros/S18.py",
+      "claim": "After a day that ended at $159.00 it might start again from $100, or from the account's cash."
     }
   ]
 }

@@ -47,13 +47,14 @@ usecases:
       - {do: "It refuses a live port unless --live was given", reqs: [IR-1, OB-1], code: ["zdt_autopilot.py::connect"]}
       - {do: "It connects and reads the account IDs; an account that is not a paper account needs --live", reqs: [IR-1], code: ["zdt_autopilot.py::connect"]}
       - {do: "It prints PAPER or LIVE with the account ID", reqs: [IR-1], code: ["zdt_autopilot.py::connect"]}
-      - {do: "It reads the account's USD TotalCashBalance and prints it as [ACCOUNT]", reqs: [OB-6, OB-10, IR-16], code: ["zdt_autopilot.py::read_cash_balance", "zdt_autopilot.py::trade_the_day"]}
+      - {do: "It reads the account's USD TotalCashBalance and its own budget, STARTING_BUDGET_USD before its first trade or the log's last EndingBalance after; [ACCOUNT] and [BUDGET]", reqs: [OB-6, OB-10, OB-15, IR-16], code: ["zdt_autopilot.py::read_cash_balance", "zdt_autopilot.py::read_budget", "zdt_autopilot.py::trade_the_day"]}
     ext:
       - {at: 1, when: "the stop is not between 0 and 1, or the target is not above 0", do: ["[REFUSED] names both limits; nothing connects"], out: end minimal, reqs: [IR-15]}
       - {at: 2, when: "PORT is 7496 or 4001 and --live was not given", do: ["[REFUSED] Port 7496 is a live port"], out: end minimal, reqs: [IR-1, OB-1]}
       - {at: 3, when: "TWS cannot be reached", do: ["[CONNECTION ERROR] names the port and the error"], out: end minimal, reqs: [OB-14]}
       - {at: 3, when: "the account is not a paper account and --live was not given", do: ["[REFUSED] names the account; the bot disconnects"], out: end minimal, reqs: [IR-1]}
       - {at: 5, when: "IB reports no USD TotalCashBalance", do: ["[ERROR] says so, and the bot stops instead of using $100"], out: end minimal, reqs: [OB-10]}
+      - {at: 5, when: "the log's last row says UNREPORTED", do: ["[ERROR] says the budget is not known, and the bot stops"], out: end minimal, reqs: [IR-16]}
 
   - id: UC-2
     name: Read the opening range
@@ -126,13 +127,13 @@ usecases:
       - {do: "The bot finds today's expiry in IB's option chain", reqs: [OB-4, OB-10], code: ["zdt_autopilot.py::get_0dte_contract"]}
       - {do: "It picks the listed out-of-the-money strike nearest spot plus or minus 1.50 rounded to the dollar, a tie going to the nearer, and checks IB knows it; [CONTRACT]", reqs: [OB-4, IR-13, OB-12, IR-18], code: ["zdt_autopilot.py::get_0dte_contract", "zdt_autopilot.py::qualify"]}
       - {do: "It reads the option's live bid and ask", reqs: [IR-14], code: ["zdt_autopilot.py::take_trade", "zdt_autopilot.py::live_quote", "zdt_autopilot.py::wait_for"]}
-      - {do: "It sizes the order with the tier table, within the balance; [ORDER]", reqs: [OB-5, IR-11, IR-16], code: ["zdt_autopilot.py::get_safe_tier_contracts", "zdt_autopilot.py::take_trade"]}
+      - {do: "It sizes the order with the tier table from its budget, never from more than the account's cash; [ORDER]", reqs: [OB-5, OB-15, IR-11], code: ["zdt_autopilot.py::get_safe_tier_contracts", "zdt_autopilot.py::read_cash_balance", "zdt_autopilot.py::take_trade"]}
       - {do: "It buys with a limit at the ask and waits for the fill; [FILLED]", reqs: [IR-7], code: ["zdt_autopilot.py::run_trade", "zdt_autopilot.py::place", "zdt_autopilot.py::wait_until", "zdt_autopilot.py::held"]}
     ext:
       - {at: 1, when: "today's expiry is not listed", do: ["[NO TRADE] says so; no later expiry is used, and the day ends"], out: end minimal, reqs: [OB-10]}
       - {at: 2, when: "no out-of-the-money strike within $5 of the target is listed", do: ["[NO TRADE] says so, and the day ends"], out: end minimal, reqs: [OB-4]}
       - {at: 3, when: "the option has no live bid and ask", do: ["[NO TRADE] says so; this signal is skipped"], out: end minimal, reqs: [IR-14]}
-      - {at: 4, when: "one contract costs more than the balance", do: ["[NO TRADE] gives both figures, and the day ends"], out: end minimal, reqs: [IR-11]}
+      - {at: 4, when: "one contract costs more than the budget, or than the cash", do: ["[NO TRADE] gives the price and what there is to size from, and the day ends"], out: end minimal, reqs: [IR-11]}
       - {at: 4, when: "the exit rules are not set", do: ["[SIGNALS ONLY] No order sent"], out: end minimal, reqs: [IR-2]}
       - {at: 5, when: "nothing fills within ENTRY_FILL_TIMEOUT_S", do: ["the order is cancelled; [NO FILL]"], out: end minimal, reqs: [IR-7]}
       - {at: 5, when: "part of the order fills within ENTRY_FILL_TIMEOUT_S", do: ["the rest is cancelled, and only what filled goes on"], out: end success, reqs: [IR-7]}
@@ -300,7 +301,7 @@ usecases:
       - {do: "The trader reads the console and trade_execution_log.csv", reqs: [OB-8], code: ["zdt_autopilot.py::log_trade"]}
     ext:
       - {at: 2, when: "the account is not a paper account", do: ["[REFUSED] names the account"], out: end minimal, reqs: [IR-1]}
-      - {at: 3, when: "the paper account holds far more than the trader's real budget", do: ["the tiers size up to MAX_ACTIVE_CONTRACTS; the trader sets the paper balance to match, or asks for a cap"], out: rejoin 4, reqs: [IR-16]}
+      - {at: 3, when: "the paper account holds far more than the budget", do: ["the bot still sizes from its own budget, never from the paper account's whole cash"], out: rejoin 4, reqs: [OB-15]}
 
   - id: UC-11
     name: Go live

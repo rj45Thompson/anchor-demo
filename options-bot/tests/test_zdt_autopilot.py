@@ -37,13 +37,18 @@ class Result:
 
 @pytest.fixture
 def simulate(tmp_path):
-    def run(day, stop=0.5, target=1.0, live=False, port=7497, via_main=False, raises=None):
+    def run(day, stop=0.5, target=1.0, live=False, port=7497, via_main=False, raises=None, budget=1000.0, log_rows=()):
         """Runs the bot through the day. via_main: through main()'s command line. raises: the exception the run must
-        end with; the result still carries the fake TWS and the output, so what was left behind can be checked."""
+        end with; the result still carries the fake TWS and the output, so what was left behind can be checked.
+        budget: STARTING_BUDGET_USD, the fake account's $1,000 by default so the money sums size from it; log_rows: earlier
+        rows already in the log."""
         tws = FakeTWS(day)
         log = tmp_path / "trade_execution_log.csv"
+        if log_rows:
+            with log.open("w", newline="") as f:
+                csv.writer(f).writerows([["Timestamp", "PlayDirection", "Contracts", "EntryPrice", "ExitPrice", "NetPL", "EndingBalance"], *log_rows])
         patches = dict(ib=tws, now_et=lambda: tws.now, LOG_FILENAME=str(log),
-                       STOP_LOSS_PCT=stop, TAKE_PROFIT_PCT=target, PORT=port)
+                       STOP_LOSS_PCT=stop, TAKE_PROFIT_PCT=target, PORT=port, STARTING_BUDGET_USD=budget)
         saved = {k: getattr(bot, k) for k in patches}
         for k, v in patches.items():
             setattr(bot, k, v)
@@ -274,7 +279,7 @@ def test_cannot_afford_one_contract_means_no_trade(simulate):
     """Alternate 7b, end to end."""
     r = simulate(replace(CALL_TO_TARGET, cash_usd=50.00))
     assert r.code == 0
-    assert "[NO TRADE] One SPY 20261109 583C costs $62.30 with fees; the balance is $50.00." in r.out
+    assert "[NO TRADE] One SPY 20261109 583C costs $62.30 with fees; there is $50.00 to size from (budget $1,000.00, cash $50.00)." in r.out
     assert r.orders() == []
 
 
@@ -427,3 +432,34 @@ def test_the_live_flag_reaches_the_bot_from_the_command_line(simulate):
     """UC-11 step 2. python zdt_autopilot.py --live: main() hands --live to the bot, which then trades the live account."""
     r = simulate(replace(CALL_TO_TARGET, accounts=("U1234567",)), live=True, via_main=True)
     assert r.code == 0 and "LIVE U1234567" in r.out and len(r.trades) == 1
+
+
+def test_the_budget_starts_at_100_and_sizes_one_contract(simulate):
+    """UC-1 step 5 and UC-4 step 4 (OB-15, the owner 11-08: start it with $100 and trade within that). The account holds
+    $1,000, but the bot sizes from its own $100: the tiers give one contract, $62.30 with fees. At the target,
+    0.61 x 100 - 2 x 1.00 = $59.00, and the budget ends the day at $159.00."""
+    r = simulate(CALL_TO_TARGET, budget=100.0)
+    assert "[BUDGET] $100.00 to trade with, from STARTING_BUDGET_USD." in r.out
+    assert [row[1:] for row in r.trades] == [["SPY CALL", "1", "0.61", "1.22", "59.00", "159.00"]]
+
+
+def test_the_budget_carries_over_from_the_log(simulate):
+    """UC-1 step 5 (IR-19). The log's last row ended at $159.00, so the day starts there: the tiers give two contracts
+    ($124.60 of $159.00). 0.61 x 200 - 2 x 1.40 = $119.20, and the budget ends at $278.20."""
+    r = simulate(CALL_TO_TARGET, budget=100.0, log_rows=[["2026-11-06 10:10:01", "SPY CALL", "1", "0.61", "1.22", "59.00", "159.00"]])
+    assert "[BUDGET] $159.00 to trade with, from the log's last row (2026-11-06 10:10:01)." in r.out
+    assert [row[1:] for row in r.trades[-1:]] == [["SPY CALL", "2", "0.61", "1.22", "119.20", "278.20"]]
+
+
+def test_an_unreported_last_row_stops_the_bot(simulate):
+    """UC-1 alternate 5b (IR-19). The log's last row says UNREPORTED: the budget is not known, so the bot stops first."""
+    r = simulate(CALL_TO_TARGET, budget=100.0, log_rows=[["2026-11-06 10:10:01", "SPY CALL", "1", "0.61", "1.22", "UNREPORTED", "UNREPORTED"]])
+    assert r.code == 1 and "has no ending balance (UNREPORTED), so the budget is not known. Stopping." in r.out
+    assert r.orders() == []
+
+
+def test_the_cash_caps_the_budget(simulate):
+    """UC-4 step 4 (OB-15). The budget says $1,000 but the account holds $150: it sizes from $150, two contracts ($124.60)."""
+    r = simulate(replace(CALL_TO_TARGET, cash_usd=150.0), budget=1000.0)
+    assert "; the account holds less, so it sizes from $150.00." in r.out
+    assert [row[2] for row in r.trades] == ["2"]

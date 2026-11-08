@@ -3,6 +3,7 @@
 ========================================================================================
 [SIGNALS ONLY] STOP_LOSS_PCT and TAKE_PROFIT_PCT are not set: signals are shown, no order is sent.
 [ACCOUNT] Current Available Funds: $1,000.00 USD
+[BUDGET] $100.00 to trade with, from STARTING_BUDGET_USD.
 [INIT] Requesting first 15-minute bar to establish Opening Range (ORB)...
 [WAIT] The opening range closes at 09:45 ET, 0 min from now.
 [ORB ESTABLISHED] 15-Min High: $581.00 | 15-Min Low: $579.00
@@ -13,7 +14,7 @@
 [09:50:00] SPY Spot: $581.50 | High: $581.00 | Low: $579.00
 [SIGNAL] CALL: SPY $581.50
 [CONTRACT] SPY 20261109 583C (target strike 583)
-[ORDER] BUY 6 x SPY 20261109 583C at $0.61 (about $373.80 with fees)
+[ORDER] BUY 1 x SPY 20261109 583C at $0.61 (about $62.30 with fees)
 [SIGNALS ONLY] No order sent: set STOP_LOSS_PCT and TAKE_PROFIT_PCT to trade.
 [15:49:59] SPY Spot: $584.00 | High: $581.00 | Low: $579.00
 [DONE] 15:50 ET: no new trades today.

@@ -15,14 +15,16 @@ behind.
 Main path, each step with what you see:
 
 1. You start the script. It connects and prints PAPER or LIVE with the account ID.
-2. It reads the account's USD `TotalCashBalance` (the original's field). It prints `[ACCOUNT]`.
+2. It reads the account's USD `TotalCashBalance` (the original's field) and its own budget: `STARTING_BUDGET_USD`
+   ($100) before its first trade, then the last ending balance in its log. It prints `[ACCOUNT]` and `[BUDGET]`.
 3. It reads today's session hours from IB, waits for the first 15-minute bar to close, and reads that
    bar. It prints `[ORB ESTABLISHED]` and the two triggers (high + `ORB_BUFFER`, low - `ORB_BUFFER`).
 4. It streams SPY's last price and prints a status line every second.
 5. SPY trades above the CALL trigger or below the PUT trigger. It prints `[SIGNAL]`.
 6. It picks today's expiry and the listed strike nearest spot +/- 1.50 rounded to the dollar (the original's rule),
    always out of the money, a tie going to the one nearer spot +/- 1.50. It prints `[CONTRACT]`.
-7. It reads that option's ask and sizes the order with the original's tier table. It prints `[ORDER]`.
+7. It reads that option's ask and sizes the order with the original's tier table, from its budget and never from more
+   than the account's cash. It prints `[ORDER]`.
 8. It buys with a limit at the ask and waits for the fill. It prints `[FILLED]`.
 9. It places the stop and the target at IB as one OCA pair, so they stay working even if the PC or the
    script dies. It prints `[EXITS AT IB]`.
@@ -37,6 +39,7 @@ Alternate paths:
 
 - 1a. Live port or live account without `--live`: it refuses and exits.
 - 2a. IB reports no USD `TotalCashBalance`: it stops. The original carried on with $100 instead.
+- 2b. The log's last row says UNREPORTED: the budget is not known, and it stops.
 - 3a. Started after 9:45 ET: it still reads the 9:30 bar. The original read the latest 30 minutes, so
   after about 10:15 its "opening range" was a later bar, and before 9:45 it was a bar still forming.
 - 3b. IB lists today as CLOSED: it does nothing. A half day closes early, and the flatten time moves with it.
@@ -46,7 +49,7 @@ Alternate paths:
 - 6b. No out-of-the-money strike within $5 of the target is listed: no trade today. The original crashed here (`min()` of
   an empty list), and it never checked that IB knew the contract it picked.
 - 7a. The option has no live bid and ask: this signal is skipped.
-- 7b. One contract costs more than the balance: no trade today. The original bought one anyway.
+- 7b. One contract costs more than the budget, or than the cash: no trade today. The original bought one anyway.
 - 8a. Not filled within 10 seconds: the rest is cancelled and only what filled is traded.
 - 9a. Exit rules not set: SIGNALS ONLY, no orders at all.
 - 10a. The connection drops while holding: the stop and target keep working at IB; the script says what

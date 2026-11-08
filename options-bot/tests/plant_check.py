@@ -40,13 +40,16 @@ PLANTS = [
     ("no cleanup after a crash", "            if ib.isConnected():\n                make_flat()", "            if ib.isConnected():\n                pass"),
     ("a dead feed not noticed", "        if (now - ticker.time).total_seconds() > PRICE_TIMEOUT_S:", "        if False:"),
     ("any first bar taken as the open's", "    first = [b for b in bars if b.date == session_open]", "    first = bars[:1]"),
+    ("sized from the whole cash, not the budget", "        size_from = min(balance, cash)", "        size_from = cash"),
+    ("the budget not carried over from the log", """    return float(last[6]), f"the log's last row ({last[0]})\"""", """    return STARTING_BUDGET_USD, "STARTING_BUDGET_USD\""""),
 ]
 
 
 # Plants in the epics model, each of which tests/test_model.py must refuse: (label, file, old, new).
 MODEL_PLANTS = [
     ("a step names code its tests never ran", "model/usecases.yaml",
-     'code: ["zdt_autopilot.py::read_cash_balance", "zdt_autopilot.py::trade_the_day"]}', 'code: ["zdt_autopilot.py::read_cash_balance", "zdt_autopilot.py::close_out"]}'),
+     'code: ["zdt_autopilot.py::read_cash_balance", "zdt_autopilot.py::read_budget", "zdt_autopilot.py::trade_the_day"]}',
+     'code: ["zdt_autopilot.py::read_cash_balance", "zdt_autopilot.py::read_budget", "zdt_autopilot.py::close_out"]}'),
     ("a requirement linked straight to code", "model/requirements.yaml", "{id: OB-6, kind: authored,", "{id: OB-6, code: read_cash_balance, kind: authored,"),
     ("an alternate path with no tests", "model/step_tests.yaml", "  UC-4.3a: [test_an_option_with_no_quote_is_not_traded]\n", ""),
     ("a trace older than the code", "zdt_autopilot.py", 'ORDER_REF = "zdt-autopilot"', 'ORDER_REF = "zdt-autopilot"  # changed'),

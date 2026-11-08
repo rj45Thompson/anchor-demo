@@ -38,11 +38,14 @@ def spy(tws):
     return contract
 
 
-def simulate(day, stop=0.5, target=1.0, live=False, port=7497):
-    """Runs the bot through the whole day. Returns (exit code, fake TWS, CSV trade rows, console output)."""
+def simulate(day, stop=0.5, target=1.0, live=False, port=7497, budget=1000.0):
+    """Runs the bot through the whole day. Returns (exit code, fake TWS, CSV trade rows, console output). budget: the
+    STARTING_BUDGET_USD the scenario's sums are written for (the fake account's $1,000); None keeps the bot's own."""
     tws = install(day)
     log = pathlib.Path(tempfile.mkdtemp()) / "trade_execution_log.csv"
     bot.LOG_FILENAME, bot.STOP_LOSS_PCT, bot.TAKE_PROFIT_PCT, bot.PORT = str(log), stop, target, port
+    if budget is not None:
+        bot.STARTING_BUDGET_USD = budget
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
         code = bot.run_live_execution(live=live)

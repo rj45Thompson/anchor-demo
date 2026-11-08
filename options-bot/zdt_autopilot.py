@@ -25,7 +25,7 @@ SYMBOL = "SPY"
 EXCHANGE = "SMART"
 CURRENCY = "USD"
 
-STARTING_BUDGET_USD = 100.00   # the original used it only as a stand-in balance; the bot now stops instead
+STARTING_BUDGET_USD = 100.00   # the budget it starts with (the owner, 2026-11-08); after a trade it goes on from the log
 IBKR_FEE_PER_LEG = 0.65        # sizing estimate only: the P/L uses the commissions IB reports
 TIME_STOP_PCT = 0.25           # the original uses this after the point where it stops, so it is not wired in
 ORB_BUFFER = 0.30
@@ -181,6 +181,21 @@ def read_cash_balance():
     return None
 
 
+def read_budget():
+    """(step 2) The bot's own budget, and where it came from: the last EndingBalance in its log, or STARTING_BUDGET_USD
+    before its first trade. None when the last row says UNREPORTED: then the budget is not known, and the bot stops."""
+    with open(LOG_FILENAME, newline='') as f:
+        rows = list(csv.reader(f))[1:]
+    if not rows:
+        return STARTING_BUDGET_USD, "STARTING_BUDGET_USD"
+    last = rows[-1]
+    if len(last) != 7:
+        raise RuntimeError(f"{LOG_FILENAME}'s last row has {len(last)} columns, not the log's 7: {last!r}")
+    if last[6] == "UNREPORTED":
+        return None, f"the log's last row ({last[0]})"
+    return float(last[6]), f"the log's last row ({last[0]})"
+
+
 def read_opening_range(spy, session_open):
     """(step 3) High and low of today's first 15-minute bar. Waits for that bar to close if the script
     starts early, and still reads that bar if it starts late. None when IB has no such bar."""
@@ -294,10 +309,16 @@ def take_trade(spy, direction, spot, balance, flatten_at):
             print(f"[NO TRADE] {name(opt)} has no live bid and ask after {QUOTE_TIMEOUT_S}s.")
             return 'skip'
         ask = quote[1]
+        cash = read_cash_balance()
+        if cash is None:
+            print("[ERROR] IB stopped reporting the account's USD TotalCashBalance. Stopping.")
+            return 'stop'
+        size_from = min(balance, cash)       # the budget, never more than the account holds
         one = ask * 100.0 + IBKR_FEE_PER_LEG * 2
-        qty = get_safe_tier_contracts(balance, ask)
+        qty = get_safe_tier_contracts(size_from, ask)
         if qty == 0:
-            print(f"[NO TRADE] One {name(opt)} costs ${one:,.2f} with fees; the balance is ${balance:,.2f}.")
+            print(f"[NO TRADE] One {name(opt)} costs ${one:,.2f} with fees; there is ${size_from:,.2f} to size from "
+                  f"(budget ${balance:,.2f}, cash ${cash:,.2f}).")
             return 'stop'
         print(f"[ORDER] BUY {qty} x {name(opt)} at ${ask:.2f} (about ${qty * one:,.2f} with fees)")
         if not exits_set():
@@ -421,11 +442,17 @@ def trade_the_day():
         return 0
 
     # Fetch live account balance                                                                    (step 2)
-    current_balance = read_cash_balance()
-    if current_balance is None:
+    cash = read_cash_balance()
+    if cash is None:
         print("[ERROR] IB reports no USD TotalCashBalance for this account, so contracts cannot be sized. Stopping.")
         return 1
-    print(f"[ACCOUNT] Current Available Funds: ${current_balance:,.2f} USD")
+    print(f"[ACCOUNT] Current Available Funds: ${cash:,.2f} USD")
+    current_balance, source = read_budget()
+    if current_balance is None:
+        print(f"[ERROR] {source} has no ending balance (UNREPORTED), so the budget is not known. Stopping.")
+        return 1
+    print(f"[BUDGET] ${current_balance:,.2f} to trade with, from {source}"
+          + (f"; the account holds less, so it sizes from ${cash:,.2f}" if cash < current_balance else "") + ".")
 
     # 1. Establish 15-Minute Opening Range                                                          (step 3)
     print("[INIT] Requesting first 15-minute bar to establish Opening Range (ORB)...")

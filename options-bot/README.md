@@ -32,14 +32,16 @@ behind.
 Main path, each step with what you see:
 
 1. You start the script. It connects and prints PAPER or LIVE with the account ID.
-2. It reads the account's USD `TotalCashBalance` (the original's field). It prints `[ACCOUNT]`.
+2. It reads the account's USD `TotalCashBalance` (the original's field) and its own budget: `STARTING_BUDGET_USD`
+   ($100) before its first trade, then the last ending balance in its log. It prints `[ACCOUNT]` and `[BUDGET]`.
 3. It reads today's session hours from IB, waits for the first 15-minute bar to close, and reads that
    bar. It prints `[ORB ESTABLISHED]` and the two triggers (high + `ORB_BUFFER`, low - `ORB_BUFFER`).
 4. It streams SPY's last price and prints a status line every second.
 5. SPY trades above the CALL trigger or below the PUT trigger. It prints `[SIGNAL]`.
 6. It picks today's expiry and the listed strike nearest spot +/- 1.50 rounded to the dollar (the original's rule),
    always out of the money, a tie going to the one nearer spot +/- 1.50. It prints `[CONTRACT]`.
-7. It reads that option's ask and sizes the order with the original's tier table. It prints `[ORDER]`.
+7. It reads that option's ask and sizes the order with the original's tier table, from its budget and never from more
+   than the account's cash. It prints `[ORDER]`.
 8. It buys with a limit at the ask and waits for the fill. It prints `[FILLED]`.
 9. It places the stop and the target at IB as one OCA pair, so they stay working even if the PC or the
    script dies. It prints `[EXITS AT IB]`.
@@ -54,6 +56,7 @@ Alternate paths:
 
 - 1a. Live port or live account without `--live`: it refuses and exits.
 - 2a. IB reports no USD `TotalCashBalance`: it stops. The original carried on with $100 instead.
+- 2b. The log's last row says UNREPORTED: the budget is not known, and it stops.
 - 3a. Started after 9:45 ET: it still reads the 9:30 bar. The original read the latest 30 minutes, so
   after about 10:15 its "opening range" was a later bar, and before 9:45 it was a bar still forming.
 - 3b. IB lists today as CLOSED: it does nothing. A half day closes early, and the flatten time moves with it.
@@ -63,7 +66,7 @@ Alternate paths:
 - 6b. No out-of-the-money strike within $5 of the target is listed: no trade today. The original crashed here (`min()` of
   an empty list), and it never checked that IB knew the contract it picked.
 - 7a. The option has no live bid and ask: this signal is skipped.
-- 7b. One contract costs more than the balance: no trade today. The original bought one anyway.
+- 7b. One contract costs more than the budget, or than the cash: no trade today. The original bought one anyway.
 - 8a. Not filled within 10 seconds: the rest is cancelled and only what filled is traded.
 - 9a. Exit rules not set: SIGNALS ONLY, no orders at all.
 - 10a. The connection drops while holding: the stop and target keep working at IB; the script says what
@@ -91,6 +94,11 @@ Changed, each one a defect in the original as it arrived:
 New, because the file ends before them: steps 7 to 13, the live guard (1a), the session hours (3b), the
 re-arm rule (12), and the cleanup (13). Every value that is not from the original is marked in the file.
 
+From the owner's answer (2026-11-08): start it with $100 and trade 0DTE within that budget, buying cheap calls when
+the market is going up and cheap puts when it is going down. The bot now sizes from its own budget, `STARTING_BUDGET_USD`
+to start and the log's last ending balance after that, and never from more than the account holds (2, 7, 2b). Calls on
+an up move and puts on a down move is the breakout rule it already had (5).
+
 ## Open questions for the owner
 
 1. The original ends at the PUT check. Is there more of it? If not:
@@ -99,11 +107,13 @@ re-arm rule (12), and the cleanup (13). Every value that is not from the origina
    the bot does not use it yet.
 4. After a trade, should it trade again the same day? It now waits for SPY to come back inside the range
    first, then takes the next breakout, until two losses in a row.
-5. `STARTING_BUDGET_USD` was only the stand-in balance. Should the bot size from the whole account, or never
-   from more than a budget set for it? A paper account usually holds far more than $100, so on paper it sizes
-   up to `MAX_ACTIVE_CONTRACTS`.
-6. The original's docstring aims at about 0.20 delta, but its strike rule is a fixed $1.50 from spot, which
-   is a different delta at 9:45 than at 15:00. Keep the fixed offset, or pick by the delta IB reports?
+5. The trend: the bot reads it as SPY breaking out of the first 15-minute range, up for calls and down for puts.
+   Is that the read you mean, or another one (VWAP, a moving average)?
+6. Cheap lotto options: the strike is the original's fixed $1.50 from spot (about 0.20 delta in its comment).
+   When that option costs more than the budget, should it go further out to a cheaper one, or skip the day?
+   And keep the fixed offset, or pick by the delta IB reports?
+7. Answered 2026-11-08: start with $100 and trade within it. The budget carries over from day to day in the
+   log; say if it should start again at $100 each day instead.
 
 ## The light loop
 
@@ -112,7 +122,7 @@ the original script's own comments, and ib_async's documentation, each copied wo
 `rules.json` quotes it, every suspect in `suspects.json` names a rule and a code line, and a fault counts only
 when that suspect's repro (`repros/`) fails its own assertion on the code.
 
-The first run proved 3 faults (`REPORT_before_fixes.md`): a tie between two listed strikes went to the one
+It now holds 19 rules and 18 suspects. The first run proved 3 faults (`REPORT_before_fixes.md`): a tie between two listed strikes went to the one
 farther from spot +/- 1.50; with the strikes just above spot unlisted it could buy an in-the-money call,
 against the original's "slightly OTM"; and Ctrl+C while waiting for IB's commission report left a closed
 trade out of the CSV. All three are fixed and each has a test. The second run proved none (`REPORT.md`).
@@ -132,13 +142,13 @@ set `USECASE_MODEL` to that file and `tests/test_model.py` runs it too.
 
 ## Tests
 
-`pip install -r requirements-dev.txt`, then `py -m pytest tests` (80 tests) runs the bot through whole simulated
+`pip install -r requirements-dev.txt`, then `py -m pytest tests` (84 tests) runs the bot through whole simulated
 trading days against an in-memory TWS (`tests/fake_ib_async.py`), with tests for every step and alternate path of
 the trading epic. No TWS, network or account is involved. `tests/test_api_contract.py` reads the real ib_async
 source and checks that every `ib.` call, keyword and field the bot uses exists there. It runs when ib_async is
 installed, or when `IB_ASYNC_SRC` points at its source, and is skipped otherwise.
 
-`py tests/plant_check.py` plants 28 defects, one at a time, in copies of the bot and of the model (the original's
+`py tests/plant_check.py` plants 30 defects, one at a time, in copies of the bot and of the model (the original's
 five among them), and each must make a test fail. A check that has only ever passed cannot be told from one
 that is switched off.
 
@@ -148,6 +158,24 @@ is that check.
 `py tests/demo_day.py` prints one simulated day the way the terminal shows it (`tests/demo_day_signals_only.txt`);
 `py tests/demo_day.py --exits 0.5 1.0` does the same with a stop and a target set, test values only
 (`tests/demo_day_with_exits.txt`).
+
+## Replay on real sessions
+
+`sim/` runs the bot's own code, unchanged, through SPY's real one-minute bars: `py sim/market_data.py` fetches the latest
+five sessions (Yahoo Finance's public chart data), `py sim/replay.py` replays them with the budget carried day to day
+(`--reset-daily` starts each at $100; `--stop` and `--target` set the test exits), and `py sim/make_replay_page.py OUT`
+writes the page that plays each day back. Option prices there are modeled (Black-Scholes, VIX as the volatility, the time
+left to the close), because past 0DTE quotes are not in free data; `sim/README.md` says what is real and what is modeled.
+The replay has its own light loop (`sim/spec_check/`): six rules from its use case, among them that no decision uses a
+price from the future, none broken, and a planted look-ahead caught.
+
+## Ask Claude about it
+
+The bot's pages carry a chat panel (`site/bot_chat.js`) that answers questions about the bot and reads the answers aloud.
+It talks to a small Cloudflare Worker (`relay/`, the House of Cars sales relay's design) that holds the Claude key and gives
+Claude this README, the epics model and the bot's settings. Claude there can show a part of the pages and nothing else: it
+cannot change the site, the bot or an account, and it gives no trading advice. `relay/README.md` has its use case, its caps
+and its tests.
 
 ---
 

@@ -218,6 +218,8 @@ class Day:
 
 
 class FakeTWS:
+    PER_CONTRACT = 0.70          # IB's commission a contract in this fake; $1.00 minimum a fill
+
     def __init__(self, day):
         self.day = day
         self.now = dt.datetime.combine(day.date, day.start, ET)
@@ -336,7 +338,7 @@ class FakeTWS:
             trade.orderStatus.status = "Filled"
         if self.day.commission_delay_s is not None:
             due = self.now + dt.timedelta(seconds=self.day.commission_delay_s)
-            self.reports.append((due, report, exec_id, round(max(1.00, 0.70 * qty), 2)))
+            self.reports.append((due, report, exec_id, round(max(1.00, self.PER_CONTRACT * qty), 2)))
         if trade.order.ocaGroup:
             for other in self.trades:
                 if other is not trade and other.order.ocaGroup == trade.order.ocaGroup and not other.isDone():

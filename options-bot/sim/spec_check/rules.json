@@ -1,0 +1,40 @@
+{
+  "rules": [
+    {
+      "id": "R1",
+      "section": "1",
+      "says": "Only regular-hours bars, none with an empty price",
+      "quote": "only regular hours, and skips any minute with an empty price"
+    },
+    {
+      "id": "R2",
+      "section": "2",
+      "says": "No look-ahead: a minute is seen only after it ends",
+      "quote": "The bot sees each minute's close only once that minute has ended"
+    },
+    {
+      "id": "R3",
+      "section": "3",
+      "says": "The opening range is the real first 15 minutes",
+      "quote": "The opening range is built from the real minute bars of the session's first 15 minutes."
+    },
+    {
+      "id": "R4",
+      "section": "4",
+      "says": "Option prices are modeled, and the results say so",
+      "quote": "every result file and page says they are modeled"
+    },
+    {
+      "id": "R5",
+      "section": "5",
+      "says": "The bot's code runs unchanged",
+      "quote": "The bot's own code runs unchanged; the replay only stands in for TWS."
+    },
+    {
+      "id": "R6",
+      "section": "6",
+      "says": "The budget starts at STARTING_BUDGET_USD and carries over",
+      "quote": "The budget starts at STARTING_BUDGET_USD and carries from session to session in the log"
+    }
+  ]
+}
