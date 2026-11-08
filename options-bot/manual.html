@@ -27,6 +27,7 @@ pre code{border:0;padding:0;background:none}
 hr{border:0;border-top:1px solid var(--line);margin:30px 0 16px}
 .nav{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.nav a{font-size:13px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--soft)}
 .nav a:hover{border-color:var(--accent)}
+.lp-index-on .nav{display:none}
 footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}footer p{color:var(--muted)}
 </style>
 </head>
@@ -34,7 +35,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-si
 <main>
 <p class="crumb"><a href="../">anchor-demo</a> / <a href="./">options trader bot</a> / manual</p>
 <h1 id="zdt-autopilot-spy-0dte-opening-range-breakout-on-interactive-brokers">ZDT autopilot: SPY 0DTE opening-range breakout on Interactive Brokers</h1>
-<nav class="nav"><a href="#run-it-on-a-paper-account-first">Run it on a paper account first</a><a href="#the-use-case-it-follows">The use case it follows</a><a href="#what-is-from-the-original-and-what-is-new">What is from the original and what is new</a><a href="#open-questions-for-the-owner">Open questions for the owner</a><a href="#the-light-loop">The light loop</a><a href="#epics-and-use-cases">Epics and use cases</a><a href="#tests">Tests</a><a href="#replay-on-real-sessions">Replay on real sessions</a><a href="#how-others-do-it">How others do it</a><a href="#ask-claude-about-it">Ask Claude about it</a></nav>
+<nav class="nav"><a href="#run-it-on-a-paper-account-first">Run it on a paper account first</a><a href="#the-use-case-it-follows">The use case it follows</a><a href="#what-is-from-the-original-and-what-is-new">What is from the original and what is new</a><a href="#open-questions-for-the-owner">Open questions for the owner</a><a href="#the-light-loop">The light loop</a><a href="#epics-and-use-cases">Epics and use cases</a><a href="#tests">Tests</a><a href="#replay-on-real-sessions">Replay on real sessions</a><a href="#how-others-do-it">How others do it</a><a href="#talk-to-the-page">Talk to the page</a></nav>
 
 <p>A trading script, finished and tested. The original arrived cut off mid-line at the PUT trigger check
 (<code>elif last_price &lt; orb_lo</code>); every change from it is listed below, and every value in <code>zdt_autopilot.py</code>
@@ -263,12 +264,13 @@ unrelated. The nearest data:</p>
   Vilkov's net results reversed once the spread was charged at its true size. The bot's replay prices options with a
   model, so a paper run on real quotes is the check that counts.</li>
 </ul>
-<h2 id="ask-claude-about-it">Ask Claude about it</h2>
-<p>The bot's pages carry a chat panel (<code>site/bot_chat.js</code>) that answers questions about the bot and reads the answers aloud.
-It talks to a small Cloudflare Worker (<code>relay/</code>, the House of Cars sales relay's design) that holds the Claude key and gives
-Claude this README, the epics model and the bot's settings. Claude there can show a part of the pages and nothing else: it
-cannot change the site, the bot or an account, and it gives no trading advice. <code>relay/README.md</code> has its use case, its caps
-and its tests.</p>
+<h2 id="talk-to-the-page">Talk to the page</h2>
+<p>The bot's pages carry Living Page, a small package any page can use: one script and a Cloudflare Worker that holds the
+Claude key. Press <strong>Talk to this page</strong> and Claude answers aloud, from this README, the epics model and the bot's settings.
+On the bot page you can also tell it how to change the page: reword a part, add or remove one, reorder them, or change the
+colour and the text size. The change is made at once, in your own browser only, and Undo puts it back; only the page's
+owner can keep a change for everyone. Claude cannot change the bot, its code or anyone's account, and it gives no trading
+advice. <code>relay/build_docs.py</code> writes what the relay tells Claude about the bot.</p>
 <hr />
 <p>Software, not financial advice. Options can lose their whole premium, and 0DTE options expire the same day.
 Run it on a paper account first.</p>
@@ -276,5 +278,6 @@ Run it on a paper account first.</p>
 <p>This is the bot's <a href="README.md">README.md</a>, also in the download. <a href="./">Back to the options trader bot</a>.</p>
 </footer>
 </main>
+<script src="../living-page/1/living-page.js" data-relay="https://living-page-relay.tami-play.workers.dev" data-site="options-bot" data-page="manual" data-index></script>
 </body>
 </html>

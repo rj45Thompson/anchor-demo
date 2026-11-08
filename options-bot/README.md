@@ -252,13 +252,14 @@ unrelated. The nearest data:
   Vilkov's net results reversed once the spread was charged at its true size. The bot's replay prices options with a
   model, so a paper run on real quotes is the check that counts.
 
-## Ask Claude about it
+## Talk to the page
 
-The bot's pages carry a chat panel (`site/bot_chat.js`) that answers questions about the bot and reads the answers aloud.
-It talks to a small Cloudflare Worker (`relay/`, the House of Cars sales relay's design) that holds the Claude key and gives
-Claude this README, the epics model and the bot's settings. Claude there can show a part of the pages and nothing else: it
-cannot change the site, the bot or an account, and it gives no trading advice. `relay/README.md` has its use case, its caps
-and its tests.
+The bot's pages carry Living Page, a small package any page can use: one script and a Cloudflare Worker that holds the
+Claude key. Press **Talk to this page** and Claude answers aloud, from this README, the epics model and the bot's settings.
+On the bot page you can also tell it how to change the page: reword a part, add or remove one, reorder them, or change the
+colour and the text size. The change is made at once, in your own browser only, and Undo puts it back; only the page's
+owner can keep a change for everyone. Claude cannot change the bot, its code or anyone's account, and it gives no trading
+advice. `relay/build_docs.py` writes what the relay tells Claude about the bot.
 
 ---
 

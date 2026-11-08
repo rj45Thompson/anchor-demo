@@ -74,6 +74,7 @@ pre code{{border:0;padding:0;background:none}}
 hr{{border:0;border-top:1px solid var(--line);margin:30px 0 16px}}
 .nav{{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}}.nav a{{font-size:13px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--soft)}}
 .nav a:hover{{border-color:var(--accent)}}
+.lp-index-on .nav{{display:none}}
 footer{{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}}footer p{{color:var(--muted)}}
 </style>
 </head>
@@ -87,6 +88,7 @@ footer{{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-s
 <p>This is the bot's <a href="README.md">README.md</a>, also in the download. <a href="./">Back to the options trader bot</a>.</p>
 </footer>
 </main>
+<script src="../living-page/1/living-page.js" data-relay="https://living-page-relay.tami-play.workers.dev" data-site="options-bot" data-page="manual" data-index></script>
 </body>
 </html>
 """
