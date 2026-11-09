@@ -16,6 +16,10 @@ const ROW = { top: 0.12, mid: 0.5, bottom: 0.88 };
 // it across and into the slot the finger is over. It was held in the slot, so a pull from 2nd up and right towards 3rd went straight up
 // the slot into 1st
 export const SLOT_EXIT = 0.1;
+// UC-50.5 AUTHORED (the owner 11-09: "I can't shift"): the detent, how far from a slot's end the knob may stop and still be in that gear,
+// in the gate's unit square (the slot runs 0.38 from the middle row to its end). Was 0.04: the thumb had to reach the very end of the
+// slot, and the bottom gears' end sits near the screen's bottom edge, where a phone's home bar takes the touch
+export const DETENT = 0.16;
 
 /** the gate for n forward gears: one slot per pair, left to right; slot.x in 0..1, the gear at the top and the one at the bottom */
 export function gateLayout(n) {
@@ -49,8 +53,8 @@ export function moveKnob(knob, want, layout) {
 export function gearAt(knob, layout) {
   const s = layout.slots.find((q) => Math.abs(q.x - knob.x) < 0.02);
   if (!s) return 0;
-  if (knob.y <= ROW.top + 0.04) return s.up;
-  if (s.down && knob.y >= ROW.bottom - 0.04) return s.down;
+  if (knob.y <= ROW.top + DETENT) return s.up;
+  if (s.down && knob.y >= ROW.bottom - DETENT) return s.down;
   return 0;
 }
 /** the knob's place for a gear (0: the middle of the neutral row) */

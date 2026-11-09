@@ -133,6 +133,7 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 /* a phone on its side: the tree's lamps a size smaller, so it ends above the clutch slider and gas (an 844 x 390 phone ran 8 px into them) */
 @media (pointer:coarse) and (orientation:landscape){#dtree{gap:clamp(3px,.9vmin,12px);padding:clamp(6px,1.2vmin,16px)}#dtree i{width:clamp(16px,5.4vmin,66px);height:clamp(16px,5.4vmin,66px)}#dtree i.s{width:clamp(9px,2.7vmin,34px);height:clamp(9px,2.7vmin,34px)}}
 @media (pointer:coarse) and (orientation:landscape) and (max-height:420px){#dtree{gap:clamp(2px,.6vmin,12px)}#dtree i{width:clamp(14px,4.3vmin,66px);height:clamp(14px,4.3vmin,66px)}}   /* UC-50.1b a short phone: the tree a little smaller, so the raised clutch clears it */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:380px){#dtree i{width:clamp(12px,3.8vmin,66px);height:clamp(12px,3.8vmin,66px)}}
 #dpanel{position:fixed;right:14px;bottom:14px;max-width:min(40vw,400px);min-width:clamp(170px,27vmin,320px);padding:clamp(10px,1.4vmin,16px) clamp(12px,1.8vmin,20px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);font-variant-numeric:tabular-nums}
 #dcar{margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(12px,2.2vmin,20px);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-soft)}
 #dtimes div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;font-size:clamp(13px,2.3vmin,22px);line-height:1.6}#dtimes span{color:var(--dim)}#dtimes b{font:700 clamp(15px,3vmin,32px) ui-monospace,Consolas,monospace;color:#5dffa9}#dtimes div.foul b{color:#ff5a4f}
@@ -256,7 +257,7 @@ body{--gate:clamp(210px,33vmin,330px)}
 @media (pointer:coarse){body{--gate:clamp(170px,48vmin,320px)}}
 /* on its side the gate sits under the times panel, which ends at 182 px (54 px down, 128 px tall: measured 11-08 on the 915, 844
    and 740 px phones, scratchpad layout9): the gate keeps 8 px under it and 16 px off the bottom */
-@media (pointer:coarse) and (orientation:landscape){body{--gate:min(clamp(170px,48vmin,320px),calc(100vh - 206px))}}
+@media (pointer:coarse) and (orientation:landscape){body{--gate:min(clamp(170px,48vmin,320px),calc(100vh - 216px))}}   /* UC-50.5 10 px less: the gate raised, the times panel above it kept clear */
 @media (pointer:coarse) and (orientation:portrait){body{--gate:min(clamp(170px,48vmin,320px),calc(100vw - 16px - (16px + clamp(72px,17vmin,116px) + 12px + clamp(84px,24vmin,150px)) - 10px))}}
 body.clutchmode #dgate{display:block;position:fixed;left:14px;bottom:44px;width:var(--gate);height:var(--gate);border-radius:16px;background:rgba(10,10,10,.28);border:1px solid var(--line);touch-action:none}
 #dgate svg{width:100%;height:100%}#dgate .slot{fill:none;stroke:#07080a;stroke-width:6.5;stroke-linecap:round}#dgate .lip{fill:none;stroke:#5c636c;stroke-width:8;stroke-linecap:round;transform:translateY(.9px)}#dgate text{fill:var(--dim);font:800 8px 'Open Sans',sans-serif;text-anchor:middle}#dgate text.on{fill:var(--accent-soft)}
@@ -276,13 +277,13 @@ body.dragover #dkeys,body.dragover #dsay,body.dragover #dpedalk,body.dragover #d
 #dslip .slipgo .act.go{flex:1;font-size:clamp(20px,3.4vmin,30px);font-weight:900;letter-spacing:.12em;padding:14px 18px;box-shadow:0 0 0 4px rgba(242,88,39,.25),0 0 24px rgba(242,88,39,.45)}
 @media (pointer:coarse){body.clutchmode #dpedal{display:none}body.clutchmode #dtouch .shiftcol{display:none}
   body.clutchmode #dslider{display:block;position:relative;align-self:flex-end;margin-right:12px;margin-left:0;width:clamp(72px,17vmin,116px);height:clamp(180px,48vmin,360px);border-radius:18px;background:rgba(10,10,10,.8);border:1px solid #ffb020;overflow:hidden;pointer-events:auto;touch-action:none}
-  body.clutchmode #dgate{left:auto;right:16px;bottom:16px;pointer-events:auto}
+  body.clutchmode #dgate{left:auto;right:16px;bottom:calc(26px + env(safe-area-inset-bottom, 0px));pointer-events:auto}   /* UC-50.5 raised clear of the bottom edge, as the clutch (UC-50.1b) */
   /* UC-50.1 the gas just left of the gate (the owner 11-09: "Move the gas to just left of the gate"): the left thumb has the clutch to
      itself, the right goes between the gas and the gate, as a driver's right foot and right hand do */
-  body.clutchmode #dgas{position:fixed;right:calc(16px + var(--gate) + 12px);bottom:16px;margin:0}
+  body.clutchmode #dgas{position:fixed;right:calc(16px + var(--gate) + 12px);bottom:calc(26px + env(safe-area-inset-bottom, 0px));margin:0}
   /* UC-50.1b the clutch raised clear of the screen's bottom edge, where an iPhone's home bar sits (the owner 11-09: "my finger is too big to
      reach the bottom of the screen. Move clutch up a bit") */
-  body.clutchmode #dslider{margin-bottom:calc(26px + env(safe-area-inset-bottom, 0px))}}
+  body.clutchmode #dslider{margin-bottom:calc(40px + env(safe-area-inset-bottom, 0px))}}   /* 40 px: the owner 11-09 again, "move up on the screen a tad" */
 /* UC-50.4 the gas a race pedal (the owner 11-09: "make gas pedal button look cool"): brushed metal with grip slots, sunk and lit green while held */
 #dgas{background:repeating-linear-gradient(0deg,rgba(0,0,0,.42) 0 3px,transparent 3px 12px) center/72% 70% no-repeat,linear-gradient(160deg,#eef2f6,#a3acb6 45%,#59616b);border:2px solid #d4dbe3;border-radius:18px;color:#0c2b16;text-shadow:0 1px 0 rgba(255,255,255,.65);letter-spacing:.14em;box-shadow:inset 0 2px 0 rgba(255,255,255,.75),inset 0 -3px 0 rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.55);transition:transform .06s,box-shadow .06s}
 #dgas.on{transform:translateY(3px) scale(.97);box-shadow:inset 0 2px 8px rgba(0,0,0,.55),0 0 22px rgba(61,255,122,.85),0 0 0 3px #3dff7a}
