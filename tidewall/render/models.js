@@ -170,6 +170,36 @@ export function rimFigure(root, colour, cache) {
   markFlash(root);
 }
 
+/** A ship's sails in a colour of its own (graphics round 3: the kind reads at a glance, the hull stays wood): the texture is
+ *  multiplied by `sail` where it is light and no more saturated than the beige sailcloth,
+ *  left alone where it is coloured or dark (the wood, the rigging); the hull also takes `hull` (1 = as made). The outline and
+ *  the hit flash are `rim`. One material per source material and cache key (the cache is the caller's, one per ship kind). */
+export function tintSails(root, sail, hull, rim, cache) {
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const src = o.material;
+    if (!src.map) throw new ModelLoadError('the ship mesh "' + o.name + '" has no base colour texture to tint');
+    let m = cache.get(src);
+    if (!m) {
+      m = new THREE.MeshStandardNodeMaterial();
+      m.normalMap = src.normalMap; if (src.normalMap) m.normalScale.copy(src.normalScale);
+      m.roughnessMap = src.roughnessMap; m.metalnessMap = src.metalnessMap; m.roughness = src.roughness; m.metalness = src.metalness;
+      const t = texture(src.map);
+      const lum = dot(t.rgb, vec3(0.2126, 0.7152, 0.0722));
+      const sat = max(t.r, max(t.g, t.b)).sub(min(t.r, min(t.g, t.b)));
+      // the ship's sailcloth is beige, not grey (measured on its texture, 11-09: bright texels lum 0.53, saturation 0.19 median,
+      // 0.21 at p90, linear), so its own weights: light and no more saturated than the cloth; the wood is dark, the gold trim is
+      // more saturated
+      const w = smoothstep(0.25, 0.42, lum).mul(oneMinus(smoothstep(0.25, 0.32, sat)));
+      m.colorNode = vec4(t.rgb.mul(mix(vec3(hull.r, hull.g, hull.b), vec3(sail.r, sail.g, sail.b), w)), t.a);
+      m.emissiveNode = rimAndFlash(uniform(rim.clone()), RIM_K);
+      cache.set(src, m);
+    }
+    o.material = m;
+  });
+  markFlash(root);
+}
+
 /** Every mesh in `root` drawn with its material multiplied by `k` (a darker or tinted copy, shared per source material). */
 export function shade(root, colour) {
   const made = new Map();

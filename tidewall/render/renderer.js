@@ -17,9 +17,9 @@
 // It reads the model and the view models and never changes them. A new level (the model swaps its board) is picked up by itself.
 import * as THREE from 'three/webgpu';
 import { uniform, pass, mrt, output, emissive, normalView, vec3, vec4, float, uv, length, smoothstep, oneMinus, mix, renderOutput, saturation,
-         luminance, clamp } from 'three/tsl';
+         luminance, clamp, nodeObject } from 'three/tsl';
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
-import { bloom } from 'three/addons/tsl/display/BloomNode.js';
+import BloomNode from 'three/addons/tsl/display/BloomNode.js';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, Screen } from '../core/index.js';
 import { GAME_TITLE } from '../app/title.js';
@@ -60,6 +60,36 @@ const GRADE = { saturation: 1.12, contrast: 1.06, cool: [-0.012, 0.004, 0.03], w
 // AUTHORED ambient occlusion (GTAO, three's GTAONode): radius in world units (a square is 1), drawn at half resolution, and how much
 // of it is applied (1 = all). Contact shading where walls, castles, cannons and figures meet the ground.
 const BLOOM = { strength: 0.4, radius: 0.2, threshold: 0.6 };   // AUTHORED: over the glow target only
+// AUTHORED (graphics round 3, perf): the bloom blurs BLOOM_MIPS of three's five mip levels, and the shadow map is drawn again every
+// SHADOW_EVERY frames (the sun never moves; what moves is figures, a frame of shadow lag at 60 fps). Measured with
+// tools/perf_battle.py --ablate (shots/aaa3/perf_*.txt): the bloom's 13 passes and the shadow pass were the two largest costs.
+const BLOOM_MIPS = 3, SHADOW_EVERY = 2;
+
+/** three's BloomNode with fewer blur levels: its passes cost more CPU than GPU here (13 renders a frame), and the two widest levels
+ *  (1/16 and 1/32 of the screen) add a faint wide haze the game's small glows barely reach. The composite sums the levels kept,
+ *  with three's own weights (lerpBloomFactor: mix(f, 1.2 - f, radius)) and the two dropped levels' share given to the widest kept. */
+class LeanBloom extends BloomNode {
+  constructor(input, strength, radius, threshold, mips) {
+    super(input, strength, radius, threshold);
+    if (!(mips >= 1 && mips <= 5)) throw new RenderContractError('LeanBloom: 1..5 blur levels, got ' + mips);
+    this._nMips = mips;
+  }
+  setup(builder) {
+    const out = super.setup(builder);
+    const F = [1.0, 0.8, 0.6, 0.4, 0.2], tex = [this._textureNodeBlur0, this._textureNodeBlur1, this._textureNodeBlur2, this._textureNodeBlur3, this._textureNodeBlur4];
+    const w = (f) => mix(float(f), float(1.2 - f), this.radius);
+    let sum = null;
+    for (let i = 0; i < this._nMips; i++) {
+      let k = w(F[i]);
+      if (i === this._nMips - 1) for (let j = this._nMips; j < 5; j++) k = k.add(w(F[j]));   // the dropped levels' weight
+      const c = k.mul(tex[i]);
+      sum = sum ? sum.add(c) : c;
+    }
+    this._compositeMaterial.fragmentNode = sum.mul(this.strength).context(builder.getSharedContext());
+    this._compositeMaterial.needsUpdate = true;
+    return out;
+  }
+}
 const AO = { radius: 0.6, thickness: 1, scale: 0.5, strength: 0.85 };
 const WIPE_SECONDS = 0.7;                  // AUTHORED: the light sweep across the picture when the phase or the menu screen changes
 // the menu screens the game's island drifts behind on the low menu camera (camera.js); an untouched title that shows the demo full
@@ -151,9 +181,11 @@ class Renderer {
   makeChain(q) {
     const cam = this.rig.camera, grade = this.grade;
     const sp = pass(this.scene, cam, q.msaa ? { samples: q.msaa } : {});
-    // both chains write the SAME three targets (low leaves the normal unread): a material's shader is built for the targets of
-    // the pass that first drew it and three r175 reuses it for the other pass, so a 2-target low chain made the 3-target high
-    // chain's pipelines invalid after Q, Q (11-09: 111 "Invalid RenderPipeline" warnings and no picture, present since round 1)
+    // every chain writes the SAME targets: a material's shader is built for the targets of the pass that first drew it and three
+    // r175 reuses it for the other pass, so a 2-target low chain made the 3-target high chain's pipelines invalid after Q, Q
+    // (11-09: 111 "Invalid RenderPipeline" warnings and no picture, present since round 1)
+    // (the AO cannot read its normals from the depth instead: three r175's GTAONode getNormalFromDepth calls textureDimensions on the
+    // MULTISAMPLED depth, which WGSL refuses - 11-09, round 3: "no matching call to textureDimensions(texture_depth_multisampled_2d)")
     sp.setMRT(mrt({ output, emissive, normal: normalView }));
     sp.getTextureNode('normal'); sp.getTextureNode('emissive');          // a pass makes a target only when it is asked for one
     let lit = sp.getTextureNode('output').rgb;
@@ -163,7 +195,7 @@ class Renderer {
       const z = sp.getViewZNode().negate();                              // the AO fades out into the haze (sky.js hazeAt)
       lit = lit.mul(mix(float(1), aoPass.getTextureNode().r, float(AO.strength).mul(oneMinus(this.sky.hazeAt(z)))));
     }
-    if (q.bloom !== false) lit = lit.add(bloom(sp.getTextureNode('emissive'), BLOOM.strength, BLOOM.radius, BLOOM.threshold).rgb);
+    if (q.bloom !== false) lit = lit.add(nodeObject(new LeanBloom(sp.getTextureNode('emissive'), BLOOM.strength, BLOOM.radius, BLOOM.threshold, q.bloomMips ?? BLOOM_MIPS)).rgb);
     const out = grade(vec4(lit, 1));
     return q.msaa ? out : fxaa(out);                                      // no MSAA: FXAA on the graded picture
   }
@@ -226,6 +258,16 @@ class Renderer {
     this.scene.remove(g);
     cam.position.copy(was);
     knight.mixer.stopAllAction();
+  }
+
+  /** One picture through the post chain: the shadow map is redrawn every SHADOW_EVERY-th call (and whenever asked: a new level,
+   *  the warm-up), the rest of the chain every call. tools/perf_battle.py times this same call. */
+  renderFrame() {
+    const sh = this.sun.shadow;
+    sh.autoUpdate = false;
+    this.frameNo = (this.frameNo ?? -1) + 1;
+    if (this.frameNo % (this.shadowEvery ?? SHADOW_EVERY) === 0) sh.needsUpdate = true;
+    this.post.render();
   }
 
   /** Draw the level setMatch built, once, and wait until the GPU has done it: the page calls this before its loop starts, so the
@@ -320,6 +362,7 @@ class Renderer {
     this.fx.clear();
     this.units = new Units(this.scene, this.board, this.match, this.models, seats, this.fx);
     this.fitSun();
+    this.sun.shadow.needsUpdate = true;                                      // a new level's casters are drawn into the map now
     this.rig.pose = null; this.rig.key = null; this.rig.cur = null;
     this.director = new CameraDirector();
   }
@@ -361,7 +404,7 @@ class Renderer {
     } else {
       this.scene.visible = false;                                           // no match: the menus over the plain sea colour
     }
-    this.post.render();
+    this.renderFrame();
     const cam = this.rig.camera, W = this.cssW, H = this.cssH;
     const project = (v) => { const p = v.clone().project(cam); return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, visible: p.z < 1 && p.z > -1 }; };
     this.hud.draw(view, project, m ? this.units.heroTags() : [], seconds, this.hudMode === 'all');

@@ -21,7 +21,7 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
 #ui .ctl { pointer-events: auto; display: inline-flex; gap: 6px; align-items: center; margin-bottom: 6px; font-weight: bold; }
 #ui .ctl button { font: 700 13px/1 var(--font); color: var(--ink); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.4);
   border-radius: 999px; padding: 7px 14px; cursor: pointer; min-height: 32px; }
-#ui .ctl button.on { background: #3aa8ff; border-color: #fff; color: #fff; }
+#ui .ctl button.on { background: #1957ff; border-color: #fff; color: #fff; }
 /* player 1's touch controls: a stick on the left, A B Y on the right, sized for thumbs, above the player cards */
 .tpad { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
 .tpad[hidden] { display: none; }

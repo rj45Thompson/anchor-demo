@@ -8,9 +8,12 @@ import { mrt, diffuseColor } from 'three/tsl';
 
 // ---------------------------------------------------------------- palette (AUTHORED)
 // A player's colour is the view's, by slot (the model only knows slots 0..3). Four hues far apart on the wheel and far from the grass
-// green, so a wall, a hero and a territory fill read as one owner at a glance.
-export const PLAYER_HEX = Object.freeze([0x3aa8ff, 0xff6a4d, 0xb072ff, 0xffc233]);
-export const PLAYER_CSS = Object.freeze(['#3aa8ff', '#ff6a4d', '#b072ff', '#ffc233']);
+// green, so a wall, a hero and a territory fill read as one owner at a glance. Round 3 (tools/colour_check.py): round 2's sky blue
+// and violet were 5.9 delta E apart for a deuteranope (one colour) and the blue 21 from the sea; the yellow was pale on sand. Now a
+// deeper blue, an orchid purple, a full gold: every pair at least 35.8 apart in normal, protan, deutan and tritan vision, every
+// colour at least 54 from grass, sand and sea.
+export const PLAYER_HEX = Object.freeze([0x1957ff, 0xff5e4d, 0xcc52c2, 0xffcc00]);
+export const PLAYER_CSS = Object.freeze(['#1957ff', '#ff5e4d', '#cc52c2', '#ffcc00']);
 export const PLAYER_COLOURS = PLAYER_HEX.map((h) => new THREE.Color(h));
 export const NEUTRAL_WALL = new THREE.Color(0xe9e4d6);        // a wall no player owns (a map's own wall)
 export const ENEMY_SHOT = new THREE.Color(0xff8a2a);
@@ -91,12 +94,20 @@ export function pitGeometry() {
     at(cyl(0.3, 0.3, 0.05, 10, C.pit), 0, 0.03, 0),
   ], 'pit');
 }
+/** A broken wall block's rubble (graphics round 3: "wall rubble chunks that stay until rebuilt"): a heap of tumbled bricks the
+ *  wall's own size and shades, two of them tipped up on end, a broken coping stone (white: board.js tints it with the owner's
+ *  colour) and stone chips round the heap. It stands until the rules clear the square. All sizes AUTHORED. */
 export function rubbleGeometry() {
+  const st = C.stone, dk = C.stoneDark, white = new THREE.Color(0.95, 0.95, 0.95);
   return merge([
-    at(box(0.26, 0.12, 0.22, C.rubble), -0.16, 0.06, -0.1, 0, 0.4),
-    at(box(0.2, 0.1, 0.18, C.stoneDark), 0.15, 0.05, 0.12, 0, -0.5),
-    at(box(0.16, 0.08, 0.14, C.rubble), 0.12, 0.04, -0.18, 0, 0.9),
-    at(box(0.14, 0.07, 0.16, C.stoneDark), -0.1, 0.035, 0.2, 0, 0.2),
+    at(box(0.34, 0.14, 0.2, st), -0.14, 0.07, -0.12, 0, 0.4),
+    at(box(0.3, 0.13, 0.18, dk), 0.16, 0.065, 0.1, 0, -0.5),
+    at(box(0.26, 0.12, 0.17, st.clone().multiplyScalar(0.9)), 0.02, 0.19, -0.02, 0.2, 1.2, 0.15),   // one on top of the heap
+    at(box(0.18, 0.28, 0.14, dk), -0.24, 0.13, 0.18, 0.25, 0.3, -0.35),                            // tipped up on end
+    at(box(0.15, 0.24, 0.13, st), 0.27, 0.11, -0.2, -0.3, 0.8, 0.3),
+    at(box(0.3, 0.08, 0.22, white), 0.05, 0.05, 0.27, 0.12, -0.25, 0.08),                          // the broken coping stone
+    at(box(0.08, 0.05, 0.07, dk), -0.36, 0.025, -0.3, 0, 0.6), at(box(0.07, 0.04, 0.06, st), 0.38, 0.02, 0.32, 0, 1.1),
+    at(box(0.06, 0.04, 0.08, dk), 0.36, 0.02, -0.36, 0, 0.2), at(box(0.07, 0.05, 0.05, st), -0.32, 0.025, 0.37, 0, 2.0),
   ], 'rubble');
 }
 export function graveGeometry() {

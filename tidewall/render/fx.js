@@ -232,6 +232,21 @@ export class Effects {
     if (this.rnd() < 0.35) this.fx.flat.emit({ at: { x: at.x + s[0], y: 0.04, z: at.z + s[2] }, life: 1.0, size: [0.1, 0.6], color: WHITE, alpha: 0.7, shape: Shape.Ring, fadeIn: 0 });
   }
 
+  /** A ring of foam running out on the water at `at`, `r` squares wide (a sinking ship churns the sea). */
+  foamRing(at, r) {
+    this.fx.flat.emit({ at: { x: at.x, y: 0.045, z: at.z }, life: 1.1, size: [0.3 * r, 1.4 * r], color: WHITE, alpha: 0.75, shape: Shape.Ring, fadeIn: 0 });
+    this.fx.flat.emit({ at: { x: at.x, y: 0.04, z: at.z }, life: 1.6, size: [0.4 * r, 0.9 * r], color: WHITE, alpha: 0.4, spin: this.rnd(), fadeIn: 0.05 });
+  }
+
+  /** n planks of `colour` thrown from a wreck: they fly a little, land on the water and float there, drifting, while they fade. */
+  planks(at, colour, n, k = 1) {
+    for (let i = 0; i < n; i++) {
+      const s = this.spread(1.6 * k, 0), c = colour.clone().multiplyScalar(0.7 + this.rnd() * 0.4);
+      this.fx.flat.emit({ at: { x: at.x + s[0] * 0.3, y: 0.05, z: at.z + s[2] * 0.3 }, vel: [s[0], 0, s[2]], drag: 1.1, life: 4 + this.rnd() * 2,
+                          size: [0.22 * k, 0.22 * k], color: c, alpha: 0.95, spin: (this.rnd() - 0.5) * 0.8, fadeIn: 0 });
+    }
+  }
+
   /** A glint of `colour` rising from `at`, starting `delay` seconds from now (the territory sweep). */
   sparkle(at, colour, delay = 0) {
     this.fx.glow.emit({ at, born: this.fx.uTime.value + delay, vel: [0, 0.9 + this.rnd() * 0.6, 0], drag: 1.2, life: 0.9,

@@ -6,11 +6,12 @@
 // confirm button would place. Positions come from the model every frame (cells, never a float the rules hold) and are eased on
 // screen; the events only start effects. Colours follow the player's SEAT (seats[slot]), as the HUD's cards do.
 import * as THREE from 'three/webgpu';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GameRules, Phase, Terrain, Occupant, ShipKind, ShotFired, ShotLanded, ShipSunk, ShipDamaged, GruntKilled, WallBroken,
          CannonDamaged, LoopClosed, CastleClaimed, SwordSwung, WallsPlaced, CannonPlaced } from '../core/index.js';
 import { uv, length, smoothstep } from 'three/tsl';
 import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry } from './look.js';
-import { boneEndingWith, tintArmour, shade, rimFigure, setFlash } from './models.js';
+import { boneEndingWith, tintArmour, shade, rimFigure, setFlash, tintSails } from './models.js';
 import { Effects } from './fx.js';
 
 const SHIP_SPEED = 3.0, GRUNT_SPEED = 2.4, HERO_SPEED = 9.0;   // AUTHORED: squares per second the drawn figures may cover easing to the model
@@ -23,7 +24,14 @@ const WAKE_STEP = 0.2;                                           // AUTHORED: sq
 // its footprint and a cannon over its 2x2 squares
 // Round 2 ("knights and goblins are specks" at the island-wide zoom): the hero 1.3 -> 1.9 squares tall and the grunt 0.95 -> 1.35;
 // the camera looks down at 54 degrees, so a figure's height shows foreshortened and its footprint stays near its own square
-const HERO_HEIGHT = 1.9, GRUNT_HEIGHT = 1.35, SHIP_LENGTH = 1.8, LANDER_SCALE = 1.35, LANDER_TINT = new THREE.Color(0.62, 0.58, 0.6);
+// Round 3 (the lead: "ships are the enemy, but at the default zoom they're tiny"): a ship 1.8 -> 2.3 squares long, the lander 1.3x
+// that; sails by kind (a gunship's black, a lander's deep green: the normal game has no red ships, PLAN.md), a red threat rim
+// (the off-screen chevrons' red) and a wake tinted with it
+const HERO_HEIGHT = 1.9, GRUNT_HEIGHT = 1.35, SHIP_LENGTH = 2.3, LANDER_SCALE = 1.3, LANDER_TINT = new THREE.Color(0.62, 0.58, 0.6);
+const SHIP_RIM = new THREE.Color(0xff3a1f), SAIL = [new THREE.Color(0.16, 0.17, 0.2), new THREE.Color(0.2, 0.42, 0.25)];
+const WAKE = new THREE.Color(1, 1, 1).lerp(new THREE.Color(0xff3a1f), 0.3);
+const SINK_PITCH = 1.25, SINK_ROLL = 0.5, SINK_DEPTH = 1.6;       // AUTHORED: radians the bow dips and the hull rolls, squares it goes down
+const SINK_FOAM_EVERY = 0.14;                                    // AUTHORED: seconds between foam rings round a sinking ship
 const CASTLE_MARGIN = 0.8, CANNON_WIDTH = 0.78;                 // castle: footprint + margin; cannon: width per square of its size
 const SLASH_SPEED = 2.2;                                         // AUTHORED: the 1.5 s slash clip played in about 0.7 s, a quick swing
 const RUN_FROM = 2.5;                                            // squares per second above which a hero runs instead of walking
@@ -41,15 +49,27 @@ const GRUNT_RED = new THREE.Color(0xff2a1f), BLOB_ALPHA = 0.42, FLASH_SECONDS = 
 const NEUTRAL_BANNER = new THREE.Color(0xe8e2d2), NEUTRAL_GLOW = new THREE.Color(0xfff1d0);
 // the goblin's and the ship's rimmed materials, made once for the page and shared by every level (one shader each, built by the
 // renderer's warm-up through gruntFigure and shipModel)
-const GRUNT_MATS = new Map(), SHIP_MATS = new Map();
+const GRUNT_MATS = new Map(), SHIP_MATS = [new Map(), new Map()];
 /** A grunt figure, outlined red (the renderer's warm-up draws one, so its shader is built before play). */
 export function gruntFigure(models) { const fig = models.figure('goblin'); rimFigure(fig.root, GRUNT_RED, GRUNT_MATS); return fig; }
 /** A ship (the lander darker), outlined in the enemy's colour. */
 export function shipModel(models, lander) {
   const mdl = models.instance('ship');
-  if (lander) shade(mdl, LANDER_TINT);
-  rimFigure(mdl, ENEMY_SHOT.clone().multiplyScalar(0.7), SHIP_MATS);
+  tintSails(mdl, SAIL[lander ? 1 : 0], lander ? LANDER_TINT : new THREE.Color(1, 1, 1), SHIP_RIM.clone().multiplyScalar(0.42), SHIP_MATS[lander ? 1 : 0]);
   return mdl;
+}
+/** The aiming reticle: a ring with four ticks on its rim, merged into one geometry (graphics round 3: it was five meshes per hero,
+ *  20 draws a frame for four players, and the draws are what the frame's CPU time goes on). */
+function reticleGeometry() {
+  const parts = [new THREE.RingGeometry(0.42, 0.5, 32).rotateX(-Math.PI / 2)];
+  for (let i = 0; i < 4; i++) {
+    const b = new THREE.BoxGeometry(1, 1, 1), m = new THREE.Matrix4().compose(new THREE.Vector3(Math.sin(i * Math.PI / 2) * 0.5, 0, Math.cos(i * Math.PI / 2) * 0.5),
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), i * Math.PI / 2), new THREE.Vector3(0.05, 0.02, 0.28));
+    parts.push(b.applyMatrix4(m));
+  }
+  const g = mergeGeometries(parts, false);
+  if (!g) throw new Error('units.js: the reticle parts would not merge');
+  return g;
 }
 const yawTo = (cur, want, k) => { let d = want - cur; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return cur + d * k; };
 
@@ -67,7 +87,7 @@ export class Units {
       ball: new THREE.IcosahedronGeometry(0.13, 1), ring: new THREE.RingGeometry(0.42, 0.5, 32).rotateX(-Math.PI / 2),
       disc: new THREE.CircleGeometry(0.5, 24).rotateX(-Math.PI / 2), pip: new THREE.SphereGeometry(0.06, 8, 6),
       puff: new THREE.IcosahedronGeometry(0.2, 0), blade: new THREE.BoxGeometry(0.035, 0.46, 0.08).translate(0, 0.23, 0),
-      cube: new THREE.BoxGeometry(1, 1, 1), trim: new THREE.TorusGeometry(0.62, 0.05, 6, 24).rotateX(Math.PI / 2),
+      cube: new THREE.BoxGeometry(1, 1, 1), reticle: reticleGeometry(), trim: new THREE.TorusGeometry(0.62, 0.05, 6, 24).rotateX(Math.PI / 2),
     };
     this.flagMats = this.colours.map((c) => new THREE.MeshStandardNodeMaterial({ color: c, side: THREE.DoubleSide, roughness: 0.5 }));
     this.flagNeutral = new THREE.MeshStandardNodeMaterial({ color: NEUTRAL_BANNER, side: THREE.DoubleSide, roughness: 0.6 });
@@ -219,13 +239,16 @@ export class Units {
       e.hull.scale.setScalar(1 + e.hit * 0.08);
       setFlash(e.hull, e.hit * e.hit * 0.8);                            // a hit flashes the hull white, fading with the bump
       if (e.sink >= 0) {
+        // the sink: the bow dips first (the hull tips up by the stern), it rolls onto its side, then it slides under; foam rings
+        // and bubbles where it goes, planks left floating at the start (units.events ShipSunk)
         e.sink += dt;
-        const k = Math.min(1, e.sink / SINK_SECONDS);
-        e.g.position.y = -1.1 * k * k;
-        e.g.rotation.z += 0.9 * k; e.g.rotation.x += 0.5 * k;
+        const k = Math.min(1, e.sink / SINK_SECONDS), tip = Math.min(1, k * 2.2), down = k * k;
+        e.g.position.y = -SINK_DEPTH * down;
+        e.hull.rotation.set(SINK_ROLL * tip * tip, 0, -SINK_PITCH * tip * (1 - 0.3 * down));   // bow (+x) down: about the hull's z
         e.pips.visible = false;
-        e.bubble += dt;
+        e.bubble += dt; e.foam = (e.foam ?? 0) + dt;
         while (e.bubble > BUBBLE_EVERY) { e.bubble -= BUBBLE_EVERY; this.fxs.bubbles(e.pos, e.len / SHIP_LENGTH); }
+        while (e.foam > SINK_FOAM_EVERY) { e.foam -= SINK_FOAM_EVERY; this.fxs.foamRing(e.pos, e.len * (0.5 + k)); }
         if (k >= 1) { this.group.remove(e.g); this.ships.delete(id); }
       }
     }
@@ -237,7 +260,7 @@ export class Units {
     for (const k of [-1, 1]) {
       fx.emit({ at: { x: stern.x + side[0] * k * 0.12, y: 0.03, z: stern.z + side[1] * k * 0.12 },
                 vel: [side[0] * k * 0.32 - fwd[0] * 0.08, 0, side[1] * k * 0.32 - fwd[1] * 0.08], drag: 0.6,
-                life: 2.2, size: [0.22 * e.len, 0.75 * e.len], color: C.foam, alpha: 0.55, spin: k * 0.4, fadeIn: 0.04 });
+                life: 2.2, size: [0.22 * e.len, 0.75 * e.len], color: WAKE, alpha: 0.6, spin: k * 0.4, fadeIn: 0.04 });
     }
   }
   pips(e, s) {
@@ -374,9 +397,7 @@ export class Units {
     const tip = new THREE.Mesh(this.geo.pip, glow(new THREE.Color(0xffa040), 3)); tip.position.y = 0.36; torch.add(tip); hand.add(torch);
     const ring = new THREE.Mesh(this.geo.ring, this.glowP[s]); ring.scale.setScalar(1.4);
     const shadow = new THREE.Mesh(this.geo.disc, this.blobMat); shadow.scale.setScalar(1.3); shadow.renderOrder = 1;
-    const reticle = new THREE.Group();
-    const r1 = new THREE.Mesh(this.geo.ring, this.glowP[s]); reticle.add(r1);
-    for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(this.geo.cube, this.glowP[s]); b.scale.set(0.05, 0.02, 0.28); b.position.set(Math.sin(i * Math.PI / 2) * 0.5, 0, Math.cos(i * Math.PI / 2) * 0.5); b.rotation.y = i * Math.PI / 2; reticle.add(b); }
+    const reticle = new THREE.Mesh(this.geo.reticle, this.glowP[s]);   // the ring and its four ticks, one draw
     this.group.add(g, ring, shadow, reticle);
     const e = { g, fig, state: null, blade, hammer, torch, hand, ring, shadow, reticle, pos: null, yaw: 0, swing: 0, at: new THREE.Vector3() };
     this.play(e, 'Combat_Stance', 0);
@@ -533,7 +554,8 @@ export class Units {
         const sh = this.ships.get(e.shipId); if (sh && sh.sink < 0) sh.sink = 0;
         const at = new THREE.Vector3(e.at.x + 0.5, 0, e.at.y + 0.5), k = sh ? sh.len / SHIP_LENGTH : 1;
         this.fxs.explosion(at.clone().add(new THREE.Vector3(0, 0.5, 0)), C.wood, 1.1 * k);
-        this.fxs.splash(at, 1.4 * k);
+        this.fxs.splash(at, 1.6 * k);
+        this.fxs.planks(at, C.wood, 7, k);                                   // debris left floating on the water
       }
       else if (e instanceof GruntKilled) { this.fxs.dust(cellAt(e.at, 0), 0.8, new THREE.Color(0.62, 0.58, 0.68)); }
       else if (e instanceof CannonDamaged) { const c = this.cannons.get(e.cannonId); if (c) this.fxs.explosion(c.g.position.clone().add(new THREE.Vector3(0, 0.5, 0)), C.iron, 0.7); }

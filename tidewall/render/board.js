@@ -7,7 +7,7 @@ import * as THREE from 'three/webgpu';
 import { texture, uniform, vertexColor, positionWorld, positionLocal, vec2, vec3, vec4, float, mix, smoothstep, sin, fract, min, max, abs, step, clamp,
          normalize, dot, reflect, pow, cameraPosition, transformNormalToView, mrt, cos, positionGeometry,
          instancedBufferAttribute } from 'three/tsl';
-import { Terrain, Occupant, EnclosureRules, PieceMap, WallOutline, WallsPlaced, RingBuilt } from '../core/index.js';
+import { Terrain, Occupant, EnclosureRules, PieceMap, WallOutline, WallsPlaced, RingBuilt, ShotLanded } from '../core/index.js';
 import { C, SKY, NEUTRAL_WALL, mats, glowing, wallStoneGeometry, wallCapGeometry, tuftGeometry, TUFT_H, makeNoiseTexture, NOISE_SLOPE, makeNoise, InstancedBatch, PropSet, pitGeometry, rubbleGeometry, graveGeometry } from './look.js';
 
 export const MARGIN = 12;              // AUTHORED: squares of sea drawn round the board, so the island never sits on a hard edge
@@ -16,6 +16,9 @@ const TUFTS_PER_SQUARE = 3;            // AUTHORED: grass tufts on each open gra
 const TUFT_CAP = 52 * 34 * TUFTS_PER_SQUARE;   // the largest generated map (app/maps.js) full of grass
 const SDF_RANGE = 8;                   // the distance texture holds -8..+8 squares
 const WALL_H = 0.5, WALL_W = 0.9;      // AUTHORED: a wall block, in squares
+// AUTHORED (graphics round 3): a cannonball's scorch on the land fades over SCORCH_SECONDS (the first moments glow as embers); its
+// strength is the flash texture's G channel, so the land's shader reads it with the texture it already samples
+const SCORCH_SECONDS = 9, SCORCH_UPLOAD = 0.1;
 const FLASH_SECONDS = 1.4;             // AUTHORED: how long a square glows after the capture sweep's front passed it
 const SWEEP_SPEED = 9;                 // AUTHORED: squares per second the capture glow runs out from the castle
 // AUTHORED: the direction the sea's glints come from. The sun is behind the camera's left shoulder (its shadows fall away from the
@@ -97,14 +100,19 @@ export class BoardLook {
     const grain = nz(P.mul(1.7)).a.mul(2).sub(1);
     const sand = vc.mul(ripple.mul(0.06).add(0.97)).mul(grain.mul(0.05).add(1));
     const base = mix(sand, grass, grassy);
-    const tint = mix(base, fill.rgb.mul(0.62).add(0.3), fill.a.mul(inBoard));   // a light wash of the owner's colour, not a dark stain
+    let tint = mix(base, fill.rgb.mul(0.62).add(0.3), fill.a.mul(inBoard));   // a light wash of the owner's colour, not a dark stain
+    // a cannonball's scorch (graphics round 3): a ragged dark crater in the middle of the square it hit, fading (fl.g)
+    const sc = fl.g.mul(inBoard), cr = positionWorld.xz.fract().sub(0.5).length().add(nz(P.mul(0.8)).a.sub(0.5).mul(0.22));
+    const crater = smoothstep(0.46, 0.14, cr).mul(sc);
+    tint = mix(tint, vec3(0.13, 0.1, 0.08), crater.mul(0.82));
+    this.scorchEmbers = vec3(1.0, 0.32, 0.06).mul(smoothstep(0.18, 0.02, cr)).mul(sc.mul(sc).mul(sc).mul(sc)).mul(2.4);
     // a faint square grid on the land, eased in while pieces are being placed (REPAIR) so a square is easy to aim at
     const gx = fract(positionWorld.x), gz = fract(positionWorld.z);
     const edge = min(min(gx, gx.oneMinus()), min(gz, gz.oneMinus()));
     const line = smoothstep(0.045, 0.0, edge).mul(this.uGrid).mul(inBoard).mul(smoothstep(0.03, 0.1, positionWorld.y));
     const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.85, metalness: 0, flatShading: false });
     m.colorNode = tint.mul(float(1).sub(line.mul(0.28)));
-    m.emissiveNode = fill.rgb.mul(fl.r).mul(inBoard).mul(2.2);
+    m.emissiveNode = fill.rgb.mul(fl.r).mul(inBoard).mul(2.2).add(this.scorchEmbers);
     return m;
   }
 
@@ -275,6 +283,8 @@ export class Board {
 
     // the territory: one texel per square, the owner's colour and how strongly it fills; a second texture holds the flash
     this.fillData = new Uint8Array(w * h * 4); this.flashData = new Uint8Array(w * h * 4);
+    this.scorch = new Float32Array(w * h);                                  // each square's scorch, 1 when a ball lands, fading to 0
+    this.rubbleOwner = new Int8Array(w * h).fill(-1);                     // whose wall a rubble square was (its stones keep the colour)
     this.fillTex = new THREE.DataTexture(this.fillData, w, h, THREE.RGBAFormat, THREE.UnsignedByteType);
     this.flashTex = new THREE.DataTexture(this.flashData, w, h, THREE.RGBAFormat, THREE.UnsignedByteType);
     for (const t of [this.fillTex, this.flashTex]) { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; }
@@ -325,7 +335,7 @@ export class Board {
     const kinds = [[Occupant.Rubble, rubbleGeometry()], [Occupant.Pit, pitGeometry()], [Occupant.Graveyard, graveGeometry()]];
     this.props = new Map();
     for (const [occ, geo] of kinds) {
-      this.props.set(occ, new InstancedBatch(this.group, geo, mats.vc, n, { castShadow: true, receiveShadow: true, name: 'props ' + occ }));
+      this.props.set(occ, new InstancedBatch(this.group, geo, mats.vc, n, { colors: occ === Occupant.Rubble, castShadow: true, receiveShadow: true, name: 'props ' + occ }));
     }
     // (a House square has no drawing: the normal rules, the only ones this game runs, clear every house at load, MatchModel.plain)
     for (const occ of [Occupant.Tree, Occupant.RockSmall, Occupant.RockLarge]) {
@@ -341,6 +351,10 @@ export class Board {
   events(list, seconds) {
     for (const e of list) {
       if (e instanceof WallsPlaced || e instanceof RingBuilt) this.pieces.shown(e);
+      else if (e instanceof ShotLanded) {                               // a ball on the land leaves a scorch (the sea takes it whole)
+        const { x, y } = e.target;
+        if (this.grid.in(x, y) && this.grid.terrainAt(x, y) !== Terrain.Water && this.grid.terrainAt(x, y) !== Terrain.Lake) this.scorch[y * this.w + x] = 1;
+      }
     }
   }
 
@@ -369,6 +383,8 @@ export class Board {
       const i = y * w + x, o = g.occupantAt(x, y), ow = g.ownerAt(x, y), hp = g.healthAt(x, y), t = g.terrainAt(x, y);
       if (o !== s.occ[i] || ow !== s.own[i] || hp !== s.hp[i] || t !== s.ter[i]) {
         if (o === Occupant.Wall || s.occ[i] === Occupant.Wall) walls = true;
+        if (o === Occupant.Rubble) { if (s.occ[i] === Occupant.Wall) this.rubbleOwner[i] = s.own[i] < 4 ? s.own[i] : -1; }   // the rules forget the owner
+        else this.rubbleOwner[i] = -1;
         props = true;
         s.occ[i] = o; s.own[i] = ow; s.hp[i] = hp; s.ter[i] = t;
       }
@@ -437,7 +453,10 @@ export class Board {
       q.setFromAxisAngle(up, this.noise(x * 3.1, y * 2.7) * Math.PI * 2);
       const gy = this.groundAt(x, y);
       m.compose(new THREE.Vector3(x + 0.5, gy, y + 0.5), q, new THREE.Vector3(1, 1, 1));
-      im.set(k, m);
+      if (o === Occupant.Rubble) {                                       // the broken wall's stones keep a little of its owner's colour
+        const ro = this.rubbleOwner[y * this.w + x];
+        im.set(k, m, ro >= 0 ? new THREE.Color(1, 1, 1).lerp(this.colourOf(ro), 0.45) : new THREE.Color(1, 1, 1));
+      } else im.set(k, m);
       if (o === Occupant.Pit) { m.makeTranslation(x + 0.5, gy + 0.065, y + 0.5); this.embers.set(em++, m); }
     }
     for (const [o, im] of this.props) im.commit(counts.get(o) ?? 0);
@@ -543,21 +562,26 @@ export class Board {
 
   drawTerritory(dt) {
     const t = this.territory, w = this.w, g = this.grid, d = this.fillData, f = this.flashData;
-    let flashing = false;
+    let flashing = false, changed = false, scorching = false;
+    const put = (k, v) => { if (d[k] !== v) { d[k] = v; changed = true; } };   // the fill is uploaded only when a byte of it changed
     for (let y = 0; y < this.h; y++) for (let x = 0; x < w; x++) {
       const i = y * w + x, r = t ? t.regionAt(x, y) : 0, owner = r > 0 ? t.mainOwner(r) : -1;
       if (owner >= 0 && g.occupantAt(x, y) !== Occupant.Wall) {
         const c = this.colourOf(owner);
-        d[i * 4] = c.r * 255; d[i * 4 + 1] = c.g * 255; d[i * 4 + 2] = c.b * 255; d[i * 4 + 3] = 150;
-      } else { d[i * 4 + 3] = 0; }
+        put(i * 4, c.r * 255 | 0); put(i * 4 + 1, c.g * 255 | 0); put(i * 4 + 2, c.b * 255 | 0); put(i * 4 + 3, 150);
+      } else put(i * 4 + 3, 0);
       // the capture sweep: a bright front as it passes, then a glow that fades over FLASH_SECONDS
       const e = this.now - this.flashAt[i];
       let v = 0;
       if (e < FLASH_SECONDS && this.flashAt[i] > -1e8) { flashing = true; if (e >= 0) v = Math.exp(-(e * e) / 0.015) + 0.45 * (1 - e / FLASH_SECONDS) ** 2; }
       f[i * 4] = Math.round(255 * Math.min(1, v));
+      if (this.scorch[i] > 0) { this.scorch[i] = Math.max(0, this.scorch[i] - dt / SCORCH_SECONDS); scorching = true; }
+      f[i * 4 + 1] = Math.round(255 * this.scorch[i]);
     }
-    this.fillTex.needsUpdate = true;
-    if (flashing || this._wasFlashing) this.flashTex.needsUpdate = true;
+    if (changed || !this._filled) { this.fillTex.needsUpdate = true; this._filled = true; }
+    this.scorchClock = (this.scorchClock ?? 0) + dt;
+    const scorchDue = (scorching || this._wasScorching) && this.scorchClock >= SCORCH_UPLOAD;   // a fading scorch: 10 uploads a second
+    if (flashing || this._wasFlashing || scorchDue) { this.flashTex.needsUpdate = true; this.scorchClock = 0; this._wasScorching = scorching; }
     this._wasFlashing = flashing;
   }
 
