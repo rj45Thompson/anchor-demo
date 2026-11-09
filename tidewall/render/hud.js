@@ -3,7 +3,7 @@
 // was refused), the tag over each hero, and every menu screen (title, join/setup, pause, the continue-or-give-up screen, results,
 // initials, high scores). It only READS the ported HudViewModel, MenuModel and model; it decides nothing.
 import { Phase, Screen, MenuModel, HudViewModel } from '../core/index.js';
-import { PLAYER_CSS } from './look.js';
+import { PLAYER_CSS, PLAYER_TEXT_CSS, PLAYER_INK_CSS, HUD_PANEL_CSS } from './look.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const PHASE_WORD = { [Phase.Claim]: 'CLAIM', [Phase.Cannons]: 'CANNONS', [Phase.Battle]: 'BATTLE', [Phase.Repair]: 'REPAIR',
@@ -83,7 +83,7 @@ export class Hud {
       const p = project(t.at); if (!p.visible) continue;
       const seat = Hud.seatOf(hud, t.slot), s = 'P' + (seat + 1);
       this.panel(p.x - 16, p.y - 11, 32, 22, 11, PLAYER_CSS[seat], 'rgba(255,255,255,0.9)');
-      this.text(s, p.x, p.y + 1, 13, '#fff', 'center', 900, false);
+      this.text(s, p.x, p.y + 1, 13, PLAYER_INK_CSS[seat], 'center', 900, false);
     }
   }
 
@@ -168,10 +168,10 @@ export class Hud {
   /** One player's card: s is the player SLOT (what the model and controller are asked by), seat names and colours it. */
   card(s, seat, p, x, y, w, h, m, ctl, seconds) {
     const col = PLAYER_CSS[seat], c = this.ctx;
-    this.panel(x, y, w, h, 12, 'rgba(10,26,44,0.78)', col);
+    this.panel(x, y, w, h, 12, HUD_PANEL_CSS, col);
     c.fillStyle = col; c.beginPath(); c.roundRect(x, y, 10, h, [12, 0, 0, 12]); c.fill();
     const fs = Math.max(13, h * 0.24);
-    this.text('P' + (seat + 1), x + 22, y + h * 0.28, fs * 1.2, col, 'left', 900);
+    this.text('P' + (seat + 1), x + 22, y + h * 0.28, fs * 1.2, PLAYER_TEXT_CSS[seat], 'left', 900);
     if (ctl.isBot(s)) this.text('BOT', x + 22 + fs * 1.9, y + h * 0.3, fs * 0.62, 'rgba(255,255,255,0.65)', 'left', 700, false);
     this.text(String(p.score), x + w - 12, y + h * 0.28, fs, '#fff', 'right');
     // what this player is doing now
@@ -273,8 +273,8 @@ export class Hud {
     for (let s = 0; s < MenuModel.Seats; s++) {
       const j = menu.joined[s];
       this.panel(x, y, cw, ch, 14, j ? PLAYER_CSS[s] : 'rgba(255,255,255,0.08)', j ? '#fff' : 'rgba(255,255,255,0.35)');
-      this.text('P' + (s + 1), x + cw / 2, y + ch * 0.34, ch * 0.3, j ? '#fff' : 'rgba(255,255,255,0.6)', 'center', 900);
-      this.text(j ? 'READY' : 'PRESS TO JOIN', x + cw / 2, y + ch * 0.72, ch * 0.15, '#fff', 'center', 800, j);
+      this.text('P' + (s + 1), x + cw / 2, y + ch * 0.34, ch * 0.3, j ? PLAYER_INK_CSS[s] : 'rgba(255,255,255,0.6)', 'center', 900, !j);
+      this.text(j ? 'READY' : 'PRESS TO JOIN', x + cw / 2, y + ch * 0.72, ch * 0.15, j ? PLAYER_INK_CSS[s] : '#fff', 'center', 800, false);
       this.hit({ kind: 'seat', seat: s }, x, y, x + cw, y + ch);
       x += cw + 12;
     }
@@ -361,7 +361,7 @@ export class Hud {
     rows.forEach((r, i) => {
       const y = H * 0.26 + i * rh;
       this.text(String(i + 1).padStart(2, ' ') + '.', W / 2 - 150, y, rh * 0.65, 'rgba(255,255,255,0.7)', 'right');
-      this.text(r.key, W / 2 - 110, y, rh * 0.65, PLAYER_CSS[i % 4], 'left', 900);
+      this.text(r.key, W / 2 - 110, y, rh * 0.65, PLAYER_TEXT_CSS[i % 4], 'left', 900);
       this.text(String(r.value), W / 2 + 160, y, rh * 0.65, '#fff', 'right');
     });
   }

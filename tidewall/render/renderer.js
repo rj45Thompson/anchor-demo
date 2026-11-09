@@ -29,11 +29,11 @@ import { CameraRig, CameraDirector } from './camera.js';
 import { Hud } from './hud.js';
 import { Fx } from './fx.js';
 import { Sky } from './sky.js';
-import { PLAYER_CSS, PLAYER_HEX, PLAYER_COLOURS } from './look.js';
+import { PLAYER_CSS, PLAYER_HEX, PLAYER_COLOURS, PLAYER_TEXT_CSS } from './look.js';
 import { Models, tintArmour } from './models.js';
 import { PropSet, SUN, SKY, sunDirection } from './look.js';
 
-export { PLAYER_CSS, PLAYER_HEX };
+export { PLAYER_CSS, PLAYER_HEX, PLAYER_TEXT_CSS };
 
 /** The browser cannot run WebGPU: the page shows its notice; nothing else draws. */
 export class NoWebGpuError extends Error {
@@ -309,6 +309,9 @@ class Renderer {
 
   /** The camera's quarter turns (camera.js lookOf): 1 = it looks east, so a stick's up must move the cursor east (main.js). */
   get screenTurn() { return this.rig.turn; }
+
+  /** The match HUD's top bar height in CSS px (Hud.matchLayout): the page puts its hint strip under it. */
+  hudBarHeight() { return Hud.matchLayout(this.cssW, this.cssH, 0).barH; }
 
   /** The free screen rect (CSS px): the canvas minus the HUD's top bar and its card row (Hud.matchLayout, the numbers it draws
    *  with) and minus each on-screen control (`cover`, DOM rects), each cut from the side that leaves the most area. */

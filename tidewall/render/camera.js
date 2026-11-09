@@ -13,6 +13,10 @@ import { Phase, ShipSunk, CastleRuined } from '../core/index.js';
 export const FOV = 38;                                          // AUTHORED: vertical field of view, degrees
 // AUTHORED: degrees down from level for play and for REPAIR, landscape and portrait (portrait looks flatter so the frame is used)
 const PITCH = { land: [54, 80], port: [48, 76] };
+// AUTHORED (round 4, phone pass): on a small screen (short side under SMALL_SCREEN CSS px: a phone) REPAIR looks less steeply down.
+// Measured with the 80 / 76 degree REPAIR angle: the hero stood 8 px tall in phone landscape and 11 px in portrait (run_page
+// `camera`, shots/aaa3/run_page_camera2.txt), too small to find; the play angle is unchanged.
+const SMALL_SCREEN = 560, PITCH_SMALL = { land: [54, 64], port: [48, 60] };
 const SWING_SECONDS = 1.1;                                      // AUTHORED: the swing between the play and REPAIR angles
 const FIT_MARGIN = 0.04;                                        // AUTHORED: fraction of the free rect kept clear inside its edges
 // AUTHORED framing (squares): a target box is padded by PAD, at least MIN_ACROSS across the free rect, never past the board;
@@ -172,7 +176,7 @@ export class CameraRig {
     }
   }
 
-  pitchNow() { const P = PITCH[this.turn ? 'port' : 'land'], s = this.k * this.k * (3 - 2 * this.k); return P[0] + (P[1] - P[0]) * s; }
+  pitchNow() { const P = this.pitches || PITCH[this.turn ? 'port' : 'land'], s = this.k * this.k * (3 - 2 * this.k); return P[0] + (P[1] - P[0]) * s; }
 
   /** Place the camera for a ground target, distance and pitch (degrees). */
   place(cam, t, dist, pitchDeg, turn) {
@@ -229,7 +233,8 @@ export class CameraRig {
     this.kWant = building ? 1 : 0;
     const step = dt / SWING_SECONDS;
     this.k = this.kWant > this.k ? Math.min(this.kWant, this.k + step) : Math.max(this.kWant, this.k - step);
-    const P = PITCH[turn ? 'port' : 'land'], s = this.k * this.k * (3 - 2 * this.k);
+    const P = (Math.min(W, H) < SMALL_SCREEN ? PITCH_SMALL : PITCH)[turn ? 'port' : 'land'], s = this.k * this.k * (3 - 2 * this.k);
+    this.pitches = P;
     // WHAT: the box to frame
     const whole = { x0: land.x0 - 1, y0: land.y0 - 1, x1: land.x1 + 1, y1: land.y1 + 1 };
     let box = whole, state = 'whole';
@@ -241,7 +246,7 @@ export class CameraRig {
     }
     const q = (v) => Math.round(v * 4) / 4;                         // a quarter square: the solve is redone only when the box moves
     const ndc = this.ndc(W, H);
-    const key = [box.x0, box.y0, box.x1, box.y1].map(q).join(',') + '|' + Object.values(ndc).map((v) => v.toFixed(3)).join(',') + '|' + this.camera.aspect.toFixed(4) + '|' + turn;
+    const key = [box.x0, box.y0, box.x1, box.y1].map(q).join(',') + '|' + Object.values(ndc).map((v) => v.toFixed(3)).join(',') + '|' + this.camera.aspect.toFixed(4) + '|' + turn + '|' + P.join(',');
     if (key !== this.key) {
       this.key = key;
       // the box fitted at both angles; then never closer than MIN_ACROSS squares across the free rect at the target (a small

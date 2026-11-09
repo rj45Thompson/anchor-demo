@@ -8,13 +8,13 @@
 // ?speed=N run N ticks per tick of real time (1..16, default 1); ?quality=low starts the graphics on the low setting (Q switches).
 import { GAME_TITLE } from './title.js';
 import { InputHub, KEY_CLUSTERS, SEATS } from './input.js';
-import { Overlay } from './overlay.js';
+import { Overlay, HintStrip } from './overlay.js';
 import { SoundPlayer, VOLUME } from './sound.js';
 import { Phones } from './phones.js';
 import { ControlsChoice, TouchPad } from './controls.js';
 import { MapSource, CAMPAIGN_ISLANDS } from './maps.js';
 import * as core from '../core/index.js';
-import { createRenderer, NoWebGpuError, PLAYER_CSS } from '../render/renderer.js';
+import { createRenderer, NoWebGpuError, PLAYER_TEXT_CSS } from '../render/renderer.js';
 
 const {
   GameRules, GameOptions, GridModel, MapCheck, MatchModel, MatchController, MenuModel, MenuInput, PadInput, Screen, MenuActionKind, HighScoreTable,
@@ -68,6 +68,8 @@ class Game {
     if (typeof matchMedia === 'function') coarse = matchMedia('(pointer: coarse)').matches;
     this.controls = new ControlsChoice(GAME_TITLE.toLowerCase() + '-controls', { coarse, userAgent: navigator.userAgent });
     this.touchpad = new TouchPad(document.body);
+    // the first match's hint strip (overlay.js HintStrip): the match and the round it speaks in, set when a player's first match starts
+    this.hint = new HintStrip(document.body); this.hintMatch = null; this.hintRound = 0;
     this.input.attachTouch(this.touchpad);
     // the CONTROLS buttons on the join screen (overlay.js draws them), and C on the keyboard there
     document.getElementById('ui').addEventListener('click', (e) => {
@@ -79,7 +81,7 @@ class Game {
     this.maps = new MapSource(GameRules.default());
     this.scoresNote = '';
     this.menu = new MenuModel(this.loadScores(), CAMPAIGN_ISLANDS);
-    this.overlay = new Overlay(document.getElementById('ui'), PLAYER_CSS, Screen, KEY_CLUSTERS.map((c) => 'P' + (c.seat + 1) + ': ' + c.help));
+    this.overlay = new Overlay(document.getElementById('ui'), PLAYER_TEXT_CSS, Screen, KEY_CLUSTERS.map((c) => 'P' + (c.seat + 1) + ': ' + c.help));
     this.seed = sw.seed ?? (Date.now() & 0x7fffffff);
     this.ticks = 0;
     this.acc = 0;
@@ -145,6 +147,7 @@ class Game {
     this.phaseKey = ''; this.phaseTick = 0;
     this.grid = model.grid;
     this.renderer.setMatch(model, seatOf);
+    if (!demo && !this.sw.attract && this.hintMatch === null) { this.hintMatch = model; this.hintRound = model.round; }
   }
 
   /** The campaign's four islands, starting with the one chosen on the setup screen and going on round the list. */
@@ -301,10 +304,16 @@ class Game {
     // the camera's hints: the human players it frames (bots never steer it), the pointer player (its hero follows a still pointer,
     // so the camera must not follow that hero), the on-screen controls it keeps its frame clear of, and the player's own zoom/pan
     const playing = !this.demo && !this.sw.attract;
+    // the hint strip: in the first round of the first match, while it is being played; under the top bar, or below any on-screen
+    // control it would sit on (its rect is then a cover rect, so the camera frames round it)
+    const hinting = playing && this.model === this.hintMatch && this.model.round === this.hintRound && this.menu.screen === Screen.Playing;
+    this.hint.set(hinting ? Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase) : null, this.controls.showsTouch, !hinting);
+    const pads = this.touchpad.visible ? this.touchpad.coverRects() : [];
+    if (this.hint.covering) this.hint.place(this.renderer.hudBarHeight() + 6, pads);
     const camera = {
       humans: playing ? this.seatOf.map((_, slot) => slot).filter((slot) => !this.controller.isBot(slot)) : [],
       pointerSlot: playing && this.pointerMode ? this.mouseSlot : -1,
-      cover: this.touchpad.visible ? this.touchpad.coverRects() : [],
+      cover: this.hint.covering ? [...pads, this.hint.rect()] : pads,
       input: this.input.takeCamera(),
     };
     if (this.touchpad.takeFrame()) camera.input.toggle = true;
@@ -323,7 +332,7 @@ class Game {
     this.overlay.render({
       screen: this.menu.screen, inDemo: this.menu.inDemo, attract: this.sw.attract, devices: this.input.devices,
       phones: { state: this.phones.state, reason: this.phones.reason }, scoresNote: this.scoresNote, controls: this.controls.mode,
-      touchControls: this.controls.showsTouch,
+      touchControls: this.controls.showsTouch, touchFirst: this.controls.touchFirst,
       soundNote: this.silent ? '' : this.sound.needsGesture ? 'Press any key for sound' : '',
     });
   }

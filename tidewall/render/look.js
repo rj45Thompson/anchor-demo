@@ -15,6 +15,14 @@ import { mrt, diffuseColor } from 'three/tsl';
 export const PLAYER_HEX = Object.freeze([0x1957ff, 0xff5e4d, 0xcc52c2, 0xffcc00]);
 export const PLAYER_CSS = Object.freeze(['#1957ff', '#ff5e4d', '#cc52c2', '#ffcc00']);
 export const PLAYER_COLOURS = PLAYER_HEX.map((h) => new THREE.Color(h));
+// HUD text (round 4, HUDTEXT): P1's deeper blue read 2.9:1 as text on the navy card. A player's colour as TEXT on a dark panel is
+// its lighter tint below (PLAYER_TEXT_CSS: the colour mixed toward white, AUTHORED t = 0.44, 0.16, 0.30, 0), and text drawn ON a
+// player-colour fill (the hero tag, a joined seat card) is the ink that reads on that fill (PLAYER_INK_CSS: white on the blue,
+// navy on the other three). HUD_PANEL_CSS is the card and foot panel. tools/colour_check.py reads all three from this file and
+// fails under WCAG 4.5:1 for any player label, the panel taken over a WHITE backdrop (the brightest the scene can put behind it).
+export const PLAYER_TEXT_CSS = Object.freeze(['#7ea1ff', '#ff7869', '#db86d4', '#ffcc00']);
+export const PLAYER_INK_CSS = Object.freeze(['#ffffff', '#0a1828', '#0a1828', '#0a1828']);
+export const HUD_PANEL_CSS = 'rgba(10,26,44,0.9)';
 export const NEUTRAL_WALL = new THREE.Color(0xe9e4d6);        // a wall no player owns (a map's own wall)
 export const ENEMY_SHOT = new THREE.Color(0xff8a2a);
 

@@ -480,8 +480,10 @@ export class Units {
   // ------------------------------------------------------------------ ghosts (what confirm would place)
   makeGhost(s) {
     const col = this.colours[s];
-    const ok = glowing(new THREE.MeshBasicNodeMaterial({ color: col.clone().multiplyScalar(1.4), transparent: true, opacity: 0.5, depthWrite: false }));
-    const bad = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0xff2b2b), transparent: true, opacity: 0.35, depthWrite: false });
+    // AUTHORED (round 4, phone pass): lightened toward white and less see-through, so the piece reads from the near top-down REPAIR
+    // camera on a phone, where a square is ~15 px and the deeper P1 blue at half opacity sank into the grass
+    const ok = glowing(new THREE.MeshBasicNodeMaterial({ color: col.clone().lerp(new THREE.Color(0xffffff), 0.3).multiplyScalar(1.4), transparent: true, opacity: 0.72, depthWrite: false }));
+    const bad = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0xff2b2b), transparent: true, opacity: 0.6, depthWrite: false });
     const geo = new THREE.BoxGeometry(0.9, 0.5, 0.9).translate(0, 0.25, 0);
     const im = new THREE.InstancedMesh(geo, ok, 16); im.count = 0; im.visible = false; im.renderOrder = 3; im.frustumCulled = false;
     const castleRing = new THREE.Mesh(new THREE.RingGeometry(1.25, 1.42, 40).rotateX(-Math.PI / 2), this.glowP[s]); castleRing.visible = false;
