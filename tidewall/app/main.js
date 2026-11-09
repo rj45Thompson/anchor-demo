@@ -11,13 +11,14 @@ import { InputHub, KEY_CLUSTERS, SEATS } from './input.js';
 import { Overlay } from './overlay.js';
 import { SoundPlayer, VOLUME } from './sound.js';
 import { Phones } from './phones.js';
+import { ControlsChoice, TouchPad } from './controls.js';
 import { MapSource, CAMPAIGN_ISLANDS } from './maps.js';
 import * as core from '../core/index.js';
 import { createRenderer, NoWebGpuError, PLAYER_CSS } from '../render/renderer.js';
 
 const {
   GameRules, GameOptions, GridModel, MapCheck, MatchModel, MatchController, MenuModel, MenuInput, PadInput, Screen, MenuActionKind, HighScoreTable,
-  SeededRandom, Synth, LoopClosed,
+  SeededRandom, Synth, LoopClosed, Cell,
 } = core;
 
 document.title = GAME_TITLE;
@@ -63,6 +64,17 @@ class Game {
     this.renderer = renderer; this.canvas = canvas; this.sw = sw;
     this.input = new InputHub(window);
     this.phones = new Phones(SEATS);
+    let coarse = false;
+    if (typeof matchMedia === 'function') coarse = matchMedia('(pointer: coarse)').matches;
+    this.controls = new ControlsChoice(GAME_TITLE.toLowerCase() + '-controls', { coarse, userAgent: navigator.userAgent });
+    this.touchpad = new TouchPad(document.body);
+    this.input.attachTouch(this.touchpad);
+    // the CONTROLS buttons on the join screen (overlay.js draws them), and C on the keyboard there
+    document.getElementById('ui').addEventListener('click', (e) => {
+      const b = e.target instanceof Element ? e.target.closest('[data-controls]') : null;
+      if (b) this.controls.set(b.dataset.controls);
+    });
+    window.addEventListener('keydown', (e) => { if (e.code === 'KeyC' && !e.repeat && this.menu.screen === Screen.Setup && !this.sw.attract) this.controls.next(); });
     this.sound = new SoundPlayer(Synth);
     this.maps = new MapSource(GameRules.default());
     this.scoresNote = '';
@@ -76,6 +88,7 @@ class Game {
     this.wasPresent = new Array(SEATS).fill(true);
     this.stopped = false;
     this.phonesOpened = false;
+    this.pointerMode = false;      // the mouse player's hero follows the pointer (set when it moves in play, cleared by their stick)
     /** The page check's brake: when set, it is asked after every tick whether to stop there; the page then keeps drawing without
      *  ticking until the check clears `braked`. phaseTick is the tick the current (round, phase) began. */
     this.brake = null; this.braked = false; this.phaseKey = ''; this.phaseTick = 0;
@@ -177,8 +190,7 @@ class Game {
    *  screen with no rows (the title, the results, the scores) is "press a button"; a click beside the rows does nothing. On the
    *  join screen a click on a free seat's card joins that seat; the arrows beside a setup value step it; the initial being set steps
    *  its letter from its top or bottom half. The hit boxes are the ones the HUD drew this frame (render/hud.js hitAt). */
-  pointerToMenu(menuIn) {
-    const p = this.input.takePointer();
+  pointerToMenu(menuIn, p) {
     if (!(p.click || p.moved) || Number.isNaN(p.x)) return;
     const screen = this.menu.screen;
     if (screen === Screen.Playing) return;                                  // in play the pointer does nothing (yet)
@@ -197,12 +209,33 @@ class Game {
     else throw new Error('main.js: no pointer handling for a ' + h.kind + ' hit box');
   }
 
-  /** The pointer cursor: a hand over anything the pointer can act on in a menu. */
+  /** The mouse in play is the keyboard player's (seat 1's; if seat 1 did not join, the first player's): the slot it drives. */
+  get mouseSlot() { const k = this.seatOf.indexOf(0); return k >= 0 ? k : 0; }
+
+  /** The pointer in play, onto the mouse player's PadInput (the private model's host does the same): once the pointer moves the hero follows
+   *  the square under it (picked through the live camera, renderer.pickCell) until that player's stick or keys move again; a left
+   *  click confirms at that square (claim, place a cannon, fire, place the piece), right click or the wheel rotates, middle click is
+   *  ready (Tab too). `fields` is the slot's PadInput fields from its keys and pads, merged here. */
+  pointerToPlay(fields, p) {
+    const stick = fields.stickX !== 0 || fields.stickY !== 0;
+    if (p.moved) this.pointerMode = true;
+    if (stick && !p.moved) this.pointerMode = false;
+    const out = Object.assign({}, fields);
+    if (this.pointerMode && !Number.isNaN(p.x)) {
+      const c = this.renderer.pickCell(p.x, p.y);
+      if (c !== null) { out.hasPointer = true; out.pointer = new Cell(c.x, c.y); }
+    }
+    out.confirm = fields.confirm || p.confirm; out.rotate = fields.rotate || p.rotate; out.ready = fields.ready || p.ready;
+    return out;
+  }
+
+  /** The pointer cursor: a hand over anything the pointer can act on in a menu, a crosshair over the board in play. */
   pointerCursor() {
     const p = this.input.pointer, screen = this.menu.screen, r = this.canvas.getBoundingClientRect(), hud = this.renderer.hud;
     const menuUp = !this.sw.attract && !(screen === Screen.Playing);
     const on = menuUp && !Number.isNaN(p.x) && (!hud.hasHits(screen) || screen === Screen.Initials || hud.hitAt(screen, p.x - r.left, p.y - r.top) !== null);
-    const want = on ? 'pointer' : '';
+    const aim = !this.sw.attract && !this.demo && screen === Screen.Playing && this.pointerMode;
+    const want = on ? 'pointer' : aim ? 'crosshair' : '';
     if (document.body.style.cursor !== want) document.body.style.cursor = want;
   }
 
@@ -210,7 +243,10 @@ class Game {
     this.ticks++;
     const seats = this.input.take();
     const menuIn = seats.map((s) => new MenuInput(s.menu));
-    if (!this.sw.attract) this.pointerToMenu(menuIn);
+    const ptr = this.input.takePointer();
+    const wasPlaying = this.menu.screen === Screen.Playing && !this.demo;   // a click that started the match is not a move in it
+    this.input.playing = wasPlaying;
+    if (!this.sw.attract) this.pointerToMenu(menuIn, ptr);
     if (!this.sw.attract) {
       const before = this.menu.screen + ':' + this.menu.row + ':' + this.menu.joinedCount;
       const acts = this.menu.update(menuIn, this.demo ? null : this.model);
@@ -222,7 +258,9 @@ class Game {
                                               : sc === Screen.Playing || sc === Screen.Decide || sc === Screen.Results);
     if (!run) return;                                                       // paused: the rules do not run
     if (!this.demo) this.followConnections();
-    const pads = this.seatOf.map((seat) => this.demo ? new PadInput() : new PadInput(seats[seat].pad));
+    const mouse = this.mouseSlot, play = wasPlaying && this.menu.screen === Screen.Playing;
+    const pads = this.seatOf.map((seat, slot) => this.demo ? new PadInput()
+      : new PadInput(play && slot === mouse ? this.pointerToPlay(seats[seat].pad, ptr) : seats[seat].pad));
     this.controller.frame(pads);
     const key = this.model.round + ':' + this.model.phase;
     if (key !== this.phaseKey) { this.phaseKey = key; this.phaseTick = this.model.tick; }
@@ -247,11 +285,18 @@ class Game {
     this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha }, seconds);
     this.pointerCursor();
     const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup;
-    if (joinScreen && !this.phonesOpened) { this.phonesOpened = true; this.phones.open(); }   // a room opens when a join screen first shows
-    this.phones.show(joinScreen);
+    // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its
+    // phones are read by the input hub once it is open
+    const phones = this.controls.usesPhones;
+    if (phones && joinScreen && this.phones.state === 'off') {
+      this.phones.open().then((ph) => { if (ph.state === 'open') this.input.attachPhones(ph.pads); });
+    }
+    if (!phones && this.phones.state !== 'off') { this.phones.close(); this.input.attachPhones(null); }
+    this.phones.show(joinScreen && phones);
+    this.touchpad.show(this.controls.showsTouch && !this.sw.attract && !this.demo && this.menu.screen === Screen.Playing);
     this.overlay.render({
       screen: this.menu.screen, inDemo: this.menu.inDemo, attract: this.sw.attract, devices: this.input.devices,
-      phones: { state: this.phones.state, reason: this.phones.reason }, scoresNote: this.scoresNote,
+      phones: { state: this.phones.state, reason: this.phones.reason }, scoresNote: this.scoresNote, controls: this.controls.mode,
       soundNote: this.silent ? '' : this.sound.needsGesture ? 'Press any key for sound' : '',
     });
   }

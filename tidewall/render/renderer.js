@@ -219,6 +219,35 @@ class Renderer {
     await this.renderer.backend.device.queue.onSubmittedWorkDone();
   }
 
+  /** The board square under a point of the page (CSS px, clientX/Y), through the live camera, or null when that point sees no
+   *  ground (above the horizon, or no level yet). The ray meets the ground's own height (the land's relief, board.groundAtPoint),
+   *  found by stepping from the sea plane: three steps settle it to well under a hundredth of a square. Squares off the board are
+   *  returned as they are (the controller keeps a cursor on the map). */
+  pickCell(clientX, clientY) {
+    if (!this.board) return null;
+    const r = this.canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2((clientX - r.left) / r.width * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, this.rig.camera);
+    const o = ray.ray.origin, d = ray.ray.direction;
+    if (d.y > -1e-6) return null;
+    let h = 0, p = null;
+    for (let i = 0; i < 3; i++) {
+      const t = (h - o.y) / d.y;
+      if (t < 0) return null;
+      p = o.clone().addScaledVector(d, t);
+      h = this.board.groundAtPoint(p.x, p.z);
+    }
+    return { x: Math.floor(p.x), y: Math.floor(p.z) };
+  }
+
+  /** Where the centre of square (x, y) is on the page (CSS px from the canvas's top-left), at the ground's height, through the live
+   *  camera: the page check clicks the board with it. */
+  screenOfCell(x, y) {
+    if (!this.board) throw new RenderContractError('screenOfCell needs a level: call setMatch first');
+    const v = new THREE.Vector3(x + 0.5, this.board.groundAt(x, y), y + 0.5).project(this.rig.camera);
+    return { x: (v.x + 1) / 2 * this.cssW, y: (1 - v.y) / 2 * this.cssH };
+  }
+
   /** Follow framing: the camera frames every hero with room round them instead of the whole island. */
   set follow(on) { this.rig.follow = !!on; }
   get follow() { return this.rig.follow; }

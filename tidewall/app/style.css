@@ -15,3 +15,36 @@ html, body { margin: 0; height: 100%; background: #0b1622; color: var(--ink); fo
 #nogpu h1 { color: var(--gold); }
 #ui .credits { margin-top: 6px; font-size: 11px; color: var(--dim); pointer-events: auto; }
 #ui .credits a { color: var(--ink); }
+/* the page never scrolls, pans or zooms under a finger: every touch is the game's */
+html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+/* the CONTROLS choice on the join screen */
+#ui .ctl { pointer-events: auto; display: inline-flex; gap: 6px; align-items: center; margin-bottom: 6px; font-weight: bold; }
+#ui .ctl button { font: 700 13px/1 var(--font); color: var(--ink); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 999px; padding: 7px 14px; cursor: pointer; min-height: 32px; }
+#ui .ctl button.on { background: #3aa8ff; border-color: #fff; color: #fff; }
+/* player 1's touch controls: a stick on the left, A B Y on the right, sized for thumbs, above the player cards */
+.tpad { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+.tpad[hidden] { display: none; }
+.tstick, .tb, .tpause { pointer-events: auto; touch-action: none; }
+.tstick { position: absolute; left: max(16px, env(safe-area-inset-left)); bottom: calc(max(16px, env(safe-area-inset-bottom)) + 12vh);
+  width: min(36vmin, 170px); height: min(36vmin, 170px); border-radius: 50%; background: rgba(10,24,40,0.35);
+  border: 2px solid rgba(255,255,255,0.45); }
+.tknob { position: absolute; left: 30%; top: 30%; width: 40%; height: 40%; border-radius: 50%; background: rgba(255,255,255,0.55);
+  border: 2px solid #fff; pointer-events: none; }
+.tbtns { position: absolute; right: max(16px, env(safe-area-inset-right)); bottom: calc(max(16px, env(safe-area-inset-bottom)) + 12vh);
+  width: min(44vmin, 210px); height: min(44vmin, 210px); }
+.tb { position: absolute; width: 42%; height: 42%; border-radius: 50%; font: 900 min(7vmin, 30px)/1 var(--font); color: #fff;
+  border: 2px solid rgba(255,255,255,0.8); background: rgba(10,24,40,0.45); padding: 0; }
+.tb.down { filter: brightness(1.6); transform: scale(0.94); }
+.tb-a { right: 0; bottom: 0; background: rgba(47,191,113,0.6); }
+.tb-b { right: 0; top: 0; background: rgba(217,83,79,0.6); }
+.tb-y { left: 0; bottom: 0; background: rgba(255,194,51,0.6); }
+.tpause { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 54px); right: max(12px, env(safe-area-inset-right));
+  width: 44px; height: 44px; border-radius: 50%; font: 900 15px/1 var(--font); color: #fff; background: rgba(10,24,40,0.6);
+  border: 2px solid rgba(255,255,255,0.6); }
+/* a short screen (a phone held sideways): a compact foot, so the join screen's rows end above it (render/hud.js FOOT) */
+@media (max-height: 559px) {
+  #ui .foot { bottom: 6px; padding: 4px 10px; font-size: 11px; line-height: 1.35; }
+  #ui .ctl { margin-bottom: 2px; }
+  #ui .ctl button { padding: 4px 10px; min-height: 26px; font-size: 12px; }
+}

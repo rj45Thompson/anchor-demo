@@ -19,7 +19,7 @@ export class Overlay {
     this.last = '';
   }
 
-  /** s = { screen, inDemo, attract, devices[], phones: {state, reason}, soundNote, scoresNote } */
+  /** s = { screen, inDemo, attract, devices[], phones: {state, reason}, controls: 'local' | 'phones' | 'both', soundNote, scoresNote } */
   render(s) {
     const html = this.build(s);
     if (html === this.last) return;
@@ -46,13 +46,17 @@ export class Overlay {
       if (d.keyboard) dev.push(seat === 0 ? 'keys WASD' : 'keys arrows');
       if (d.pad) dev.push('gamepad');
       if (d.phone) dev.push('phone');
+      if (d.touch) dev.push('touch');
       if (d.padId && !d.pad) dev.push(d.padId);
       line += '<span class="dev" style="color:' + this.colours[seat] + '">P' + (seat + 1) + ': ' + esc(dev.length ? dev.join(' + ') : 'no controller yet') + '</span>';
     }
     const phones = s.phones.state === 'open' ? 'Phones: scan the code, then press A on the phone to join its seat.'
       : s.phones.state === 'opening' ? 'Phones: opening a room...'
+      : s.phones.state === 'off' ? 'Phones: off. Choose PHONES or BOTH to let phones join with a QR code (C switches).'
       : 'Phones unavailable: ' + s.phones.reason + ' Keyboard and gamepads still work.';
-    return '<div class="foot"><div class="devs">' + line + '</div>'
+    const ctl = '<div class="ctl">CONTROLS ' + ['local', 'phones', 'both'].map((k) => '<button data-controls="' + k + '" class="'
+      + (s.controls === k ? 'on' : '') + '">' + ({ local: 'LOCAL', phones: 'PHONES', both: 'BOTH' })[k] + '</button>').join('') + '</div>';
+    return '<div class="foot">' + ctl + '<div class="devs">' + line + '</div>'
       + '<div class="' + (s.phones.state === 'failed' ? 'note' : 'sub') + '">' + esc(phones) + '</div></div>';
   }
 }

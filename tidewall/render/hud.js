@@ -95,7 +95,8 @@ export class Hud {
     const g = this.ctx.createLinearGradient(0, 0, 0, barH * 1.4); g.addColorStop(0, 'rgba(8,30,52,0.72)'); g.addColorStop(1, 'rgba(8,30,52,0)');
     this.ctx.fillStyle = g; this.ctx.fillRect(0, 0, W, barH * 1.4);
     const fs = Math.max(14, u * 2.1);
-    this.text('ROUND ' + hud.round + '  ·  LEVEL ' + hud.level + (hud.mapName ? '  ·  ' + hud.mapName : ''), 18, barH / 2, fs, '#fff', 'left');
+    const narrow = W < 640;                                   // a phone held upright: the short form, so nothing runs into the phase chip
+    this.text(narrow ? 'R' + hud.round + ' · L' + hud.level : 'ROUND ' + hud.round + '  ·  LEVEL ' + hud.level + (hud.mapName ? '  ·  ' + hud.mapName : ''), narrow ? 12 : 18, barH / 2, fs, '#fff', 'left');
     const lives = Math.max(0, hud.lives);
     let lx = W - 18;
     this.text('SCORE ' + hud.teamScore, lx, barH / 2, fs, '#ffe08a', 'right');
@@ -104,7 +105,7 @@ export class Hud {
     // phase chip and the timer ring
     const word = PHASE_WORD[hud.phase];
     if (word === undefined) throw new Error('hud.js: no word for phase ' + hud.phase);
-    const cx = W / 2, chipW = Math.max(150, fs * 9);
+    const cx = W / 2, chipW = narrow ? Math.max(118, fs * 7.5) : Math.max(150, fs * 9);
     this.panel(cx - chipW / 2, barH * 0.16, chipW, barH * 0.7, barH * 0.35, 'rgba(255,255,255,0.14)', 'rgba(255,255,255,0.5)');
     this.text(word, cx - (hud.secondsTotal > 0 ? fs * 0.9 : 0), barH / 2, fs * 1.05, '#fff');
     if (hud.secondsTotal > 0 && !m.ended) {
@@ -227,9 +228,12 @@ export class Hud {
   drawSetup(menu, seconds) {
     const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60);
     this.dim(0.5);
-    this.logo(H * 0.12, Math.max(30, u * 6), seconds);
+    // FOOT: CSS px the page's own foot takes at the bottom (app/style.css .foot, compact under 560 px of height); the rows must end
+    // above it. On a short screen (a phone held sideways) the name, the cards and the rows shrink to fit.
+    const FOOT = H < 560 ? 84 : 120, short = H < 560;
+    this.logo(short ? H * 0.08 : H * 0.12, short ? Math.max(22, H * 0.065) : Math.max(30, u * 6), seconds);
     // the four seats: joined ones in their colour, open ones waiting for a button
-    const cw = Math.min(200, (W - 60) / 4 - 12), ch = Math.max(70, u * 11), y = H * 0.26;
+    const cw = Math.min(200, (W - 60) / 4 - 12), ch = short ? Math.max(44, H * 0.14) : Math.max(70, u * 11), y = short ? H * 0.17 : H * 0.26;
     let x = (W - (cw + 12) * 4 + 12) / 2;
     for (let s = 0; s < MenuModel.Seats; s++) {
       const j = menu.joined[s];
@@ -239,21 +243,22 @@ export class Hud {
       this.hit({ kind: 'seat', seat: s }, x, y, x + cw, y + ch);
       x += cw + 12;
     }
-    const rows = MenuModel.SetupRows, rh = Math.max(30, u * 4.6), top = y + ch + rh;
+    const rows = MenuModel.SetupRows, rh = Math.min(Math.max(30, u * 4.6), (H - FOOT - y - ch) / 6.6), top = y + ch + rh;
+    const half = Math.min(230, W / 2 - 10), lab = half - 30;     // the rows' half width and where a label starts (narrow on a phone)
     for (let i = 0; i < rows.length; i++) {
       const sel = i === menu.row, yy = top + i * rh, raw = menu.valueOfRow(i);
       const val = i === MenuModel.RowMap ? HudViewModel.pretty(raw) : raw;   // "GullrockIsle" -> "GULLROCK ISLE", as the match's top bar says it
-      if (sel) this.panel(W / 2 - 230, yy - rh * 0.45, 460, rh * 0.9, rh * 0.45, 'rgba(255,255,255,0.2)', '#fff');
-      this.text(rows[i], val ? W / 2 - 200 : W / 2, yy, rh * 0.5, sel ? '#fff' : 'rgba(255,255,255,0.75)', val ? 'left' : 'center');
-      if (val) this.text((sel ? '◀ ' : '') + val + (sel ? ' ▶' : ''), W / 2 + 200, yy, rh * 0.5, sel ? '#ffe08a' : 'rgba(255,224,138,0.75)', 'right');
+      if (sel) this.panel(W / 2 - half, yy - rh * 0.45, half * 2, rh * 0.9, rh * 0.45, 'rgba(255,255,255,0.2)', '#fff');
+      this.text(rows[i], val ? W / 2 - lab : W / 2, yy, rh * 0.5, sel ? '#fff' : 'rgba(255,255,255,0.75)', val ? 'left' : 'center');
+      if (val) this.text((sel ? '◀ ' : '') + val + (sel ? ' ▶' : ''), W / 2 + lab, yy, rh * 0.5, sel ? '#ffe08a' : 'rgba(255,224,138,0.75)', 'right');
       const y0 = yy - rh * 0.45, y1 = yy + rh * 0.45;
       if (sel && val) {                                       // the arrows, measured in the font they were drawn in
         this.font(rh * 0.5); const all = this.ctx.measureText('◀ ' + val + ' ▶').width, arrow = this.ctx.measureText('◀ ').width;
-        const xr = W / 2 + 200, xl = xr - all;
+        const xr = W / 2 + lab, xl = xr - all;
         this.hit({ kind: 'step', row: i, dir: -1 }, xl - 8, y0, xl + arrow, y1);
         this.hit({ kind: 'step', row: i, dir: 1 }, xr - arrow, y0, xr + 8, y1);
       }
-      this.hit({ kind: 'row', row: i }, W / 2 - 230, y0, W / 2 + 230, y1);
+      this.hit({ kind: 'row', row: i }, W / 2 - half, y0, W / 2 + half, y1);
     }
   }
 

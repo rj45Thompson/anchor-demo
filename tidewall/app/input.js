@@ -1,7 +1,8 @@
 // input.js - four seats, one screen. Seat n is player n. Each seat merges what drives it:
 //   - the keyboard: seat 0 (left hand) and seat 1 (right hand), each its own key cluster (KEY_CLUSTERS);
 //   - a real gamepad: navigator.getGamepads()[n] for n = 0..3, W3C "standard" mapping;
-//   - a phone (PhonePad): the phone in seat n appears as a standard gamepad at index base + n (base = 4 with up to four real pads).
+//   - a phone (PhonePad): the phone in seat n appears as a standard gamepad at index base + n (base = 4 with up to four real pads);
+//   - player 1's on-screen touch controls (app/controls.js TouchPad), and a tap on the board (main.js reads the pointer).
 // Every animation frame poll() reads them; presses are LATCHED until the next game tick take()s them, because the page draws faster
 // than the rules tick and a press that fell between two ticks would otherwise be lost.
 //
@@ -44,8 +45,8 @@ export class SeatLatch {
 
 /** Which devices sit in a seat right now (the join screen and the HUD show it). */
 export class SeatDevices {
-  constructor() { this.keyboard = false; this.pad = false; this.phone = false; this.padId = ''; }
-  get any() { return this.keyboard || this.pad || this.phone; }
+  constructor() { this.keyboard = false; this.pad = false; this.phone = false; this.touch = false; this.padId = ''; }
+  get any() { return this.keyboard || this.pad || this.phone || this.touch; }
 }
 
 export class InputHub {
@@ -71,29 +72,72 @@ export class InputHub {
     target.addEventListener('blur', () => this.down.clear());   // a key held while the window lost focus must not stick
     // the pointer (a mouse, a pen or a finger) for the menus: where it is, and whether it moved or pressed since the last take. A
     // press on a link or a control of the page (the credits, the front-page link) belongs to that control, not to the game.
-    this.pointer = { x: NaN, y: NaN, moved: false, click: false };
-    const own2 = (e) => !(e.target instanceof Element && e.target.closest('a, button, input, select, textarea'));
+    // confirm / rotate / ready: the buttons pressed since the last take, for play (a left click is BOTH a menu click and a play
+    // confirm, as on the private model's host; main.js uses each only where it belongs). WHEEL_GAP: ms between two wheel turns, so a
+    // trackpad's burst of wheel events is one turn.
+    this.pointer = { x: NaN, y: NaN, moved: false, click: false, confirm: false, rotate: false, ready: false, lastWheel: -1e9 };
+    const WHEEL_GAP = 160;
+    const own2 = (e) => !(e.target instanceof Element && e.target.closest('a, button, input, select, textarea, [data-nogame]'));
+    // a finger on the board: the hero goes where it touches, and the tap acts when it LIFTS (so a second finger can still make it a
+    // two-finger tap, which turns the piece instead). A tap that began outside play (the START tap) acts on nothing in play.
+    this.fingers = new Set(); this.twoFinger = false; this.fingerInPlay = false;
+    this.playing = false;           // main.js says whether a match is being played, each tick
+    const lift = (e) => {
+      if (e.pointerType !== 'touch' || !this.fingers.has(e.pointerId)) return;
+      this.fingers.delete(e.pointerId);
+      if (this.fingers.size > 0) return;
+      const p = this.pointer;
+      if (this.twoFinger) { if (this.fingerInPlay) p.rotate = true; }
+      else if (e.type === 'pointerup' && this.fingerInPlay && this.playing) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.confirm = true; }
+      this.twoFinger = false;
+    };
+    target.addEventListener('pointerup', lift);
+    target.addEventListener('pointercancel', lift);
     target.addEventListener('pointermove', (e) => {
       if (!own2(e)) return;
       const p = this.pointer, far = !(Math.abs(e.clientX - p.x) <= 2 && Math.abs(e.clientY - p.y) <= 2);
       p.x = e.clientX; p.y = e.clientY; if (far) p.moved = true;
     });
     target.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 || !own2(e)) return;                  // the left button, a tap or a pen touch
-      const p = this.pointer; p.x = e.clientX; p.y = e.clientY; p.moved = true; p.click = true; this.anyKey = true;
+      if (!own2(e)) return;
+      const p = this.pointer;
+      this.anyKey = true;
+      if (e.pointerType === 'touch') {
+        this.fingers.add(e.pointerId);
+        if (this.fingers.size === 1) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.click = true; this.fingerInPlay = this.playing; }
+        else this.twoFinger = true;
+        return;
+      }
+      p.x = e.clientX; p.y = e.clientY; p.moved = true;
+      if (e.button === 0) { p.click = true; p.confirm = true; }           // the left button or a pen touch
+      else if (e.button === 2) p.rotate = true;                           // right: turn the piece
+      else if (e.button === 1) { p.ready = true; e.preventDefault(); }    // middle: ready / swap tool (and no auto-scroll)
     });
+    target.addEventListener('contextmenu', (e) => { if (own2(e)) e.preventDefault(); });   // the right button turns, it opens no menu
+    target.addEventListener('wheel', (e) => {
+      if (!own2(e) || e.deltaY === 0) return;
+      const p = this.pointer, now = performance.now();
+      if (now - p.lastWheel >= WHEEL_GAP) { p.rotate = true; p.lastWheel = now; }
+    }, { passive: true });
   }
 
   /** The pointer since the last call: { x, y (CSS px in the window), moved, click }; clears moved and click. */
-  takePointer() { const p = this.pointer, out = { x: p.x, y: p.y, moved: p.moved, click: p.click }; p.moved = false; p.click = false; return out; }
+  takePointer() {
+    const p = this.pointer, out = { x: p.x, y: p.y, moved: p.moved, click: p.click, confirm: p.confirm, rotate: p.rotate, ready: p.ready };
+    p.moved = p.click = p.confirm = p.rotate = p.ready = false;
+    return out;
+  }
 
+  /** The PhonePad host once its room is open (null when it closes): its phones are read as pads at index base() + seat. */
   attachPhones(phonepad) { this.phonepad = phonepad; }
+  /** Player 1's on-screen touch controls (app/controls.js TouchPad). */
+  attachTouch(touchpad) { this.touchpad = touchpad; }
 
   /** Read every device once; call each animation frame. */
   poll() {
     const sticks = Array.from({ length: SEATS }, () => [0, 0]);
     const fast = new Array(SEATS).fill(false);
-    for (const d of this.devices) { d.keyboard = false; d.pad = false; d.phone = false; d.padId = ''; }
+    for (const d of this.devices) { d.keyboard = false; d.pad = false; d.phone = false; d.touch = false; d.padId = ''; }
 
     for (const c of KEY_CLUSTERS) {
       const s = c.seat, L = this.latch[s], held = (keys) => keys.some((k) => this.down.has(k)), hit = (keys) => keys.some((k) => this.pressed.has(k));
@@ -108,6 +152,14 @@ export class InputHub {
       if (hit(c.confirm) || hit(c.rotate) || hit(c.ready) || hit(c.start)) this.touched[s] = true;
     }
     this.pressed.clear();
+
+    if (this.touchpad && this.touchpad.visible) {                     // the on-screen stick and buttons are player 1's
+      const t = this.touchpad.take(), L = this.latch[0];
+      this.devices[0].touch = true;
+      sticks[0][0] += t.stickX; sticks[0][1] += t.stickY;
+      L.confirm ||= t.confirm; L.rotate ||= t.rotate; L.back ||= t.back; L.ready ||= t.ready; L.start ||= t.start;
+      if (t.confirm || t.rotate || t.ready || t.start) this.touched[0] = true;
+    }
 
     const list = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
     const base = this.phonepad ? this.phonepad.base() : 4;
