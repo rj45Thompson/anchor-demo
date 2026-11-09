@@ -1,0 +1,49 @@
+// port of model/Match/Commands.cs
+import { Cell } from '../cell.js';
+
+/** The command kinds of the normal game, with the private model's numbers. 7, 8 and 9 are the bigger ruleset's commands and
+ *  are not ported: a Command refuses them. */
+export const CommandKind = Object.freeze({
+  PlaceWall: 0, PlaceCannon: 1, Fire: 2, Ready: 3, Claim: 4, Leave: 5, Rejoin: 6,
+  Decide: 10,                                  // the fate screen: Fight Again or Give Up
+  SwitchMode: 11, Strike: 12,                  // the hero: tool <-> sword, and a sword swing
+});
+
+const KINDS = new Set(Object.values(CommandKind));
+
+function whole(name, v) {
+  if (!Number.isInteger(v)) throw new TypeError('Command.' + name + ' is a whole number, got ' + v);
+  return v;
+}
+
+/** What a player asks for, never what happened. The host gives each one its arrival order within the tick; every machine then
+ *  runs the same tick's commands in that order (REQ-NET-10). One shape for every kind so a tick's batch is one list.
+ *    placeWall: shapeId, quarterTurns, at = anchor.  placeCannon: at = top-left cell.  fire: at = target cell.
+ *    claim: at = any cell of the castle.  decide: quarterTurns 1 = Fight Again, 0 = Give Up.  strike: at = the hero's square.
+ *    ready / leave / rejoin / switchMode: no payload. */
+export class Command {
+  constructor(kind, slot, seq, arrival, shapeId, quarterTurns, at) {
+    if (!KINDS.has(kind)) throw new Error('command kind ' + kind + ' is not part of the normal game');
+    if (!(at instanceof Cell)) throw new TypeError('Command.at is a Cell');
+    this.kind = kind;
+    this.slot = whole('slot', slot);           // player slot 0..3
+    this.seq = whole('seq', seq);              // the player's own counter, echoed in the event so a client matches its reply
+    this.arrival = whole('arrival', arrival);  // host receive order within the tick (REQ-PLACE-05)
+    this.shapeId = whole('shapeId', shapeId);
+    this.quarterTurns = whole('quarterTurns', quarterTurns);
+    this.at = at;
+    Object.freeze(this);
+  }
+
+  static placeWall(slot, seq, shapeId, quarterTurns, anchor, arrival) { return new Command(CommandKind.PlaceWall, slot, seq, arrival, shapeId, quarterTurns, anchor); }
+  static placeCannon(slot, seq, topLeft, arrival) { return new Command(CommandKind.PlaceCannon, slot, seq, arrival, 0, 0, topLeft); }
+  static fire(slot, seq, target, arrival) { return new Command(CommandKind.Fire, slot, seq, arrival, 0, 0, target); }
+  static ready(slot, seq, arrival) { return new Command(CommandKind.Ready, slot, seq, arrival, 0, 0, Cell.zero); }
+  static claim(slot, seq, castleCell, arrival) { return new Command(CommandKind.Claim, slot, seq, arrival, 0, 0, castleCell); }
+  /** Decide your fate: fightAgain true = Fight Again, false = Give Up (carried in quarterTurns). */
+  static decide(slot, seq, fightAgain, arrival) { return new Command(CommandKind.Decide, slot, seq, arrival, 0, fightAgain ? 1 : 0, Cell.zero); }
+  static switchMode(slot, seq, arrival) { return new Command(CommandKind.SwitchMode, slot, seq, arrival, 0, 0, Cell.zero); }
+  static strike(slot, seq, at, arrival) { return new Command(CommandKind.Strike, slot, seq, arrival, 0, 0, at); }
+  static leave(slot, arrival) { return new Command(CommandKind.Leave, slot, 0, arrival, 0, 0, Cell.zero); }
+  static rejoin(slot, arrival) { return new Command(CommandKind.Rejoin, slot, 0, arrival, 0, 0, Cell.zero); }
+}
