@@ -8,8 +8,9 @@
 import * as THREE from 'three/webgpu';
 import { GameRules, Phase, Terrain, Occupant, ShipKind, ShotFired, ShotLanded, ShipSunk, ShipDamaged, GruntKilled, WallBroken,
          CannonDamaged, LoopClosed, CastleClaimed, SwordSwung, WallsPlaced, CannonPlaced } from '../core/index.js';
+import { uv, length, smoothstep } from 'three/tsl';
 import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry } from './look.js';
-import { boneEndingWith, tintArmour, shade } from './models.js';
+import { boneEndingWith, tintArmour, shade, rimFigure, setFlash } from './models.js';
 import { Effects } from './fx.js';
 
 const SHIP_SPEED = 3.0, GRUNT_SPEED = 2.4, HERO_SPEED = 9.0;   // AUTHORED: squares per second the drawn figures may cover easing to the model
@@ -20,7 +21,9 @@ const WAKE_STEP = 0.2;                                           // AUTHORED: sq
 // AUTHORED figure sizes in squares (a square is one unit): a hero a little taller than a square, a grunt a little shorter, a ship
 // one square long plus its bow and stern (a two-sail lander a third bigger and darker, so the two kinds read apart), a castle over
 // its footprint and a cannon over its 2x2 squares
-const HERO_HEIGHT = 1.3, GRUNT_HEIGHT = 0.95, SHIP_LENGTH = 1.8, LANDER_SCALE = 1.35, LANDER_TINT = new THREE.Color(0.62, 0.58, 0.6);
+// Round 2 ("knights and goblins are specks" at the island-wide zoom): the hero 1.3 -> 1.9 squares tall and the grunt 0.95 -> 1.35;
+// the camera looks down at 54 degrees, so a figure's height shows foreshortened and its footprint stays near its own square
+const HERO_HEIGHT = 1.9, GRUNT_HEIGHT = 1.35, SHIP_LENGTH = 1.8, LANDER_SCALE = 1.35, LANDER_TINT = new THREE.Color(0.62, 0.58, 0.6);
 const CASTLE_MARGIN = 0.8, CANNON_WIDTH = 0.78;                 // castle: footprint + margin; cannon: width per square of its size
 const SLASH_SPEED = 2.2;                                         // AUTHORED: the 1.5 s slash clip played in about 0.7 s, a quick swing
 const RUN_FROM = 2.5;                                            // squares per second above which a hero runs instead of walking
@@ -31,6 +34,23 @@ const towards = (v, target, maxStep) => {                        // move a Vecto
   if (len <= maxStep || len < 1e-6) { v.copy(target); return len; }
   v.addScaledVector(d, maxStep / len); return len;
 };
+// AUTHORED (round 2): the enemy's rim and ground ring (a grunt's red; a ship's the enemy shot's orange-red), the soft blob shadow
+// under every figure (its darkness at the centre), how long a hit flash lasts, and a castle's stone lifted out of the dark (the
+// Meshy castle's texture is a dark grey that read as a blot on open grass: lead_live_check.png, round 1)
+const GRUNT_RED = new THREE.Color(0xff2a1f), BLOB_ALPHA = 0.42, FLASH_SECONDS = 0.28, CASTLE_LIFT = new THREE.Color(1.6, 1.55, 1.45);
+const NEUTRAL_BANNER = new THREE.Color(0xe8e2d2), NEUTRAL_GLOW = new THREE.Color(0xfff1d0);
+// the goblin's and the ship's rimmed materials, made once for the page and shared by every level (one shader each, built by the
+// renderer's warm-up through gruntFigure and shipModel)
+const GRUNT_MATS = new Map(), SHIP_MATS = new Map();
+/** A grunt figure, outlined red (the renderer's warm-up draws one, so its shader is built before play). */
+export function gruntFigure(models) { const fig = models.figure('goblin'); rimFigure(fig.root, GRUNT_RED, GRUNT_MATS); return fig; }
+/** A ship (the lander darker), outlined in the enemy's colour. */
+export function shipModel(models, lander) {
+  const mdl = models.instance('ship');
+  if (lander) shade(mdl, LANDER_TINT);
+  rimFigure(mdl, ENEMY_SHOT.clone().multiplyScalar(0.7), SHIP_MATS);
+  return mdl;
+}
 const yawTo = (cur, want, k) => { let d = want - cur; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return cur + d * k; };
 
 export class Units {
@@ -50,9 +70,18 @@ export class Units {
       cube: new THREE.BoxGeometry(1, 1, 1), trim: new THREE.TorusGeometry(0.62, 0.05, 6, 24).rotateX(Math.PI / 2),
     };
     this.flagMats = this.colours.map((c) => new THREE.MeshStandardNodeMaterial({ color: c, side: THREE.DoubleSide, roughness: 0.5 }));
-    this.flagNeutral = new THREE.MeshStandardNodeMaterial({ color: new THREE.Color(0xf6f2e8), side: THREE.DoubleSide, roughness: 0.6 });
+    this.flagNeutral = new THREE.MeshStandardNodeMaterial({ color: NEUTRAL_BANNER, side: THREE.DoubleSide, roughness: 0.6 });
     this.glowP = this.colours.map((c) => glow(c, 2.4));
     this.glowEnemy = glow(ENEMY_SHOT, 2.6);
+    this.glowGrunt = glow(GRUNT_RED, 1.7);
+    this.glowNeutral = glow(NEUTRAL_GLOW, 1.25);
+    // the soft round shadow under a figure: dark at the centre, gone at the rim (a figure's own cast shadow falls to the side, long,
+    // from the low sun; this keeps its feet on the ground from the camera's angle)
+    this.blobMat = new THREE.MeshBasicNodeMaterial({ color: 0x000000, transparent: true, depthWrite: false });
+    this.blobMat.opacityNode = smoothstep(0.5, 0.08, length(uv().sub(0.5))).mul(BLOB_ALPHA);
+    // the pale pad a castle no one holds stands on (a claimed castle stands in its owner's light territory fill)
+    this.padMat = new THREE.MeshBasicNodeMaterial({ color: NEUTRAL_GLOW.clone().multiplyScalar(1.1), transparent: true, depthWrite: false });
+    this.padMat.opacityNode = smoothstep(0.5, 0.3, length(uv().sub(0.5))).mul(0.4);
     this.pipEmpty = fade(new THREE.Color(0x333333), 0.6);
     this.castles = new Map(); this.cannons = new Map(); this.ships = new Map(); this.grunts = new Map(); this.shots = new Map();
     this.heroes = []; this.ghosts = [];
@@ -70,16 +99,20 @@ export class Units {
       g.position.set(x0 + fw / 2, gy - 0.03, y0 + fd / 2);
       const M = this.models.castle, sc = (Math.max(fw, fd) + CASTLE_MARGIN) / Math.max(M.size.x, M.size.z);
       const body = this.models.instance('castle'); body.scale.setScalar(sc); body.position.y = -M.box.min.y * sc - 0.04; g.add(body);
+      shade(body, CASTLE_LIFT);
       const top = (M.box.max.y - M.box.min.y) * sc - 0.04;           // the top of the model's middle spire, over the footprint's centre
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.75, 5), mats.vc); pole.position.set(0, top + 0.2, 0);
       pole.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(pole.geometry.attributes.position.count * 3).fill(0.3), 3));
       g.add(pole);
       const flag = new THREE.Mesh(this.geo.flag, this.flagNeutral); flag.position.set(0, top + 0.56, 0); flag.castShadow = true; g.add(flag);
       // the home marker: a glowing ring at the castle's foot in its claimer's colour
-      const ring = new THREE.Mesh(new THREE.RingGeometry(Math.max(fw, fd) * 0.62, Math.max(fw, fd) * 0.62 + 0.07, 40).rotateX(-Math.PI / 2), this.glowP[0]);
+      const rr = (Math.max(fw, fd) + CASTLE_MARGIN) / 2 + 0.2;            // just outside the model's plinth (inside it, it was hidden)
+      const ring = new THREE.Mesh(new THREE.RingGeometry(rr, rr + 0.09, 48).rotateX(-Math.PI / 2), this.glowP[0]);
       ring.position.y = 0.05; ring.visible = false; g.add(ring);
+      const pad = new THREE.Mesh(this.geo.disc, this.padMat); pad.scale.setScalar((Math.max(fw, fd) + CASTLE_MARGIN) * 1.5); pad.position.y = 0.035;
+      pad.renderOrder = 1; pad.visible = false; g.add(pad);
       this.group.add(g);
-      this.castles.set(k.id, { castle: k, g, body, pole, flag, ring, cells: k.cells, half: (Math.max(fw, fd) + CASTLE_MARGIN) / 2 });
+      this.castles.set(k.id, { castle: k, g, body, pole, flag, ring, pad, cells: k.cells, half: (Math.max(fw, fd) + CASTLE_MARGIN) / 2 });
     }
   }
 
@@ -99,9 +132,12 @@ export class Units {
       const own = this.castleOwner(e.castle);
       e.flag.material = own.slot >= 0 ? this.flagMats[own.slot] : this.flagNeutral;
       e.flag.rotation.y = Math.sin(seconds * 2.2 + e.castle.id) * 0.35 - 0.3;
-      e.flag.scale.setScalar(own.home ? 1.8 : 1.3);
-      e.ring.visible = own.home && !ruined;
-      if (own.home) e.ring.material = this.glowP[own.slot];
+      // a castle no one holds: a neutral banner as big as a home's, a pale ring and pad, so it reads as a castle to take, not a hole
+      const free = own.slot < 0;
+      e.flag.scale.setScalar(own.home || free ? 1.8 : 1.3);
+      e.ring.visible = (own.home || free) && !ruined;
+      e.ring.material = own.home ? this.glowP[own.slot] : this.glowNeutral;
+      e.pad.visible = free && !ruined;
     }
   }
 
@@ -150,8 +186,7 @@ export class Units {
     // the water line
     const M = this.models.ship, k = SHIP_LENGTH * s.size * (two ? LANDER_SCALE : 1) / M.size.x;
     const hull = new THREE.Group(); g.add(hull);
-    const mdl = this.models.instance('ship'); mdl.rotation.y = Math.PI; mdl.scale.setScalar(k); mdl.position.y = -M.box.min.y * k - M.size.y * k * 0.25;
-    if (two) shade(mdl, LANDER_TINT);
+    const mdl = shipModel(this.models, two); mdl.rotation.y = Math.PI; mdl.scale.setScalar(k); mdl.position.y = -M.box.min.y * k - M.size.y * k * 0.25;
     hull.add(mdl);
     const pips = new THREE.Group(); pips.position.y = M.size.y * k * 0.75 + 0.2; g.add(pips);
     const p = this.shipCentre(s); g.position.copy(p);
@@ -182,6 +217,7 @@ export class Units {
       e.g.rotation.set(Math.sin(seconds * 1.3 + id) * 0.05, e.yaw, Math.sin(seconds * 1.1 + id * 2) * 0.04);
       e.hit = Math.max(0, e.hit - dt * 3);
       e.hull.scale.setScalar(1 + e.hit * 0.08);
+      setFlash(e.hull, e.hit * e.hit * 0.8);                            // a hit flashes the hull white, fading with the bump
       if (e.sink >= 0) {
         e.sink += dt;
         const k = Math.min(1, e.sink / SINK_SECONDS);
@@ -215,11 +251,13 @@ export class Units {
 
   // ------------------------------------------------------------------ grunts
   makeGrunt(gr) {
-    const g = new THREE.Group(), fig = this.models.figure('goblin');
+    const g = new THREE.Group(), fig = gruntFigure(this.models);
     fig.root.scale.setScalar(GRUNT_HEIGHT / this.models.goblin.size.y); g.add(fig.root);
+    const ring = new THREE.Mesh(this.geo.ring, this.glowGrunt); ring.position.y = 0.03; ring.scale.setScalar(1.15); g.add(ring);
+    const blob = new THREE.Mesh(this.geo.disc, this.blobMat); blob.position.y = 0.02; blob.scale.setScalar(1.15); blob.renderOrder = 1; g.add(blob);
     const p = new THREE.Vector3(gr.at.x + 0.5, this.board.groundAt(gr.at.x, gr.at.y), gr.at.y + 0.5);
     g.position.copy(p); this.group.add(g);
-    const e = { g, fig, state: null, pos: p.clone(), yaw: 0, die: -1 };
+    const e = { g, fig, ring, blob, state: null, pos: p.clone(), yaw: 0, die: -1 };
     this.play(e, 'Walking', 0);
     const w = fig.actions.Walking; w.time = ((gr.id * 0.37) % 1) * w.getClip().duration;   // grunts landed together do not step in step
     return e;
@@ -262,6 +300,8 @@ export class Units {
       e.g.rotation.set(0, e.yaw, 0);
       if (e.die >= 0) {
         e.die += dt;
+        setFlash(e.fig.root, Math.max(0, 1 - e.die / FLASH_SECONDS));   // the hit: a white flash as it falls
+        e.ring.visible = false; e.blob.visible = e.die < 0.3;
         const k = Math.min(1, e.die / DIE_SECONDS);
         e.g.rotation.x = -1.4 * Math.min(1, k * 3);
         e.g.position.y -= 0.3 * k;
@@ -332,8 +372,8 @@ export class Units {
     const hammer = new THREE.Mesh(this.geo.hammer, mats.vc); hand.add(hammer);
     const torch = new THREE.Group(); torch.add(new THREE.Mesh(this.geo.torch, mats.vc));
     const tip = new THREE.Mesh(this.geo.pip, glow(new THREE.Color(0xffa040), 3)); tip.position.y = 0.36; torch.add(tip); hand.add(torch);
-    const ring = new THREE.Mesh(this.geo.ring, this.glowP[s]); ring.scale.setScalar(0.85);
-    const shadow = new THREE.Mesh(this.geo.disc, fade(new THREE.Color(0x000000), 0.1)); shadow.scale.setScalar(0.55);
+    const ring = new THREE.Mesh(this.geo.ring, this.glowP[s]); ring.scale.setScalar(1.4);
+    const shadow = new THREE.Mesh(this.geo.disc, this.blobMat); shadow.scale.setScalar(1.3); shadow.renderOrder = 1;
     const reticle = new THREE.Group();
     const r1 = new THREE.Mesh(this.geo.ring, this.glowP[s]); reticle.add(r1);
     for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(this.geo.cube, this.glowP[s]); b.scale.set(0.05, 0.02, 0.28); b.position.set(Math.sin(i * Math.PI / 2) * 0.5, 0, Math.cos(i * Math.PI / 2) * 0.5); b.rotation.y = i * Math.PI / 2; reticle.add(b); }
@@ -394,7 +434,7 @@ export class Units {
       e.fig.mixer.update(dt);
       e.g.position.copy(e.pos);
       e.g.rotation.set(0, e.yaw, 0);
-      e.ring.position.set(e.pos.x, e.pos.y + 0.03, e.pos.z); e.ring.scale.setScalar(0.85 + Math.sin(seconds * 4 + s) * 0.05);
+      e.ring.position.set(e.pos.x, e.pos.y + 0.03, e.pos.z); e.ring.scale.setScalar(1.4 + Math.sin(seconds * 4 + s) * 0.06);
       e.shadow.position.set(e.pos.x, e.pos.y + 0.02, e.pos.z);
       // the tool in hand: the sword when it is out (REPAIR and BATTLE), else the phase's tool
       const slashing = e.state === 'Right_Hand_Sword_Slash' && e.swing > 0;           // a slash shows the sword to its end

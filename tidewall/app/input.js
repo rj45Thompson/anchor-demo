@@ -45,7 +45,9 @@ export class SeatLatch {
 
 /** Which devices sit in a seat right now (the join screen and the HUD show it). */
 export class SeatDevices {
-  constructor() { this.keyboard = false; this.pad = false; this.phone = false; this.touch = false; this.padId = ''; }
+  // keysUsed / mouseUsed: a key of the seat's cluster / the mouse has been pressed on this page (the join screen names only the
+  // devices a player has used; `keyboard` stays the seat's presence, which never drops for a keyboard seat)
+  constructor() { this.keyboard = false; this.pad = false; this.phone = false; this.touch = false; this.padId = ''; this.keysUsed = false; this.mouseUsed = false; }
   get any() { return this.keyboard || this.pad || this.phone || this.touch; }
 }
 
@@ -81,6 +83,7 @@ export class InputHub {
     // a finger on the board: the hero goes where it touches, and the tap acts when it LIFTS (so a second finger can still make it a
     // two-finger tap, which turns the piece instead). A tap that began outside play (the START tap) acts on nothing in play.
     this.fingers = new Set(); this.twoFinger = false; this.fingerInPlay = false;
+    this.keysUsed = new Array(SEATS).fill(false); this.mouseUsed = false;
     this.playing = false;           // main.js says whether a match is being played, each tick
     const lift = (e) => {
       if (e.pointerType !== 'touch' || !this.fingers.has(e.pointerId)) return;
@@ -108,7 +111,7 @@ export class InputHub {
         else this.twoFinger = true;
         return;
       }
-      p.x = e.clientX; p.y = e.clientY; p.moved = true;
+      p.x = e.clientX; p.y = e.clientY; p.moved = true; this.mouseUsed = true;
       if (e.button === 0) { p.click = true; p.confirm = true; }           // the left button or a pen touch
       else if (e.button === 2) p.rotate = true;                           // right: turn the piece
       else if (e.button === 1) { p.ready = true; e.preventDefault(); }    // middle: ready / swap tool (and no auto-scroll)
@@ -150,6 +153,8 @@ export class InputHub {
       L.confirm ||= hit(c.confirm); L.rotate ||= hit(c.rotate); L.back ||= hit(c.back); L.ready ||= hit(c.ready); L.start ||= hit(c.start);
       fast[s] ||= held(c.fast);
       if (hit(c.confirm) || hit(c.rotate) || hit(c.ready) || hit(c.start)) this.touched[s] = true;
+      if ([c.up, c.down, c.left, c.right, c.confirm, c.rotate, c.back, c.ready, c.start].some(hit)) this.keysUsed[s] = true;
+      this.devices[s].keysUsed = this.keysUsed[s]; this.devices[s].mouseUsed = s === 0 && this.mouseUsed;
     }
     this.pressed.clear();
 

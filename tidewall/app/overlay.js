@@ -43,7 +43,10 @@ export class Overlay {
     let line = '';
     for (let seat = 0; seat < s.devices.length; seat++) {
       const d = s.devices[seat], dev = [];
-      if (d.keyboard) dev.push(seat === 0 ? 'keys WASD' : 'keys arrows');
+      // only what a player has used is named (a phone's join screen said "P1: keys WASD" with no keyboard in sight)
+      if (seat === 0 && s.touchControls) dev.push('touch controls');
+      if (d.keysUsed) dev.push(seat === 0 ? 'keys WASD' : 'keys arrows');
+      if (d.mouseUsed) dev.push('mouse');
       if (d.pad) dev.push('gamepad');
       if (d.phone) dev.push('phone');
       if (d.touch) dev.push('touch');

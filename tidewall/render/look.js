@@ -3,6 +3,7 @@
 // AUTHORED for this game (a bright, toy-like board with a soft glowing edge in each owner's colour, picked up by the bloom).
 import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mrt, diffuseColor } from 'three/tsl';
 
 // ---------------------------------------------------------------- palette (AUTHORED)
@@ -44,7 +45,6 @@ export function sunDirection() {
 // colours (merged props) or instance colours (walls), so the draw-call count stays small.
 export const mats = {
   vc: new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.62, metalness: 0, flatShading: true }),
-  wall: new THREE.MeshStandardNodeMaterial({ roughness: 0.42, metalness: 0, flatShading: true }),
 };
 /** Mark a material as one that GLOWS: its colour (with instance colours and opacity) is also written to the scene pass's `emissive`
  *  target, which is the ONLY thing the bloom reads (renderer.js). Everything lit by the sun writes black there, so a sunlit white
@@ -116,6 +116,35 @@ export function hammerGeometry() {
 }
 export function torchGeometry() {
   return merge([at(cyl(0.02, 0.025, 0.34, 5, C.wood), 0, 0.17, 0)], 'linstock');
+}
+
+/** A wall block's stone body (graphics round 2: "walls look like plain plastic tiles"): two courses of bevelled bricks laid in an
+ *  alternating bond (the lower course runs north-south, the upper east-west, so each face shows a long brick over two short ones or
+ *  the other way round), over a darker mortar core that shows in the joints. Each brick has its own shade (vertex colour); the whole
+ *  block is tinted per instance (board.js: the owner's colour, a little, and a per-block variation). The owner-colour cap sits on top
+ *  (wallCapGeometry). Footprint w x w, height h - cap; y = 0 is the ground. All sizes AUTHORED. */
+export const WALL_CAP_H = 0.11;
+export function wallStoneGeometry(w, h) {
+  const body = h - WALL_CAP_H, course = body / 2, gap = 0.016, r = 0.026, bw = w - 0.02;
+  const shades = [1.0, 0.9, 0.96, 0.86, 0.93].map((k) => C.stone.clone().multiplyScalar(k));
+  const brick = (sx, sy, sz, c) => paint(new RoundedBoxGeometry(sx, sy, sz, 1, r), c);
+  const half = (bw - gap) / 2, o = (half + gap) / 2;
+  return merge([
+    at(box(w - 0.07, body + WALL_CAP_H * 0.6, w - 0.07, C.stoneDark.clone().multiplyScalar(0.62)), 0, (body + WALL_CAP_H * 0.6) / 2, 0),   // the mortar core
+    at(brick(half, course - gap, bw, shades[0]), -o, course / 2, 0), at(brick(half, course - gap, bw, shades[1]), o, course / 2, 0),
+    at(brick(bw, course - gap, half, shades[2]), 0, course * 1.5, -o), at(brick(bw, course - gap, half, shades[3]), 0, course * 1.5, o),
+  ], 'wall stone');
+}
+/** The cap on a wall block: two bevelled coping stones side by side with a dark groove between (the mortar core shows through),
+ *  white (the instance colour is the owner's colour). From the near top-down REPAIR camera the caps ARE the wall, so the groove and
+ *  the bevels are what make a run of blocks read as laid stones rather than one smooth tile; the per-block quarter turn (board.js)
+ *  lays the grooves both ways. */
+export function wallCapGeometry(w, h) {
+  const gap = 0.024, half = (w - gap) / 2, o = (half + gap) / 2, y = h - WALL_CAP_H / 2, white = new THREE.Color(1, 1, 1);
+  return merge([
+    at(paint(new RoundedBoxGeometry(half, WALL_CAP_H, w, 1, 0.032), white), -o, y, 0),
+    at(paint(new RoundedBoxGeometry(half, WALL_CAP_H, w, 1, 0.032), white.clone().multiplyScalar(0.93)), o, y, 0),
+  ], 'wall cap');
 }
 
 /** A grass tuft: seven thin blades leaning out from one root, dark at the root and light at the tip (vertex colours), about a fifth of

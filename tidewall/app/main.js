@@ -282,7 +282,10 @@ class Game {
     if (this.acc > STEP * max) this.acc = STEP * max;   // a stalled tab does not owe a burst of ticks when it comes back
     const alpha = Math.min(1, this.acc / STEP);
     const events = this.events; this.events = [];
-    this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha }, seconds);
+    // the renderer takes the seconds SINCE THE LAST FRAME (renderer.js frame(view, dt)). Until 11-09 this passed the page clock
+    // (now / 1000), which the renderer clamps to 0.1 s, so every animation on the page ran 5-6x fast (measured: the renderer's clock
+    // went 10.3 s in 2.0 s of wall time); the test scene and the review frames passed the right value and never showed it.
+    this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha }, dt);
     this.pointerCursor();
     const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup;
     // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its
@@ -297,15 +300,18 @@ class Game {
     this.overlay.render({
       screen: this.menu.screen, inDemo: this.menu.inDemo, attract: this.sw.attract, devices: this.input.devices,
       phones: { state: this.phones.state, reason: this.phones.reason }, scoresNote: this.scoresNote, controls: this.controls.mode,
+      touchControls: this.controls.showsTouch,
       soundNote: this.silent ? '' : this.sound.needsGesture ? 'Press any key for sound' : '',
     });
   }
 
   run() {
-    let last = performance.now();
+    // dt is measured between animation-frame timestamps only: the first frame's timestamp is the start of that frame, which can be
+    // EARLIER than a performance.now() read before it was requested (11-09: a negative first dt, refused by the renderer)
+    let last = null;
     const loop = (now) => {
       if (this.stopped) return;
-      const dt = (now - last) / 1000; last = now;
+      const dt = last === null ? 0 : (now - last) / 1000; last = now;
       try { this.frame(dt, now / 1000); }
       catch (e) {
         this.stopped = true;

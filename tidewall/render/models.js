@@ -12,7 +12,7 @@
 //   cannon  1.90 x 1.78 x 1.85, centred, on a round platform; muzzle toward -x
 // (orientation LOOKED at in shots/models/m1_all.png: front and side views with axes).
 import * as THREE from 'three/webgpu';
-import { texture, uniform, vec3, vec4, dot, max, min, smoothstep, mix, oneMinus } from 'three/tsl';
+import { texture, uniform, vec3, vec4, dot, max, min, smoothstep, mix, oneMinus, pow, normalView, positionViewDirection } from 'three/tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -103,6 +103,23 @@ export function boneEndingWith(root, suffix) {
   return found;
 }
 
+// AUTHORED (graphics round 2, "knights and goblins are specks"): the rim light that outlines a figure in its side's colour, so a
+// hero reads as its player and a grunt as the enemy at the island-wide zoom. RIM_POWER sharpens it toward the silhouette, RIM_K is
+// its strength (it is emissive, so the bloom catches it a little). FLASH_K: how white a figure goes at the peak of its hit flash.
+export const RIM_POWER = 2.2, RIM_K = 1.35, FLASH_K = 2.2;
+/** The rim and the hit flash, as an emissive node: the colour toward the silhouette (where the surface turns away from the camera),
+ *  plus white times the drawn object's own userData.flash (0..1, set by units.js per figure; a per-OBJECT uniform, so every figure
+ *  shares one material and one shader and still flashes alone). Every mesh drawn with it must carry userData.flash: markFlash(). */
+function rimAndFlash(colourNode, k) {
+  const fres = oneMinus(max(dot(normalView, positionViewDirection), 0));
+  const flash = uniform(0).onObjectUpdate(({ object }) => object.userData.flash);
+  return colourNode.mul(pow(fres, RIM_POWER).mul(k)).add(vec3(1, 1, 1).mul(flash.mul(FLASH_K)));
+}
+/** Give every mesh of a figure its hit-flash value (0 = none); units.js raises it on a hit and lets it fall. */
+export function markFlash(root) { root.traverse((o) => { if (o.isMesh) o.userData.flash = 0; }); }
+/** Set a figure's hit flash (0..1) on all its meshes. */
+export function setFlash(root, v) { root.traverse((o) => { if (o.isMesh) o.userData.flash = v; }); }
+
 /** The knight's armour in a player's colour: the texture is multiplied by the colour where it is light and grey (the white armour
  *  and cape), and left alone where it is coloured or dark (the face, the hair, the leather). Every mesh in `root` gets one shared
  *  material per player; the weights below are AUTHORED for the knight's texture (LOOKED at, shots/models/). */
@@ -121,11 +138,36 @@ export function tintArmour(root, colour) {
       const lum = dot(t.rgb, vec3(0.2126, 0.7152, 0.0722));                       // linear light
       const sat = max(t.r, max(t.g, t.b)).sub(min(t.r, min(t.g, t.b)));
       const w = smoothstep(0.12, 0.4, lum).mul(oneMinus(smoothstep(0.05, 0.16, sat)));
-      m.colorNode = vec4(t.rgb.mul(mix(vec3(1, 1, 1), uniform(colour.clone()), w)), t.a);   // a uniform: one shader for every colour
+      const tint = uniform(colour.clone());                                       // a uniform: one shader for every colour
+      m.colorNode = vec4(t.rgb.mul(mix(vec3(1, 1, 1), tint, w)), t.a);
+      m.emissiveNode = rimAndFlash(tint, RIM_K);                                  // the outline in the player's colour, and the hit flash
       made.set(src, m);
     }
     o.material = m;
   });
+  markFlash(root);
+}
+
+/** A figure (the goblin) outlined in one colour: its own textures as they are, with the rim and the hit flash of rimAndFlash. The
+ *  materials are made once per source material and colour (cache) and shared by every figure that passes the same cache, so the
+ *  shader is built once (renderer.js warm-up draws one). */
+export function rimFigure(root, colour, cache) {
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const src = o.material;
+    if (!src.map) throw new ModelLoadError('the figure mesh "' + o.name + '" has no base colour texture');
+    let m = cache.get(src);
+    if (!m) {
+      m = new THREE.MeshStandardNodeMaterial();
+      m.map = src.map; m.color.copy(src.color);
+      m.normalMap = src.normalMap; if (src.normalMap) m.normalScale.copy(src.normalScale);
+      m.roughnessMap = src.roughnessMap; m.metalnessMap = src.metalnessMap; m.roughness = src.roughness; m.metalness = src.metalness;
+      m.emissiveNode = rimAndFlash(uniform(colour.clone()), RIM_K);
+      cache.set(src, m);
+    }
+    o.material = m;
+  });
+  markFlash(root);
 }
 
 /** Every mesh in `root` drawn with its material multiplied by `k` (a darker or tinted copy, shared per source material). */

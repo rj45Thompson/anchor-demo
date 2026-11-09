@@ -1,12 +1,17 @@
 // camera.js - the one shared camera. It frames the whole island (or, when asked, every hero with room round them), at a 3/4 angle
 // for the battle and swung to near top-down while pieces are placed (REPAIR), eased between the two so it glides. The framing is
 // solved by projection: the camera is pulled back until every corner of the box it must show sits inside the screen's safe area
-// (the HUD's banner at the top and the player cards at the bottom are kept clear).
+// (the HUD's banner at the top and the player cards at the bottom are kept clear). Behind the menus (title, join, scores) it drops
+// to a low wide angle that shows the horizon and the sky (sky.js) and drifts slowly round the island (graphics round 2).
 import * as THREE from 'three/webgpu';
 
 export const PITCH_BATTLE = 54, PITCH_BUILD = 80, FOV = 38;   // AUTHORED: degrees down from level; vertical field of view
 const SAFE = { left: 0.04, right: 0.04, top: 0.13, bottom: 0.2 }; // AUTHORED: fractions of the screen the HUD covers
 const SWING_SECONDS = 1.1;                                      // AUTHORED: the swing between the two angles
+// AUTHORED (round 2): the menu camera. 13 degrees down with a 46-degree field puts the top of the picture 10 degrees above the
+// horizon, MENU_CLOSER of the distance that fits the whole island (it fills the picture and its edges drift in and out); it sways MENU_SWAY radians either side of the south view over MENU_PERIOD seconds and breathes in and out a little;
+// MENU_SECONDS is the glide between it and the game's camera
+const MENU_PITCH = 13, MENU_FOV = 46, MENU_SWAY = 0.32, MENU_PERIOD = 70, MENU_SECONDS = 1.6, MENU_CLOSER = 0.8;
 
 export class CameraRig {
   constructor(aspect) {
@@ -15,11 +20,13 @@ export class CameraRig {
     this.box = null; this.follow = false;
     this.pose = null;
     this.shake = 0;
+    this.m = 0; this.time = 0;          // m: 0 = the game's camera, 1 = the menu camera (eased); time: the menu drift's clock
   }
 
   /** Solve one pose: where the camera stands to show `box` ({x0,y0,x1,y1} squares, y up to `top`) at `pitchDeg`. */
-  solve(box, pitchDeg, top) {
-    const cam = this.camera, p = THREE.MathUtils.degToRad(pitchDeg);
+  solve(box, pitchDeg, top, fov = FOV) {
+    const cam = this.camera, p = THREE.MathUtils.degToRad(pitchDeg), fovWas = cam.fov;
+    cam.fov = fov;
     const fwd = new THREE.Vector3(0, -Math.sin(p), -Math.cos(p));      // looking north (row 0 at the top of the screen) and down
     const pts = [];
     for (const x of [box.x0, box.x1]) for (const z of [box.y0, box.y1]) for (const y of [0, top]) pts.push(new THREE.Vector3(x, y, z));
@@ -47,16 +54,18 @@ export class CameraRig {
       const e = extent();
       // centre the box in the safe area: move the target across the ground by the NDC error
       const cx = (e.x0 + e.x1) / 2 - wantX, cy = (e.y0 + e.y1) / 2 - wantY;
-      const hh = Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * dist, hw = hh * cam.aspect;
+      const hh = Math.tan(THREE.MathUtils.degToRad(fov / 2)) * dist, hw = hh * cam.aspect;
       target.x += cx * hw;
       target.z -= cy * hh / Math.max(0.2, Math.sin(p));
     }
     place();
-    return { pos: cam.position.clone(), target: target.clone() };
+    const out = { pos: cam.position.clone(), target: target.clone() };
+    cam.fov = fovWas; cam.updateProjectionMatrix();
+    return out;
   }
 
   /** The island's box (from the board) and whether REPAIR is on; heroes for the follow framing. */
-  update(dt, box, building, heroSpots) {
+  update(dt, box, building, heroSpots, menu = false) {
     let frame = box;
     if (this.follow && heroSpots.length) {
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -69,10 +78,25 @@ export class CameraRig {
     this.k = this.kWant > this.k ? Math.min(this.kWant, this.k + step) : Math.max(this.kWant, this.k - step);
     const s = this.k * this.k * (3 - 2 * this.k);
     const key = JSON.stringify(frame) + this.camera.aspect.toFixed(4);
-    if (key !== this.key) { this.key = key; this.battle = this.solve(frame, PITCH_BATTLE, 1.6); this.build = this.solve(frame, PITCH_BUILD, 1.6); }
+    if (key !== this.key) {
+      this.key = key; this.battle = this.solve(frame, PITCH_BATTLE, 1.6); this.build = this.solve(frame, PITCH_BUILD, 1.6);
+      this.menuPose = this.solve(box, MENU_PITCH, 1.6, MENU_FOV);
+    }
     const pos = this.battle.pos.clone().lerp(this.build.pos, s), target = this.battle.target.clone().lerp(this.build.target, s);
+    // the menu camera: the low pose swung round the island's centre and breathing in and out, eased in and out of the game's
+    const mStep = dt / MENU_SECONDS;
+    this.m = menu ? Math.min(1, this.m + mStep) : Math.max(0, this.m - mStep);
+    if (this.m > 0) {
+      this.time += dt;
+      const sm = this.m * this.m * (3 - 2 * this.m), w = this.time * 2 * Math.PI / MENU_PERIOD;
+      const mt = this.menuPose.target, off = this.menuPose.pos.clone().sub(mt).multiplyScalar(MENU_CLOSER * (1 + 0.05 * Math.sin(w * 1.7)));
+      off.applyAxisAngle(new THREE.Vector3(0, 1, 0), MENU_SWAY * Math.sin(w));
+      pos.lerp(mt.clone().add(off), sm); target.lerp(mt, sm);
+      this.camera.fov = FOV + (MENU_FOV - FOV) * sm;
+    } else this.camera.fov = FOV;
+    this.camera.updateProjectionMatrix();
     if (!this.pose) this.pose = { pos: pos.clone(), target: target.clone() };
-    const f = this.follow ? Math.min(1, dt * 3) : 1;                   // the follow framing glides; the island framing is exact
+    const f = this.follow && this.m === 0 ? Math.min(1, dt * 3) : 1;  // the follow framing glides; the island framing is exact
     this.pose.pos.lerp(pos, f); this.pose.target.lerp(target, f);
     this.shake = Math.max(0, this.shake - dt * 2.5);
     const j = this.shake * this.shake * 0.25, t = performance.now() / 1000;

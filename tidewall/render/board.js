@@ -7,9 +7,8 @@ import * as THREE from 'three/webgpu';
 import { texture, uniform, vertexColor, positionWorld, positionLocal, vec2, vec3, vec4, float, mix, smoothstep, sin, fract, min, max, abs, step, clamp,
          normalize, dot, reflect, pow, cameraPosition, transformNormalToView, mrt, cos, positionGeometry,
          instancedBufferAttribute } from 'three/tsl';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { Terrain, Occupant, EnclosureRules, PieceMap, WallOutline, WallsPlaced, RingBuilt } from '../core/index.js';
-import { C, SKY, NEUTRAL_WALL, mats, glowing, tuftGeometry, TUFT_H, makeNoiseTexture, NOISE_SLOPE, makeNoise, InstancedBatch, PropSet, pitGeometry, rubbleGeometry, graveGeometry } from './look.js';
+import { C, SKY, NEUTRAL_WALL, mats, glowing, wallStoneGeometry, wallCapGeometry, tuftGeometry, TUFT_H, makeNoiseTexture, NOISE_SLOPE, makeNoise, InstancedBatch, PropSet, pitGeometry, rubbleGeometry, graveGeometry } from './look.js';
 
 export const MARGIN = 12;              // AUTHORED: squares of sea drawn round the board, so the island never sits on a hard edge
 const SUB = 4;                         // AUTHORED: land vertices per square (the coast is smooth, not stepped)
@@ -40,6 +39,19 @@ export class BoardLook {
     this.land = this.makeLand();
     this.sea = this.makeSea();
     this.tufts = this.makeTufts();
+    this.makeWallMats();
+  }
+
+  /** The walls' two materials, shared by every level like the land's: the stone body (brick shades in its vertex colours, a fine
+   *  grain from the noise texture so a face is not flat paint, tinted per block by the instance colour) and the owner-colour cap,
+   *  a painted, slightly glossy slab. */
+  makeWallMats() {
+    const P = positionWorld, grain = texture(this.noiseTex, P.xz.mul(1.9).add(P.y.mul(1.3))).a;
+    const fleck = texture(this.noiseTex, P.zx.mul(0.37).add(P.y.mul(0.5))).r;
+    this.wallStone = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.88, metalness: 0, flatShading: true });
+    this.wallStone.colorNode = vec3(grain.mul(0.16).add(0.9).mul(fleck.mul(0.12).add(0.94)));
+    this.wallCap = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, flatShading: true });
+    this.wallCap.colorNode = vec3(grain.mul(0.08).add(0.95));
   }
 
   /** Grass tufts: ONE mesh drawn instanced (Mesh.count), each tuft's place, turn and size in an instanced vertex attribute, so a
@@ -283,8 +295,9 @@ export class Board {
     const sdfTex = new THREE.DataTexture(data, tw, th, THREE.RGBAFormat, THREE.UnsignedByteType);
     sdfTex.magFilter = sdfTex.minFilter = THREE.LinearFilter; sdfTex.generateMipmaps = false; sdfTex.needsUpdate = true;
     this.sdfTex = sdfTex;
-    const span = 400;                                                 // the sea runs past every camera's edge
-    const geo = new THREE.PlaneGeometry(span, span, 160, 160); geo.rotateX(-Math.PI / 2); geo.translate(w / 2, 0, h / 2);
+    const span = 1200;                                                // the sea runs past the camera's far plane (400) every way: it
+                                                                      // never ends on screen, it fades into the haze (sky.js)
+    const geo = new THREE.PlaneGeometry(span, span, 480, 480); geo.rotateX(-Math.PI / 2); geo.translate(w / 2, 0, h / 2);
     this.look.bindSea(sdfTex);
     const m = this.look.sea;
     this.sea = new THREE.Mesh(geo, m); this.sea.receiveShadow = true; this.sea.name = 'sea';
@@ -294,8 +307,10 @@ export class Board {
   // ------------------------------------------------------------------ walls and props
   buildWalls() {
     const n = this.w * this.h;
-    const geo = new RoundedBoxGeometry(WALL_W, WALL_H, WALL_W, 2, 0.07); geo.translate(0, WALL_H / 2, 0);
-    this.walls = new InstancedBatch(this.group, geo, mats.wall, n, { colors: true, castShadow: true, receiveShadow: true, name: 'walls' });
+    // a block is two batches of the same squares (each under the 1000-instance limit, InstancedBatch): the stone body, tinted per
+    // block, and its cap in the owner's colour
+    this.walls = new InstancedBatch(this.group, wallStoneGeometry(WALL_W, WALL_H), this.look.wallStone, n, { colors: true, castShadow: true, receiveShadow: true, name: 'walls' });
+    this.caps = new InstancedBatch(this.group, wallCapGeometry(WALL_W, WALL_H), this.look.wallCap, n, { colors: true, castShadow: true, receiveShadow: true, name: 'wall caps' });
     // the outline: thin glowing bars on every outer edge of a piece (WallOutline), coloured by the piece's owner
     const cap = n * 12;
     const bar = new THREE.BoxGeometry(1, 1, 1);
@@ -372,14 +387,21 @@ export class Board {
       if (g.occupantAt(x, y) !== Occupant.Wall) continue;
       const ow = g.ownerAt(x, y), hp = g.healthAt(x, y), gy = this.groundAt(x, y);
       const sy = hp <= 1 ? 0.68 : 1;                                   // a damaged wall (one hit left) stands lower
-      m.makeScale(1, sy, 1).setPosition(x + 0.5, gy - 0.04, y + 0.5);
-      c.copy(ow < 4 ? this.colourOf(ow) : NEUTRAL_WALL).lerp(C.foam, 0.28);
+      // per block (hashed from the square, so the same board always lays the same stones): a quarter turn of the brick bond, a
+      // shade and a warmth; the stone takes a little of the owner's colour, the cap all of it
+      const v = this.noise(x * 5.3 + 1.7, y * 4.9 - 3.1), turn = Math.floor(this.noise(x * 2.9 - 7, y * 3.3 + 5) * 4) % 4;
+      m.makeRotationY(turn * Math.PI / 2).premultiply(new THREE.Matrix4().makeScale(1, sy, 1)).setPosition(x + 0.5, gy - 0.04, y + 0.5);
+      const own = ow < 4 ? this.colourOf(ow) : NEUTRAL_WALL;
+      c.setRGB(1.0 + (v - 0.5) * 0.05, 1.0, 1.0 - (v - 0.5) * 0.08).multiplyScalar(0.88 + v * 0.22).lerp(own, 0.26);
       if (hp <= 1) c.multiplyScalar(0.72);
       this.walls.set(k, m, c);
+      c.copy(own).lerp(C.foam, 0.1).multiplyScalar(0.94 + v * 0.1);
+      if (hp <= 1) c.multiplyScalar(0.72);
+      this.caps.set(k, m, c);
       top[y * w + x] = gy - 0.04 + WALL_H * sy;
       k++;
     }
-    this.walls.commit(k);
+    this.walls.commit(k); this.caps.commit(k);
     // the outline (WallOutline.build): bars inset a hair into the block so they sit on its faces
     const edges = WallOutline.build(g, this.pieces), T = 0.045, IN = (1 - WALL_W) / 2;
     let e = 0;

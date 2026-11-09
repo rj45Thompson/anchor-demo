@@ -16,15 +16,16 @@ import { uniform, pass, mrt, output, emissive, normalView, vec3, vec4, float, uv
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
-import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk } from '../core/index.js';
+import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, Screen } from '../core/index.js';
 import { GAME_TITLE } from '../app/title.js';
 import { Board, BoardLook } from './board.js';
-import { Units } from './units.js';
+import { Units, gruntFigure, shipModel } from './units.js';
 import { CameraRig } from './camera.js';
 import { Hud } from './hud.js';
 import { Fx } from './fx.js';
+import { Sky } from './sky.js';
 import { PLAYER_CSS, PLAYER_HEX, PLAYER_COLOURS } from './look.js';
-import { Models, tintArmour, shade } from './models.js';
+import { Models, tintArmour } from './models.js';
 import { PropSet, SUN, SKY, sunDirection } from './look.js';
 
 export { PLAYER_CSS, PLAYER_HEX };
@@ -55,6 +56,10 @@ const GRADE = { saturation: 1.12, contrast: 1.06, cool: [-0.012, 0.004, 0.03], w
 // of it is applied (1 = all). Contact shading where walls, castles, cannons and figures meet the ground.
 const BLOOM = { strength: 0.4, radius: 0.2, threshold: 0.6 };   // AUTHORED: over the glow target only
 const AO = { radius: 0.6, thickness: 1, scale: 0.5, strength: 0.85 };
+const WIPE_SECONDS = 0.7;                  // AUTHORED: the light sweep across the picture when the phase or the menu screen changes
+// the menu screens the game's island drifts behind on the low menu camera (camera.js); an untouched title that shows the demo full
+// screen (menu.inDemo) is play, and keeps the game's camera
+const DRIFT_SCREENS = new Set([Screen.Title, Screen.Setup, Screen.HighScores, Screen.Results, Screen.Initials]);
 export async function createRenderer(canvas, opts = {}) {
   if (!(canvas instanceof HTMLCanvasElement)) throw new RenderContractError('createRenderer needs a <canvas>');
   if (!navigator.gpu) throw new NoWebGpuError('this browser has no navigator.gpu (Chrome or Edge 113+ on Windows, macOS or ChromeOS have it)');
@@ -97,6 +102,7 @@ class Renderer {
     this.scene.add(sun, sun.target); this.sun = sun;
     this.look = new BoardLook();                                            // the land's and sea's materials, shared by every level
     this.scene.add(this.look.tufts);
+    this.sky = new Sky(this.scene, this.look.noiseTex);                     // the dome, the haze and the cloud shadows (before any draw)
     this.fx = new Fx(this.scene, uniform(0));                               // the particles, shared by every level
     this.buildPost();
     // the HUD layer: a 2D canvas laid exactly over the WebGPU one
@@ -111,6 +117,7 @@ class Renderer {
     this.hudMode = opts.hud ?? 'all';
     this.board = null; this.units = null; this.match = null; this.grid = null; this.seatsKey = null;
     this.clock = 0;
+    this.wipeKey = null; this.wipeT = WIPE_SECONDS;                         // what the last frame showed; seconds into the wipe
     this.setQuality(opts.quality ?? 'high'); this.toast = null;
     this.resize(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight);
   }
@@ -142,7 +149,8 @@ class Renderer {
       if (q.ao) {
         const aoPass = ao(sp.getTextureNode('depth'), sp.getTextureNode('normal'), cam);
         aoPass.resolutionScale = AO.scale; aoPass.radius.value = AO.radius; aoPass.thickness.value = AO.thickness;
-        lit = lit.mul(mix(float(1), aoPass.getTextureNode().r, AO.strength));
+        const z = sp.getViewZNode().negate();                              // the AO fades out into the haze (sky.js hazeAt)
+        lit = lit.mul(mix(float(1), aoPass.getTextureNode().r, float(AO.strength).mul(oneMinus(this.sky.hazeAt(z)))));
       }
       const b = bloom(sp.getTextureNode('emissive'), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
       const out = grade(vec4(lit.add(b.rgb), 1));
@@ -151,7 +159,8 @@ class Renderer {
     this.chains = { high: chain(QUALITY.high), low: chain(QUALITY.low) };
   }
 
-  /** The quality setting: 'high' or 'low' (QUALITY). Switches the post chain, the shadow map, the sea's detail and the pixel ratio. */
+  /** The quality setting: 'high' or 'low' (QUALITY). Switches the post chain, the sea's detail and the pixel ratio; the shadow map's
+   *  size is the starting quality's (?quality=low starts with the small one). */
   setQuality(name) {
     const q = QUALITY[name];
     if (!q) throw new RenderContractError("setQuality: 'high' or 'low', got " + name);
@@ -194,8 +203,7 @@ class Renderer {
   warmUp() {
     const g = new THREE.Group(), m = this.models, pose = (fig, clip) => { fig.actions[clip].play(); fig.mixer.update(0.1); return fig.root; };
     const knight = m.figure('knight'); tintArmour(knight.root, PLAYER_COLOURS[0]);
-    const lander = m.instance('ship'); shade(lander, new THREE.Color(0.6, 0.6, 0.6));
-    const items = [pose(knight, 'Combat_Stance'), pose(m.figure('goblin'), 'Walking'), m.instance('ship'), lander, m.instance('castle'), m.instance('cannon')];
+    const items = [pose(knight, 'Combat_Stance'), pose(gruntFigure(m), 'Walking'), shipModel(m, false), shipModel(m, true), m.instance('castle'), m.instance('cannon')];
     items.forEach((o, i) => { o.position.set(i * 2, 0, 0); g.add(o); });
     let i = items.length;
     for (const parts of [...this.propParts.values(), ...Object.values(this.decorParts)]) {
@@ -306,7 +314,9 @@ class Renderer {
         else if (e instanceof WallBroken) this.rig.shake = Math.max(this.rig.shake, 0.45);
         else if (e instanceof ShipSunk) this.rig.shake = Math.max(this.rig.shake, 0.35);
       }
-      this.rig.update(dt, this.board.landBounds(), building, this.units.heroSpots());
+      const drift = !!view.menu && DRIFT_SCREENS.has(view.menu.screen) && !(view.menu.screen === Screen.Title && view.menu.inDemo);
+      this.rig.update(dt, this.board.landBounds(), building, this.units.heroSpots(), drift);
+      this.sky.update(this.rig.camera, this.rig.pose.target, seconds);
       this.scene.visible = true;
     } else {
       this.scene.visible = false;                                           // no match: the menus over the plain sea colour
@@ -315,6 +325,13 @@ class Renderer {
     const cam = this.rig.camera, W = this.cssW, H = this.cssH;
     const project = (v) => { const p = v.clone().project(cam); return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, visible: p.z < 1 && p.z > -1 }; };
     this.hud.draw(view, project, m ? this.units.heroTags() : [], seconds, this.hudMode === 'all');
+    // the wipe: when the match's phase (or round) or the menu screen changes, after the first frame
+    // (a phase change of the demo playing behind a menu is not one: only a match the player is watching wipes on its phases)
+    const sc = view.menu ? view.menu.screen : Screen.Playing, watched = sc === Screen.Playing || sc === Screen.Decide || (sc === Screen.Title && view.menu.inDemo);
+    const key = (m && watched ? m.round + ':' + m.phase : '-') + '|' + (view.menu ? view.menu.screen + ':' + view.menu.inDemo : '-');
+    if (this.wipeKey !== null && key !== this.wipeKey) this.wipeT = 0;
+    this.wipeKey = key;
+    if (this.wipeT < WIPE_SECONDS && this.hudMode === 'all') { this.hud.wipe(this.wipeT / WIPE_SECONDS); this.wipeT += dt; }
     if (this.toast && this.clock < this.toast.until) this.hud.toast(this.toast.text, Math.min(1, (this.toast.until - this.clock) * 2));
   }
 

@@ -202,6 +202,19 @@ export class Hud {
     this.text(text, this.cssW / 2, this.cssH * 0.7 + 17, 16, '#ffffff', 'center', 700, false);
     c.restore();
   }
+  /** The transition wipe between phases and screens (graphics round 2): a slanted band of light sweeps once across the picture,
+   *  k = 0..1 through it. It only brightens (no frame of the game is hidden), so nothing a player needs disappears under it. */
+  wipe(k) {
+    const c = this.ctx, W = this.cssW, H = this.cssH, slant = H * 0.36, band = W * 0.24;
+    const e = k * k * (3 - 2 * k), x = -band - slant + e * (W + 2 * band + 2 * slant);
+    const g = c.createLinearGradient(x - band / 2, 0, x + band / 2, 0);
+    g.addColorStop(0, 'rgba(160,220,255,0)'); g.addColorStop(0.42, 'rgba(160,220,255,0.16)'); g.addColorStop(0.5, 'rgba(255,255,255,0.42)');
+    g.addColorStop(0.58, 'rgba(160,220,255,0.16)'); g.addColorStop(1, 'rgba(160,220,255,0)');
+    c.save(); c.globalAlpha = Math.min(1, Math.sin(Math.PI * k) * 1.6);
+    const s = 2 * slant / H;                                    // the band leans: x moves left by s per pixel down, level at mid-height
+    c.setTransform(this.dpr, 0, -s * this.dpr, this.dpr, s * H / 2 * this.dpr, 0);
+    c.fillStyle = g; c.fillRect(x - band / 2, 0, band, H); c.restore();
+  }
     dim(a = 0.55) { this.ctx.fillStyle = 'rgba(6,20,36,' + a + ')'; this.ctx.fillRect(0, 0, this.cssW, this.cssH); }
 
   logo(y, size, seconds) {
