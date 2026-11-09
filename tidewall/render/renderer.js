@@ -11,17 +11,21 @@
 //   r.screenshot()                            -> Promise<Blob> (the 3D frame with the HUD drawn over it)
 // It reads the model and the view models and never changes them. A new level (the model swaps its board) is picked up by itself.
 import * as THREE from 'three/webgpu';
-import { pass, vec3, vec4, uv, length, smoothstep, oneMinus, min } from 'three/tsl';
+import { uniform, pass, mrt, output, emissive, normalView, vec3, vec4, float, uv, length, smoothstep, oneMinus, mix, renderOutput, saturation,
+         luminance, clamp } from 'three/tsl';
+import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
-import { Phase, Occupant, WallBroken, CannonDestroyed } from '../core/index.js';
+import { ao } from 'three/addons/tsl/display/GTAONode.js';
+import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk } from '../core/index.js';
 import { GAME_TITLE } from '../app/title.js';
-import { Board } from './board.js';
+import { Board, BoardLook } from './board.js';
 import { Units } from './units.js';
 import { CameraRig } from './camera.js';
 import { Hud } from './hud.js';
+import { Fx } from './fx.js';
 import { PLAYER_CSS, PLAYER_HEX, PLAYER_COLOURS } from './look.js';
 import { Models, tintArmour, shade } from './models.js';
-import { PropSet } from './look.js';
+import { PropSet, SUN, SKY, sunDirection } from './look.js';
 
 export { PLAYER_CSS, PLAYER_HEX };
 
@@ -36,7 +40,21 @@ export class RenderContractError extends Error {
 }
 
 const BG = 0x1f5f9e;                       // AUTHORED: the sea's far colour behind everything
-
+// AUTHORED quality settings (Q on the keyboard switches; ?quality=low starts low). high: 4x MSAA, ambient occlusion, a 4096 shadow
+// map, the sea's second wave octave, up to 2 device pixels per CSS pixel. low (slower GPUs): FXAA instead of MSAA, no AO, a 2048
+// shadow map, one wave octave, 1 device pixel per CSS pixel.
+const QUALITY = Object.freeze({
+  high: { msaa: 4, ao: true, shadow: 4096, waterDetail: 1, maxPixelRatio: 2 },
+  low: { msaa: 0, ao: false, shadow: 2048, waterDetail: 0, maxPixelRatio: 1 },
+});
+const EXPOSURE = 0.72;                     // AUTHORED: into the ACES filmic curve (three scales it by 1/0.6 inside)
+// AUTHORED grade after the tone map (display values): a little more colour, a touch of contrast, shadows nudged cool and highlights
+// warm, and the vignette's strength
+const GRADE = { saturation: 1.12, contrast: 1.06, cool: [-0.012, 0.004, 0.03], warm: [0.035, 0.015, -0.02], vignette: 0.3 };
+// AUTHORED ambient occlusion (GTAO, three's GTAONode): radius in world units (a square is 1), drawn at half resolution, and how much
+// of it is applied (1 = all). Contact shading where walls, castles, cannons and figures meet the ground.
+const BLOOM = { strength: 0.4, radius: 0.2, threshold: 0.6 };   // AUTHORED: over the glow target only
+const AO = { radius: 0.6, thickness: 1, scale: 0.5, strength: 0.85 };
 export async function createRenderer(canvas, opts = {}) {
   if (!(canvas instanceof HTMLCanvasElement)) throw new RenderContractError('createRenderer needs a <canvas>');
   if (!navigator.gpu) throw new NoWebGpuError('this browser has no navigator.gpu (Chrome or Edge 113+ on Windows, macOS or ChromeOS have it)');
@@ -45,12 +63,12 @@ export async function createRenderer(canvas, opts = {}) {
   const renderer = new THREE.WebGPURenderer({ canvas, antialias: false });
   await renderer.init();
   if (!renderer.backend.isWebGPUBackend) throw new NoWebGpuError('three.js started its WebGL 2 backend, not WebGPU');
-  renderer.toneMapping = THREE.NeutralToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;                     // applied in the post chain (renderOutput), then the grade
+  renderer.toneMappingExposure = EXPOSURE;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   const models = await Models.load();                                     // the models; one that does not load stops here
+  if (opts.quality !== undefined && !(opts.quality in QUALITY)) throw new RenderContractError("createRenderer: quality is 'high' or 'low', got " + opts.quality);
   const r = new Renderer(canvas, renderer, opts, models);
   r.warmUp();
   await renderer.backend.device.queue.onSubmittedWorkDone();             // the GPU has built what the warm-up asked for before play starts
@@ -72,18 +90,15 @@ class Renderer {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(BG);
     this.rig = new CameraRig(1);
-    // light: a warm sun from the south-west (shadows to the north-east read as 3D in both camera angles) and a sky fill
-    const hemi = new THREE.HemisphereLight(0xdff3ff, 0x6a8a5a, 1.35); this.scene.add(hemi);
-    const sun = new THREE.DirectionalLight(0xfff1d6, 2.4);
-    sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
+    // light: the sun (soft shadows, PCFSoftShadowMap, its box fitted to each island in fitSun) and the sky's hemisphere fill
+    const hemi = new THREE.HemisphereLight(SKY.sky, SKY.ground, SKY.intensity); this.scene.add(hemi);
+    const sun = new THREE.DirectionalLight(SUN.color, SUN.intensity);
+    sun.castShadow = true; sun.shadow.mapSize.set(QUALITY.high.shadow, QUALITY.high.shadow); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03; sun.shadow.radius = 3;
     this.scene.add(sun, sun.target); this.sun = sun;
-    // the post chain (the pattern of the site's other WebGPU pages): the scene pass, bloom on what glows (values above 1), a soft vignette
-    this.post = new THREE.PostProcessing(renderer);
-    const scenePass = pass(this.scene, this.rig.camera, { samples: 4 });
-    const col = scenePass.getTextureNode('output');
-    const b = bloom(min(col, vec4(5, 5, 5, 1)), 0.55, 0.32, 0.95);
-    const vig = oneMinus(smoothstep(0.45, 0.95, length(uv().sub(0.5))).mul(0.35));
-    this.post.outputNode = vec4(col.rgb.add(b.rgb).mul(vig), 1);
+    this.look = new BoardLook();                                            // the land's and sea's materials, shared by every level
+    this.scene.add(this.look.tufts);
+    this.fx = new Fx(this.scene, uniform(0));                               // the particles, shared by every level
+    this.buildPost();
     // the HUD layer: a 2D canvas laid exactly over the WebGPU one
     const hc = document.createElement('canvas');
     hc.className = 'render-hud';
@@ -96,7 +111,75 @@ class Renderer {
     this.hudMode = opts.hud ?? 'all';
     this.board = null; this.units = null; this.match = null; this.grid = null; this.seatsKey = null;
     this.clock = 0;
+    this.setQuality(opts.quality ?? 'high'); this.toast = null;
     this.resize(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight);
+  }
+
+  /** The post chain. The scene pass writes three targets at once (MRT): the lit colour, what GLOWS (look.js glowing(): only those
+   *  materials write it, so the bloom never catches a sunlit wall) and the view-space normal the ambient occlusion reads with the
+   *  depth. colour x AO + bloom(glow), then a soft vignette. */
+  buildPost() {
+    const cam = this.rig.camera;
+    this.post = new THREE.PostProcessing(this.renderer);
+    this.post.outputColorTransform = false;                                // the tone map and sRGB happen inside the chain, before the grade
+    const grade = (hdr) => {
+      let c = renderOutput(hdr).rgb;                                        // ACES filmic + sRGB
+      c = saturation(c, GRADE.saturation);
+      c = c.sub(0.5).mul(GRADE.contrast).add(0.5);
+      const l = luminance(c);
+      c = c.add(vec3(...GRADE.cool).mul(oneMinus(l))).add(vec3(...GRADE.warm).mul(l));
+      const vig = oneMinus(smoothstep(0.45, 0.95, length(uv().sub(0.5))).mul(GRADE.vignette));
+      return vec4(clamp(c, 0, 1).mul(vig), 1);
+    };
+    const chain = (q) => {
+      const sp = pass(this.scene, cam, q.msaa ? { samples: q.msaa } : {});
+      sp.setMRT(q.ao ? mrt({ output, emissive, normal: normalView }) : mrt({ output, emissive }));
+      let lit = sp.getTextureNode('output').rgb;
+      if (q.ao) {
+        const aoPass = ao(sp.getTextureNode('depth'), sp.getTextureNode('normal'), cam);
+        aoPass.resolutionScale = AO.scale; aoPass.radius.value = AO.radius; aoPass.thickness.value = AO.thickness;
+        lit = lit.mul(mix(float(1), aoPass.getTextureNode().r, AO.strength));
+      }
+      const b = bloom(sp.getTextureNode('emissive'), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
+      const out = grade(vec4(lit.add(b.rgb), 1));
+      return q.msaa ? out : fxaa(out);                                      // no MSAA: FXAA on the graded picture
+    };
+    this.chains = { high: chain(QUALITY.high), low: chain(QUALITY.low) };
+  }
+
+  /** The quality setting: 'high' or 'low' (QUALITY). Switches the post chain, the shadow map, the sea's detail and the pixel ratio. */
+  setQuality(name) {
+    const q = QUALITY[name];
+    if (!q) throw new RenderContractError("setQuality: 'high' or 'low', got " + name);
+    this.quality = name;
+    this.post.outputNode = this.chains[name]; this.post.needsUpdate = true;
+    this.sun.shadow.mapSize.set(q.shadow, q.shadow);
+    this.look.uWaterDetail.value = q.waterDetail;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q.maxPixelRatio));
+    if (this.cssW) this.resize(this.cssW, this.cssH);
+    this.toast = { text: 'GRAPHICS: ' + name.toUpperCase() + '  (Q to switch)', until: this.clock + 2.2 };
+  }
+  /** Q: high <-> low. */
+  cycleQuality() { this.setQuality(this.quality === 'high' ? 'low' : 'high'); }
+
+  /** The sun's shadow box fitted to the island: the board plus its decoration margin, from the ground to the tallest figure, seen
+   *  from the sun; every texel of the shadow map lands on something the camera can show. */
+  fitSun() {
+    const w = this.grid.width, h = this.grid.height, M = 5, TOP = 3;          // AUTHORED: squares of sea round the board that cast
+    const dir = sunDirection();                                               // (rock islets), tallest thing
+    const centre = new THREE.Vector3(w / 2, 0, h / 2), far = Math.max(w, h) * 2;
+    this.sun.position.copy(centre).addScaledVector(dir, far); this.sun.target.position.copy(centre);
+    this.sun.updateMatrixWorld(); this.sun.target.updateMatrixWorld();
+    const view = new THREE.Matrix4().lookAt(this.sun.position, centre, new THREE.Vector3(0, 1, 0));
+    view.setPosition(this.sun.position); view.invert();
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const x of [-M, w + M]) for (const z of [-M, h + M]) for (const y of [-1, TOP]) {
+      const v = new THREE.Vector3(x, y, z).applyMatrix4(view);
+      x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); z0 = Math.min(z0, v.z); z1 = Math.max(z1, v.z);
+    }
+    const sc = this.sun.shadow.camera;
+    sc.left = x0; sc.right = x1; sc.bottom = y0; sc.top = y1; sc.near = Math.max(0.1, -z1 - 1); sc.far = -z0 + 1;
+    sc.updateProjectionMatrix();
   }
 
   /** Draw one of every model once, through the same passes a match draws with (shadow, scene, bloom), before the page starts: the
@@ -155,13 +238,10 @@ class Renderer {
     this.grid = this.match.grid;
     this.seatsKey = seats.join(',');
     const colours = seats.map((s) => PLAYER_COLOURS[s]);
-    this.board = new Board(this.scene, this.grid, colours, this.propParts, this.decorParts);
-    this.units = new Units(this.scene, this.board, this.match, this.models, seats);
-    // the sun's shadow box covers the board and its margin
-    const w = this.grid.width, h = this.grid.height, r = Math.max(w, h) * 0.75;
-    this.sun.position.set(w / 2 - r * 0.6, r * 1.1, h / 2 + r * 0.8);
-    this.sun.target.position.set(w / 2, 0, h / 2);
-    const sc = this.sun.shadow.camera; sc.left = -r; sc.right = r; sc.top = r; sc.bottom = -r; sc.near = 1; sc.far = r * 4; sc.updateProjectionMatrix();
+    this.board = new Board(this.scene, this.grid, colours, this.propParts, this.decorParts, this.look);
+    this.fx.clear();
+    this.units = new Units(this.scene, this.board, this.match, this.models, seats, this.fx);
+    this.fitSun();
     this.rig.pose = null; this.rig.key = null;
   }
 
@@ -180,11 +260,17 @@ class Renderer {
       const seats = Renderer.seatsOf(view.hud.seatOfSlot, m);
       if (m.grid !== this.grid || seats.join(',') !== this.seatsKey) this.buildLevel(seats);   // a new match or level, or new seats
       const building = m.phase === Phase.Repair;
+      this.fx.uTime.value = seconds;
       this.board.events(view.events);
       this.board.update(dt, seconds, this.rig.k);
       this.units.events(view.events);
       this.units.update(view, dt, seconds);
-      for (const e of view.events) if (e instanceof WallBroken || e instanceof CannonDestroyed) this.rig.shake = Math.max(this.rig.shake, 0.5);
+      this.fx.commit();
+      for (const e of view.events) {                                        // a gentle shake on the big hits (AUTHORED strengths)
+        if (e instanceof CannonDestroyed) this.rig.shake = Math.max(this.rig.shake, 0.6);
+        else if (e instanceof WallBroken) this.rig.shake = Math.max(this.rig.shake, 0.45);
+        else if (e instanceof ShipSunk) this.rig.shake = Math.max(this.rig.shake, 0.35);
+      }
       this.rig.update(dt, this.board.landBounds(), building, this.units.heroSpots());
       this.scene.visible = true;
     } else {
@@ -194,6 +280,7 @@ class Renderer {
     const cam = this.rig.camera, W = this.cssW, H = this.cssH;
     const project = (v) => { const p = v.clone().project(cam); return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, visible: p.z < 1 && p.z > -1 }; };
     this.hud.draw(view, project, m ? this.units.heroTags() : [], seconds, this.hudMode === 'all');
+    if (this.toast && this.clock < this.toast.until) this.hud.toast(this.toast.text, Math.min(1, (this.toast.until - this.clock) * 2));
   }
 
   resize(w, h) {

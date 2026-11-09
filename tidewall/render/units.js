@@ -7,12 +7,16 @@
 // screen; the events only start effects. Colours follow the player's SEAT (seats[slot]), as the HUD's cards do.
 import * as THREE from 'three/webgpu';
 import { GameRules, Phase, Terrain, Occupant, ShipKind, ShotFired, ShotLanded, ShipSunk, ShipDamaged, GruntKilled, WallBroken,
-         CannonDamaged, LoopClosed, CastleClaimed, SwordSwung } from '../core/index.js';
-import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, fade, flagGeometry, hammerGeometry, torchGeometry } from './look.js';
+         CannonDamaged, LoopClosed, CastleClaimed, SwordSwung, WallsPlaced, CannonPlaced } from '../core/index.js';
+import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry } from './look.js';
 import { boneEndingWith, tintArmour, shade } from './models.js';
+import { Effects } from './fx.js';
 
 const SHIP_SPEED = 3.0, GRUNT_SPEED = 2.4, HERO_SPEED = 9.0;   // AUTHORED: squares per second the drawn figures may cover easing to the model
 const SINK_SECONDS = 2.4, DIE_SECONDS = 1.1;
+const BUBBLE_EVERY = 0.045;                                      // AUTHORED: seconds between bubbles over a sinking ship
+const TRAIL_STEP = 0.12;                                         // AUTHORED: squares a shot flies between two puffs of its trail
+const WAKE_STEP = 0.2;                                           // AUTHORED: squares a ship sails between two puffs of wake
 // AUTHORED figure sizes in squares (a square is one unit): a hero a little taller than a square, a grunt a little shorter, a ship
 // one square long plus its bow and stern (a two-sail lander a third bigger and darker, so the two kinds read apart), a castle over
 // its footprint and a cannon over its 2x2 squares
@@ -31,8 +35,10 @@ const yawTo = (cur, want, k) => { let d = want - cur; while (d > Math.PI) d -= 2
 
 export class Units {
   /** seats[slot] = the controller seat each player slot sits at (HudViewModel.seatOfSlot); it picks the slot's colour. */
-  constructor(scene, board, match, models, seats) {
+  constructor(scene, board, match, models, seats, fx) {
     this.scene = scene; this.board = board; this.match = match; this.models = models;
+    if (!fx) throw new Error('units.js: the particle pools (fx.js Fx) are required');
+    this.fx = fx; this.fxs = new Effects(fx);
     if (!Array.isArray(seats) || seats.length !== match.playerCount) throw new Error('units.js: seats must name a seat for each of the ' + match.playerCount + ' players, got ' + seats);
     this.colours = seats.map((seat) => { if (!PLAYER_COLOURS[seat]) throw new Error('units.js: no colour for seat ' + seat); return PLAYER_COLOURS[seat]; });
     this.group = new THREE.Group(); this.group.name = 'units'; scene.add(this.group);
@@ -47,8 +53,9 @@ export class Units {
     this.flagNeutral = new THREE.MeshStandardNodeMaterial({ color: new THREE.Color(0xf6f2e8), side: THREE.DoubleSide, roughness: 0.6 });
     this.glowP = this.colours.map((c) => glow(c, 2.4));
     this.glowEnemy = glow(ENEMY_SHOT, 2.6);
+    this.pipEmpty = fade(new THREE.Color(0x333333), 0.6);
     this.castles = new Map(); this.cannons = new Map(); this.ships = new Map(); this.grunts = new Map(); this.shots = new Map();
-    this.effects = []; this.heroes = []; this.ghosts = [];
+    this.heroes = []; this.ghosts = [];
     this.buildCastles();
     for (let s = 0; s < match.playerCount; s++) { this.heroes.push(this.makeHero(s)); this.ghosts.push(this.makeGhost(s)); }
     this.dryNearest = this.nearestDry();
@@ -133,7 +140,7 @@ export class Units {
       const loaded = c.inFlight === 0 && c.reloadLeft === 0;
       e.trim.visible = m.phase !== Phase.Battle || loaded || Math.sin(performance.now() / 90) > 0;   // a reloading gun's ring blinks
     }
-    for (const [id, e] of this.cannons) if (!seen.has(id)) { this.group.remove(e.g); this.cannons.delete(id); this.puff(e.g.position, 6, 0x5c5c5c); }
+    for (const [id, e] of this.cannons) if (!seen.has(id)) { this.group.remove(e.g); this.cannons.delete(id); this.fxs.explosion(e.g.position.clone().add(new THREE.Vector3(0, 0.4, 0)), C.iron, 1.2); }
   }
 
   // ------------------------------------------------------------------ ships
@@ -149,7 +156,7 @@ export class Units {
     const pips = new THREE.Group(); pips.position.y = M.size.y * k * 0.75 + 0.2; g.add(pips);
     const p = this.shipCentre(s); g.position.copy(p);
     this.group.add(g);
-    return { g, hull, pips, pos: p.clone(), yaw: Math.atan2(this.board.w / 2 - p.x, this.board.h / 2 - p.z) - Math.PI / 2, sink: -1, hp: -1, hit: 0, model: s };
+    return { g, hull, pips, pos: p.clone(), yaw: Math.atan2(this.board.w / 2 - p.x, this.board.h / 2 - p.z) - Math.PI / 2, sink: -1, hp: -1, hit: 0, model: s, len: SHIP_LENGTH * s.size * (two ? LANDER_SCALE : 1), wake: 0, bubble: 0 };
   }
   shipCentre(s) { return new THREE.Vector3(s.at.x + s.size / 2, 0, s.at.y + s.size / 2); }
 
@@ -164,6 +171,8 @@ export class Units {
       const left = towards(e.pos, target, SHIP_SPEED * dt);
       const d = e.pos.clone().sub(before);
       if (d.lengthSq() > 1e-8) e.yaw = yawTo(e.yaw, Math.atan2(-d.z, d.x), Math.min(1, dt * 6));   // bow (+x) along the motion
+      e.wake += d.length();
+      while (e.wake > WAKE_STEP) { e.wake -= WAKE_STEP; this.wakeOf(e); }
       if (e.hp !== s.health) { this.pips(e, s); e.hp = s.health; }
     }
     for (const [id, e] of this.ships) {
@@ -179,15 +188,27 @@ export class Units {
         e.g.position.y = -1.1 * k * k;
         e.g.rotation.z += 0.9 * k; e.g.rotation.x += 0.5 * k;
         e.pips.visible = false;
+        e.bubble += dt;
+        while (e.bubble > BUBBLE_EVERY) { e.bubble -= BUBBLE_EVERY; this.fxs.bubbles(e.pos, e.len / SHIP_LENGTH); }
         if (k >= 1) { this.group.remove(e.g); this.ships.delete(id); }
       }
+    }
+  }
+  /** A puff of the ship's wake: foam left at the stern that spreads to both sides (a V behind a moving ship) and fades. */
+  wakeOf(e) {
+    const fx = this.fx.flat, c = Math.cos(e.yaw), sn = Math.sin(e.yaw), fwd = [c, -sn], side = [sn, c];
+    const stern = { x: e.pos.x - fwd[0] * e.len * 0.42, y: 0.03, z: e.pos.z - fwd[1] * e.len * 0.42 };
+    for (const k of [-1, 1]) {
+      fx.emit({ at: { x: stern.x + side[0] * k * 0.12, y: 0.03, z: stern.z + side[1] * k * 0.12 },
+                vel: [side[0] * k * 0.32 - fwd[0] * 0.08, 0, side[1] * k * 0.32 - fwd[1] * 0.08], drag: 0.6,
+                life: 2.2, size: [0.22 * e.len, 0.75 * e.len], color: C.foam, alpha: 0.55, spin: k * 0.4, fadeIn: 0.04 });
     }
   }
   pips(e, s) {
     e.pips.clear();
     if (s.maxHealth <= 1) return;
     for (let i = 0; i < s.maxHealth; i++) {
-      const p = new THREE.Mesh(this.geo.pip, i < s.health ? this.glowEnemy : fade(new THREE.Color(0x333333), 0.6));
+      const p = new THREE.Mesh(this.geo.pip, i < s.health ? this.glowEnemy : this.pipEmpty);
       p.position.set(0, 0, (i - (s.maxHealth - 1) / 2) * 0.16); e.pips.add(p);
     }
   }
@@ -276,8 +297,7 @@ export class Units {
       if (!e) {
         const mat = sh.fromSlot >= 0 ? this.slotGlow(sh.fromSlot) : this.glowEnemy;
         const ball = new THREE.Mesh(this.geo.ball, mat);
-        const trail = [];
-        for (let i = 0; i < 4; i++) { const t = new THREE.Mesh(this.geo.ball, mat); t.scale.setScalar(0.7 - i * 0.14); this.group.add(t); trail.push(t); }
+        const trail = { colour: sh.fromSlot >= 0 ? this.colours[sh.fromSlot] : ENEMY_SHOT, last: null };
         const from = this.shotOrigin(sh);
         const tg = sh.target, wetT = this.board.grid.terrainAt(tg.x, tg.y) === Terrain.Water;
         const to = new THREE.Vector3(tg.x + 0.5, wetT ? 0.05 : this.board.groundAt(tg.x, tg.y) + 0.25, tg.y + 0.5);
@@ -288,9 +308,14 @@ export class Units {
       const arc = 0.8 + e.from.distanceTo(e.to) * 0.16;
       const at = (q) => e.from.clone().lerp(e.to, q).add(new THREE.Vector3(0, 4 * arc * q * (1 - q), 0));
       e.ball.position.copy(at(k));
-      e.trail.forEach((t, i) => t.position.copy(at(Math.max(0, k - (i + 1) * 0.035))));
+      const tr = e.trail;                                                 // a puff of trail every TRAIL_STEP squares of flight
+      if (!tr.last) tr.last = e.ball.position.clone();
+      for (let d = tr.last.distanceTo(e.ball.position); d > TRAIL_STEP; d -= TRAIL_STEP) {
+        tr.last.lerp(e.ball.position, TRAIL_STEP / d);
+        this.fxs.trail(tr.last, tr.colour);
+      }
     }
-    for (const [id, e] of this.shots) if (!seen.has(id)) { this.group.remove(e.ball); for (const t of e.trail) this.group.remove(t); this.shots.delete(id); }
+    for (const [id, e] of this.shots) if (!seen.has(id)) { this.group.remove(e.ball); this.shots.delete(id); }
   }
 
   // ------------------------------------------------------------------ heroes (the cursor)
@@ -308,7 +333,7 @@ export class Units {
     const torch = new THREE.Group(); torch.add(new THREE.Mesh(this.geo.torch, mats.vc));
     const tip = new THREE.Mesh(this.geo.pip, glow(new THREE.Color(0xffa040), 3)); tip.position.y = 0.36; torch.add(tip); hand.add(torch);
     const ring = new THREE.Mesh(this.geo.ring, this.glowP[s]); ring.scale.setScalar(0.85);
-    const shadow = new THREE.Mesh(this.geo.disc, fade(new THREE.Color(0x000000), 0.18)); shadow.scale.setScalar(0.6);
+    const shadow = new THREE.Mesh(this.geo.disc, fade(new THREE.Color(0x000000), 0.1)); shadow.scale.setScalar(0.55);
     const reticle = new THREE.Group();
     const r1 = new THREE.Mesh(this.geo.ring, this.glowP[s]); reticle.add(r1);
     for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(this.geo.cube, this.glowP[s]); b.scale.set(0.05, 0.02, 0.28); b.position.set(Math.sin(i * Math.PI / 2) * 0.5, 0, Math.cos(i * Math.PI / 2) * 0.5); b.rotation.y = i * Math.PI / 2; reticle.add(b); }
@@ -396,7 +421,7 @@ export class Units {
   // ------------------------------------------------------------------ ghosts (what confirm would place)
   makeGhost(s) {
     const col = this.colours[s];
-    const ok = new THREE.MeshBasicNodeMaterial({ color: col.clone().multiplyScalar(1.4), transparent: true, opacity: 0.5, depthWrite: false });
+    const ok = glowing(new THREE.MeshBasicNodeMaterial({ color: col.clone().multiplyScalar(1.4), transparent: true, opacity: 0.5, depthWrite: false }));
     const bad = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0xff2b2b), transparent: true, opacity: 0.35, depthWrite: false });
     const geo = new THREE.BoxGeometry(0.9, 0.5, 0.9).translate(0, 0.25, 0);
     const im = new THREE.InstancedMesh(geo, ok, 16); im.count = 0; im.visible = false; im.renderOrder = 3; im.frustumCulled = false;
@@ -437,38 +462,7 @@ export class Units {
     }
   }
 
-  // ------------------------------------------------------------------ effects (started by events)
-  addEffect(obj, life, step) { this.group.add(obj); this.effects.push({ obj, t: 0, life, step }); }
-  puff(at, n, hex) {
-    for (let i = 0; i < n; i++) {
-      const mat = fade(new THREE.Color(hex), 0.7), m = new THREE.Mesh(this.geo.puff, mat);
-      const dir = new THREE.Vector3(Math.cos(i * 2.4), 1.2, Math.sin(i * 2.4)).normalize();
-      m.position.copy(at); m.position.y += 0.3;
-      this.addEffect(m, 1.1, (k, o) => { o.position.addScaledVector(dir, 0.02); o.scale.setScalar(0.6 + k * 1.4); mat.opacity = 0.7 * (1 - k); });
-    }
-  }
-  splash(at) {
-    const mat = fade(C.foam, 0.9, 1.2), ring = new THREE.Mesh(this.geo.ring, mat); ring.position.set(at.x, 0.06, at.z);
-    this.addEffect(ring, 0.9, (k, o) => { o.scale.setScalar(0.4 + k * 1.6); mat.opacity = 0.9 * (1 - k); });
-    for (let i = 0; i < 7; i++) {
-      const dm = fade(C.foam, 0.95, 1.3), d = new THREE.Mesh(this.geo.pip, dm), a = i * 0.9, sp = 0.6 + (i % 3) * 0.25;
-      d.position.set(at.x, 0.05, at.z);
-      this.addEffect(d, 0.8, (k, o) => { o.position.set(at.x + Math.cos(a) * k * 0.5 * sp, 0.05 + 1.2 * sp * k * (1 - k) * 2, at.z + Math.sin(a) * k * 0.5 * sp); dm.opacity = 0.95 * (1 - k); });
-    }
-  }
-  flash(at, color, size = 1) {
-    const mat = fade(color, 1, 4), s = new THREE.Mesh(this.geo.ball, mat); s.position.copy(at);
-    this.addEffect(s, 0.4, (k, o) => { o.scale.setScalar(size * (1 + k * 3)); mat.opacity = (1 - k) * (1 - k); });
-  }
-  debris(at) {
-    for (let i = 0; i < 6; i++) {
-      const d = new THREE.Mesh(this.geo.cube, mats.vc), a = i * 1.05, v = 0.7 + (i % 2) * 0.4;
-      d.geometry = this.geo.cube; d.material = new THREE.MeshStandardNodeMaterial({ color: C.stoneDark, flatShading: true });
-      d.scale.setScalar(0.12); d.position.copy(at);
-      this.addEffect(d, 0.9, (k, o) => { o.position.set(at.x + Math.cos(a) * k * v, at.y + 1.6 * v * k * (1 - k) * 2 - 0.2 * k, at.z + Math.sin(a) * k * v); o.rotation.set(k * 8, k * 5, 0); });
-    }
-  }
-
+  // ------------------------------------------------------------------ effects (started by events; fx.js Effects draws them)
   events(list) {
     const m = this.match, g = m.grid;
     const cellAt = (c, lift = 0.3) => new THREE.Vector3(c.x + 0.5, (g.terrainAt(c.x, c.y) === Terrain.Water ? 0 : this.board.groundAt(c.x, c.y)) + lift, c.y + 0.5);
@@ -476,20 +470,44 @@ export class Units {
       if (Number(m.tick - e.tick) > STALE_TICKS) continue;
       if (e instanceof ShotFired) {
         const c = this.cannons.get(e.cannonId);
-        if (e.fromSlot >= 0 && c) { c.recoil = 1; this.flash(c.g.position.clone().add(new THREE.Vector3(Math.sin(c.aim) * 0.95, 0.75, Math.cos(c.aim) * 0.95)), this.colours[e.fromSlot], 0.6); }
-        else if (e.fromShip > 0) { const sh = this.ships.get(e.fromShip); if (sh) this.flash(sh.g.position.clone().add(new THREE.Vector3(0, 0.5, 0)), ENEMY_SHOT, 0.5); }
+        if (e.fromSlot >= 0 && c) {
+          c.recoil = 1;
+          const dir = new THREE.Vector3(Math.sin(c.aim), 0, Math.cos(c.aim)), sc = c.g.scale.x;
+          this.fxs.muzzle(c.g.position.clone().addScaledVector(dir, 0.95 * sc).add(new THREE.Vector3(0, 0.62 * sc, 0)), dir, this.colours[e.fromSlot], sc);
+        } else if (e.fromShip > 0) {
+          const sh = this.ships.get(e.fromShip);
+          if (sh) {
+            const dir = new THREE.Vector3(e.target.x + 0.5 - sh.pos.x, 0, e.target.y + 0.5 - sh.pos.z).normalize();
+            this.fxs.muzzle(sh.pos.clone().addScaledVector(dir, 0.35).add(new THREE.Vector3(0, 0.45, 0)), dir, ENEMY_SHOT, 0.7);
+          }
+        }
       } else if (e instanceof ShotLanded) {
         const wetT = g.terrainAt(e.target.x, e.target.y) === Terrain.Water;
-        if (wetT) this.splash(cellAt(e.target, 0));
-        if (e.hit || !wetT) this.flash(cellAt(e.target, 0.35), e.hit ? new THREE.Color(0xffd27a) : new THREE.Color(0xffffff), e.hit ? 1 : 0.5);
-      } else if (e instanceof WallBroken) { this.debris(cellAt(e.at, 0.3)); this.puff(cellAt(e.at, 0), 3, 0x9a9182); }
-      else if (e instanceof ShipDamaged) { const sh = this.ships.get(e.shipId); if (sh) sh.hit = 1; }
-      else if (e instanceof ShipSunk) { const sh = this.ships.get(e.shipId); if (sh && sh.sink < 0) sh.sink = 0; this.splash(new THREE.Vector3(e.at.x + 0.5, 0, e.at.y + 0.5)); }
-      else if (e instanceof GruntKilled) { this.puff(cellAt(e.at, 0), 4, 0x7a6f8a); }
-      else if (e instanceof CannonDamaged) { const c = this.cannons.get(e.cannonId); if (c) this.flash(c.g.position.clone().add(new THREE.Vector3(0, 0.5, 0)), new THREE.Color(0xffd27a), 0.7); }
+        if (wetT && !e.hit) this.fxs.splash(cellAt(e.target, 0));
+        else if (e.hit) this.fxs.explosion(cellAt(e.target, 0.35), wetT ? C.wood : C.stoneDark, 0.8);
+        else this.fxs.dust(cellAt(e.target, 0), 0.9);
+      } else if (e instanceof WallBroken) {
+        const ow = g.ownerAt(e.at.x, e.at.y);
+        this.fxs.explosion(cellAt(e.at, 0.3), ow < this.colours.length ? this.colours[ow].clone().lerp(C.foam, 0.28) : C.stone, 1);
+      }
+      else if (e instanceof ShipDamaged) { const sh = this.ships.get(e.shipId); if (sh) { sh.hit = 1; this.fxs.chunks(sh.pos.clone().add(new THREE.Vector3(0, 0.5, 0)), C.wood, 5, 0.8); } }
+      else if (e instanceof ShipSunk) {
+        const sh = this.ships.get(e.shipId); if (sh && sh.sink < 0) sh.sink = 0;
+        const at = new THREE.Vector3(e.at.x + 0.5, 0, e.at.y + 0.5), k = sh ? sh.len / SHIP_LENGTH : 1;
+        this.fxs.explosion(at.clone().add(new THREE.Vector3(0, 0.5, 0)), C.wood, 1.1 * k);
+        this.fxs.splash(at, 1.4 * k);
+      }
+      else if (e instanceof GruntKilled) { this.fxs.dust(cellAt(e.at, 0), 0.8, new THREE.Color(0.62, 0.58, 0.68)); }
+      else if (e instanceof CannonDamaged) { const c = this.cannons.get(e.cannonId); if (c) this.fxs.explosion(c.g.position.clone().add(new THREE.Vector3(0, 0.5, 0)), C.iron, 0.7); }
+      else if (e instanceof WallsPlaced) { for (const c of e.cells) this.fxs.dust(cellAt(c, 0), 0.75); }
+      else if (e instanceof CannonPlaced) { this.fxs.dust(new THREE.Vector3(e.topLeft.x + 1, this.board.groundAt(e.topLeft.x, e.topLeft.y), e.topLeft.y + 1), 1.6); }
       else if (e instanceof LoopClosed) {
         const k = this.castles.get(e.castleId);
-        if (k) this.board.flashRegionOf(k.cells);
+        if (k) {
+          const swept = this.board.flashRegionOf(k.cells);              // the capture glow sweeps out from the castle
+          const col = this.colours[e.slot] ?? C.foam;
+          for (const q of swept) if (this.fxs.rnd() < 0.5) this.fxs.sparkle(new THREE.Vector3(q.x + 0.2 + this.fxs.rnd() * 0.6, this.board.groundAt(q.x, q.y) + 0.1, q.y + 0.2 + this.fxs.rnd() * 0.6), col, q.delay);
+        }
       } else if (e instanceof SwordSwung) {
         const h = this.heroes[e.slot];
         if (h) {                                                            // the slash clip, sped up to a quick swing, from its start
@@ -499,10 +517,10 @@ export class Units {
           a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.timeScale = SLASH_SPEED;
           h.swing = a.getClip().duration / SLASH_SPEED;
         }
-        this.flash(cellAt(e.at, 0.4), this.colours[e.slot], 0.5);
+        this.fxs.flash(cellAt(e.at, 0.4), this.colours[e.slot], 0.5);
       } else if (e instanceof CastleClaimed) {
         const k = this.castles.get(e.castleId);
-        if (k) this.flash(k.g.position.clone().add(new THREE.Vector3(0, 1.2, 0)), this.colours[e.slot], 1.2);
+        if (k) this.fxs.flash(k.g.position.clone().add(new THREE.Vector3(0, 1.2, 0)), this.colours[e.slot], 1.2);
       }
     }
   }
@@ -516,12 +534,6 @@ export class Units {
     this.updateShots(alpha);
     this.updateHeroes(view, dt, seconds);
     this.updateGhosts(view, seconds);
-    for (let i = this.effects.length - 1; i >= 0; i--) {
-      const f = this.effects[i]; f.t += dt;
-      const k = Math.min(1, f.t / f.life);
-      f.step(k, f.obj);
-      if (k >= 1) { this.group.remove(f.obj); this.effects.splice(i, 1); }
-    }
   }
 
   /** The glowing material of a player slot's colour; a slot the match does not have is an error. */

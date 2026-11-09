@@ -5,7 +5,7 @@
 // and the high scores, and back to the title. An untouched title plays the demo full screen (attract), and any press leaves it.
 //
 // URL switches (for a kiosk and for the page check): ?attract=1 the demo with HUD and sound and no menus; ?seed=N the match seed;
-// ?speed=N run N ticks per tick of real time (1..16, default 1).
+// ?speed=N run N ticks per tick of real time (1..16, default 1); ?quality=low starts the graphics on the low setting (Q switches).
 import { GAME_TITLE } from './title.js';
 import { InputHub, KEY_CLUSTERS, SEATS } from './input.js';
 import { Overlay } from './overlay.js';
@@ -37,7 +37,9 @@ function readSwitches() {
     if (!Number.isInteger(v) || v < lo || v > hi) throw new Error('?' + name + '=' + q.get(name) + ' is not a whole number from ' + lo + ' to ' + hi);
     return v;
   };
-  return { attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1 };
+  const quality = q.get('quality');
+  if (quality !== null && quality !== 'high' && quality !== 'low') throw new Error('?quality=' + quality + ' is not high or low');
+  return { attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high' };
 }
 
 function showFatal(text) {
@@ -79,6 +81,7 @@ class Game {
     this.brake = null; this.braked = false; this.phaseKey = ''; this.phaseTick = 0;
     const wake = () => { this.sound.wake(); };
     window.addEventListener('keydown', wake);
+    window.addEventListener('keydown', (e) => { if (e.code === 'KeyQ' && !e.repeat) this.renderer.cycleQuality(); });   // graphics quality: high <-> low
     window.addEventListener('pointerdown', wake);
     this.startMatch(true, null);
     if (sw.attract) this.menu.playing();
@@ -240,7 +243,7 @@ async function boot() {
   if (!navigator.gpu) { noWebGpu('navigator.gpu is missing'); return; }
   const canvas = document.getElementById('view');
   let renderer;
-  try { renderer = await createRenderer(canvas); }
+  try { renderer = await createRenderer(canvas, { quality: sw.quality }); }
   catch (e) {
     if (e instanceof NoWebGpuError) { noWebGpu(e.message); return; }
     throw e;

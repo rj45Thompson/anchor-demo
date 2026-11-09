@@ -179,7 +179,15 @@ export class Hud {
   }
 
   // ------------------------------------------------------------------ menus
-  dim(a = 0.55) { this.ctx.fillStyle = 'rgba(6,20,36,' + a + ')'; this.ctx.fillRect(0, 0, this.cssW, this.cssH); }
+  /** A short note at the bottom centre over everything (the quality switch says what it switched to); a fades it out. */
+  toast(text, a) {
+    const c = this.ctx; c.save(); c.globalAlpha = a;
+    this.font(16, 700); const w = c.measureText(text).width + 36;
+    this.panel(this.cssW / 2 - w / 2, this.cssH * 0.7, w, 34, 17, 'rgba(10,24,40,0.82)', 'rgba(255,255,255,0.35)');
+    this.text(text, this.cssW / 2, this.cssH * 0.7 + 17, 16, '#ffffff', 'center', 700, false);
+    c.restore();
+  }
+    dim(a = 0.55) { this.ctx.fillStyle = 'rgba(6,20,36,' + a + ')'; this.ctx.fillRect(0, 0, this.cssW, this.cssH); }
 
   logo(y, size, seconds) {
     const W = this.cssW;
