@@ -11,6 +11,11 @@
 export const FULL_CLUTCH = 0.95;
 export const MATCH_RPM = 0.03;
 const ROW = { top: 0.12, mid: 0.5, bottom: 0.88 };
+// UC-34.1f AUTHORED (the owner 11-09: "shifting to third is really hard"): a finger this far sideways of the knob's slot (in the gate's
+// unit square; the slots of a 7-gear gate are 0.24 apart) takes the knob out of the slot to the middle row, where its next move carries
+// it across and into the slot the finger is over. It was held in the slot, so a pull from 2nd up and right towards 3rd went straight up
+// the slot into 1st
+export const SLOT_EXIT = 0.1;
 
 /** the gate for n forward gears: one slot per pair, left to right; slot.x in 0..1, the gear at the top and the one at the bottom */
 export function gateLayout(n) {
@@ -27,6 +32,7 @@ export function moveKnob(knob, want, layout) {
   const near = layout.slots.reduce((a, s) => (Math.abs(s.x - knob.x) < Math.abs(a.x - knob.x) ? s : a));
   const inSlot = Math.abs(knob.y - ROW.mid) > 0.02;
   if (inSlot) {                                            // in a slot: only up and down it, and out to the middle row
+    if (Math.abs(want.x - near.x) > SLOT_EXIT) return { x: near.x, y: ROW.mid };   // UC-34.1f the finger has gone sideways: out to the middle row
     const lo = near.down ? ROW.bottom : ROW.mid;
     return { x: near.x, y: Math.max(ROW.top, Math.min(lo, want.y)) };
   }
@@ -82,5 +88,9 @@ export const pedalRelease = (depth, dt) => Math.max(0, depth - (dt > 0 ? dt : 0)
 export const WHEEL = { FULL_PX: 800, LINE_PX: 33, PAGE_PX: 800 };
 export const wheelPx = (deltaY, deltaMode) => deltaY * (deltaMode === 1 ? WHEEL.LINE_PX : deltaMode === 2 ? WHEEL.PAGE_PX : 1);
 export const wheelDepth = (depth, deltaY, deltaMode = 0) => Math.max(0, Math.min(1, depth + wheelPx(deltaY, deltaMode) / WHEEL.FULL_PX));
-/** a slider's depth for a finger at y on a track from top (the pedal up) to bottom (the floor) */
-export const sliderDepth = (y, top, bottom) => Math.max(0, Math.min(1, (y - top) / (bottom - top)));
+// UC-34.1f AUTHORED (the owner 11-09: "the clutch should engage gears over 75 depressed ... that button is close to the bottom of the
+// screen. My finger can't get to the bottom"): the floor is 75 % of the way down the slider's track, and the last quarter is the floor
+// too. On the floor (depth 1) a gear goes in (FULL_CLUTCH) and the drive is fully cut, so a car held there on the tree does not creep
+export const SLIDER_FULL = 0.75;
+/** a slider's depth for a finger at y on a track from top (the pedal up) to bottom: the floor at SLIDER_FULL of the way down */
+export const sliderDepth = (y, top, bottom) => Math.max(0, Math.min(1, (y - top) / ((bottom - top) * SLIDER_FULL)));

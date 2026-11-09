@@ -21,6 +21,10 @@ header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:1
 header h1{margin:0;font-size:18px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
 header h1 b{color:var(--accent)}
 body:not(.inrun) header h1{white-space:nowrap;flex-shrink:0}   /* UC-44.3: 740 x 360 broke it into HOUSE / OF / CARS under the pills (measured 11-08) */
+/* UC-49 in a race or on the strip too: the title on one line (measured 11-09, page_check's 1280 x 800 slip: eleven pills folded it into
+   HOUSE OF / CARS, its second line against the Lot button); under 1500 px the pills a driver does not need there make the room */
+body.inrun header h1{white-space:nowrap;flex-shrink:0}
+@media (max-width:1500px){body.inrun header #renderer,body.inrun header #quality,body.inrun header>span.pill:not([id]){display:none}}
 @media (max-width:900px){body:not(.inrun) header span.pill:not([id]),body:not(.inrun) header #quality{display:none}}   /* the concept and Resolution pills: the card and the loading screen say the first */
 .pill{font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:99px;background:var(--panel);color:var(--dim)}
 #showroom .nav{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:10px;align-items:center}
@@ -205,6 +209,31 @@ body.dragmode.hascluster #dpanel{bottom:calc(var(--clh,300px) + 44px)}
 #dsay b{display:block;font-size:10px;letter-spacing:.14em;color:var(--accent-soft);margin-bottom:2px}
 #dsay.free::after{display:none}#dsay::after{content:'';position:absolute;left:50%;bottom:-7px;width:12px;height:12px;background:inherit;border-right:1px solid var(--accent);border-bottom:1px solid var(--accent);transform:translateX(-50%) rotate(45deg)}
 #dfail .q{margin:4px 0 12px;font-size:14px;color:var(--dim);font-style:italic}
+/* UC-44.4 the line: the result over the held frame (app.js finishMoment), a flash (not with Motion off); UC-44.5 the slip's verdict on top */
+#dfin{position:fixed;left:50%;top:21%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px clamp(16px,3vmin,28px) 12px;border-radius:16px;background:rgba(10,10,10,.8);border:2px solid var(--accent);text-align:center;white-space:nowrap;pointer-events:none;z-index:4;box-shadow:0 18px 50px rgba(0,0,0,.6);animation:finin .35s ease-out both}
+#dfin[hidden]{display:none}#dfin i{font:800 clamp(9px,1.5vmin,12px)/1 'Open Sans',sans-serif;letter-spacing:.3em;color:var(--accent-soft);font-style:normal}
+#dfin b{font:900 clamp(30px,6vmin,72px)/1 'Open Sans',sans-serif;letter-spacing:.06em;color:#fff}#dfin span{font:800 clamp(15px,3vmin,30px)/1.1 ui-monospace,Consolas,monospace;color:#fff}
+#dfin small{font:600 clamp(11px,1.9vmin,17px)/1.2 ui-monospace,Consolas,monospace;color:var(--dim)}
+#dfin.v-win{border-color:#3dff7a}#dfin.v-win b{color:#5dffa9;text-shadow:0 0 28px rgba(61,255,122,.55)}#dfin.v-lose{border-color:#ff5a4f}#dfin.v-lose b{color:#ff7a5c;text-shadow:0 0 28px rgba(255,90,79,.45)}
+@keyframes finin{from{opacity:0;transform:translateX(-50%) scale(1.25)}to{opacity:1;transform:translateX(-50%) scale(1)}}@keyframes finfade{from{opacity:0}to{opacity:1}}
+body.motionoff #dfin{animation:finfade .25s both}body.dragover #dfin{display:none!important}body.dragfin #dgrade{visibility:hidden}
+#dphoto{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}#dphoto[hidden]{display:none}
+#dflash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:5}#dflash.go{animation:dflash .35s ease-out}@keyframes dflash{0%{opacity:.5}100%{opacity:0}}
+/* where it stands: on a computer in the grade's own slot between the car and the dials (the finish camera holds the car in the frame's
+   upper half); on a phone or a tablet on its side one row in the same slot (the car fills the top of the frame); upright under the
+   car (it sits mid-frame) */
+@media (pointer:fine) and (orientation:landscape){#dfin{top:auto;bottom:calc(clamp(200px,46vmin,500px) + 16px)}body.dragmode.hascluster #dfin{bottom:calc(var(--clh,300px) + 46px)}}
+@media (pointer:coarse) and (orientation:landscape){#dfin{top:auto;bottom:calc(clamp(200px,46vmin,500px) + 16px);flex-direction:row;align-items:baseline;column-gap:12px;padding:6px 16px 8px}#dfin i,#dfin small{display:none}#dfin b{font-size:clamp(22px,5.5vmin,44px)}body.dragmode.hascluster #dfin{bottom:calc(var(--clh,300px) + 20px)}
+  #dfin{box-sizing:border-box;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 2 * (16px + clamp(84px,24vmin,150px) + 12px + clamp(54px,12vmin,90px) + 14px))}   /* no wider than the dials: the controls stand beside them */
+  body.dragmode.clutchmode #dfin{max-width:calc(100vw - 2 * max(16px + clamp(72px,17vmin,116px) + 12px + clamp(84px,24vmin,150px) + 14px, 16px + var(--gate) + 14px))}}
+@media (orientation:portrait){#dfin{top:48%}}
+#dslip .verdict{margin:0 0 12px;padding:12px 14px 10px;border-radius:12px;border:2px solid var(--accent);background:rgba(242,88,39,.08);text-align:center}
+#dslip .verdict b{display:block;font:900 clamp(30px,6.5vmin,50px)/1 'Open Sans',sans-serif;letter-spacing:.05em;color:#fff;animation:vstamp .45s cubic-bezier(.2,1.4,.4,1) both}
+#dslip .verdict span{display:block;margin-top:5px;font:800 clamp(18px,3.2vmin,26px)/1.1 ui-monospace,Consolas,monospace}#dslip .verdict p{margin:6px 0 0;font:600 13px ui-monospace,Consolas,monospace}
+#dslip .verdict .hs{font:italic 600 12.5px 'Open Sans',sans-serif;color:#ffd27a}
+#dslip .verdict.v-win{border-color:#3dff7a;background:rgba(61,255,122,.08)}#dslip .verdict.v-win b{color:#5dffa9}#dslip .verdict.v-lose{border-color:#ff5a4f;background:rgba(255,90,79,.08)}#dslip .verdict.v-lose b{color:#ff7a5c}
+@keyframes vstamp{from{opacity:0;transform:scale(1.6)}to{opacity:1;transform:none}}body.motionoff #dslip .verdict b{animation:finfade .25s both}
+@media (prefers-reduced-motion:reduce){#dfin,#dslip .verdict b{animation:none}}
 #dslip .rival{margin:8px 0 10px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
 #dslip .rival.won{border-color:#3dff7a}#dslip .rival.lost{border-color:#ff5a4f}
 #dslip .rival p{margin:2px 0}#dslip .rival .q{font-style:italic;color:var(--dim)}body.clutchmode #dgas{margin-right:auto}
@@ -446,10 +475,12 @@ button,.pill{white-space:nowrap}
 </section>
 
 <div id="drag" hidden>
+  <canvas id="dphoto" hidden aria-hidden="true"></canvas>
   <div id="dtree" aria-label="The start tree"><i data-l="prestage" class="s"></i><i data-l="stage" class="s"></i><i data-l="a1"></i><i data-l="a2"></i><i data-l="a3"></i><i data-l="green" class="gr"></i><i data-l="red" class="rd"></i></div>
   <div id="dpanel"><p id="dcar"></p><div id="dtimes"></div></div>
   <div id="dleds" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div id="dgrade" aria-live="polite"></div>
+  <div id="dfin" hidden aria-live="polite"><i>AT THE LINE</i><b id="dfinv"></b><span id="dfinl"></span><small id="dfinet"></small></div><div id="dflash" aria-hidden="true"></div>
   <div id="dslip" hidden role="dialog" aria-label="Time slip"></div>
   <div id="dhelp"><span class="np">Wait for the green · W / ↑ gas · E or Shift: shift up · Q: down</span><span class="cp">Mouse wheel: the clutch (down: in, up: out) · a mouse button, W, ↑ or Space: gas · drag the knob or 1-7: the gate, N neutral (E / Q: next, back)</span> · C: camera · G: clutch on/off · R: run again · Esc: the lot</div>
   <div id="dpedal" class="clutchdepth" role="meter" aria-label="Clutch pedal, percent down" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i><b>CLUTCH</b></div>

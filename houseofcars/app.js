@@ -7,7 +7,7 @@ import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as Rules from './rules.js';
 import { loadWorld } from './world.js';
-import { rotatorAxes, threeMatrix, threeMatrixFromAxes, toThreePoint, verticalFovDeg } from './ue_space.js';
+import { rotatorAxes, threeMatrix, threeMatrixFromAxes, toThreePoint, toThreeDir, verticalFovDeg } from './ue_space.js';
 import { makeRig, updateRig } from './camera_rig.js';
 import { SLIDES } from './slides.js';
 import { svgIcon, drawIcon } from './icons.js';
@@ -15,7 +15,7 @@ import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, 
 import { freeRects, fitSubject, mergeGroups, FRAME } from './lot_frame.js';            // UC-44.3: the subject framed where the panels leave room
 import { focusWeight, level, LIGHT } from './lot_light.js';                             // UC-44.3: the light follows the slide in view
 import { buildRain, wetRoad, sunTracker, overcast, buildShafts } from './weather.js';        // UC-40: rain, a wet road, a grey sky, the strip's shafts (the circuit's: fx.js makePost)
-import { makeAudio, driveSound, silence, blip, loadSfx, sfx, grind } from './audio.js';
+import { makeAudio, driveSound, silence, blip, loadSfx, sfx, grind, crack } from './audio.js';
 import { Radio } from './radio.js';                                                       // UC-27: the car radio
 import { makeWalker, stepWalker, facing, EYE_M } from './walk.js';                        // UC-28: walking the lot
 import { buildDressing } from './dress.js';                                                // UC-33: kerbs, lines, posts, gantries
@@ -43,6 +43,7 @@ import * as Replay from './drag_replay.js';                                 // U
 import { mark, timed, ResolutionGovernor } from './perf.js';                                                   // UC-30: ?perf logs where the time goes
 import { batchStatic } from './batch.js';                                                  // GFX 11-08: a car's meshes drawn one draw per material (batch.js)
 import { makeLotFocus } from './lot_focus.js';                                             // GFX 11-08: the tops' reflection draws only the slides near the one in view
+import { KICK, makeKick, stepKick, kickLens, frameAccel, buildSmoke, emitSmoke, haloMaterial, haloLook, raceResult, verdictWords, FINISH } from './drag_fx.js';   // UC-44.4 / 44.5 the run's drama, read off the sim
 import { warmSlices, warmSteps, drawnInEveryPass } from './warm.js';                                  // UC-44.2: shaders built before they are seen (warm.js)
 mark('app.js running');
 const perfFirst = [];                                   // UC-30: the models just added, marked again once a frame has drawn them (declared first: a model can arrive while the page is still setting up)
@@ -1283,7 +1284,7 @@ const radio = new Radio(audio, (st, note) => {
 });
 window.HOC.radio = radio; window.HOC.modelQ = modelQ;   // UC-32: the page check reads the queue
 $('radio').addEventListener('click', () => radio.next());
-function syncMotion() { $('motion').textContent = 'Motion ' + (MOTION.on ? 'on' : 'off'); $('motion').setAttribute('aria-pressed', String(MOTION.on)); }
+function syncMotion() { $('motion').textContent = 'Motion ' + (MOTION.on ? 'on' : 'off'); $('motion').setAttribute('aria-pressed', String(MOTION.on)); document.body.classList.toggle('motionoff', !MOTION.on); }   // UC-44: the CSS's own motion (the slip's reveal) follows the switch too
 function toggleMotion() { MOTION.on = !MOTION.on; try { localStorage.setItem('hoc.motion', MOTION.on ? 'on' : 'off'); } catch (e) { /* not kept */ } syncMotion(); }
 $('motion').addEventListener('click', toggleMotion); syncMotion();
 function syncDragCam() { $('dcam').textContent = 'Camera: ' + (DRAGCAM.film ? 'filmed' : 'chase'); $('dcam').setAttribute('aria-pressed', String(DRAGCAM.film)); }
@@ -1555,18 +1556,27 @@ function buildDragStrip(scene) {
     const on = glowMaterial(color, 7), list = [];
     for (const z of [-0.42, 0.42]) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), off); m.position.set(-0.12, y, z); tree.add(m); list.push(m); }
     const housing = new THREE.Mesh(new THREE.BoxGeometry(0.2, r * 2.6, 1.4), mat(0x0d0e10, 0.5)); housing.position.set(0, y, 0); tree.add(housing);
-    lamps[name] = { list, on, off };
+    // UC-44.4 the lamp's glow in the haze (drag_fx.js HALO): a soft sprite in front of each bulb, shown only while the bulb is lit
+    const halo = haloMaterial(THREE, color), halos = [-0.42, 0.42].map((z) => { const h = new THREE.Sprite(halo.material); h.position.set(-0.14 - r, y, z); h.visible = false; h.renderOrder = 4; tree.add(h); return h; });
+    lamps[name] = { list, on, off, halos, halo, r };
   };
   lamp('prestage', 3.5, '#ffd27a', 0.09); lamp('stage', 3.3, '#ffd27a', 0.09);
   lamp('a1', 2.9, '#ffb020', 0.15); lamp('a2', 2.5, '#ffb020', 0.15); lamp('a3', 2.1, '#ffb020', 0.15);
   lamp('green', 1.6, '#3dff7a', 0.16); lamp('red', 1.15, '#ff3b30', 0.16);
   // GFX 11-08 (batch.js): the strip's static parts one draw per material; kept as they are: the tree's lamps (their materials swap),
   // the roads and the grass (the rain and the scenery re-material them), the shafts and the scenery (already a few draws)
-  batchStatic(THREE, g, { keep: [scenery.group, shafts.mesh, grass, asphalt, pad, ...Object.values(lamps).flatMap((L) => L.list)] });
+  // UC-44.4 the tyre smoke: one pool, one draw call, as many puffs as the page's quality allows (drag_fx.js SMOKE)
+  const smoke = buildSmoke(THREE, { quality: GFX_Q }); g.add(smoke.mesh);
+  batchStatic(THREE, g, { keep: [scenery.group, shafts.mesh, grass, asphalt, pad, smoke.mesh, ...Object.values(lamps).flatMap((L) => [...L.list, ...L.halos])] });
   scene.add(g);
-  return { group: g, lamps };
+  // the halos' size and strength for the day (drag_fx.js haloLook): wider and brighter in the rain, set at the start of a run
+  const halo = (rain) => { const H = haloLook(rain); for (const L of Object.values(lamps)) { L.halo.strength.value = H.strength; for (const h of L.halos) h.scale.setScalar(H.size * L.r / 0.15); } };
+  // the smoke, the glows and the lamps' lit material are not drawn until the run needs them, so the warm-up would never build them: shown
+  // for it (the smoke with nothing in it; behind the loading screen), then put back (tickDrag sets the lamps every frame)
+  const warmFx = (on) => { smoke.mesh.visible = on; for (const L of Object.values(lamps)) { for (const h of L.halos) h.visible = on; for (const m of L.list) m.material = on ? L.on : L.off; } };
+  return { group: g, lamps, smoke, halo, warmFx };
 }
-function setLamp(dv, name, lit) { const L = dv.lamps[name]; for (const m of L.list) m.material = lit ? L.on : L.off; }
+function setLamp(dv, name, lit) { const L = dv.lamps[name]; for (const m of L.list) m.material = lit ? L.on : L.off; for (const h of L.halos) h.visible = lit; }   // UC-44.4 its glow with it
 // the track's own pieces hide while the strip shows, and come back as they were
 function setDragScene(on) {
   const parts = [trackView.ground, trackView.track, trackView.gates, trackView.marker, trackView.dressing];   // the dressing is the track's, not the strip's
@@ -1586,6 +1596,7 @@ async function startDrag(entry, o = {}) {
   loadingShow('Rolling the car to the strip…', entry.name);
   await prepareTrack();
   if (!dragView) dragView = buildDragStrip(trackView.scene);
+  window.HOC.dragView = dragView;                                       // UC-44.4 the page check: the smoke pool, the tree's glows
   window.HOC.track = trackView;
   if (race && race.car) { trackView.scene.remove(race.car.group); if (race.ghostCar) trackView.scene.remove(race.ghostCar); if (race.opp) trackView.scene.remove(race.opp.car.group); }
   mode = 'show';
@@ -1617,6 +1628,8 @@ async function startDrag(entry, o = {}) {
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {},
            director: makeDirector(), body: carJson.bounds_cm.value };   // UC-35: the filmed run, framed on the car's own READ bounds
   race.opp = opp;                                                      // UC-38
+  race.kick = makeKick(); race.fxSpeed = null; race.fxGear = 0; race.fxRpm01 = 0; race.fin = null;   // UC-44.4 the camera's answer to the car, the shifts heard, the line
+  $('dfin').hidden = true; $('dphoto').hidden = true; document.body.classList.remove('dragfin');
   race.online = o.online || null; race.onlineGo = false; race.sentFinish = false; race.onlineResult = null;   // UC-42 an online match
   race.clutchMode = DRAGBOX.clutch;                                    // UC-34: in neutral, the pedal up, the gate drawn
   race.road = WEATHER.rain ? 'wet' : 'dry';                           // UC-40: the run's road, kept for the run (the rain switch starts a new run)
@@ -1638,8 +1651,14 @@ async function startDrag(entry, o = {}) {
   syncAuto(); prizeTease(race);                                       // UC-45 AUTO there to press; UC-46.1 the coffee's time to beat, while staged
   race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
   const wxChanged = rainDay.set(WEATHER.rain);                          // UC-40: rain or dry, as the switch says at the start of the run
+  dragView.halo(WEATHER.rain); dragView.smoke.clear();                  // UC-44.4 the tree's glow for the day; no smoke left from the last run
   race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.35, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45, bloomCap: 6, saturation: 1.08 });   // UC-40.4 the strip's shafts are in its scene, not the post
-  await warmPieces(trackView.scene, () => race.post.render(), 'strip');   // UC-30: behind the loading screen
+  const warmFx = !warmed.has(dragView.group); if (warmFx) dragView.warmFx(true);   // UC-44.4 the smoke's and the glows' shaders built here too
+  // UC-44.4 / UC-30 / UC-44.2 the strip behind the loading screen, a step a frame (the old warm-up's steps 16 ms apart fell inside one frame,
+  // so only the first drew anything: measured 11-08 by both the strip's and the speed pass), and the loading screen goes once the GPU has
+  // every pipeline the warm-up asked for (warmPieces' pipelinesReady)
+  await warmPieces(trackView.scene, () => race.post.render(), 'strip');
+  if (warmFx) dragView.warmFx(false);
   if (wxChanged) race.post.render();                                    // UC-40: the weather's new shaders built behind the loading screen too
   await loadingDone();
   audio.start();
@@ -1857,6 +1876,7 @@ function tickDrag(dt) {
   const input = { throttle: finished ? 0 : raw.throttle, brake: finished ? (shut ? 1 : 0) : raw.brake, steering: raw.steering, handbrake: 0, transmission: 'manual' };
   if (r.clutchMode) { input.clutch = r.pedal.depth; input.gear = r.gate.gear; input.road = r.road; }   // UC-40 the wet or dry curve   // UC-34 (chaos_vehicle.js A11)
   acc += Math.min(dt, 0.1);
+  let stepped = 0, crossed = false;                                    // UC-44.4: the physics time this frame ran, and the line crossed in it
   while (acc >= STEP) {
     const p = r.presses.shift(), gear = v.trans.target, rpm = v.trans.engineRPM;
     if (p === 'up' && gear >= 1 && gear < c.trans.forward.length) { gradeShift(r, gear, rpm); sfx(audio, 'gear_in_' + (1 + Math.floor(Math.random() * 3)), 0.7); }
@@ -1866,9 +1886,13 @@ function tickDrag(dt) {
     for (const e of ev) {
       if (e === 'green') blip(audio, 'go');
       if (e === 'red') blip(audio, 'count');
+      if (e === 'finish') crossed = true;
     }
-    r.now += STEP; acc -= STEP;
+    r.now += STEP; acc -= STEP; stepped += STEP;
   }
+  // UC-44.4 an upshift heard: the sim's gear went up this frame (the crack as loud as the revs it left)
+  if (v.trans.target > r.fxGear && r.fxGear >= 1) crack(audio, r.fxRpm01);
+  r.fxGear = v.trans.target; r.fxRpm01 = v.engineRPM / c.engine.maxRPM;
   // the tree
   const T = r.armed ? run.tree : { prestage: false, stage: false, ambers: 0, green: false, red: run.tree.red };   // UC-22.1b dark until START
   setLamp(dragView, 'prestage', T.prestage); setLamp(dragView, 'stage', T.stage);
@@ -1888,6 +1912,13 @@ function tickDrag(dt) {
   if (!$('dkeys').hidden && r.armed && r.run.t > 3) $('dkeys').hidden = true;   // UC-34.1d the controls go 3 s after START
   const cam = r.camera, rig = updateRig(r.rig, v.pos, [X, Y, Z], dt);     // the chase rig runs either way, so C switches back to it settled
   const sf = stepSpeedFx(r.speedfx || (r.speedfx = makeSpeedFx()), v.forwardSpeedCmS * 0.036, dt, MOTION.on);   // UC-33.1 / 33.4
+  // UC-44.4 the camera's answer to the car (drag_fx.js stepKick): its acceleration measured off the sim over the physics time this frame
+  // ran (the launch, the clutch biting after a shift), the share of the driven tyres the sim says are spinning, the revs on the line
+  const driven = v.w.map((w, i) => (w.engine ? i : -1)).filter((i) => i >= 0);
+  const spin = driven.filter((i) => v.wheels[i].slipping && v.wheels[i].inContact).length / driven.length;
+  const kick = stepKick(r.kick, { accel: frameAccel(r.fxSpeed, v.forwardSpeedCmS, stepped), spin, rpm01: v.engineRPM / c.engine.maxRPM, throttle: r.throttle, standing: run.leave === null }, dt, MOTION.on);
+  if (stepped > 0) r.fxSpeed = v.forwardSpeedCmS;
+  r.kickOut = kick;                                                     // the page check reads what the camera was given
   const B = r.body, centre = [0, 1, 2].map((k) => v.pos[k] + X[k] * B.origin[0] + Y[k] * B.origin[1] + Z[k] * B.origin[2]);
   stepDirector(r.director, { left: run.leave !== null, distM: (v.pos[0] - r.x0) / 100, carX: centre[0], quarterX: Drag.MARKS.quarter * 100 }, dt);   // UC-35.1-4
   r.shot = DRAGCAM.film ? shotId(r.director) : 'chase';
@@ -1895,11 +1926,13 @@ function tickDrag(dt) {
     const f = framing(r.director, { c: centre, len: B.box_extent[0] * 2, halfWidth: B.box_extent[1], height: B.box_extent[2] * 2 }, { laneY: DRAG_LANE_Y_CM, quarterX: Drag.MARKS.quarter * 100, aspect: cam.aspect,
       other: r.opp && r.opp.centre ? { c: r.opp.centre, len: B.box_extent[0] * 2, halfWidth: B.box_extent[1], height: B.box_extent[2] * 2 } : undefined });   // UC-38.3: both cars while near
     cam.position.fromArray(toThreePoint(f.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(f.look));
-    cam.fov = verticalFor(f.hfovDeg + (f.mounted ? sf.fovDeg : 0), cam.aspect);   // UC-35.3b: a camera riding with the car widens and shakes with it
+    const kw = f.mounted ? 1 : KICK.FIXED_SHARE;                       // UC-44.4 the kick: whole riding with the car, half standing beside it (its lens punches in)
+    cam.fov = verticalFor(f.hfovDeg + (f.mounted ? sf.fovDeg : 0) + kickLens(kick.fovDeg, f.mounted), cam.aspect);   // UC-35.3b: a camera riding with the car widens and shakes with it
     if (f.mounted) { cam.rotateX(sf.pitchDeg * DEG); cam.rotateZ(sf.rollDeg * DEG); cam.rotateY(sf.yawDeg * DEG); }
+    cam.rotateX(kick.pitchDeg * kw * DEG); cam.rotateZ(kick.rollDeg * kw * DEG); cam.rotateY(kick.yawDeg * kw * DEG);
   } else {
     cam.position.fromArray(toThreePoint(rig.eye)); cam.up.set(0, 1, 0); cam.lookAt(...toThreePoint(rig.look));
-    cam.fov = verticalFovDeg(r.fov + sf.fovDeg, cam.aspect); cam.rotateX(sf.pitchDeg * DEG); cam.rotateZ(sf.rollDeg * DEG); cam.rotateY(sf.yawDeg * DEG);
+    cam.fov = verticalFovDeg(r.fov + sf.fovDeg + kick.fovDeg, cam.aspect); cam.rotateX((sf.pitchDeg + kick.pitchDeg) * DEG); cam.rotateZ((sf.rollDeg + kick.rollDeg) * DEG); cam.rotateY((sf.yawDeg + kick.yawDeg) * DEG);
   }
   cam.updateProjectionMatrix();
   $('drag').classList.toggle('running', run.leave !== null);   // UC-35.6: the tree steps back once the car has left
@@ -1919,13 +1952,51 @@ function tickDrag(dt) {
   $('hud-speed').querySelector('#shift').classList.toggle('on', sl.shift);
   // the slip, once, at the line
   // filmed, it waits for the finish camera to see the car through the line and past it (about a second, UC-35.4)
-  if (run.done && !r.slipShown && !r.over && (!DRAGCAM.film || r.shot === 'roll')) { r.slipShown = true; if (run.foul) showFail(r, 'Red light: gone before the green'); else showDragSlip(r); }   // UC-22.5
-  laySkids(trackView.skids, v, Y, r.wheelWidths, dt);
+  if (crossed) finishMoment(r);                                         // UC-44.4 the line
+  if (run.done && !r.slipShown && !r.over && (!DRAGCAM.film || r.shot === 'roll') && !(r.fin && r.fin.hold > 0)) { r.slipShown = true; if (run.foul) showFail(r, 'Red light: gone before the green'); else showDragSlip(r); }   // UC-22.5
+  laySkids(trackView.skids, v, Y, r.wheelWidths, dt, { smoke: false, markAlpha: DRAG_MARK_ALPHA });   // UC-44.4 the strip's smoke is its own (below)
+  // UC-44.4 tyre smoke from each driven tyre the sim says is spinning (drag_fx.js emitSmoke), as hard as it slides, thrown back along the car
+  if (stepped > 0) {
+    const fwd = toThreeDir(X), carVel = toThreeDir(v.vel).map((x) => x / 100), P = dragView.smoke.pool;
+    for (const i of driven) {
+      const ws = v.wheels[i];
+      if (!ws.inContact || !ws.contactCm || !ws.slipping) { P.acc[i] = 0; continue; }
+      emitSmoke(P, i, toThreePoint(ws.contactCm), fwd.map((x) => x * ws.slipCmS / 100), carVel, slideAmount(ws), stepped, Math.random);
+    }
+  }
+  cam.updateMatrixWorld(); dragView.smoke.update(cam, dt);
   r.throttle += (input.throttle - r.throttle) * Math.min(1, dt * 8);
   const slide = v.wheels.reduce((a, w) => a + slideAmount(w), 0) / v.wheels.length;
   driveSound(audio, { rpm: v.engineRPM, throttle: r.throttle, speedCmS: v.forwardSpeedCmS, slide, gear: v.gear, running: true });
+  // UC-44.4 the held frame at the line (drag_fx.js FINISH): the crossing frame stays on screen as a copy (#dphoto) and nothing is drawn
+  // under it while it holds; a resize ends it (the copy would be stretched)
+  const F = r.fin;
+  if (F && F.hold > 0 && F.drawn) { F.hold -= dt; if (canvas.width !== F.w || canvas.height !== F.h) F.hold = 0; if (F.hold > 0) return; $('dphoto').hidden = true; }
   rainDay.frame(cam, dt);                                               // UC-40: the rain around this camera, the sun on its screen
   r.post.render();
+  if (F && !F.drawn) { F.drawn = true; if (F.hold > 0) holdPhoto(); }
+}
+// the crossing frame copied off the canvas in the task that drew it, while the browser still holds it (WebGL's drawing buffer and
+// WebGPU's current texture are only readable then): what a held canvas shows when nothing is drawn depends on how the browser presents
+// it (measured 11-08: WebGL 2 kept an older frame), a copy does not
+function holdPhoto() {
+  const p = $('dphoto');
+  if (p.width !== canvas.width || p.height !== canvas.height) { p.width = canvas.width; p.height = canvas.height; }
+  p.getContext('2d').drawImage(canvas, 0, 0); p.hidden = false;
+}
+// UC-44.4 / 44.5 the line: the frame the visitor's car crosses it is held (drag_fx.js FINISH) with a flash and the result over it, who
+// crossed first and by how much (dragResult: the two slips on the run's clock), and a win or a loss heard. A red light holds nothing:
+// the fail panel says it (showFail)
+const DRAG_MARK_ALPHA = 0.55;                                          // AUTHORED: the strip's rubber at full slide (the circuit's 0.34 vanished on the wet launch pad)
+function finishMoment(r) {
+  const s = Drag.slip(r.run), res = dragResult(r, s);
+  r.fin = { res, hold: s.foul ? 0 : FINISH.hold_s, drawn: false, w: canvas.width, h: canvas.height };
+  if (s.foul) return;
+  const W = autoWords(r, verdictWords(res, r.online ? r.online.name : r.opp && r.opp.rival ? r.opp.rival.name : null));
+  $('dfinv').textContent = W.head; $('dfinl').textContent = W.line; $('dfinet').textContent = fmt(s.quarter_s) + ' s @ ' + Math.round(s.quarter_kmh) + ' km/h';
+  $('dfin').className = 'v-' + res.kind; $('dfin').hidden = false; document.body.classList.add('dragfin');
+  if (MOTION.on && !REDUCED) { const f = $('dflash'); f.style.animationDuration = FINISH.flash_s + 's'; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }   // the photo's flash: not with Motion off
+  blip(audio, res.kind === 'win' ? 'best' : res.kind === 'lose' ? 'lose' : 'lap');
 }
 // UC-39 the traction bar (traction.js reads the driven tyres off the sim: left of the band the engine bogs, in it the tyres grip,
 // right of it they spin). Shown for the launch: staging, and until a second past 60 ft
@@ -2113,7 +2184,8 @@ async function openOnline() {
     },
     onGo: () => { if (race && race.online) { race.onlineGo = true; armDrag(); $('donline').hidden = true; } },
     onPose: (p) => { if (race && race.online && race.opp) race.opp.rec.push(p); },
-    onFinish: (f) => { if (!(race && race.online)) return; race.onlineResult = f; const el = document.querySelector('#dslip .rival'); if (el) el.outerHTML = onlineBlock(race); },
+    onFinish: (f) => { if (!(race && race.online)) return; race.onlineResult = f; const el = document.querySelector('#dslip .rival'); if (el) el.outerHTML = onlineBlock(race);
+      const vd = document.querySelector('#dslip .verdict'); if (vd) vd.outerHTML = verdictHTML(race, Drag.slip(race.run)); },   // UC-44.5 the verdict, once both times are in
     onLeave: (l) => { if (race && race.online && race.online.peerId === l.peerId) onlineSay((l.name || 'The other driver') + ' left' + (l.during === 'go' || l.during === 'racing' ? ': the run goes on alone.' : '.')); },
     onError: (e) => onlineSay('Online, ' + e.where + ': ' + e.message) });
   Online.mountLobby(box, online, { carName: (k) => SHORT[k] || k });
@@ -2146,16 +2218,38 @@ function onlineBlock(r) {
     '<p class="q">' + esc(f.why || '') + '</p></div>';
 }
 function rivalBlock(r, s) {
-  const o = r.opp, mine = r.run.move !== null && r.run.quarterAt !== null ? r.run.move + r.run.quarterAt : null;
+  const o = r.opp;
   lastDrag = { car: r.entry.name, reaction: s.reaction_s, sixty: s.sixty_s, eighth: s.eighth_s, quarter: s.quarter_s, foul: !!s.foul, stalled: false, result: 'none', rival: null };
   if (r.online) { sendOnlineFinish(r); return onlineBlock(r); }        // UC-42.5 (a person's name never goes to the sales chat)
   if (!o || !o.rival) return '';
-  const won = !s.foul && mine !== null && mine < o.finishT, rs = o.slip, rt = rs.reaction_s === null ? null : rs.reaction_s + o.rival.reaction;
+  // UC-44.5 the same result the verdict and the line show (dragResult). Was: against the rival's first RECORDED pose past the line (1/60 s
+  // apart, up to one physics step late); now its own slip, at the physics' own step, as the visitor's
+  const res = dragResult(r, s), won = res.kind === 'win', rs = o.slip, rt = rs.reaction_s === null ? null : rs.reaction_s + o.rival.reaction;
   const line = rivalSay(r, won ? 'lose' : 'win');
   lastDrag.result = won ? 'win' : 'lose'; lastDrag.rival = { name: o.rival.name, car: o.rival.key, quarter: rs.quarter_s };
-  return '<div class="rival ' + (won ? 'won' : 'lost') + '"><p class="kick">' + (won ? 'You beat ' : 'Beaten by ') + esc(o.rival.name) + ' in the ' + esc(SHORT[o.rival.key]) + '</p>' +
+  return '<div class="rival ' + (won ? 'won' : res.kind === 'tie' ? '' : 'lost') + '"><p class="kick">' + (won ? 'You beat ' : res.kind === 'tie' ? 'A dead heat with ' : 'Beaten by ') + esc(o.rival.name) + ' in the ' + esc(SHORT[o.rival.key]) + '</p>' +
     '<p>' + esc(o.rival.name) + ': reaction ' + (rt === null ? '--' : fmt(rt)) + ' s · 1/4 mile ' + (rs.quarter_s === null ? '--' : fmt(rs.quarter_s)) + ' s</p>' +
     '<p class="q">' + esc(o.rival.name) + ': "' + esc(line) + '"</p></div>';
+}
+// UC-44.5 who crossed first and by how much (drag_fx.js raceResult): the visitor's slip against the rival's own (its house run's slip, its
+// driver's reaction added); online, the result the two pages agreed (online.js); alone, the time itself
+function dragResult(r, s) {
+  if (r.online) {
+    const f = r.onlineResult;
+    if (f && (f.result === 'win' || f.result === 'lose' || f.result === 'tie') && typeof f.margin_s === 'number') return { kind: f.result, margin_s: f.margin_s, holeshot: false, et: s.quarter_s };
+    return raceResult(s, null);
+  }
+  const o = r.opp;
+  return raceResult(s, o && o.rival ? { reaction_s: o.slip.reaction_s + o.rival.reaction, quarter_s: o.slip.quarter_s } : null);
+}
+// the slip's verdict: the result in a word, the margin, the time and the trap speed, big, above the table (UC-44.5)
+// UC-45.2 an AUTO run: the house driver drove it, so the verdict is the car's (the strip agent's question 11-09: an AUTO run said YOU WIN)
+function autoWords(r, W) { return r.selfDrive && W.head === 'YOU WIN' ? Object.assign({}, W, { head: 'AUTO WINS', note: 'The car drove itself: a win, but not yours to keep.' }) : W; }
+function verdictHTML(r, s) {
+  const res = dragResult(r, s), W = autoWords(r, verdictWords(res, r.online ? r.online.name : r.opp && r.opp.rival ? r.opp.rival.name : null));
+  if (!W.head) return '';
+  return '<div class="verdict v-' + res.kind + '"><b>' + esc(W.head) + '</b><span>' + esc(W.line) + '</span><p>' + fmt(s.quarter_s) + ' s @ ' + Math.round(s.quarter_kmh) + ' km/h · reaction ' +
+    (s.reaction_s >= 0 ? '+' : '') + fmt(s.reaction_s) + '</p>' + (W.note ? '<p class="hs">' + esc(W.note) + '</p>' : '') + '</div>';
 }
 function showDragSlip(r) {
   const s = Drag.slip(r.run), b = r.best.slip;
@@ -2167,7 +2261,7 @@ function showDragSlip(r) {
   const grades = s.shifts.map((x) => '<span class="g-' + x.grade.toLowerCase() + '">' + x.from + '→' + (x.from + 1) + ' ' + x.grade.toLowerCase() + '</span>').join('');
   r.over = 'slip'; document.body.classList.add('dragover');            // UC-22.5 the slip alone, RACE AGAIN on top of it
   $('dslip').innerHTML = '<div class="slipgo"><button class="act go" id="drerun">RACE AGAIN<small>R</small></button><button class="act" id="dlot">Lot<small>Esc</small></button></div>' +
-    '<p class="kick">Time slip</p><h3>' + esc(r.title) + (r.selfDrive ? ' <span class="autotag">AUTO</span>' : '') + '</h3>' + rivalBlock(r, s) +
+    verdictHTML(r, s) + '<p class="kick">Time slip</p><h3>' + esc(r.title) + (r.selfDrive ? ' <span class="autotag">AUTO</span>' : '') + '</h3>' + rivalBlock(r, s) +
     (s.foul ? '<p class="foul">RED LIGHT: left ' + fmt(-s.reaction_s) + ' s before the green</p>' : '') +
     '<table><tr><th></th><td>You</td><td>Sim, best shifts</td><td>Dragy owners</td></tr>' +
     row('Reaction', s.reaction_s === null ? '--' : (s.reaction_s >= 0 ? '+' : '') + fmt(s.reaction_s), fmt(b.reaction_s), '') +

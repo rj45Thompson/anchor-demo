@@ -81,7 +81,7 @@ function build(A) {
   const windG = c.createGain(); windG.gain.value = 0;
   wind.connect(wl).connect(windG).connect(master);
   for (const o of [saw, sub, intake, tyre, wind]) o.start();
-  A.nodes = { master, engineBus, lp, saw, sub, bp, intakeG, sqG, scrubG, windG };
+  A.nodes = { master, engineBus, lp, saw, sub, bp, intakeG, sqG, scrubG, windG, noise };   // noise: the crack's too (UC-44.4)
 }
 
 // every frame of the drive: rpm (READ engine model), throttle 0..1, speed (cm/s), slide 0..1, gear
@@ -154,5 +154,16 @@ export function blip(A, kind) {
   else if (kind === 'gate') tone(1320, 0.12, 0.18, 'sine');
   else if (kind === 'lap') { tone(784, 0.25, 0.3, 'triangle'); tone(988, 0.25, 0.3, 'triangle', 0.12); tone(1319, 0.5, 0.3, 'triangle', 0.24); }
   else if (kind === 'best') { [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.4, 0.28, 'triangle', i * 0.1)); }
+  else if (kind === 'lose') { tone(523, 0.3, 0.26, 'triangle'); tone(392, 0.55, 0.26, 'triangle', 0.18); }   // UC-44.4 crossed second: two falling notes (AUTHORED)
   else throw new Error('audio.js: no sound called ' + kind);
+}
+// UC-44.4 an upshift's exhaust crack: a short burst of low noise as the drive is cut and comes back, louder the higher the revs it left
+// (k 0..1, the shift's rpm over the redline). AUTHORED voicing, like the engine's; no recording
+export function crack(A, k) {
+  if (!A.ctx || !A.nodes) return;
+  const c = A.ctx, t = c.currentTime, src = c.createBufferSource(), lp = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = A.nodes.noise; lp.type = 'lowpass';   // the engine's own noise, made when the sound started (a new one at the first shift cost a frame) lp.frequency.value = 520; lp.Q.value = 6;
+  const v = 0.12 + 0.4 * Math.max(0, Math.min(1, k)) ** 2;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.006); g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+  src.connect(lp).connect(g).connect(A.nodes.master); src.start(t, Math.random() * 1.5); src.stop(t + 0.18);
 }

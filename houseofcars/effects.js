@@ -35,8 +35,10 @@ export function clearSkids(S) {
   for (const p of S.smoke.parts) { p.life = 0; p.sprite.visible = false; }
 }
 
-// one frame: each wheel that slides adds a quad from where it was to where it is now
-export function laySkids(S, v, carRightUe, widthsCm, dt) {
+// one frame: each wheel that slides adds a quad from where it was to where it is now. o (UC-44.4, the strip): { smoke: false } leaves the
+// smoke to the strip's own (drag_fx.js buildSmoke), { markAlpha } a mark's darkness at full slide; the circuit passes neither (as before)
+export function laySkids(S, v, carRightUe, widthsCm, dt, o = {}) {
+  const smoke = o.smoke !== false, markAlpha = o.markAlpha ?? 0.34;
   const t = performance.now() / 1000; S.now.value = t;
   v.wheels.forEach((w, i) => {
     const k = slideAmount(w);
@@ -48,13 +50,13 @@ export function laySkids(S, v, carRightUe, widthsCm, dt) {
     if (prev && Math.hypot(p[0] - prev.p[0], p[1] - prev.p[1]) < 400) {
       const q = S.next; S.next = (S.next + 1) % SEG;
       [prev.L, prev.R, L, R].forEach((c, j) => { S.pos.set(toThreePoint(c), 3 * (4 * q + j)); });
-      const a0 = 0.34 * prev.k, a1 = 0.34 * k;
+      const a0 = markAlpha * prev.k, a1 = markAlpha * k;
       S.col.set([0.05, 0.05, 0.05, a0, 0.05, 0.05, 0.05, a0, 0.05, 0.05, 0.05, a1, 0.05, 0.05, 0.05, a1], 16 * q);
       S.sk.set([0, t, 1, t, 0, t, 1, t], 8 * q);
       S.geo.attributes.position.needsUpdate = true; S.geo.attributes.color.needsUpdate = true; S.geo.attributes.skid.needsUpdate = true;
     }
     S.last[i] = { p, L, R, k };
-    if (k > 0.35) puff(S.smoke, toThreePoint(p), k);
+    if (smoke && k > 0.35) puff(S.smoke, toThreePoint(p), k);
   });
   tickSmoke(S.smoke, dt);
 }
