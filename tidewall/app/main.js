@@ -317,7 +317,13 @@ class Game {
       input: this.input.takeCamera(),
     };
     if (this.touchpad.takeFrame()) camera.input.toggle = true;
-    this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha, camera }, dt);
+    // QRLAND (round 5): the join screen lays its seats and rows out around what the page draws over the canvas: the phone room's QR
+    // panel (PhonePad's own box, [data-phonepad]; its host script offers a corner (place) and a parent, no size) and the how-to
+    // card, as measured last frame (the canvas fills the window, so these CSS px are the HUD's)
+    const menuCover = !this.sw.attract && this.menu.screen === Screen.Setup
+      ? ['[data-phonepad]', '#ui .howto'].map((q) => document.querySelector(q)).filter(Boolean).map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0)
+      : [];
+    this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha, camera, menuCover }, dt);
     this.pointerCursor();
     const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup;
     // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its

@@ -8,7 +8,7 @@
 // Behind the menus (title, join, scores) it drops to a low wide angle that shows the horizon and the sky (sky.js) and drifts slowly
 // round the island (graphics round 2). A match with no human player (the attract demo) shows the whole island.
 import * as THREE from 'three/webgpu';
-import { Phase, ShipSunk, CastleRuined } from '../core/index.js';
+import { Phase, ShipSunk, CastleRuined, Occupant } from '../core/index.js';
 
 export const FOV = 38;                                          // AUTHORED: vertical field of view, degrees
 // AUTHORED: degrees down from level for play and for REPAIR, landscape and portrait (portrait looks flatter so the frame is used)
@@ -23,6 +23,13 @@ const FIT_MARGIN = 0.04;                                        // AUTHORED: fra
 // LOOK_AHEAD seconds of the hero's motion lead the frame (at most LOOK_MAX squares)
 const PAD = 1.5, MIN_ACROSS = 15, LOOK_AHEAD = 0.5, LOOK_MAX = 3;
 const CLAIM_NEAR = 18, CLAIM_CASTLES = 2;                       // AUTHORED: free castles near a hero framed in CLAIM
+// AUTHORED (round 5, REPAIRFAR): in REPAIR home is the player's territory, castles and their own walls within HOME_WALLS squares
+// of those castles (a broken ring encloses nothing, so territory alone framed the castle and cut the ring it is mending), and the
+// hero and its held piece join home's frame only while within REPAIR_NEAR squares of it. A person's cursor never moves itself (the private model's MatchController:
+// "A person's cursor never moves itself"; it is put on a castle only on a new map), so a touch player's hero opens REPAIR wherever
+// the last ship tap sent it: framing both measured 64 squares across and a 6 px hero in phone landscape (TASKS.md REPAIRFAR).
+// Farther, the camera frames home alone and the HUD marks the hero at the free rect's edge (renderer heroMarks).
+const HOME_WALLS = 7, REPAIR_NEAR = 4;
 // SHIPS_FRAMED: afloat ships framed in BATTLE (nearest to the player's castles); SPREAD_ARC: radians of directions past which only
 // the nearest one is
 const SHIPS_FRAMED = 3, SPREAD_ARC = THREE.MathUtils.degToRad(150);
@@ -69,15 +76,18 @@ export class CameraDirector {
     }
     const near = (p, list, d) => list.some((q) => Math.max(Math.abs(p.x - q.x), Math.abs(p.z - q.z)) <= d);
     const claimed = new Set(); for (let s = 0; s < match.playerCount; s++) if (match.player(s).claimedCastle) claimed.add(match.player(s).claimedCastle);
+    const away = [];
     for (const s of humans) {
       const own = area.get(s), pointer = hints.pointerSlot === s, hero = units.heroes[s];
       // the hero, led by its motion (not the pointer player's: its hero follows a still pointer, so the camera would chase it)
+      const heroPts = [];
       if (hero && hero.g.visible && !pointer) {
         const at = hero.at, was = this.prev.get(s) || at.clone(), v = dt > 0 ? at.clone().sub(was).divideScalar(dt) : new THREE.Vector3();
         this.prev.set(s, at.clone());
         const lead = v.multiplyScalar(LOOK_AHEAD); if (lead.length() > LOOK_MAX) lead.setLength(LOOK_MAX);
-        pts.push({ x: at.x, z: at.z }, { x: at.x + lead.x, z: at.z + lead.z });
+        heroPts.push({ x: at.x, z: at.z }, { x: at.x + lead.x, z: at.z + lead.z });
       }
+      if (match.phase !== Phase.Repair) pts.push(...heroPts);
       switch (match.phase) {
         case Phase.Claim: {
           const hp = hero ? { x: hero.at.x, z: hero.at.z } : null;
@@ -117,8 +127,19 @@ export class CameraDirector {
           break;
         }
         case Phase.Repair: {
-          pts.push(...own);
-          if (!pointer) { const gh = ctl.ghostOf(s); if (gh.cells) for (const c of gh.cells) pts.push({ x: c.x + 0.5, z: c.y + 0.5 }); }
+          const home = own.slice(), forts = [...units.castles.values()].filter((e) => !e.castle.ruined && units.castleOwner(e.castle).slot === s).map((e) => e.g.position);
+          for (let y = 0; y < g.height; y++) for (let x = 0; x < g.width; x++) {
+            if (g.occupantAt(x, y) !== Occupant.Wall || g.ownerAt(x, y) !== s) continue;
+            const p = { x: x + 0.5, z: y + 0.5 };
+            if (forts.some((c) => Math.max(Math.abs(p.x - c.x), Math.abs(p.z - c.z)) <= HOME_WALLS)) home.push(p);
+          }
+          pts.push(...home);
+          const withHero = heroPts.slice();
+          if (!pointer) { const gh = ctl.ghostOf(s); if (gh.cells) for (const c of gh.cells) withHero.push({ x: c.x + 0.5, z: c.y + 0.5 }); }
+          // the hero and its piece join home's frame while within REPAIR_NEAR of it; else home alone and an edge mark (a player
+          // with no land, castle or wall left has only the hero to frame)
+          if (!home.length || !withHero.length || withHero.every((p) => near(p, home, REPAIR_NEAR))) pts.push(...withHero);
+          else away.push({ slot: s, x: withHero[0].x, z: withHero[0].z });
           break;
         }
         default: pts.push(...own);
@@ -138,7 +159,7 @@ export class CameraDirector {
     const L = board.landBounds();
     const inside = (p) => p.x >= -1 && p.x <= g.width + 1 && p.z >= -1 && p.z <= g.height + 1;
     const framed = pts.filter(inside);
-    return { points: framed, dropped: pts.length - framed.length, land: L };
+    return { points: framed, dropped: pts.length - framed.length, land: L, away };
   }
 }
 

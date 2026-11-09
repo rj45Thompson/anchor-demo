@@ -67,7 +67,7 @@ export class Hud {
     if (!menu || !full) return;
     switch (screen) {
       case Screen.Title: this.drawTitle(menu, seconds, !!m); break;
-      case Screen.Setup: this.drawSetup(menu, seconds); break;
+      case Screen.Setup: this.drawSetup(menu, seconds, view.menuCover || []); break;
       case Screen.Pause: this.drawRows('PAUSED', MenuModel.PauseRows, menu.row, ''); break;
       case Screen.Decide: this.drawDecide(view, seconds); break;
       case Screen.Results: this.drawResults(menu, seconds); break;
@@ -108,6 +108,24 @@ export class Hud {
       c.beginPath(); c.moveTo(tx, ty); c.lineTo(bx + ox, by + oy); c.lineTo(cx - dx * r * 0.1, cy - dy * r * 0.1); c.lineTo(bx - ox, by - oy); c.closePath();
       c.fillStyle = '#ff3a1f'; c.fill(); c.lineWidth = 2; c.strokeStyle = 'rgba(255,255,255,0.9)'; c.stroke();
     });
+  }
+
+  /** REPAIRFAR (round 5): a disc in the player's colour at the free rect's edge with an arrow pointing at their hero, for a hero
+   *  the REPAIR frame left out (camera.js REPAIR_NEAR). Not a ship chevron: round, white-rimmed, in the player's own colour.
+   *  marks: [{ x, y, colour }] screen px. */
+  heroMarks(marks, free, seconds) {
+    const c = this.ctx, E = 26;
+    for (const m of marks) {
+      const cx = Math.min(Math.max(m.x, free.x0 + E), free.x1 - E), cy = Math.min(Math.max(m.y, free.y0 + E), free.y1 - E);
+      let dx = m.x - cx, dy = m.y - cy, len = Math.hypot(dx, dy);
+      if (len < 1) { dx = 0; dy = -1; len = 1; }
+      dx /= len; dy /= len;
+      const r = 12 + 1.5 * Math.sin(seconds * 5), tx = cx + dx * (r + 12), ty = cy + dy * (r + 12), ox = -dy * 8, oy = dx * 8;
+      c.beginPath(); c.moveTo(tx, ty); c.lineTo(cx + dx * r + ox, cy + dy * r + oy); c.lineTo(cx + dx * r - ox, cy + dy * r - oy); c.closePath();
+      c.fillStyle = m.colour; c.fill(); c.lineWidth = 2; c.strokeStyle = 'rgba(255,255,255,0.95)'; c.stroke();
+      c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.fillStyle = m.colour; c.fill(); c.stroke();
+      c.beginPath(); c.arc(cx, cy, r * 0.42, 0, Math.PI * 2); c.fillStyle = 'rgba(255,255,255,0.95)'; c.fill();
+    }
   }
 
   drawMatch(view, seconds, banner) {
@@ -260,16 +278,37 @@ export class Hud {
     this.text('Defend your castle with up to three friends', W / 2, H * 0.7, Math.max(13, u * 1.9), 'rgba(255,255,255,0.85)', 'center', 700);
   }
 
-  drawSetup(menu, seconds) {
+  /** The join screen. cover: DOM rects drawn over the canvas that the seats and rows must stay clear of (QRLAND, round 5: the
+   *  phone room's QR panel, which PhonePad places at a fixed corner at a fixed size, and the how-to card); measured by the page
+   *  each frame (main.js menuCover). A seat or row band that would cross one moves into the widest gap beside it, or below it
+   *  when that gap is too narrow; with no cover crossed the layout is the centred one. */
+  drawSetup(menu, seconds, cover) {
     const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60);
     this.dim(0.5);
     // FOOT: CSS px the page's own foot takes at the bottom (app/style.css .foot, compact under 560 px of height); the rows must end
     // above it. On a short screen (a phone held sideways) the name, the cards and the rows shrink to fit.
     const FOOT = H < 560 ? 84 : 120, short = H < 560;
     this.logo(short ? H * 0.08 : H * 0.12, short ? Math.max(22, H * 0.065) : Math.max(30, u * 6), seconds);
+    // AUTHORED: GAP px kept between the menu and a cover; the narrowest band the four seats (SEATS_NEED) and the rows (ROWS_NEED:
+    // a label and "◀ GULLROCK ISLE ▶" side by side) are laid in before they move below the cover instead
+    const GAP = 12, SEATS_NEED = Math.min(W - 20, 480), ROWS_NEED = Math.min(W - 20, 340);
+    const crosses = (y0, y1, x0, x1) => cover.some((c) => c.top < y1 && c.bottom > y0 && c.left < x1 && c.right > x0);
+    const gapAt = (y0, y1) => {                        // the widest x span in [0, W] no cover crosses between y0 and y1
+      let iv = [[0, W]];
+      for (const c of cover) if (c.top < y1 && c.bottom > y0) iv = iv.flatMap(([a, b]) => [[a, Math.min(b, c.left - GAP)], [Math.max(a, c.right + GAP), b]]).filter(([a, b]) => b - a > 1);
+      return iv.reduce((best, v) => (!best || v[1] - v[0] > best[1] - best[0] ? v : best), null) || [0, 0];
+    };
+    const below = (y0, y1) => Math.max(y0, ...cover.filter((c) => c.top < y1 && c.bottom > y0).map((c) => c.bottom + GAP));
     // the four seats: joined ones in their colour, open ones waiting for a button
-    const cw = Math.min(200, (W - 60) / 4 - 12), ch = short ? Math.max(44, H * 0.14) : Math.max(70, u * 11), y = short ? H * 0.17 : H * 0.26;
-    let x = (W - (cw + 12) * 4 + 12) / 2;
+    let cw = Math.min(200, (W - 60) / 4 - 12), y = short ? H * 0.17 : H * 0.26, sx0 = 0, sx1 = W;
+    const ch = short ? Math.max(44, H * 0.14) : Math.max(70, u * 11);
+    const seatsW = (cw + 12) * 4 - 12;
+    if (crosses(y, y + ch, (W - seatsW) / 2, (W + seatsW) / 2)) {
+      let g = gapAt(y, y + ch);
+      if (g[1] - g[0] < SEATS_NEED) { y = below(y, y + ch); g = gapAt(y, y + ch); }
+      [sx0, sx1] = g; cw = Math.min(cw, (sx1 - sx0 - 20) / 4 - 9);
+    }
+    let x = (sx0 + sx1 - ((cw + 12) * 4 - 12)) / 2;
     for (let s = 0; s < MenuModel.Seats; s++) {
       const j = menu.joined[s];
       this.panel(x, y, cw, ch, 14, j ? PLAYER_CSS[s] : 'rgba(255,255,255,0.08)', j ? '#fff' : 'rgba(255,255,255,0.35)');
@@ -278,22 +317,29 @@ export class Hud {
       this.hit({ kind: 'seat', seat: s }, x, y, x + cw, y + ch);
       x += cw + 12;
     }
-    const rows = MenuModel.SetupRows, rh = Math.min(Math.max(30, u * 4.6), (H - FOOT - y - ch) / 6.6), top = y + ch + rh;
-    const half = Math.min(230, W / 2 - 10), lab = half - 30;     // the rows' half width and where a label starts (narrow on a phone)
+    // the rows end above the foot and above any cover below the seats that leaves them no ROWS_NEED gap (a how-to card across a
+    // portrait phone); beside a cover they centre in the widest gap
+    let floor = H - FOOT;
+    for (const c of cover) if (c.top > y + ch) { const g = gapAt(c.top, c.bottom); if (g[1] - g[0] < ROWS_NEED) floor = Math.min(floor, c.top - GAP); }
+    const rows = MenuModel.SetupRows, rh = Math.min(Math.max(30, u * 4.6), (floor - y - ch) / 6.6), top = y + ch + rh;
+    let half = Math.min(230, W / 2 - 10), cx = W / 2;            // the rows' half width (narrow on a phone) and their centre
+    const ry0 = top - rh * 0.45, ry1 = top + (rows.length - 1) * rh + rh * 0.45;
+    if (crosses(ry0, ry1, cx - half, cx + half)) { const g = gapAt(ry0, ry1); cx = (g[0] + g[1]) / 2; half = Math.min(half, (g[1] - g[0]) / 2); }
+    const lab = half - 30;                                       // where a label starts and a value ends, from the centre
     for (let i = 0; i < rows.length; i++) {
       const sel = i === menu.row, yy = top + i * rh, raw = menu.valueOfRow(i);
       const val = i === MenuModel.RowMap ? HudViewModel.pretty(raw) : raw;   // "GullrockIsle" -> "GULLROCK ISLE", as the match's top bar says it
-      if (sel) this.panel(W / 2 - half, yy - rh * 0.45, half * 2, rh * 0.9, rh * 0.45, 'rgba(255,255,255,0.2)', '#fff');
-      this.text(rows[i], val ? W / 2 - lab : W / 2, yy, rh * 0.5, sel ? '#fff' : 'rgba(255,255,255,0.75)', val ? 'left' : 'center');
-      if (val) this.text((sel ? '◀ ' : '') + val + (sel ? ' ▶' : ''), W / 2 + lab, yy, rh * 0.5, sel ? '#ffe08a' : 'rgba(255,224,138,0.75)', 'right');
+      if (sel) this.panel(cx - half, yy - rh * 0.45, half * 2, rh * 0.9, rh * 0.45, 'rgba(255,255,255,0.2)', '#fff');
+      this.text(rows[i], val ? cx - lab : cx, yy, rh * 0.5, sel ? '#fff' : 'rgba(255,255,255,0.75)', val ? 'left' : 'center');
+      if (val) this.text((sel ? '◀ ' : '') + val + (sel ? ' ▶' : ''), cx + lab, yy, rh * 0.5, sel ? '#ffe08a' : 'rgba(255,224,138,0.75)', 'right');
       const y0 = yy - rh * 0.45, y1 = yy + rh * 0.45;
       if (sel && val) {                                       // the arrows, measured in the font they were drawn in
         this.font(rh * 0.5); const all = this.ctx.measureText('◀ ' + val + ' ▶').width, arrow = this.ctx.measureText('◀ ').width;
-        const xr = W / 2 + lab, xl = xr - all;
+        const xr = cx + lab, xl = xr - all;
         this.hit({ kind: 'step', row: i, dir: -1 }, xl - 8, y0, xl + arrow, y1);
         this.hit({ kind: 'step', row: i, dir: 1 }, xr - arrow, y0, xr + 8, y1);
       }
-      this.hit({ kind: 'row', row: i }, W / 2 - half, y0, W / 2 + half, y1);
+      this.hit({ kind: 'row', row: i }, cx - half, y0, cx + half, y1);
     }
   }
 

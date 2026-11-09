@@ -337,7 +337,7 @@ class Renderer {
     const sp = (p) => { const v = new THREE.Vector3(p.x, this.board.groundAtPoint(p.x, p.z), p.z).project(cam); return { x: (v.x + 1) / 2 * W, y: (1 - v.y) / 2 * H }; };
     return { free: { ...this.rig.free }, targets: a ? a.points.map(sp) : [], dropped: a ? a.dropped : 0, across: this.rig.last.across,
              needed: this.rig.last.needed, state: this.rig.state, settled: !!this.rig.settled, turn: this.rig.turn,
-             userZoom: this.rig.user.zoom, userPan: this.rig.user.pan.length() };
+             userZoom: this.rig.user.zoom, userPan: this.rig.user.pan.length(), away: a ? a.away.length : 0, heroMarks: this.heroMarked || 0 };
   }
 
   /** A new match, built now (the level's build and its first draw belong to the moment a match starts, not to the first second of
@@ -421,6 +421,14 @@ class Renderer {
         if (!p.visible || p.x < f.x0 || p.x > f.x1 || p.y < f.y0 || p.y > f.y1) marks.push(p);
       }
       this.hud.shipMarks(marks, f, seconds);
+      // REPAIRFAR: a hero the REPAIR frame left out (too far from home, camera.js REPAIR_NEAR) gets a mark in its colour at the edge
+      const heroes = [];
+      if (this.aim) for (const h of this.aim.away) {
+        const p = project(new THREE.Vector3(h.x, this.board.groundAtPoint(h.x, h.z) + 0.6, h.z));
+        if (!p.visible || p.x < f.x0 || p.x > f.x1 || p.y < f.y0 || p.y > f.y1) heroes.push({ ...p, colour: '#' + this.units.colours[h.slot].getHexString(), slot: h.slot });
+      }
+      this.heroMarked = heroes.length;
+      this.hud.heroMarks(heroes, f, seconds);
     }
     // the wipe: when the match's phase (or round) or the menu screen changes, after the first frame
     // (a phase change of the demo playing behind a menu is not one: only a match the player is watching wipes on its phases)
