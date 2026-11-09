@@ -14,6 +14,8 @@
 export const SEATS = 4;
 const STICK_FULL = 1000;              // the controller's stick scale: -1000..1000
 const MENU_STEP = 500;                // a stick pushed past half way is one menu step, once per push
+const mid = (pts) => ({ x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 });
+const spread = (pts) => Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
 const TOUCH = 300;                    // stick travel that counts as a seat being touched (a bot seat hands over)
 
 /** Keyboard clusters: KeyboardEvent.code values per action. */
@@ -77,8 +79,15 @@ export class InputHub {
     // confirm / rotate / ready: the buttons pressed since the last take, for play (a left click is BOTH a menu click and a play
     // confirm, as on the private model's host; main.js uses each only where it belongs). WHEEL_GAP: ms between two wheel turns, so a
     // trackpad's burst of wheel events is one turn.
-    this.pointer = { x: NaN, y: NaN, moved: false, click: false, confirm: false, rotate: false, ready: false, lastWheel: -1e9 };
-    const WHEEL_GAP = 160;
+    this.pointer = { x: NaN, y: NaN, moved: false, click: false, confirm: false, rotate: false, ready: false, touch: false };
+    // the player's own camera since the last take (render/camera.js userInput): wheel steps, a drag's pan in px, a pinch ratio, the
+    // whole-island toggle (Z). A right DRAG pans and a right CLICK turns the piece (decided when the button lifts: RIGHT_DRAG px of
+    // travel make it a drag); two fingers that move pan and pinch, two that only tap turn the piece.
+    this.cam = { wheel: 0, panX: 0, panY: 0, pinch: 1, toggle: false };
+    const RIGHT_DRAG = 6, TWO_DRAG = 12;
+    this.right = null;              // a right button held: { x, y, travel }
+    this.fingerAt = new Map();      // where each finger on the board is (pointerId -> {x, y})
+    this.twoTravel = 0;
     const own2 = (e) => !(e.target instanceof Element && e.target.closest('a, button, input, select, textarea, [data-nogame]'));
     // a finger on the board: the hero goes where it touches, and the tap acts when it LIFTS (so a second finger can still make it a
     // two-finger tap, which turns the piece instead). A tap that began outside play (the START tap) acts on nothing in play.
@@ -86,17 +95,38 @@ export class InputHub {
     this.keysUsed = new Array(SEATS).fill(false); this.mouseUsed = false;
     this.playing = false;           // main.js says whether a match is being played, each tick
     const lift = (e) => {
-      if (e.pointerType !== 'touch' || !this.fingers.has(e.pointerId)) return;
-      this.fingers.delete(e.pointerId);
+      if (e.pointerType !== 'touch') {
+        if (e.button === 2 && this.right) { if (this.right.travel < RIGHT_DRAG) this.pointer.rotate = true; this.right = null; }   // a right click turns
+        return;
+      }
+      if (!this.fingers.has(e.pointerId)) return;
+      this.fingers.delete(e.pointerId); this.fingerAt.delete(e.pointerId);
       if (this.fingers.size > 0) return;
       const p = this.pointer;
-      if (this.twoFinger) { if (this.fingerInPlay) p.rotate = true; }
+      if (this.twoFinger) { if (this.fingerInPlay && this.twoTravel < TWO_DRAG) p.rotate = true; }
       else if (e.type === 'pointerup' && this.fingerInPlay && this.playing) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.confirm = true; }
       this.twoFinger = false;
     };
     target.addEventListener('pointerup', lift);
     target.addEventListener('pointercancel', lift);
     target.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch' && this.fingerAt.has(e.pointerId)) {
+        if (this.fingers.size >= 2) {                                   // two fingers: their middle pans, their spread zooms
+          const pts = [...this.fingerAt.values()], m0 = mid(pts), d0 = spread(pts);
+          this.fingerAt.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          const pts1 = [...this.fingerAt.values()], m1 = mid(pts1), d1 = spread(pts1);
+          this.cam.panX += m1.x - m0.x; this.cam.panY += m1.y - m0.y;
+          if (d0 > 1 && d1 > 1) this.cam.pinch *= d1 / d0;
+          this.twoTravel += Math.hypot(m1.x - m0.x, m1.y - m0.y) + Math.abs(d1 - d0);
+          return;                                                       // the hero does not follow a two-finger gesture
+        }
+        this.fingerAt.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+      if (this.right && (e.buttons & 2)) {                              // a right drag pans the camera
+        const dx = e.clientX - this.right.x, dy = e.clientY - this.right.y;
+        this.right.travel += Math.hypot(dx, dy); this.right.x = e.clientX; this.right.y = e.clientY;
+        if (this.right.travel >= RIGHT_DRAG) { this.cam.panX += dx; this.cam.panY += dy; }
+      }
       if (!own2(e)) return;
       const p = this.pointer, far = !(Math.abs(e.clientX - p.x) <= 2 && Math.abs(e.clientY - p.y) <= 2);
       p.x = e.clientX; p.y = e.clientY; if (far) p.moved = true;
@@ -106,27 +136,30 @@ export class InputHub {
       const p = this.pointer;
       this.anyKey = true;
       if (e.pointerType === 'touch') {
-        this.fingers.add(e.pointerId);
-        if (this.fingers.size === 1) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.click = true; this.fingerInPlay = this.playing; }
-        else this.twoFinger = true;
+        this.fingers.add(e.pointerId); this.fingerAt.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (this.fingers.size === 1) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.click = true; p.touch = true; this.fingerInPlay = this.playing; }
+        else { this.twoFinger = true; this.twoTravel = 0; }
         return;
       }
-      p.x = e.clientX; p.y = e.clientY; p.moved = true; this.mouseUsed = true;
+      p.x = e.clientX; p.y = e.clientY; p.moved = true; p.touch = false; this.mouseUsed = true;
       if (e.button === 0) { p.click = true; p.confirm = true; }           // the left button or a pen touch
-      else if (e.button === 2) p.rotate = true;                           // right: turn the piece
+      else if (e.button === 2) this.right = { x: e.clientX, y: e.clientY, travel: 0 };   // right: turn the piece (a click) or pan (a drag)
       else if (e.button === 1) { p.ready = true; e.preventDefault(); }    // middle: ready / swap tool (and no auto-scroll)
     });
     target.addEventListener('contextmenu', (e) => { if (own2(e)) e.preventDefault(); });   // the right button turns, it opens no menu
-    target.addEventListener('wheel', (e) => {
+    target.addEventListener('wheel', (e) => {                            // the wheel zooms the camera (down = out)
       if (!own2(e) || e.deltaY === 0) return;
-      const p = this.pointer, now = performance.now();
-      if (now - p.lastWheel >= WHEEL_GAP) { p.rotate = true; p.lastWheel = now; }
+      this.cam.wheel += Math.max(-3, Math.min(3, e.deltaY / (e.deltaMode === 1 ? 3 : 100)));
     }, { passive: true });
+    target.addEventListener('keydown', (e) => { if (e.code === 'KeyZ' && !e.repeat) this.cam.toggle = true; });   // whole island
   }
 
-  /** The pointer since the last call: { x, y (CSS px in the window), moved, click }; clears moved and click. */
+  /** The player's camera input since the last call (render/camera.js userInput's fields); clears it. */
+  takeCamera() { const c = this.cam; this.cam = { wheel: 0, panX: 0, panY: 0, pinch: 1, toggle: false }; return c; }
+
+  /** The pointer since the last call: { x, y (CSS px in the window), moved, click, touch (a finger) }; clears moved and click. */
   takePointer() {
-    const p = this.pointer, out = { x: p.x, y: p.y, moved: p.moved, click: p.click, confirm: p.confirm, rotate: p.rotate, ready: p.ready };
+    const p = this.pointer, out = { x: p.x, y: p.y, moved: p.moved, click: p.click, confirm: p.confirm, rotate: p.rotate, ready: p.ready, touch: p.touch };
     p.moved = p.click = p.confirm = p.rotate = p.ready = false;
     return out;
   }

@@ -5,7 +5,12 @@
 //   r.setMatch(match, seats)                  on a new match; seats = HudViewModel.seatOfSlot (null: seat = slot), the seat each
 //                                             player slot sits at, which picks its colour (a later view with other seats rebuilds)
 //   r.frame(view, dt)                         each animation frame, dt = seconds since the last frame;
-//                                             view = { match, controllers[], hud, menu, events[], alpha }
+//                                             view = { match, controllers[], hud, menu, events[], alpha, camera? }; camera (the
+//                                             page's, optional) = { humans: [slot], pointerSlot, cover: [DOMRect of each on-screen
+//                                             control over the canvas], input: CameraRig.userInput's fields }; without it (or with
+//                                             no human) the camera shows the whole island
+//   r.screenTurn                              the camera's quarter turns (0 or 1): the page turns each stick with it
+//   r.cameraReport()                          the free rect, the framed targets on screen, how tight, settled (the page check)
 //   await r.settle()                          draw the match as it was set and wait for the GPU: its pipelines are built before play
 //   r.resize(w, h)                            CSS pixels
 //   r.screenshot()                            -> Promise<Blob> (the 3D frame with the HUD drawn over it)
@@ -20,7 +25,7 @@ import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, Screen } from '
 import { GAME_TITLE } from '../app/title.js';
 import { Board, BoardLook } from './board.js';
 import { Units, gruntFigure, shipModel } from './units.js';
-import { CameraRig } from './camera.js';
+import { CameraRig, CameraDirector } from './camera.js';
 import { Hud } from './hud.js';
 import { Fx } from './fx.js';
 import { Sky } from './sky.js';
@@ -129,7 +134,7 @@ class Renderer {
     const cam = this.rig.camera;
     this.post = new THREE.PostProcessing(this.renderer);
     this.post.outputColorTransform = false;                                // the tone map and sRGB happen inside the chain, before the grade
-    const grade = (hdr) => {
+    this.grade = (hdr) => {
       let c = renderOutput(hdr).rgb;                                        // ACES filmic + sRGB
       c = saturation(c, GRADE.saturation);
       c = c.sub(0.5).mul(GRADE.contrast).add(0.5);
@@ -138,25 +143,29 @@ class Renderer {
       const vig = oneMinus(smoothstep(0.45, 0.95, length(uv().sub(0.5))).mul(GRADE.vignette));
       return vec4(clamp(c, 0, 1).mul(vig), 1);
     };
-    const chain = (q) => {
-      const sp = pass(this.scene, cam, q.msaa ? { samples: q.msaa } : {});
-      // both chains write the SAME three targets (low leaves the normal unread): a material's shader is built for the targets of
-      // the pass that first drew it and three r175 reuses it for the other pass, so a 2-target low chain made the 3-target high
-      // chain's pipelines invalid after Q, Q (11-09: 111 "Invalid RenderPipeline" warnings and no picture, present since round 1)
-      sp.setMRT(mrt({ output, emissive, normal: normalView }));
-      sp.getTextureNode('normal');                                         // a pass makes a target only when it is asked for one
-      let lit = sp.getTextureNode('output').rgb;
-      if (q.ao) {
-        const aoPass = ao(sp.getTextureNode('depth'), sp.getTextureNode('normal'), cam);
-        aoPass.resolutionScale = AO.scale; aoPass.radius.value = AO.radius; aoPass.thickness.value = AO.thickness;
-        const z = sp.getViewZNode().negate();                              // the AO fades out into the haze (sky.js hazeAt)
-        lit = lit.mul(mix(float(1), aoPass.getTextureNode().r, float(AO.strength).mul(oneMinus(this.sky.hazeAt(z)))));
-      }
-      const b = bloom(sp.getTextureNode('emissive'), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
-      const out = grade(vec4(lit.add(b.rgb), 1));
-      return q.msaa ? out : fxaa(out);                                      // no MSAA: FXAA on the graded picture
-    };
-    this.chains = { high: chain(QUALITY.high), low: chain(QUALITY.low) };
+    this.chains = { high: this.makeChain(QUALITY.high), low: this.makeChain(QUALITY.low) };
+  }
+
+  /** One post chain for a quality's settings (msaa, ao; bloom unless q.bloom === false). Also what tools/perf_battle.py --ablate
+   *  builds its variants with, so a measured "without X" is the same chain with one stage left out, not a re-typed copy. */
+  makeChain(q) {
+    const cam = this.rig.camera, grade = this.grade;
+    const sp = pass(this.scene, cam, q.msaa ? { samples: q.msaa } : {});
+    // both chains write the SAME three targets (low leaves the normal unread): a material's shader is built for the targets of
+    // the pass that first drew it and three r175 reuses it for the other pass, so a 2-target low chain made the 3-target high
+    // chain's pipelines invalid after Q, Q (11-09: 111 "Invalid RenderPipeline" warnings and no picture, present since round 1)
+    sp.setMRT(mrt({ output, emissive, normal: normalView }));
+    sp.getTextureNode('normal'); sp.getTextureNode('emissive');          // a pass makes a target only when it is asked for one
+    let lit = sp.getTextureNode('output').rgb;
+    if (q.ao) {
+      const aoPass = ao(sp.getTextureNode('depth'), sp.getTextureNode('normal'), cam);
+      aoPass.resolutionScale = AO.scale; aoPass.radius.value = AO.radius; aoPass.thickness.value = AO.thickness;
+      const z = sp.getViewZNode().negate();                              // the AO fades out into the haze (sky.js hazeAt)
+      lit = lit.mul(mix(float(1), aoPass.getTextureNode().r, float(AO.strength).mul(oneMinus(this.sky.hazeAt(z)))));
+    }
+    if (q.bloom !== false) lit = lit.add(bloom(sp.getTextureNode('emissive'), BLOOM.strength, BLOOM.radius, BLOOM.threshold).rgb);
+    const out = grade(vec4(lit, 1));
+    return q.msaa ? out : fxaa(out);                                      // no MSAA: FXAA on the graded picture
   }
 
   /** The quality setting: 'high' or 'low' (QUALITY). Switches the post chain, the sea's detail and the pixel ratio; the shadow map's
@@ -256,9 +265,35 @@ class Renderer {
     return { x: (v.x + 1) / 2 * this.cssW, y: (1 - v.y) / 2 * this.cssH };
   }
 
-  /** Follow framing: the camera frames every hero with room round them instead of the whole island. */
-  set follow(on) { this.rig.follow = !!on; }
-  get follow() { return this.rig.follow; }
+  /** The camera's quarter turns (camera.js lookOf): 1 = it looks east, so a stick's up must move the cursor east (main.js). */
+  get screenTurn() { return this.rig.turn; }
+
+  /** The free screen rect (CSS px): the canvas minus the HUD's top bar and its card row (Hud.matchLayout, the numbers it draws
+   *  with) and minus each on-screen control (`cover`, DOM rects), each cut from the side that leaves the most area. */
+  freeRect(view, cover) {
+    const W = this.cssW, H = this.cssH, n = view.hud ? view.hud.players.filter((p) => p.present).length : 0, L = Hud.matchLayout(W, H, n);
+    const f = { x0: 0, y0: L.barH + 4, x1: W, y1: n > 0 ? L.cardsTop - 4 : H };
+    const cr = this.canvas.getBoundingClientRect();
+    for (const c of cover || []) {
+      const x0 = c.left - cr.left, x1 = c.right - cr.left, y0 = c.top - cr.top, y1 = c.bottom - cr.top;
+      if (x1 <= f.x0 || x0 >= f.x1 || y1 <= f.y0 || y0 >= f.y1) continue;
+      const cuts = [{ ...f, x0: x1 }, { ...f, x1: x0 }, { ...f, y0: y1 }, { ...f, y1: y0 }].filter((g) => g.x1 > g.x0 && g.y1 > g.y0);
+      if (!cuts.length) throw new RenderContractError('an on-screen control covers the whole free rect: ' + JSON.stringify(c));
+      cuts.sort((a, b) => (b.x1 - b.x0) * (b.y1 - b.y0) - (a.x1 - a.x0) * (a.y1 - a.y0));
+      Object.assign(f, cuts[0]);
+    }
+    return f;
+  }
+
+  /** What the camera shows, for the page check: the free rect, every target it framed as a screen point, how many it left out
+   *  (past the land), the squares across the free rect and the squares the targets needed, its state, and whether it has settled. */
+  cameraReport() {
+    const cam = this.rig.camera, W = this.cssW, H = this.cssH, a = this.aim;
+    const sp = (p) => { const v = new THREE.Vector3(p.x, this.board.groundAtPoint(p.x, p.z), p.z).project(cam); return { x: (v.x + 1) / 2 * W, y: (1 - v.y) / 2 * H }; };
+    return { free: { ...this.rig.free }, targets: a ? a.points.map(sp) : [], dropped: a ? a.dropped : 0, across: this.rig.last.across,
+             needed: this.rig.last.needed, state: this.rig.state, settled: !!this.rig.settled, turn: this.rig.turn,
+             userZoom: this.rig.user.zoom, userPan: this.rig.user.pan.length() };
+  }
 
   /** A new match, built now (the level's build and its first draw belong to the moment a match starts, not to the first second of
    *  play). seatOfSlot: the HUD's seat for each player slot (a player's colour is their seat's); null means seat = slot. */
@@ -285,7 +320,8 @@ class Renderer {
     this.fx.clear();
     this.units = new Units(this.scene, this.board, this.match, this.models, seats, this.fx);
     this.fitSun();
-    this.rig.pose = null; this.rig.key = null;
+    this.rig.pose = null; this.rig.key = null; this.rig.cur = null;
+    this.director = new CameraDirector();
   }
 
   frame(view, dt) {
@@ -315,7 +351,11 @@ class Renderer {
         else if (e instanceof ShipSunk) this.rig.shake = Math.max(this.rig.shake, 0.35);
       }
       const drift = !!view.menu && DRIFT_SCREENS.has(view.menu.screen) && !(view.menu.screen === Screen.Title && view.menu.inDemo);
-      this.rig.update(dt, this.board.landBounds(), building, this.units.heroSpots(), drift);
+      const camIn = view.camera || null;
+      this.rig.free = this.freeRect(view, camIn ? camIn.cover : []);
+      if (camIn && camIn.input) this.rig.userInput(camIn.input, this.cssH);
+      this.aim = drift ? null : this.director.targets(m, view.controllers[0], this.units, this.board, camIn, view.events, seconds, dt);
+      this.rig.update(dt, this.board.landBounds(), building, this.aim, drift, this.cssW, this.cssH);
       this.sky.update(this.rig.camera, this.rig.pose.target, seconds);
       this.scene.visible = true;
     } else {
@@ -325,6 +365,17 @@ class Renderer {
     const cam = this.rig.camera, W = this.cssW, H = this.cssH;
     const project = (v) => { const p = v.clone().project(cam); return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, visible: p.z < 1 && p.z > -1 }; };
     this.hud.draw(view, project, m ? this.units.heroTags() : [], seconds, this.hudMode === 'all');
+    // the chevrons for enemy ships outside the free rect, in play only (a menu over the match hides them)
+    const sc0 = view.menu ? view.menu.screen : Screen.Playing;
+    if (m && this.hudMode === 'all' && (sc0 === Screen.Playing || (sc0 === Screen.Title && view.menu.inDemo)) && this.rig.m === 0) {
+      const f = this.rig.free, marks = [];
+      for (const sh of m.ships) {
+        if (!sh.alive) continue;
+        const p = project(new THREE.Vector3(sh.at.x + sh.size / 2, 0.4, sh.at.y + sh.size / 2));
+        if (!p.visible || p.x < f.x0 || p.x > f.x1 || p.y < f.y0 || p.y > f.y1) marks.push(p);
+      }
+      this.hud.shipMarks(marks, f, seconds);
+    }
     // the wipe: when the match's phase (or round) or the menu screen changes, after the first frame
     // (a phase change of the demo playing behind a menu is not one: only a match the player is watching wipes on its phases)
     const sc = view.menu ? view.menu.screen : Screen.Playing, watched = sc === Screen.Playing || sc === Screen.Decide || (sc === Screen.Title && view.menu.inDemo);

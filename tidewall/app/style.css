@@ -25,7 +25,7 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
 /* player 1's touch controls: a stick on the left, A B Y on the right, sized for thumbs, above the player cards */
 .tpad { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
 .tpad[hidden] { display: none; }
-.tstick, .tb, .tpause { pointer-events: auto; touch-action: none; }
+.tstick, .tb, .tpause, .tframe { pointer-events: auto; touch-action: none; }
 .tstick { position: absolute; left: max(16px, env(safe-area-inset-left)); bottom: calc(max(16px, env(safe-area-inset-bottom)) + 12vh);
   width: min(36vmin, 170px); height: min(36vmin, 170px); border-radius: 50%; background: rgba(10,24,40,0.35);
   border: 2px solid rgba(255,255,255,0.45); }
@@ -42,6 +42,9 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
 .tpause { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 54px); right: max(12px, env(safe-area-inset-right));
   width: 44px; height: 44px; border-radius: 50%; font: 900 15px/1 var(--font); color: #fff; background: rgba(10,24,40,0.6);
   border: 2px solid rgba(255,255,255,0.6); }
+.tframe { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 54px); right: calc(max(12px, env(safe-area-inset-right)) + 52px);
+  width: 44px; height: 44px; border-radius: 50%; font: 900 20px/1 var(--font); color: #fff; background: rgba(10,24,40,0.6);
+  border: 2px solid rgba(255,255,255,0.6); padding: 0; }
 /* a short screen (a phone held sideways): a compact foot, so the join screen's rows end above it (render/hud.js FOOT) */
 @media (max-height: 559px) {
   #ui .foot { bottom: 6px; padding: 4px 10px; font-size: 11px; line-height: 1.35; }

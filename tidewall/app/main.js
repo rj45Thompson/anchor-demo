@@ -214,16 +214,26 @@ class Game {
 
   /** The pointer in play, onto the mouse player's PadInput (the private model's host does the same): once the pointer moves the hero follows
    *  the square under it (picked through the live camera, renderer.pickCell) until that player's stick or keys move again; a left
-   *  click confirms at that square (claim, place a cannon, fire, place the piece), right click or the wheel rotates, middle click is
+   *  click confirms at that square (claim, place a cannon, fire, place the piece), a right click rotates (a right drag pans and the
+   *  wheel zooms the camera, input.js), middle click is
    *  ready (Tab too). `fields` is the slot's PadInput fields from its keys and pads, merged here. */
   pointerToPlay(fields, p) {
     const stick = fields.stickX !== 0 || fields.stickY !== 0;
-    if (p.moved) this.pointerMode = true;
-    if (stick && !p.moved) this.pointerMode = false;
     const out = Object.assign({}, fields);
-    if (this.pointerMode && !Number.isNaN(p.x)) {
-      const c = this.renderer.pickCell(p.x, p.y);
-      if (c !== null) { out.hasPointer = true; out.pointer = new Cell(c.x, c.y); }
+    if (p.touch) {
+      // a finger: the square under it is picked ONCE, when it touches, and the tap acts on that square when it lifts. It is not
+      // picked again every tick (the camera follows the hero, so a still screen point would walk the hero across the map), and a
+      // finger player is not a pointer player (the camera follows their hero, as a stick player's)
+      this.pointerMode = false;
+      if (p.click && !Number.isNaN(p.x)) this.touchCell = this.renderer.pickCell(p.x, p.y);
+      if ((p.click || p.confirm) && this.touchCell) { out.hasPointer = true; out.pointer = new Cell(this.touchCell.x, this.touchCell.y); }
+    } else {
+      if (p.moved) this.pointerMode = true;
+      if (stick && !p.moved) this.pointerMode = false;
+      if (this.pointerMode && !Number.isNaN(p.x)) {
+        const c = this.renderer.pickCell(p.x, p.y);
+        if (c !== null) { out.hasPointer = true; out.pointer = new Cell(c.x, c.y); }
+      }
     }
     out.confirm = fields.confirm || p.confirm; out.rotate = fields.rotate || p.rotate; out.ready = fields.ready || p.ready;
     return out;
@@ -259,8 +269,11 @@ class Game {
     if (!run) return;                                                       // paused: the rules do not run
     if (!this.demo) this.followConnections();
     const mouse = this.mouseSlot, play = wasPlaying && this.menu.screen === Screen.Playing;
+    // the camera may turn a quarter (portrait: it looks east, render/camera.js): every stick turns with it, so up on the stick is
+    // up on the screen. A quarter turn maps whole numbers to whole numbers: (x, y) -> (-y, x) moves the cursor east for "up".
+    const turn = this.renderer.screenTurn, turned = (pad) => (turn === 1 ? Object.assign({}, pad, { stickX: -pad.stickY, stickY: pad.stickX }) : pad);
     const pads = this.seatOf.map((seat, slot) => this.demo ? new PadInput()
-      : new PadInput(play && slot === mouse ? this.pointerToPlay(seats[seat].pad, ptr) : seats[seat].pad));
+      : new PadInput(play && slot === mouse ? this.pointerToPlay(turned(seats[seat].pad), ptr) : turned(seats[seat].pad)));
     this.controller.frame(pads);
     const key = this.model.round + ':' + this.model.phase;
     if (key !== this.phaseKey) { this.phaseKey = key; this.phaseTick = this.model.tick; }
@@ -285,7 +298,17 @@ class Game {
     // the renderer takes the seconds SINCE THE LAST FRAME (renderer.js frame(view, dt)). Until 11-09 this passed the page clock
     // (now / 1000), which the renderer clamps to 0.1 s, so every animation on the page ran 5-6x fast (measured: the renderer's clock
     // went 10.3 s in 2.0 s of wall time); the test scene and the review frames passed the right value and never showed it.
-    this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha }, dt);
+    // the camera's hints: the human players it frames (bots never steer it), the pointer player (its hero follows a still pointer,
+    // so the camera must not follow that hero), the on-screen controls it keeps its frame clear of, and the player's own zoom/pan
+    const playing = !this.demo && !this.sw.attract;
+    const camera = {
+      humans: playing ? this.seatOf.map((_, slot) => slot).filter((slot) => !this.controller.isBot(slot)) : [],
+      pointerSlot: playing && this.pointerMode ? this.mouseSlot : -1,
+      cover: this.touchpad.visible ? this.touchpad.coverRects() : [],
+      input: this.input.takeCamera(),
+    };
+    if (this.touchpad.takeFrame()) camera.input.toggle = true;
+    this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha, camera }, dt);
     this.pointerCursor();
     const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup;
     // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its

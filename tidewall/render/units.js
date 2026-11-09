@@ -450,8 +450,6 @@ export class Units {
     }
   }
 
-  /** Where each live hero stands (world): the HUD tags it, a follow camera frames them. */
-  heroSpots() { return this.heroes.filter((e) => e.g.visible).map((e) => e.at.clone()); }
   heroTags() {
     const out = [];
     this.heroes.forEach((e, s) => { if (e.g.visible) out.push({ slot: s, at: e.at.clone().add(new THREE.Vector3(0, HERO_HEIGHT + 0.35, 0)) }); });

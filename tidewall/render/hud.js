@@ -87,11 +87,34 @@ export class Hud {
     }
   }
 
+  /** Where the match HUD draws its parts on a W x H (CSS px) screen with n player cards: the top bar's height and the card row's
+   *  top. The camera keeps its frame between the two (renderer.freeRect), so these are the numbers drawMatch draws with. */
+  static matchLayout(W, H, n) {
+    const u = Math.min(W / 100, H / 60), barH = Math.max(40, u * 5.2), cardH = Math.max(64, u * 8.5);
+    return { u, barH, cardH, cardW: n > 0 ? Math.min(250, (W - 30) / n - 10) : 0, cardsTop: n > 0 ? H - cardH - 12 : H };
+  }
+
+  /** A chevron at the free rect's edge for each enemy ship outside it, pointing at the ship (the private host's ShipMarks rule:
+   *  a ship the players cannot see gets a red chevron at the band's edge; graphics round 3). marks: [{ x, y } screen px]. */
+  shipMarks(marks, free, seconds) {
+    const c = this.ctx, E = 18;
+    marks.forEach((m, i) => {
+      const cx = Math.min(Math.max(m.x, free.x0 + E), free.x1 - E), cy = Math.min(Math.max(m.y, free.y0 + E), free.y1 - E);
+      let dx = m.x - cx, dy = m.y - cy, len = Math.hypot(dx, dy);
+      if (len < 1) { dx = 0; dy = -1; len = 1; }
+      dx /= len; dy /= len;
+      const r = 16 * (0.82 + 0.18 * Math.sin(seconds * 6 + i)), tx = cx + dx * r, ty = cy + dy * r, bx = cx - dx * r * 0.6, by = cy - dy * r * 0.6;
+      const ox = -dy * r * 0.8, oy = dx * r * 0.8;
+      c.beginPath(); c.moveTo(tx, ty); c.lineTo(bx + ox, by + oy); c.lineTo(cx - dx * r * 0.1, cy - dy * r * 0.1); c.lineTo(bx - ox, by - oy); c.closePath();
+      c.fillStyle = '#ff3a1f'; c.fill(); c.lineWidth = 2; c.strokeStyle = 'rgba(255,255,255,0.9)'; c.stroke();
+    });
+  }
+
   drawMatch(view, seconds, banner) {
     const hud = view.hud, m = view.match, W = this.cssW, H = this.cssH, ctl = view.controllers[0];
-    const u = Math.min(W / 100, H / 60);
+    const n = hud.players.filter((p) => p.present).length, L = Hud.matchLayout(W, H, n), u = L.u;
     // the top bar: round + level on the left, the phase and its timer in the middle, lives and team score on the right
-    const barH = Math.max(40, u * 5.2);
+    const barH = L.barH;
     const g = this.ctx.createLinearGradient(0, 0, 0, barH * 1.4); g.addColorStop(0, 'rgba(8,30,52,0.72)'); g.addColorStop(1, 'rgba(8,30,52,0)');
     this.ctx.fillStyle = g; this.ctx.fillRect(0, 0, W, barH * 1.4);
     const fs = Math.max(14, u * 2.1);
@@ -126,9 +149,8 @@ export class Hud {
       this.ctx.globalAlpha = 1;
     }
     // the player cards along the bottom
-    const n = hud.players.filter((p) => p.present).length;
     if (n === 0) return;
-    const cw = Math.min(250, (W - 30) / n - 10), ch = Math.max(64, u * 8.5), y0 = H - ch - 12;
+    const cw = L.cardW, ch = L.cardH, y0 = L.cardsTop;
     let x = (W - (cw + 10) * n + 10) / 2;
     for (let s = 0; s < hud.players.length; s++) {
       const p = hud.players[s]; if (!p.present) continue;

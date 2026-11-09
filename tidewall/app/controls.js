@@ -46,10 +46,14 @@ export class TouchPad {
       + '<div class="tbtns" data-nogame="1"><button class="tb tb-y" data-b="ready" aria-label="Y: ready or swap">Y</button>'
       + '<button class="tb tb-b" data-b="rotate" aria-label="B: rotate or back">B</button>'
       + '<button class="tb tb-a" data-b="confirm" aria-label="A: place, fire or confirm">A</button></div>'
-      + '<button class="tpause" data-b="start" data-nogame="1" aria-label="Pause">II</button>';
+      + '<button class="tpause" data-b="start" data-nogame="1" aria-label="Pause">II</button>'
+      + '<button class="tframe" data-nogame="1" aria-label="Whole island or close camera">&#x26F6;</button>';
     parent.appendChild(el);
     this.el = el; this.visible = false;
     this.stickX = 0; this.stickY = 0; this.edges = { confirm: false, rotate: false, back: false, ready: false, start: false };
+    this.frameTap = false;            // the frame button: whole island <-> the close camera (render/camera.js)
+    const fb = el.querySelector('.tframe');
+    fb.addEventListener('pointerdown', (e) => { e.preventDefault(); this.frameTap = true; });
     const stick = el.querySelector('.tstick'), knob = el.querySelector('.tknob');
     let finger = null;
     const move = (e) => {
@@ -85,6 +89,11 @@ export class TouchPad {
     this.visible = on; this.el.hidden = !on;
     if (!on) { this.stickX = 0; this.stickY = 0; }
   }
+
+  /** The frame button was tapped since the last call (cleared). */
+  takeFrame() { const t = this.frameTap; this.frameTap = false; return t; }
+  /** The screen rects of the controls that sit over the board (the camera keeps its frame clear of them). */
+  coverRects() { return [...this.el.querySelectorAll('.tstick, .tbtns, .tpause, .tframe')].map((e) => e.getBoundingClientRect()); }
 
   /** The stick now and the buttons pressed since the last take (cleared). */
   take() {
