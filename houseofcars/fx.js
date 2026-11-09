@@ -104,7 +104,7 @@ export function polishedTops(y, hex) {
     const t = reflection.clone(); t.uvNode = nodeObject(reflection.uvNode).add(vec2(x, y)); return nodeObject(t).rgb;   // clone() hands back a bare node
   });
   mat.emissiveNode = taps.reduce((a, t) => a.add(t)).mul(0.2).mul(fres);
-  return { material: mat, target: reflection.target };
+  return { material: mat, target: reflection.target, reflector: reflection.reflector };   // reflector: lot_focus.js trims what it draws (GFX 11-08)
 }
 
 // ---------------------------------------------------------------- ground detail (UC-7.5)

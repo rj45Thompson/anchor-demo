@@ -13,7 +13,7 @@ import { makeRig, updateRig } from './camera_rig.js';
 import { SLIDES } from './slides.js';
 import { svgIcon, drawIcon } from './icons.js';
 import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, skyEnv, setPaint, paint, groundDetail, lightBeam, asphaltRoad, concreteWall, contactShadow } from './fx.js';
-import { buildRain, wetRoad, sunTracker, overcast } from './weather.js';                     // UC-40: rain, a wet road, a grey sky (the shafts: fx.js makePost)
+import { buildRain, wetRoad, sunTracker, overcast, buildShafts } from './weather.js';        // UC-40: rain, a wet road, a grey sky, the strip's shafts (the circuit's: fx.js makePost)
 import { makeAudio, driveSound, silence, blip, loadSfx, sfx, grind } from './audio.js';
 import { Radio } from './radio.js';                                                       // UC-27: the car radio
 import { makeWalker, stepWalker, facing, EYE_M } from './walk.js';                        // UC-28: walking the lot
@@ -30,14 +30,18 @@ import { lotCars, leadsFor, compareHTML, priceVsPace } from './sale.js';
 import { loadingShow, loadingDone } from './loading.js';
 import * as Drag from './drag.js';                                                          // UC-22: the drag strip's rules
 import { STRIP, makeDirector, stepDirector, framing, shotId, verticalFor } from './drag_cam.js';   // UC-35: the filmed run
-import * as Sim from './drag_sim.js';                                                       // UC-34: the clutch pedal, the H gate
+import * as Sim from './drag_sim.js';
+import { pickRival, rivalLine, leader, SHORT, SAY_S, DRIVERS } from './rivals.js';             // UC-38 the rival in the other lane                                                       // UC-34: the clutch pedal, the H gate
 import { clusterSVG, bindCluster, powerReserve } from './gauges.js';                          // UC-36: each car's own cluster
 import { buildScenery } from './scenery.js';
 import { traction } from './traction.js';                                                    // UC-39: the launch read off the tyres                                                  // UC-37.4: grass, trees and hills past the walls
 import { knowHTML, knownSpecsHTML } from './know.js';                                                   // UC-14: Know this car (know.js)                  // the page's own driver (UC-9.2): the sim's ghosts, and the page check's lap
 import { dragyHUD } from './dragstats.js';                                                  // UC-21: Dragy owners' runs (dragstats.js)
-import { ScoreBoard, HOUSE_NAME, checkName, ranked, qualifies, boardHTML, lastName, keepName } from './scores.js';   // UC-25: the shared boards
+import { ScoreBoard, HOUSE_NAME, checkName, checkEmail, ranked, qualifies, boardHTML, lastName, keepName } from './scores.js';   // UC-25: the shared boards
+import * as Replay from './drag_replay.js';                                 // UC-46: a drag run's inputs step by step, so a first place can be run again before its coffee (tools/verify_claim.mjs)
 import { mark, timed, ResolutionGovernor } from './perf.js';                                                   // UC-30: ?perf logs where the time goes
+import { batchStatic } from './batch.js';                                                  // GFX 11-08: a car's meshes drawn one draw per material (batch.js)
+import { makeLotFocus } from './lot_focus.js';                                             // GFX 11-08: the tops' reflection draws only the slides near the one in view
 mark('app.js running');
 const perfFirst = [];                                   // UC-30: the models just added, marked again once a frame has drawn them (declared first: a model can arrive while the page is still setting up)
 
@@ -365,6 +369,7 @@ async function simBody(key, carJson) {
     spin.attach(mesh);
     wheels[w.sim_wheel] = { sale: true, steer, spin, steers: w.steers, restY: c.y };
   }
+  batchStatic(THREE, body, { keep: wheels.filter(Boolean).map((x) => x.steer) });   // GFX 11-08: the body one draw per material, the wheels left on their pivots
   return { group: g, wheels };
 }
 // a 3D model of a car for sale (Meshy's or hand-made), on its pedestal: scaled so its length is the car's READ length (data/models.json says where
@@ -456,6 +461,7 @@ for (let i = 0; i < LOT.length; i++) {
     turn = new THREE.Group();
     if (car) {
       const { group } = await buildCar(car);
+      batchStatic(THREE, group);                                   // GFX 11-08: on the lot nothing of it moves but the turntable (batch.js)
       if (car.drivable) turn.position.y = 0.3 - Math.min(...car.wheels.map((w) => w.bone_location[2] - w.radius)) / 100;   // wheels on the pedestal
       else turn.position.y = 0.3 - (car.bounds_cm.origin[2] - car.bounds_cm.box_extent[2]) / 100;
       turn.add(group);
@@ -467,7 +473,7 @@ for (let i = 0; i < LOT.length; i++) {
         const { card, caption } = photoCard(saleKey);
         if (card) stand.add(card); stand.add(caption);
         modelQ.items.push({ i, key: saleKey, turn, stand, card, caption, state: 'wait',
-          ready: saleModel(def.model).then((g) => { g.name = saleKey; return { g }; }, (e) => ({ e })) });   // an error is reported when its turn comes
+          ready: saleModel(def.model).then((g) => { g.name = saleKey; batchStatic(THREE, g); return { g }; }, (e) => ({ e })) });   // GFX 11-08: batched (batch.js)   // an error is reported when its turn comes
       } else { turn.add(soonSign()); HOC.saleModels.soon.push(saleKey); }   // UC-26: the empty pedestal says why
     }
     stand.add(turn);
@@ -478,6 +484,9 @@ for (let i = 0; i < LOT.length; i++) {
   show.scene.add(stand);
   show.slides.push({ def, car, stand, turn, angle: a });
 }
+// GFX 11-08 (lot_focus.js): the tops' reflection draws only the slides near the one in view; on once the lot is warmed
+const lotFocus = makeLotFocus(THREE, { renderer, light: key, reflector: tops.reflector, planeY: tops.target.position.y, scene: show.scene, stands: show.slides.map((s) => s.stand) });
+window.HOC.lotFocus = lotFocus;
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SIMS = new Set(GHOSTS.ghosts.map((g) => g.car));
@@ -733,6 +742,7 @@ function tickWalk(dt) {
   showCam.position.set(walk.w.x, EYE_M, walk.w.z);
   showCam.rotation.set(walk.w.pitch, walk.w.yaw, 0, 'YXZ');
   const i = facing(walk.w, walkTargets());
+  lotFocus.update(walk.w.x, walk.w.z, true);                             // GFX 11-08: a walker can look across the ring: nothing culled
   if (i !== walk.faced) {
     walk.faced = i; if (i >= 0) { walk.lastFaced = i; const d = show.slides[i].def; if (d.kind === 'listing' || d.kind === 'unlisted') wantModel((d.listing || d.unlisted).key); }   // UC-32.3
     const el = $('walklabel'); el.hidden = i < 0;
@@ -772,6 +782,7 @@ function tickShow(dt) {
   showCam.lookAt(Math.sin(a) * RING * e + Math.cos(a) * side, aim - (1 - e) * aim, Math.cos(a) * RING * e - Math.sin(a) * side);
   show.holdSpin = Math.max(0, show.holdSpin - dt);             // a drag holds the turntable for a few seconds
   show.slides.forEach((c, i) => { if (c.turn && i === show.index && !show.drag && show.holdSpin === 0) c.turn.rotation.y += dt * 0.35; });
+  lotFocus.update(Math.sin(show.angle) * RING, Math.cos(show.angle) * RING, e < 1);   // GFX 11-08: the slide the camera is turned to; the whole ring while the intro flies in
   showPost.render();
 }
 
@@ -880,8 +891,9 @@ async function buildTrack() {
 // makePost). set() puts all of it on, or takes all of it off, at the start of a run (startRace / startDrag): a switch mid-run waits for
 // the next one. Dry, nothing of it is left: the rain out of the scene, every road undone, the clear sky and its own probe back
 const rainDay = {
-  on: false, roads: [], wet: new Map(), rain: null, sky: null, sunT: null, envDry: null, envWet: null,
+  on: false, roads: [], shafts: [], wet: new Map(), rain: null, sky: null, sunT: null, envDry: null, envWet: null,
   road(mat) { this.roads.push(mat); },
+  shaft(s) { this.shafts.push(s); s.mesh.visible = this.on; },   // UC-40.4 a scene's own shafts (weather.js buildShafts): shown on a rain day
   set(want) {                                          // -> whether anything changed (its shaders are then new)
     const tv = trackView;
     let changed = false;
@@ -890,6 +902,7 @@ const rainDay = {
       if (want && !this.wet.has(m)) { this.wet.set(m, wetRoad(THREE, m, { quality: GFX_Q })); changed = true; }
       if (!want && this.wet.has(m)) { this.wet.get(m).undo(); this.wet.delete(m); changed = true; }
     }
+    for (const s of this.shafts) if (s.mesh.visible !== want) { s.mesh.visible = want; changed = true; }
     if (want === this.on) return changed;
     if (want) {
       if (!this.rain) this.rain = buildRain(THREE, { quality: GFX_Q });
@@ -909,7 +922,7 @@ const rainDay = {
     return true;
   },
   rays() { return this.on ? { sun: this.sunT, quality: GFX_Q } : null; },
-  frame(camera, dt) { if (this.on) { this.rain.update(camera, dt); this.sunT.update(camera); } },   // each frame, before the post renders
+  frame(camera, dt) { if (this.on) { this.rain.update(camera, dt); this.sunT.update(camera); for (const s of this.shafts) if (s.mesh.parent && s.mesh.parent.visible) s.update(camera); } },   // each frame, before the post renders
 };
 window.HOC.rainDay = rainDay;                                                  // UC-40 for the page check
 
@@ -988,12 +1001,14 @@ async function startRace(entry) {
   audio.start();
   window.HOC.state = race;
   mode = 'race';
+  race.selfDrive = false; syncAuto();                                 // UC-45: AUTO there to press
   $('showroom').style.display = 'none'; $('race').style.display = 'block'; document.body.classList.add('inrun');
   $('t-best').textContent = '—';
 }
 // the visitor is on the lot (not leaving it for a race or the strip, which may still be loading): the sales chat's moment
 let onLot = true;
 function backToShowroom() {
+  leaveOnline();                                                       // UC-42: off the strip, out of the lobby
   mode = 'show'; onLot = true;
   window.dispatchEvent(new CustomEvent('hoc:lot-open'));              // the sales chat belongs to the lot: it greets the first time, shows its tab after
   if (dragView && trackView) setDragScene(false);
@@ -1003,6 +1018,7 @@ function backToShowroom() {
 
 // keys, as IMC_Vehicle_Default maps them (data: ue_out/bp/IMC_Vehicle_Default.t3d), plus Esc and G for the page
 const keys = new Set();
+let startSpace = false;                                               // UC-22.1b: the Space press that started the tree, until it is let go
 const touch = { throttle: false, brake: false, left: false, right: false };
 const audio = makeAudio();
 // UC-27 the radio: the button names the station, a change puts its name across the top for a moment, as a car game shows one
@@ -1054,11 +1070,15 @@ addEventListener('keydown', (e) => {
   if (mode === 'drag') {                                  // UC-22 the strip's keys (the page's own: Unreal's template has no manual gears)
     if (e.key === 'Escape') { backToShowroom(); return; }
     if (e.key === 'e' || e.key === 'E' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { e.preventDefault(); if (!e.repeat) dragPress('up'); return; }
-    if (race.clutchMode && !e.repeat && (/^Digit[0-9]$/.test(e.code) || e.key === 'n' || e.key === 'N')) { requestGear(race, /^Digit/.test(e.code) ? +e.code.slice(5) : 0); return; }   // UC-34.1a the gate on keys: 1..7, N or 0 neutral
+    if (race.clutchMode && !race.selfDrive && !e.repeat && (/^Digit[0-9]$/.test(e.code) || e.key === 'n' || e.key === 'N')) { requestGear(race, /^Digit/.test(e.code) ? +e.code.slice(5) : 0); return; }   // UC-34.1a the gate on keys: 1..7, N or 0 neutral
     if (e.key === 'g' || e.key === 'G') { toggleDragBox(); return; }
     if (e.key === 'q' || e.key === 'Q') { if (!e.repeat) dragPress('down'); return; }
-    if ((e.code === 'Space' || e.key === 'Enter') && !race.armed && !race.over) { e.preventDefault(); armDrag(); return; }   // UC-22.1b START
-    if ((e.key === 'r' || e.key === 'R' || e.key === 'Enter' || e.code === 'Space') && (race.over || race.run.done || race.v.stalled)) { e.preventDefault(); dragRerun(); return; }
+    // UC-22.1b START, then gas (UC-34.1d). The press that starts the tree is START only: gas from it crept the car a few cm on the
+    // tree, which set the run's first motion there and put the tree's 4.5 s into the slip's 0-100 (measured 11-08: 7.84 s for 3.2).
+    // Let go and press again for gas
+    if (e.code === 'Space' && !race.over && !race.run.done) { e.preventDefault(); if (!race.armed && !e.repeat) { armDrag(); startSpace = true; } if (!startSpace) keys.add('Space'); return; }
+    if (e.key === 'Enter' && !race.armed && !race.over) { e.preventDefault(); armDrag(); return; }   // UC-22.1b START
+    if ((e.key === 'r' || e.key === 'R' || e.key === 'Enter' || e.code === 'Space') && (race.over || race.run.done || race.v.stalled)) { e.preventDefault(); if (!e.repeat) dragRerun(); return; }   // a held Space past the line is not a rerun
     if (e.key === 'p' || e.key === 'P') { savePicture(race.entry.name + '-drag'); return; }
     if (e.key === 'c' || e.key === 'C') { toggleDragCam(); return; }   // UC-35.3a
     if (e.key === 'u' || e.key === 'U') { toggleWeather(); return; }   // UC-40.3: a new run in the other weather
@@ -1074,8 +1094,18 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Backspace') { e.preventDefault(); doReset(); return; }
   keys.add(e.code);
 });
-addEventListener('keyup', (e) => keys.delete(e.code));
+addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Space') startSpace = false; });
 $('back').addEventListener('click', () => backToShowroom());   // UC-5.6: a phone has no Esc
+// UC-47 a phone as the controller (phone_controller.js, the PhonePad session's): the pill opens the room and its QR code, and closes
+// it again; the phone is then a standard gamepad (gamepad.js, the pad pill), so nothing else here changes
+$('phonepill').addEventListener('click', () => {
+  const P = window.HOC_PHONE, b = $('phonepill');
+  if (!P) throw new Error('phone_controller.js did not load (index.html names it)');
+  if (P.pads) { P.stop(); b.textContent = 'Phone pad'; b.setAttribute('aria-pressed', 'false'); return; }
+  b.textContent = 'Phone pad: opening…';
+  P.start().then(() => { b.textContent = 'Phone pad: on'; b.setAttribute('aria-pressed', 'true'); },
+    (e) => { b.textContent = 'Phone pad'; b.setAttribute('aria-pressed', 'false'); reportError(e); });
+});
 document.querySelectorAll('#touch button').forEach((b) => {
   const k = b.dataset.k;
   b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (k === 'reset') doReset(); else touch[k] = true; });
@@ -1084,10 +1114,10 @@ document.querySelectorAll('#touch button').forEach((b) => {
 function readInput() {
   const on = (...c) => c.some((x) => keys.has(x));
   const k = {
-    throttle: on('KeyW', 'ArrowUp') || touch.throttle ? 1 : 0,
+    throttle: on('KeyW', 'ArrowUp') || touch.throttle || (mode === 'drag' && (on('Space') || mouseGas.size > 0)) ? 1 : 0,   // UC-34.1d the strip's gas
     brake: on('KeyS', 'ArrowDown') || touch.brake ? 1 : 0,
     steering: (on('KeyD', 'ArrowRight') || touch.right ? 1 : 0) - (on('KeyA', 'ArrowLeft') || touch.left ? 1 : 0),
-    handbrake: on('Space') ? 1 : 0,
+    handbrake: on('Space') && mode !== 'drag' ? 1 : 0,                  // on the strip Space is gas
   };
   const g = readGamepad(pad);                            // the IMC maps both to the same actions: the larger input wins
   $('padpill').textContent = pad.id ? 'Gamepad' : pad.nonstandard ? 'Gamepad: unknown layout' : '';
@@ -1218,6 +1248,9 @@ function buildDragStrip(scene) {
   pad.rotation.x = -Math.PI / 2; pad.position.set(45, 0.005, 0); pad.receiveShadow = true; g.add(pad);
   asphalt.material.name = 'strip-asphalt'; pad.material.name = 'strip-pad';
   rainDay.road(asphalt.material); rainDay.road(pad.material);                         // UC-40: the strip's road gets wet, the launch pad too
+  // UC-40.4 the sun's shafts over the strip: Elami's GodRayShaft quads along the sun's own direction (weather.js buildShafts). They
+  // replace the screen-space LSPP pass here (the owner 11-08: "god rays ... not visible, do shafts"; Elami replaced it the same way)
+  const shafts = buildShafts(THREE, { light: trackView.sun }); g.add(shafts.mesh); rainDay.shaft(shafts);
   const line = (x0, x1, z, w, color = 0xf2f2f2) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, w), mat(color, 0.6)); m.rotation.x = -Math.PI / 2; m.position.set((x0 + x1) / 2, 0.01, z); g.add(m); };
   line(-behind, END, -W / 2 + 0.3, 0.2); line(-behind, END, W / 2 - 0.3, 0.2); line(-behind, END, 0, 0.18, 0xffd400);   // the lane edges and the centre line
   line(-0.15, 0.15, -W / 4, W / 2 - 0.8); line(-0.15, 0.15, W / 4, W / 2 - 0.8);                                       // the start line, both lanes
@@ -1271,6 +1304,9 @@ function buildDragStrip(scene) {
   lamp('prestage', 3.5, '#ffd27a', 0.09); lamp('stage', 3.3, '#ffd27a', 0.09);
   lamp('a1', 2.9, '#ffb020', 0.15); lamp('a2', 2.5, '#ffb020', 0.15); lamp('a3', 2.1, '#ffb020', 0.15);
   lamp('green', 1.6, '#3dff7a', 0.16); lamp('red', 1.15, '#ff3b30', 0.16);
+  // GFX 11-08 (batch.js): the strip's static parts one draw per material; kept as they are: the tree's lamps (their materials swap),
+  // the roads and the grass (the rain and the scenery re-material them), the shafts and the scenery (already a few draws)
+  batchStatic(THREE, g, { keep: [scenery.group, shafts.mesh, grass, asphalt, pad, ...Object.values(lamps).flatMap((L) => L.list)] });
   scene.add(g);
   return { group: g, lamps };
 }
@@ -1285,7 +1321,10 @@ function setDragScene(on) {
   $('drag').hidden = !on;
 }
 const dragTimeRows = [['rt', 'Reaction'], ['sixty', '60 ft'], ['kmh100', '0-100 km/h'], ['eighth', '1/8 mile'], ['quarter', '1/4 mile']];
-async function startDrag(entry) {
+// UC-38 the rivals' cars, in the lot's order (rivals.js DRIVERS has one for each), and how many strips have been entered from the lot
+const RIVAL_CARS = LISTINGS.cars.map((c) => c.key).filter((k) => DRIVERS[k]);
+let rivalN = 0;
+async function startDrag(entry, o = {}) {
   onLot = false; if (window.HOC_SALES) window.HOC_SALES.hide();                      // not over the strip's dials
   if (entry.sim) wantModel(entry.name);                  // UC-32.3
   loadingShow('Rolling the car to the strip…', entry.name);
@@ -1304,35 +1343,46 @@ async function startDrag(entry) {
   const unexported = entry.sim ? await fetchJson('sim_cars/' + entry.name + '.unexported.json') : (await fetchJson('chaos_unexported.json')).cars[entry.name];
   const opts = { gravityZ: gravity, unexported, angularDampingOnGround: RULES.angular_damping.on_ground, angularDampingInAir: RULES.angular_damping.in_air };
   const strip = Drag.flatStrip(TRACK.surface_friction.road);                // the template road's READ grip
-  const front = carJson.bounds_cm.value.origin[0] + carJson.bounds_cm.value.box_extent[0];   // the nose, ahead of the car's origin (cm)
-  const stage = [-front, DRAG_LANE_Y_CM, 60];
-  const settle = (v) => { Chaos.resetVehicle(v, stage, 0); for (let i = 0; i < 240; i++) Chaos.stepVehicle(v, { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' }, STEP, strip); return v; };
+  const stage = Replay.stagePoint(carJson, DRAG_LANE_Y_CM);           // the nose on the line, in the left lane (drag_replay.js: a claim's check stages it the same way)
+  const settle = (v) => Replay.settle(Chaos, v, stage, strip, STEP);  // reset at the stage, settled on its springs (drag_replay.js, shared with the check)
   const v = settle(Chaos.makeVehicle(carJson, opts));
   const best = Drag.bestRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip);   // the sim's own best run, for the slip (DERIVED)
-  const houseRec = [];
-  const house = Drag.houseRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip, houseRec, DRAGBOX.clutch ? { road: WEATHER.rain ? 'wet' : 'dry' } : undefined);   // UC-40: the house car on the same road // UC-25.2: R.J.Thompson's run on this car's board (DERIVED)
-  // UC-38 that run is the car in the other lane: the same car, replayed from its recording (no second physics), 12 m to the right
-  const oppCar = entry.sim ? await simBody(entry.name, carJson) : null;
-  if (oppCar) { oppCar.group.matrixAutoUpdate = false; trackView.scene.add(oppCar.group); }
+  const houseOpts = DRAGBOX.clutch ? { road: WEATHER.rain ? 'wet' : 'dry' } : undefined;
+  const house = Drag.houseRun(Chaos, settle(Chaos.makeVehicle(carJson, opts)), strip, null, houseOpts);   // UC-40: the house car on the same road // UC-25.2: R.J.Thompson's run on this car's board (DERIVED)
+  // UC-38 the car in the other lane: a rival (rivals.js), another car of the lot with its own driver, its own house run on the same
+  // road, replayed a human reaction after the green. A rerun is a rematch with the same driver; a strip entered from the lot brings
+  // the next one
+  const kept = o.rematch && race && race.opp && race.opp.rival && race.entry && race.entry.name === entry.name ? race.opp.rival : null;
+  const rival = entry.sim && !o.online ? kept || pickRival(entry.name, RIVAL_CARS, rivalN++) : null;
+  const opp = o.online ? await onlineOpp(o.online, gravity, strip) : rival ? await rivalRun(rival, gravity, strip, houseOpts) : null;   // UC-42
   const camKey = entry.sim ? 'SportsCar' : entry.name;
   const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
   race = { kind: 'drag', entry, car, carJson, v, strip, best, house, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {},
            director: makeDirector(), body: carJson.bounds_cm.value };   // UC-35: the filmed run, framed on the car's own READ bounds
-  race.opp = oppCar ? { car: oppCar, rec: houseRec, i: 0, laneShift: -2 * DRAG_LANE_Y_CM } : null;   // UC-38
+  race.opp = opp;                                                      // UC-38
+  race.online = o.online || null; race.onlineGo = false; race.sentFinish = false; race.onlineResult = null;   // UC-42 an online match
   race.clutchMode = DRAGBOX.clutch;                                    // UC-34: in neutral, the pedal up, the gate drawn
+  race.road = WEATHER.rain ? 'wet' : 'dry';                           // UC-40: the run's road, kept for the run (the rain switch starts a new run)
+  race.tape = entry.sim ? Replay.makeTape({ car: entry.name, clutch: race.clutchMode, road: race.clutchMode ? race.road : null }) : null;   // UC-46: the run as the sim takes it, for a first place's coffee
+  race.selfDrive = false;                                             // UC-45: the visitor drives until they press AUTO
   if (race.clutchMode) { const layout = Sim.gateLayout(v.cfg.trans.forward.length); race.gate = { layout, knob: Sim.knobFor(0, layout), gear: 0 }; race.pedal = { depth: 0, held: false, anchor: 0, prev: 0 }; race.cut = null; }
   document.body.classList.toggle('clutchmode', race.clutchMode); drawGate(race); drawPedal(race);
-  race.armed = false; race.over = null; document.body.classList.remove('dragover'); $('dfail').hidden = true; $('dstart').hidden = false;   // UC-22.1b staged, the tree dark
+  race.armed = false; race.over = null; document.body.classList.remove('dragover'); $('dfail').hidden = true; $('dstart').hidden = !!race.online;   // UC-22.1b staged, the tree dark (UC-42: the lobby's Ready instead)
   race.cluster = await buildCluster(entry, v, race.pts);              // UC-36: the car's own cluster, or the page's tach (36.1a)
   const tachEl = $('hud-speed'); tachEl.querySelector('svg.tach')?.remove();
   race.tach = buildTach(tachEl, v.cfg.engine.maxRPM, Math.min(...race.pts));   // the red band from the earliest derived shift point
   $('dslip').hidden = true; $('dgrade').textContent = '';
   $('dtimes').innerHTML = dragTimeRows.map(([k, l]) => '<div data-k="' + k + '"><span>' + l + '</span><b>--</b></div>').join('');
-  $('dcar').textContent = entry.sim ? (LOT_CARS.find((c) => c.key === entry.name) || {}).title || entry.name : entry.name;
+  race.title = entry.sim ? (LOT_CARS.find((c) => c.key === entry.name) || {}).title || entry.name : entry.name;
+  const vsName = o.online ? o.online.name : opp ? opp.rival.name : null, vsCar = o.online ? o.online.car : opp ? opp.rival.key : null;
+  $('dcar').textContent = vsName ? (SHORT[entry.name] || race.title) + ' vs ' + vsName.toUpperCase() + ' · ' + SHORT[vsCar] : race.title;   // UC-38.1 / UC-42 who you race
+  $('dsayn').textContent = opp && opp.rival ? opp.rival.name.toUpperCase() + ' · ' + SHORT[opp.rival.key] : '';
+  $('dkeys').hidden = false; mouseGas.clear();                          // UC-34.1d the controls, while staged
+  syncAuto(); prizeTease(race);                                       // UC-45 AUTO there to press; UC-46.1 the coffee's time to beat, while staged
   race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
   const wxChanged = rainDay.set(WEATHER.rain);                          // UC-40: rain or dry, as the switch says at the start of the run
-  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.35, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45, bloomCap: 6, saturation: 1.08, godRays: rainDay.rays() });
+  race.post = makePost(renderer, trackView.scene, race.camera, { bloomStrength: 0.35, bloomRadius: 0.3, bloomThreshold: 1.2, vignette: 0.45, bloomCap: 6, saturation: 1.08 });   // UC-40.4 the strip's shafts are in its scene, not the post
   await warmPieces(trackView.scene, () => race.post.render(), 'strip');   // UC-30: behind the loading screen
   if (wxChanged) race.post.render();                                    // UC-40: the weather's new shaders built behind the loading screen too
   await loadingDone();
@@ -1346,14 +1396,60 @@ document.querySelectorAll('#dtouch button[data-d]').forEach((b) => b.addEventLis
 { const gas = $('dgas');                                     // UC-35 6b: the strip's gas, on the left, held as the race's own gas button
   gas.addEventListener('pointerdown', (e) => { e.preventDefault(); touch.throttle = true; });
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) gas.addEventListener(ev, () => { touch.throttle = false; }); }
+// UC-41 the sales chat: what is on the visitor's page (relay rules.js readPage checks every field) and the two things it may do
+window.HOC.salesPage = () => {
+  const lot = show.slides[show.index], lotCar = lot && lot.def.kind === 'listing' ? lot.def.listing.key : null;
+  const view = mode === 'drag' ? 'drag' : mode === 'drive' ? 'drive' : 'lot';
+  const page = { view, car: view === 'drag' && race ? race.entry.name : lotCar };
+  if (lastDrag) page.run = Object.fromEntries(Object.entries(lastDrag).filter(([, v]) => v !== null && v !== undefined));
+  return page;
+};
+window.HOC.salesAct = (a) => {
+  if (a.name === 'drag_race') { startDrag({ name: a.car, sim: true, drivable: true }).catch((e) => reportError(e)); return; }
+  if (a.name === 'show_car') {
+    const i = show.slides.findIndex((s) => s.def.kind === 'listing' && s.def.listing.key === a.car);
+    if (i < 0) throw new Error('salesAct: ' + a.car + ' is not on the lot');
+    if (mode !== 'show') backToShowroom();
+    select(i); return;
+  }
+  throw new Error('salesAct: the page cannot ' + a.name);
+};
 window.HOC.dragBot = () => { if (race && race.kind === 'drag') { race.bot = true; armDrag(); } };   // the bot presses START too
+// UC-45 AUTO (the owner 11-08: "add a button to go to automatic driving but when they press the button tell them that you can't have
+// a leaderboard score in automatic mode that's cheating!"): the car drives itself, the house driver on the strip (both gearboxes, from
+// wherever the run is) and the sim's driver on the circuit; the run is marked AUTO and never goes on a board or a record
+function autoDrive() {
+  const r = race;
+  if (!r || r.selfDrive || r.online) return;
+  if (r.kind === 'drag') { if (mode !== 'drag' || r.over || r.run.done) return; r.bot = true; if (!r.armed) armDrag(); }
+  else { if (mode !== 'race') return; r.auto = AI.makeDriver(trackView.line, r.v); }
+  r.selfDrive = true; syncAuto();
+  const el = $('autonote');
+  el.innerHTML = '<b>AUTO:</b> the car drives itself. You can\'t have a leaderboard score in automatic mode' + (r.kind === 'drag' && r.prizeOpen ? ', or the coffee' : '') + ': that\'s cheating!';
+  el.hidden = false; clearTimeout(autoDrive.t); autoDrive.t = setTimeout(() => { el.hidden = true; }, 5000);   // AUTHORED: 5 s to read it
+}
+function syncAuto() {                                                  // UC-45 the button: there while a run can still be handed over
+  const b = $('auto'), r = race, on = !!(r && r.selfDrive);
+  b.hidden = !r || !!r.online || (r.kind === 'drag' && !on && (!!r.over || r.run.done));
+  b.textContent = on ? 'AUTO ON' : 'AUTO'; b.setAttribute('aria-pressed', String(on)); b.disabled = on;
+}
+tapOn($('auto'), autoDrive);
 // UC-22.1b the tree waits for the driver: the strip opens staged with the tree dark; START (Space or Enter) begins it
-function armDrag() { if (!(mode === 'drag' && race && race.kind === 'drag') || race.armed || race.over) return; race.armed = true; $('dstart').hidden = true; blip(audio, 'count'); }
+function armDrag() {                                                  // UC-42: online, only GO starts the tree
+  if (!(mode === 'drag' && race && race.kind === 'drag') || race.armed || race.over || (race.online && !race.onlineGo)) return;
+  race.armed = true; $('dstart').hidden = true; $('dprize').hidden = true; blip(audio, 'count'); if (race.opp && race.opp.say && race.opp.say.moment === 'stage') race.opp.say = null;
+}
 // UC-22.5 a run that failed (a stall, a red light): FAIL, why in a word, and one RESTART; the driving HUD goes
-function showFail(r, why) { r.over = 'fail'; $('dstart').hidden = true; document.body.classList.add('dragover'); $('dfailw').textContent = why; $('dfail').hidden = false; blip(audio, 'count'); }   // the page check: gas on the green, every shift at its derived point, through the same presses
+function showFail(r, why) {
+  r.over = 'fail'; $('dstart').hidden = true; document.body.classList.add('dragover'); $('dfailw').textContent = why; $('dfail').hidden = false; blip(audio, 'count');
+  if (r.online) sendOnlineFinish(r);                                   // UC-42.5 a stall or a red light is a finish too
+  const o = r.opp, line = o && o.rival ? rivalSay(r, why === 'Stalled' ? 'stall' : 'red') : null;   // UC-38.4 the rival has a word
+  $('dfailq').hidden = !line; $('dfailq').textContent = line ? o.rival.name + ': "' + line + '"' : '';
+  lastDrag = { car: r.entry.name, foul: !!r.run.foul, stalled: why === 'Stalled', result: 'none', rival: o && o.rival ? { name: o.rival.name, car: o.rival.key } : null };   // UC-41 for the chat
+}   // the page check: gas on the green, every shift at its derived point, through the same presses
 window.HOC.dragTick = (dt) => tickDrag(dt);                                      // the page check steps frames itself (a background page draws few)
-function dragPress(dir) {
-  if (!(mode === 'drag' && race && race.kind === 'drag' && !race.run.done)) return;
+function dragPress(dir, bot = false) {
+  if (!(mode === 'drag' && race && race.kind === 'drag' && !race.run.done) || (race.selfDrive && !bot)) return;   // UC-45: under AUTO only the house driver shifts
   if (race.clutchMode) requestGear(race, race.gate.gear + (dir === 'up' ? 1 : -1)); else race.presses.push(dir);   // UC-34: through the gate
 }
 function gradePop(text, kind) { const el = $('dgrade'); el.textContent = text; el.className = 'g-' + kind; void el.offsetWidth; el.classList.add('pop'); }
@@ -1415,14 +1511,26 @@ function drawPedal(r) {                                              // the clut
   $('dgasm').style.setProperty('--d', (r.throttle || 0).toFixed(3));                 // the gas meter, right of the clutch (UC-34 1d)
   $('dpedal').setAttribute('aria-valuenow', String(Math.round(d * 100)));
 }
-// UC-34.1b the mouse pushes the clutch: held anywhere on the strip's picture and pulled down; let go, it springs up
+// UC-34.1d a computer's clutch is the mouse wheel (drag_sim.js wheelDepth: down presses it in, and it stays where the wheel leaves it)
+// and its gas a held mouse button on the strip's picture, either one (the owner 11-08: "lets use the mousewheel as the clutch, left
+// right click as gas"); the mouse also drags the gate's knob
+const mouseGas = new Set();
+addEventListener('wheel', (e) => {
+  if (!(mode === 'drag' && race && race.clutchMode && race.pedal) || race.over || race.bot) return;
+  if (e.target.closest && e.target.closest('#dslip, header, #salechat')) return;
+  e.preventDefault(); race.pedal.wheel = true; race.pedal.depth = Sim.wheelDepth(race.pedal.depth, e.deltaY, e.deltaMode);
+}, { passive: false });
+// capture phase: the gate's own handler redraws it (drawGate sets innerHTML), which detaches the element the press landed on, and a
+// detached target is in no #dgate any more, so a knob press read as gas (measured 11-08: throttle 0.99 while dragging the knob)
 addEventListener('pointerdown', (e) => {
-  if (!(mode === 'drag' && race && race.clutchMode) || e.pointerType !== 'mouse' || e.button !== 0) return;
-  if (e.target.closest && e.target.closest('button, a, input, #dslip, #dgate, header')) return;
-  race.pedal.held = true; race.pedal.anchor = Sim.pedalGrab(race.pedal.depth, e.clientY); e.preventDefault();
-});
-addEventListener('pointermove', (e) => { if (mode === 'drag' && race && race.clutchMode && race.pedal.held && e.pointerType === 'mouse') race.pedal.depth = Sim.pedalDrag(race.pedal.anchor, e.clientY); });
-for (const ev of ['pointerup', 'pointercancel', 'blur']) addEventListener(ev, (e) => { if (race && race.pedal && (ev === 'blur' || e.pointerType === 'mouse')) race.pedal.held = false; });
+  if (!(mode === 'drag' && race) || e.pointerType !== 'mouse' || (e.button !== 0 && e.button !== 2) || race.over) return;
+  if (e.target.closest && e.target.closest('button, a, input, #dslip, #dgate, header, #salechat')) return;
+  mouseGas.add(e.button); e.preventDefault();
+}, true);
+for (const ev of ['pointerup', 'pointercancel']) addEventListener(ev, (e) => { if (e.pointerType === 'mouse') mouseGas.delete(e.button); });
+addEventListener('blur', () => mouseGas.clear());
+addEventListener('contextmenu', (e) => { if (mode === 'drag') e.preventDefault(); });   // the right button is gas on the strip
+
 // UC-34.1c a phone's clutch: a slider on the left beside the gas, held where the finger is, springing up when it lifts
 { const sl = $('dslider');
   const at = (e) => { const b = sl.getBoundingClientRect(); race.pedal.depth = Sim.sliderDepth(e.clientY, b.top, b.bottom); };
@@ -1434,15 +1542,30 @@ for (const ev of ['pointerup', 'pointercancel', 'blur']) addEventListener(ev, (e
   const at = (e) => { const b = gt.getBoundingClientRect(), r = race, want = { x: ((e.clientX - b.left) / b.width * 100 - 8) / 84, y: ((e.clientY - b.top) / b.height * 100 - 8) / 84 };
     r.gate.knob = Sim.moveKnob(r.gate.knob, want, r.gate.layout); const g = Sim.gearAt(r.gate.knob, r.gate.layout);
     if (g !== r.gate.gear && (g !== 0 || Math.abs(r.gate.knob.y - r.gate.layout.row.mid) < 0.02)) { if (!requestGear(r, g)) dragging = false; } drawGate(r); };
-  gt.addEventListener('pointerdown', (e) => { if (!(race && race.clutchMode) || race.run.done) return; e.preventDefault(); gt.setPointerCapture(e.pointerId); dragging = true; at(e); });
+  gt.addEventListener('pointerdown', (e) => { if (!(race && race.clutchMode) || race.run.done || race.selfDrive) return; e.preventDefault(); gt.setPointerCapture(e.pointerId); dragging = true; at(e); });
   gt.addEventListener('pointermove', (e) => { if (dragging) at(e); });
   for (const ev of ['pointerup', 'pointercancel']) gt.addEventListener(ev, () => { dragging = false; if (race && race.gate) { race.gate.knob = Sim.knobFor(race.gate.gear, race.gate.layout); drawGate(race); } }); }
 function syncDragBox() { $('dbox').textContent = DRAGBOX.clutch ? 'Clutch on' : 'Clutch off'; $('dbox').setAttribute('aria-pressed', String(DRAGBOX.clutch)); }
 function toggleDragBox() { DRAGBOX.clutch = !DRAGBOX.clutch; try { localStorage.setItem('hoc.gearbox', DRAGBOX.clutch ? 'clutch' : 'paddles'); } catch (e) { /* not kept */ } syncDragBox(); dragRerun(); }   // a new run with the other gearbox
-$('dbox').addEventListener('click', toggleDragBox); syncDragBox(); $('dstart').addEventListener('click', () => armDrag()); $('dfailr').addEventListener('click', () => dragRerun());
+// UC-22.1b alt 3: a race button pressed while the other hand holds the clutch. A phone does not make a click of a second finger's
+// tap while the first holds the slider (measured 11-08: START stayed up, the slider's finger let go, the car stalled), so each
+// pointer's own press and lift on the button is the press: down and up on it, any finger, not cancelled (a scroll cancels it).
+// The keyboard's click (Enter or Space on the focused button) still counts
+function tapOn(el, fn) {
+  const down = new Set();
+  el.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); down.add(e.pointerId); });
+  el.addEventListener('pointerup', (e) => { if (down.delete(e.pointerId)) fn(); });
+  el.addEventListener('pointercancel', (e) => down.delete(e.pointerId));
+  addEventListener('pointerup', (e) => { if (!el.contains(e.target)) down.delete(e.pointerId); }, true);   // a mouse's one id, let go elsewhere
+  el.addEventListener('click', (e) => { if (e.detail === 0) fn(); });
+}
+$('dbox').addEventListener('click', toggleDragBox); syncDragBox(); tapOn($('dstart'), () => armDrag()); tapOn($('dfailr'), () => dragRerun());
 window.HOC.dragBox = DRAGBOX;
 window.HOC.audio = audio;                                                     // the page check: the stick's sounds loaded (UC-34 4b)
-function dragRerun() { if (race && race.kind === 'drag') startDrag(race.entry).catch((e) => reportError(e)); }
+function dragRerun() {
+  if (race && race.kind === 'drag' && race.online) { openOnline().catch((e) => reportError(e)); return; }   // UC-42: a rematch online is a new challenge in the lobby
+  if (race && race.kind === 'drag') startDrag(race.entry, { rematch: true }).catch((e) => reportError(e));   // UC-38: the same rival
+}
 function fmt(s, d = 3) { return s === null || s === undefined ? '--' : s.toFixed(d); }
 function tickDrag(dt) {
   const r = race, v = r.v, c = v.cfg, run = r.run;
@@ -1451,9 +1574,9 @@ function tickDrag(dt) {
   const pad = navigator.getGamepads ? [...navigator.getGamepads()].find((p) => p && p.connected && p.mapping === 'standard') : null;
   if (pad) { for (const [b, dir] of [[5, 'up'], [3, 'down']]) { const d = !!(pad.buttons[b] && pad.buttons[b].pressed); if (d && !r.padPrev[b]) dragPress(dir); r.padPrev[b] = d; } }
   const finished = run.done;
-  if (r.bot && !r.clutchMode && run.green !== null && !finished) { raw.throttle = 1; const gg = v.trans.target; if (gg >= 1 && gg < c.trans.forward.length && v.trans.current === gg && v.trans.engineRPM >= r.pts[gg - 1] && !r.presses.length) dragPress('up'); }
+  if (r.bot && !r.clutchMode && run.green !== null && !finished) { raw.throttle = 1; const gg = v.trans.target; if (gg >= 1 && gg < c.trans.forward.length && v.trans.current === gg && v.trans.engineRPM >= r.pts[gg - 1] && !r.presses.length) dragPress('up', true); }
   if (r.clutchMode) {                                                  // UC-34: the pedal springs up when let go; the bot drives it
-    if (r.bot && !finished) botClutch(r, raw, dt); else if (!r.pedal.held) r.pedal.depth = Sim.pedalRelease(r.pedal.depth, dt);
+    if (r.bot && !finished) botClutch(r, raw, dt); else if (!r.pedal.held && !r.pedal.wheel) r.pedal.depth = Sim.pedalRelease(r.pedal.depth, dt);   // a wheel-set pedal stays
     if (finished) r.pedal.depth = 1;                                   // past the line the clutch goes in: it coasts, it cannot stall
     if (r.pedal.depth >= 0.5 && r.pedal.prev < 0.5 && r.gate.gear >= 1) r.cut = { gear: r.gate.gear, rpm: v.engine.rpm };   // the drive cut: the shift's rpm
     if (r.pedal.depth >= 0.98 && r.pedal.prev < 0.98 && !finished) sfx(audio, 'clutch_floor', 0.45, 0.7);   // UC-34 4b the pedal at the floor
@@ -1464,13 +1587,15 @@ function tickDrag(dt) {
   // the brake (AUTHORED): a brake press at speed is a FULL brake in Unreal's reverse-as-brake model, the wheels locked (no ABS) and
   // the tyre smoke filled the screen (11-06)
   const shut = finished && v.forwardSpeedCmS * 0.036 < 30;
+  if (r.selfDrive) { raw.brake = 0; raw.steering = 0; if (!r.clutchMode && run.green === null) raw.throttle = 0; }   // UC-45 AUTO: the visitor's keys do not drive (the house driver sets the gas)
   const input = { throttle: finished ? 0 : raw.throttle, brake: finished ? (shut ? 1 : 0) : raw.brake, steering: raw.steering, handbrake: 0, transmission: 'manual' };
-  if (r.clutchMode) { input.clutch = r.pedal.depth; input.gear = r.gate.gear; input.road = WEATHER.rain ? 'wet' : 'dry'; }   // UC-40 the wet or dry curve   // UC-34 (chaos_vehicle.js A11)
+  if (r.clutchMode) { input.clutch = r.pedal.depth; input.gear = r.gate.gear; input.road = r.road; }   // UC-40 the wet or dry curve   // UC-34 (chaos_vehicle.js A11)
   acc += Math.min(dt, 0.1);
   while (acc >= STEP) {
     const p = r.presses.shift(), gear = v.trans.target, rpm = v.trans.engineRPM;
     if (p === 'up' && gear >= 1 && gear < c.trans.forward.length) { gradeShift(r, gear, rpm); sfx(audio, 'gear_in_' + (1 + Math.floor(Math.random() * 3)), 0.7); }
-    Chaos.stepVehicle(v, Object.assign({}, input, { gearUp: p === 'up', gearDown: p === 'down' }), STEP, r.strip);
+    const took = r.tape && !run.done ? Replay.recordStep(r.tape, input, p, r.armed) : Object.assign({}, input, { gearUp: p === 'up', gearDown: p === 'down' });   // UC-46: recorded as the sim takes it
+    Chaos.stepVehicle(v, took, STEP, r.strip);
     const ev = Drag.tick(run, { dt: r.armed ? STEP : 0, distM: (v.pos[0] - r.x0) / 100, speedKmh: v.forwardSpeedCmS * 0.036, rpm: v.trans.engineRPM, gear: v.trans.target, maxRPM: c.engine.maxRPM });
     for (const e of ev) {
       if (e === 'green') blip(audio, 'go');
@@ -1492,7 +1617,9 @@ function tickDrag(dt) {
   const [X, Y, Z] = carAxes(v);
   r.car.group.matrix.fromArray(threeMatrixFromAxes([X, Y, Z], [1, 1, 1], v.pos));
   r.car.wheels.forEach((w, i) => { if (w) { const ws = v.wheels[i]; poseWheel(w, ws.steerDeg, ws.spinRad, ws.suspensionOffsetCm); } });
-  if (r.opp) placeOpponent(r);                                          // UC-38
+  if (r.opp) { placeOpponent(r); rivalTalk(r); }                         // UC-38
+  if (r.online && online) online.sendPose({ t: run.t, pos: v.pos, axes: [0, 1, 2].map((j) => [v.rot[0][j], v.rot[1][j], v.rot[2][j]]), w: v.wheels.map((ws) => [ws.steerDeg, ws.spinRad, ws.suspensionOffsetCm]) });   // UC-42.4 (20 a second at most, online.js)
+  if (!$('dkeys').hidden && r.armed && r.run.t > 3) $('dkeys').hidden = true;   // UC-34.1d the controls go 3 s after START
   const cam = r.camera, rig = updateRig(r.rig, v.pos, [X, Y, Z], dt);     // the chase rig runs either way, so C switches back to it settled
   const sf = stepSpeedFx(r.speedfx || (r.speedfx = makeSpeedFx()), v.forwardSpeedCmS * 0.036, dt, MOTION.on);   // UC-33.1 / 33.4
   const B = r.body, centre = [0, 1, 2].map((k) => v.pos[k] + X[k] * B.origin[0] + Y[k] * B.origin[1] + Z[k] * B.origin[2]);
@@ -1554,14 +1681,80 @@ function drawTraction(r) {
 // UC-38 the other lane's car at the run's clock: between the two recorded poses either side of it (positions blended, the axes and
 // the wheels the nearer one's), moved to the other lane; the last pose once the recording ends
 function placeOpponent(r) {
-  const o = r.opp, rec = o.rec, t = r.run.t;
+  const o = r.opp, rec = o.rec, g = r.run.greenAt, late = o.rival ? o.rival.reaction : 0;
+  const t = late && g !== undefined && g !== null && r.run.t > g ? Math.max(g, r.run.t - late) : r.run.t;   // UC-38.2 a human reaction after the green
   while (o.i < rec.length - 2 && rec[o.i + 1].t <= t) o.i++;
   const a = rec[o.i], b = rec[Math.min(o.i + 1, rec.length - 1)], u = b.t > a.t ? Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t))) : 0, n = u < 0.5 ? a : b;
   const pos = [0, 1, 2].map((k) => a.pos[k] + (b.pos[k] - a.pos[k]) * u + (k === 1 ? o.laneShift : 0));
   o.car.group.matrix.fromArray(threeMatrixFromAxes(n.axes, [1, 1, 1], pos));
   o.car.wheels.forEach((w, i) => { if (w) poseWheel(w, n.w[i][0], n.w[i][1], n.w[i][2]); });
-  const B = r.body, X = n.axes[0], Y = n.axes[1], Z = n.axes[2];
+  const B = o.body || r.body, X = n.axes[0], Y = n.axes[1], Z = n.axes[2];
   o.centre = [0, 1, 2].map((k) => pos[k] + X[k] * B.origin[0] + Y[k] * B.origin[1] + Z[k] * B.origin[2]);
+  o.distM = (pos[0] - o.x0) / 100;                                     // along the strip from its own staged nose, as the player's
+}
+// UC-38 the rival's car and run: its own READ car file and body, staged in the left lane as the player's car is, its house run on the
+// same road (drag.js houseRun, DERIVED) recorded for the replay, shown 12 m to the right. finishT: when it crosses the quarter on the
+// run's clock, its reaction included
+async function stageCar(key, gravity, strip) {                        // a lot car staged in the left lane, settled, as the player's is
+  wantModel(key);
+  const rJson = await fetchJson('sim_cars/' + key + '.json'), unexported = await fetchJson('sim_cars/' + key + '.unexported.json');
+  const opts = { gravityZ: gravity, unexported, angularDampingOnGround: RULES.angular_damping.on_ground, angularDampingInAir: RULES.angular_damping.in_air };
+  const B = rJson.bounds_cm.value, stage = [-(B.origin[0] + B.box_extent[0]), DRAG_LANE_Y_CM, 60];
+  const v = Chaos.makeVehicle(rJson, opts); Chaos.resetVehicle(v, stage, 0);
+  for (let i = 0; i < 240; i++) Chaos.stepVehicle(v, { throttle: 0, brake: 0, steering: 0, handbrake: 0, transmission: 'manual' }, STEP, strip);
+  return { rJson, B, v, x0: v.pos[0] };
+}
+async function rivalRun(rival, gravity, strip, houseOpts) {
+  const key = rival.key, { rJson, B, v, x0 } = await stageCar(key, gravity, strip);
+  const rec = [], run = Drag.houseRun(Chaos, v, strip, rec, houseOpts);
+  const body = await simBody(key, rJson); body.group.matrixAutoUpdate = false; trackView.scene.add(body.group);
+  const fin = rec.find((p) => (p.pos[0] - x0) / 100 >= Drag.MARKS.quarter);
+  if (!fin) throw new Error('rivals: the ' + key + ' house run never reached the quarter mile in its recording');
+  return { car: body, rec, i: 0, laneShift: -2 * DRAG_LANE_Y_CM, rival, x0, body: B, slip: run.slip, finishT: fin.t + rival.reaction, distM: 0, lead: null, lines: 0, said: [], say: null };
+}
+// UC-38.3 the rival talks: a taunt while staged (it stays until START), a line when the lead changes after the green (3 a run at
+// most, one at a time), a word at the finish or a failure; shown in a bubble over its car
+function rivalSay(r, moment) {
+  const o = r.opp, line = rivalLine(o.rival, moment, r.entry.name);
+  o.said.push(moment); o.say = { moment, line, until: moment === 'stage' ? Infinity : performance.now() + SAY_S * 1000 };
+  $('dsayw').textContent = line;
+  return line;
+}
+function rivalTalk(r) {
+  const o = r.opp;
+  if (!o.rival) return;
+  if (!o.said.length && !r.armed) rivalSay(r, 'stage');
+  if (r.run.green !== null && !r.run.done && !r.over && !(o.say && performance.now() < o.say.until)) {
+    const L = leader((r.v.pos[0] - r.x0) / 100, o.distM);
+    if (L && L !== o.lead) { if (o.lead && o.lines < 3) { rivalSay(r, L === 'rival' ? 'ahead' : 'passed'); o.lines++; } o.lead = L; }
+  }
+  const el = $('dsay'), on = !!(o.say && performance.now() < o.say.until && !r.over && mode === 'drag');
+  el.hidden = !on;
+  if (on && (o.placed !== o.say || !sayClear(el))) { o.placed = o.say; placeSay(r, el); }   // re-placed when the HUD moves onto it
+}
+// where a line goes, once per line: over the rival's car when that spot is clear of the HUD, else the clear spot nearest it, with no
+// tail (11-08, a phone on its side: the car parks behind the times panel and the bubble covered it). Clear: 6 px from every HUD box
+const HUD_BOXES = ['dpanel', 'dleds', 'dtrac', 'dstart', 'dkeys', 'dcluster', 'dgate', 'dtree', 'dslider', 'dgas', 'dpedal', 'dgasm', 'dpedalk', 'dgasmk', 'hud-speed', 'dgrade', 'dhelp'];
+// the HUD's boxes now (measured 11-08: placed once, the bubble sat on START and the controls on two phones, laid out after it)
+const hudBoxes = () => HUD_BOXES.map((id) => document.getElementById(id)).filter((e) => e && !e.hidden && getComputedStyle(e).display !== 'none')
+  .map((e) => e.getBoundingClientRect()).filter((b) => b.width > 0 && b.height > 0);
+const clearOf = (boxes, x0, y0, x1, y1) => x0 >= 8 && x1 <= innerWidth - 8 && y0 >= 52 && y1 <= innerHeight - 8 &&
+  !boxes.some((b) => x0 < b.right + 6 && x1 > b.left - 6 && y0 < b.bottom + 6 && y1 > b.top - 6);
+function sayClear(el) { const b = el.getBoundingClientRect(); return clearOf(hudBoxes(), b.left, b.top, b.right, b.bottom); }
+function placeSay(r, el) {
+  const w = el.offsetWidth, h = el.offsetHeight, W = innerWidth, H = innerHeight, boxes = hudBoxes();
+  const clear = (cx, top) => clearOf(boxes, cx - w / 2, top, cx + w / 2, top + h);
+  const p = new THREE.Vector3().setFromMatrixPosition(r.opp.car.group.matrix).project(r.camera);
+  const seen = p.z <= 1 && Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1, ax = (p.x + 1) / 2 * W, ay = (1 - p.y) / 2 * H - 60;
+  let best = seen && clear(ax, ay - h) ? { cx: ax, top: ay - h, over: true } : null;
+  if (!best) for (let gy = 0.1; gy <= 0.75; gy += 0.025) for (let gx = 0.08; gx <= 0.92; gx += 0.02) {
+    const cx = gx * W, top = gy * H;
+    if (!clear(cx, top)) continue;
+    const d = seen ? (cx - ax) ** 2 + (top + h - ay) ** 2 : (cx - W / 2) ** 2 + (top - H * 0.2) ** 2;
+    if (!best || d < best.d) best = { cx, top, over: false, d };
+  }
+  if (!best) best = { cx: Math.max(w / 2 + 8, Math.min(W - w / 2 - 8, ax)), top: Math.max(52, ay - h), over: seen };   // nowhere clear (a tiny window): over the car
+  el.style.left = Math.round(best.cx) + 'px'; el.style.top = Math.round(best.top) + 'px'; el.classList.toggle('free', !best.over);
 }
 // UC-36 the car's own cluster (data/clusters.json: its facts READ, its drawing the page's): built at the start, its red band from the car's
 // own derived shift points where its redline was not read, the Power Reserve the share of the power not in use (gauges.js)
@@ -1601,7 +1794,7 @@ function readDragBest(k) { try { const v = localStorage.getItem(DRAG_BEST(k)); r
 function writeDragBest(k, t) { try { const b = readDragBest(k); if (b === null || t < b) { localStorage.setItem(DRAG_BEST(k), String(t)); return true; } } catch (e) { /* a private window keeps none */ } return false; }
 function sellHTML(r, s) {
   const key = r.entry.name, L = LISTINGS.cars.find((c) => c.key === key);
-  const isBest = !s.foul && s.quarter_s !== null && writeDragBest(key, s.quarter_s);
+  const isBest = !s.foul && !r.selfDrive && s.quarter_s !== null && writeDragBest(key, s.quarter_s);   // UC-45.2: an AUTO run is not the visitor's best
   const cars = LOT_CARS.filter((c) => SIMS.has(c.key) && modelOf(c.key));
   const board = cars.map((c) => ({ c, t: readDragBest(c.key) })).sort((a, b) => (a.t === null) - (b.t === null) || (a.t || 0) - (b.t || 0));
   const listing = L ? '<div class="sellbox"><div><p class="kick">This car is for sale</p><b>' + esc(V(L.price) !== null ? money(V(L.price), V(L.currency)) : 'Price not listed') + '</b>' +
@@ -1621,6 +1814,74 @@ function fitHTML(r) {
   return '<p class="fit">Sim fitted to its owners&#39; Dragy runs: driveline efficiency ' + f.best.efficiency + ', tyre grip x' + f.best.friction + ' (off by ' + res + ')' +
     (f.near_bound && (f.near_bound.efficiency || f.near_bound.friction) ? '. <b>Near the edge of the search:</b> the fit stretches a stand-in to cover something the sim lacks' : '') + '.</p>';
 }
+// UC-38.4 the rival on the slip: who crossed the quarter first on the run's clock (reaction and ET both count), its reaction and
+// its 1/4 mile, and its word; also what the sales chat is told about the run (UC-41)
+let lastDrag = null;
+// UC-42 race someone online (online.js, loaded only when asked: it fetches Trystero from jsDelivr, so a static import would take the
+// page down with the CDN). The other lane is the other driver's own car, its poses streamed onto race.opp.rec for placeOpponent;
+// START becomes the lobby's Ready and GO starts both trees; at the line each sends its slip and both learn who won
+let online = null;
+const ONLINE_APP = 'houseofcars-drag-1';
+function onlineSay(t) { $('donlinemsg').textContent = t; }
+async function openOnline() {
+  $('donline').hidden = false;
+  if (online) return;
+  const box = $('donlinebox'), me = race && race.kind === 'drag' && mode === 'drag' ? race.entry.name : null;
+  if (!me || !RIVAL_CARS.includes(me)) { onlineSay('Take one of the lot\'s cars to the strip first.'); return; }
+  let Online;
+  try { Online = await import('./online.js'); } catch (e) { onlineSay('The online lobby could not load: ' + e.message); return; }
+  const nickname = await Online.askNickname(box);
+  online = Online.createOnline({ appId: ONLINE_APP, nickname, car: me,
+    onMatch: (m) => {
+      if (!RIVAL_CARS.includes(m.car)) { onlineSay('Their car is not one of this lot\'s, so it cannot be drawn.'); return; }
+      onlineSay(''); startDrag({ name: me, sim: true, drivable: true }, { online: m }).catch((e) => reportError(e));
+    },
+    onGo: () => { if (race && race.online) { race.onlineGo = true; armDrag(); $('donline').hidden = true; } },
+    onPose: (p) => { if (race && race.online && race.opp) race.opp.rec.push(p); },
+    onFinish: (f) => { if (!(race && race.online)) return; race.onlineResult = f; const el = document.querySelector('#dslip .rival'); if (el) el.outerHTML = onlineBlock(race); },
+    onLeave: (l) => { if (race && race.online && race.online.peerId === l.peerId) onlineSay((l.name || 'The other driver') + ' left' + (l.during === 'go' || l.during === 'racing' ? ': the run goes on alone.' : '.')); },
+    onError: (e) => onlineSay('Online, ' + e.where + ': ' + e.message) });
+  Online.mountLobby(box, online, { carName: (k) => SHORT[k] || k });
+}
+$('donlinebtn').addEventListener('click', () => openOnline().catch((e) => reportError(e)));
+$('donlinex').addEventListener('click', () => { $('donline').hidden = true; });
+function leaveOnline() { if (online) { online.leave(); online = null; } $('donlinebox').innerHTML = ''; onlineSay(''); $('donline').hidden = true; }
+// the other driver's car staged in the left lane as the player's is (its READ car file and body), shown 12 m to the right; its first
+// pose the staged one (placeOpponent reads rec[0]), the rest streamed
+async function onlineOpp(m, gravity, strip) {
+  const s = await stageCar(m.car, gravity, strip), v = s.v;
+  const rec = [{ t: 0, pos: v.pos.slice(), axes: [0, 1, 2].map((j) => [v.rot[0][j], v.rot[1][j], v.rot[2][j]]), w: v.wheels.map((w) => [w.steerDeg, w.spinRad, w.suspensionOffsetCm]) }];
+  const body = await simBody(m.car, s.rJson); body.group.matrixAutoUpdate = false; trackView.scene.add(body.group);
+  return { car: body, rec, i: 0, laneShift: -2 * DRAG_LANE_Y_CM, rival: null, x0: s.x0, body: s.B, slip: null, finishT: null, distM: 0, lead: null, lines: 0, said: [], say: null };
+}
+function sendOnlineFinish(r) {
+  if (r.sentFinish || !online) return;
+  r.sentFinish = true;                                                 // once: online.js throws on a second finish
+  const s = Drag.slip(r.run);
+  online.sendFinish({ reaction_s: s.reaction_s, sixty_s: s.sixty_s, eighth_s: s.eighth_s, quarter_s: s.quarter_s,
+    quarterAt: r.run.move !== null && r.run.quarterAt !== null ? r.run.move + r.run.quarterAt : null, foul: !!r.run.foul });   // the run's clock at the line
+}
+function onlineBlock(r) {
+  const n = esc(r.online.name), f = r.onlineResult, car = esc(SHORT[r.online.car] || r.online.car);
+  if (!f) return '<div class="rival"><p class="kick">' + n + ' in the ' + car + '</p><p>Waiting for their time...</p></div>';
+  const head = { win: 'You beat ' + n, lose: 'Beaten by ' + n, tie: 'A dead heat with ' + n, solo: n + ' left the race', none: 'Nobody reached the line' }[f.result] || esc(f.result);
+  const t = f.theirs || {}, num = (x) => (typeof x === 'number' ? fmt(x) : '--');
+  return '<div class="rival ' + (f.result === 'win' ? 'won' : f.result === 'lose' ? 'lost' : '') + '"><p class="kick">' + head + ' in the ' + car + '</p>' +
+    '<p>' + n + ': reaction ' + num(t.reaction_s) + ' s · 1/4 mile ' + num(t.quarter_s) + ' s' + (typeof f.margin_s === 'number' ? ' · by ' + fmt(f.margin_s) + ' s' : '') + '</p>' +
+    '<p class="q">' + esc(f.why || '') + '</p></div>';
+}
+function rivalBlock(r, s) {
+  const o = r.opp, mine = r.run.move !== null && r.run.quarterAt !== null ? r.run.move + r.run.quarterAt : null;
+  lastDrag = { car: r.entry.name, reaction: s.reaction_s, sixty: s.sixty_s, eighth: s.eighth_s, quarter: s.quarter_s, foul: !!s.foul, stalled: false, result: 'none', rival: null };
+  if (r.online) { sendOnlineFinish(r); return onlineBlock(r); }        // UC-42.5 (a person's name never goes to the sales chat)
+  if (!o || !o.rival) return '';
+  const won = !s.foul && mine !== null && mine < o.finishT, rs = o.slip, rt = rs.reaction_s === null ? null : rs.reaction_s + o.rival.reaction;
+  const line = rivalSay(r, won ? 'lose' : 'win');
+  lastDrag.result = won ? 'win' : 'lose'; lastDrag.rival = { name: o.rival.name, car: o.rival.key, quarter: rs.quarter_s };
+  return '<div class="rival ' + (won ? 'won' : 'lost') + '"><p class="kick">' + (won ? 'You beat ' : 'Beaten by ') + esc(o.rival.name) + ' in the ' + esc(SHORT[o.rival.key]) + '</p>' +
+    '<p>' + esc(o.rival.name) + ': reaction ' + (rt === null ? '--' : fmt(rt)) + ' s · 1/4 mile ' + (rs.quarter_s === null ? '--' : fmt(rs.quarter_s)) + ' s</p>' +
+    '<p class="q">' + esc(o.rival.name) + ': "' + esc(line) + '"</p></div>';
+}
 function showDragSlip(r) {
   const s = Drag.slip(r.run), b = r.best.slip;
   const dg = DRAGY.cars[r.entry.name], q = dg && dg.tests['1/4 mile'], e8 = dg && dg.tests['1/8 mile'], z = dg && dg.tests['0-100 km/h'];
@@ -1631,7 +1892,7 @@ function showDragSlip(r) {
   const grades = s.shifts.map((x) => '<span class="g-' + x.grade.toLowerCase() + '">' + x.from + '→' + (x.from + 1) + ' ' + x.grade.toLowerCase() + '</span>').join('');
   r.over = 'slip'; document.body.classList.add('dragover');            // UC-22.5 the slip alone, RACE AGAIN on top of it
   $('dslip').innerHTML = '<div class="slipgo"><button class="act go" id="drerun">RACE AGAIN<small>R</small></button><button class="act" id="dlot">Lot<small>Esc</small></button></div>' +
-    '<p class="kick">Time slip</p><h3>' + esc($('dcar').textContent) + '</h3>' +
+    '<p class="kick">Time slip</p><h3>' + esc(r.title) + (r.selfDrive ? ' <span class="autotag">AUTO</span>' : '') + '</h3>' + rivalBlock(r, s) +
     (s.foul ? '<p class="foul">RED LIGHT: left ' + fmt(-s.reaction_s) + ' s before the green</p>' : '') +
     '<table><tr><th></th><td>You</td><td>Sim, best shifts</td><td>Dragy owners</td></tr>' +
     row('Reaction', s.reaction_s === null ? '--' : (s.reaction_s >= 0 ? '+' : '') + fmt(s.reaction_s), fmt(b.reaction_s), '') +
@@ -1646,25 +1907,50 @@ function showDragSlip(r) {
     fitHTML(r) +
     sellHTML(r, s);
   $('dslip').hidden = false;
-  $('drerun').onclick = dragRerun; $('dlot').onclick = () => backToShowroom();
+  tapOn($('drerun'), dragRerun); $('dlot').onclick = () => backToShowroom();
   $('dslip').querySelectorAll('button[data-dragto]').forEach((b) => { b.onclick = () => startDrag({ name: b.dataset.dragto, sim: true, drivable: true }).catch((e) => reportError(e)); });   // UC-23.3
   quarterBoard(r, s);
 }
+// UC-46 the coffee (the owner 11-08: "say if you get the top high score you win a free Tim Hortons coffee. Which will email me if it
+// happens. Let them enter their email."). The words are the page's own; the prize is the page's maker's, not House of Cars' or Tim
+// Hortons'. It is offered only while the board's server says it takes claims (tools/scores_server.gs), and only on a car for sale,
+// whose run the owner can run again from its tape (tools/verify_claim.mjs) before the coffee goes out
+const PRIZE = {
+  tease: (t) => '&#9749; Beat <b>' + t.toFixed(3) + ' s</b> for a free Tim Hortons coffee',
+  board: '&#9749; First place on this car\'s board wins a free Tim Hortons coffee from the maker of this page.',
+  terms: 'Your email goes only to the maker of this page, to send the coffee: never on the board, never shared. Your run\'s replay is checked first. One coffee per person. Not from House of Cars or Tim Hortons.'
+};
+function prizeTease(r) {                                               // UC-46.1 while staged: the time to beat for the coffee
+  const el = $('dprize'); el.hidden = true; r.prizeOpen = false;
+  if (!r.entry.sim || r.online) return;
+  SCORES.board('drag.' + r.entry.name).then(({ rows, claims }) => {
+    if (race !== r || !claims) return;
+    r.prizeOpen = true;
+    if (r.armed) return;
+    el.innerHTML = PRIZE.tease(ranked(rows, { name: HOUSE_NAME, score: r.house.slip.quarter_s }, true)[0].score); el.hidden = false;
+  }, (e) => { el.dataset.why = e.message; });                         // no offer without the board; the slip's board block says why it could not be read (UC-25.3a)
+}
 // UC-25 this car's quarter-mile board, shared by everyone (scores.js): R.J.Thompson's house run first, then the names people save.
-// A board that cannot be reached says so and keeps the run nowhere else (UC-25.3a); a red light never goes on it (UC-25.1a)
+// A board that cannot be reached says so and keeps the run nowhere else (UC-25.3a); a red light never goes on it (UC-25.1a), nor a
+// run the car drove itself (UC-45.2). UC-46.2: a run that takes first place claims the coffee
 function quarterBoard(r, s) {
   const run = r.run, id = 'drag.' + r.entry.name, el = $('dboard');
   const house = { name: HOUSE_NAME, score: r.house.slip.quarter_s, kmh: r.house.slip.quarter_kmh, at: '' };
   const fmt = (x) => x.score.toFixed(3) + ' s' + (x.kmh ? ' @ ' + Math.round(x.kmh) + ' km/h' : '');
   const show = (rows, mine) => { $('dbrows').innerHTML = boardHTML(ranked(rows, house, true), fmt, mine); };
   const live = () => race === r && r.run === run;       // the slip still shows this run (not a rerun or another car)
-  el.innerHTML = '<p class="kick">Quarter-mile board: everyone in this car</p><div id="dbrows"></div>' +
-    '<form id="dbform" hidden><label for="dbname">Your name for the board</label><div><input id="dbname" maxlength="16" autocomplete="nickname" spellcheck="false"><button class="act go" type="submit">Save</button></div></form><p id="dbmsg" aria-live="polite">Reading the board…</p>';
+  el.innerHTML = '<p class="kick">Quarter-mile board: everyone in this car</p><p id="dbprize" hidden>' + PRIZE.board + '</p><div id="dbrows"></div>' +
+    '<form id="dbform" hidden><label for="dbname">Your name for the board</label><div><input id="dbname" maxlength="16" autocomplete="nickname" spellcheck="false"><button class="act go" type="submit">Save</button></div></form>' +
+    '<form id="dbcoffee" hidden novalidate><label for="dbemail">First place! Your email, for the coffee</label><div><input id="dbemail" type="email" maxlength="120" autocomplete="email" spellcheck="false"><button class="act go" type="submit">Claim</button></div><p class="fine">' + PRIZE.terms + '</p></form>' +
+    '<p id="dbmsg" aria-live="polite">Reading the board…</p>';
   show([]);
   const msg = (t) => { $('dbmsg').textContent = t; };
-  SCORES.top(id).then((rows) => {
+  SCORES.board(id).then(({ rows, claims }) => {
     if (!live()) return;
     show(rows);
+    const prize = claims && !!r.tape;                                    // UC-46.1: the server takes claims and this run has a tape to check
+    $('dbprize').hidden = !prize;
+    if (r.selfDrive) { msg('AUTO: no leaderboard score' + (prize ? ' and no coffee' : '') + ' in automatic mode. That would be cheating!'); return; }   // UC-45.2
     if (s.foul || s.quarter_s === null) { msg(s.foul ? 'A red light does not go on the board.' : ''); return; }
     if (!qualifies(rows, house, true, s.quarter_s)) { msg(s.quarter_s < house.score ? '' : 'Beat ' + HOUSE_NAME + '’s ' + house.score.toFixed(3) + ' s: every shift on the light.'); return; }
     msg('You made the top ten.'); $('dbform').hidden = false;
@@ -1674,12 +1960,29 @@ function quarterBoard(r, s) {
       const c = checkName(box.value); if (!c.ok) { msg(c.why); return; }
       const entry = { name: c.name, score: Math.round(s.quarter_s * 1000) / 1000, kmh: Math.round(s.quarter_kmh * 10) / 10, at: new Date().toISOString() };
       $('dbform').hidden = true; msg('Saving…');
-      SCORES.submit(id, entry).then((after) => { if (!live()) return; keepName(c.name); show(after, entry); msg('Saved. You are on the board.'); },
-        (err) => { if (!live()) return; $('dbform').hidden = false; msg(err.message + '. Not saved: try again.'); });
+      SCORES.submit(id, entry).then((after) => {
+        if (!live()) return; keepName(c.name); show(after, entry); msg('Saved. You are on the board.');
+        const first = ranked(after, house, true)[0];
+        if (prize && first && !first.house && first.name === entry.name && first.score === entry.score) coffee(r, id, entry, msg);   // UC-46.2 first place
+      }, (err) => { if (!live()) return; $('dbform').hidden = false; msg(err.message + '. Not saved: try again.'); });
     };
   }, (e) => { if (live()) msg(e.message + '. Your run is not on it.'); });
 }
-
+// UC-46.2-3 first place: the visitor's email for the coffee, sent with the run's tape so the owner can run it again first
+function coffee(r, id, entry, msg) {
+  const tape = Replay.encode(r.tape);
+  if (tape.length > Replay.TAPE.maxChars) { msg('First place! But this run\'s replay is too long to send (' + tape.length + ' characters), so it cannot be checked for the coffee.'); return; }
+  const f = $('dbcoffee'), box = $('dbemail');
+  f.hidden = false; msg('First place on this car. Claim your coffee:'); box.focus();
+  f.onsubmit = (e) => {
+    e.preventDefault();
+    const c = checkEmail(box.value); if (!c.ok) { msg(c.why); return; }
+    f.hidden = true; msg('Sending your claim…');
+    SCORES.claim(id, { name: entry.name, score: entry.score, kmh: entry.kmh, email: c.email, tape }).then(
+      () => { if (race === r) msg('Claimed! Your run\'s replay is checked, then ' + c.email + ' hears about the coffee.'); },
+      (err) => { if (race !== r) return; f.hidden = false; msg(err.message + '. Not claimed: try again.'); });
+  };
+}
 // ---------------------------------------------------------------- the ghost picker (UC-9.3)
 const GHOST_KEY = 'hoc.ghostpick';
 function fillGhostPicker() {
@@ -1721,13 +2024,13 @@ $('ghostpick').addEventListener('change', () => { applyGhostPick(); $('ghostpick
 
 // a lap is done (Increment_Lap_Count ran): the banner, the chime, and the device record (hud.js)
 function lapDone(r, lapS, bestBefore) {
-  const isBest = lapS < bestBefore;
-  const rec = readRecord(r.entry.name), isRecord = rec === null || lapS < rec;
+  const isBest = !r.selfDrive && lapS < bestBefore;                  // UC-45.2: an AUTO lap is not called a best
+  const rec = readRecord(r.entry.name), isRecord = !r.selfDrive && (rec === null || lapS < rec);   // UC-45.2: a lap the car drove itself is never a record
   if (isRecord && writeRecord(r.entry.name, lapS)) $('t-rec').textContent = Rules.formatTime(lapS, RULES);
   if (isRecord) { const g = saveGhost(r.entry.name, r.rec, lapS); if (r.ghostPick === 'mine') { r.ghost = g; showGhostLine(r); } }
   r.rec = makeRecorder();                                // the next lap starts on the clock the rules just restarted
   const vs = r.ghost && r.ghostPick !== 'mine' ? (lapS <= r.ghost.lap ? 'You beat the ' : 'The ') + r.ghostLabel + (lapS <= r.ghost.lap ? ' by ' : ' was faster by ') + Math.abs(lapS - r.ghost.lap).toFixed(3) + ' s' : null;
-  lapBanner($('lapb'), Rules.formatTime(lapS, RULES), bestBefore !== RULES.best_time_default.value ? lapS - bestBefore : null, isBest, [isRecord ? 'Record on this device' : null, vs].filter(Boolean).join(' · ') || null);
+  lapBanner($('lapb'), Rules.formatTime(lapS, RULES), bestBefore !== RULES.best_time_default.value ? lapS - bestBefore : null, isBest, [isRecord ? 'Record on this device' : null, r.selfDrive ? 'AUTO: not a record' : null, vs].filter(Boolean).join(' · ') || null);
   blip(audio, isBest ? 'best' : 'lap');
 }
 
@@ -1765,6 +2068,7 @@ if (KIOSK) {
 }
 setTimeout(() => prepareTrack().catch((e) => { console.error(e); }), 1500);   // behind the lot; startRace awaits the same promise and shows any error
 await warmLot();                                         // UC-30: behind the loading screen
+lotFocus.active = true;                                  // GFX 11-08: the warm-up drew every piece in every pass; from here the reflection follows the view
 mark('lot warmed');
 loadingDone().then(() => { mark('lot open'); modelQ.open = true; pumpModels(); if (BACKEND !== 'WebGPU') gpuNotice().catch((e) => reportError(e)); if (onLot) window.dispatchEvent(new CustomEvent('hoc:lot-open')); });   // the sales chat (sales_chat.js) greets once the lot is open (a race or the strip opened by a link: when the visitor reaches the lot)   // UC-20.3: closes now, or when a player says; UC-31 then the notice, once the lot is in view
 // UC-7.2a: the page lowers its own resolution when frames run steadily slow AND fewer pixels make them quicker (perf.js

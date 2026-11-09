@@ -97,6 +97,11 @@ button:focus-visible,#card .pick:focus-visible,#card .act:focus-visible{outline:
 #foot{position:fixed;left:16px;bottom:10px;max-width:calc(50vw - 120px);font-size:11px;color:var(--dim)}
 #foot{pointer-events:none}#foot a{color:var(--accent-soft);pointer-events:auto}
 #back{position:fixed;top:52px;left:16px;padding:8px 12px;font-size:13px}
+/* UC-45 AUTO beside the Lot button; its note across the top. UC-46 the coffee: the time to beat under START, the claim in the board */
+#auto{position:fixed;top:52px;left:96px;padding:8px 12px;font-size:13px;font-weight:800;letter-spacing:.08em}#auto[aria-pressed="true"]{background:var(--accent);border-color:#ffb38f;color:#fff;cursor:default}#auto[hidden],body.dragover #auto{display:none}
+#autonote{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:40;width:max-content;max-width:min(560px,calc(100vw - 32px));padding:10px 16px;border-radius:12px;background:rgba(14,16,19,.94);border:1px solid var(--accent);font-size:15px;line-height:1.35;text-align:center;pointer-events:none}#autonote b{color:var(--accent-soft)}#autonote[hidden]{display:none}
+#dprize{position:fixed;left:50%;top:calc(42% + 8.5vmin + 30px);transform:translateX(-50%);z-index:30;margin:0;padding:6px 14px;border-radius:999px;background:rgba(14,16,19,.86);border:1px solid rgba(242,88,39,.65);font-size:clamp(12px,1.8vmin,15px);white-space:nowrap;pointer-events:none}#dprize b{color:#fff}#dprize[hidden]{display:none}
+.autotag{display:inline-block;vertical-align:middle;font-size:.55em;letter-spacing:.12em;padding:2px 8px;border-radius:999px;background:var(--accent);color:#fff}#dbprize{margin:4px 0 8px;font-size:13px;color:#fff}#dbcoffee .fine{font-size:11px;line-height:1.35;color:var(--dim);margin:6px 0 0}
 #ghostpick{position:fixed;top:96px;left:16px;max-width:min(300px,44vw);font:inherit;font-size:12px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 8px}
 #loading{background:var(--bg);z-index:5}
 #loading>div{text-align:center}
@@ -137,7 +142,7 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #dslip .sellbox{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;padding:10px 12px;border-radius:10px;background:rgba(242,88,39,.1);border:1px solid rgba(242,88,39,.4)}
 #dslip .sellbox b{font-size:18px}#dslip .newbest{margin:8px 0 0;font-weight:800;color:#5dffa9;letter-spacing:.04em}
 #dboard{margin:10px 0 12px;padding:10px 12px;border:1px solid var(--accent);border-radius:12px;background:rgba(242,88,39,.06)}#dboard form label{display:block;font-size:12px;color:var(--dim);margin:10px 0 4px}#dboard form div{display:flex;gap:8px}
-#dbname{flex:1;min-width:0;padding:8px 10px;font:inherit;font-size:14px;color:#fff;background:#1c1f23;border:1px solid #3a3f45;border-radius:8px}#dbmsg{min-height:1.2em;font-size:12px;color:var(--accent-soft);margin:6px 0 0}
+#dbname,#dbemail{flex:1;min-width:0;padding:8px 10px;font:inherit;font-size:14px;color:#fff;background:#1c1f23;border:1px solid #3a3f45;border-radius:8px}#dbmsg{min-height:1.2em;font-size:12px;color:var(--accent-soft);margin:6px 0 0}
 #dslip ol.board{list-style:none;margin:6px 0 12px;padding:0;font-size:12.5px}#dslip ol.board li{display:grid;grid-template-columns:22px 1fr auto auto;gap:8px;align-items:center;padding:4px 6px;border-radius:7px}
 #dslip ol.board li.me{background:rgba(93,255,169,.08)}#dslip ol.board .n{color:var(--dim);font-weight:800}#dslip ol.board b{font:700 12.5px ui-monospace,Consolas,monospace;color:#5dffa9}#dslip ol.board button{padding:3px 9px;font-size:11.5px}
 #dhelp{position:fixed;left:16px;bottom:16px;font-size:12px;color:var(--dim)}
@@ -148,7 +153,7 @@ body.dragmode #touch{display:none}
 #dtouch>*{pointer-events:auto}#dtouch .shiftcol{display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}#dtouch .shiftcol>*{pointer-events:auto}
 #dtouch button{width:clamp(84px,24vmin,150px);height:clamp(84px,24vmin,150px);padding:0;border-radius:22px;font-weight:800;font-size:clamp(17px,4vmin,28px);user-select:none;-webkit-user-select:none;touch-action:none}
 #dtouch button.down{height:clamp(46px,11vmin,80px);font-size:clamp(15px,3vmin,22px)}#dgas{background:#16351f;border-color:#3dff7a;color:#c9ffd9}
-@media (pointer:coarse){#dtouch{display:flex}#dhelp{display:none}#dpanel{bottom:calc(clamp(84px,24vmin,150px) + 30px)}}
+@media (pointer:coarse){#phonepill{display:none}#dtouch{display:flex}#dhelp{display:none}#dpanel{bottom:calc(clamp(84px,24vmin,150px) + 30px)}}
 #dslip:not([hidden]) ~ #dtouch{display:none}   /* the slip open: nothing left to press but its own buttons */
 /* UC-36 the car's own cluster in the tach's place, as wide as the screen allows between the left column and the gate */
 /* UC-39 the traction bar: under the shift lights for the launch; amber bogging, the green band where the tyres grip, red spinning */
@@ -165,15 +170,37 @@ body.dragmode #dtrac.on{opacity:1}
 #dcluster{display:none}body.dragmode.hascluster #hud-speed{display:none}
 body.dragmode.hascluster #dcluster{display:block;position:fixed;left:50%;bottom:38px;transform:translateX(-50%);width:min(calc(100vw - 460px),1060px);filter:drop-shadow(0 10px 28px rgba(0,0,0,.6))}
 #dcluster svg{display:block;width:100%;height:auto}
-@media (pointer:fine) and (orientation:landscape){body.dragmode.clutchmode.hascluster #dcluster{width:min(calc(100vw - 2 * (clamp(180px,28vmin,280px) + 44px)),1060px)}}
+@media (pointer:fine) and (orientation:landscape){body.dragmode.clutchmode.hascluster #dcluster{width:min(calc(100vw - 2 * (var(--gate) + 44px)),1060px)}}
 body.dragmode.hascluster #dpanel{bottom:calc(var(--clh,300px) + 44px)}
 @media (orientation:landscape){body.dragmode.hascluster #dgrade{bottom:calc(var(--clh,300px) + 46px)}}
 @media (pointer:coarse) and (orientation:landscape){body.dragmode.hascluster #dcluster{bottom:12px;width:calc(100vw - 2 * (16px + clamp(84px,24vmin,150px) + 12px + clamp(54px,12vmin,90px) + 14px))}body.dragmode.hascluster #dpanel{bottom:auto}
   /* with the clutch: between the slider and gas on the left and the gate on the right, whichever side is wider */
-  body.dragmode.clutchmode.hascluster #dcluster{width:calc(100vw - 2 * max(16px + clamp(72px,17vmin,116px) + 12px + clamp(84px,24vmin,150px) + 14px, 16px + clamp(150px,42vmin,300px) + 14px))}}
+  body.dragmode.clutchmode.hascluster #dcluster{width:calc(100vw - 2 * max(16px + clamp(72px,17vmin,116px) + 12px + clamp(84px,24vmin,150px) + 14px, 16px + var(--gate) + 14px))}}
 @media (orientation:portrait){body.dragmode.hascluster #dcluster{width:calc(100vw - 24px);bottom:calc(clamp(84px,24vmin,150px) + clamp(46px,11vmin,80px) + 40px)}body.dragmode.clutchmode.hascluster #dcluster{bottom:calc(clamp(180px,48vmin,360px) + 30px)}body.dragmode.hascluster #dpanel{bottom:auto}}
 /* UC-34 the clutch and the gate: a computer's pedal (the mouse pulls it down) and gate (on keys), a phone's slider and gate (dragged) */
-#dpedal,#dgate,#dslider,#dgasm{display:none}body.clutchmode #dgas{margin-right:auto}
+#dpedal,#dgate,#dslider,#dgasm{display:none}
+/* UC-34.1d a computer's controls in small letters under the clutch and the gas (the owner 11-08: "small letters below the clutch on PC") */
+#dpedalk,#dgasmk{display:none}
+@media (pointer:fine){body.clutchmode #dpedalk,body.clutchmode #dgasmk{display:block;position:fixed;top:calc(96px + clamp(180px,34vmin,320px) + 6px);width:clamp(44px,6vmin,64px);text-align:center;font:800 10px/1.25 'Open Sans',sans-serif;letter-spacing:.06em;color:#fff;pointer-events:none}
+  body.clutchmode #dpedalk{left:110px}body.clutchmode #dgasmk{left:calc(110px + clamp(44px,6vmin,64px) + 10px)}
+  body.clutchmode #dgate{pointer-events:auto;cursor:grab}}
+#dpedalk small,#dgasmk small{display:block;font-weight:600;font-size:9px;color:var(--dim)}
+/* UC-22.1b / UC-34.1d the controls, under START while staged and for 3 s after it ("flash what the buttons are at the start") */
+#dkeys{position:fixed;left:50%;top:calc(42% + clamp(46px,6.6vmin,64px));transform:translateX(-50%);z-index:30;pointer-events:none;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;max-width:min(92vw,720px);font:600 clamp(11px,1.6vmin,15px)/1.3 'Open Sans',sans-serif;color:#fff;background:rgba(10,10,10,.74);border:1px solid var(--line);border-radius:10px;padding:6px 14px;animation:keysflash 1s ease-in-out 3}
+#dkeys[hidden]{display:none}
+#dkeys span{display:none;white-space:nowrap}#dkeys b{color:var(--accent-soft);letter-spacing:.1em;margin-right:6px}
+@media (pointer:fine){body.clutchmode #dkeys .fine.cp,body:not(.clutchmode) #dkeys .fine.np{display:inline}}
+@media (pointer:coarse){body.clutchmode #dkeys .coarse.cp,body:not(.clutchmode) #dkeys .coarse.np{display:inline}}
+@keyframes keysflash{50%{border-color:var(--accent);box-shadow:0 0 18px rgba(242,88,39,.55)}}
+/* UC-38.3 the rival talks: one bubble, over its car */
+#dsay{position:fixed;left:50%;top:30%;transform:translateX(-50%);z-index:25;pointer-events:none;max-width:min(300px,70vw);background:rgba(10,10,10,.86);border:1px solid var(--accent);border-radius:12px;padding:7px 11px;font:600 13px/1.35 'Open Sans',sans-serif;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#dsay[hidden]{display:none}
+#dsay b{display:block;font-size:10px;letter-spacing:.14em;color:var(--accent-soft);margin-bottom:2px}
+#dsay.free::after{display:none}#dsay::after{content:'';position:absolute;left:50%;bottom:-7px;width:12px;height:12px;background:inherit;border-right:1px solid var(--accent);border-bottom:1px solid var(--accent);transform:translateX(-50%) rotate(45deg)}
+#dfail .q{margin:4px 0 12px;font-size:14px;color:var(--dim);font-style:italic}
+#dslip .rival{margin:8px 0 10px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+#dslip .rival.won{border-color:#3dff7a}#dslip .rival.lost{border-color:#ff5a4f}
+#dslip .rival p{margin:2px 0}#dslip .rival .q{font-style:italic;color:var(--dim)}body.clutchmode #dgas{margin-right:auto}
 body.clutchmode #dgasm{display:block;position:fixed;left:calc(110px + clamp(44px,6vmin,64px) + 10px);top:96px;width:clamp(44px,6vmin,64px);height:clamp(180px,34vmin,320px);border-radius:12px;background:rgba(10,10,10,.72);border:1px solid var(--line);overflow:hidden;--d:0}
 #dgasm i{position:absolute;left:0;right:0;top:0;height:calc(var(--d) * 100%);background:linear-gradient(180deg,rgba(61,255,122,.12),rgba(61,255,122,.6));border-bottom:4px solid #3dff7a}
 #dgasm b{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;letter-spacing:.12em;color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto;height:70%}
@@ -187,7 +214,14 @@ body.clutchmode #dpedal{display:block;position:fixed;left:110px;top:96px;width:c
 #dslider .cpic .plate{transform-box:view-box;transform:translateX(calc(var(--d) * 9px))}
 #dpedal i,#dslider i{position:absolute;left:0;right:0;top:0;height:calc(var(--d) * 100%);background:linear-gradient(180deg,rgba(255,176,32,.15),rgba(255,176,32,.65));border-bottom:4px solid #ffb020}
 #dpedal b,#dslider b{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:10px;letter-spacing:.12em;color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto;height:70%}
-body.clutchmode #dgate{display:block;position:fixed;left:14px;bottom:44px;width:clamp(180px,28vmin,280px);height:clamp(180px,28vmin,280px);border-radius:16px;background:rgba(10,10,10,.28);border:1px solid var(--line);touch-action:none}
+/* the gate's size, in one place: every layout that keeps clear of it reads --gate (UC-34.1; the owner 11-08: "a bit larger") */
+body{--gate:clamp(210px,33vmin,330px)}
+@media (pointer:coarse){body{--gate:clamp(170px,48vmin,320px)}}
+/* on its side the gate sits under the times panel, which ends at 182 px (54 px down, 128 px tall: measured 11-08 on the 915, 844
+   and 740 px phones, scratchpad layout9): the gate keeps 8 px under it and 16 px off the bottom */
+@media (pointer:coarse) and (orientation:landscape){body{--gate:min(clamp(170px,48vmin,320px),calc(100vh - 206px))}}
+@media (pointer:coarse) and (orientation:portrait){body{--gate:min(clamp(170px,48vmin,320px),calc(100vw - 16px - (16px + clamp(72px,17vmin,116px) + 12px + clamp(84px,24vmin,150px)) - 10px))}}
+body.clutchmode #dgate{display:block;position:fixed;left:14px;bottom:44px;width:var(--gate);height:var(--gate);border-radius:16px;background:rgba(10,10,10,.28);border:1px solid var(--line);touch-action:none}
 #dgate svg{width:100%;height:100%}#dgate .slot{fill:none;stroke:#07080a;stroke-width:6.5;stroke-linecap:round}#dgate .lip{fill:none;stroke:#5c636c;stroke-width:8;stroke-linecap:round;transform:translateY(.9px)}#dgate text{fill:var(--dim);font:800 8px 'Open Sans',sans-serif;text-anchor:middle}#dgate text.on{fill:var(--accent-soft)}
 #dgate .kn{fill:var(--accent);font-size:6.5px;font-weight:800}
 /* UC-22.1b the tree waits for START; UC-22.5 a failed run is FAIL and one RESTART; a finished one the slip with RACE AGAIN on top.
@@ -199,16 +233,16 @@ body.clutchmode #dgate{display:block;position:fixed;left:14px;bottom:44px;width:
 #dfail{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:30;display:flex;flex-direction:column;align-items:center;text-align:center}
 #dfail b{font:900 clamp(72px,17vmin,190px)/1 'Open Sans',sans-serif;letter-spacing:.08em;color:#ff3b30;text-shadow:0 0 34px rgba(255,59,48,.6),0 6px 24px rgba(0,0,0,.85)}
 #dfail p{margin:8px 0 22px;font-size:clamp(12px,2vmin,16px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#ffb4ad;text-shadow:0 2px 8px #000}
-body.dragover #dcluster,body.dragover #hud-speed,body.dragover #dgate,body.dragover #dpedal,body.dragover #dgasm,body.dragover #dtouch,body.dragover #dtrac,body.dragover #dleds,body.dragover #dpanel,body.dragover #dtree,body.dragover #dgrade,body.dragover #dhelp{display:none!important}
+body.dragover #dkeys,body.dragover #dsay,body.dragover #dpedalk,body.dragover #dgasmk,body.dragover #dcluster,body.dragover #hud-speed,body.dragover #dgate,body.dragover #dpedal,body.dragover #dgasm,body.dragover #dtouch,body.dragover #dtrac,body.dragover #dleds,body.dragover #dpanel,body.dragover #dtree,body.dragover #dgrade,body.dragover #dhelp{display:none!important}
 #dslip .slipgo{position:sticky;top:-16px;z-index:2;display:flex;gap:10px;align-items:stretch;margin:-16px -18px 12px;padding:14px 18px;background:rgba(12,12,12,.97);border-bottom:1px solid var(--line)}
 #dslip .slipgo .act{flex-direction:column;justify-content:center;font-size:15px;padding:10px 16px}#dslip .slipgo .act small{font-size:10px;letter-spacing:.2em;opacity:.8}
 #dslip .slipgo .act.go{flex:1;font-size:clamp(20px,3.4vmin,30px);font-weight:900;letter-spacing:.12em;padding:14px 18px;box-shadow:0 0 0 4px rgba(242,88,39,.25),0 0 24px rgba(242,88,39,.45)}
 @media (pointer:coarse){body.clutchmode #dpedal{display:none}body.clutchmode #dtouch .shiftcol{display:none}
   body.clutchmode #dslider{display:block;position:relative;align-self:flex-end;margin-right:12px;margin-left:0;width:clamp(72px,17vmin,116px);height:clamp(180px,48vmin,360px);border-radius:18px;background:rgba(10,10,10,.8);border:1px solid #ffb020;overflow:hidden;pointer-events:auto;touch-action:none}
-  body.clutchmode #dgate{left:auto;right:16px;bottom:16px;width:clamp(150px,42vmin,300px);height:clamp(150px,42vmin,300px);pointer-events:auto}}
+  body.clutchmode #dgate{left:auto;right:16px;bottom:16px;pointer-events:auto}}
 @media (max-width:1000px){body.dragmode header #renderer,body.dragmode header #quality{display:none}}
 /* a phone on its side: the times top right beside a shorter shift-light bar, clear of the buttons and of the car's band */
-@media (pointer:coarse) and (orientation:landscape){body.clutchmode #dslider{height:clamp(84px,24vmin,150px)}#dpanel{top:54px;bottom:auto;min-width:150px;max-width:210px}#dleds{width:min(46vw,820px,calc(100vw - 480px))}#dtrac{width:min(46vw,640px,calc(100vw - 480px))}#dtimes div{line-height:1.35}}
+@media (pointer:coarse) and (orientation:landscape){body.clutchmode #dslider{height:clamp(84px,24vmin,150px)}#dpanel{top:54px;bottom:auto;min-width:150px;max-width:210px;padding:8px 12px}#dcar{margin-bottom:3px}#dleds{width:min(46vw,820px,calc(100vw - 480px))}#dtrac{width:min(46vw,640px,calc(100vw - 480px))}#dtimes div{line-height:1.15}}
 /* the grade just above the tach on a screen on its side, where the car is not */
 @media (orientation:landscape){#dgrade{top:auto;bottom:calc(clamp(200px,46vmin,500px) + 16px);font-size:clamp(28px,6vmin,72px)}}   /* the strip's header: room for the dials */
 /* upright: the tach above the buttons, the grade below the times */
@@ -296,11 +330,15 @@ body.walking #card,body.walking #showroom .nav,body.walking #foot{display:none}
 #walklabel span{display:block;font-size:12px;color:var(--accent-soft);margin-top:3px}
 .walkbtn{font:inherit;font-size:12px;font-weight:800;letter-spacing:.06em;padding:8px 12px;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;cursor:pointer}
 @media (pointer:coarse){#walkhud span{display:none}}
-header #dcam,header #dbox{display:none}body.dragmode header #dcam,body.dragmode header #dbox{display:inline-block}
+header #dcam,header #dbox,header #donlinebtn{display:none}body.dragmode header #dcam,body.dragmode header #dbox,body.dragmode header #donlinebtn{display:inline-block}
+@media (max-width:1000px){body.inrun header #donlinebtn{font-size:11px;padding:3px 6px}}
+/* UC-42 the online lobby's box (online.js mountLobby draws inside it) */
+#donline{position:fixed;right:16px;top:64px;z-index:45;pointer-events:auto;width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 90px);overflow:auto;background:rgba(10,10,10,.94);border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.55)}
+#donline[hidden]{display:none}#donlinex{float:right;background:none;border:0;color:var(--dim);font-size:20px;line-height:1;cursor:pointer}#donlinemsg{margin:6px 0 0;font-size:12px;color:var(--accent-soft)}#donlinemsg:empty{display:none}
 header #rain{display:none}body.inrun header #rain{display:inline-block}   /* UC-40.3: the Rain pill, in a race and on the strip */
 @media (max-width:1000px){body.inrun header{gap:6px}body.inrun header #mute,body.inrun header #radio,body.inrun header #motion,body.inrun header #dcam,body.inrun header #dbox,body.inrun header #rain{font-size:11px;padding:3px 6px}}   /* the Rain pill made the strip's row of pills too wide for a phone (412 px upright, 915 on its side): tighter */
 @media (max-width:720px){body.inrun header{padding:12px 10px}}
-header #mute,header #radio,header #motion,header #dcam,header #dbox,header #rain{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}
+header #mute,header #radio,header #motion,header #dcam,header #dbox,header #rain,header #donlinebtn,header #phonepill{pointer-events:auto;cursor:pointer;font:inherit;font-size:12px;padding:3px 9px;color:var(--dim)}header #radio[aria-pressed="true"]{color:var(--accent-soft)}header #phonepill[aria-pressed="true"]{color:var(--accent-soft)}
 #rbanner{position:fixed;z-index:6;left:0;right:0;top:64px;text-align:center;pointer-events:none;opacity:0}#rbanner.on{animation:station 3.2s ease both}
 #rbanner b{display:block;font-size:clamp(26px,4.5vw,46px);font-weight:800;font-style:italic;letter-spacing:.02em;color:#fff;text-shadow:0 3px 0 var(--accent-dark),0 0 24px rgba(242,88,39,.6)}
 #rbanner span{display:block;margin-top:4px;font-size:14px;font-style:italic;color:var(--accent-soft);text-shadow:0 1px 4px #000}
@@ -334,7 +372,7 @@ button,.pill{white-space:nowrap}
 </head>
 <body>
 <canvas id="view"></canvas>
-<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button><button class="pill" id="dbox" aria-pressed="true" title="The strip's gearbox: a clutch and an H gate, or paddles (G)">Clutch on</button><button class="pill" id="rain" aria-pressed="true" title="Rain on the circuit and the strip: a wet road, a grey sky and light shafts (U). It changes from the next run; on the strip, a new run at once">Rain on</button></header>
+<header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="phonepill" aria-pressed="false" title="Drive with your phone: scan the code it shows">Phone pad</button><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button><button class="pill" id="dbox" aria-pressed="true" title="The strip's gearbox: a clutch and an H gate, or paddles (G)">Clutch on</button><button class="pill" id="donlinebtn" title="Race someone online: a lobby of drivers on this page right now">Race online</button><button class="pill" id="rain" aria-pressed="true" title="Rain on the circuit and the strip: a wet road, a grey sky and light shafts (U). It changes from the next run; on the strip, a new run at once">Rain on</button></header>
 <div id="rbanner" aria-live="polite"></div>
 <div id="loading"><div id="lbox"><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i><span id="lmb"></span></div></div></div>
 
@@ -355,6 +393,8 @@ button,.pill{white-space:nowrap}
 
 <section id="race">
   <button id="back" aria-label="Back to the lot">◀ Lot</button>
+  <button id="auto" type="button" hidden aria-pressed="false" title="Let the car drive itself (no leaderboard score in automatic mode)">AUTO</button>
+  <div id="autonote" hidden role="status" aria-live="polite"></div>
   <select id="ghostpick" aria-label="Race against a ghost"></select>
   <div id="hud-time"><div class="t" id="t-now">---:---:---</div><div class="b">Best <span id="t-best">—</span> · Record <span id="t-rec" title="The best lap driven on this device">—</span><span id="t-ghost"></span></div></div>
   <div id="countdown"></div>
@@ -374,14 +414,19 @@ button,.pill{white-space:nowrap}
   <div id="dleds" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div id="dgrade" aria-live="polite"></div>
   <div id="dslip" hidden role="dialog" aria-label="Time slip"></div>
-  <div id="dhelp"><span class="np">Wait for the green · W / ↑ gas · E or Shift: shift up · Q: down</span><span class="cp">Hold the mouse and pull down: the clutch · W / ↑ gas · 1-7: the gate, N neutral (E / Q: next, back)</span> · C: camera · G: clutch on/off · R: run again · Esc: the lot</div>
+  <div id="dhelp"><span class="np">Wait for the green · W / ↑ gas · E or Shift: shift up · Q: down</span><span class="cp">Mouse wheel: the clutch (down: in, up: out) · a mouse button, W, ↑ or Space: gas · drag the knob or 1-7: the gate, N neutral (E / Q: next, back)</span> · C: camera · G: clutch on/off · R: run again · Esc: the lot</div>
   <div id="dpedal" class="clutchdepth" role="meter" aria-label="Clutch pedal, percent down" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i><b>CLUTCH</b></div>
-  <div id="dgasm" aria-hidden="true"><i></i><b>GAS</b></div>
+<div id="dgasm" aria-hidden="true"><i></i><b>GAS</b></div>
+  <div id="dpedalk" aria-hidden="true">WHEEL<small>down: in</small></div><div id="dgasmk" aria-hidden="true">CLICK<small>W &uarr; Space</small></div>
+  <div id="dkeys" hidden><span class="fine cp"><b>CLUTCH</b>mouse wheel, down: in</span><span class="fine cp"><b>GEARS</b>drag the knob, or 1-7</span><span class="fine cp"><b>GAS</b>hold a mouse button, W, &uarr; or Space</span><span class="fine np"><b>GAS</b>hold W, &uarr; or Space</span><span class="fine np"><b>SHIFT</b>E or Shift</span><span class="coarse cp"><b>CLUTCH</b>the slider</span><span class="coarse cp"><b>GEARS</b>drag the knob</span><span class="coarse cp"><b>GAS</b>the pedal</span><span class="coarse np"><b>GAS</b>the pedal</span><span class="coarse np"><b>SHIFT</b>the buttons</span></div>
+  <div id="dsay" hidden aria-live="polite"><b id="dsayn"></b><span id="dsayw"></span></div>
+  <div id="donline" hidden role="dialog" aria-label="Race someone online"><button id="donlinex" aria-label="Close the lobby">&times;</button><div id="donlinebox"></div><p id="donlinemsg" aria-live="polite"></p></div>
   <div id="dgate" aria-label="Shift gate"></div>
   <div id="dcluster" aria-label="The car's instrument cluster"></div>
   <div id="dtrac" aria-live="off"><span class="bog">BOG</span><span class="spin">SPIN</span><i class="band"></i><i class="mk"></i><b id="dtracw">TRACTION</b></div>
   <button id="dstart" hidden aria-label="Start the tree">START<small>Space</small></button>
-  <div id="dfail" hidden role="dialog" aria-label="The run failed"><b>FAIL</b><p id="dfailw"></p><button id="dfailr" class="bigact">RESTART<small>R</small></button></div>
+  <p id="dprize" hidden></p>
+  <div id="dfail" hidden role="dialog" aria-label="The run failed"><b>FAIL</b><p id="dfailw"></p><p id="dfailq" class="q" hidden></p><button id="dfailr" class="bigact">RESTART<small>R</small></button></div>
   <div id="dtouch"><div id="dslider" class="clutchdepth" aria-label="Clutch: slide down to press it"><svg class="cpic" viewBox="0 0 60 200" aria-hidden="true"><g class="pedal"><line x1="30" y1="8" x2="30" y2="66" stroke="#c9ced6" stroke-width="4" stroke-linecap="round"/><circle cx="30" cy="8" r="5" fill="#8d939b"/><rect x="12" y="62" width="36" height="16" rx="5" fill="#2b2f35" stroke="#c9ced6" stroke-width="1.5"/><path d="M16 67h28M16 70h28M16 73h28" stroke="#8d939b" stroke-width="1"/></g><rect x="10" y="112" width="12" height="80" rx="3" fill="#7d838c"/><g class="plate"><rect x="24" y="118" width="5" height="68" rx="1.5" fill="#c46b2b"/><path d="M25 124v56M27.5 124v56" stroke="#8a4518" stroke-width=".8"/><rect x="30" y="114" width="9" height="76" rx="2.5" fill="#a9aeb5"/><path d="M39 150h12" stroke="#a9aeb5" stroke-width="3"/></g></svg><i></i><b>CLUTCH</b></div><button id="dgas" aria-label="Gas: hold it down">GAS</button><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>
 </div>
 <div id="compare" hidden role="dialog" aria-modal="true" aria-label="Compare the cars for sale"><div class="cmpbox"><button id="cmpclose" aria-label="Close">✕</button>
@@ -391,6 +436,8 @@ button,.pill{white-space:nowrap}
 <div id="nogpu"><div><h2>This page needs WebGPU or WebGL 2</h2><p>Your browser offers neither, so there is nothing to draw with. Chrome, Edge and Safari 26 have WebGPU; most browsers have WebGL 2.</p></div></div>
 <!-- the sales chat (sales_chat.js, relay/README.md: another session's; on for everyone with the owner's yes 2026-11-07) -->
 <script src="sales_chat.js" data-relay="https://hoc-sales-relay.tami-play.workers.dev"></script>
+<!-- UC-47 a phone as the controller (phone_controller.js, D:/_phonepad: the PhonePad session's); the header's Phone pill opens it -->
+<script src="phone_controller.js" data-relay="https://phonepad-relay.tami-play.workers.dev" data-button="none"></script>
 <script type="module" src="perf.js"></script>
 <script type="module" src="loading.js"></script>
 <script type="module" src="app.js"></script>

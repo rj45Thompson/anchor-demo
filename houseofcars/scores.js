@@ -23,6 +23,16 @@ export function checkName(raw) {
   return { ok: true, name };
 }
 
+// UC-46 an email for the coffee, as entered: { ok, email } or { ok: false, why }. The server (tools/scores_server.gs) holds the same rule
+export const EMAIL_MAX = 120;                             // AUTHORED: room for any real address
+const EMAIL = /^[^\s@<>",;]+@[^\s@<>",;]+\.[A-Za-z]{2,}$/;
+export function checkEmail(raw) {
+  const email = String(raw || '').trim();
+  if (!email) return { ok: false, why: 'Type your email first.' };
+  if (email.length > EMAIL_MAX || !EMAIL.test(email)) return { ok: false, why: 'That does not look like an email address.' };
+  return { ok: true, email };
+}
+
 /** one board's rows with the house row among them, best first, the top TOP; lower: true where a lower score wins (a time) */
 export function ranked(rows, house, lower) {
   const all = rows.concat(house ? [Object.assign({ house: true }, house)] : []);
@@ -44,10 +54,21 @@ export class ScoreBoard {
   get ready() { return !!this.endpoint; }
   notReady() { return new Error('The shared board is not set up yet' + (this.why ? ' (' + this.why + ')' : '')); }
   /** the board's stored rows: [{ name, score, kmh?, at }] */
-  async top(board) {
+  async top(board) { return (await this.board(board)).rows; }
+  /** the board's rows, and whether its first place can claim the coffee (UC-46): { rows, claims } */
+  async board(board) {
     if (!this.ready) throw this.notReady();
     const r = await fetch(this.endpoint + '?board=' + encodeURIComponent(board), { cache: 'no-store' });
-    return this.answer(r);
+    const j = await this.read(r);
+    return { rows: j.rows, claims: j.claims === true };
+  }
+  /** UC-46.3 a first place claims the coffee: c { name, score, kmh, email, tape }; answers the board's rows, or throws the reason */
+  async claim(board, c) {
+    if (!this.ready) throw this.notReady();
+    const r = await fetch(this.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ claim: true, board }, c)) });
+    const j = await this.read(r);
+    if (j.claimed !== true) throw new Error('The shared board did not take the claim');
+    return j.rows;
   }
   /** store one row; answers the board's rows after it */
   async submit(board, entry) {
@@ -56,12 +77,13 @@ export class ScoreBoard {
     const r = await fetch(this.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ board }, entry)) });
     return this.answer(r);
   }
-  async answer(r) {
+  async answer(r) { return (await this.read(r)).rows; }
+  async read(r) {                                         // the server's answer, checked: { rows, ... } or the reason, thrown
     if (!r.ok) throw new Error('The shared board answered HTTP ' + r.status);
     let j; try { j = await r.json(); } catch (e) { throw new Error('The shared board sent something that is not a board'); }
     if (j.error) throw new Error('The shared board said: ' + j.error);
     if (!Array.isArray(j.rows)) throw new Error('The shared board sent no rows');
-    return j.rows;
+    return j;
   }
 }
 

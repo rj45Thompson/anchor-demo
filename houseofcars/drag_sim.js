@@ -74,5 +74,13 @@ export const pedalGrab = (depth, y) => y - depth * PEDAL.TRAVEL_PX;
 export const pedalDrag = (anchor, y) => Math.max(0, Math.min(1, (y - anchor) / PEDAL.TRAVEL_PX));
 /** let go: the pedal comes up */
 export const pedalRelease = (depth, dt) => Math.max(0, depth - (dt > 0 ? dt : 0) / PEDAL.RETURN_S);
+// UC-34.1d a computer's clutch on the mouse wheel (the owner 11-08: "I can't hit clutch with mouse AND gate", then "lets use the
+// mousewheel as the clutch, left right click as gas"): scrolling down presses the pedal in, up lets it out, and it stays where the
+// wheel leaves it (a wheel is not held, so nothing springs back), so the launch is as slow or as quick as the scroll. A notch is
+// 100 px of deltaY in Chrome and Edge on Windows; FULL_PX: 8 notches from the top to the floor (AUTHORED). Lines and pages
+// (deltaMode 1, 2: Firefox, some mice) count as LINE_PX and PAGE_PX each
+export const WHEEL = { FULL_PX: 800, LINE_PX: 33, PAGE_PX: 800 };
+export const wheelPx = (deltaY, deltaMode) => deltaY * (deltaMode === 1 ? WHEEL.LINE_PX : deltaMode === 2 ? WHEEL.PAGE_PX : 1);
+export const wheelDepth = (depth, deltaY, deltaMode = 0) => Math.max(0, Math.min(1, depth + wheelPx(deltaY, deltaMode) / WHEEL.FULL_PX));
 /** a slider's depth for a finger at y on a track from top (the pedal up) to bottom (the floor) */
 export const sliderDepth = (y, top, bottom) => Math.max(0, Math.min(1, (y - top) / (bottom - top)));

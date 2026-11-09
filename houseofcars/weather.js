@@ -217,6 +217,8 @@ export function buildRain(THREE, opts = {}) {
   const g = streakGeometryData(count, opts.seed ?? 4040);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 12), 3));   // unused: the shader places every vertex
+  geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(count * 12), 3));     // unlit: the zeros three put in its place,
+                                                                                               // without its console warning a compile
   geo.setAttribute('seed', new THREE.BufferAttribute(g.seeds, 3));
   geo.setAttribute('corner', new THREE.BufferAttribute(g.corners, 2));
   geo.setIndex(new THREE.BufferAttribute(g.index, 1));
@@ -459,4 +461,107 @@ export function godRays(THREE, sceneColor, sun, opts = {}) {
     return T.vec4(T.vec3(T.step(L.skyFrom, T.perspectiveDepthToViewZ(z, sun.near, sun.far).negate().div(sun.far))), 1);
   }
   return T.vec4(sceneColor.rgb.add(s.mul(gain)), sceneColor.a);
+}
+
+// ---------------------------------------------------------------- light shafts as scene geometry: Elami's GodRayShaft
+// What Elami ships for god rays is not the LSPP post above but Assets/Art/Shaders/GodRayShaft.shader ("Tami/GodRayShaft"), whose
+// header records that it REPLACED the LSPP post process, "which RJ killed on look": additive quads in the scene (Blend SrcAlpha One,
+// ZWrite Off, Cull Off), each brightest at its light end and fading along its length, feathered at its sides, faded as it turns
+// edge-on and faded where it meets the scene (the soft-particle depth fade, the term RJ singled out: "the difference between god ray
+// and glowing cardboard"). Its axis is the scene sun's (BlockTilePainterWindow.Lighting.cs ResolveShaftAxis, auto-orient: the light's
+// forward), its quad turned about that axis toward the camera (PlaceGodRayShaft's double cross product). The shape terms and the
+// look below are READ; Elami turns a shaft to the camera once, when it is placed, and the page does it every frame, since its
+// camera drives past them (AUTHORED, the same construction).
+// The look is GodrayRain's shaft (the VFX whose rain is ported above: "heavy rain + a god ray"), not the Lighting tab's starting
+// shaft (DefaultShaft: falloff 1.6, brightest at its top), which looked at on the strip 11-08 (shots/shafts_default_*.png) was a
+// glow in the sky above the frame and nothing by the road: GodrayRain's falloff 0.35 "stays bright most of its length".
+export const SHAFT = {                                // Media/VFX/GodrayRain/GodrayRain_Shaft.mat = GodrayRainRules.cs:71-79
+  src: 'Media/VFX/GodrayRain/GodrayRain_Shaft.mat (values Elami AUTHORED, GodrayRainRules.cs:71-79) + Art/Shaders/GodRayShaft.shader (the terms)',
+  colour: [1, 0.97, 0.8], intensity: 1.6, falloff: 0.35, topFade: 0.12, edgeFade: 0.25, depthFade: 1.0, viewFadePower: 1.2,
+};
+export const SHAFTS = {                               // AUTHORED: the page's shafts over the strip
+  every: 20, from: -12, to: 580,  // m along the strip: a row every 20 m from behind the start line to past the finish
+  across: [-30, 30],              // m: where a shaft lands across the strip (it is 24 m wide); one each side of the centre line a row
+  width: [2, 5], length: [42, 64],   // m: Elami's 1.6 x 10 is sized to its 1 m tile under a tactics camera. 5-9 m wide read as
+                                  //   columns of fog, not shafts (looked at 11-08, shots/shafts_tune1_sheet.png)
+  intensity: 1.0,                 // x SHAFT.intensity
+  nearFade: [3, 12],              // m from the eye: a shaft the camera drives through fades out instead of washing the screen
+  farFade: [90, 260],             // m: and the far ones go into the haze (the scene's fog is not applied to an additive quad). Out to
+                                  //   520 m the rows down the strip piled up into one white glow at its end (shots/shafts_tune1_sheet.png)
+};
+// where each shaft lands and its size: rows along the strip, one each side of the centre line, seeded -> [{ x, z, width, length }]
+export function shaftPlaces(opts = {}) {
+  const S = { ...SHAFTS, ...opts }, rnd = makeRng(opts.seed ?? 1108), out = [];
+  const lerp = (r, a, b) => a + (b - a) * r;
+  for (let x = S.from; x <= S.to; x += S.every) for (const side of [-1, 1]) {
+    out.push({ x: x + lerp(rnd(), -0.4, 0.4) * S.every, z: side * lerp(rnd(), 2, Math.abs(S.across[side < 0 ? 0 : 1])),
+               width: lerp(rnd(), ...S.width), length: lerp(rnd(), ...S.length) });
+  }
+  return out;
+}
+// the shafts' geometry, four corners a shaft (pure): base (the landing point), corner (u across 0..1, v 0 at the ground to 1 at the
+// light end, GodRayShaft's v), size (width, length)
+export function shaftGeometryData(places) {
+  const n = places.length, base = new Float32Array(n * 12), corner = new Float32Array(n * 8), size = new Float32Array(n * 8), index = new Uint32Array(n * 6);
+  const C = [0, 0, 1, 0, 1, 1, 0, 1];
+  places.forEach((p, i) => {
+    for (let k = 0; k < 4; k++) { base.set([p.x, 0, p.z], i * 12 + k * 3); size.set([p.width, p.length], i * 8 + k * 2); }
+    corner.set(C, i * 8); index.set([0, 1, 2, 0, 2, 3].map((j) => j + i * 4), i * 6);
+  });
+  return { base, corner, size, index };
+}
+// buildShafts(THREE, { light, places? }) -> { mesh, update(camera), places }: ONE draw call for every shaft. light: the scene's
+// DirectionalLight (the axis: from its target back toward it). update(camera) once a frame, before rendering.
+export function buildShafts(THREE, opts = {}) {
+  const T = THREE.TSL, S = SHAFT, A = { ...SHAFTS, ...(opts.shafts || {}) };
+  const light = opts.light;
+  if (!light || !light.isDirectionalLight) throw new Error('weather.js buildShafts: the scene\'s DirectionalLight is required (the shafts\' axis)');
+  const places = opts.places ?? shaftPlaces(opts);
+  if (!places.length) throw new Error('weather.js buildShafts: no places to put a shaft');
+  const g = shaftGeometryData(places);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(places.length * 12), 3));   // unused: the shader places them
+  geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(places.length * 12), 3));     // unlit (as the rain's)
+  geo.setAttribute('base', new THREE.BufferAttribute(g.base, 3));
+  geo.setAttribute('corner', new THREE.BufferAttribute(g.corner, 2));
+  geo.setAttribute('size', new THREE.BufferAttribute(g.size, 2));
+  geo.setIndex(new THREE.BufferAttribute(g.index, 1));
+
+  const uUp = T.uniform(new THREE.Vector3(0, 1, 0)), uSide0 = T.uniform(new THREE.Vector3(1, 0, 0)), uCam = T.uniform(new THREE.Vector3());
+  const base = T.modelWorldMatrix.mul(T.vec4(T.attribute('base', 'vec3'), 1)).xyz, corner = T.attribute('corner', 'vec2'), size = T.attribute('size', 'vec2');
+  const mid = base.add(uUp.mul(size.y.mul(0.5)));
+  const across = T.cross(uUp, uCam.sub(mid));                                  // PlaceGodRayShaft: side = up x view, normal = side x up
+  const side = T.normalize(across.add(uSide0.mul(1e-4)));                      // ...never degenerate: looking straight up a shaft
+  const normal = T.normalize(T.cross(side, uUp));
+  const pos = base.add(side.mul(corner.x.sub(0.5).mul(size.x))).add(uUp.mul(corner.y.mul(size.y)));
+  const vNormal = T.varying(normal, 'v_shaftNormal'), vCorner = T.varying(corner, 'v_shaftCorner');
+
+  const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending });
+  mat.forceSinglePass = true;
+  mat.positionNode = T.modelWorldMatrixInverse.mul(T.vec4(pos, 1)).xyz;
+  const u = vCorner.x, v = vCorner.y;
+  // GodRayShaft frag, term by term
+  const top = T.smoothstep(1, 1 - S.topFade - 1e-4, v);
+  const along = T.pow(T.saturate(v), S.falloff).mul(S.topFade > 0.0001 ? top : 1);
+  const edge = T.smoothstep(0, S.edgeFade, u).mul(T.smoothstep(0, S.edgeFade, T.oneMinus(u)));
+  const toEye = uCam.sub(T.positionWorld), dist = T.length(toEye);
+  const viewFade = T.pow(T.saturate(T.abs(T.dot(T.normalize(vNormal), toEye.div(T.max(dist, 1e-4))))), S.viewFadePower);
+  const sceneZ = T.perspectiveDepthToViewZ(T.viewportDepthTexture(T.screenUV).x, T.cameraNear, T.cameraFar).negate();
+  const depthFade = T.saturate(sceneZ.sub(T.positionView.z.negate()).div(S.depthFade));
+  // the page's two (AUTHORED, see SHAFTS)
+  const near = T.smoothstep(A.nearFade[0], A.nearFade[1], dist), far = T.oneMinus(T.smoothstep(A.farFade[0], A.farFade[1], dist));
+  mat.colorNode = T.vec3(...S.colour).mul(S.intensity * A.intensity);
+  mat.opacityNode = T.saturate(along.mul(edge).mul(viewFade).mul(depthFade).mul(near).mul(far));
+  mat.name = 'weather-shafts';
+
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.frustumCulled = false; mesh.renderOrder = 19; mesh.name = 'weather-shafts';
+  const a = new THREE.Vector3(), b = new THREE.Vector3();
+  function update(camera) {
+    light.getWorldPosition(a); light.target.getWorldPosition(b);
+    uUp.value.copy(a).sub(b).normalize();                                      // from the ground back toward the sun
+    uSide0.value.set(1, 0, 0).cross(uUp.value); if (uSide0.value.lengthSq() < 1e-8) uSide0.value.set(0, 0, 1).cross(uUp.value); uSide0.value.normalize();
+    camera.getWorldPosition(uCam.value);
+  }
+  return { mesh, update, places, uniforms: { up: uUp, cam: uCam } };
 }

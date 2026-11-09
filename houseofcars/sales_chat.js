@@ -36,8 +36,8 @@
       return body;
     }
     health() { return this.call('/health', { method: 'GET' }); }
-    chat(history) {
-      return this.call('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ history }) });
+    chat(history, page) {                       // page: what is on the visitor's screen (UC-41; the relay checks every field)
+      return this.call('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(page ? { history, page } : { history }) });
     }
   }
 
@@ -200,16 +200,21 @@
       this.input.value = '';
       this.setBusy(true);
       const wait = this.line('note', 'Claude is thinking...');
-      const r = await this.relay.chat(this.history);
+      const page = window.HOC && window.HOC.salesPage ? window.HOC.salesPage() : null;
+      const r = await this.relay.chat(this.history, page);
       wait.remove();
       if (!r.ok) {
         this.history.pop();                      // an unanswered question is not sent again as history
         this.line('note bad', r.say);
         this.input.value = q;                    // back in the box, to send again
       } else {
-        this.history.push({ role: 'assistant', text: r.text });
-        this.line('claude', r.text + (r.cut ? ' [cut short]' : ''));
-        this.voice.say(r.text);
+        // an action with no words is kept as what it did, so the history never holds an empty turn (the relay refuses one)
+        const did = (r.actions || []).map((a) => (a.name === 'drag_race' ? 'Started a drag race in the ' : 'Showed the ') + a.car.replace(/_/g, ' ') + '.').join(' ');
+        const said = r.text || did;
+        this.history.push({ role: 'assistant', text: said });
+        this.line('claude', said + (r.cut ? ' [cut short]' : ''));
+        if (r.text) this.voice.say(r.text);
+        for (const a of r.actions || []) window.HOC.salesAct(a);    // UC-41 show a car, or race one
       }
       this.setBusy(false);
       this.input.focus({ preventScroll: true });
