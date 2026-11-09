@@ -15,10 +15,13 @@ export const FOV = 38;                                          // AUTHORED: ver
 const PITCH = { land: [54, 80], port: [48, 76] };
 const SWING_SECONDS = 1.1;                                      // AUTHORED: the swing between the play and REPAIR angles
 const FIT_MARGIN = 0.04;                                        // AUTHORED: fraction of the free rect kept clear inside its edges
-// AUTHORED framing (squares): a target box is padded by PAD, at least MIN_ACROSS across the free rect, never past the land by more
-// than LAND_MARGIN; LOOK_AHEAD seconds of the hero's motion lead the frame (at most LOOK_MAX squares)
-const PAD = 1.5, MIN_ACROSS = 15, LAND_MARGIN = 3, LOOK_AHEAD = 0.5, LOOK_MAX = 3;
+// AUTHORED framing (squares): a target box is padded by PAD, at least MIN_ACROSS across the free rect, never past the board;
+// LOOK_AHEAD seconds of the hero's motion lead the frame (at most LOOK_MAX squares)
+const PAD = 1.5, MIN_ACROSS = 15, LOOK_AHEAD = 0.5, LOOK_MAX = 3;
 const CLAIM_NEAR = 18, CLAIM_CASTLES = 2;                       // AUTHORED: free castles near a hero framed in CLAIM
+// SHIPS_FRAMED: afloat ships framed in BATTLE (nearest to the player's castles); SPREAD_ARC: radians of directions past which only
+// the nearest one is
+const SHIPS_FRAMED = 3, SPREAD_ARC = THREE.MathUtils.degToRad(150);
 const THREAT_SHIP = 10, THREAT_GRUNT = 4, EVENT_NEAR = 10, EVENT_SECONDS = 1.8;   // AUTHORED: squares and seconds
 // AUTHORED motion: spring stiffness (1/s) for the ground target and for the distance (slower: pan faster than zoom), the dead zone
 // (squares of target, fraction of distance) inside which the goal does not move, and the player's own camera
@@ -85,6 +88,22 @@ export class CameraDirector {
         case Phase.Cannons: pts.push(...own); break;
         case Phase.Battle: {
           pts.push(...own);
+          // the ships the player must shoot at: the nearest SHIPS_FRAMED afloat ships by distance to their castles (the lead,
+          // 11-09: "the ships they must shoot are off screen"); ships spread round the castle (their directions span more than
+          // SPREAD_ARC) frame only the nearest one, the rest get edge chevrons. Framing them moves the frame toward their sea.
+          const homes = [...units.castles.values()].filter((e) => !e.castle.ruined && units.castleOwner(e.castle).slot === s).map((e) => ({ x: e.g.position.x, z: e.g.position.z }));
+          const from = homes.length ? homes : own.length ? own : hero ? [{ x: hero.at.x, z: hero.at.z }] : [];
+          const dist = (p) => Math.min(...from.map((q) => Math.hypot(p.x - q.x, p.z - q.z)));
+          const afloat = match.ships.filter((sh) => sh.alive && g.in(sh.at.x, sh.at.y)).map((sh) => ({ x: sh.at.x + sh.size / 2, z: sh.at.y + sh.size / 2 }));
+          if (from.length && afloat.length) {
+            let pick = afloat.sort((a, b) => dist(a) - dist(b)).slice(0, SHIPS_FRAMED);
+            const cx = from.reduce((a, q) => a + q.x, 0) / from.length, cz = from.reduce((a, q) => a + q.z, 0) / from.length;
+            const ang = pick.map((p) => Math.atan2(p.z - cz, p.x - cx)).sort((a, b) => a - b);
+            let gap = ang.length > 1 ? ang[0] + 2 * Math.PI - ang[ang.length - 1] : 2 * Math.PI;
+            for (let i = 1; i < ang.length; i++) gap = Math.max(gap, ang[i] - ang[i - 1]);
+            if (2 * Math.PI - gap > SPREAD_ARC) pick = pick.slice(0, 1);
+            pts.push(...pick);
+          }
           for (const sh of match.ships) { const p = { x: sh.at.x + sh.size / 2, z: sh.at.y + sh.size / 2 }; if (sh.alive && near(p, own, THREAT_SHIP)) pts.push(p); }
           for (const sh of match.shots) {
             const t = { x: sh.target.x + 0.5, z: sh.target.y + 0.5 };
@@ -111,9 +130,9 @@ export class CameraDirector {
     }
     this.focusEvents = this.focusEvents.filter((f) => f.until > seconds);
     for (const f of this.focusEvents) pts.push(f.p);
-    // clamp to the land: what lies past it is not framed (off-screen ships get edge chevrons, hud.js shipMarks)
+    // clamp to the board (nothing the rules move ever leaves it): a point past it is not framed
     const L = board.landBounds();
-    const inside = (p) => p.x >= L.x0 - LAND_MARGIN && p.x <= L.x1 + LAND_MARGIN && p.z >= L.y0 - LAND_MARGIN && p.z <= L.y1 + LAND_MARGIN;
+    const inside = (p) => p.x >= -1 && p.x <= g.width + 1 && p.z >= -1 && p.z <= g.height + 1;
     const framed = pts.filter(inside);
     return { points: framed, dropped: pts.length - framed.length, land: L };
   }
