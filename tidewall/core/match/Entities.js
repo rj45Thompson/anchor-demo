@@ -24,6 +24,14 @@ export class PlayerModel {
     /** The hero's sword is out (REQ-HERO-02): in REPAIR and BATTLE a player holds EITHER the phase's tool OR the sword. */
     this.sword = false;
     this.swordLeft = 0;          // ticks until the sword can swing again
+    // ---- the bomb rule set (GameOptions.bombs; see match/Bombs.js and BOMBS_SPEC.md). Untouched, and not hashed, when it is off.
+    this.bombs = 0;              // bombs in hand to drop (bombCap, refilled at BATTLE, +1 per bombRegenTicks)
+    this.bombCap = 0;            // the refill and regrowth cap (a bombPack may lift `bombs` above it)
+    this.bombRegen = 0;          // ticks toward the next +1
+    this.items = { metal: 0, trap: 0, bombPack: 0, bigBomb: 0 };   // bought, in stock (bombPack counts packs bought: it applies at once)
+    this.stunLeft = 0;           // ticks the hero is stunned
+    this.carrying = 0;           // id of the bomb in the hero's hands, 0 = none
+    this.heroAt = null;          // the hero's square as the controller last reported it (a bomb command or MoveHero); null = unknown
   }
   get cannonsToPlace() { return this.cannonsFresh + this.cannonsCarried; }
 }
@@ -66,6 +74,8 @@ export class ShipModel {
 export class GruntModel {
   constructor(id, at, moveTicks, bite) {
     this.id = id; this.at = at; this.moveLeft = moveTicks; this.biteLeft = bite; this.alive = true;
+    // the bomb rule set: ticks until it may drop another bomb, ticks it still flees, and the square it flees from
+    this.bombLeft = 0; this.fleeLeft = 0; this.fleeFrom = at;
   }
 }
 
@@ -78,4 +88,21 @@ export class ShotModel {
     this.firedTick = firedTick;   // a shot is not moved on the tick it was fired: it lands exactly `ticks` later
     this.cannonId = 0;            // the player's gun that fired it (its one ball in the air)
   }
+}
+
+/** A lit bomb (BOMBS_SPEC.md). owner = a player's slot, or -1 for a grunt's. carriedBy = the slot of the hero holding it, -1 = on
+ *  the ground. While flightLeft > 0 it is in the air from flightFrom to flightTo (its fuse is frozen); landing keeps the fuse. */
+export class BombModel {
+  constructor(id, owner, at, fuseLeft, big) {
+    this.id = id; this.owner = owner; this.at = at; this.fuseLeft = fuseLeft; this.big = big;
+    this.carriedBy = -1;
+    this.flightLeft = 0; this.flightTicks = 0; this.flightFrom = at; this.flightTo = at;
+    this.skipTick = -1;          // the tick a command dropped or threw it: that tick's world step does not age it (it lasts the full count)
+    this.alive = true;
+  }
+}
+
+/** A drawn spike trap on an empty land square: the first grunt to step on it dies and the trap is used up. */
+export class TrapModel {
+  constructor(id, owner, at) { this.id = id; this.owner = owner; this.at = at; }
 }

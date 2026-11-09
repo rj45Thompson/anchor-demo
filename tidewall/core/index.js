@@ -10,14 +10,15 @@ export { CellMath } from './rules/CellMath.js';
 export { PlacementResult, PlacementRules } from './rules/PlacementRules.js';
 export { PathResult, PathRules } from './rules/PathRules.js';
 export { EnclosureRules, Territory } from './rules/EnclosureRules.js';
-export { GameRules, RoundKind, RoundSpec, RoundTable } from './rules/GameRules.js';
+export { GameRules, BombRules, ItemKind, ItemNames, RoundKind, RoundSpec, RoundTable } from './rules/GameRules.js';
 export { GameType, Battlefield, Difficulty, GameOptions, Campaign } from './rules/Campaign.js';
 export { MapCheck } from './rules/MapCheck.js';
 
 export { CommandKind, Command } from './match/Commands.js';
 export { PlaceWallCommand } from './match/PlaceWallCommand.js';
 export { PieceDealer, Streams } from './match/PieceDealer.js';
-export { Phase, GunKind, ShipKind, PlayerModel, CannonModel, ShipModel, GruntModel, ShotModel } from './match/Entities.js';
+export { Phase, GunKind, ShipKind, PlayerModel, CannonModel, ShipModel, GruntModel, ShotModel, BombModel, TrapModel } from './match/Entities.js';
+export { BombWorld } from './match/Bombs.js';
 export * from './match/Events.js';
 export { MatchModel } from './match/MatchModel.js';
 

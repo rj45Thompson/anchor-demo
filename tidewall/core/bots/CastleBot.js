@@ -11,6 +11,8 @@ import { Phase } from '../match/Entities.js';
 import { Command } from '../match/Commands.js';
 
 const INT_MAX = 2147483647, INT_MIN = -2147483648;
+/** AUTHORED: squares beyond the castle's ring within which a bot hero deals with a grunt or a grunt's bomb (BOMBS_SPEC task: within 3 squares of its walls). */
+const BOMB_ZONE = 3;
 
 function castleOf(m, id) {
   for (const c of m.grid.castles) if (c.id === id) return c;
@@ -56,7 +58,7 @@ export class CastleBot {
         }
         break;
       case Phase.Battle: {
-        const bw = this._swordWork(m, p, arrival);
+        const bw = m.options.bombs ? this._bombWork(m, p, arrival) : this._swordWork(m, p, arrival);
         if (bw.handled) { if (bw.cmd !== null) yield bw.cmd; break; }
         let aim = null, best = INT_MAX;
         for (const s of m.ships) {
@@ -72,7 +74,7 @@ export class CastleBot {
         break;
       }
       case Phase.Repair: {
-        const rw = this._swordWork(m, p, arrival);
+        const rw = m.options.bombs ? this._bombWork(m, p, arrival) : this._swordWork(m, p, arrival);
         if (rw.handled) { if (rw.cmd !== null) yield rw.cmd; break; }
         const place = this._repairMove(m, this._working(m, p.claimedCastle));
         if (place !== null) yield Command.placeWall(this.slot, ++this._seq, m.heldShapeId(this.slot), place.value, place.key, arrival);
@@ -107,6 +109,94 @@ export class CastleBot {
     if (!p.sword) return { handled: false, cmd: null };
     cmd = Command.switchMode(this.slot, ++this._seq, arrival);
     return { handled: true, cmd };
+  }
+
+  /** The bomb rule set's hero work, greedy: (1) a bomb in its hands is thrown at the nearest grunt in range, else into the sea, else
+   *  put out; (2) a grunt's bomb within BOMB_ZONE squares of its castle's ring is put out or - every other one - picked up; (3) a
+   *  grunt near the castle gets a bomb of its own on its square, unless that blast would reach one of the bot's own bricks, and only
+   *  one of its bombs is lit at a time; (4) after a drop it walks home out of the blast. With nothing to do the bomb tool goes away
+   *  (the phase's own tool again). Same contract as _swordWork: handled false = nothing for the hero to do, so the phase's work goes on. */
+  _bombWork(m, p, arrival) {
+    const home = castleOf(m, p.claimedCastle);
+    if (home === null) return { handled: false, cmd: null };
+    const { x0, y0, x1, y1 } = box(home);
+    const zone = m.rules.ringRadius + BOMB_ZONE;
+    const away = (at) => { const dx = at.x < x0 ? x0 - at.x : at.x > x1 ? at.x - x1 : 0, dy = at.y < y0 ? y0 - at.y : at.y > y1 ? at.y - y1 : 0; return Math.max(dx, dy); };
+    const S = this.slot, say = (cmd) => ({ handled: true, cmd });
+    if (p.stunLeft > 0) return say(null);
+    const mine = m.bombs.filter((b) => b.alive && b.owner === S && b.carriedBy < 0 && b.flightLeft === 0);
+    // (1) carrying: throw
+    if (p.carrying !== 0) {
+      const from = p.heroAt, tgt = this._throwAt(m, from);
+      if (!p.sword) return say(Command.switchMode(S, ++this._seq, arrival));
+      if (tgt !== null) return say(Command.throwBomb(S, ++this._seq, from, tgt, arrival));
+      return say(Command.defuseBomb(S, ++this._seq, from, arrival));
+    }
+    // (4) walk out of the blast of its own bomb
+    if (p.heroAt !== null)
+      for (const b of mine)
+        if (Math.max(Math.abs(b.at.x - p.heroAt.x), Math.abs(b.at.y - p.heroAt.y)) <= 2) return say(Command.moveHero(S, ++this._seq, home.cells[0], arrival));
+    // (2) a grunt's bomb near the walls
+    let bomb = null, bestD = INT_MAX;
+    for (const b of m.bombs) {
+      if (!b.alive || b.owner !== -1 || b.carriedBy >= 0 || b.flightLeft > 0) continue;
+      const d = away(b.at);
+      if (d <= zone && d < bestD) { bestD = d; bomb = b; }
+    }
+    if (bomb !== null) {
+      if (bomb.id % 2 === 1 && bomb.fuseLeft > 30) return say(Command.pickUpBomb(S, ++this._seq, bomb.at, arrival));
+      return say(Command.defuseBomb(S, ++this._seq, bomb.at, arrival));
+    }
+    // (3) a grunt near the castle: a bomb of its own, where it cannot hurt the bot's bricks
+    if (mine.length === 0 && p.bombs > 0) {
+      let g0 = null;
+      bestD = INT_MAX;
+      for (const g of m.grunts) {
+        if (!g.alive) continue;
+        const d = away(g.at);
+        if (d <= zone && d < bestD && this._safeToBlast(m, g.at)) { bestD = d; g0 = g; }
+      }
+      if (g0 !== null) {
+        if (!p.sword) return say(Command.switchMode(S, ++this._seq, arrival));
+        return say(Command.dropBomb(S, ++this._seq, g0.at, arrival));
+      }
+    }
+    if (!p.sword) return { handled: false, cmd: null };
+    return say(Command.switchMode(S, ++this._seq, arrival));
+  }
+
+  /** No wall square (anyone's) within two squares of `at` along its four lines, and the square is dry land: a bomb dropped there
+   *  breaks no brick. */
+  _safeToBlast(m, at) {
+    const g = m.grid;
+    if (!g.in(at.x, at.y) || g.terrainAt(at.x, at.y) !== Terrain.Land) return false;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]])
+      for (let k = 1; k <= m.rules.bombArm; k++) {
+        const x = at.x + dx * k, y = at.y + dy * k;
+        if (!g.in(x, y)) break;
+        const o = g.occupantAt(x, y);
+        if (o === Occupant.Wall || o === Occupant.Castle || o === Occupant.Cannon) return false;
+        if (o !== Occupant.Empty && o !== Occupant.Rubble && o !== Occupant.Graveyard) break;   // a rock stops the arm (and is hit)
+      }
+    return true;
+  }
+
+  /** Where to throw a bomb from `from`: the nearest grunt within the throw range, else the nearest sea square within it. null = none. */
+  _throwAt(m, from) {
+    const range = m.rules.throwRange, g = m.grid;
+    let best = null, bestD = INT_MAX;
+    for (const k of m.grunts) {
+      if (!k.alive) continue;
+      const d = Math.abs(k.at.x - from.x) + Math.abs(k.at.y - from.y);
+      if (d <= range && d < bestD) { bestD = d; best = k.at; }
+    }
+    if (best !== null) return best;
+    for (let y = from.y - range; y <= from.y + range; y++)
+      for (let x = from.x - range; x <= from.x + range; x++) {
+        const d = Math.abs(x - from.x) + Math.abs(y - from.y);
+        if (d <= range && d < bestD && g.in(x, y) && g.terrainAt(x, y) === Terrain.Water) { bestD = d; best = new Cell(x, y); }
+      }
+    return best;
   }
 
   /** The castle to build round: its own; or, with none (a ruined home), the castles in turn by slot, skipping ruins and those

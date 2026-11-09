@@ -33,7 +33,7 @@ const HOME_WALLS = 7, REPAIR_NEAR = 4;
 // SHIPS_FRAMED: afloat ships framed in BATTLE (nearest to the player's castles); SPREAD_ARC: radians of directions past which only
 // the nearest one is
 const SHIPS_FRAMED = 3, SPREAD_ARC = THREE.MathUtils.degToRad(150);
-const THREAT_SHIP = 10, THREAT_GRUNT = 4, EVENT_NEAR = 10, EVENT_SECONDS = 1.8;   // AUTHORED: squares and seconds
+const THREAT_SHIP = 10, THREAT_GRUNT = 4, BOMB_NEAR = 3, EVENT_NEAR = 10, EVENT_SECONDS = 1.8;   // AUTHORED: squares and seconds
 // AUTHORED motion: spring stiffness (1/s) for the ground target and for the distance (slower: pan faster than zoom), the dead zone
 // (squares of target, fraction of distance) inside which the goal does not move, and the player's own camera
 const PAN_OMEGA = 4.2, ZOOM_OMEGA = 2.6, DEAD_ZONE = 1.0, DEAD_ZOOM = 0.06;
@@ -56,6 +56,19 @@ function spring(x, v, goal, w, dt) {
 
 export class CameraDirector {
   constructor() { this.prev = new Map(); this.focusEvents = []; }
+
+  /** Where the live bombs are that would blow near this player (within BOMB_NEAR squares of their area or their hero): the frame
+   *  keeps them in view so the player sees what is about to go off. A bomb in the air counts at the square it will land on. */
+  bombPoints(match, area, hero) {
+    const out = [], at = hero && hero.g.visible ? hero.at : null;
+    for (const b of match.bombs) {
+      if (!b.alive) continue;
+      const c = b.flightLeft > 0 ? b.flightTo : b.at, p = { x: c.x + 0.5, z: c.y + 0.5 };
+      if (area.some((q) => Math.max(Math.abs(p.x - q.x), Math.abs(p.z - q.z)) <= BOMB_NEAR)
+          || (at && Math.max(Math.abs(p.x - at.x), Math.abs(p.z - at.z)) <= BOMB_NEAR)) out.push(p);
+    }
+    return out;
+  }
 
   /** The points (world x, z) the camera must frame this frame, and what it dropped. hints: { humans: [slot], pointerSlot }.
    *  Returns null when there is no human to frame (the whole island is shown). */
@@ -124,6 +137,7 @@ export class CameraDirector {
             if (near(t, own, 1)) pts.push(t, { x: sh.origin.x + 0.5, z: sh.origin.y + 0.5 });
           }
           for (const gr of match.grunts) { const p = { x: gr.at.x + 0.5, z: gr.at.y + 0.5 }; if (gr.alive && near(p, own, THREAT_GRUNT)) pts.push(p); }
+          pts.push(...this.bombPoints(match, own, hero));
           break;
         }
         case Phase.Repair: {
@@ -134,6 +148,7 @@ export class CameraDirector {
             if (forts.some((c) => Math.max(Math.abs(p.x - c.x), Math.abs(p.z - c.z)) <= HOME_WALLS)) home.push(p);
           }
           pts.push(...home);
+          pts.push(...this.bombPoints(match, home, hero));
           const withHero = heroPts.slice();
           if (!pointer) { const gh = ctl.ghostOf(s); if (gh.cells) for (const c of gh.cells) withHero.push({ x: c.x + 0.5, z: c.y + 0.5 }); }
           // the hero and its piece join home's frame while within REPAIR_NEAR of it; else home alone and an edge mark (a player

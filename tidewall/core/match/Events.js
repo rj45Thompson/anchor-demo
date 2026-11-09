@@ -10,6 +10,19 @@ export const RejectReason = Object.freeze({
   BadSlot: 7, AlreadyConnected: 8,
   // 9..11 are the bigger ruleset's reasons and are not ported
   SwordOut: 12, NoSword: 13, SwordSwinging: 14,          // the hero's modes (REQ-HERO-02/03)
+  // the bomb rule set (BOMBS_SPEC.md), appended: the numbers above never move
+  NoBombs: 15,        // dropBomb: none left in hand
+  BombHere: 16,       // dropBomb: a bomb already lies on that square
+  NoBombNear: 17,     // pickUpBomb / defuseBomb: no bomb within one square that the hero may take
+  HandsFull: 18,      // pickUpBomb: the hero already carries one
+  HandsEmpty: 19,     // throwBomb: the hero carries nothing
+  TooFar: 20,         // throwBomb: the target is more than throwRange squares away
+  Stunned: 21,        // any bomb verb while the hero is stunned
+  CannotAfford: 22,   // buy: not enough score
+  ToolOut: 23,        // dropBomb: the phase's own tool (build / cannon) is out, not the bomb tool
+  BadItem: 24,        // buy: not an ItemKind
+  NoItem: 25,         // placeTrap: no trap in stock
+  NoBombRules: 26,    // a bomb command in a match played without GameOptions.bombs
 });
 
 /** Why the board changed under a thing. Only the two causes a normal match can produce are ported. */
@@ -226,4 +239,56 @@ export class ModeSwitched extends MatchEvent {
 /** A hero swung the sword at a square; kills grunts died (REQ-HERO-03). */
 export class SwordSwung extends MatchEvent {
   constructor(t, slot, at, kills) { super(t); this.slot = slot; this.at = at; this.kills = kills; }
+}
+
+// ---- the bomb rule set (BOMBS_SPEC.md); every event below is appended and exists only in a match with GameOptions.bombs ----------
+
+/** A bomb was put down: by a hero (owner = slot) or a grunt (owner -1). */
+export class BombDropped extends MatchEvent {
+  constructor(t, id, owner, at, fuseLeft, big) { super(t); this.id = id; this.owner = owner; this.at = at; this.fuseLeft = fuseLeft; this.big = big; }
+}
+export class BombPickedUp extends MatchEvent {
+  constructor(t, id, slot) { super(t); this.id = id; this.slot = slot; }
+}
+export class BombThrown extends MatchEvent {
+  constructor(t, id, slot, from, to, ticks) { super(t); this.id = id; this.slot = slot; this.from = from; this.to = to; this.ticks = ticks; }
+}
+export class BombLanded extends MatchEvent {
+  constructor(t, id, at) { super(t); this.id = id; this.at = at; }
+}
+/** A thrown bomb came down in the sea: gone. */
+export class BombSank extends MatchEvent {
+  constructor(t, id, at) { super(t); this.id = id; this.at = at; }
+}
+export class BombDefused extends MatchEvent {
+  constructor(t, id, slot) { super(t); this.id = id; this.slot = slot; }
+}
+/** `at` = the bomb's square; `arms` = every other square the blast reached (east, west, south, north arms in that order, near to
+ *  far). The blast is drawn for rules.blastTicks; its damage is all done on this tick. */
+export class BombExploded extends MatchEvent {
+  constructor(t, id, at, arms, owner, big) { super(t); this.id = id; this.at = at; this.arms = arms; this.owner = owner; this.big = big; }
+}
+export class PlayerStunned extends MatchEvent {
+  constructor(t, slot, ticks) { super(t); this.slot = slot; this.ticks = ticks; }
+}
+/** A stunned hero let go of the bomb it carried; it lies on the hero's square and keeps its fuse. */
+export class BombFumbled extends MatchEvent {
+  constructor(t, id, slot, at) { super(t); this.id = id; this.slot = slot; this.at = at; }
+}
+export class ItemBought extends MatchEvent {
+  constructor(t, slot, item) { super(t); this.slot = slot; this.item = item; }
+}
+/** The player's next piece was built of metal (every brick health rules.metalWallHealth). Follows that piece's WallsPlaced. */
+export class MetalPlaced extends MatchEvent {
+  constructor(t, slot, seq, cells) { super(t); this.slot = slot; this.seq = seq; this.cells = cells; }
+}
+export class TrapPlaced extends MatchEvent {
+  constructor(t, id, slot, at) { super(t); this.id = id; this.slot = slot; this.at = at; }
+}
+export class TrapSprung extends MatchEvent {
+  constructor(t, id, at, gruntId) { super(t); this.id = id; this.at = at; this.gruntId = gruntId; }
+}
+/** A wall or cannon was built on a trap: it is gone. */
+export class TrapRemoved extends MatchEvent {
+  constructor(t, id, at) { super(t); this.id = id; this.at = at; }
 }

@@ -136,7 +136,7 @@ export class Fx {
 // ---------------------------------------------------------------- the effects, each a burst of particles (sizes in squares, AUTHORED)
 const WHITE = new THREE.Color(1, 1, 1), SMOKE = new THREE.Color(0.86, 0.85, 0.83), SOOT = new THREE.Color(0.3, 0.29, 0.29);
 const FIRE = new THREE.Color(3.2, 1.5, 0.45), FLASH = new THREE.Color(4, 3.3, 2.2), SPRAY = new THREE.Color(0.92, 0.97, 1);
-const DUST = new THREE.Color(0.93, 0.87, 0.74), BUBBLE = new THREE.Color(0.85, 0.96, 1);
+const EMBER = new THREE.Color(2.2, 0.7, 0.12), DUST = new THREE.Color(0.93, 0.87, 0.74), BUBBLE = new THREE.Color(0.85, 0.96, 1);
 
 /** The game's effects as particle bursts. Spreads come from a small seeded generator, so the same match draws the same bursts. */
 export class Effects {
@@ -259,6 +259,38 @@ export class Effects {
     for (let i = 0; i < 6; i++) {
       const s = this.spread(2 * size, 1.5 * size);
       this.fx.glow.emit({ at, vel: s, drag: 3, life: 0.45, size: [0.14, 0.03], color: colour.clone().multiplyScalar(3), shape: Shape.Spark, fadeIn: 0 });
+    }
+  }
+
+  /** The lit fuse's spark at `at`: one short-lived ember thrown up and out (a bomb calls it a few times a second). */
+  fuseSpark(at) {
+    const s = this.spread(0.7, 1.0);
+    this.fx.glow.emit({ at, vel: s, drag: 2, gravity: 4, life: 0.22 + this.rnd() * 0.12, size: [0.08, 0.015], color: FIRE, shape: Shape.Spark, fadeIn: 0 });
+  }
+
+  /** One square of a blast's cross of flame: a column of fire rising from the ground, sparks, a curl of smoke. k scales it. */
+  flame(at, k = 1) {
+    const { glow, smoke } = this.fx;
+    glow.emit({ at, vel: [0, 1.3, 0], drag: 3, life: 0.4, size: [0.8 * k, 1.2 * k], color: EMBER, fadeIn: 0 });
+    glow.emit({ at: { x: at.x, y: at.y + 0.25, z: at.z }, vel: [0, 2, 0], drag: 3, life: 0.3, size: [0.45 * k, 0.8 * k], color: FIRE, alpha: 0.8, fadeIn: 0 });
+    for (let i = 0; i < 2; i++) {
+      const s = this.spread(1.6, 2.6);
+      glow.emit({ at, vel: s, drag: 1.5, gravity: 7, life: 0.4 + this.rnd() * 0.25, size: [0.1, 0.025], color: FIRE, shape: Shape.Spark, fadeIn: 0 });
+    }
+    const s = this.spread(0.5, 0.9);
+    smoke.emit({ at, vel: s, drag: 1.4, life: 1.2 + this.rnd() * 0.6, size: [0.35 * k, 1.1 * k], color: SOOT, alpha: 0.5, spin: this.rnd() - 0.5, fadeIn: 0.15 });
+  }
+
+  /** The dark scorch a blast leaves on the ground, fading over a few seconds. */
+  scorch(at, k = 1) {
+    this.fx.flat.emit({ at: { x: at.x, y: 0.05, z: at.z }, life: 6, size: [0.85 * k, 0.95 * k], color: SOOT.clone().multiplyScalar(0.35), alpha: 0.55, spin: this.rnd() * 3, fadeIn: 0.02 });
+  }
+
+  /** A small puff of pale smoke where a bomb was put out. */
+  puff(at) {
+    for (let i = 0; i < 6; i++) {
+      const s = this.spread(0.8, 0.9);
+      this.fx.smoke.emit({ at, vel: s, drag: 2, life: 0.8 + this.rnd() * 0.4, size: [0.15, 0.55], color: WHITE, alpha: 0.6, spin: this.rnd() - 0.5, fadeIn: 0.08 });
     }
   }
 }

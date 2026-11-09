@@ -2,9 +2,12 @@
 // the big banner, one card per player with their colour, score, cannons to place, the piece they hold and why their last command
 // was refused), the tag over each hero, and every menu screen (title, join/setup, pause, the continue-or-give-up screen, results,
 // initials, high scores). It only READS the ported HudViewModel, MenuModel and model; it decides nothing.
-import { Phase, Screen, MenuModel, HudViewModel } from '../core/index.js';
+import { Phase, Screen, MenuModel, HudViewModel, ItemBought, ItemNames } from '../core/index.js';
 import { PLAYER_CSS, PLAYER_TEXT_CSS, PLAYER_INK_CSS, HUD_PANEL_CSS } from './look.js';
 
+const WARN = '#ffd24a';                                   // AUTHORED: the warning colour of a refusal, a stun
+const NOTE_SECONDS = 2;                                   // AUTHORED: how long a fresh refusal or purchase takes over a card's line
+const ITEM_WORDS = Object.freeze({ metal: 'METAL PIECE', trap: 'TRAP', bombPack: 'BOMB PACK', bigBomb: 'BIG BOMB' });
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const PHASE_WORD = { [Phase.Claim]: 'CLAIM', [Phase.Cannons]: 'CANNONS', [Phase.Battle]: 'BATTLE', [Phase.Repair]: 'REPAIR',
                      [Phase.Score]: 'SCORE', [Phase.GameOver]: 'GAME OVER', [Phase.Victory]: 'VICTORY', [Phase.Decide]: 'CONTINUE?' };
@@ -14,6 +17,8 @@ export class Hud {
     this.canvas = canvas; this.ctx = canvas.getContext('2d');
     if (!this.ctx) throw new Error('hud.js: the HUD canvas gave no 2D context');
     this.title = title;
+    this.said = new Map();         // slot -> the last lastMessage seen, to tell a new one
+    this.notes = new Map();       // slot -> { text, at, buy }: the latest refusal or purchase on a card, shown for NOTE_SECONDS in a bright colour
   }
 
   /** Where the pointer can act on the menu drawn last, in CSS px (taken from the drawing code itself, so a hit box can never drift
@@ -58,6 +63,7 @@ export class Hud {
     c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     c.clearRect(0, 0, W, H);
     const menu = view.menu, m = view.match;
+    if (m) for (const e of view.events) if (e instanceof ItemBought) this.notes.set(e.slot, { text: 'BOUGHT ' + ITEM_WORDS[ItemNames[e.item]], at: seconds, buy: true });
     const screen = menu ? menu.screen : Screen.Playing;
     this.hits = []; this.hitsScreen = full ? screen : -1;
     if (m && (screen === Screen.Playing || screen === Screen.Pause || screen === Screen.Decide || (screen === Screen.Title && menu.inDemo))) {
@@ -185,40 +191,69 @@ export class Hud {
 
   /** One player's card: s is the player SLOT (what the model and controller are asked by), seat names and colours it. */
   card(s, seat, p, x, y, w, h, m, ctl, seconds) {
-    const col = PLAYER_CSS[seat], c = this.ctx;
-    this.panel(x, y, w, h, 12, HUD_PANEL_CSS, col);
+    const col = PLAYER_CSS[seat], c = this.ctx, bombs = m.options.bombs, pl = m.player(s);
+    // a refusal that just came in, or a purchase, takes the line for NOTE_SECONDS and lights the card's edge
+    if (p.lastMessage !== (this.said.get(s) ?? '')) { this.said.set(s, p.lastMessage); if (p.lastMessage) this.notes.set(s, { text: p.lastMessage, at: seconds, buy: false }); }
+    const note = this.notes.get(s), fresh = note !== undefined && seconds - note.at < NOTE_SECONDS;
+    this.panel(x, y, w, h, 12, HUD_PANEL_CSS, fresh ? (note.buy ? '#ffffff' : WARN) : col);
     c.fillStyle = col; c.beginPath(); c.roundRect(x, y, 10, h, [12, 0, 0, 12]); c.fill();
     const fs = Math.max(13, h * 0.24);
     this.text('P' + (seat + 1), x + 22, y + h * 0.28, fs * 1.2, PLAYER_TEXT_CSS[seat], 'left', 900);
     if (ctl.isBot(s)) this.text('BOT', x + 22 + fs * 1.9, y + h * 0.3, fs * 0.62, 'rgba(255,255,255,0.65)', 'left', 700, false);
     this.text(String(p.score), x + w - 12, y + h * 0.28, fs, '#fff', 'right');
+    if (bombs) this.stock(pl, x + w - 12 - this.textWidth(String(p.score), fs) - 10, y + h * 0.3, fs * 0.58);
     // what this player is doing now
     const mid = x + 22, row = y + h * 0.68;
     // why the last command was refused, or that the player fell, takes the line: it is what they need to read now
-    const status = p.fell ? 'NO CASTLE INSIDE YOUR WALLS' : p.lastMessage;
+    const status = p.fell ? 'NO CASTLE INSIDE YOUR WALLS' : fresh ? note.text : p.lastMessage;
+    const onFoot = bombs && (m.phase === Phase.Repair || m.phase === Phase.Battle);
+    const hand = onFoot ? this.hand(pl, x + w - 12, row, fs) : 0;       // the bombs in hand, at the line's right end
     if (status) {                                                         // shrunk to fit the card, never cut
-      let px = fs * 0.62; this.font(px); const room = w - (mid - x) - 12, tw = this.ctx.measureText(status).width;
+      let px = fs * 0.62; this.font(px); const room = w - (mid - x) - 12 - hand, tw = this.ctx.measureText(status).width;
       if (tw > room) px *= room / tw;
-      this.text(status, mid, row, px, p.fell ? '#ff6a6a' : '#ffb4a8', 'left', 800, false);
+      this.text(status, mid, row, px, p.fell ? '#ff6a6a' : fresh ? (note.buy ? PLAYER_TEXT_CSS[seat] : WARN) : '#ffb4a8', 'left', 800, false);
     }
+    else if (onFoot && pl.stunLeft > 0) this.text('STUNNED', mid, row, fs * 0.72, WARN, 'left', 800, false);
     else if (m.phase === Phase.Cannons) {
       for (let i = 0; i < p.cannons; i++) this.cannonIcon(mid + fs * 0.4 + i * fs * 1.25, row, fs * 0.5, col);
       if (p.cannons === 0) this.text('READY', mid, row, fs * 0.8, 'rgba(255,255,255,0.8)', 'left', 800, false);
     } else if (m.phase === Phase.Repair) {
       const shape = m.catalog.byId(p.heldShapeId);
       if (!shape) throw new Error('hud.js: player ' + s + ' holds shape ' + p.heldShapeId + ', which the catalog does not have');
-      // the tool in hand is named: the sword when it is out (a piece cannot be placed then), else the piece itself
-      if (m.player(s).sword) this.text('SWORD OUT', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
+      // the tool in hand is named: the bombs when they are out (a piece cannot be placed then), else the piece itself
+      if (pl.sword) this.text(bombs ? 'BOMBS' : 'SWORD OUT', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
       else this.piece(shape.rotated(ctl.ghostOf(s).quarterTurns), mid, row, fs * 0.42, col);
     } else if (m.phase === Phase.Claim) {
-      this.text(m.player(s).claimedCastle !== 0 ? 'HOME CHOSEN' : 'PICK A CASTLE', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
+      this.text(pl.claimedCastle !== 0 ? 'HOME CHOSEN' : 'PICK A CASTLE', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
     } else if (m.phase === Phase.Battle) {
-      this.text(m.player(s).sword ? 'SWORD OUT' : 'CANNON', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
+      this.text(pl.sword ? (bombs ? 'BOMBS' : 'SWORD OUT') : 'CANNON', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
     }
     if (!p.connected) {
       this.panel(x, y, w, h, 12, 'rgba(20,20,26,0.72)');
       this.text('DISCONNECTED', x + w / 2, y + h / 2, fs * 0.8, '#ffb4a8');
     }
+  }
+
+  textWidth(s, px, weight = 800) { this.font(px, weight); return this.ctx.measureText(s).width; }
+
+  /** The bombs in hand as a bomb icon and a count, right-aligned at x; returns the width taken (the line's text gives way to it). */
+  hand(pl, x, y, fs) {
+    const c = this.ctx, label = '×' + pl.bombs, tw = this.textWidth(label, fs * 0.8), r = fs * 0.3;
+    this.text(label, x, y, fs * 0.8, pl.bombs > 0 ? '#fff' : '#ff9a8a', 'right', 800, false);
+    const bx = x - tw - r - 4;
+    c.beginPath(); c.arc(bx, y + r * 0.35, r, 0, Math.PI * 2); c.fillStyle = pl.bombs > 0 ? '#1d1f24' : 'rgba(29,31,36,0.45)'; c.fill();
+    c.lineWidth = 1.5; c.strokeStyle = 'rgba(255,255,255,0.85)'; c.stroke();
+    c.beginPath(); c.moveTo(bx + r * 0.5, y - r * 0.5); c.lineTo(bx + r * 1.1, y - r * 1.3); c.strokeStyle = '#ffc24a'; c.stroke();
+    return tw + r * 2 + 12;
+  }
+
+  /** The stock bought in the shop and not yet used, as short chips ending at x: metal pieces (M), traps (T) and big bombs (B). */
+  stock(pl, x, y, px) {
+    const parts = [];
+    if (pl.items.metal > 0) parts.push('M' + pl.items.metal);
+    if (pl.items.trap > 0) parts.push('T' + pl.items.trap);
+    if (pl.items.bigBomb > 0) parts.push('B' + pl.items.bigBomb);
+    if (parts.length) this.text(parts.join('  '), x, y, px, '#cfe6ff', 'right', 800, false);
   }
 
   cannonIcon(x, y, r, col) {

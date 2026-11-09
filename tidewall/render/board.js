@@ -8,7 +8,7 @@ import { texture, uniform, vertexColor, positionWorld, positionLocal, vec2, vec3
          normalize, dot, reflect, pow, cameraPosition, transformNormalToView, mrt, cos, positionGeometry,
          instancedBufferAttribute } from 'three/tsl';
 import { Terrain, Occupant, EnclosureRules, PieceMap, WallOutline, WallsPlaced, RingBuilt, ShotLanded } from '../core/index.js';
-import { C, SKY, NEUTRAL_WALL, mats, glowing, wallStoneGeometry, wallCapGeometry, tuftGeometry, TUFT_H, makeNoiseTexture, NOISE_SLOPE, makeNoise, InstancedBatch, PropSet, pitGeometry, rubbleGeometry, graveGeometry } from './look.js';
+import { C, SKY, NEUTRAL_WALL, mats, glowing, wallStoneGeometry, wallCapGeometry, wallSteelGeometry, wallSteelCapGeometry, STEEL, tuftGeometry, TUFT_H, makeNoiseTexture, NOISE_SLOPE, makeNoise, InstancedBatch, PropSet, pitGeometry, rubbleGeometry, graveGeometry } from './look.js';
 
 export const MARGIN = 12;              // AUTHORED: squares of sea drawn round the board, so the island never sits on a hard edge
 const SUB = 4;                         // AUTHORED: land vertices per square (the coast is smooth, not stepped)
@@ -55,6 +55,9 @@ export class BoardLook {
     this.wallStone.colorNode = vec3(grain.mul(0.16).add(0.9).mul(fleck.mul(0.12).add(0.94)));
     this.wallCap = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, flatShading: true });
     this.wallCap.colorNode = vec3(grain.mul(0.08).add(0.95));
+    // the metal piece's steel: smoother and glossier than the stone, fine grain only
+    this.wallSteel = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.34, metalness: 0.45, flatShading: true });
+    this.wallSteel.colorNode = vec3(grain.mul(0.06).add(0.96));
   }
 
   /** Grass tufts: ONE mesh drawn instanced (Mesh.count), each tuft's place, turn and size in an instanced vertex attribute, so a
@@ -178,10 +181,11 @@ export class BoardLook {
 export class Board {
   /** @param {THREE.Scene} scene  @param grid the model's GridModel  @param colours each player slot's colour (its seat's)
    *  @param propParts Map occupant -> the model parts a square holding it is drawn with (trees and rocks: models.js)
-   *  @param decorParts { bush, rockSmall, rockLarge, oak }: the decoration's model parts (buildDecor) */
-  constructor(scene, grid, colours, propParts, decorParts, look) {
+   *  @param decorParts { bush, rockSmall, rockLarge, oak }: the decoration's model parts (buildDecor)
+   *  @param rules the match's rules: a brick with more health than rules.wallHealth is a metal one (the bomb rule set's shop piece) */
+  constructor(scene, grid, colours, propParts, decorParts, look, rules) {
     if (!(look instanceof BoardLook)) throw new Error('board.js: the shared BoardLook is required');
-    this.look = look;
+    this.look = look; this.rules = rules;
     this.scene = scene; this.grid = grid; this.colours = colours; this.propParts = propParts; this.decorParts = decorParts;
     this.w = grid.width; this.h = grid.height;
     this.group = new THREE.Group(); this.group.name = 'board'; scene.add(this.group);
@@ -321,6 +325,9 @@ export class Board {
     // block, and its cap in the owner's colour
     this.walls = new InstancedBatch(this.group, wallStoneGeometry(WALL_W, WALL_H), this.look.wallStone, n, { colors: true, castShadow: true, receiveShadow: true, name: 'walls' });
     this.caps = new InstancedBatch(this.group, wallCapGeometry(WALL_W, WALL_H), this.look.wallCap, n, { colors: true, castShadow: true, receiveShadow: true, name: 'wall caps' });
+    // the metal piece's blocks: steel body and steel cap, tinted a little toward the owner (they are only made when one is bought)
+    this.steel = new InstancedBatch(this.group, wallSteelGeometry(WALL_W, WALL_H), this.look.wallSteel, n, { colors: true, castShadow: true, receiveShadow: true, name: 'steel walls' });
+    this.steelCaps = new InstancedBatch(this.group, wallSteelCapGeometry(WALL_W, WALL_H), this.look.wallSteel, n, { colors: true, castShadow: true, receiveShadow: true, name: 'steel caps' });
     // the outline: thin glowing bars on every outer edge of a piece (WallOutline), coloured by the piece's owner
     const cap = n * 12;
     const bar = new THREE.BoxGeometry(1, 1, 1);
@@ -398,10 +405,18 @@ export class Board {
   drawWalls() {
     const g = this.grid, w = this.w, h = this.h, m = new THREE.Matrix4(), c = new THREE.Color();
     const top = new Float32Array(w * h);
-    let k = 0;
+    let k = 0, ks = 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       if (g.occupantAt(x, y) !== Occupant.Wall) continue;
       const ow = g.ownerAt(x, y), hp = g.healthAt(x, y), gy = this.groundAt(x, y);
+      if (hp > this.rules.wallHealth) {                                  // a metal block: steel, worn a little by each blast it has taken
+        const own = ow < 4 ? this.colourOf(ow) : NEUTRAL_WALL, wear = 0.78 + 0.22 * (hp - this.rules.wallHealth) / (this.rules.metalWallHealth - this.rules.wallHealth);
+        m.makeRotationY(Math.floor(this.noise(x * 2.9 - 7, y * 3.3 + 5) * 4) * Math.PI / 2).setPosition(x + 0.5, gy - 0.04, y + 0.5);
+        c.copy(STEEL).lerp(own, 0.1).multiplyScalar(wear * 1.1); this.steel.set(ks, m, c);
+        c.copy(STEEL).lerp(own, 0.22).multiplyScalar(wear * 1.1); this.steelCaps.set(ks, m, c);
+        top[y * w + x] = gy - 0.04 + WALL_H; ks++;
+        continue;
+      }
       const sy = hp <= 1 ? 0.68 : 1;                                   // a damaged wall (one hit left) stands lower
       // per block (hashed from the square, so the same board always lays the same stones): a quarter turn of the brick bond, a
       // shade and a warmth; the stone takes a little of the owner's colour, the cap all of it
@@ -417,7 +432,7 @@ export class Board {
       top[y * w + x] = gy - 0.04 + WALL_H * sy;
       k++;
     }
-    this.walls.commit(k); this.caps.commit(k);
+    this.walls.commit(k); this.caps.commit(k); this.steel.commit(ks); this.steelCaps.commit(ks);
     // the outline (WallOutline.build): bars inset a hair into the block so they sit on its faces
     const edges = WallOutline.build(g, this.pieces), T = 0.045, IN = (1 - WALL_W) / 2;
     let e = 0;

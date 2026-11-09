@@ -1,31 +1,55 @@
 // actions.js - the ACTION BAR: a row of labelled buttons for the mouse and keyboard player, one per thing the player can DO in the
 // phase they are in, each showing the keys that do it, each clickable. It exists because the mouse had no way to swap tool or to be
-// ready (the swap was Tab or a middle click, and a laptop has no middle button), and because nothing on screen said the sword exists.
+// ready (the swap was Tab or a middle click, and a laptop has no middle button), and because nothing on screen said what the tool in
+// hand is.
 //
-// ACTIONS is DATA. A new action (a later round's bombs: drop, pick up, defuse, throw) is one more entry here, with the PadInput field
-// it sets (`field`) and a rule for when it is available (`enabled`); the bar, its greying, its labels and the camera cover rect need no
-// other change. (The controller then needs the field and the model the command, as for any new input.)
+// ACTIONS is DATA. A new action is one more entry here, with the PadInput field it sets (`field`), the value it sets (`value`,
+// default true: a shop button sets its ItemKind), whether it is a HOLD (`hold`: the field stays set while the button is down - the
+// defuse), the row it sits in (`row` 0 or 1) and a rule for when it is available (`enabled`) and shown (`visible`); the bar, its
+// greying, its labels and the camera cover rect need no other change. (The controller then needs the field and the model the command.)
 //
-// An entry: { id, field (the PadInput field a press sets), label(ctx), keys (what the button shows), enabled(ctx), tool(ctx) (optional:
-// a second line naming the tool in hand, the highlighted state when `on(ctx)`), on(ctx) (optional: shown pressed in) }.
-// ctx is what the page knows about the player now: { phase: 'Claim'|'Cannons'|'Battle'|'Repair'|..., sword, ready, cannonsLeft }.
+// An entry: { id, field, value?, hold?, row?, label(ctx), keys (what the button shows; a string or keys(ctx)), enabled(ctx),
+// visible(ctx)?, tool(ctx)? (a second line: the tool in hand, or the stock bought), on(ctx)? (shown pressed in), poor(ctx)? (the
+// shop: the player cannot pay, the button is dim but still sends, so the refusal says why) }.
+// ctx is what the page knows about the player now: { phase: 'Claim'|'Cannons'|'Battle'|'Repair'|..., sword (the tool flag: the bomb
+// tool in the bomb rule set), ready, bombs (the rule set is on), carrying, bombsLeft, score, costs, items }.
 
 const IN_PLAY = (c) => c.phase === 'Claim' || c.phase === 'Cannons' || c.phase === 'Battle' || c.phase === 'Repair';
 const TOOL_PHASE = (c) => c.phase === 'Battle' || c.phase === 'Repair';
+const BOMBS = (c) => c.bombs;
+const SHOP = [['metal', 'Metal', 'piece, 6 hits'], ['trap', 'Trap', 'spikes'], ['bombPack', 'Bombs', '+3 bombs'], ['bigBomb', 'Big bomb', 'next one']];
 
 export const ACTIONS = Object.freeze([
   Object.freeze({
     id: 'place', field: 'confirm', keys: 'Space / click',
-    label: (c) => (c.sword && TOOL_PHASE(c) ? 'Swing' : ({ Claim: 'Claim', Cannons: 'Place', Battle: 'Fire', Repair: 'Place' })[c.phase] || 'Place'),
+    label: (c) => (c.sword && TOOL_PHASE(c) ? (c.bombs ? (c.carrying ? 'Throw' : 'Drop') : 'Swing') : ({ Claim: 'Claim', Cannons: 'Place', Battle: 'Fire', Repair: 'Place' })[c.phase] || 'Place'),
     enabled: IN_PLAY,
   }),
-  Object.freeze({ id: 'rotate', field: 'rotate', keys: 'R / right click', label: () => 'Rotate', enabled: (c) => c.phase === 'Repair' && !c.sword }),
+  Object.freeze({ id: 'rotate', field: 'rotate', keys: (c) => (c.bombs ? 'R' : 'R / right click'), label: () => 'Rotate', enabled: (c) => c.phase === 'Repair' && !c.sword }),
+  Object.freeze({
+    id: 'drop', field: 'drop', keys: 'B', label: (c) => (c.carrying ? 'Throw' : 'Drop bomb'), visible: BOMBS, enabled: TOOL_PHASE,
+    tool: (c) => (c.bombs ? 'x' + c.bombsLeft : ''),
+  }),
+  Object.freeze({ id: 'pickup', field: 'pickUp', keys: 'F / right click', label: () => 'Pick up', visible: BOMBS, enabled: (c) => TOOL_PHASE(c) && !c.carrying }),
+  Object.freeze({ id: 'defuse', field: 'defuse', hold: true, keys: 'hold F / right', label: () => 'Defuse', visible: BOMBS, enabled: TOOL_PHASE }),
   Object.freeze({
     id: 'swap', field: 'swap', keys: 'Tab / Q', label: () => 'Swap tool', enabled: TOOL_PHASE,
     on: (c) => c.sword && TOOL_PHASE(c),
-    tool: (c) => (!TOOL_PHASE(c) ? '' : c.sword ? 'SWORD' : c.phase === 'Battle' ? 'CANNON' : 'PIECES'),
+    tool: (c) => (!TOOL_PHASE(c) ? '' : c.sword ? (c.bombs ? 'BOMBS' : 'SWORD') : c.phase === 'Battle' ? 'CANNON' : 'PIECES'),
   }),
   Object.freeze({ id: 'ready', field: 'ready', keys: 'E / Enter', label: () => 'Ready', enabled: (c) => c.phase === 'Cannons' && !c.ready }),
+  // the shop (REPAIR): one button per item with its price from rules.itemCosts, dim when the player cannot pay; the trap is then put down
+  ...SHOP.map(([name, word, what], item) => Object.freeze({
+    id: 'buy-' + name, field: 'buy', value: item, row: 1, keys: String(item + 1),
+    label: (c) => word + ' ' + (c.costs ? c.costs[name] : ''),
+    visible: BOMBS, enabled: (c) => c.phase === 'Repair',
+    poor: (c) => c.phase === 'Repair' && !!c.costs && c.score < c.costs[name],
+    tool: (c) => (c.items && c.items[name] > 0 && name !== 'bombPack' ? 'own ' + c.items[name] : what),
+  })),
+  Object.freeze({
+    id: 'trap', field: 'trap', row: 1, keys: 'T', label: () => 'Set trap', visible: BOMBS, enabled: (c) => c.phase === 'Repair' && !!c.items && c.items.trap > 0,
+    tool: (c) => (c.items ? 'x' + c.items.trap : ''),
+  }),
 ]);
 
 export class ActionBar {
@@ -33,23 +57,28 @@ export class ActionBar {
   constructor(parent, actions) {
     const el = document.createElement('div');
     el.className = 'abar'; el.dataset.nogame = '1'; el.hidden = true; el.setAttribute('role', 'toolbar'); el.setAttribute('aria-label', 'Actions');
-    this.actions = actions; this.el = el; this.visible = false;
-    this.edges = {}; this.buttons = new Map(); this.shown = new Map();
+    this.actions = actions; this.el = el; this.visible = false; this.compact = false;
+    this.edges = {}; this.held = {}; this.buttons = new Map(); this.shown = new Map();
+    const rows = [document.createElement('div'), document.createElement('div')];
+    rows.forEach((r, i) => { r.className = 'abr abr' + i; el.appendChild(r); });
+    this.score = document.createElement('div'); this.score.className = 'abscore'; this.score.dataset.nogame = '1';
+    rows[1].appendChild(this.score);
+    this.rows = rows;
     for (const a of actions) {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'ab'; b.dataset.action = a.id; b.dataset.nogame = '1'; b.tabIndex = -1;
       b.innerHTML = '<span class="al"></span><span class="at"></span><span class="ak"></span>';
-      b.querySelector('.ak').textContent = a.keys;
       // pointerdown, as the touch controls do: the press is latched until the next game tick takes it. A greyed button latches nothing.
+      // A hold stays set while the button is down.
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         if (b.getAttribute('aria-disabled') === 'true') return;
-        this.edges[a.field] = true;
+        if (a.hold) this.held[a.field] = true; else this.edges[a.field] = a.value === undefined ? true : a.value;
         b.classList.add('down');
       });
-      const up = () => b.classList.remove('down');
+      const up = () => { b.classList.remove('down'); if (a.hold) this.held[a.field] = false; };
       b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
-      el.appendChild(b); this.buttons.set(a.id, b);
+      rows[a.row || 0].appendChild(b); this.buttons.set(a.id, b);
     }
     parent.appendChild(el);
   }
@@ -57,24 +86,37 @@ export class ActionBar {
   show(on) {
     if (on === this.visible) return;
     this.visible = on; this.el.hidden = !on;
-    if (!on) this.edges = {};
+    if (!on) { this.edges = {}; this.held = {}; }
   }
+
+  /** Compact: the shop row alone, small (a touch screen has its own stick and A / B / Y; the shop and the trap are what it lacks). */
+  setCompact(on) { if (on !== this.compact) { this.compact = on; this.el.classList.toggle('compact', on); } }
 
   /** Label, keys-state and greying from what the player can do now. Touches the DOM only where something changed. */
   update(ctx) {
     for (const a of this.actions) {
       const b = this.buttons.get(a.id);
-      const state = { label: a.label(ctx), tool: a.tool ? a.tool(ctx) : '', enabled: !!a.enabled(ctx), on: a.on ? !!a.on(ctx) : false };
+      const state = {
+        label: a.label(ctx), keys: typeof a.keys === 'function' ? a.keys(ctx) : a.keys, tool: a.tool ? a.tool(ctx) : '', enabled: !!a.enabled(ctx),
+        on: a.on ? !!a.on(ctx) : false, shown: a.visible ? !!a.visible(ctx) : true, poor: a.poor ? !!a.poor(ctx) : false,
+      };
       const key = JSON.stringify(state);
       if (this.shown.get(a.id) === key) continue;
       this.shown.set(a.id, key);
+      b.hidden = !state.shown;
       b.querySelector('.al').textContent = state.label;
       b.querySelector('.at').textContent = state.tool;
+      b.querySelector('.ak').textContent = state.keys;
       b.setAttribute('aria-disabled', state.enabled ? 'false' : 'true');
       b.classList.toggle('off', !state.enabled);
+      b.classList.toggle('poor', state.enabled && state.poor);
       b.classList.toggle('on', state.on);
       b.setAttribute('aria-pressed', state.on ? 'true' : 'false');
     }
+    const showScore = !!ctx.bombs;
+    this.score.hidden = !showScore;
+    if (showScore) this.score.textContent = 'Score ' + ctx.score;
+    this.rows[1].hidden = !ctx.bombs;
   }
 
   /** The bar sits `bottom` CSS px up from the window's foot (above the HUD's player cards). */
@@ -83,9 +125,9 @@ export class ActionBar {
   /** The bar's screen rect: one of the camera's cover rects while it is shown. */
   rect() { return this.el.getBoundingClientRect(); }
 
-  /** The presses since the last call, by PadInput field (cleared). */
+  /** The presses since the last call (cleared) and the holds now, by PadInput field; buy is -1 when no shop button was pressed. */
   take() {
-    const out = Object.assign({ confirm: false, rotate: false, swap: false, ready: false }, this.edges);
+    const out = Object.assign({ confirm: false, rotate: false, swap: false, ready: false, drop: false, pickUp: false, defuse: false, trap: false, buy: -1 }, this.held, this.edges);
     this.edges = {};
     return out;
   }

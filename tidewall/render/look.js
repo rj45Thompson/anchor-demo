@@ -166,6 +166,52 @@ export function wallCapGeometry(w, h) {
   ], 'wall cap');
 }
 
+/** A METAL wall block (the shop's metal piece, six hits): a steel slab with a dark seam round its middle and rivets studding every
+ *  face, so it reads as plate beside the stone course. Same footprint and height as wallStoneGeometry (its cap is wallSteelCapGeometry). */
+export const STEEL = new THREE.Color(0.42, 0.46, 0.53);
+export function wallSteelGeometry(w, h) {
+  const body = h - WALL_CAP_H, bw = w - 0.02, parts = [
+    at(paint(new RoundedBoxGeometry(bw, body, bw, 1, 0.03), STEEL), 0, body / 2, 0),
+    at(paint(new RoundedBoxGeometry(bw + 0.012, 0.03, bw + 0.012, 1, 0.012), STEEL.clone().multiplyScalar(0.45)), 0, body / 2, 0),   // the seam
+  ];
+  const rivet = STEEL.clone().multiplyScalar(1.5), r = 0.034, o = bw / 2 - 0.1;
+  for (const y of [body * 0.2, body * 0.8]) for (const f of [0, 1, 2, 3]) for (const k of [-o, o]) {
+    const a = f * Math.PI / 2, nx = Math.cos(a), nz = Math.sin(a), tx = -nz, tz = nx;
+    parts.push(at(paint(new THREE.SphereGeometry(r, 6, 4), rivet), nx * bw / 2 + tx * k, y, nz * bw / 2 + tz * k));
+  }
+  return merge(parts, 'wall steel');
+}
+/** The cap of a metal block: one plate, white (the instance colour is steel with a little of the owner's colour), a rivet in each
+ *  corner standing up from it. */
+export function wallSteelCapGeometry(w, h) {
+  const y = h - WALL_CAP_H / 2, white = new THREE.Color(1, 1, 1), o = w / 2 - 0.1, parts = [at(paint(new RoundedBoxGeometry(w - 0.02, WALL_CAP_H, w - 0.02, 1, 0.032), white.clone().multiplyScalar(0.86)), 0, y, 0)];
+  for (const sx of [-o, o]) for (const sz of [-o, o]) parts.push(at(paint(new THREE.SphereGeometry(0.045, 8, 5), white.clone().multiplyScalar(1.1)), sx, h - 0.005, sz, 0, 0, 0, 1, 0.6, 1));
+  return merge(parts, 'wall steel cap');
+}
+
+/** A bomb: a dark iron sphere with a collar and a short fuse (y = 0 is the ground; the fuse's tip is at fuseTip). */
+export const BOMB_R = 0.33, BOMB_TIP = new THREE.Vector3(0.09, 0.9, 0);
+export function bombGeometry(body) {
+  return merge([
+    at(paint(new THREE.SphereGeometry(BOMB_R, 16, 12), body), 0, BOMB_R, 0),
+    at(paint(new THREE.CylinderGeometry(0.1, 0.12, 0.09, 8), C.iron.clone().multiplyScalar(0.9)), 0, BOMB_R * 2 - 0.02, 0),
+    at(paint(new THREE.CylinderGeometry(0.02, 0.02, 0.26, 5), C.woodDark), 0.05, BOMB_R * 2 + 0.12, 0, 0, 0, -0.35),
+  ], 'bomb');
+}
+
+/** A spike trap: a flat iron plate with a rim and nine spikes. The owner's colour is a separate ring (units/bombs.js). */
+export function trapGeometry() {
+  const iron = C.iron.clone().multiplyScalar(1.15), spike = new THREE.Color(0.78, 0.8, 0.84), parts = [
+    at(cyl(0.4, 0.43, 0.06, 12, iron), 0, 0.03, 0),
+    at(paint(new THREE.TorusGeometry(0.4, 0.025, 5, 16).rotateX(Math.PI / 2), iron.clone().multiplyScalar(1.4)), 0, 0.06, 0),
+  ];
+  for (let i = 0; i < 9; i++) {
+    const a = i * 2.39996, r = i === 0 ? 0 : 0.14 + 0.1 * (i % 3), x = Math.cos(a) * r, z = Math.sin(a) * r;
+    parts.push(at(cone(0.055, 0.3, 5, spike), x, 0.2, z));
+  }
+  return merge(parts, 'trap');
+}
+
 /** A grass tuft: seven thin blades leaning out from one root, dark at the root and light at the tip (vertex colours), about a fifth of
  *  a square tall. y = 0 is the ground; the blades' height is TUFT_H (the sway in board.js bends them more toward the tip). */
 export const TUFT_H = 0.24;

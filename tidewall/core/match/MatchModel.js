@@ -18,19 +18,20 @@ import { PieceCatalog } from '../pieces.js';
 import { PlacementRules, PlacementResult } from '../rules/PlacementRules.js';
 import { PathRules, PathResult } from '../rules/PathRules.js';
 import { EnclosureRules } from '../rules/EnclosureRules.js';
-import { GameRules, RoundKind, RoundTable } from '../rules/GameRules.js';
+import { GameRules, BombRules, RoundKind, RoundTable } from '../rules/GameRules.js';
 import { GameOptions, GameType, Battlefield, Difficulty, Campaign } from '../rules/Campaign.js';
 import { MapCheck } from '../rules/MapCheck.js';
 import { CommandKind, Command } from './Commands.js';
 import { PlaceWallCommand } from './PlaceWallCommand.js';
 import { PieceDealer, Streams } from './PieceDealer.js';
+import { BombWorld } from './Bombs.js';
 import { Phase, ShipKind, PlayerModel, CannonModel, ShipModel, GruntModel, ShotModel } from './Entities.js';
 import {
   RejectReason, ThingCause,
   PhaseChanged, CastleClaimed, RingBuilt, WallsPlaced, PlacementRejected, CommandRejected, CannonsGranted, CannonPlaced,
   PlayerReady, ShipSpawned, ShipMoved, ShotFired, ShotLanded, WallDamaged, WallBroken, CannonDamaged, CannonDestroyed,
   ShipDamaged, ShipSunk, GruntLanded, CannonLost, GruntMoved, GruntKilled, RubbleCleared, LoopClosed, RoundScored, LifeLost,
-  PlayerLeft, PlayerRejoined, GameEnded, LevelStarted, ThingChanged, CastleRuined, CastleRestored, CastleBitten, HouseRose,
+  MetalPlaced, PlayerLeft, PlayerRejoined, GameEnded, LevelStarted, ThingChanged, CastleRuined, CastleRestored, CastleBitten, HouseRose,
   HouseSurrounded, GruntSurrounded, WallsTrimmed, LastPieceGrace, FateAsked, FateChosen, FinalBonus, PlayerFell,
   ModeSwitched, SwordSwung,
 } from './Events.js';
@@ -89,6 +90,10 @@ export class MatchModel {
     this.lives = rules.lives;
     this.options = options ?? new GameOptions({ type: GameType.Normal });   // a match built on a handed board plays the normal rules
     if (this.options.super) throw new Error('only the normal ruleset is ported (GameOptions.type ' + this.options.type + ')');
+    // the bomb rule set (BOMBS_SPEC.md) is opt-in: with options.bombs false nothing of it exists and the base rules run untouched
+    if (this.options.bombs !== (rules instanceof BombRules)) throw new Error('GameOptions.bombs and the rules must agree: bombs needs BombRules, and BombRules need bombs');
+    this._bw = this.options.bombs ? new BombWorld(this) : null;
+    if (this._bw !== null) for (const p of this._players) this._bw.initPlayer(p);
     this._graceUsed = new Array(playerCount).fill(false);
     this.round = firstRound;
     this.mapName = table.for(firstRound).map;
@@ -160,6 +165,14 @@ export class MatchModel {
   get ships() { return this._ships; }
   get grunts() { return this._grunts; }
   get shots() { return this._shots; }
+  /** The bomb rule set's state, read-only: lit bombs {id, owner, at, fuseLeft, carriedBy, flightLeft, flightTicks, flightFrom, flightTo,
+   *  big}, spike traps {id, owner, at}. Empty when GameOptions.bombs is off. */
+  get bombs() { return this._bw === null ? [] : this._bw.bombs; }
+  get traps() { return this._bw === null ? [] : this._bw.traps; }
+  /** The grounded bomb on a square, or null. */
+  bombAt(x, y) { return this._bw === null ? null : this._bw.bombAt(x, y); }
+  /** A metal brick stands here (health above a normal brick's). A metal brick worn down to a normal brick's health reads as normal. */
+  isMetalAt(x, y) { return this._bw !== null && this.grid.occupantAt(x, y) === Occupant.Wall && this.grid.healthAt(x, y) > this.rules.wallHealth; }
   get ended() { return this.phase === Phase.GameOver || this.phase === Phase.Victory; }
   get currentRound() { return this.table.for(this.round); }
   castleHealthOf(castleId) { return castleId >= 1 && castleId <= this._castleHealth.length ? this._castleHealth[castleId - 1] : 0; }
@@ -260,6 +273,7 @@ export class MatchModel {
       case Phase.Cannons:
         for (const p of this._players) { p.cannonsCarried = p.cannonsFresh; p.cannonsFresh = 0; }   // REQ-CANNON-02
         this._enter(Phase.Battle, this.currentRound.battleTicks);
+        if (this._bw !== null) this._bw.onBattleStart();
         // (the C# burns the bigger ruleset's pits down here; a normal board never holds one)
         if (!this._holdNoSpawn) this._spawnWave();
         this._holdNoSpawn = false;
@@ -332,6 +346,7 @@ export class MatchModel {
     if (!this.options.super) MatchModel.plain(this.grid);
     this.mapName = spec.map;
     this._cannons.length = 0; this._ships.length = 0; this._grunts.length = 0; this._shots.length = 0;
+    if (this._bw !== null) this._bw.clear(true);            // a new board: nothing lit, no traps
     for (const p of this._players) { p.claimedCastle = 0; p.cannonsFresh = 0; p.cannonsCarried = 0; }
     this._events.push(new LevelStarted(this.tick, this.level, this.round, this.mapName, challenge));
     this._startLevelThings();
@@ -386,7 +401,10 @@ export class MatchModel {
       case CommandKind.Claim: return this._claim(c, p);
       case CommandKind.Leave: p.connected = false; this._events.push(new PlayerLeft(this.tick, c.slot)); return true;
       case CommandKind.SwitchMode: return this._switchMode(c, p);
-      case CommandKind.Strike: return this._strike(c, p);
+      case CommandKind.Strike: return this._bw !== null ? this._bw.apply(c, p) : this._strike(c, p);   // bombs: strike = drop a bomb
+      case CommandKind.PickUpBomb: case CommandKind.ThrowBomb: case CommandKind.DefuseBomb:
+      case CommandKind.Buy: case CommandKind.PlaceTrap: case CommandKind.MoveHero:
+        return this._bw !== null ? this._bw.apply(c, p) : this._reject(c, RejectReason.NoBombRules);
       case CommandKind.Decide:
         if (this.phase !== Phase.Decide) return this._reject(c, RejectReason.WrongPhase);
         this._chooseFate(c.quarterTurns !== 0, c.slot); return true;
@@ -442,11 +460,16 @@ export class MatchModel {
     const cells = PlacementRules.cellsOf(shape, c.quarterTurns, c.at);
     const houses = [];
     for (const cell of cells) if (this.grid.occupantAt(cell.x, cell.y) === Occupant.House) houses.push(cell);
-    for (const cell of cells) this.grid.setWall(cell.x, cell.y, c.slot, this.rules.wallHealth);
+    const player = this._players[c.slot];
+    const metal = this._bw !== null && player.items.metal > 0;          // a bought metal piece: every brick takes more blasts
+    if (metal) player.items.metal--;
+    for (const cell of cells) this.grid.setWall(cell.x, cell.y, c.slot, metal ? this.rules.metalWallHealth : this.rules.wallHealth);
     for (const h of houses) this._houseToGrunt(h);
     if (this._grace) this._graceUsed[c.slot] = true;
     dealer.take();
     this._events.push(new WallsPlaced(this.tick, c.slot, c.seq, c.shapeId, c.quarterTurns & 3, cells, dealer.current));
+    if (metal) this._events.push(new MetalPlaced(this.tick, c.slot, c.seq, cells));
+    if (this._bw !== null) for (const cell of cells) this._bw.removeTrapAt(cell.x, cell.y);
     for (const id of EnclosureRules.enclosedCastleIds(this.grid))
       if (!before.includes(id)) {
         this._players[c.slot].score = add32(this._players[c.slot].score, this.rules.pointsClosingCredit);
@@ -471,6 +494,7 @@ export class MatchModel {
     const cannon = new CannonModel(this._nextCannon++, c.slot, c.at, this.rules.cannonHealth);
     this._cannons.push(cannon);
     for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) this.grid.setCannon(c.at.x + dx, c.at.y + dy, c.slot);
+    if (this._bw !== null) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) this._bw.removeTrapAt(c.at.x + dx, c.at.y + dy);
     if (p.cannonsCarried > 0) p.cannonsCarried--; else p.cannonsFresh--;
     this._events.push(new CannonPlaced(this.tick, cannon.id, c.slot, c.seq, c.at));
     return true;
@@ -582,6 +606,7 @@ export class MatchModel {
         if (crush && g.terrainAt(x, y) === Terrain.Land && g.occupantAt(x, y) === Occupant.Empty) this._crushGruntsAt(x, y);
         if (g.terrainAt(x, y) !== Terrain.Land || g.occupantAt(x, y) !== Occupant.Empty || this.gruntAt(x, y)) continue;
         g.setWall(x, y, slot, this.rules.wallHealth);
+        if (this._bw !== null) this._bw.removeTrapAt(x, y);
         built.push(new Cell(x, y));
       }
     this._events.push(new RingBuilt(this.tick, slot, castleId, built));
@@ -656,6 +681,7 @@ export class MatchModel {
     this._lostAtScore = fallen.length > 0 && !this.isChallenge;
     this._wonAtScore = !this._lostAtScore && this.table.isLast(this.round) && !this.enemiesAfloat();
     if (this._lostAtScore) {
+      if (this._bw !== null) this._bw.clear(false);          // the fuses go out with the lost round
       this.lives--;
       this._events.push(new LifeLost(this.tick, this.lives));
       if (this.lives > 0) for (const p of this._players) this._replayHome(p);
@@ -863,17 +889,21 @@ export class MatchModel {
   }
 
   _simulateGrunts() {
+    if (this._bw !== null) this._bw.step();
     for (const g of this._grunts) if (g.alive) this._actGrunt(g);
+    if (this._bw !== null) this._bw.sweepTraps();
     removeDead(this._grunts);
   }
 
   _simulateBattle() {
     for (const k of this._cannons) if (k.alive && k.reloadLeft > 0) k.reloadLeft--;
     this._landShots();
+    if (this._bw !== null) this._bw.step();
     if (this.phaseTicksLeft > 0) {
       for (const s of this._ships) if (s.alive) this._actShip(s);
       for (const g of this._grunts) if (g.alive) this._actGrunt(g);
     }
+    if (this._bw !== null) this._bw.sweepTraps();
     removeDead(this._ships);
     removeDead(this._grunts);
   }
@@ -888,6 +918,7 @@ export class MatchModel {
         for (const k of this._cannons) if (k.id === sh.cannonId && k.inFlight > 0) k.inFlight--;
         for (const s of this._ships)
           if (s.alive && s.covers(x, y)) { hit = true; this._hitShip(s, sh.damage, sh.fromSlot); }
+        if (this._bw === null)                    // bombs are the only ground attack: with them on, a ball on land spares grunts
         for (const g of this._grunts)
           if (g.alive && g.at.x === x && g.at.y === y) {
             hit = true; g.alive = false;
@@ -1009,9 +1040,11 @@ export class MatchModel {
 
   _actGrunt(gr) {
     const g = this.grid;
+    if (this._bw !== null && this._bw.gruntPre(gr)) return;       // bombs: cooldown ticks; a grunt that just dropped one runs
     for (let k = 0; k < 4; k++) {
       const x = gr.at.x + DX4[k], y = gr.at.y + DY4[k];
       if (!g.in(x, y) || !isGruntTarget(g.occupantAt(x, y))) continue;
+      if (this._bw !== null) { this._bw.gruntAtTarget(gr); return; }   // bombs: it drops a bomb (or waits) instead of biting
       if (--gr.biteLeft > 0) return;
       gr.biteLeft = this.rules.gruntBiteTicks;
       const o = g.occupantAt(x, y);
@@ -1022,7 +1055,8 @@ export class MatchModel {
     gr.moveLeft = this.rules.gruntTicksPerCell;
     const me = gr;
     const r = PathRules.nextStep(g, gr.at,
-      (x, y) => g.terrainAt(x, y) === Terrain.Land && (g.occupantAt(x, y) === Occupant.Empty || g.occupantAt(x, y) === Occupant.Rubble) && !this._otherGruntAt(x, y, me),
+      (x, y) => g.terrainAt(x, y) === Terrain.Land && (g.occupantAt(x, y) === Occupant.Empty || g.occupantAt(x, y) === Occupant.Rubble) && !this._otherGruntAt(x, y, me)
+        && (this._bw === null || !this._bw.gruntBombReaches(x, y)),     // bombs: a grunt does not walk into its own kind's lit bomb
       (x, y) => this._nextToTarget(x, y));
     if (r.result === PathResult.Stepped) { const from = gr.at; gr.at = r.next; this._events.push(new GruntMoved(this.tick, gr.id, from, r.next)); }
   }
@@ -1039,6 +1073,16 @@ export class MatchModel {
   }
 
   // ---- tests (C# internal) ------------------------------------------------------------------------------------------------
+
+  /** Tests: put a grunt on land at `at` (the same grunt a landing makes). */
+  putGrunt(at) {
+    const gr = new GruntModel(this._nextGrunt++, at, this.rules.gruntTicksPerCell, this.rules.gruntBiteTicks);
+    this._grunts.push(gr);
+    return gr;
+  }
+
+  /** Tests (bombs only): a lit bomb on the ground at `at`, owner a slot or -1. */
+  putBomb(owner, at, fuse = undefined, big = false) { return this._bw.put(owner, at, fuse, big); }
 
   /** Tests: enter a phase now. */
   forcePhase(p, ticks) { this._enter(p, ticks); }
@@ -1093,6 +1137,7 @@ export class MatchModel {
     // and the bigger ruleset's three counters, which a normal match leaves at their start values (1, 1, 0)
     for (const v of this._castleHealth) f.mix(v);
     for (const v of [this._housesSurrounded, 1, 1, 0]) f.mix(v);
+    if (this._bw !== null) this._bw.hashInto(f);      // only with bombs on: the base hash is bit-identical to the C# model's
     return f;
   }
 }

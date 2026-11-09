@@ -121,7 +121,7 @@ export class HudViewModel {
     switch (r) {
       case PlacementResult.BadGround: return "can't build on swamp or lake";
       case PlacementResult.GraceUsed: return 'that was your last piece';
-      case PlacementResult.SwordOut: return 'sword out - swap tool to build';
+      case PlacementResult.SwordOut: return 'bombs out - swap tool to build';
       case PlacementResult.OutOfBounds: return 'off the map';
       case PlacementResult.OnWater: return "can't build on water";
       case PlacementResult.Occupied: return 'something is there';
@@ -149,8 +149,20 @@ export class HudViewModel {
       case RejectReason.Blocked: return 'something is there';
       case RejectReason.NoLoadedCannon: return 'reloading';
       case RejectReason.NotACastle: return 'pick a castle';
-      case RejectReason.SwordOut: return 'sword out - swap tool for the cannon';
-      case RejectReason.NoSword: return 'swap tool to draw the sword';
+      case RejectReason.SwordOut: return 'bombs out - swap tool for the cannon';
+      case RejectReason.NoSword: return 'swap tool to take out bombs';
+      case RejectReason.NoBombs: return 'no bombs left';
+      case RejectReason.BombHere: return 'a bomb is already here';
+      case RejectReason.NoBombNear: return 'no bomb within reach';
+      case RejectReason.HandsFull: return 'hands full - throw it first';
+      case RejectReason.HandsEmpty: return 'nothing to throw';
+      case RejectReason.TooFar: return 'too far to throw';
+      case RejectReason.Stunned: return 'stunned';
+      case RejectReason.CannotAfford: return 'not enough score';
+      case RejectReason.ToolOut: return 'swap tool to take out bombs';
+      case RejectReason.BadItem: return 'no such item';
+      case RejectReason.NoItem: return 'none in stock - buy one first';
+      case RejectReason.NoBombRules: return 'not in this rule set';
       case RejectReason.SwordSwinging: return '';
       case RejectReason.WrongPhase: return 'not now';
       case RejectReason.Disconnected: return 'controller unplugged';

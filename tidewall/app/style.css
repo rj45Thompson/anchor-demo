@@ -93,3 +93,29 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
 .ab.down { filter: brightness(1.5); transform: scale(0.95); }
 .ab.on { background: #b3261e; border-color: #fff; }
 .ab.off { opacity: 0.4; cursor: default; border-style: dashed; }
+
+/* the action bar has two rows: the verbs (row 0) and, in the bomb rule set, the shop with the score (row 1) */
+.abar { flex-direction: column; align-items: center; gap: 6px; }
+.abr { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.abr[hidden], .ab[hidden], .abscore[hidden] { display: none; }
+.abscore { align-self: center; padding: 6px 12px; font: 900 15px/1 var(--font); color: var(--gold); background: rgba(10,24,40,0.78); border: 2px solid rgba(255,214,102,0.7);
+  border-radius: 12px; min-height: 44px; display: flex; align-items: center; }
+.abr1 .ab { min-width: 84px; min-height: 48px; }
+.ab.poor { opacity: 0.55; border-style: dashed; border-color: #ff8a80; }
+.ab[data-action="defuse"].down { background: #b3261e; }
+/* touch: the shop row alone, small, above the stick and the A / B / Y buttons */
+.abar.compact .abr0 { display: none; }
+.abar.compact .abr1 .ab { min-width: 56px; min-height: 44px; padding: 3px 5px; font-size: 12px; }
+.abar.compact .abr1 .ab .ak { display: none; }
+.abar.compact .abr1 .ab .at { font-size: 9px; }
+.abar.compact .abscore { padding: 3px 7px; font-size: 12px; min-height: 36px; }
+.abar.compact .abr1 { gap: 4px; }
+/* the touch buttons say what they do in the bomb rule set */
+.tb[data-cap]::after { content: attr(data-cap); position: absolute; left: 0; right: 0; bottom: 8%; font: 800 9px/1 var(--font); letter-spacing: 0.08em; text-align: center; }
+@media (max-height: 559px) { .abr1 .ab { min-width: 70px; min-height: 42px; padding: 3px 7px; font-size: 13px; } }
+.abar.compact .abr1 { flex-wrap: wrap; }
+
+.tshop { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 54px); right: calc(max(12px, env(safe-area-inset-right)) + 104px); pointer-events: auto; touch-action: none;
+  width: 44px; height: 44px; border-radius: 50%; font: 900 10px/1 var(--font); letter-spacing: 0.04em; color: #fff; background: rgba(10,24,40,0.6); border: 2px solid rgba(255,214,102,0.9); padding: 0; }
+.tshop[hidden] { display: none; }
+.tshop.on { background: #b3261e; }

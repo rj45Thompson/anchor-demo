@@ -5,7 +5,8 @@
 // and the high scores, and back to the title. An untouched title plays the demo full screen (attract), and any press leaves it.
 //
 // URL switches (for a kiosk and for the page check): ?attract=1 the demo with HUD and sound and no menus; ?seed=N the match seed;
-// ?speed=N run N ticks per tick of real time (1..16, default 1); ?quality=low starts the graphics on the low setting (G switches).
+// ?speed=N run N ticks per tick of real time (1..16, default 1); ?quality=low starts the graphics on the low setting (G switches);
+// ?bombs=0 plays the base rules (no bombs, no shop; a hidden switch for the page checks - bombs are the game).
 import { GAME_TITLE } from './title.js';
 import { InputHub, KEY_CLUSTERS, SEATS } from './input.js';
 import { Overlay, HintStrip } from './overlay.js';
@@ -41,7 +42,8 @@ function readSwitches() {
   };
   const quality = q.get('quality');
   if (quality !== null && quality !== 'high' && quality !== 'low') throw new Error('?quality=' + quality + ' is not high or low');
-  return { attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high' };
+  const bombs = int('bombs', 0, 1);
+  return { attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high', bombs: bombs !== 0 };
 }
 
 function showFatal(text) {
@@ -94,6 +96,7 @@ class Game {
     this.wasPresent = new Array(SEATS).fill(true);
     this.stopped = false;
     this.phonesOpened = false;
+    this.shopOpen = false;         // a touch screen's shop row is open
     this.pointerMode = false;      // the mouse player's hero follows the pointer (set when it moves in play, cleared by their stick)
     /** The page check's brake: when set, it is asked after every tick whether to stop there; the page then keeps drawing without
      *  ticking until the check clears `braked`. phaseTick is the tick the current (round, phase) began. */
@@ -129,7 +132,7 @@ class Game {
 
   /** A new match: the demo (all four seats bots) or a game for the seats that joined. */
   startMatch(demo, joined) {
-    const options = new GameOptions({ field: this.menu.options.field, level: this.menu.options.level });
+    const options = new GameOptions({ field: this.menu.options.field, level: this.menu.options.level, bombs: this.sw.bombs });
     const seatOf = [];
     for (let s = 0; s < SEATS; s++) if (demo || joined[s]) seatOf.push(s);
     const seed = demo && !this.sw.attract ? (this.seed ^ (this.ticks & 0xffff)) : this.seed;
@@ -243,6 +246,7 @@ class Game {
       }
     }
     out.confirm = fields.confirm || p.confirm; out.rotate = fields.rotate || p.rotate; out.ready = fields.ready || p.ready; out.swap = fields.swap || p.swap;
+    out.grab = fields.grab || p.grab; out.tap = fields.tap || p.tap;   // the right button in the bomb rule set (input.js)
     return out;
   }
 
@@ -263,6 +267,7 @@ class Game {
     const ptr = this.input.takePointer();
     const wasPlaying = this.menu.screen === Screen.Playing && !this.demo;   // a click that started the match is not a move in it
     this.input.playing = wasPlaying;
+    this.input.bombMode = this.model.options.bombs;
     this.input.enterReadies = wasPlaying && !this.seatOf.includes(1);   // Enter is P1's READY unless P2 is in the match (P2's place key)
     if (!this.sw.attract) this.pointerToMenu(menuIn, ptr);
     if (!this.sw.attract) {
@@ -315,14 +320,28 @@ class Game {
     this.hint.set(hinting ? Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase) : null, this.controls.showsTouch, !hinting);
     const pads = this.touchpad.visible ? this.touchpad.coverRects() : [];
     if (this.hint.covering) this.hint.place(this.renderer.hudBarHeight() + 6, pads);
-    // the action bar: shown to the keyboard-and-mouse player in a match (a touch screen has its own buttons), above the HUD's cards;
-    // its rect is a camera cover rect, so the camera frames round it
-    const bar = playing && !this.controls.showsTouch && this.menu.screen === Screen.Playing;
+    // the action bar: shown to the keyboard-and-mouse player in a match, above the HUD's cards; its rect is a camera cover rect, so the
+    // camera frames round it. A touch screen has its own stick and A / B / Y: it gets the shop row alone, in REPAIR, in the bomb rule set.
+    const bombs = this.model.options.bombs, repair = this.model.phase === core.Phase.Repair;
+    const touch = this.controls.showsTouch;
+    // a touch screen's shop row opens from the SHOP button (it covers part of the board, so it stays out of the way until asked for)
+    if (this.touchpad.takeShop()) this.shopOpen = !this.shopOpen;
+    if (!(playing && bombs && repair && touch)) this.shopOpen = false;
+    this.touchpad.setShop(playing && bombs && repair && touch && this.menu.screen === Screen.Playing, this.shopOpen);
+    const bar = playing && this.menu.screen === Screen.Playing && (!touch || this.shopOpen);
     this.bar.show(bar);
+    this.touchpad.setBombs(bombs);
     if (bar) {
       const mp = this.model.player(this.mouseSlot);
-      this.bar.update({ phase: Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase), sword: mp.sword, ready: mp.ready });
-      this.bar.place(this.renderer.hudFootHeight() + 8);
+      this.bar.setCompact(touch);
+      this.bar.update({
+        phase: Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase), sword: mp.sword, ready: mp.ready, bombs,
+        carrying: mp.carrying !== 0, bombsLeft: mp.bombs, score: mp.score, costs: bombs ? this.model.rules.itemCosts : null, items: mp.items,
+      });
+      // a narrow touch screen: the shop row rides above the stick and the buttons; a wide one has room between them
+      const low = pads.filter((r) => r.top > window.innerHeight / 2);   // the stick and the buttons (the pause and frame buttons are at the top)
+      const high = touch && window.innerWidth < 700 && low.length ? window.innerHeight - Math.min(...low.map((r) => r.top)) + 8 : 0;
+      this.bar.place(Math.max(this.renderer.hudFootHeight() + 8, high));
     }
     const camera = {
       humans: playing ? this.seatOf.map((_, slot) => slot).filter((slot) => !this.controller.isBot(slot)) : [],

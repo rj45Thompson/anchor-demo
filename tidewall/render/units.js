@@ -13,8 +13,10 @@ import { uv, length, smoothstep } from 'three/tsl';
 import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry } from './look.js';
 import { boneEndingWith, tintArmour, shade, rimFigure, setFlash, tintSails } from './models.js';
 import { Effects } from './fx.js';
+import { BombsView } from './bombs.js';
+import { bombGeometry } from './look.js';
 
-const SHIP_SPEED = 3.0, GRUNT_SPEED = 2.4, HERO_SPEED = 9.0;   // AUTHORED: squares per second the drawn figures may cover easing to the model
+const SHIP_SPEED = 3.0, GRUNT_SPEED = 2.4, HERO_SPEED = 9.0, BOMB_HERO_SPEED = 16.0;   // AUTHORED: squares per second the drawn figures may cover easing to the model
 const SINK_SECONDS = 2.4, DIE_SECONDS = 1.1;
 const BUBBLE_EVERY = 0.045;                                      // AUTHORED: seconds between bubbles over a sinking ship
 const TRAIL_STEP = 0.12;                                         // AUTHORED: squares a shot flies between two puffs of its trail
@@ -87,7 +89,7 @@ export class Units {
       ball: new THREE.IcosahedronGeometry(0.13, 1), ring: new THREE.RingGeometry(0.42, 0.5, 32).rotateX(-Math.PI / 2),
       disc: new THREE.CircleGeometry(0.5, 24).rotateX(-Math.PI / 2), pip: new THREE.SphereGeometry(0.06, 8, 6),
       puff: new THREE.IcosahedronGeometry(0.2, 0), blade: new THREE.BoxGeometry(0.035, 0.46, 0.08).translate(0, 0.23, 0),
-      cube: new THREE.BoxGeometry(1, 1, 1), reticle: reticleGeometry(), trim: new THREE.TorusGeometry(0.62, 0.05, 6, 24).rotateX(Math.PI / 2),
+      held: match.options.bombs ? bombGeometry(new THREE.Color(0.1, 0.1, 0.13)) : null, cube: new THREE.BoxGeometry(1, 1, 1), reticle: reticleGeometry(), trim: new THREE.TorusGeometry(0.62, 0.05, 6, 24).rotateX(Math.PI / 2),
     };
     this.flagMats = this.colours.map((c) => new THREE.MeshStandardNodeMaterial({ color: c, side: THREE.DoubleSide, roughness: 0.5 }));
     this.flagNeutral = new THREE.MeshStandardNodeMaterial({ color: NEUTRAL_BANNER, side: THREE.DoubleSide, roughness: 0.6 });
@@ -108,6 +110,7 @@ export class Units {
     this.buildCastles();
     for (let s = 0; s < match.playerCount; s++) { this.heroes.push(this.makeHero(s)); this.ghosts.push(this.makeGhost(s)); }
     this.dryNearest = this.nearestDry();
+    this.bombs = match.options.bombs ? new BombsView(this) : null;   // the bomb rule set's bombs, traps and stun (bombs.js)
   }
 
   // ------------------------------------------------------------------ castles
@@ -280,7 +283,7 @@ export class Units {
     const blob = new THREE.Mesh(this.geo.disc, this.blobMat); blob.position.y = 0.02; blob.scale.setScalar(1.15); blob.renderOrder = 1; g.add(blob);
     const p = new THREE.Vector3(gr.at.x + 0.5, this.board.groundAt(gr.at.x, gr.at.y), gr.at.y + 0.5);
     g.position.copy(p); this.group.add(g);
-    const e = { g, fig, ring, blob, state: null, pos: p.clone(), yaw: 0, die: -1 };
+    const e = { g, fig, ring, blob, model: gr, base: GRUNT_HEIGHT / this.models.goblin.size.y, setDown: 0, state: null, pos: p.clone(), yaw: 0, die: -1 };
     this.play(e, 'Walking', 0);
     const w = fig.actions.Walking; w.time = ((gr.id * 0.37) % 1) * w.getClip().duration;   // grunts landed together do not step in step
     return e;
@@ -306,7 +309,7 @@ export class Units {
       if (!e) { e = this.makeGrunt(gr); this.grunts.set(gr.id, e); }
       const target = new THREE.Vector3(gr.at.x + 0.5, this.board.groundAt(gr.at.x, gr.at.y), gr.at.y + 0.5), before = e.pos.clone();
       towards(e.pos, target, GRUNT_SPEED * dt);
-      const d = e.pos.clone().sub(before), moving = d.lengthSq() > 1e-8, bite = moving ? null : this.biteTarget(gr);
+      const d = e.pos.clone().sub(before), moving = d.lengthSq() > 1e-8, bite = moving || this.match.options.bombs ? null : this.biteTarget(gr);   // a bomb-rule grunt drops a bomb instead of biting
       if (moving) {
         e.yaw = yawTo(e.yaw, Math.atan2(d.x, d.z), Math.min(1, dt * 10));
         this.play(e, 'Walking', 0.2); e.fig.actions.Walking.timeScale = 1.4;
@@ -321,6 +324,8 @@ export class Units {
       if (!seen.has(id) && e.die < 0) e.die = 0;
       e.g.position.copy(e.pos);
       e.g.rotation.set(0, e.yaw, 0);
+      // a grunt that has just set a bomb down crouches over it (a squash that lasts half a second), then runs as the model says
+      if (e.setDown > 0) { e.setDown = Math.max(0, e.setDown - dt * 2); const k = Math.sin(Math.PI * (1 - e.setDown)); e.fig.root.scale.y = e.base * (1 - 0.3 * k); e.g.position.y -= 0.12 * k; }
       if (e.die >= 0) {
         e.die += dt;
         setFlash(e.fig.root, Math.max(0, 1 - e.die / FLASH_SECONDS));   // the hit: a white flash as it falls
@@ -391,7 +396,10 @@ export class Units {
     g.updateMatrixWorld(true);
     const hand = new THREE.Group(); hand.scale.setScalar(0.8 / bone.getWorldScale(new THREE.Vector3()).x);
     hand.rotation.set(Math.PI / 2, 0, 0); bone.add(hand);
-    const blade = new THREE.Mesh(this.geo.blade, this.glowP[s]); blade.scale.set(1.5, 1.5, 1.5); hand.add(blade);   // AUTHORED: a sword half a square long
+    // what the tool-out hero holds: a sword half a square long, or in the bomb rule set a bomb (AUTHORED sizes)
+    const bombs = this.match.options.bombs, armed = new THREE.Mesh(bombs ? this.geo.held : this.geo.blade, bombs ? mats.vc : this.glowP[s]);
+    if (bombs) { armed.scale.setScalar(0.55); armed.position.y = -0.12; } else armed.scale.set(1.5, 1.5, 1.5);
+    hand.add(armed);
     const hammer = new THREE.Mesh(this.geo.hammer, mats.vc); hand.add(hammer);
     const torch = new THREE.Group(); torch.add(new THREE.Mesh(this.geo.torch, mats.vc));
     const tip = new THREE.Mesh(this.geo.pip, glow(new THREE.Color(0xffa040), 3)); tip.position.y = 0.36; torch.add(tip); hand.add(torch);
@@ -399,7 +407,7 @@ export class Units {
     const shadow = new THREE.Mesh(this.geo.disc, this.blobMat); shadow.scale.setScalar(1.3); shadow.renderOrder = 1;
     const reticle = new THREE.Mesh(this.geo.reticle, this.glowP[s]);   // the ring and its four ticks, one draw
     this.group.add(g, ring, shadow, reticle);
-    const e = { g, fig, state: null, blade, hammer, torch, hand, ring, shadow, reticle, pos: null, yaw: 0, swing: 0, at: new THREE.Vector3() };
+    const e = { g, fig, state: null, armed, tip: 0, hammer, torch, hand, ring, shadow, reticle, pos: null, yaw: 0, swing: 0, at: new THREE.Vector3() };
     this.play(e, 'Combat_Stance', 0);
     return e;
   }
@@ -419,17 +427,19 @@ export class Units {
   }
 
   updateHeroes(view, dt, seconds) {
-    const m = this.match, ctl = view.controllers[0], playing = !(m.ended || m.phase === Phase.Decide);
+    const m = this.match, ctl = view.controllers[0], playing = !(m.ended || m.phase === Phase.Decide), bombs = m.options.bombs;
     for (let s = 0; s < this.heroes.length; s++) {
       const e = this.heroes[s], p = m.player(s), show = playing && p.connected;
       e.g.visible = e.ring.visible = e.shadow.visible = show;
       e.reticle.visible = false;
       if (!show) continue;
       const cur = ctl.cursorExact(s), cx = Math.floor(cur.x), cy = Math.floor(cur.y), g = m.grid;
-      // where the hero stands: the cursor, or over open sea the nearest shore square beneath it
-      let tx = cur.x, tz = cur.y;
-      if (g.in(cx, cy) && g.terrainAt(cx, cy) === Terrain.Water) {
-        const n = this.dryNearest[cy * g.width + cx];
+      // where the hero stands: the cursor (in the bomb rule set the hero walks to it on land: the controller's heroExact), or over
+      // open sea the nearest shore square beneath it
+      const stand = bombs ? ctl.heroExact(s) : cur, sx = Math.floor(stand.x), sy = Math.floor(stand.y);
+      let tx = stand.x, tz = stand.y;
+      if (g.in(sx, sy) && g.terrainAt(sx, sy) === Terrain.Water) {
+        const n = this.dryNearest[sy * g.width + sx];
         if (n >= 0) { tx = (n % g.width) + 0.5; tz = Math.floor(n / g.width) + 0.5; }
       }
       // over a standing castle the hero waits at the castle's south foot: the castle model is taller than the hero and would hide it,
@@ -441,7 +451,7 @@ export class Units {
       }
       const target = new THREE.Vector3(tx, this.board.groundAtPoint(tx, tz), tz);
       if (!e.pos) e.pos = target.clone();
-      const before = e.pos.clone(); towards(e.pos, target, HERO_SPEED * dt);
+      const before = e.pos.clone(); towards(e.pos, target, (bombs ? BOMB_HERO_SPEED : HERO_SPEED) * dt);
       const d = e.pos.clone().sub(before), moving = d.lengthSq() > 1e-7, speed = dt > 0 ? d.length() / dt : 0;
       const aiming = m.phase === Phase.Battle && !p.sword;
       if (moving) e.yaw = yawTo(e.yaw, Math.atan2(d.x, d.z), Math.min(1, dt * 12));
@@ -454,13 +464,15 @@ export class Units {
       else this.play(e, 'Combat_Stance', 0.25);
       e.fig.mixer.update(dt);
       e.g.position.copy(e.pos);
-      e.g.rotation.set(0, e.yaw, 0);
+      // a stunned hero (bomb rule set) is tipped over on its side and sunk a little; getting up eases back
+      e.tip += ((bombs && p.stunLeft > 0 ? 1 : 0) - e.tip) * Math.min(1, dt * 10);
+      e.g.rotation.set(0, e.yaw, e.tip * 1.35, 'YXZ'); e.g.position.y -= e.tip * 0.35;
       e.ring.position.set(e.pos.x, e.pos.y + 0.03, e.pos.z); e.ring.scale.setScalar(1.4 + Math.sin(seconds * 4 + s) * 0.06);
       e.shadow.position.set(e.pos.x, e.pos.y + 0.02, e.pos.z);
-      // the tool in hand: the sword when it is out (REPAIR and BATTLE), else the phase's tool
-      const slashing = e.state === 'Right_Hand_Sword_Slash' && e.swing > 0;           // a slash shows the sword to its end
-      const sword = slashing || (p.sword && (m.phase === Phase.Repair || m.phase === Phase.Battle));
-      e.blade.visible = sword; e.hammer.visible = !sword && (m.phase === Phase.Repair || m.phase === Phase.Cannons); e.torch.visible = aiming && !sword;
+      // the tool in hand: the sword (bombs, in the bomb rule set) when it is out (REPAIR and BATTLE), else the phase's tool
+      const slashing = !bombs && e.state === 'Right_Hand_Sword_Slash' && e.swing > 0;  // a slash shows the sword to its end
+      const sword = slashing || (p.sword && (m.phase === Phase.Repair || m.phase === Phase.Battle) && !(bombs && p.carrying > 0));   // a carried bomb floats over the hand
+      e.armed.visible = sword; e.hammer.visible = !sword && (m.phase === Phase.Repair || m.phase === Phase.Cannons); e.torch.visible = aiming && !sword;
       if (aiming) {
         e.reticle.visible = true;
         const wetC = !g.in(cx, cy) || g.terrainAt(cx, cy) === Terrain.Water;
@@ -571,20 +583,25 @@ export class Units {
           for (const q of swept) if (this.fxs.rnd() < 0.5) this.fxs.sparkle(new THREE.Vector3(q.x + 0.2 + this.fxs.rnd() * 0.6, this.board.groundAt(q.x, q.y) + 0.1, q.y + 0.2 + this.fxs.rnd() * 0.6), col, q.delay);
         }
       } else if (e instanceof SwordSwung) {
-        const h = this.heroes[e.slot];
-        if (h) {                                                            // the slash clip, sped up to a quick swing, from its start
-          if (h.state === 'Right_Hand_Sword_Slash') h.fig.actions.Right_Hand_Sword_Slash.reset();   // a second swing starts it again
-          this.play(h, 'Right_Hand_Sword_Slash', 0.08);
-          const a = h.fig.actions.Right_Hand_Sword_Slash;
-          a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.timeScale = SLASH_SPEED;
-          h.swing = a.getClip().duration / SLASH_SPEED;
-        }
+        this.slash(e.slot);
         this.fxs.flash(cellAt(e.at, 0.4), this.colours[e.slot], 0.5);
       } else if (e instanceof CastleClaimed) {
         const k = this.castles.get(e.castleId);
         if (k) this.fxs.flash(k.g.position.clone().add(new THREE.Vector3(0, 1.2, 0)), this.colours[e.slot], 1.2);
-      }
+      } else if (this.bombs) this.bombs.event(e, cellAt);
     }
+  }
+
+  /** A hero's arm swing (the slash clip, sped up to a quick swing, from its start): a sword strike, or in the bomb rule set a bomb
+   *  dropped or thrown. */
+  slash(slot) {
+    const h = this.heroes[slot];
+    if (!h) return;
+    if (h.state === 'Right_Hand_Sword_Slash') h.fig.actions.Right_Hand_Sword_Slash.reset();   // a second swing starts it again
+    this.play(h, 'Right_Hand_Sword_Slash', 0.08);
+    const a = h.fig.actions.Right_Hand_Sword_Slash;
+    a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.timeScale = SLASH_SPEED;
+    h.swing = a.getClip().duration / SLASH_SPEED;
   }
 
   update(view, dt, seconds) {
@@ -595,6 +612,7 @@ export class Units {
     this.updateGrunts(dt);
     this.updateShots(alpha);
     this.updateHeroes(view, dt, seconds);
+    if (this.bombs) this.bombs.update(view, dt, seconds);
     this.updateGhosts(view, seconds);
   }
 
@@ -606,6 +624,7 @@ export class Units {
   }
 
   dispose() {
+    if (this.bombs) this.bombs.dispose();
     for (const e of this.heroes) e.fig.mixer.stopAllAction();
     for (const e of this.grunts.values()) e.fig.mixer.stopAllAction();
     this.scene.remove(this.group);

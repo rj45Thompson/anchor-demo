@@ -21,7 +21,7 @@ import { uniform, pass, mrt, output, emissive, normalView, vec3, vec4, float, uv
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
 import BloomNode from 'three/addons/tsl/display/BloomNode.js';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
-import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, Screen } from '../core/index.js';
+import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, BombExploded, Screen } from '../core/index.js';
 import { GAME_TITLE } from '../app/title.js';
 import { Board, BoardLook } from './board.js';
 import { Units, gruntFigure, shipModel } from './units.js';
@@ -364,7 +364,7 @@ class Renderer {
     this.grid = this.match.grid;
     this.seatsKey = seats.join(',');
     const colours = seats.map((s) => PLAYER_COLOURS[s]);
-    this.board = new Board(this.scene, this.grid, colours, this.propParts, this.decorParts, this.look);
+    this.board = new Board(this.scene, this.grid, colours, this.propParts, this.decorParts, this.look, this.match.rules);
     this.fx.clear();
     this.units = new Units(this.scene, this.board, this.match, this.models, seats, this.fx);
     this.fitSun();
@@ -398,6 +398,7 @@ class Renderer {
         if (e instanceof CannonDestroyed) this.rig.shake = Math.max(this.rig.shake, 0.6);
         else if (e instanceof WallBroken) this.rig.shake = Math.max(this.rig.shake, 0.45);
         else if (e instanceof ShipSunk) this.rig.shake = Math.max(this.rig.shake, 0.35);
+        else if (e instanceof BombExploded) this.rig.shake = Math.max(this.rig.shake, e.big ? 0.5 : 0.3);
       }
       const drift = !!view.menu && DRIFT_SCREENS.has(view.menu.screen) && !(view.menu.screen === Screen.Title && view.menu.inDemo);
       const camIn = view.camera || null;

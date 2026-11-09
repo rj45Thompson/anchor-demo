@@ -69,6 +69,38 @@ export class GameRules {
   static default() { return new GameRules(); }
 }
 
+/** The shop's items (BOMBS_SPEC.md). Appended-only numbers; `ItemNames[k]` is the key in rules.itemCosts and player.items. */
+export const ItemKind = Object.freeze({ Metal: 0, Trap: 1, BombPack: 2, BigBomb: 3 });
+export const ItemNames = Object.freeze(['metal', 'trap', 'bombPack', 'bigBomb']);
+
+/** The rules of the bomb rule set (GameOptions.bombs): the base rules plus these numbers. A SUBCLASS, so GameRules itself (and the
+ *  parity traces' rules check) is untouched. Every number cites BOMBS_SPEC.md (RJ 2026-11-09); ticks are 30 to the second. */
+export class BombRules extends GameRules {
+  constructor() {
+    super();
+    // REQ-BOMB-01: fuse 90 ticks; blast = a plus, arm length 2 (big 4), drawn 8 ticks
+    this.bombFuse = 90; this.bombArm = 2; this.bigBombArm = 4; this.blastTicks = 8;
+    // REQ-BOMB-02: damage per blast (a normal brick has wallHealth 2, a metal one metalWallHealth 6, a castle castleHealth 12)
+    this.blastBrickDamage = 1; this.blastCannonDamage = 1; this.blastCastleDamage = 3;
+    this.metalWallHealth = 6;
+    // REQ-BOMB-03: a hero in a blast is stunned
+    this.stunTicks = 45;
+    // REQ-BOMB-04: the hero's stock of bombs
+    this.bombCap = 3; this.bombPackCap = 6; this.bombPackSize = 3; this.bombRegenTicks = 150;
+    // REQ-BOMB-05: the hero verbs (reach in squares, king's move; throw range in Manhattan squares; flight = base + perCell * distance)
+    this.pickUpReach = 1; this.defuseReach = 1; this.defuseHoldTicks = 12;   // defuseHoldTicks: the controller's B hold, read from here
+    this.throwRange = 5; this.throwBaseTicks = 6; this.throwTicksPerCell = 2;
+    // REQ-BOMB-06: grunts drop bombs instead of biting
+    this.gruntBombCooldownTicks = 150; this.gruntFleeCells = 2; this.gruntFleeTicks = 60;
+    // REQ-BOMB-07: points
+    this.pointsBombKill = 25; this.pointsDefuseGruntBomb = 10; this.pointsTrapKill = 25;
+    // REQ-BOMB-08: the shop (score)
+    this.itemCosts = { metal: 80, trap: 40, bombPack: 30, bigBomb: 60 };
+  }
+
+  static default() { return new BombRules(); }
+}
+
 export const RoundKind = Object.freeze({ Wave: 0, Challenge: 1 });
 
 /** One round of the campaign: its phase lengths and its wave (REQ-PHASE-02, REQ-SHIP-01). `map` names the board the round is
@@ -129,6 +161,16 @@ export class RoundTable {
     const r = [];
     for (let i = 1; i <= 8; i++)
       r.push(new RoundSpec(15 * s, (18 + i) * s, 25 * s, 2 + Math.trunc(i / 2), 1, 1 + Math.trunc(i / 3), i >= 3 ? 1 + Math.trunc((i - 3) / 2) : 0));
+    return new RoundTable(r, endless);
+  }
+
+  /** The bomb rule set's longer rounds (BOMBS_SPEC.md "Round lengths"): CANNONS 25 s (was 15), BATTLE (24 + i) s (was 18 + i),
+   *  REPAIR 75 s (was 25); ships as in `default`. */
+  static tidewall(endless = false) {
+    const s = GameRules.TicksPerSecond;
+    const r = [];
+    for (let i = 1; i <= 8; i++)
+      r.push(new RoundSpec(25 * s, (24 + i) * s, 75 * s, 2 + Math.trunc(i / 2), 1, 1 + Math.trunc(i / 3), i >= 3 ? 1 + Math.trunc((i - 3) / 2) : 0));
     return new RoundTable(r, endless);
   }
 }

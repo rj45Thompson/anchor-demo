@@ -20,10 +20,10 @@ const icon = (k) => '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' +
  *  app/input.js KEY_CLUSTERS (P1's), mouse input.js (left acts, right click turns, middle is ready, the wheel zooms), touch
  *  controls.js TouchPad, phones PhonePad's A/B/Y. */
 const HOWTO_ROWS = Object.freeze({
-  keys: 'WASD move, Space place / fire, R turn, Tab or Q swap tool, E ready',
-  mouse: 'Click claim / place / fire, right click turn, the buttons below swap tool and ready, wheel zoom',
-  touch: 'Stick move, A place / fire, B turn, Y ready; tap the board to act there; pinch to zoom',
-  phone: 'Scan the code, A joins; stick move, A place / fire, B turn, Y ready',
+  keys: 'WASD move, Space place / fire / bomb, R turn, Tab tool, F grab bomb (hold: defuse), 1-4 shop',
+  mouse: 'Click place / fire / bomb, right click grab a bomb (hold: defuse), the buttons below: tool, shop, ready',
+  touch: 'Stick move, A place / fire / bomb, B grab bomb (hold: defuse), Y tool / ready; pinch to zoom',
+  phone: 'Scan the code, A joins; A place / fire / bomb, B grab bomb (hold: defuse), Y tool / ready',
 });
 
 /** The devices the how-to card explains for a CONTROLS mode on this device (touchFirst: a phone or tablet, controls.js). */
@@ -39,8 +39,8 @@ export function howtoDevices(mode, touchFirst) {
 export const PHASE_HINTS = Object.freeze({
   Claim: { say: 'Pick a castle', touch: 'tap one', desk: 'click one, or walk there and press Space / A' },
   Cannons: { say: 'Place cannons inside your walls', touch: 'tap inside, then Y', desk: 'click inside, then Ready (E / Y)' },
-  Battle: { say: 'Fire at ships', touch: 'tap a ship', desk: 'click a ship, or aim and press Space; Tab or Q draws the sword' },
-  Repair: { say: 'Close the ring with pieces', touch: 'tap to place, B turns', desk: 'click to place, right click / R turns' },
+  Battle: { say: 'Fire at ships', touch: 'tap a ship; Y takes out bombs', desk: 'click a ship, or aim and press Space; Tab or Q takes out bombs' },
+  Repair: { say: 'Close the ring with pieces', touch: 'tap to place; hold B to defuse bombs', desk: 'click to place, R turns; hold right click to defuse a bomb; 1-4 shop' },
 });
 
 /** The first-match hint strip: one line under the top bar in the first round of the first match a player plays on this page, the
@@ -122,7 +122,7 @@ export class Overlay {
     const rows = howtoDevices(s.controls, s.touchFirst)
       .map((k) => '<div class="hrow" data-dev="' + k + '">' + icon(k) + '<span>' + esc(HOWTO_ROWS[k]) + '</span></div>').join('');
     return '<div class="howto"><div class="hhead">HOW TO PLAY</div><div class="hgoal">Wall in a castle, place cannons, sink the ships,'
-      + ' then close the ring before the bell.</div>' + rows + '</div>';
+      + ' defuse raider bombs, then close the ring before the bell.</div>' + rows + '</div>';
   }
 
   seats(s) {
