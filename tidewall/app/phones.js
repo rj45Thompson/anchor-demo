@@ -59,10 +59,22 @@ export class Phones {
     this.state = 'off'; this.reason = '';
   }
 
-  /** The QR box: shown on the join screen only. */
+  /** The QR box's size for this window (PhonePad's show options: qr = the code's width in px, 64..320; compact = code and room
+   *  only). A short screen (a sideways phone, or any window under 500 px tall) gets the compact 96 px box, which PhonePad
+   *  measured at 112 x 160; a window under 800 px tall gets 140 px (166 x 295); larger windows keep the default 180 px. */
+  static qrOptions(w, h) {
+    const short = Math.min(w, h);
+    if (h < 500 || short < 480) return { qr: 96, compact: true };
+    if (h < 800) return { qr: 140, compact: false };
+    return { qr: 180, compact: false };
+  }
+
+  /** The QR box: shown on the join screen only, sized for the window and resized in place when the window changes. */
   show(on) {
     if (!this.pads) return;
-    if (on && !this.shown) { this.pads.show(); this.shown = true; }
-    else if (!on && this.shown) { this.pads.hide(); this.shown = false; }
+    if (on) {
+      const o = Phones.qrOptions(innerWidth, innerHeight), key = o.qr + (o.compact ? 'c' : '');
+      if (!this.shown || key !== this.sizeKey) { this.pads.show(document.body, o); this.shown = true; this.sizeKey = key; }
+    } else if (this.shown) { this.pads.hide(); this.shown = false; this.sizeKey = null; }
   }
 }
