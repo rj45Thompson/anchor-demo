@@ -8,12 +8,18 @@ const readMuted = () => { try { return localStorage.getItem(STORE) === '1'; } ca
 export function makeAudio() {
   const A = { ctx: null, muted: readMuted(), nodes: null, lastGear: null };
   A.start = () => {                                         // browsers allow sound only after a press (UC-7.4a)
-    if (A.ctx) { if (A.ctx.state === 'suspended') A.ctx.resume(); return; }
+    if (A.ctx) { if (A.ctx.state !== 'running') { A.ctx.resume(); unlockTick(A.ctx); } return; }
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;                                       // no Web Audio: the page stays silent and says so on the button
+    // UC-7.4b an iPhone (the owner 11-09: "No sound on iPhone"). WebKit puts Web Audio in the ringer's 'ambient' session, which the
+    // silent switch mutes; the Audio Session API (Safari 16.4) moves it to 'playback', as a game's sound is. The page's own Sound
+    // pill is how a visitor silences it. Elsewhere navigator.audioSession does not exist and nothing changes
+    if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback';
     A.ctx = new Ctx();
+    unlockTick(A.ctx);
     build(A);
   };
+  A.running = () => !!A.ctx && A.ctx.state === 'running';
   A.setMuted = (m) => {
     A.muted = m;
     try { localStorage.setItem(STORE, m ? '1' : '0'); } catch (e) { /* per-viewer convenience only */ }
@@ -21,6 +27,14 @@ export function makeAudio() {
   };
   A.available = () => !!(window.AudioContext || window.webkitAudioContext);
   return A;
+}
+
+// UC-7.4b iOS starts a context only from inside a press's own handler, and only when something plays in it: one silent sample, played
+// there (WebKit's audio unlock); resume() alone in a pointerdown left it suspended on iPhones
+function unlockTick(ctx) {
+  const b = ctx.createBuffer(1, 1, ctx.sampleRate), src = ctx.createBufferSource();
+  src.buffer = b; src.connect(ctx.destination); src.start(0);
+  if (ctx.state !== 'running') ctx.resume();
 }
 
 function noiseBuffer(ctx) {

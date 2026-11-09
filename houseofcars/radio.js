@@ -3,6 +3,7 @@
 // master (audio.js), so the sound switch silences the radio with the engine. Every tempo, scale, voice and level here is AUTHORED
 // (for feel); the music theory is the usual one (equal temperament, A4 = 440 Hz). The talk station speaks with the browser's own
 // voice (speechSynthesis) and says so when the device has none (UC-27.3a).
+import { bestVoice } from './voices.js';                               // UC-27.3b never a novelty voice (an iPhone lists them first)
 export const STATIONS = [
   { id: 'hocfm', name: 'HOC FM 104.7', tag: 'Synthwave for the night shift', style: 'synth', bpm: 100, root: 57, seed: 7 },
   { id: 'redline', name: 'Redline 99', tag: 'Drum and bass at the limiter', style: 'dnb', bpm: 172, root: 53, seed: 11 },
@@ -113,6 +114,8 @@ export class Radio {
     const say = () => {
       if (this.station && this.station.style === 'talk' && !this.audio.muted) {
         const u = new SpeechSynthesisUtterance(TALK[n % TALK.length]); n++;
+        const v = bestVoice(speechSynthesis.getVoices());
+        if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-CA';   // none yet (Chrome fills the list late): the device's default English
         u.rate = 1.05; u.pitch = 0.9; u.volume = 0.9;
         u.onend = () => { this.talkTimer = setTimeout(say, 1800); };
         speechSynthesis.speak(u);

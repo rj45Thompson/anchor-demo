@@ -5,14 +5,15 @@
 // Serves UC-1.1..1.4, UC-1.1a, UC-1.2a, UC-2.1..2.5, UC-2.2a (D:/_houseofcars/USE_CASES.md).
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import * as Rules from './rules.js';
 import { loadWorld } from './world.js';
 import { rotatorAxes, threeMatrix, threeMatrixFromAxes, toThreePoint, verticalFovDeg } from './ue_space.js';
 import { makeRig, updateRig } from './camera_rig.js';
 import { SLIDES } from './slides.js';
 import { svgIcon, drawIcon } from './icons.js';
-import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, skyEnv, setPaint, paint, groundDetail, lightBeam, asphaltRoad, concreteWall, contactShadow } from './fx.js';
+import { studioEnvironment, upgradePaint, polishedTops, glowMaterial, makePost, physicalSky, skyEnv, setPaint, paint, groundDetail, lightBeam, asphaltRoad, concreteWall, contactShadow, showroomFloor, plinthMaterial } from './fx.js';
+import { freeRects, fitSubject, mergeGroups, FRAME } from './lot_frame.js';            // UC-44.3: the subject framed where the panels leave room
+import { focusWeight, level, LIGHT } from './lot_light.js';                             // UC-44.3: the light follows the slide in view
 import { buildRain, wetRoad, sunTracker, overcast, buildShafts } from './weather.js';        // UC-40: rain, a wet road, a grey sky, the strip's shafts (the circuit's: fx.js makePost)
 import { makeAudio, driveSound, silence, blip, loadSfx, sfx, grind } from './audio.js';
 import { Radio } from './radio.js';                                                       // UC-27: the car radio
@@ -42,6 +43,7 @@ import * as Replay from './drag_replay.js';                                 // U
 import { mark, timed, ResolutionGovernor } from './perf.js';                                                   // UC-30: ?perf logs where the time goes
 import { batchStatic } from './batch.js';                                                  // GFX 11-08: a car's meshes drawn one draw per material (batch.js)
 import { makeLotFocus } from './lot_focus.js';                                             // GFX 11-08: the tops' reflection draws only the slides near the one in view
+import { warmSlices, warmSteps, drawnInEveryPass } from './warm.js';                                  // UC-44.2: shaders built before they are seen (warm.js)
 mark('app.js running');
 const perfFirst = [];                                   // UC-30: the models just added, marked again once a frame has drawn them (declared first: a model can arrive while the page is still setting up)
 
@@ -72,12 +74,18 @@ export const AUTHORED = [
 const $ = (id) => document.getElementById(id);
 const CSSV = (n) => { const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); if (!v) throw new Error('index.html :root lacks ' + n); return v; };
 const PAL = { accent: CSSV('--accent'), soft: CSSV('--accent-soft'), ink: CSSV('--ink'), bg: CSSV('--bg'), bg2: CSSV('--bg2'), slate: CSSV('--slate') };   // UC-6.1
-await Promise.all(['800 88px "Open Sans"', '700 32px "Open Sans"', '600 40px "Open Sans"'].map((f) => document.fonts.load(f)));   // the panels are drawn once, so wait for the face
+// the panels are drawn once, so the face is awaited before the first one (UC-44.1: asked for now, awaited at the stands; until then the
+// renderer starts and the data arrives instead of waiting on the font)
+const fontsReady = Promise.all(['800 88px "Open Sans"', '700 32px "Open Sans"', '600 40px "Open Sans"'].map((f) => document.fonts.load(f)));
 const jsonCache = new Map();                            // each data file is fetched once (the track preloads them behind the lot)
 const fetchJson = (f) => {
   if (!jsonCache.has(f)) jsonCache.set(f, fetch('data/' + f).then((r) => { if (!r.ok) throw new Error('data/' + f + ': ' + r.status); return r.json(); }));
   return jsonCache.get(f);
 };
+// UC-44.1 every data file the lot awaits below, asked for at once, now: the lot used to ask in four rounds, each after the one before
+// had arrived and after the renderer had started (on a 70 ms line, four round trips in a row). The same promises are awaited below
+for (const f of ['showroom.json', 'track.json', 'timetrial_rules.json', 'camera.json', 'input.json', 'listings.json', 'models.json', 'glb_bytes.json', 'ghosts/index.json',
+  'scores.json', 'sale_specs.json', 'reviews.json', 'recalls.json', 'colours.json', 'photos.json', 'dragy.json']) fetchJson(f);
 const fetchBin = (f) => fetch('data/' + f).then((r) => { if (!r.ok) throw new Error('data/' + f + ': ' + r.status); return r.arrayBuffer(); });
 const canvas = $('view');
 const loader = new GLTFLoader();
@@ -86,19 +94,71 @@ const prog = new Map();                          // UC-4.2b: the loading bar sho
 // UC-20 against each model's own size (data/glb_bytes.json, tools/glb_sizes.py): GitHub Pages sends models gzipped, and a progress
 // event counts the unpacked bytes loaded against the packed length, so the bar passed 100 % (READ 11-07: the i8's 6.1 MB as 4.4)
 let GLB_BYTES = null;
+// UC-48 the load as the screen tells it (the owner 11-09: "a freeze on iPhone, lag at 100 percent", "more loading stats"). The bar
+// was the bytes alone, so it sat at 100 % while the lot was still being built and its shaders prepared, the longest part on a phone.
+// Now the bytes fill DL_SHARE of it and the build's own steps the rest (loadStage), so 100 % is the lot ready; under it, the line's
+// speed and the time left while bytes come (DERIVED from the bytes of the last 2 s), then the stage and its count
+const DL_SHARE = 0.8;                                    // AUTHORED: the bytes' share of the bar; the build's steps fill the rest
+const LOAD = { samples: [], stage: null, done: 0, total: 0 };
+const STAGE = { build: 'Building the lot', warm: 'Preparing the paint and the light', gpu: 'The graphics card is finishing the shaders', open: '' };
+function loadStage(stage, done = 0, total = 0) {
+  if (!(stage in STAGE)) throw new Error('loadStage: no stage ' + stage);
+  LOAD.stage = stage; LOAD.done = done; LOAD.total = total; showProgress();
+}
 function showProgress() {
   let l = 0, t = 0;
   for (const v of prog.values()) { l += v.l; t += v.t; }
   const bar = document.querySelector('#bar i');
-  if (bar && t) { bar.style.width = (100 * l / t).toFixed(0) + '%'; $('lmb').textContent = (100 * l / t).toFixed(0) + ' % · ' + (l / 1e6).toFixed(1) + ' / ' + (t / 1e6).toFixed(1) + ' MB'; }
+  if (!bar || !t) return;
+  const now = performance.now(), S = LOAD.samples;
+  S.push([now, l]); while (S.length > 2 && now - S[0][0] > 2000) S.shift();
+  // the lot's first load splits the bar; once the lot is open, a later load (the track, the strip) is its bytes alone, as before
+  const lot = LOAD.stage !== 'open', dl = l / t, build = LOAD.total ? LOAD.done / LOAD.total : 0, frac = lot ? DL_SHARE * dl + (1 - DL_SHARE) * build : dl;
+  bar.style.width = (100 * frac).toFixed(0) + '%';
+  $('lmb').textContent = Math.floor(100 * frac) + ' % · ' + (l / 1e6).toFixed(1) + ' / ' + (t / 1e6).toFixed(1) + ' MB';
+  const rate = now > S[0][0] ? (l - S[0][1]) / ((now - S[0][0]) / 1000) : 0;   // bytes a second, the last 2 s
+  $('lstat').textContent = dl < 1 ? (rate > 0 ? 'Downloading the 3D models · ' + (rate / 1e6).toFixed(1) + ' MB/s · about ' + Math.max(1, Math.ceil((t - l) / rate)) + ' s left' : 'Downloading the 3D models…')
+    : lot && LOAD.stage ? STAGE[LOAD.stage] + (LOAD.stage === 'warm' ? ': ' + LOAD.done + ' of ' + (LOAD.total - 1) : '') + '…' : '';
 }
-const loadGlb = (url) => {
+// UC-44.1 a model's bytes and its unpacking are two steps: a car for sale comes down the line while the lot warms up, and is unpacked
+// (GLTFLoader.parse, on the main thread: up to 250 ms a car on the desktop profile, MEASURED 11-08 in ?perf's long animation frames)
+// only when its turn to join comes, after the lot has opened. bar: whether its bytes count on the loading screen's bar (the lot's own
+// cars do, the cars for sale fetched behind it do not: the lot does not wait for them)
+const bytesCache = new Map();
+function glbBytes(url, bar = true) {
   const size = GLB_BYTES[url];
   if (size === undefined) throw new Error(url + ' is not in data/glb_bytes.json: run py tools/glb_sizes.py');
-  if (!glbCache.has(url)) { mark('glb asked', url); glbCache.set(url, loader.loadAsync(url, (e) => { prog.set(url, { l: e.loaded, t: size }); showProgress(); }).then((g) => { mark('glb parsed', url); upgradePaint(g.scene); return g; })); }
+  if (!bytesCache.has(url)) {
+    mark('glb asked', url);
+    bytesCache.set(url, fetch(url).then(async (r) => {
+      if (!r.ok) throw new Error(url + ': HTTP ' + r.status);
+      const reader = r.body.getReader(), parts = [];
+      let got = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        parts.push(value); got += value.length;
+        if (bar) { prog.set(url, { l: got, t: size }); showProgress(); }   // UC-4.2b: unpacked bytes against the unpacked size, as before
+      }
+      const buf = new Uint8Array(got);
+      for (let o = 0, k = 0; k < parts.length; o += parts[k].length, k++) buf.set(parts[k], o);
+      mark('glb fetched', url);
+      return buf.buffer;
+    }));
+  }
+  return bytesCache.get(url);
+}
+const loadGlb = (url) => {
+  if (!glbCache.has(url)) glbCache.set(url, glbBytes(url).then((b) => loader.parseAsync(b, url.slice(0, url.lastIndexOf('/') + 1))).then((g) => { mark('glb parsed', url); upgradePaint(g.scene); return g; }));
   return glbCache.get(url);
 };
 const meshUrl = (assetPath) => 'data/meshes/' + assetPath.split('/').pop().split('.').pop() + '.glb';   // "/Game/X/SM_A.SM_A" or "/Game/X/SM_A"
+// UC-44.1 the lot's own cars' parts (the 'car' slides of slides.js, their parts in showroom.json): their bytes are asked for the moment
+// the two files that name them are in, so they come down the line while the renderer starts; buildCar unpacks them (loadGlb)
+const lotOwnUrls = (show) => [...new Set(SLIDES.filter((d) => d.kind === 'car').map((d) => {
+  const e = show.cars.find((c) => c.name === d.car); if (!e) throw new Error('slides.js names a car showroom.json lacks: ' + d.car); return e;
+}).flatMap((e) => (e.drivable ? e.parts.map((p) => meshUrl(p.mesh)) : [meshUrl(e.mesh)])))];
+const lotOwnBytes = Promise.all([fetchJson('showroom.json'), fetchJson('glb_bytes.json')]).then(([S, G]) => { GLB_BYTES = G.bytes; return Promise.all(lotOwnUrls(S).map((u) => glbBytes(u))); });
 
 // ---------------------------------------------------------------- renderer (UC-1.1, UC-1.1a)
 function webgl2Available() { try { return !!document.createElement('canvas').getContext('webgl2'); } catch (e) { return false; } }
@@ -119,28 +179,71 @@ const GFX_Q = BACKEND !== 'WebGPU' || matchMedia('(pointer: coarse)').matches ? 
 // (UC-32). Tried first and dropped: renderer.compileAsync, aimed at the canvas and then at the post pass's target; the real frame
 // did not reuse what it built (the pedestal tops' reflection and the shadow map draw the scene again, each with its own shaders)
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));   // a timer, not a frame: it still runs in a tab in the background
+// UC-44.2 a new animation frame since frame f (renderer.info.frame, moved by the renderer's own loop): three draws a post pass's scene
+// once a frame (warm.js 3), so a piece drawn in the same frame as the one before it is never drawn. A tab in the background
+// draws no frames: the warm-up then waits for the visitor to look, and the lot opens with its shaders built
+const frameAfter = (f) => new Promise((res) => { const go = () => (renderer.info.frame !== f ? res() : requestAnimationFrame(go)); requestAnimationFrame(go); });
 const drawables = (o) => { const m = []; o.traverse((x) => { if (x.isMesh || x.isSprite || x.isLine || x.isPoints) m.push(x); }); return m; };
 // a scene drawn behind its loading screen a piece at a time, so its first visible frame builds nothing; a piece drawn once is not
 // drawn again (the track and the strip are warmed on the first race only, the car of each race on its own). 11-07: the strip's first
 // frame froze the page for longer than the page check's 30 s click wait, the lot's had for 8.3 s
+// UC-44.2 the GPU's half of a build. With the WGSL written, the first draw of a pipeline also waits for the GPU to compile it
+// (MEASURED 11-08, desktop: frames of 400 to 700 ms while a car warmed, of which 100 to 300 ms was script). So a warming mesh is not
+// drawn: three's own compile path (the one renderer.compileAsync uses: _createObjectPipeline, createRenderPipelineAsync) prepares it
+// in the very pass and render target that is drawing (its shaders, its reflection's and its shadow map's, which that path runs too),
+// and it is drawn once every pipeline it asked for is ready. These are three r175 internals, so they are checked here and the page
+// stops, said, if the importmap ever loads a three without them
+const warming = new Map();                                   // a mesh being warmed -> the promises of the pipelines it asked for; .only: a pass test (the mesh is prepared only where it passes)
+{
+  const R = renderer, direct = R._renderObjectDirect;
+  if (typeof direct !== 'function' || typeof R._createObjectPipeline !== 'function' || R._handleObjectFunction !== direct || R._compilationPromises !== null)
+    throw new Error('three.js internals the warm-up uses (Renderer._renderObjectDirect, _createObjectPipeline, _handleObjectFunction, _compilationPromises) are not as in r175: the importmap must load three@0.175.0');
+  R._renderObjectDirect = R._handleObjectFunction = function (object, ...rest) {
+    const asked = warming.get(object);
+    if (!asked) return direct.call(this, object, ...rest);
+    if (asked.only && !asked.only()) return;                   // not prepared in this pass (warmModel: the reflection first)
+    const was = this._compilationPromises; this._compilationPromises = asked;
+    try { return this._createObjectPipeline(object, ...rest); } finally { this._compilationPromises = was; }
+  };
+}
+// AUTHORED: pipelines not ready this long after they were asked for are a failure, thrown (three's createRenderPipelineAsync wrapper
+// never settles when the GPU refuses a pipeline: without a limit the page would wait for ever)
+const PIPELINES_S = 60;
+/** every pipeline the meshes asked for while warming, ready; resolves with how many */
+async function pipelinesReady(meshes, what) {
+  const asked = meshes.flatMap((m) => warming.get(m));
+  let late = null;
+  const r = await Promise.race([Promise.all(asked), new Promise((res) => { late = setTimeout(res, PIPELINES_S * 1000, 'late'); })]).finally(() => clearTimeout(late));
+  if (r === 'late') throw new Error(what + ': ' + asked.length + ' GPU pipelines not ready ' + PIPELINES_S + ' s after their shaders were written');
+  return asked.length;
+}
 const warmed = new WeakSet();
-const WARM_STEPS = 8;                                             // AUTHORED: at most 8 frames per warm-up (11-07: the strip's 56 pieces, one a frame, took 60 s in software)
-async function warmPieces(scene, render, label, before) {
+// UC-44.2 the pieces' meshes are warmed a frame at a time, each frame at most one lit material (warm.js warmSteps). A warming mesh is
+// prepared, not drawn (warming), so a warm-up frame draws next to nothing and stays cheap even in software: the reason for the old cap
+// (WARM_STEPS 8 frames, 11-07: the strip's 56 pieces, one a frame, took 60 s in software, each frame drawing everything warmed so
+// far). MEASURED 11-08, phone profile: the old step holding the three template cars held the loading screen still for 9.2 s
+async function warmPieces(scene, render, label, before, told = null) {   // told(done, total): UC-48 the steps as they go
   const pieces = scene.children.filter((p) => !warmed.has(p) && drawables(p).length), was = new Map();
   if (!pieces.length) return;
-  for (const piece of pieces) for (const m of drawables(piece)) { was.set(m, [m.visible, m.frustumCulled]); m.visible = false; }   // the lights stay on: shaders depend on them
-  if (before) before();
-  const per = Math.ceil(pieces.length / WARM_STEPS);
-  for (let i = 0; i < pieces.length; i += per) {
-    const step = pieces.slice(i, i + per), ms = step.flatMap(drawables);
-    for (const p of step) warmed.add(p);
-    for (const m of ms) { m.visible = was.get(m)[0]; m.frustumCulled = false; }   // unculled, so a piece out of view is built too
-    await timed('warmed ' + label, step.length + ' pieces', () => { render(); });
-    for (const m of ms) m.frustumCulled = was.get(m)[1];
-    await pause(16);
-  }
+  for (const piece of pieces) for (const m of drawables(piece)) { was.set(m, [m.visible, m.frustumCulled]); m.visible = false; warming.set(m, []); }   // the lights stay on: shaders depend on them; UC-44.2 prepared, not drawn, until its pipelines are ready
+  try {
+    for (const p of pieces) warmed.add(p);
+    const steps = warmSteps(warmSlices([...was.keys()].filter((m) => was.get(m)[0])));   // a part hidden in its model stays hidden
+    let f = renderer.info.frame;
+    if (before) before();
+    for (const [k, ms] of steps.entries()) {
+      if (told) told(k, steps.length + 1);                         // UC-48: the GPU's wait below is the last step
+      for (const m of ms) { m.visible = true; m.frustumCulled = false; }   // unculled, so a piece out of view is built too
+      await frameAfter(f); f = renderer.info.frame;               // UC-44.2: in a frame of its own (was a 16 ms timer: two steps could share a frame)
+      await timed('warmed ' + label, ms.length + ' meshes', () => { render(); });
+      for (const m of ms) m.frustumCulled = was.get(m)[1];
+    }
+    if (told) told(steps.length, steps.length + 1);
+    mark('pipelines ready', label + ' (' + await pipelinesReady([...was.keys()], label) + ')');   // UC-44.2: compiled by the GPU while the loading screen ran on
+  } finally { for (const m of was.keys()) warming.delete(m); }
 }
-const warmLot = () => warmPieces(show.scene, () => showPost.render(), 'lot', () => tickShow(0));   // tickShow: the camera where the lot opens
+const warmLot = () => warmPieces(show.scene, () => showPost.render(), 'lot', () => tickShow(0),   // tickShow: the camera where the lot opens
+  (done, total) => loadStage(done < total - 1 ? 'warm' : 'gpu', done, total));   // UC-48
 // UC-31 not on WebGPU: say so, with the reason the browser gives and what would run it (Chrome's own release notes, linked)
 async function gpuNotice() {
   try { if (localStorage.getItem('hoc.gpunote') === BACKEND) return; } catch (e) { /* a private window: shown each visit */ }
@@ -165,8 +268,6 @@ $('renderer').textContent = BACKEND;
 renderer.toneMapping = THREE.NeutralToneMapping;              // UC-37.1 (AUTHORED): Khronos PBR Neutral: a hot highlight rolls off to its own colour (ACES bleached it white; AgX left the picture grey)
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-const pmrem = new THREE.PMREMGenerator(renderer);
-const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;      // the track's
 const studioTex = studioEnvironment(renderer, PAL.accent);                  // the showroom's (fx.js)
 
 const [SHOW, TRACK, RULES, CAMS, INPUT, LISTINGS, MODELS, GLBS] = await Promise.all([fetchJson('showroom.json'), fetchJson('track.json'), fetchJson('timetrial_rules.json'),
@@ -251,11 +352,12 @@ const PAINTS = [{ name: 'Factory', hex: null }, { name: 'Arctic white', hex: '#e
   { name: 'Racing blue', hex: '#2766ee' }, { name: 'Crimson', hex: '#b0102c' }, { name: 'Lime', hex: '#8cd23f' }, { name: 'Sunburst', hex: '#f2a516' }];
 show.scene.environment = studioTex;
 show.scene.background = new THREE.Color(0x07090c);
+const DOME = { horizon: 0x202a38, top: 0x07090c };          // the dome's colours (AUTHORED look); UC-44.3 the floor fades into its horizon
 { // the room (AUTHORED look): a dark dome, a glossy floor, an orange light ring, a key light and soft fill
   const g = new THREE.SphereGeometry(160, 48, 24), col = [];
   for (let i = 0; i < g.attributes.position.count; i++) {
     const h = Math.max(0, g.attributes.position.getY(i) / 160);
-    const c = new THREE.Color(0x202a38).lerp(new THREE.Color(0x07090c), Math.pow(h, 0.45));
+    const c = new THREE.Color(DOME.horizon).lerp(new THREE.Color(DOME.top), Math.pow(h, 0.45));
     col.push(c.r, c.g, c.b);
   }
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
@@ -267,7 +369,8 @@ key.position.set(10, 22, 14); key.castShadow = true; key.shadow.mapSize.set(2048
 Object.assign(key.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30, far: 90 });
 show.scene.add(key);
 const RING = Math.max(15, LOT.length * 9.4 / (2 * Math.PI));   // m (layout, AUTHORED): ~9.4 m of ring per slide, so pedestals never touch
-const floor = new THREE.Mesh(new THREE.CircleGeometry(80, 128), new THREE.MeshStandardNodeMaterial({ color: 0x07080a, roughness: 0.55, metalness: 0.0 }));
+const SPOT_I = 140;                                            // each pedestal's spot (AUTHORED look); UC-44.3 dimmed off the slide in view (lot_light.js)
+const floor = new THREE.Mesh(new THREE.CircleGeometry(80, 128), showroomFloor(80, 0x07080a, DOME.horizon, RING + 16));   // UC-44.3 slabs, and no edge against the dome (fx.js); AUTHORED: the fade starts 16 m past the ring, beyond every slide
 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; show.scene.add(floor);
 const tops = polishedTops(0.301, 0x0a0b0d);                   // every pedestal top shares one reflector (fx.js)
 show.scene.add(tops.target);
@@ -400,21 +503,82 @@ const carEntry = (name) => { const e = SHOW.cars.find((c) => c.name === name); i
 // heads for (select, a link, walking up to it, a drive) goes to the front. Every model downloads at once; only the joining is
 // queued, so no two cars' shaders are built in one frame. Until its model joins, a car stands as its own first listing photo
 const modelQ = { items: [], busy: false };
+// UC-44.2 a joining car is prepared before it is seen (warm.js 2 and 4): hung on warmHold (scaled to 0, so no triangle has area; on
+// the lot's own scene, so its lights and environment are the ones the car will be lit by; outside every slide, so lot_focus never hides
+// it from the reflection) and prepared one material a frame, each in a frame of the lot that ran the main view, the tops' reflection and
+// the key light's shadow map (warm.js drawnInEveryPass); once the GPU has its pipelines it rolls onto its pedestal, and that frame
+// builds nothing. While the visitor is away from the lot (a race, the strip) no lot frame is drawn, and the car waits for the lot
+const warmHold = new THREE.Group(); warmHold.name = 'warm-hold'; warmHold.scale.setScalar(0); show.scene.add(warmHold);
+const lotDrawn = { frame: -1 };                                  // the last frame tickShow / tickWalk drew the lot in (renderer.info.frame)
+const lotFrameAfter = (after) => new Promise((res) => {
+  const go = () => (drawnInEveryPass(after, { lot: lotDrawn.frame, reflect: lotFocus.reflectFrame, shadow: lotFocus.shadowFrame }) ? res() : requestAnimationFrame(go));
+  requestAnimationFrame(go);
+});
+async function warmModel(g) {
+  const ms = drawables(g), was = new Map(ms.map((m) => [m, [m.visible, m.frustumCulled]]));
+  for (const m of ms) { m.visible = false; warming.set(m, []); }
+  warmHold.add(g);
+  try {
+    // each step in two frames: the tops' reflection first, then the main view and the shadow map. Each camera keeps a built shader of its
+    // own (warm.js 1), so preparing both in one frame built every lit material twice in it (MEASURED 11-08, desktop ?perf: frames of up to
+    // 490 ms of script while a car warmed)
+    const reflectOnly = () => lotFocus.reflecting;
+    for (const step of warmSteps(warmSlices(ms.filter((m) => was.get(m)[0])))) {   // a part hidden in the model stays hidden, and is never drawn
+      for (const m of step) { m.visible = true; m.frustumCulled = false; warming.get(m).only = reflectOnly; }   // unculled: the holder's bounds are a point
+      await lotFrameAfter(renderer.info.frame);
+      for (const m of step) warming.get(m).only = null;
+      await lotFrameAfter(renderer.info.frame);
+    }
+    mark('pipelines ready', g.name + ' (' + await pipelinesReady(ms, g.name) + ')');   // every pipeline it asked for, in every pass
+  } finally {
+    for (const [m, [v, c]] of was) { m.visible = v; m.frustumCulled = c; warming.delete(m); }
+    warmHold.remove(g);
+  }
+}
 const ringGap = (i) => { const n = show.slides.length, d = Math.abs(i - show.index); return Math.min(d, n - d); };
-function wantModel(key) { const it = modelQ.items.find((x) => x.key === key); if (it) it.urgent = performance.now(); pumpModels(); }
+const joinOrder = (a, b) => (b.urgent || 0) - (a.urgent || 0) || ringGap(a.i) - ringGap(b.i);
+function wantModel(key) { const it = modelQ.items.find((x) => x.key === key); if (it) it.urgent = performance.now(); pumpDownloads(); pumpModels(); }
+// UC-44.1 / UC-32.2 a car for sale's model is fetched once the lot's own cars are in (lotOwn: the lot cannot open without them, and the
+// seven models asked for beside them took the line from them: 25.6 of the 34.0 MB of models the lot asked for, READ data/glb_bytes.json),
+// then in the order the cars join, DOWNLOADS at a time, so the car that joins first is the one that arrives first.
+// AUTHORED: 2 keeps the line busy while one model is being unpacked on the main thread, and still gives the first car half the line
+const DOWNLOADS = 2;
+function fetchBytes(it) {                                        // its bytes only; a failure is reported when its turn comes (fetchModel)
+  if (!it.bytes) it.bytes = glbBytes('data/meshes/' + it.model.glb, false).then(() => {}, () => {}).then(() => { it.fetched = true; pumpDownloads(); });
+  return it.bytes;
+}
+function fetchModel(it) {                                        // unpacked, at its turn to join: { g } or { e }
+  fetchBytes(it);
+  if (!it.ready) it.ready = saleModel(it.model).then((g) => { g.name = it.key; batchStatic(THREE, g); return { g }; }).catch((e) => ({ e }));   // GFX 11-08: batched (batch.js)
+  return it.ready;
+}
+function pumpDownloads() {
+  if (!modelQ.lotOwnIn) return;
+  const busy = modelQ.items.filter((x) => x.bytes && !x.fetched).length;
+  for (const it of modelQ.items.filter((x) => !x.bytes).sort(joinOrder).slice(0, Math.max(0, DOWNLOADS - busy))) fetchBytes(it);
+}
 async function pumpModels() {
   if (modelQ.busy || !modelQ.open) return;
-  const next = modelQ.items.filter((x) => x.state === 'wait').sort((a, b) => (b.urgent || 0) - (a.urgent || 0) || ringGap(a.i) - ringGap(b.i))[0];
-  if (!next) return;
+  const next = modelQ.items.filter((x) => x.state === 'wait').sort(joinOrder)[0];
+  if (!next) { if (modelQ.items.every((x) => x.state === 'on' || x.state === 'failed')) preloadTrack(); return; }   // UC-44.1: then the track
   modelQ.busy = true; next.state = 'joining';
-  const got = await next.ready;                                  // { g } or { e }
-  if (got.e) { next.state = 'failed'; if (next.caption) { next.caption.material.map = captionTex('3D model did not load'); next.caption.material.needsUpdate = true; } reportError(got.e); }
+  const got = await fetchModel(next);                            // in flight already, or asked for now (the visitor went to it)
+  const fail = (e, say) => { next.state = 'failed'; if (next.caption) { next.caption.material.map = captionTex(say); next.caption.material.needsUpdate = true; } reportError(e); };
+  if (got.e) fail(got.e, '3D model did not load');
   else {
-    next.turn.add(got.g);
-    if (next.card) { next.stand.remove(next.card, next.caption); next.card.material.map.dispose(); }
-    next.state = 'on'; HOC.saleModels.on.push(next.key); mark('model on its pedestal', next.key); perfFirst.push(next.key);
+    let warm = null;
+    // UC-44.2 its unpacking (just done: GLTFLoader.parse and batching, up to 1.3 s of script on the phone profile) and its first build
+    // in frames of their own: MEASURED 11-08, phone profile, the two in one frame made the longest frames after the lot opened (2.4 to 3.5 s)
+    await frameAfter(renderer.info.frame);
+    try { await timed('warmed model', next.key, () => warmModel(got.g)); } catch (e) { warm = e; }   // UC-44.2: its shaders built before it shows
+    if (warm) fail(warm, '3D model did not draw');               // said on its pedestal and reported, never shown half-built
+    else {
+      next.turn.add(got.g);
+      if (next.card) { next.stand.remove(next.card, next.caption); next.card.material.map.dispose(); }
+      next.state = 'on'; HOC.saleModels.on.push(next.key); mark('model on its pedestal', next.key); perfFirst.push(next.key);
+    }
   }
-  await pause(120);                                              // the frame that builds its shaders, and one more, before the next
+  await pause(120);                                              // a beat between two cars joining (UC-32.2: never two in one frame)
   modelQ.busy = false; pumpModels();
 }
 function captionTex(text) {
@@ -434,6 +598,12 @@ function photoCard(key) {
   card.position.set(0, 2.5, 0); card.name = 'photo_' + key;
   return { card, caption };
 }
+await fontsReady;                                         // the panels below are drawn in the face
+// UC-44.1 the lot's own cars' parts, every file at once (buildCar below asks for a car's parts one after another, each once the one
+// before has arrived and been unpacked; their bytes were asked for at the top: lotOwnBytes); the cars for sale only once these are in
+const lotOwn = lotOwnBytes.then(() => Promise.all(lotOwnUrls(SHOW).map(loadGlb)));
+lotOwn.then(() => { modelQ.lotOwnIn = true; pumpDownloads(); });   // a part that fails fails the lot itself: buildCar awaits the same promise
+loadStage('build');                                       // UC-48: the bytes are in or coming; the stands and the cars are built
 for (let i = 0; i < LOT.length; i++) {
   const def = LOT[i];
   const a = (i / LOT.length) * Math.PI * 2;
@@ -444,20 +614,24 @@ for (let i = 0; i < LOT.length; i++) {
   const onPed = car || def.kind === 'listing' || def.kind === 'unlisted';       // a slide with a pedestal (a car, or a car for sale)
   const saleKey = def.kind === 'listing' ? def.listing.key : def.kind === 'unlisted' ? def.unlisted.key : null;
   if (saleKey) def.model = modelOf(saleKey);   // UC-8.3: a model of THAT car, or none; looked up before its panel says which
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(onPed ? 5.0 : 6.2, onPed ? 2.8 : 3.5), new THREE.MeshBasicNodeMaterial({ map: car || !onPed ? panelTexture(def, car) : salePanel(def) }));
+  const tints = [];                                                     // UC-44.3 the colours the light's focus dims: [colour, its full value, its dim level] (lightSlides)
+  const tint = (col, dim) => tints.push([col, col.clone(), dim]);
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(onPed ? 5.0 : 6.2, onPed ? 2.8 : 3.5), new THREE.MeshBasicNodeMaterial({ map: car || !onPed ? panelTexture(def, car) : salePanel(def) }));   // UC-44.3 dimmed through its own colour (lightSlides)
   panel.position.set(0, onPed ? 4.0 : 2.6, onPed ? -4.2 : 0);
   stand.add(panel);
-  let turn = null;
+  let turn = null, spot = null, photo = null;
   if (onPed) {
     const ped = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.3, 0.3, 64), new THREE.MeshStandardNodeMaterial({ color: 0x14161a, roughness: 0.45, metalness: 0.3 }));
     ped.position.y = 0.15; ped.receiveShadow = true; stand.add(ped);
     const top = new THREE.Mesh(new THREE.CircleGeometry(3.1, 64), tops.material);
     top.rotation.x = -Math.PI / 2; top.position.y = 0.301; top.receiveShadow = true; stand.add(top);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.03, 8, 128), glowMaterial(PAL.accent, 8));
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.03, 8, 128), new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(PAL.accent).multiplyScalar(8) }));   // glowMaterial's accent x 8, as a colour the focus can dim
+    tint(rim.material.color, LIGHT.RIM_DIM);
     rim.rotation.x = Math.PI / 2; rim.position.y = 0.31; stand.add(rim);
-    const spot = new THREE.SpotLight(0xffffff, 140, 18, 0.55, 0.6, 1.6);
+    spot = new THREE.SpotLight(0xffffff, SPOT_I, 18, 0.55, 0.6, 1.6);
     spot.position.set(0, 9, 3); spot.target.position.set(0, 0.6, 0); stand.add(spot, spot.target);
-    stand.add(lightBeam(spot.position, spot.target.position, 3.4, 0xfff4e6, 0.09));             // its beam in the air (fx.js)
+    const beam = lightBeam(spot.position, spot.target.position, 3.4, 0xfff4e6, 0.09); stand.add(beam);   // its beam in the air (fx.js)
+    tint(beam.material.color, LIGHT.SPOT_DIM);
     turn = new THREE.Group();
     if (car) {
       const { group } = await buildCar(car);
@@ -471,18 +645,19 @@ for (let i = 0; i < LOT.length; i++) {
       if (def.model) {
         turn.position.y = 0.3; HOC.saleModels.want.push(saleKey);
         const { card, caption } = photoCard(saleKey);
-        if (card) stand.add(card); stand.add(caption);
-        modelQ.items.push({ i, key: saleKey, turn, stand, card, caption, state: 'wait',
-          ready: saleModel(def.model).then((g) => { g.name = saleKey; batchStatic(THREE, g); return { g }; }, (e) => ({ e })) });   // GFX 11-08: batched (batch.js)   // an error is reported when its turn comes
+        if (card) stand.add(card); stand.add(caption); photo = card;   // UC-44.3 framed with the pedestal until the model joins
+        modelQ.items.push({ i, key: saleKey, turn, stand, card, caption, state: 'wait', model: def.model, ready: null });   // UC-44.1: fetched by pumpDownloads
       } else { turn.add(soonSign()); HOC.saleModels.soon.push(saleKey); }   // UC-26: the empty pedestal says why
     }
     stand.add(turn);
   } else {
-    const plinth = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.12, 0.9), new THREE.MeshStandardNodeMaterial({ color: 0x14161a, roughness: 0.22, metalness: 0.25 }));
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.12, 0.9), plinthMaterial(0x14161a, PAL.accent));   // UC-44.3 (fx.js): dark, its front edge lit
+    tint(plinth.material.emissive, LIGHT.RIM_DIM);
     plinth.position.set(0, 0.06, 0); stand.add(plinth);
   }
   show.scene.add(stand);
-  show.slides.push({ def, car, stand, turn, angle: a });
+  tint(panel.material.color, LIGHT.SIGN_DIM);
+  show.slides.push({ def, car, stand, turn, angle: a, spot, photo, tints, signH: onPed ? 0 : 3.5 });   // signH: a sign slide's sign, framed (UC-44.3)
 }
 // GFX 11-08 (lot_focus.js): the tops' reflection draws only the slides near the one in view; on once the lot is warmed
 const lotFocus = makeLotFocus(THREE, { renderer, light: key, reflector: tops.reflector, planeY: tops.target.position.y, scene: show.scene, stands: show.slides.map((s) => s.stand) });
@@ -723,7 +898,7 @@ function startWalk() {
   if (mode !== 'show') return;
   const a = show.slides[show.index].angle, out = RING + 7.5;           // just outside the ring, facing the car on show
   walk.w = makeWalker(Math.sin(a) * out, Math.cos(a) * out, a);
-  walk.fov = showCam.fov; showCam.fov = 70; showCam.updateProjectionMatrix();
+  walk.fov = showCam.fov; showCam.fov = 70; showCam.clearViewOffset(); showCam.updateProjectionMatrix();   // UC-44.3: no lens shift on foot
   walk.faced = -1; walk.lastFaced = show.index; walk.stick = { x: 0, y: 0 }; keys.clear();
   mode = 'walk'; document.body.classList.add('walking'); $('walkhud').hidden = false; $('walklabel').hidden = true;
 }
@@ -743,12 +918,13 @@ function tickWalk(dt) {
   showCam.rotation.set(walk.w.pitch, walk.w.yaw, 0, 'YXZ');
   const i = facing(walk.w, walkTargets());
   lotFocus.update(walk.w.x, walk.w.z, true);                             // GFX 11-08: a walker can look across the ring: nothing culled
+  lightSlides(1);                                                        // UC-44.3: every stand lit for a walker
   if (i !== walk.faced) {
     walk.faced = i; if (i >= 0) { walk.lastFaced = i; const d = show.slides[i].def; if (d.kind === 'listing' || d.kind === 'unlisted') wantModel((d.listing || d.unlisted).key); }   // UC-32.3
     const el = $('walklabel'); el.hidden = i < 0;
     if (i >= 0) el.innerHTML = slideName(i) + '<span>' + (matchMedia('(pointer:coarse)').matches ? 'Tap to see this car' : 'Enter: see this car') + '</span>';
   }
-  showPost.render();
+  showPost.render(); lotDrawn.frame = renderer.info.frame;               // UC-44.2: a frame of the lot (a joining car warms in it)
 }
 $('walk').onclick = () => startWalk();
 $('walkexit').onclick = () => endWalk(-1);
@@ -768,22 +944,93 @@ canvas.addEventListener('pointermove', (e) => {
 const walkUp = (e) => { if (walk.look && e.pointerId === walk.look.id) walk.look = null; if (walk.move && e.pointerId === walk.move.id) { walk.move = null; walk.stick = { x: 0, y: 0 }; } };
 canvas.addEventListener('pointerup', walkUp); canvas.addEventListener('pointercancel', walkUp);
 window.HOC.walk = walk; window.HOC.startWalk = startWalk; window.HOC.walkTick = (dt) => tickWalk(dt);   // the page check steps the walk by its own clock
+// UC-44.3 the panels' boxes (the header's row, the card, the nav's row, the footer, the sales chat, the WebGL note), read off the page
+// only when one changes, and the rectangles they leave free (lot_frame.js); the chat is another script's (sales_chat.js): a page
+// without it has one panel fewer
+const lotFrame = { rects: null, s: 1, dx: 0, dy: 0, last: null };
+window.HOC.lotFrame = lotFrame;                             // the page check and devtools: the last fit (UC-44.3)
+function readPanels() {
+  const box = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 ? [r.left, r.top, r.right, r.bottom] : null; };   // hidden: no size
+  const boxes = {}, put = (k, e) => { const b = e && box(e); if (b) boxes[k] = b; };
+  document.querySelectorAll('header > *').forEach((e, i) => put('header:' + i, e));
+  document.querySelectorAll('#showroom .nav > *').forEach((e, i) => put('nav:' + i, e));
+  for (const id of ['card', 'foot', 'gpunote']) put(id, $(id));
+  put('chat', document.querySelector('#salechat'));
+  lotFrame.rects = freeRects({ w: innerWidth, h: innerHeight }, mergeGroups(boxes), FRAME.GAP);
+}
+const panelWatch = new ResizeObserver(() => { lotFrame.rects = null; });
+for (const e of [document.querySelector('header'), $('card'), document.querySelector('#showroom .nav'), $('foot'), $('gpunote'), document.querySelector('#salechat')]) if (e) panelWatch.observe(e);
+addEventListener('resize', () => { lotFrame.rects = null; });
+// the slide's subject on screen (CSS px) under the authored camera: a pedestal and what stands on it (a cylinder round the
+// pedestal, as tall as its car, so the box does not breathe as the turntable turns), or a sign slide's sign; null when a point is
+// behind the camera (nothing to frame)
+const SUBJ = Array.from({ length: 16 }, () => new THREE.Vector3()), subBox = new THREE.Box3();
+function subjectRect(c) {
+  let n = 0;
+  if (c.turn) {
+    subBox.setFromObject(c.turn);
+    const top = Math.max(0.3, subBox.isEmpty() ? 0 : subBox.max.y, c.photo && c.photo.parent ? c.photo.position.y + 1.65 : 0);   // photoCard: 3.3 m tall at 2.5
+    for (let k = 0; k < 8; k++) for (const y of [0, top]) SUBJ[n++].set(Math.sin(k * Math.PI / 4) * PED_R, y, Math.cos(k * Math.PI / 4) * PED_R);
+  } else for (const x of [-3.1, 3.1]) for (const y of [2.6 - c.signH / 2, 2.6 + c.signH / 2]) SUBJ[n++].set(x, y, 0);   // the sign: 6.2 m wide at 2.6 (the stand loop)
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (let k = 0; k < n; k++) {
+    const p = c.stand.localToWorld(SUBJ[k]).project(showCam);
+    if (p.z > 1 || p.z < -1) return null;
+    const x = (p.x + 1) / 2 * innerWidth, y = (1 - p.y) / 2 * innerHeight;
+    x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+  }
+  return [x0, y0, x1, y1];
+}
+// the authored camera pulled back by 1 / s from what it looks at, and the picture shifted (dx, dy) px by a lens shift (the pose, the
+// ring behind and the light stay the authored ones); the intro flies in unframed and lands framed (weight e). AUTHORED: it settles in
+// about a second; with Motion off it moves at once (no animated zoom)
+function frameSubject(dt, e, still, target) {
+  showCam.clearViewOffset(); showCam.updateMatrixWorld();
+  if (!lotFrame.rects) readPanels();
+  const sub = e > 0 ? subjectRect(show.slides[show.index]) : null;
+  lotFrame.sub = sub;                                       // the page check and devtools: what was framed
+  const f = lotFrame.last = sub ? fitSubject(sub, lotFrame.rects, { w: innerWidth, h: innerHeight }) : { s: 1, dx: 0, dy: 0, fits: false };
+  const k = still ? 1 : Math.min(1, dt * 3);
+  lotFrame.s += (1 + (f.s - 1) * e - lotFrame.s) * k; lotFrame.dx += (f.dx * e - lotFrame.dx) * k; lotFrame.dy += (f.dy * e - lotFrame.dy) * k;
+  showCam.position.sub(target).divideScalar(lotFrame.s).add(target);
+  if (Math.abs(lotFrame.dx) > 0.5 || Math.abs(lotFrame.dy) > 0.5) showCam.setViewOffset(innerWidth, innerHeight, -lotFrame.dx, -lotFrame.dy, innerWidth, innerHeight);
+}
+// UC-44.3 the light follows the slide in view (lot_light.js): its spot, beam, rim and sign full, the others dimmed; whole (0..1) lifts
+// every stand back up (the intro's fly-in, walking the lot)
+const litAt = { angle: NaN, whole: NaN };
+function lightSlides(whole) {
+  // the camera at rest: nothing to change. MEASURED (lot pass, profile_lot.py, the Ghost's slide): writing the levels every frame
+  // re-uploaded 13 lights' and about 50 materials' uniforms every frame, since show.angle creeps toward its target forever.
+  // AUTHORED: 1e-4 rad is 3 mm of the camera's travel round the ring
+  if (Math.abs(show.angle - litAt.angle) < 1e-4 && whole === litAt.whole) return;
+  litAt.angle = show.angle; litAt.whole = whole;
+  const sp = 2 * Math.PI / show.slides.length;
+  for (const c of show.slides) {
+    const w = focusWeight(c.angle, show.angle, sp);
+    for (const [col, full, dim] of c.tints) col.copy(full).multiplyScalar(level(w, dim, whole));   // the materials' own colours: no extra uniform
+    if (c.spot) c.spot.intensity = SPOT_I * level(w, LIGHT.SPOT_DIM, whole);
+  }
+}
+const showTarget = new THREE.Vector3();
 function tickShow(dt) {
   show.angle += (show.targetAngle - show.angle) * Math.min(1, dt * 2.6);
   intro = Math.min(1, intro + dt / 3.2);
   const aspect = innerWidth / innerHeight;
   const a = show.angle, R = RING + 10.5 * (aspect < 1 ? Math.min(2.2, 0.85 / aspect) : 1);   // portrait: back off so the slide fits the width
-  const side = innerWidth > 900 ? 1.6 : 0;      // desktop: look a little left of the slide so the card on the right does not cover it
-  const bob = REDUCED ? 0 : Math.sin(performance.now() / 2400) * 0.12;
+  const still = REDUCED || !MOTION.on;                       // UC-44 alternates: the OS's reduced motion or the Motion pill off: no sway
+  const bob = still ? 0 : Math.sin(performance.now() / 2400) * 0.12;
   const e = ease(intro), sweep = (1 - e) * 1.4;              // the intro: down from above the lot, swinging in
   const ea = a - sweep, Rr = R + (1 - e) * 26;
-  const lift = aspect < 1 ? 1.4 : 0, aim = aspect < 1 ? 0.2 : 1.6;   // portrait: aim low so the car sits above the card (measured: the card hid it)
-  showCam.position.set(Math.sin(ea) * Rr + Math.cos(ea) * side, 2.5 + lift + bob + (1 - e) * 24, Math.cos(ea) * Rr - Math.sin(ea) * side);
-  showCam.lookAt(Math.sin(a) * RING * e + Math.cos(a) * side, aim - (1 - e) * aim, Math.cos(a) * RING * e - Math.sin(a) * side);
+  const lift = aspect < 1 ? 1.4 : 0, aim = aspect < 1 ? 0.2 : 1.6;   // portrait: look down on the car a little more
+  showCam.position.set(Math.sin(ea) * Rr, 2.5 + lift + bob + (1 - e) * 24, Math.cos(ea) * Rr);
+  showTarget.set(Math.sin(a) * RING * e, aim - (1 - e) * aim, Math.cos(a) * RING * e);
+  showCam.lookAt(showTarget);
+  frameSubject(dt, e, still, showTarget);                    // UC-44.3 (lot_frame.js): replaces the 1.6 m step left over 900 px wide
   show.holdSpin = Math.max(0, show.holdSpin - dt);             // a drag holds the turntable for a few seconds
   show.slides.forEach((c, i) => { if (c.turn && i === show.index && !show.drag && show.holdSpin === 0) c.turn.rotation.y += dt * 0.35; });
+  lightSlides(1 - e);                                         // UC-44.3: every stand lit while the intro flies in, then the one in view
   lotFocus.update(Math.sin(show.angle) * RING, Math.cos(show.angle) * RING, e < 1);   // GFX 11-08: the slide the camera is turned to; the whole ring while the intro flies in
-  showPost.render();
+  showPost.render(); lotDrawn.frame = renderer.info.frame;               // UC-44.2: a frame of the lot (a joining car warms in it)
 }
 
 // ---------------------------------------------------------------- the Time Trial (UC-2.1..2.5)
@@ -939,6 +1186,11 @@ function takePicture() {
   }, 'image/png');
 }
 let trackReady = null;
+// UC-44.1 the track loads behind the lot once every car for sale has joined (pumpModels). It started 1.5 s after the stands were built:
+// its 9.1 MB (READ: the sizes of track.glb, collision.bin and ground_*.bin) and its scene build then ran beside the lot's own loading, its warm-up and
+// the cars' joining (MEASURED 11-08, phone profile: its build began 23 s before the lot opened). A drive asked for sooner starts it
+// at once: startRace and startDrag await the same promise, and show any error
+const preloadTrack = () => prepareTrack().catch((e) => { console.error(e); });
 function prepareTrack() {                               // once: the physics module, the track, the world, the minimap, the gate points
   if (!trackReady) trackReady = (async () => {
     mark('track: start');
@@ -1018,7 +1270,8 @@ function backToShowroom() {
 
 // keys, as IMC_Vehicle_Default maps them (data: ue_out/bp/IMC_Vehicle_Default.t3d), plus Esc and G for the page
 const keys = new Set();
-let startSpace = false;                                               // UC-22.1b: the Space press that started the tree, until it is let go
+let startSpace = false;
+const PAD_CLUTCH_FULL = 0.9;                                          // UC-34.1e: a pad's left trigger at 90 % or more is the clutch on the floor (tickDrag)                                               // UC-22.1b: the Space press that started the tree, until it is let go
 const touch = { throttle: false, brake: false, left: false, right: false };
 const audio = makeAudio();
 // UC-27 the radio: the button names the station, a change puts its name across the top for a moment, as a car game shows one
@@ -1046,7 +1299,10 @@ window.HOC.motion = MOTION;
 function syncMute() { $('mute').textContent = !audio.available() ? 'No sound' : audio.muted ? 'Sound off' : 'Sound on'; $('mute').setAttribute('aria-pressed', String(!audio.muted)); if (audio.muted && typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }   // UC-27.4: the talk station's voice too
 $('mute').addEventListener('click', () => { audio.start(); audio.setMuted(!audio.muted); syncMute(); });
 syncMute();
-addEventListener('pointerdown', () => audio.start(), { once: true });
+// UC-7.4b the sound starts with the first press that a browser lets start it. iOS counts the END of a touch (or a click), not its
+// start, so the page asks again on every press until the context runs (it was once, on pointerdown: an iPhone stayed silent)
+const soundOn = () => { audio.start(); if (audio.running()) for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click']) removeEventListener(ev, soundOn, true); };
+for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click']) addEventListener(ev, soundOn, true);
 addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;   // a name being typed (UC-25.3) drives nothing: R would rerun, E shift
   audio.start();
@@ -1576,7 +1832,17 @@ function tickDrag(dt) {
   const finished = run.done;
   if (r.bot && !r.clutchMode && run.green !== null && !finished) { raw.throttle = 1; const gg = v.trans.target; if (gg >= 1 && gg < c.trans.forward.length && v.trans.current === gg && v.trans.engineRPM >= r.pts[gg - 1] && !r.presses.length) dragPress('up', true); }
   if (r.clutchMode) {                                                  // UC-34: the pedal springs up when let go; the bot drives it
-    if (r.bot && !finished) botClutch(r, raw, dt); else if (!r.pedal.held && !r.pedal.wheel) r.pedal.depth = Sim.pedalRelease(r.pedal.depth, dt);   // a wheel-set pedal stays
+    // UC-34.1e a pad's left trigger is the clutch here (a phone's left pedal, labelled "Brake / clutch" by index.html for PhonePad): a drag
+    // car has no use for the brake before the line, and a manual car's left pedal is its clutch. The pad holds the pedal where it is
+    // pressed and lets it up when let go; its trigger is then not also the brake (the keys' S and the down arrow still are)
+    // PAD_CLUTCH_FULL (AUTHORED): a press of 90 % of the trigger or more is the pedal on the floor. A thumb on the phone's pedal tops
+    // out at 0.955 (MEASURED 11-09, test/phone_drive.py), and the clutch at 0.955 still passes 4.5 % of the engine's torque: in first at
+    // full gas the E 63 S crept 3.6 m in 3 s, the i8 3.0 m, the Wraith 2.0 m (MEASURED, node, the sim's own cars): past the 1 ft
+    // roll-out, a red light on the tree. Below it the pedal follows the trigger in proportion
+    const padClutch = !r.bot && !finished && pad && pad.buttons[6] ? Math.min(1, pad.buttons[6].value / PAD_CLUTCH_FULL) : 0;
+    if (r.bot && !finished) botClutch(r, raw, dt);
+    else if (padClutch > 0 || r.pedal.pad) { r.pedal.depth = padClutch; r.pedal.pad = padClutch > 0; raw.brake = keys.has('KeyS') || keys.has('ArrowDown') || touch.brake ? 1 : 0; }
+    else if (!r.pedal.held && !r.pedal.wheel) r.pedal.depth = Sim.pedalRelease(r.pedal.depth, dt);   // a wheel-set pedal stays
     if (finished) r.pedal.depth = 1;                                   // past the line the clutch goes in: it coasts, it cannot stall
     if (r.pedal.depth >= 0.5 && r.pedal.prev < 0.5 && r.gate.gear >= 1) r.cut = { gear: r.gate.gear, rpm: v.engine.rpm };   // the drive cut: the shift's rpm
     if (r.pedal.depth >= 0.98 && r.pedal.prev < 0.98 && !finished) sfx(audio, 'clutch_floor', 0.45, 0.7);   // UC-34 4b the pedal at the floor
@@ -1728,20 +1994,30 @@ function rivalTalk(r) {
     const L = leader((r.v.pos[0] - r.x0) / 100, o.distM);
     if (L && L !== o.lead) { if (o.lead && o.lines < 3) { rivalSay(r, L === 'rival' ? 'ahead' : 'passed'); o.lines++; } o.lead = L; }
   }
-  const el = $('dsay'), on = !!(o.say && performance.now() < o.say.until && !r.over && mode === 'drag');
+  const el = $('dsay'), on = !!(o.say && performance.now() < o.say.until && !r.over && mode === 'drag' && o.noRoom !== o.say);   // UC-49.4 a line with no room is held back
   el.hidden = !on;
   if (on && (o.placed !== o.say || !sayClear(el))) { o.placed = o.say; placeSay(r, el); }   // re-placed when the HUD moves onto it
 }
 // where a line goes, once per line: over the rival's car when that spot is clear of the HUD, else the clear spot nearest it, with no
 // tail (11-08, a phone on its side: the car parks behind the times panel and the bubble covered it). Clear: 6 px from every HUD box
-const HUD_BOXES = ['dpanel', 'dleds', 'dtrac', 'dstart', 'dkeys', 'dcluster', 'dgate', 'dtree', 'dslider', 'dgas', 'dpedal', 'dgasm', 'dpedalk', 'dgasmk', 'hud-speed', 'dgrade', 'dhelp'];
+const HUD_BOXES = ['back', 'auto', 'dpanel', 'dleds', 'dtrac', 'dstart', 'dkeys', 'dcluster', 'dgate', 'dtree', 'dslider', 'dgas', 'dpedal', 'dgasm', 'dpedalk', 'dgasmk', 'hud-speed', 'dgrade', 'dhelp'];
 // the HUD's boxes now (measured 11-08: placed once, the bubble sat on START and the controls on two phones, laid out after it)
 const hudBoxes = () => HUD_BOXES.map((id) => document.getElementById(id)).filter((e) => e && !e.hidden && getComputedStyle(e).display !== 'none')
   .map((e) => e.getBoundingClientRect()).filter((b) => b.width > 0 && b.height > 0);
 const clearOf = (boxes, x0, y0, x1, y1) => x0 >= 8 && x1 <= innerWidth - 8 && y0 >= 52 && y1 <= innerHeight - 8 &&
   !boxes.some((b) => x0 < b.right + 6 && x1 > b.left - 6 && y0 < b.bottom + 6 && y1 > b.top - 6);
 function sayClear(el) { const b = el.getBoundingClientRect(); return clearOf(hudBoxes(), b.left, b.top, b.right, b.bottom); }
+// UC-49.4 a small phone (measured 11-09, test/layout9.py: at 740 x 360 the long line found no clear spot and its last resort, over the
+// car, covered the Lot and AUTO buttons, the tree, the shift lights and START): the line is tried smaller and narrower first, and with
+// no room even then it is held back, never laid over the HUD (the rival still has its word on the slip, rivalBlock)
 function placeSay(r, el) {
+  el.classList.remove('tight');
+  let spot = saySpot(r, el);
+  if (!spot) { el.classList.add('tight'); spot = saySpot(r, el); }
+  if (!spot) { r.opp.noRoom = r.opp.say; el.hidden = true; return; }
+  el.style.left = Math.round(spot.cx) + 'px'; el.style.top = Math.round(spot.top) + 'px'; el.classList.toggle('free', !spot.over);
+}
+function saySpot(r, el) {
   const w = el.offsetWidth, h = el.offsetHeight, W = innerWidth, H = innerHeight, boxes = hudBoxes();
   const clear = (cx, top) => clearOf(boxes, cx - w / 2, top, cx + w / 2, top + h);
   const p = new THREE.Vector3().setFromMatrixPosition(r.opp.car.group.matrix).project(r.camera);
@@ -1753,8 +2029,7 @@ function placeSay(r, el) {
     const d = seen ? (cx - ax) ** 2 + (top + h - ay) ** 2 : (cx - W / 2) ** 2 + (top - H * 0.2) ** 2;
     if (!best || d < best.d) best = { cx, top, over: false, d };
   }
-  if (!best) best = { cx: Math.max(w / 2 + 8, Math.min(W - w / 2 - 8, ax)), top: Math.max(52, ay - h), over: seen };   // nowhere clear (a tiny window): over the car
-  el.style.left = Math.round(best.cx) + 'px'; el.style.top = Math.round(best.top) + 'px'; el.classList.toggle('free', !best.over);
+  return best;
 }
 // UC-36 the car's own cluster (data/clusters.json: its facts READ, its drawing the page's): built at the start, its red band from the car's
 // own derived shift points where its redline was not read, the Power Reserve the share of the power not in use (gauges.js)
@@ -2066,8 +2341,8 @@ if (KIOSK) {
   setInterval(() => { if (mode === 'show' && performance.now() > hold) { at = (at + 1) % sale.length; select(sale[at]); } }, 9000);
   document.body.classList.add('kiosk');
 }
-setTimeout(() => prepareTrack().catch((e) => { console.error(e); }), 1500);   // behind the lot; startRace awaits the same promise and shows any error
 await warmLot();                                         // UC-30: behind the loading screen
+loadStage('open');                                       // UC-48: 100 % is the lot ready
 lotFocus.active = true;                                  // GFX 11-08: the warm-up drew every piece in every pass; from here the reflection follows the view
 mark('lot warmed');
 loadingDone().then(() => { mark('lot open'); modelQ.open = true; pumpModels(); if (BACKEND !== 'WebGPU') gpuNotice().catch((e) => reportError(e)); if (onLot) window.dispatchEvent(new CustomEvent('hoc:lot-open')); });   // the sales chat (sales_chat.js) greets once the lot is open (a race or the strip opened by a link: when the visitor reaches the lot)   // UC-20.3: closes now, or when a player says; UC-31 then the notice, once the lot is in view

@@ -33,7 +33,8 @@ export function farFrom(points, focus, r) {
 }
 
 /** opts: { renderer, light (the shadow-casting DirectionalLight), reflector (fx.js polishedTops(...).reflector), planeY (the tops'
- *  height), scene, stands (each slide's Group, in slide order) }. Returns { update(x, z, whole), active, stats } */
+ *  height), scene, stands (each slide's Group, in slide order) }. Returns { update(x, z, whole), active, stats, shadowFrame,
+ *  reflectFrame (the last frames the shadow map and the reflection were drawn in: renderer.info.frame), reflecting } */
 export function makeLotFocus(THREE, o) {
   const { renderer, light, reflector, planeY, scene, stands } = o;
   if (!renderer || !renderer.info) throw new Error('lot_focus: opts.renderer must be the page\'s renderer (its info.frame stamps the shadow map)');
@@ -46,7 +47,7 @@ export function makeLotFocus(THREE, o) {
   // a slide's drawn pieces are its direct children but its lights; a light deeper down would be hidden with its piece
   for (const s of stands) for (const c of s.children) if (!c.isLight) c.traverse((x) => { if (x.isLight) throw new Error('lot_focus: a light inside a piece of a slide (' + (c.name || c.type) + '): hiding the piece would hide the light'); });
   const at = stands.map((s) => [s.position.x, s.position.z]), none = new Uint8Array(stands.length);
-  const F = { active: false, focus: [at[0][0], at[0][1]], whole: true, far: none, shadowFrame: -1, stats: { reflectHidden: 0, below: below.length, unculled: 0 } };
+  const F = { active: false, focus: [at[0][0], at[0][1]], whole: true, far: none, shadowFrame: -1, reflectFrame: -1, reflecting: false, stats: { reflectHidden: 0, below: below.length, unculled: 0 } };
   // the shadow map's frame: three updates its camera's matrices right before it draws it (LightShadow.updateMatrices)
   const um = light.shadow.updateMatrices;
   light.shadow.updateMatrices = function (l) { F.shadowFrame = renderer.info.frame; return um.call(this, l); };
@@ -56,15 +57,21 @@ export function makeLotFocus(THREE, o) {
     F.far = whole ? none : farFrom(at, F.focus, FOCUS.REFLECT_M);
   };
   const run = reflector.updateBefore;
+  // UC-44.2 for app.js's warm-up (warm.js): reflecting, true while the reflection renders (a joining car's material is prepared here in
+  // one frame and in the main view in the next, so no frame builds it twice); reflectFrame, the frame the reflection was last drawn in
+  // (its render added draw calls; three skips it when the view faces away from the tops)
+  const drew = (calls) => { F.reflecting = false; if (renderer.info.render.drawCalls > calls) F.reflectFrame = renderer.info.frame; };
   reflector.updateBefore = function (frame) {
-    if (!F.active) return run.call(this, frame);
+    const calls = renderer.info.render.drawCalls;
+    F.reflecting = true;
+    if (!F.active) { try { return run.call(this, frame); } finally { drew(calls); } }
     const hid = [];
     const hide = (m) => { if (m.visible) { m.visible = false; hid.push(m); } };
     for (const m of below) hide(m);
     if (F.shadowFrame === renderer.info.frame) { for (let i = 0; i < stands.length; i++) if (F.far[i]) for (const c of stands[i].children) if (!c.isLight) hide(c); }
     else F.stats.unculled++;                                           // the shadow map is still to come this frame: cull no slide
     F.stats.reflectHidden = hid.length;
-    try { return run.call(this, frame); } finally { for (const m of hid) m.visible = true; }
+    try { return run.call(this, frame); } finally { for (const m of hid) m.visible = true; drew(calls); }
   };
   return F;
 }

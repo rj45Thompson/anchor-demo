@@ -20,6 +20,7 @@
 (function () {
   'use strict';
   const RELAY = document.currentScript && document.currentScript.dataset.relay;
+  const HERE = document.currentScript ? document.currentScript.src : location.href;   // voices.js sits beside this file
 
   /* ------------------------------------------------------------------------------------------------- RelayClient */
   class RelayClient {
@@ -52,13 +53,14 @@
       this.pending = null;
       this.voice = null;
       if (!this.synth) return;
-      const pick = () => {
-        const all = this.synth.getVoices().filter((v) => /^en(-|_|$)/i.test(v.lang));
-        const rank = (v) => (/natural|online|google/i.test(v.name) ? 0 : 2) + (/^en-CA/i.test(v.lang) ? 0 : /^en-US/i.test(v.lang) ? 0.5 : 1);
-        this.voice = all.sort((a, b) => rank(a) - rank(b))[0] || null;
-      };
-      pick();
-      this.synth.addEventListener('voiceschanged', pick);
+      // The voice is the site's own rule (voices.js, tested in test/voices.test.mjs), shared with the radio: an iPhone lists Apple's
+      // novelty voices (Albert, Bad News, ...) first, and "the first English voice" spoke in one of them. Until the list arrives
+      // (iOS fills it late), a line goes out with the language only, which the device speaks in its own default voice.
+      import(new URL('voices.js', HERE).href).then(({ bestVoice }) => {
+        const pick = () => { this.voice = bestVoice(this.synth.getVoices()); };
+        pick();
+        this.synth.addEventListener('voiceschanged', pick);
+      }).catch((e) => console.error('sales_chat.js: voices.js did not load, so the chat speaks in the device default voice: ' + e.message));
       const wake = () => { if (this.pending) { const t = this.pending; this.pending = null; this.say(t); } };
       window.addEventListener('pointerdown', wake, true);
       window.addEventListener('keydown', wake, true);

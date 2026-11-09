@@ -41,6 +41,8 @@ class LoadingScreen {
     // behind it never sees them: 11-06 a game built later let app.js take ArrowRight (the next car) and Enter (a test drive)
     const key = (e) => { if (this.game) this.game.onKey(e); };
     addEventListener('keydown', key, true); addEventListener('keyup', key, true);
+    addEventListener('resize', () => this.fitCaption());
+    this.stillness();
     const linked = location.hash.match(/car=([a-z0-9_]+)/);
     this.photo(linked && linked[1]);
     this.play();                                       // UC-24.1: running at once, no button to press
@@ -61,10 +63,26 @@ class LoadingScreen {
     const price = car && V(car.price) !== null ? ' · ' + money(V(car.price)) : '';
     $('lcap').innerHTML = (own ? '' : 'On the lot now: ') + '<b>' + esc(car ? car.display.value : k) + '</b>' + esc(price) +
       ' · <a href="' + esc(P.cars[k].listing) + '" target="_blank" rel="noopener">' + esc(P.cars[k].credit.replace('Photos', 'Photo')) + '</a>';
+    this.fitCaption();
+  }
+  /** UC-44.1 while the game runs the caption sits at the top and the title box under it: --lcapb is the caption's bottom, measured
+   *  (upright on a 390 px phone the caption takes two lines and ran into the title, shots/lotpass/b0_port_load.png) */
+  fitCaption() {
+    const c = $('lcap');
+    if (!this.el || !c || !this.el.classList.contains('playing')) return;   // not playing: the caption is at the bottom, the box in the middle
+    this.el.style.setProperty('--lcapb', Math.ceil(c.getBoundingClientRect().bottom) + 'px');
+  }
+  /** UC-44 alternates: the Motion pill off (app.js keeps it as hoc.motion) or the OS's reduced motion: the photo does not drift and the
+   *  bar's sheen does not run (#loading.still, index.html) */
+  stillness() {
+    let off = false;
+    try { off = localStorage.getItem('hoc.motion') === 'off'; } catch (e) { /* storage blocked: the pill's choice was not kept either */ }
+    this.el.classList.toggle('still', off || matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
   show(text, key) {
     if (!this.el) return;
     this.el.style.display = 'grid'; this.el.classList.remove('ready'); $('lready').hidden = true;
+    this.stillness();                                  // the Motion pill may have changed on the lot
     $('lt').textContent = text;
     this.photo(key);
     this.play();                                       // UC-24.1
@@ -91,7 +109,7 @@ class LoadingScreen {
   play() {
     if (!this.game) this.game = new RingShooter($('lgame'), this);
     this.el.classList.add('playing'); $('lplay').hidden = true; $('lhs').hidden = true;
-    this.game.start();
+    this.game.start(); this.fitCaption();
   }
   /** UC-24.4 game over: the shared board with the house row, and a name box when the score makes its top ten */
   async gameOver(score) {
@@ -118,7 +136,7 @@ class LoadingScreen {
     try { const rows = await this.scores.submit('rocks', entry); keepName(c.name); $('lhsrows').innerHTML = this.rows(rows, entry); $('lhsmsg').textContent = 'Saved. You are on the board.'; }
     catch (e) { $('lhsform').hidden = false; $('lhsmsg').textContent = e.message + '. Not saved: try again.'; }
   }
-  again() { $('lhs').hidden = true; this.last = null; if (this.game) { this.game.reset(); this.game.touched = true; } }
+  again() { $('lhs').hidden = true; this.last = null; if (this.game) { this.game.reset(); this.game.touched = true; this.el.classList.add('touched'); } }
 }
 
 /** the game: your ship rides a ring round the lot's badge and shoots inward; rocks fly out of the middle and split when hit.
@@ -153,9 +171,9 @@ class RingShooter {
     this.resize = () => { const d = Math.min(devicePixelRatio || 1, 2); this.cv.width = innerWidth * d; this.cv.height = innerHeight * d; this.dpr = d; };
     addEventListener('resize', this.resize);
   }
-  start() { this.resize(); this.reset(); this.touched = false; this.running = true; this.last = performance.now(); cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame((t) => this.frame(t)); }
+  start() { this.resize(); this.reset(); this.touched = false; this.screen.el.classList.remove('touched'); this.running = true; this.last = performance.now(); cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame((t) => this.frame(t)); }
   /** the first input: from here it is a game (scored, losable), started fresh */
-  wake() { if (!this.touched) { this.touched = true; this.reset(); } }
+  wake() { if (!this.touched) { this.touched = true; this.reset(); this.screen.el.classList.add('touched'); } }   // UC-44.1: the photo steps back for the game (index.html)
   stop() { this.running = false; cancelAnimationFrame(this.raf); this.keys.clear(); }
   reset() {
     this.angle = Math.PI / 2; this.shots = []; this.rocks = []; this.bits = []; this.score = 0; this.lives = 3; this.hurt = 0;
@@ -257,9 +275,16 @@ class RingShooter {
     // the score, the best, the lives; and the end
     g.textAlign = 'left'; g.textBaseline = 'top'; g.fillStyle = '#fefefe'; g.font = '700 ' + 15 * s + 'px "Open Sans", system-ui, sans-serif';
     const coarse = matchMedia('(pointer:coarse)').matches;
-    if (!this.touched) {                                // idling: what to press to play
-      g.fillStyle = soft; g.font = '800 ' + 15 * s + 'px "Open Sans", system-ui, sans-serif';
-      g.globalAlpha = 0.65 + 0.35 * Math.sin(performance.now() / 300); g.fillText(coarse ? 'TAP TO PLAY' : 'PRESS ← → OR CLICK TO PLAY', 18 * s, H - 70 * s); g.globalAlpha = 1;
+    if (!this.touched) {                                // idling: the invitation, in the middle of the field (UC-48.1)
+      // UC-48.1 (the owner 11-09: "Making loading game more apparent.. play while it loads"): it was one small line in the corner. Now the
+      // field's own middle, under the house disc, says it, with this device's controls; it breathes unless the visitor asked for less motion
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches, pulse = still ? 1 : 0.75 + 0.25 * Math.sin(performance.now() / 350);
+      const big = Math.min(30 * s, W / 13), y0 = cy + 44 * s;
+      g.save(); g.textAlign = 'center'; g.textBaseline = 'top'; g.shadowColor = 'rgba(0,0,0,.85)'; g.shadowBlur = 8 * s;
+      g.globalAlpha = pulse; g.fillStyle = '#fff'; g.font = '800 ' + big + 'px "Open Sans", system-ui, sans-serif'; g.fillText('PLAY WHILE IT LOADS', cx, y0);
+      g.fillStyle = soft; g.font = '800 ' + Math.min(15 * s, W / 26) + 'px "Open Sans", system-ui, sans-serif';
+      g.fillText(coarse ? 'TAP ANYWHERE TO START' : 'PRESS ← → OR CLICK TO START', cx, y0 + big * 1.35);
+      g.restore(); g.textAlign = 'left'; g.textBaseline = 'top';
     } else g.fillText('SCORE ' + this.score.toLocaleString('en-CA'), 18 * s, H - 70 * s);
     g.fillStyle = '#a3abb0'; g.font = '600 ' + 12 * s + 'px "Open Sans", system-ui, sans-serif';
     g.fillText('YOUR BEST ' + Math.max(this.best, this.score).toLocaleString('en-CA') + (this.touched ? '   ' + '▲'.repeat(Math.max(0, this.lives)) : ''), 18 * s, H - 48 * s);

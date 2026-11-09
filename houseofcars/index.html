@@ -20,6 +20,8 @@ canvas#view{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-
 header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;padding:12px 16px;pointer-events:none}
 header h1{margin:0;font-size:18px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
 header h1 b{color:var(--accent)}
+body:not(.inrun) header h1{white-space:nowrap;flex-shrink:0}   /* UC-44.3: 740 x 360 broke it into HOUSE / OF / CARS under the pills (measured 11-08) */
+@media (max-width:900px){body:not(.inrun) header span.pill:not([id]),body:not(.inrun) header #quality{display:none}}   /* the concept and Resolution pills: the card and the loading screen say the first */
 .pill{font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:99px;background:var(--panel);color:var(--dim)}
 #showroom .nav{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:10px;align-items:center}
 button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer}
@@ -94,7 +96,7 @@ button:focus-visible,#card .pick:focus-visible,#card .act:focus-visible{outline:
 #card ul.pts{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px}#card ul.pts li{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start}
 #card ul.pts .ico{color:var(--accent);margin-top:2px}#card ul.pts b{display:block;font-size:14px}#card ul.pts span{color:#cfd4d6;font-size:13px}
 #card h2 .ico{color:var(--accent);vertical-align:-3px;margin-right:6px}
-#foot{position:fixed;left:16px;bottom:10px;max-width:calc(50vw - 120px);font-size:11px;color:var(--dim)}
+#foot{position:fixed;left:16px;bottom:10px;max-width:calc(50vw - 240px);font-size:11px;color:var(--dim)}   /* UC-44.3: 240 = half the nav (440 px, measured 11-08) + a gap; it was 120 and ran under the nav's first two buttons on 1280 to 1920 px screens */
 #foot{pointer-events:none}#foot a{color:var(--accent-soft);pointer-events:auto}
 #back{position:fixed;top:52px;left:16px;padding:8px 12px;font-size:13px}
 /* UC-45 AUTO beside the Lot button; its note across the top. UC-46 the coffee: the time to beat under START, the claim in the board */
@@ -108,6 +110,10 @@ button:focus-visible,#card .pick:focus-visible,#card .act:focus-visible{outline:
 #bar{position:relative;width:min(640px,86vw);height:24px;border-radius:12px;background:rgba(255,255,255,.12);margin:14px auto 6px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 #bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
 #lmb{position:absolute;inset:0;line-height:24px;font-size:13px;font-weight:800;letter-spacing:.06em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+/* UC-48 under the bar: the line's speed and the time left, then the stage and its count */
+/* a way home while the screen and its game cover the page's footer (the front page's rule: every demo links back to it) */
+#lhome{display:inline-block;margin-top:4px;font-size:12px;color:var(--accent-soft);pointer-events:auto;text-decoration:none}#lhome:hover,#lhome:focus-visible{text-decoration:underline}
+#lstat{min-height:1.4em;font-size:12px;letter-spacing:.02em;color:var(--ink);opacity:.85;font-variant-numeric:tabular-nums;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 #loading .brand{font-size:clamp(26px,5vw,44px);font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);animation:rise .9s ease both}
 #loading .brand b{color:var(--accent)}
 #loading .tag{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent-soft);margin:6px 0 22px;animation:rise .9s .15s ease both}
@@ -193,6 +199,7 @@ body.dragmode.hascluster #dpanel{bottom:calc(var(--clh,300px) + 44px)}
 @media (pointer:coarse){body.clutchmode #dkeys .coarse.cp,body:not(.clutchmode) #dkeys .coarse.np{display:inline}}
 @keyframes keysflash{50%{border-color:var(--accent);box-shadow:0 0 18px rgba(242,88,39,.55)}}
 /* UC-38.3 the rival talks: one bubble, over its car */
+#dsay.tight{max-width:min(210px,42vw);font-size:11px;padding:5px 8px}   /* UC-49.4 a small phone: tried smaller before held back */
 #dsay{position:fixed;left:50%;top:30%;transform:translateX(-50%);z-index:25;pointer-events:none;max-width:min(300px,70vw);background:rgba(10,10,10,.86);border:1px solid var(--accent);border-radius:12px;padding:7px 11px;font:600 13px/1.35 'Open Sans',sans-serif;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.5)}
 #dsay[hidden]{display:none}
 #dsay b{display:block;font-size:10px;letter-spacing:.14em;color:var(--accent-soft);margin-bottom:2px}
@@ -258,12 +265,22 @@ body.dragover #dkeys,body.dragover #dsay,body.dragover #dpedalk,body.dragover #d
 #lready{margin-top:14px;color:var(--ink)}#lready b{display:block;font-size:15px;letter-spacing:.06em}#lenter{background:var(--accent)}
 #lcap{position:absolute;left:0;right:0;bottom:18px;text-align:center;font-size:12px;color:var(--dim);padding:0 16px}#lcap b{color:var(--ink)}#lcap a{color:var(--accent-soft);pointer-events:auto}
 #loading.playing #lphoto.on{opacity:.2}
+/* UC-44.1 the loading screen's look: the car's photo plainly there while the game idles by itself (it was at a fifth, under the
+   vignette: a black screen with a dashed ring, shots/lotpass/b0_*_load.png), back to a fifth once someone plays (the rocks need the
+   contrast); the bar's sheen says it is working while no bytes are counted yet; the box under the photo's caption, however many
+   lines the caption takes (loading.js sets --lcapb: the caption's bottom; upright on a phone it ran into the title); Motion off or
+   the OS's reduced motion (#loading.still): no drift and no sheen. AUTHORED: .36, the sheen's 1.8 s */
+#loading.playing:not(.touched) #lphoto.on{opacity:.36}
+#bar::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);transform:translateX(-100%);animation:sheen 1.8s ease-in-out infinite;pointer-events:none}
+@keyframes sheen{to{transform:translateX(100%)}}
+#loading.still #lphoto.on,#loading.still #bar::after{animation:none}#loading.still #bar::after{display:none}
 #loading.playing #lgame{display:block}
-#loading.playing #lbox{position:absolute;top:36px;left:0;right:0}
+#loading.playing #lbox{position:absolute;top:max(36px,calc(var(--lcapb,0px) + 8px));left:0;right:0}   /* UC-44.1: under the caption (loading.js --lcapb) */
 #loading.playing #lbox .brand{font-size:18px;letter-spacing:.2em}
 #loading.playing #lt{font-size:13px}
 #loading.playing #lbox .tag{display:none}
 #loading.playing #lcap{bottom:auto;top:12px}
+@media (max-width:520px){#loading.playing #lbox{top:52px}}   /* UC-48: the photo's credit runs to two lines on a phone and sat over the brand */
 #loading.ready #lbox{transform:none;top:auto;bottom:22%}
 #loading.ready #lgame{opacity:.35;pointer-events:none}
 #lhs{position:absolute;z-index:3;left:50%;top:54%;transform:translate(-50%,-50%);width:min(380px,90vw);padding:16px 18px;border-radius:14px;background:rgba(14,15,17,.94);border:1px solid var(--accent);box-shadow:0 12px 40px rgba(0,0,0,.6);pointer-events:auto;text-align:center}
@@ -281,8 +298,25 @@ body.dragover #dkeys,body.dragover #dsay,body.dragover #dpedalk,body.dragover #d
 #card.in{animation:cardin .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes cardin{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#card.in,#loading .brand,#loading .tag{animation:none}}
-@media (max-width:1100px){#foot{left:50%;transform:translateX(-50%);bottom:4px;max-width:calc(100vw - 32px);text-align:center;font-size:10px}#showroom .nav{bottom:46px}}
-@media (max-width:720px){body #card{bottom:134px;max-height:26vh}}
+@media (max-width:1100px){#foot{left:16px;right:16px;bottom:4px;max-width:none;text-align:center;font-size:10px}#showroom .nav{bottom:46px}}   /* UC-44.3: left and right, not left 50% + translate, which capped it at half the screen (5 lines on a 412 px phone, the nav over it) */
+@media (max-width:720px){body #card{bottom:116px;max-height:26vh}}   /* UC-44.3: the nav 18 px lower (the footer is 2 to 3 lines now) */
+/* UC-44.3 a phone on its side (short and wide): the sales chat takes a side, a third of the width at most, and the car stands beside it
+   (the camera frames it there: lot_frame.js). UC-49.3 hides the card on a phone; the card's own rules here serve a short wide window
+   that is not a phone. Measured before (lot_layout9): the card and the chat covered 41 % (915 x 412), 60 % (844 x 390) and 88 % (740 x 360)
+   of the car's box. The chat's own sheet (sales_chat.js) sizes it for a computer; only its width and left edge are set here */
+@media (orientation:landscape) and (max-height:500px){body:not(.inrun) header{padding:8px 12px}
+  body #card{top:46px;bottom:auto;right:8px;width:min(300px,34vw);max-height:calc(100vh - 146px);padding:12px 12px 6px}body #card h2{font-size:18px}body #card .price{font-size:24px}
+  body #salechat{left:8px;width:min(300px,34vw)}}
+/* UC-49.2 a phone is held sideways: upright, a screen asks to turn it (a web page cannot lock an iPhone's orientation: this is the lock) */
+#rotate{display:none;position:fixed;inset:0;z-index:2147483000;background:var(--bg);color:var(--ink);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+#rotate a{margin-top:22px;font-size:13px;color:var(--accent-soft);text-decoration:none}#rotate b{display:block;font-size:22px;letter-spacing:.06em;margin:18px 0 8px}#rotate span{font-size:14px;line-height:1.4;color:var(--dim);max-width:280px}
+#rotate svg{width:96px;height:96px;animation:hocturn 2.4s ease-in-out infinite}
+@keyframes hocturn{0%,20%{transform:rotate(0)}50%,70%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+@media (prefers-reduced-motion:reduce){#rotate svg{animation:none;transform:rotate(-90deg)}}
+@media (pointer:coarse) and (orientation:portrait) and (max-width:600px){#rotate{display:flex}}
+/* UC-49.3 sideways on a phone: the 3D signs carry each car (the 2D card repeated them), the brand on one line, the pills a phone needs */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:520px){#card{display:none}header h1{flex:none;white-space:nowrap;font-size:14px;letter-spacing:.12em}
+  header #renderer,header #quality,header #radio,header>span.pill:not([id]){display:none}}
 #race{display:none}
 #hud-time{position:fixed;top:56px;left:50%;transform:translateX(-50%);text-align:center;font-variant-numeric:tabular-nums;padding:6px 18px 8px;border-radius:14px;background:rgba(10,10,10,.42);backdrop-filter:blur(6px);border:1px solid var(--line)}
 #hud-time .b{color:#d5dadd}
@@ -353,7 +387,9 @@ header #mute,header #radio,header #motion,header #dcam,header #dbox,header #rain
 @media (max-width:720px){#card{top:auto;bottom:84px;max-height:30vh;padding:12px 12px 6px}#card h2{font-size:18px}#hint{display:none}#hud-speed{transform:scale(.6);transform-origin:right bottom}#minimap{left:auto;right:12px;bottom:auto;top:96px;width:112px;height:112px}#lapb b{font-size:38px}header .pill+.pill{display:none}header h1{font-size:15px}}
 @media (pointer:coarse){#touch{display:flex}}
 button,.pill{white-space:nowrap}
-@media (max-width:720px){#showroom .nav{gap:6px;bottom:78px}#showroom .nav button{padding:9px 12px}#pos{font-size:11px;padding:2px 6px}}
+@media (max-width:720px){#showroom .nav{gap:6px;bottom:60px}#showroom .nav button{padding:9px 12px}#pos{font-size:11px;padding:2px 6px}}
+/* UC-44.3 a phone upright: WALK THE LOT is WALK, so the nav fits inside a 390 px screen (before: 392 to 396 px of buttons, past both edges on the SportsCar's slide: lot_layout9 b0extra) */
+@media (max-width:480px){#walk .wl{display:none}}
 @media (pointer:coarse){#touch{padding:12px}#touch div{gap:8px}#touch button{width:60px;height:60px;font-size:19px}#hud-speed{bottom:96px;right:14px}}
 @media (max-width:720px){header #mute{display:inline-block}}
 
@@ -372,9 +408,10 @@ button,.pill{white-space:nowrap}
 </head>
 <body>
 <canvas id="view"></canvas>
+<div id="rotate" role="alert"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="30" y="10" width="36" height="76" rx="7" fill="none" stroke="#f25827" stroke-width="4"/><circle cx="48" cy="77" r="3" fill="#f25827"/></svg><b>Turn your phone sideways</b><span>House of Cars is a game for a phone held sideways, like a steering wheel.</span><a href="../">&larr; All projects</a></div>
 <header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="phonepill" aria-pressed="false" title="Drive with your phone: scan the code it shows">Phone pad</button><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button><button class="pill" id="dbox" aria-pressed="true" title="The strip's gearbox: a clutch and an H gate, or paddles (G)">Clutch on</button><button class="pill" id="donlinebtn" title="Race someone online: a lobby of drivers on this page right now">Race online</button><button class="pill" id="rain" aria-pressed="true" title="Rain on the circuit and the strip: a wet road, a grey sky and light shafts (U). It changes from the next run; on the strip, a new run at once">Rain on</button></header>
 <div id="rbanner" aria-live="polite"></div>
-<div id="loading"><div id="lbox"><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i><span id="lmb"></span></div></div></div>
+<div id="loading"><div id="lbox"><div class="brand">House <b>of</b> Cars</div><div class="tag">3D lot concept · Edmonton</div><div id="lt">Bringing the cars onto the lot…</div><div id="bar"><i></i><span id="lmb"></span></div><div id="lstat" aria-live="off"></div><a id="lhome" href="../">&larr; All projects</a></div></div>
 
 <section id="showroom">
   <div id="gpunote" role="status" hidden><p id="gpunotetext"></p><button id="gpunoteok" type="button">Got it</button></div>   <!-- UC-31: the lot's, gone with it in a race -->
@@ -384,7 +421,7 @@ button,.pill{white-space:nowrap}
     <button id="drive" class="go">TEST DRIVE</button>
     <button id="next" aria-label="Next car">▶</button>
     <span class="pill" id="pos"></span>
-    <button id="walk" class="walkbtn" title="Walk the lot (K)">WALK THE LOT</button>
+    <button id="walk" class="walkbtn" title="Walk the lot (K)" aria-label="Walk the lot">WALK<span class="wl"> THE LOT</span></button>
   </div>
   <div id="walkhud" hidden><span>W A S D or the arrows to walk · drag to look · Shift to walk faster · Enter on a car to see it</span><button id="walkexit" type="button">Leave (Esc)</button></div>
   <button id="walklabel" type="button" hidden></button>
@@ -437,7 +474,7 @@ button,.pill{white-space:nowrap}
 <!-- the sales chat (sales_chat.js, relay/README.md: another session's; on for everyone with the owner's yes 2026-11-07) -->
 <script src="sales_chat.js" data-relay="https://hoc-sales-relay.tami-play.workers.dev"></script>
 <!-- UC-47 a phone as the controller (phone_controller.js, D:/_phonepad: the PhonePad session's); the header's Phone pill opens it -->
-<script src="phone_controller.js" data-relay="https://phonepad-relay.tami-play.workers.dev" data-button="none"></script>
+<script src="phone_controller.js" data-relay="https://phonepad-relay.tami-play.workers.dev" data-button="none" data-brake-label="Brake / clutch"></script>
 <script type="module" src="perf.js"></script>
 <script type="module" src="loading.js"></script>
 <script type="module" src="app.js"></script>

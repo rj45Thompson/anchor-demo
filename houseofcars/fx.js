@@ -2,7 +2,7 @@
 // a polished showroom floor, and the post chain (bloom on the accent lights, a vignette, multisampled edges). All of it is
 // AUTHORED (app.js AUTHORED lists it); none of it changes a car or track number. Serves UC-7.2, UC-7.3, UC-7.5.
 import * as THREE from 'three/webgpu';
-import { positionLocal, positionView, normalView, abs, vertexColor, mx_fractal_noise_float, mx_noise_float, nodeObject, pass, uniform, uv, float, vec2, vec3, vec4, color as tslColor, texture, mix, max, min, smoothstep, luminance, length, reflector, positionWorld, cameraPosition, normalize, dot, pow, oneMinus, normalWorld } from 'three/tsl';
+import { positionLocal, positionView, normalView, abs, vertexColor, mx_fractal_noise_float, mx_noise_float, nodeObject, pass, uniform, uv, float, vec2, vec3, vec4, color as tslColor, texture, mix, max, min, smoothstep, luminance, length, reflector, positionWorld, cameraPosition, normalize, dot, pow, oneMinus, normalWorld, output, normalLocal, materialColor, materialEmissive } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js';
 import { godRays } from './weather.js';                    // UC-40: the light shafts, put in front of the bloom (makePost o.godRays)
@@ -149,13 +149,14 @@ export function concreteWall(mat) {
 // ---------------------------------------------------------------- a spot light's visible beam (UC-7.2)
 // An open cone from the lamp to the floor, added on top of the scene: brightest near the lamp, soft at its rim (the view-facing
 // term), so the light reads as light in a dark room. AUTHORED, like the spot it belongs to.
-export function lightBeam(from, to, radius, hex, k) {
+export function lightBeam(from, to, radius, hex, k) {   // UC-44.3: its brightness is the material's colour (hex times k), so the lot dims it by setting that
   const h = from.distanceTo(to);
   const geo = new THREE.ConeGeometry(radius, h, 48, 1, true); geo.translate(0, -h / 2, 0);   // apex at the origin, opening down
   const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false });
   const along = smoothstep(-h, 0, positionLocal.y);                                          // 1 at the lamp, 0 at the floor
   const rim = pow(abs(dot(normalize(normalView), normalize(positionView.negate()))), 2.0);  // faint where the cone is seen edge-on
-  mat.colorNode = vec3(tslColor(new THREE.Color(hex))).mul(along.mul(along).mul(rim).mul(k));
+  mat.color.set(hex).multiplyScalar(k);
+  mat.colorNode = materialColor.rgb.mul(along.mul(along).mul(rim));
   const m = new THREE.Mesh(geo, mat);
   m.position.copy(from);                                                                      // in the parent's space: lookAt would read world space
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), to.clone().sub(from).normalize());   // the cone opens toward the target
@@ -165,6 +166,47 @@ export function lightBeam(from, to, radius, hex, k) {
 
 // an emissive accent: values above 1 so the bloom picks it up
 export const glowMaterial = (hex, k) => new THREE.MeshBasicNodeMaterial({ colorNode: tslColor(new THREE.Color(hex)).mul(k) });
+
+// ---------------------------------------------------------------- a sign slide's plinth (UC-44.3)
+// (The sign is dimmed through its material's own colour, app.js lightSlides.) The plinth: before (lot pass 11-08,
+// shots/lotpass/b0_desk_welcome.png, b0_port_welcome.png) a box at roughness 0.22 and metalness 0.25 that mirrored the studio's white
+// strips into one flat light-grey bar across the picture; now AUTHORED: satin (roughness 0.5, metalness 0.1), so it reads as the
+// dark display plinth it is, with its front top edge lit in the accent like the pedestals' rims (a 2 cm band, bright enough to
+// bloom: its emissive colour is the accent times 6), dimmed with them by app.js setting that emissive colour. No extra mesh: the band
+// is the plinth's own emissive, where its front face meets its top.
+export function plinthMaterial(baseHex, accentHex) {
+  const m = new THREE.MeshStandardNodeMaterial({ color: baseHex, roughness: 0.5, metalness: 0.1 });
+  m.emissive.set(accentHex).multiplyScalar(6);
+  const edge = smoothstep(0.5, 0.9, normalLocal.z).mul(smoothstep(0.034, 0.04, positionLocal.y));   // the box is 0.12 m tall: y up to 0.06
+  m.emissiveNode = materialEmissive.mul(edge);
+  return m;
+}
+
+// ---------------------------------------------------------------- the showroom floor (UC-44.3)
+// Before (lot pass 11-08, shots/lotpass/b0_desk_intro40.png): a flat disc 80 m across whose edge stood out against the dome as a
+// grey table top in the intro and on wide screens, and whose sheen at a low angle read as one grey haze with nothing in it to show
+// the camera moving. Now, AUTHORED: polished concrete slabs, SEAM_M square, their joints a rougher line that breaks the sheen
+// (a 256 px canvas, mipmapped, so far joints fade instead of shimmering), and past fadeFrom metres from the middle the floor's
+// final colour blends into the dome's horizon colour (horizonHex, READ by app.js from the dome it builds), so it meets the
+// backdrop with no edge, an infinity cove. Drawn in the main pass only (lot_focus.js hides it from the tops' reflection).
+const SEAM_M = 4;
+let seamTex = null;
+export function showroomFloor(radius, baseHex, horizonHex, fadeFrom) {
+  if (!seamTex) {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#000'; g.fillRect(0, 0, 256, 256);
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 256, 3); g.fillRect(0, 0, 3, 256);   // the joint on two edges: tiled, every slab has four
+    seamTex = new THREE.CanvasTexture(c); seamTex.wrapS = seamTex.wrapT = THREE.RepeatWrapping; seamTex.anisotropy = 8;
+  }
+  const mat = new THREE.MeshStandardNodeMaterial({ color: baseHex, roughness: 0.55, metalness: 0.0 });
+  const seam = texture(seamTex, positionWorld.xz.div(SEAM_M)).r;
+  mat.roughnessNode = mix(float(0.55), float(0.95), seam);
+  mat.colorNode = tslColor(new THREE.Color(baseHex)).mul(oneMinus(seam.mul(0.35)));
+  const fade = smoothstep(fadeFrom, radius, length(positionWorld.xz));
+  mat.outputNode = vec4(mix(output.rgb, vec3(tslColor(new THREE.Color(horizonHex))), fade), output.a);
+  return mat;
+}
 
 // ---------------------------------------------------------------- the post chain (UC-7.2, UC-7.5)
 // UC-37.3 a car's contact shadow: a soft dark patch on the road under it, darkest under the middle, so it sits on the road; the
