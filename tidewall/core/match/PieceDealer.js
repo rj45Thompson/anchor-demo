@@ -14,12 +14,13 @@ export const Streams = Object.freeze({
 /** One player's piece supply: a shuffled bag of every shape in the catalog, dealt one at a time, refilled when empty. Each bag
  *  is shuffled by its OWN random stream, keyed by (match seed, slot, bag number): what a player is dealt never depends on when
  *  another acted. The private model's bag can also grow through a map in its bigger ruleset; that is not ported (a normal bag
- *  always holds every shape). Its binary snapshot (Write/Read) is not ported either: nothing here sends one. */
+ *  always holds every shape). A catalog may weight shapes (PieceCatalog.withWeights, the Tidewall set): a bag then holds weightOf(id)
+ *  copies of each, shuffled by the same stream, so a weight-1 shape is rare; the ported catalog's weights are all 1, so its bag is unchanged. Its binary snapshot (Write/Read) is not ported either: nothing here sends one. */
 export class PieceDealer {
   /** random: the platform seam, a function from a stream key to a random source (key => new SeededRandom(key)). */
   constructor(catalog, random, seed, slot) {
     this._catalog = catalog; this._random = random; this._seed = seed; this._slot = slot;
-    this._bag = new Int32Array(catalog.count);
+    this._bag = new Int32Array(catalog.bagSize);
     this._bagLen = 0;
     this._next = 0;
     this._bagsDealt = 0;
@@ -29,7 +30,10 @@ export class PieceDealer {
   _refill() {
     const rng = this._random(Streams.key(this._seed, 1000 + this._slot, this._bagsDealt));
     this._bagLen = 0;
-    for (let i = 0; i < this._catalog.count; i++) this._bag[this._bagLen++] = this._catalog.at(i).id;
+    for (let i = 0; i < this._catalog.count; i++) {      // weightOf is 1 for the ported catalog: one of every shape, as the C# bag
+      const id = this._catalog.at(i).id;
+      for (let k = this._catalog.weightOf(id); k > 0; k--) this._bag[this._bagLen++] = id;
+    }
     for (let i = this._bagLen - 1; i > 0; i--) {                 // Fisher-Yates
       const j = rng.range(0, i + 1);
       const t = this._bag[i]; this._bag[i] = this._bag[j]; this._bag[j] = t;

@@ -119,7 +119,7 @@ export class MatchModel {
     const problems = MapCheck.problems(grid, rules, challenge);
     if (problems.length > 0) throw new Error('the map is not playable: ' + problems.join('; '));
     if (!options.super) MatchModel.plain(grid);
-    const m = new MatchModel(grid, PieceCatalog.default(), rules, table, playerCount, seed, random,
+    const m = new MatchModel(grid, Campaign.catalogFor(options), rules, table, playerCount, seed, random,
       challenge ? Phase.Repair : Phase.Claim, options, first, levels.load);
     if (options.field === Battlefield.Veteran) m.teamScore = add32(m.teamScore, rules.pointsVeteranStart);
     return m;
@@ -446,15 +446,25 @@ export class MatchModel {
     p.connected = true; this._events.push(new PlayerRejoined(this.tick, c.slot)); return true;
   }
 
+  /** What a placeWall(slot, shapeId, quarterTurns, at) would answer NOW, without placing it: the same checks in the same order as
+   *  _placeWall (which calls this), so a view that draws this verdict at the ghost can never disagree with the command (UC-P1).
+   *  Returns { result: PlacementResult, bad: Cell[] } - bad = the squares behind the result (PlacementRules.offending), empty for a
+   *  reason that is not about a square (wrong phase, tool out, wrong piece, last piece used). The slot must be connected. */
+  wallVerdict(slot, shapeId, quarterTurns, at) {
+    if (this.phase !== Phase.Repair) return { result: PlacementResult.WrongPhase, bad: [] };
+    if (this._players[slot].sword) return { result: PlacementResult.SwordOut, bad: [] };   // REQ-HERO-02
+    if (shapeId !== this._dealers[slot].current) return { result: PlacementResult.WrongPiece, bad: [] };
+    if (this._grace && this._graceUsed[slot]) return { result: PlacementResult.GraceUsed, bad: [] };
+    const shape = this.catalog.byId(shapeId), enemy = (x, y) => this.gruntAt(x, y);
+    const result = PlacementRules.check(this.grid, shape, quarterTurns, at, enemy);
+    return { result, bad: result === PlacementResult.Ok ? [] : PlacementRules.offending(this.grid, shape, quarterTurns, at, enemy) };
+  }
+
   _placeWall(c) {
-    if (this.phase !== Phase.Repair) { this._events.push(new PlacementRejected(this.tick, c.slot, c.seq, PlacementResult.WrongPhase)); return false; }
-    if (this._players[c.slot].sword) { this._events.push(new PlacementRejected(this.tick, c.slot, c.seq, PlacementResult.SwordOut)); return false; }   // REQ-HERO-02
-    const dealer = this._dealers[c.slot];
-    if (c.shapeId !== dealer.current) { this._events.push(new PlacementRejected(this.tick, c.slot, c.seq, PlacementResult.WrongPiece)); return false; }
-    const shape = this.catalog.byId(c.shapeId);
-    if (this._grace && this._graceUsed[c.slot]) { this._events.push(new PlacementRejected(this.tick, c.slot, c.seq, PlacementResult.GraceUsed)); return false; }
-    const result = PlacementRules.check(this.grid, shape, c.quarterTurns, c.at, (x, y) => this.gruntAt(x, y));
+    const result = this.wallVerdict(c.slot, c.shapeId, c.quarterTurns, c.at).result;
     if (result !== PlacementResult.Ok) { this._events.push(new PlacementRejected(this.tick, c.slot, c.seq, result)); return false; }
+    const dealer = this._dealers[c.slot];
+    const shape = this.catalog.byId(c.shapeId);
 
     const before = EnclosureRules.enclosedCastleIds(this.grid);
     const cells = PlacementRules.cellsOf(shape, c.quarterTurns, c.at);
@@ -479,18 +489,36 @@ export class MatchModel {
     return true;
   }
 
-  _placeCannon(c, p) {
-    if (this.phase !== Phase.Cannons) return this._reject(c, RejectReason.WrongPhase);
-    if (p.cannonsToPlace <= 0) return this._reject(c, RejectReason.NoCannons);
+  /** What a placeCannon(slot, at) would answer NOW: -1 (it would be placed) or the RejectReason, with the squares behind it (the
+   *  2x2 square that is blocked or outside the player's own ring). The same checks in the same order as _placeCannon, which calls
+   *  it; the controller draws the CANNONS ghost from it, so the ghost and the command agree (UC-P1). `terr` is EnclosureRules.map
+   *  of the board now (passed in so a caller drawing several ghosts maps the board once), or null to map it here. */
+  cannonVerdict(slot, at, terr = null) {
+    const p = this._players[slot];
+    if (this.phase !== Phase.Cannons) return { result: RejectReason.WrongPhase, bad: [] };
+    if (p.cannonsToPlace <= 0) return { result: RejectReason.NoCannons, bad: [] };
     // inside an area the player's OWN walls ring, not a team-mate's
-    const terr = EnclosureRules.map(this.grid);
-    for (let dy = 0; dy < 2; dy++)
-      for (let dx = 0; dx < 2; dx++) {
-        const x = c.at.x + dx, y = c.at.y + dy;
-        if (!this.grid.in(x, y) || this.grid.terrainAt(x, y) !== Terrain.Land || this.grid.occupantAt(x, y) !== Occupant.Empty || this.gruntAt(x, y))
-          return this._reject(c, RejectReason.Blocked);
-        if (!terr.holds(c.slot, terr.regionAt(x, y))) return this._reject(c, RejectReason.NotEnclosed);
+    if (terr === null) terr = EnclosureRules.map(this.grid);
+    const g = this.grid, blocked = (x, y) => !g.in(x, y) || g.terrainAt(x, y) !== Terrain.Land || g.occupantAt(x, y) !== Occupant.Empty || this.gruntAt(x, y);
+    let result = -1;
+    for (let dy = 0; dy < 2 && result < 0; dy++)
+      for (let dx = 0; dx < 2 && result < 0; dx++) {
+        const x = at.x + dx, y = at.y + dy;
+        if (blocked(x, y)) result = RejectReason.Blocked;
+        else if (!terr.holds(slot, terr.regionAt(x, y))) result = RejectReason.NotEnclosed;
       }
+    const bad = [];
+    if (result >= 0)                                  // every square of the 2x2 behind that reason (a view outlines them)
+      for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+        const x = at.x + dx, y = at.y + dy;
+        if (result === RejectReason.Blocked ? blocked(x, y) : !blocked(x, y) && !terr.holds(slot, terr.regionAt(x, y))) bad.push(new Cell(x, y));
+      }
+    return { result, bad };
+  }
+
+  _placeCannon(c, p) {
+    const why = this.cannonVerdict(c.slot, c.at).result;
+    if (why >= 0) return this._reject(c, why);
     const cannon = new CannonModel(this._nextCannon++, c.slot, c.at, this.rules.cannonHealth);
     this._cannons.push(cannon);
     for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) this.grid.setCannon(c.at.x + dx, c.at.y + dy, c.slot);

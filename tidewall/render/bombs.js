@@ -142,12 +142,13 @@ export class BombsView {
       for (const c of e.arms) { fxs.flame(cellAt(c, 0.15), e.big ? 1.15 : 1); fxs.scorch(cellAt(c, 0), 0.8); }
     } else if (e instanceof BombDropped) {
       fxs.dust(cellAt(e.at, 0), 0.6);
-      if (e.owner >= 0) u.slash(e.owner);
+      if (e.owner >= 0) { u.slash(e.owner); u.gesture(e.owner, 'drop'); }
       else for (const gr of u.grunts.values()) if (gr.model.alive && gr.model.at.x === e.at.x && gr.model.at.y === e.at.y) gr.setDown = 1;   // the grunt that set it down
     } else if (e instanceof BombPickedUp) {
+      u.gesture(e.slot, 'lift');
       u.fxs.flash(hero(e.slot).at.clone().add(new THREE.Vector3(0, 1.0, 0)), u.colours[e.slot], 0.35);
     } else if (e instanceof BombThrown) {
-      u.slash(e.slot);
+      u.slash(e.slot); u.gesture(e.slot, 'toss');
     } else if (e instanceof BombLanded) {
       fxs.dust(cellAt(e.at, 0), 0.7);
     } else if (e instanceof BombSank) {

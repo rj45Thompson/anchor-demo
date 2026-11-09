@@ -6,8 +6,8 @@ const OCCUPANT_NAME = Object.fromEntries(Object.entries(Occupant).map(([k, v]) =
 
 /** What makes a map playable, checked when it is loaded - a map that fails is refused, never half-played. */
 export const MapCheck = Object.freeze({
-  MaxWidth: 64,
-  MaxHeight: 64,
+  MaxWidth: 96,       // raised from 64 for the bigger Tidewall islands (the biggest generated board is 76 x 56); no parity trace has a board over 64
+  MaxHeight: 96,
 
   /** Every problem, in words; empty = playable. challenge: a field where no ships come, so the sea checks do not apply. */
   problems(g, rules, challenge = false) {

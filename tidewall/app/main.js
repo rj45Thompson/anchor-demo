@@ -14,7 +14,7 @@ import { SoundPlayer, VOLUME } from './sound.js';
 import { Phones } from './phones.js';
 import { ControlsChoice, TouchPad } from './controls.js';
 import { ActionBar, ACTIONS } from './actions.js';
-import { MapSource, CAMPAIGN_ISLANDS } from './maps.js';
+import { MapSource, CAMPAIGN_ISLANDS, campaignNames } from './maps.js';
 import * as core from '../core/index.js';
 import { createRenderer, NoWebGpuError, PLAYER_TEXT_CSS } from '../render/renderer.js';
 
@@ -137,8 +137,9 @@ class Game {
     for (let s = 0; s < SEATS; s++) if (demo || joined[s]) seatOf.push(s);
     const seed = demo && !this.sw.attract ? (this.seed ^ (this.ticks & 0xffff)) : this.seed;
     const names = this.campaignFrom(this.menu.map.name);
-    const levels = { names, load: (name, rules, challenge) => MapCheck.loadChecked(this.maps.byName(name), rules, challenge) };
-    const first = GridModel.fromAscii(this.maps.byName(MatchModel.firstMapName(options, names)));
+    const maps = this.maps.forPlayers(seatOf.length);   // UC-S1: the island's size follows the player count (1-2 small, 3 medium, 4 large)
+    const levels = { names, load: (name, rules, challenge) => MapCheck.loadChecked(maps.byName(name), rules, challenge) };
+    const first = GridModel.fromAscii(maps.byName(MatchModel.firstMapName(options, names)));
     const model = MatchModel.startOn(first, options, seatOf.length, seed, (key) => new SeededRandom(key), levels);
     const presenter = { isIdle: true, present: (e) => this.present(e) };
     this.demo = demo;
@@ -157,13 +158,8 @@ class Game {
     if (!demo && !this.sw.attract && this.hintMatch === null) { this.hintMatch = model; this.hintRound = model.round; }
   }
 
-  /** The campaign's four islands, starting with the one chosen on the setup screen and going on round the list. */
-  campaignFrom(first) {
-    const names = CAMPAIGN_ISLANDS.map((i) => i.name);
-    const at = names.indexOf(first);
-    if (at < 0) throw new Error('the setup screen chose an island the campaign does not have: ' + first);
-    return names.map((_, k) => names[(at + k) % names.length]);
-  }
+  /** The campaign's four islands: the one chosen on the setup screen, then the next three of the menu's list (app/maps.js). */
+  campaignFrom(first) { return campaignNames(first); }
 
   get silent() { return this.demo && !this.sw.attract; }
 
@@ -235,8 +231,18 @@ class Game {
       // picked again every tick (the camera follows the hero, so a still screen point would walk the hero across the map), and a
       // finger player is not a pointer player (the camera follows their hero, as a stick player's)
       this.pointerMode = false;
-      if (p.click && !Number.isNaN(p.x)) this.touchCell = this.renderer.pickCell(p.x, p.y);
-      if ((p.click || p.confirm) && this.touchCell) { out.hasPointer = true; out.pointer = new Cell(this.touchCell.x, this.touchCell.y); }
+      if (p.click && !Number.isNaN(p.x)) {
+        this.touchCell = this.renderer.pickCell(p.x, p.y);
+        // UC-P1 (11-09): where a ghost is drawn (REPAIR's piece, CANNONS' cannon) a tap ON it places it exactly where it is drawn,
+        // and a tap anywhere else only moves it there. A tap used to place at once on the tapped square, where no ghost had been
+        // drawn: on a phone the piece never landed on the ghost the player saw (the probe: 116 of 116 taps)
+        const shown = this.renderer.units ? this.renderer.units.ghostShown(this.mouseSlot) : null, t = this.touchCell;
+        this.touchGhost = shown !== null;
+        this.touchOnGhost = shown !== null && t !== null && shown.cells.some(([x, y]) => x === t.x && y === t.y);
+      }
+      const onGhost = this.touchGhost && this.touchOnGhost;
+      if ((p.click || p.confirm) && this.touchCell && !onGhost) { out.hasPointer = true; out.pointer = new Cell(this.touchCell.x, this.touchCell.y); }
+      if (this.touchGhost && !this.touchOnGhost) p = { ...p, confirm: false };   // the tap moved the ghost; it places nothing
     } else {
       if (p.moved) this.pointerMode = true;
       if (stick && !p.moved) this.pointerMode = false;

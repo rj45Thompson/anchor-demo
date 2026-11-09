@@ -21,7 +21,7 @@ import { uniform, pass, mrt, output, emissive, normalView, vec3, vec4, float, uv
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
 import BloomNode from 'three/addons/tsl/display/BloomNode.js';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
-import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, BombExploded, Screen } from '../core/index.js';
+import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, BombExploded, Screen, LoopClosed } from '../core/index.js';
 import { GAME_TITLE } from '../app/title.js';
 import { Board, BoardLook } from './board.js';
 import { Units, gruntFigure, shipModel } from './units.js';
@@ -92,6 +92,7 @@ class LeanBloom extends BloomNode {
 }
 const AO = { radius: 0.6, thickness: 1, scale: 0.5, strength: 0.85 };
 const WIPE_SECONDS = 0.7;                  // AUTHORED: the light sweep across the picture when the phase or the menu screen changes
+const TOAST_SECONDS = 2.4;                 // AUTHORED: how long "Castle secured!" stays up after a closing brick (UC-P2)
 // the menu screens the game's island drifts behind on the low menu camera (camera.js); an untouched title that shows the demo full
 // screen (menu.inDemo) is play, and keeps the game's camera
 const DRIFT_SCREENS = new Set([Screen.Title, Screen.Setup, Screen.HighScores, Screen.Results, Screen.Initials]);
@@ -154,6 +155,7 @@ class Renderer {
     this.clock = 0;
     this.wipeKey = null; this.wipeT = WIPE_SECONDS;                         // what the last frame showed; seconds into the wipe
     this.setQuality(opts.quality ?? 'high'); this.toast = null;
+    this.toastLog = [];          // every LoopClosed toast shown: { text, castleId, slot, at (performance.now) } - the page check reads it
     this.resize(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight);
   }
 
@@ -394,6 +396,12 @@ class Renderer {
       this.units.events(view.events);
       this.units.update(view, dt, seconds);
       this.fx.commit();
+      for (const e of view.events) {                                        // UC-P2: a closing brick says so (with the board's sweep and the fanfare)
+        if (!(e instanceof LoopClosed)) continue;
+        const two = this.toast && this.toast.loop && this.clock - this.toast.from < 0.5;   // two castles in one ring: one toast
+        this.toast = { text: two ? 'Castles secured!' : 'Castle secured!', until: this.clock + TOAST_SECONDS, from: this.clock, loop: true };
+        this.toastLog.push({ text: this.toast.text, castleId: e.castleId, slot: e.slot, at: performance.now() });
+      }
       for (const e of view.events) {                                        // a gentle shake on the big hits (AUTHORED strengths)
         if (e instanceof CannonDestroyed) this.rig.shake = Math.max(this.rig.shake, 0.6);
         else if (e instanceof WallBroken) this.rig.shake = Math.max(this.rig.shake, 0.45);
@@ -415,6 +423,10 @@ class Renderer {
     const cam = this.rig.camera, W = this.cssW, H = this.cssH;
     const project = (v) => { const p = v.clone().project(cam); return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, visible: p.z < 1 && p.z > -1 }; };
     this.hud.draw(view, project, m ? this.units.heroTags() : [], seconds, this.hudMode === 'all');
+    // UC-P1: the ghost's reason at the ghost (in play only: a menu over the match hides it)
+    const playingNow = !view.menu || view.menu.screen === Screen.Playing;
+    this.hud.ghostNotes(m && playingNow && this.hudMode === 'all'
+      ? this.units.ghostNotes(seconds).map((n) => { const p = project(n.at); return { ...n, x: p.x, y: p.y }; }) : []);
     // the chevrons for enemy ships outside the free rect, in play only (a menu over the match hides them)
     const sc0 = view.menu ? view.menu.screen : Screen.Playing;
     if (m && this.hudMode === 'all' && (sc0 === Screen.Playing || (sc0 === Screen.Title && view.menu.inDemo)) && this.rig.m === 0) {
@@ -441,7 +453,8 @@ class Renderer {
     if (this.wipeKey !== null && key !== this.wipeKey) this.wipeT = 0;
     this.wipeKey = key;
     if (this.wipeT < WIPE_SECONDS && this.hudMode === 'all') { this.hud.wipe(this.wipeT / WIPE_SECONDS); this.wipeT += dt; }
-    if (this.toast && this.clock < this.toast.until) this.hud.toast(this.toast.text, Math.min(1, (this.toast.until - this.clock) * 2));
+    // the toast sits in the free rect's upper part (the action bar and the cards cover the screen's foot)
+    if (this.toast && this.clock < this.toast.until) this.hud.toast(this.toast.text, Math.min(1, (this.toast.until - this.clock) * 2), this.toast.loop ? this.rig.free.y0 + 18 : null, this.toast.loop);
   }
 
   resize(w, h) {

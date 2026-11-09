@@ -65,6 +65,13 @@ export class Ghost {
     this.shapeId = 0;
     this.quarterTurns = 0;
     this.place = PlaceKind.Cannon;   // CANNONS: what confirm would place
+    /** What the model would answer to confirm now (UC-P1: the ghost says WHY it is red): 'wall' -> a PlacementResult (Ok = 0),
+     *  'cannon' -> a RejectReason or -1 (placed), null in a phase with no ghost to refuse. From MatchModel.wallVerdict /
+     *  cannonVerdict, the very checks the command runs. */
+    this.kind = null;
+    this.result = 0;
+    /** The squares behind a refusal (outlined red by the view); empty when legal or when the reason is not about a square. */
+    this.bad = [];
   }
 }
 
@@ -95,7 +102,14 @@ export class MatchController {
     this._turns = new Int32Array(n); this._seq = new Int32Array(n);
     // the bomb rule set: where each hero stands (Q16, chasing the cursor), the square last reported to the core, and the B hold
     this._hx = new Int32Array(n); this._hy = new Int32Array(n); this._sent = new Array(n).fill(null);
+    // UC-P3: the hero and the cursor as they were one tick ago (Q16), so a view can draw them BETWEEN ticks at the display rate
+    // (heroAt / cursorAt with the frame's alpha). View-only: no command and no rule reads them.
+    this._phx = new Int32Array(n); this._phy = new Int32Array(n); this._pqx = new Int32Array(n); this._pqy = new Int32Array(n);
     this._hold = new Int32Array(n); this._holdDone = new Array(n).fill(false); this._arm = new Array(n).fill(null);
+    // REPAIR: the bomb tool this controller drew by itself for a bomb verb (a pick-up, a drop), put away again after the throw or
+    // the drop, so the pieces come back (UC-P1, 11-09: a right click meant to turn the piece picked up a bomb beside the hero, drew
+    // the bomb tool and hid the ghost; every later click dropped a bomb until the player found Tab)
+    this._autoTool = new Array(n).fill(false);
     this._bots = new Array(n).fill(null);
     this._pending = [];
     /** The squares the shared camera can show at its widest, set by the host each frame: no cursor - no hero - walks past them.
@@ -118,6 +132,7 @@ export class MatchController {
         this._qx[s] = c.x * 65536 + 32768; this._qy[s] = c.y * 65536 + 32768;
       }
       this._hx[s] = this._qx[s]; this._hy[s] = this._qy[s]; this._sent[s] = null; this._hold[s] = 0; this._arm[s] = null;
+      this._phx[s] = this._hx[s]; this._phy[s] = this._hy[s]; this._pqx[s] = this._qx[s]; this._pqy[s] = this._qy[s];
     }
   }
 
@@ -135,6 +150,16 @@ export class MatchController {
   /** The hero's square and its exact place in squares (the bomb rule set: the hero chases the cursor; a view draws it there). */
   heroCell(slot) { return new Cell(CellMath.cellOfQ16(this._hx[slot]), CellMath.cellOfQ16(this._hy[slot])); }
   heroExact(slot) { return { x: this._hx[slot] / 65536.0, y: this._hy[slot] / 65536.0 }; }
+  /** UC-P3: the hero (bomb rule set) / the cursor in squares at `alpha` (0..1) of the way from the last tick to this one: a view
+   *  draws the figure there every display frame, so it moves at the display rate instead of in 30 Hz steps. */
+  heroAt(slot, alpha) {
+    const k = Math.max(0, Math.min(1, alpha));
+    return { x: (this._phx[slot] + (this._hx[slot] - this._phx[slot]) * k) / 65536.0, y: (this._phy[slot] + (this._hy[slot] - this._phy[slot]) * k) / 65536.0 };
+  }
+  cursorAt(slot, alpha) {
+    const k = Math.max(0, Math.min(1, alpha));
+    return { x: (this._pqx[slot] + (this._qx[slot] - this._pqx[slot]) * k) / 65536.0, y: (this._pqy[slot] + (this._qy[slot] - this._pqy[slot]) * k) / 65536.0 };
+  }
   /** The B / defuse hold as 0..1 of rules.defuseHoldTicks (0 = not held, or already done): the progress ring. */
   holdProgress(slot) {
     if (this._hold[slot] === 0 || this._holdDone[slot]) return 0;
@@ -159,6 +184,7 @@ export class MatchController {
       throw new RangeError('one PadInput per player slot (' + this.model.playerCount + '), got ' + (pads === null || pads === undefined ? 0 : pads.length));
     for (let s = 0; s < pads.length; s++)
       if (!(pads[s] instanceof PadInput)) throw new TypeError('pads[' + s + '] is not a PadInput');
+    this._phx.set(this._hx); this._phy.set(this._hy); this._pqx.set(this._qx); this._pqy.set(this._qy);
     for (let s = 0; s < this.model.playerCount; s++) {
       if (this._bots[s] !== null) {
         let acted = false;
@@ -242,7 +268,8 @@ export class MatchController {
     // for both; a device that still has one sets both fields, and only the one that fits the phase acts)
     const toolPhase = m.phase === Phase.Repair || m.phase === Phase.Battle;
     if (p.ready && !toolPhase) this._pending.push(Command.ready(s, ++this._seq[s], this._pending.length));
-    if (p.swap && toolPhase) this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length));
+    if (p.swap && toolPhase) { this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length)); this._autoTool[s] = false; }
+    if (m.phase !== Phase.Repair) this._autoTool[s] = false;
     if (bombs) { if (this._bombInput(s, p, toolPhase)) return; }
     if (!p.confirm) return;
     const at = this.cursor(s);
@@ -321,17 +348,21 @@ export class MatchController {
       else if (arm.cell.x === hero.x && arm.cell.y === hero.y) { this._arm[s] = null; act = true; }
     }
     if (!act) return toolPhase && p.confirm && pl.sword;
-    if (!pl.sword) this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length));
+    const repair = m.phase === Phase.Repair;
+    if (!pl.sword) { this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length)); if (repair) this._autoTool[s] = true; }
     if (pl.carrying !== 0) this._pending.push(Command.throwBomb(s, ++this._seq[s], hero, this._throwTarget(s, hero), this._pending.length));
     else this._pending.push(Command.dropBomb(s, ++this._seq[s], hero, this._pending.length));
+    if (repair && this._autoTool[s]) { this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length)); this._autoTool[s] = false; }
     return true;
   }
 
   /** Take the bomb beside the hero, and bring the bomb tool out so the next press throws it. */
   _pickUp(s, pl, hero) {
     this._pending.push(Command.pickUpBomb(s, ++this._seq[s], hero, this._pending.length));
-    if (!pl.sword && (this.model.phase === Phase.Repair || this.model.phase === Phase.Battle))
+    if (!pl.sword && (this.model.phase === Phase.Repair || this.model.phase === Phase.Battle)) {
       this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length));
+      if (this.model.phase === Phase.Repair) this._autoTool[s] = true;
+    }
   }
 
   /** The cursor's square, pulled in along its longer axis until it is within the throw range (Manhattan) of the hero. */
@@ -349,8 +380,9 @@ export class MatchController {
     return this.model.grid.in(x, y) && this.model.grid.terrainAt(x, y) !== Terrain.Water;
   }
 
-  /** The ghost a view draws at slot's cursor. */
-  ghostOf(s) {
+  /** The ghost a view draws at slot's cursor. `terr` (CANNONS only): EnclosureRules.map of the board now, when the caller asks for
+   *  several ghosts in one frame; null maps it here. */
+  ghostOf(s, terr = null) {
     const m = this.model;
     const at = this.cursor(s);
     const gh = new Ghost();
@@ -358,21 +390,25 @@ export class MatchController {
     gh.place = PlaceKind.Cannon;
     switch (m.phase) {
       case Phase.Repair: {
+        // the command's own check (MatchModel.wallVerdict): until 11-09 this was PlacementRules.check alone, which knew nothing of
+        // the last-piece grace, the tool in hand or the piece in hand, so a ghost drawn legal could still be refused (UC-P1)
         const shape = m.catalog.byId(gh.shapeId);
         gh.cells = PlacementRules.cellsOf(shape, this._turns[s], at);
-        gh.legal = PlacementRules.check(m.grid, shape, this._turns[s], at, (x, y) => m.gruntAt(x, y)) === PlacementResult.Ok;
+        const v = m.wallVerdict(s, gh.shapeId, this._turns[s], at);
+        gh.kind = 'wall'; gh.result = v.result; gh.bad = v.bad;
+        gh.legal = v.result === PlacementResult.Ok;
         break;
       }
       case Phase.Cannons: {
-        // a 2x2 cannon, top-left at the cursor (the C#'s 3x3 kinds are extended-rules only)
+        // a 2x2 cannon, top-left at the cursor (the C#'s 3x3 kinds are extended-rules only). The model's own check
+        // (MatchModel.cannonVerdict): this used to ask "is it enclosed by anyone", the model asks "by THIS player's walls", so a
+        // ghost inside a team-mate's ring was drawn legal and refused (UC-P1)
         const list = [];
         for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) list.push(new Cell(at.x + dx, at.y + dy));
         gh.cells = list;
-        const outside = EnclosureRules.outside(m.grid);
-        gh.legal = m.player(s).cannonsToPlace >= 1;
-        for (const c of gh.cells)
-          gh.legal = gh.legal && m.grid.in(c.x, c.y) && m.grid.terrainAt(c.x, c.y) === Terrain.Land
-                     && m.grid.occupantAt(c.x, c.y) === Occupant.Empty && !outside[c.y * m.grid.width + c.x] && !m.gruntAt(c.x, c.y);
+        const v = m.cannonVerdict(s, at, terr);
+        gh.kind = 'cannon'; gh.result = v.result; gh.bad = v.bad;
+        gh.legal = v.result < 0;
         break;
       }
       default:

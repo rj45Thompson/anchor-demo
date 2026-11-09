@@ -13,7 +13,7 @@ import { C, SKY, NEUTRAL_WALL, mats, glowing, wallStoneGeometry, wallCapGeometry
 export const MARGIN = 12;              // AUTHORED: squares of sea drawn round the board, so the island never sits on a hard edge
 const SUB = 4;                         // AUTHORED: land vertices per square (the coast is smooth, not stepped)
 const TUFTS_PER_SQUARE = 3;            // AUTHORED: grass tufts on each open grass square
-const TUFT_CAP = 52 * 34 * TUFTS_PER_SQUARE;   // the largest generated map (app/maps.js) full of grass
+const TUFT_CAP = 76 * 56 * TUFTS_PER_SQUARE;   // the largest generated map (app/maps.js SIZE_CLASSES.large: up to 76 x 56) full of grass
 const SDF_RANGE = 8;                   // the distance texture holds -8..+8 squares
 const WALL_H = 0.5, WALL_W = 0.9;      // AUTHORED: a wall block, in squares
 // AUTHORED (graphics round 3): a cannonball's scorch on the land fades over SCORCH_SECONDS (the first moments glow as embers); its
@@ -62,8 +62,8 @@ export class BoardLook {
 
   /** Grass tufts: ONE mesh drawn instanced (Mesh.count), each tuft's place, turn and size in an instanced vertex attribute, so a
    *  level only rewrites the attribute (no InstancedMesh, whose matrices would sit in a uniform buffer capped at 1000; no new shader
-   *  per level). They lean with a breeze that grows toward the blade tips. TUFT_CAP covers the largest generated map (app/maps.js:
-   *  52 x 34 squares) at TUFTS_PER_SQUARE; a board that would need more is an error in Board.drawTufts, never a silent cut. */
+   *  per level). They lean with a breeze that grows toward the blade tips. TUFT_CAP covers the largest generated map (app/maps.js SIZE_CLASSES.large:
+   *  up to 76 x 56 squares) at TUFTS_PER_SQUARE; a board that would need more is an error in Board.drawTufts, never a silent cut. */
   makeTufts() {
     this.tuftData = new Float32Array(TUFT_CAP * 4);
     this.tuftAttr = new THREE.InstancedBufferAttribute(this.tuftData, 4).setUsage(THREE.DynamicDrawUsage);
@@ -573,6 +573,17 @@ export class Board {
     const c = this.colours[slot];
     if (!c) throw new Error('board.js: no player in slot ' + slot + ' (the match has ' + this.colours.length + ')');
     return c;
+  }
+
+  /** UC-P2: the territory as DRAWN - every square the fill texture colours (alpha > 0), [x, y, owner slot] - for the page check
+   *  to hold cell for cell against the model's EnclosureRules. */
+  displayedTerritory() {
+    const out = [], d = this.fillData;
+    for (let y = 0; y < this.h; y++) for (let x = 0; x < this.w; x++) {
+      const i = y * this.w + x;
+      if (d[i * 4 + 3] > 0) out.push([x, y, this.territory ? this.territory.mainOwner(this.territory.regionAt(x, y)) : -1]);
+    }
+    return out;
   }
 
   drawTerritory(dt) {

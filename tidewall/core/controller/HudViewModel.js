@@ -6,6 +6,7 @@
 //   - the fate wording is "CONTINUE OR GIVE UP?" / "CONTINUE!" (the private build quoted an existing game's line);
 //   - the reject reasons 9..11 (the extended rules' weapons) have no words: the rules port does not have them.
 import { GameRules } from '../rules/GameRules.js';
+import { Terrain, Occupant } from '../grid.js';
 import { PlacementResult } from '../rules/PlacementRules.js';
 import { Phase } from '../match/Entities.js';
 import { MatchModel } from '../match/MatchModel.js';
@@ -114,6 +115,42 @@ export class HudViewModel {
       sb += ch.toUpperCase();
     }
     return sb;
+  }
+
+  /** The short reason a ghost shows at itself when confirm would be refused (UC-P1, PLAY_FIXES_AND_LOOK_SPEC.md: "water", "wall
+   *  here", "castle", ...). `ghost` is MatchController.ghostOf's Ghost (kind, result, bad); `grid` names what stands on the first
+   *  outlined square. '' when the ghost is legal. Port-own (the private model's ghost said nothing). */
+  static ghostWords(ghost, grid) {
+    if (ghost.legal || ghost.kind === null) return '';
+    const b = ghost.bad.length > 0 ? ghost.bad[0] : null, on = b !== null && grid.in(b.x, b.y);
+    const thing = () => {
+      switch (on ? grid.occupantAt(b.x, b.y) : -1) {
+        case Occupant.Wall: return 'wall here';
+        case Occupant.Castle: return 'castle';
+        case Occupant.Cannon: return 'cannon here';
+        case Occupant.Graveyard: return 'ruined castle';
+        case Occupant.RockSmall: case Occupant.RockLarge: return 'rock';
+        case Occupant.Tree: return 'tree';
+        default: return 'blocked';
+      }
+    };
+    if (ghost.kind === 'wall')
+      switch (ghost.result) {
+        case PlacementResult.OutOfBounds: return 'off the map';
+        case PlacementResult.OnWater: return 'water';
+        case PlacementResult.BadGround: return on && grid.terrainAt(b.x, b.y) === Terrain.Lake ? 'lake' : 'swamp';
+        case PlacementResult.Occupied: return thing();
+        case PlacementResult.EnemyThere: return 'enemy here';
+        case PlacementResult.GraceUsed: return 'last piece used';
+        case PlacementResult.SwordOut: return 'bombs out: swap tool';
+        case PlacementResult.WrongPiece: return 'new piece';
+        default: return HudViewModel.placementWords(ghost.result);
+      }
+    switch (ghost.result) {
+      case RejectReason.Blocked: return on && grid.terrainAt(b.x, b.y) === Terrain.Water ? 'water' : !on ? 'off the map' : thing();
+      case RejectReason.NotEnclosed: return 'outside your walls';
+      default: return HudViewModel.rejectWords(ghost.result);
+    }
   }
 
   /** C# Words(PlacementResult). */

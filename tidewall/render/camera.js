@@ -95,8 +95,9 @@ export class CameraDirector {
       // the hero, led by its motion (not the pointer player's: its hero follows a still pointer, so the camera would chase it)
       const heroPts = [];
       if (hero && hero.g.visible && !pointer) {
-        const at = hero.at, was = this.prev.get(s) || at.clone(), v = dt > 0 ? at.clone().sub(was).divideScalar(dt) : new THREE.Vector3();
-        this.prev.set(s, at.clone());
+        // the lead from the hero's own (spring) velocity: a difference of two drawn positions over one frame's dt was as uneven as
+        // the frames (UC-P3: the lead, and so the camera, twitched with every stalled frame)
+        const at = hero.at, v = hero.vel ? hero.vel.clone().setY(0) : new THREE.Vector3();
         const lead = v.multiplyScalar(LOOK_AHEAD); if (lead.length() > LOOK_MAX) lead.setLength(LOOK_MAX);
         heroPts.push({ x: at.x, z: at.z }, { x: at.x + lead.x, z: at.z + lead.z });
       }

@@ -96,6 +96,17 @@ export class BombRules extends GameRules {
     this.pointsBombKill = 25; this.pointsDefuseGruntBomb = 10; this.pointsTrapKill = 25;
     // REQ-BOMB-08: the shop (score)
     this.itemCosts = { metal: 80, trap: 40, bombPack: 30, bigBomb: 60 };
+    // UC-S1 (RJ 2026-11-09, bigger islands: 4 players on a 72 x 52 board with 5-7 castles, 1-2 players on 48 x 36 with 3-5). The
+    // island is bigger than the base game's, so each wave sails more ships and every enclosed home castle grants more cannons.
+    // shipsBaseBonus: ships added to every wave's base count (the base table sails 2..6; a ship now crosses up to ~36 squares of
+    // sea at 20 ticks a square, 12 s, before it is in range, so a wave needs a few more to keep pressure on 5-7 castles).
+    this.shipsBaseBonus = 1;
+    // shipsPerExtraPlayer: ships added per player beyond the first (the base table adds 1). A 4-player island holds 5-7 castles, so it
+    // is attacked from more sides: 2 per extra player (RoundSpec.shipCount; the board's maxShips cap of 16 still applies).
+    this.shipsPerExtraPlayer = 2;
+    // the starting cannons: a home castle's enclosed ground is bigger on these islands (ring radius is unchanged), so 3 where the
+    // base game grants 2; every other enclosed castle still grants otherCastleCannons (1).
+    this.homeCastleCannons = 3;
   }
 
   static default() { return new BombRules(); }
@@ -165,12 +176,12 @@ export class RoundTable {
   }
 
   /** The bomb rule set's longer rounds (BOMBS_SPEC.md "Round lengths"): CANNONS 25 s (was 15), BATTLE (24 + i) s (was 18 + i),
-   *  REPAIR 75 s (was 25); ships as in `default`. */
-  static tidewall(endless = false) {
+   *  REPAIR 75 s (was 25); ships as in `default` plus the bomb rules' shipsBaseBonus and shipsPerExtraPlayer (UC-S1). */
+  static tidewall(endless = false, rules = BombRules.default()) {
     const s = GameRules.TicksPerSecond;
     const r = [];
     for (let i = 1; i <= 8; i++)
-      r.push(new RoundSpec(25 * s, (24 + i) * s, 75 * s, 2 + Math.trunc(i / 2), 1, 1 + Math.trunc(i / 3), i >= 3 ? 1 + Math.trunc((i - 3) / 2) : 0));
+      r.push(new RoundSpec(25 * s, (24 + i) * s, 75 * s, 2 + Math.trunc(i / 2) + rules.shipsBaseBonus, rules.shipsPerExtraPlayer, 1 + Math.trunc(i / 3), i >= 3 ? 1 + Math.trunc((i - 3) / 2) : 0));
     return new RoundTable(r, endless);
   }
 }

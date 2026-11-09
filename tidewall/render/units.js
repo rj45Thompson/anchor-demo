@@ -8,9 +8,10 @@
 import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GameRules, Phase, Terrain, Occupant, ShipKind, ShotFired, ShotLanded, ShipSunk, ShipDamaged, GruntKilled, WallBroken,
-         CannonDamaged, LoopClosed, CastleClaimed, SwordSwung, WallsPlaced, CannonPlaced } from '../core/index.js';
+         CannonDamaged, LoopClosed, CastleClaimed, SwordSwung, WallsPlaced, CannonPlaced, PlacementRejected, CommandRejected, CommandKind,
+         EnclosureRules, HudViewModel } from '../core/index.js';
 import { uv, length, smoothstep } from 'three/tsl';
-import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry } from './look.js';
+import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry, drawAllRoom } from './look.js';
 import { boneEndingWith, tintArmour, shade, rimFigure, setFlash, tintSails } from './models.js';
 import { Effects } from './fx.js';
 import { BombsView } from './bombs.js';
@@ -18,6 +19,16 @@ import { bombGeometry } from './look.js';
 
 const SHIP_SPEED = 3.0, GRUNT_SPEED = 2.4, HERO_SPEED = 9.0, BOMB_HERO_SPEED = 16.0;   // AUTHORED: squares per second the drawn figures may cover easing to the model
 const SINK_SECONDS = 2.4, DIE_SECONDS = 1.1;
+const FLAG_RATE = 3.5;                                           // AUTHORED: 1/s the flag eases up (secured) or down its pole
+const REFUSED_SECONDS = 1.6;
+// UC-P3 (AUTHORED, tuned on run_page `smooth`): the drawn hero's spring stiffness (1/s: at a 10 squares/s walk it trails the rules'
+// hero by 2v/w ~ 1 square, and settles in ~0.3 s from a stop), the distance it is snapped instead of walked (a new map), its top
+// speed (squares/s: 1.8x the rules' 10, so a jump in its target is walked quickly, never flown), the speed under which it
+// stands, how fast it turns (1/s), and the speeds at which the Walking and Running clips' feet do not slide (squares/s at timeScale 1)
+const CASTLE_SOUTH = 0.6;                                        // AUTHORED: squares of preference for a castle's south (camera) side
+const HERO_OMEGA = 18, HERO_SNAP = 12, HERO_MAX = 18, IDLE_BELOW = 0.35, TURN_RATE = 10, WALK_NATURAL = 2.2, RUN_NATURAL = 6;
+// AUTHORED: how long each bomb gesture takes (s)
+const GESTURE = Object.freeze({ drop: 0.32, lift: 0.45, toss: 0.4 });                                     // AUTHORED: how long a refused confirm's reason flashes at the ghost
 const BUBBLE_EVERY = 0.045;                                      // AUTHORED: seconds between bubbles over a sinking ship
 const TRAIL_STEP = 0.12;                                         // AUTHORED: squares a shot flies between two puffs of its trail
 const WAKE_STEP = 0.2;                                           // AUTHORED: squares a ship sails between two puffs of wake
@@ -107,6 +118,8 @@ export class Units {
     this.pipEmpty = fade(new THREE.Color(0x333333), 0.6);
     this.castles = new Map(); this.cannons = new Map(); this.ships = new Map(); this.grunts = new Map(); this.shots = new Map();
     this.heroes = []; this.ghosts = [];
+    this.badOutline = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0xff1010), depthTest: false, depthWrite: false, transparent: true, opacity: 0.95 });
+    this.clock = 0;                                                  // seconds, the renderer's clock (update() sets it)
     this.buildCastles();
     for (let s = 0; s < match.playerCount; s++) { this.heroes.push(this.makeHero(s)); this.ghosts.push(this.makeGhost(s)); }
     this.dryNearest = this.nearestDry();
@@ -135,7 +148,8 @@ export class Units {
       const pad = new THREE.Mesh(this.geo.disc, this.padMat); pad.scale.setScalar((Math.max(fw, fd) + CASTLE_MARGIN) * 1.5); pad.position.y = 0.035;
       pad.renderOrder = 1; pad.visible = false; g.add(pad);
       this.group.add(g);
-      this.castles.set(k.id, { castle: k, g, body, pole, flag, ring, pad, cells: k.cells, half: (Math.max(fw, fd) + CASTLE_MARGIN) / 2 });
+      this.castles.set(k.id, { castle: k, g, body, pole, flag, ring, pad, cells: k.cells, half: (Math.max(fw, fd) + CASTLE_MARGIN) / 2,
+                               flagTop: top + 0.56, flagLow: top + 0.08, raise: 0, secured: false });
     }
   }
 
@@ -148,18 +162,28 @@ export class Units {
     return { slot: o, home: false };
   }
 
-  updateCastles(seconds) {
+  /** UC-P2: whether the board shows castle `id` secured (a closed ring round it: every square of it in an enclosed area of the
+   *  board's territory, EnclosureRules' own rule for enclosedCastleIds) and how far its flag is up (0 lowered .. 1 at the top). */
+  castleShown(id) { const e = this.castles.get(id); return e ? { secured: e.secured, raise: e.raise } : null; }
+
+  updateCastles(seconds, dt = 0) {
+    const t = this.board.territory;
     for (const e of this.castles.values()) {
       const ruined = e.castle.ruined;
       e.body.visible = !ruined; e.flag.visible = !ruined; e.pole.visible = !ruined;
+      // UC-P2: a castle inside a closed ring flies its flag at the top of the pole and its ring glows; an open one lowers it
+      e.secured = !ruined && !!t && e.cells.every((c) => t.regionAt(c.x, c.y) > 0);
+      e.raise += ((e.secured ? 1 : 0) - e.raise) * Math.min(1, dt * FLAG_RATE);
+      e.flag.position.y = e.flagLow + (e.flagTop - e.flagLow) * e.raise;
       const own = this.castleOwner(e.castle);
       e.flag.material = own.slot >= 0 ? this.flagMats[own.slot] : this.flagNeutral;
       e.flag.rotation.y = Math.sin(seconds * 2.2 + e.castle.id) * 0.35 - 0.3;
       // a castle no one holds: a neutral banner as big as a home's, a pale ring and pad, so it reads as a castle to take, not a hole
       const free = own.slot < 0;
       e.flag.scale.setScalar(own.home || free ? 1.8 : 1.3);
-      e.ring.visible = (own.home || free) && !ruined;
-      e.ring.material = own.home ? this.glowP[own.slot] : this.glowNeutral;
+      e.ring.visible = (own.home || free || e.secured) && !ruined;
+      e.ring.material = own.slot >= 0 && (own.home || e.secured) ? this.glowP[own.slot] : this.glowNeutral;
+      e.ring.scale.setScalar(e.secured ? 1 + 0.05 * Math.sin(seconds * 3 + e.castle.id) : 1);
       e.pad.visible = free && !ruined;
     }
   }
@@ -407,7 +431,8 @@ export class Units {
     const shadow = new THREE.Mesh(this.geo.disc, this.blobMat); shadow.scale.setScalar(1.3); shadow.renderOrder = 1;
     const reticle = new THREE.Mesh(this.geo.reticle, this.glowP[s]);   // the ring and its four ticks, one draw
     this.group.add(g, ring, shadow, reticle);
-    const e = { g, fig, state: null, armed, tip: 0, hammer, torch, hand, ring, shadow, reticle, pos: null, yaw: 0, swing: 0, at: new THREE.Vector3() };
+    const e = { g, fig, state: null, armed, tip: 0, hammer, torch, hand, ring, shadow, reticle, pos: null, vel: new THREE.Vector3(), yaw: 0, swing: 0,
+                at: new THREE.Vector3(), baseScale: g.scale.clone(), gest: null, holdK: 0 };
     this.play(e, 'Combat_Stance', 0);
     return e;
   }
@@ -434,39 +459,67 @@ export class Units {
       e.reticle.visible = false;
       if (!show) continue;
       const cur = ctl.cursorExact(s), cx = Math.floor(cur.x), cy = Math.floor(cur.y), g = m.grid;
-      // where the hero stands: the cursor (in the bomb rule set the hero walks to it on land: the controller's heroExact), or over
-      // open sea the nearest shore square beneath it
-      const stand = bombs ? ctl.heroExact(s) : cur, sx = Math.floor(stand.x), sy = Math.floor(stand.y);
+      // where the hero stands: the cursor (in the bomb rule set the hero walks to it on land: the controller's hero), or over open
+      // sea the nearest shore square beneath it. UC-P3: read BETWEEN the rules' ticks at this frame's alpha (heroAt / cursorAt), so
+      // the target moves every display frame; until 11-09 it jumped once a tick and the drawn hero (eased toward it faster than the
+      // rules walk) caught it and stood still until the next tick - a walk of starts and stops at 30 Hz
+      const alpha = view.alpha ?? 1;
+      const stand = bombs ? ctl.heroAt(s, alpha) : ctl.cursorAt(s, alpha), sx = Math.floor(stand.x), sy = Math.floor(stand.y);
       let tx = stand.x, tz = stand.y;
       if (g.in(sx, sy) && g.terrainAt(sx, sy) === Terrain.Water) {
         const n = this.dryNearest[sy * g.width + sx];
         if (n >= 0) { tx = (n % g.width) + 0.5; tz = Math.floor(n / g.width) + 0.5; }
       }
-      // over a standing castle the hero waits at the castle's south foot: the castle model is taller than the hero and would hide it,
-      // and the camera looks from the south (the tag, the ghost and the reticle still show the cursor itself)
+      // over a standing castle the hero waits at the castle's foot: the castle model is taller than the hero and would hide it (the
+      // tag, the ghost and the reticle still show the cursor itself). UC-P3: pushed out to the NEAREST side (the south one, the
+      // camera's, preferred by CASTLE_SOUTH squares), so walking past a castle slides the hero round it instead of jumping it to the
+      // south foot and back
+      const t0x = tx, t0z = tz;
       for (const k of this.castles.values()) {
         if (k.castle.ruined) continue;
-        const c = k.g.position, half = k.half;
-        if (Math.abs(tx - c.x) < half && Math.abs(tz - c.z) < half) { tz = c.z + half + 0.2; tx = Math.min(Math.max(tx, c.x - half + 0.3), c.x + half - 0.3); }
+        const c = k.g.position, half = k.half + 0.2;
+        if (Math.abs(tx - c.x) >= half || Math.abs(tz - c.z) >= half) continue;
+        const side = [['s', c.z + half - tz - CASTLE_SOUTH], ['n', tz - (c.z - half)], ['e', c.x + half - tx], ['w', tx - (c.x - half)]].sort((a, b) => a[1] - b[1])[0][0];
+        if (side === 's') tz = c.z + half; else if (side === 'n') tz = c.z - half; else if (side === 'e') tx = c.x + half; else tx = c.x - half;
       }
-      const target = new THREE.Vector3(tx, this.board.groundAtPoint(tx, tz), tz);
-      if (!e.pos) e.pos = target.clone();
-      const before = e.pos.clone(); towards(e.pos, target, (bombs ? BOMB_HERO_SPEED : HERO_SPEED) * dt);
-      const d = e.pos.clone().sub(before), moving = d.lengthSq() > 1e-7, speed = dt > 0 ? d.length() / dt : 0;
+      e.adjusted = tx !== t0x || tz !== t0z || sx !== Math.floor(tx) || sy !== Math.floor(tz);   // drawn away from the rules' point (a page check reads it)
+      // UC-P3: the drawn hero is a body with a velocity pulled to that point by a critically damped spring (HERO_OMEGA): it speeds
+      // up from a stand, slows into a stop, carries no step of the rules' grid, and at a steady walk keeps a steady small lag. A
+      // jump the rules make (a new map, the castle's foot) is too far to walk: it is taken at once (HERO_SNAP)
+      if (!e.pos || Math.hypot(tx - e.pos.x, tz - e.pos.z) > HERO_SNAP) { e.pos = new THREE.Vector3(tx, 0, tz); e.vel = new THREE.Vector3(); }
+      const h = Math.min(dt, 0.05), w = HERO_OMEGA, f = 1 + 2 * h * w, hh = h * w * w;
+      for (const [ax, goal] of [['x', tx], ['z', tz]]) {             // the implicit (stable at any frame time) critically damped step
+        const det = f + h * hh, x0 = e.pos[ax], v0 = e.vel[ax];
+        e.vel[ax] = (v0 + hh * (goal - x0)) / det;
+      }
+      // never faster than HERO_MAX: a target that jumps (round a castle to its foot, off the sea to the shore) is walked to, not
+      // flown to - the spring alone would cover a 4-square jump at ~70 squares/s, which reads as a teleport
+      const vlen = Math.hypot(e.vel.x, e.vel.z);
+      if (vlen > HERO_MAX) { e.vel.x *= HERO_MAX / vlen; e.vel.z *= HERO_MAX / vlen; }
+      e.pos.x += e.vel.x * h; e.pos.z += e.vel.z * h;
+      e.pos.y = this.board.groundAtPoint(e.pos.x, e.pos.z);
+      const speed = Math.hypot(e.vel.x, e.vel.z), moving = speed > IDLE_BELOW;
       const aiming = m.phase === Phase.Battle && !p.sword;
-      if (moving) e.yaw = yawTo(e.yaw, Math.atan2(d.x, d.z), Math.min(1, dt * 12));
+      // turning: toward the way it walks, eased (no snap round when the input turns)
+      if (moving) e.yaw = yawTo(e.yaw, Math.atan2(e.vel.x, e.vel.z), Math.min(1, dt * TURN_RATE));
       else if (aiming) e.yaw = yawTo(e.yaw, Math.atan2(cur.x - e.pos.x, cur.y - e.pos.z), Math.min(1, dt * 8));
-      // the clip: a sword slash plays to its end (SwordSwung starts it); else running or walking while it moves, the stance when still
+      // the clip from the REAL speed: the stance standing, walking, running; each played at the rate its feet need (AUTHORED rates)
       e.swing = Math.max(0, e.swing - dt);
       if (e.state === 'Right_Hand_Sword_Slash' && e.swing > 0) { /* the slash plays out */ }
-      else if (moving && speed > RUN_FROM) { this.play(e, 'Running', 0.15); e.fig.actions.Running.timeScale = Math.min(1.6, Math.max(0.8, speed / 6)); }
-      else if (moving) this.play(e, 'Walking', 0.15);
-      else this.play(e, 'Combat_Stance', 0.25);
+      else if (moving && speed > RUN_FROM) { this.play(e, 'Running', 0.2); e.fig.actions.Running.timeScale = Math.min(1.6, Math.max(0.8, speed / RUN_NATURAL)); }
+      else if (moving) { this.play(e, 'Walking', 0.2); e.fig.actions.Walking.timeScale = Math.min(1.5, Math.max(0.6, speed / WALK_NATURAL)); }
+      else this.play(e, 'Combat_Stance', 0.3);
       e.fig.mixer.update(dt);
       e.g.position.copy(e.pos);
-      // a stunned hero (bomb rule set) is tipped over on its side and sunk a little; getting up eases back
+      // the bomb verbs' gestures (view only, the Zelda-style polish): a dip to set a bomb down, a crouch and lift to pick one up, a
+      // wind-up and throw, a crouch held while putting one out, and a dizzy wobble while stunned
+      const gs = this.gestureOf(e, p, ctl.holdProgress ? ctl.holdProgress(s) : 0, seconds, dt);
+      // a stunned hero (bomb rule set) is knocked half over and wobbles dizzily; getting up eases back
       e.tip += ((bombs && p.stunLeft > 0 ? 1 : 0) - e.tip) * Math.min(1, dt * 10);
-      e.g.rotation.set(0, e.yaw, e.tip * 1.35, 'YXZ'); e.g.position.y -= e.tip * 0.35;
+      const dizzy = e.tip * Math.sin(seconds * 7.5) * 0.28;
+      e.g.rotation.set(gs.lean, e.yaw + e.tip * Math.sin(seconds * 3.1) * 0.6, e.tip * 0.55 + dizzy, 'YXZ');
+      e.g.position.y += gs.lift - e.tip * 0.2;
+      e.g.scale.set(e.baseScale.x * gs.wide, e.baseScale.y * gs.tall, e.baseScale.z * gs.wide);
       e.ring.position.set(e.pos.x, e.pos.y + 0.03, e.pos.z); e.ring.scale.setScalar(1.4 + Math.sin(seconds * 4 + s) * 0.06);
       e.shadow.position.set(e.pos.x, e.pos.y + 0.02, e.pos.z);
       // the tool in hand: the sword (bombs, in the bomb rule set) when it is out (REPAIR and BATTLE), else the phase's tool
@@ -483,6 +536,31 @@ export class Units {
     }
   }
 
+  /** A hero's bomb gesture now (view only): { lean (pitch, + forward), lift (y), tall, wide (scale factors) }. A one-shot gesture
+   *  (drop, lift, toss) runs GESTURE[kind].secs from gesture(); the defuse crouch is held while the hold ring fills. */
+  gestureOf(e, p, hold, seconds, dt) {
+    const out = { lean: 0, lift: 0, tall: 1, wide: 1 };
+    const crouch = (k) => { out.lean += 0.45 * k; out.lift -= 0.12 * k; out.tall *= 1 - 0.16 * k; out.wide *= 1 + 0.06 * k; };
+    e.holdK += ((hold > 0 ? 1 : 0) - e.holdK) * Math.min(1, dt * 14);
+    if (e.holdK > 0.01) { crouch(e.holdK); out.lean += e.holdK * Math.sin(seconds * 18) * 0.03; }   // a busy little shake of the hands
+    const gst = e.gest;
+    if (gst) {
+      const k = (seconds - gst.t0) / GESTURE[gst.kind];
+      if (k >= 1 || k < 0) e.gest = null;
+      else if (gst.kind === 'drop') crouch(Math.sin(Math.PI * k));                                   // down and up again
+      else if (gst.kind === 'lift') {                                                               // crouch, then rise tall
+        if (k < 0.45) crouch(Math.sin(Math.PI * k / 0.9)); else { const u = (k - 0.45) / 0.55; crouch(Math.max(0, 1 - u * 2)); out.tall *= 1 + 0.08 * Math.sin(Math.PI * u); out.lift += 0.08 * Math.sin(Math.PI * u); }
+      } else if (gst.kind === 'toss') out.lean += k < 0.35 ? -0.35 * Math.sin(Math.PI * k / 0.7) : 0.5 * Math.sin(Math.PI * (k - 0.35) / 0.65);   // wind up back, throw forward
+    }
+    return out;
+  }
+  /** Start a bomb gesture on slot's hero: 'drop' (set a bomb down), 'lift' (pick one up) or 'toss' (throw it). */
+  gesture(slot, kind) {
+    const e = this.heroes[slot];
+    if (!e || !(kind in GESTURE)) throw new Error('units.js: no hero gesture "' + kind + '" for slot ' + slot);
+    e.gest = { kind, t0: this.clock };
+  }
+
   heroTags() {
     const out = [];
     this.heroes.forEach((e, s) => { if (e.g.visible) out.push({ slot: s, at: e.at.clone().add(new THREE.Vector3(0, HERO_HEIGHT + 0.35, 0)) }); });
@@ -497,16 +575,25 @@ export class Units {
     const ok = glowing(new THREE.MeshBasicNodeMaterial({ color: col.clone().lerp(new THREE.Color(0xffffff), 0.3).multiplyScalar(1.4), transparent: true, opacity: 0.72, depthWrite: false }));
     const bad = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0xff2b2b), transparent: true, opacity: 0.6, depthWrite: false });
     const geo = new THREE.BoxGeometry(0.9, 0.5, 0.9).translate(0, 0.25, 0);
-    const im = new THREE.InstancedMesh(geo, ok, 16); im.count = 0; im.visible = false; im.renderOrder = 3; im.frustumCulled = false;
+    const im = new THREE.InstancedMesh(geo, ok, 16); drawAllRoom(im, 0); im.renderOrder = 3; im.frustumCulled = false;
+    // UC-P1: the squares behind a refusal, outlined in red over everything (a square frame: a 4-sided ring turned to the grid)
+    const frame = new THREE.RingGeometry(0.6, 0.72, 4, 1, Math.PI / 4).rotateX(-Math.PI / 2);
+    const outline = new THREE.InstancedMesh(frame, this.badOutline, 16); drawAllRoom(outline, 0); outline.renderOrder = 5; outline.frustumCulled = false;
     const castleRing = new THREE.Mesh(new THREE.RingGeometry(1.25, 1.42, 40).rotateX(-Math.PI / 2), this.glowP[s]); castleRing.visible = false;
-    this.group.add(im, castleRing);
-    return { im, ok, bad, castleRing };
+    this.group.add(im, outline, castleRing);
+    return { im, ok, bad, outline, castleRing, shown: null, refused: null };
   }
+  /** What each player's ghost shows this frame (UC-P1), for the HUD's note and the page check: the squares drawn, whether legal,
+   *  the model's verdict (kind + result: MatchController.ghostOf), the squares outlined red, the words, and the last refusal's
+   *  reason (flashed at the ghost for REFUSED_SECONDS). null = no ghost drawn. */
+  ghostShown(s) { return this.ghosts[s].shown; }
   updateGhosts(view, seconds) {
     const m = this.match, ctl = view.controllers[0], mat = new THREE.Matrix4();
+    const terr = m.phase === Phase.Cannons ? EnclosureRules.map(m.grid) : null;
+    const at = (c) => (m.grid.in(c.x, c.y) ? this.board.groundAt(c.x, c.y) : 0);   // a square off the board is drawn on the sea
     for (let s = 0; s < this.ghosts.length; s++) {
       const e = this.ghosts[s], p = m.player(s);
-      e.im.count = 0; e.im.visible = false; e.castleRing.visible = false;
+      e.im.visible = false; e.outline.visible = false; e.castleRing.visible = false; e.shown = null;
       if (!p.connected || m.ended) continue;
       if (m.phase === Phase.Claim) {
         if (p.claimedCastle !== 0) continue;
@@ -521,18 +608,45 @@ export class Units {
       if (m.phase !== Phase.Repair && m.phase !== Phase.Cannons) continue;
       if (m.phase === Phase.Repair && p.sword) continue;
       if (m.phase === Phase.Cannons && p.cannonsToPlace === 0) continue;
-      const gh = ctl.ghostOf(s);
+      const gh = ctl.ghostOf(s, terr);
       if (!gh.cells) continue;
       e.im.material = gh.legal ? e.ok : e.bad;
       const hover = 0.12 + Math.sin(seconds * 5 + s) * 0.05, low = m.phase === Phase.Cannons ? 0.45 : 1;
-      let k = 0;
+      // EVERY square of the piece, on the board or not (until 11-09 squares off the board were skipped, so a piece hanging off the
+      // edge showed as a shorter red piece with nothing to say why: UC-P1)
+      let k = 0, top = 0, cx = 0, cz = 0;
       for (const c of gh.cells) {
-        if (!m.grid.in(c.x, c.y)) continue;
-        mat.makeScale(1, low, 1).setPosition(c.x + 0.5, this.board.groundAt(c.x, c.y) + hover, c.y + 0.5);
+        const gy = at(c);
+        mat.makeScale(1, low, 1).setPosition(c.x + 0.5, gy + hover, c.y + 0.5);
         e.im.setMatrixAt(k++, mat);
+        top = Math.max(top, gy + hover + 0.5 * low); cx += c.x + 0.5; cz += c.y + 0.5;
       }
-      e.im.count = k; e.im.visible = k > 0; e.im.instanceMatrix.needsUpdate = true;
+      drawAllRoom(e.im, k);                     // all 16 drawn, the unused scaled to nothing (look.js: the shader's bound array)
+      let n = 0;
+      for (const c of gh.bad) { mat.makeTranslation(c.x + 0.5, at(c) + 0.72 + hover, c.y + 0.5); e.outline.setMatrixAt(n++, mat); }
+      drawAllRoom(e.outline, n);
+      const refused = e.refused && seconds - e.refused.t < REFUSED_SECONDS ? e.refused : null;
+      e.shown = { cells: gh.cells.map((c) => [c.x, c.y]), legal: gh.legal, kind: gh.kind, result: gh.result, bad: gh.bad.map((c) => [c.x, c.y]),
+                  text: HudViewModel.ghostWords(gh, m.grid), refused, at: new THREE.Vector3(cx / k, top + 0.25, cz / k) };
     }
+  }
+  /** The ghosts' notes for the HUD (UC-P1): the reason at a red ghost, and a refusal's reason flashed there. */
+  ghostNotes(seconds) {
+    const out = [];
+    this.ghosts.forEach((e, s) => {
+      const g = e.shown;
+      if (!g) return;
+      const flash = g.refused !== null, text = flash ? g.refused.text : g.text;
+      if (text) out.push({ slot: s, at: g.at, text, strong: flash ? 1 - (seconds - g.refused.t) / REFUSED_SECONDS : 0 });
+    });
+    return out;
+  }
+  /** A refusal of a ghost's confirm (PlacementRejected, or a CommandRejected of a cannon), remembered to flash at the ghost. */
+  refusedAt(slot, kind, reason, seconds) {
+    const e = this.ghosts[slot];
+    if (!e) return;
+    const bad = e.shown && e.shown.result === reason ? e.shown.bad.map(([x, y]) => ({ x, y })) : [];
+    e.refused = { kind, code: reason, text: HudViewModel.ghostWords({ legal: false, kind, result: reason, bad }, this.match.grid), t: seconds };
   }
 
   // ------------------------------------------------------------------ effects (started by events; fx.js Effects draws them)
@@ -582,6 +696,10 @@ export class Units {
           const col = this.colours[e.slot] ?? C.foam;
           for (const q of swept) if (this.fxs.rnd() < 0.5) this.fxs.sparkle(new THREE.Vector3(q.x + 0.2 + this.fxs.rnd() * 0.6, this.board.groundAt(q.x, q.y) + 0.1, q.y + 0.2 + this.fxs.rnd() * 0.6), col, q.delay);
         }
+      } else if (e instanceof PlacementRejected) {
+        if (e.slot >= 0 && e.slot < this.ghosts.length) this.refusedAt(e.slot, 'wall', e.reason, this.clock);
+      } else if (e instanceof CommandRejected && e.kind === CommandKind.PlaceCannon) {
+        if (e.slot >= 0 && e.slot < this.ghosts.length) this.refusedAt(e.slot, 'cannon', e.reason, this.clock);
       } else if (e instanceof SwordSwung) {
         this.slash(e.slot);
         this.fxs.flash(cellAt(e.at, 0.4), this.colours[e.slot], 0.5);
@@ -605,8 +723,9 @@ export class Units {
   }
 
   update(view, dt, seconds) {
+    this.clock = seconds;
     const alpha = view.alpha ?? 0;
-    this.updateCastles(seconds);
+    this.updateCastles(seconds, dt);
     this.updateCannons(view, dt);
     this.updateShips(dt, seconds);
     this.updateGrunts(dt);

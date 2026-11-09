@@ -293,6 +293,21 @@ export function makeNoiseTexture() {
 // mesh made with room for 1664 squares and drawn first with count 0 bound 106496 bytes and drew NOTHING (a black frame, a WebGPU
 // validation warning each frame). So no InstancedMesh here ever has room for more than CHUNK instances: a big set is several meshes.
 export const CHUNK = 1000;
+// ...and that same line sizes the bound array by the mesh's count AT THAT FIRST BUILD (buffer(array, 'mat4', count)); the shader is
+// cached per mesh (getMaterialCacheKey takes its uuid) and never rebuilt when count grows. Measured 11-09 (UC-P2): the wall batch's
+// first build had 28 blocks (the castle rings), so every brick placed after it was drawn with no stone and no cap - only its
+// outline - while the rules counted it: a ring the model called closed looked open on screen. So a mesh is BUILT at a room size
+// (ROOM_MIN, doubling, at most CHUNK) and DRAWS that many instances (the ones past what is in use are scaled to nothing); when the
+// set outgrows the room, the mesh is made again (a new uuid, so a new shader) with the next room size. roomFor(n) is that rule.
+const ROOM_MIN = 64;
+const NOTHING = new THREE.Matrix4().makeScale(0, 0, 0);
+export function roomFor(n) { let r = ROOM_MIN; while (r < n) r *= 2; return Math.min(CHUNK, r); }
+/** Keep a fixed-size InstancedMesh drawing its WHOLE capacity (its shader is built with it, so no later instance falls outside the
+ *  bound array) with the instances from `used` on scaled to nothing. For the small meshes made once with their capacity (a ghost). */
+export function drawAllRoom(im, used) {
+  for (let k = used; k < im.instanceMatrix.count; k++) im.setMatrixAt(k, NOTHING);
+  im.count = im.instanceMatrix.count; im.visible = used > 0; im.instanceMatrix.needsUpdate = true;
+}
 export class InstancedBatch {
   /** Meshes are added a CHUNK at a time as instances are set, up to `capacity`. colors: each instance has its own colour. */
   constructor(parent, geo, mat, capacity, { colors = false, castShadow = false, receiveShadow = false, name = 'batch', renderOrder = 0 } = {}) {
@@ -300,15 +315,18 @@ export class InstancedBatch {
     this.o = { colors, castShadow, receiveShadow, name, renderOrder };
     this.meshes = []; this.n = 0;
   }
+  /** A mesh with room for CHUNK instances in its arrays, whose shader is built for `room` of them (it draws `room`). */
+  make(c, room) {
+    const im = new THREE.InstancedMesh(this.geo, this.mat, CHUNK), o = this.o;
+    if (o.colors) im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CHUNK * 3), 3);
+    im.count = room; im.userData.room = room; im.visible = false;
+    im.castShadow = o.castShadow; im.receiveShadow = o.receiveShadow; im.renderOrder = o.renderOrder;
+    im.name = o.name + ' ' + c;
+    im.frustumCulled = false;                                    // instances spread over the whole board; the mesh's own bounds do not
+    return im;
+  }
   chunk(c) {
-    while (this.meshes.length <= c) {
-      const im = new THREE.InstancedMesh(this.geo, this.mat, CHUNK), o = this.o;
-      if (o.colors) im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CHUNK * 3), 3);
-      im.count = 0; im.castShadow = o.castShadow; im.receiveShadow = o.receiveShadow; im.renderOrder = o.renderOrder;
-      im.name = o.name + ' ' + this.meshes.length;
-      im.frustumCulled = false;                                    // instances spread over the whole board; the mesh's own bounds do not
-      this.parent.add(im); this.meshes.push(im);
-    }
+    while (this.meshes.length <= c) { const im = this.make(this.meshes.length, ROOM_MIN); this.parent.add(im); this.meshes.push(im); }
     return this.meshes[c];
   }
   set(i, matrix, color) {
@@ -320,9 +338,19 @@ export class InstancedBatch {
   /** Draw the first n instances. */
   commit(n) {
     this.n = n;
-    this.meshes.forEach((im, c) => {
-      im.count = Math.max(0, Math.min(CHUNK, n - c * CHUNK));
-      im.visible = im.count > 0;                                   // r175 draws instance 0 of a count-0 mesh (a stray block at the origin)
+    this.meshes.forEach((old, c) => {
+      const used = Math.max(0, Math.min(CHUNK, n - c * CHUNK));
+      let im = old;
+      if (used > old.userData.room) {                              // outgrown: a new mesh (a new shader) with room for them
+        im = this.make(c, roomFor(used));
+        im.instanceMatrix.array.set(old.instanceMatrix.array);
+        if (old.instanceColor) im.instanceColor.array.set(old.instanceColor.array);
+        this.parent.remove(old); old.dispose();
+        this.parent.add(im); this.meshes[c] = im;
+      }
+      for (let k = used; k < im.userData.room; k++) im.setMatrixAt(k, NOTHING);
+      im.count = im.userData.room;
+      im.visible = used > 0;                                       // r175 draws instance 0 of a count-0 mesh (a stray block at the origin)
       im.instanceMatrix.needsUpdate = true;
       if (im.instanceColor) im.instanceColor.needsUpdate = true;
     });

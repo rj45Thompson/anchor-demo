@@ -32,6 +32,32 @@ export const PlacementRules = Object.freeze({
     return PlacementResult.Ok;
   },
 
+  /** The squares that make check() answer what it answers: the cells off the board (OutOfBounds), on water (OnWater), on swamp or
+   *  lake (BadGround), occupied (Occupied) or under an enemy (EnemyThere); empty for Ok and UnknownShape. Same precedence as check,
+   *  so a view outlines exactly the squares behind the reason it shows (UC-P1: the offending square outlined in red). */
+  offending(grid, shape, quarterTurns, anchor, enemyAt = null) {
+    const result = PlacementRules.check(grid, shape, quarterTurns, anchor, enemyAt);
+    const out = [];
+    if (result === PlacementResult.Ok || result === PlacementResult.UnknownShape) return out;
+    for (const c of PlacementRules.cellsOf(shape, quarterTurns, anchor)) {
+      const on = grid.in(c.x, c.y);
+      let bad;
+      switch (result) {
+        case PlacementResult.OutOfBounds: bad = !on; break;
+        case PlacementResult.OnWater: bad = on && grid.terrainAt(c.x, c.y) === Terrain.Water; break;
+        case PlacementResult.BadGround: bad = on && grid.terrainAt(c.x, c.y) !== Terrain.Land && grid.terrainAt(c.x, c.y) !== Terrain.Water; break;
+        case PlacementResult.Occupied: {
+          const o = on ? grid.occupantAt(c.x, c.y) : Occupant.Empty;
+          bad = o !== Occupant.Empty && o !== Occupant.House && o !== Occupant.Rubble; break;
+        }
+        case PlacementResult.EnemyThere: bad = enemyAt !== null && on && enemyAt(c.x, c.y); break;
+        default: throw new Error('PlacementRules.offending: check() answered ' + result + ', which names no square');
+      }
+      if (bad) out.push(c);
+    }
+    return out;
+  },
+
   /** The board cells the piece would cover (no legality check). */
   cellsOf(shape, quarterTurns, anchor) {
     const o = shape.rotated(quarterTurns);

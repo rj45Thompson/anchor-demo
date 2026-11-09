@@ -1,6 +1,7 @@
 // port of model/Rules/Campaign.cs
 import { Fnv64 } from '../grid.js';
 import { GameRules, BombRules, RoundSpec, RoundTable } from './GameRules.js';
+import { PieceCatalog } from '../pieces.js';
 
 /** The setup screen's choice of ruleset. Only Normal (0) is ported; 1 is the private model's bigger ruleset, which this game
  *  does not play (a match refuses any other value). */
@@ -36,9 +37,13 @@ export class GameOptions {
 
 const S = GameRules.TicksPerSecond;
 
+const BOMB_RULES = BombRules.default();   // the bomb rule set's numbers the table reads (ship counts), one place with the rules
+
 function wave(map, battleSeconds, white, grey, bombs) {
-  // BOMBS_SPEC.md: with bombs CANNONS is 25 s (was 15), BATTLE 6 s longer (24 + i against 18 + i), REPAIR 75 s (was 25)
-  const r = new RoundSpec((bombs ? 25 : 15) * S, (battleSeconds + (bombs ? 6 : 0)) * S, (bombs ? 75 : 25) * S, white, 1, 0, grey);
+  // BOMBS_SPEC.md: with bombs CANNONS is 25 s (was 15), BATTLE 6 s longer (24 + i against 18 + i), REPAIR 75 s (was 25);
+  // UC-S1: with bombs the islands are bigger, so the wave carries shipsBaseBonus more ships and shipsPerExtraPlayer per extra player
+  const r = new RoundSpec((bombs ? 25 : 15) * S, (battleSeconds + (bombs ? 6 : 0)) * S, (bombs ? 75 : 25) * S,
+    white + (bombs ? BOMB_RULES.shipsBaseBonus : 0), bombs ? BOMB_RULES.shipsPerExtraPlayer : 1, 0, grey);
   r.map = map;
   return r;
 }
@@ -75,4 +80,8 @@ export const Campaign = Object.freeze({
 
   /** The rules with the options folded in: the repair time is read from the table and scaled when a round starts. */
   rulesFor(o) { return o.bombs ? BombRules.default() : GameRules.default(); },
+
+  /** The piece set for these options: the bomb rule set deals the smaller Tidewall pieces (1-4 squares), the base rules the ported
+   *  starting set (so the parity traces keep their hashes). */
+  catalogFor(o) { return o.bombs ? PieceCatalog.tidewall() : PieceCatalog.default(); },
 });

@@ -272,13 +272,36 @@ export class Hud {
 
   // ------------------------------------------------------------------ menus
   /** A short note at the bottom centre over everything (the quality switch says what it switched to); a fades it out. */
-  toast(text, a) {
+  toast(text, a, top = null, big = false) {
     const c = this.ctx; c.save(); c.globalAlpha = a;
-    this.font(16, 700); const w = c.measureText(text).width + 36;
-    this.panel(this.cssW / 2 - w / 2, this.cssH * 0.7, w, 34, 17, 'rgba(10,24,40,0.82)', 'rgba(255,255,255,0.35)');
-    this.text(text, this.cssW / 2, this.cssH * 0.7 + 17, 16, '#ffffff', 'center', 700, false);
+    const px = big ? 24 : 16, h = big ? 46 : 34, y = top ?? this.cssH * 0.7;
+    this.font(px, big ? 900 : 700); const w = c.measureText(text).width + (big ? 52 : 36);
+    // a closing ring's toast (UC-P2) is gold on a dark panel; the quality switch's note stays plain
+    this.panel(this.cssW / 2 - w / 2, y, w, h, h / 2, big ? 'rgba(46,30,8,0.9)' : 'rgba(10,24,40,0.82)', big ? '#ffd257' : 'rgba(255,255,255,0.35)');
+    this.text(text, this.cssW / 2, y + h / 2 + 1, px, big ? '#ffd257' : '#ffffff', 'center', big ? 900 : 700, big);
     c.restore();
+    this.drawnToast = { text, y, a };
   }
+  /** UC-P1: why the ghost would be refused, said AT the ghost: a red pill over it with a pointer down to it ("water", "wall here").
+   *  `notes` [{ x, y (CSS px of the ghost's top), text, strong (0..1: a refused press just now, drawn bigger and brighter) }]. */
+  ghostNotes(notes) {
+    const c = this.ctx;
+    this.drawnNotes = [];
+    for (const n of notes) {
+      const px = Math.round(13 + 4 * n.strong);
+      c.save();
+      this.font(px, 800);
+      const w = c.measureText(n.text).width + 18, h = px + 10, x = Math.max(4, Math.min(this.cssW - w - 4, n.x - w / 2)), y = n.y - h - 30;
+      c.globalAlpha = 0.85 + 0.15 * n.strong;
+      c.beginPath(); c.moveTo(n.x - 6, y + h - 1); c.lineTo(n.x, y + h + 26); c.lineTo(n.x + 6, y + h - 1); c.closePath();
+      c.fillStyle = 'rgba(178,20,20,0.95)'; c.fill();
+      this.panel(x, y, w, h, h / 2, n.strong > 0 ? 'rgba(206,24,24,0.97)' : 'rgba(150,18,18,0.92)', n.strong > 0 ? '#ffffff' : 'rgba(255,255,255,0.6)');
+      this.text(n.text, x + w / 2, y + h / 2 + 1, px, '#ffffff', 'center', 800, false);
+      c.restore();
+      this.drawnNotes.push({ slot: n.slot, text: n.text, box: [x, y, x + w, y + h], strong: n.strong });
+    }
+  }
+
   /** The transition wipe between phases and screens (graphics round 2): a slanted band of light sweeps once across the picture,
    *  k = 0..1 through it. It only brightens (no frame of the game is hidden), so nothing a player needs disappears under it. */
   wipe(k) {
