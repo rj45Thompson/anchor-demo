@@ -172,10 +172,45 @@ class Game {
     }
   }
 
+  /** The mouse or a finger in a menu (11-09: a click on the title did nothing), the same rule as the private model's host:
+   *  hovering a row chooses it (MenuModel.pointAt); a click takes the row UNDER the pointer as seat 1's confirm; a click on a
+   *  screen with no rows (the title, the results, the scores) is "press a button"; a click beside the rows does nothing. On the
+   *  join screen a click on a free seat's card joins that seat; the arrows beside a setup value step it; the initial being set steps
+   *  its letter from its top or bottom half. The hit boxes are the ones the HUD drew this frame (render/hud.js hitAt). */
+  pointerToMenu(menuIn) {
+    const p = this.input.takePointer();
+    if (!(p.click || p.moved) || Number.isNaN(p.x)) return;
+    const screen = this.menu.screen;
+    if (screen === Screen.Playing) return;                                  // in play the pointer does nothing (yet)
+    const r = this.canvas.getBoundingClientRect(), hud = this.renderer.hud;
+    const h = hud.hitAt(screen, p.x - r.left, p.y - r.top);
+    if (h && (h.kind === 'row' || h.kind === 'step')) this.menu.pointAt(h.row);
+    if (!p.click) return;
+    // whose press a click is: P1's on the title (the mouse sits with P1's keys), else the first joined seat's (a menu takes only
+    // joined seats' presses once anyone has joined, MenuModel._nav), so a group that joined from pads alone can still click
+    const first = this.menu.joined.indexOf(true), seat = screen === Screen.Title || first < 0 ? 0 : first, s = menuIn[seat];
+    if (!h) { if (!hud.hasHits(screen) || screen === Screen.Initials) s.confirm = true; return; }   // initials: a click is "next"
+    if (h.kind === 'row') s.confirm = true;
+    else if (h.kind === 'seat') { if (!this.menu.joined[h.seat]) menuIn[h.seat].confirm = true; }
+    else if (h.kind === 'step') { if (h.dir < 0) s.left = true; else s.right = true; }
+    else if (h.kind === 'letter') { if (h.dir < 0) s.up = true; else s.down = true; }
+    else throw new Error('main.js: no pointer handling for a ' + h.kind + ' hit box');
+  }
+
+  /** The pointer cursor: a hand over anything the pointer can act on in a menu. */
+  pointerCursor() {
+    const p = this.input.pointer, screen = this.menu.screen, r = this.canvas.getBoundingClientRect(), hud = this.renderer.hud;
+    const menuUp = !this.sw.attract && !(screen === Screen.Playing);
+    const on = menuUp && !Number.isNaN(p.x) && (!hud.hasHits(screen) || screen === Screen.Initials || hud.hitAt(screen, p.x - r.left, p.y - r.top) !== null);
+    const want = on ? 'pointer' : '';
+    if (document.body.style.cursor !== want) document.body.style.cursor = want;
+  }
+
   gameTick() {
     this.ticks++;
     const seats = this.input.take();
     const menuIn = seats.map((s) => new MenuInput(s.menu));
+    if (!this.sw.attract) this.pointerToMenu(menuIn);
     if (!this.sw.attract) {
       const before = this.menu.screen + ':' + this.menu.row + ':' + this.menu.joinedCount;
       const acts = this.menu.update(menuIn, this.demo ? null : this.model);
@@ -210,6 +245,7 @@ class Game {
     const alpha = Math.min(1, this.acc / STEP);
     const events = this.events; this.events = [];
     this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha }, seconds);
+    this.pointerCursor();
     const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup;
     if (joinScreen && !this.phonesOpened) { this.phonesOpened = true; this.phones.open(); }   // a room opens when a join screen first shows
     this.phones.show(joinScreen);

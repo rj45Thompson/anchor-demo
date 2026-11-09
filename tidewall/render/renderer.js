@@ -133,7 +133,11 @@ class Renderer {
     };
     const chain = (q) => {
       const sp = pass(this.scene, cam, q.msaa ? { samples: q.msaa } : {});
-      sp.setMRT(q.ao ? mrt({ output, emissive, normal: normalView }) : mrt({ output, emissive }));
+      // both chains write the SAME three targets (low leaves the normal unread): a material's shader is built for the targets of
+      // the pass that first drew it and three r175 reuses it for the other pass, so a 2-target low chain made the 3-target high
+      // chain's pipelines invalid after Q, Q (11-09: 111 "Invalid RenderPipeline" warnings and no picture, present since round 1)
+      sp.setMRT(mrt({ output, emissive, normal: normalView }));
+      sp.getTextureNode('normal');                                         // a pass makes a target only when it is asked for one
       let lit = sp.getTextureNode('output').rgb;
       if (q.ao) {
         const aoPass = ao(sp.getTextureNode('depth'), sp.getTextureNode('normal'), cam);
@@ -153,7 +157,9 @@ class Renderer {
     if (!q) throw new RenderContractError("setQuality: 'high' or 'low', got " + name);
     this.quality = name;
     this.post.outputNode = this.chains[name]; this.post.needsUpdate = true;
-    this.sun.shadow.mapSize.set(q.shadow, q.shadow);
+    // the shadow map's size is chosen ONCE, by the quality the page starts with: resizing it under a running scene left the old
+    // map bound for a frame (11-09: "Destroyed texture [4096x4096 Depth24Plus] used in a submit" after Q)
+    if (this.shadowSize === undefined) { this.shadowSize = q.shadow; this.sun.shadow.mapSize.set(q.shadow, q.shadow); }
     this.look.uWaterDetail.value = q.waterDetail;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q.maxPixelRatio));
     if (this.cssW) this.resize(this.cssW, this.cssH);

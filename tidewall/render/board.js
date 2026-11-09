@@ -68,7 +68,7 @@ export class BoardLook {
   makeLand() {
     const cellUv = positionWorld.xz.div(this.uSize);
     const inBoard = step(0, positionWorld.x).mul(step(positionWorld.x, this.uSize.x)).mul(step(0, positionWorld.z)).mul(step(positionWorld.z, this.uSize.y));
-    const fill = this.fillNode.uv(cellUv), fl = this.flashNode.uv(cellUv);
+    const fill = this.fillNode.sample(cellUv), fl = this.flashNode.sample(cellUv);
       // the ground's own detail, all procedural (no texture file): on grass, broad patches of drier and lusher green, a finer mottle and
     // blade-length streaks; on sand, wind ripples and grain. Which is which is read from the vertex colour the island was painted with
     // (grass is greener than it is red; the beach is the other way round).
@@ -101,7 +101,7 @@ export class BoardLook {
     const t = this.uTime, q = this.uWaterDetail;
     const P = positionWorld.xz;
     const suv = P.add(M).div(this.uSize.add(2 * M));
-    const sdfN = this.sdfNode.uv(suv).r.mul(2 * SDF_RANGE).sub(SDF_RANGE);
+    const sdfN = this.sdfNode.sample(suv).r.mul(2 * SDF_RANGE).sub(SDF_RANGE);
     const off = sdfN.negate();                                        // squares out from the coast
     // the surface: two drifting octaves of noise and a long swell. Its slope (finite differences) is the normal the sun lights, the
     // sky reflects in and the glints come from; the second octave is dropped on the low quality setting (uWaterDetail = 0)

@@ -16,6 +16,19 @@ export class Hud {
     this.title = title;
   }
 
+  /** Where the pointer can act on the menu drawn last, in CSS px (taken from the drawing code itself, so a hit box can never drift
+   *  from what is on screen): { kind: 'row', row } a menu row, { kind: 'seat', seat } a seat card on the join screen, { kind:
+   *  'step', row, dir } the arrow beside a setup value, { kind: 'letter', dir } the top or bottom half of the initial being set.
+   *  hitsScreen: the menu screen they belong to. As the private model's host keeps its menu rows for its mouse. */
+  hitAt(screen, x, y) {
+    if (screen !== this.hitsScreen) return null;
+    for (const h of this.hits) if (x >= h.x0 && x <= h.x1 && y >= h.y0 && y <= h.y1) return h;
+    return null;
+  }
+  /** The menu drawn last for `screen` has pointer targets (else a click anywhere is "press a button", as on the title). */
+  hasHits(screen) { return screen === this.hitsScreen && this.hits.length > 0; }
+  hit(h, x0, y0, x1, y1) { this.hits.push(Object.assign(h, { x0, y0, x1, y1 })); }
+
   resize(w, h, dpr) { this.canvas.width = Math.round(w * dpr); this.canvas.height = Math.round(h * dpr); this.dpr = dpr; this.cssW = w; this.cssH = h; }
 
   // ------------------------------------------------------------------ drawing helpers (sizes in CSS px; the context is scaled)
@@ -46,6 +59,7 @@ export class Hud {
     c.clearRect(0, 0, W, H);
     const menu = view.menu, m = view.match;
     const screen = menu ? menu.screen : Screen.Playing;
+    this.hits = []; this.hitsScreen = full ? screen : -1;
     if (m && (screen === Screen.Playing || screen === Screen.Pause || screen === Screen.Decide || (screen === Screen.Title && menu.inDemo))) {
       this.drawTags(view.hud, project, tags);
       if (full) this.drawMatch(view, seconds, screen !== Screen.Decide);   // the fate screen has its own heading
@@ -222,6 +236,7 @@ export class Hud {
       this.panel(x, y, cw, ch, 14, j ? PLAYER_CSS[s] : 'rgba(255,255,255,0.08)', j ? '#fff' : 'rgba(255,255,255,0.35)');
       this.text('P' + (s + 1), x + cw / 2, y + ch * 0.34, ch * 0.3, j ? '#fff' : 'rgba(255,255,255,0.6)', 'center', 900);
       this.text(j ? 'READY' : 'PRESS TO JOIN', x + cw / 2, y + ch * 0.72, ch * 0.15, '#fff', 'center', 800, j);
+      this.hit({ kind: 'seat', seat: s }, x, y, x + cw, y + ch);
       x += cw + 12;
     }
     const rows = MenuModel.SetupRows, rh = Math.max(30, u * 4.6), top = y + ch + rh;
@@ -231,6 +246,14 @@ export class Hud {
       if (sel) this.panel(W / 2 - 230, yy - rh * 0.45, 460, rh * 0.9, rh * 0.45, 'rgba(255,255,255,0.2)', '#fff');
       this.text(rows[i], val ? W / 2 - 200 : W / 2, yy, rh * 0.5, sel ? '#fff' : 'rgba(255,255,255,0.75)', val ? 'left' : 'center');
       if (val) this.text((sel ? '◀ ' : '') + val + (sel ? ' ▶' : ''), W / 2 + 200, yy, rh * 0.5, sel ? '#ffe08a' : 'rgba(255,224,138,0.75)', 'right');
+      const y0 = yy - rh * 0.45, y1 = yy + rh * 0.45;
+      if (sel && val) {                                       // the arrows, measured in the font they were drawn in
+        this.font(rh * 0.5); const all = this.ctx.measureText('◀ ' + val + ' ▶').width, arrow = this.ctx.measureText('◀ ').width;
+        const xr = W / 2 + 200, xl = xr - all;
+        this.hit({ kind: 'step', row: i, dir: -1 }, xl - 8, y0, xl + arrow, y1);
+        this.hit({ kind: 'step', row: i, dir: 1 }, xr - arrow, y0, xr + 8, y1);
+      }
+      this.hit({ kind: 'row', row: i }, W / 2 - 230, y0, W / 2 + 230, y1);
     }
   }
 
@@ -244,6 +267,7 @@ export class Hud {
       const sel = i === at, yy = top + i * rh;
       if (sel) this.panel(W / 2 - 170, yy - rh * 0.45, 340, rh * 0.9, rh * 0.45, 'rgba(255,255,255,0.22)', '#fff');
       this.text(r, W / 2, yy, rh * 0.52, sel ? '#fff' : 'rgba(255,255,255,0.7)');
+      this.hit({ kind: 'row', row: i }, W / 2 - 170, yy - rh * 0.45, W / 2 + 170, yy + rh * 0.45);
     });
   }
 
@@ -257,6 +281,7 @@ export class Hud {
       const sel = i === menu.row, x = W / 2 + (i === 0 ? -bw - 16 : 16);
       this.panel(x, y, bw, bh, bh / 2, sel ? (i === 0 ? '#2fbf71' : '#d9534f') : 'rgba(255,255,255,0.1)', sel ? '#fff' : 'rgba(255,255,255,0.4)');
       this.text(r, x + bw / 2, y + bh / 2, bh * 0.36, '#fff');
+      this.hit({ kind: 'row', row: i }, x, y, x + bw, y + bh);
     });
   }
 
@@ -277,7 +302,14 @@ export class Hud {
       const x = W / 2 + (i - 1) * (bs + 16) - bs / 2, y = H * 0.48, sel = i === menu.initialsAt;
       this.panel(x, y, bs, bs * 1.15, 14, sel ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)', sel ? '#fff' : 'rgba(255,255,255,0.4)');
       this.text(menu.initials[i], x + bs / 2, y + bs * 0.58, bs * 0.7, sel && Math.sin(seconds * 8) < 0 ? '#ffe08a' : '#fff', 'center', 900);
+      if (sel) {                                              // a click on its top half steps the letter back, its bottom half on
+        this.text('▲', x + bs / 2, y - bs * 0.16, bs * 0.22, 'rgba(255,255,255,0.8)', 'center', 900, false);
+        this.text('▼', x + bs / 2, y + bs * 1.31, bs * 0.22, 'rgba(255,255,255,0.8)', 'center', 900, false);
+        this.hit({ kind: 'letter', dir: -1 }, x, y - bs * 0.3, x + bs, y + bs * 0.575);
+        this.hit({ kind: 'letter', dir: 1 }, x, y + bs * 0.575, x + bs, y + bs * 1.45);
+      }
     }
+    if (Math.sin(seconds * 4) > -0.4) this.text('CLICK OR PRESS A FOR THE NEXT LETTER', W / 2, H * 0.48 + bs * 1.7, Math.max(13, u * 1.9), 'rgba(255,255,255,0.75)', 'center', 700);
   }
 
   drawScores(menu) {

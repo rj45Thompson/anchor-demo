@@ -69,7 +69,23 @@ export class InputHub {
     });
     target.addEventListener('keyup', (e) => { this.down.delete(e.code); });
     target.addEventListener('blur', () => this.down.clear());   // a key held while the window lost focus must not stick
+    // the pointer (a mouse, a pen or a finger) for the menus: where it is, and whether it moved or pressed since the last take. A
+    // press on a link or a control of the page (the credits, the front-page link) belongs to that control, not to the game.
+    this.pointer = { x: NaN, y: NaN, moved: false, click: false };
+    const own2 = (e) => !(e.target instanceof Element && e.target.closest('a, button, input, select, textarea'));
+    target.addEventListener('pointermove', (e) => {
+      if (!own2(e)) return;
+      const p = this.pointer, far = !(Math.abs(e.clientX - p.x) <= 2 && Math.abs(e.clientY - p.y) <= 2);
+      p.x = e.clientX; p.y = e.clientY; if (far) p.moved = true;
+    });
+    target.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || !own2(e)) return;                  // the left button, a tap or a pen touch
+      const p = this.pointer; p.x = e.clientX; p.y = e.clientY; p.moved = true; p.click = true; this.anyKey = true;
+    });
   }
+
+  /** The pointer since the last call: { x, y (CSS px in the window), moved, click }; clears moved and click. */
+  takePointer() { const p = this.pointer, out = { x: p.x, y: p.y, moved: p.moved, click: p.click }; p.moved = false; p.click = false; return out; }
 
   attachPhones(phonepad) { this.phonepad = phonepad; }
 
