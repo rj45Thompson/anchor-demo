@@ -121,7 +121,7 @@ export class HudViewModel {
     switch (r) {
       case PlacementResult.BadGround: return "can't build on swamp or lake";
       case PlacementResult.GraceUsed: return 'that was your last piece';
-      case PlacementResult.SwordOut: return 'sword out - Y to build';
+      case PlacementResult.SwordOut: return 'sword out - swap tool to build';
       case PlacementResult.OutOfBounds: return 'off the map';
       case PlacementResult.OnWater: return "can't build on water";
       case PlacementResult.Occupied: return 'something is there';
@@ -149,8 +149,8 @@ export class HudViewModel {
       case RejectReason.Blocked: return 'something is there';
       case RejectReason.NoLoadedCannon: return 'reloading';
       case RejectReason.NotACastle: return 'pick a castle';
-      case RejectReason.SwordOut: return 'sword out - Y for the cannon';
-      case RejectReason.NoSword: return 'Y to draw the sword';
+      case RejectReason.SwordOut: return 'sword out - swap tool for the cannon';
+      case RejectReason.NoSword: return 'swap tool to draw the sword';
       case RejectReason.SwordSwinging: return '';
       case RejectReason.WrongPhase: return 'not now';
       case RejectReason.Disconnected: return 'controller unplugged';

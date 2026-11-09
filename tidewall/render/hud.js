@@ -207,11 +207,13 @@ export class Hud {
     } else if (m.phase === Phase.Repair) {
       const shape = m.catalog.byId(p.heldShapeId);
       if (!shape) throw new Error('hud.js: player ' + s + ' holds shape ' + p.heldShapeId + ', which the catalog does not have');
-      this.piece(shape.rotated(ctl.ghostOf(s).quarterTurns), mid, row, fs * 0.42, col);
+      // the tool in hand is named: the sword when it is out (a piece cannot be placed then), else the piece itself
+      if (m.player(s).sword) this.text('SWORD OUT', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
+      else this.piece(shape.rotated(ctl.ghostOf(s).quarterTurns), mid, row, fs * 0.42, col);
     } else if (m.phase === Phase.Claim) {
       this.text(m.player(s).claimedCastle !== 0 ? 'HOME CHOSEN' : 'PICK A CASTLE', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
     } else if (m.phase === Phase.Battle) {
-      this.text(m.player(s).sword ? 'SWORD OUT' : 'FIRE!', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
+      this.text(m.player(s).sword ? 'SWORD OUT' : 'CANNON', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
     }
     if (!p.connected) {
       this.panel(x, y, w, h, 12, 'rgba(20,20,26,0.72)');

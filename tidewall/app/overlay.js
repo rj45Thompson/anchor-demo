@@ -20,8 +20,8 @@ const icon = (k) => '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' +
  *  app/input.js KEY_CLUSTERS (P1's), mouse input.js (left acts, right click turns, middle is ready, the wheel zooms), touch
  *  controls.js TouchPad, phones PhonePad's A/B/Y. */
 const HOWTO_ROWS = Object.freeze({
-  keys: 'WASD move, Space place / fire, R turn, Tab ready',
-  mouse: 'Click claim / place / fire, right click turn, middle ready, wheel zoom',
+  keys: 'WASD move, Space place / fire, R turn, Tab or Q swap tool, E ready',
+  mouse: 'Click claim / place / fire, right click turn, the buttons below swap tool and ready, wheel zoom',
   touch: 'Stick move, A place / fire, B turn, Y ready; tap the board to act there; pinch to zoom',
   phone: 'Scan the code, A joins; stick move, A place / fire, B turn, Y ready',
 });
@@ -38,8 +38,8 @@ export function howtoDevices(mode, touchFirst) {
 /** The first match's hint for each phase (by the ported Phase name), and how to do it with a touch screen or a desk. */
 export const PHASE_HINTS = Object.freeze({
   Claim: { say: 'Pick a castle', touch: 'tap one', desk: 'click one, or walk there and press Space / A' },
-  Cannons: { say: 'Place cannons inside your walls', touch: 'tap inside, then Y', desk: 'click inside, then Tab / Y' },
-  Battle: { say: 'Fire at ships', touch: 'tap a ship', desk: 'click a ship, or aim and press Space / A' },
+  Cannons: { say: 'Place cannons inside your walls', touch: 'tap inside, then Y', desk: 'click inside, then Ready (E / Y)' },
+  Battle: { say: 'Fire at ships', touch: 'tap a ship', desk: 'click a ship, or aim and press Space; Tab or Q draws the sword' },
   Repair: { say: 'Close the ring with pieces', touch: 'tap to place, B turns', desk: 'click to place, right click / R turns' },
 });
 

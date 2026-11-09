@@ -46,7 +46,7 @@ export class RenderContractError extends Error {
 }
 
 const BG = 0x1f5f9e;                       // AUTHORED: the sea's far colour behind everything
-// AUTHORED quality settings (Q on the keyboard switches; ?quality=low starts low). high: 4x MSAA, ambient occlusion, a 4096 shadow
+// AUTHORED quality settings (G on the keyboard switches; ?quality=low starts low). high: 4x MSAA, ambient occlusion, a 4096 shadow
 // map, the sea's second wave octave, up to 2 device pixels per CSS pixel. low (slower GPUs): FXAA instead of MSAA, no AO, a 2048
 // shadow map, one wave octave, 1 device pixel per CSS pixel.
 const QUALITY = Object.freeze({
@@ -182,7 +182,7 @@ class Renderer {
     const cam = this.rig.camera, grade = this.grade;
     const sp = pass(this.scene, cam, q.msaa ? { samples: q.msaa } : {});
     // every chain writes the SAME targets: a material's shader is built for the targets of the pass that first drew it and three
-    // r175 reuses it for the other pass, so a 2-target low chain made the 3-target high chain's pipelines invalid after Q, Q
+    // r175 reuses it for the other pass, so a 2-target low chain made the 3-target high chain's pipelines invalid after G, G
     // (11-09: 111 "Invalid RenderPipeline" warnings and no picture, present since round 1)
     // (the AO cannot read its normals from the depth instead: three r175's GTAONode getNormalFromDepth calls textureDimensions on the
     // MULTISAMPLED depth, which WGSL refuses - 11-09, round 3: "no matching call to textureDimensions(texture_depth_multisampled_2d)")
@@ -312,6 +312,9 @@ class Renderer {
 
   /** The match HUD's top bar height in CSS px (Hud.matchLayout): the page puts its hint strip under it. */
   hudBarHeight() { return Hud.matchLayout(this.cssW, this.cssH, 0).barH; }
+
+  /** The height in CSS px the match HUD's player-card row takes at the window's foot (card plus its gap): the page puts its action bar above it. */
+  hudFootHeight() { const L = Hud.matchLayout(this.cssW, this.cssH, 1); return this.cssH - L.cardsTop; }
 
   /** The free screen rect (CSS px): the canvas minus the HUD's top bar and its card row (Hud.matchLayout, the numbers it draws
    *  with) and minus each on-screen control (`cover`, DOM rects), each cut from the side that leaves the most area. */

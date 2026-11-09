@@ -23,14 +23,14 @@ export const KEY_CLUSTERS = Object.freeze([
   Object.freeze({
     seat: 0, label: 'Player 1 keys',
     up: ['KeyW'], down: ['KeyS'], left: ['KeyA'], right: ['KeyD'],
-    confirm: ['Space'], rotate: ['KeyR'], back: ['Backspace'], ready: ['Tab'], start: ['Escape'], fast: ['ShiftLeft'],
-    help: 'WASD move, Space place/fire, R rotate, Tab ready, Left Shift fast, Esc pause, Backspace back',
+    confirm: ['Space'], rotate: ['KeyR'], back: ['Backspace'], swap: ['Tab', 'KeyQ'], ready: ['KeyE'], start: ['Escape'], fast: ['ShiftLeft'],
+    help: 'WASD move, Space place/fire, R rotate, Tab or Q swap tool (sword), E or Enter ready, Left Shift fast, Esc pause, Backspace back',
   }),
   Object.freeze({
     seat: 1, label: 'Player 2 keys',
     up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'],
-    confirm: ['Enter', 'NumpadEnter'], rotate: ['ShiftRight'], back: ['ShiftRight'], ready: ['Slash'], start: ['Backslash'], fast: ['ControlRight'],
-    help: 'Arrows move, Enter place/fire, Right Shift rotate/back, / ready, Right Ctrl fast, \\ pause',
+    confirm: ['Enter', 'NumpadEnter'], rotate: ['ShiftRight'], back: ['ShiftRight'], swap: ['Period'], ready: ['Slash'], start: ['Backslash'], fast: ['ControlRight'],
+    help: 'Arrows move, Enter place/fire, Right Shift rotate/back, . swap tool, / ready, Right Ctrl fast, \\ pause',
   }),
 ]);
 
@@ -40,7 +40,7 @@ const PAD = Object.freeze({ A: 0, B: 1, X: 2, Y: 3, RB: 5, START: 9, UP: 12, DOW
 export class SeatLatch {
   constructor() { this.clear(); this.stickX = 0; this.stickY = 0; this.fast = false; }
   clear() {
-    this.confirm = false; this.rotate = false; this.ready = false;
+    this.confirm = false; this.rotate = false; this.ready = false; this.swap = false;
     this.up = false; this.down = false; this.left = false; this.right = false; this.back = false; this.start = false;
   }
 }
@@ -64,7 +64,7 @@ export class InputHub {
     this.prevButtons = new Map();   // gamepad slot key -> pressed[] of the last poll
     this.phonepad = null;           // the PhonePad host, once its room is open
     this.anyKey = false;            // any key or button at all since the last take (wakes the audio, leaves the demo)
-    const own = new Set(KEY_CLUSTERS.flatMap((c) => [...c.up, ...c.down, ...c.left, ...c.right, ...c.confirm, ...c.rotate, ...c.back, ...c.ready, ...c.start, ...c.fast]));
+    const own = new Set(KEY_CLUSTERS.flatMap((c) => [...c.up, ...c.down, ...c.left, ...c.right, ...c.confirm, ...c.rotate, ...c.back, ...c.swap, ...c.ready, ...c.start, ...c.fast]));
     this.ownKeys = own;
     target.addEventListener('keydown', (e) => {
       if (own.has(e.code)) e.preventDefault();          // Tab must not move focus, Space must not scroll, Backspace must not navigate
@@ -79,7 +79,7 @@ export class InputHub {
     // confirm / rotate / ready: the buttons pressed since the last take, for play (a left click is BOTH a menu click and a play
     // confirm, as on the private model's host; main.js uses each only where it belongs). WHEEL_GAP: ms between two wheel turns, so a
     // trackpad's burst of wheel events is one turn.
-    this.pointer = { x: NaN, y: NaN, moved: false, click: false, confirm: false, rotate: false, ready: false, touch: false };
+    this.pointer = { x: NaN, y: NaN, moved: false, click: false, confirm: false, rotate: false, ready: false, swap: false, touch: false };
     // the player's own camera since the last take (render/camera.js userInput): wheel steps, a drag's pan in px, a pinch ratio, the
     // whole-island toggle (Z). A right DRAG pans and a right CLICK turns the piece (decided when the button lifts: RIGHT_DRAG px of
     // travel make it a drag); two fingers that move pan and pinch, two that only tap turn the piece.
@@ -94,6 +94,8 @@ export class InputHub {
     this.fingers = new Set(); this.twoFinger = false; this.fingerInPlay = false;
     this.keysUsed = new Array(SEATS).fill(false); this.mouseUsed = false;
     this.playing = false;           // main.js says whether a match is being played, each tick
+    this.enterReadies = false;      // main.js: in a match without player 2, Enter is player 1's READY
+    this.bar = null;                // the on-screen action bar (app/actions.js), player 1's like the touch controls
     const lift = (e) => {
       if (e.pointerType !== 'touch') {
         if (e.button === 2 && this.right) { if (this.right.travel < RIGHT_DRAG) this.pointer.rotate = true; this.right = null; }   // a right click turns
@@ -144,7 +146,7 @@ export class InputHub {
       p.x = e.clientX; p.y = e.clientY; p.moved = true; p.touch = false; this.mouseUsed = true;
       if (e.button === 0) { p.click = true; p.confirm = true; }           // the left button or a pen touch
       else if (e.button === 2) this.right = { x: e.clientX, y: e.clientY, travel: 0 };   // right: turn the piece (a click) or pan (a drag)
-      else if (e.button === 1) { p.ready = true; e.preventDefault(); }    // middle: ready / swap tool (and no auto-scroll)
+      else if (e.button === 1) { p.ready = true; p.swap = true; e.preventDefault(); }    // middle: ready or swap tool, an extra (the action bar and keys do both) (and no auto-scroll)
     });
     target.addEventListener('contextmenu', (e) => { if (own2(e)) e.preventDefault(); });   // the right button turns, it opens no menu
     target.addEventListener('wheel', (e) => {                            // the wheel zooms the camera (down = out)
@@ -159,8 +161,8 @@ export class InputHub {
 
   /** The pointer since the last call: { x, y (CSS px in the window), moved, click, touch (a finger) }; clears moved and click. */
   takePointer() {
-    const p = this.pointer, out = { x: p.x, y: p.y, moved: p.moved, click: p.click, confirm: p.confirm, rotate: p.rotate, ready: p.ready, touch: p.touch };
-    p.moved = p.click = p.confirm = p.rotate = p.ready = false;
+    const p = this.pointer, out = { x: p.x, y: p.y, moved: p.moved, click: p.click, confirm: p.confirm, rotate: p.rotate, ready: p.ready, swap: p.swap, touch: p.touch };
+    p.moved = p.click = p.confirm = p.rotate = p.ready = p.swap = false;
     return out;
   }
 
@@ -168,6 +170,8 @@ export class InputHub {
   attachPhones(phonepad) { this.phonepad = phonepad; }
   /** Player 1's on-screen touch controls (app/controls.js TouchPad). */
   attachTouch(touchpad) { this.touchpad = touchpad; }
+  /** Player 1's on-screen action bar (app/actions.js ActionBar). */
+  attachBar(bar) { this.bar = bar; }
 
   /** Read every device once; call each animation frame. */
   poll() {
@@ -183,10 +187,12 @@ export class InputHub {
       if (held(c.up)) sticks[s][1] -= STICK_FULL;
       if (held(c.down)) sticks[s][1] += STICK_FULL;
       L.up ||= hit(c.up); L.down ||= hit(c.down); L.left ||= hit(c.left); L.right ||= hit(c.right);
-      L.confirm ||= hit(c.confirm); L.rotate ||= hit(c.rotate); L.back ||= hit(c.back); L.ready ||= hit(c.ready); L.start ||= hit(c.start);
+      // Enter is also player 1's READY while player 2 is not in the match (it is player 2's place key when they are)
+      const readyKeys = s === 0 && this.enterReadies ? [...c.ready, 'Enter', 'NumpadEnter'] : c.ready;
+      L.confirm ||= hit(c.confirm); L.rotate ||= hit(c.rotate); L.back ||= hit(c.back); L.swap ||= hit(c.swap); L.ready ||= hit(readyKeys); L.start ||= hit(c.start);
       fast[s] ||= held(c.fast);
-      if (hit(c.confirm) || hit(c.rotate) || hit(c.ready) || hit(c.start)) this.touched[s] = true;
-      if ([c.up, c.down, c.left, c.right, c.confirm, c.rotate, c.back, c.ready, c.start].some(hit)) this.keysUsed[s] = true;
+      if (hit(c.confirm) || hit(c.rotate) || hit(c.swap) || hit(readyKeys) || hit(c.start)) this.touched[s] = true;
+      if ([c.up, c.down, c.left, c.right, c.confirm, c.rotate, c.back, c.swap, readyKeys, c.start].some(hit)) this.keysUsed[s] = true;
       this.devices[s].keysUsed = this.keysUsed[s]; this.devices[s].mouseUsed = s === 0 && this.mouseUsed;
     }
     this.pressed.clear();
@@ -195,8 +201,13 @@ export class InputHub {
       const t = this.touchpad.take(), L = this.latch[0];
       this.devices[0].touch = true;
       sticks[0][0] += t.stickX; sticks[0][1] += t.stickY;
-      L.confirm ||= t.confirm; L.rotate ||= t.rotate; L.back ||= t.back; L.ready ||= t.ready; L.start ||= t.start;
+      L.confirm ||= t.confirm; L.rotate ||= t.rotate; L.back ||= t.back; L.ready ||= t.ready; L.swap ||= t.ready; L.start ||= t.start;   // Y: both (the phase picks)
       if (t.confirm || t.rotate || t.ready || t.start) this.touched[0] = true;
+    }
+    if (this.bar && this.bar.visible) {                               // the action bar: player 1's, for the mouse and the keyboard
+      const t = this.bar.take(), L = this.latch[0];
+      L.confirm ||= t.confirm; L.rotate ||= t.rotate; L.back ||= t.rotate; L.swap ||= t.swap; L.ready ||= t.ready;
+      if (t.confirm || t.rotate || t.swap || t.ready) this.touched[0] = true;
     }
 
     const list = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
@@ -227,7 +238,7 @@ export class InputHub {
       sticks[seat][0] += sx; sticks[seat][1] += sy;
       L.up ||= edge(PAD.UP); L.down ||= edge(PAD.DOWN); L.left ||= edge(PAD.LEFT); L.right ||= edge(PAD.RIGHT);
       L.confirm ||= edge(PAD.A); L.rotate ||= edge(PAD.B) || edge(PAD.RB); L.back ||= edge(PAD.B);
-      L.ready ||= edge(PAD.Y); L.start ||= edge(PAD.START);
+      L.ready ||= edge(PAD.Y); L.swap ||= edge(PAD.Y); L.start ||= edge(PAD.START);
       fast[seat] ||= !!now[PAD.X];
       if (now.some((p, k) => p && !prev[k])) { this.touched[seat] = true; this.anyKey = true; }
       this.prevButtons.set(key, now);
@@ -263,7 +274,7 @@ export class InputHub {
     for (let s = 0; s < SEATS; s++) {
       const L = this.latch[s];
       out.push({
-        pad: { stickX: L.stickX, stickY: L.stickY, confirm: L.confirm, rotate: L.rotate, ready: L.ready, fast: L.fast },
+        pad: { stickX: L.stickX, stickY: L.stickY, confirm: L.confirm, rotate: L.rotate, ready: L.ready, swap: L.swap, fast: L.fast },
         menu: { up: L.up, down: L.down, left: L.left, right: L.right, confirm: L.confirm, back: L.back, start: L.start },
       });
       L.clear();

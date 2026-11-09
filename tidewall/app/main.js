@@ -5,13 +5,14 @@
 // and the high scores, and back to the title. An untouched title plays the demo full screen (attract), and any press leaves it.
 //
 // URL switches (for a kiosk and for the page check): ?attract=1 the demo with HUD and sound and no menus; ?seed=N the match seed;
-// ?speed=N run N ticks per tick of real time (1..16, default 1); ?quality=low starts the graphics on the low setting (Q switches).
+// ?speed=N run N ticks per tick of real time (1..16, default 1); ?quality=low starts the graphics on the low setting (G switches).
 import { GAME_TITLE } from './title.js';
 import { InputHub, KEY_CLUSTERS, SEATS } from './input.js';
 import { Overlay, HintStrip } from './overlay.js';
 import { SoundPlayer, VOLUME } from './sound.js';
 import { Phones } from './phones.js';
 import { ControlsChoice, TouchPad } from './controls.js';
+import { ActionBar, ACTIONS } from './actions.js';
 import { MapSource, CAMPAIGN_ISLANDS } from './maps.js';
 import * as core from '../core/index.js';
 import { createRenderer, NoWebGpuError, PLAYER_TEXT_CSS } from '../render/renderer.js';
@@ -71,6 +72,9 @@ class Game {
     // the first match's hint strip (overlay.js HintStrip): the match and the round it speaks in, set when a player's first match starts
     this.hint = new HintStrip(document.body); this.hintMatch = null; this.hintRound = 0;
     this.input.attachTouch(this.touchpad);
+    // the action bar: labelled buttons for the mouse and keyboard player (touch has its own on-screen buttons)
+    this.bar = new ActionBar(document.body, ACTIONS);
+    this.input.attachBar(this.bar);
     // the CONTROLS buttons on the join screen (overlay.js draws them), and C on the keyboard there
     document.getElementById('ui').addEventListener('click', (e) => {
       const b = e.target instanceof Element ? e.target.closest('[data-controls]') : null;
@@ -96,7 +100,7 @@ class Game {
     this.brake = null; this.braked = false; this.phaseKey = ''; this.phaseTick = 0;
     const wake = () => { this.sound.wake(); };
     window.addEventListener('keydown', wake);
-    window.addEventListener('keydown', (e) => { if (e.code === 'KeyQ' && !e.repeat) this.renderer.cycleQuality(); });   // graphics quality: high <-> low
+    window.addEventListener('keydown', (e) => { if (e.code === 'KeyG' && !e.repeat) this.renderer.cycleQuality(); });   // graphics quality: high <-> low
     window.addEventListener('pointerdown', wake);
     this.startMatch(true, null);
     if (sw.attract) this.menu.playing();
@@ -238,7 +242,7 @@ class Game {
         if (c !== null) { out.hasPointer = true; out.pointer = new Cell(c.x, c.y); }
       }
     }
-    out.confirm = fields.confirm || p.confirm; out.rotate = fields.rotate || p.rotate; out.ready = fields.ready || p.ready;
+    out.confirm = fields.confirm || p.confirm; out.rotate = fields.rotate || p.rotate; out.ready = fields.ready || p.ready; out.swap = fields.swap || p.swap;
     return out;
   }
 
@@ -259,6 +263,7 @@ class Game {
     const ptr = this.input.takePointer();
     const wasPlaying = this.menu.screen === Screen.Playing && !this.demo;   // a click that started the match is not a move in it
     this.input.playing = wasPlaying;
+    this.input.enterReadies = wasPlaying && !this.seatOf.includes(1);   // Enter is P1's READY unless P2 is in the match (P2's place key)
     if (!this.sw.attract) this.pointerToMenu(menuIn, ptr);
     if (!this.sw.attract) {
       const before = this.menu.screen + ':' + this.menu.row + ':' + this.menu.joinedCount;
@@ -310,10 +315,19 @@ class Game {
     this.hint.set(hinting ? Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase) : null, this.controls.showsTouch, !hinting);
     const pads = this.touchpad.visible ? this.touchpad.coverRects() : [];
     if (this.hint.covering) this.hint.place(this.renderer.hudBarHeight() + 6, pads);
+    // the action bar: shown to the keyboard-and-mouse player in a match (a touch screen has its own buttons), above the HUD's cards;
+    // its rect is a camera cover rect, so the camera frames round it
+    const bar = playing && !this.controls.showsTouch && this.menu.screen === Screen.Playing;
+    this.bar.show(bar);
+    if (bar) {
+      const mp = this.model.player(this.mouseSlot);
+      this.bar.update({ phase: Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase), sword: mp.sword, ready: mp.ready });
+      this.bar.place(this.renderer.hudFootHeight() + 8);
+    }
     const camera = {
       humans: playing ? this.seatOf.map((_, slot) => slot).filter((slot) => !this.controller.isBot(slot)) : [],
       pointerSlot: playing && this.pointerMode ? this.mouseSlot : -1,
-      cover: this.hint.covering ? [...pads, this.hint.rect()] : pads,
+      cover: [...pads, ...(this.hint.covering ? [this.hint.rect()] : []), ...(bar ? [this.bar.rect()] : [])],
       input: this.input.takeCamera(),
     };
     if (this.touchpad.takeFrame()) camera.input.toggle = true;

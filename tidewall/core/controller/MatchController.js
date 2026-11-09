@@ -12,18 +12,20 @@ import { PlaybackQueue } from './PlaybackQueue.js';
 import { CastleBot } from '../bots/CastleBot.js';
 
 const PAD_FIELDS = Object.freeze({
-  stickX: 'int', stickY: 'int', hasPointer: 'bool', pointer: 'cell', confirm: 'bool', rotate: 'bool', ready: 'bool', fast: 'bool',
+  stickX: 'int', stickY: 'int', hasPointer: 'bool', pointer: 'cell', confirm: 'bool', rotate: 'bool', ready: 'bool', swap: 'bool', fast: 'bool',
 });
 
 /** What a player's input device says this frame, in whole numbers (C# struct PadInput). The app's input layer fills it; the
- *  controller never reads a device. Stick axes run -1000..1000 (+y is down the board); `pointer` is a cell when a mouse points at
+ *  controller never reads a device. `swap` is this port's own field (the C# struct had one READY button for both jobs): it swaps the
+ *  phase's tool for the sword and back in REPAIR and BATTLE, and `ready` only readies (CLAIM, CANNONS); a device with one button for
+ *  both (a pad's Y) sets both and the phase picks the one that applies. Stick axes run -1000..1000 (+y is down the board); `pointer` is a cell when a mouse points at
  *  the board (`hasPointer`). confirm / rotate / ready are pressed THIS frame (edges, not held); fast is HELD (the cursor moves
  *  twice as far). Unset fields are the C# struct's defaults (0, false, cell 0,0); a field this struct does not have is refused. */
 export class PadInput {
   constructor(fields = {}) {
     this.stickX = 0; this.stickY = 0;
     this.hasPointer = false; this.pointer = Cell.zero;
-    this.confirm = false; this.rotate = false; this.ready = false;
+    this.confirm = false; this.rotate = false; this.ready = false; this.swap = false;
     this.fast = false;
     for (const k of Object.keys(fields)) {
       const kind = PAD_FIELDS[k];
@@ -193,8 +195,10 @@ export class MatchController {
       this._qy[s] = Math.max(b.y0 * 65536, Math.min((b.y1 + 1) * 65536 - 1, this._qy[s]));
     }
     // with the sword out the cursor IS the hero on foot - it does not walk into the sea (a step onto water is undone, each axis on
-    // its own, so the hero slides along a shore instead of sticking to it)
-    if (m.player(s).sword) {
+    // its own, so the hero slides along a shore instead of sticking to it). Only a step FROM dry land is held back: a cursor that is
+    // already in the sea (BATTLE aims it at the ships) must be free to walk out, or a hero who drew the sword out there is stuck in
+    // the water for the whole phase (found 11-09 playing by keyboard: every step from a wet square was undone)
+    if (m.player(s).sword && this._dry(px, py)) {
       if (!this._dry(this._qx[s], this._qy[s]) && this._dry(px, this._qy[s])) this._qx[s] = px;
       else if (!this._dry(this._qx[s], this._qy[s]) && this._dry(this._qx[s], py)) this._qy[s] = py;
       else if (!this._dry(this._qx[s], this._qy[s])) { this._qx[s] = px; this._qy[s] = py; }
@@ -205,10 +209,11 @@ export class MatchController {
       if (m.options.super) throw new Error('the extended rules are not ported (options.type ' + m.options.type + ')');
       this._turns[s] = (this._turns[s] + 1) & 3;
     }
-    // READY in claim and cannons; in REPAIR and BATTLE it swaps the phase's tool for the sword and back
-    if (p.ready)
-      this._pending.push(m.phase === Phase.Repair || m.phase === Phase.Battle ? Command.switchMode(s, ++this._seq[s], this._pending.length)
-                                                                              : Command.ready(s, ++this._seq[s], this._pending.length));
+    // READY in claim and cannons; SWAP in REPAIR and BATTLE trades the phase's tool for the sword and back (the C# host had one button
+    // for both; a device that still has one sets both fields, and only the one that fits the phase acts)
+    const toolPhase = m.phase === Phase.Repair || m.phase === Phase.Battle;
+    if (p.ready && !toolPhase) this._pending.push(Command.ready(s, ++this._seq[s], this._pending.length));
+    if (p.swap && toolPhase) this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length));
     if (!p.confirm) return;
     const at = this.cursor(s);
     if (m.player(s).sword && (m.phase === Phase.Repair || m.phase === Phase.Battle)) {

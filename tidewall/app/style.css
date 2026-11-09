@@ -80,3 +80,16 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
 .hint b { color: var(--gold); font-weight: 900; }
 .hint.gone { opacity: 0; }
 @media (max-width: 639px), (max-height: 559px) { .hint { font-size: 13px; padding: 5px 12px; } }
+
+/* the action bar (app/actions.js): the mouse and keyboard player's labelled buttons, centred above the player cards */
+.abar { position: fixed; z-index: 3; left: 50%; transform: translateX(-50%); bottom: 100px; display: flex; gap: 8px; max-width: calc(100% - 24px);
+  pointer-events: auto; touch-action: none; }
+.abar[hidden] { display: none; }
+.ab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 96px; min-height: 52px; padding: 5px 12px;
+  font: 800 15px/1.1 var(--font); color: #fff; background: rgba(10,24,40,0.78); border: 2px solid rgba(255,255,255,0.7); border-radius: 12px; cursor: pointer; }
+.ab .at { font: 900 11px/1 var(--font); color: var(--gold); letter-spacing: 0.06em; min-height: 11px; }
+.ab .ak { font: 600 11px/1 var(--font); color: rgba(255,255,255,0.75); }
+.ab:hover:not(.off) { background: rgba(25,87,255,0.75); }
+.ab.down { filter: brightness(1.5); transform: scale(0.95); }
+.ab.on { background: #b3261e; border-color: #fff; }
+.ab.off { opacity: 0.4; cursor: default; border-style: dashed; }
