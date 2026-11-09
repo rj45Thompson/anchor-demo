@@ -16,6 +16,7 @@ import { freeRects, fitSubject, mergeGroups, FRAME } from './lot_frame.js';     
 import { focusWeight, level, LIGHT } from './lot_light.js';                             // UC-44.3: the light follows the slide in view
 import { buildRain, wetRoad, sunTracker, overcast, buildShafts } from './weather.js';        // UC-40: rain, a wet road, a grey sky, the strip's shafts (the circuit's: fx.js makePost)
 import { makeAudio, driveSound, silence, blip, loadSfx, sfx, grind, crack } from './audio.js';
+import { engineOf } from './engine_voice.js';                                  // UC-50.2 the engine's voice from its listing's engine line
 import { Radio } from './radio.js';                                                       // UC-27: the car radio
 import { makeWalker, stepWalker, facing, EYE_M } from './walk.js';                        // UC-28: walking the lot
 import { buildDressing } from './dress.js';                                                // UC-33: kerbs, lines, posts, gantries
@@ -1233,6 +1234,7 @@ async function startRace(entry) {
   Chaos.resetVehicle(v, start.location_cm, start.yaw_deg);
   const camKey = entry.sim ? 'SportsCar' : entry.name;    // a car for sale rides the template SportsCar's cameras (STAND-IN: AUTHORED list)
   const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
+  audio.setVoice(carVoice(entry));                                      // UC-50.2
   race = { entry, car, v, rules: Rules.makeRace(TRACK.gates, RULES), now: 0, rig: makeRig(arm), fov: cam.field_of_view,
            inside: TRACK.gates.map(() => false), carBox: carJson.bounds_cm.value, front: false,
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey };
@@ -1297,6 +1299,11 @@ function toggleWeather() { WEATHER.rain = !WEATHER.rain; try { localStorage.setI
 $('rain').addEventListener('click', toggleWeather); syncWeather();
 window.HOC.dragCam = DRAGCAM;
 window.HOC.motion = MOTION;
+// UC-50.2 a car's engine voice: its listing's engine line, READ (data/listings.json); a car with none (the template's) has the page's own
+function carVoice(entry) {
+  const L = entry.sim && LISTINGS.cars.find((c) => c.key === entry.name);
+  return L && L.engine && L.engine.kind === 'READ' ? engineOf(L.engine.value) : null;
+}
 function syncMute() { $('mute').textContent = !audio.available() ? 'No sound' : audio.muted ? 'Sound off' : 'Sound on'; $('mute').setAttribute('aria-pressed', String(!audio.muted)); if (audio.muted && typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }   // UC-27.4: the talk station's voice too
 $('mute').addEventListener('click', () => { audio.start(); audio.setMuted(!audio.muted); syncMute(); });
 syncMute();
@@ -1624,6 +1631,7 @@ async function startDrag(entry, o = {}) {
   const opp = o.online ? await onlineOpp(o.online, gravity, strip) : rival ? await rivalRun(rival, gravity, strip, houseOpts) : null;   // UC-42
   const camKey = entry.sim ? 'SportsCar' : entry.name;
   const arm = CAMS.cars[camKey].BackSpringArm, cam = CAMS.cars[camKey].BackCamera;
+  audio.setVoice(carVoice(entry));                                      // UC-50.2
   race = { kind: 'drag', entry, car, carJson, v, strip, best, house, pts: best.points, run: Drag.makeRun(), x0: v.pos[0], now: 0, rig: makeRig(arm), fov: cam.field_of_view,
            wheelWidths: carJson.wheels.map((w) => w.setup.wheel_width.value), throttle: 0, camKey, presses: [], gradeT: 0, front: false, slipShown: false, padPrev: {},
            director: makeDirector(), body: carJson.bounds_cm.value };   // UC-35: the filmed run, framed on the car's own READ bounds
@@ -1669,8 +1677,8 @@ async function startDrag(entry, o = {}) {
 }
 document.querySelectorAll('#dtouch button[data-d]').forEach((b) => b.addEventListener('pointerdown', (e) => { e.preventDefault(); dragPress(b.dataset.d); }));   // a phone's shift buttons
 { const gas = $('dgas');                                     // UC-35 6b: the strip's gas, on the left, held as the race's own gas button
-  gas.addEventListener('pointerdown', (e) => { e.preventDefault(); touch.throttle = true; });
-  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) gas.addEventListener(ev, () => { touch.throttle = false; }); }
+  gas.addEventListener('pointerdown', (e) => { e.preventDefault(); touch.throttle = true; gas.classList.add('on'); });   // UC-50.4 lit while held
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) gas.addEventListener(ev, () => { touch.throttle = false; gas.classList.remove('on'); }); }
 // UC-41 the sales chat: what is on the visitor's page (relay rules.js readPage checks every field) and the two things it may do
 window.HOC.salesPage = () => {
   const lot = show.slides[show.index], lotCar = lot && lot.def.kind === 'listing' ? lot.def.listing.key : null;

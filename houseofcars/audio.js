@@ -2,6 +2,7 @@
 // engine RPM (chaos_vehicle.js v.engineRPM, from the READ torque curve and gearbox) and its weight follows the throttle; the tyre
 // noise follows Unreal's own IsSlipping / IsSkidding (v.wheels[i].slipping / .skidding, WheelSystem.h). The harmonics, filters,
 // levels and the UI sounds are the page's own (AUTHORED: Unreal's template sounds are not ported). Serves UC-7.4, UC-7.4a.
+import { partials, cycleHz, TEMPLATE_VOICE } from './engine_voice.js';   // UC-50.2 the engine's voice from its cylinders
 const STORE = 'hoc.muted';
 const readMuted = () => { try { return localStorage.getItem(STORE) === '1'; } catch (e) { return false; } };
 
@@ -20,6 +21,10 @@ export function makeAudio() {
     build(A);
   };
   A.running = () => !!A.ctx && A.ctx.state === 'running';
+  /** UC-50.2 the car's voice: { cyl, layout, turbo } (engine_voice.js engineOf of its listing's engine line), or null: the template's */
+  A.setVoice = (v) => { A.voice = v || null; if (A.nodes) applyVoice(A); };
+  /** a context of the caller's own (an OfflineAudioContext: test/sound_lab.html renders a run to a file to listen to) */
+  A.startWith = (ctx) => { A.ctx = ctx; build(A); };
   A.setMuted = (m) => {
     A.muted = m;
     try { localStorage.setItem(STORE, m ? '1' : '0'); } catch (e) { /* per-viewer convenience only */ }
@@ -48,28 +53,44 @@ function build(A) {
   const master = c.createGain(); master.gain.value = A.muted ? 0 : 0.8;
   const comp = c.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
   master.connect(comp).connect(c.destination);
-  // engine: a sawtooth at the firing pitch, a square an octave below, through a drive shaper and a throttle-opened low-pass
+  // UC-50.2 the engine (the owner 11-09: "better engine revving sound"): one oscillator playing the car's own cycle (engine_voice.js: its
+  // cylinders and layout READ from the listing, the harmonics its firing makes), driven harder into a soft clip the more the throttle is
+  // open, through a low-pass the throttle and the revs open, and an exhaust body (a broad lift near 150 Hz). Was a sawtooth at two
+  // firings a turn and a square an octave down: the same buzz for every car. Levels and filters AUTHORED (the page's voicing)
   const engineBus = c.createGain(); engineBus.gain.value = 0;
-  const shaper = c.createWaveShaper();
-  const curve = new Float32Array(1024);
-  for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; curve[i] = Math.tanh(2.4 * x); }
+  const eng = c.createOscillator(), drive = c.createGain(); drive.gain.value = 1;
+  const shaper = c.createWaveShaper(), curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; curve[i] = Math.tanh(1.8 * x); }
   shaper.curve = curve;
-  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
-  const saw = c.createOscillator(); saw.type = 'sawtooth';
-  const sub = c.createOscillator(); sub.type = 'square';
-  const sawG = c.createGain(); sawG.gain.value = 0.5;
-  const subG = c.createGain(); subG.gain.value = 0.35;
-  saw.connect(sawG).connect(shaper); sub.connect(subG).connect(shaper);
-  shaper.connect(lp).connect(engineBus).connect(master);
-  // intake: band-passed noise that rises with throttle and RPM
+  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.4;
+  const body = c.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 150; body.Q.value = 0.9; body.gain.value = 7;
+  eng.connect(drive).connect(shaper).connect(lp).connect(body).connect(engineBus).connect(master);
+  // the intake's roar: band-passed noise beating at the firing frequency (an oscillator on its gain), louder with throttle and revs
   const noise = noiseBuffer(c);
   const intake = c.createBufferSource(); intake.buffer = noise; intake.loop = true;
-  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.8;
+  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+  const beat = c.createGain(); beat.gain.value = 0.55;
+  const pulse = c.createOscillator(), pulseDepth = c.createGain(); pulseDepth.gain.value = 0.45;
+  pulse.connect(pulseDepth).connect(beat.gain);
   const intakeG = c.createGain(); intakeG.gain.value = 0;
-  intake.connect(bp).connect(intakeG).connect(master);
-  // tyres: a resonant squeal band and a broad scrub, each gated by Unreal's slip rules
+  intake.connect(bp).connect(beat).connect(intakeG).connect(master);
+  // a turbo's whine, for a car whose engine line says turbo (READ): a thin tone that climbs with the revs under load
+  const whine = c.createOscillator(); whine.type = 'sine';
+  const whineG = c.createGain(); whineG.gain.value = 0;
+  whine.connect(whineG).connect(master);
+  // UC-50.3 the tyres (the owner 11-09: "better tires screech"): a squeal, two tones a little apart that waver as rubber does (two slow
+  // oscillators on their pitch), its pitch climbing with the slip; under it a resonant hiss and a broad scrub. Each follows the wheels'
+  // slide (effects.js slideAmount: zero unless Unreal's IsSkidding / IsSlipping). Was one band of noise
+  const sq1 = c.createOscillator(); sq1.type = 'triangle';
+  const sq2 = c.createOscillator(); sq2.type = 'sine';
+  const wob1 = c.createOscillator(), wob2 = c.createOscillator(); wob1.frequency.value = 5.3; wob2.frequency.value = 7.9;
+  const wobG = c.createGain(); wobG.gain.value = 26;
+  wob1.connect(wobG); wob2.connect(wobG); wobG.connect(sq1.frequency); wobG.connect(sq2.frequency);
+  const sqToneG = c.createGain(); sqToneG.gain.value = 0;
+  const sq2G = c.createGain(); sq2G.gain.value = 0.45;
+  sq1.connect(sqToneG); sq2.connect(sq2G).connect(sqToneG); sqToneG.connect(master);
   const tyre = c.createBufferSource(); tyre.buffer = noise; tyre.loop = true;
-  const sq = c.createBiquadFilter(); sq.type = 'bandpass'; sq.frequency.value = 1150; sq.Q.value = 9;
+  const sq = c.createBiquadFilter(); sq.type = 'bandpass'; sq.frequency.value = 1150; sq.Q.value = 7;
   const sqG = c.createGain(); sqG.gain.value = 0;
   tyre.connect(sq).connect(sqG).connect(master);
   const scrub = c.createBiquadFilter(); scrub.type = 'lowpass'; scrub.frequency.value = 700;
@@ -80,40 +101,51 @@ function build(A) {
   const wl = c.createBiquadFilter(); wl.type = 'lowpass'; wl.frequency.value = 380;
   const windG = c.createGain(); windG.gain.value = 0;
   wind.connect(wl).connect(windG).connect(master);
-  for (const o of [saw, sub, intake, tyre, wind]) o.start();
-  A.nodes = { master, engineBus, lp, saw, sub, bp, intakeG, sqG, scrubG, windG, noise };   // noise: the crack's too (UC-44.4)
+  for (const o of [eng, pulse, intake, whine, sq1, sq2, wob1, wob2, tyre, wind]) o.start();
+  A.nodes = { master, engineBus, eng, drive, lp, bp, pulse, intakeG, whine, whineG, sq1, sq2, sqToneG, sqG, scrubG, windG, noise };   // noise: the crack's too (UC-44.4)
+  applyVoice(A);
+}
+// UC-50.2 the car's voice on the engine's oscillator (a race calls setVoice with engine_voice.js engineOf of its listing's engine line)
+function applyVoice(A) {
+  const p = partials(A.voice || TEMPLATE_VOICE);
+  A.nodes.eng.setPeriodicWave(A.ctx.createPeriodicWave(p.real, p.imag));
 }
 
 // every frame of the drive: rpm (READ engine model), throttle 0..1, speed (cm/s), slide 0..1, gear
 export function driveSound(A, s) {
   if (!A.ctx || !A.nodes) return;
-  const n = A.nodes, t = A.ctx.currentTime, k = 0.03;
-  const f = Math.max(28, s.rpm / 60 * 2);                     // firing pitch: two pulses a turn (AUTHORED voicing)
-  n.saw.frequency.setTargetAtTime(f, t, k);
-  n.sub.frequency.setTargetAtTime(f / 2, t, k);
-  n.lp.frequency.setTargetAtTime(300 + 2600 * s.throttle + f * 2, t, 0.05);
+  const n = A.nodes, t = A.ctx.currentTime, k = 0.03, v = A.voice || TEMPLATE_VOICE;
+  const fc = Math.max(3, cycleHz(s.rpm)), f = fc * v.cyl;              // the cycle and the firing (engine_voice.js)
+  n.eng.frequency.setTargetAtTime(fc, t, k);
+  n.pulse.frequency.setTargetAtTime(f, t, k);
+  n.drive.gain.setTargetAtTime(0.9 + 1.6 * s.throttle, t, 0.05);       // more of the clip's grit under load
+  n.lp.frequency.setTargetAtTime(Math.min(9000, 260 + 2400 * s.throttle + f * 1.6), t, 0.05);
   if (A.lastGear !== null && s.gear !== A.lastGear && s.gear > 0 && A.lastGear > 0) A.shiftUntil = t + 0.12;   // a gear change
   A.lastGear = s.gear;
   const dip = t < (A.shiftUntil || 0);                        // the shift's dip in the note
-  const level = (0.16 + 0.22 * s.throttle) * (dip ? 0.25 : 1);
+  const level = (0.15 + 0.25 * s.throttle) * (dip ? 0.25 : 1);
   n.engineBus.gain.setTargetAtTime(s.running ? level : 0, t, dip ? 0.01 : 0.06);
-  n.bp.frequency.setTargetAtTime(500 + f * 4, t, 0.05);
-  n.intakeG.gain.setTargetAtTime(s.running ? 0.05 * s.throttle : 0, t, 0.08);
-  const kmh = Math.abs(s.speedCmS) * 0.036;
+  const revs = Math.min(1, s.rpm / 7000);
+  n.bp.frequency.setTargetAtTime(380 + f * 2.4, t, 0.05);
+  n.intakeG.gain.setTargetAtTime(s.running ? 0.07 * s.throttle * (0.35 + 0.65 * revs) : 0, t, 0.08);
+  n.whine.frequency.setTargetAtTime(1700 + s.rpm * 0.42, t, 0.08);
+  n.whineG.gain.setTargetAtTime(s.running && v.turbo ? 0.011 * s.throttle * revs * revs : 0, t, 0.12);
+  const kmh = Math.abs(s.speedCmS) * 0.036, sl = Math.max(0, Math.min(1, s.slide));
   // s.slide: the wheels' mean slide (effects.js slideAmount: zero unless IsSkidding / IsSlipping)
-  n.sqG.gain.setTargetAtTime(kmh > 8 ? 0.3 * s.slide : 0, t, 0.05);
-  n.scrubG.gain.setTargetAtTime(kmh > 3 ? 0.22 * s.slide : 0, t, 0.06);
+  const fs = 640 + 460 * sl + Math.min(220, kmh * 1.1);                // the squeal climbs with the slip, a little with the speed
+  n.sq1.frequency.setTargetAtTime(fs, t, 0.04); n.sq2.frequency.setTargetAtTime(fs * 2.03, t, 0.04);
+  n.sqToneG.gain.setTargetAtTime(kmh > 5 ? 0.2 * Math.pow(sl, 1.3) : 0, t, 0.05);
+  n.sqG.gain.setTargetAtTime(kmh > 8 ? 0.14 * sl : 0, t, 0.05);
+  n.scrubG.gain.setTargetAtTime(kmh > 3 ? 0.2 * sl : 0, t, 0.06);
   n.windG.gain.setTargetAtTime(Math.min(0.2, kmh / 900), t, 0.2);
 }
 
 export function silence(A) {
   if (!A.nodes) return;
   const t = A.ctx.currentTime, n = A.nodes;
-  for (const g of [n.engineBus.gain, n.intakeG.gain, n.sqG.gain, n.scrubG.gain, n.windG.gain]) g.setTargetAtTime(0, t, 0.05);
+  for (const g of [n.engineBus.gain, n.intakeG.gain, n.whineG.gain, n.sqToneG.gain, n.sqG.gain, n.scrubG.gain, n.windG.gain]) g.setTargetAtTime(0, t, 0.05);
 }
 
-// UC-34 4b the stick's recorded sounds (data/sfx, cut by tools/sfx.py from CC0 recordings; data/sfx/CREDITS.json names them):
-// fetched and decoded once the audio has started, played through the master like everything else
 export const SFX = ['gear_in_1', 'gear_in_2', 'gear_in_3', 'gear_out', 'gate', 'clutch_floor'];
 export async function loadSfx(A) {
   if (!A.ctx || A.sfx) return;
@@ -162,7 +194,7 @@ export function blip(A, kind) {
 export function crack(A, k) {
   if (!A.ctx || !A.nodes) return;
   const c = A.ctx, t = c.currentTime, src = c.createBufferSource(), lp = c.createBiquadFilter(), g = c.createGain();
-  src.buffer = A.nodes.noise; lp.type = 'lowpass';   // the engine's own noise, made when the sound started (a new one at the first shift cost a frame) lp.frequency.value = 520; lp.Q.value = 6;
+  src.buffer = A.nodes.noise; lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 6;   // the engine's own noise, made when the sound started (a new one at the first shift cost a frame); the filter's two settings had sat inside this comment
   const v = 0.12 + 0.4 * Math.max(0, Math.min(1, k)) ** 2;
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.006); g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
   src.connect(lp).connect(g).connect(A.nodes.master); src.start(t, Math.random() * 1.5); src.stop(t + 0.18);
