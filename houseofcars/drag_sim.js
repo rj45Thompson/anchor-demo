@@ -89,7 +89,7 @@ export const pedalRelease = (depth, dt) => Math.max(0, depth - (dt > 0 ? dt : 0)
 // wheel leaves it (a wheel is not held, so nothing springs back), so the launch is as slow or as quick as the scroll. A notch is
 // 100 px of deltaY in Chrome and Edge on Windows; FULL_PX: 8 notches from the top to the floor (AUTHORED). Lines and pages
 // (deltaMode 1, 2: Firefox, some mice) count as LINE_PX and PAGE_PX each
-export const WHEEL = { FULL_PX: 800, LINE_PX: 33, PAGE_PX: 800 };
+export const WHEEL = { FULL_PX: 300, LINE_PX: 33, PAGE_PX: 300 };   // UC-52.1 3 notches (the owner 11-09: "too much rolling to be fast"; it was 8)
 export const wheelPx = (deltaY, deltaMode) => deltaY * (deltaMode === 1 ? WHEEL.LINE_PX : deltaMode === 2 ? WHEEL.PAGE_PX : 1);
 export const wheelDepth = (depth, deltaY, deltaMode = 0) => Math.max(0, Math.min(1, depth + wheelPx(deltaY, deltaMode) / WHEEL.FULL_PX));
 // UC-34.1f AUTHORED (the owner 11-09: "the clutch should engage gears over 75 depressed ... that button is close to the bottom of the

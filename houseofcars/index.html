@@ -103,6 +103,21 @@ button:focus-visible,#card .pick:focus-visible,#card .act:focus-visible{outline:
 #foot{position:fixed;left:16px;bottom:10px;max-width:calc(50vw - 240px);font-size:11px;color:var(--dim)}   /* UC-44.3: 240 = half the nav (440 px, measured 11-08) + a gap; it was 120 and ran under the nav's first two buttons on 1280 to 1920 px screens */
 #foot{pointer-events:none}#foot a{color:var(--accent-soft);pointer-events:auto}
 #back{position:fixed;top:52px;left:16px;padding:8px 12px;font-size:13px}
+/* UC-52.2 the first drive: the controls card at the top (clear of START) and the real controls ringed while it shows */
+#dftue{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:41;width:min(460px,calc(100vw - 32px));padding:12px 16px 14px;border-radius:14px;background:rgba(10,12,16,.9);border:1px solid #ffd27a;box-shadow:0 10px 28px rgba(0,0,0,.6);font:600 13px/1.4 'Open Sans',sans-serif;color:#fff;pointer-events:auto}
+#dftue[hidden]{display:none}#dftue>b{display:block;font-size:15px;letter-spacing:.08em;color:#ffd27a;margin-bottom:6px;text-transform:uppercase}
+#dftue ul{margin:0 0 10px;padding:0;list-style:none}#dftue li{margin:3px 0}#dftue li b{color:#ffd27a;letter-spacing:.06em;margin-right:6px}
+#dftuego{padding:7px 16px;font:inherit;font-weight:800;color:#0a0a0a;background:#ffd27a;border:0;border-radius:8px;cursor:pointer}
+.ftue-ring{outline:3px solid #ffd27a !important;outline-offset:4px;animation:ftuering 1.1s ease-in-out infinite}
+@keyframes ftuering{50%{outline-color:rgba(255,210,122,.25)}}
+@media (prefers-reduced-motion:reduce){.ftue-ring{animation:none}}
+#dhow{position:fixed;top:52px;left:172px;padding:8px 12px;font-size:13px;font-weight:800}#dhow[hidden],body.dragover #dhow{display:none}
+/* UC-52.3 a wide screen: the slip to the right, the car (framed in the middle) in clear view (the owner 11-09: "we want to showcase the cool cars") */
+@media (min-width:1100px) and (orientation:landscape){#dslip{left:auto;right:24px;transform:translateY(-50%)}}
+/* UC-54 Brave's notice */
+#brave{position:fixed;inset:0;z-index:2147483600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;background:var(--bg);color:var(--ink)}
+#brave[hidden]{display:none}#brave b{font-size:22px}#brave span{color:var(--dim);max-width:420px}#brave div{display:flex;gap:12px}
+#brave a,#brave button{padding:9px 16px;border-radius:10px;font:inherit;font-weight:800;text-decoration:none;color:#fff;background:var(--accent);border:0;cursor:pointer}#brave button{background:transparent;border:1px solid var(--line)}
 /* UC-45 AUTO beside the Lot button; its note across the top. UC-46 the coffee: the time to beat under START, the claim in the board */
 #auto{position:fixed;top:52px;left:96px;padding:8px 12px;font-size:13px;font-weight:800;letter-spacing:.08em}#auto[aria-pressed="true"]{background:var(--accent);border-color:#ffb38f;color:#fff;cursor:default}#auto[hidden],body.dragover #auto{display:none}
 #autonote{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:40;width:max-content;max-width:min(560px,calc(100vw - 32px));padding:10px 16px;border-radius:12px;background:rgba(14,16,19,.94);border:1px solid var(--accent);font-size:15px;line-height:1.35;text-align:center;pointer-events:none}#autonote b{color:var(--accent-soft)}#autonote[hidden]{display:none}
@@ -144,7 +159,7 @@ body.dragmode #hud-time,body.dragmode #minimap,body.dragmode #ghostpick,body.dra
 #dgrade{position:fixed;top:24%;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:clamp(34px,8vmin,96px);font-weight:800;letter-spacing:.06em;text-shadow:0 4px 18px rgba(0,0,0,.7);opacity:0}
 #dgrade.pop{animation:gradepop 1.1s ease-out both}#dgrade.g-perfect{color:#5dffa9}#dgrade.g-early{color:#ffd27a}#dgrade.g-late{color:#ff7a5c}
 @keyframes gradepop{0%{opacity:0;transform:translate(-50%,10px) scale(.9)}15%{opacity:1;transform:translate(-50%,0) scale(1.05)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-8px)}}
-#dslip{position:fixed;top:calc(50% + 26px);left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 150px);overflow:auto;pointer-events:auto;padding:16px 18px;border-radius:14px;background:rgba(12,12,12,.94);border:1px solid var(--accent);box-shadow:0 18px 60px rgba(0,0,0,.6)}
+#dslip{position:fixed;top:calc(50% + 26px);left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 150px);overflow:auto;pointer-events:auto;padding:16px 18px;border-radius:14px;background:rgba(12,12,12,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);text-shadow:0 1px 3px rgba(0,0,0,.9);border:1px solid var(--accent);box-shadow:0 18px 60px rgba(0,0,0,.6)}
 #dslip h3{margin:2px 0 8px}#dslip .kick{margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-soft);font-weight:700}
 #dslip table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px}#dslip th{text-align:left;color:var(--dim);font-weight:600;padding:4px 6px 4px 0}#dslip td{padding:4px 6px;font:600 13px ui-monospace,Consolas,monospace}
 #dslip tr:first-child td{font:700 10.5px 'Open Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-soft)}#dslip tr td:nth-child(2){color:#5dffa9}
@@ -448,6 +463,12 @@ button,.pill{white-space:nowrap}
 </head>
 <body>
 <canvas id="view"></canvas>
+<!-- UC-54 Brave (the owner 11-09: "if people use Brave it won't work"): said before anything loads, and forwarded to the projects page -->
+<div id="brave" hidden role="alert"><b>House of Cars runs in Chrome or Edge</b><span>Brave turns off the graphics this page needs. Taking you back to the projects page in <i id="bravet">8</i> s.</span><div><a href="../">Go now</a><button type="button" id="bravestay">Try anyway</button></div></div>
+<script>(function () { if (!navigator.brave || !navigator.brave.isBrave) return; navigator.brave.isBrave().then(function (b) { if (!b) return;
+  var el = document.getElementById('brave'), t = document.getElementById('bravet'), n = 8, iv; el.hidden = false;
+  iv = setInterval(function () { n--; t.textContent = n; if (n <= 0) { clearInterval(iv); location.href = '../'; } }, 1000);
+  document.getElementById('bravestay').onclick = function () { clearInterval(iv); el.hidden = true; }; }); })();</script>
 <div id="rotate" role="alert"><svg viewBox="0 0 96 96" aria-hidden="true"><rect x="30" y="10" width="36" height="76" rx="7" fill="none" stroke="#f25827" stroke-width="4"/><circle cx="48" cy="77" r="3" fill="#f25827"/></svg><b>Turn your phone sideways</b><span>House of Cars is a game for a phone held sideways, like a steering wheel.</span><a href="../">&larr; All projects</a></div>
 <header><h1>House <b>of</b> Cars</h1><span class="pill" id="renderer">starting</span><span class="pill">3D lot concept · Edmonton</span><span class="pill" id="quality"></span><span class="pill" id="padpill" style="display:none"></span><button class="pill" id="phonepill" aria-pressed="false" title="Drive with your phone: scan the code it shows">Phone pad</button><button class="pill" id="mute" aria-pressed="true" title="Sound (M)">Sound on</button><button class="pill" id="radio" aria-pressed="false" title="Radio: next station (N), back (B)">Radio off</button><button class="pill" id="motion" aria-pressed="true" title="The view widening with speed, and the shake (V)">Motion on</button><button class="pill" id="dcam" aria-pressed="true" title="The strip's camera: filmed, or the chase camera (C)">Camera: filmed</button><button class="pill" id="dbox" aria-pressed="true" title="The strip's gearbox: a clutch and an H gate, or paddles (G)">Clutch on</button><button class="pill" id="donlinebtn" title="Race someone online: a lobby of drivers on this page right now">Race online</button><button class="pill" id="rain" aria-pressed="true" title="Rain on the circuit and the strip: a wet road, a grey sky and light shafts (U). It changes from the next run; on the strip, a new run at once">Rain on</button></header>
 <div id="rbanner" aria-live="polite"></div>
@@ -471,6 +492,7 @@ button,.pill{white-space:nowrap}
 <section id="race">
   <button id="back" aria-label="Back to the lot">◀ Lot</button>
   <button id="auto" type="button" hidden aria-pressed="false" title="Let the car drive itself (no leaderboard score in automatic mode)">AUTO</button>
+  <button id="dhow" type="button" hidden title="How to drive: the controls">?</button>
   <div id="autonote" hidden role="status" aria-live="polite"></div>
   <select id="ghostpick" aria-label="Race against a ghost"></select>
   <div id="hud-time"><div class="t" id="t-now">---:---:---</div><div class="b">Best <span id="t-best">—</span> · Record <span id="t-rec" title="The best lap driven on this device">—</span><span id="t-ghost"></span></div></div>
@@ -504,6 +526,7 @@ button,.pill{white-space:nowrap}
   <div id="dcluster" aria-label="The car's instrument cluster"></div>
   <div id="dtrac" aria-live="off"><span class="bog">BOG</span><span class="spin">SPIN</span><i class="band"></i><i class="mk"></i><b id="dtracw">TRACTION</b></div>
   <button id="dstart" hidden aria-label="Start the tree">START<small>Space</small></button>
+  <div id="dftue" hidden role="dialog" aria-label="How to drive"><b>How to drive</b><ul id="dftuel"></ul><button id="dftuego" type="button">Got it</button></div>
   <p id="dprize" hidden></p>
   <div id="dfail" hidden role="dialog" aria-label="The run failed"><b>FAIL</b><p id="dfailw"></p><p id="dfailq" class="q" hidden></p><button id="dfailr" class="bigact">RESTART<small>R</small></button></div>
   <div id="dtouch"><div id="dslider" class="clutchdepth" aria-label="Clutch: slide down to press it"><svg class="cpic" viewBox="0 0 60 200" aria-hidden="true"><g class="pedal"><line x1="30" y1="8" x2="30" y2="66" stroke="#c9ced6" stroke-width="4" stroke-linecap="round"/><circle cx="30" cy="8" r="5" fill="#8d939b"/><rect x="12" y="62" width="36" height="16" rx="5" fill="#2b2f35" stroke="#c9ced6" stroke-width="1.5"/><path d="M16 67h28M16 70h28M16 73h28" stroke="#8d939b" stroke-width="1"/></g><rect x="10" y="112" width="12" height="80" rx="3" fill="#7d838c"/><g class="plate"><rect x="24" y="118" width="5" height="68" rx="1.5" fill="#c46b2b"/><path d="M25 124v56M27.5 124v56" stroke="#8a4518" stroke-width=".8"/><rect x="30" y="114" width="9" height="76" rx="2.5" fill="#a9aeb5"/><path d="M39 150h12" stroke="#a9aeb5" stroke-width="3"/></g></svg><i></i><b>CLUTCH</b></div><button id="dgas" aria-label="Gas: hold it down">GAS</button><div class="shiftcol"><button data-d="down" class="down" aria-label="Shift down">▼</button><button data-d="up" aria-label="Shift up">SHIFT ▲</button></div></div>

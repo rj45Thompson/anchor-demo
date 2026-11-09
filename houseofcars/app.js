@@ -1656,7 +1656,8 @@ async function startDrag(entry, o = {}) {
   $('dcar').textContent = vsName ? (SHORT[entry.name] || race.title) + ' vs ' + vsName.toUpperCase() + ' · ' + SHORT[vsCar] : race.title;   // UC-38.1 / UC-42 who you race
   $('dsayn').textContent = opp && opp.rival ? opp.rival.name.toUpperCase() + ' · ' + SHORT[opp.rival.key] : '';
   $('dkeys').hidden = false; mouseGas.clear();                          // UC-34.1d the controls, while staged
-  syncAuto(); prizeTease(race);                                       // UC-45 AUTO there to press; UC-46.1 the coffee's time to beat, while staged
+  syncAuto(); prizeTease(race); $('dhow').hidden = !!race.online;   // UC-52.2 the ? by AUTO
+  { let seen = false; try { seen = localStorage.getItem(FTUE_KEY) === '1'; } catch (e) { seen = false; } if (!seen) showFtue(race); }   // UC-52.2 the first strip on this device                                       // UC-45 AUTO there to press; UC-46.1 the coffee's time to beat, while staged
   race.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 3000);
   const wxChanged = rainDay.set(WEATHER.rain);                          // UC-40: rain or dry, as the switch says at the start of the run
   dragView.halo(WEATHER.rain); dragView.smoke.clear();                  // UC-44.4 the tree's glow for the day; no smoke left from the last run
@@ -1717,10 +1718,42 @@ function syncAuto() {                                                  // UC-45 
   b.textContent = on ? 'AUTO ON' : 'AUTO'; b.setAttribute('aria-pressed', String(on)); b.disabled = on;
 }
 tapOn($('auto'), autoDrive);
+// UC-52.2 the first drive (the owner 11-09: "highlight the controls, the user doesn't know what they are first time! a first time FTUE
+// popup"): a card of this device's controls for this gearbox, the real controls ringed while it shows; once per device (kept), the ? again
+const FTUE_KEY = 'hoc.ftue.strip';
+let ftueOn = false;                                                   // the card or the rings are showing (a phone shows the rings only)
+function ftueLines(r) {
+  const coarse = matchMedia('(pointer:coarse)').matches, L = [];
+  if (r.clutchMode) {
+    L.push(['CLUTCH', coarse ? 'the slider on the left: slide it down to press it in' : 'the mouse wheel: roll down to press it in, up to let it out', coarse ? 'dslider' : 'dpedal']);
+    L.push(['GEARS', coarse ? 'drag the knob in the gate, with the clutch in' : 'drag the knob, or keys 1 to 7 (N neutral), with the clutch in', 'dgate']);
+    L.push(['GAS', coarse ? 'the pedal beside the gate: hold it' : 'hold a mouse button, W, the up arrow or Space', coarse ? 'dgas' : 'dgasm']);
+  } else {
+    L.push(['GAS', coarse ? 'the pedal: hold it' : 'hold W, the up arrow or Space', coarse ? 'dgas' : null]);
+    L.push(['SHIFT', coarse ? 'the up and down buttons' : 'E or Shift up, Q down', null]);
+  }
+  L.push(['START', 'press it (or Space), then go on the green', 'dstart']);
+  return L;
+}
+function showFtue(r) {
+  const el = $('dftue');
+  if (!r || r.kind !== 'drag' || r.online) return;
+  const L = ftueLines(r);
+  $('dftuel').innerHTML = L.map(([k, w]) => '<li><b>' + esc(k) + '</b>' + esc(w) + '</li>').join('');
+  for (const [, , id] of L) if (id && $(id)) $(id).classList.add('ftue-ring');
+  el.hidden = matchMedia('(pointer:coarse)').matches; ftueOn = true;   // a phone: the rings and the controls' own line under START (#dkeys); a card there would sit on START
+}
+function hideFtue() {
+  if (!ftueOn) return;
+  ftueOn = false; $('dftue').hidden = true; document.querySelectorAll('.ftue-ring').forEach((e) => e.classList.remove('ftue-ring'));
+  try { localStorage.setItem(FTUE_KEY, '1'); } catch (e) { /* a private window keeps none: the card comes again next time */ }
+}
+$('dftuego').addEventListener('click', hideFtue);
+$('dhow').addEventListener('click', () => showFtue(race));
 // UC-22.1b the tree waits for the driver: the strip opens staged with the tree dark; START (Space or Enter) begins it
 function armDrag() {                                                  // UC-42: online, only GO starts the tree
   if (!(mode === 'drag' && race && race.kind === 'drag') || race.armed || race.over || (race.online && !race.onlineGo)) return;
-  race.armed = true; $('dstart').hidden = true; $('dprize').hidden = true; blip(audio, 'count'); if (race.opp && race.opp.say && race.opp.say.moment === 'stage') race.opp.say = null;
+  race.armed = true; $('dstart').hidden = true; $('dprize').hidden = true; hideFtue();   // UC-52.2 the card goes on START blip(audio, 'count'); if (race.opp && race.opp.say && race.opp.say.moment === 'stage') race.opp.say = null;
 }
 // UC-22.5 a run that failed (a stall, a red light): FAIL, why in a word, and one RESTART; the driving HUD goes
 function showFail(r, why) {
