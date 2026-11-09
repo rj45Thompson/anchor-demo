@@ -11,7 +11,8 @@ red; run this again.
   PLACES            where the link goes on each kind of page: inside the bar the page already has, else a small fixed button
   stamp(f)          puts the link in, or refreshes it, between <!--home-link--> and <!--/home-link--> so a re-run replaces it
 
-usage:  py tools/home_link.py            stamp every reachable page with no root link of its own
+usage:  py tools/home_link.py            stamp every reachable page with no root link of its own (a page already marked is left as it is)
+        py tools/home_link.py --refresh  also re-stamp the pages this tool marked before, except KEEP (after a change to PLACES)
         py tools/home_link.py --check    list the reachable pages with no root link and exit 1 if there are any; change nothing
 """
 import collections
@@ -65,6 +66,12 @@ FIXED = ('<a href="{root}" title="{tip}" style="position:fixed;z-index:214748300
 FORCE = {
     "harness/index.html": "its own link ('Anchor demo home') is the last line of the page, 3,800 px down at 1280 wide",
     "casement/index.html": "its own link sits in a side menu a phone does not show; at 390 wide the next one is 5,400 px down",
+}
+
+
+# pages whose block between the markers was placed by their own lane, never re-stamped (even by --refresh)
+KEEP = {
+    "tidewall/index.html": "bottom left, by the Rampart session (4eb2230): top right would cover the game's QR panel",
 }
 
 
@@ -173,11 +180,18 @@ def main():
         for f, came in bad:
             print("  %s  (linked from %s)" % (rel(f), rel(came)))
         return 1 if bad else 0
-    # a stamped page has a root link, so it is not "missing"; refresh those too, so a changed PLACES reaches every page
+    # a page that already carries a block is left as it is: its lane may have placed it by hand (KEEP). --refresh re-stamps the
+    # rest, so a changed PLACES reaches every page this tool stamped
+    refresh = "--refresh" in sys.argv
     pages = reachable()
     busy = in_progress()
-    todo = [f for f in sorted(pages) if pages[f] is not None and (not root_link(f) or rel(f) in FORCE
-                                                                  or "<!--home-link-->" in io.open(f, encoding="utf-8").read())]
+
+    def wants(f):
+        marked = "<!--home-link-->" in io.open(f, encoding="utf-8").read()
+        if marked:
+            return refresh and rel(f) not in KEEP
+        return not root_link(f) or rel(f) in FORCE
+    todo = [f for f in sorted(pages) if pages[f] is not None and wants(f)]
     for f in [f for f in todo if f in busy]:
         print("  %-40s left alone: another lane is writing it (uncommitted); stamp it once that lane commits" % rel(f))
     todo = [f for f in todo if f not in busy]
