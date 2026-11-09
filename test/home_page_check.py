@@ -20,7 +20,10 @@ Every check prints PASS or FAIL with the value it measured, never a bare "ok":
             every link into u2ue's page on an id it holds; the u2ue chapter list is that page's
             manual exactly (every chapter, in its order, under its own title); every figure the
             front page quotes from u2ue's page (data-from="u2ue") is on that page word for word;
-            every share picture (og:image) a page names is a file of the site.
+            every share picture (og:image) a page names is a file of the site; every page a visitor can
+            reach from the front page or the 3D view has a link back to the front page (tools/home_link.py).
+  home link at 1280 and 390 px, every one of those pages opened: its link back is on screen and
+            nothing covers it (elementFromPoint at its centre is the link), so it can really be clicked.
 
 Needs Playwright for Python and its Chromium (pip install playwright; playwright install chromium).
 
@@ -120,6 +123,63 @@ def static():
                 bad.append("%s: %s" % (name, url))
     check("static every share picture is in the site", pics >= 3 and not bad, "%d named, missing: %s" % (pics, bad))
     three_d(front)
+    pages = home_link.reachable()
+    left = home_link.missing()
+    check("static every page reachable from here links back to it", len(pages) > 30 and not left,
+          "%d reachable pages, with no link to the front page: %s (tools/home_link.py puts it in)" %
+          (len(pages), [home_link.rel(f) for f, _ in left]))
+
+
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+import home_link  # noqa: E402 - the walk of the site's pages and what counts as a link to its front page
+
+# the link back is on screen at the top of the page and nothing covers it: a link drawn under a layer that lets clicks through to a
+# canvas, or hidden in a closed drawer, is in the HTML and still cannot be clicked (the fly-through's phone heading did exactly that)
+HOME_HIT = """(rootPath)=>{const out=[];
+  for(const a of document.querySelectorAll('a[href]')){ let u; try{u=new URL(a.href)}catch(e){continue}
+    if(u.origin!==location.origin || (u.pathname!==rootPath && u.pathname!==rootPath+'index.html')) continue;
+    const r=a.getBoundingClientRect(); if(!r.width||!r.height) continue;
+    const x=r.left+r.width/2, y=r.top+r.height/2; const on=x>=0&&y>=0&&x<=innerWidth&&y<=innerHeight;
+    const top=on?document.elementFromPoint(x,y):null; const hit=!!top&&(top===a||a.contains(top));
+    out.push({text:a.textContent.trim().slice(0,30), x:Math.round(x), y:Math.round(y), on:on, hit:hit,
+              over: hit||!top ? '' : top.tagName+(top.id?'#'+top.id:'')});}
+  return out}"""
+
+
+def home_links(b):
+    root_path = re.sub(r"^https?://[^/]+", "", BASE)
+    for w, h in ((1280, 800), (390, 844)):
+        ctx = b.new_context(viewport={"width": w, "height": h})
+        page = ctx.new_page()
+        bad, n, left = [], 0, []
+        for f in sorted(home_link.reachable()):
+            name = home_link.rel(f)
+            if name in ("index.html", "3d/index.html"):
+                continue
+            n += 1
+            try:
+                page.goto(BASE + name, wait_until="load", timeout=30000)
+            except Exception as e:
+                bad.append("%s: did not load (%s)" % (name, str(e).splitlines()[0][:60]))
+                continue
+            page.wait_for_timeout(400)
+            try:
+                links = page.evaluate(HOME_HIT, root_path)
+            except Exception as e:
+                # games/tami/ asks where the game is served and then goes there, a moment after it loads; only that is waited out
+                if "Execution context was destroyed" not in str(e):
+                    raise
+                page.wait_for_load_state("load", timeout=30000)
+                links = page.evaluate(HOME_HIT, root_path) if page.url.startswith(BASE) else None
+            if not page.url.startswith(BASE):
+                left.append("%s -> %s" % (name, page.url.split("/")[2]))     # a page whose job is to send you elsewhere
+                continue
+            if not any(l["on"] and l["hit"] for l in links):
+                bad.append("%s: %s" % (name, [(l["text"], l["x"], l["y"], "covered by " + l["over"] if l["on"] else "off screen")
+                                             for l in links] or "no link"))
+        check("home link %d: on every reachable page, on screen and clickable" % w, n > 30 and not bad,
+              "%d pages; failing: %s; left the site at once (not shown): %s" % (n, bad, left))
+        ctx.close()
 
 
 def three_d(front):
@@ -398,6 +458,7 @@ with sync_playwright() as p:
     phone(b, 390, 844)
     iframe_measure(b)
     routes(b)
+    home_links(b)
     b.close()
 
 json.dump(results, open(os.path.join(OUT, "results.json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
