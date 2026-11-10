@@ -13,26 +13,36 @@ const MODES = Object.freeze(['local', 'phones', 'both']);
 export const CONTROL_WORDS = Object.freeze({ local: 'LOCAL', phones: 'PHONES', both: 'BOTH' });
 
 export class ControlsChoice {
-  /** @param key the localStorage key  @param env { coarse, userAgent } of this browser (main.js reads them; a test passes its own) */
+  /** @param key the storage key  @param env { coarse, userAgent } of this browser (main.js reads them; a test passes its own), and
+   *  from the page's host (app/host.js) when there is one: storage (its storage; null = the browser's localStorage) and phones
+   *  ({ allowed, why }; null = phones are offered). Where phones are not allowed LOCAL is the only mode. */
   constructor(key, env) {
     this.key = key;
+    this.storage = env.storage ?? null;
+    this.phonesAllowed = env.phones ? env.phones.allowed : true;
+    this.phonesWhy = env.phones ? env.phones.why : '';
+    this.modes = this.phonesAllowed ? MODES : Object.freeze(['local']);
     this.touchFirst = env.coarse || /Android|iPhone|iPad|iPod/i.test(env.userAgent);
     this.note = '';
     let saved = null;
-    try { saved = localStorage.getItem(key); }
+    try { saved = this.store().getItem(key); }
     catch (e) { this.note = 'The controls choice is not kept in this browser: ' + e.message; }
-    // a stored value that is not one of the three is not used (and left as it is): the device's own first choice applies
-    this.mode = MODES.includes(saved) ? saved : (this.touchFirst ? 'local' : 'both');
+    // a stored value that is not one of the modes here is not used (and left as it is): the device's own first choice applies
+    this.mode = this.modes.includes(saved) ? saved : (this.touchFirst || !this.phonesAllowed ? 'local' : 'both');
   }
+  /** Where the choice is kept: the host's storage, or (no host) the browser's localStorage, read here so a browser that refuses
+   *  it throws inside the callers' try. */
+  store() { return this.storage !== null ? this.storage : localStorage; }
   get usesPhones() { return this.mode !== 'local'; }
   get showsTouch() { return this.touchFirst && this.mode !== 'phones'; }
   set(mode) {
     if (!MODES.includes(mode)) throw new Error('controls.js: no controls mode "' + mode + '" (' + MODES.join(', ') + ')');
+    if (!this.modes.includes(mode)) throw new Error('controls.js: the controls mode "' + mode + '" is not offered here: phones: ' + this.phonesWhy);
     this.mode = mode;
-    try { localStorage.setItem(this.key, mode); }
+    try { this.store().setItem(this.key, mode); }
     catch (e) { this.note = 'The controls choice is not kept in this browser: ' + e.message; }
   }
-  next() { this.set(MODES[(MODES.indexOf(this.mode) + 1) % MODES.length]); }
+  next() { this.set(this.modes[(this.modes.indexOf(this.mode) + 1) % this.modes.length]); }
 }
 
 const STICK_FULL = 1000;              // the controller's stick scale (input.js)

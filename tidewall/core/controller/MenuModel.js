@@ -5,12 +5,19 @@
 //     from the app's generated-map list, handed to the constructor as [{name, seed}, ...] (the seam that replaces a fixed map
 //     library). Left/right or confirm on row 0 steps through that list; `map` is the chosen entry the host starts the match on.
 //   - the fate rows read CONTINUE / GIVE UP (the private build quoted an existing game's wording).
+//   - SETTINGS (SETTINGS_UC.md UC-ST1, this game's own): a row of the pause menu, and from the title and the join screen the host's
+//     openSettings() (its SETTINGS button and READY: the join screen's rows already fill the band the HUD lays them in, and the title
+//     has none). The settings rows are a panel over the screen they opened from (`settingsOver`): `screen` stays Title, Setup or
+//     Pause, so everything that follows the screen
+//     (the paused rules, the music, the HUD under the panel) is unchanged. Their values live in a SettingsModel; a change returns a
+//     SettingsChanged action for the host to apply (the sound buses, the renderer's quality, the store).
 // Everything else (the battlefield and difficulty rows, joining, pause, the fate screen's left/right + START, results, initials,
 // the high-score table, the idle-title demo) is the C# behaviour unchanged.
 import { GameRules } from '../rules/GameRules.js';
 import { GameOptions, GameType, Battlefield, Difficulty } from '../rules/Campaign.js';
 import { Phase } from '../match/Entities.js';
 import { MatchModel } from '../match/MatchModel.js';
+import { SettingsModel } from './SettingsModel.js';
 
 const MENU_FIELDS = Object.freeze(['up', 'down', 'left', 'right', 'confirm', 'back', 'start']);
 
@@ -30,7 +37,7 @@ export class MenuInput {
 
 export const Screen = Object.freeze({ Title: 0, Setup: 1, Playing: 2, Pause: 3, Decide: 4, Results: 5, Initials: 6, HighScores: 7 });
 
-export const MenuActionKind = Object.freeze({ StartGame: 0, StartDemo: 1, Restart: 2, QuitToTitle: 3, QuitApp: 4, Decide: 5, SaveHighScores: 6 });
+export const MenuActionKind = Object.freeze({ StartGame: 0, StartDemo: 1, Restart: 2, QuitToTitle: 3, QuitApp: 4, Decide: 5, SaveHighScores: 6, SettingsChanged: 7 });
 
 function kindName(v) { for (const k of Object.keys(MenuActionKind)) if (MenuActionKind[k] === v) return k; return String(v); }
 
@@ -63,12 +70,18 @@ export class MenuModel {
   static TitleIdleTicks = 30 * GameRules.TicksPerSecond;      // AUTHORED in the private model: an untouched title plays the demo
 
   static SetupRows = Object.freeze(['MAP', 'BATTLEFIELD', 'DIFFICULTY', 'START', 'HIGH SCORES', 'QUIT']);
-  static PauseRows = Object.freeze(['RESUME', 'RESTART', 'QUIT TO TITLE']);
+  static PauseRows = Object.freeze(['RESUME', 'RESTART', 'SETTINGS', 'QUIT TO TITLE']);
   static DecideRows = Object.freeze(['CONTINUE', 'GIVE UP']);
   static RowMap = 0; static RowField = 1; static RowDifficulty = 2; static RowStart = 3; static RowScores = 4; static RowQuit = 5;
+  static PauseRowSettings = 2;
+  static SettingsRows = Object.freeze(['MUSIC', 'EFFECTS', 'AMBIENCE', 'MUTE', 'GRAPHICS', 'BACK']);
+  static SetMusic = 0; static SetEffects = 1; static SetAmbience = 2; static SetMute = 3; static SetGraphics = 4; static SetBack = 5;
+  /** The SettingsModel volume each volume row changes. */
+  static SettingsVolume = Object.freeze({ 0: 'music', 1: 'fx', 2: 'ambience' });
 
-  /** scores: a HighScoreTable or null (a new empty one). maps: the app's generated maps, [{name, seed}, ...], at least one. */
-  constructor(scores, maps) {
+  /** scores: a HighScoreTable or null (a new empty one). maps: the app's generated maps, [{name, seed}, ...], at least one.
+   *  settings: the SettingsModel the settings rows change, or undefined (a test: SettingsModel.defaults('high')). */
+  constructor(scores, maps, settings) {
     this.maps = checkMaps(maps);
     this.mapIndex = 0;
     this.screen = Screen.Title;
@@ -84,7 +97,13 @@ export class MenuModel {
     this.lastWon = false;
     this.inDemo = false;
     this._idle = 0;
+    this.settings = settings === undefined ? SettingsModel.defaults('high') : settings;
+    if (!(this.settings instanceof SettingsModel)) throw new TypeError('MenuModel: settings is a SettingsModel');
+    this.settingsOver = null;          // the screen the settings panel is open over (Setup or Pause), or null when it is shut
+    this.settingsRow = 0;
   }
+
+  get settingsOpen() { return this.settingsOver !== null; }
 
   /** The chosen map entry {name, seed}. */
   get map() { return this.maps[this.mapIndex]; }
@@ -101,12 +120,36 @@ export class MenuModel {
     }
   }
 
+  /** The value shown beside a settings row: '70%', 'ON' / 'OFF' (MUTE), 'HIGH' / 'LOW' (GRAPHICS), '' for BACK. */
+  valueOfSettingsRow(row) {
+    const st = this.settings, vol = MenuModel.SettingsVolume[row];
+    if (vol !== undefined) return st[vol] + '%';
+    if (row === MenuModel.SetMute) return st.muted ? 'ON' : 'OFF';
+    if (row === MenuModel.SetGraphics) return st.quality === 'high' ? 'HIGH' : 'LOW';
+    if (row === MenuModel.SetBack) return '';
+    throw new RangeError('MenuModel: no settings row ' + row);
+  }
+
+  /** The settings panel opens over the title, the join screen or the pause menu (the pause menu's SETTINGS row, or the host for the
+   *  other two), on its first row. Not over the title while the demo fills it. */
+  openSettings() {
+    const sc = this.screen;
+    if (!(sc === Screen.Setup || sc === Screen.Pause || (sc === Screen.Title && !this.inDemo)))
+      throw new Error('MenuModel: settings open over the title, the join screen or the pause menu, not screen ' + sc + (this.inDemo ? ' (the demo)' : ''));
+    if (this.settingsOver !== null) throw new Error('MenuModel: the settings panel is already open');
+    this.settingsOver = this.screen; this.settingsRow = 0;
+  }
+
+  /** Back to the screen it opened over, on the row it was on (the settings rows move settingsRow, never row). */
+  closeSettings() { this.settingsOver = null; this._idle = 0; }
+
   /** One frame. `match` is the running match or null; the menu follows it into the fate screen and out to the results. */
   update(seats, match) {
     if (seats === null || seats === undefined || seats.length !== MenuModel.Seats) throw new RangeError('one MenuInput per seat (' + MenuModel.Seats + ')');
     for (let i = 0; i < seats.length; i++) if (!(seats[i] instanceof MenuInput)) throw new TypeError('seats[' + i + '] is not a MenuInput');
     const acts = [];
     let any = false; for (const s of seats) any = any || s.any;
+    if (this.settingsOver !== null) { this._settings(seats, acts); return acts; }
     switch (this.screen) {
       case Screen.Title:
         if (this.inDemo && any) { this.inDemo = false; acts.push(new MenuAction(MenuActionKind.QuitToTitle)); this._idle = 0; break; }
@@ -131,6 +174,7 @@ export class MenuModel {
         if (pick !== null) {
           if (pick === 0) this._go(Screen.Playing);
           else if (pick === 1) { this._go(Screen.Playing); acts.push(new MenuAction(MenuActionKind.Restart)); }
+          else if (pick === MenuModel.PauseRowSettings) this.openSettings();
           else { this._go(Screen.Title); acts.push(new MenuAction(MenuActionKind.QuitToTitle)); }
         } else for (let i = 0; i < MenuModel.Seats; i++) if (this.joined[i] && (seats[i].start || seats[i].back)) { this._go(Screen.Playing); break; }
         break;
@@ -192,6 +236,32 @@ export class MenuModel {
     }
   }
 
+  /** The settings panel: Back (or the BACK row) shuts it; left / right change the chosen row; up / down / confirm as every menu
+   *  (_nav). The seats that drive it are the ones that drive the screen under it. */
+  _settings(seats, acts) {
+    const open = this.joinedCount === 0;
+    for (let i = 0; i < MenuModel.Seats; i++) if ((open || this.joined[i]) && seats[i].back) { this.closeSettings(); return; }
+    for (let i = 0; i < MenuModel.Seats; i++) {
+      if (!open && !this.joined[i]) continue;
+      const s = seats[i];
+      if (s.left || s.right) this._changeSetting(this.settingsRow, s.right ? 1 : -1, acts);
+    }
+    const pick = this._nav(seats, MenuModel.SettingsRows.length, false, 'settingsRow');
+    if (pick === MenuModel.SetBack) this.closeSettings();
+    else if (pick !== null) this._changeSetting(pick, 0, acts);
+  }
+
+  /** dir: -1 / 1 left / right, 0 confirm. A change returns SettingsChanged (a volume already at its end does not change). */
+  _changeSetting(row, dir, acts) {
+    const st = this.settings, vol = MenuModel.SettingsVolume[row];
+    let changed = true;
+    if (vol !== undefined) { if (dir === 0) st.cycle(vol); else changed = st.step(vol, dir); }
+    else if (row === MenuModel.SetMute) st.toggleMute();
+    else if (row === MenuModel.SetGraphics) st.toggleQuality();
+    else changed = false;                                              // BACK: left / right do nothing
+    if (changed) acts.push(new MenuAction(MenuActionKind.SettingsChanged));
+  }
+
   _change(row, dir) {
     if (row === MenuModel.RowMap) { const n = this.maps.length; this.mapIndex = (this.mapIndex + dir + n) % n; }
     else if (row === MenuModel.RowField) this.options.field = this.options.field === Battlefield.Recruit ? Battlefield.Veteran : Battlefield.Recruit;
@@ -217,22 +287,23 @@ export class MenuModel {
 
   /** Up/down move the row (wrapping), Confirm picks it. Any joined seat drives it; with nobody joined, any seat. On the fate screen
    *  (sideways) left/right move it too, and START takes it. null = nothing picked this frame. */
-  _nav(seats, rows, sideways) {
+  _nav(seats, rows, sideways, key = 'row') {
     const open = this.joinedCount === 0;
     for (let i = 0; i < MenuModel.Seats; i++) {
       if (!open && !this.joined[i]) continue;
       const s = seats[i];
-      if (s.up || (sideways && s.left)) this.row = (this.row + rows - 1) % rows;
-      if (s.down || (sideways && s.right)) this.row = (this.row + 1) % rows;
-      if (s.confirm || s.start) return this.row;
+      if (s.up || (sideways && s.left)) this[key] = (this[key] + rows - 1) % rows;
+      if (s.down || (sideways && s.right)) this[key] = (this[key] + 1) % rows;
+      if (s.confirm || s.start) return this[key];
     }
     return null;
   }
 
-  _go(s) { this.screen = s; this.row = 0; this._idle = 0; }
+  _go(s) { this.screen = s; this.row = 0; this._idle = 0; this.settingsOver = null; }
 
   /** The pointer is over a row (a mouse in the host): it becomes the chosen row, so a click confirms the row under the mouse. */
   pointAt(row) {
+    if (this.settingsOver !== null) { if (row >= 0 && row < MenuModel.SettingsRows.length) this.settingsRow = row; return; }
     const rows = this.screen === Screen.Setup ? MenuModel.SetupRows.length : this.screen === Screen.Pause ? MenuModel.PauseRows.length
                : this.screen === Screen.Decide ? MenuModel.DecideRows.length : 0;
     if (row >= 0 && row < rows) this.row = row;

@@ -96,7 +96,10 @@ export class Overlay {
   }
 
   /** s = { screen, inDemo, attract, devices[], phones: {state, reason}, controls: 'local' | 'phones' | 'both', touchControls, touchFirst,
-   *  soundNote, soundError (a sound file that did not load, or unreadable sound settings: on the title footer), scoresNote } */
+   *  soundNote, soundError (a sound file that did not load, or unreadable sound settings: on the title footer), scoresNote,
+   *  phonesAllowed, phonesWhy (the page's host may not allow phones: app/host.js), hostLines [{ id, text, bad }] (the host's lines on
+   *  the title footer), settingsButton (the SETTINGS button is offered), settings (the open settings panel: { row, rows: [{ label,
+   *  value, level (a volume's percent, else null) }] }, or null) } */
   render(s) {
     const html = this.build(s);
     if (html !== this.last) { this.last = html; this.root.innerHTML = html; }
@@ -108,16 +111,52 @@ export class Overlay {
   build(s) {
     const S = this.Screen;
     const parts = [];
-    if (!s.attract && s.screen === S.Setup) parts.push(this.seats(s), this.howto(s));
-    if (!s.attract && s.screen === S.Title && !s.inDemo) parts.push('<div class="keys foot">' + this.keyHelp.map(esc).join('<br>') + '<br>Gamepads and phones: stick or d-pad move, A place/fire, B rotate/back, Y ready, X held fast, START pause'
+    // the settings panel (SETTINGS_UC.md UC-ST1) stands alone over the dimmed menu: the join screen's foot and how-to card, the title's
+    // foot and the scores' note wait under it
+    if (s.settings) parts.push(this.settingsPanel(s.settings, s.touchFirst));
+    if (!s.settings && !s.attract && s.screen === S.Setup) parts.push(this.seats(s), this.howto(s));
+    if (!s.settings && !s.attract && s.screen === S.Title && !s.inDemo) parts.push('<div class="keys foot">' + this.keyHelp.map(esc).join('<br>') + '<br>' + (s.phonesAllowed ? 'Gamepads and phones' : 'Gamepads') + ': stick or d-pad move, A place/fire, B rotate/back, Y ready, X held fast, START pause'
       + '<div class="credits">Models: ' + MODEL_CREDITS.map((c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author)).join('; ')
       + ' (<a href="' + CC_BY_4 + '" target="_blank" rel="noopener">CC BY 4.0</a>, from Sketchfab). ' + esc(OWN_MODELS)
       + '<br>Sounds: ' + SOUND_CREDITS.map((c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author)).join('; ')
       + ' (<a href="' + CC0 + '" target="_blank" rel="noopener">CC0</a>).</div>'
-      + (s.soundError ? '<div class="note sounderr">' + esc(s.soundError) + '</div>' : '') + '</div>');
-    if (s.screen === S.HighScores && s.scoresNote) parts.push('<div class="note foot">' + esc(s.scoresNote) + '</div>');
+      + (s.soundError ? '<div class="note sounderr">' + esc(s.soundError) + '</div>' : '')
+      + s.hostLines.map((l) => '<div class="hostline' + (l.bad ? ' bad' : '') + '" data-host-line="' + esc(l.id) + '">' + esc(l.text) + '</div>').join('') + '</div>');
+    if (!s.settings && s.screen === S.HighScores && s.scoresNote) parts.push('<div class="note foot">' + esc(s.scoresNote) + '</div>');
+    if (s.settingsButton) parts.push('<button class="setopen" data-settings="open" aria-label="Settings">SETTINGS<span class="sk">E / Y</span></button>');
     if (s.soundNote) parts.push('<div class="corner">' + esc(s.soundNote) + '</div>');
     return parts.join('');
+  }
+
+  /** The settings panel: a wooden board in a stone frame (the HUD's panels, UC-L1), one row per setting with its value; a volume
+   *  has a ten-step meter and an arrow each side. The rows are plain boxes the pointer passes through to the page (#ui takes no
+   *  pointer events): main.js finds the row or arrow under the pointer with settingsHitAt and feeds it to the menu like a HUD row. */
+  settingsPanel(st, touch) {
+    const rows = st.rows.map((r, i) => {
+      const sel = i === st.row ? ' sel' : '';
+      let val = '';
+      if (r.value) {
+        const meter = r.level === null ? '' : '<span class="meter">' + Array.from({ length: 10 }, (_, k) => '<i' + (k < Math.floor(r.level / 10) ? ' class="on"' : '') + '></i>').join('') + '</span>';
+        val = '<span class="sval"><span class="sarr" data-sstep="-1">◀</span>' + meter + '<span class="snum">' + esc(r.value) + '</span><span class="sarr" data-sstep="1">▶</span></span>';
+      }
+      return '<div class="srow' + sel + '" data-srow="' + i + '"><span class="slab">' + esc(r.label) + '</span>' + val + '</div>';
+    }).join('');
+    return '<div class="setdim"></div><div class="settings" role="dialog" aria-label="Settings"><div class="sbody"><div class="shead">SETTINGS</div>' + rows
+      + '<div class="shelp">' + (touch ? 'Tap a row to change it, or its arrows; BACK closes' : 'Up / down choose, left / right change, B or Backspace goes back')
+      + '</div></div></div>';
+  }
+
+  /** The settings row or arrow under a point (client CSS px), from the boxes drawn last frame: { kind: 'step', row, dir },
+   *  { kind: 'row', row } or null - the shapes render/hud.js hitAt gives for the HUD's rows. */
+  settingsHitAt(x, y) {
+    const inside = (e) => { const r = e.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; };
+    for (const row of this.root.querySelectorAll('.settings [data-srow]')) {
+      if (!inside(row)) continue;
+      const n = Number(row.dataset.srow);
+      for (const a of row.querySelectorAll('[data-sstep]')) if (inside(a)) return { kind: 'step', row: n, dir: Number(a.dataset.sstep) };
+      return { kind: 'row', row: n };
+    }
+    return null;
   }
 
   /** The how-to card on the join screen: the goal in one line, then what each control of the chosen CONTROLS mode does. */
@@ -142,13 +181,16 @@ export class Overlay {
       if (d.padId && !d.pad) dev.push(d.padId);
       line += '<span class="dev" style="color:' + this.colours[seat] + '">P' + (seat + 1) + ': ' + esc(dev.length ? dev.join(' + ') : 'no controller yet') + '</span>';
     }
-    const phones = s.phones.state === 'open' ? 'Phones: scan the code, then press A on the phone to join its seat.'
+    // a host that does not allow phones (the desktop build): the reason, and PHONES and BOTH drawn disabled with it
+    const phones = !s.phonesAllowed ? 'Phones unavailable: ' + s.phonesWhy + ' Keyboard and gamepads still work.'
+      : s.phones.state === 'open' ? 'Phones: scan the code, then press A on the phone to join its seat.'
       : s.phones.state === 'opening' ? 'Phones: opening a room...'
       : s.phones.state === 'off' ? 'Phones: off. Choose PHONES or BOTH to let phones join with a QR code (C switches).'
       : 'Phones unavailable: ' + s.phones.reason + ' Keyboard and gamepads still work.';
+    const off = (k) => (!s.phonesAllowed && k !== 'local' ? ' disabled title="phones: ' + esc(s.phonesWhy) + '"' : '');
     const ctl = '<div class="ctl">CONTROLS ' + ['local', 'phones', 'both'].map((k) => '<button data-controls="' + k + '" class="'
-      + (s.controls === k ? 'on' : '') + '">' + ({ local: 'LOCAL', phones: 'PHONES', both: 'BOTH' })[k] + '</button>').join('') + '</div>';
+      + (s.controls === k ? 'on' : '') + '"' + off(k) + '>' + ({ local: 'LOCAL', phones: 'PHONES', both: 'BOTH' })[k] + '</button>').join('') + '</div>';
     return '<div class="foot">' + ctl + '<div class="devs">' + line + '</div>'
-      + '<div class="' + (s.phones.state === 'failed' ? 'note' : 'sub') + '">' + esc(phones) + '</div></div>';
+      + '<div class="' + (!s.phonesAllowed || s.phones.state === 'failed' ? 'note' : 'sub') + '">' + esc(phones) + '</div></div>';
   }
 }

@@ -27,6 +27,7 @@ export { MatchModel } from './match/MatchModel.js';
 export { PlaybackQueue } from './controller/PlaybackQueue.js';
 export { PadInput, PlaceKind, Ghost, MatchController } from './controller/MatchController.js';
 export { MenuInput, Screen, MenuActionKind, MenuAction, MenuModel, HighScoreTable } from './controller/MenuModel.js';
+export { SettingsModel, SettingsError } from './controller/SettingsModel.js';
 export { PlayerHud, HudViewModel } from './controller/HudViewModel.js';
 export { PieceMap, WallOutline } from './controller/WallOutline.js';
 export { CastleBot } from './bots/CastleBot.js';

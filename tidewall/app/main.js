@@ -9,10 +9,15 @@
 // ?bombs=0 plays the base rules (no bombs, no shop; a hidden switch for the page checks - bombs are the game); ?dev=0|1 overrides
 // whether this is a development page (a sound file that fails to load stops a development page; a public one shows it on the title
 // footer); by default a page served from this machine (localhost, 127.0.0.1, ::1) is a development page.
+//
+// The page's host (app/host.js, SETTINGS_UC.md UC-DH1): a program that runs this page (the desktop build) sets window.tidewallHost
+// before this module runs; it is read once, checked whole, and from then on supplies the storage, the title footer's extra lines,
+// whether phones may join, QUIT and the match events. With no host the page is the web page it always was.
 import { GAME_TITLE } from './title.js';
+import { readHost } from './host.js';
 import { InputHub, KEY_CLUSTERS, SEATS } from './input.js';
 import { Overlay, HintStrip } from './overlay.js';
-import { SoundPlayer, SoundLoadError, SETTINGS_DEFAULT } from './sound.js';
+import { SoundPlayer, SoundLoadError } from './sound.js';
 import { musicFor, duckFor } from './soundbank.js';
 import { Phones } from './phones.js';
 import { ControlsChoice, TouchPad } from './controls.js';
@@ -23,7 +28,7 @@ import { createRenderer, NoWebGpuError, PLAYER_TEXT_CSS } from '../render/render
 
 const {
   GameRules, GameOptions, GridModel, MapCheck, MatchModel, MatchController, MenuModel, MenuInput, PadInput, Screen, MenuActionKind, HighScoreTable,
-  SeededRandom, Synth, Cell,
+  SeededRandom, Synth, Cell, SettingsModel, SettingsError,
 } = core;
 
 document.title = GAME_TITLE;
@@ -69,13 +74,18 @@ function noWebGpu(why) {
 }
 
 class Game {
-  constructor(renderer, canvas, sw) {
-    this.renderer = renderer; this.canvas = canvas; this.sw = sw;
+  /** host: the checked page host (app/host.js readHost), or null on the web. */
+  constructor(renderer, canvas, sw, host) {
+    this.renderer = renderer; this.canvas = canvas; this.sw = sw; this.host = host;
     this.input = new InputHub(window);
     this.phones = new Phones(SEATS);
     let coarse = false;
     if (typeof matchMedia === 'function') coarse = matchMedia('(pointer: coarse)').matches;
-    this.controls = new ControlsChoice(GAME_TITLE.toLowerCase() + '-controls', { coarse, userAgent: navigator.userAgent });
+    this.controls = new ControlsChoice(GAME_TITLE.toLowerCase() + '-controls', { coarse, userAgent: navigator.userAgent,
+      storage: host ? host.storage : null, phones: host ? host.phones : null });
+    // who plays, for the host's match events: no person plays the bots' demo or the attract match
+    const game = this;
+    this.who = Object.freeze({ get demo() { return game.demo || game.sw.attract; }, isHuman: (slot) => !game.controller.isBot(slot) });
     this.touchpad = new TouchPad(document.body);
     // the first match's hint strip (overlay.js HintStrip): the match and the round it speaks in, set when a player's first match starts
     this.hint = new HintStrip(document.body); this.hintMatch = null; this.hintRound = 0;
@@ -84,16 +94,22 @@ class Game {
     this.bar = new ActionBar(document.body, ACTIONS);
     this.input.attachBar(this.bar);
     // the CONTROLS buttons on the join screen (overlay.js draws them), and C on the keyboard there
+    // and the SETTINGS button on the title and the join screen (its press is taken by the next tick, gameTick)
+    this.settingsAsked = false;
     document.getElementById('ui').addEventListener('click', (e) => {
       const b = e.target instanceof Element ? e.target.closest('[data-controls]') : null;
       if (b) this.controls.set(b.dataset.controls);
+      if (e.target instanceof Element && e.target.closest('[data-settings]')) this.settingsAsked = true;
     });
-    window.addEventListener('keydown', (e) => { if (e.code === 'KeyC' && !e.repeat && this.menu.screen === Screen.Setup && !this.sw.attract) this.controls.next(); });
+    window.addEventListener('keydown', (e) => { if (e.code === 'KeyC' && !e.repeat && this.menu.screen === Screen.Setup && !this.menu.settingsOpen && !this.sw.attract) this.controls.next(); });
     this.soundNote = '';
-    this.sound = new SoundPlayer(Synth, this.loadSoundSettings());
+    // the settings (SETTINGS_UC.md UC-ST1): the stored sound settings and the quality the page started on, one SettingsModel the
+    // menu's settings rows, M and G all change; applySound / applyQuality hand it to the SoundPlayer and the renderer
+    const settings = this.loadSettings();
+    this.sound = new SoundPlayer(Synth, settings.sound());
     this.maps = new MapSource(GameRules.default());
     this.scoresNote = '';
-    this.menu = new MenuModel(this.loadScores(), CAMPAIGN_ISLANDS);
+    this.menu = new MenuModel(this.loadScores(), CAMPAIGN_ISLANDS, settings);
     this.overlay = new Overlay(document.getElementById('ui'), PLAYER_TEXT_CSS, Screen, KEY_CLUSTERS.map((c) => 'P' + (c.seat + 1) + ': ' + c.help));
     this.seed = sw.seed ?? (Date.now() & 0x7fffffff);
     this.ticks = 0;
@@ -110,22 +126,27 @@ class Game {
     this.brake = null; this.braked = false; this.phaseKey = ''; this.phaseTick = 0;
     const wake = () => { this.sound.wake(); };
     window.addEventListener('keydown', wake);
-    window.addEventListener('keydown', (e) => { if (e.code === 'KeyG' && !e.repeat) this.renderer.cycleQuality(); });   // graphics quality: high <-> low
+    // graphics quality: high <-> low (the settings' GRAPHICS row follows it)
+    window.addEventListener('keydown', (e) => { if (e.code === 'KeyG' && !e.repeat) { this.menu.settings.toggleQuality(); this.applyQuality(); } });
     window.addEventListener('pointerdown', wake);
-    // M mutes (UC-S2 1a) everywhere, and the choice is kept. Player 2's trap key moved from M to Numpad 0 (next to their Numpad 1-4
-    // shop keys, app/input.js) so the two never clash.
+    // M mutes (UC-S2 1a) everywhere, and the choice is kept (the settings' MUTE row follows it). Player 2's trap key moved from M to
+    // Numpad 0 (next to their Numpad 1-4 shop keys, app/input.js) so the two never clash.
     window.addEventListener('keydown', (e) => {
       if (e.code !== 'KeyM' || e.repeat) return;
-      this.sound.toggleMute();
-      this.saveSoundSettings();
+      this.menu.settings.toggleMute();
+      this.applySound(0.05);
     });
     this.startMatch(true, null);
     if (sw.attract) this.menu.playing();
   }
 
+  /** Where the page keeps its saved values: the host's storage, or the browser's localStorage. Read inside each caller's try: a
+   *  browser that refuses localStorage throws on the read. */
+  store() { return this.host ? this.host.storage : localStorage; }
+
   loadScores() {
     let text;
-    try { text = localStorage.getItem(SCORES_KEY); }
+    try { text = this.store().getItem(SCORES_KEY); }
     catch (e) { this.scoresNote = 'High scores are not kept in this browser: ' + e.message; this.scoresWritable = false; return new HighScoreTable(); }
     this.scoresWritable = true;
     if (!text) return new HighScoreTable();
@@ -138,33 +159,54 @@ class Game {
     }
   }
 
-  /** R4: the sound settings ({ muted, music, fx, ambience }, each volume 0..1). Unreadable ones are reported and never written over. */
-  loadSoundSettings() {
+  /** R4: the settings (core/controller/SettingsModel.js): the stored sound settings ({ muted, music, fx, ambience }, each volume 0..1,
+   *  a whole percent) and the quality the page started on. Unreadable ones are reported and never written over. */
+  loadSettings() {
+    const first = SettingsModel.defaults(this.sw.quality);
     let text;
-    try { text = localStorage.getItem(SOUND_KEY); }
-    catch (e) { this.soundNote = 'Sound settings are not kept in this browser: ' + e.message; this.soundWritable = false; return SETTINGS_DEFAULT; }
+    try { text = this.store().getItem(SOUND_KEY); }
+    catch (e) { this.soundNote = 'Sound settings are not kept in this browser: ' + e.message; this.soundWritable = false; return first; }
     this.soundWritable = true;
-    if (!text) return SETTINGS_DEFAULT;
-    let v = null;
-    try { v = JSON.parse(text); } catch (e) { v = null; }
-    const vol = (x) => typeof x === 'number' && x >= 0 && x <= 1;
-    if (!v || typeof v.muted !== 'boolean' || !vol(v.music) || !vol(v.fx) || !vol(v.ambience)) {
+    if (!text) return first;
+    try { return SettingsModel.parse(text, this.sw.quality); }
+    catch (e) {
+      if (!(e instanceof SettingsError)) throw e;
       this.soundNote = 'The saved sound settings could not be read (' + text.slice(0, 60) + '); they are left untouched.';
       this.soundWritable = false;
-      return SETTINGS_DEFAULT;
+      return first;
     }
-    return { muted: v.muted, music: v.music, fx: v.fx, ambience: v.ambience };
   }
 
   saveSoundSettings() {
     if (!this.soundWritable) return;
-    try { localStorage.setItem(SOUND_KEY, JSON.stringify(this.sound.settings)); }
+    try { this.store().setItem(SOUND_KEY, this.menu.settings.save()); }
     catch (e) { this.soundNote = 'Sound settings could not be saved: ' + e.message; }
+  }
+
+  /** The settings' sound onto the SoundPlayer's master and bus gains (ramped over `secs`; 0 = at once: a time constant of 1 ms, so
+   *  the pick that follows a settings change is heard at the new level), then stored. */
+  applySound(secs) {
+    this.sound.settings = this.menu.settings.sound();
+    this.sound.applySettings(secs);
+    this.saveSoundSettings();
+  }
+
+  /** The settings' graphics quality onto the renderer (its own note shows the switch). */
+  applyQuality() {
+    const q = this.menu.settings.quality;
+    if (this.renderer.quality !== q) this.renderer.setQuality(q);
+    if (this.renderer.quality !== q) throw new Error('main.js: the renderer stayed on ' + this.renderer.quality + ' graphics after setQuality(' + q + ')');
+  }
+
+  /** The SETTINGS button is offered on the title (not while the demo fills it) and on the join screen, while the panel is shut. */
+  get settingsOffered() {
+    const sc = this.menu.screen;
+    return !this.sw.attract && !this.menu.settingsOpen && ((sc === Screen.Title && !this.menu.inDemo) || sc === Screen.Setup);
   }
 
   saveScores() {
     if (!this.scoresWritable) return;
-    try { localStorage.setItem(SCORES_KEY, this.menu.highScores.save()); }
+    try { this.store().setItem(SCORES_KEY, this.menu.highScores.save()); }
     catch (e) { this.scoresNote = 'High scores could not be saved: ' + e.message; }
   }
 
@@ -205,9 +247,12 @@ class Game {
   present(e) {
     this.events.push(e);
     this.sound.forEvent(e, !this.silent);
+    if (this.host) this.host.event(e, this.who);
   }
 
   act(a) {
+    // a settings change is applied first, so its pick is heard at the new effects volume (UC-ST1 step 3)
+    if (a.kind === MenuActionKind.SettingsChanged) { this.applyQuality(); this.applySound(0); this.sound.menu('pick', this.ticks); return; }
     this.sound.menu('pick', this.ticks);
     switch (a.kind) {
       case MenuActionKind.StartGame: this.startMatch(false, this.menu.joined.slice()); break;
@@ -216,7 +261,9 @@ class Game {
       case MenuActionKind.StartDemo: break;                                   // the demo is already playing behind the title
       case MenuActionKind.Decide: this.controller.decide(a.flag); break;
       case MenuActionKind.SaveHighScores: this.saveScores(); break;
-      case MenuActionKind.QuitApp: this.menu.toTitle(); this.startMatch(true, null); break;   // a web page cannot close itself: back to the title
+      case MenuActionKind.QuitApp:
+        if (this.host) { this.host.quit(); break; }                         // the host closes the program
+        this.menu.toTitle(); this.startMatch(true, null); break;            // a web page cannot close itself: back to the title
       default: throw new Error('no handler for menu action ' + a.kind);
     }
   }
@@ -234,19 +281,21 @@ class Game {
    *  hovering a row chooses it (MenuModel.pointAt); a click takes the row UNDER the pointer as seat 1's confirm; a click on a
    *  screen with no rows (the title, the results, the scores) is "press a button"; a click beside the rows does nothing. On the
    *  join screen a click on a free seat's card joins that seat; the arrows beside a setup value step it; the initial being set steps
-   *  its letter from its top or bottom half. The hit boxes are the ones the HUD drew this frame (render/hud.js hitAt). */
+   *  its letter from its top or bottom half. The hit boxes are the ones the HUD drew this frame (render/hud.js hitAt); while the
+   *  settings panel is open, its rows and arrows as the overlay drew them (overlay.js settingsHitAt), the same kinds of box, and a
+   *  click beside them does nothing. */
   pointerToMenu(menuIn, p) {
     if (!(p.click || p.moved) || Number.isNaN(p.x)) return;
-    const screen = this.menu.screen;
+    const screen = this.menu.screen, settings = this.menu.settingsOpen;
     if (screen === Screen.Playing) return;                                  // in play the pointer does nothing (yet)
     const r = this.canvas.getBoundingClientRect(), hud = this.renderer.hud;
-    const h = hud.hitAt(screen, p.x - r.left, p.y - r.top);
+    const h = settings ? this.overlay.settingsHitAt(p.x, p.y) : hud.hitAt(screen, p.x - r.left, p.y - r.top);
     if (h && (h.kind === 'row' || h.kind === 'step')) this.menu.pointAt(h.row);
     if (!p.click) return;
     // whose press a click is: P1's on the title (the mouse sits with P1's keys), else the first joined seat's (a menu takes only
     // joined seats' presses once anyone has joined, MenuModel._nav), so a group that joined from pads alone can still click
     const first = this.menu.joined.indexOf(true), seat = screen === Screen.Title || first < 0 ? 0 : first, s = menuIn[seat];
-    if (!h) { if (!hud.hasHits(screen) || screen === Screen.Initials) s.confirm = true; return; }   // initials: a click is "next"
+    if (!h) { if (!settings && (!hud.hasHits(screen) || screen === Screen.Initials)) s.confirm = true; return; }   // initials: a click is "next"
     if (h.kind === 'row') s.confirm = true;
     else if (h.kind === 'seat') { if (!this.menu.joined[h.seat]) menuIn[h.seat].confirm = true; }
     else if (h.kind === 'step') { if (h.dir < 0) s.left = true; else s.right = true; }
@@ -299,7 +348,8 @@ class Game {
   pointerCursor() {
     const p = this.input.pointer, screen = this.menu.screen, r = this.canvas.getBoundingClientRect(), hud = this.renderer.hud;
     const menuUp = !this.sw.attract && !(screen === Screen.Playing);
-    const on = menuUp && !Number.isNaN(p.x) && (!hud.hasHits(screen) || screen === Screen.Initials || hud.hitAt(screen, p.x - r.left, p.y - r.top) !== null);
+    const on = menuUp && !Number.isNaN(p.x) && (this.menu.settingsOpen ? this.overlay.settingsHitAt(p.x, p.y) !== null
+      : !hud.hasHits(screen) || screen === Screen.Initials || hud.hitAt(screen, p.x - r.left, p.y - r.top) !== null);
     const aim = !this.sw.attract && !this.demo && screen === Screen.Playing && this.pointerMode;
     const want = on ? 'pointer' : aim ? 'crosshair' : '';
     if (document.body.style.cursor !== want) document.body.style.cursor = want;
@@ -316,10 +366,17 @@ class Game {
     this.input.enterReadies = wasPlaying && !this.seatOf.includes(1);   // Enter is P1's READY unless P2 is in the match (P2's place key)
     if (!this.sw.attract) this.pointerToMenu(menuIn, ptr);
     if (!this.sw.attract) {
-      const before = this.menu.screen + ':' + this.menu.row + ':' + this.menu.joinedCount;
+      const where = () => [this.menu.screen, this.menu.row, this.menu.joinedCount, this.menu.settingsOver, this.menu.settingsRow].join(':');
+      const before = where();
+      // the settings panel from the title or the join screen (UC-ST1 step 1): the SETTINGS button, or READY on a seat's own device
+      // (E, /, a pad's or phone's Y) - on the join screen a joined seat's, on the title anyone's, as the menus take presses
+      const offered = this.settingsOffered, title = this.menu.screen === Screen.Title;
+      const ready = seats.some((s, i) => s.pad.ready && (title || this.menu.joined[i]));
+      if (offered && (this.settingsAsked || ready)) this.menu.openSettings();
+      this.settingsAsked = false;
       const acts = this.menu.update(menuIn, this.demo ? null : this.model);
       for (const a of acts) this.act(a);
-      if (this.menu.screen + ':' + this.menu.row + ':' + this.menu.joinedCount !== before) this.sound.menu('move', this.ticks);
+      if (where() !== before) this.sound.menu('move', this.ticks);
     }
     const sc = this.menu.screen;
     const run = this.sw.attract || (this.demo ? sc === Screen.Title || sc === Screen.Setup || sc === Screen.HighScores
@@ -398,7 +455,7 @@ class Game {
     // QRLAND (round 5): the join screen lays its seats and rows out around what the page draws over the canvas: the phone room's QR
     // panel (PhonePad's own box, [data-phonepad]; its host script offers a corner (place) and a parent, no size) and the how-to
     // card, as measured last frame (the canvas fills the window, so these CSS px are the HUD's)
-    const menuCover = !this.sw.attract && this.menu.screen === Screen.Setup
+    const menuCover = !this.sw.attract && this.menu.screen === Screen.Setup && !this.menu.settingsOpen
       ? ['[data-phonepad]', '#ui .howto'].map((q) => document.querySelector(q)).filter(Boolean).map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0)
       : [];
     this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha, camera, menuCover }, dt);
@@ -406,7 +463,7 @@ class Game {
     const scene = { screen: this.menu.screen, demo: this.demo, attract: this.sw.attract, phase: this.model.phase };
     this.sound.update({ music: musicFor(scene), duck: duckFor(scene) });
     this.pointerCursor();
-    const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup;
+    const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup && !this.menu.settingsOpen;
     // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its
     // phones are read by the input hub once it is open
     const phones = this.controls.usesPhones;
@@ -422,7 +479,19 @@ class Game {
       touchControls: this.controls.showsTouch, touchFirst: this.controls.touchFirst,
       soundNote: this.sound.muted ? 'Sound off (M)' : this.sound.needsGesture ? 'Press any key for sound' : '',
       soundError: [this.soundNote, ...this.sound.loadErrors.map((f) => 'Sound file ' + f.file + ' did not load: ' + f.why)].filter(Boolean).join(' '),
+      phonesAllowed: this.controls.phonesAllowed, phonesWhy: this.controls.phonesWhy, hostLines: this.host ? this.host.footer : [],
+      settingsButton: this.settingsOffered, settings: this.settingsView(),
     });
+  }
+
+  /** What the settings panel shows (overlay.js settingsPanel), read from the menu model; null while it is shut. */
+  settingsView() {
+    const m = this.menu;
+    if (!m.settingsOpen || this.sw.attract) return null;
+    return { row: m.settingsRow, rows: MenuModel.SettingsRows.map((label, i) => {
+      const vol = MenuModel.SettingsVolume[i];
+      return { label, value: m.valueOfSettingsRow(i), level: vol === undefined ? null : m.settings[vol] };
+    }) };
   }
 
   run() {
@@ -447,6 +516,7 @@ class Game {
 
 async function boot() {
   const sw = readSwitches();
+  const host = readHost(window);     // before the first await: a host sets itself before this module runs (UC-DH1 step 1)
   if (!navigator.gpu) { noWebGpu('navigator.gpu is missing'); return; }
   const canvas = document.getElementById('view');
   let renderer;
@@ -458,7 +528,7 @@ async function boot() {
   const fit = () => { const w = window.innerWidth, h = window.innerHeight; renderer.resize(w, h); };
   window.addEventListener('resize', fit);
   fit();
-  const game = new Game(renderer, canvas, sw);
+  const game = new Game(renderer, canvas, sw, host);
   // UC-S2 1b: every sound file is fetched and decoded before the loop starts. A failure is logged and shown on the title footer; on a
   // development page it also stops the page (no other sound is put in its place either way)
   try { await game.sound.load(); }

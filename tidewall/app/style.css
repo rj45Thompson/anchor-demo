@@ -125,3 +125,52 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
   width: 44px; height: 44px; border-radius: 50%; font: 900 10px/1 var(--font); letter-spacing: 0.04em; color: var(--gold); background: var(--wood); border: 3px solid var(--gold); box-shadow: 0 2px 0 var(--stone-dark); padding: 0; }
 .tshop[hidden] { display: none; }
 .tshop.on { background: #b3261e; }
+
+/* the page's host (app/host.js): its lines on the title footer, and the CONTROLS buttons it does not allow */
+#ui .hostline { margin-top: 6px; font-size: 12px; font-weight: bold; color: var(--dim); }
+#ui .hostline.bad { color: var(--bad); }
+#ui .ctl button[disabled] { opacity: 0.45; cursor: not-allowed; text-decoration: line-through; }
+
+/* SETTINGS (SETTINGS_UC.md UC-ST1): the button on the title and the join screen, and the panel. The panel is the HUD's wooden board
+   (render/hud.js woodPanel, UC-L1): a stone rim lit at the top in an ink line, planks inside with seams, the chosen row in gold.
+   The rows take no pointer events (#ui takes none): main.js hit-tests them (overlay.js settingsHitAt) and feeds the menu. */
+#ui .setopen { position: absolute; left: max(12px, env(safe-area-inset-left)); top: max(12px, env(safe-area-inset-top)); pointer-events: auto;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 104px; min-height: 48px; padding: 6px 12px; box-sizing: border-box;
+  font: 900 15px/1 var(--font); letter-spacing: 0.06em; color: #fff; text-shadow: 0 2px 0 var(--inkline); background: var(--wood);
+  border: var(--frame); box-shadow: var(--lift); border-radius: 14px; cursor: pointer; }
+#ui .setopen .sk { font: 700 11px/1 var(--font); letter-spacing: 0.04em; color: var(--gold); }
+#ui .setopen:hover { filter: brightness(1.15); border-color: var(--gold); }
+#ui .setdim { position: absolute; inset: 0; background: rgba(6, 20, 36, 0.68); }   /* over the menu's own dim: the panel stands alone */
+#ui .settings { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(540px, calc(100% - 32px)); box-sizing: border-box;
+  padding: 6px; border-radius: 22px; background: linear-gradient(180deg, #cfc6b2, #8c8372);
+  box-shadow: 0 0 0 1.5px var(--inkline), 1px 4px 0 rgba(0, 0, 0, 0.32), 0 10px 24px rgba(0, 0, 0, 0.45); }
+#ui .sbody { border-radius: 16px; padding: 12px 14px 10px; box-shadow: inset 0 0 0 1.5px rgba(20, 10, 4, 0.55);
+  background: linear-gradient(180deg, rgba(255, 240, 210, 0.16) 0 26px, rgba(0, 0, 0, 0) 26px),
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, 0) 0 62px, rgba(30, 16, 6, 0.35) 62px 64px), linear-gradient(180deg, #8a5a30, #4e2f16); }
+#ui .shead { text-align: center; font: 900 30px/1.1 var(--font); letter-spacing: 0.08em; color: var(--gold); text-shadow: 0 3px 0 var(--inkline); margin: 2px 0 8px; }
+#ui .srow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 50px; margin: 4px 0; padding: 0 10px 0 14px;
+  border: 3px solid transparent; border-radius: 16px; font: 900 20px/1 var(--font); color: rgba(255, 255, 255, 0.78); text-shadow: 0 2px 0 var(--inkline); }
+#ui .srow.sel { color: #fff; border-color: var(--gold); background: linear-gradient(180deg, #9c6a3a, #6b4423); box-shadow: 0 0 0 1.5px var(--inkline), 0 3px 0 var(--stone-dark); }
+#ui .sval { display: flex; align-items: center; gap: 6px; color: rgba(255, 210, 74, 0.8); }
+#ui .srow.sel .sval { color: var(--gold); }
+#ui .sarr { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; border-radius: 12px; font-size: 18px; opacity: 0.5; }
+#ui .srow.sel .sarr { opacity: 1; background: rgba(20, 10, 4, 0.28); }
+#ui .snum { min-width: 4.3ch; text-align: center; }
+#ui .meter { display: inline-flex; gap: 3px; }
+#ui .meter i { width: 8px; height: 20px; border-radius: 3px; background: rgba(20, 10, 4, 0.45); box-shadow: inset 0 0 0 1px rgba(255, 210, 74, 0.35); }
+#ui .meter i.on { background: var(--gold); box-shadow: inset 0 -3px 0 rgba(150, 90, 10, 0.55); }
+#ui .shelp { text-align: center; color: var(--dim); font: 600 12px/1.4 var(--font); margin-top: 8px; text-shadow: 0 1px 0 var(--inkline); }
+@media (max-width: 479px) {
+  #ui .srow { font-size: 16px; padding: 0 4px 0 10px; gap: 4px; }
+  #ui .meter { gap: 2px; }
+  #ui .meter i { width: 5px; height: 16px; }
+  #ui .sarr { min-width: 36px; }
+  #ui .sval { gap: 3px; }
+}
+@media (max-height: 559px) {
+  #ui .settings { width: min(500px, calc(100% - 32px)); }
+  #ui .sbody { padding: 6px 12px 6px; }
+  #ui .shead { font-size: 22px; margin: 0 0 4px; }
+  #ui .srow { min-height: 38px; margin: 2px 0; font-size: 17px; }   /* 38 + the 6 px border: a 44 px tap target */
+  #ui .shelp { margin-top: 4px; }
+}
