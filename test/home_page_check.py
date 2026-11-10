@@ -126,8 +126,8 @@ def static():
     pages = home_link.reachable()
     left = home_link.missing()
     check("static every page reachable from here links back to it", len(pages) > 30 and not left,
-          "%d reachable pages, with no link to the front page: %s (tools/home_link.py puts it in)" %
-          (len(pages), [home_link.rel(f) for f, _ in left]))
+          "%d reachable pages, with no link to the front page: %s (tools/home_link.py puts it in); without one by the owner's "
+          "choice (home_link.EXEMPT): %s" % (len(pages), [home_link.rel(f) for f, _ in left], sorted(home_link.EXEMPT)))
 
 
 sys.path.insert(0, os.path.join(ROOT, "tools"))
@@ -154,7 +154,7 @@ def home_links(b):
         bad, n, left = [], 0, []
         for f in sorted(home_link.reachable()):
             name = home_link.rel(f)
-            if name in ("index.html", "3d/index.html"):
+            if name in ("index.html", "3d/index.html") or name in home_link.EXEMPT:
                 continue
             n += 1
             try:
@@ -178,7 +178,8 @@ def home_links(b):
                 bad.append("%s: %s" % (name, [(l["text"], l["x"], l["y"], "covered by " + l["over"] if l["on"] else "off screen")
                                              for l in links] or "no link"))
         check("home link %d: on every reachable page, on screen and clickable" % w, n > 30 and not bad,
-              "%d pages; failing: %s; left the site at once (not shown): %s" % (n, bad, left))
+              "%d pages; failing: %s; left the site at once (not shown): %s; not checked, without a link by the owner's choice: %s"
+              % (n, bad, left, sorted(home_link.EXEMPT)))
         ctx.close()
 
 

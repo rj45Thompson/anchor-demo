@@ -10,6 +10,7 @@ red; run this again.
   root_link(f)      the first <a> on a page that lands on the site root (relative, or the hosted address), or None
   PLACES            where the link goes on each kind of page: inside the bar the page already has, else a small fixed button
   stamp(f)          puts the link in, or refreshes it, between <!--home-link--> and <!--/home-link--> so a re-run replaces it
+  EXEMPT            pages the owner wants without one (with his words): never stamped, never counted as missing
 
 usage:  py tools/home_link.py            stamp every reachable page with no root link of its own (a page already marked is left as it is)
         py tools/home_link.py --refresh  also re-stamp the pages this tool marked before, except KEEP (after a change to PLACES)
@@ -70,8 +71,13 @@ FORCE = {
 
 
 # pages whose block between the markers was placed by their own lane, never re-stamped (even by --refresh)
-KEEP = {
-    "tidewall/index.html": "bottom left, by the Rampart session (4eb2230): top right would cover the game's QR panel",
+KEEP = {}
+
+
+# pages the owner wants WITHOUT a link back: never stamped, and not counted as missing one. A page joins this list only with his words.
+EXEMPT = {
+    "tidewall/index.html": "the owner, 11-08 22:24 local: \"I don't want the go back to projects button on tidewal\" (relayed by the "
+                           "Rampart session; its lane took the block out in bc3c1fc)",
 }
 
 
@@ -142,9 +148,10 @@ def in_progress():
 
 
 def missing():
-    """the reachable pages with no root link, the two start pages aside (the front page is the root; the 3D view links it)"""
+    """the reachable pages with no root link, the two start pages aside (the front page is the root; the 3D view links it) and the
+    EXEMPT ones"""
     pages = reachable()
-    return [(f, pages[f]) for f in sorted(pages) if pages[f] is not None and not root_link(f)]
+    return [(f, pages[f]) for f in sorted(pages) if pages[f] is not None and rel(f) not in EXEMPT and not root_link(f)]
 
 
 def stamp(f):
@@ -187,6 +194,8 @@ def main():
     busy = in_progress()
 
     def wants(f):
+        if rel(f) in EXEMPT:
+            return False
         marked = "<!--home-link-->" in io.open(f, encoding="utf-8").read()
         if marked:
             return refresh and rel(f) not in KEEP
