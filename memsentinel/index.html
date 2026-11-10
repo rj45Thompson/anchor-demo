@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory Sentinel</title>
+<meta name="description" content="Memory Sentinel finds Unreal Engine 5 memory bugs before players do: UObject pointers the garbage collector cannot see, shared pointer cycles, objects that outlive their level, and heap stomps caught at the exact line. An Unreal plugin with an editor tab, an in-game overlay and a visual report.">
+<meta property="og:title" content="Memory Sentinel: find Unreal memory bugs before players do">
+<meta property="og:description" content="A static pass, a level leak test and a heap sampler with rotating CPU data breakpoints, in one Unreal plugin. Every finding says where, why, how it is known and what to change. Live report and manual.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://rj45thompson.github.io/anchor-demo/thumbs/memsentinel.jpg">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="viewer.css">
+<style>
+:root{
+  --bg:#0a0e13;--panel:#121820;--panel2:#18202a;--line:#263241;--well:#0e141b;
+  --fg:#eef1f4;--soft:#c8d1db;--muted:#97a4b3;--faint:#5f6b7a;
+  --accent:#5cc8ff;--good:#3dd68c;--warn:#ffb547;--bad:#ff5c5c;
+  --dangling:#ff8a5c;--cycle:#b58cff;--leak:#2fd1c0;--stomp:#ff5c9a;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--head:'Space Grotesk',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.62 var(--sans)}
+main{max-width:1120px;margin:0 auto;padding:22px 16px 60px}
+a{color:var(--accent)}
+code,kbd{font-family:var(--mono);font-size:.88em;background:var(--well);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--fg);overflow-wrap:anywhere}
+dd a,p a{overflow-wrap:anywhere}
+.crumb{font-size:13.5px;color:var(--muted);margin:0 0 22px}
+.crumb a{color:var(--muted)}
+h1{font:700 clamp(34px,6vw,56px)/1.04 var(--head);margin:0 0 14px;letter-spacing:-.01em}
+h1 b{background:linear-gradient(92deg,var(--accent),#9fe0ff 40%,var(--cycle));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font:650 clamp(22px,3vw,28px)/1.2 var(--head);margin:64px 0 10px;scroll-margin-top:16px;letter-spacing:-.005em}
+h2 .n{font:600 13px var(--mono);color:var(--accent);display:block;letter-spacing:.08em;margin-bottom:6px}
+h3{font:600 18px/1.3 var(--head);margin:26px 0 6px}
+p{margin:0 0 12px;color:var(--soft);max-width:760px}
+.lede{font-size:18px;color:var(--soft);max-width:740px}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 8px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:999px;border:1px solid var(--line);color:var(--fg);text-decoration:none;font-weight:600;background:var(--panel)}
+.btn.go{background:var(--accent);border-color:var(--accent);color:#06121b}
+.btn:hover{border-color:var(--accent)}
+.meta{font:12.5px var(--mono);color:var(--muted);margin:14px 0 0;display:flex;flex-wrap:wrap;gap:4px 14px}
+.meta span{white-space:nowrap}
+.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:26px;margin-bottom:10px}
+.shot{margin:0;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#000;box-shadow:0 20px 60px -20px rgba(92,200,255,.25)}
+.shot img{display:block;width:100%;height:auto}
+.shot figcaption{font-size:13px;color:var(--muted);padding:10px 14px;background:var(--panel)}
+.four{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,500px),1fr));gap:16px;margin-top:18px}
+.ex{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0;position:relative;overflow:hidden}
+.ex::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:var(--c)}
+.ex h3{margin:0 0 4px;display:flex;align-items:center;gap:10px}
+.ex h3 i{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block;flex:none}
+.ex p{font-size:14.5px;margin-bottom:10px}
+.stage{background:var(--well);border:1px solid var(--line);border-radius:10px;padding:8px;margin:10px 0}
+.stage svg{display:block;width:100%;height:auto}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl button{font:600 13px var(--sans);color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer}
+.ctl button:hover{border-color:var(--c)}
+.ctl button.on{background:color-mix(in srgb,var(--c) 22%,var(--panel2));border-color:var(--c)}
+.ctl button.do{background:var(--c);border-color:var(--c);color:#0b0f14}
+.say{font:13px/1.5 var(--mono);color:var(--muted);min-height:3em;margin:10px 0 0}
+.say b{color:var(--fg);font-weight:600}
+.codeline{font:12.5px var(--mono);background:#070a0e;border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--soft);overflow-x:auto;white-space:pre;margin:8px 0 0}
+.codeline .k{color:var(--cycle)} .codeline .t{color:var(--leak)} .codeline .bad{color:var(--bad)} .codeline .ok{color:var(--good)}
+.reportwrap{margin-top:18px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+.card h3{margin-top:0}
+.card ul{margin:0;padding-left:18px;color:var(--soft);font-size:14.5px}
+.card li{margin:4px 0}
+.steps{counter-reset:s;list-style:none;padding:0;margin:14px 0 0;max-width:820px}
+.steps li{counter-increment:s;position:relative;padding:0 0 16px 46px;color:var(--soft)}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);color:var(--accent);font:600 14px var(--mono);display:grid;place-items:center}
+pre.cmd{font:13px/1.55 var(--mono);background:#070a0e;border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;color:var(--soft);margin:8px 0 14px;max-width:100%}
+dl.ref{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,1fr);gap:8px 18px;margin:12px 0;font-size:14.5px}
+dl.ref dt{font:13px var(--mono);color:var(--fg);overflow-wrap:anywhere}
+dl.ref dd{margin:0;color:var(--soft)}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px;margin:16px 0}
+.stat div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat b{display:block;font:700 26px/1.1 var(--head);color:var(--fg)}
+.stat span{font-size:13.5px;color:var(--muted)}
+.note{border-left:3px solid var(--warn);background:var(--panel);padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0;max-width:820px}
+.note p{margin:0;font-size:14.5px}
+details.claude{margin:18px 0 0;max-width:820px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+details.claude summary{cursor:pointer;font-weight:600}
+.cmdrow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin:10px 0}
+.cmdrow code{flex:1 1 240px;min-width:0;display:block;white-space:normal;padding:10px 12px;line-height:1.5}
+.cmdrow button{font:600 13px var(--sans);background:var(--accent);color:#06121b;border:0;border-radius:8px;padding:9px 14px;cursor:pointer}
+.toc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;margin:20px 0 0;padding:12px 0 0;border-top:1px solid var(--line)}
+.toc a{color:var(--muted);text-decoration:none}
+.toc a:hover{color:var(--accent)}
+footer{margin-top:70px;padding-top:18px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+footer p{color:var(--muted)}
+@media (min-width:980px){.hero{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center}}
+@media (max-width:640px){dl.ref{grid-template-columns:minmax(0,1fr);gap:2px}dl.ref dd{margin-bottom:10px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<p class="crumb"><a href="../">anchor-demo</a> / Memory Sentinel</p>
+
+<section class="hero">
+  <div>
+    <h1>Memory <b>Sentinel</b></h1>
+    <p class="lede">Find Unreal memory bugs before your players do. UObject pointers the garbage collector cannot see, shared pointer cycles, objects that outlive their level, and writes past the end of a block or after it was freed, each with the line, the reason, how it is known and what to change.</p>
+    <div class="btns">
+      <a class="btn go" href="#report">Open the live report</a>
+      <a class="btn" href="#install">Plug it into your project</a>
+      <a class="btn" href="MemorySentinel-UE5.7-v1.0.zip" download>Download the plugin</a>
+    </div>
+    <p class="meta"><span>Unreal Engine 5.7</span><span>Windows x64</span><span>C++ plugin + Python tools</span><span>MIT</span></p>
+  </div>
+  <figure class="shot">
+    <img src="shots/panel-leak.jpg" width="1600" height="900" alt="The Memory Sentinel panel inside Unreal, showing a level leak: an object that survived the level unload, with the chain of references from the engine's root to it.">
+    <figcaption>The panel running inside Unreal, here as the in-game overlay (<code>ms.Show</code>). The editor tab is the same widget. A captured frame from the test game, not a mock-up.</figcaption>
+  </figure>
+</section>
+
+<nav class="toc" aria-label="On this page">
+  <a href="#bugs">Four bugs</a><a href="#report">Live report</a><a href="#how">How it works</a><a href="#install">Plug it in</a>
+  <a href="#reference">Reference</a><a href="#measured">Measured</a><a href="#blind">What it cannot see</a><a href="#prior">Prior art</a>
+</nav>
+
+<h2 id="bugs"><span class="n">01</span>Four bugs, and how each one happens</h2>
+<p>Each card is a working model of one bug. Press the buttons and watch what the engine does. The panel and the report draw the same pictures for real findings.</p>
+
+<div class="four">
+  <article class="ex" style="--c:var(--dangling)" id="ex-gc">
+    <h3><i></i>A UObject pointer the collector cannot see</h3>
+    <p>C++ has no runtime reflection. Unreal Header Tool reads <code>UPROPERTY</code> and writes the list of references the garbage collector walks. A raw pointer without it is not on that list: the collector frees the object, and the pointer still holds its address.</p>
+    <div class="stage"><svg viewBox="0 0 560 210" role="img" aria-label="Garbage collection model"></svg></div>
+    <div class="ctl"><button type="button" data-act="prop" class="on">UPROPERTY: on</button><button type="button" data-act="run" class="do">Collect garbage</button><button type="button" data-act="reset">Reset</button></div>
+    <pre class="codeline" data-code></pre>
+    <p class="say" data-say>The collector starts at the roots and follows only the references Unreal Header Tool listed.</p>
+  </article>
+
+  <article class="ex" style="--c:var(--cycle)" id="ex-cycle">
+    <h3><i></i>A shared pointer cycle</h3>
+    <p><code>TSharedPtr</code> is a reference count. When two objects hold strong pointers to each other, neither count can reach zero after everything else lets go, so both stay in memory forever. One side has to be a <code>TWeakPtr</code>.</p>
+    <div class="stage"><svg viewBox="0 0 560 210" role="img" aria-label="Reference count model"></svg></div>
+    <div class="ctl"><button type="button" data-act="weak">Back edge: TSharedPtr</button><button type="button" data-act="run" class="do">Close the quest screen</button><button type="button" data-act="reset">Reset</button></div>
+    <pre class="codeline" data-code></pre>
+    <p class="say" data-say>The quest screen holds the log; the log holds its nodes; each node holds the log back.</p>
+  </article>
+
+  <article class="ex" style="--c:var(--stomp)" id="ex-stomp">
+    <h3><i></i>A write past the end of a block</h3>
+    <p>A sampled block gets a canary: known bytes right after its end. A data breakpoint, one of the CPU's four debug registers, watches the first word of the canary. The write that touches it stops on the spot, so the report names the exact line.</p>
+    <div class="stage"><svg viewBox="0 0 560 190" role="img" aria-label="Heap block with canary"></svg></div>
+    <div class="ctl"><button type="button" data-act="dr" class="on">Data breakpoint: on</button><button type="button" data-act="run" class="do">Write 12 bytes too many</button><button type="button" data-act="reset">Reset</button></div>
+    <pre class="codeline" data-code></pre>
+    <p class="say" data-say>A 12-byte block, then its canary (to the next 8-byte boundary, and 16 more). DR0 watches the canary's first whole 8-byte word.</p>
+  </article>
+
+  <article class="ex" style="--c:var(--leak)" id="ex-leak">
+    <h3><i></i>An object that outlives its level</h3>
+    <p>Leaving a level should free what it made. Something that lives longer, a subsystem, a static, a cache, keeps one reference, and the object (and everything it holds) stays. The leak test leaves the level, collects garbage twice and asks the engine who still holds each survivor.</p>
+    <div class="stage"><svg viewBox="0 0 560 210" role="img" aria-label="Level unload model"></svg></div>
+    <div class="ctl"><button type="button" data-act="weak">Keeper holds: TObjectPtr</button><button type="button" data-act="run" class="do">Leave the level</button><button type="button" data-act="reset">Reset</button></div>
+    <pre class="codeline" data-code></pre>
+    <p class="say" data-say>The level made three actors and a cache. A game instance subsystem keeps the cache in an array.</p>
+  </article>
+</div>
+
+<h2 id="report"><span class="n">02</span>The live report</h2>
+<p>This is a real report, drawn by the same viewer the plugin writes into <code>report.html</code>. The findings come from the plugin's test game, which plants each bug on purpose beside a clean copy of the same pattern. The files are as the runs wrote them, with this machine's folder names shortened. Pick a finding to see its evidence; the detector runs, with what each one checked and cannot see, are at the bottom.</p>
+<div class="reportwrap"><div id="ms-app" class="ms-app"></div></div>
+
+<h2 id="how"><span class="n">03</span>How it works</h2>
+<p>Three detectors, one findings format, and two ways to read it. Every finding says how it is known: where the declaration was read, which engine search found the chain, which bytes changed. A detector that could not run says so and never reports a clean pass.</p>
+
+<div class="cols">
+  <div class="card" style="border-top:3px solid var(--dangling)">
+    <h3>Static pass</h3>
+    <p>Reads the project's own <code>Source/</code> and its plugins' <code>Source/</code>, with comments and strings blanked so neither can match. It indexes every class and struct with its reflection macro and bases, reads each member declaration, and reports:</p>
+    <ul>
+      <li>raw <code>UObject*</code>, <code>TObjectPtr</code> or containers of them with no <code>UPROPERTY</code> and not in the class's <code>AddReferencedObjects</code>;</li>
+      <li>static UObject pointers, and <code>TSubclassOf</code> without <code>UPROPERTY</code>;</li>
+      <li>UObject pointers in plain structs, and <code>FGCObject</code>s that forget a member;</li>
+      <li>lambdas handed to timers, delegates and tasks that capture <code>this</code> or a UObject unguarded;</li>
+      <li>UObjects cast or assigned into <code>void*</code>;</li>
+      <li><code>TSharedPtr</code> cycles between types, through base classes too, naming the side to weaken.</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:3px solid var(--leak)">
+    <h3>Level leak test</h3>
+    <p>Records every live object, opens the map, lets it run, opens the return map and collects garbage twice. A survivor is anything that belonged to the map's package or world, an actor or component in no live world, or an object of the project's own classes made during the level.</p>
+    <p>For each survivor, the engine's own reference search (<code>FReferenceChainSearch</code>, the code behind <code>obj refs</code>) gives the shortest chain from a root, each link with the property or <code>AddReferencedObjects</code> that holds the next object.</p>
+  </div>
+  <div class="card" style="border-top:3px solid var(--stomp)">
+    <h3>Heap sampler</h3>
+    <p>With <code>-MemorySentinel</code>, a proxy wraps the engine's allocator at startup. One allocation in N (256 by default), and every allocation of a suspect size, gets 16 to 23 bytes of canary and a recorded stack. Its reported size stays the size asked for.</p>
+    <p>Canaries are checked on free and on a per-frame budget. Freed blocks wait in quarantine filled with a pattern, so a late write lands in memory nothing else owns. A corrupted block's size becomes a suspect.</p>
+  </div>
+</div>
+
+<h3>Four registers, many blocks: the rotation</h3>
+<p>The CPU can watch only four addresses at once (DR0 to DR3, up to 8 bytes each), and the watch costs nothing. So the sampler rotates them: every few frames a rotor thread picks four words, suspect-size canaries first, then suspect blocks in quarantine, then the newest samples, and loads them into every thread. Over a run the watch moves across many blocks, and the one write that touches a watched word is stopped where it happens.</p>
+<div class="stage" id="rotor" style="max-width:860px"><svg viewBox="0 0 860 150" role="img" aria-label="Debug registers rotating over sampled blocks"></svg></div>
+<p class="say" id="rotor-say" style="max-width:860px"></p>
+
+<h3>Guard pages, when you ask for them</h3>
+<p>With <code>-MemorySentinelGuardEvery=N</code> or <code>-MemorySentinelGuardSizes=a,b</code>, a sample of blocks sits right against a no-access page, as Google's GWP-ASan does. A touch past the end, or of a freed guarded block, faults at that instruction; the finding is written from the fault handler, then the game crashes there, on purpose. Off by default.</p>
+
+<h3>Things the engine taught us on the way</h3>
+<div class="cols">
+  <div class="card"><p><b>An engine flag that empties the search.</b> In Unreal 5.7, <code>FReferenceChainSearch</code>'s <code>ExternalOnly</code> mode tests each chain with a placeholder that always answers no and then removes every chain that failed it, so the search returns nothing. The leak test asks for <code>Shortest</code> only. See <code>ReferenceChainSearch.cpp</code>, <code>PerformSearch</code>, in your engine source.</p></div>
+  <div class="card"><p><b>The allocator's own write is not the program's.</b> A watched block handed back to the engine's allocator gets the allocator's free-list pointer written into it, and a thread still holding the old watch would report that write. A watched block never leaves quarantine while any thread may still be watching it.</p></div>
+  <div class="card"><p><b>A level's own components are not leaks.</b> Each world makes its line-batch components in the transient package. The first test run reported the new world's as survivors; a survivor must now be outside every live world.</p></div>
+</div>
+
+<h2 id="install"><span class="n">04</span>Plug it into your project</h2>
+<ol class="steps">
+  <li><a href="MemorySentinel-UE5.7-v1.0.zip" download>Download the plugin</a> and unzip it into your project, so you have <code>Plugins/MemorySentinel/</code>. It is a source plugin for a C++ project (Unreal 5.7, Windows x64).</li>
+  <li>Regenerate project files and build your editor target. The plugin adds three modules: <code>MemorySentinelHeap</code> (loads early, wraps the allocator only when asked), <code>MemorySentinel</code> (leak test, findings, panel) and <code>MemorySentinelEditor</code> (the tab).</li>
+  <li>Open <b>Tools &gt; Memory Sentinel</b>. <b>Scan source</b> runs the static pass with the Python that ships inside Unreal; <b>Leak test</b> opens the map in the box, leaves it, and lists what survived (in the editor it runs in a separate, windowless game process, so your editor world is never touched); <b>Visual report</b> builds <code>report.html</code> and opens it. Double-click a source finding to open your IDE at its line.</li>
+  <li>For the heap sampler, start the game with <code>-MemorySentinel</code>, and add <code>-MemorySentinelSuspectSizes=1234</code> once a report names a block size: every block of that size is then sampled and watched first.</li>
+</ol>
+<details class="claude">
+  <summary>Have Claude install it</summary>
+  <p>Paste this into a terminal in your Unreal project's folder. It starts Claude Code with the install as its first task.</p>
+  <div class="cmdrow"><code id="claude-cmd">claude "Install Memory Sentinel into this Unreal project: download https://rj45thompson.github.io/anchor-demo/memsentinel/MemorySentinel-UE5.7-v1.0.zip and unzip it into Plugins/, build the editor target, then run the engine's Python on Plugins/MemorySentinel/Tools/ms.py scan . and walk me through what it found."</code><button type="button" id="copy">Copy</button></div>
+  <p style="font-size:13.5px;color:var(--muted)">No Claude Code yet? <a href="https://code.claude.com/docs/en/setup" rel="noopener">Set it up first</a>, then paste the line.</p>
+</details>
+
+<h3>In CI, or from any script</h3>
+<pre class="cmd">python Plugins/MemorySentinel/Tools/ms.py scan . --fail-on error
+python Plugins/MemorySentinel/Tools/ms.py leaktest --project MyGame.uproject --map /Game/Maps/Arena
+python Plugins/MemorySentinel/Tools/ms.py heap --project MyGame.uproject --map /Game/Maps/Arena --seconds 120 --suspect 1234
+python Plugins/MemorySentinel/Tools/ms.py report Saved/MemorySentinel -o report.html</pre>
+<p>The engine's own Python is at <code>Engine/Binaries/ThirdParty/Python3/Win64/python.exe</code>; any Python 3.9 or newer works. Exit codes: <code>0</code> nothing at or above <code>--fail-on</code>, <code>1</code> findings, <code>2</code> the detector could not run (no source, the map did not load, the run wrote nothing). A crashed run becomes a finding of its own, with the crash stack.</p>
+
+<h2 id="reference"><span class="n">05</span>Reference</h2>
+<h3>Command line switches (game)</h3>
+<dl class="ref">
+  <dt>-MemorySentinel</dt><dd>Wrap the allocator and start the heap sampler (or <code>[MemorySentinel] bHeapSampler=True</code> in <code>DefaultEngine.ini</code>).</dd>
+  <dt>-MemorySentinelSampleEvery=N</dt><dd>Give one allocation in N a canary. Default 256.</dd>
+  <dt>-MemorySentinelSuspectSizes=a,b</dt><dd>Sample every block of these sizes and watch them first. Up to 16 sizes; a corrupted block's size is added on its own.</dd>
+  <dt>-MemorySentinelGuardEvery=N</dt><dd>Put one allocation in N (up to 4 KB) against a no-access page. Off by default.</dd>
+  <dt>-MemorySentinelGuardSizes=a,b</dt><dd>Put every block of these sizes against a guard page.</dd>
+  <dt>-MemorySentinelTable=N</dt><dd>Sampled blocks tracked at once. Default 65,536; a full table pauses sampling, and the report counts what it skipped.</dd>
+</dl>
+<h3>Console commands</h3>
+<dl class="ref">
+  <dt>ms.LeakTest &lt;map&gt; [-seconds=5] [-return=/Engine/Maps/Entry] [-quit]</dt><dd>The level leak test, in a running game.</dd>
+  <dt>ms.Show [rule]</dt><dd>The panel over the game; again to hide. With a rule, select its first finding.</dd>
+  <dt>ms.Heap</dt><dd>The sampler's counters and the four words the registers watch now.</dd>
+  <dt>ms.Heap.Write</dt><dd>Write the heap findings file now (it is also written when something is found, and at exit).</dd>
+  <dt>ms.Suspect &lt;bytes&gt;</dt><dd>Add a suspect size while the game runs.</dd>
+  <dt>ms.Heap.CheckBudget, ms.Heap.RotateFrames</dt><dd>Blocks checked per frame (256), frames between register reloads (15).</dd>
+  <dt>ms.Shot &lt;file.png&gt;, ms.After &lt;seconds&gt; &lt;command&gt;, ms.QuitAfter &lt;seconds&gt;</dt><dd>For scripted headless runs: a screenshot with the panel, a delayed command, a timed exit.</dd>
+</dl>
+<h3>Reading a finding</h3>
+<p>Every detector writes the same JSON to <code>Saved/MemorySentinel/</code>: what it checked (so a clean run can be told from one that did not run), what it cannot see, and its findings. Each finding has a <b>rule</b>, a <b>severity</b>, <b>where</b> (file and line, or an object or block), <b>why</b>, a <b>fix</b>, <b>how it is known</b> and its <b>evidence</b> (the chain, the cycle, the bytes, the stacks). To accept a static finding on purpose, put <code>// memsentinel: ignore &lt;reason&gt;</code> on its line or the line above; it stays in the report as suppressed, with the reason.</p>
+
+<h2 id="measured"><span class="n">06</span>Measured</h2>
+<p>On the test game, where every bug is planted beside a clean copy of the same pattern:</p>
+<div class="stat">
+  <div><b>18 of 18</b><span>planted static bugs reported at their own lines; 0 reports in the clean folder</span></div>
+  <div><b>1 of 1</b><span>planted level leak found, with its chain from the engine's root; 0 survivors with nothing planted, out of about 43,000 live objects</span></div>
+  <div><b>5 of 5</b><span>planted heap bugs found: overrun, overrun freed in the same frame, write after free, double free, guarded overrun</span></div>
+  <div><b>0</b><span>heap findings with nothing planted: 19 million allocations, 67,355 canaries, 5,067 guard pages, 27 rotations, two map travels</span></div>
+</div>
+<p>The overrun and the write after free are stopped by a data breakpoint at the exact writing line; the guarded overrun faults at its line. The tool was checked against the rules it was built from with a spec check: 13 rules quoted word for word from the design notes, one small program per rule run against the shipped tool, every rule kept. Three faults planted in a copy of the tool (a reader that ignores missing <code>UPROPERTY</code>, a graph that counts <code>TWeakPtr</code> as strong, a run that never switches the sampler on) each turned their programs red, so the checks can fail.</p>
+<h3>On code we did not write</h3>
+<p>The static pass, run on seven of Epic's plugins that ship with Unreal 5.7 (Gameplay Abilities, Common UI, Enhanced Input, Modular Gameplay, Game Features, Common Conversation, Gameplay State Tree: 763 files, 170,027 lines), reports 19 errors, 57 warnings and 6 info. We read every error by hand: in each, the collector really does not see that pointer (no <code>UPROPERTY</code>, and not reported by the class's <code>AddReferencedObjects</code>). Most are safe in practice because something else holds the object, or the set is cleared every tick; that judgement is the person's, which is why every finding can be suppressed with a reason. The plugins' source is in every Unreal install, so this can be repeated: <code>ms.py scan "Engine/Plugins/Runtime/GameplayAbilities"</code>.</p>
+<div class="note"><p>Not measured yet: the heap sampler's cost in frame time, and how often a rotation catches a stomp nobody planted. The numbers above are one run each.</p></div>
+
+<h2 id="blind"><span class="n">07</span>What it cannot see</h2>
+<p>Every findings file lists its own blind spots. In short:</p>
+<div class="cols">
+  <div class="card"><h3>Static pass</h3><ul>
+    <li>Only the project's own source: engine code, engine plugins and generated code are not read.</li>
+    <li>Pointers behind a type alias or written by a macro are not followed.</li>
+    <li>Cycles that only form at runtime; a type that holds its own type is listed as info.</li>
+    <li>Whether a plain struct lives across a frame (short-lived ones are safe).</li>
+  </ul></div>
+  <div class="card"><h3>Level leak test</h3><ul>
+    <li>Only what the run played; paths the level did not reach are not exercised.</li>
+    <li>A dangling raw pointer keeps nothing alive, so this test cannot see one.</li>
+    <li>The shortest chain to a root; another chain may hold the same object.</li>
+  </ul></div>
+  <div class="card"><h3>Heap sampler</h3><ul>
+    <li>Only sampled blocks, and only writes: a read after free is caught only on guarded blocks.</li>
+    <li>Four 8-byte words at a time, on threads that existed at the last rotation.</li>
+    <li>Blocks allocated before the plugin loads, or larger than 1 MB, are never sampled.</li>
+    <li>A debugger that owns the debug registers turns the rotor off (it says so).</li>
+  </ul></div>
+</div>
+
+<h2 id="prior"><span class="n">08</span>Prior art, and where this fits</h2>
+<p>No single tool does all of this, and Memory Sentinel does not replace the ones below; it puts their questions in one place and asks them on every run.</p>
+<dl class="ref">
+  <dt><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/memory-insights-in-unreal-engine" rel="noopener">Unreal Insights</a></dt><dd>Memory over time; a leak shows as a climbing line. The best overview.</dd>
+  <dt>obj list, obj refs, memreport</dt><dd>Live objects, who holds one, a memory snapshot. The leak test automates the diff and calls the same search as <code>obj refs</code>.</dd>
+  <dt>gc.CollectGarbageEveryFrame</dt><dd>Collects every frame, so a dangling raw pointer crashes sooner. The static pass finds the pointer without the crash.</dd>
+  <dt>-stompmalloc</dt><dd>Every allocation against a protected page: exact, and very slow. The guard pages here are a sample of that.</dd>
+  <dt><a href="https://learn.microsoft.com/en-us/cpp/sanitizers/asan" rel="noopener">AddressSanitizer</a></dt><dd>Compiler instrumentation for overflows and use after free. Thorough, and a separate build.</dd>
+  <dt><a href="https://llvm.org/docs/GwpAsan.html" rel="noopener">GWP-ASan</a></dt><dd>Guard pages on a random sample of allocations, cheap enough for shipped builds; the model for the guard sampler.</dd>
+  <dt><a href="https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html" rel="noopener">Debug registers</a></dt><dd>DR0 to DR3 and DR7, described in Intel's Software Developer's Manual (volume 3, debug features). Windows sets them per thread with <a href="https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadcontext" rel="noopener">SetThreadContext</a>; the hit arrives in a <a href="https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-addvectoredexceptionhandler" rel="noopener">vectored exception handler</a>.</dd>
+  <dt><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-object-handling-in-unreal-engine" rel="noopener">Unreal object handling</a></dt><dd>Epic's own description of garbage collection and why references need <code>UPROPERTY</code>; <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/smart-pointers-in-unreal-engine" rel="noopener">smart pointers</a> for <code>TSharedPtr</code> and <code>TWeakPtr</code>.</dd>
+</dl>
+
+<footer>
+  <p>Memory Sentinel 1.0, a draft prototype. <a href="MemorySentinel-UE5.7-v1.0.zip" download>Plugin</a> (source, for Unreal 5.7 on Windows x64) and <a href="memsentinel-source-v1.0.zip" download>everything</a>: the plugin, its Python tools, the test game with its planted bugs, and the tests. MIT licence.</p>
+  <p><a href="../">All projects</a></p>
+</footer>
+</main>
+
+<script src="viewer.js"></script>
+<script src="sample.js"></script>
+<script>
+(function () {
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var COL = { ink: "#eef1f4", muted: "#97a4b3", faint: "#5f6b7a", line: "#263241", card: "#18202a", well: "#0e141b",
+    good: "#3dd68c", bad: "#ff5c5c", warn: "#ffb547", accent: "#5cc8ff", dangling: "#ff8a5c", cycle: "#b58cff", leak: "#2fd1c0", stomp: "#ff5c9a" };
+
+  function s(tag, attrs, text) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function clear(svg) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var defs = s("defs", {});
+    ["ink", "muted", "good", "bad", "warn", "cycle", "leak", "dangling", "stomp", "accent"].forEach(function (k) {
+      var m = s("marker", { id: "a-" + k + "-" + svg.dataset.id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" });
+      m.appendChild(s("path", { d: "M0,0 L10,5 L0,10 z", fill: COL[k] }));
+      defs.appendChild(m);
+    });
+    svg.appendChild(defs);
+  }
+  function box(svg, x, y, w, h, title, sub, edge, state) {
+    var g = s("g", { style: "transition:opacity .5s" });
+    var fill = state === "dead" ? "#22161a" : COL.card;
+    g.appendChild(s("rect", { x: x, y: y, width: w, height: h, rx: 8, fill: fill, stroke: edge, "stroke-width": state === "hot" ? 2.5 : 1.4 }));
+    g.appendChild(s("rect", { x: x, y: y, width: 4, height: h, rx: 2, fill: edge }));
+    g.appendChild(s("text", { x: x + 14, y: y + 21, fill: state === "dead" ? COL.faint : COL.ink, "font-size": 13, "font-weight": 600, "font-family": "IBM Plex Sans, sans-serif" }, title));
+    if (sub) g.appendChild(s("text", { x: x + 14, y: y + 38, fill: COL.muted, "font-size": 11, "font-family": "JetBrains Mono, monospace" }, sub));
+    if (state === "dead") {
+      g.appendChild(s("line", { x1: x + w - 26, y1: y + 10, x2: x + w - 10, y2: y + 26, stroke: COL.bad, "stroke-width": 2.5 }));
+      g.appendChild(s("line", { x1: x + w - 10, y1: y + 10, x2: x + w - 26, y2: y + 26, stroke: COL.bad, "stroke-width": 2.5 }));
+    }
+    svg.appendChild(g);
+    return g;
+  }
+  function arrow(svg, x1, y1, x2, y2, color, dashed, label, lx, ly) {
+    svg.appendChild(s("line", { x1: x1, y1: y1, x2: x2, y2: y2, stroke: COL[color], "stroke-width": 2, "stroke-dasharray": dashed ? "6 5" : "none", "marker-end": "url(#a-" + color + "-" + svg.dataset.id + ")" }));
+    if (label) svg.appendChild(s("text", { x: lx, y: ly, fill: COL[color], "font-size": 11.5, "font-family": "JetBrains Mono, monospace", "text-anchor": "middle" }, label));
+  }
+  function later(ms, fn) { return REDUCED ? fn() : setTimeout(fn, ms); }
+
+  function card(id, model) {
+    var root = document.getElementById(id);
+    var svg = root.querySelector("svg");
+    svg.dataset.id = id;
+    var say = root.querySelector("[data-say]");
+    var code = root.querySelector("[data-code]");
+    var st = model.init();
+    function draw() { clear(svg); model.draw(svg, st); code.innerHTML = model.code(st); }
+    root.querySelectorAll("button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var act = b.dataset.act;
+        if (act === "reset") { st = model.init(); say.innerHTML = model.start; root.querySelectorAll("button[data-act=prop],button[data-act=dr],button[data-act=weak]").forEach(function (t) { model.label(t, st); }); draw(); return; }
+        if (act === "run") { model.run(st, draw, function (t) { say.innerHTML = t; }); return; }
+        model.toggle(st, act); model.label(b, st); st.phase = 0; say.innerHTML = model.start; draw();
+      });
+    });
+    model.start = say.innerHTML;
+    draw();
+  }
+
+  // 1. the collector and an unseen pointer
+  card("ex-gc", {
+    init: function () { return { prop: true, phase: 0 }; },
+    toggle: function (st) { st.prop = !st.prop; },
+    label: function (b, st) { if (b.dataset.act === "prop") { b.textContent = "UPROPERTY: " + (st.prop ? "on" : "off"); b.classList.toggle("on", st.prop); } },
+    code: function (st) {
+      return st.prop ? '<span class="k">UPROPERTY</span>()\n<span class="t">TObjectPtr</span>&lt;UInventory&gt; Inventory;   <span class="ok">// on the collector\'s list</span>'
+        : '<span class="t">UInventory</span>* Inventory;   <span class="bad">// no UPROPERTY: not on the list</span>';
+    },
+    draw: function (svg, st) {
+      var p = st.phase;
+      box(svg, 12, 30, 128, 46, "GameInstance", "root", COL.accent, p >= 1 ? "hot" : "");
+      box(svg, 216, 30, 128, 46, "AHero", "actor", p >= 2 ? COL.good : COL.muted, p >= 2 ? "hot" : "");
+      var dead = p >= 4 && !st.prop;
+      box(svg, 420, 30, 128, 46, "UInventory", dead ? "freed" : "object", dead ? COL.bad : (p >= 3 && st.prop ? COL.good : COL.muted), dead ? "dead" : (p >= 3 && st.prop ? "hot" : ""));
+      arrow(svg, 142, 53, 213, 53, p >= 2 ? "good" : "muted", false, "UPROPERTY", 178, 22);
+      arrow(svg, 346, 53, 417, 53, st.prop ? (p >= 3 ? "good" : "muted") : (dead ? "bad" : "muted"), !st.prop, st.prop ? "UPROPERTY" : "raw ptr", 382, 22);
+      svg.appendChild(s("text", { x: 12, y: 112, fill: COL.muted, "font-size": 12, "font-family": "IBM Plex Sans, sans-serif" }, "Reachable from a root through listed references:"));
+      [["GameInstance", p >= 1], ["AHero", p >= 2], ["UInventory", st.prop && p >= 3]].forEach(function (r, i) {
+        var x = 12 + i * 140;
+        svg.appendChild(s("rect", { x: x, y: 124, width: 128, height: 28, rx: 6, fill: r[1] ? "rgba(61,214,140,.18)" : COL.well, stroke: r[1] ? COL.good : COL.line }));
+        svg.appendChild(s("text", { x: x + 64, y: 143, fill: r[1] ? COL.good : COL.faint, "font-size": 12, "text-anchor": "middle", "font-family": "JetBrains Mono, monospace" }, (r[1] ? "kept " : "") + r[0]));
+      });
+      if (dead) svg.appendChild(s("text", { x: 280, y: 190, fill: COL.bad, "font-size": 13, "text-anchor": "middle", "font-family": "IBM Plex Sans, sans-serif", "font-weight": 600 }, "AHero::Inventory still holds the address: it dangles"));
+    },
+    run: function (st, draw, say) {
+      st.phase = 0; draw();
+      say("Mark: start at the roots.");
+      later(450, function () { st.phase = 1; draw(); say("Mark: <b>GameInstance</b> is a root."); });
+      later(950, function () { st.phase = 2; draw(); say("Mark: <b>AHero</b> is reached through a UPROPERTY."); });
+      later(1500, function () {
+        st.phase = 3; draw();
+        say(st.prop ? "Mark: <b>UInventory</b> is reached through a UPROPERTY." : "Mark: the raw pointer is not on the list, so <b>UInventory</b> is never reached.");
+      });
+      later(2150, function () {
+        st.phase = 4; draw();
+        say(st.prop ? "Sweep: everything reached is kept. Nothing dangles." :
+          "Sweep: <b>UInventory</b> is freed. The next use of <code>Inventory</code> reads freed memory. The static pass reports this member before it ever runs.");
+      });
+    }
+  });
+
+  // 2. a shared pointer cycle
+  card("ex-cycle", {
+    init: function () { return { weak: false, phase: 0 }; },
+    toggle: function (st) { st.weak = !st.weak; },
+    label: function (b, st) { if (b.dataset.act === "weak") { b.textContent = "Back edge: " + (st.weak ? "TWeakPtr" : "TSharedPtr"); b.classList.toggle("on", st.weak); } },
+    code: function (st) {
+      return 'struct FQuestLog  { TArray&lt;<span class="t">TSharedPtr</span>&lt;FQuestNode&gt;&gt; Nodes; };\nstruct FQuestNode { ' +
+        (st.weak ? '<span class="ok">TWeakPtr</span>&lt;FQuestLog&gt; Log; };   <span class="ok">// does not count</span>' : '<span class="bad">TSharedPtr</span>&lt;FQuestLog&gt; Log; };  <span class="bad">// counts: a cycle</span>');
+    },
+    draw: function (svg, st) {
+      var closed = st.phase >= 1;
+      var logCount = (closed ? 0 : 1) + (st.weak ? 0 : 1);
+      var freed = closed && logCount === 0;
+      var nodeCount = freed ? 0 : 1;
+      box(svg, 12, 24, 140, 46, "Quest screen", closed ? "closed" : "holds the log", closed ? COL.faint : COL.accent, closed ? "dead" : "");
+      box(svg, 210, 24, 140, 46, "FQuestLog", "count " + logCount, freed ? COL.good : (closed ? COL.bad : COL.cycle), freed ? "dead" : (closed ? "hot" : ""));
+      box(svg, 408, 24, 140, 46, "FQuestNode", "count " + nodeCount, freed ? COL.good : (closed ? COL.bad : COL.cycle), freed ? "dead" : (closed ? "hot" : ""));
+      if (!closed) arrow(svg, 152, 47, 208, 47, "accent", false, "TSharedPtr", 180, 40);
+      arrow(svg, 350, 40, 406, 40, freed ? "muted" : "cycle", false, "Nodes", 378, 33);
+      arrow(svg, 406, 58, 352, 58, st.weak ? "good" : (freed ? "muted" : "cycle"), st.weak, st.weak ? "weak Log" : "Log", 378, 76);
+      var msg = !closed ? "Each count is the number of strong pointers to it." : freed ? "Both counts reached zero: both are freed." : "Nothing outside holds them, but each holds the other: counts stay at 1. Leaked.";
+      svg.appendChild(s("text", { x: 280, y: 130, fill: freed ? COL.good : (closed ? COL.bad : COL.muted), "font-size": 13, "text-anchor": "middle", "font-weight": 600, "font-family": "IBM Plex Sans, sans-serif" }, msg));
+      svg.appendChild(s("text", { x: 280, y: 160, fill: COL.muted, "font-size": 12, "text-anchor": "middle", "font-family": "IBM Plex Sans, sans-serif" },
+        st.weak ? "The static pass finds no cycle: the back edge is weak." : "The static pass reports FQuestLog -> FQuestNode -> FQuestLog and names Log as the side to weaken."));
+    },
+    run: function (st, draw, say) {
+      st.phase = 0; draw();
+      later(300, function () {
+        st.phase = 1; draw();
+        say(st.weak ? "The screen lets go. FQuestLog's count drops to <b>0</b>: it is freed, its nodes go with it." :
+          "The screen lets go. FQuestLog still has <b>1</b> (its node), FQuestNode still has <b>1</b> (the log). Neither is ever freed.");
+      });
+    }
+  });
+
+  // 3. a write past the end, a canary and a data breakpoint
+  card("ex-stomp", {
+    init: function () { return { dr: true, written: 0, running: false }; },
+    toggle: function (st) { st.dr = !st.dr; },
+    label: function (b, st) { if (b.dataset.act === "dr") { b.textContent = "Data breakpoint: " + (st.dr ? "on" : "off"); b.classList.toggle("on", st.dr); } },
+    code: function () { return 'uint8* P = (uint8*)FMemory::Malloc(12);\nfor (int32 I = 0; I &lt; <span class="bad">24</span>; ++I) P[I] = I;   <span class="bad">// 12 bytes past the end</span>'; },
+    draw: function (svg, st) {
+      var cell = 24, gap = 2, x0 = 12, y0 = 70;
+      svg.appendChild(s("text", { x: x0, y: 28, fill: COL.muted, "font-size": 12, "font-family": "IBM Plex Sans, sans-serif" }, "block (12 bytes)"));
+      svg.appendChild(s("text", { x: x0 + 12 * (cell + gap), y: 28, fill: COL.good, "font-size": 12, "font-family": "IBM Plex Sans, sans-serif" }, "canary"));
+      if (st.dr) {
+        var wx = x0 + 12 * (cell + gap) + 4 * (cell + gap);
+        svg.appendChild(s("rect", { x: wx - 2, y: y0 - 26, width: 8 * (cell + gap) - gap + 4, height: cell + 32, rx: 6, fill: "none", stroke: st.hit ? COL.bad : COL.accent, "stroke-width": 2, "stroke-dasharray": st.hit ? "none" : "5 4" }));
+        svg.appendChild(s("text", { x: wx + 4, y: y0 - 10, fill: st.hit ? COL.bad : COL.accent, "font-size": 11.5, "font-family": "JetBrains Mono, monospace" }, st.hit ? "DR0 fired" : "DR0 watches this word"));
+      }
+      for (var i = 0; i < 20 + 4; i++) {
+        var x = x0 + i * (cell + gap), canary = i >= 12, w = i < st.written;
+        var fill = canary ? (w ? COL.bad : "rgba(61,214,140,.22)") : (w ? "rgba(92,200,255,.35)" : COL.card);
+        svg.appendChild(s("rect", { x: x, y: y0, width: cell, height: cell, rx: 4, fill: fill, stroke: canary ? (w ? COL.bad : COL.good) : COL.line }));
+        svg.appendChild(s("text", { x: x + cell / 2, y: y0 + 16, fill: COL.ink, "font-size": 10, "text-anchor": "middle", "font-family": "JetBrains Mono, monospace" }, w ? (i).toString(16) : (canary ? "a7" : "..")));
+      }
+      svg.appendChild(s("line", { x1: x0 + 12 * (cell + gap) - 1, y1: y0 - 6, x2: x0 + 12 * (cell + gap) - 1, y2: y0 + cell + 8, stroke: COL.ink, "stroke-width": 2 }));
+      if (st.written >= 24 || st.hit) {
+        svg.appendChild(s("text", { x: x0, y: 140, fill: COL.bad, "font-size": 12.5, "font-weight": 600, "font-family": "IBM Plex Sans, sans-serif" },
+          st.dr ? "stopped in SentinelPlant_HeapOverrun() at line 10: the exact write" : "the canary check finds changed bytes; which code wrote them is not known"));
+        svg.appendChild(s("text", { x: x0, y: 162, fill: COL.muted, "font-size": 12, "font-family": "IBM Plex Sans, sans-serif" },
+          st.dr ? "caught by: canary and data breakpoint" : "next run: -MemorySentinelSuspectSizes=12 puts a breakpoint on it"));
+      }
+    },
+    run: function (st, draw, say) {
+      if (st.running) return;
+      st.running = true; st.written = 0; st.hit = false; draw();
+      say("Writing...");
+      var step = function () {
+        st.written++;
+        if (st.dr && st.written === 17) {
+          st.hit = true;
+          say("<b>DR0 fired</b> on the write to the watched word. The fault handler records the writer's stack; the program carries on.");
+        }
+        draw();
+        if (st.written < 24) { if (REDUCED) step(); else setTimeout(step, 70); }
+        else {
+          st.running = false;
+          say(st.dr ? "Canary: all <b>12</b> canary bytes it reached changed. The finding carries both: the bytes and the exact line." :
+            "Canary: all <b>12</b> canary bytes it reached changed, found at the next per-frame check (or on free). The size becomes a suspect.");
+        }
+      };
+      step();
+    }
+  });
+
+  // 4. an object that outlives its level
+  card("ex-leak", {
+    init: function () { return { weak: false, phase: 0 }; },
+    toggle: function (st) { st.weak = !st.weak; },
+    label: function (b, st) { if (b.dataset.act === "weak") { b.textContent = "Keeper holds: " + (st.weak ? "TWeakObjectPtr" : "TObjectPtr"); b.classList.toggle("on", st.weak); } },
+    code: function (st) {
+      return 'UCLASS() class USentinelTestKeeper : public UGameInstanceSubsystem {\n  UPROPERTY() TArray&lt;' + (st.weak ? '<span class="ok">TWeakObjectPtr</span>' : '<span class="bad">TObjectPtr</span>') + '&lt;USentinelLevelCache&gt;&gt; Caches; };';
+    },
+    draw: function (svg, st) {
+      var gone = st.phase >= 1, kept = gone && !st.weak;
+      svg.appendChild(s("rect", { x: 10, y: 14, width: 300, height: 128, rx: 10, fill: gone ? "rgba(0,0,0,0)" : "rgba(47,209,192,.06)", stroke: gone ? COL.line : COL.leak, "stroke-dasharray": gone ? "5 5" : "none" }));
+      svg.appendChild(s("text", { x: 22, y: 34, fill: gone ? COL.faint : COL.leak, "font-size": 12, "font-family": "JetBrains Mono, monospace" }, gone ? "level left, garbage collected twice" : "level: Template_Default"));
+      ["Floor", "Light", "PlayerStart"].forEach(function (n, i) {
+        var g = box(svg, 22 + i * 94, 48, 84, 32, n, null, COL.muted, gone ? "dead" : "");
+        if (gone) g.setAttribute("opacity", "0.35");
+      });
+      box(svg, 22, 94, 150, 40, "LevelCache", kept ? "survived" : (gone ? "freed" : "made by the level"), kept ? COL.bad : COL.leak, kept ? "hot" : (gone ? "dead" : ""));
+      box(svg, 360, 24, 190, 46, "GameInstance", "lives across levels", COL.accent, "");
+      box(svg, 360, 96, 190, 46, "TestKeeper", "Caches", COL.accent, "");
+      arrow(svg, 455, 70, 455, 94, "accent", false);
+      if (!gone || kept) arrow(svg, 358, 118, 175, 114, kept ? "bad" : "accent", st.weak, st.weak ? "weak" : "Caches", 268, 108);
+      if (kept) svg.appendChild(s("text", { x: 280, y: 180, fill: COL.bad, "font-size": 12, "text-anchor": "middle", "font-family": "JetBrains Mono, monospace" }, "root GameEngine -> GameInstance -> TestKeeper -> Caches -> LevelCache"));
+      if (gone && st.weak) svg.appendChild(s("text", { x: 280, y: 180, fill: COL.good, "font-size": 12.5, "text-anchor": "middle", "font-weight": 600, "font-family": "IBM Plex Sans, sans-serif" }, "Nothing survived: the weak pointer did not hold it."));
+    },
+    run: function (st, draw, say) {
+      st.phase = 0; draw();
+      later(300, function () {
+        st.phase = 1; draw();
+        say(st.weak ? "The level's objects are all freed; the keeper's weak pointer now reads null." :
+          "The actors are freed. <b>LevelCache survives</b>: the engine's reference search gives the chain, and the report names <code>Caches</code> as the link to cut.");
+      });
+    }
+  });
+
+  // the rotation: four registers moving over sampled blocks, suspects first
+  (function rotor() {
+    var host = document.getElementById("rotor"), svg = host.querySelector("svg"), say = document.getElementById("rotor-say");
+    svg.dataset.id = "rotor";
+    var N = 18, blocks = [];
+    for (var i = 0; i < N; i++) blocks.push({ suspect: i === 3 || i === 11, freed: i === 7 || i === 15 });
+    var turn = 0, running = false, timer = null;
+    function pick() {
+      var order = [];
+      blocks.forEach(function (b, i) { if (b.suspect && !b.freed) order.push(i); });
+      blocks.forEach(function (b, i) { if (b.suspect && b.freed) order.push(i); });
+      var rest = [];
+      blocks.forEach(function (b, i) { if (!b.suspect) rest.push(i); });
+      for (var k = 0; k < rest.length && order.length < 4; k++) order.push(rest[(turn * 2 + k) % rest.length]);
+      return order.slice(0, 4);
+    }
+    function draw() {
+      clear(svg);
+      var watched = pick();
+      var cw = 40, gap = 6, x0 = 20, y0 = 62;
+      blocks.forEach(function (b, i) {
+        var x = x0 + i * (cw + gap), on = watched.indexOf(i);
+        svg.appendChild(s("rect", { x: x, y: y0, width: cw, height: 34, rx: 6, fill: b.freed ? COL.well : COL.card, stroke: b.suspect ? COL.warn : COL.line, "stroke-width": b.suspect ? 2 : 1, "stroke-dasharray": b.freed ? "4 3" : "none" }));
+        svg.appendChild(s("text", { x: x + cw / 2, y: y0 + 22, fill: b.suspect ? COL.warn : COL.faint, "font-size": 10.5, "text-anchor": "middle", "font-family": "JetBrains Mono, monospace" }, b.freed ? "free" : (b.suspect ? "susp" : "blk")));
+        if (on >= 0) {
+          svg.appendChild(s("rect", { x: x - 3, y: y0 - 30, width: cw + 6, height: 22, rx: 11, fill: COL.accent }));
+          svg.appendChild(s("text", { x: x + cw / 2, y: y0 - 15, fill: "#06121b", "font-size": 11, "font-weight": 700, "text-anchor": "middle", "font-family": "JetBrains Mono, monospace" }, "DR" + on));
+          svg.appendChild(s("line", { x1: x + cw / 2, y1: y0 - 8, x2: x + cw / 2, y2: y0 - 1, stroke: COL.accent, "stroke-width": 2 }));
+        }
+      });
+      svg.appendChild(s("text", { x: x0, y: 128, fill: COL.muted, "font-size": 12, "font-family": "IBM Plex Sans, sans-serif" }, "rotation " + (turn + 1) + ": suspects (orange) first, then suspect blocks in quarantine, then the newest samples"));
+      say.textContent = "Rotation " + (turn + 1) + ": DR0 to DR3 watch blocks " + watched.map(function (i) { return i + 1; }).join(", ") + ". The two suspect sizes are always watched; the other registers move on.";
+    }
+    function start() { if (running || REDUCED) return; running = true; timer = setInterval(function () { turn++; draw(); }, 1400); }
+    function stop() { running = false; clearInterval(timer); }
+    draw();
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) start(); else stop(); }); }).observe(host);
+    }
+  })();
+
+  // the live report
+  MemorySentinelViewer.mount(document.getElementById("ms-app"), window.MEMSENTINEL_SAMPLE, { select: "heap-overrun" });
+
+  var copy = document.getElementById("copy");
+  copy.addEventListener("click", function () {
+    var t = document.getElementById("claude-cmd").textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { copy.textContent = "Copied"; });
+    else { var r = document.createRange(); r.selectNodeContents(document.getElementById("claude-cmd")); getSelection().removeAllRanges(); getSelection().addRange(r); }
+  });
+})();
+</script>
+</body>
+</html>
