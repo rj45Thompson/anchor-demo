@@ -41,4 +41,21 @@ can reach and in the sea outside the board (render/board.js `buildDecor`). The h
 | `rock_small.glb` | Free Pack - Rocks Stylized | polyone | https://sketchfab.com/3d-models/7c60b4d1b8ab4187965f30c5e0212fc0 | node SM_Rocks_02 | 206 | lagoon rims, the sea off the coast |
 | `rock_large.glb` | Free Pack - Rocks Stylized | polyone | https://sketchfab.com/3d-models/7c60b4d1b8ab4187965f30c5e0212fc0 | node SM_Rocks_04 | 600 | rock islets off the coast |
 
-Total download for all nine models: 5.39 MB (5,651,532 bytes).
+The look lane (UC-L1, 2026-11-09; LOOK_UC_L1.md) added five more, from the same kind of source (Sketchfab, each CC Attribution 4.0,
+downloaded to `art_in/sketchfab/`, picked in `art_in/sketchfab/CHOSEN.json`, credited on the title screen's footer):
+
+| File | Title | Author | Link | Part used | Triangles | Drawn as |
+|---|---|---|---|---|---|---|
+| `bomb.glb` | Round Bomb | rectus | https://sketchfab.com/3d-models/2148b02dd8c948f797903f75988d8717 | whole model | 1,158 -> 1,158 | every bomb (lit, carried, thrown; the big bomb tinted red-brown); its fuse spark sits at the model's highest vertex |
+| `barrel.glb` | Old wooden Barrel 3d Model | aarav.sharma2310 | https://sketchfab.com/3d-models/1afde542abdd49daa67ccf1a4cab2eef | whole model (welded, smooth normals) | 9,998 -> 1,799 | barrels beside the islet houses and on lagoon rims |
+| `tower.glb` | Medieval Tower | farooq.smurf | https://sketchfab.com/3d-models/c4d4b41b87fd427fbfc9c61f3c151ae9 | whole model (welded, smooth normals) | 12,664 -> 2,998 | towers on rock islets off the coast |
+| `house_a.glb` | FREE Low Poly Medieval Village - 5 Houses | wErTT | https://sketchfab.com/3d-models/c9f1b1ab017544d7b68c35890d27a3fc | the house on the plot at (0, 0): every mesh node centred in x -7..7, z -7..7 | 1,753 (kept whole) | houses on sand islets off the coast |
+| `house_b.glb` | (same pack) | wErTT | (same link) | the half-timbered house at (-19, 19): nodes centred in x -26..-12, z 12..26 | 1,671 (kept whole) | houses on sand islets off the coast |
+
+The village's materials were specular-glossiness and are converted to metal-roughness by the build (three.js no longer reads the
+spec-gloss extension). The bricks kit (`art_in/sketchfab/bricks.glb`) was LOOKED at and not used: its texture is a red clay brick
+sheet, not the chunky grey stone the walls are, so the walls stay procedural (render/look.js). The Sketchfab "Cartoon Knight"
+(`art_in/sketchfab/knight.glb`) was LOOKED at beside the Meshy knight (`shots/look/hero_compare.png`) and not used: its one clip is
+an idle, the hero needs walking and running (UC-P3) and a swing, and its red tunic would read as player 2's colour on every hero.
+
+Total download for all fourteen models: 6.12 MB (6,416,844 bytes); the look lane added 0.73 MB (765,312 bytes).

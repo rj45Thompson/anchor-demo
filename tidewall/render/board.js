@@ -1,14 +1,17 @@
 // board.js - the island and everything that stands on its squares: the land (a heightfield with gentle relief and a sand edge),
 // the animated sea with shoreline foam, the territory fill painted into the land in each owner's colour (flashing when a ring
-// closes), the walls (one toy block per square, each placed PIECE wrapped in a glowing outline in its owner's colour), and the
-// props on the squares (rubble, rocks, trees, houses, pits, graveyards). It reads the model's GridModel and nothing else; every
+// closes), the walls (UC-L1: one chunky stone block per square with a light coping, a band of the owner's cloth and a soft contact
+// shadow, and the owner's pennants on the north corners of each run of their wall; nothing on a wall glows), the props on the
+// squares (rubble, rocks, trees, houses, pits, graveyards) and the scenery round the board (rocks, oaks, houses, barrels, towers). It reads the model's GridModel and nothing else; every
 // change is found by comparing the board's bytes with the last frame's, so a view can never drift from the rules.
 import * as THREE from 'three/webgpu';
 import { texture, uniform, vertexColor, positionWorld, positionLocal, vec2, vec3, vec4, float, mix, smoothstep, sin, fract, min, max, abs, step, clamp,
          normalize, dot, reflect, pow, cameraPosition, transformNormalToView, mrt, cos, positionGeometry,
-         instancedBufferAttribute } from 'three/tsl';
+         instancedBufferAttribute, instanceIndex, uv, oneMinus } from 'three/tsl';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Terrain, Occupant, EnclosureRules, PieceMap, WallOutline, WallsPlaced, RingBuilt, ShotLanded } from '../core/index.js';
-import { C, SKY, NEUTRAL_WALL, mats, glowing, wallStoneGeometry, wallCapGeometry, wallSteelGeometry, wallSteelCapGeometry, STEEL, tuftGeometry, TUFT_H, makeNoiseTexture, NOISE_SLOPE, makeNoise, InstancedBatch, PropSet, pitGeometry, rubbleGeometry, graveGeometry } from './look.js';
+import { C, SKY, NEUTRAL_WALL, mats, glowing, wallStoneGeometry, wallCapGeometry, wallSteelGeometry, wallSteelCapGeometry, STEEL, tuftGeometry, TUFT_H, makeNoiseTexture, NOISE_SLOPE, makeNoise, InstancedBatch, PropSet, pitGeometry, rubbleGeometry, graveGeometry,
+         wallTrimGeometry, wallShadowGeometry, pennantPoleGeometry, pennantFlagGeometry, PENNANT_FLAG } from './look.js';
 
 export const MARGIN = 12;              // AUTHORED: squares of sea drawn round the board, so the island never sits on a hard edge
 const SUB = 4;                         // AUTHORED: land vertices per square (the coast is smooth, not stepped)
@@ -16,6 +19,13 @@ const TUFTS_PER_SQUARE = 3;            // AUTHORED: grass tufts on each open gra
 const TUFT_CAP = 76 * 56 * TUFTS_PER_SQUARE;   // the largest generated map (app/maps.js SIZE_CLASSES.large: up to 76 x 56) full of grass
 const SDF_RANGE = 8;                   // the distance texture holds -8..+8 squares
 const WALL_H = 0.5, WALL_W = 0.9;      // AUTHORED: a wall block, in squares
+// AUTHORED (UC-L1): how much of the owner's colour the light coping takes (the cloth and the pennants carry the rest; seen from the
+// near top-down REPAIR camera the coping is most of what shows of a wall), a pennant for about every PENNANT_EVERY squares of an
+// owner's wall run, the pennant pole's inset from the block's corner, and the soft shadow's darkness at its middle
+// the scenery tall enough for its shadow to read from the camera; the low bits (bushes, small rocks, barrels, the sand islets)
+// stay out of the shadow pass (a draw each, every other frame)
+const DECOR_CASTS = new Set(['rockLarge', 'oak', 'tower', 'houseA', 'houseB']);
+const WALL_JITTER = 0.04, CAP_OWNER = 0.18, PENNANT_EVERY = 5, PENNANT_INSET = 0.1, WALL_SHADOW_K = 0.38;
 // AUTHORED (graphics round 3): a cannonball's scorch on the land fades over SCORCH_SECONDS (the first moments glow as embers); its
 // strength is the flash texture's G channel, so the land's shader reads it with the texture it already samples
 const SCORCH_SECONDS = 9, SCORCH_UPLOAD = 0.1;
@@ -45,19 +55,33 @@ export class BoardLook {
     this.makeWallMats();
   }
 
-  /** The walls' two materials, shared by every level like the land's: the stone body (brick shades in its vertex colours, a fine
-   *  grain from the noise texture so a face is not flat paint, tinted per block by the instance colour) and the owner-colour cap,
-   *  a painted, slightly glossy slab. */
+  /** The walls' materials, shared by every level like the land's (UC-L1). Every one is lit by the sun and writes nothing to the
+   *  glow target, so no wall blooms. The stone (its stones' shades in the vertex colours, smooth-shaded: the rounded stones' own
+   *  normals are their roundness; a fine grain from the noise texture so a face is not flat paint; tinted per block by the instance
+   *  colour), the light coping, the owner's cloth (matte, a fine weave), the steel of a metal block, the soft contact shadow under
+   *  each block, and the pennants' flags (the owner's colour per instance, waving: the wave grows from the pole to the tail, each
+   *  flag at its own phase). */
   makeWallMats() {
     const P = positionWorld, grain = texture(this.noiseTex, P.xz.mul(1.9).add(P.y.mul(1.3))).a;
     const fleck = texture(this.noiseTex, P.zx.mul(0.37).add(P.y.mul(0.5))).r;
-    this.wallStone = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.88, metalness: 0, flatShading: true });
-    this.wallStone.colorNode = vec3(grain.mul(0.16).add(0.9).mul(fleck.mul(0.12).add(0.94)));
-    this.wallCap = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, flatShading: true });
-    this.wallCap.colorNode = vec3(grain.mul(0.08).add(0.95));
+    this.wallStone = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
+    this.wallStone.colorNode = vec3(grain.mul(0.14).add(0.91).mul(fleck.mul(0.1).add(0.95)));
+    this.wallCap = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.82, metalness: 0 });
+    // the coping's face: the fine grain and a broad mottle of lighter and darker patches, so a long run of copings is weathered
+    // stone, not one paint
+    this.wallCap.colorNode = vec3(grain.mul(0.1).add(0.93).mul(texture(this.noiseTex, P.xz.mul(0.29)).r.mul(0.2).add(0.9)));
+    this.wallTrim = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
+    this.wallTrim.colorNode = vec3(texture(this.noiseTex, P.xz.mul(5.3).add(P.y.mul(7.1))).a.mul(0.14).add(0.88));
     // the metal piece's steel: smoother and glossier than the stone, fine grain only
-    this.wallSteel = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.34, metalness: 0.45, flatShading: true });
+    this.wallSteel = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.36, metalness: 0.5 });
     this.wallSteel.colorNode = vec3(grain.mul(0.06).add(0.96));
+    this.wallShadow = new THREE.MeshBasicNodeMaterial({ color: 0x14200c, transparent: true, depthWrite: false });
+    const d = max(abs(uv().x.sub(0.5)), abs(uv().y.sub(0.5))).mul(2);    // 0 at the middle, 1 at the square's edge
+    this.wallShadow.opacityNode = smoothstep(1.0, 0.5, d).mul(WALL_SHADOW_K);
+    this.pennantFlag = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, side: THREE.DoubleSide });
+    const along = positionGeometry.x.div(PENNANT_FLAG).clamp(0, 1);
+    const wave = sin(this.uTime.mul(5.2).add(positionGeometry.x.mul(16)).add(instanceIndex.toFloat().mul(1.37))).mul(0.055).mul(along);
+    this.pennantFlag.positionNode = positionLocal.add(vec3(0, 0, wave));
   }
 
   /** Grass tufts: ONE mesh drawn instanced (Mesh.count), each tuft's place, turn and size in an instanced vertex attribute, so a
@@ -99,8 +123,26 @@ export class BoardLook {
     let grass = mix(vc, vec3(C.grassDry.r, C.grassDry.g, C.grassDry.b), smoothstep(0.58, 0.9, patch).mul(0.6));
     grass = mix(grass, vec3(C.grassDeep.r, C.grassDeep.g, C.grassDeep.b), smoothstep(0.42, 0.1, patch).mul(0.55));
     grass = grass.mul(mottle.mul(0.1).add(1)).mul(streak.mul(0.06).add(1));
+    // UC-L1: the lawn laid in square turf tiles (a light checker, one tile per board square), with patches of dirt path and beds of
+    // flowers, all from the noise texture and the square's own coordinates (no texture file). AUTHORED sizes: a path patch about 20
+    // squares apart (0.05 tiles per square), a flower bed about 14 (0.07); flowers on a 3 x 3 lattice per square, about 45 % of its
+    // points in a bed, each a dot 0.06 of a square across, white, yellow or pink by a hash of its point
+    const cell = positionWorld.xz.floor(), checker = cell.x.add(cell.y).mod(2);
+    grass = grass.mul(checker.mul(0.075).add(0.96));
+    // (one noise sample makes both: a path where it is high, a flower bed where it is low, so they never overlap; the dirt's grain is
+    // the sand's own sample below: every texture read here is per pixel of the whole island)
+    const patchN = nz(P.mul(0.05).add(vec2(0.31, 0.77))).r, grainS = nz(P.mul(1.7)).a;
+    const pathK = smoothstep(0.66, 0.71, patchN);
+    const dirt = vec3(C.path.r, C.path.g, C.path.b).mul(grainS.mul(0.16).add(0.9));
+    grass = mix(grass, dirt, pathK.mul(0.8));
+    const bed = smoothstep(0.36, 0.3, patchN);
+    const q = P.mul(3), qi = q.floor(), qf = q.fract().sub(0.5);
+    const h1 = fract(sin(qi.x.mul(12.9898).add(qi.y.mul(78.233))).mul(43758.5453)), h2 = fract(h1.mul(17.31));
+    const flower = smoothstep(0.2, 0.13, qf.add(vec2(h2.sub(0.5).mul(0.36), h1.sub(0.5).mul(0.36))).length()).mul(step(0.55, h1)).mul(bed);
+    const petal = mix(mix(vec3(C.flowerA.r, C.flowerA.g, C.flowerA.b), vec3(C.flowerB.r, C.flowerB.g, C.flowerB.b), step(0.4, h2)), vec3(C.flowerC.r, C.flowerC.g, C.flowerC.b), step(0.72, h2));
+    grass = mix(grass, petal, flower);
     const ripple = sin(P.x.mul(5.2).add(P.y.mul(2.3)).add(nz(P.mul(0.06).add(0.61)).r.mul(6.4))).mul(0.5).add(0.5);
-    const grain = nz(P.mul(1.7)).a.mul(2).sub(1);
+    const grain = grainS.mul(2).sub(1);
     const sand = vc.mul(ripple.mul(0.06).add(0.97)).mul(grain.mul(0.05).add(1));
     const base = mix(sand, grass, grassy);
     let tint = mix(base, fill.rgb.mul(0.62).add(0.3), fill.a.mul(inBoard));   // a light wash of the owner's colour, not a dark stain
@@ -324,15 +366,18 @@ export class Board {
     // a block is two batches of the same squares (each under the 1000-instance limit, InstancedBatch): the stone body, tinted per
     // block, and its cap in the owner's colour
     this.walls = new InstancedBatch(this.group, wallStoneGeometry(WALL_W, WALL_H), this.look.wallStone, n, { colors: true, castShadow: true, receiveShadow: true, name: 'walls' });
-    this.caps = new InstancedBatch(this.group, wallCapGeometry(WALL_W, WALL_H), this.look.wallCap, n, { colors: true, castShadow: true, receiveShadow: true, name: 'wall caps' });
+    // (the copings cast no shadow of their own: the stone body under each casts the block's, and the shadow map is the frame's
+    // second-largest cost, perf_battle --ablate)
+    this.caps = new InstancedBatch(this.group, wallCapGeometry(WALL_W, WALL_H), this.look.wallCap, n, { colors: true, castShadow: false, receiveShadow: true, name: 'wall caps' });
     // the metal piece's blocks: steel body and steel cap, tinted a little toward the owner (they are only made when one is bought)
     this.steel = new InstancedBatch(this.group, wallSteelGeometry(WALL_W, WALL_H), this.look.wallSteel, n, { colors: true, castShadow: true, receiveShadow: true, name: 'steel walls' });
-    this.steelCaps = new InstancedBatch(this.group, wallSteelCapGeometry(WALL_W, WALL_H), this.look.wallSteel, n, { colors: true, castShadow: true, receiveShadow: true, name: 'steel caps' });
-    // the outline: thin glowing bars on every outer edge of a piece (WallOutline), coloured by the piece's owner
-    const cap = n * 12;
-    const bar = new THREE.BoxGeometry(1, 1, 1);
-    const glowMat = glowing(new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(2.6, 2.6, 2.6) }));
-    this.outline = new InstancedBatch(this.group, bar, glowMat, cap, { colors: true, name: 'wall outline' });
+    this.steelCaps = new InstancedBatch(this.group, wallSteelCapGeometry(WALL_W, WALL_H), this.look.wallSteel, n, { colors: true, castShadow: false, receiveShadow: true, name: 'steel caps' });
+    // UC-L1, both kinds of block: the owner's cloth band and the soft shadow under the block; the pennants on the runs' corners
+    // (the round 1-4 glowing outline bars round each piece are gone: RJ 11-09, "not going with the laser look anymore")
+    this.trims = new InstancedBatch(this.group, wallTrimGeometry(WALL_W, WALL_H), this.look.wallTrim, n, { colors: true, castShadow: false, receiveShadow: true, name: 'wall cloth' });
+    this.shadows = new InstancedBatch(this.group, wallShadowGeometry(), this.look.wallShadow, n, { name: 'wall shadows', renderOrder: 1 });
+    this.poles = new InstancedBatch(this.group, pennantPoleGeometry(), mats.vc, n, { castShadow: false, name: 'pennant poles' });   // a pole's shadow is a hair: not drawn
+    this.flags = new InstancedBatch(this.group, pennantFlagGeometry(), this.look.pennantFlag, n, { colors: true, castShadow: false, name: 'pennant flags' });
   }
 
   buildProps() {
@@ -403,58 +448,81 @@ export class Board {
   }
 
   drawWalls() {
-    const g = this.grid, w = this.w, h = this.h, m = new THREE.Matrix4(), c = new THREE.Color();
+    const g = this.grid, w = this.w, h = this.h, m = new THREE.Matrix4(), c = new THREE.Color(), sq = new THREE.Matrix4();
     const top = new Float32Array(w * h);
-    let k = 0, ks = 0;
+    let k = 0, ks = 0, kb = 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       if (g.occupantAt(x, y) !== Occupant.Wall) continue;
-      const ow = g.ownerAt(x, y), hp = g.healthAt(x, y), gy = this.groundAt(x, y);
-      if (hp > this.rules.wallHealth) {                                  // a metal block: steel, worn a little by each blast it has taken
-        const own = ow < 4 ? this.colourOf(ow) : NEUTRAL_WALL, wear = 0.78 + 0.22 * (hp - this.rules.wallHealth) / (this.rules.metalWallHealth - this.rules.wallHealth);
-        m.makeRotationY(Math.floor(this.noise(x * 2.9 - 7, y * 3.3 + 5) * 4) * Math.PI / 2).setPosition(x + 0.5, gy - 0.04, y + 0.5);
-        c.copy(STEEL).lerp(own, 0.1).multiplyScalar(wear * 1.1); this.steel.set(ks, m, c);
-        c.copy(STEEL).lerp(own, 0.22).multiplyScalar(wear * 1.1); this.steelCaps.set(ks, m, c);
-        top[y * w + x] = gy - 0.04 + WALL_H; ks++;
-        continue;
-      }
-      const sy = hp <= 1 ? 0.68 : 1;                                   // a damaged wall (one hit left) stands lower
-      // per block (hashed from the square, so the same board always lays the same stones): a quarter turn of the brick bond, a
-      // shade and a warmth; the stone takes a little of the owner's colour, the cap all of it
+      const ow = g.ownerAt(x, y), hp = g.healthAt(x, y), gy = this.groundAt(x, y), own = ow < 4 ? this.colourOf(ow) : NEUTRAL_WALL;
+      const metal = hp > this.rules.wallHealth;
+      const sy = !metal && hp <= 1 ? 0.68 : 1;                         // a damaged stone block (one hit left) stands lower
+      const dim = !metal && hp <= 1 ? 0.75 : 1;                        // ...and darker
+      // per block (hashed from the square, so the same board always lays the same stones): a quarter turn of the stones' bond, a
+      // shade and a warmth
       const v = this.noise(x * 5.3 + 1.7, y * 4.9 - 3.1), turn = Math.floor(this.noise(x * 2.9 - 7, y * 3.3 + 5) * 4) % 4;
-      m.makeRotationY(turn * Math.PI / 2).premultiply(new THREE.Matrix4().makeScale(1, sy, 1)).setPosition(x + 0.5, gy - 0.04, y + 0.5);
-      const own = ow < 4 ? this.colourOf(ow) : NEUTRAL_WALL;
-      c.setRGB(1.0 + (v - 0.5) * 0.05, 1.0, 1.0 - (v - 0.5) * 0.08).multiplyScalar(0.88 + v * 0.22).lerp(own, 0.26);
-      if (hp <= 1) c.multiplyScalar(0.72);
-      this.walls.set(k, m, c);
-      c.copy(own).lerp(C.foam, 0.1).multiplyScalar(0.94 + v * 0.1);
-      if (hp <= 1) c.multiplyScalar(0.72);
-      this.caps.set(k, m, c);
-      top[y * w + x] = gy - 0.04 + WALL_H * sy;
-      k++;
-    }
-    this.walls.commit(k); this.caps.commit(k); this.steel.commit(ks); this.steelCaps.commit(ks);
-    // the outline (WallOutline.build): bars inset a hair into the block so they sit on its faces
-    const edges = WallOutline.build(g, this.pieces), T = 0.045, IN = (1 - WALL_W) / 2;
-    let e = 0;
-    const q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3();
-    for (const ed of edges) {
-      const cx = ed.cell % w, cy = Math.floor(ed.cell / w), ow = g.ownerAt(cx, cy), base = this.groundAt(cx, cy) - 0.04, tp = top[ed.cell];
-      c.copy(ow < 4 ? this.colourOf(ow) : NEUTRAL_WALL);
-      if (ed.kind === WallOutline.Kind.Upright) {
-        const ix = ed.x0 > cx ? -IN : IN, iz = ed.y0 > cy ? -IN : IN;
-        p.set(ed.x0 + ix, (base + tp) / 2, ed.y0 + iz); sc.set(T, tp - base, T);
+      // ...and a height a hair up or down (WALL_JITTER), so a run's copings are not one flat plane
+      m.makeRotationY(turn * Math.PI / 2).premultiply(sq.makeScale(1, sy, 1)).setPosition(x + 0.5, gy - 0.04 + (v - 0.5) * WALL_JITTER, y + 0.5);
+      if (metal) {                                                     // a metal block: grey steel, worn a little by each blast it has taken
+        const wear = 0.8 + 0.2 * (hp - this.rules.wallHealth) / (this.rules.metalWallHealth - this.rules.wallHealth);
+        c.setScalar(wear * (0.96 + v * 0.08)); this.steel.set(ks, m, c);
+        c.copy(STEEL).multiplyScalar(wear * 1.3); this.steelCaps.set(ks, m, c);
+        ks++;
       } else {
-        let x0 = ed.x0, z0 = ed.y0, x1 = ed.x1, z1 = ed.y1;
-        if (ed.side === 0) { z0 += IN; z1 += IN; } else if (ed.side === 2) { z0 -= IN; z1 -= IN; }
-        else if (ed.side === 1) { x0 -= IN; x1 -= IN; } else { x0 += IN; x1 += IN; }
-        const yy = ed.kind === WallOutline.Kind.Top ? tp : base + 0.06;
-        p.set((x0 + x1) / 2, yy, (z0 + z1) / 2);
-        sc.set(Math.max(Math.abs(x1 - x0), T), T, Math.max(Math.abs(z1 - z0), T));
+        c.setRGB(1.0 + (v - 0.5) * 0.06, 1.0, 1.0 - (v - 0.5) * 0.1).multiplyScalar((0.9 + v * 0.18) * dim);
+        this.walls.set(k, m, c);
+        c.copy(C.wallTop).multiplyScalar(0.94 + v * 0.08).lerp(own, CAP_OWNER).multiplyScalar(dim);
+        this.caps.set(k, m, c);
+        k++;
       }
-      q.identity(); m.compose(p, q, sc);
-      this.outline.set(e, m, c); e++;
+      c.copy(own).multiplyScalar(dim); this.trims.set(kb, m, c);      // the owner's cloth, on both kinds
+      this.shadows.set(kb, sq.makeTranslation(x + 0.5, gy + 0.012, y + 0.5));
+      kb++;
+      top[y * w + x] = gy - 0.04 + (v - 0.5) * WALL_JITTER + WALL_H * sy;
     }
-    this.outline.commit(e);
+    this.walls.commit(k); this.caps.commit(k); this.steel.commit(ks); this.steelCaps.commit(ks); this.trims.commit(kb); this.shadows.commit(kb);
+    this.drawPennants(top);
+  }
+
+  /** The owner's pennants (UC-L1): each run of one owner's wall (its squares joined side to side) flies about one pennant per
+   *  PENNANT_EVERY squares, on blocks along the run's NORTH side (no square of the run north of them), spread evenly along the run
+   *  in row order, the pole at the block's north edge and the flag flying west (east from a block with no run square east of it, a
+   *  north-east corner). Only the north side: the camera looks from the south (or the east, turned, in portrait), so a flag stands
+   *  over the run's outside and never over the top of a block (the page check's walls_drawn looks there). A map's own (unowned)
+   *  wall flies none. */
+  drawPennants(top) {
+    const g = this.grid, w = this.w, h = this.h, run = new Int32Array(w * h).fill(-1), m = new THREE.Matrix4(), c = new THREE.Color();
+    const wallOf = (x, y, ow) => g.in(x, y) && g.occupantAt(x, y) === Occupant.Wall && g.ownerAt(x, y) === ow;
+    let n = 0, runs = 0;
+    for (let y0 = 0; y0 < h; y0++) for (let x0 = 0; x0 < w; x0++) {
+      const ow = g.ownerAt(x0, y0);
+      if (run[y0 * w + x0] >= 0 || g.occupantAt(x0, y0) !== Occupant.Wall || ow >= 4) continue;
+      const cells = [y0 * w + x0]; run[y0 * w + x0] = runs;
+      for (let i = 0; i < cells.length; i++) {                       // the run: 4-joined squares of this owner's wall
+        const x = cells[i] % w, y = (cells[i] / w) | 0;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (wallOf(nx, ny, ow) && run[ny * w + nx] < 0) { run[ny * w + nx] = runs; cells.push(ny * w + nx); }
+        }
+      }
+      runs++;
+      cells.sort((a, b) => a - b);                                     // row order
+      const corners = [];
+      for (const i of cells) {
+        const x = i % w, y = (i / w) | 0;
+        if (wallOf(x, y - 1, ow)) continue;
+        corners.push({ x, y, east: wallOf(x - 1, y, ow) && !wallOf(x + 1, y, ow) });
+      }
+      const want = Math.min(corners.length, Math.max(1, Math.round(cells.length / PENNANT_EVERY)));
+      for (let j = 0; j < want; j++) {
+        const q = corners[Math.floor((j + 0.5) * corners.length / want)];
+        const px = q.east ? q.x + 1 - PENNANT_INSET : q.x + PENNANT_INSET, pz = q.y + PENNANT_INSET;
+        m.makeRotationY(q.east ? 0 : Math.PI).setPosition(px, top[q.y * w + q.x], pz);
+        this.poles.set(n, m); this.flags.set(n, m, c.copy(this.colourOf(ow)));
+        n++;
+      }
+    }
+    this.poles.commit(n); this.flags.commit(n);
+    this.pennantCount = n;
   }
 
   drawProps() {
@@ -483,16 +551,30 @@ export class Board {
    *  swamp), TUFTS_PER_SQUARE each at places hashed from the square, so the same board always grows the same grass. */
   drawTufts() {
     const g = this.grid, d = this.look.tuftData, r = (x, y, k) => this.noise(x * 7.31 + k * 3.7, y * 5.17 - k * 1.3);
+    // where each square's tufts would stand is the same all match long (it depends on the land's shape and the noise only), so it
+    // is worked out once per board: the coast distance (sdf) it needs walks the coast's squares, and doing that for every tuft each
+    // time a wall broke cost ~40 ms a time in BATTLE (11-09, perf: a stall a broken wall). Each time, only which squares are open
+    // grass is read.
+    if (!this.tuftAt) {
+      this.tuftAt = [];
+      for (let y = 0; y < this.h; y++) for (let x = 0; x < this.w; x++) {
+        const list = [];
+        if (g.terrainAt(x, y) === Terrain.Land) for (let k = 0; k < TUFTS_PER_SQUARE; k++) {
+          const px = x + 0.12 + r(x, y, k) * 0.76, pz = y + 0.12 + r(y, x, k + 5) * 0.76;
+          if (this.sdf(px, pz) < 0.85) continue;                       // the sand band
+          if (this.noise(px * 0.45 + 20, pz * 0.45 - 7) < 0.42) continue;  // tufts grow in clumps, with open lawn between
+          const size = Math.round((0.75 + r(x + 3, y, k) * 0.6) * 100); // 0.75..1.35 as hundredths
+          list.push([px, this.groundAtPoint(px, pz) - 0.01, pz, size * 2 * Math.PI + r(x, y + 9, k) * 2 * Math.PI * 0.999]);
+        }
+        this.tuftAt.push(list);
+      }
+    }
     let n = 0;
     for (let y = 0; y < this.h; y++) for (let x = 0; x < this.w; x++) {
       if (g.occupantAt(x, y) !== Occupant.Empty || g.terrainAt(x, y) !== Terrain.Land) continue;
-      for (let k = 0; k < TUFTS_PER_SQUARE; k++) {
-        const px = x + 0.12 + r(x, y, k) * 0.76, pz = y + 0.12 + r(y, x, k + 5) * 0.76;
-        if (this.sdf(px, pz) < 0.85) continue;                         // the sand band
-        if (this.noise(px * 0.45 + 20, pz * 0.45 - 7) < 0.42) continue;    // tufts grow in clumps, with open lawn between
+      for (const t of this.tuftAt[y * this.w + x]) {
         if (n >= TUFT_CAP) throw new RangeError('board.js: more grass tufts than TUFT_CAP (' + TUFT_CAP + '): a board bigger than the largest generated map');
-        const size = Math.round((0.75 + r(x + 3, y, k) * 0.6) * 100);   // 0.75..1.35 as hundredths
-        d[n * 4] = px; d[n * 4 + 1] = this.groundAtPoint(px, pz) - 0.01; d[n * 4 + 2] = pz; d[n * 4 + 3] = size * 2 * Math.PI + r(x, y + 9, k) * 2 * Math.PI * 0.999;
+        d[n * 4] = t[0]; d[n * 4 + 1] = t[1]; d[n * 4 + 2] = t[2]; d[n * 4 + 3] = t[3];
         n++;
       }
     }
@@ -501,7 +583,8 @@ export class Board {
   }
 
   // ------------------------------------------------------------------ decoration (no square of the rules)
-  /** Rocks, bushes and a few oak islets, ONLY where nothing the rules move or place can ever be, read from the rules
+  /** Rocks, bushes, oak islets, and (UC-L1) towers on rock islets, houses with barrels on sand islets and barrels on a lagoon's
+   *  rim, ONLY where nothing the rules move or place can ever be, read from the rules
    *  (core/match/MatchModel.js):
    *  - a ship can be on ANY water square joined to the board's edge: it is born on an edge square (_spawnWave), sails over water,
    *    4-connected (_actShip, PathRules.nextStep), and a lander heads for any water square beside land (_shoreWater). So no water
@@ -530,7 +613,7 @@ export class Board {
         reach[ny * w + nx] = 1; q.push(ny * w + nx);
       }
     }
-    const items = { bush: [], rockSmall: [], rockLarge: [], oak: [] };
+    const items = { bush: [], rockSmall: [], rockLarge: [], oak: [], tower: [], houseA: [], houseB: [], barrel: [], islet: [] };
     const put = (kind, x, z, y, scale) => items[kind].push({ x, z, y, scale, turn: rnd() * Math.PI * 2 });
     // lagoon squares: water the flood did not reach. A rim square (land beside it) gets a bush or a small rock now and then.
     let lagoon = 0;
@@ -541,29 +624,56 @@ export class Board {
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!wet(g.terrainAt(x + dx, y + dy))) rim = true;
       if (!rim || rnd() > 0.45) continue;
       const px = x + 0.25 + rnd() * 0.5, pz = y + 0.25 + rnd() * 0.5;
-      put(rnd() < 0.6 ? 'bush' : 'rockSmall', px, pz, -0.04, 0.8 + rnd() * 0.4);
+      const r = rnd();
+      if (r < 0.15) put('barrel', px, pz, -0.08, 0.9 + rnd() * 0.2);              // a barrel washed up on the lagoon's rim
+      else put(r < 0.6 ? 'bush' : 'rockSmall', px, pz, -0.04, 0.8 + rnd() * 0.4);
     }
     // the sea outside the board: off the north, east and west edges, 1.5 to 4.5 squares out
     const side = [];
     for (let x = 0; x < w; x += 3) side.push([x + rnd() * 3, -1.5 - rnd() * 3]);
     for (let y = 0; y < h; y += 3) { side.push([-1.5 - rnd() * 3, y + rnd() * 3]); side.push([w + 1.5 + rnd() * 3, y + rnd() * 3]); }
-    let oaks = 0;
+    // AUTHORED (UC-L1): at most TOWERS towers on rock islets and HOUSES sand islets with a house and two barrels; the heights put
+    // a tower's foot and a house's floor on the islet's top (rockLarge fitted 1.2 wide: its top ~0.45 over the sea; ISLET_TOP)
+    const TOWERS = 3, HOUSES = 3, ISLET_TOP = 0.12;
+    let oaks = 0, towers = 0, houses = 0;
     for (const [px, pz] of side) {
       const r = rnd();
-      if (r < 0.5) continue;                                      // about half the places stay open sea
-      if (r < 0.62 && oaks < 4) { put('rockLarge', px, pz, -0.35, 1); put('oak', px, pz, 0.45, 0.8 + rnd() * 0.3); oaks++; }
-      else if (r < 0.8) put('rockLarge', px, pz, -0.3, 0.7 + rnd() * 0.5);
+      if (r < 0.46) continue;                                     // about half the places stay open sea
+      if (r < 0.56 && oaks < 4) { put('rockLarge', px, pz, -0.35, 1); put('oak', px, pz, 0.45, 0.8 + rnd() * 0.3); oaks++; }
+      else if (r < 0.64 && towers < TOWERS) { put('rockLarge', px, pz, -0.35, 1.05); put('tower', px, pz, 0.38, 0.9 + rnd() * 0.2); towers++; }
+      else if (r < 0.72 && houses < HOUSES) {
+        put('islet', px, pz, 0, 1);
+        put(houses % 2 ? 'houseB' : 'houseA', px, pz, ISLET_TOP, 0.95 + rnd() * 0.1);
+        const a = rnd() * Math.PI * 2;
+        for (const k of [0, 1]) put('barrel', px + Math.cos(a + k * 0.5) * 0.95, pz + Math.sin(a + k * 0.5) * 0.95, ISLET_TOP, 0.9 + rnd() * 0.2);
+        houses++;
+      }
+      else if (r < 0.84) put('rockLarge', px, pz, -0.3, 0.7 + rnd() * 0.5);
       else put('rockSmall', px, pz, -0.08, 0.8 + rnd() * 0.6);
     }
+    // the scenery never moves, so each kind is BAKED: every copy of a part merged into one geometry, one mesh per part of the kind
+    // whatever the count (UC-L1, 11-09: the houses, towers and barrels as one plain mesh per part per copy were ~40 more draws a
+    // frame, and perf_battle measured 53 fps against 55 before; baked, the whole scenery is a draw per part). The parts' materials
+    // are the renderer's, so the shaders are the ones its warm-up built.
     this.decor = {};
     const m = new THREE.Matrix4(), qt = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
     for (const kind of Object.keys(items)) {
       const list = items[kind];
       if (!D[kind]) throw new Error('board.js: no decoration parts for ' + kind);
-      const set = new PropSet(this.group, D[kind], Math.max(1, list.length), { castShadow: true, receiveShadow: true, name: 'decor ' + kind });
-      list.forEach((it, i) => { qt.setFromAxisAngle(up, it.turn); m.compose(new THREE.Vector3(it.x, it.y, it.z), qt, new THREE.Vector3(it.scale, it.scale, it.scale)); set.set(i, m); });
-      set.commit(list.length);
       this.decor[kind] = list.length;
+      if (!list.length) continue;
+      for (const part of D[kind]) {
+        const copies = list.map((it) => {
+          qt.setFromAxisAngle(up, it.turn); m.compose(new THREE.Vector3(it.x, it.y, it.z), qt, new THREE.Vector3(it.scale, it.scale, it.scale));
+          return part.geometry.clone().applyMatrix4(m);
+        });
+        const geo = copies.length === 1 ? copies[0] : mergeGeometries(copies, false);
+        if (!geo) throw new Error('board.js: the ' + kind + ' scenery would not merge');
+        if (copies.length > 1) for (const c of copies) c.dispose();
+        const mesh = new THREE.Mesh(geo, part.material);
+        mesh.castShadow = DECOR_CASTS.has(kind); mesh.receiveShadow = true; mesh.name = 'decor ' + kind;
+        this.group.add(mesh);
+      }
     }
     this.decor.lagoonSquares = lagoon;
   }

@@ -17,6 +17,12 @@ const PITCH = { land: [54, 80], port: [48, 76] };
 // Measured with the 80 / 76 degree REPAIR angle: the hero stood 8 px tall in phone landscape and 11 px in portrait (run_page
 // `camera`, shots/aaa3/run_page_camera2.txt), too small to find; the play angle is unchanged.
 const SMALL_SCREEN = 560, PITCH_SMALL = { land: [54, 64], port: [48, 60] };
+// AUTHORED (UC-L1, 11-09): the hero is drawn 0.7 as tall as before, and in BATTLE on a phone it measured 14 px tall in landscape and
+// 13 px in portrait (run_page `camera`), under the ~15 px it must keep. BATTLE's frame is the widest (the player's area and the
+// nearest ships), so on a small screen BATTLE looks flatter: an upright figure's height on screen grows with the cosine of the angle
+// down (cos 34 / cos 48 = 1.24) and the ground's depth shrinks with its sine, so the same targets fit at the same or a nearer
+// distance. The play angle eases between this and PITCH_SMALL's (PLAY_EASE, 1/s), so a phase change does not cut the camera.
+const PITCH_SMALL_BATTLE = { land: 46, port: 34 }, PLAY_EASE = 3;
 const SWING_SECONDS = 1.1;                                      // AUTHORED: the swing between the play and REPAIR angles
 const FIT_MARGIN = 0.04;                                        // AUTHORED: fraction of the free rect kept clear inside its edges
 // AUTHORED framing (squares): a target box is padded by PAD, at least MIN_ACROSS across the free rect, never past the board;
@@ -261,8 +267,8 @@ export class CameraRig {
   }
 
   /** One frame. land: the land's box; building: REPAIR; aim: CameraDirector.targets() (null = no human: the whole island);
-   *  menu: the drifting menu camera. W, H: the canvas in CSS px. */
-  update(dt, land, building, aim, menu, W, H) {
+   *  menu: the drifting menu camera. W, H: the canvas in CSS px. battle: the match is in BATTLE (a phone's flatter angle). */
+  update(dt, land, building, aim, menu, W, H, battle = false) {
     this.clock += dt;
     const freeW = this.free ? this.free.x1 - this.free.x0 : W, freeH = this.free ? this.free.y1 - this.free.y0 : H;
     const turn = freeH > freeW * 1.05 && (land.x1 - land.x0) > (land.y1 - land.y0) ? 1 : 0;
@@ -270,7 +276,12 @@ export class CameraRig {
     this.kWant = building ? 1 : 0;
     const step = dt / SWING_SECONDS;
     this.k = this.kWant > this.k ? Math.min(this.kWant, this.k + step) : Math.max(this.kWant, this.k - step);
-    const P = (Math.min(W, H) < SMALL_SCREEN ? PITCH_SMALL : PITCH)[turn ? 'port' : 'land'], s = this.k * this.k * (3 - 2 * this.k);
+    const small = Math.min(W, H) < SMALL_SCREEN, side = turn ? 'port' : 'land', P0 = (small ? PITCH_SMALL : PITCH)[side];
+    const playWant = small && battle ? PITCH_SMALL_BATTLE[side] : P0[0];
+    if (this.playPitch === undefined || this.cur === null) this.playPitch = playWant;
+    else this.playPitch += (playWant - this.playPitch) * Math.min(1, dt * PLAY_EASE);
+    // the eased angle in tenths of a degree (the fit below is redone only when the angle has moved that much)
+    const P = [Math.round(this.playPitch * 10) / 10, P0[1]], s = this.k * this.k * (3 - 2 * this.k);
     this.pitches = P;
     // WHAT: the box to frame
     const whole = { x0: land.x0 - 1, y0: land.y0 - 1, x1: land.x1 + 1, y1: land.y1 + 1 };

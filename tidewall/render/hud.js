@@ -2,8 +2,9 @@
 // the big banner, one card per player with their colour, score, cannons to place, the piece they hold and why their last command
 // was refused), the tag over each hero, and every menu screen (title, join/setup, pause, the continue-or-give-up screen, results,
 // initials, high scores). It only READS the ported HudViewModel, MenuModel and model; it decides nothing.
+// The look (UC-L1, 11-09): chunky wooden panels in a stone frame, gold numerals, no thin bright edges (woodPanel).
 import { Phase, Screen, MenuModel, HudViewModel, ItemBought, ItemNames } from '../core/index.js';
-import { PLAYER_CSS, PLAYER_TEXT_CSS, PLAYER_INK_CSS, HUD_PANEL_CSS } from './look.js';
+import { PLAYER_CSS, PLAYER_TEXT_CSS, PLAYER_INK_CSS, HUD_PANEL_CSS, UI } from './look.js';
 
 const WARN = '#ffd24a';                                   // AUTHORED: the warning colour of a refusal, a stun
 const NOTE_SECONDS = 2;                                   // AUTHORED: how long a fresh refusal or purchase takes over a card's line
@@ -11,6 +12,30 @@ const ITEM_WORDS = Object.freeze({ metal: 'METAL PIECE', trap: 'TRAP', bombPack:
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const PHASE_WORD = { [Phase.Claim]: 'CLAIM', [Phase.Cannons]: 'CANNONS', [Phase.Battle]: 'BATTLE', [Phase.Repair]: 'REPAIR',
                      [Phase.Score]: 'SCORE', [Phase.GameOver]: 'GAME OVER', [Phase.Victory]: 'VICTORY', [Phase.Decide]: 'CONTINUE?' };
+
+// AUTHORED: px of room round a panel sprite for its drop shadow (offset 1, 3)
+const PANEL_PAD = 4;
+/** Paint a wooden panel (Hud.woodPanel's look) at x, y, w x h on a 2D context g. */
+function paintWoodPanel(g, x, y, w, h, r, rim, fill) {
+  const b = Math.max(3, Math.min(6, Math.min(w, h) * 0.07));                                // the rim's width, px
+  const grad = (y0, y1, a, z) => { const q = g.createLinearGradient(0, y0, 0, y1); q.addColorStop(0, a); q.addColorStop(1, z); return q; };
+  g.beginPath(); g.roundRect(x + 1, y + 3, w, h, r); g.fillStyle = 'rgba(0,0,0,0.32)'; g.fill();   // the shadow
+  g.beginPath(); g.roundRect(x, y, w, h, r);
+  g.fillStyle = rim || grad(y, y + h, UI.stoneLight, UI.stoneDark);
+  g.fill(); g.lineWidth = 1.5; g.strokeStyle = UI.ink; g.stroke();
+  const ir = Math.max(2, r - b);
+  g.beginPath(); g.roundRect(x + b, y + b, w - 2 * b, h - 2 * b, ir);
+  g.fillStyle = fill || grad(y + b, y + h - b, UI.woodLight, UI.woodDark);
+  g.fill();
+  g.save(); g.clip();
+  if (!fill && h > 44) {                                                                    // plank seams
+    g.fillStyle = 'rgba(30,16,6,0.35)';
+    for (let k = 1; k < 3; k++) g.fillRect(x + b, y + b + (h - 2 * b) * k / 3, w - 2 * b, 1.5);
+  }
+  g.fillStyle = 'rgba(255,240,210,0.16)'; g.fillRect(x + b, y + b, w - 2 * b, Math.max(2, (h - 2 * b) * 0.12));   // lit along the top
+  g.restore();
+  g.lineWidth = 1.5; g.strokeStyle = 'rgba(20,10,4,0.55)'; g.stroke();
+}
 
 export class Hud {
   constructor(canvas, title) {
@@ -46,6 +71,28 @@ export class Hud {
   panel(x, y, w, h, r, fill, edge) {
     const c = this.ctx; c.beginPath(); c.roundRect(x, y, w, h, r); c.fillStyle = fill; c.fill();
     if (edge) { c.lineWidth = 2; c.strokeStyle = edge; c.stroke(); }
+  }
+  /** A chunky wooden panel in a stone frame (UC-L1): a soft drop shadow, a stone rim (lighter at the top, `rim` replaces its colour:
+   *  a player's colour, the warning colour), a dark ink line round it, and planks inside (light to dark, with a seam or two when it is
+   *  tall enough), lit along the top. `fill` replaces the planks with a flat colour (a joined seat's colour, a chosen button).
+   *  Drawn once per size and look into a sprite of its own and stamped from then on: a frame draws a dozen of them (the cards, the
+   *  phase chip, the menus), and painting each from paths and gradients every frame cost the HUD ~0.1 ms a frame (11-09, perf). */
+  woodPanel(x, y, w, h, r, { rim = null, fill = null, alpha = 1 } = {}) {
+    const dpr = this.dpr, W = Math.round(w), H = Math.round(h), key = [W, H, Math.round(r), rim, fill, dpr].join('|');
+    if (!this.panels || this.panels.size > 64) this.panels = new Map();
+    let sp = this.panels.get(key);
+    if (!sp) {
+      sp = document.createElement('canvas');
+      sp.width = Math.ceil((W + PANEL_PAD * 2) * dpr); sp.height = Math.ceil((H + PANEL_PAD * 2) * dpr);
+      const g = sp.getContext('2d');
+      if (!g) throw new Error('hud.js: a panel sprite gave no 2D context');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      paintWoodPanel(g, PANEL_PAD, PANEL_PAD, W, H, r, rim, fill);
+      this.panels.set(key, sp);
+    }
+    const c = this.ctx; c.save(); c.globalAlpha *= alpha;
+    c.drawImage(sp, x - PANEL_PAD, y - PANEL_PAD, sp.width / dpr, sp.height / dpr);
+    c.restore();
   }
 
   /** The seat a player slot sits at (HudViewModel.seatOfSlot, set by the host): a card, a tag and a colour say "P" + seat + 1, so a
@@ -88,7 +135,7 @@ export class Hud {
     for (const t of tags) {
       const p = project(t.at); if (!p.visible) continue;
       const seat = Hud.seatOf(hud, t.slot), s = 'P' + (seat + 1);
-      this.panel(p.x - 16, p.y - 11, 32, 22, 11, PLAYER_CSS[seat], 'rgba(255,255,255,0.9)');
+      this.panel(p.x - 17, p.y - 12, 34, 24, 12, UI.ink); this.panel(p.x - 15, p.y - 10, 30, 20, 10, PLAYER_CSS[seat], 'rgba(255,255,255,0.85)');
       this.text(s, p.x, p.y + 1, 13, PLAYER_INK_CSS[seat], 'center', 900, false);
     }
   }
@@ -139,28 +186,28 @@ export class Hud {
     const n = hud.players.filter((p) => p.present).length, L = Hud.matchLayout(W, H, n), u = L.u;
     // the top bar: round + level on the left, the phase and its timer in the middle, lives and team score on the right
     const barH = L.barH;
-    const g = this.ctx.createLinearGradient(0, 0, 0, barH * 1.4); g.addColorStop(0, 'rgba(8,30,52,0.72)'); g.addColorStop(1, 'rgba(8,30,52,0)');
+    const g = this.ctx.createLinearGradient(0, 0, 0, barH * 1.4); g.addColorStop(0, 'rgba(36,20,8,0.7)'); g.addColorStop(1, 'rgba(36,20,8,0)');
     this.ctx.fillStyle = g; this.ctx.fillRect(0, 0, W, barH * 1.4);
     const fs = Math.max(14, u * 2.1);
     const narrow = W < 640;                                   // a phone held upright: the short form, so nothing runs into the phase chip
     this.text(narrow ? 'R' + hud.round + ' · L' + hud.level : 'ROUND ' + hud.round + '  ·  LEVEL ' + hud.level + (hud.mapName ? '  ·  ' + hud.mapName : ''), narrow ? 12 : 18, barH / 2, fs, '#fff', 'left');
     const lives = Math.max(0, hud.lives);
     let lx = W - 18;
-    this.text('SCORE ' + hud.teamScore, lx, barH / 2, fs, '#ffe08a', 'right');
+    this.text('SCORE ' + hud.teamScore, lx, barH / 2, fs, UI.gold, 'right');
     this.font(fs); lx -= this.ctx.measureText('SCORE ' + hud.teamScore).width + 26;
     for (let i = 0; i < lives; i++) { this.shield(lx - i * (fs * 1.2), barH / 2, fs * 0.5); }
     // phase chip and the timer ring
     const word = PHASE_WORD[hud.phase];
     if (word === undefined) throw new Error('hud.js: no word for phase ' + hud.phase);
     const cx = W / 2, chipW = narrow ? Math.max(118, fs * 7.5) : Math.max(150, fs * 9);
-    this.panel(cx - chipW / 2, barH * 0.16, chipW, barH * 0.7, barH * 0.35, 'rgba(255,255,255,0.14)', 'rgba(255,255,255,0.5)');
+    this.woodPanel(cx - chipW / 2, barH * 0.1, chipW, barH * 0.8, barH * 0.3);
     this.text(word, cx - (hud.secondsTotal > 0 ? fs * 0.9 : 0), barH / 2, fs * 1.05, '#fff');
     if (hud.secondsTotal > 0 && !m.ended) {
       const rx = cx + chipW / 2 - barH * 0.36, ry = barH / 2, rr = barH * 0.27, k = hud.secondsLeft / hud.secondsTotal, c = this.ctx;
-      c.beginPath(); c.arc(rx, ry, rr, 0, Math.PI * 2); c.fillStyle = 'rgba(0,0,0,0.35)'; c.fill();
+      c.beginPath(); c.arc(rx, ry, rr, 0, Math.PI * 2); c.fillStyle = UI.woodDark; c.fill(); c.lineWidth = 2; c.strokeStyle = UI.ink; c.stroke();
       c.beginPath(); c.moveTo(rx, ry); c.arc(rx, ry, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); c.closePath();
-      c.fillStyle = hud.secondsLeft <= 5 ? '#ff5b4a' : '#7fe0ff'; c.fill();
-      this.text(String(hud.secondsLeft), rx, ry + 1, rr * 1.05, '#fff', 'center', 900);
+      c.fillStyle = hud.secondsLeft <= 5 ? 'rgba(255,91,74,0.85)' : 'rgba(255,210,74,0.45)'; c.fill();
+      this.text(String(hud.secondsLeft), rx, ry + 1, rr * 1.05, hud.secondsLeft <= 5 ? '#fff' : UI.gold, 'center', 900);
     }
     // the banner: big for a moment after it changes
     const since = Number(m.tick - hud.bannerTick);
@@ -169,7 +216,7 @@ export class Hud {
       this.ctx.globalAlpha = a;
       const by = H * 0.36, bs = Math.max(26, u * 5.4) * pop;
       this.text(hud.banner, W / 2, by, bs, '#fff', 'center', 900);
-      if (hud.subtitle) this.text(hud.subtitle, W / 2, by + bs * 0.95, bs * 0.42, '#ffe08a');
+      if (hud.subtitle) this.text(hud.subtitle, W / 2, by + bs * 0.95, bs * 0.42, UI.gold);
       this.ctx.globalAlpha = 1;
     }
     // the player cards along the bottom
@@ -195,12 +242,15 @@ export class Hud {
     // a refusal that just came in, or a purchase, takes the line for NOTE_SECONDS and lights the card's edge
     if (p.lastMessage !== (this.said.get(s) ?? '')) { this.said.set(s, p.lastMessage); if (p.lastMessage) this.notes.set(s, { text: p.lastMessage, at: seconds, buy: false }); }
     const note = this.notes.get(s), fresh = note !== undefined && seconds - note.at < NOTE_SECONDS;
-    this.panel(x, y, w, h, 12, HUD_PANEL_CSS, fresh ? (note.buy ? '#ffffff' : WARN) : col);
-    c.fillStyle = col; c.beginPath(); c.roundRect(x, y, 10, h, [12, 0, 0, 12]); c.fill();
+    // a wooden card (its planks: HUD_PANEL_CSS's wood, the colour tools/colour_check.py holds the labels to), its stone rim lit in
+    // the warning colour (or white for a purchase) while a fresh note shows, and a cloth ribbon in the player's colour down its left
+    this.woodPanel(x, y, w, h, 12, { rim: fresh ? (note.buy ? '#ffffff' : WARN) : null, fill: HUD_PANEL_CSS });
+    c.fillStyle = col; c.beginPath(); c.roundRect(x + 4, y + 4, 10, h - 8, [9, 0, 0, 9]); c.fill();
+    c.lineWidth = 1.5; c.strokeStyle = UI.ink; c.stroke();
     const fs = Math.max(13, h * 0.24);
     this.text('P' + (seat + 1), x + 22, y + h * 0.28, fs * 1.2, PLAYER_TEXT_CSS[seat], 'left', 900);
     if (ctl.isBot(s)) this.text('BOT', x + 22 + fs * 1.9, y + h * 0.3, fs * 0.62, 'rgba(255,255,255,0.65)', 'left', 700, false);
-    this.text(String(p.score), x + w - 12, y + h * 0.28, fs, '#fff', 'right');
+    this.text(String(p.score), x + w - 12, y + h * 0.28, fs, UI.gold, 'right');
     if (bombs) this.stock(pl, x + w - 12 - this.textWidth(String(p.score), fs) - 10, y + h * 0.3, fs * 0.58);
     // what this player is doing now
     const mid = x + 22, row = y + h * 0.68;
@@ -277,7 +327,7 @@ export class Hud {
     const px = big ? 24 : 16, h = big ? 46 : 34, y = top ?? this.cssH * 0.7;
     this.font(px, big ? 900 : 700); const w = c.measureText(text).width + (big ? 52 : 36);
     // a closing ring's toast (UC-P2) is gold on a dark panel; the quality switch's note stays plain
-    this.panel(this.cssW / 2 - w / 2, y, w, h, h / 2, big ? 'rgba(46,30,8,0.9)' : 'rgba(10,24,40,0.82)', big ? '#ffd257' : 'rgba(255,255,255,0.35)');
+    this.woodPanel(this.cssW / 2 - w / 2, y, w, h, h / 2, { rim: big ? '#ffd257' : null });
     this.text(text, this.cssW / 2, y + h / 2 + 1, px, big ? '#ffd257' : '#ffffff', 'center', big ? 900 : 700, big);
     c.restore();
     this.drawnToast = { text, y, a };
@@ -371,7 +421,7 @@ export class Hud {
     let x = (sx0 + sx1 - ((cw + 12) * 4 - 12)) / 2;
     for (let s = 0; s < MenuModel.Seats; s++) {
       const j = menu.joined[s];
-      this.panel(x, y, cw, ch, 14, j ? PLAYER_CSS[s] : 'rgba(255,255,255,0.08)', j ? '#fff' : 'rgba(255,255,255,0.35)');
+      this.woodPanel(x, y, cw, ch, 14, j ? { fill: PLAYER_CSS[s] } : { alpha: 0.85 });
       this.text('P' + (s + 1), x + cw / 2, y + ch * 0.34, ch * 0.3, j ? PLAYER_INK_CSS[s] : 'rgba(255,255,255,0.6)', 'center', 900, !j);
       this.text(j ? 'READY' : 'PRESS TO JOIN', x + cw / 2, y + ch * 0.72, ch * 0.15, j ? PLAYER_INK_CSS[s] : '#fff', 'center', 800, false);
       this.hit({ kind: 'seat', seat: s }, x, y, x + cw, y + ch);
@@ -389,9 +439,9 @@ export class Hud {
     for (let i = 0; i < rows.length; i++) {
       const sel = i === menu.row, yy = top + i * rh, raw = menu.valueOfRow(i);
       const val = i === MenuModel.RowMap ? HudViewModel.pretty(raw) : raw;   // "GullrockIsle" -> "GULLROCK ISLE", as the match's top bar says it
-      if (sel) this.panel(cx - half, yy - rh * 0.45, half * 2, rh * 0.9, rh * 0.45, 'rgba(255,255,255,0.2)', '#fff');
+      if (sel) this.woodPanel(cx - half, yy - rh * 0.5, half * 2, rh, rh * 0.4, { rim: UI.gold });
       this.text(rows[i], val ? cx - lab : cx, yy, rh * 0.5, sel ? '#fff' : 'rgba(255,255,255,0.75)', val ? 'left' : 'center');
-      if (val) this.text((sel ? '◀ ' : '') + val + (sel ? ' ▶' : ''), cx + lab, yy, rh * 0.5, sel ? '#ffe08a' : 'rgba(255,224,138,0.75)', 'right');
+      if (val) this.text((sel ? '◀ ' : '') + val + (sel ? ' ▶' : ''), cx + lab, yy, rh * 0.5, sel ? UI.gold : 'rgba(255,210,74,0.8)', 'right');
       const y0 = yy - rh * 0.45, y1 = yy + rh * 0.45;
       if (sel && val) {                                       // the arrows, measured in the font they were drawn in
         this.font(rh * 0.5); const all = this.ctx.measureText('◀ ' + val + ' ▶').width, arrow = this.ctx.measureText('◀ ').width;
@@ -411,7 +461,7 @@ export class Hud {
     const top = H * 0.46;
     rows.forEach((r, i) => {
       const sel = i === at, yy = top + i * rh;
-      if (sel) this.panel(W / 2 - 170, yy - rh * 0.45, 340, rh * 0.9, rh * 0.45, 'rgba(255,255,255,0.22)', '#fff');
+      if (sel) this.woodPanel(W / 2 - 170, yy - rh * 0.5, 340, rh, rh * 0.4, { rim: UI.gold });
       this.text(r, W / 2, yy, rh * 0.52, sel ? '#fff' : 'rgba(255,255,255,0.7)');
       this.hit({ kind: 'row', row: i }, W / 2 - 170, yy - rh * 0.45, W / 2 + 170, yy + rh * 0.45);
     });
@@ -425,7 +475,7 @@ export class Hud {
     const rows = MenuModel.DecideRows, bw = Math.max(170, u * 24), bh = Math.max(56, u * 8.5), y = H * 0.55;
     rows.forEach((r, i) => {
       const sel = i === menu.row, x = W / 2 + (i === 0 ? -bw - 16 : 16);
-      this.panel(x, y, bw, bh, bh / 2, sel ? (i === 0 ? '#2fbf71' : '#d9534f') : 'rgba(255,255,255,0.1)', sel ? '#fff' : 'rgba(255,255,255,0.4)');
+      this.woodPanel(x, y, bw, bh, bh * 0.4, sel ? { fill: i === 0 ? '#2f9f5f' : '#c4433f', rim: UI.gold } : {});
       this.text(r, x + bw / 2, y + bh / 2, bh * 0.36, '#fff');
       this.hit({ kind: 'row', row: i }, x, y, x + bw, y + bh);
     });
@@ -435,7 +485,7 @@ export class Hud {
     const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60);
     this.dim(0.65);
     this.text(menu.lastWon ? 'VICTORY!' : 'GAME OVER', W / 2, H * 0.34, Math.max(44, u * 10), menu.lastWon ? '#ffe08a' : '#ff8a7a', 'center', 900);
-    this.text('TEAM SCORE  ' + menu.pendingScore, W / 2, H * 0.5, Math.max(22, u * 4), '#fff');
+    this.text('TEAM SCORE  ' + menu.pendingScore, W / 2, H * 0.5, Math.max(22, u * 4), UI.gold);
     if (Math.sin(seconds * 4) > -0.4) this.text('PRESS A BUTTON', W / 2, H * 0.64, Math.max(16, u * 2.6), 'rgba(255,255,255,0.85)');
   }
 
@@ -443,10 +493,10 @@ export class Hud {
     const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60), bs = Math.max(64, u * 12);
     this.dim(0.7);
     this.text('NEW HIGH SCORE', W / 2, H * 0.26, Math.max(32, u * 6.5), '#ffe08a', 'center', 900);
-    this.text(String(menu.pendingScore), W / 2, H * 0.37, Math.max(22, u * 4), '#fff');
+    this.text(String(menu.pendingScore), W / 2, H * 0.37, Math.max(22, u * 4), UI.gold);
     for (let i = 0; i < 3; i++) {
       const x = W / 2 + (i - 1) * (bs + 16) - bs / 2, y = H * 0.48, sel = i === menu.initialsAt;
-      this.panel(x, y, bs, bs * 1.15, 14, sel ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)', sel ? '#fff' : 'rgba(255,255,255,0.4)');
+      this.woodPanel(x, y, bs, bs * 1.15, 14, sel ? { rim: UI.gold } : {});
       this.text(menu.initials[i], x + bs / 2, y + bs * 0.58, bs * 0.7, sel && Math.sin(seconds * 8) < 0 ? '#ffe08a' : '#fff', 'center', 900);
       if (sel) {                                              // a click on its top half steps the letter back, its bottom half on
         this.text('▲', x + bs / 2, y - bs * 0.16, bs * 0.22, 'rgba(255,255,255,0.8)', 'center', 900, false);
@@ -468,7 +518,7 @@ export class Hud {
       const y = H * 0.26 + i * rh;
       this.text(String(i + 1).padStart(2, ' ') + '.', W / 2 - 150, y, rh * 0.65, 'rgba(255,255,255,0.7)', 'right');
       this.text(r.key, W / 2 - 110, y, rh * 0.65, PLAYER_TEXT_CSS[i % 4], 'left', 900);
-      this.text(String(r.value), W / 2 + 160, y, rh * 0.65, '#fff', 'right');
+      this.text(String(r.value), W / 2 + 160, y, rh * 0.65, UI.gold, 'right');
     });
   }
 }

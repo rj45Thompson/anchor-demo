@@ -1,6 +1,8 @@
 // look.js - this game's own look: the palette, the materials and every procedural mesh the board is drawn with. Nothing here is read
 // from another project: every shape is built in code from boxes, cylinders, cones and extruded outlines, and every colour below is
-// AUTHORED for this game (a bright, toy-like board with a soft glowing edge in each owner's colour, picked up by the bloom).
+// AUTHORED for this game. The look (UC-L1, LOOK_UC_L1.md, 11-09: a cartoon castle-builder, no more laser look): a bright cartoon
+// castle-builder - chunky rounded stone walls with lighter tops and the owner's cloth and pennants, bright tiled grass; only fire,
+// sparks and the players' markers glow, never a wall.
 import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -18,17 +20,21 @@ export const PLAYER_COLOURS = PLAYER_HEX.map((h) => new THREE.Color(h));
 // HUD text (round 4, HUDTEXT): P1's deeper blue read 2.9:1 as text on the navy card. A player's colour as TEXT on a dark panel is
 // its lighter tint below (PLAYER_TEXT_CSS: the colour mixed toward white, AUTHORED t = 0.44, 0.16, 0.30, 0), and text drawn ON a
 // player-colour fill (the hero tag, a joined seat card) is the ink that reads on that fill (PLAYER_INK_CSS: white on the blue,
-// navy on the other three). HUD_PANEL_CSS is the card and foot panel. tools/colour_check.py reads all three from this file and
+// navy on the other three). HUD_PANEL_CSS is the card's planks and the foot panel. tools/colour_check.py reads all three from this file and
 // fails under WCAG 4.5:1 for any player label, the panel taken over a WHITE backdrop (the brightest the scene can put behind it).
 export const PLAYER_TEXT_CSS = Object.freeze(['#7ea1ff', '#ff7869', '#db86d4', '#ffcc00']);
 export const PLAYER_INK_CSS = Object.freeze(['#ffffff', '#0a1828', '#0a1828', '#0a1828']);
-export const HUD_PANEL_CSS = 'rgba(10,26,44,0.9)';
+export const HUD_PANEL_CSS = 'rgba(58,36,18,0.94)';                // UC-L1: dark planks (was a navy glass, rgba(10,26,44,0.9))
+/** UC-L1 UI colours (AUTHORED): the stone frame round a panel (light at its top, dark at its foot), the planks (light, dark), the
+ *  ink line round the chunky shapes, and the gold of the numerals and the chosen rows. app/style.css carries the same values. */
+export const UI = Object.freeze({ stoneLight: '#cfc6b2', stoneDark: '#8c8372', woodLight: '#8a5a30', woodDark: '#4e2f16', ink: '#1c1410', gold: '#ffd24a' });
 export const NEUTRAL_WALL = new THREE.Color(0xe9e4d6);        // a wall no player owns (a map's own wall)
 export const ENEMY_SHOT = new THREE.Color(0xff8a2a);
 
 export const C = Object.freeze({
-  sand: new THREE.Color(0xf2dca2), wetSand: new THREE.Color(0xd8bd7f), grass: new THREE.Color(0x7ccb5c), grassDark: new THREE.Color(0x5daf48),
-  grassLight: new THREE.Color(0x9bdb6a), grassRoot: new THREE.Color(0x5aa944), grassTip: new THREE.Color(0xd2f08e),
+  // the grass (UC-L1): a brighter, yellower lawn green than round 4's (0x7ccb5c / 0x5daf48 / 0x9bdb6a)
+  sand: new THREE.Color(0xf2dca2), wetSand: new THREE.Color(0xd8bd7f), grass: new THREE.Color(0x86cf45), grassDark: new THREE.Color(0x6cc23a),
+  grassLight: new THREE.Color(0xa2dc58), grassRoot: new THREE.Color(0x5aa944), grassTip: new THREE.Color(0xd2f08e),
   grassDry: new THREE.Color(0xb9d66a), grassDeep: new THREE.Color(0x3f9a4c), swamp: new THREE.Color(0x6f7d3c), seaBed: new THREE.Color(0x2a6d8a),
   shallow: new THREE.Color(0x3fd0d2), deep: new THREE.Color(0x1552a6), lagoon: new THREE.Color(0x8fe8d6), midSea: new THREE.Color(0x1e92c8), foam: new THREE.Color(0xffffff),
   stone: new THREE.Color(0xd9d2c3), stoneDark: new THREE.Color(0xa69d8c), roof: new THREE.Color(0x4a5a78), wood: new THREE.Color(0x9a6640),
@@ -37,7 +43,16 @@ export const C = Object.freeze({
   houseWall: new THREE.Color(0xf4ead2), houseRoof: new THREE.Color(0xc4553f), pit: new THREE.Color(0x2b1d17), ember: new THREE.Color(0xff6a1a),
   rubble: new THREE.Color(0xb3aa98), grave: new THREE.Color(0xbfc3c9), skin: new THREE.Color(0xf0c9a0), enemy: new THREE.Color(0x3d3f4c),
   enemyHelm: new THREE.Color(0xe6e0cf), banner: new THREE.Color(0x24262e),
+  // UC-L1 stone walls: the sides a mid warm grey, the coping on top lighter, the mortar between stones dark; dirt paths and the
+  // flowers dotted through the lawn (board.js BoardLook.makeLand); the pennants' poles and their gold knobs
+  wallSide: new THREE.Color(0x9f9686), wallTop: new THREE.Color(0xe6dcc6), mortar: new THREE.Color(0x5e564c),
+  path: new THREE.Color(0xd3b07a), flowerA: new THREE.Color(0xfff6e0), flowerB: new THREE.Color(0xffd84a), flowerC: new THREE.Color(0xff8fb8),
+  pennantPole: new THREE.Color(0x7a5232), pennantKnob: new THREE.Color(0xf2c64a),
 });
+
+// AUTHORED (UC-L1, RJ 11-09 "maybe the main character is a little bit smaller too"): the hero's drawn height in squares, 0.7 of
+// round 2's 1.9 (units.js draws the knight this tall; bombs.js puts the stun stars over it)
+export const HERO_HEIGHT = 1.33;
 
 // ---------------------------------------------------------------- light (AUTHORED)
 // A warm low sun from the south-west (long shadows to the north-east read as 3D from the south-facing camera) and a cool sky fill
@@ -137,66 +152,142 @@ export function torchGeometry() {
   return merge([at(cyl(0.02, 0.025, 0.34, 5, C.wood), 0, 0.17, 0)], 'linstock');
 }
 
-/** A wall block's stone body (graphics round 2: "walls look like plain plastic tiles"): two courses of bevelled bricks laid in an
- *  alternating bond (the lower course runs north-south, the upper east-west, so each face shows a long brick over two short ones or
- *  the other way round), over a darker mortar core that shows in the joints. Each brick has its own shade (vertex colour); the whole
- *  block is tinted per instance (board.js: the owner's colour, a little, and a per-block variation). The owner-colour cap sits on top
- *  (wallCapGeometry). Footprint w x w, height h - cap; y = 0 is the ground. All sizes AUTHORED. */
-export const WALL_CAP_H = 0.11;
+/** Paint a geometry one colour (times shade(normal, position) per vertex when given) KEEPING its own normals, so a rounded stone
+ *  stays round (paint() makes a geometry flat-faceted: its merge recomputes the normals). */
+function paintSmooth(geo0, color, shade = null) {
+  const geo = geo0.index ? geo0.toNonIndexed() : geo0;           // one form for every part (RoundedBoxGeometry is unindexed)
+  const pos = geo.attributes.position, nrm = geo.attributes.normal, n = pos.count, a = new Float32Array(n * 3);
+  const N = new THREE.Vector3(), P = new THREE.Vector3();
+  for (let i = 0; i < n; i++) {
+    const k = shade ? shade(N.fromBufferAttribute(nrm, i), P.fromBufferAttribute(pos, i)) : 1;
+    a[i * 3] = color.r * k; a[i * 3 + 1] = color.g * k; a[i * 3 + 2] = color.b * k;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(a, 3));
+  if (geo.attributes.uv) geo.deleteAttribute('uv');
+  return geo;
+}
+/** Merge smooth-painted parts, keeping each part's normals (no recompute: a rounded box's own normals are its roundness). */
+function mergeSmooth(parts, what) {
+  const g = mergeGeometries(parts, false);
+  if (!g) throw new Error('look.js: the parts of "' + what + '" would not merge (attribute sets differ)');
+  return g;
+}
+
+/** A wall block (UC-L1, "chunky rounded stone blocks"): two courses of big, well rounded stones in an alternating bond (the lower
+ *  course split east-west, the upper north-south, so a run of blocks reads as laid stone, never as one plastic slab) over a dark
+ *  mortar core that shows in the soft grooves. Every stone is lit lighter where it faces up and darker underneath and toward the
+ *  ground (vertex colours), so the block's sides read darker than its top. The coping on top is wallCapGeometry; the owner's cloth
+ *  band and the contact shadow are wallTrimGeometry and wallShadowGeometry. Footprint w x w, height h - WALL_CAP_H; y = 0 is the
+ *  ground. All sizes AUTHORED. */
+export const WALL_CAP_H = 0.13;
+/** A stone's vertex shade: lighter facing up, darker facing down, and darker toward the ground (AUTHORED strengths). */
+const stoneShade = (top) => (n, p) => (1 + 0.14 * Math.max(0, n.y) - 0.22 * Math.max(0, -n.y)) * (0.8 + 0.2 * Math.min(1, p.y / top));
 export function wallStoneGeometry(w, h) {
-  const body = h - WALL_CAP_H, course = body / 2, gap = 0.016, r = 0.026, bw = w - 0.02;
-  const shades = [1.0, 0.9, 0.96, 0.86, 0.93].map((k) => C.stone.clone().multiplyScalar(k));
-  const brick = (sx, sy, sz, c) => paint(new RoundedBoxGeometry(sx, sy, sz, 1, r), c);
+  const body = h - WALL_CAP_H, course = body / 2, gap = 0.03, r = 0.055, bw = w - 0.01;
+  const shades = [1.0, 0.92, 0.97, 0.88].map((k) => C.wallSide.clone().multiplyScalar(k));
   const half = (bw - gap) / 2, o = (half + gap) / 2;
-  return merge([
-    at(box(w - 0.07, body + WALL_CAP_H * 0.6, w - 0.07, C.stoneDark.clone().multiplyScalar(0.62)), 0, (body + WALL_CAP_H * 0.6) / 2, 0),   // the mortar core
-    at(brick(half, course - gap, bw, shades[0]), -o, course / 2, 0), at(brick(half, course - gap, bw, shades[1]), o, course / 2, 0),
-    at(brick(bw, course - gap, half, shades[2]), 0, course * 1.5, -o), at(brick(bw, course - gap, half, shades[3]), 0, course * 1.5, o),
+  // (RoundedBoxGeometry's segments: 1 here = three rows of faces per side, 108 triangles a stone; 2 was 300, and a 4-player board
+  // holds ~400 blocks drawn twice a frame, shadow and colour: perf_battle measured 53 fps at 1080p with it)
+  const stone = (sx, sy, sz, c, x, y, z) => paintSmooth(new RoundedBoxGeometry(sx, sy, sz, 1, r).translate(x, y, z), c, stoneShade(h));
+  return mergeSmooth([
+    paintSmooth(new RoundedBoxGeometry(w - 0.09, body + WALL_CAP_H * 0.5, w - 0.09, 1, 0.02).translate(0, (body + WALL_CAP_H * 0.5) / 2, 0), C.mortar),
+    stone(half, course - gap, bw, shades[0], -o, course / 2, 0), stone(half, course - gap, bw, shades[1], o, course / 2, 0),
+    stone(bw, course - gap, half, shades[2], 0, course * 1.5, -o), stone(bw, course - gap, half, shades[3], 0, course * 1.5, o),
   ], 'wall stone');
 }
-/** The cap on a wall block: two bevelled coping stones side by side with a dark groove between (the mortar core shows through),
- *  white (the instance colour is the owner's colour). From the near top-down REPAIR camera the caps ARE the wall, so the groove and
- *  the bevels are what make a run of blocks read as laid stones rather than one smooth tile; the per-block quarter turn (board.js)
- *  lays the grooves both ways. */
+/** The coping on a wall block (UC-L1, "chunky rounded stone blocks with a lighter top"): four chunky cap stones, two by two (a big
+ *  one, two middling, a small one: COPING_SPLIT), each
+ *  well rounded over its edges and lit full on its top and much darker over its rim (capShade), so every stone shows its own bevel
+ *  and the grooves between them the dark core below. Each stone has its own shade, height and size (COPING, AUTHORED, a hair apart);
+ *  board.js turns each block a quarter turn by a hash of its square and tints it, so neighbouring blocks never repeat the same
+ *  stones and the same board always lays the same ones (no flicker). White (the instance colour is the light top stone). Together
+ *  they span CAP_SPAN, overhanging the body a little. From the near top-down REPAIR camera the coping IS the wall. */
+export const CAP_SPAN = 0.93;                                  // AUTHORED: the coping's width in squares (the block's body is 0.9)
+const capShade = (n) => 0.48 + 0.52 * Math.pow(Math.max(0, n.y), 4);
+// per stone (x, z quadrant): its shade (r, g, b: a warm stone, a cool one, a sandy one, a dark one), height over WALL_CAP_H, and
+// width and depth shrink (squares), so the four never read as one tile cut in a grid
+// (kept light: a stone top in a castle's shadow must still read apart from the shadowed ground under it; at 0.79 the darkest stone
+// did not, run_page walls_drawn 11-10)
+const COPING = [[[1.06, 1.02, 0.95], 1.0, 0.0, 0.03], [[0.93, 0.95, 0.99], 1.18, 0.04, 0.01], [[1.0, 0.95, 0.87], 0.88, 0.015, 0.045], [[0.9, 0.89, 0.88], 1.1, 0.035, 0.022]];
+// the joints between the four run COPING_SPLIT off the block's middle (along x one way, along z the other), so a big stone and a
+// small one meet and the middle of every block is on a stone's flat top whatever its quarter turn: the page check (run_page.py
+// walls_drawn) looks at that point, and a joint there showed the dark core either way (11-10: 77 of 78 drawn)
+const COPING_SPLIT = 0.12;
 export function wallCapGeometry(w, h) {
-  const gap = 0.024, half = (w - gap) / 2, o = (half + gap) / 2, y = h - WALL_CAP_H / 2, white = new THREE.Color(1, 1, 1);
-  return merge([
-    at(paint(new RoundedBoxGeometry(half, WALL_CAP_H, w, 1, 0.032), white), -o, y, 0),
-    at(paint(new RoundedBoxGeometry(half, WALL_CAP_H, w, 1, 0.032), white.clone().multiplyScalar(0.93)), o, y, 0),
-  ], 'wall cap');
+  const gap = 0.035, S = CAP_SPAN / 2, parts = [];
+  const span = (k, split) => (k < 0 ? [-S, split - gap / 2] : [split + gap / 2, S]);   // a stone's extent along one axis
+  COPING.forEach(([[r, g, b], hk, dw, dd], i) => {
+    const [x0, x1] = span(i & 1 ? 1 : -1, COPING_SPLIT), [z0, z1] = span(i & 2 ? 1 : -1, -COPING_SPLIT);
+    const ch = WALL_CAP_H * hk, y = h - WALL_CAP_H + ch / 2;
+    parts.push(paintSmooth(new RoundedBoxGeometry(x1 - x0 - dw, ch, z1 - z0 - dd, 1, 0.06).translate((x0 + x1) / 2, y, (z0 + z1) / 2), new THREE.Color(r, g, b), capShade));
+  });
+  return mergeSmooth(parts, 'wall cap');
 }
+/** The owner's cloth round a wall block (UC-L1 "coloured cloth trim"): a band of cloth in the groove between the two courses of
+ *  stone, standing a little proud of the stone on every side; white (the instance colour is the owner's colour). Four bars round
+ *  the block, hollow: nothing of it stands where the stone is, so with the stone hidden the block's square shows the ground
+ *  (run_page.py walls_drawn). */
+// TRIM_SPAN: the band runs out to the square's edge, past the coping (CAP_SPAN), so from the near top-down REPAIR camera the cloth
+// shows as a ring of the owner's colour round each block's coping (the band of the next block meets it)
+export const TRIM_H = 0.075, TRIM_SPAN = 1.0;
+export function wallTrimGeometry(w, h) {
+  const y = (h - WALL_CAP_H) / 2, W2 = TRIM_SPAN, t = 0.07, white = new THREE.Color(1, 1, 1);
+  const bar = (sx, sz, x, z) => paintSmooth(new THREE.BoxGeometry(sx, TRIM_H, sz).translate(x, y, z), white);   // 12 triangles a bar
+  return mergeSmooth([bar(W2, t, 0, (W2 - t) / 2), bar(W2, t, 0, -(W2 - t) / 2), bar(t, W2 - 2 * t, (W2 - t) / 2, 0), bar(t, W2 - 2 * t, -(W2 - t) / 2, 0)], 'wall cloth');
+}
+/** The soft contact shadow under a wall block: a square a little bigger than the block, flat on the ground (its darkness is the
+ *  material's, board.js: darkest under the block, gone at the edge), so a block sits ON the grass from every camera and in the low
+ *  quality setting too (no ambient occlusion there). */
+export const WALL_SHADOW = 1.32;                               // AUTHORED: the shadow square's side, in squares
+export function wallShadowGeometry() { return new THREE.PlaneGeometry(WALL_SHADOW, WALL_SHADOW).rotateX(-Math.PI / 2); }
 
-/** A METAL wall block (the shop's metal piece, six hits): a steel slab with a dark seam round its middle and rivets studding every
- *  face, so it reads as plate beside the stone course. Same footprint and height as wallStoneGeometry (its cap is wallSteelCapGeometry). */
-export const STEEL = new THREE.Color(0.42, 0.46, 0.53);
+/** A METAL wall block (the shop's metal piece, six hits): riveted grey steel - a rounded steel slab with a dark seam round its
+ *  middle and a row of rivets above and below it on every face. Same footprint and height as wallStoneGeometry (its coping is
+ *  wallSteelCapGeometry). The steel stays grey (board.js tints it only by wear); the owner shows by the trim and the pennant. */
+export const STEEL = new THREE.Color(0.6, 0.63, 0.68);
 export function wallSteelGeometry(w, h) {
-  const body = h - WALL_CAP_H, bw = w - 0.02, parts = [
-    at(paint(new RoundedBoxGeometry(bw, body, bw, 1, 0.03), STEEL), 0, body / 2, 0),
-    at(paint(new RoundedBoxGeometry(bw + 0.012, 0.03, bw + 0.012, 1, 0.012), STEEL.clone().multiplyScalar(0.45)), 0, body / 2, 0),   // the seam
+  const body = h - WALL_CAP_H, bw = w - 0.01, parts = [
+    paintSmooth(new RoundedBoxGeometry(bw, body, bw, 1, 0.045).translate(0, body / 2, 0), STEEL, stoneShade(h)),
+    paintSmooth(new RoundedBoxGeometry(bw + 0.014, 0.035, bw + 0.014, 1, 0.012).translate(0, body / 2, 0), STEEL.clone().multiplyScalar(0.42)),   // the seam
   ];
-  const rivet = STEEL.clone().multiplyScalar(1.5), r = 0.034, o = bw / 2 - 0.1;
-  for (const y of [body * 0.2, body * 0.8]) for (const f of [0, 1, 2, 3]) for (const k of [-o, o]) {
+  const rivet = STEEL.clone().multiplyScalar(1.35), o = bw / 2 - 0.1;
+  for (const y of [body * 0.24, body * 0.76]) for (const f of [0, 1, 2, 3]) for (const k of [-o, 0, o]) {
     const a = f * Math.PI / 2, nx = Math.cos(a), nz = Math.sin(a), tx = -nz, tz = nx;
-    parts.push(at(paint(new THREE.SphereGeometry(r, 6, 4), rivet), nx * bw / 2 + tx * k, y, nz * bw / 2 + tz * k));
+    parts.push(paintSmooth(new THREE.SphereGeometry(0.032, 6, 4).translate(nx * bw / 2 + tx * k, y, nz * bw / 2 + tz * k), rivet, (n) => 0.8 + 0.3 * Math.max(0, n.y)));
   }
-  return merge(parts, 'wall steel');
+  return mergeSmooth(parts, 'wall steel');
 }
-/** The cap of a metal block: one plate, white (the instance colour is steel with a little of the owner's colour), a rivet in each
- *  corner standing up from it. */
+/** The coping of a metal block: one riveted plate, white (the instance colour is the steel's), a rivet in each corner. */
 export function wallSteelCapGeometry(w, h) {
-  const y = h - WALL_CAP_H / 2, white = new THREE.Color(1, 1, 1), o = w / 2 - 0.1, parts = [at(paint(new RoundedBoxGeometry(w - 0.02, WALL_CAP_H, w - 0.02, 1, 0.032), white.clone().multiplyScalar(0.86)), 0, y, 0)];
-  for (const sx of [-o, o]) for (const sz of [-o, o]) parts.push(at(paint(new THREE.SphereGeometry(0.045, 8, 5), white.clone().multiplyScalar(1.1)), sx, h - 0.005, sz, 0, 0, 0, 1, 0.6, 1));
-  return merge(parts, 'wall steel cap');
+  const y = h - WALL_CAP_H / 2, white = new THREE.Color(1, 1, 1), o = w / 2 - 0.1;
+  const parts = [paintSmooth(new RoundedBoxGeometry(CAP_SPAN, WALL_CAP_H, CAP_SPAN, 1, 0.04).translate(0, y, 0), white.clone().multiplyScalar(0.9), (n) => 0.86 + 0.14 * Math.max(0, n.y))];
+  for (const sx of [-o, o]) for (const sz of [-o, o]) parts.push(paintSmooth(new THREE.SphereGeometry(0.045, 8, 5).scale(1, 0.6, 1).translate(sx, h - 0.005, sz), white.clone().multiplyScalar(1.1)));
+  return mergeSmooth(parts, 'wall steel cap');
 }
 
-/** A bomb: a dark iron sphere with a collar and a short fuse (y = 0 is the ground; the fuse's tip is at fuseTip). */
-export const BOMB_R = 0.33, BOMB_TIP = new THREE.Vector3(0.09, 0.9, 0);
-export function bombGeometry(body) {
+/** The pennant on an owner's wall corner (UC-L1 "a coloured banner/pennant on the piece corner"): a wooden pole with a gold knob
+ *  (pennantPoleGeometry, vertex colours) and a swallow-tailed flag (pennantFlagGeometry, white: the instance colour is the owner's;
+ *  x runs along the flag from the pole, so the wind's wave grows toward its tail: board.js). y = 0 is the top of the block. */
+export const PENNANT_POLE = 0.5, PENNANT_FLAG = 0.38, PENNANT_FLAG_H = 0.22;   // AUTHORED: pole height, flag length and height
+export function pennantPoleGeometry() {
+  return mergeSmooth([
+    paintSmooth(new THREE.CylinderGeometry(0.018, 0.022, PENNANT_POLE, 6).translate(0, PENNANT_POLE / 2, 0), C.pennantPole),
+    paintSmooth(new THREE.SphereGeometry(0.035, 8, 6).translate(0, PENNANT_POLE + 0.02, 0), C.pennantKnob),
+  ], 'pennant pole');
+}
+export function pennantFlagGeometry() {
+  const s = new THREE.Shape(), L = PENNANT_FLAG, H = PENNANT_FLAG_H;
+  s.moveTo(0, 0); s.lineTo(L, 0.01); s.lineTo(L * 0.72, -H / 2); s.lineTo(L, -H - 0.01); s.lineTo(0, -H); s.lineTo(0, 0);
+  return paintSmooth(new THREE.ShapeGeometry(s).translate(0.012, PENNANT_POLE - 0.02, 0), new THREE.Color(1, 1, 1));
+}
+
+/** A sand islet off the coast that a house stands on (UC-L1 scenery): a low round mound of sand with a grassy top, its top
+ *  ISLET_TOP over the sea (board.js buildDecor puts the house's floor there). Sizes AUTHORED. */
+export function isletGeometry() {
   return merge([
-    at(paint(new THREE.SphereGeometry(BOMB_R, 16, 12), body), 0, BOMB_R, 0),
-    at(paint(new THREE.CylinderGeometry(0.1, 0.12, 0.09, 8), C.iron.clone().multiplyScalar(0.9)), 0, BOMB_R * 2 - 0.02, 0),
-    at(paint(new THREE.CylinderGeometry(0.02, 0.02, 0.26, 5), C.woodDark), 0.05, BOMB_R * 2 + 0.12, 0, 0, 0, -0.35),
-  ], 'bomb');
+    at(cyl(1.2, 1.55, 0.5, 18, C.sand), 0, -0.13, 0),
+    at(cyl(1.0, 1.12, 0.06, 18, C.grassLight), 0, 0.1, 0),
+  ], 'islet');
 }
 
 /** A spike trap: a flat iron plate with a rim and nine spikes. The owner's colour is a separate ring (units/bombs.js). */

@@ -11,11 +11,10 @@ import { GameRules, Phase, Terrain, Occupant, ShipKind, ShotFired, ShotLanded, S
          CannonDamaged, LoopClosed, CastleClaimed, SwordSwung, WallsPlaced, CannonPlaced, PlacementRejected, CommandRejected, CommandKind,
          EnclosureRules, HudViewModel } from '../core/index.js';
 import { uv, length, smoothstep } from 'three/tsl';
-import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry, drawAllRoom } from './look.js';
-import { boneEndingWith, tintArmour, shade, rimFigure, setFlash, tintSails } from './models.js';
+import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry, drawAllRoom, HERO_HEIGHT } from './look.js';
+import { boneEndingWith, tintArmour, shade, rimFigure, setFlash, tintSails, outlineFigure } from './models.js';
 import { Effects } from './fx.js';
 import { BombsView } from './bombs.js';
-import { bombGeometry } from './look.js';
 
 const SHIP_SPEED = 3.0, GRUNT_SPEED = 2.4, HERO_SPEED = 9.0, BOMB_HERO_SPEED = 16.0;   // AUTHORED: squares per second the drawn figures may cover easing to the model
 const SINK_SECONDS = 2.4, DIE_SECONDS = 1.1;
@@ -40,7 +39,10 @@ const WAKE_STEP = 0.2;                                           // AUTHORED: sq
 // Round 3 (the lead: "ships are the enemy, but at the default zoom they're tiny"): a ship 1.8 -> 2.3 squares long, the lander 1.3x
 // that; sails by kind (a gunship's black, a lander's deep green: the normal game has no red ships, PLAN.md), a red threat rim
 // (the off-screen chevrons' red) and a wake tinted with it
-const HERO_HEIGHT = 1.9, GRUNT_HEIGHT = 1.35, SHIP_LENGTH = 2.3, LANDER_SCALE = 1.3, LANDER_TINT = new THREE.Color(0.62, 0.58, 0.6);
+// UC-L1 (11-09): the hero is drawn 0.7 of that, HERO_HEIGHT (look.js), with a chunky dark outline (models.js outlineFigure); what it
+// holds, its ring and its blob shadow shrink with it (TOOLS_AT: the hero height the tools were sized against, round 2)
+const GRUNT_HEIGHT = 1.35, SHIP_LENGTH = 2.3, LANDER_SCALE = 1.3, LANDER_TINT = new THREE.Color(0.62, 0.58, 0.6);
+const TOOLS_AT = 1.9, HERO_RING = 1.1, HERO_BLOB = 1.0;
 const SHIP_RIM = new THREE.Color(0xff3a1f), SAIL = [new THREE.Color(0.16, 0.17, 0.2), new THREE.Color(0.2, 0.42, 0.25)];
 const WAKE = new THREE.Color(1, 1, 1).lerp(new THREE.Color(0xff3a1f), 0.3);
 const SINK_PITCH = 1.25, SINK_ROLL = 0.5, SINK_DEPTH = 1.6;       // AUTHORED: radians the bow dips and the hull rolls, squares it goes down
@@ -87,8 +89,11 @@ function reticleGeometry() {
 const yawTo = (cur, want, k) => { let d = want - cur; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return cur + d * k; };
 
 export class Units {
-  /** seats[slot] = the controller seat each player slot sits at (HudViewModel.seatOfSlot); it picks the slot's colour. */
-  constructor(scene, board, match, models, seats, fx) {
+  /** seats[slot] = the controller seat each player slot sits at (HudViewModel.seatOfSlot); it picks the slot's colour.
+   *  bomb: the bomb model's baked parts and what was read from them (renderer.js: { parts, big, radius, tip }), shared by every level. */
+  constructor(scene, board, match, models, seats, fx, bomb) {
+    if (match.options.bombs && !(bomb && bomb.parts && bomb.big)) throw new Error('units.js: the bomb rule set needs the bomb model parts');
+    this.bomb = bomb;
     this.scene = scene; this.board = board; this.match = match; this.models = models;
     if (!fx) throw new Error('units.js: the particle pools (fx.js Fx) are required');
     this.fx = fx; this.fxs = new Effects(fx);
@@ -100,7 +105,7 @@ export class Units {
       ball: new THREE.IcosahedronGeometry(0.13, 1), ring: new THREE.RingGeometry(0.42, 0.5, 32).rotateX(-Math.PI / 2),
       disc: new THREE.CircleGeometry(0.5, 24).rotateX(-Math.PI / 2), pip: new THREE.SphereGeometry(0.06, 8, 6),
       puff: new THREE.IcosahedronGeometry(0.2, 0), blade: new THREE.BoxGeometry(0.035, 0.46, 0.08).translate(0, 0.23, 0),
-      held: match.options.bombs ? bombGeometry(new THREE.Color(0.1, 0.1, 0.13)) : null, cube: new THREE.BoxGeometry(1, 1, 1), reticle: reticleGeometry(), trim: new THREE.TorusGeometry(0.62, 0.05, 6, 24).rotateX(Math.PI / 2),
+      cube: new THREE.BoxGeometry(1, 1, 1), reticle: reticleGeometry(), trim: new THREE.TorusGeometry(0.62, 0.05, 6, 24).rotateX(Math.PI / 2),
     };
     this.flagMats = this.colours.map((c) => new THREE.MeshStandardNodeMaterial({ color: c, side: THREE.DoubleSide, roughness: 0.5 }));
     this.flagNeutral = new THREE.MeshStandardNodeMaterial({ color: NEUTRAL_BANNER, side: THREE.DoubleSide, roughness: 0.6 });
@@ -415,20 +420,27 @@ export class Units {
     const g = new THREE.Group(), fig = this.models.figure('knight');
     tintArmour(fig.root, this.colours[s]);
     fig.root.scale.setScalar(HERO_HEIGHT / this.models.knight.size.y); g.add(fig.root);
-    // what the hero holds rides on the right hand bone; `hand` cancels the bone's own scale so the tools keep their size in squares
+    outlineFigure(fig.root);                                           // UC-L1: the chunky dark outline
+    // what the hero holds rides on the right hand bone; `hand` cancels the bone's own scale so the tools keep their size in squares,
+    // scaled with the hero (they were sized for a TOOLS_AT-square hero)
     const bone = boneEndingWith(fig.root, 'RightHand');
     g.updateMatrixWorld(true);
-    const hand = new THREE.Group(); hand.scale.setScalar(0.8 / bone.getWorldScale(new THREE.Vector3()).x);
+    const hand = new THREE.Group(); hand.scale.setScalar(0.8 * (HERO_HEIGHT / TOOLS_AT) / bone.getWorldScale(new THREE.Vector3()).x);
     hand.rotation.set(Math.PI / 2, 0, 0); bone.add(hand);
-    // what the tool-out hero holds: a sword half a square long, or in the bomb rule set a bomb (AUTHORED sizes)
-    const bombs = this.match.options.bombs, armed = new THREE.Mesh(bombs ? this.geo.held : this.geo.blade, bombs ? mats.vc : this.glowP[s]);
-    if (bombs) { armed.scale.setScalar(0.55); armed.position.y = -0.12; } else armed.scale.set(1.5, 1.5, 1.5);
+    // what the tool-out hero holds: a sword half a square long, or in the bomb rule set the bomb model (AUTHORED sizes)
+    const bombs = this.match.options.bombs;
+    let armed;
+    if (bombs) {
+      armed = new THREE.Group();
+      for (const p of this.bomb.parts) armed.add(new THREE.Mesh(p.geometry, p.material));
+      armed.scale.setScalar(0.55); armed.position.y = -0.12;
+    } else { armed = new THREE.Mesh(this.geo.blade, this.glowP[s]); armed.scale.set(1.5, 1.5, 1.5); }
     hand.add(armed);
     const hammer = new THREE.Mesh(this.geo.hammer, mats.vc); hand.add(hammer);
     const torch = new THREE.Group(); torch.add(new THREE.Mesh(this.geo.torch, mats.vc));
     const tip = new THREE.Mesh(this.geo.pip, glow(new THREE.Color(0xffa040), 3)); tip.position.y = 0.36; torch.add(tip); hand.add(torch);
-    const ring = new THREE.Mesh(this.geo.ring, this.glowP[s]); ring.scale.setScalar(1.4);
-    const shadow = new THREE.Mesh(this.geo.disc, this.blobMat); shadow.scale.setScalar(1.3); shadow.renderOrder = 1;
+    const ring = new THREE.Mesh(this.geo.ring, this.glowP[s]); ring.scale.setScalar(HERO_RING);
+    const shadow = new THREE.Mesh(this.geo.disc, this.blobMat); shadow.scale.setScalar(HERO_BLOB); shadow.renderOrder = 1;
     const reticle = new THREE.Mesh(this.geo.reticle, this.glowP[s]);   // the ring and its four ticks, one draw
     this.group.add(g, ring, shadow, reticle);
     const e = { g, fig, state: null, armed, tip: 0, hammer, torch, hand, ring, shadow, reticle, pos: null, vel: new THREE.Vector3(), yaw: 0, swing: 0,
@@ -520,7 +532,7 @@ export class Units {
       e.g.rotation.set(gs.lean, e.yaw + e.tip * Math.sin(seconds * 3.1) * 0.6, e.tip * 0.55 + dizzy, 'YXZ');
       e.g.position.y += gs.lift - e.tip * 0.2;
       e.g.scale.set(e.baseScale.x * gs.wide, e.baseScale.y * gs.tall, e.baseScale.z * gs.wide);
-      e.ring.position.set(e.pos.x, e.pos.y + 0.03, e.pos.z); e.ring.scale.setScalar(1.4 + Math.sin(seconds * 4 + s) * 0.06);
+      e.ring.position.set(e.pos.x, e.pos.y + 0.03, e.pos.z); e.ring.scale.setScalar(HERO_RING + Math.sin(seconds * 4 + s) * 0.05);
       e.shadow.position.set(e.pos.x, e.pos.y + 0.02, e.pos.z);
       // the tool in hand: the sword (bombs, in the bomb rule set) when it is out (REPAIR and BATTLE), else the phase's tool
       const slashing = !bombs && e.state === 'Right_Hand_Sword_Slash' && e.swing > 0;  // a slash shows the sword to its end

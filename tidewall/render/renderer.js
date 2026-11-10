@@ -30,8 +30,8 @@ import { Hud } from './hud.js';
 import { Fx } from './fx.js';
 import { Sky } from './sky.js';
 import { PLAYER_CSS, PLAYER_HEX, PLAYER_COLOURS, PLAYER_TEXT_CSS } from './look.js';
-import { Models, tintArmour } from './models.js';
-import { PropSet, SUN, SKY, sunDirection } from './look.js';
+import { Models, tintArmour, outlineFigure, topPoint } from './models.js';
+import { PropSet, SUN, SKY, sunDirection, isletGeometry, mats } from './look.js';
 
 export { PLAYER_CSS, PLAYER_HEX, PLAYER_TEXT_CSS };
 
@@ -91,6 +91,9 @@ class LeanBloom extends BloomNode {
   }
 }
 const AO = { radius: 0.6, thickness: 1, scale: 0.5, strength: 0.85 };
+// AUTHORED (UC-L1): the bomb model's width in squares (round 4's procedural bomb was 0.66 across), and the big bomb's tint over the
+// model's own iron (a hot red-brown, so the two kinds read apart on the board)
+const BOMB_W = 0.7, BIG_BOMB_TINT = new THREE.Color(1.7, 0.5, 0.4);
 const WIPE_SECONDS = 0.7;                  // AUTHORED: the light sweep across the picture when the phase or the menu screen changes
 const TOAST_SECONDS = 2.4;                 // AUTHORED: how long "Castle secured!" stays up after a closing brick (UC-P2)
 // the menu screens the game's island drifts behind on the low menu camera (camera.js); an untouched title that shows the demo full
@@ -126,8 +129,20 @@ class Renderer {
       [Occupant.RockSmall, models.parts('rockSmall', { width: 0.5 })],
       [Occupant.RockLarge, models.parts('rockLarge', { width: 0.95 })],
     ]);
+    // the scenery round the board (UC-L1 adds the houses, barrels, towers and the sand islets houses stand on; sizes in squares,
+    // AUTHORED: a house about a square and a half across, a barrel under half a square tall, a tower 2.4 squares tall)
     this.decorParts = { bush: models.parts('bush', { width: 0.45 }), rockSmall: models.parts('rockSmall', { width: 0.5 }),
-                        rockLarge: models.parts('rockLarge', { width: 1.2 }), oak: models.parts('oak', { height: 1.3 }) };
+                        rockLarge: models.parts('rockLarge', { width: 1.2 }), oak: models.parts('oak', { height: 1.3 }),
+                        houseA: models.parts('houseA', { width: 1.5 }), houseB: models.parts('houseB', { width: 1.5 }),
+                        barrel: models.parts('barrel', { height: 0.42 }), tower: models.parts('tower', { height: 2.4 }),
+                        islet: [{ geometry: isletGeometry(), material: mats.vc }] };
+    // the bomb (UC-L1: the Sketchfab round bomb): its parts baked once, its radius (half the width it was fitted to: the sphere is
+    // the widest part) and its fuse's tip (the highest vertex) read from the model; the big bomb shares the geometry, tinted
+    const bombParts = models.parts('bomb', { width: BOMB_W });
+    this.bomb = {
+      parts: bombParts, radius: BOMB_W / 2, tip: topPoint(bombParts),
+      big: bombParts.map((q) => { const m = q.material.clone(); m.color = m.color.clone().multiply(BIG_BOMB_TINT); return { geometry: q.geometry, material: m }; }),
+    };
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(BG);
     this.rig = new CameraRig(1);
@@ -223,7 +238,8 @@ class Renderer {
   /** The sun's shadow box fitted to the island: the board plus its decoration margin, from the ground to the tallest figure, seen
    *  from the sun; every texel of the shadow map lands on something the camera can show. */
   fitSun() {
-    const w = this.grid.width, h = this.grid.height, M = 5, TOP = 3;          // AUTHORED: squares of sea round the board that cast
+    const w = this.grid.width, h = this.grid.height, M = 6, TOP = 3;          // AUTHORED: squares of sea round the board that cast (the
+                                                                               // scenery stands up to 4.5 out, an islet 1.5 across)
     const dir = sunDirection();                                               // (rock islets), tallest thing
     const centre = new THREE.Vector3(w / 2, 0, h / 2), far = Math.max(w, h) * 2;
     this.sun.position.copy(centre).addScaledVector(dir, far); this.sun.target.position.copy(centre);
@@ -245,11 +261,11 @@ class Renderer {
    *  there swallowed a short gamepad tap, and the page check's pad run failed). */
   warmUp() {
     const g = new THREE.Group(), m = this.models, pose = (fig, clip) => { fig.actions[clip].play(); fig.mixer.update(0.1); return fig.root; };
-    const knight = m.figure('knight'); tintArmour(knight.root, PLAYER_COLOURS[0]);
+    const knight = m.figure('knight'); tintArmour(knight.root, PLAYER_COLOURS[0]); outlineFigure(knight.root);
     const items = [pose(knight, 'Combat_Stance'), pose(gruntFigure(m), 'Walking'), shipModel(m, false), shipModel(m, true), m.instance('castle'), m.instance('cannon')];
     items.forEach((o, i) => { o.position.set(i * 2, 0, 0); g.add(o); });
     let i = items.length;
-    for (const parts of [...this.propParts.values(), ...Object.values(this.decorParts)]) {
+    for (const parts of [...this.propParts.values(), ...Object.values(this.decorParts), this.bomb.parts, this.bomb.big]) {
       const b = new PropSet(g, parts, 1, { castShadow: true, receiveShadow: true, name: 'warm-up' });
       b.set(0, new THREE.Matrix4().makeTranslation(i++ * 2, 0, 0)); b.commit(1);
     }
@@ -368,7 +384,7 @@ class Renderer {
     const colours = seats.map((s) => PLAYER_COLOURS[s]);
     this.board = new Board(this.scene, this.grid, colours, this.propParts, this.decorParts, this.look, this.match.rules);
     this.fx.clear();
-    this.units = new Units(this.scene, this.board, this.match, this.models, seats, this.fx);
+    this.units = new Units(this.scene, this.board, this.match, this.models, seats, this.fx, this.bomb);
     this.fitSun();
     this.sun.shadow.needsUpdate = true;                                      // a new level's casters are drawn into the map now
     this.rig.pose = null; this.rig.key = null; this.rig.cur = null;
@@ -413,7 +429,7 @@ class Renderer {
       this.rig.free = this.freeRect(view, camIn ? camIn.cover : []);
       if (camIn && camIn.input) this.rig.userInput(camIn.input, this.cssH);
       this.aim = drift ? null : this.director.targets(m, view.controllers[0], this.units, this.board, camIn, view.events, seconds, dt);
-      this.rig.update(dt, this.board.landBounds(), building, this.aim, drift, this.cssW, this.cssH);
+      this.rig.update(dt, this.board.landBounds(), building, this.aim, drift, this.cssW, this.cssH, m.phase === Phase.Battle);
       this.sky.update(this.rig.camera, this.rig.pose.target, seconds);
       this.scene.visible = true;
     } else {
