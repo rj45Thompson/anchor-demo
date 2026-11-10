@@ -21,9 +21,10 @@ export const AUTHORED = [
   'A7 chassis-vs-ground contact: 8 corners of a box (READ bounds_cm X/Y and top, bottom at the highest READ wheel-centre height), each traced from the centre of mass with world.trace; velocity impulse with restitution 0, Coulomb friction using the hit\'s friction, and a position push-out of the deepest corner; Chaos collides the physics asset shapes (ABSENT)',
   'A8 vehicle sleeping (ProcessSleeping, sleep_threshold, sleep_slope_limit) is not simulated: the body never sleeps',
   'A10 a gear press (input.gearUp / gearDown) reaches the gearbox once, on the next substep; Unreal applies GearUpInput on every physics tick it is held (ChaosWheeledVehicleMovementComponent.cpp:769-779)',
-  'A11 a friction clutch between the engine and the gearbox (UC-34), only when the input names one (input.clutch: 0 the pedal up .. 1 the floor; input.gear: the gate\'s gear, set at once by the driver\'s hand; without them every step is as before). Locked, the step is Unreal\'s own. Slipping, it passes its hold (CLUTCH_STRENGTH x (1 - clutch) x the engine\'s maximum torque, from ClutchModule.cpp:30\'s ClutchValue) signed by which side spins faster: that torque loads the free-running engine (EngineSystem.cpp\'s free branch) and drives the wheels through the gearbox (TorqueSimModule.cpp:40). It locks when the two speeds meet with the engine\'s torque within its hold, and slips when the pedal takes the hold under the torque. An engine dragged under STALL_FRACTION of its idle stalls (Wikipedia, Stall (engine), rev 1349070313). Unreal\'s wheeled path, the template\'s, has no clutch: this is its modular system\'s clutch, ported onto that path',
+  'A11 a friction clutch between the engine and the gearbox (UC-34), only when the input names one (input.clutch: 0 the pedal up .. 1 the floor; input.gear: the gate\'s gear, set at once by the driver\'s hand; without them every step is as before). Locked, the step is Unreal\'s own. Slipping, it passes its hold (CLUTCH_STRENGTH x (1 - clutch) x the engine\'s maximum torque, from ClutchModule.cpp:30\'s ClutchValue) signed by which side spins faster: that torque loads the free-running engine (EngineSystem.cpp\'s free branch) and drives the wheels through the gearbox (TorqueSimModule.cpp:40). It locks when the two speeds meet with the engine\'s torque within its hold, and slips when the pedal takes the hold under the torque. An engine dragged under STALL_FRACTION of its idle stalls (Wikipedia, Stall (engine), rev 1349070313). Locked, the wheels under STALL_FRACTION of idle stall an engine at its idle; one still turning above it (by more than LOCK_RPM) slips instead, its spin driving the wheels through the hold (A11c: the plates pass no more than the hold, and the locked step gives the wheels none of the engine inertia). Unreal\'s wheeled path, the template\'s, has no clutch: this is its modular system\'s clutch, ported onto that path',
   'A12 a longitudinal slip curve for the driven tyres (UC-39), only when the input names a clutch (input.clutch; without one every step is as before). Its shape is READ: Pacejka\'s Magic Formula with the constant coefficients MathWorks prints for dry tarmac (TYRE below, research/TYRE_CURVE.md; with input.road named, the dry or wet row and the curve\'s own peak, A13), its slip k = (Omega Re - Vx) / max(|Vx|, VXLOW) held within KPUMIN..KPUMAX, all READ from the same page. AUTHORED: its peak is the wheel\'s own grip G (WheelSystem.cpp:84, load x friction x FrictionForceMultiplier) in place of the curve\'s D x Fz, so each car keeps its tuned grip; the wheel\'s spin is integrated over the step (backward Euler on Chaos\'s own wheel inertia, I dOmega/dt = drive - Re Fx(k), the first balance met the way the net torque turns the wheel; on the curve\'s rising side the wheel settles in microseconds, far inside a 1/120 s step) and held within Chaos\'s MaxWheelspinRotation of rolling (WheelSystem.cpp:209-210); it runs on a driven wheel on the ground that is not braking (brake > |drive|, the model\'s own test, WheelSystem.cpp:92), every other wheel and step staying Chaos\'s; traction control holds the drive as Chaos does (WheelSystem.cpp:114-125); the friction circle and SideSlipModifier follow it as in Chaos (the spin balances the curve\'s force before that clip, which only a sideways force engages); the page\'s smoothing of the slip over Vth is not ported (it prints no blend), the saturation is used as printed; on the curve a driven tyre is published as slipping (IsSlipping, read by the page\'s squeal and skid marks) past the curve\'s peak slip, not past SlipThreshold, which a hooked tyre\'s few per cent of slip crosses on the 20 cm/s fronts',
   'A13 the road under the slip curve (UC-40.2), only when a clutch step also names input.road: \'dry\' or \'wet\' picks the row of the same MathWorks table (TYRES: Dry tarmac B 10 C 1.9 D 1 E 0.97, Wet tarmac B 12 C 2.3 D 0.82 E 1, READ), and the driven tyre\'s grip, the curve\'s peak, becomes the curve\'s OWN, D x Fz x the road\'s friction (hit.friction, data/track.json surface_friction.road), in place of A12\'s load x friction x FrictionForceMultiplier. CHANGED 2026-11-07 by the owner\'s call (RJ: "default it to rain with godrays so there will be a little more slip", "Extra slipping makes it much more challenging"; rain on by default, the race stays fair): the multiplier is the template\'s stand-in 3 front / 4 rear (2.607 / 3.476 fitted on the E 63 S), a tyre gripping three to four times its load, under which five of the six cars could not spin on a dropped clutch at all (research/TYRE_CURVE.md). That grip is the one TCS, ABS and the friction circle then read, as A12\'s G; a wheel the engine does not drive keeps Chaos\'s. Without input.road a clutch step is A12 as it was (the dry row, peak G), so a caller that names no road is unchanged; without a clutch, input.road is refused',
+  'A14 anti-stall (UC-56.3), only when a clutch step also names input.antiStall: true. Near idle the clutch passes no more than the engine can carry there, so it slips instead of dragging the engine dead, and the plates grip only once the wheels turn the engine at idle or faster. A driving aid the page adds (AUTHORED: CLUTCH.ANTI_STALL), for a new clutch driver; without it every step is as before',
   'A9 suspension hard stop: when a wheel compresses past suspension_max_raise, a frictionless contact at the wheel stops the approach and pushes the body out (push-out capped at the READ Chaos CVars min(MaxPushout 5 cm, MaxPushoutVelocity 100 cm/s * dt)), with the constraint geometry; it stands in for the hard-stop manifold of FPBDSuspensionConstraints (PBDSuspensionConstraints.cpp:213-293), which the PBD solver iterates',
 ];
 
@@ -632,7 +633,16 @@ const engineTorque = (v) => (v.engine.started ? v.engine.throttle * engineTorque
 // TDI's crank, rods and dual-mass flywheel with clutch: Ubysz A., 'Problems of rotational mass in passenger vehicles', Transport
 // Problems 5(1) 2010, p.35 Table 1 row 6 (https://delibra.bg.polsl.pl//Content/27480/BCPS_31096_-_Problems-of-rotation_0000.pdf).
 // A STAND-IN still (another engine's), used only with a clutch: without one the step is Unreal's, at the car's own 5.0
-export const CLUTCH = { CLUTCH_STRENGTH: 1.0, LOCK_RPM: 30, STALL_FRACTION: 0.5, GOV_BAND_RPM: 150, ENGINE_MOI: 0.246 };
+// AUTHORED: A14 (UC-56.3) ANTI_STALL, a driving aid the page adds: at or under idle the clutch passes at most IDLE_SHARE of the
+// engine's own torque at idle (READ off its curve), which the governor carries a little under idle (IDLE_SHARE x GOV_BAND_RPM below
+// it, well above STALL_FRACTION); that limit rises in a line to the engine's full torque BAND_RPM above idle, so a launch from real
+// revs is not touched
+export const CLUTCH = { CLUTCH_STRENGTH: 1.0, LOCK_RPM: 30, STALL_FRACTION: 0.5, GOV_BAND_RPM: 150, ENGINE_MOI: 0.246, ANTI_STALL: { BAND_RPM: 400, IDLE_SHARE: 0.9 } };
+// A14 the most the clutch may pass at this rpm with anti-stall on
+function antiStallCap(v, rpm) {
+  const c = v.cfg.engine, A = CLUTCH.ANTI_STALL, low = A.IDLE_SHARE * engineTorqueFromRPM(v, c.idleRPM);
+  return low + Math.max(0, rpm - c.idleRPM) * (v.engine.maxTorque - low) / A.BAND_RPM;
+}
 function engineSimulate(v, dt) {                                      // UE: EngineSystem.cpp:44-76
   const e = v.engine, c = v.cfg.engine;
   if (!e.started) return;
@@ -648,14 +658,15 @@ function engineSimulate(v, dt) {                                      // UE: Eng
 }
 // A11 the clutch before the engine steps: locked (Unreal's path), or slipping with the torque it passes. pedal 0..1, fromWheel the
 // engine rpm the driven wheels mean in the current gear
-function clutchState(v, pedal, fromWheel) {
+function clutchState(v, pedal, fromWheel, antiStall) {
   const e = v.engine, cl = v.clutch;
-  const hold = (1 - pedal) * CLUTCH.CLUTCH_STRENGTH * e.maxTorque;          // ClutchValue x the engine's torque, UE: ClutchModule.cpp:30
+  const full = (1 - pedal) * CLUTCH.CLUTCH_STRENGTH * e.maxTorque;          // ClutchValue x the engine's torque, UE: ClutchModule.cpp:30
+  const hold = antiStall ? Math.min(full, antiStallCap(v, e.rpm)) : full;   // A14
   if (outOfGear(v.trans) || !e.started) { cl.locked = false; cl.slip = 0; return { locked: false, torque: 0, hold }; }
   if (cl.locked && (hold <= 0 || Math.abs(engineTorque(v)) > hold)) cl.locked = false;   // the pedal down past what the torque needs
   if (cl.locked) return { locked: true, torque: 0, hold };
   cl.slip = e.omega - RPMToOmega(Math.abs(fromWheel));                      // the engine's side less the gearbox's (rad/s)
-  return { locked: false, torque: Math.sign(cl.slip) * hold, hold };
+  return { locked: false, torque: Math.sign(cl.slip) * hold, hold, antiStall };
 }
 // A11 the idle governor: the torque it adds under idle, from none at idle to the engine's full torque at idle GOV_BAND_RPM below it
 function governor(v, rpm) {
@@ -678,7 +689,7 @@ function slipEngine(v, dt, load) {
 function clutchAfter(v, st, fromWheel) {
   const e = v.engine, cl = v.clutch, g = RPMToOmega(Math.abs(fromWheel)), now = e.omega - g;
   if (!e.started) return;                                                   // a stalled engine grips nothing
-  if (st.hold > 0 && Math.max(Math.abs(engineTorque(v)), governor(v, e.rpm)) <= st.hold && (Math.sign(now) !== Math.sign(cl.slip) || Math.abs(now) < RPMToOmega(CLUTCH.LOCK_RPM))) {
+  if (st.hold > 0 && !(st.antiStall && g < e.idleSpeed) && Math.max(Math.abs(engineTorque(v)), governor(v, e.rpm)) <= st.hold && (Math.sign(now) !== Math.sign(cl.slip) || Math.abs(now) < RPMToOmega(CLUTCH.LOCK_RPM))) {
     cl.locked = true; e.omega = Math.max(g, e.idleSpeed); e.rpm = OmegaToRPM(e.omega);
   }
   if (e.omega < CLUTCH.STALL_FRACTION * e.idleSpeed) stall(v);
@@ -961,6 +972,7 @@ function substep(v, input, dt, world) {
     steering: controlFn(c.rates.steering, v.input.steering), handbrake: v.input.handbrake, parking: c.parkEnabled,
     clutch: input.clutch,                                                    // A11 (UC-34): a pedal, not rate-limited
     road: input.road,                                                        // A13 (UC-40.2): the road under the curve, only with a clutch
+    antiStall: input.clutch !== undefined && input.antiStall === true,       // A14 (UC-56.3): only with a clutch
   };
   v.tyreCurve = ci.clutch !== undefined;                                     // A12: the driven tyres on the slip curve this step
   v.road = ci.road === undefined ? null : ci.road;                           // A13: the road named this step (null: A12 as it was)
@@ -1036,14 +1048,23 @@ function substep(v, input, dt, world) {
     v.w.forEach((w) => { if (w.engine) wheelRPM = Math.abs(OmegaToRPM(w.omega)); });   // UE: .cpp:852-859
     const fromWheel = wheelRPM * gearRatio(v, v.trans.current);               // GetEngineRPMFromWheelRPM, UE: TransmissionSystem.h:208-211
     const wheelSpeedRPM = Math.abs(fromWheel);
-    const cl = ci.clutch === undefined ? null : clutchState(v, ci.clutch, fromWheel);   // A11: null = no clutch, Unreal's own step
+    const cl = ci.clutch === undefined ? null : clutchState(v, ci.clutch, fromWheel, ci.antiStall);   // A11: null = no clutch, Unreal's own step; A14
     const slipping = cl !== null && !cl.locked && !outOfGear(v.trans);
     v.engine.freeRunning = outOfGear(v.trans) || slipping;                   // SetEngineRPM, UE: Core/Public/EngineSystem.h:85-92
     if (!v.engine.freeRunning) v.engine.targetSpeed = RPMToOmega(clamp(Math.abs(fromWheel), c.engine.idleRPM, c.engine.maxRPM));
     if (slipping) { slipEngine(v, dt, cl.torque); clutchAfter(v, cl, fromWheel); }   // A11
     else if (cl !== null && outOfGear(v.trans)) slipEngine(v, dt, 0);       // A11: with a clutch, free in neutral at the clutch's inertia too
     else engineSimulate(v, dt);
-    if (cl && cl.locked && v.engine.started && Math.abs(fromWheel) < CLUTCH.STALL_FRACTION * c.engine.idleRPM) stall(v);   // A11: a locked engine turns with the wheels
+    if (cl && cl.locked && v.engine.started && ci.antiStall && Math.abs(fromWheel) < c.engine.idleRPM) v.clutch.locked = false;   // A14: the wheels under idle: it slips from the next step
+    else if (cl && cl.locked && v.engine.started && Math.abs(fromWheel) < CLUTCH.STALL_FRACTION * c.engine.idleRPM) {   // A11: a locked engine turns with the wheels
+      // A11c ...unless it still turns above its idle (by more than the clutch's grain, LOCK_RPM): then the plates slip from the next step
+      // and its spin drives the wheels through the hold. Unreal's locked step gives the wheels none of the engine's inertia, so a tyre
+      // that hooked after spinning snapped the wheels' side from 4,835 to under 450 rpm in one step, and the engine, still at 4,723 rpm,
+      // stalled with it (MEASURED 11-10: the E 63 S, the clutch dropped at 6,900 rpm with the gas off 0.12 s between a phone's two
+      // fingers, test/phone_drive.py UC-47.5). The plates pass no more than the hold, so they cannot stop that engine in a step. One at
+      // its idle (where the locked step holds it) stalls as before
+      if (v.engine.omega > v.engine.idleSpeed + RPMToOmega(CLUTCH.LOCK_RPM)) v.clutch.locked = false; else stall(v);
+    }
     v.trans.engineRPM = v.engine.started ? v.engine.rpm : 0;                 // UE: .cpp:865
     v.trans.allowed = !v.inAir && !v.w.some((w, i) => wheelIsSlipping(w, c.wheels[i]));   // UE: .cpp:866 + IsWheelSpinning .cpp:825-840
     transmissionSimulate(v, dt);                                             // UE: .cpp:869

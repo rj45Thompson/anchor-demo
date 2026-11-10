@@ -288,7 +288,24 @@ const DRAGCAM = { film: (() => { try { return localStorage.getItem('hoc.dragcam'
 // UC-34 the strip's gearbox: the clutch and the H gate (the default), or the paddles of UC-22, kept on this device
 // UC-40 the weather: rain (the default, RJ 11-07) or dry, kept on this device; with the clutch the tyres follow the wet or dry curve
 const WEATHER = { rain: (() => { try { return localStorage.getItem('hoc.weather') !== 'dry'; } catch (e) { return true; } })() };
-const DRAGBOX = { clutch: (() => { try { return localStorage.getItem('hoc.gearbox') !== 'paddles'; } catch (e) { return true; } })() };
+// UC-56 a new driver on this device: the paddles first (no clutch, no stall), the clutch offered after a clean run, then the clutch
+// with anti-stall (chaos_vehicle.js A14) until NOVICE.CLUTCH_CLEAN_RUNS clean clutch runs. A visitor who had chosen a gearbox or done
+// the clutch coach before this record existed has driven the strip already: a veteran, no aid. Storage blocked or the record
+// unreadable: nothing is kept, so a new driver each visit (the use case's alternate)
+const DRIVER_KEY = 'hoc.driver', NOVICE = { CLUTCH_CLEAN_RUNS: 3 };   // AUTHORED: three clean clutch runs and the aid goes
+const newDriver = () => ({ paddleClean: 0, clutchClean: 0, tried: false, offer: 'on' });
+const driverOk = (d) => !!d && typeof d === 'object' && (d.veteran === true || (Number.isInteger(d.paddleClean) && Number.isInteger(d.clutchClean) && typeof d.tried === 'boolean' && (d.offer === 'on' || d.offer === 'off')));
+const DRIVER = (() => {
+  let kept = null, gearbox = null, coached = false;
+  try { kept = localStorage.getItem(DRIVER_KEY); gearbox = localStorage.getItem('hoc.gearbox'); coached = localStorage.getItem('hoc.coach.strip') === '1'; } catch (e) { return newDriver(); }
+  if (kept !== null) { let d = null; try { d = JSON.parse(kept); } catch (e) { d = null; } if (driverOk(d)) return d; }
+  const d = gearbox !== null || coached ? { veteran: true } : newDriver();
+  try { localStorage.setItem(DRIVER_KEY, JSON.stringify(d)); } catch (e) { /* not kept */ }
+  return d;
+})();
+function saveDriver() { try { localStorage.setItem(DRIVER_KEY, JSON.stringify(DRIVER)); } catch (e) { /* not kept: a new driver next visit */ } }
+const DRAGBOX = { clutch: (() => { let g = null; try { g = localStorage.getItem('hoc.gearbox'); } catch (e) { g = null; } return g !== null ? g !== 'paddles' : !!DRIVER.veteran; })() };
+const antiStallOn = () => DRAGBOX.clutch && !DRIVER.veteran && DRIVER.clutchClean < NOVICE.CLUTCH_CLEAN_RUNS;   // UC-56.3
 const DEG = Math.PI / 180;
 const SALE_SPECS = await fetchJson('sale_specs.json');    // UC-9.1: each car for sale's factory numbers, READ with sources (tools/sale_specs.py)
 const [REVIEWS, RECALLS, COLOURS, PHOTOS, DRAGY] = await Promise.all([fetchJson('reviews.json'), fetchJson('recalls.json'), fetchJson('colours.json'), fetchJson('photos.json'), fetchJson('dragy.json')]);   // UC-14: ratings, owner reports, mods, clubs (tools/reviews.py); recalls (tools/recalls.py)
@@ -1641,7 +1658,8 @@ async function startDrag(entry, o = {}) {
   race.online = o.online || null; race.onlineGo = false; race.sentFinish = false; race.onlineResult = null;   // UC-42 an online match
   race.clutchMode = DRAGBOX.clutch;                                    // UC-34: in neutral, the pedal up, the gate drawn
   race.road = WEATHER.rain ? 'wet' : 'dry';                           // UC-40: the run's road, kept for the run (the rain switch starts a new run)
-  race.tape = entry.sim ? Replay.makeTape({ car: entry.name, clutch: race.clutchMode, road: race.clutchMode ? race.road : null }) : null;   // UC-46: the run as the sim takes it, for a first place's coffee
+  race.antiStall = race.clutchMode && antiStallOn();                  // UC-56.3 for the whole run (the tape says it once)
+  race.tape = entry.sim ? Replay.makeTape({ car: entry.name, clutch: race.clutchMode, road: race.clutchMode ? race.road : null, antiStall: race.antiStall }) : null;   // UC-46: the run as the sim takes it, for a first place's coffee
   race.selfDrive = false;                                             // UC-45: the visitor drives until they press AUTO
   if (race.clutchMode) { const layout = Sim.gateLayout(v.cfg.trans.forward.length); race.gate = { layout, knob: Sim.knobFor(0, layout), gear: 0 }; race.pedal = { depth: 0, held: false, anchor: 0, prev: 0 }; race.cut = null; }
   document.body.classList.toggle('clutchmode', race.clutchMode); drawGate(race); drawPedal(race);
@@ -1760,7 +1778,8 @@ $('dhow').addEventListener('click', () => { showFtue(race); if (race && !race.ar
 // out, the first graded shift), never on a timer, its control ringed. Not in AUTO, online, or a bot's run (it comes again next time).
 // The revs' band is the car's own: from bogRPM (traction.js: the lowest rpm at the torque curve's peak, READ) to the red (the earliest
 // derived shift point, the tach's red band). A test browser coaches only when asked (?coach=1), so the other checks keep their line
-const COACH_KEY = 'hoc.coach.strip';
+const COACH_KEY = 'hoc.coach.strip', COACH_KEY_PADDLES = 'hoc.coach.paddles';   // UC-56: each gearbox's launch coached once
+const coachKey = (r) => (r.clutchMode ? COACH_KEY : COACH_KEY_PADDLES);
 const COACH_DONE_S = 2.5;                                              // AUTHORED: how long "that is a launch" stays
 const DKEYS_HTML = $('dkeys').innerHTML;
 const coachAllowed = () => !navigator.webdriver || new URLSearchParams(location.search).get('coach') === '1';
@@ -1785,7 +1804,7 @@ function coachSteps(r) {
 }
 function coachStart(r, again) {
   if (!r || r.kind !== 'drag' || r.online || r.bot || r.selfDrive || !coachAllowed()) return;
-  if (!again && lobbyGet(COACH_KEY) === '1') return;
+  if (!again && lobbyGet(coachKey(r)) === '1') return;
   if (r.coach) coachEnd(r, false);
   r.coach = { i: 0, doneAt: null, ring: null, said: '', test: false, band: r.clutchMode ? [bogRPM(r.v), Math.min(...r.pts)] : null };
   r.coach.steps = coachSteps(r);
@@ -1799,7 +1818,7 @@ function coachEnd(r, seen) {
   r.coach = null;
   const k = $('dkeys'); k.classList.remove('coach'); k.innerHTML = DKEYS_HTML;
   if (r.armed) k.hidden = true;                                        // in a run the controls' line has had its 3 s
-  if (seen) lobbySet(COACH_KEY, '1');
+  if (seen) lobbySet(coachKey(r), '1');
 }
 function coachTick(r) {
   const C = r.coach;
@@ -1897,12 +1916,13 @@ function gradeShift(r, gear, rpm) {                                   // UC-22.3
   blip(audio, grade === 'PERFECT' ? 'go' : 'gate');
 }
 // UC-34.4 a gear asked for through the gate: in, if the clutch is down (or the revs match); a grind, and the gear stays, if not
+const CLUTCH_REARM = 0.8;                                             // UC-55.3 AUTHORED: how far up the pedal comes before the floor clunks again
 function requestGear(r, g) {
   const v = r.v, n = v.cfg.trans.forward.length; g = Math.max(0, Math.min(n, g));
   if (g === r.gate.gear || r.run.done) return true;
   const wheel = v.w.find((w) => w.engine), wheelRpm = wheel ? Math.abs(wheel.omega) * 30 / Math.PI : 0;
   const out = Sim.shiftOutcome(g, r.pedal.depth, v.engine.rpm, g ? wheelRpm * Math.abs(Chaos.gearRatio(v, g)) : 0);
-  if (!out.ok) { gradePop('GRIND · clutch in to shift', 'late'); grind(audio); r.gate.knob = Sim.knobFor(r.gate.gear, r.gate.layout); drawGate(r); return false; }
+  if (!out.ok) { gradePop('GRIND · clutch in to shift', 'late'); grind(audio); r.grinds = (r.grinds || 0) + 1; r.gate.knob = Sim.knobFor(r.gate.gear, r.gate.layout); drawGate(r); return false; }
   const from = r.gate.gear; r.gate.gear = g; r.gate.knob = Sim.knobFor(g, r.gate.layout);
   if (g === 0) sfx(audio, 'gear_out', 0.7); else { sfx(audio, 'gate', 0.35); sfx(audio, 'gear_in_' + (1 + Math.floor(Math.random() * 3)), 0.85); }   // UC-34 4b
   if (from >= 1 && g === from + 1 && from < n && r.cut && r.cut.gear === from) gradeShift(r, from, r.cut.rpm);   // graded at the rpm the drive was cut
@@ -1983,8 +2003,10 @@ addEventListener('contextmenu', (e) => { if (mode === 'drag') e.preventDefault()
   gt.addEventListener('pointerdown', (e) => { if (!(race && race.clutchMode) || race.run.done || race.selfDrive) return; e.preventDefault(); gt.setPointerCapture(e.pointerId); dragging = true; at(e); });
   gt.addEventListener('pointermove', (e) => { if (dragging) at(e); });
   for (const ev of ['pointerup', 'pointercancel']) gt.addEventListener(ev, () => { dragging = false; if (race && race.gate) { race.gate.knob = Sim.knobFor(race.gate.gear, race.gate.layout); drawGate(race); } }); }
-function syncDragBox() { $('dbox').textContent = DRAGBOX.clutch ? 'Clutch on' : 'Clutch off'; $('dbox').setAttribute('aria-pressed', String(DRAGBOX.clutch)); }
-function toggleDragBox() { DRAGBOX.clutch = !DRAGBOX.clutch; try { localStorage.setItem('hoc.gearbox', DRAGBOX.clutch ? 'clutch' : 'paddles'); } catch (e) { /* not kept */ } syncDragBox(); dragRerun(); }   // a new run with the other gearbox
+function syncDragBox() { $('dbox').textContent = DRAGBOX.clutch ? (antiStallOn() ? 'Clutch on · anti-stall' : 'Clutch on') : 'Clutch off';
+  $('dbox').title = antiStallOn() ? 'Anti-stall: the engine catches itself for your first ' + NOVICE.CLUTCH_CLEAN_RUNS + ' clean clutch runs (' + DRIVER.clutchClean + ' done)' : ''; $('dbox').setAttribute('aria-pressed', String(DRAGBOX.clutch)); }
+function toggleDragBox() { DRAGBOX.clutch = !DRAGBOX.clutch; if (DRAGBOX.clutch && !DRIVER.veteran && !DRIVER.tried) { DRIVER.tried = true; saveDriver(); }   // UC-56.3 the clutch taken
+  try { localStorage.setItem('hoc.gearbox', DRAGBOX.clutch ? 'clutch' : 'paddles'); } catch (e) { /* not kept */ } syncDragBox(); dragRerun(); }   // a new run with the other gearbox
 // UC-22.1b alt 3: a race button pressed while the other hand holds the clutch. A phone does not make a click of a second finger's
 // tap while the first holds the slider (measured 11-08: START stayed up, the slider's finger let go, the car stalled), so each
 // pointer's own press and lift on the button is the press: down and up on it, any finger, not cancelled (a scroll cancels it).
@@ -2030,7 +2052,8 @@ function tickDrag(dt) {
     else if (!r.pedal.held && !r.pedal.wheel) r.pedal.depth = Sim.pedalRelease(r.pedal.depth, dt);   // a wheel-set pedal stays
     if (finished) r.pedal.depth = 1;                                   // past the line the clutch goes in: it coasts, it cannot stall
     if (r.pedal.depth >= 0.5 && r.pedal.prev < 0.5 && r.gate.gear >= 1) r.cut = { gear: r.gate.gear, rpm: v.engine.rpm };   // the drive cut: the shift's rpm
-    if (r.pedal.depth >= 0.98 && r.pedal.prev < 0.98 && !finished) sfx(audio, 'clutch_floor', 0.45, 0.7);   // UC-34 4b the pedal at the floor
+    if (r.pedal.depth >= 0.98 && !r.pedal.floored && !finished) { sfx(audio, 'clutch_floor', 0.45, 0.7); r.pedal.floored = true; r.pedal.clunks = (r.pedal.clunks || 0) + 1; }   // UC-34 4b the pedal at the floor
+    else if (r.pedal.depth < CLUTCH_REARM) r.pedal.floored = false;   // UC-55.3 heard again only once the pedal has come back up
     r.pedal.prev = r.pedal.depth; drawPedal(r);
     if (v.stalled && !r.over) showFail(r, 'Stalled');                 // UC-34.3a a lost run
   }
@@ -2040,7 +2063,7 @@ function tickDrag(dt) {
   const shut = finished && v.forwardSpeedCmS * 0.036 < 30;
   if (r.selfDrive) { raw.brake = 0; raw.steering = 0; if (!r.clutchMode && run.green === null) raw.throttle = 0; }   // UC-45 AUTO: the visitor's keys do not drive (the house driver sets the gas)
   const input = { throttle: finished ? 0 : raw.throttle, brake: finished ? (shut ? 1 : 0) : raw.brake, steering: raw.steering, handbrake: 0, transmission: 'manual' };
-  if (r.clutchMode) { input.clutch = r.pedal.depth; input.gear = r.gate.gear; input.road = r.road; }   // UC-40 the wet or dry curve   // UC-34 (chaos_vehicle.js A11)
+  if (r.clutchMode) { input.clutch = r.pedal.depth; input.gear = r.gate.gear; input.road = r.road; input.antiStall = r.antiStall; }   // UC-40 the wet or dry curve   // UC-34 (chaos_vehicle.js A11)
   acc += Math.min(dt, 0.1);
   let stepped = 0, crossed = false;                                    // UC-44.4: the physics time this frame ran, and the line crossed in it
   while (acc >= STEP) {
@@ -2564,6 +2587,20 @@ function verdictHTML(r, s) {
   return '<div class="verdict v-' + res.kind + '"><b>' + esc(W.head) + '</b><span>' + esc(W.line) + '</span><p>' + fmt(s.quarter_s) + ' s @ ' + Math.round(s.quarter_kmh) + ' km/h · reaction ' +
     (s.reaction_s >= 0 ? '+' : '') + fmt(s.reaction_s) + '</p>' + (W.note ? '<p class="hs">' + esc(W.note) + '</p>' : '') + '</div>';
 }
+// UC-56 a clean run (the line reached, no red light, the visitor driving): counted for this gearbox. After a clean paddle run the slip
+// offers the clutch until it is taken or put off (56.2); the clean clutch run that ends anti-stall says so (56.4). '' when nothing
+function noviceRun(r, s) {
+  if (DRIVER.veteran || r.selfDrive || r.bot || s.foul || s.quarter_s === null) return '';
+  if (r.clutchMode) {
+    DRIVER.clutchClean++; saveDriver(); syncDragBox();
+    return r.antiStall && DRIVER.clutchClean === NOVICE.CLUTCH_CLEAN_RUNS ? '<div id="dnovice" class="novice"><p><b>Anti-stall off from your next run.</b> ' + NOVICE.CLUTCH_CLEAN_RUNS + ' clean clutch runs: the clutch is all yours now, so let it out too low and the engine stalls.</p></div>' : '';
+  }
+  DRIVER.paddleClean++; saveDriver();
+  if (DRIVER.tried || DRIVER.offer === 'off') return '';
+  return '<div id="dnovice" class="novice"><p><b>Ready for the clutch?</b> Shift with a clutch and a gate, like the real car. Anti-stall catches the engine for your first ' + NOVICE.CLUTCH_CLEAN_RUNS + ' clean runs.</p>' +
+    '<button type="button" class="act go" id="dtryclutch">Try the clutch</button><button type="button" class="act" id="dnotyet">Not yet</button></div>';
+}
+window.HOC.driver = () => JSON.parse(JSON.stringify(DRIVER));                 // the novice check (test/novice_check.py)
 function showDragSlip(r) {
   const s = Drag.slip(r.run), b = r.best.slip;
   const dg = DRAGY.cars[r.entry.name], q = dg && dg.tests['1/4 mile'], e8 = dg && dg.tests['1/8 mile'], z = dg && dg.tests['0-100 km/h'];
@@ -2573,8 +2610,9 @@ function showDragSlip(r) {
   const kmh = (x) => (x === null || x === undefined ? '' : ' @ ' + Math.round(x) + ' km/h');
   const grades = s.shifts.map((x) => '<span class="g-' + x.grade.toLowerCase() + '">' + x.from + '→' + (x.from + 1) + ' ' + x.grade.toLowerCase() + '</span>').join('');
   r.over = 'slip'; document.body.classList.add('dragover');            // UC-22.5 the slip alone, RACE AGAIN on top of it
+  const novice = noviceRun(r, s);                                      // UC-56.2 / 56.4
   $('dslip').innerHTML = '<div class="slipgo"><button class="act go" id="drerun">RACE AGAIN<small>R</small></button><button class="act" id="dlot">Lot<small>Esc</small></button></div>' +
-    verdictHTML(r, s) + '<p class="kick">Time slip</p><h3>' + esc(r.title) + (r.selfDrive ? ' <span class="autotag">AUTO</span>' : '') + '</h3>' + rivalBlock(r, s) +
+    verdictHTML(r, s) + novice + '<p class="kick">Time slip</p><h3>' + esc(r.title) + (r.selfDrive ? ' <span class="autotag">AUTO</span>' : '') + '</h3>' + rivalBlock(r, s) +
     (s.foul ? '<p class="foul">RED LIGHT: left ' + fmt(-s.reaction_s) + ' s before the green</p>' : '') +
     '<table><tr><th></th><td>You</td><td>Sim, best shifts</td><td>Dragy owners</td></tr>' +
     row('Reaction', s.reaction_s === null ? '--' : (s.reaction_s >= 0 ? '+' : '') + fmt(s.reaction_s), fmt(b.reaction_s), '') +
@@ -2590,6 +2628,7 @@ function showDragSlip(r) {
     sellHTML(r, s);
   $('dslip').hidden = false;
   tapOn($('drerun'), dragRerun); $('dlot').onclick = () => backToShowroom();
+  if ($('dtryclutch')) { tapOn($('dtryclutch'), () => { if (!DRAGBOX.clutch) toggleDragBox(); }); $('dnotyet').onclick = () => { DRIVER.offer = 'off'; saveDriver(); $('dnovice').remove(); }; }
   $('dslip').querySelectorAll('button[data-dragto]').forEach((b) => { b.onclick = () => startDrag({ name: b.dataset.dragto, sim: true, drivable: true }).catch((e) => reportError(e)); });   // UC-23.3
   quarterBoard(r, s);
 }

@@ -5,26 +5,30 @@
 // Rows are run-length coded: [n, throttle, brake, steering, clutch, gear, press, armed], n steps alike. A gearbox without a clutch
 // writes clutch and gear as null (its input has neither). Numbers are kept exactly: JSON round-trips a finite double, and -0 is
 // written as 0 both in the tape and in the input the live sim takes (inputOf builds both), so the two runs see the same numbers.
+// Version 2 (UC-56.3): a clutch tape says whether anti-stall was on (antiStall, chaos_vehicle.js A14), the same for every step;
+// a paddle tape says null. No version 1 tape was ever claimed (the claims server was not live), so none is read.
 //
 // Pure (no three, no page): test/drag_replay.test.mjs runs a tape recorded here against the sim in node.
 
-export const TAPE = { version: 1, maxChars: 45000 };   // AUTHORED: a claim stores the tape in one Google Sheets cell, which holds at most 50,000 characters (READ: Google's sheet limits)
+export const TAPE = { version: 2, maxChars: 45000 };   // AUTHORED: a claim stores the tape in one Google Sheets cell, which holds at most 50,000 characters (READ: Google's sheet limits)
 export const STAGE_SETTLE_STEPS = 240;                 // the staged car settles on its springs before the run (app.js startDrag, as it always has)
 const PRESS = { up: 1, down: 2 };
 const num = (x, what) => { if (typeof x !== 'number' || !Number.isFinite(x)) throw new Error('drag_replay: the ' + what + ' is not a finite number (' + x + ')'); return x + 0; };   // x + 0: -0 becomes 0
 
-/** meta: { car (the sim car's key), clutch (the clutch gearbox, UC-34), road ('wet' | 'dry' with the clutch, else null) } */
+/** meta: { car (the sim car's key), clutch (the clutch gearbox, UC-34), road ('wet' | 'dry' with the clutch, else null), antiStall
+ *  (with the clutch: true or false, UC-56.3) } */
 export function makeTape(meta) {
   if (!meta || typeof meta.car !== 'string' || !meta.car) throw new Error('drag_replay: a tape needs its car');
   const clutch = !!meta.clutch;
   if (clutch && meta.road !== 'wet' && meta.road !== 'dry') throw new Error('drag_replay: a clutch tape needs its road, wet or dry');
-  return { v: TAPE.version, car: meta.car, clutch, road: clutch ? meta.road : null, rows: [] };
+  if (clutch && typeof meta.antiStall !== 'boolean') throw new Error('drag_replay: a clutch tape needs to say whether anti-stall was on');
+  return { v: TAPE.version, car: meta.car, clutch, road: clutch ? meta.road : null, antiStall: clutch ? meta.antiStall : null, rows: [] };
 }
 
 /** the input the sim takes for a row (the live run and a replay both build theirs here) */
 export function inputOf(tape, row) {
   const i = { throttle: row[1], brake: row[2], steering: row[3], handbrake: 0, transmission: 'manual', gearUp: row[6] === PRESS.up, gearDown: row[6] === PRESS.down };
-  if (tape.clutch) { i.clutch = row[4]; i.gear = row[5]; i.road = tape.road; }
+  if (tape.clutch) { i.clutch = row[4]; i.gear = row[5]; i.road = tape.road; i.antiStall = tape.antiStall; }
   return i;
 }
 
@@ -32,7 +36,8 @@ export function inputOf(tape, row) {
  *  undefined (the step's queued paddle press); armed: the tree has been started (its clock runs) */
 export function recordStep(tape, input, press, armed) {
   if (tape.clutch && input.road !== tape.road) throw new Error('drag_replay: the road changed mid-run (' + tape.road + ' to ' + input.road + ')');
-  if (!tape.clutch && (input.clutch !== undefined || input.gear !== undefined)) throw new Error('drag_replay: a clutch input on a paddle tape');
+  if (tape.clutch && input.antiStall !== tape.antiStall) throw new Error('drag_replay: anti-stall changed mid-run');
+  if (!tape.clutch && (input.clutch !== undefined || input.gear !== undefined || input.antiStall !== undefined)) throw new Error('drag_replay: a clutch input on a paddle tape');
   if (press !== undefined && !PRESS[press]) throw new Error('drag_replay: an unknown press ' + press);
   const row = [1, num(input.throttle, 'throttle'), num(input.brake, 'brake'), num(input.steering, 'steering'),
     tape.clutch ? num(input.clutch, 'clutch') : null, tape.clutch ? num(input.gear, 'gear') : null, PRESS[press] || 0, armed ? 1 : 0];
@@ -51,6 +56,7 @@ export function decode(text) {
   if (typeof t.car !== 'string' || !/^[a-z0-9_]{1,64}$/.test(t.car)) throw new Error('drag_replay: the tape names no car');
   if (typeof t.clutch !== 'boolean') throw new Error('drag_replay: the tape does not say its gearbox');
   if (t.clutch ? t.road !== 'wet' && t.road !== 'dry' : t.road !== null) throw new Error('drag_replay: the tape\'s road does not fit its gearbox');
+  if (t.clutch ? typeof t.antiStall !== 'boolean' : t.antiStall !== null) throw new Error('drag_replay: the anti-stall does not fit the tape gearbox');
   if (!Array.isArray(t.rows) || !t.rows.length) throw new Error('drag_replay: the tape has no steps');
   for (const r of t.rows) {
     const ok = Array.isArray(r) && r.length === 8 && Number.isInteger(r[0]) && r[0] >= 1 && [1, 2, 3].every((k) => Number.isFinite(r[k])) &&

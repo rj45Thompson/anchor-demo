@@ -122,7 +122,7 @@ export function driveSound(A, s) {
   n.lp.frequency.setTargetAtTime(Math.min(9000, 260 + 2400 * s.throttle + f * 1.6), t, 0.05);
   if (A.lastGear !== null && s.gear !== A.lastGear && s.gear > 0 && A.lastGear > 0) A.shiftUntil = t + 0.12;   // a gear change
   A.lastGear = s.gear;
-  const dip = t < (A.shiftUntil || 0);                        // the shift's dip in the note
+  const dip = t < Math.max(A.shiftUntil || 0, A.duckUntil || 0);   // the shift's dip in the note; UC-55.1 under a grind
   const level = (0.15 + 0.25 * s.throttle) * (dip ? 0.25 : 1);
   n.engineBus.gain.setTargetAtTime(s.running ? level : 0, t, dip ? 0.01 : 0.06);
   const revs = Math.min(1, s.rpm / 7000);
@@ -159,16 +159,37 @@ export function sfx(A, name, gain = 0.8, rate = 1) {
   const s = A.ctx.createBufferSource(), g = A.ctx.createGain(); s.buffer = b; s.playbackRate.value = rate; g.gain.value = gain;
   s.connect(g).connect(A.nodes.master); s.start();
 }
-// a gear the synchromesh refuses: no free recording of one was found, so the page's own (AUTHORED): a noise band buzzing at the
-// rate the dog teeth hit each other, 0.4 s
+// UC-55.1 a gear the synchromesh refuses (the owner 11-10: "Make the gear scrapping much louder to show you messed up"): no free
+// recording of one was found, so the page's own (AUTHORED, every number here): the engine's own noise through two narrow metal bands,
+// chopped at a ragged 38-62 Hz (the dog teeth skipping over each other), three detuned square partials for the ring of the metal, at
+// driven into a soft clip (a noise burst loud enough by its peaks alone clipped the output: a peak of 1.5 for twice the gear clip's
+// level, measured offline), full level for 0.35 s then fading by 0.7 s, the engine ducked under it. UC-55.2 one at a time: a new grind cuts the last one off
+export const GRIND = { PEAK: 0.8, DRIVE: 4, HOLD_S: 0.35, END_S: 0.7, BANDS: [[1700, 2.5], [3300, 4]], CHOP_HZ: [38, 62], CHOP_STEP_S: 0.035, RING_HZ: [1131, 1597, 2389], RING_GAIN: 0.05 };
+let SOFT = null;
+const softClip = () => SOFT || (SOFT = Float32Array.from({ length: 1025 }, (_, i) => Math.tanh(3 * (i / 512 - 1)) / Math.tanh(3)));   // -1..1 onto -1..1, rounded off
 export function grind(A) {
   if (!A.ctx || !A.nodes) return;
-  const c = A.ctx, t = c.currentTime, src = c.createBufferSource(), bp = c.createBiquadFilter(), am = c.createGain(), lfo = c.createOscillator(), depth = c.createGain(), out = c.createGain();
-  src.buffer = noiseBuffer(c); bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 3;
-  lfo.type = 'square'; lfo.frequency.value = 170; depth.gain.value = 0.5; am.gain.value = 0.5;
-  out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(0.5, t + 0.02); out.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-  lfo.connect(depth).connect(am.gain); src.connect(bp).connect(am).connect(out).connect(A.nodes.master);
-  src.start(t); lfo.start(t); src.stop(t + 0.42); lfo.stop(t + 0.42);
+  const c = A.ctx, t = c.currentTime, G = GRIND;
+  if (A.grindVoice) A.grindVoice.cut(t);
+  const out = c.createGain(), chop = c.createGain(), lfo = c.createOscillator(), depth = c.createGain(), src = c.createBufferSource(), stops = [src, lfo];
+  out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(G.PEAK, t + 0.01); out.gain.setValueAtTime(G.PEAK, t + G.HOLD_S);
+  out.gain.exponentialRampToValueAtTime(0.001, t + G.END_S);
+  lfo.type = 'sawtooth'; depth.gain.value = 0.5; chop.gain.value = 0.5;      // the chop: 0..1 under a sawtooth, a tooth's hit then its drag
+  for (let k = 0, at = t; at < t + G.END_S; k++, at += G.CHOP_STEP_S) lfo.frequency.setValueAtTime(G.CHOP_HZ[0] + Math.random() * (G.CHOP_HZ[1] - G.CHOP_HZ[0]), at);
+  lfo.connect(depth).connect(chop.gain);
+  src.buffer = A.nodes.noise;                                                // the engine's own noise, made when the sound started
+  for (const [f, q] of G.BANDS) { const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; src.connect(bp).connect(chop); }
+  for (const f of G.RING_HZ) {
+    const o = c.createOscillator(), g = c.createGain(); o.type = 'square'; o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * 0.97, t + G.END_S);
+    g.gain.value = G.RING_GAIN; o.connect(g).connect(chop); stops.push(o);
+  }
+  const drive = c.createGain(), clip = c.createWaveShaper(); drive.gain.value = G.DRIVE; clip.curve = softClip(); clip.oversample = '2x';
+  chop.connect(drive).connect(clip).connect(out).connect(A.nodes.master);
+  for (const n of stops) { n.start(t, n === src ? Math.random() * 1.2 : undefined); n.stop(t + G.END_S + 0.02); }
+  A.duckUntil = t + G.END_S;                                                 // the engine under it (driveSound)
+  const voice = { cut(at) { out.gain.cancelScheduledValues(at); out.gain.setTargetAtTime(0, at, 0.005); for (const n of stops) n.stop(at + 0.03); if (A.grindVoice === voice) A.grindVoice = null; } };
+  A.grindVoice = voice;
+  src.onended = () => { if (A.grindVoice === voice) A.grindVoice = null; };
 }
 
 // short UI sounds: the countdown's beeps (a higher one on GO), a gate tick, the lap chime
