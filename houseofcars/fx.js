@@ -2,7 +2,7 @@
 // a polished showroom floor, and the post chain (bloom on the accent lights, a vignette, multisampled edges). All of it is
 // AUTHORED (app.js AUTHORED lists it); none of it changes a car or track number. Serves UC-7.2, UC-7.3, UC-7.5.
 import * as THREE from 'three/webgpu';
-import { positionLocal, positionView, normalView, abs, vertexColor, mx_fractal_noise_float, mx_noise_float, nodeObject, pass, uniform, uv, float, vec2, vec3, vec4, color as tslColor, texture, mix, max, min, smoothstep, luminance, length, reflector, positionWorld, cameraPosition, normalize, dot, pow, oneMinus, normalWorld, output, normalLocal, materialColor, materialEmissive } from 'three/tsl';
+import { positionLocal, positionView, normalView, abs, vertexColor, mx_fractal_noise_float, mx_noise_float, nodeObject, pass, uniform, uv, float, vec2, vec3, vec4, color as tslColor, texture, mix, max, min, smoothstep, luminance, length, reflector, positionWorld, cameraPosition, normalize, dot, pow, oneMinus, normalWorld, output, normalLocal, materialColor, materialEmissive, renderOutput } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js';
 import { godRays } from './weather.js';                    // UC-40: the light shafts, put in front of the bloom (makePost o.godRays)
@@ -223,6 +223,32 @@ export function contactShadow(lengthM, widthM, strength = 0.72) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(lengthM * 1.18, widthM * 1.35), new THREE.MeshBasicNodeMaterial({ map: contactTex, transparent: true, opacity: strength, depthWrite: false, color: 0x000000 }));
   m.rotation.x = -Math.PI / 2; m.renderOrder = 1; m.name = 'contact-shadow';
   return m;
+}
+/** UC-51.2 a small second view in a corner of the canvas, over the main picture: the scene into a target of its own (HDR, the main
+ *  pass's type and samples, so the scene's pipelines are the ones already built), then that target onto the corner through the
+ *  renderer's own tone mapping and colour space, the rest of the canvas untouched (a plain render to the canvas goes through three's
+ *  frame buffer target, whose output copy covers the whole canvas). w, h: the corner's size in CSS px */
+export function makeInset(renderer, w, h) {
+  const pr = renderer.getPixelRatio();
+  const rt = new THREE.RenderTarget(Math.max(1, Math.round(w * pr)), Math.max(1, Math.round(h * pr)), { type: THREE.HalfFloatType, samples: 4 });
+  const mat = new THREE.NodeMaterial();
+  mat.fragmentNode = renderOutput(texture(rt.texture), renderer.toneMapping, renderer.outputColorSpace);
+  const quad = new THREE.QuadMesh(mat), vp = new THREE.Vector4();
+  return {
+    /** x, y: the corner's top left in CSS px, as the page lays it out */
+    draw(scene, camera, x, y, cw, ch) {
+      const ac = renderer.autoClear, tm = renderer.toneMapping, cs = renderer.outputColorSpace;
+      renderer.getViewport(vp);
+      renderer.setRenderTarget(rt); renderer.autoClear = true; renderer.render(scene, camera);
+      renderer.setRenderTarget(null); renderer.autoClear = false; renderer.toneMapping = THREE.NoToneMapping; renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+      renderer.setViewport(x, y, cw, ch); renderer.setScissor(x, y, cw, ch); renderer.setScissorTest(true);
+      quad.render(renderer);
+      renderer.setScissorTest(false); renderer.setViewport(vp); renderer.autoClear = ac; renderer.toneMapping = tm; renderer.outputColorSpace = cs;
+    },
+    /** the corner's new size (the same target, so the same pipelines) */
+    setSize(cw, ch) { rt.setSize(Math.max(1, Math.round(cw * pr)), Math.max(1, Math.round(ch * pr))); },
+    dispose() { rt.dispose(); mat.dispose(); },
+  };
 }
 export function makePost(renderer, scene, camera, o) {
   const post = new THREE.PostProcessing(renderer);

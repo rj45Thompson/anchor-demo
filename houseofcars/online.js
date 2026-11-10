@@ -71,6 +71,15 @@ function injectCss() {
 // keys typed into the panel belong to the panel, not to the page's driving and walking controls (as sales_chat.js does)
 const keepKeys = (el) => { for (const t of ['keydown', 'keyup', 'keypress']) el.addEventListener(t, (e) => e.stopPropagation()); };
 const NICK_KEY = 'hoc.online.nick';
+/** UC-53.1 the nickname for a lobby joined on its own: the one this browser kept, or 'Driver' and four random digits (kept) */
+export function autoNickname() {
+  let n = '';
+  try { n = sanitizeName(localStorage.getItem(NICK_KEY) || ''); } catch (e) { n = ''; }   // storage blocked: a new name each visit
+  if (n) return n;
+  n = 'Driver ' + String(1000 + (crypto.getRandomValues(new Uint16Array(1))[0] % 9000));
+  try { localStorage.setItem(NICK_KEY, n); } catch (e) { /* not kept */ }
+  return n;
+}
 
 /** step 1: a small form asking for the nickname; resolves with the clean name (sanitizeName). The last one is offered again
  *  (kept per browser; if storage is blocked it is simply not kept). */

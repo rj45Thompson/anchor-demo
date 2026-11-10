@@ -103,11 +103,38 @@ button:focus-visible,#card .pick:focus-visible,#card .act:focus-visible{outline:
 #foot{position:fixed;left:16px;bottom:10px;max-width:calc(50vw - 240px);font-size:11px;color:var(--dim)}   /* UC-44.3: 240 = half the nav (440 px, measured 11-08) + a gap; it was 120 and ran under the nav's first two buttons on 1280 to 1920 px screens */
 #foot{pointer-events:none}#foot a{color:var(--accent-soft);pointer-events:auto}
 #back{position:fixed;top:52px;left:16px;padding:8px 12px;font-size:13px}
+/* UC-51.1 the launch coached in the controls' line; 51.2 the tyre camera's frame (the view itself is drawn into the canvas under it);
+   51.3 the rev counter bigger, from its foot (a computer always; a phone once the controls' line has gone in a run) */
+#dkeys.coach{pointer-events:auto;animation:none;align-items:center;gap:4px 8px}#dkeys.coach #dcoachw{display:inline;white-space:normal}#dkeys.coach b{color:var(--accent-soft);letter-spacing:.06em}
+#dcoachskip{padding:3px 10px;font:inherit;font-size:.85em;font-weight:800;color:#fff;background:rgba(255,255,255,.1);border:1px solid var(--line);border-radius:7px;cursor:pointer}
+#dtyre{position:fixed;z-index:29;pointer-events:none;border:2px solid rgba(255,255,255,.85);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.5)}#dtyre[hidden]{display:none}
+#dtyre span{position:absolute;left:6px;top:5px;font:800 10px/1 'Open Sans',sans-serif;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.55);padding:3px 6px;border-radius:4px}
+#dcluster svg{overflow:visible}#dtach{transform-box:view-box;transition:transform .35s ease}body.tachbig #dtach{transform:scale(var(--big))}
+/* UC-53 the lobby's line (top right on a computer; on a phone at the top in the middle, the chat behind its own button) */
+#dlive{position:fixed;right:14px;top:96px;z-index:42;width:min(300px,calc(100vw - 28px));padding:9px 12px;border-radius:12px;background:rgba(10,10,10,.82);border:1px solid var(--line);font:600 13px/1.4 'Open Sans',sans-serif;color:#fff;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#dlive[hidden]{display:none}#dlive.live{border-color:#ff3b30;box-shadow:0 0 0 1px #ff3b30,0 8px 24px rgba(0,0,0,.5)}
+#dlivet{margin:0;overflow-wrap:anywhere}#dlivet b{color:var(--accent-soft)}#dlivet small{display:block;color:var(--dim);font-weight:600;font-size:12px}
+#dlivet .livebadge{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:6px;background:#ff3b30;color:#fff;font-size:11px;font-weight:800;letter-spacing:.08em;animation:livepulse 1.4s ease-in-out infinite}
+@keyframes livepulse{50%{opacity:.55}}@media (prefers-reduced-motion:reduce){#dlivet .livebadge{animation:none}}
+#dliveb{display:flex;flex-wrap:wrap;gap:8px;margin-top:7px}#dliveb:empty{display:none}
+#dliveb button,#dchatf button,#dchatm{padding:6px 12px;font:inherit;font-weight:800;color:#fff;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:8px;cursor:pointer;min-height:34px}
+#dliveb button.go{background:var(--accent);border-color:var(--accent)}
+#dchat{margin-top:7px;padding-top:6px;border-top:1px solid var(--line)}#dchat[hidden]{display:none}
+#dchatl{list-style:none;margin:0 0 6px;padding:0;max-height:96px;overflow:auto;font-weight:400}#dchatl li{overflow-wrap:anywhere}#dchatl li b{color:var(--accent-soft);margin-right:5px}#dchatl li.me b{color:var(--dim)}
+#dchatf{display:flex;gap:6px}#dchati{flex:1;min-width:0;padding:6px 8px;font:inherit;font-size:16px;font-weight:400;color:#fff;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:8px}
+#dchatm{padding:6px 8px;font-size:11px;color:var(--dim)}
+body.livebar:not(.liverun) #dpanel{display:none}   /* staged, its times blank: the line (who you race, a real person) in its place */
+@media (min-width:1100px) and (orientation:landscape){body.dragover #dlive{right:auto;left:14px}}
+@media (pointer:coarse){#dlive{right:14px;top:54px;width:calc((100vw - min(46vw,640px,calc(100vw - 480px))) / 2 - 22px);max-width:300px;padding:7px 10px;font-size:12px}#dlivet small{font-size:11px}
+#dlive.run{right:auto;left:50%;transform:translateX(-50%);top:118px;width:max-content;max-width:min(340px,calc(100vw - 460px))}
+#dliveb{margin-top:5px;gap:6px}#dliveb button{padding:4px 9px;min-height:30px}#dchatl{max-height:min(96px,24vh)}
+#dlive.chat{z-index:46;top:8px;right:auto;left:50%;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));max-width:none;max-height:calc(100vh - 16px);overflow:auto}
+#dlive.chat #dchat{display:flex;flex-direction:column}#dlive.chat #dchatf{order:-1;margin-bottom:6px}}
 /* UC-52.2 the first drive: the controls card at the top (clear of START) and the real controls ringed while it shows */
-#dftue{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:41;width:min(460px,calc(100vw - 32px));padding:12px 16px 14px;border-radius:14px;background:rgba(10,12,16,.9);border:1px solid #ffd27a;box-shadow:0 10px 28px rgba(0,0,0,.6);font:600 13px/1.4 'Open Sans',sans-serif;color:#fff;pointer-events:auto}
-#dftue[hidden]{display:none}#dftue>b{display:block;font-size:15px;letter-spacing:.08em;color:#ffd27a;margin-bottom:6px;text-transform:uppercase}
-#dftue ul{margin:0 0 10px;padding:0;list-style:none}#dftue li{margin:3px 0}#dftue li b{color:#ffd27a;letter-spacing:.06em;margin-right:6px}
-#dftuego{padding:7px 16px;font:inherit;font-weight:800;color:#0a0a0a;background:#ffd27a;border:0;border-radius:8px;cursor:pointer}
+#dftue{position:fixed;top:140px;left:50%;transform:translateX(-50%);z-index:41;width:min(520px,calc(100vw - 32px));padding:9px 14px 9px;border-radius:14px;background:rgba(10,12,16,.9);border:1px solid #ffd27a;box-shadow:0 10px 28px rgba(0,0,0,.6);font:600 12.5px/1.35 'Open Sans',sans-serif;color:#fff;pointer-events:auto}   /* its top: under the traction bar's word, measured (app.js showFtue) */
+#dftue[hidden]{display:none}#dftue>b{display:block;font-size:14px;letter-spacing:.08em;color:#ffd27a;margin-bottom:4px;padding-right:90px;text-transform:uppercase}
+#dftue ul{margin:0;padding:0;list-style:none}#dftue li{margin:1px 0}#dftue li b{color:#ffd27a;letter-spacing:.06em;margin-right:6px}
+#dftuego{position:absolute;top:7px;right:10px;padding:5px 14px;font:inherit;font-weight:800;color:#0a0a0a;background:#ffd27a;border:0;border-radius:8px;cursor:pointer}
 .ftue-ring{outline:3px solid #ffd27a !important;outline-offset:4px;animation:ftuering 1.1s ease-in-out infinite}
 @keyframes ftuering{50%{outline-color:rgba(255,210,122,.25)}}
 @media (prefers-reduced-motion:reduce){.ftue-ring{animation:none}}
@@ -521,6 +548,9 @@ button,.pill{white-space:nowrap}
   <div id="dpedalk" aria-hidden="true">WHEEL<small>down: in</small></div><div id="dgasmk" aria-hidden="true">CLICK<small>W &uarr; Space</small></div>
   <div id="dkeys" hidden><span class="fine cp"><b>CLUTCH</b>mouse wheel, down: in</span><span class="fine cp"><b>GEARS</b>drag the knob, or 1-7</span><span class="fine cp"><b>GAS</b>hold a mouse button, W, &uarr; or Space</span><span class="fine np"><b>GAS</b>hold W, &uarr; or Space</span><span class="fine np"><b>SHIFT</b>E or Shift</span><span class="coarse cp"><b>CLUTCH</b>the slider</span><span class="coarse cp"><b>GEARS</b>drag the knob</span><span class="coarse cp"><b>GAS</b>the pedal</span><span class="coarse np"><b>GAS</b>the pedal</span><span class="coarse np"><b>SHIFT</b>the buttons</span></div>
   <div id="dsay" hidden aria-live="polite"><b id="dsayn"></b><span id="dsayw"></span></div>
+  <!-- UC-53 the lobby's line: a real person offered or asking, LIVE once matched, and the chat with them -->
+  <div id="dtyre" hidden aria-hidden="true"><span>TYRE CAM</span></div>
+  <div id="dlive" hidden><p id="dlivet" aria-live="polite"></p><div id="dliveb"></div><div id="dchat" hidden><ol id="dchatl" aria-label="Chat with the other driver"></ol><form id="dchatf"><input id="dchati" autocomplete="off" spellcheck="false" enterkeyhint="send" aria-label="Say something to the other driver" placeholder="Say something"><button type="submit">Send</button><button type="button" id="dchatm"></button></form></div></div>
   <div id="donline" hidden role="dialog" aria-label="Race someone online"><button id="donlinex" aria-label="Close the lobby">&times;</button><div id="donlinebox"></div><p id="donlinemsg" aria-live="polite"></p></div>
   <div id="dgate" aria-label="Shift gate"></div>
   <div id="dcluster" aria-label="The car's instrument cluster"></div>

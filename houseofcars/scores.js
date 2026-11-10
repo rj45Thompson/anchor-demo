@@ -12,6 +12,11 @@ const NAME_CHARS = /^[A-Za-z0-9 .'_-]+$/;
 const BLOCKED = ['fuck', 'shit', 'cunt', 'nigg', 'fag', 'bitch', 'whore', 'slut', 'rape', 'nazi', 'hitler', 'kike', 'chink', 'retard', 'porn', 'kkk'];
 const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+/** UC-53.3 a chat line or a peer's name with each word that holds a blocked stem masked (its letters as dots). Word by word, so a
+ *  sentence's spaces never join two words into one ("if a guy") the way the name check's squash does */
+export function maskWords(text) {
+  return String(text).replace(/\S+/g, (w) => (BLOCKED.some((b) => squash(w).includes(b)) ? '\u2022'.repeat(Math.min(8, [...w].length)) : w));
+}
 /** a name as entered: { ok, name } or { ok: false, why } in words for the box */
 export function checkName(raw) {
   const name = String(raw || '').trim().replace(/\s+/g, ' ');

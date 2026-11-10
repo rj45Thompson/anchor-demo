@@ -33,7 +33,10 @@ export const SYNC_PINGS = 12, SYNC_MIN = 4, SYNC_WAIT_MS = 1000;   // AUTHORED: 
 export const GO_LEAD_MS = 1500;                    // AUTHORED: GO is sent this far ahead of the start
 export const FINISH_WAIT_MS = 30000;               // AUTHORED: how long a sent slip waits for the other's
 // AUTHORED: the largest payload each message may have, in bytes of its JSON (checked by Trystero's onReceive BEFORE it is parsed)
-export const MAX_BYTES = { hello: 256, chal: 160, rdy: 160, go: 160, ping: 96, pong: 160, pose: 1024, fin: 512 };
+export const CHAT_MAX = 80;                        // AUTHORED: UC-53.3 a chat line, in characters (code points)
+export const CHAT_RATE = 1, CHAT_BURST = 4;        // AUTHORED: UC-53.3 chat lines a second per peer, and the burst
+// chat: CHAT_MAX characters at up to 4 bytes each in UTF-8 (320), and the JSON around them
+export const MAX_BYTES = { hello: 256, chal: 160, rdy: 160, go: 160, ping: 96, pong: 160, pose: 1024, fin: 512, chat: 400 };
 export const ACTIONS = Object.keys(MAX_BYTES);
 export const DROP_KINDS = ['oversized', 'rate', 'malformed', 'stale', 'unexpected'];
 
@@ -46,6 +49,13 @@ export function sanitizeName(s) {
   return [...clean].slice(0, NAME_MAX).join('').trim();
 }
 export const isName = (s) => typeof s === 'string' && s.length > 0 && sanitizeName(s) === s;
+/** UC-53.3 a chat line as typed: control, zero-width and direction-changing characters to spaces, runs of spaces to one, trimmed,
+ *  at most CHAT_MAX characters; '' when nothing is left. The page's word filter (scores.js maskWords) is the page's, not the wire's */
+export function cleanChat(s) {
+  if (typeof s !== 'string') return '';
+  const t = s.normalize('NFC').replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, ' ').replace(/\s+/gu, ' ').trim();
+  return [...t].slice(0, CHAT_MAX).join('').trim();
+}
 
 const plain = (x) => x !== null && typeof x === 'object' && !Array.isArray(x) && Object.getPrototypeOf(x) === Object.prototype;
 const num = (x, lo, hi) => typeof x === 'number' && Number.isFinite(x) && x >= lo && x <= hi;
@@ -138,7 +148,14 @@ export function validateSlip(s) {
   if (s.quarterAt !== null && s.quarterAt < s.quarter_s) return bad('quarterAt is before the quarter time itself');
   return good(s);
 }
-export const VALIDATE = { hello: validateHello, chal: validateChallenge, rdy: validateReady, go: validateGo, ping: validatePing, pong: validatePong, pose: validatePose, fin: validateSlip };
+/** UC-53.3 a chat line: { v, text }, the text already clean (cleanChat) and not empty */
+export function validateChat(m) {
+  const k = keysOf(m, ['v', 'text']); if (k) return bad(k);
+  if (typeof m.text !== 'string' || !m.text) return bad('text is not a line of text');
+  if (cleanChat(m.text) !== m.text) return bad('text is not a clean line of at most ' + CHAT_MAX + ' characters');
+  return good(m);
+}
+export const VALIDATE = { hello: validateHello, chal: validateChallenge, rdy: validateReady, go: validateGo, ping: validatePing, pong: validatePong, pose: validatePose, fin: validateSlip, chat: validateChat };
 
 /** step 3: the other clock from ping samples { a: sent (local ms), b: the other's clock when it answered, c: back (local ms) }.
  *  offset = other - local. The sample with the shortest round trip wins (NTP's rule): its error is at most half that round trip,
@@ -200,8 +217,8 @@ export function makeOnline(deps, opts) {
   if (typeof opts.car !== 'string' || !CAR_RE.test(opts.car)) throw new Error('online: car must be a lot key (a-z, 0-9, _), got ' + String(opts.car).slice(0, 60));
   const car = opts.car, created = now();
 
-  const EV = ['lobby', 'challenge', 'match', 'go', 'pose', 'finish', 'leave', 'error', 'state'];
-  const cbs = { lobby: opts.onLobby, challenge: opts.onChallenge, match: opts.onMatch, go: opts.onGo, pose: opts.onPose, finish: opts.onFinish, leave: opts.onLeave, error: opts.onError, state: null };
+  const EV = ['lobby', 'challenge', 'match', 'go', 'pose', 'finish', 'leave', 'error', 'state', 'chat'];
+  const cbs = { lobby: opts.onLobby, challenge: opts.onChallenge, match: opts.onMatch, go: opts.onGo, pose: opts.onPose, finish: opts.onFinish, leave: opts.onLeave, error: opts.onError, state: null, chat: opts.onChat };
   const subs = Object.fromEntries(EV.map((e) => [e, []]));
   const emit = (e, a, b) => { for (const f of subs[e]) f(a, b); if (cbs[e]) cbs[e](a, b); };
 
@@ -243,7 +260,7 @@ export function makeOnline(deps, opts) {
   }
   const peerOf = (id) => {
     let p = peers.get(id);
-    if (!p) { const t = now(); p = { id, hello: null, pose: makeBucket(POSE_RATE_MAX, POSE_RATE_MAX, t), ctl: makeBucket(CTL_RATE, CTL_BURST, t) }; peers.set(id, p); }
+    if (!p) { const t = now(); p = { id, hello: null, pose: makeBucket(POSE_RATE_MAX, POSE_RATE_MAX, t), ctl: makeBucket(CTL_RATE, CTL_BURST, t), chat: makeBucket(CHAT_RATE, CHAT_BURST, t) }; peers.set(id, p); }
     return p;
   };
   const busy = () => ['asking', 'asked', 'joining', 'match', 'go', 'racing'].includes(phase);
@@ -279,7 +296,7 @@ export function makeOnline(deps, opts) {
   function receive(name, data, peerId) {
     if (phase === 'left') return;
     const p = peerOf(peerId);
-    if (!bucketTake(name === 'pose' ? p.pose : p.ctl, now())) return drop('rate', name, peerId, name === 'pose' ? '> ' + POSE_RATE_MAX + '/s' : '> ' + CTL_RATE + '/s');
+    if (!bucketTake(name === 'pose' ? p.pose : name === 'chat' ? p.chat : p.ctl, now())) return drop('rate', name, peerId, name === 'pose' ? '> ' + POSE_RATE_MAX + '/s' : name === 'chat' ? '> ' + CHAT_RATE + '/s' : '> ' + CTL_RATE + '/s');
     const v = VALIDATE[name](data);
     if (!v.ok) return drop('malformed', name, peerId, v.why);
     recv[name]++;
@@ -361,6 +378,10 @@ export function makeOnline(deps, opts) {
       if (m.t <= match.lastInT) return drop('stale', 'pose', p.id, 't ' + m.t + ' <= ' + match.lastInT);
       match.lastInT = m.t; match.posesIn++;
       emit('pose', m, { peerId: p.id, n: match.posesIn });
+    },
+    chat(m, p) {                                                       // UC-53.3 only the person matched with, while they are here
+      if (!(match && match.peerId === p.id && match.oppHere)) return drop('unexpected', 'chat', p.id, 'chat from someone I am not matched with');
+      emit('chat', { peerId: p.id, name: match.name, text: m.text });
     },
     fin(m, p) {
       if (!(match && match.peerId === p.id && !match.theirs && match.go)) return drop('unexpected', 'fin', p.id, 'slip outside a started race');
@@ -482,6 +503,17 @@ export function makeOnline(deps, opts) {
       match.posesOut++;
       send('pose', packPose(pose), match.peerId);
       return true;
+    },
+    /** UC-53.3 a chat line to the person matched with: returns the line as sent (cleaned). Throws with no one to send to, an empty
+     *  line, or faster than CHAT_RATE a second after a burst of CHAT_BURST (the other page would drop it anyway) */
+    sendChat(text) {
+      if (!match || !match.oppHere || phase === 'left') throw new Error('online: chat needs someone matched (now ' + phase + ')');
+      const line = cleanChat(text);
+      if (!line) throw new Error('online: an empty chat line');
+      if (!match.chatOut) match.chatOut = makeBucket(CHAT_RATE, CHAT_BURST, now());
+      if (!bucketTake(match.chatOut, now())) throw new Error('online: one line a second');
+      send('chat', { v: PROTOCOL, text: line }, match.peerId);
+      return line;
     },
     /** step 5 */
     sendFinish(slip) {
