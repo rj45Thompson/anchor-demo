@@ -385,7 +385,10 @@ export class Hud {
     this.logo(H * 0.34, Math.max(48, u * 11), seconds);
     if (menu.inDemo) this.text('DEMO', W / 2, H * 0.52, Math.max(18, u * 3), '#ffe08a');
     if (Math.sin(seconds * 4) > -0.4) this.text('PRESS ANY BUTTON', W / 2, H * 0.62, Math.max(18, u * 3.2), '#fff');
-    this.text('Defend your castle with up to three friends', W / 2, H * 0.7, Math.max(13, u * 1.9), 'rgba(255,255,255,0.85)', 'center', 700);
+    const sub = Math.max(13, u * 1.9), press = Math.max(18, u * 3.2);
+    this.text('Defend your castle with up to three friends', W / 2, H * 0.7, sub, 'rgba(255,255,255,0.85)', 'center', 700);
+    // where the title's words stand (CSS px, text centred on its y): the page keeps its foot below them (TITLE_UC.md UC-T1 R1)
+    this.titleBox = { pressTop: H * 0.62 - press * 0.6, subBottom: H * 0.7 + sub * 0.6 };
   }
 
   /** The join screen. cover: DOM rects drawn over the canvas that the seats and rows must stay clear of (QRLAND, round 5: the
@@ -431,7 +434,8 @@ export class Hud {
     // portrait phone); beside a cover they centre in the widest gap
     let floor = H - FOOT;
     for (const c of cover) if (c.top > y + ch) { const g = gapAt(c.top, c.bottom); if (g[1] - g[0] < ROWS_NEED) floor = Math.min(floor, c.top - GAP); }
-    const rows = MenuModel.SetupRows, rh = Math.min(Math.max(30, u * 4.6), (floor - y - ch) / 6.6), top = y + ch + rh;
+    // the band holds the rows plus one row of air above them and 0.45 + 0.15 below the last one (6 rows: the old fixed / 6.6)
+    const rows = MenuModel.SetupRows, rh = Math.min(Math.max(30, u * 4.6), (floor - y - ch) / (rows.length + 0.6)), top = y + ch + rh;
     let half = Math.min(230, W / 2 - 10), cx = W / 2;            // the rows' half width (narrow on a phone) and their centre
     const ry0 = top - rh * 0.45, ry1 = top + (rows.length - 1) * rh + rh * 0.45;
     if (crosses(ry0, ry1, cx - half, cx + half)) { const g = gapAt(ry0, ry1); cx = (g[0] + g[1]) / 2; half = Math.min(half, (g[1] - g[0]) / 2); }
@@ -513,6 +517,10 @@ export class Hud {
     this.dim(0.7);
     this.text('HIGH SCORES', W / 2, H * 0.14, Math.max(32, u * 6.5), '#fff', 'center', 900);
     const rows = menu.highScores.rows;
+    // the table stands on a wooden board like every other menu (11-10: its rows floated over the island and its castles)
+    const pw = Math.min(W - 24, 420), top = rows.length ? H * 0.26 - rh * 0.85 : H * 0.4 - rh * 1.1;
+    const ph = rows.length ? rows.length * rh + rh * 0.7 : rh * 2.2;
+    this.woodPanel(W / 2 - pw / 2, top, pw, ph, Math.min(22, rh * 0.6), { alpha: 0.92 });
     if (rows.length === 0) this.text('NO SCORES YET', W / 2, H * 0.4, rh * 0.8, 'rgba(255,255,255,0.75)');
     rows.forEach((r, i) => {
       const y = H * 0.26 + i * rh;

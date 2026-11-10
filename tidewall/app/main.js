@@ -22,6 +22,7 @@ import { musicFor, duckFor } from './soundbank.js';
 import { Phones } from './phones.js';
 import { ControlsChoice, TouchPad } from './controls.js';
 import { ActionBar, ACTIONS } from './actions.js';
+const PLACE_ACTION = ACTIONS.find((a) => a.id === 'place');   // its label is the touch A button's caption too
 import { MapSource, CAMPAIGN_ISLANDS, campaignNames } from './maps.js';
 import * as core from '../core/index.js';
 import { createRenderer, NoWebGpuError, PLAYER_TEXT_CSS } from '../render/renderer.js';
@@ -39,6 +40,7 @@ const DEMO_BOTS_FROM = 2 * TPS;      // AUTHORED: the demo's bots wait two secon
 const DEMO_RESTART = 6 * TPS;        // AUTHORED: an ended demo holds its last screen six seconds, then a new demo starts
 const SCORES_KEY = GAME_TITLE.toLowerCase() + '-highscores';
 const SOUND_KEY = GAME_TITLE.toLowerCase() + '-sound';     // R4: mute and the three volumes, kept like the high scores
+const MOTION_KEY = GAME_TITLE.toLowerCase() + '-motion';   // SETTINGS_UC.md UC-ST2: 'full' or 'reduced', the bare word
 
 /** The URL switches, checked: a value that does not parse is refused with what was wrong, never replaced by a default. */
 function readSwitches() {
@@ -100,9 +102,13 @@ class Game {
       const b = e.target instanceof Element ? e.target.closest('[data-controls]') : null;
       if (b) this.controls.set(b.dataset.controls);
       if (e.target instanceof Element && e.target.closest('[data-settings]')) this.settingsAsked = true;
+      const info = e.target instanceof Element ? e.target.closest('[data-info]') : null;
+      if (info) this.infoAsked = info.dataset.info;                   // 'open', 'close' or 'page:N', taken by the next tick
     });
+    this.infoAsked = null;
     window.addEventListener('keydown', (e) => { if (e.code === 'KeyC' && !e.repeat && this.menu.screen === Screen.Setup && !this.menu.settingsOpen && !this.sw.attract) this.controls.next(); });
     this.soundNote = '';
+    this.motionNote = '';                                          // UC-ST2 alternate 1a: an unreadable or unsaved motion setting
     // the settings (SETTINGS_UC.md UC-ST1): the stored sound settings and the quality the page started on, one SettingsModel the
     // menu's settings rows, M and G all change; applySound / applyQuality hand it to the SoundPlayer and the renderer
     const settings = this.loadSettings();
@@ -110,7 +116,7 @@ class Game {
     this.maps = new MapSource(GameRules.default());
     this.scoresNote = '';
     this.menu = new MenuModel(this.loadScores(), CAMPAIGN_ISLANDS, settings);
-    this.overlay = new Overlay(document.getElementById('ui'), PLAYER_TEXT_CSS, Screen, KEY_CLUSTERS.map((c) => 'P' + (c.seat + 1) + ': ' + c.help));
+    this.overlay = new Overlay(document.getElementById('ui'), PLAYER_TEXT_CSS, Screen, KEY_CLUSTERS.map((c) => 'P' + (c.seat + 1) + ': ' + c.help), MenuModel.InfoPages);
     this.seed = sw.seed ?? (Date.now() & 0x7fffffff);
     this.ticks = 0;
     this.acc = 0;
@@ -136,6 +142,7 @@ class Game {
       this.menu.settings.toggleMute();
       this.applySound(0.05);
     });
+    this.applyMotion(false);                                       // UC-ST2 step 1: the motion the page starts with
     this.startMatch(true, null);
     if (sw.attract) this.menu.playing();
   }
@@ -161,14 +168,41 @@ class Game {
 
   /** R4: the settings (core/controller/SettingsModel.js): the stored sound settings ({ muted, music, fx, ambience }, each volume 0..1,
    *  a whole percent) and the quality the page started on. Unreadable ones are reported and never written over. */
+  /** UC-ST2 step 1: the stored motion, else the system's (prefers-reduced-motion). An unreadable stored value is said on the title
+   *  foot and left untouched until the player changes MOTION (alternate 1a). */
+  loadMotion() {
+    const system = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full';
+    let text;
+    try { text = this.store().getItem(MOTION_KEY); }
+    catch (e) { this.motionStorable = false; return system; }              // no storage: the sound settings' note already says so
+    this.motionStorable = true;
+    if (text === null) return system;
+    try { return SettingsModel.parseMotion(text); }
+    catch (e) {
+      if (!(e instanceof SettingsError)) throw e;
+      this.motionNote = "The saved motion setting could not be read (" + e.message + "); the system's choice is used and the saved one is left untouched.";
+      return system;
+    }
+  }
+
+  /** The renderer follows the MOTION setting; it is stored when the player changed it (save: true). */
+  applyMotion(save) {
+    const st = this.menu.settings;
+    this.renderer.setMotion(st.reducedMotion);
+    if (!save || !this.motionStorable) return;
+    try { this.store().setItem(MOTION_KEY, st.motion); this.motionNote = ''; }
+    catch (e) { this.motionNote = 'The motion setting could not be saved: ' + e.message; }
+  }
+
   loadSettings() {
-    const first = SettingsModel.defaults(this.sw.quality);
+    const motion = this.loadMotion();
+    const first = SettingsModel.defaults(this.sw.quality, motion);
     let text;
     try { text = this.store().getItem(SOUND_KEY); }
     catch (e) { this.soundNote = 'Sound settings are not kept in this browser: ' + e.message; this.soundWritable = false; return first; }
     this.soundWritable = true;
     if (!text) return first;
-    try { return SettingsModel.parse(text, this.sw.quality); }
+    try { return SettingsModel.parse(text, this.sw.quality, motion); }
     catch (e) {
       if (!(e instanceof SettingsError)) throw e;
       this.soundNote = 'The saved sound settings could not be read (' + text.slice(0, 60) + '); they are left untouched.';
@@ -201,8 +235,11 @@ class Game {
   /** The SETTINGS button is offered on the title (not while the demo fills it) and on the join screen, while the panel is shut. */
   get settingsOffered() {
     const sc = this.menu.screen;
-    return !this.sw.attract && !this.menu.settingsOpen && ((sc === Screen.Title && !this.menu.inDemo) || sc === Screen.Setup);
+    return !this.sw.attract && !this.menu.settingsOpen && !this.menu.infoOpen && ((sc === Screen.Title && !this.menu.inDemo) || sc === Screen.Setup);
   }
+
+  /** The CONTROLS & CREDITS panel (TITLE_UC.md UC-T1) is offered where SETTINGS is, while neither panel is open. */
+  get infoOffered() { return this.settingsOffered; }
 
   saveScores() {
     if (!this.scoresWritable) return;
@@ -252,7 +289,10 @@ class Game {
 
   act(a) {
     // a settings change is applied first, so its pick is heard at the new effects volume (UC-ST1 step 3)
-    if (a.kind === MenuActionKind.SettingsChanged) { this.applyQuality(); this.applySound(0); this.sound.menu('pick', this.ticks); return; }
+    if (a.kind === MenuActionKind.SettingsChanged) {
+      const motionChanged = (this.renderer.reducedMotion === true) !== this.menu.settings.reducedMotion;
+      this.applyQuality(); this.applySound(0); this.applyMotion(motionChanged); this.sound.menu('pick', this.ticks); return;
+    }
     this.sound.menu('pick', this.ticks);
     switch (a.kind) {
       case MenuActionKind.StartGame: this.startMatch(false, this.menu.joined.slice()); break;
@@ -288,6 +328,7 @@ class Game {
     if (!(p.click || p.moved) || Number.isNaN(p.x)) return;
     const screen = this.menu.screen, settings = this.menu.settingsOpen;
     if (screen === Screen.Playing) return;                                  // in play the pointer does nothing (yet)
+    if (this.menu.infoOpen) return;                                         // the info panel takes its own clicks (overlay.js infoPanel)
     const r = this.canvas.getBoundingClientRect(), hud = this.renderer.hud;
     const h = settings ? this.overlay.settingsHitAt(p.x, p.y) : hud.hitAt(screen, p.x - r.left, p.y - r.top);
     if (h && (h.kind === 'row' || h.kind === 'step')) this.menu.pointAt(h.row);
@@ -366,7 +407,7 @@ class Game {
     this.input.enterReadies = wasPlaying && !this.seatOf.includes(1);   // Enter is P1's READY unless P2 is in the match (P2's place key)
     if (!this.sw.attract) this.pointerToMenu(menuIn, ptr);
     if (!this.sw.attract) {
-      const where = () => [this.menu.screen, this.menu.row, this.menu.joinedCount, this.menu.settingsOver, this.menu.settingsRow].join(':');
+      const where = () => [this.menu.screen, this.menu.row, this.menu.joinedCount, this.menu.settingsOver, this.menu.settingsRow, this.menu.infoOver, this.menu.infoPage].join(':');
       const before = where();
       // the settings panel from the title or the join screen (UC-ST1 step 1): the SETTINGS button, or READY on a seat's own device
       // (E, /, a pad's or phone's Y) - on the join screen a joined seat's, on the title anyone's, as the menus take presses
@@ -374,6 +415,14 @@ class Game {
       const ready = seats.some((s, i) => s.pad.ready && (title || this.menu.joined[i]));
       if (offered && (this.settingsAsked || ready)) this.menu.openSettings();
       this.settingsAsked = false;
+      // the controls & credits panel (UC-T1 steps 3-5): its button, H or a pad's X opens it; H, X, its tabs, CLOSE and the dim around
+      // it act on it while it is open (the menu's own back / confirm / START close it, left / right turn the page)
+      const infoKey = seats.some((s) => s.info), asked = this.infoAsked;
+      this.infoAsked = null;
+      if (this.menu.infoOpen) {
+        if (asked === 'close' || infoKey) this.menu.closeInfo();
+        else if (asked && asked.startsWith('page:')) this.menu.showInfoPage(Number(asked.slice(5)));
+      } else if (!this.menu.settingsOpen && this.infoOffered && (asked === 'open' || infoKey)) this.menu.openInfo();
       const acts = this.menu.update(menuIn, this.demo ? null : this.model);
       for (const a of acts) this.act(a);
       if (where() !== before) this.sound.menu('move', this.ticks);
@@ -433,13 +482,21 @@ class Game {
     const bar = playing && this.menu.screen === Screen.Playing && (!touch || this.shopOpen);
     this.bar.show(bar);
     this.touchpad.setBombs(bombs);
+    const mp = playing ? this.model.player(this.mouseSlot) : null;
+    const act = mp && {
+      phase: Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase), sword: mp.sword, ready: mp.ready, bombs,
+      carrying: mp.carrying !== 0, bombsLeft: mp.bombs, score: mp.score, costs: bombs ? this.model.rules.itemCosts : null, items: mp.items,
+    };
+    // the touch buttons say what they do now: A the action bar's own label for its place / fire / drop button (one rule for both), B
+    // grab (bombs) or turn (the base rules' REPAIR), Y ready in CANNONS and tool in BATTLE and REPAIR
+    if (act && touch) {
+      const tools = act.phase === 'Battle' || act.phase === 'Repair';
+      this.touchpad.setCaptions({ confirm: PLACE_ACTION.label(act).toUpperCase(), rotate: bombs ? 'GRAB' : act.phase === 'Repair' ? 'TURN' : '',
+                                  ready: act.phase === 'Cannons' ? 'READY' : tools ? 'TOOL' : '' });
+    }
     if (bar) {
-      const mp = this.model.player(this.mouseSlot);
       this.bar.setCompact(touch);
-      this.bar.update({
-        phase: Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase), sword: mp.sword, ready: mp.ready, bombs,
-        carrying: mp.carrying !== 0, bombsLeft: mp.bombs, score: mp.score, costs: bombs ? this.model.rules.itemCosts : null, items: mp.items,
-      });
+      this.bar.update(act);
       // a narrow touch screen: the shop row rides above the stick and the buttons; a wide one has room between them
       const low = pads.filter((r) => r.top > window.innerHeight / 2);   // the stick and the buttons (the pause and frame buttons are at the top)
       const high = touch && window.innerWidth < 700 && low.length ? window.innerHeight - Math.min(...low.map((r) => r.top)) + 8 : 0;
@@ -463,7 +520,7 @@ class Game {
     const scene = { screen: this.menu.screen, demo: this.demo, attract: this.sw.attract, phase: this.model.phase };
     this.sound.update({ music: musicFor(scene), duck: duckFor(scene) });
     this.pointerCursor();
-    const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup && !this.menu.settingsOpen;
+    const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup && !this.menu.settingsOpen && !this.menu.infoOpen;
     // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its
     // phones are read by the input hub once it is open
     const phones = this.controls.usesPhones;
@@ -478,9 +535,10 @@ class Game {
       phones: { state: this.phones.state, reason: this.phones.reason }, scoresNote: this.scoresNote, controls: this.controls.mode,
       touchControls: this.controls.showsTouch, touchFirst: this.controls.touchFirst,
       soundNote: this.sound.muted ? 'Sound off (M)' : this.sound.needsGesture ? 'Press any key for sound' : '',
-      soundError: [this.soundNote, ...this.sound.loadErrors.map((f) => 'Sound file ' + f.file + ' did not load: ' + f.why)].filter(Boolean).join(' '),
+      soundError: [this.soundNote, this.motionNote, ...this.sound.loadErrors.map((f) => 'Sound file ' + f.file + ' did not load: ' + f.why)].filter(Boolean).join(' '),
       phonesAllowed: this.controls.phonesAllowed, phonesWhy: this.controls.phonesWhy, hostLines: this.host ? this.host.footer : [],
       settingsButton: this.settingsOffered, settings: this.settingsView(),
+      infoButton: this.infoOffered, info: this.menu.infoOpen && !this.sw.attract ? { page: this.menu.infoPage } : null,
     });
   }
 

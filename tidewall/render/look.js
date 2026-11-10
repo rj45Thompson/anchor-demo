@@ -323,21 +323,8 @@ export function tuftGeometry() {
 }
 
 // ---------------------------------------------------------------- deterministic noise for the land's relief and colour
-/** Value noise on a lattice, hashed from integer coordinates and a seed: the same board always draws the same island. */
-export function makeNoise(seed) {
-  const h = (x, y) => {
-    let n = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(seed | 0, 1442695041);
-    n = Math.imul(n ^ (n >>> 13), 1274126177);
-    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
-  };
-  const s = (t) => t * t * (3 - 2 * t);
-  const v = (x, y) => {
-    const xi = Math.floor(x), yi = Math.floor(y), fx = s(x - xi), fy = s(y - yi);
-    const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
-    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
-  };
-  return (x, y) => v(x, y) * 0.6 + v(x * 2.1 + 17.3, y * 2.1 - 4.1) * 0.3 + v(x * 4.3 - 9.7, y * 4.3 + 2.9) * 0.1;
-}
+// (render/noise.js: plain JavaScript, so the coast field and its tests use the same noise without three.js)
+export { makeNoise } from './noise.js';
 
 // ---------------------------------------------------------------- the noise texture the land and sea shaders sample
 /** A tiling noise texture made in code once at start (no file): R = smooth fractal noise, G and B = its slope along x and y (0.5 =

@@ -9,7 +9,8 @@ import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GameRules, Phase, Terrain, Occupant, ShipKind, ShotFired, ShotLanded, ShipSunk, ShipDamaged, GruntKilled, WallBroken,
          CannonDamaged, LoopClosed, CastleClaimed, SwordSwung, WallsPlaced, CannonPlaced, PlacementRejected, CommandRejected, CommandKind,
-         EnclosureRules, HudViewModel } from '../core/index.js';
+         EnclosureRules, HudViewModel, RingBuilt, CastleBitten, CastleRuined, CastleRestored } from '../core/index.js';
+import { wallLandsAfter } from './board.js';
 import { uv, length, smoothstep } from 'three/tsl';
 import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry, drawAllRoom, HERO_HEIGHT } from './look.js';
 import { boneEndingWith, tintArmour, shade, rimFigure, setFlash, tintSails, outlineFigure } from './models.js';
@@ -41,6 +42,12 @@ const WAKE_STEP = 0.2;                                           // AUTHORED: sq
 // (the off-screen chevrons' red) and a wake tinted with it
 // UC-L1 (11-09): the hero is drawn 0.7 of that, HERO_HEIGHT (look.js), with a chunky dark outline (models.js outlineFigure); what it
 // holds, its ring and its blob shadow shrink with it (TOOLS_AT: the hero height the tools were sized against, round 2)
+// AUTHORED (CASTLE_DAMAGE_UC.md UC-L5): a hurt castle smokes at two thirds of its health or less and burns at a third or less; its
+// stone darkens toward SCORCH with the share it has lost; its bar is BAR_W squares wide over the flag, red at a third or less; a wisp
+// of smoke every SMOKE_EVERY seconds, a flame every FLAME_EVERY
+const CASTLE_SMOKES = 2 / 3, CASTLE_BURNS = 1 / 3, SCORCH = new THREE.Color(0.5, 0.45, 0.4), BAR_W = 2.2, BAR_H = 0.2;   // (1.6 x 0.17 read as a sliver at whole-island zoom, 11-10)
+const BAR_UP = new THREE.Vector3();   // scratch: the camera's up, for the bar's offset
+const SMOKE_EVERY = 0.35, FLAME_EVERY = 0.16, BAR_LOW = new THREE.Color(0xff3b2f);
 const GRUNT_HEIGHT = 1.35, SHIP_LENGTH = 2.3, LANDER_SCALE = 1.3, LANDER_TINT = new THREE.Color(0.62, 0.58, 0.6);
 const TOOLS_AT = 1.9, HERO_RING = 1.1, HERO_BLOB = 1.0;
 const SHIP_RIM = new THREE.Color(0xff3a1f), SAIL = [new THREE.Color(0.16, 0.17, 0.2), new THREE.Color(0.2, 0.42, 0.25)];
@@ -97,6 +104,7 @@ export class Units {
     this.scene = scene; this.board = board; this.match = match; this.models = models;
     if (!fx) throw new Error('units.js: the particle pools (fx.js Fx) are required');
     this.fx = fx; this.fxs = new Effects(fx);
+    this.dustDue = [];                       // a dropping block's dust, raised when it lands (WALL_DROP_UC.md UC-L3): { at, k, due }
     if (!Array.isArray(seats) || seats.length !== match.playerCount) throw new Error('units.js: seats must name a seat for each of the ' + match.playerCount + ' players, got ' + seats);
     this.colours = seats.map((seat) => { if (!PLAYER_COLOURS[seat]) throw new Error('units.js: no colour for seat ' + seat); return PLAYER_COLOURS[seat]; });
     this.group = new THREE.Group(); this.group.name = 'units'; scene.add(this.group);
@@ -121,6 +129,11 @@ export class Units {
     this.padMat = new THREE.MeshBasicNodeMaterial({ color: NEUTRAL_GLOW.clone().multiplyScalar(1.1), transparent: true, depthWrite: false });
     this.padMat.opacityNode = smoothstep(0.5, 0.3, length(uv().sub(0.5))).mul(0.4);
     this.pipEmpty = fade(new THREE.Color(0x333333), 0.6);
+    // a hurt castle's health bar (UC-L5): a dark back and a fill that grows from its left end, drawn over everything round it
+    this.barBackMat = new THREE.MeshBasicNodeMaterial({ color: 0x1c1410, depthTest: false, depthWrite: false, transparent: true, opacity: 0.85, fog: false });
+    this.geo.barBack = new THREE.PlaneGeometry(BAR_W + 0.08, BAR_H + 0.08);
+    this.geo.barFill = new THREE.PlaneGeometry(1, BAR_H).translate(0.5, 0, 0);
+    this.camera = null;                                              // the renderer's camera: the bars face it (renderer.js buildLevel)
     this.castles = new Map(); this.cannons = new Map(); this.ships = new Map(); this.grunts = new Map(); this.shots = new Map();
     this.heroes = []; this.ghosts = [];
     this.badOutline = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0xff1010), depthTest: false, depthWrite: false, transparent: true, opacity: 0.95 });
@@ -152,9 +165,18 @@ export class Units {
       ring.position.y = 0.05; ring.visible = false; g.add(ring);
       const pad = new THREE.Mesh(this.geo.disc, this.padMat); pad.scale.setScalar((Math.max(fw, fd) + CASTLE_MARGIN) * 1.5); pad.position.y = 0.035;
       pad.renderOrder = 1; pad.visible = false; g.add(pad);
+      // UC-L5: the castle's own stone (shade() made it its own materials) and the colour each had, to scorch them as it is hurt
+      const stone = [];
+      body.traverse((o) => { if (o.isMesh && !stone.some((s) => s.m === o.material)) stone.push({ m: o.material, base: o.material.color.clone() }); });
+      const bar = new THREE.Group(); bar.position.set(0, top + 2.1, 0); bar.visible = false;   // above the flag: at top + 1.25 the close REPAIR camera drew it across the roof (11-10) bar.renderOrder = 5;
+      const back = new THREE.Mesh(this.geo.barBack, this.barBackMat); back.renderOrder = 5; bar.add(back);
+      const fillMat = new THREE.MeshBasicNodeMaterial({ color: 0xffffff, depthTest: false, depthWrite: false, transparent: true, fog: false });
+      const fill = new THREE.Mesh(this.geo.barFill, fillMat); fill.position.set(-BAR_W / 2, 0, 0.001); fill.renderOrder = 6; bar.add(fill);
+      g.add(bar);
       this.group.add(g);
       this.castles.set(k.id, { castle: k, g, body, pole, flag, ring, pad, cells: k.cells, half: (Math.max(fw, fd) + CASTLE_MARGIN) / 2,
-                               flagTop: top + 0.56, flagLow: top + 0.08, raise: 0, secured: false });
+                               flagTop: top + 0.56, flagLow: top + 0.08, raise: 0, secured: false,
+                               top, stone, bar, fill, fillMat, health: -1, stage: 0, pulse: 0, smokeT: 0, flameT: 0 });
     }
   }
 
@@ -190,7 +212,48 @@ export class Units {
       e.ring.material = own.slot >= 0 && (own.home || e.secured) ? this.glowP[own.slot] : this.glowNeutral;
       e.ring.scale.setScalar(e.secured ? 1 + 0.05 * Math.sin(seconds * 3 + e.castle.id) : 1);
       e.pad.visible = free && !ruined;
+      this.castleDamage(e, own, ruined, dt);
     }
+  }
+
+  /** UC-L5: how hurt castle e is, from the model (match.castleHealthOf): its bar, its stage (0 whole, 1 smoking, 2 burning), its
+   *  scorched stone and its smoke and fire. Nothing shows at full health or once it is ruined (the board draws its graveyard). */
+  castleDamage(e, own, ruined, dt) {
+    const max = this.match.rules.castleHealth, h = ruined ? 0 : this.match.castleHealthOf(e.castle.id), r = h / max;
+    const hurt = !ruined && h < max;
+    const stage = !hurt ? 0 : r <= CASTLE_BURNS ? 2 : r <= CASTLE_SMOKES ? 1 : 0;
+    if (h !== e.health) {
+      e.health = h;
+      const d = hurt ? 1 - r : 0;                                     // the stone darkens with the share it has lost
+      for (const s of e.stone) s.m.color.copy(s.base).lerp(s.base.clone().multiply(SCORCH), d);
+    }
+    e.stage = stage;
+    e.bar.visible = hurt;
+    if (hurt) {
+      e.fill.scale.set(Math.max(0.001, BAR_W * r), 1, 1);
+      e.fillMat.color.copy(r <= CASTLE_BURNS ? BAR_LOW : own.slot >= 0 ? this.colours[own.slot] : NEUTRAL_GLOW);
+      e.pulse = Math.max(0, e.pulse - dt * 3);
+      e.bar.scale.setScalar(1 + 0.25 * e.pulse);
+      if (this.camera) {
+        // facing the camera, and past the castle up the SCREEN (along the camera's up), so at any pitch it stands clear of the roof:
+        // 11-10, raised only in height, the near top-down REPAIR camera still drew it across the castle's back wall
+        e.bar.quaternion.copy(this.camera.quaternion);
+        BAR_UP.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
+        e.bar.position.set(0, e.top * 0.5, 0).addScaledVector(BAR_UP, e.half + 0.3);
+      }
+    }
+    if (stage >= 1) {
+      const at = (y) => new THREE.Vector3(e.g.position.x + (this.fxs.rnd() - 0.5) * e.half, e.g.position.y + y, e.g.position.z + (this.fxs.rnd() - 0.5) * e.half);
+      e.smokeT += dt;
+      while (e.smokeT > SMOKE_EVERY) { e.smokeT -= SMOKE_EVERY; this.fxs.smokeWisp(at(e.top * 0.8), stage === 2 ? 1.25 : 0.9); }
+      if (stage === 2) { e.flameT += dt; while (e.flameT > FLAME_EVERY) { e.flameT -= FLAME_EVERY; this.fxs.flame(at(e.top * 0.55), 0.8); } }
+    } else { e.smokeT = 0; e.flameT = 0; }
+  }
+
+  /** UC-L5 (the page check reads it): what castle `id` shows of its health: { bar, health, stage, body }. */
+  castleDamageShown(id) {
+    const e = this.castles.get(id);
+    return e ? { bar: e.bar.visible, health: e.bar.visible ? e.health : null, stage: e.stage, body: e.body.visible } : null;
   }
 
   // ------------------------------------------------------------------ cannons
@@ -699,7 +762,19 @@ export class Units {
       }
       else if (e instanceof GruntKilled) { this.fxs.dust(cellAt(e.at, 0), 0.8, new THREE.Color(0.62, 0.58, 0.68)); }
       else if (e instanceof CannonDamaged) { const c = this.cannons.get(e.cannonId); if (c) this.fxs.explosion(c.g.position.clone().add(new THREE.Vector3(0, 0.5, 0)), C.iron, 0.7); }
-      else if (e instanceof WallsPlaced) { for (const c of e.cells) this.fxs.dust(cellAt(c, 0), 0.75); }
+      else if (e instanceof CastleBitten || e instanceof CastleRuined || e instanceof CastleRestored) {   // UC-L5
+        const k = this.castles.get(e.castleId);
+        if (k) {
+          const at = k.g.position.clone().add(new THREE.Vector3(0, k.top * 0.5, 0)), foot = k.g.position.clone();
+          if (e instanceof CastleBitten) { this.fxs.chunks(at, C.stone, 4, 0.7); this.fxs.dust(foot, 0.7); k.pulse = 1; }
+          else if (e instanceof CastleRuined) { this.fxs.explosion(at, C.stone, 1.4); this.fxs.chunks(at, C.stone, 12, 1.3); this.fxs.dust(foot, 2.2); }
+          else for (let i = 0; i < 8; i++) this.fxs.sparkle(at.clone().add(new THREE.Vector3(Math.cos(i * 0.785) * k.half, 0, Math.sin(i * 0.785) * k.half)), NEUTRAL_GLOW, i * 0.04);
+        }
+      }
+      else if (e instanceof WallsPlaced || e instanceof RingBuilt) {   // the dust waits for each block to land (board.js WALL_DROP)
+        const n = e.cells.length, k = e instanceof WallsPlaced ? 0.75 : 0.55;
+        e.cells.forEach((c, i) => this.dustDue.push({ at: cellAt(c, 0), k, due: this.clock + wallLandsAfter(i, n) }));
+      }
       else if (e instanceof CannonPlaced) { this.fxs.dust(new THREE.Vector3(e.topLeft.x + 1, this.board.groundAt(e.topLeft.x, e.topLeft.y), e.topLeft.y + 1), 1.6); }
       else if (e instanceof LoopClosed) {
         const k = this.castles.get(e.castleId);
@@ -736,6 +811,11 @@ export class Units {
 
   update(view, dt, seconds) {
     this.clock = seconds;
+    if (this.dustDue.length) {
+      const left = [];
+      for (const d of this.dustDue) { if (d.due <= seconds) this.fxs.dust(d.at, d.k); else left.push(d); }
+      this.dustDue = left;
+    }
     const alpha = view.alpha ?? 0;
     this.updateCastles(seconds, dt);
     this.updateCannons(view, dt);

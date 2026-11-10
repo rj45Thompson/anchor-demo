@@ -5,12 +5,15 @@
 //   {"muted":false,"music":1,"fx":1,"ambience":1}   (key order and numbers exactly as before; a volume is its percent / 100)
 // A stored volume that is not a whole percent is refused as unreadable (nothing in the game writes one), never rounded.
 // The graphics quality is shown and changed here but not stored (the page starts on high, or ?quality=low), as before.
+// MOTION (SETTINGS_UC.md UC-ST2, 11-10): 'full' or 'reduced' (no camera shake, a dimmer capture flash). The page stores it under its
+// own key as the bare word (parseMotion reads it back) and, with nothing stored, starts from the system's prefers-reduced-motion.
 
 export class SettingsError extends Error {
   constructor(why) { super(why); this.name = 'SettingsError'; }
 }
 
 const QUALITIES = Object.freeze(['high', 'low']);
+const MOTIONS = Object.freeze(['full', 'reduced']);
 
 function percent(name, v) {
   if (!Number.isInteger(v) || v < 0 || v > SettingsModel.Max) throw new SettingsError(name + ' is ' + v + ', want a whole percent from 0 to ' + SettingsModel.Max);
@@ -22,25 +25,35 @@ export class SettingsModel {
   static Max = 100;
   static Volumes = Object.freeze(['music', 'fx', 'ambience']);
 
-  /** { music, fx, ambience: whole percents 0..100, muted: boolean, quality: 'high' | 'low' }; every field is required. */
+  /** { music, fx, ambience: whole percents 0..100, muted: boolean, quality: 'high' | 'low' }; every field is required. motion:
+   *  'full' | 'reduced', or left out for 'full' (the game as it was before the setting existed; the page always passes the motion it
+   *  resolved, UC-ST2 step 1). */
   constructor(v) {
     if (v === null || typeof v !== 'object') throw new SettingsError('SettingsModel needs { music, fx, ambience, muted, quality }');
     for (const k of SettingsModel.Volumes) this[k] = percent(k, v[k]);
     if (typeof v.muted !== 'boolean') throw new SettingsError('muted is ' + v.muted + ', want true or false');
     if (!QUALITIES.includes(v.quality)) throw new SettingsError('quality is ' + v.quality + ', want high or low');
     this.muted = v.muted; this.quality = v.quality;
+    if (v.motion !== undefined && !MOTIONS.includes(v.motion)) throw new SettingsError('motion is ' + v.motion + ', want full or reduced');
+    this.motion = v.motion === undefined ? 'full' : v.motion;
+  }
+
+  /** The stored motion setting (the bare word the page saved). Throws SettingsError on anything else (UC-ST2 alternate 1a). */
+  static parseMotion(text) {
+    if (!MOTIONS.includes(text)) throw new SettingsError('motion is ' + JSON.stringify(String(text).slice(0, 40)) + ', want full or reduced');
+    return text;
   }
 
   /** The settings a first visit plays with: every volume full, sound on, the quality the page started with. */
-  static defaults(quality) { return new SettingsModel({ music: SettingsModel.Max, fx: SettingsModel.Max, ambience: SettingsModel.Max, muted: false, quality }); }
+  static defaults(quality, motion) { return new SettingsModel({ music: SettingsModel.Max, fx: SettingsModel.Max, ambience: SettingsModel.Max, muted: false, quality, motion }); }
 
   /** Reads the stored sound settings (the text save() wrote). Throws SettingsError saying what is wrong; never half-reads. */
-  static parse(text, quality) {
+  static parse(text, quality, motion) {
     let v;
     try { v = JSON.parse(text); } catch (e) { throw new SettingsError('not JSON: ' + e.message); }
     if (v === null || typeof v !== 'object' || Array.isArray(v)) throw new SettingsError('not an object');
     if (typeof v.muted !== 'boolean') throw new SettingsError('muted is ' + v.muted + ', want true or false');
-    const out = { muted: v.muted, quality };
+    const out = { muted: v.muted, quality, motion };
     for (const k of SettingsModel.Volumes) {
       const x = v[k];
       if (typeof x !== 'number' || !(x >= 0 && x <= 1)) throw new SettingsError(k + ' is ' + x + ', want a volume from 0 to 1');
@@ -77,4 +90,6 @@ export class SettingsModel {
 
   toggleMute() { this.muted = !this.muted; return this.muted; }
   toggleQuality() { this.quality = this.quality === 'high' ? 'low' : 'high'; return this.quality; }
+  toggleMotion() { this.motion = this.motion === 'full' ? 'reduced' : 'full'; return this.motion; }
+  get reducedMotion() { return this.motion === 'reduced'; }
 }

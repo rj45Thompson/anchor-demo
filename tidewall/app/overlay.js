@@ -1,7 +1,8 @@
 // overlay.js - the page's own notes over the WebGPU canvas, for what only the page knows. The renderer draws the HUD and every menu
 // screen from the ported HudViewModel and MenuModel; this layer adds what is not in the model: which devices sit in each seat on the
-// join screen, whether phones can join (and why not, use case 2b), the keys, whether the browser is holding the sound back, and on
-// the title the credits the CC-BY models ask for (app/credits.js). It only READS; it decides nothing. The page is rebuilt only when
+// join screen, whether phones can join (and why not, use case 2b), the keys, whether the browser is holding the sound back, and the
+// controls & credits panel (TITLE_UC.md UC-T1) with the credits the CC-BY models ask for (app/credits.js). The title's foot is one
+// line, so it never stands over the subtitle. It only READS; it decides nothing. The page is rebuilt only when
 // what it shows changed.
 import { MODEL_CREDITS, CC_BY_4, OWN_MODELS, SOUND_CREDITS, CC0 } from './credits.js';
 
@@ -25,6 +26,12 @@ const HOWTO_ROWS = Object.freeze({
   touch: 'Stick move, A place / fire / bomb, B grab bomb (hold: defuse), Y tool / ready; pinch to zoom',
   phone: 'Scan the code, A joins; A place / fire / bomb, B grab bomb (hold: defuse), Y tool / ready',
 });
+
+/** The name each how-to row goes under on the controls page. */
+const HOWTO_LABEL = Object.freeze({ keys: 'Keyboard', mouse: 'Mouse', touch: 'Touch', phone: 'Phones' });
+
+/** The controls & credits panel's pages, in the order of MenuModel.InfoPages (checked in Overlay's constructor). */
+const INFO_PAGES = Object.freeze(['CONTROLS', 'CREDITS']);
 
 /** The devices the how-to card explains for a CONTROLS mode on this device (touchFirst: a phone or tablet, controls.js). */
 export function howtoDevices(mode, touchFirst) {
@@ -89,9 +96,11 @@ export class Overlay {
    * @param colours   the players' CSS colours by seat (the renderer's palette: one source)
    * @param Screen    the ported MenuModel's Screen enum
    * @param keyHelp   one line per keyboard cluster
+   * @param infoPages the menu's controls & credits pages (MenuModel.InfoPages), checked against the ones drawn here
    */
-  constructor(root, colours, Screen, keyHelp) {
+  constructor(root, colours, Screen, keyHelp, infoPages) {
     this.root = root; this.colours = colours; this.Screen = Screen; this.keyHelp = keyHelp;
+    if (!Array.isArray(infoPages) || infoPages.join() !== INFO_PAGES.join()) throw new Error('overlay.js: the info pages ' + INFO_PAGES.join() + ' are not the menu pages ' + infoPages);
     this.last = '';
   }
 
@@ -99,7 +108,8 @@ export class Overlay {
    *  soundNote, soundError (a sound file that did not load, or unreadable sound settings: on the title footer), scoresNote,
    *  phonesAllowed, phonesWhy (the page's host may not allow phones: app/host.js), hostLines [{ id, text, bad }] (the host's lines on
    *  the title footer), settingsButton (the SETTINGS button is offered), settings (the open settings panel: { row, rows: [{ label,
-   *  value, level (a volume's percent, else null) }] }, or null) } */
+   *  value, level (a volume's percent, else null) }] }, or null), infoButton (the CONTROLS & CREDITS button is offered), info (the
+   *  open controls & credits panel: { page }, or null) } */
   render(s) {
     const html = this.build(s);
     if (html !== this.last) { this.last = html; this.root.innerHTML = html; }
@@ -113,17 +123,19 @@ export class Overlay {
     const parts = [];
     // the settings panel (SETTINGS_UC.md UC-ST1) stands alone over the dimmed menu: the join screen's foot and how-to card, the title's
     // foot and the scores' note wait under it
+    const panel = s.settings || s.info;
     if (s.settings) parts.push(this.settingsPanel(s.settings, s.touchFirst));
-    if (!s.settings && !s.attract && s.screen === S.Setup) parts.push(this.seats(s), this.howto(s));
-    if (!s.settings && !s.attract && s.screen === S.Title && !s.inDemo) parts.push('<div class="keys foot">' + this.keyHelp.map(esc).join('<br>') + '<br>' + (s.phonesAllowed ? 'Gamepads and phones' : 'Gamepads') + ': stick or d-pad move, A place/fire, B rotate/back, Y ready, X held fast, START pause'
-      + '<div class="credits">Models: ' + MODEL_CREDITS.map((c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author)).join('; ')
-      + ' (<a href="' + CC_BY_4 + '" target="_blank" rel="noopener">CC BY 4.0</a>, from Sketchfab). ' + esc(OWN_MODELS)
-      + '<br>Sounds: ' + SOUND_CREDITS.map((c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author)).join('; ')
-      + ' (<a href="' + CC0 + '" target="_blank" rel="noopener">CC0</a>).</div>'
+    if (s.info) parts.push(this.infoPanel(s.info.page, s));
+    if (!panel && !s.attract && s.screen === S.Setup) parts.push(this.seats(s), this.howto(s));
+    // the title's foot: one line (UC-T1 step 2), then a sound error and the host's lines; the keys and the credits are in the panel
+    if (!panel && !s.attract && s.screen === S.Title && !s.inDemo) parts.push('<div class="keys foot"><div class="brief">'
+      + esc(s.touchFirst ? 'Tap to start. CONTROLS & CREDITS (top left) explains every control.'
+        : 'Keyboard, mouse' + (s.phonesAllowed ? ', gamepads and phones' : ' and gamepads') + '. H or X: controls and credits.') + '</div>'
       + (s.soundError ? '<div class="note sounderr">' + esc(s.soundError) + '</div>' : '')
       + s.hostLines.map((l) => '<div class="hostline' + (l.bad ? ' bad' : '') + '" data-host-line="' + esc(l.id) + '">' + esc(l.text) + '</div>').join('') + '</div>');
     if (!s.settings && s.screen === S.HighScores && s.scoresNote) parts.push('<div class="note foot">' + esc(s.scoresNote) + '</div>');
     if (s.settingsButton) parts.push('<button class="setopen" data-settings="open" aria-label="Settings">SETTINGS<span class="sk">E / Y</span></button>');
+    if (s.infoButton) parts.push('<button class="setopen infoopen" data-info="open" aria-label="Controls and credits">CONTROLS &amp; CREDITS<span class="sk">H / X</span></button>');
     if (s.soundNote) parts.push('<div class="corner">' + esc(s.soundNote) + '</div>');
     return parts.join('');
   }
@@ -144,6 +156,29 @@ export class Overlay {
     return '<div class="setdim"></div><div class="settings" role="dialog" aria-label="Settings"><div class="sbody"><div class="shead">SETTINGS</div>' + rows
       + '<div class="shelp">' + (touch ? 'Tap a row to change it, or its arrows; BACK closes' : 'Up / down choose, left / right change, B or Backspace goes back')
       + '</div></div></div>';
+  }
+
+  /** The controls & credits panel (UC-T1 steps 3-5): the settings panel's wooden board, two page tabs, the page, and CLOSE. Unlike
+   *  the settings rows it takes the pointer itself (style.css .info): the credits are links, and a click on the dim around it closes
+   *  it (main.js reads the data-info of what was clicked). */
+  infoPanel(page, s) {
+    const tabs = INFO_PAGES.map((t, i) => '<span class="itab' + (i === page ? ' sel' : '') + '" data-info="page:' + i + '">' + esc(t) + '</span>').join('');
+    let body;
+    if (page === 0) {
+      const lines = [...this.keyHelp, (s.phonesAllowed ? 'Gamepads and phones' : 'Gamepads') + ': stick or d-pad move, A place/fire, B rotate/back, Y ready, X held fast, START pause',
+        // the how-to rows past the keys (both clusters are listed in full above): the mouse or touch, and phones where they can join
+        ...howtoDevices(s.phonesAllowed ? 'both' : 'local', s.touchFirst).filter((k) => k !== 'keys').map((k) => HOWTO_LABEL[k] + ': ' + HOWTO_ROWS[k])];
+      body = lines.map((l) => '<div class="iline">' + esc(l) + '</div>').join('');
+    } else {
+      const link = (c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author);
+      body = '<div class="ihead">MODELS</div>' + MODEL_CREDITS.map((c) => '<div class="iline" data-credit="model">' + link(c) + ' (<a href="' + CC_BY_4 + '" target="_blank" rel="noopener">' + esc(c.licence) + '</a>, Sketchfab)</div>').join('')
+        + '<div class="iline">' + esc(OWN_MODELS) + '</div>'
+        + '<div class="ihead">SOUNDS</div>' + SOUND_CREDITS.map((c) => '<div class="iline" data-credit="sound">' + link(c) + ' (<a href="' + CC0 + '" target="_blank" rel="noopener">CC0</a>)</div>').join('');
+    }
+    return '<div class="setdim idim" data-info="close" data-nogame="1"></div><div class="settings info" data-nogame="1" role="dialog" aria-label="Controls and credits"><div class="sbody">'
+      + '<div class="itabs">' + tabs + '</div><div class="ipage" data-page="' + esc(INFO_PAGES[page]) + '">' + body + '</div>'
+      + '<div class="shelp">' + (s.touchFirst ? 'Tap a tab to turn the page; CLOSE or tap outside to go back' : 'Left / right turn the page; B, Backspace, Enter or H closes')
+      + ' <span class="iclose" data-info="close">CLOSE</span></div></div></div>';
   }
 
   /** The settings row or arrow under a point (client CSS px), from the boxes drawn last frame: { kind: 'step', row, dir },

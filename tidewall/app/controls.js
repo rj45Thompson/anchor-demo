@@ -111,13 +111,20 @@ export class TouchPad {
     if (!on) { this.stickX = 0; this.stickY = 0; }
   }
 
-  /** The bomb rule set on or off: the buttons are captioned with what they do now (A drops or throws, B grabs, Y swaps the tool). */
+  /** The bomb rule set on or off (B grabs a bomb while it is on). */
   setBombs(on) {
     if (on === this.bombs) return;
     this.bombs = on;
-    const caps = on ? { confirm: 'DROP', rotate: 'GRAB', ready: 'TOOL' } : {};
-    for (const b of this.el.querySelectorAll('.tb')) { const c = caps[b.dataset.b]; if (c) b.dataset.cap = c; else delete b.dataset.cap; }
     if (!on) this.grabbing = false;
+  }
+
+  /** Each button captioned with what it does NOW: caps = { confirm, rotate, ready }, '' for no caption (main.js works them out from
+   *  the phase and the tool in hand, the action bar's own labels: 11-10, A said DROP in BATTLE with the cannon in hand). */
+  setCaptions(caps) {
+    const key = caps.confirm + '|' + caps.rotate + '|' + caps.ready;
+    if (key === this.capsKey) return;
+    this.capsKey = key;
+    for (const b of this.el.querySelectorAll('.tb')) { const c = caps[b.dataset.b]; if (c) b.dataset.cap = c; else delete b.dataset.cap; }
   }
 
   /** The shop button shown or not (REPAIR in the bomb rule set), and whether the shop is open. */

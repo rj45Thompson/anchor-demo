@@ -49,6 +49,7 @@ export class SeatLatch {
     // press shorter than a tick still counts); tap is B let go, buy is an ItemKind or -1
     this.grabAny = false; this.defuseAny = false; this.tap = false; this.drop = false; this.pickUp = false; this.trap = false; this.buy = -1;
     this.up = false; this.down = false; this.left = false; this.right = false; this.back = false; this.start = false;
+    this.info = false;   // H or a pad's X: the controls & credits panel on the title and the join screen (TITLE_UC.md UC-T1 step 3)
   }
 }
 
@@ -212,6 +213,7 @@ export class InputHub {
       }
       L.confirm ||= hit(c.confirm); L.rotate ||= hit(c.rotate); L.back ||= hit(c.back); L.swap ||= hit(c.swap); L.ready ||= hit(readyKeys); L.start ||= hit(c.start);
       fast[s] ||= held(c.fast);
+      if (s === 0) L.info ||= hit(['KeyH']);                         // no cluster uses H: it is player 1's, like the mouse
       if (hit(c.confirm) || hit(c.rotate) || hit(c.swap) || hit(readyKeys) || hit(c.start)) this.touched[s] = true;
       if ([c.up, c.down, c.left, c.right, c.confirm, c.rotate, c.back, c.swap, readyKeys, c.start].some(hit)) this.keysUsed[s] = true;
       this.devices[s].keysUsed = this.keysUsed[s]; this.devices[s].mouseUsed = s === 0 && this.mouseUsed;
@@ -266,6 +268,7 @@ export class InputHub {
       L.confirm ||= edge(PAD.A); L.back ||= edge(PAD.B);
       L.ready ||= edge(PAD.Y); L.swap ||= edge(PAD.Y); L.start ||= edge(PAD.START);
       fast[seat] ||= !!now[PAD.X];
+      L.info ||= edge(PAD.X);                                         // X is held for fast in a match; at the menus a press is info
       if (now.some((p, k) => p && !prev[k])) { this.touched[seat] = true; this.anyKey = true; }
       this.prevButtons.set(key, now);
     }
@@ -304,6 +307,7 @@ export class InputHub {
         pad: { stickX: L.stickX, stickY: L.stickY, confirm: L.confirm, rotate: L.rotate, ready: L.ready, swap: L.swap, fast: L.fast,
                grab: L.grab || L.grabAny, defuse: L.defuse || L.defuseAny, tap: L.tap, drop: L.drop, pickUp: L.pickUp, trap: L.trap, buy: L.buy },
         menu: { up: L.up, down: L.down, left: L.left, right: L.right, confirm: L.confirm, back: L.back, start: L.start },
+        info: L.info,
       });
       L.clear();
     }

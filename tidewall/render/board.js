@@ -9,15 +9,16 @@ import { texture, uniform, vertexColor, positionWorld, positionLocal, vec2, vec3
          normalize, dot, reflect, pow, cameraPosition, transformNormalToView, mrt, cos, positionGeometry,
          instancedBufferAttribute, instanceIndex, uv, oneMinus } from 'three/tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { CoastField, LATTICE_SUB, COAST_RANGE } from './coast.js';
 import { Terrain, Occupant, EnclosureRules, PieceMap, WallOutline, WallsPlaced, RingBuilt, ShotLanded } from '../core/index.js';
 import { C, SKY, NEUTRAL_WALL, mats, glowing, wallStoneGeometry, wallCapGeometry, wallSteelGeometry, wallSteelCapGeometry, STEEL, tuftGeometry, TUFT_H, makeNoiseTexture, NOISE_SLOPE, makeNoise, InstancedBatch, PropSet, pitGeometry, rubbleGeometry, graveGeometry,
          wallTrimGeometry, wallShadowGeometry, pennantPoleGeometry, pennantFlagGeometry, PENNANT_FLAG } from './look.js';
 
 export const MARGIN = 12;              // AUTHORED: squares of sea drawn round the board, so the island never sits on a hard edge
-const SUB = 4;                         // AUTHORED: land vertices per square (the coast is smooth, not stepped)
+const SUB = LATTICE_SUB;               // land vertices per square (render/coast.js: the coast field's lattice)
 const TUFTS_PER_SQUARE = 3;            // AUTHORED: grass tufts on each open grass square
 const TUFT_CAP = 76 * 56 * TUFTS_PER_SQUARE;   // the largest generated map (app/maps.js SIZE_CLASSES.large: up to 76 x 56) full of grass
-const SDF_RANGE = 8;                   // the distance texture holds -8..+8 squares
+const SDF_RANGE = COAST_RANGE;         // the distance texture holds -8..+8 squares (render/coast.js)
 const WALL_H = 0.5, WALL_W = 0.9;      // AUTHORED: a wall block, in squares
 // AUTHORED (UC-L1): how much of the owner's colour the light coping takes (the cloth and the pennants carry the rest; seen from the
 // near top-down REPAIR camera the coping is most of what shows of a wall), a pennant for about every PENNANT_EVERY squares of an
@@ -31,6 +32,12 @@ const WALL_JITTER = 0.04, CAP_OWNER = 0.18, PENNANT_EVERY = 5, PENNANT_INSET = 0
 const SCORCH_SECONDS = 9, SCORCH_UPLOAD = 0.1;
 const FLASH_SECONDS = 1.4;             // AUTHORED: how long a square glows after the capture sweep's front passed it
 const SWEEP_SPEED = 9;                 // AUTHORED: squares per second the capture glow runs out from the castle
+// AUTHORED (AAA gap 8, WALL_DROP_UC.md UC-L3): a placed block drops in from `height` squares above its square in `seconds`, falling
+// faster as it goes, then squashes a little as it lands (`squash` of its height, over `squashSeconds`). A piece's blocks (and a
+// castle's first ring) land one after another, `stagger` seconds apart but never longer than `spread` for the whole set.
+export const WALL_DROP = Object.freeze({ height: 0.9, seconds: 0.2, squash: 0.14, squashSeconds: 0.12, stagger: 0.035, spread: 0.6 });
+/** Seconds after the event that block k of n lands (the dust is raised then: render/units.js). */
+export const wallLandsAfter = (k, n) => WALL_DROP.seconds + k * Math.min(WALL_DROP.stagger, WALL_DROP.spread / Math.max(1, n));
 // AUTHORED: the direction the sea's glints come from. The sun is behind the camera's left shoulder (its shadows fall away from the
 // camera), so its own mirror image is never on screen; the glints use a light low over the far (north) horizon instead, the way a
 // painted sea sparkles toward the viewer.
@@ -44,8 +51,12 @@ const wet = (t) => t === Terrain.Water || t === Terrain.Lake;
  *  first second of play and swallowed the page check's key and pad presses). The textures they hold before the first level binds
  *  its own are 1x1 and never drawn: no board is in the scene until a level has bound. */
 export class BoardLook {
-  constructor() {
+  /** @param mood render/mood.js Mood: the level's light (the sea reflects its sky) */
+  constructor(mood) {
+    if (!mood || !mood.seaHorizon) throw new Error('board.js: BoardLook needs the Mood (render/mood.js)');
+    this.mood = mood;
     this.uTime = uniform(0); this.uGrid = uniform(0); this.uWaterDetail = uniform(1); this.uSize = uniform(new THREE.Vector2(1, 1));
+    this.uFlash = uniform(1);            // how bright a captured territory flashes: 1, or REDUCED_FLASH under reduced motion (UC-ST2)
     const unbound = () => { const t = new THREE.DataTexture(new Uint8Array(4), 1, 1); t.needsUpdate = true; return t; };
     this.noiseTex = makeNoiseTexture();
     this.fillNode = texture(unbound()); this.flashNode = texture(unbound()); this.sdfNode = texture(unbound());
@@ -157,7 +168,7 @@ export class BoardLook {
     const line = smoothstep(0.045, 0.0, edge).mul(this.uGrid).mul(inBoard).mul(smoothstep(0.03, 0.1, positionWorld.y));
     const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.85, metalness: 0, flatShading: false });
     m.colorNode = tint.mul(float(1).sub(line.mul(0.28)));
-    m.emissiveNode = fill.rgb.mul(fl.r).mul(inBoard).mul(2.2).add(this.scorchEmbers);
+    m.emissiveNode = fill.rgb.mul(fl.r).mul(inBoard).mul(2.2).mul(this.uFlash).add(this.scorchEmbers);
     return m;
   }
 
@@ -202,7 +213,7 @@ export class BoardLook {
     const ndv = max(dot(N, V), 0);
     const fres = pow(float(1).sub(ndv), 3).mul(0.75).add(0.06);
     const R = reflect(V.negate(), N);
-    const sky = mix(vec3(SKY.horizon.r, SKY.horizon.g, SKY.horizon.b), vec3(SKY.zenith.r, SKY.zenith.g, SKY.zenith.b), smoothstep(0.05, 0.7, R.y));
+    const sky = mix(this.mood.seaHorizon, this.mood.seaZenith, smoothstep(0.05, 0.7, R.y));     // the level's sky (render/mood.js)
     // sparkle: the sun's glint on wave facets, broken into twinkling points; it glows (it is written to the bloom's target)
     const L = GLINT;
     const glint = pow(max(dot(R, vec3(L.x, L.y, L.z)), 0), 600);
@@ -238,6 +249,8 @@ export class Board {
     this.flashAt = new Float32Array(n).fill(-1e9);   // when the capture sweep's front reached each square (board clock, s)
     this.now = 0;
     this.territory = null;
+    this.dropAt = new Float64Array(this.w * this.h).fill(-1e9);   // when each square's block started to fall (seconds; page clock)
+    this.dropUntil = -1;                                            // the last block of the newest drop has settled by then
     this.buildField();
     this.buildLand();
     this.buildSea();
@@ -248,44 +261,19 @@ export class Board {
   }
 
   // ------------------------------------------------------------------ the shape of the island
-  /** Signed distance to the coast in squares (+ on land, - at sea), from the board's squares, with a little noise so the coast is
-   *  not stepped. The noise is at most a quarter square, so a land square's centre is always on land and a sea square's at sea. */
+  /** Signed distance to the coast in squares (+ on land, - at sea): render/coast.js CoastField (COAST_UC.md UC-L2), smoothed so the
+   *  coast is a shore and not a staircase of squares, and checked so every square's centre is drawn on its own side (it throws on a
+   *  board that would break that). sdf(px, pz) reads it anywhere; the lattice is the land mesh's vertices and the sea's texture. */
   buildField() {
     const { w, h, grid } = this;
     const land = new Uint8Array(w * h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) land[y * w + x] = wet(grid.terrainAt(x, y)) ? 0 : 1;
     this.land = land;
-    const isLand = (x, y) => x >= 0 && y >= 0 && x < w && y < h && land[y * w + x] === 1;
-    // the squares on either side of the coast: only they can be the nearest of the other kind
-    const coastLand = [], coastSea = [];
-    for (let y = -1; y <= h; y++) for (let x = -1; x <= w; x++) {
-      const me = isLand(x, y);
-      let edge = false;
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) if (isLand(x + dx, y + dy) !== me) edge = true;
-      if (edge) (me ? coastLand : coastSea).push([x, y]);
-    }
-    const boxDist = (px, pz, list) => {
-      let best = 1e9;
-      for (const [x, y] of list) {
-        const dx = Math.max(Math.abs(px - (x + 0.5)) - 0.5, 0), dz = Math.max(Math.abs(pz - (y + 0.5)) - 0.5, 0);
-        const d = dx * dx + dz * dz; if (d < best) best = d;
-      }
-      return Math.sqrt(best);
-    };
-    this.sdf = (px, pz) => {
-      const x = Math.floor(px), y = Math.floor(pz);
-      const raw = isLand(x, y) ? boxDist(px, pz, coastSea) : -boxDist(px, pz, coastLand);
-      if (coastLand.length === 0) return -SDF_RANGE;
-      return raw + (this.noise(px * 0.45, pz * 0.45) - 0.5) * 0.45;
-    };
-    // the lattice the land mesh and the sea's distance texture share
-    const M = MARGIN, lw = (w + 2 * M) * SUB + 1, lh = (h + 2 * M) * SUB + 1;
-    const field = new Float32Array(lw * lh);
-    for (let j = 0; j < lh; j++) for (let i = 0; i < lw; i++) {
-      const px = -M + i / SUB, pz = -M + j / SUB;
-      field[j * lw + i] = coastLand.length === 0 ? -SDF_RANGE : this.sdf(px, pz);
-    }
-    this.lattice = { lw, lh, field };
+    const coast = new CoastField(land, w, h, { margin: MARGIN, sub: SUB, range: SDF_RANGE, noise: this.noise });
+    coast.check(land);
+    this.coast = coast;
+    this.sdf = (px, pz) => coast.at(px, pz);
+    this.lattice = { lw: coast.lw, lh: coast.lh, field: coast.field };
   }
 
   /** The land's height at a point (squares; the sea is y = 0). */
@@ -402,7 +390,13 @@ export class Board {
   /** Feed the events the view was handed, in order: the piece map needs every placed piece and every built ring. */
   events(list, seconds) {
     for (const e of list) {
-      if (e instanceof WallsPlaced || e instanceof RingBuilt) this.pieces.shown(e);
+      if (e instanceof WallsPlaced || e instanceof RingBuilt) {
+        this.pieces.shown(e);
+        // the blocks drop in (UC-L3): each starts its fall so that it lands at wallLandsAfter(k, n)
+        const n = e.cells.length;
+        e.cells.forEach((c, k) => { if (this.grid.in(c.x, c.y)) this.dropAt[c.y * this.w + c.x] = this.now + wallLandsAfter(k, n) - WALL_DROP.seconds; });
+        this.dropUntil = Math.max(this.dropUntil, this.now + wallLandsAfter(n - 1, n) + WALL_DROP.squashSeconds);
+      }
       else if (e instanceof ShotLanded) {                               // a ball on the land leaves a scorch (the sea takes it whole)
         const { x, y } = e.target;
         if (this.grid.in(x, y) && this.grid.terrainAt(x, y) !== Terrain.Water && this.grid.terrainAt(x, y) !== Terrain.Lake) this.scorch[y * this.w + x] = 1;
@@ -442,9 +436,22 @@ export class Board {
       }
     }
     if (walls) { this.drawWalls(); this.territory = EnclosureRules.map(g); }
+    else if (this.now <= this.dropUntil + 0.05) this.drawWalls();     // blocks still falling or settling: redrawn every frame (UC-L3)
     if (props) this.drawProps();
     this.drawTerritory(dt);
     return walls;
+  }
+
+  /** Where square (x, y)'s block is in its drop (WALL_DROP_UC.md UC-L3), now: fall = squares above its square (it falls faster as it
+   *  comes: height * (1 - (1 + t / seconds)^2) for t in -seconds..0), squash = the share of its height it stands at (dipping by
+   *  WALL_DROP.squash over squashSeconds after it lands). A block that never dropped, or has settled, is { fall: 0, squash: 1 }; a
+   *  block of a set still waiting for its turn (staggered) is not drawn yet: squash 0. */
+  dropOf(x, y) {
+    const t = this.now - this.dropAt[y * this.w + x] - WALL_DROP.seconds;
+    if (t < -WALL_DROP.seconds) return { fall: WALL_DROP.height, squash: 0 };
+    const fall = t < 0 ? WALL_DROP.height * (1 - Math.pow(1 + t / WALL_DROP.seconds, 2)) : 0;
+    const squash = t >= 0 && t < WALL_DROP.squashSeconds ? 1 - WALL_DROP.squash * Math.sin(Math.PI * t / WALL_DROP.squashSeconds) : 1;
+    return { fall, squash };
   }
 
   drawWalls() {
@@ -455,13 +462,17 @@ export class Board {
       if (g.occupantAt(x, y) !== Occupant.Wall) continue;
       const ow = g.ownerAt(x, y), hp = g.healthAt(x, y), gy = this.groundAt(x, y), own = ow < 4 ? this.colourOf(ow) : NEUTRAL_WALL;
       const metal = hp > this.rules.wallHealth;
-      const sy = !metal && hp <= 1 ? 0.68 : 1;                         // a damaged stone block (one hit left) stands lower
+      const { fall, squash } = this.dropOf(x, y);                      // the drop (UC-L3): 0 and 1 once the block has settled
+      // a block of a set still waiting for its turn is not drawn at all (11-10: drawn at zero height its normals went singular and it
+      // lit as a flat BLACK square, shots/app/touch_02_claim_portrait.png), and no pennant stands on it
+      if (squash === 0) { top[y * w + x] = NaN; continue; }
+      const sy = (!metal && hp <= 1 ? 0.68 : 1) * squash;               // a damaged stone block (one hit left) stands lower
       const dim = !metal && hp <= 1 ? 0.75 : 1;                        // ...and darker
       // per block (hashed from the square, so the same board always lays the same stones): a quarter turn of the stones' bond, a
       // shade and a warmth
       const v = this.noise(x * 5.3 + 1.7, y * 4.9 - 3.1), turn = Math.floor(this.noise(x * 2.9 - 7, y * 3.3 + 5) * 4) % 4;
       // ...and a height a hair up or down (WALL_JITTER), so a run's copings are not one flat plane
-      m.makeRotationY(turn * Math.PI / 2).premultiply(sq.makeScale(1, sy, 1)).setPosition(x + 0.5, gy - 0.04 + (v - 0.5) * WALL_JITTER, y + 0.5);
+      m.makeRotationY(turn * Math.PI / 2).premultiply(sq.makeScale(1, sy, 1)).setPosition(x + 0.5, gy - 0.04 + (v - 0.5) * WALL_JITTER + fall, y + 0.5);
       if (metal) {                                                     // a metal block: grey steel, worn a little by each blast it has taken
         const wear = 0.8 + 0.2 * (hp - this.rules.wallHealth) / (this.rules.metalWallHealth - this.rules.wallHealth);
         c.setScalar(wear * (0.96 + v * 0.08)); this.steel.set(ks, m, c);
@@ -475,9 +486,10 @@ export class Board {
         k++;
       }
       c.copy(own).multiplyScalar(dim); this.trims.set(kb, m, c);      // the owner's cloth, on both kinds
-      this.shadows.set(kb, sq.makeTranslation(x + 0.5, gy + 0.012, y + 0.5));
+      const ss = 1 - 0.45 * fall / WALL_DROP.height;                   // a falling block's soft shadow grows as it comes down
+      this.shadows.set(kb, sq.makeScale(ss, 1, ss).setPosition(x + 0.5, gy + 0.012, y + 0.5));
       kb++;
-      top[y * w + x] = gy - 0.04 + (v - 0.5) * WALL_JITTER + WALL_H * sy;
+      top[y * w + x] = gy - 0.04 + (v - 0.5) * WALL_JITTER + fall + WALL_H * sy;
     }
     this.walls.commit(k); this.caps.commit(k); this.steel.commit(ks); this.steelCaps.commit(ks); this.trims.commit(kb); this.shadows.commit(kb);
     this.drawPennants(top);
@@ -515,6 +527,7 @@ export class Board {
       const want = Math.min(corners.length, Math.max(1, Math.round(cells.length / PENNANT_EVERY)));
       for (let j = 0; j < want; j++) {
         const q = corners[Math.floor((j + 0.5) * corners.length / want)];
+        if (Number.isNaN(top[q.y * w + q.x])) continue;                // its block has not dropped in yet (drawWalls)
         const px = q.east ? q.x + 1 - PENNANT_INSET : q.x + PENNANT_INSET, pz = q.y + PENNANT_INSET;
         m.makeRotationY(q.east ? 0 : Math.PI).setPosition(px, top[q.y * w + q.x], pz);
         this.poles.set(n, m); this.flags.set(n, m, c.copy(this.colourOf(ow)));

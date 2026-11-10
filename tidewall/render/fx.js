@@ -286,6 +286,12 @@ export class Effects {
     this.fx.flat.emit({ at: { x: at.x, y: 0.05, z: at.z }, life: 6, size: [0.85 * k, 0.95 * k], color: SOOT.clone().multiplyScalar(0.35), alpha: 0.55, spin: this.rnd() * 3, fadeIn: 0.02 });
   }
 
+  /** A wisp of dark smoke rising from something damaged (a hurt castle, CASTLE_DAMAGE_UC.md UC-L5). */
+  smokeWisp(at, k = 1) {
+    const s = this.spread(0.25, 0.7);
+    this.fx.smoke.emit({ at, vel: [s[0], 0.55 + s[1], s[2]], drag: 0.9, life: 1.8 + this.rnd() * 0.8, size: [0.3 * k, 1.2 * k], color: SOOT, alpha: 0.42, spin: this.rnd() - 0.5, fadeIn: 0.2 });
+  }
+
   /** A small puff of pale smoke where a bomb was put out. */
   puff(at) {
     for (let i = 0; i < 6; i++) {

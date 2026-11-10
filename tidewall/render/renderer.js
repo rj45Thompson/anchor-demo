@@ -29,6 +29,7 @@ import { CameraRig, CameraDirector } from './camera.js';
 import { Hud } from './hud.js';
 import { Fx } from './fx.js';
 import { Sky } from './sky.js';
+import { Mood, moodForLevel } from './mood.js';
 import { PLAYER_CSS, PLAYER_HEX, PLAYER_COLOURS, PLAYER_TEXT_CSS } from './look.js';
 import { Models, tintArmour, outlineFigure, topPoint } from './models.js';
 import { PropSet, SUN, SKY, sunDirection, isletGeometry, mats } from './look.js';
@@ -53,10 +54,11 @@ const QUALITY = Object.freeze({
   high: { msaa: 4, ao: true, shadow: 4096, waterDetail: 1, maxPixelRatio: 2 },
   low: { msaa: 0, ao: false, shadow: 2048, waterDetail: 0, maxPixelRatio: 1 },
 });
-const EXPOSURE = 0.72;                     // AUTHORED: into the ACES filmic curve (three scales it by 1/0.6 inside)
-// AUTHORED grade after the tone map (display values): a little more colour, a touch of contrast, shadows nudged cool and highlights
-// warm, and the vignette's strength
-const GRADE = { saturation: 1.12, contrast: 1.06, cool: [-0.012, 0.004, 0.03], warm: [0.035, 0.015, -0.02], vignette: 0.3 };
+// AUTHORED grade after the tone map (display values): a little more colour, a touch of contrast and the vignette's strength. The
+// exposure into the ACES filmic curve and the grade's cool shadows and warm highlights are the level's light (render/mood.js; at
+// noon 0.72, [-0.012, 0.004, 0.03] and [0.035, 0.015, -0.02], the values these constants had until 11-10)
+const GRADE = { saturation: 1.12, contrast: 1.06, vignette: 0.3 };
+const REDUCED_FLASH = 0.35;                 // AUTHORED (UC-ST2): a captured territory's flash under reduced motion, of its full brightness
 // AUTHORED ambient occlusion (GTAO, three's GTAONode): radius in world units (a square is 1), drawn at half resolution, and how much
 // of it is applied (1 = all). Contact shading where walls, castles, cannons and figures meet the ground.
 const BLOOM = { strength: 0.4, radius: 0.2, threshold: 0.6 };   // AUTHORED: over the glow target only
@@ -108,7 +110,7 @@ export async function createRenderer(canvas, opts = {}) {
   await renderer.init();
   if (!renderer.backend.isWebGPUBackend) throw new NoWebGpuError('three.js started its WebGL 2 backend, not WebGPU');
   renderer.toneMapping = THREE.ACESFilmicToneMapping;                     // applied in the post chain (renderOutput), then the grade
-  renderer.toneMappingExposure = EXPOSURE;
+  // (the exposure is the level's: Renderer's constructor and buildLevel set it from render/mood.js)
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const models = await Models.load();                                     // the models; one that does not load stops here
@@ -147,13 +149,16 @@ class Renderer {
     this.scene.background = new THREE.Color(BG);
     this.rig = new CameraRig(1);
     // light: the sun (soft shadows, PCFSoftShadowMap, its box fitted to each island in fitSun) and the sky's hemisphere fill
-    const hemi = new THREE.HemisphereLight(SKY.sky, SKY.ground, SKY.intensity); this.scene.add(hemi);
+    // (their colours and strengths are the level's light: render/mood.js, set in buildLevel; NOON is the look.js SUN and SKY values)
+    const hemi = new THREE.HemisphereLight(SKY.sky, SKY.ground, SKY.intensity); this.scene.add(hemi); this.hemi = hemi;
     const sun = new THREE.DirectionalLight(SUN.color, SUN.intensity);
     sun.castShadow = true; sun.shadow.mapSize.set(QUALITY.high.shadow, QUALITY.high.shadow); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03; sun.shadow.radius = 3;
     this.scene.add(sun, sun.target); this.sun = sun;
-    this.look = new BoardLook();                                            // the land's and sea's materials, shared by every level
+    this.mood = new Mood();                                                 // the level's light (MOOD_UC.md UC-L4), noon until a level sets it
+    this.mood.applyTo(sun, hemi, this.renderer);
+    this.look = new BoardLook(this.mood);                                   // the land's and sea's materials, shared by every level
     this.scene.add(this.look.tufts);
-    this.sky = new Sky(this.scene, this.look.noiseTex);                     // the dome, the haze and the cloud shadows (before any draw)
+    this.sky = new Sky(this.scene, this.look.noiseTex, this.mood);          // the dome, the haze and the cloud shadows (before any draw)
     this.fx = new Fx(this.scene, uniform(0));                               // the particles, shared by every level
     this.buildPost();
     // the HUD layer: a 2D canvas laid exactly over the WebGPU one
@@ -170,6 +175,7 @@ class Renderer {
     this.clock = 0;
     this.wipeKey = null; this.wipeT = WIPE_SECONDS;                         // what the last frame showed; seconds into the wipe
     this.setQuality(opts.quality ?? 'high'); this.toast = null;
+    this.reducedMotion = false;                                             // the page sets it from its settings (setMotion)
     this.toastLog = [];          // every LoopClosed toast shown: { text, castleId, slot, at (performance.now) } - the page check reads it
     this.resize(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight);
   }
@@ -186,7 +192,7 @@ class Renderer {
       c = saturation(c, GRADE.saturation);
       c = c.sub(0.5).mul(GRADE.contrast).add(0.5);
       const l = luminance(c);
-      c = c.add(vec3(...GRADE.cool).mul(oneMinus(l))).add(vec3(...GRADE.warm).mul(l));
+      c = c.add(this.mood.cool.mul(oneMinus(l))).add(this.mood.warm.mul(l));   // the shadows' cool and the highlights' warm: the mood's
       const vig = oneMinus(smoothstep(0.45, 0.95, length(uv().sub(0.5))).mul(GRADE.vignette));
       return vec4(clamp(c, 0, 1).mul(vig), 1);
     };
@@ -376,6 +382,14 @@ class Renderer {
     return seatOfSlot.slice();
   }
 
+  /** Reduced motion (SETTINGS_UC.md UC-ST2): no camera shake on hits, the capture flash at REDUCED_FLASH. */
+  setMotion(reduced) {
+    if (typeof reduced !== 'boolean') throw new RenderContractError('setMotion takes true (reduced) or false, got ' + reduced);
+    this.reducedMotion = reduced;
+    this.look.uFlash.value = reduced ? REDUCED_FLASH : 1;
+    if (reduced) this.rig.shake = 0;
+  }
+
   buildLevel(seats) {
     if (this.board) this.board.dispose();
     if (this.units) this.units.dispose();
@@ -385,6 +399,9 @@ class Renderer {
     this.board = new Board(this.scene, this.grid, colours, this.propParts, this.decorParts, this.look, this.match.rules);
     this.fx.clear();
     this.units = new Units(this.scene, this.board, this.match, this.models, seats, this.fx, this.bomb);
+    this.units.camera = this.rig.camera;                                     // a hurt castle's bar faces it (CASTLE_DAMAGE_UC.md)
+    this.mood.set(moodForLevel(this.match.level));                          // UC-L4: each level its own time of day
+    this.mood.applyTo(this.sun, this.hemi, this.renderer);
     this.fitSun();
     this.sun.shadow.needsUpdate = true;                                      // a new level's casters are drawn into the map now
     this.rig.pose = null; this.rig.key = null; this.rig.cur = null;
@@ -419,6 +436,7 @@ class Renderer {
         this.toastLog.push({ text: this.toast.text, castleId: e.castleId, slot: e.slot, at: performance.now() });
       }
       for (const e of view.events) {                                        // a gentle shake on the big hits (AUTHORED strengths)
+        if (this.reducedMotion) break;                                      // UC-ST2: reduced motion, the camera never shakes
         if (e instanceof CannonDestroyed) this.rig.shake = Math.max(this.rig.shake, 0.6);
         else if (e instanceof WallBroken) this.rig.shake = Math.max(this.rig.shake, 0.45);
         else if (e instanceof ShipSunk) this.rig.shake = Math.max(this.rig.shake, 0.35);

@@ -87,7 +87,9 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
 @media (max-width: 639px), (max-height: 559px) { .hint { font-size: 13px; padding: 5px 12px; } }
 
 /* the action bar (app/actions.js): the mouse and keyboard player's labelled buttons, centred above the player cards */
-.abar { position: fixed; z-index: 3; left: 50%; transform: translateX(-50%); bottom: 100px; display: flex; gap: 8px; max-width: calc(100% - 24px);
+/* width: max-content (11-10): a fixed box at left 50% is laid out in the half of the window right of its left edge, so at 1440 px the
+   seven-button row (728 px) wrapped Ready onto a line of its own; the max-width still lets a phone's narrow row wrap */
+.abar { position: fixed; z-index: 3; left: 50%; transform: translateX(-50%); bottom: 100px; display: flex; gap: 8px; width: max-content; max-width: calc(100vw - 24px);
   pointer-events: auto; touch-action: none; }
 .abar[hidden] { display: none; }
 .ab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 96px; min-height: 52px; padding: 5px 12px;
@@ -173,4 +175,26 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
   #ui .shead { font-size: 22px; margin: 0 0 4px; }
   #ui .srow { min-height: 38px; margin: 2px 0; font-size: 17px; }   /* 38 + the 6 px border: a 44 px tap target */
   #ui .shelp { margin-top: 4px; }
+}
+
+/* CONTROLS & CREDITS (TITLE_UC.md UC-T1): the button under SETTINGS, the one-line title foot, and the two-page panel. The panel is
+   the settings board, wider; unlike the settings rows it takes the pointer itself (its credits are links, a click on the dim closes). */
+#ui .infoopen { top: calc(max(12px, env(safe-area-inset-top)) + 58px); font-size: 13px; }
+#ui .foot .brief { font-weight: bold; }
+#ui .idim { pointer-events: auto; }
+#ui .settings.info { width: min(760px, calc(100% - 32px)); pointer-events: auto; }
+#ui .itabs { display: flex; justify-content: center; gap: 10px; margin: 2px 0 8px; }
+#ui .itab { min-width: 140px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; cursor: pointer;
+  border: 3px solid transparent; border-radius: 14px; font: 900 18px/1 var(--font); letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.7); text-shadow: 0 2px 0 var(--inkline); }
+#ui .itab.sel { color: var(--gold); border-color: var(--gold); background: linear-gradient(180deg, #9c6a3a, #6b4423); box-shadow: 0 0 0 1.5px var(--inkline), 0 3px 0 var(--stone-dark); }
+#ui .ipage { max-height: min(56vh, 460px); overflow-y: auto; padding: 4px 8px; font: 600 14px/1.45 var(--font); color: var(--ink); text-shadow: 0 1px 0 var(--inkline); }
+#ui .iline { margin: 0 0 7px; }
+#ui .ihead { margin: 8px 0 4px; font: 900 15px/1 var(--font); letter-spacing: 0.08em; color: var(--gold); }
+#ui .ipage a { color: #ffe08a; }
+#ui .iclose { display: inline-flex; align-items: center; min-height: 36px; margin-left: 10px; padding: 0 14px; border-radius: 12px; cursor: pointer;
+  border: 2px solid var(--gold); color: #fff; font: 900 13px/1 var(--font); letter-spacing: 0.06em; background: rgba(20, 10, 4, 0.3); }
+@media (max-height: 559px) {
+  #ui .infoopen { top: calc(max(8px, env(safe-area-inset-top)) + 54px); }
+  #ui .ipage { max-height: 52vh; font-size: 12px; }
+  #ui .itab { min-height: 40px; font-size: 15px; min-width: 110px; }
 }

@@ -14,9 +14,8 @@ import { sunDirection } from './look.js';
 
 // AUTHORED (this game's own look, round 2)
 const RADIUS = 350;                                     // the dome, centred on the camera every frame (the camera's far plane is 400)
-export const HAZE = new THREE.Color(0xc4def2);         // the far air: the dome's colour at the horizon and what the haze fades to
-const ZENITH = new THREE.Color(0x3f8ee8);               // overhead
-const GLARE = new THREE.Color(0xfff0d2);                 // the low light's colour
+// the far air (the dome's colour at the horizon and what the haze fades to), the sky overhead and the low light's colour are the
+// level's light: render/mood.js Mood (haze, zenith, glare; NOON there is what these were until 11-10)
 // the glare sits where the sea's glints come from (board.js GLINT: low over the north horizon, toward which the painted sea
 // sparkles), lowered to just above the horizon so the menu camera sees it; the shadow-casting sun is behind the camera (look.js SUN)
 const GLARE_DIR = new THREE.Vector3(0.25, 0.07, -0.87).normalize();
@@ -27,20 +26,22 @@ const HAZE_NEAR = 0.9, HAZE_FAR = 2.4, HAZE_NEAR_MAX = 0.45;
 // it) never shows an edge: it runs into the haze, and the haze is the sky's colour at the horizon
 const FAR_HAZE = [220, 340];
 const CLOUD_SCALE = 0.011;                              // noise-texture tiles per square for the cloud shadows (one cloud ~10 squares)
-const CLOUD_SHADE = 0.16;                               // how much light a cloud's shadow takes away
+// how much light a cloud's shadow takes away: the mood's cloudShade (0.16 at noon)
 const WIND = new THREE.Vector2(0.0068, 0.0031);         // noise-texture tiles per second the clouds (and their shadows) drift
 
 export class Sky {
   /** @param scene the scene (its fogNode is set here, once, before the first draw: every material's shader includes it)
-   *  @param noiseTex look.js makeNoiseTexture (R smooth noise), shared with the land and the sea */
-  constructor(scene, noiseTex) {
+   *  @param noiseTex look.js makeNoiseTexture (R smooth noise), shared with the land and the sea
+   *  @param mood     render/mood.js Mood: the level's light, read by the dome and the haze as uniforms */
+  constructor(scene, noiseTex, mood) {
+    if (!mood || !mood.haze) throw new Error('sky.js: the Mood (render/mood.js) is required');
     this.uTime = uniform(0); this.uNear = uniform(60); this.uFar = uniform(160);
-    const t = this.uTime, haze = vec3(HAZE.r, HAZE.g, HAZE.b);
+    const t = this.uTime, haze = mood.haze;
     // ---- the dome: the direction from the camera is the dome's own vertex direction (it is centred on the camera)
     const d = normalize(positionLocal), y = d.y;
-    let col = mix(haze, vec3(ZENITH.r, ZENITH.g, ZENITH.b), pow(smoothstep(0.0, 0.3, y), 0.6));
+    let col = mix(haze, mood.zenith, pow(smoothstep(0.0, 0.3, y), 0.6));
     const g = max(dot(d, vec3(GLARE_DIR.x, GLARE_DIR.y, GLARE_DIR.z)), 0);
-    const glareC = vec3(GLARE.r, GLARE.g, GLARE.b);
+    const glareC = mood.glare;
     // (above the horizon only: below it the dome must be exactly the haze the far sea fades to, or the seam shows as a line)
     const above = smoothstep(-0.005, 0.03, y);
     col = col.add(glareC.mul(pow(g, 7).mul(0.32).add(pow(g, 70).mul(0.7))).mul(above));
@@ -63,7 +64,7 @@ export class Sky {
     const s = sunDirection();
     const P = positionWorld, ground = P.xz.sub(vec2(s.x / s.y, s.z / s.y).mul(P.y));
     const shadow = smoothstep(0.5, 0.72, texture(noiseTex, ground.mul(CLOUD_SCALE).add(vec2(t.mul(WIND.x), t.mul(WIND.y)))).r);
-    const lit = output.rgb.mul(float(1).sub(shadow.mul(CLOUD_SHADE)));
+    const lit = output.rgb.mul(float(1).sub(shadow.mul(mood.cloudShade)));
     scene.fogNode = Fn(() => vec4(mix(lit, haze, max(rangeFogFactor(this.uNear, this.uFar).mul(HAZE_NEAR_MAX), rangeFogFactor(float(FAR_HAZE[0]), float(FAR_HAZE[1])))), output.a))();
   }
 

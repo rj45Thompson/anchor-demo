@@ -11,6 +11,9 @@
 //     Pause, so everything that follows the screen
 //     (the paused rules, the music, the HUD under the panel) is unchanged. Their values live in a SettingsModel; a change returns a
 //     SettingsChanged action for the host to apply (the sound buses, the renderer's quality, the store).
+//   - CONTROLS & CREDITS (TITLE_UC.md UC-T1, this game's own): a panel of two pages over the title or the join screen (`infoOver`),
+//     opened by the host's openInfo() (its button, H, a pad's X). Left / right turn the page; back, confirm or START close it. The
+//     title's foot is one line because of it: the full key list and the credits live here.
 // Everything else (the battlefield and difficulty rows, joining, pause, the fate screen's left/right + START, results, initials,
 // the high-score table, the idle-title demo) is the C# behaviour unchanged.
 import { GameRules } from '../rules/GameRules.js';
@@ -74,8 +77,9 @@ export class MenuModel {
   static DecideRows = Object.freeze(['CONTINUE', 'GIVE UP']);
   static RowMap = 0; static RowField = 1; static RowDifficulty = 2; static RowStart = 3; static RowScores = 4; static RowQuit = 5;
   static PauseRowSettings = 2;
-  static SettingsRows = Object.freeze(['MUSIC', 'EFFECTS', 'AMBIENCE', 'MUTE', 'GRAPHICS', 'BACK']);
-  static SetMusic = 0; static SetEffects = 1; static SetAmbience = 2; static SetMute = 3; static SetGraphics = 4; static SetBack = 5;
+  static InfoPages = Object.freeze(['CONTROLS', 'CREDITS']);
+  static SettingsRows = Object.freeze(['MUSIC', 'EFFECTS', 'AMBIENCE', 'MUTE', 'GRAPHICS', 'MOTION', 'BACK']);
+  static SetMusic = 0; static SetEffects = 1; static SetAmbience = 2; static SetMute = 3; static SetGraphics = 4; static SetMotion = 5; static SetBack = 6;
   /** The SettingsModel volume each volume row changes. */
   static SettingsVolume = Object.freeze({ 0: 'music', 1: 'fx', 2: 'ambience' });
 
@@ -101,6 +105,30 @@ export class MenuModel {
     if (!(this.settings instanceof SettingsModel)) throw new TypeError('MenuModel: settings is a SettingsModel');
     this.settingsOver = null;          // the screen the settings panel is open over (Setup or Pause), or null when it is shut
     this.settingsRow = 0;
+    this.infoOver = null;              // the screen the controls & credits panel is open over (Title or Setup), or null
+    this.infoPage = 0;                 // its page: an index of InfoPages
+  }
+
+  get infoOpen() { return this.infoOver !== null; }
+
+  /** The controls & credits panel opens over the title (not while the demo fills it) or the join screen, on CONTROLS. */
+  openInfo() {
+    const sc = this.screen;
+    if (!(sc === Screen.Setup || (sc === Screen.Title && !this.inDemo)))
+      throw new Error('MenuModel: controls & credits open over the title or the join screen, not screen ' + sc + (this.inDemo ? ' (the demo)' : ''));
+    if (this.settingsOver !== null) throw new Error('MenuModel: the settings panel is open');
+    if (this.infoOver !== null) throw new Error('MenuModel: the controls & credits panel is already open');
+    this.infoOver = sc; this.infoPage = 0;
+  }
+
+  /** Back to the screen it opened over; the title's idle demo timer starts again. */
+  closeInfo() { this.infoOver = null; this._idle = 0; }
+
+  /** A page by index (the panel's tabs). */
+  showInfoPage(page) {
+    if (this.infoOver === null) throw new Error('MenuModel: the controls & credits panel is shut');
+    if (!Number.isInteger(page) || page < 0 || page >= MenuModel.InfoPages.length) throw new RangeError('MenuModel: no info page ' + page);
+    this.infoPage = page;
   }
 
   get settingsOpen() { return this.settingsOver !== null; }
@@ -120,12 +148,14 @@ export class MenuModel {
     }
   }
 
-  /** The value shown beside a settings row: '70%', 'ON' / 'OFF' (MUTE), 'HIGH' / 'LOW' (GRAPHICS), '' for BACK. */
+  /** The value shown beside a settings row: '70%', 'ON' / 'OFF' (MUTE), 'HIGH' / 'LOW' (GRAPHICS), 'FULL' / 'REDUCED' (MOTION), ''
+   *  for BACK. */
   valueOfSettingsRow(row) {
     const st = this.settings, vol = MenuModel.SettingsVolume[row];
     if (vol !== undefined) return st[vol] + '%';
     if (row === MenuModel.SetMute) return st.muted ? 'ON' : 'OFF';
     if (row === MenuModel.SetGraphics) return st.quality === 'high' ? 'HIGH' : 'LOW';
+    if (row === MenuModel.SetMotion) return st.motion === 'full' ? 'FULL' : 'REDUCED';   // UC-ST2
     if (row === MenuModel.SetBack) return '';
     throw new RangeError('MenuModel: no settings row ' + row);
   }
@@ -137,6 +167,7 @@ export class MenuModel {
     if (!(sc === Screen.Setup || sc === Screen.Pause || (sc === Screen.Title && !this.inDemo)))
       throw new Error('MenuModel: settings open over the title, the join screen or the pause menu, not screen ' + sc + (this.inDemo ? ' (the demo)' : ''));
     if (this.settingsOver !== null) throw new Error('MenuModel: the settings panel is already open');
+    if (this.infoOver !== null) throw new Error('MenuModel: the controls & credits panel is open');
     this.settingsOver = this.screen; this.settingsRow = 0;
   }
 
@@ -150,6 +181,7 @@ export class MenuModel {
     const acts = [];
     let any = false; for (const s of seats) any = any || s.any;
     if (this.settingsOver !== null) { this._settings(seats, acts); return acts; }
+    if (this.infoOver !== null) { this._info(seats); return acts; }
     switch (this.screen) {
       case Screen.Title:
         if (this.inDemo && any) { this.inDemo = false; acts.push(new MenuAction(MenuActionKind.QuitToTitle)); this._idle = 0; break; }
@@ -251,6 +283,14 @@ export class MenuModel {
     else if (pick !== null) this._changeSetting(pick, 0, acts);
   }
 
+  _info(seats) {
+    const n = MenuModel.InfoPages.length;
+    for (const s of seats) {
+      if (s.back || s.confirm || s.start) { this.closeInfo(); return; }
+      if (s.left || s.right) { this.infoPage = (this.infoPage + (s.right ? 1 : -1) + n) % n; return; }
+    }
+  }
+
   /** dir: -1 / 1 left / right, 0 confirm. A change returns SettingsChanged (a volume already at its end does not change). */
   _changeSetting(row, dir, acts) {
     const st = this.settings, vol = MenuModel.SettingsVolume[row];
@@ -258,6 +298,7 @@ export class MenuModel {
     if (vol !== undefined) { if (dir === 0) st.cycle(vol); else changed = st.step(vol, dir); }
     else if (row === MenuModel.SetMute) st.toggleMute();
     else if (row === MenuModel.SetGraphics) st.toggleQuality();
+    else if (row === MenuModel.SetMotion) st.toggleMotion();
     else changed = false;                                              // BACK: left / right do nothing
     if (changed) acts.push(new MenuAction(MenuActionKind.SettingsChanged));
   }
@@ -299,7 +340,7 @@ export class MenuModel {
     return null;
   }
 
-  _go(s) { this.screen = s; this.row = 0; this._idle = 0; this.settingsOver = null; }
+  _go(s) { this.screen = s; this.row = 0; this._idle = 0; this.settingsOver = null; this.infoOver = null; }
 
   /** The pointer is over a row (a mouse in the host): it becomes the chosen row, so a click confirms the row under the mouse. */
   pointAt(row) {
