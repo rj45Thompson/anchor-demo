@@ -4,6 +4,8 @@
 // and is never stood in for by this device's own scores. Every board also shows the house row the page works out itself
 // (R.J.Thompson, the owner's ask 11-07): the server never holds it, and nobody else may enter under that name.
 export const HOUSE_NAME = 'R.J.Thompson';
+export const HOUSE_TITLE = 'HOC creator';                  // AUTHORED (the owner's ask 11-10, UC-25.2): the house row says who made the page
+export const HOUSE_EMAIL = 'rj45thompson@gmail.com';       // AUTHORED (same ask): his email on the house row, a mailto link
 export const TOP = 10;                                     // rows a board shows (an arcade board's ten)
 export const NAME_MAX = 16;                                // AUTHORED: room for "R.J.Thompson" and most first-and-last names
 const NAME_CHARS = /^[A-Za-z0-9 .'_-]+$/;
@@ -96,9 +98,10 @@ export class ScoreBoard {
 export function lastName() { try { return localStorage.getItem('hoc.name') || ''; } catch (e) { return ''; } }
 export function keepName(n) { try { localStorage.setItem('hoc.name', n); } catch (e) { /* a private window keeps none */ } }
 
-/** a board as HTML: rank, name, score; the house row and the row just saved marked (by name and score: the server stamps its own time) */
+/** a board as HTML: rank, name, score; the house row (HOUSE_TITLE and HOUSE_EMAIL under its name, UC-25.2) and the row just saved marked (by name and score: the server stamps its own time) */
 export function boardHTML(rows, fmt, mine) {
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   return '<ol class="hiscores">' + rows.map((r, i) => '<li class="' + (r.house ? 'house' : '') + (mine && !r.house && r.name === mine.name && r.score === mine.score ? ' me' : '') + '">' +
-    '<span class="n">' + (i + 1) + '</span><span class="nm">' + esc(r.name) + '</span><b>' + esc(fmt(r)) + '</b></li>').join('') + '</ol>';
+    '<span class="n">' + (i + 1) + '</span><span class="nm">' + esc(r.name) +
+    (r.house ? '<small class="hoc">' + HOUSE_TITLE + ' · <a href="mailto:' + HOUSE_EMAIL + '">' + HOUSE_EMAIL + '</a></small>' : '') + '</span><b>' + esc(fmt(r)) + '</b></li>').join('') + '</ol>';
 }
