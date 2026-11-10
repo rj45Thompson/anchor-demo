@@ -2051,9 +2051,12 @@ function shardOf(name){
   }
   return h%NSHARD;
 }
+// the 512 shards live in their own Pages repo since 2026-11-10 (they were 609 MB of this site's ~800 MB and stalled its deploys);
+// same host, so the fetch stays same-origin
+const SHARD_BASE="https://rj45thompson.github.io/anchor-demo-shards/shards/";
 async function loadShard(i){
   if(cache.has(i))return cache.get(i);
-  const r=await fetch("shards/"+String(i).padStart(3,"0")+".json.gz");
+  const r=await fetch(SHARD_BASE+String(i).padStart(3,"0")+".json.gz");
   if(!r.ok)throw new Error("shard http "+r.status);
   let txt;
   if(typeof DecompressionStream!=="undefined"){
