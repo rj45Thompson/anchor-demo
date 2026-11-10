@@ -32,8 +32,8 @@ export const KEY_CLUSTERS = Object.freeze([
     seat: 1, label: 'Player 2 keys',
     up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'],
     confirm: ['Enter', 'NumpadEnter'], rotate: ['ShiftRight'], back: ['ShiftRight'], swap: ['Period'], ready: ['Slash'], start: ['Backslash'], fast: ['ControlRight'],
-    grab: ['Comma'], drop: ['Quote'], trap: ['KeyM'], buy: [['Numpad1'], ['Numpad2'], ['Numpad3'], ['Numpad4']],
-    help: "Arrows move, Enter place/fire/drop bomb, Right Shift rotate/back, . swap tool, ' drop bomb, , pick up (hold: defuse), Numpad 1-4 buy, M trap, / ready, Right Ctrl fast, \\ pause",
+    grab: ['Comma'], drop: ['Quote'], trap: ['Numpad0'], buy: [['Numpad1'], ['Numpad2'], ['Numpad3'], ['Numpad4']],
+    help: "Arrows move, Enter place/fire/drop bomb, Right Shift rotate/back, . swap tool, ' drop bomb, , pick up (hold: defuse), Numpad 1-4 buy, Numpad 0 trap, / ready, Right Ctrl fast, \\ pause",
   }),
 ]);
 

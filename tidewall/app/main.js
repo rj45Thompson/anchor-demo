@@ -6,11 +6,14 @@
 //
 // URL switches (for a kiosk and for the page check): ?attract=1 the demo with HUD and sound and no menus; ?seed=N the match seed;
 // ?speed=N run N ticks per tick of real time (1..16, default 1); ?quality=low starts the graphics on the low setting (G switches);
-// ?bombs=0 plays the base rules (no bombs, no shop; a hidden switch for the page checks - bombs are the game).
+// ?bombs=0 plays the base rules (no bombs, no shop; a hidden switch for the page checks - bombs are the game); ?dev=0|1 overrides
+// whether this is a development page (a sound file that fails to load stops a development page; a public one shows it on the title
+// footer); by default a page served from this machine (localhost, 127.0.0.1, ::1) is a development page.
 import { GAME_TITLE } from './title.js';
 import { InputHub, KEY_CLUSTERS, SEATS } from './input.js';
 import { Overlay, HintStrip } from './overlay.js';
-import { SoundPlayer, VOLUME } from './sound.js';
+import { SoundPlayer, SoundLoadError, SETTINGS_DEFAULT } from './sound.js';
+import { musicFor, duckFor } from './soundbank.js';
 import { Phones } from './phones.js';
 import { ControlsChoice, TouchPad } from './controls.js';
 import { ActionBar, ACTIONS } from './actions.js';
@@ -20,7 +23,7 @@ import { createRenderer, NoWebGpuError, PLAYER_TEXT_CSS } from '../render/render
 
 const {
   GameRules, GameOptions, GridModel, MapCheck, MatchModel, MatchController, MenuModel, MenuInput, PadInput, Screen, MenuActionKind, HighScoreTable,
-  SeededRandom, Synth, LoopClosed, Cell,
+  SeededRandom, Synth, Cell,
 } = core;
 
 document.title = GAME_TITLE;
@@ -30,6 +33,7 @@ const STEP = 1 / TPS;
 const DEMO_BOTS_FROM = 2 * TPS;      // AUTHORED: the demo's bots wait two seconds so the island is seen before anyone builds
 const DEMO_RESTART = 6 * TPS;        // AUTHORED: an ended demo holds its last screen six seconds, then a new demo starts
 const SCORES_KEY = GAME_TITLE.toLowerCase() + '-highscores';
+const SOUND_KEY = GAME_TITLE.toLowerCase() + '-sound';     // R4: mute and the three volumes, kept like the high scores
 
 /** The URL switches, checked: a value that does not parse is refused with what was wrong, never replaced by a default. */
 function readSwitches() {
@@ -42,8 +46,10 @@ function readSwitches() {
   };
   const quality = q.get('quality');
   if (quality !== null && quality !== 'high' && quality !== 'low') throw new Error('?quality=' + quality + ' is not high or low');
-  const bombs = int('bombs', 0, 1);
-  return { attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high', bombs: bombs !== 0 };
+  const bombs = int('bombs', 0, 1), dev = int('dev', 0, 1);
+  const local = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(location.hostname);
+  return { attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high', bombs: bombs !== 0,
+           dev: dev === null ? local : dev === 1 };
 }
 
 function showFatal(text) {
@@ -83,7 +89,8 @@ class Game {
       if (b) this.controls.set(b.dataset.controls);
     });
     window.addEventListener('keydown', (e) => { if (e.code === 'KeyC' && !e.repeat && this.menu.screen === Screen.Setup && !this.sw.attract) this.controls.next(); });
-    this.sound = new SoundPlayer(Synth);
+    this.soundNote = '';
+    this.sound = new SoundPlayer(Synth, this.loadSoundSettings());
     this.maps = new MapSource(GameRules.default());
     this.scoresNote = '';
     this.menu = new MenuModel(this.loadScores(), CAMPAIGN_ISLANDS);
@@ -105,6 +112,13 @@ class Game {
     window.addEventListener('keydown', wake);
     window.addEventListener('keydown', (e) => { if (e.code === 'KeyG' && !e.repeat) this.renderer.cycleQuality(); });   // graphics quality: high <-> low
     window.addEventListener('pointerdown', wake);
+    // M mutes (UC-S2 1a) everywhere, and the choice is kept. Player 2's trap key moved from M to Numpad 0 (next to their Numpad 1-4
+    // shop keys, app/input.js) so the two never clash.
+    window.addEventListener('keydown', (e) => {
+      if (e.code !== 'KeyM' || e.repeat) return;
+      this.sound.toggleMute();
+      this.saveSoundSettings();
+    });
     this.startMatch(true, null);
     if (sw.attract) this.menu.playing();
   }
@@ -122,6 +136,30 @@ class Game {
       this.scoresWritable = false;
       return new HighScoreTable();
     }
+  }
+
+  /** R4: the sound settings ({ muted, music, fx, ambience }, each volume 0..1). Unreadable ones are reported and never written over. */
+  loadSoundSettings() {
+    let text;
+    try { text = localStorage.getItem(SOUND_KEY); }
+    catch (e) { this.soundNote = 'Sound settings are not kept in this browser: ' + e.message; this.soundWritable = false; return SETTINGS_DEFAULT; }
+    this.soundWritable = true;
+    if (!text) return SETTINGS_DEFAULT;
+    let v = null;
+    try { v = JSON.parse(text); } catch (e) { v = null; }
+    const vol = (x) => typeof x === 'number' && x >= 0 && x <= 1;
+    if (!v || typeof v.muted !== 'boolean' || !vol(v.music) || !vol(v.fx) || !vol(v.ambience)) {
+      this.soundNote = 'The saved sound settings could not be read (' + text.slice(0, 60) + '); they are left untouched.';
+      this.soundWritable = false;
+      return SETTINGS_DEFAULT;
+    }
+    return { muted: v.muted, music: v.music, fx: v.fx, ambience: v.ambience };
+  }
+
+  saveSoundSettings() {
+    if (!this.soundWritable) return;
+    try { localStorage.setItem(SOUND_KEY, JSON.stringify(this.sound.settings)); }
+    catch (e) { this.soundNote = 'Sound settings could not be saved: ' + e.message; }
   }
 
   saveScores() {
@@ -155,6 +193,7 @@ class Game {
     this.phaseKey = ''; this.phaseTick = 0;
     this.grid = model.grid;
     this.renderer.setMatch(model, seatOf);
+    this.sound.newMatch();
     if (!demo && !this.sw.attract && this.hintMatch === null) { this.hintMatch = model; this.hintRound = model.round; }
   }
 
@@ -165,11 +204,11 @@ class Game {
 
   present(e) {
     this.events.push(e);
-    if (!this.silent) this.sound.forEvent(e, LoopClosed);
+    this.sound.forEvent(e, !this.silent);
   }
 
   act(a) {
-    this.sound.play(Synth.Sfx.MenuPick, this.ticks, 0, VOLUME.menuPick);
+    this.sound.menu('pick', this.ticks);
     switch (a.kind) {
       case MenuActionKind.StartGame: this.startMatch(false, this.menu.joined.slice()); break;
       case MenuActionKind.Restart: this.startMatch(false, this.menu.joined.slice()); break;
@@ -280,7 +319,7 @@ class Game {
       const before = this.menu.screen + ':' + this.menu.row + ':' + this.menu.joinedCount;
       const acts = this.menu.update(menuIn, this.demo ? null : this.model);
       for (const a of acts) this.act(a);
-      if (this.menu.screen + ':' + this.menu.row + ':' + this.menu.joinedCount !== before) this.sound.play(Synth.Sfx.MenuMove, this.ticks, 0, VOLUME.menuMove);
+      if (this.menu.screen + ':' + this.menu.row + ':' + this.menu.joinedCount !== before) this.sound.menu('move', this.ticks);
     }
     const sc = this.menu.screen;
     const run = this.sw.attract || (this.demo ? sc === Screen.Title || sc === Screen.Setup || sc === Screen.HighScores
@@ -363,6 +402,9 @@ class Game {
       ? ['[data-phonepad]', '#ui .howto'].map((q) => document.querySelector(q)).filter(Boolean).map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0)
       : [];
     this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha, camera, menuCover }, dt);
+    // UC-S2: the music for what is on screen (crossfaded on a change), the ambience ducked in battle
+    const scene = { screen: this.menu.screen, demo: this.demo, attract: this.sw.attract, phase: this.model.phase };
+    this.sound.update({ music: musicFor(scene), duck: duckFor(scene) });
     this.pointerCursor();
     const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup;
     // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its
@@ -378,7 +420,8 @@ class Game {
       screen: this.menu.screen, inDemo: this.menu.inDemo, attract: this.sw.attract, devices: this.input.devices,
       phones: { state: this.phones.state, reason: this.phones.reason }, scoresNote: this.scoresNote, controls: this.controls.mode,
       touchControls: this.controls.showsTouch, touchFirst: this.controls.touchFirst,
-      soundNote: this.silent ? '' : this.sound.needsGesture ? 'Press any key for sound' : '',
+      soundNote: this.sound.muted ? 'Sound off (M)' : this.sound.needsGesture ? 'Press any key for sound' : '',
+      soundError: [this.soundNote, ...this.sound.loadErrors.map((f) => 'Sound file ' + f.file + ' did not load: ' + f.why)].filter(Boolean).join(' '),
     });
   }
 
@@ -416,6 +459,14 @@ async function boot() {
   window.addEventListener('resize', fit);
   fit();
   const game = new Game(renderer, canvas, sw);
+  // UC-S2 1b: every sound file is fetched and decoded before the loop starts. A failure is logged and shown on the title footer; on a
+  // development page it also stops the page (no other sound is put in its place either way)
+  try { await game.sound.load(); }
+  catch (e) {
+    if (!(e instanceof SoundLoadError)) throw e;
+    console.error(e.message);
+    if (sw.dev) throw e;
+  }
   await renderer.settle();        // the first island's pipelines are built before the loop starts (a first-second stall drops a tap)
   window.__game = game;           // the page check reads the model, the menu and the controller through these two
   window.__core = core;

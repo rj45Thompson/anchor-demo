@@ -3,7 +3,7 @@
 // join screen, whether phones can join (and why not, use case 2b), the keys, whether the browser is holding the sound back, and on
 // the title the credits the CC-BY models ask for (app/credits.js). It only READS; it decides nothing. The page is rebuilt only when
 // what it shows changed.
-import { MODEL_CREDITS, CC_BY_4, OWN_MODELS } from './credits.js';
+import { MODEL_CREDITS, CC_BY_4, OWN_MODELS, SOUND_CREDITS, CC0 } from './credits.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -96,7 +96,7 @@ export class Overlay {
   }
 
   /** s = { screen, inDemo, attract, devices[], phones: {state, reason}, controls: 'local' | 'phones' | 'both', touchControls, touchFirst,
-   *  soundNote, scoresNote } */
+   *  soundNote, soundError (a sound file that did not load, or unreadable sound settings: on the title footer), scoresNote } */
   render(s) {
     const html = this.build(s);
     if (html !== this.last) { this.last = html; this.root.innerHTML = html; }
@@ -111,7 +111,10 @@ export class Overlay {
     if (!s.attract && s.screen === S.Setup) parts.push(this.seats(s), this.howto(s));
     if (!s.attract && s.screen === S.Title && !s.inDemo) parts.push('<div class="keys foot">' + this.keyHelp.map(esc).join('<br>') + '<br>Gamepads and phones: stick or d-pad move, A place/fire, B rotate/back, Y ready, X held fast, START pause'
       + '<div class="credits">Models: ' + MODEL_CREDITS.map((c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author)).join('; ')
-      + ' (<a href="' + CC_BY_4 + '" target="_blank" rel="noopener">CC BY 4.0</a>, from Sketchfab). ' + esc(OWN_MODELS) + '</div></div>');
+      + ' (<a href="' + CC_BY_4 + '" target="_blank" rel="noopener">CC BY 4.0</a>, from Sketchfab). ' + esc(OWN_MODELS)
+      + '<br>Sounds: ' + SOUND_CREDITS.map((c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author)).join('; ')
+      + ' (<a href="' + CC0 + '" target="_blank" rel="noopener">CC0</a>).</div>'
+      + (s.soundError ? '<div class="note sounderr">' + esc(s.soundError) + '</div>' : '') + '</div>');
     if (s.screen === S.HighScores && s.scoresNote) parts.push('<div class="note foot">' + esc(s.scoresNote) + '</div>');
     if (s.soundNote) parts.push('<div class="corner">' + esc(s.soundNote) + '</div>');
     return parts.join('');
