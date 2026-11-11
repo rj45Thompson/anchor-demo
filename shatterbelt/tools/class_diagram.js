@@ -218,7 +218,9 @@ export function blocks(source) {
   };
 }
 
+// Line endings follow the page's own: a Windows checkout may have turned it to CRLF.
 export function stamp(page, name, content) {
+  if (page.includes('\r\n')) content = content.replace(/\r?\n/g, '\r\n');
   const open = `<!--gen:${name}-->`;
   const close = `<!--/gen:${name}-->`;
   const at = page.indexOf(open);
@@ -232,7 +234,7 @@ export function between(page, name) {
   const at = page.indexOf(open);
   const end = page.indexOf(`<!--/gen:${name}-->`);
   if (at < 0 || end < at) throw new Error(`index.html has no ${open} block`);
-  return page.slice(at + open.length, end);
+  return page.slice(at + open.length, end).replace(/\r\n/g, '\n');
 }
 
 function main() {

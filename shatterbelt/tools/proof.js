@@ -65,7 +65,8 @@ function plantAll() {
     const folder = mkdtempSync(join(tmpdir(), 'shatterbelt-proof-'));
     try {
       for (const part of ['core.js', 'index.html', 'package.json', 'tools', 'test']) cpSync(join(HERE, part), join(folder, part), { recursive: true });
-      const source = readFileSync(join(folder, 'core.js'), 'utf8');
+      const source = readFileSync(join(folder, 'core.js'), 'utf8').replace(/\r\n/g, '\n'); // the plants are written with \n
+
       const hits = typeof plant.find === 'string' ? source.split(plant.find).length - 1 : (source.match(plant.find) || []).length;
       if (hits === 0 || (typeof plant.find === 'string' && hits !== 1)) throw new Error(`plant "${plant.bug}" matches ${hits} places in core.js`);
       writeFileSync(join(folder, 'core.js'), typeof plant.find === 'string' ? source.replace(plant.find, plant.put) : source.replace(plant.find, plant.put));
