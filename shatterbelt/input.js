@@ -99,6 +99,12 @@ export class Controls {
     return bits;
   }
 
+  // The pad's menu buttons while no game steps run (paused): sample() reads the pad only inside a step, so
+  // without this the Start button could pause a game but never carry it on. Call once per frame.
+  pollPad() {
+    this.readPad();
+  }
+
   // Forget everything held, for example when a game starts or pauses.
   clear() {
     this.held = this.touchHeld = this.tapped = 0;

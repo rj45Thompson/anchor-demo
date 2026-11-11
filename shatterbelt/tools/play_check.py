@@ -6,6 +6,10 @@ It serves the site from its root, opens shatterbelt/, and:
             taking a picture just after a rock breaks
   over      stops firing and flies on until the last ship is lost, then takes a picture of the game over screen
   replay    presses "Watch the replay" and waits for the page's own check that the replay ended in the same state
+  hour      plays a game whose input log is already full (an hour of play recorded into it through its own
+            record()), to the end: the game over screen must say there is no replay, and offer none
+  pad       with a stand-in gamepad (navigator.getGamepads answers with an object the check presses buttons on):
+            A starts, Start pauses, and Start again carries on
   phone     opens the page at 375 px wide as a touch phone: no sideways scroll, the touch buttons show in play
 Every picture is checked for a blank game view (almost no variation in the pixels), and any console error or
 uncaught exception fails the run.
@@ -16,7 +20,7 @@ usage:  py shatterbelt/tools/play_check.py [out_dir] [--write]      (from the si
         --write puts the measured numbers into shatterbelt/index.html (the "In a real browser" block)
 Exit 1 when any check fails.
 """
-import functools, html, http.server, json, os, re, socketserver, statistics, sys, tempfile, threading, time
+import functools, html, http.server, json, math, os, re, socketserver, statistics, sys, tempfile, threading, time
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
@@ -124,13 +128,82 @@ def desktop(browser, base, msgs):
     best = page.evaluate("(()=>{try{return localStorage.getItem('shatterbelt.best')}catch(e){return 'blocked'}})()")
     check("best score saved", best is not None and int(best) >= over["score"], "localStorage best = %s" % best)
 
+    check("a game within the hour offers its replay", page.is_visible("#replayBtn"), "Watch the replay is shown")
     page.click("#replayBtn")
     page.wait_for_function("window.shatterbelt.mode === 'over' && window.shatterbelt.stats.replayMatched !== null", timeout=240000)
     matched = game(page, "s.stats.replayMatched")
     check("the replay from seed + input log ends in exactly the same state", matched is True,
           document_text(page, "replayResult"))
+    past_an_hour(page)
     ctx.close()
     return {"gpu": gpu, "fps": fps, "played": played, "over": over, "replay": matched}
+
+
+def past_an_hour(page):
+    """a game longer than the input log's hour: the log stops recording, and the game over screen says there is no
+    replay rather than offering one that would not match. The hour is recorded into the log through its own
+    record() (216,000 steps in a moment), then the game is played on, unrecorded, to its end."""
+    page.keyboard.press("Enter")
+    page.wait_for_function("window.shatterbelt.mode === 'playing'")
+    filled = page.evaluate("""(() => { const log = window.shatterbelt.log;
+        while (log.length < log.bytes.length) log.record(0);
+        return [log.length, log.bytes.length, log.dropped]; })()""")
+    page.keyboard.down("ArrowUp")
+    deadline = game(page, "g.time") + 300
+    while not game(page, "g.over") and game(page, "g.time") < deadline:
+        page.keyboard.down("ArrowLeft"); page.wait_for_timeout(400); page.keyboard.up("ArrowLeft"); page.wait_for_timeout(300)
+    page.keyboard.up("ArrowUp")
+    page.wait_for_function("window.shatterbelt.mode === 'over'", timeout=20000)
+    page.wait_for_timeout(600)
+    dropped = game(page, "s.log.dropped")
+    offered = page.is_visible("#replayBtn")
+    said = document_text(page, "replayResult")
+    shoot(page, "8_over_past_an_hour")
+    check("a game past the hour: the log stopped recording, and the over screen says there is no replay",
+          filled[0] == filled[1] == 216000 and dropped > 0 and not offered and "No replay" in said,
+          "log %d of %d steps, %d steps not recorded; replay button %s; says: %s" % (
+              filled[0], filled[1], dropped, "shown" if offered else "hidden", said))
+
+
+# A stand-in for the Gamepad API, so the check can press a pad's buttons: navigator.getGamepads() answers with one
+# standard-layout pad whose buttons window.__pad.press(index, down) sets.
+PAD_SCRIPT = """
+window.__pad = { id: 'play_check stand-in pad', index: 0, connected: true, mapping: 'standard', axes: [0, 0, 0, 0],
+  buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
+  press(i, down) { this.buttons[i] = { pressed: down, touched: down, value: down ? 1 : 0 }; } };
+Object.defineProperty(Navigator.prototype, 'getGamepads', { value: () => [window.__pad], configurable: true });
+"""
+
+
+def gamepad(browser, base, msgs):
+    """the pad: A starts a game, Start pauses it, and Start again carries on (the page reads the pad inside game
+    steps, and none run while paused, so the second press needs reading outside them)"""
+    ctx = browser.new_context(viewport={"width": 1280, "height": 800})
+    ctx.add_init_script(PAD_SCRIPT)
+    page = ctx.new_page()
+    listen(page, msgs)
+    page.goto(base, wait_until="load")
+    page.wait_for_function("window.shatterbelt && window.shatterbelt.mode === 'title'", timeout=60000)
+    page.wait_for_timeout(500)
+
+    def press(button):
+        page.evaluate("window.__pad.press(%d, true)" % button); page.wait_for_timeout(250)
+        page.evaluate("window.__pad.press(%d, false)" % button); page.wait_for_timeout(400)
+        return page.evaluate("window.shatterbelt.mode")
+
+    after = {"A": press(0)}
+    after["Start"] = press(9)
+    steps = game(page, "g.steps")
+    page.wait_for_timeout(500)
+    held = game(page, "g.steps") == steps
+    after["Start again"] = press(9)
+    page.wait_for_timeout(300)
+    moving = game(page, "g.steps") > steps
+    check("gamepad: A starts, Start pauses, Start again carries on",
+          after == {"A": "playing", "Start": "paused", "Start again": "playing"} and held and moving,
+          "mode after A: %s, after Start: %s (game held still: %s), after Start again: %s (steps running: %s)" % (
+              after["A"], after["Start"], held, after["Start again"], moving))
+    ctx.close()
 
 
 def document_text(page, id_):
@@ -161,15 +234,19 @@ def phone(browser, base, msgs):
     left = page.locator('[data-input="Left"]').bounding_box()
     points = [{"x": fire["x"] + fire["width"] / 2, "y": fire["y"] + fire["height"] / 2, "id": 1},
               {"x": left["x"] + left["width"] / 2, "y": left["y"] + left["height"] / 2, "id": 2}]
-    angle0 = game(page, "g.ship.angle")
+    # the rules wrap the ship's angle to within half a turn of 0, so how far it turned is summed a sample at a time,
+    # each the short way (a 100 ms sample turns about 0.5 rad, well under a half turn)
+    last = game(page, "g.ship.angle")
     cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": points})
-    fired = 0
+    fired, turned = 0, 0.0
     for _ in range(30):
         page.wait_for_timeout(100)
         fired = max(fired, game(page, "g.bullets.countAlive(b => b.fromShip)"))
+        now = game(page, "g.ship.angle")
+        turned += math.atan2(math.sin(now - last), math.cos(now - last))
+        last = now
     shoot(page, "5_phone_play")
     cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
-    turned = game(page, "g.ship.angle") - angle0
     check("phone 375: holding Fire and Turn left together fires and turns", fired >= 3 and turned < -1,
           "up to %d shots in flight, turned %.2f rad" % (fired, turned))
     page.screenshot(path=os.path.join(OUT, "6_phone_full_page.png"), full_page=True)
@@ -239,6 +316,7 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(args=["--ignore-gpu-blocklist", "--enable-gpu", "--use-angle=d3d11"])
             desk = desktop(browser, base, msgs)
+            gamepad(browser, base, msgs)
             ph = phone(browser, base, msgs)
             small_phone(browser, base, msgs)
             browser.close()

@@ -58,6 +58,7 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.25);
   last = now;
   if (mode !== 'paused' && mode !== 'loading') alpha = clock.advance(mode === 'replay' ? dt * 2 : dt, stepOnce);
+  else if (mode === 'paused') controls.pollPad(); // no steps run, so the pad's Start is read here to carry on
   if (renderer && game) renderer.draw(game, alpha, mode === 'paused' ? 0 : dt);
   stats.frames += 1;
   requestAnimationFrame(frame);
@@ -137,14 +138,17 @@ function pause(on) {
 function endGame() {
   mode = 'over';
   lastRun.steps = log.length;
+  lastRun.replayable = log.dropped === 0; // the log holds an hour of play; a longer game cannot be replayed
   lastRun.score = game.score;
   lastRun.snapshot = JSON.stringify(game.snapshot());
   const newBest = game.score > best;
   if (newBest) { best = game.score; saved.write('best', best); }
   $('overScore').textContent = format(game.score);
   $('overBest').textContent = newBest ? 'A new best score' : `Best ${format(best)}`;
-  $('overWave').textContent = `Wave ${game.wave}, ${format(Math.round(lastRun.steps / 60))} seconds`;
-  $('replayResult').textContent = '';
+  $('overWave').textContent = `Wave ${game.wave}, ${format(Math.round(game.steps / 60))} seconds`;
+  $('replayBtn').hidden = !lastRun.replayable;
+  $('replayResult').textContent = lastRun.replayable ? ''
+    : 'No replay for this game: it ran past an hour, and the input log keeps only the first hour.';
   updateHud();
   show('over');
 }
@@ -152,6 +156,7 @@ function endGame() {
 // Plays the last game again from its seed and its input log, at double speed, then checks that it
 // ended in exactly the same state.
 function watchReplay() {
+  if (!lastRun || !lastRun.replayable) return;
   mode = 'replay';
   newGame(lastRun.options);
   show('replaying');
@@ -278,6 +283,7 @@ async function boot() {
 window.shatterbelt = {
   get game() { return game; },
   get mode() { return mode; },
+  get log() { return log; },
   stats,
 };
 
