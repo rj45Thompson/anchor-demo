@@ -153,6 +153,8 @@ def phone(browser, base, msgs):
     check("phone 375: an upright phone gets an upright field", field[1] > field[0], "field %d x %d" % tuple(field))
     pad = page.evaluate("getComputedStyle(document.querySelector('.touchpad')).display")
     check("phone 375: the touch buttons show during play", pad == "flex", "touchpad display: %s" % pad)
+    page.wait_for_timeout(400)   # let any scroll the start of play does settle
+    check_buttons_on_screen(page, "phone 375x812")
     # a real held touch on Fire (through the browser's input layer), and one on Turn left at the same time
     cdp = ctx.new_cdp_session(page)
     fire = page.locator('[data-input="Fire"]').bounding_box()
@@ -173,6 +175,35 @@ def phone(browser, base, msgs):
     page.screenshot(path=os.path.join(OUT, "6_phone_full_page.png"), full_page=True)
     ctx.close()
     return {"field": field}
+
+
+def check_buttons_on_screen(page, label):
+    """every touch button sits wholly inside the visible screen: shown is not enough, it has to be reachable (tick 4:
+    at 375x812 the left, right and Jump buttons were below the bottom edge while this file only checked display:flex)"""
+    off = page.evaluate("""() => [...document.querySelectorAll('.pad button')].map(b => {
+        const r = b.getBoundingClientRect();
+        return {name: b.dataset.input, inside: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth,
+                box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)]};
+      }).filter(b => !b.inside)""")
+    size = page.evaluate("[innerWidth, innerHeight]")
+    check("%s: every touch button is on screen in play" % label, not off,
+          "all inside %dx%d" % tuple(size) if not off else "off screen in %dx%d: %s" % (size[0], size[1], off))
+
+
+def small_phone(browser, base, msgs):
+    """a small phone (360x640): the same reachability check, where there is least room"""
+    ctx = browser.new_context(viewport={"width": 360, "height": 640}, device_scale_factor=2, is_mobile=True, has_touch=True)
+    page = ctx.new_page()
+    listen(page, msgs)
+    page.goto(base, wait_until="load")
+    page.wait_for_function("window.shatterbelt && window.shatterbelt.mode === 'title'", timeout=60000)
+    page.wait_for_timeout(800)
+    page.tap("#playBtn")
+    page.wait_for_function("window.shatterbelt.mode === 'playing'")
+    page.wait_for_timeout(400)
+    check_buttons_on_screen(page, "phone 360x640")
+    shoot(page, "7_small_phone_play")
+    ctx.close()
 
 
 def gpu_name(renderer):
@@ -209,6 +240,7 @@ def main():
             browser = p.chromium.launch(args=["--ignore-gpu-blocklist", "--enable-gpu", "--use-angle=d3d11"])
             desk = desktop(browser, base, msgs)
             ph = phone(browser, base, msgs)
+            small_phone(browser, base, msgs)
             browser.close()
     finally:
         server.shutdown()

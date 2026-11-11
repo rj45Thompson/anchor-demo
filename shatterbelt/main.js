@@ -115,11 +115,23 @@ function start() {
   stats.gamesStarted += 1;
   show(null);
   stage.focus({ preventScroll: true });
+  fitStageOnScreen();
+}
+
+// A phone's stage is sized to the screen less the page header, but the page can be scrolled anywhere when Play is
+// tapped, which left the touch buttons under the bottom edge. Bring the whole stage into view (the buttons first,
+// if it is taller than the screen). Checked by play_check.py: "every touch button is on screen in play".
+function fitStageOnScreen() {
+  if (!stage.classList.contains('touch')) return;
+  const r = stage.getBoundingClientRect();
+  const below = r.bottom - innerHeight;
+  const by = r.height > innerHeight || below > 0 ? below : (r.top < 0 ? r.top : 0);
+  if (by) window.scrollBy({ top: by, behavior: 'instant' });
 }
 
 function pause(on) {
   if (on && mode === 'playing') { mode = 'paused'; controls.clear(); show('paused'); }
-  else if (!on && mode === 'paused') { mode = 'playing'; last = performance.now(); show(null); }
+  else if (!on && mode === 'paused') { mode = 'playing'; last = performance.now(); show(null); fitStageOnScreen(); }
 }
 
 function endGame() {
