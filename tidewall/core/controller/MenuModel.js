@@ -14,6 +14,10 @@
 //   - CONTROLS & CREDITS (TITLE_UC.md UC-T1, this game's own): a panel of two pages over the title or the join screen (`infoOver`),
 //     opened by the host's openInfo() (its button, H, a pad's X). Left / right turn the page; back, confirm or START close it. The
 //     title's foot is one line because of it: the full key list and the credits live here.
+//   - TEXT SIZE and KEYS (SETTINGS_UC.md UC-ST4 / UC-ST3, 11-10, this game's own): two settings rows. KEYS opens the KEYS page of the
+//     settings panel (`keysOpen`): a PLAYER row, one row per movable action, RESET KEYS, BACK. Picking an action waits for a key
+//     (`keysWaiting`); the host hands the next key press to keyPressed(code), which rebinds it in the KeyBindings and returns
+//     KeysChanged for the host to store.
 // Everything else (the battlefield and difficulty rows, joining, pause, the fate screen's left/right + START, results, initials,
 // the high-score table, the idle-title demo) is the C# behaviour unchanged.
 import { GameRules } from '../rules/GameRules.js';
@@ -21,6 +25,7 @@ import { GameOptions, GameType, Battlefield, Difficulty } from '../rules/Campaig
 import { Phase } from '../match/Entities.js';
 import { MatchModel } from '../match/MatchModel.js';
 import { SettingsModel } from './SettingsModel.js';
+import { KeyBindings, MOVABLE, ACTION_WORDS, keyName } from './KeyBindings.js';
 
 const MENU_FIELDS = Object.freeze(['up', 'down', 'left', 'right', 'confirm', 'back', 'start']);
 
@@ -40,7 +45,7 @@ export class MenuInput {
 
 export const Screen = Object.freeze({ Title: 0, Setup: 1, Playing: 2, Pause: 3, Decide: 4, Results: 5, Initials: 6, HighScores: 7 });
 
-export const MenuActionKind = Object.freeze({ StartGame: 0, StartDemo: 1, Restart: 2, QuitToTitle: 3, QuitApp: 4, Decide: 5, SaveHighScores: 6, SettingsChanged: 7 });
+export const MenuActionKind = Object.freeze({ StartGame: 0, StartDemo: 1, Restart: 2, QuitToTitle: 3, QuitApp: 4, Decide: 5, SaveHighScores: 6, SettingsChanged: 7, KeysChanged: 8 });
 
 function kindName(v) { for (const k of Object.keys(MenuActionKind)) if (MenuActionKind[k] === v) return k; return String(v); }
 
@@ -78,14 +83,19 @@ export class MenuModel {
   static RowMap = 0; static RowField = 1; static RowDifficulty = 2; static RowStart = 3; static RowScores = 4; static RowQuit = 5;
   static PauseRowSettings = 2;
   static InfoPages = Object.freeze(['CONTROLS', 'CREDITS']);
-  static SettingsRows = Object.freeze(['MUSIC', 'EFFECTS', 'AMBIENCE', 'MUTE', 'GRAPHICS', 'MOTION', 'BACK']);
-  static SetMusic = 0; static SetEffects = 1; static SetAmbience = 2; static SetMute = 3; static SetGraphics = 4; static SetMotion = 5; static SetBack = 6;
+  static SettingsRows = Object.freeze(['MUSIC', 'EFFECTS', 'AMBIENCE', 'MUTE', 'GRAPHICS', 'MOTION', 'TEXT SIZE', 'KEYS', 'BACK']);
+  static SetMusic = 0; static SetEffects = 1; static SetAmbience = 2; static SetMute = 3; static SetGraphics = 4; static SetMotion = 5;
+  static SetText = 6; static SetKeys = 7; static SetBack = 8;
+  /** The KEYS page (UC-ST3): PLAYER (whose keys), one row per movable action (KeyBindings MOVABLE), RESET KEYS, BACK. */
+  static KeysRows = Object.freeze(['PLAYER', ...MOVABLE.map((a) => ACTION_WORDS[a]), 'RESET KEYS', 'BACK']);
+  static KeysPlayer = 0; static KeysFirstAction = 1; static KeysReset = 1 + MOVABLE.length; static KeysBack = 2 + MOVABLE.length;
   /** The SettingsModel volume each volume row changes. */
   static SettingsVolume = Object.freeze({ 0: 'music', 1: 'fx', 2: 'ambience' });
 
   /** scores: a HighScoreTable or null (a new empty one). maps: the app's generated maps, [{name, seed}, ...], at least one.
-   *  settings: the SettingsModel the settings rows change, or undefined (a test: SettingsModel.defaults('high')). */
-  constructor(scores, maps, settings) {
+   *  settings: the SettingsModel the settings rows change, or undefined (a test: SettingsModel.defaults('high')). keys: the
+   *  KeyBindings the KEYS page changes, or undefined (the shipped keys). */
+  constructor(scores, maps, settings, keys) {
     this.maps = checkMaps(maps);
     this.mapIndex = 0;
     this.screen = Screen.Title;
@@ -107,6 +117,37 @@ export class MenuModel {
     this.settingsRow = 0;
     this.infoOver = null;              // the screen the controls & credits panel is open over (Title or Setup), or null
     this.infoPage = 0;                 // its page: an index of InfoPages
+    this.keys = keys === undefined ? KeyBindings.defaults() : keys;
+    if (!(this.keys instanceof KeyBindings)) throw new TypeError('MenuModel: keys is a KeyBindings');
+    this.keysOpen = false;             // the settings panel shows its KEYS page
+    this.keysSeat = 0;                 // whose keys it shows: a KeyBindings cluster
+    this.keysRow = 0;
+    this.keysWaiting = false;          // an action was picked: the next key press is its new key (keyPressed)
+    this.keysNote = '';                // what the last key press did: a refusal, a swap, or ''
+  }
+
+  /** The value beside a KEYS row: 'P1', an action's keys ('PRESS A KEY' while it waits), '' for RESET KEYS and BACK. */
+  valueOfKeysRow(row) {
+    if (row === MenuModel.KeysPlayer) return 'P' + (this.keysSeat + 1);
+    const a = MOVABLE[row - MenuModel.KeysFirstAction];
+    if (a !== undefined && row >= MenuModel.KeysFirstAction) return this.keysWaiting && row === this.keysRow ? 'PRESS A KEY' : this.keys.label(this.keysSeat, a);
+    if (row === MenuModel.KeysReset || row === MenuModel.KeysBack) return '';
+    throw new RangeError('MenuModel: no keys row ' + row);
+  }
+
+  /** UC-ST3 step 3: the key pressed while the KEYS page waits (a KeyboardEvent.code). Esc puts it back as it was (3c); a key the
+   *  page keeps or one of the fixed keys is refused with its reason (3b); a key another action had swaps (3a). Returns the actions
+   *  for the host: [KeysChanged] when the keys changed, else []. */
+  keyPressed(code) {
+    if (!this.keysWaiting) throw new Error('MenuModel: the KEYS page is not waiting for a key');
+    this.keysWaiting = false;
+    if (code === 'Escape') { this.keysNote = ''; return []; }
+    const action = MOVABLE[this.keysRow - MenuModel.KeysFirstAction];
+    const r = this.keys.bind(this.keysSeat, action, code);
+    if (!r.ok) { this.keysNote = r.why; return []; }
+    this.keysNote = r.moved ? keyName(code) + ' was P' + (r.moved.seat + 1) + ' ' + ACTION_WORDS[r.moved.action] + ': that is now '
+      + this.keys.label(r.moved.seat, r.moved.action) : '';
+    return [new MenuAction(MenuActionKind.KeysChanged)];
   }
 
   get infoOpen() { return this.infoOver !== null; }
@@ -156,7 +197,8 @@ export class MenuModel {
     if (row === MenuModel.SetMute) return st.muted ? 'ON' : 'OFF';
     if (row === MenuModel.SetGraphics) return st.quality === 'high' ? 'HIGH' : 'LOW';
     if (row === MenuModel.SetMotion) return st.motion === 'full' ? 'FULL' : 'REDUCED';   // UC-ST2
-    if (row === MenuModel.SetBack) return '';
+    if (row === MenuModel.SetText) return st.text + '%';                                  // UC-ST4
+    if (row === MenuModel.SetKeys || row === MenuModel.SetBack) return '';
     throw new RangeError('MenuModel: no settings row ' + row);
   }
 
@@ -172,7 +214,7 @@ export class MenuModel {
   }
 
   /** Back to the screen it opened over, on the row it was on (the settings rows move settingsRow, never row). */
-  closeSettings() { this.settingsOver = null; this._idle = 0; }
+  closeSettings() { this.settingsOver = null; this._idle = 0; this.keysOpen = false; this.keysWaiting = false; this.keysNote = ''; }
 
   /** One frame. `match` is the running match or null; the menu follows it into the fate screen and out to the results. */
   update(seats, match) {
@@ -271,6 +313,7 @@ export class MenuModel {
   /** The settings panel: Back (or the BACK row) shuts it; left / right change the chosen row; up / down / confirm as every menu
    *  (_nav). The seats that drive it are the ones that drive the screen under it. */
   _settings(seats, acts) {
+    if (this.keysOpen) { this._keys(seats, acts); return; }
     const open = this.joinedCount === 0;
     for (let i = 0; i < MenuModel.Seats; i++) if ((open || this.joined[i]) && seats[i].back) { this.closeSettings(); return; }
     for (let i = 0; i < MenuModel.Seats; i++) {
@@ -280,7 +323,28 @@ export class MenuModel {
     }
     const pick = this._nav(seats, MenuModel.SettingsRows.length, false, 'settingsRow');
     if (pick === MenuModel.SetBack) this.closeSettings();
+    else if (pick === MenuModel.SetKeys) { this.keysOpen = true; this.keysRow = 0; this.keysNote = ''; }
     else if (pick !== null) this._changeSetting(pick, 0, acts);
+  }
+
+  /** The KEYS page (UC-ST3). While it waits for a key only back works (a pad's B, 3c); the key itself comes through keyPressed. Back
+   *  or BACK returns to the settings rows on KEYS; left / right on PLAYER (or confirm) switch whose keys; RESET KEYS ships them. */
+  _keys(seats, acts) {
+    const open = this.joinedCount === 0, drives = (i) => open || this.joined[i];
+    if (this.keysWaiting) {
+      for (let i = 0; i < MenuModel.Seats; i++) if (drives(i) && seats[i].back) { this.keysWaiting = false; this.keysNote = ''; }
+      return;
+    }
+    for (let i = 0; i < MenuModel.Seats; i++) if (drives(i) && seats[i].back) { this.keysOpen = false; this.settingsRow = MenuModel.SetKeys; return; }
+    for (let i = 0; i < MenuModel.Seats; i++)
+      if (drives(i) && this.keysRow === MenuModel.KeysPlayer && (seats[i].left || seats[i].right)) this.keysSeat = (this.keysSeat + 1) % KeyBindings.Seats;
+    const pick = this._nav(seats, MenuModel.KeysRows.length, false, 'keysRow');
+    if (pick === null) return;
+    this.keysNote = '';
+    if (pick === MenuModel.KeysBack) { this.keysOpen = false; this.settingsRow = MenuModel.SetKeys; }
+    else if (pick === MenuModel.KeysPlayer) this.keysSeat = (this.keysSeat + 1) % KeyBindings.Seats;
+    else if (pick === MenuModel.KeysReset) { if (!this.keys.isDefault) { this.keys.reset(); acts.push(new MenuAction(MenuActionKind.KeysChanged)); } }
+    else this.keysWaiting = true;
   }
 
   _info(seats) {
@@ -299,7 +363,8 @@ export class MenuModel {
     else if (row === MenuModel.SetMute) st.toggleMute();
     else if (row === MenuModel.SetGraphics) st.toggleQuality();
     else if (row === MenuModel.SetMotion) st.toggleMotion();
-    else changed = false;                                              // BACK: left / right do nothing
+    else if (row === MenuModel.SetText) changed = st.stepText(dir === 0 ? 1 : dir, dir === 0);   // UC-ST4: confirm goes round
+    else changed = false;                                              // KEYS, BACK: left / right do nothing
     if (changed) acts.push(new MenuAction(MenuActionKind.SettingsChanged));
   }
 
@@ -344,6 +409,7 @@ export class MenuModel {
 
   /** The pointer is over a row (a mouse in the host): it becomes the chosen row, so a click confirms the row under the mouse. */
   pointAt(row) {
+    if (this.settingsOver !== null && this.keysOpen) { if (!this.keysWaiting && row >= 0 && row < MenuModel.KeysRows.length) this.keysRow = row; return; }
     if (this.settingsOver !== null) { if (row >= 0 && row < MenuModel.SettingsRows.length) this.settingsRow = row; return; }
     const rows = this.screen === Screen.Setup ? MenuModel.SetupRows.length : this.screen === Screen.Pause ? MenuModel.PauseRows.length
                : this.screen === Screen.Decide ? MenuModel.DecideRows.length : 0;

@@ -12,32 +12,35 @@
 // visible(ctx)?, tool(ctx)? (a second line: the tool in hand, or the stock bought), on(ctx)? (shown pressed in), poor(ctx)? (the
 // shop: the player cannot pay, the button is dim but still sends, so the refusal says why) }.
 // ctx is what the page knows about the player now: { phase: 'Claim'|'Cannons'|'Battle'|'Repair'|..., sword (the tool flag: the bomb
-// tool in the bomb rule set), ready, bombs (the rule set is on), carrying, bombsLeft, score, costs, items }.
+// tool in the bomb rule set), ready, bombs (the rule set is on), carrying, bombsLeft, score, costs, items, key(action) (player 1's keys
+// for a movable action now, core/controller/KeyBindings.js label: a rebind shows at once, UC-ST3), enterReady (Enter is READY too) }.
 
 const IN_PLAY = (c) => c.phase === 'Claim' || c.phase === 'Cannons' || c.phase === 'Battle' || c.phase === 'Repair';
 const TOOL_PHASE = (c) => c.phase === 'Battle' || c.phase === 'Repair';
 const BOMBS = (c) => c.bombs;
 const SHOP = [['metal', 'Metal', 'piece, 6 hits'], ['trap', 'Trap', 'spikes'], ['bombPack', 'Bombs', '+3 bombs'], ['bigBomb', 'Big bomb', 'next one']];
 
+import { zoomOf } from './overlay.js';
+
 export const ACTIONS = Object.freeze([
   Object.freeze({
-    id: 'place', field: 'confirm', keys: 'Space / click',
+    id: 'place', field: 'confirm', keys: (c) => c.key('confirm') + ' / click',
     label: (c) => (c.sword && TOOL_PHASE(c) ? (c.bombs ? (c.carrying ? 'Throw' : 'Drop') : 'Swing') : ({ Claim: 'Claim', Cannons: 'Place', Battle: 'Fire', Repair: 'Place' })[c.phase] || 'Place'),
     enabled: IN_PLAY,
   }),
-  Object.freeze({ id: 'rotate', field: 'rotate', keys: (c) => (c.bombs ? 'R' : 'R / right click'), label: () => 'Rotate', enabled: (c) => c.phase === 'Repair' && !c.sword }),
+  Object.freeze({ id: 'rotate', field: 'rotate', keys: (c) => (c.bombs ? c.key('rotate') : c.key('rotate') + ' / right click'), label: () => 'Rotate', enabled: (c) => c.phase === 'Repair' && !c.sword }),
   Object.freeze({
-    id: 'drop', field: 'drop', keys: 'B', label: (c) => (c.carrying ? 'Throw' : 'Drop bomb'), visible: BOMBS, enabled: TOOL_PHASE,
+    id: 'drop', field: 'drop', keys: (c) => c.key('drop'), label: (c) => (c.carrying ? 'Throw' : 'Drop bomb'), visible: BOMBS, enabled: TOOL_PHASE,
     tool: (c) => (c.bombs ? 'x' + c.bombsLeft : ''),
   }),
-  Object.freeze({ id: 'pickup', field: 'pickUp', keys: 'F / right click', label: () => 'Pick up', visible: BOMBS, enabled: (c) => TOOL_PHASE(c) && !c.carrying }),
-  Object.freeze({ id: 'defuse', field: 'defuse', hold: true, keys: 'hold F / right', label: () => 'Defuse', visible: BOMBS, enabled: TOOL_PHASE }),
+  Object.freeze({ id: 'pickup', field: 'pickUp', keys: (c) => c.key('grab') + ' / right click', label: () => 'Pick up', visible: BOMBS, enabled: (c) => TOOL_PHASE(c) && !c.carrying }),
+  Object.freeze({ id: 'defuse', field: 'defuse', hold: true, keys: (c) => 'hold ' + c.key('grab') + ' / right', label: () => 'Defuse', visible: BOMBS, enabled: TOOL_PHASE }),
   Object.freeze({
-    id: 'swap', field: 'swap', keys: 'Tab / Q', label: () => 'Swap tool', enabled: TOOL_PHASE,
+    id: 'swap', field: 'swap', keys: (c) => c.key('swap'), label: () => 'Swap tool', enabled: TOOL_PHASE,
     on: (c) => c.sword && TOOL_PHASE(c),
     tool: (c) => (!TOOL_PHASE(c) ? '' : c.sword ? (c.bombs ? 'BOMBS' : 'SWORD') : c.phase === 'Battle' ? 'CANNON' : 'PIECES'),
   }),
-  Object.freeze({ id: 'ready', field: 'ready', keys: 'E / Enter', label: () => 'Ready', enabled: (c) => c.phase === 'Cannons' && !c.ready }),
+  Object.freeze({ id: 'ready', field: 'ready', keys: (c) => c.key('ready') + (c.enterReady ? ' / Enter' : ''), label: () => 'Ready', enabled: (c) => c.phase === 'Cannons' && !c.ready }),
   // the shop (REPAIR): one button per item with its price from rules.itemCosts, dim when the player cannot pay; the trap is then put down
   ...SHOP.map(([name, word, what], item) => Object.freeze({
     id: 'buy-' + name, field: 'buy', value: item, row: 1, keys: String(item + 1),
@@ -120,7 +123,7 @@ export class ActionBar {
   }
 
   /** The bar sits `bottom` CSS px up from the window's foot (above the HUD's player cards). */
-  place(bottom) { this.el.style.bottom = bottom + 'px'; }
+  place(bottom) { this.el.style.bottom = bottom / zoomOf(this.el) + 'px'; }   // the window's px (TEXT SIZE zooms the bar)
 
   /** The bar's screen rect: one of the camera's cover rects while it is shown. */
   rect() { return this.el.getBoundingClientRect(); }

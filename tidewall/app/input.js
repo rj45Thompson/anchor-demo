@@ -11,6 +11,8 @@
 //   0 A, 1 B, 2 X, 3 Y, 5 right shoulder (also rotate), 9 Start, 12..15 d-pad up/down/left/right; axes[0], axes[1] the left stick
 //   (+y is down, as the board's +y).
 
+import { KeyBindings } from '../core/controller/KeyBindings.js';
+
 export const SEATS = 4;
 const STICK_FULL = 1000;              // the controller's stick scale: -1000..1000
 const MENU_STEP = 500;                // a stick pushed past half way is one menu step, once per push
@@ -19,23 +21,9 @@ const spread = (pts) => Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
 const TOUCH = 300;                    // stick travel that counts as a seat being touched (a bot seat hands over)
 const RIGHT_DRAG = 6;                 // px of travel that make a right press a camera drag, not a grab / a turn
 
-/** Keyboard clusters: KeyboardEvent.code values per action. */
-export const KEY_CLUSTERS = Object.freeze([
-  Object.freeze({
-    seat: 0, label: 'Player 1 keys',
-    up: ['KeyW'], down: ['KeyS'], left: ['KeyA'], right: ['KeyD'],
-    confirm: ['Space'], rotate: ['KeyR'], back: ['Backspace'], swap: ['Tab', 'KeyQ'], ready: ['KeyE'], start: ['Escape'], fast: ['ShiftLeft'],
-    grab: ['KeyF'], drop: ['KeyB'], trap: ['KeyT'], buy: [['Digit1'], ['Digit2'], ['Digit3'], ['Digit4']],
-    help: 'WASD move, Space place/fire/drop bomb, R rotate, Tab or Q swap tool (bombs), B drop bomb, F pick up (hold: defuse), 1-4 buy, T trap, E or Enter ready, Left Shift fast, Esc pause, Backspace back',
-  }),
-  Object.freeze({
-    seat: 1, label: 'Player 2 keys',
-    up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'],
-    confirm: ['Enter', 'NumpadEnter'], rotate: ['ShiftRight'], back: ['ShiftRight'], swap: ['Period'], ready: ['Slash'], start: ['Backslash'], fast: ['ControlRight'],
-    grab: ['Comma'], drop: ['Quote'], trap: ['Numpad0'], buy: [['Numpad1'], ['Numpad2'], ['Numpad3'], ['Numpad4']],
-    help: "Arrows move, Enter place/fire/drop bomb, Right Shift rotate/back, . swap tool, ' drop bomb, , pick up (hold: defuse), Numpad 1-4 buy, Numpad 0 trap, / ready, Right Ctrl fast, \\ pause",
-  }),
-]);
+// The keyboard clusters live in core/controller/KeyBindings.js (UC-ST3, 11-10): the shipped keys and the player's rebinds. Every poll
+// reads `bindings.clusters`, so a rebind acts on the next frame.
+const clusterKeys = (c) => [...c.up, ...c.down, ...c.left, ...c.right, ...c.confirm, ...c.rotate, ...c.back, ...c.swap, ...c.ready, ...c.start, ...c.fast, ...c.grab, ...c.drop, ...c.trap, ...c.buy.flat()];
 
 const PAD = Object.freeze({ A: 0, B: 1, X: 2, Y: 3, RB: 5, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 });
 
@@ -62,7 +50,11 @@ export class SeatDevices {
 }
 
 export class InputHub {
-  constructor(target = window) {
+  /** bindings: the KeyBindings the keyboard clusters are read from (main.js keeps the player's own; a test passes the shipped ones). */
+  constructor(target = window, bindings = KeyBindings.defaults()) {
+    if (!(bindings instanceof KeyBindings)) throw new TypeError('InputHub: bindings is a KeyBindings');
+    this.bindings = bindings;
+    this.captureKey = null;         // UC-ST3 step 2: while the KEYS panel waits for a key, the next key press goes here and is not played
     this.down = new Set();          // key codes held now
     this.pressed = new Set();       // key codes pressed since the last poll (edges)
     this.released = new Set();      // key codes let go since the last poll
@@ -73,10 +65,9 @@ export class InputHub {
     this.prevButtons = new Map();   // gamepad slot key -> pressed[] of the last poll
     this.phonepad = null;           // the PhonePad host, once its room is open
     this.anyKey = false;            // any key or button at all since the last take (wakes the audio, leaves the demo)
-    const own = new Set(KEY_CLUSTERS.flatMap((c) => [...c.up, ...c.down, ...c.left, ...c.right, ...c.confirm, ...c.rotate, ...c.back, ...c.swap, ...c.ready, ...c.start, ...c.fast, ...c.grab, ...c.drop, ...c.trap, ...c.buy.flat()]));
-    this.ownKeys = own;
     target.addEventListener('keydown', (e) => {
-      if (own.has(e.code)) e.preventDefault();          // Tab must not move focus, Space must not scroll, Backspace must not navigate
+      if (this.captureKey && !e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); const f = this.captureKey; this.captureKey = null; f(e.code); this.anyKey = true; return; }
+      if (this.ownKeys.has(e.code)) e.preventDefault();  // Tab must not move focus, Space must not scroll, Backspace must not navigate
       if (!e.repeat) this.pressed.add(e.code);
       this.down.add(e.code);
       this.anyKey = true;
@@ -169,6 +160,13 @@ export class InputHub {
     target.addEventListener('keydown', (e) => { if (e.code === 'KeyZ' && !e.repeat) this.cam.toggle = true; });   // whole island
   }
 
+  /** Every key a cluster uses now (its default is kept from the page's scroll, focus and back keys), rebuilt after a rebind. */
+  get ownKeys() {
+    const cl = this.bindings.clusters;
+    if (this._ownFrom !== cl) { this._ownFrom = cl; this._own = new Set(cl.flatMap(clusterKeys)); }
+    return this._own;
+  }
+
   /** The player's camera input since the last call (render/camera.js userInput's fields); clears it. */
   takeCamera() { const c = this.cam; this.cam = { wheel: 0, panX: 0, panY: 0, pinch: 1, toggle: false }; return c; }
 
@@ -196,7 +194,7 @@ export class InputHub {
     const fast = new Array(SEATS).fill(false);
     for (const d of this.devices) { d.keyboard = false; d.pad = false; d.phone = false; d.touch = false; d.padId = ''; }
 
-    for (const c of KEY_CLUSTERS) {
+    for (const c of this.bindings.clusters) {
       const s = c.seat, L = this.latch[s], held = (keys) => keys.some((k) => this.down.has(k)), hit = (keys) => keys.some((k) => this.pressed.has(k));
       this.devices[s].keyboard = true;
       if (held(c.left)) sticks[s][0] -= STICK_FULL;
@@ -205,7 +203,7 @@ export class InputHub {
       if (held(c.down)) sticks[s][1] += STICK_FULL;
       L.up ||= hit(c.up); L.down ||= hit(c.down); L.left ||= hit(c.left); L.right ||= hit(c.right);
       // Enter is also player 1's READY while player 2 is not in the match (it is player 2's place key when they are)
-      const readyKeys = s === 0 && this.enterReadies ? [...c.ready, 'Enter', 'NumpadEnter'] : c.ready;
+      const readyKeys = s === 0 && this.enterReadies && this.bindings.enterFree ? [...c.ready, 'Enter', 'NumpadEnter'] : c.ready;
       if (this.bombMode) {
         L.grab ||= held(c.grab); L.tap ||= this.released.has(c.grab[0]); L.drop ||= hit(c.drop); L.trap ||= hit(c.trap);
         c.buy.forEach((keys, item) => { if (hit(keys)) L.buy = item; });
@@ -291,7 +289,7 @@ export class InputHub {
 
   /** A key cluster's direction key is held: its press already made the menu edge, the stick crossing must not make a second. */
   keyHeldDir(seat, dir) {
-    const c = KEY_CLUSTERS.find((k) => k.seat === seat);
+    const c = this.bindings.clusters.find((k) => k.seat === seat);
     return !!c && c[dir].some((k) => this.down.has(k));
   }
 

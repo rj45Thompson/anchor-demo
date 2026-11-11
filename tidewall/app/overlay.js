@@ -18,7 +18,7 @@ const ICON = Object.freeze({
 const icon = (k) => '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg>';
 
 /** What each kind of control does, one line each (the how-to card on the join screen). The bindings are the page's own: keys
- *  app/input.js KEY_CLUSTERS (P1's), mouse input.js (left acts, right click turns, middle is ready, the wheel zooms), touch
+ *  core/controller/KeyBindings.js (P1's keys now: s.keysHowto replaces the keys row), mouse input.js (left acts, right click turns, middle is ready, the wheel zooms), touch
  *  controls.js TouchPad, phones PhonePad's A/B/Y. */
 const HOWTO_ROWS = Object.freeze({
   keys: 'WASD move, Space place / fire / bomb, R turn, Tab tool, F grab bomb (hold: defuse), 1-4 shop',
@@ -26,6 +26,9 @@ const HOWTO_ROWS = Object.freeze({
   touch: 'Stick move, A place / fire / bomb, B grab bomb (hold: defuse), Y tool / ready; pinch to zoom',
   phone: 'Scan the code, A joins; A place / fire / bomb, B grab bomb (hold: defuse), Y tool / ready',
 });
+
+/** A how-to row: the keys row from the bindings now when the page passes them (s.keysHowto), the others as written. */
+const howtoRow = (k, s) => (k === 'keys' && s.keysHowto ? s.keysHowto : HOWTO_ROWS[k]);
 
 /** The name each how-to row goes under on the controls page. */
 const HOWTO_LABEL = Object.freeze({ keys: 'Keyboard', mouse: 'Mouse', touch: 'Touch', phone: 'Phones' });
@@ -43,12 +46,24 @@ export function howtoDevices(mode, touchFirst) {
 }
 
 /** The first match's hint for each phase (by the ported Phase name), and how to do it with a touch screen or a desk. */
+// desk(k): k(action) is player 1's keys for a movable action now (core/controller/KeyBindings.js label), so a rebind shows here too
 export const PHASE_HINTS = Object.freeze({
-  Claim: { say: 'Pick a castle', touch: 'tap one', desk: 'click one, or walk there and press Space / A' },
-  Cannons: { say: 'Place cannons inside your walls', touch: 'tap inside, then Y', desk: 'click inside, then Ready (E / Y)' },
-  Battle: { say: 'Fire at ships', touch: 'tap a ship; Y takes out bombs', desk: 'click a ship, or aim and press Space; Tab or Q takes out bombs' },
-  Repair: { say: 'Close the ring with pieces', touch: 'tap to place; hold B to defuse bombs', desk: 'click to place, R turns; hold right click to defuse a bomb; 1-4 shop' },
+  Claim: { say: 'Pick a castle', touch: 'tap one', desk: (k) => 'click one, or walk there and press ' + k('confirm') + ' / A' },
+  Cannons: { say: 'Place cannons inside your walls', touch: 'tap inside, then Y', desk: (k) => 'click inside, then Ready (' + k('ready') + ' / Y)' },
+  Battle: { say: 'Fire at ships', touch: 'tap a ship; Y takes out bombs', desk: (k) => 'click a ship, or aim and press ' + k('confirm') + '; ' + k('swap') + ' takes out bombs' },
+  Repair: { say: 'Close the ring with pieces', touch: 'tap to place; hold B to defuse bombs', desk: (k) => 'click to place, ' + k('rotate') + ' turns; hold right click to defuse a bomb; 1-4 shop' },
 });
+
+/** The CSS zoom an element is drawn at (TEXT SIZE, style.css --ts): a px offset written to its style is multiplied by it, so a place
+ *  in the window's px is divided by it first. */
+export function zoomOf(el) {
+  const z = Number(getComputedStyle(el).zoom);
+  if (!(z > 0)) throw new Error('overlay.js: the element has no readable zoom: ' + getComputedStyle(el).zoom);
+  return z;
+}
+
+/** A phone-sized window: the same query style.css shrinks the strip with. */
+const COMPACT = () => matchMedia('(max-width: 639px), (max-height: 559px)').matches;
 
 /** The first-match hint strip: one line under the top bar in the first round of the first match a player plays on this page, the
  *  phase's goal and how to do it; it fades out when that round ends and does not come back. It is its own element (not the overlay's
@@ -60,13 +75,21 @@ export class HintStrip {
     parent.appendChild(el);
     this.el = el; this.text = ''; this.on = false;
   }
-  /** phase: the Phase name or null (nothing to say); touch: say it for a touch screen; fading: the hint round is over. */
-  set(phase, touch, fading) {
+  /** phase: the Phase name or null (nothing to say); touch: say it for a touch screen; fading: the hint round is over; key(action):
+   *  player 1's keys now (the desk line names them). */
+  set(phase, touch, fading, key, goals = []) {
     const h = phase ? PHASE_HINTS[phase] : null;
-    const text = h ? h.say + '|' + (touch ? h.touch : h.desk) : '';
+    // TUTORIAL_UC.md UC-T2: the phase's goals after it, each ticked when the player has done it (core FirstMatchGuide). On a compact
+    // screen (style.css's phone query) only the goal in hand: the whole list made the strip two lines on a 412 px tall phone, and the
+    // camera, which frames below the strip, zoomed out to 33.6 squares (run_page camera, 11-11)
+    if (goals.length > 1 && COMPACT()) { const open = goals.find((g) => !g.done); goals = [open || goals[goals.length - 1]]; }
+    const list = goals.map((g) => (g.done ? '1' : '0') + g.say + (g.count ? ' ' + g.count : '')).join('~');
+    const text = h ? h.say + '|' + (touch ? h.touch : h.desk(key)) + '|' + list : '';
     if (text && text !== this.text) {
       const [say, how] = text.split('|');
-      this.el.innerHTML = '<b>' + esc(say) + '</b><span>' + esc(how) + '</span>';
+      this.el.innerHTML = '<b>' + esc(say) + '</b><span>' + esc(how) + '</span>' + (goals.length ? '<span class="goals">'
+        + goals.map((g) => '<span class="goal' + (g.done ? ' done' : '') + '" data-goal="' + esc(g.id) + '">' + (g.done ? '✓' : '○') + ' ' + esc(g.say)
+          + (g.count ? ' <i>' + esc(g.count) + '</i>' : '') + '</span>').join('') + '</span>' : '');
     }
     if (text) this.text = text;
     const on = !!text && !fading;
@@ -77,7 +100,7 @@ export class HintStrip {
   place(top, avoid) {
     let y = top;
     for (let pass = 0; pass < 3; pass++) {
-      this.el.style.top = y + 'px';
+      this.el.style.top = y / zoomOf(this.el) + 'px';
       const r = this.el.getBoundingClientRect();
       const hit = avoid.filter((a) => a.left < r.right && a.right > r.left && a.top < r.bottom && a.bottom > r.top);
       if (!hit.length) return;
@@ -95,10 +118,11 @@ export class Overlay {
    * @param root      the #ui element
    * @param colours   the players' CSS colours by seat (the renderer's palette: one source)
    * @param Screen    the ported MenuModel's Screen enum
-   * @param keyHelp   one line per keyboard cluster
+   * @param keyHelp   () => one line per keyboard cluster, from the key bindings now (UC-ST3)
    * @param infoPages the menu's controls & credits pages (MenuModel.InfoPages), checked against the ones drawn here
    */
   constructor(root, colours, Screen, keyHelp, infoPages) {
+    if (typeof keyHelp !== 'function') throw new TypeError('overlay.js: keyHelp is a function giving the clusters lines');
     this.root = root; this.colours = colours; this.Screen = Screen; this.keyHelp = keyHelp;
     if (!Array.isArray(infoPages) || infoPages.join() !== INFO_PAGES.join()) throw new Error('overlay.js: the info pages ' + INFO_PAGES.join() + ' are not the menu pages ' + infoPages);
     this.last = '';
@@ -112,7 +136,15 @@ export class Overlay {
    *  open controls & credits panel: { page }, or null) } */
   render(s) {
     const html = this.build(s);
-    if (html !== this.last) { this.last = html; this.root.innerHTML = html; }
+    if (html !== this.last) {
+      this.last = html; this.root.innerHTML = html;
+      // a panel with more rows than the screen has room for scrolls them (UC-ST3's KEYS page, a short phone): keep the chosen one in view
+      const sel = this.root.querySelector('.srows .srow.sel');
+      if (sel) sel.scrollIntoView({ block: 'nearest' });
+      // rows below the fold fade out at the panel's foot, so it shows there is more (style.css .srows.more)
+      const rows = this.root.querySelector('.srows');
+      if (rows) { const more = () => rows.classList.toggle('more', rows.scrollTop + rows.clientHeight < rows.scrollHeight - 2); more(); rows.addEventListener('scroll', more); }
+    }
     // the foot's height, for the how-to card that stands above it on a narrow screen (style.css --foot-h)
     const f = this.root.querySelector('.foot'), h = f ? f.offsetHeight : 0;
     if (h !== this.footH) { this.footH = h; this.root.style.setProperty('--foot-h', h + 'px'); }
@@ -142,19 +174,24 @@ export class Overlay {
 
   /** The settings panel: a wooden board in a stone frame (the HUD's panels, UC-L1), one row per setting with its value; a volume
    *  has a ten-step meter and an arrow each side. The rows are plain boxes the pointer passes through to the page (#ui takes no
-   *  pointer events): main.js finds the row or arrow under the pointer with settingsHitAt and feeds it to the menu like a HUD row. */
+   *  pointer events): main.js finds the row or arrow under the pointer with settingsHitAt and feeds it to the menu like a HUD row.
+   *  st.head (the KEYS page, UC-ST3: 'KEYS'), st.note (what the last key did) and st.help (the line under it) replace the defaults. */
   settingsPanel(st, touch) {
     const rows = st.rows.map((r, i) => {
       const sel = i === st.row ? ' sel' : '';
       let val = '';
       if (r.value) {
         const meter = r.level === null ? '' : '<span class="meter">' + Array.from({ length: 10 }, (_, k) => '<i' + (k < Math.floor(r.level / 10) ? ' class="on"' : '') + '></i>').join('') + '</span>';
-        val = '<span class="sval"><span class="sarr" data-sstep="-1">◀</span>' + meter + '<span class="snum">' + esc(r.value) + '</span><span class="sarr" data-sstep="1">▶</span></span>';
+        val = r.arrows === false ? '<span class="sval"><span class="skey">' + esc(r.value) + '</span></span>'      // a key, not a value to step (UC-ST3)
+          : '<span class="sval"><span class="sarr" data-sstep="-1">◀</span>' + meter + '<span class="snum">' + esc(r.value) + '</span><span class="sarr" data-sstep="1">▶</span></span>';
       }
       return '<div class="srow' + sel + '" data-srow="' + i + '"><span class="slab">' + esc(r.label) + '</span>' + val + '</div>';
     }).join('');
-    return '<div class="setdim"></div><div class="settings" role="dialog" aria-label="Settings"><div class="sbody"><div class="shead">SETTINGS</div>' + rows
-      + '<div class="shelp">' + (touch ? 'Tap a row to change it, or its arrows; BACK closes' : 'Up / down choose, left / right change, B or Backspace goes back')
+    const head = st.head || 'SETTINGS';
+    return '<div class="setdim"></div><div class="settings" role="dialog" aria-label="' + esc(head) + '" data-page="' + esc(head) + '"><div class="sbody"><div class="shead">' + esc(head) + '</div>'
+      + '<div class="srows">' + rows + '</div>'
+      + (st.note ? '<div class="snote">' + esc(st.note) + '</div>' : '')
+      + '<div class="shelp">' + esc(st.help || (touch ? 'Tap a row to change it, or its arrows; BACK closes' : 'Up / down choose, left / right change, B or Backspace goes back'))
       + '</div></div></div>';
   }
 
@@ -165,9 +202,9 @@ export class Overlay {
     const tabs = INFO_PAGES.map((t, i) => '<span class="itab' + (i === page ? ' sel' : '') + '" data-info="page:' + i + '">' + esc(t) + '</span>').join('');
     let body;
     if (page === 0) {
-      const lines = [...this.keyHelp, (s.phonesAllowed ? 'Gamepads and phones' : 'Gamepads') + ': stick or d-pad move, A place/fire, B rotate/back, Y ready, X held fast, START pause',
+      const lines = [...this.keyHelp(), (s.phonesAllowed ? 'Gamepads and phones' : 'Gamepads') + ': stick or d-pad move, A place/fire, B rotate/back, Y ready, X held fast, START pause',
         // the how-to rows past the keys (both clusters are listed in full above): the mouse or touch, and phones where they can join
-        ...howtoDevices(s.phonesAllowed ? 'both' : 'local', s.touchFirst).filter((k) => k !== 'keys').map((k) => HOWTO_LABEL[k] + ': ' + HOWTO_ROWS[k])];
+        ...howtoDevices(s.phonesAllowed ? 'both' : 'local', s.touchFirst).filter((k) => k !== 'keys').map((k) => HOWTO_LABEL[k] + ': ' + howtoRow(k, s))];
       body = lines.map((l) => '<div class="iline">' + esc(l) + '</div>').join('');
     } else {
       const link = (c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author);
@@ -197,7 +234,7 @@ export class Overlay {
   /** The how-to card on the join screen: the goal in one line, then what each control of the chosen CONTROLS mode does. */
   howto(s) {
     const rows = howtoDevices(s.controls, s.touchFirst)
-      .map((k) => '<div class="hrow" data-dev="' + k + '">' + icon(k) + '<span>' + esc(HOWTO_ROWS[k]) + '</span></div>').join('');
+      .map((k) => '<div class="hrow" data-dev="' + k + '">' + icon(k) + '<span>' + esc(howtoRow(k, s)) + '</span></div>').join('');
     return '<div class="howto"><div class="hhead">HOW TO PLAY</div><div class="hgoal">Wall in a castle, place cannons, sink the ships,'
       + ' defuse raider bombs, then close the ring before the bell.</div>' + rows + '</div>';
   }
@@ -208,7 +245,7 @@ export class Overlay {
       const d = s.devices[seat], dev = [];
       // only what a player has used is named (a phone's join screen said "P1: keys WASD" with no keyboard in sight)
       if (seat === 0 && s.touchControls) dev.push('touch controls');
-      if (d.keysUsed) dev.push(seat === 0 ? 'keys WASD' : 'keys arrows');
+      if (d.keysUsed) dev.push('keys ' + (s.keysMove ? s.keysMove[seat] : seat === 0 ? 'WASD' : 'arrows'));
       if (d.mouseUsed) dev.push('mouse');
       if (d.pad) dev.push('gamepad');
       if (d.phone) dev.push('phone');

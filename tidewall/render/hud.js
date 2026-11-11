@@ -13,6 +13,14 @@ const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const PHASE_WORD = { [Phase.Claim]: 'CLAIM', [Phase.Cannons]: 'CANNONS', [Phase.Battle]: 'BATTLE', [Phase.Repair]: 'REPAIR',
                      [Phase.Score]: 'SCORE', [Phase.GameOver]: 'GAME OVER', [Phase.Victory]: 'VICTORY', [Phase.Decide]: 'CONTINUE?' };
 
+// AUTHORED (SETTINGS_UC.md UC-ST4 step 2): the smallest screen the HUD is ever laid out for, CSS px. TEXT SIZE draws the HUD for a
+// screen that much smaller and scales it up, so a size that would push it under this is cut to what fits.
+const MIN_LAYOUT_W = 360, MIN_LAYOUT_H = 320;   // a 360 px wide phone, the narrowest in common use, at 100 %
+
+/** The text size the HUD can give on a w x h (CSS px) screen when `want` (1, 1.25, 1.5) is asked for: never under 1, never laying
+ *  the HUD out for a screen under MIN_LAYOUT_W x MIN_LAYOUT_H. */
+export function textScaleFor(want, w, h) { return Math.max(1, Math.min(want, w / MIN_LAYOUT_W, h / MIN_LAYOUT_H)); }
+
 // AUTHORED: px of room round a panel sprite for its drop shadow (offset 1, 3)
 const PANEL_PAD = 4;
 /** Paint a wooden panel (Hud.woodPanel's look) at x, y, w x h on a 2D context g. */
@@ -44,6 +52,26 @@ export class Hud {
     this.title = title;
     this.said = new Map();         // slot -> the last lastMessage seen, to tell a new one
     this.notes = new Map();       // slot -> { text, at, buy }: the latest refusal or purchase on a card, shown for NOTE_SECONDS in a bright colour
+    this.want = 1;                // UC-ST4: the text size asked for (setTextSize), and `s` the one this screen gives (textScaleFor)
+    this.s = 1;
+  }
+
+  /** UC-ST4 step 1: TEXT SIZE as a ratio (1, 1.25, 1.5). Everything the HUD draws is laid out for a screen that much smaller (cssW,
+   *  cssH) and drawn scaled up, so a card or a menu grows whole and nothing is laid out past the edge. The size unit u stays the
+   *  window's (min(W / 100, H / 60) times s in the layout), so a part sized from u grows by s too, not only one sized in px. Every point handed IN (a
+   *  projected tag, a ghost note, a free rect, a click) is in the window's CSS px and is turned into the layout's here; every box
+   *  handed OUT (layout, titleBox) is in the window's px. */
+  setTextSize(want) {
+    if (!(want >= 1 && want <= 2)) throw new Error('hud.js: a text size is a ratio from 1 to 2, got ' + want);
+    this.want = want;
+    if (this.realW) this.resize(this.realW, this.realH, this.dpr);
+  }
+
+  /** The match HUD's layout (matchLayout) for n cards, in the window's CSS px: what the camera's free rect and the page's hint strip
+   *  and action bar are cut from. */
+  layout(n) {
+    const s = this.s, L = Hud.matchLayout(this.cssW, this.cssH, n, s);
+    return { u: L.u * s, barH: L.barH * s, cardH: L.cardH * s, cardW: L.cardW * s, cardsTop: L.cardsTop * s };
   }
 
   /** Where the pointer can act on the menu drawn last, in CSS px (taken from the drawing code itself, so a hit box can never drift
@@ -57,9 +85,19 @@ export class Hud {
   }
   /** The menu drawn last for `screen` has pointer targets (else a click anywhere is "press a button", as on the title). */
   hasHits(screen) { return screen === this.hitsScreen && this.hits.length > 0; }
-  hit(h, x0, y0, x1, y1) { this.hits.push(Object.assign(h, { x0, y0, x1, y1 })); }
+  // the boxes are kept in the window's px (drawn in the layout's: TEXT SIZE scales them by s, UC-ST4)
+  hit(h, x0, y0, x1, y1) { const s = this.s; this.hits.push(Object.assign(h, { x0: x0 * s, y0: y0 * s, x1: x1 * s, y1: y1 * s })); }
 
-  resize(w, h, dpr) { this.canvas.width = Math.round(w * dpr); this.canvas.height = Math.round(h * dpr); this.dpr = dpr; this.cssW = w; this.cssH = h; }
+  resize(w, h, dpr) {
+    this.canvas.width = Math.round(w * dpr); this.canvas.height = Math.round(h * dpr); this.dpr = dpr;
+    this.realW = w; this.realH = h;
+    this.s = textScaleFor(this.want, w, h);
+    this.cssW = w / this.s; this.cssH = h / this.s;                          // the screen the HUD is laid out for (UC-ST4)
+  }
+
+  /** A point in the window's CSS px as the layout's; a rect { x0, y0, x1, y1 } the same. */
+  inLayout(p) { return { ...p, x: p.x / this.s, y: p.y / this.s }; }
+  rectInLayout(f) { const s = this.s; return { x0: f.x0 / s, y0: f.y0 / s, x1: f.x1 / s, y1: f.y1 / s }; }
 
   // ------------------------------------------------------------------ drawing helpers (sizes in CSS px; the context is scaled)
   font(px, weight = 800) { this.ctx.font = weight + ' ' + px + 'px ' + FONT; }
@@ -107,8 +145,9 @@ export class Hud {
   /** view: the frame's view ({match, controllers, hud, menu}); project(vec3) -> {x, y, visible} in CSS px; tags from the units. */
   draw(view, project, tags, seconds, full) {
     const c = this.ctx, W = this.cssW, H = this.cssH;
-    c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    c.setTransform(this.dpr * this.s, 0, 0, this.dpr * this.s, 0, 0);
     c.clearRect(0, 0, W, H);
+    const real = project; project = (v) => this.inLayout(real(v));
     const menu = view.menu, m = view.match;
     if (m) for (const e of view.events) if (e instanceof ItemBought) this.notes.set(e.slot, { text: 'BOUGHT ' + ITEM_WORDS[ItemNames[e.item]], at: seconds, buy: true });
     const screen = menu ? menu.screen : Screen.Playing;
@@ -120,7 +159,7 @@ export class Hud {
     if (!menu || !full) return;
     switch (screen) {
       case Screen.Title: this.drawTitle(menu, seconds, !!m); break;
-      case Screen.Setup: this.drawSetup(menu, seconds, view.menuCover || []); break;
+      case Screen.Setup: this.drawSetup(menu, seconds, (view.menuCover || []).map((r) => ({ left: r.left / this.s, right: r.right / this.s, top: r.top / this.s, bottom: r.bottom / this.s }))); break;
       case Screen.Pause: this.drawRows('PAUSED', MenuModel.PauseRows, menu.row, ''); break;
       case Screen.Decide: this.drawDecide(view, seconds); break;
       case Screen.Results: this.drawResults(menu, seconds); break;
@@ -142,8 +181,9 @@ export class Hud {
 
   /** Where the match HUD draws its parts on a W x H (CSS px) screen with n player cards: the top bar's height and the card row's
    *  top. The camera keeps its frame between the two (renderer.freeRect), so these are the numbers drawMatch draws with. */
-  static matchLayout(W, H, n) {
-    const u = Math.min(W / 100, H / 60), barH = Math.max(40, u * 5.2), cardH = Math.max(64, u * 8.5);
+  static matchLayout(W, H, n, s = 1) {
+    // s: TEXT SIZE (UC-ST4): W, H are the layout's (the window / s) and u the window's, so every part grows by s
+    const u = Math.min(W / 100, H / 60) * s, barH = Math.max(40, u * 5.2), cardH = Math.max(64, u * 8.5);
     return { u, barH, cardH, cardW: n > 0 ? Math.min(250, (W - 30) / n - 10) : 0, cardsTop: n > 0 ? H - cardH - 12 : H };
   }
 
@@ -151,6 +191,7 @@ export class Hud {
    *  a ship the players cannot see gets a red chevron at the band's edge; graphics round 3). marks: [{ x, y } screen px]. */
   shipMarks(marks, free, seconds) {
     const c = this.ctx, E = 18;
+    marks = marks.map((m) => this.inLayout(m)); free = this.rectInLayout(free);
     marks.forEach((m, i) => {
       const cx = Math.min(Math.max(m.x, free.x0 + E), free.x1 - E), cy = Math.min(Math.max(m.y, free.y0 + E), free.y1 - E);
       let dx = m.x - cx, dy = m.y - cy, len = Math.hypot(dx, dy);
@@ -168,6 +209,7 @@ export class Hud {
    *  marks: [{ x, y, colour }] screen px. */
   heroMarks(marks, free, seconds) {
     const c = this.ctx, E = 26;
+    marks = marks.map((m) => this.inLayout(m)); free = this.rectInLayout(free);
     for (const m of marks) {
       const cx = Math.min(Math.max(m.x, free.x0 + E), free.x1 - E), cy = Math.min(Math.max(m.y, free.y0 + E), free.y1 - E);
       let dx = m.x - cx, dy = m.y - cy, len = Math.hypot(dx, dy);
@@ -183,14 +225,19 @@ export class Hud {
 
   drawMatch(view, seconds, banner) {
     const hud = view.hud, m = view.match, W = this.cssW, H = this.cssH, ctl = view.controllers[0];
-    const n = hud.players.filter((p) => p.present).length, L = Hud.matchLayout(W, H, n), u = L.u;
+    const n = hud.players.filter((p) => p.present).length, L = Hud.matchLayout(W, H, n, this.s), u = L.u;
     // the top bar: round + level on the left, the phase and its timer in the middle, lives and team score on the right
     const barH = L.barH;
     const g = this.ctx.createLinearGradient(0, 0, 0, barH * 1.4); g.addColorStop(0, 'rgba(36,20,8,0.7)'); g.addColorStop(1, 'rgba(36,20,8,0)');
     this.ctx.fillStyle = g; this.ctx.fillRect(0, 0, W, barH * 1.4);
     const fs = Math.max(14, u * 2.1);
     const narrow = W < 640;                                   // a phone held upright: the short form, so nothing runs into the phase chip
-    this.text(narrow ? 'R' + hud.round + ' · L' + hud.level : 'ROUND ' + hud.round + '  ·  LEVEL ' + hud.level + (hud.mapName ? '  ·  ' + hud.mapName : ''), narrow ? 12 : 18, barH / 2, fs, '#fff', 'left');
+    // the round and level: the longest form that ends before the phase chip (at 150 % text the island's name ran under it, 11-10)
+    const chipW0 = narrow ? Math.max(118, fs * 7.5) : Math.max(150, fs * 9), left = narrow ? 12 : 18, room = W / 2 - chipW0 / 2 - left - 12;
+    const forms = ['ROUND ' + hud.round + '  ·  LEVEL ' + hud.level + (hud.mapName ? '  ·  ' + hud.mapName : ''), 'ROUND ' + hud.round + '  ·  LEVEL ' + hud.level,
+                   'R' + hud.round + ' · L' + hud.level];
+    const said = forms.slice(narrow ? 2 : 0).find((t) => this.textWidth(t, fs) <= room) ?? forms[2];
+    this.text(said, left, barH / 2, fs, '#fff', 'left');
     const lives = Math.max(0, hud.lives);
     let lx = W - 18;
     this.text('SCORE ' + hud.teamScore, lx, barH / 2, fs, UI.gold, 'right');
@@ -199,7 +246,7 @@ export class Hud {
     // phase chip and the timer ring
     const word = PHASE_WORD[hud.phase];
     if (word === undefined) throw new Error('hud.js: no word for phase ' + hud.phase);
-    const cx = W / 2, chipW = narrow ? Math.max(118, fs * 7.5) : Math.max(150, fs * 9);
+    const cx = W / 2, chipW = chipW0;
     this.woodPanel(cx - chipW / 2, barH * 0.1, chipW, barH * 0.8, barH * 0.3);
     this.text(word, cx - (hud.secondsTotal > 0 ? fs * 0.9 : 0), barH / 2, fs * 1.05, '#fff');
     if (hud.secondsTotal > 0 && !m.ended) {
@@ -324,7 +371,7 @@ export class Hud {
   /** A short note at the bottom centre over everything (the quality switch says what it switched to); a fades it out. */
   toast(text, a, top = null, big = false) {
     const c = this.ctx; c.save(); c.globalAlpha = a;
-    const px = big ? 24 : 16, h = big ? 46 : 34, y = top ?? this.cssH * 0.7;
+    const px = big ? 24 : 16, h = big ? 46 : 34, y = top === null ? this.cssH * 0.7 : top / this.s;
     this.font(px, big ? 900 : 700); const w = c.measureText(text).width + (big ? 52 : 36);
     // a closing ring's toast (UC-P2) is gold on a dark panel; the quality switch's note stays plain
     this.woodPanel(this.cssW / 2 - w / 2, y, w, h, h / 2, { rim: big ? '#ffd257' : null });
@@ -336,6 +383,7 @@ export class Hud {
    *  `notes` [{ x, y (CSS px of the ghost's top), text, strong (0..1: a refused press just now, drawn bigger and brighter) }]. */
   ghostNotes(notes) {
     const c = this.ctx;
+    notes = notes.map((n) => this.inLayout(n));
     this.drawnNotes = [];
     for (const n of notes) {
       const px = Math.round(13 + 4 * n.strong);
@@ -380,7 +428,7 @@ export class Hud {
   }
 
   drawTitle(menu, seconds, behind) {
-    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60);
+    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60) * this.s;
     this.dim(behind ? 0.35 : 0.2);
     this.logo(H * 0.34, Math.max(48, u * 11), seconds);
     if (menu.inDemo) this.text('DEMO', W / 2, H * 0.52, Math.max(18, u * 3), '#ffe08a');
@@ -388,7 +436,7 @@ export class Hud {
     const sub = Math.max(13, u * 1.9), press = Math.max(18, u * 3.2);
     this.text('Defend your castle with up to three friends', W / 2, H * 0.7, sub, 'rgba(255,255,255,0.85)', 'center', 700);
     // where the title's words stand (CSS px, text centred on its y): the page keeps its foot below them (TITLE_UC.md UC-T1 R1)
-    this.titleBox = { pressTop: H * 0.62 - press * 0.6, subBottom: H * 0.7 + sub * 0.6 };
+    this.titleBox = { pressTop: (H * 0.62 - press * 0.6) * this.s, subBottom: (H * 0.7 + sub * 0.6) * this.s };   // the window's px
   }
 
   /** The join screen. cover: DOM rects drawn over the canvas that the seats and rows must stay clear of (QRLAND, round 5: the
@@ -396,7 +444,7 @@ export class Hud {
    *  each frame (main.js menuCover). A seat or row band that would cross one moves into the widest gap beside it, or below it
    *  when that gap is too narrow; with no cover crossed the layout is the centred one. */
   drawSetup(menu, seconds, cover) {
-    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60);
+    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60) * this.s;
     this.dim(0.5);
     // FOOT: CSS px the page's own foot takes at the bottom (app/style.css .foot, compact under 560 px of height); the rows must end
     // above it. On a short screen (a phone held sideways) the name, the cards and the rows shrink to fit.
@@ -458,7 +506,7 @@ export class Hud {
   }
 
   drawRows(head, rows, at, sub) {
-    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60), rh = Math.max(34, u * 5.4);
+    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60) * this.s, rh = Math.max(34, u * 5.4);
     this.dim(0.55);
     this.text(head, W / 2, H * 0.3, Math.max(34, u * 7), '#fff', 'center', 900);
     if (sub) this.text(sub, W / 2, H * 0.3 + u * 6, Math.max(14, u * 2.2), '#ffe08a');
@@ -472,7 +520,7 @@ export class Hud {
   }
 
   drawDecide(view, seconds) {
-    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60), menu = view.menu, hud = view.hud;
+    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60) * this.s, menu = view.menu, hud = view.hud;
     this.dim(0.6);
     this.text(hud.banner, W / 2, H * 0.32, Math.max(30, u * 6), '#fff', 'center', 900);
     if (hud.subtitle) this.text(hud.subtitle, W / 2, H * 0.32 + u * 6.5, Math.max(14, u * 2.4), '#ffe08a');
@@ -486,7 +534,7 @@ export class Hud {
   }
 
   drawResults(menu, seconds) {
-    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60);
+    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60) * this.s;
     this.dim(0.65);
     this.text(menu.lastWon ? 'VICTORY!' : 'GAME OVER', W / 2, H * 0.34, Math.max(44, u * 10), menu.lastWon ? '#ffe08a' : '#ff8a7a', 'center', 900);
     this.text('TEAM SCORE  ' + menu.pendingScore, W / 2, H * 0.5, Math.max(22, u * 4), UI.gold);
@@ -494,7 +542,7 @@ export class Hud {
   }
 
   drawInitials(menu, seconds) {
-    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60), bs = Math.max(64, u * 12);
+    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60) * this.s, bs = Math.max(64, u * 12);
     this.dim(0.7);
     this.text('NEW HIGH SCORE', W / 2, H * 0.26, Math.max(32, u * 6.5), '#ffe08a', 'center', 900);
     this.text(String(menu.pendingScore), W / 2, H * 0.37, Math.max(22, u * 4), UI.gold);
@@ -513,7 +561,7 @@ export class Hud {
   }
 
   drawScores(menu) {
-    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60), rh = Math.max(24, u * 3.6);
+    const W = this.cssW, H = this.cssH, u = Math.min(W / 100, H / 60) * this.s, rh = Math.max(24, u * 3.6);
     this.dim(0.7);
     this.text('HIGH SCORES', W / 2, H * 0.14, Math.max(32, u * 6.5), '#fff', 'center', 900);
     const rows = menu.highScores.rows;

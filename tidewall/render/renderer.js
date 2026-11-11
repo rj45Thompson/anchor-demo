@@ -30,6 +30,7 @@ import { Hud } from './hud.js';
 import { Fx } from './fx.js';
 import { Sky } from './sky.js';
 import { Mood, moodForLevel } from './mood.js';
+import { Weather } from './weather.js';
 import { PLAYER_CSS, PLAYER_HEX, PLAYER_COLOURS, PLAYER_TEXT_CSS } from './look.js';
 import { Models, tintArmour, outlineFigure, topPoint } from './models.js';
 import { PropSet, SUN, SKY, sunDirection, isletGeometry, mats } from './look.js';
@@ -57,7 +58,7 @@ const QUALITY = Object.freeze({
 // AUTHORED grade after the tone map (display values): a little more colour, a touch of contrast and the vignette's strength. The
 // exposure into the ACES filmic curve and the grade's cool shadows and warm highlights are the level's light (render/mood.js; at
 // noon 0.72, [-0.012, 0.004, 0.03] and [0.035, 0.015, -0.02], the values these constants had until 11-10)
-const GRADE = { saturation: 1.12, contrast: 1.06, vignette: 0.3 };
+const GRADE = { contrast: 1.06, vignette: 0.3 };   // the colour strength is the mood's (moods.js saturation; noon 1.12 as before)
 const REDUCED_FLASH = 0.35;                 // AUTHORED (UC-ST2): a captured territory's flash under reduced motion, of its full brightness
 // AUTHORED ambient occlusion (GTAO, three's GTAONode): radius in world units (a square is 1), drawn at half resolution, and how much
 // of it is applied (1 = all). Contact shading where walls, castles, cannons and figures meet the ground.
@@ -159,6 +160,7 @@ class Renderer {
     this.look = new BoardLook(this.mood);                                   // the land's and sea's materials, shared by every level
     this.scene.add(this.look.tufts);
     this.sky = new Sky(this.scene, this.look.noiseTex, this.mood);          // the dome, the haze and the cloud shadows (before any draw)
+    this.weather = new Weather(this.scene);                                 // the storm's rain and lightning (MOOD_UC.md UC-L6)
     this.fx = new Fx(this.scene, uniform(0));                               // the particles, shared by every level
     this.buildPost();
     // the HUD layer: a 2D canvas laid exactly over the WebGPU one
@@ -189,7 +191,7 @@ class Renderer {
     this.post.outputColorTransform = false;                                // the tone map and sRGB happen inside the chain, before the grade
     this.grade = (hdr) => {
       let c = renderOutput(hdr).rgb;                                        // ACES filmic + sRGB
-      c = saturation(c, GRADE.saturation);
+      c = saturation(c, this.mood.saturation);
       c = c.sub(0.5).mul(GRADE.contrast).add(0.5);
       const l = luminance(c);
       c = c.add(this.mood.cool.mul(oneMinus(l))).add(this.mood.warm.mul(l));   // the shadows' cool and the highlights' warm: the mood's
@@ -335,15 +337,15 @@ class Renderer {
   get screenTurn() { return this.rig.turn; }
 
   /** The match HUD's top bar height in CSS px (Hud.matchLayout): the page puts its hint strip under it. */
-  hudBarHeight() { return Hud.matchLayout(this.cssW, this.cssH, 0).barH; }
+  hudBarHeight() { return this.hud.layout(0).barH; }
 
   /** The height in CSS px the match HUD's player-card row takes at the window's foot (card plus its gap): the page puts its action bar above it. */
-  hudFootHeight() { const L = Hud.matchLayout(this.cssW, this.cssH, 1); return this.cssH - L.cardsTop; }
+  hudFootHeight() { const L = this.hud.layout(1); return this.cssH - L.cardsTop; }
 
   /** The free screen rect (CSS px): the canvas minus the HUD's top bar and its card row (Hud.matchLayout, the numbers it draws
    *  with) and minus each on-screen control (`cover`, DOM rects), each cut from the side that leaves the most area. */
   freeRect(view, cover) {
-    const W = this.cssW, H = this.cssH, n = view.hud ? view.hud.players.filter((p) => p.present).length : 0, L = Hud.matchLayout(W, H, n);
+    const W = this.cssW, H = this.cssH, n = view.hud ? view.hud.players.filter((p) => p.present).length : 0, L = this.hud.layout(n);
     const f = { x0: 0, y0: L.barH + 4, x1: W, y1: n > 0 ? L.cardsTop - 4 : H };
     const cr = this.canvas.getBoundingClientRect();
     for (const c of cover || []) {
@@ -402,6 +404,7 @@ class Renderer {
     this.units.camera = this.rig.camera;                                     // a hurt castle's bar faces it (CASTLE_DAMAGE_UC.md)
     this.mood.set(moodForLevel(this.match.level));                          // UC-L4: each level its own time of day
     this.mood.applyTo(this.sun, this.hemi, this.renderer);
+    this.weather.setLevel(this.grid.width, this.grid.height, this.match.level);
     this.fitSun();
     this.sun.shadow.needsUpdate = true;                                      // a new level's casters are drawn into the map now
     this.rig.pose = null; this.rig.key = null; this.rig.cur = null;
@@ -449,6 +452,7 @@ class Renderer {
       this.aim = drift ? null : this.director.targets(m, view.controllers[0], this.units, this.board, camIn, view.events, seconds, dt);
       this.rig.update(dt, this.board.landBounds(), building, this.aim, drift, this.cssW, this.cssH, m.phase === Phase.Battle);
       this.sky.update(this.rig.camera, this.rig.pose.target, seconds);
+      this.weather.update(dt, this.mood.current, this.sun, this.hemi, this.renderer, this.rig.camera, this.reducedMotion);   // UC-L6
       this.scene.visible = true;
     } else {
       this.scene.visible = false;                                           // no match: the menus over the plain sea colour

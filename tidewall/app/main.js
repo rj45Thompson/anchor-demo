@@ -15,7 +15,7 @@
 // whether phones may join, QUIT and the match events. With no host the page is the web page it always was.
 import { GAME_TITLE } from './title.js';
 import { readHost } from './host.js';
-import { InputHub, KEY_CLUSTERS, SEATS } from './input.js';
+import { InputHub, SEATS } from './input.js';
 import { Overlay, HintStrip } from './overlay.js';
 import { SoundPlayer, SoundLoadError } from './sound.js';
 import { musicFor, duckFor } from './soundbank.js';
@@ -29,7 +29,7 @@ import { createRenderer, NoWebGpuError, PLAYER_TEXT_CSS } from '../render/render
 
 const {
   GameRules, GameOptions, GridModel, MapCheck, MatchModel, MatchController, MenuModel, MenuInput, PadInput, Screen, MenuActionKind, HighScoreTable,
-  SeededRandom, Synth, Cell, SettingsModel, SettingsError,
+  SeededRandom, Synth, Cell, SettingsModel, SettingsError, KeyBindings, KeyBindingsError, FirstMatchGuide,
 } = core;
 
 document.title = GAME_TITLE;
@@ -41,6 +41,9 @@ const DEMO_RESTART = 6 * TPS;        // AUTHORED: an ended demo holds its last s
 const SCORES_KEY = GAME_TITLE.toLowerCase() + '-highscores';
 const SOUND_KEY = GAME_TITLE.toLowerCase() + '-sound';     // R4: mute and the three volumes, kept like the high scores
 const MOTION_KEY = GAME_TITLE.toLowerCase() + '-motion';   // SETTINGS_UC.md UC-ST2: 'full' or 'reduced', the bare word
+const KEYS_KEY = GAME_TITLE.toLowerCase() + '-keys';       // UC-ST3: the rebound keys, KeyBindings.save()
+const GUIDE_HOLD = 1.6;                                    // AUTHORED (UC-T2): seconds a finished phase's ticked goals stay up
+const TEXT_KEY = GAME_TITLE.toLowerCase() + '-text';       // UC-ST4: the text size percent, the bare number
 
 /** The URL switches, checked: a value that does not parse is refused with what was wrong, never replaced by a default. */
 function readSwitches() {
@@ -79,7 +82,9 @@ class Game {
   /** host: the checked page host (app/host.js readHost), or null on the web. */
   constructor(renderer, canvas, sw, host) {
     this.renderer = renderer; this.canvas = canvas; this.sw = sw; this.host = host;
-    this.input = new InputHub(window);
+    this.keysNote = '';                                            // UC-ST3 3e / UC-ST4: an unreadable or unsaved key or text setting
+    this.keyBindings = this.loadKeys();
+    this.input = new InputHub(window, this.keyBindings);
     this.phones = new Phones(SEATS);
     let coarse = false;
     if (typeof matchMedia === 'function') coarse = matchMedia('(pointer: coarse)').matches;
@@ -90,7 +95,7 @@ class Game {
     this.who = Object.freeze({ get demo() { return game.demo || game.sw.attract; }, isHuman: (slot) => !game.controller.isBot(slot) });
     this.touchpad = new TouchPad(document.body);
     // the first match's hint strip (overlay.js HintStrip): the match and the round it speaks in, set when a player's first match starts
-    this.hint = new HintStrip(document.body); this.hintMatch = null; this.hintRound = 0;
+    this.hint = new HintStrip(document.body); this.hintMatch = null; this.hintRound = 0; this.guide = null;
     this.input.attachTouch(this.touchpad);
     // the action bar: labelled buttons for the mouse and keyboard player (touch has its own on-screen buttons)
     this.bar = new ActionBar(document.body, ACTIONS);
@@ -115,8 +120,9 @@ class Game {
     this.sound = new SoundPlayer(Synth, settings.sound());
     this.maps = new MapSource(GameRules.default());
     this.scoresNote = '';
-    this.menu = new MenuModel(this.loadScores(), CAMPAIGN_ISLANDS, settings);
-    this.overlay = new Overlay(document.getElementById('ui'), PLAYER_TEXT_CSS, Screen, KEY_CLUSTERS.map((c) => 'P' + (c.seat + 1) + ': ' + c.help), MenuModel.InfoPages);
+    this.menu = new MenuModel(this.loadScores(), CAMPAIGN_ISLANDS, settings, this.keyBindings);
+    const kb = this.keyBindings;
+    this.overlay = new Overlay(document.getElementById('ui'), PLAYER_TEXT_CSS, Screen, () => [0, 1].map((s) => 'P' + (s + 1) + ': ' + kb.help(s)), MenuModel.InfoPages);
     this.seed = sw.seed ?? (Date.now() & 0x7fffffff);
     this.ticks = 0;
     this.acc = 0;
@@ -143,6 +149,8 @@ class Game {
       this.applySound(0.05);
     });
     this.applyMotion(false);                                       // UC-ST2 step 1: the motion the page starts with
+    this.applyText(false);                                         // UC-ST4: the text size the page starts with
+    this.textAsked = this.menu.settings.text;
     this.startMatch(true, null);
     if (sw.attract) this.menu.playing();
   }
@@ -185,6 +193,62 @@ class Game {
     }
   }
 
+  /** UC-ST3 3e: the stored keys, else the shipped ones. Unreadable ones are said on the title foot and never written over until the
+   *  player changes a key. */
+  loadKeys() {
+    let text;
+    try { text = this.store().getItem(KEYS_KEY); }
+    catch (e) { this.keysStorable = false; return KeyBindings.defaults(); }   // no storage: the sound settings' note already says so
+    this.keysStorable = true;
+    if (text === null) return KeyBindings.defaults();
+    try { return KeyBindings.parse(text); }
+    catch (e) {
+      if (!(e instanceof KeyBindingsError)) throw e;
+      this.keysNote = 'The saved keys could not be read (' + e.message + '); the shipped keys are used and the saved ones are left untouched.';
+      return KeyBindings.defaults();
+    }
+  }
+
+  saveKeys() {
+    if (!this.keysStorable) return;
+    try { this.store().setItem(KEYS_KEY, this.keyBindings.save()); this.keysNote = ''; }
+    catch (e) { this.keysNote = 'The keys could not be saved: ' + e.message; }
+  }
+
+  /** UC-ST4 step 3: the stored text size percent, else 100. */
+  loadText() {
+    let text;
+    try { text = this.store().getItem(TEXT_KEY); }
+    catch (e) { this.textStorable = false; return 100; }
+    this.textStorable = true;
+    if (text === null) return 100;
+    try { return SettingsModel.parseText(text); }
+    catch (e) {
+      if (!(e instanceof SettingsError)) throw e;
+      this.keysNote = 'The saved text size could not be read (' + e.message + '); 100 % is used and the saved one is left untouched.';
+      return 100;
+    }
+  }
+
+  /** UC-ST4 steps 1-2: the HUD and the page's panels at the TEXT SIZE (what this screen can give, hud.js textScaleFor); stored when
+   *  the player changed it (save: true). */
+  applyText(save) {
+    const st = this.menu.settings, hud = this.renderer.hud;
+    hud.setTextSize(st.text / 100);
+    this.showTextSize();
+    if (!save || !this.textStorable) return;
+    try { this.store().setItem(TEXT_KEY, String(st.text)); }
+    catch (e) { this.keysNote = 'The text size could not be saved: ' + e.message; }
+  }
+
+  /** The page's panels at the size the HUD gives (style.css --ts); a resize can change it (hud.js textScaleFor), so frame() asks. */
+  showTextSize() {
+    const s = this.renderer.hud.s;
+    if (s === this.tsShown) return;
+    this.tsShown = s; this.textGiven = Math.round(s * 100);
+    document.documentElement.style.setProperty('--ts', String(s));
+  }
+
   /** The renderer follows the MOTION setting; it is stored when the player changed it (save: true). */
   applyMotion(save) {
     const st = this.menu.settings;
@@ -196,13 +260,14 @@ class Game {
 
   loadSettings() {
     const motion = this.loadMotion();
-    const first = SettingsModel.defaults(this.sw.quality, motion);
+    const textSize = this.loadText();
+    const first = SettingsModel.defaults(this.sw.quality, motion, textSize);
     let text;
     try { text = this.store().getItem(SOUND_KEY); }
     catch (e) { this.soundNote = 'Sound settings are not kept in this browser: ' + e.message; this.soundWritable = false; return first; }
     this.soundWritable = true;
     if (!text) return first;
-    try { return SettingsModel.parse(text, this.sw.quality, motion); }
+    try { return SettingsModel.parse(text, this.sw.quality, motion, textSize); }
     catch (e) {
       if (!(e instanceof SettingsError)) throw e;
       this.soundNote = 'The saved sound settings could not be read (' + text.slice(0, 60) + '); they are left untouched.';
@@ -273,7 +338,10 @@ class Game {
     this.grid = model.grid;
     this.renderer.setMatch(model, seatOf);
     this.sound.newMatch();
-    if (!demo && !this.sw.attract && this.hintMatch === null) { this.hintMatch = model; this.hintRound = model.round; }
+    if (!demo && !this.sw.attract && this.hintMatch === null) {
+      this.hintMatch = model; this.hintRound = model.round;
+      this.guide = new FirstMatchGuide(0);                            // UC-T2: the first match's first player (slot 0 is a person here)
+    }
   }
 
   /** The campaign's four islands: the one chosen on the setup screen, then the next three of the menu's list (app/maps.js). */
@@ -283,6 +351,7 @@ class Game {
 
   present(e) {
     this.events.push(e);
+    if (this.guide && this.model === this.hintMatch && this.model.round === this.hintRound) this.guide.see([e]);   // UC-T2
     this.sound.forEvent(e, !this.silent);
     if (this.host) this.host.event(e, this.who);
   }
@@ -291,8 +360,11 @@ class Game {
     // a settings change is applied first, so its pick is heard at the new effects volume (UC-ST1 step 3)
     if (a.kind === MenuActionKind.SettingsChanged) {
       const motionChanged = (this.renderer.reducedMotion === true) !== this.menu.settings.reducedMotion;
-      this.applyQuality(); this.applySound(0); this.applyMotion(motionChanged); this.sound.menu('pick', this.ticks); return;
+      const textChanged = this.textAsked !== this.menu.settings.text;
+      this.applyQuality(); this.applySound(0); this.applyMotion(motionChanged); this.applyText(textChanged); this.textAsked = this.menu.settings.text;
+      this.sound.menu('pick', this.ticks); return;
     }
+    if (a.kind === MenuActionKind.KeysChanged) { this.saveKeys(); this.sound.menu('pick', this.ticks); return; }   // UC-ST3 step 3
     this.sound.menu('pick', this.ticks);
     switch (a.kind) {
       case MenuActionKind.StartGame: this.startMatch(false, this.menu.joined.slice()); break;
@@ -450,7 +522,10 @@ class Game {
   }
 
   frame(dt, seconds) {
+    // UC-ST3 step 2: while the KEYS page waits, the next key press is its new key and is not played
+    this.input.captureKey = this.menu.keysWaiting ? (code) => { for (const a of this.menu.keyPressed(code)) this.act(a); } : null;
     this.input.poll();
+    this.showTextSize();
     this.acc += Math.min(dt, 0.25) * this.sw.speed;
     let steps = 0;
     const max = 8 * this.sw.speed;
@@ -468,7 +543,15 @@ class Game {
     // the hint strip: in the first round of the first match, while it is being played; under the top bar, or below any on-screen
     // control it would sit on (its rect is then a cover rect, so the camera frames round it)
     const hinting = playing && this.model === this.hintMatch && this.model.round === this.hintRound && this.menu.screen === Screen.Playing;
-    this.hint.set(hinting ? Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase) : null, this.controls.showsTouch, !hinting);
+    let phaseName = Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase);
+    // UC-T2: a phase whose goals were all done stays on the strip, ticked, for GUIDE_HOLD s into the next (a lone player's claim ends
+    // CLAIM on the tick it is made, and its tick would never be seen)
+    if (hinting && this.guide) {
+      if (this.guidePhase && this.guidePhase !== phaseName && this.guide.phaseDone(this.guidePhase)) this.guideHeld = { phase: this.guidePhase, until: seconds + GUIDE_HOLD };
+      this.guidePhase = phaseName;
+      if (this.guideHeld && seconds < this.guideHeld.until) phaseName = this.guideHeld.phase; else this.guideHeld = null;
+    }
+    this.hint.set(hinting ? phaseName : null, this.controls.showsTouch, !hinting, (a) => this.keyBindings.label(0, a), hinting && this.guide ? this.guide.goals(phaseName) : []);
     const pads = this.touchpad.visible ? this.touchpad.coverRects() : [];
     if (this.hint.covering) this.hint.place(this.renderer.hudBarHeight() + 6, pads);
     // the action bar: shown to the keyboard-and-mouse player in a match, above the HUD's cards; its rect is a camera cover rect, so the
@@ -486,6 +569,7 @@ class Game {
     const act = mp && {
       phase: Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase), sword: mp.sword, ready: mp.ready, bombs,
       carrying: mp.carrying !== 0, bombsLeft: mp.bombs, score: mp.score, costs: bombs ? this.model.rules.itemCosts : null, items: mp.items,
+      key: (a) => this.keyBindings.label(0, a), enterReady: this.input.enterReadies && this.keyBindings.enterFree,
     };
     // the touch buttons say what they do now: A the action bar's own label for its place / fire / drop button (one rule for both), B
     // grab (bombs) or turn (the base rules' REPAIR), Y ready in CANNONS and tool in BATTLE and REPAIR
@@ -535,7 +619,7 @@ class Game {
       phones: { state: this.phones.state, reason: this.phones.reason }, scoresNote: this.scoresNote, controls: this.controls.mode,
       touchControls: this.controls.showsTouch, touchFirst: this.controls.touchFirst,
       soundNote: this.sound.muted ? 'Sound off (M)' : this.sound.needsGesture ? 'Press any key for sound' : '',
-      soundError: [this.soundNote, this.motionNote, ...this.sound.loadErrors.map((f) => 'Sound file ' + f.file + ' did not load: ' + f.why)].filter(Boolean).join(' '),
+      soundError: [this.soundNote, this.motionNote, this.keysNote, ...this.sound.loadErrors.map((f) => 'Sound file ' + f.file + ' did not load: ' + f.why)].filter(Boolean).join(' '),
       phonesAllowed: this.controls.phonesAllowed, phonesWhy: this.controls.phonesWhy, hostLines: this.host ? this.host.footer : [],
       settingsButton: this.settingsOffered, settings: this.settingsView(),
       infoButton: this.infoOffered, info: this.menu.infoOpen && !this.sw.attract ? { page: this.menu.infoPage } : null,
@@ -546,9 +630,16 @@ class Game {
   settingsView() {
     const m = this.menu;
     if (!m.settingsOpen || this.sw.attract) return null;
+    if (m.keysOpen) return {                                          // UC-ST3: the KEYS page
+      head: 'KEYS', row: m.keysRow, note: m.keysNote,
+      help: m.keysWaiting ? 'Press the new key for ' + MenuModel.KeysRows[m.keysRow] + '; Esc or a pad\'s B keeps the old one'
+        : 'Pick an action, then press its new key. Pads and phones keep their buttons.',
+      rows: MenuModel.KeysRows.map((label, i) => ({ label, value: m.valueOfKeysRow(i), level: null, arrows: i === MenuModel.KeysPlayer })) };
     return { row: m.settingsRow, rows: MenuModel.SettingsRows.map((label, i) => {
       const vol = MenuModel.SettingsVolume[i];
-      return { label, value: m.valueOfSettingsRow(i), level: vol === undefined ? null : m.settings[vol] };
+      // TEXT SIZE says what this screen gives when that is less than asked (UC-ST4 step 2)
+      const value = i === MenuModel.SetText && this.textGiven < m.settings.text ? m.settings.text + '% (fits ' + this.textGiven + '%)' : m.valueOfSettingsRow(i);
+      return { label, value, level: vol === undefined ? null : m.settings[vol] };
     }) };
   }
 

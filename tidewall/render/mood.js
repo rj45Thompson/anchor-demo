@@ -18,6 +18,7 @@ export class Mood {
     this.haze = c(); this.zenith = c(); this.glare = c(); this.seaHorizon = c(); this.seaZenith = c();
     this.cool = uniform(new THREE.Vector3()); this.warm = uniform(new THREE.Vector3());
     this.cloudShade = uniform(0);
+    this.saturation = uniform(1);
     this.current = null;
     this.set(MOODS.noon);
   }
@@ -29,6 +30,7 @@ export class Mood {
     this.seaHorizon.value.set(mood.seaHorizon); this.seaZenith.value.set(mood.seaZenith);
     this.cool.value.set(...mood.cool); this.warm.value.set(...mood.warm);
     this.cloudShade.value = mood.cloudShade;
+    this.saturation.value = mood.saturation;
     this.current = mood;
   }
 
