@@ -20,7 +20,12 @@ const runs = new Float64Array(graphs.length);
 const rate = new Float64Array(graphs.length);
 const byName = new Map(graphs.map((g, i) => [g.name, i]));
 let lastRun = new Float64Array(graphs.length);
-globalThis.__bpNode = (g, id) => { heat[g].set(id, 1); runs[g] += 1; lastRun[g] += 1; };
+// every statement each graph has run since the page opened: the fly-through (fly.js) lights the model's towers from it
+const total = new Float64Array(graphs.length);
+globalThis.__bpNode = (g, id) => { heat[g].set(id, 1); runs[g] += 1; lastRun[g] += 1; total[g] += 1; };
+// what the fly-through reads (UC-PG7): filled in as the page loads; events say when it is ready and what each action did
+const live = globalThis.PG_LIVE = { graphs, byName, total };
+const tell = (name, detail) => window.dispatchEvent(new CustomEvent('pg:' + name, { detail }));
 
 function refuse(why) {
   $('status').innerHTML = '';
@@ -195,6 +200,8 @@ say('This page\'s own forward pass, against PyTorch\'s on ' + compared + ' fixed
   + report.parity.f16Bound.toExponential(2) + ').</span>' + (parityOk ? '' : ' Nothing is answered.'), parityOk ? null : 'bad');
 if (!parityOk) throw new Error('forward pass outside the parity bound');
 openBusiest();
+Object.assign(live, { core, meta, vocab, weights, priors, stats: st });
+tell('ready', live);
 
 const speakers = [...priors.speakers.keys()].sort();
 const local = new core.GptProposer(gpt, speakers);
@@ -263,7 +270,7 @@ function ask() {
       box.innerHTML = '<p class="note">Not a question in a listed form, so the model continues it below, each character marked with where the training text holds it.</p>';
       $('w').value = plan.args[0];
       $('write').requestSubmit();
-      $('write').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      tell('go', 'write');
       return;
     }
     ranked = undefined;
@@ -328,6 +335,10 @@ function show(a, ms, q) {
   const lines = [];
   for (const h of a.chain) for (const n of h.evidence) if (lines.indexOf(n - 1) < 0 && lines.length < 6) lines.push(n - 1);
   if (lines.length) box.append(drawGraph(lines));
+  // every line the chain cites, for the city to light (UC-PG7 step 3)
+  const cited = [];
+  for (const h of a.chain) for (const n of h.evidence) if (cited.indexOf(n) < 0) cited.push(n);
+  tell('answer', { status: a.status, lines: cited });
 }
 
 /** the node graph around the chain's lines: lines, their speeches, the speakers, and the speech after */
@@ -384,21 +395,91 @@ $('write').addEventListener('submit', (e) => {
   $('wgo').disabled = true;
   setTimeout(() => {
     lastRun = new Float64Array(graphs.length);
-    const out = mixer.write(gpt, prompt, 200);
-    $('wgo').disabled = false;
+    // one character at a time (Mixer.begin, Mixer.next), a few each frame, so the city can light while the model runs
+    const w = mixer.begin(gpt, prompt);
     const div = $('written');
     div.textContent = prompt;
-    for (const ch of out) {
-      const s = document.createElement('span');
-      s.textContent = ch.char;
-      const k = Math.min(1, ch.matched / 24);
-      s.style.background = 'rgba(' + Math.round(43 + 63 * k) + ',' + Math.round(58 + 107 * k) + ',' + Math.round(74 + 48 * k) + ',' + (ch.matched ? 0.9 : 0.35) + ')';
-      s.title = ch.matched ? 'the ' + ch.matched + ' characters ending here occur ' + (ch.places === 1 ? 'once' : fmt(ch.places) + ' times') + ' in the training text, one of them at line ' + fmt(ch.line) + ': ' + lineText(ch.line) : 'no stretch ending here is in the training text';
-      div.append(s);
-    }
-    openBusiest('Mixer');
+    let n = 0;
+    const more = () => {
+      const until = performance.now() + 12;
+      while (n < 200 && performance.now() < until) {
+        const ch = mixer.next(w);
+        n += 1;
+        const s = document.createElement('span');
+        s.textContent = ch.char;
+        const k = Math.min(1, ch.matched / 24);
+        s.style.background = 'rgba(' + Math.round(43 + 63 * k) + ',' + Math.round(58 + 107 * k) + ',' + Math.round(74 + 48 * k) + ',' + (ch.matched ? 0.9 : 0.35) + ')';
+        s.title = ch.matched ? 'the ' + ch.matched + ' characters ending here occur ' + (ch.places === 1 ? 'once' : fmt(ch.places) + ' times') + ' in the training text, one of them at line ' + fmt(ch.line) + ': ' + lineText(ch.line) : 'no stretch ending here is in the training text';
+        div.append(s);
+        tell('char', ch);
+      }
+      if (n < 200) { requestAnimationFrame(more); return; }
+      $('wgo').disabled = false;
+      openBusiest('Mixer');
+    };
+    more();
   }, 30);
 });
+
+// ---- the model, taken apart (UC-PG7 step 2, R27): a copy of the model on the same weights that keeps what every head looks at
+const learner = new core.Gpt(weights, meta.hyper, vocab);
+learner.trace = {};
+let learnLogits = null;
+for (let l = 0; l < meta.hyper.n_layers; l++) $('llayer').append(new Option(String(l + 1), String(l)));
+for (let h = 0; h < meta.hyper.n_heads; h++) $('lhead').append(new Option(String(h + 1), String(h)));
+const shown1 = (c) => (c === '\n' ? '↵' : c === ' ' ? '␣' : c);
+
+function learnShow() {
+  const L = +$('llayer').value;
+  const H = +$('lhead').value;
+  const row = learner.trace.att[L][H];
+  const chars = learner.history.map((id) => vocab.chars[id]);
+  const div = $('lcontext');
+  div.textContent = '';
+  let top = 0;
+  for (let s = 0; s < row.length; s++) top = Math.max(top, row[s]);
+  chars.forEach((c, s) => {
+    const span = document.createElement('span');
+    span.textContent = c === '\n' ? '↵\n' : c;
+    const k = row[s] / top;
+    span.style.background = 'rgba(240,138,60,' + (0.08 + 0.82 * k).toFixed(3) + ')';
+    span.title = 'block ' + (L + 1) + ', head ' + (H + 1) + ' gives ' + (100 * row[s]).toFixed(1) + '% of its attention to this ' + JSON.stringify(c);
+    div.append(span);
+  });
+  // the chances: the softmax of the model's logits, the eight likeliest characters
+  let max = -Infinity;
+  for (let c = 0; c < learnLogits.length; c++) max = Math.max(max, learnLogits[c]);
+  let sum = 0;
+  const p = Array.from(learnLogits, (v) => { const e = Math.exp(v - max); sum += e; return e; }).map((e) => e / sum);
+  const best = p.map((x, c) => [x, c]).sort((a, b) => b[0] - a[0]).slice(0, 8);
+  $('lchances').innerHTML = best.map(([x, c]) => '<div class="bar"><span>' + esc(shown1(vocab.chars[c])) + '</span><b style="width:' + (100 * x / best[0][0]).toFixed(1) + '%"></b><span>' + (100 * x).toFixed(1) + '%</span></div>').join('');
+  live.lastLearn = { layer: L, head: H, row, chars, att: learner.trace.att, chances: best.map(([x, c]) => ({ char: vocab.chars[c], p: x })) };
+  tell('learn', live.lastLearn);
+}
+
+function learnFeed(text) {
+  if (!text.length) { $('lcontext').textContent = 'Give it at least one character to read.'; return; }
+  for (const c of text) {
+    if (!vocab.has(c)) { $('lcontext').textContent = 'The model has no character ' + JSON.stringify(c) + ': it was never in its training text.'; return; }
+  }
+  learner.reset();
+  learnLogits = learner.read(text);
+  learnShow();
+}
+$('lform').addEventListener('submit', (e) => { e.preventDefault(); learnFeed($('lt').value); });
+$('lnext').addEventListener('click', () => {
+  // its best guess fed back in, as writing does: one more character through all six blocks
+  let bestC = 0;
+  for (let c = 1; c < learnLogits.length; c++) if (learnLogits[c] > learnLogits[bestC]) bestC = c;
+  $('lt').value += vocab.chars[bestC];
+  learnLogits = learner.feed(bestC);
+  learnShow();
+});
+$('llayer').addEventListener('change', learnShow);
+$('lhead').addEventListener('change', learnShow);
+for (const id of ['lt', 'lgo', 'lnext']) $(id).disabled = false;
+learnFeed($('lt').value);
+window.addEventListener('pg:pickhead', (e) => { $('llayer').value = String(e.detail.layer); $('lhead').value = String(e.detail.head); learnShow(); });
 
 // ---- the head-to-head, from the run's own files
 (function scores() {
