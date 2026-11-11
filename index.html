@@ -31,7 +31,7 @@
    and every section id is here). */
 (function(){
   var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","phonepad","memsentinel","games","starfighter","houseofcars","tidewall","shatterbelt","breakout","bpgames",
-             "research","engine","bossbench","warship","apps","casement","options-bot","docs","docs-u2ue","docs-blueprint","docs-loop",
+             "research","engine","priorgpt","bossbench","warship","apps","casement","options-bot","docs","docs-u2ue","docs-blueprint","docs-loop",
              "docs-research","repos","contact","about"];
   var ALIAS = { projects:"u2ue", resume:"breakout", space:"starfighter", bench:"bossbench", manual:"u2ue-chapters", documentation:"docs" };
   function route(){
@@ -403,6 +403,7 @@ h3 a:hover{color:var(--accent)}
       <li class="gr" data-sec="research"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide AI research"><span>&#9656;</span></button><a class="row" href="#research"><span class="g" style="--c:var(--c-research)"></span><span class="l">AI research</span><span class="n"></span></a></div>
         <ul>
           <li class="leaf"><a class="row" href="#engine"><span class="g dot" style="--c:var(--c-research)"></span><span class="l">Knowledge engine</span></a></li>
+          <li class="leaf"><a class="row" href="#priorgpt"><span class="g dot" style="--c:var(--c-research)"></span><span class="l">PriorGPT</span></a></li>
           <li class="leaf"><a class="row" href="#bossbench"><span class="g dot" style="--c:var(--c-research)"></span><span class="l">BossBench</span></a></li>
           <li class="leaf"><a class="row" href="#warship"><span class="g dot" style="--c:var(--c-research)"></span><span class="l">WarShip</span></a></li>
           <li class="leaf also"><a class="row" href="#fly"><span class="g dot" style="--c:var(--c-tools)"></span><span class="l">Closed loop fly-through</span></a></li>
@@ -752,6 +753,17 @@ h3 a:hover{color:var(--accent)}
         <p class="more">Its confidence curve was checked on held-out facts: 0.20 percentage points calibration error. It is being rebuilt with real entity identity; this build runs on the previous version of this site.</p>
         <ul class="tags"><li>Knowledge graph</li><li>Calibration</li><li>JavaScript</li></ul>
         <p class="links"><a class="go" href="engine.html#think">Ask it a question</a><a href="engine.html#law">The anchor law</a><a href="WHITEPAPER.html">The whitepaper</a></p>
+      </div>
+    </article>
+    <article id="priorgpt" class="card" data-node="PriorGPT">
+      <div class="fig"><b>99.4%</b><span>right on 900 questions about its training text; the same model alone, 20.6%</span></div>
+      <div class="body">
+        <p class="meta"><span class="state s-proto">Prototype</span><span>Runs in the browser</span></p>
+        <h3><a href="priorgpt/">PriorGPT</a></h3>
+        <p class="line">Karpathy's nanoGPT, plus a node graph of its own training text that checks every answer and cites the lines it rests on.</p>
+        <p class="more">750 of 750 right where the answer is in that text; its 5 misses, all lines it should have called absent, are listed on the page. Runs on its own Blueprint graphs.</p>
+        <ul class="tags"><li>Language model</li><li>Knowledge graph</li><li>Blueprint debugger</li></ul>
+        <p class="links"><a class="go" href="priorgpt/">Ask it</a><a href="priorgpt/#scores">How it compares</a><a href="priorgpt/#how">How it works</a></p>
       </div>
     </article>
     <article id="bossbench" class="card" data-node="BossBench">

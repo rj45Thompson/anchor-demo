@@ -1,0 +1,27 @@
+{
+ "new_text": "held-out text, first half (characters 0 to 55770 after the split)",
+ "new_characters": 55770,
+ "measure_characters": 55770,
+ "steps": 300,
+ "batch": "32 new + 32 old windows of 256",
+ "device": "cuda",
+ "gpu": "NVIDIA GeForce RTX 2080",
+ "seconds_fine_tune": 86.27,
+ "seconds_one_measure": 1.62,
+ "bits_before": {
+  "old priors": 1.586109338553764,
+  "new text": 1.9968277035263196,
+  "held-out measure": 2.251387880701994
+ },
+ "bits_after": {
+  "old priors": 1.6819268479891207,
+  "new text": 1.007060119274754,
+  "held-out measure": 2.3049941085562704
+ },
+ "worse": [
+  "old priors",
+  "held-out measure"
+ ],
+ "kept": false,
+ "why": "worse on: old priors, held-out measure; the old weights stay"
+}

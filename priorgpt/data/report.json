@@ -1,0 +1,247 @@
+{
+ "summary": "900 test questions made from the training text with a seed, the gold answers read from it. The plain model answered 20.6% right, PriorGPT 99.4%. Both are the same weights; PriorGPT's only addition is reading the training text, so these questions measure what reading it adds, not how much more the model learned.",
+ "kinds": [
+  {
+   "kind": "complete",
+   "label": "Complete a training line from its first half",
+   "n": 150,
+   "plain": {
+    "k": 0,
+    "n": 150,
+    "rate": 0.0,
+    "lo": 0.0,
+    "hi": 0.02497113914571871
+   },
+   "prior": {
+    "k": 150,
+    "n": 150,
+    "rate": 1.0,
+    "lo": 0.9750288608542812,
+    "hi": 1.0
+   },
+   "confirmed": 0
+  },
+  {
+   "kind": "speaker",
+   "label": "Who says a training line (a speech's first line)",
+   "n": 150,
+   "plain": {
+    "k": 1,
+    "n": 150,
+    "rate": 0.006666666666666667,
+    "lo": 0.0011777710231334546,
+    "hi": 0.036793752933975674
+   },
+   "prior": {
+    "k": 150,
+    "n": 150,
+    "rate": 1.0,
+    "lo": 0.9750288608542812,
+    "hi": 1.0
+   },
+   "confirmed": 22
+  },
+  {
+   "kind": "answerer",
+   "label": "Who answers after a one-line speech (3 hops)",
+   "n": 150,
+   "plain": {
+    "k": 36,
+    "n": 150,
+    "rate": 0.24,
+    "lo": 0.17869214008148449,
+    "hi": 0.3142928522742892
+   },
+   "prior": {
+    "k": 150,
+    "n": 150,
+    "rate": 1.0,
+    "lo": 0.9750288608542812,
+    "hi": 1.0
+   },
+   "confirmed": 36
+  },
+  {
+   "kind": "reply",
+   "label": "The reply's first line after a one-line speech (4 hops)",
+   "n": 150,
+   "plain": {
+    "k": 0,
+    "n": 150,
+    "rate": 0.0,
+    "lo": 0.0,
+    "hi": 0.02497113914571871
+   },
+   "prior": {
+    "k": 150,
+    "n": 150,
+    "rate": 1.0,
+    "lo": 0.9750288608542812,
+    "hi": 1.0
+   },
+   "confirmed": 0
+  },
+  {
+   "kind": "noisy",
+   "label": "Who says a training line quoted with one word dropped",
+   "n": 150,
+   "plain": {
+    "k": 0,
+    "n": 150,
+    "rate": 0.0,
+    "lo": 0.0,
+    "hi": 0.02497113914571871
+   },
+   "prior": {
+    "k": 150,
+    "n": 150,
+    "rate": 1.0,
+    "lo": 0.9750288608542812,
+    "hi": 1.0
+   },
+   "confirmed": 13
+  },
+  {
+   "kind": "absent",
+   "label": "Who says a line the training text does not hold (right answer: ABSENT)",
+   "n": 150,
+   "plain": {
+    "k": 148,
+    "n": 150,
+    "rate": 0.9866666666666667,
+    "lo": 0.9526921436197238,
+    "hi": 0.9963359476117768
+   },
+   "prior": {
+    "k": 145,
+    "n": 150,
+    "rate": 0.9666666666666667,
+    "lo": 0.9243471574929044,
+    "hi": 0.9856797793044249
+   },
+   "confirmed": null
+  }
+ ],
+ "overall": {
+  "plain": {
+   "k": 185,
+   "n": 900,
+   "rate": 0.20555555555555555,
+   "lo": 0.18043183578842323,
+   "hi": 0.23318223110117334
+  },
+  "prior": {
+   "k": 895,
+   "n": 900,
+   "rate": 0.9944444444444445,
+   "lo": 0.9870610435898539,
+   "hi": 0.9976247686144084
+  }
+ },
+ "lm": {
+  "test": {
+   "positions": 55770,
+   "modelAlone": 2.2500862660475605,
+   "modelWithPriors": 2.208820450983353
+  },
+  "dev": {
+   "positions": 55769,
+   "modelAlone": 1.9968350619281383,
+   "modelWithPriors": 1.970092049675184
+  },
+  "lambdas": [
+   {
+    "from": 1,
+    "to": 2,
+    "lambda": 0.84,
+    "devPositions": 306
+   },
+   {
+    "from": 3,
+    "to": 4,
+    "lambda": 0.88,
+    "devPositions": 4468
+   },
+   {
+    "from": 5,
+    "to": 6,
+    "lambda": 0.9,
+    "devPositions": 13255
+   },
+   {
+    "from": 7,
+    "to": 8,
+    "lambda": 0.93,
+    "devPositions": 15993
+   },
+   {
+    "from": 9,
+    "to": 10,
+    "lambda": 0.92,
+    "devPositions": 11348
+   },
+   {
+    "from": 11,
+    "to": 13,
+    "lambda": 0.91,
+    "devPositions": 7618
+   },
+   {
+    "from": 14,
+    "to": 17,
+    "lambda": 0.93,
+    "devPositions": 2415
+   },
+   {
+    "from": 18,
+    "to": 24,
+    "lambda": 0.86,
+    "devPositions": 351
+   },
+   {
+    "from": 25,
+    "to": 256,
+    "lambda": 0.79,
+    "devPositions": 15
+   }
+  ],
+  "max": 256,
+  "note": "The mixing weights were set on the first half of the held-out text and are scored on the second half only. Mixing in the priors changed the score by +0.0413 bits per character (better)."
+ },
+ "misses": [
+  "absent-test-45: \"Who says: kind make of conceive a bark And baser\" answered READ \"POLIXENES\"; the gold is \"ABSENT\"",
+  "absent-test-81: \"Who says: in That enter'd a ever drowsy head,\" answered READ \"RICHMOND\"; the gold is \"ABSENT\"",
+  "absent-test-87: \"Who says: There yet,--poor Claudio! no But is remedy.\" answered READ \"ESCALUS\"; the gold is \"ABSENT\"",
+  "absent-test-98: \"Who says: Here comes your father: never make denial;\" answered READ \"LADY CAPULET\"; the gold is \"ABSENT\"",
+  "absent-test-105: \"Who says: great traveller, Half-can and wild that stabbed\" answered READ \"POMPEY\"; the gold is \"ABSENT\""
+ ],
+ "how": [
+  "The model is Karpathy's nanoGPT exactly as the public Kaggle notebook <code>ashtcoder/mingpt-shakespeare-andrej-karpathy</code> builds it: 6 layers, 6 heads, width 384, 10,788,929 parameters, trained 5,000 steps on a Tesla T4 on Kaggle, the notebook's own cells unchanged but for the dataset's new mount path. Its training text is the first 1,003,854 of 1,115,394 characters of the notebook's Shakespeare, its own 90 percent split.",
+  "That same training text is the priors. Every line, speech and speaker is a node of a graph, a line IN a speech, a speech SPOKEN BY its speaker and FOLLOWED BY the next; a suffix array finds any stretch of it at once.",
+  "A question becomes a plan of hops. The model proposes its own answer; the priors check it hop by hop and cite the training lines each hop rests on; an answer they do not back is replaced, and an answer nothing backs is ABSENT.",
+  "When it writes, each next character mixes the model's guess with what the training text says follows the longest stretch ending the text so far, and each character shows where that stretch is.",
+  "The page runs the engine as the program printed from its Blueprint graphs, and refuses to run any other. Its forward pass matched PyTorch's to 7.6e-06 with the float weights and 7.3e-03 with the half floats this page loads, over 264 positions."
+ ],
+ "nearMin": 0.58,
+ "thresholds": {
+  "speaker": 0.76,
+  "absent": 0.76,
+  "noisy": 0.76,
+  "answerer": 0.0
+ },
+ "thresholdNote": "The nearest-line threshold was the lowest of the values tied best on the dev questions (0.58 to 0.75), a rule fixed before the test ran. Every miss accepted a near line scoring 0.60 to 0.67, inside that range; changing the rule now would be tuning on the test, so the result stands as measured.",
+ "parity": {
+  "f32": 7.62939453125e-06,
+  "f16Bound": 0.007268428802490234,
+  "positions": 264
+ },
+ "kaggle": {
+  "estimate_loss_after": {
+   "train": 1.075186014175415,
+   "val": 1.4828294515609741
+  },
+  "val_bits_per_char": 2.1234617233276367,
+  "gpu": "Tesla T4",
+  "torch": "2.11.0+cu130"
+ }
+}
