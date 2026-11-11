@@ -45,8 +45,16 @@ function moveShipTo(game, x, y) {
 }
 
 const heading = v => Math.atan2(v.y, v.x);
-const angleBetween = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+const signedTurn = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from)); // the short way, -pi to pi
+const angleBetween = (a, b) => Math.abs(signedTurn(b, a));
 const eventsOf = (events, type) => events.filter(e => e.type === type);
+
+// A player who changes what they hold every so often (as in the determinism test).
+function holder(seed) {
+  const rng = new Random(seed);
+  let held = 0;
+  return () => { if (rng.oneIn(12)) held = rng.int(32); return held; };
+}
 
 // ---- splitting -------------------------------------------------------------------------------------
 
@@ -89,6 +97,27 @@ test('a hit Small rock breaks and leaves nothing', () => {
   const events = game.step(0);
   assert.equal(game.rocks.live.length, 0);
   assert.equal(eventsOf(events, 'rockBroken').length, 1);
+});
+
+// The worst case for the rock pool: the fullest wave (11 Large rocks) is 22 Medium rocks at most, and a broken
+// rock keeps its slot until flush() while its two pieces take theirs at once, so 22 breaks before one flush()
+// hold 22 + 44 = 66 slots.
+test('the rock pool holds the worst case: every Medium rock of the fullest wave broken in one step', () => {
+  const game = emptyGame();
+  moveShipTo(game, 30, 30);
+  game.wave = 10;
+  game.startWave();
+  game.flush();
+  assert.equal(game.rocks.live.length, rocksForWave(11), 'the fullest wave');
+  for (const rock of game.rocks.live) game.breakRock(rock, true);
+  game.flush();
+  assert.equal(game.rocks.countAlive(r => r.size === RockSize.Medium), 22);
+  game.events.length = 0;
+  assert.doesNotThrow(() => { for (const rock of game.rocks.live) game.breakRock(rock, true); }, 'the same calls collide() makes, all before one flush()');
+  game.flush();
+  assert.equal(game.rocks.live.length, 44);
+  assert.ok(game.rocks.live.every(r => r.size === RockSize.Small));
+  assert.equal(eventsOf(game.events, 'rockBroken').length, 22);
 });
 
 // ---- scoring ---------------------------------------------------------------------------------------
@@ -139,6 +168,29 @@ test('wrap: a moving rock crosses an edge in the real step, and things touch acr
   const field = new Field(1000, 625);
   assert.ok(field.overlaps({ pos: { x: 995, y: 10 }, radius: 10 }, { pos: { x: 3, y: 620 }, radius: 10 }));
   assert.ok(!field.overlaps({ pos: { x: 900, y: 10 }, radius: 10 }, { pos: { x: 3, y: 620 }, radius: 10 }));
+});
+
+// "angle += angularVel * dt, wrap the angle": a spinning rock and a ship turning for a long time each stay
+// within half a turn of 0, and the wrap never changes how far they turn in a step.
+test('spin: an angle is wrapped to within half a turn, and still turns by its spin every step', () => {
+  const game = emptyGame();
+  game.ships = 1000;
+  moveShipTo(game, 100, 100);
+  const fast = addRock(game, RockSize.Large, 500, 300);
+  const back = addRock(game, RockSize.Large, 800, 400);
+  fast.angularVel = 1.2;                  // the fastest a rock spins, each way
+  back.angularVel = -1.2;
+  let wraps = 0;
+  for (let i = 0; i < 1200; i++) {
+    game.step(i < 900 ? Input.Left : Input.Right); // the ship turns too: 69 rad left, then 23 right
+    for (const e of [fast, back, game.ship]) {
+      assert.ok(e.angle > -Math.PI && e.angle <= Math.PI, `step ${i + 1}: angle ${e.angle}`);
+      const turned = signedTurn(e.prev.angle, e.angle);
+      assert.ok(Math.abs(turned - e.angularVel * STEP) < 1e-12, `step ${i + 1}: turned ${turned}, spin ${e.angularVel}`);
+      if (Math.abs(e.angle - e.prev.angle) > Math.PI) wraps += 1;
+    }
+  }
+  assert.ok(wraps >= 3 + 3 + 10, `${wraps} wraps: each went round more than once`);
 });
 
 // ---- shots -----------------------------------------------------------------------------------------
@@ -308,6 +360,70 @@ test('game over when the last ship is lost, and no ship comes back', () => {
   assert.equal(rock.alive, false, 'the rock it hit broke');
 });
 
+// "No extra ship once the game is over": the last ship is hit while its own shot is still on the way to a rock,
+// and that shot takes the score past 15,000 a step later.
+test('no extra ship once the game is over, from a shot that lands after the last ship is lost', () => {
+  const game = emptyGame();
+  game.ships = 1;
+  game.score = Rules.extraShipEvery - 10;
+  moveShipTo(game, 500, 300);
+  addRock(game, RockSize.Large, 800, 100);
+  addShot(game, 800 - 60, 100);           // the ship's shot, two steps from the rock
+  addShot(game, 500, 300, 0, false);      // a hunter's shot, on the ship
+  game.step(0);
+  assert.equal(game.over, true, 'the last ship is lost');
+  const seen = [];
+  for (let i = 0; i < 300; i++) for (const e of game.step(0)) seen.push(e.type);
+  assert.ok(game.score > Rules.extraShipEvery, `the shot landed: score ${game.score}`);
+  assert.ok(!seen.includes('extraShip'), `events after game over: ${seen.join(', ')}`);
+  assert.equal(game.ships, 0);
+  assert.equal(game.over, true);
+  assert.equal(game.ship.alive, false, 'no ship flies in a finished game');
+});
+
+// The last ship lost and a ship earned in the same step: the game is decided once, after every hit of the step,
+// so the order of the two shots in the pool cannot change it.
+test('the last ship lost and a ship earned in one step: the game goes on, whichever shot is first in the pool', () => {
+  for (const hunterShotFirst of [true, false]) {
+    const game = emptyGame();
+    game.ships = 1;
+    game.score = Rules.extraShipEvery - 10;
+    moveShipTo(game, 500, 300);
+    addRock(game, RockSize.Large, 800, 100);
+    const onShip = () => addShot(game, 500, 300, 0, false);
+    const onRock = () => addShot(game, 800, 100);
+    if (hunterShotFirst) { onShip(); onRock(); } else { onRock(); onShip(); }
+    const types = game.step(0).map(e => e.type);
+    const order = hunterShotFirst ? 'hunter shot first' : 'ship shot first';
+    assert.equal(game.score, Rules.extraShipEvery + 15, `${order}: the rock was hit`);
+    assert.equal(game.over, false, `${order}: ${types.join(', ')}`);
+    assert.equal(game.ships, 1, order);
+    assert.ok(types.includes('shipDestroyed') && types.includes('extraShip') && !types.includes('gameOver'), `${order}: ${types.join(', ')}`);
+    for (let i = 0; i < 600 && !game.ship.alive; i++) game.step(0);
+    assert.equal(game.ship.alive, true, `${order}: the earned ship flies`);
+  }
+});
+
+test('a hyperspace landing has no shield, even from a jump taken while the respawn shield is up', () => {
+  let landings = 0;
+  for (let seed = 1; seed <= 40 && landings < 8; seed++) {
+    const game = emptyGame({ seed });
+    game.spawnShip();
+    assert.ok(game.ship.invulnerable > 0, 'shielded after the respawn');
+    game.step(Input.Hyperspace);
+    assert.ok(game.ship.jumping > 0, 'in hyperspace');
+    let arrived = null;
+    for (let i = 0; i < 60 && !arrived; i++) {
+      for (const e of game.step(0)) if (e.type === 'hyperspaceIn' || e.type === 'hyperspaceFailed') arrived = e.type;
+    }
+    if (arrived !== 'hyperspaceIn') continue; // one jump in eight fails; the rule is about a landing
+    landings += 1;
+    assert.equal(game.ship.invulnerable, 0, `seed ${seed}: landed with ${game.ship.invulnerable} s of shield`);
+    assert.equal(game.ship.canBeHit, true);
+  }
+  assert.ok(landings >= 8, `${landings} landings`);
+});
+
 test('hyperspace moves the ship, and about one jump in eight fails', () => {
   const game = emptyGame();
   let jumps = 0, failed = 0;
@@ -385,6 +501,21 @@ test('in the game, a Small hunter\'s shot flies toward the ship', () => {
   const shot = game.bullets.live[0];
   assert.equal(shot.fromShip, false);
   assert.ok(angleBetween(heading(shot.vel), 0) <= Rules.hunters.aimErrorBest + 1e-9);
+});
+
+test('a Small hunter aims at a ship that has just respawned under its shield', () => {
+  for (let seed = 1; seed <= 20; seed++) {
+    const game = emptyGame({ seed });
+    game.score = 40000;
+    game.spawnShip();                     // the game's own respawn: the centre, shield on
+    assert.equal(game.ship.canBeHit, false, 'shielded');
+    const hunter = addHunter(game, HunterKind.Small, game.ship.pos.x - 300, game.ship.pos.y);
+    game.fireHunterBullet(hunter);
+    game.flush();
+    const shot = game.bullets.live.find(b => !b.fromShip);
+    const off = angleBetween(heading(shot.vel), 0);
+    assert.ok(off <= Rules.hunters.aimErrorBest + 1e-9, `seed ${seed}: the shot flew ${off.toFixed(3)} rad off the ship`);
+  }
 });
 
 test('a hunter\'s aim gets better as the score rises; the Big one fires anywhere', () => {
@@ -484,10 +615,54 @@ test('determinism: the same seed and the same input log give the same game after
   }
 });
 
-test('the input log keeps every step, past its first block', () => {
+test('the input log is made once, with room for an hour of play, and stops recording at its end', () => {
+  const hour = 60 * 60 * 60; // steps
   const log = new InputLog();
-  for (let i = 0; i < 10000; i++) log.record(i % 32);
-  assert.equal(log.length, 10000);
-  assert.equal(log.at(9999), 9999 % 32);
+  const bytes = log.bytes;
+  assert.equal(bytes.length, hour, 'room for an hour, made when the game starts');
+  let refused = 0;
+  for (let i = 0; i < hour; i++) if (!log.record(i % 32)) refused += 1;
+  assert.equal(refused, 0);
+  assert.equal(log.length, hour);
+  assert.equal(log.dropped, 0, 'a game of exactly an hour still replays');
+  assert.equal(log.record(5), false, 'full: the step is not recorded');
+  assert.equal(log.record(6), false);
+  assert.equal(log.length, hour);
+  assert.equal(log.dropped, 2, 'and the log says so: this game cannot be replayed');
+  assert.equal(log.bytes, bytes, 'the same buffer: it never grew');
+  assert.equal(log.at(hour - 1), (hour - 1) % 32);
   assert.equal(log.at(4097), 4097 % 32);
+});
+
+// "Pool makes a fixed number of objects when the game starts": every object the game can reach after a long,
+// busy game (ships lost, jumps, hunters, waves) is one it had when it started, the step's events included. What
+// the engine makes for a moment and throws away (a loop's iterator, a boxed number) is not the game's, and a
+// test cannot see it; the C++ twin is the one that counts every allocation.
+test('play keeps no new objects: everything a game can reach after 20,000 busy steps was there at the start', () => {
+  const reach = roots => {
+    const seen = new Set();
+    const stack = [...roots];
+    while (stack.length) {
+      const o = stack.pop();
+      if (o === null || typeof o !== 'object' || seen.has(o)) continue;
+      seen.add(o);
+      if (ArrayBuffer.isView(o)) continue;
+      for (const key of Object.keys(o)) stack.push(o[key]);
+    }
+    return seen;
+  };
+  const game = new Game({ seed: 21, startingShips: 1000 });
+  const atStart = reach([game]);
+  const next = holder(2024);
+  const seen = { shipDestroyed: 0, hyperspaceOut: 0, hunterArrived: 0, rockBroken: 0, waveStart: 0 };
+  for (let i = 0; i < 20000; i++) {
+    const events = game.step(next());
+    for (const e of events) if (e.type in seen) seen[e.type] += 1;
+    if (events.length || i % 50 === 0) {
+      for (const o of reach([game, events])) {
+        assert.ok(atStart.has(o), `step ${i + 1} made a new object: ${JSON.stringify(o).slice(0, 160)}`);
+      }
+    }
+  }
+  for (const [type, count] of Object.entries(seen)) assert.ok(count > 0, `a busy game: ${JSON.stringify(seen)} (no ${type})`);
 });

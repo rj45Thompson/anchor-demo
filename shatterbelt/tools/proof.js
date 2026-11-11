@@ -32,8 +32,32 @@ export const PLANTS = [
     find: 'if (p.y < 0) p.y += this.height; else if (p.y >= this.height) p.y -= this.height;',
     put: 'if (p.y >= this.height) p.y -= this.height;' },
   { bug: 'Extra ship on every score past 15,000', change: 'the threshold is checked, but never moves on',
-    find: 'while (this.score >= this.nextExtraShipAt) {',
-    put: 'if (this.score >= Rules.extraShipEvery) {' },
+    find: 'while (!this.over && this.score >= this.nextExtraShipAt) {',
+    put: 'if (!this.over && this.score >= Rules.extraShipEvery) {' },
+  { bug: 'Extra ships after game over', change: 'a shot that lands after the last ship is lost still earns a ship',
+    find: 'while (!this.over && this.score >= this.nextExtraShipAt) {',
+    put: 'while (this.score >= this.nextExtraShipAt) {' },
+  { bug: 'Game over decided at the crash', change: 'the last ship lost ends the game before the rest of the step\'s hits count',
+    find: "    this.emit('shipDestroyed', ship);\n  }",
+    put: "    this.emit('shipDestroyed', ship);\n    this.checkGameOver();\n  }" },
+  { bug: 'Rock pool too small', change: 'the rock pool holds 48, as it once did',
+    find: 'export const PoolSize = Object.freeze({ bullets: 16, rocks: 66, hunters: 2 });',
+    put: 'export const PoolSize = Object.freeze({ bullets: 16, rocks: 48, hunters: 2 });' },
+  { bug: 'Hyperspace keeps the shield', change: 'a jump taken under the respawn shield lands with it still on',
+    find: '    ship.invulnerable = 0;   // a jump taken under the respawn shield lands without it\n',
+    put: '' },
+  { bug: 'Hunter blind to a shielded ship', change: 'the Small hunter aims only at a ship it can hit',
+    find: 'const target = this.ship.alive && this.ship.jumping <= 0 ? this.ship : null;',
+    put: 'const target = this.ship.canBeHit ? this.ship : null;' },
+  { bug: 'Angle never wrapped', change: 'a spinning rock\'s angle grows for ever',
+    find: '    if (this.angle > Math.PI) this.angle -= 2 * Math.PI; else if (this.angle <= -Math.PI) this.angle += 2 * Math.PI;\n',
+    put: '' },
+  { bug: 'A new event object every time', change: 'emit() makes a fresh record instead of filling one made at the start',
+    find: 'const event = events.items[events.length++];',
+    put: 'const event = events.items[events.length++] = { ...events.items[0] };' },
+  { bug: 'The input log grows', change: 'a full log doubles its buffer mid-game instead of refusing the step',
+    find: '      this.dropped += 1;\n      return false;\n    }',
+    put: '      const bigger = new Uint8Array(this.bytes.length * 2);\n      bigger.set(this.bytes);\n      this.bytes = bigger;\n    }' },
   { bug: 'Hunter aims the long way round', change: 'aiming ignores the wrapping edges',
     find: 'const exact = Trig.atan2(field.dy(this, target), field.dx(this, target));',
     put: 'const exact = Trig.atan2(target.pos.y - this.pos.y, target.pos.x - this.pos.x);' },
@@ -64,7 +88,7 @@ function plantAll() {
   for (const plant of PLANTS) {
     const folder = mkdtempSync(join(tmpdir(), 'shatterbelt-proof-'));
     try {
-      for (const part of ['core.js', 'index.html', 'package.json', 'tools', 'test']) cpSync(join(HERE, part), join(folder, part), { recursive: true });
+      for (const part of ['core.js', 'render.js', 'index.html', 'package.json', 'tools', 'test']) cpSync(join(HERE, part), join(folder, part), { recursive: true });
       const source = readFileSync(join(folder, 'core.js'), 'utf8').replace(/\r\n/g, '\n'); // the plants are written with \n
 
       const hits = typeof plant.find === 'string' ? source.split(plant.find).length - 1 : (source.match(plant.find) || []).length;

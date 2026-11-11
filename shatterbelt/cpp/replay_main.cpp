@@ -33,7 +33,7 @@ struct EventNames
 
     void Add(const EventList& events)
     {
-        for (int i = 0; i < events.count; ++i)
+        for (int i = 0; i < events.length; ++i)
         {
             const int wrote = std::snprintf(text + used, sizeof(text) - used, "%s\"%s\"", used ? "," : "", NameOf(events.items[i].type));
             Check(wrote > 0 && wrote < static_cast<int>(sizeof(text)) - used, "event names buffer too small");

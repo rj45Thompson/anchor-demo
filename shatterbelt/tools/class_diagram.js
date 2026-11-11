@@ -53,7 +53,7 @@ export function readClasses(source) {
 // The type a field is given, when the source names a class: new Field(...) is a Field, and a pool made
 // with () => new Rock() is a Pool<Rock>. Plain values are left untyped.
 function typeOf(expression) {
-  const pool = expression.match(/^new Pool\(\d+, \(\) => new (\w+)\(\)\)/);
+  const pool = expression.match(/^new Pool\([\w.]+, \(\) => new (\w+)\(\)\)/);
   if (pool) return `Pool<${pool[1]}>`;
   const made = expression.match(/^new (\w+)\(/);
   return made ? made[1] : null;

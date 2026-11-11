@@ -17,7 +17,7 @@
 //
 // What C++ adds: nothing allocates once a Game exists (test_core.cpp counts operator new across a long
 // game), there are no exceptions and no RTTI, no virtual functions, and a Game is plain data with no
-// pointers into itself, so it copies with = (a save state).
+// pointers into itself, so it copies with = (a save state). An InputLog allocates once, when it is made.
 #pragma once
 
 #include <cstdint>
@@ -26,6 +26,7 @@ namespace Shatterbelt
 {
 
 constexpr double STEP = 1.0 / 60.0; // seconds of game time per step: the simulation always runs at 60 Hz
+constexpr int STEPS_PER_HOUR = 60 * 60 * 60; // 216,000: the room in an input log, an hour of play
 
 // One step's controls, as bits, so a whole game's input fits in one byte per step.
 namespace Input
@@ -126,6 +127,20 @@ constexpr double bulletLifetime = 1.5;
 constexpr int extraShipEvery = 15000;
 } // namespace Rules
 
+// How many of each a game can hold at once. Each pool is made this size and never grows, so each is a worst
+// case:
+//   bullets  the ship's 5 shots and 3 for each hunter slot, with room for the shots that hit something this
+//            step, which keep their slot until Flush()
+//   rocks    the fullest wave is 11 Large rocks, so at most 22 Medium or 44 Small. A rock broken in a step keeps
+//            its slot until Flush() while its two pieces take theirs at once: 3 slots, for a Large rock's 4
+//            Small rocks' worth or a Medium's 2. So the most is every one of 22 Medium rocks breaking in one
+//            step: 22 + 44 = 66.
+//   hunters  a new one comes only once the last has gone
+namespace PoolSize
+{
+constexpr int bullets = 16, rocks = 66, hunters = 2;
+}
+
 inline const RockRules& RulesOf(RockSize size) { return Rules::rocks[static_cast<int>(size)]; }
 inline const HunterRules& RulesOf(HunterKind kind) { return Rules::hunters::kinds[static_cast<int>(kind)]; }
 
@@ -199,6 +214,8 @@ public:
     explicit Entity(double InRadius = 0) : radius(InRadius) {}
 
     void Place(double x, double y, double vx, double vy, double InAngle);
+    // Moves by its velocity and turns by its spin. The angle is wrapped to within half a turn of 0 (above -pi,
+    // up to pi), and exactly, as in core.js.
     void Integrate(double dt);
     double Speed() const;
 
@@ -400,19 +417,21 @@ public:
 };
 
 // One byte of input per step. With the seed, it is the whole game: replaying it gives the same game.
-// Like core.js's, it doubles its buffer when full. That allocates, so it is recorded outside Game::Step.
+// It is made once, when a game starts, with room for an hour of play, and never grows. A step after that is
+// not recorded, only counted in dropped: a game with a dropped step cannot be replayed, and says so.
 class InputLog
 {
 public:
-    InputLog();
+    explicit InputLog(int capacity = STEPS_PER_HOUR);
     ~InputLog();
     InputLog(const InputLog&) = delete;
     InputLog& operator=(const InputLog&) = delete;
 
-    void Record(uint8_t input);
+    bool Record(uint8_t input); // false, and the step is counted as dropped, once the log is full
     uint8_t At(int step) const { return bytes[step]; }
 
     int length = 0;
+    int dropped = 0; // steps that came after the log was full
 
 private:
     uint8_t* bytes;
@@ -439,14 +458,15 @@ struct Event
     double vx = 0, vy = 0;
 };
 
-// A step's events, in a fixed array. The most one step can make is 48: 8 from input and the timers, 2
-// from each of the 16 shots' hits, 4 from the ship ramming and 4 from the hunters hitting rocks.
-// Emit() checks the capacity anyway.
+// What happened in a step, for a renderer and the sound: a fixed array of records, as in core.js, that every
+// step fills again from the first. No step makes more than 48: 8 from input and the timers, 2 from each of the
+// 16 shots' hits, 3 from the ship ramming, 4 from the hunters hitting rocks and 1 game over. Emit() checks the
+// capacity anyway.
 struct EventList
 {
     static constexpr int capacity = 64;
     Event items[capacity];
-    int count = 0;
+    int length = 0; // how many of the records are this step's
 };
 
 struct GameOptions
@@ -499,6 +519,7 @@ public:
 
     // ---- 5. spawn and destroy ----------------------------------------------------------------------
     void Flush();
+    void CheckGameOver();
 
     // ---- 6. events --------------------------------------------------------------------------------
     void Emit(EventType type, const Entity& at, int points = 0);
@@ -516,11 +537,11 @@ public:
     Random rng;
     Field field;
     Ship ship;
-    // capacities: 11 Large rocks can become at most 44 pieces at once; 5 ship shots plus 3 per hunter
-    Pool<Bullet, 16> bullets;
-    Pool<Rock, 48> rocks;
-    Pool<Hunter, 2> hunters;
+    Pool<Bullet, PoolSize::bullets> bullets; // each size is a worst case: see PoolSize
+    Pool<Rock, PoolSize::rocks> rocks;
+    Pool<Hunter, PoolSize::hunters> hunters;
     Entity centre;
+    Entity probe;                   // a point FarFromShip() tries
 
     int score = 0;
     int ships;                      // ships left, counting the one flying
@@ -529,6 +550,7 @@ public:
     double time = 0;
     int steps = 0;
     bool over = false;
+    bool shipLost = false;          // a ship was lost in this step: CheckGameOver() decides what it means
     double waveTimer = 0;           // counts down to the next wave once the field is clear
     double hunterTimer = Rules::hunters::firstAfter;
     double respawnTimer = 0;

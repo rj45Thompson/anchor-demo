@@ -1,7 +1,8 @@
 // The rules of the C++ core, checked the way test/core.test.js checks core.js, plus what only C++ can
 // break: allocating inside Game::Step, and drifting from core.js's numbers.
 //
-//   test_core.exe        runs every test and prints one TAP line per test ("ok 3 - name"); exit 1 on a failure
+//   test_core.exe          runs every test and prints one TAP line per test ("ok 3 - name"); exit 1 on a failure
+//   test_core.exe <text>   runs only the tests whose name contains the text
 #include "shatterbelt_core.h"
 
 #include <cmath>
@@ -48,10 +49,10 @@ void Expect(bool ok, const char* what)
 // ---- helpers: set up an exact situation, then let the real Step() run it ----------------------
 
 // A game with nothing on the field and no wave or hunter due, so a test can place exactly what it needs.
-Game EmptyGame()
+Game EmptyGame(uint32_t seed = 11)
 {
     GameOptions options;
-    options.seed = 11;
+    options.seed = seed;
     Game game(options);
     for (int i = 0; i < game.rocks.LiveCount(); ++i) game.rocks.Release(game.rocks.Live(i));
     for (int i = 0; i < game.bullets.LiveCount(); ++i) game.bullets.Release(game.bullets.Live(i));
@@ -93,12 +94,13 @@ void MoveShipTo(Game& game, double x, double y)
 }
 
 double Heading(const Vec2& v) { return std::atan2(v.y, v.x); }
-double AngleBetween(double a, double b) { return std::fabs(std::atan2(std::sin(a - b), std::cos(a - b))); }
+double SignedTurn(double from, double to) { return std::atan2(std::sin(to - from), std::cos(to - from)); } // the short way
+double AngleBetween(double a, double b) { return std::fabs(SignedTurn(b, a)); }
 
 int CountOf(const EventList& events, EventType type)
 {
     int count = 0;
-    for (int i = 0; i < events.count; ++i)
+    for (int i = 0; i < events.length; ++i)
         if (events.items[i].type == type) ++count;
     return count;
 }
@@ -168,6 +170,28 @@ void SmallDoesNotSplit()
     Expect(CountOf(events, EventType::rockBroken) == 1, "one rockBroken event");
 }
 
+// The worst case for the rock pool: the fullest wave (11 Large rocks) is 22 Medium rocks at most, and a broken
+// rock keeps its slot until Flush() while its two pieces take theirs at once, so 22 breaks before one Flush()
+// hold 22 + 44 = 66 slots. Before the pool was this size, this test stopped the run: "rock pool too small".
+void RockPoolHoldsTheFullestWave()
+{
+    Game game = EmptyGame();
+    MoveShipTo(game, 30, 30);
+    game.wave = 10;
+    game.StartWave();
+    game.Flush();
+    Expect(game.rocks.LiveCount() == RocksForWave(11), "the fullest wave");
+    for (int i = 0; i < game.rocks.LiveCount(); ++i) game.BreakRock(game.rocks.Live(i), true);
+    game.Flush();
+    Expect(game.rocks.CountAlive([](const Rock& r) { return r.size == RockSize::Medium; }) == 22, "22 Medium rocks");
+    game.events.length = 0;
+    for (int i = 0; i < game.rocks.LiveCount(); ++i) game.BreakRock(game.rocks.Live(i), true); // the calls Collide() makes, before one Flush()
+    game.Flush();
+    Expect(game.rocks.LiveCount() == 44, "44 pieces");
+    Expect(game.rocks.CountAlive([](const Rock& r) { return r.size == RockSize::Small; }) == 44, "all Small");
+    Expect(CountOf(game.events, EventType::rockBroken) == 22, "22 rockBroken events");
+}
+
 // ---- scoring -------------------------------------------------------------------------------------
 
 int ScoreForRock(RockSize size)
@@ -233,6 +257,36 @@ void WrapInTheStep()
     c.pos = { 900, 10 };
     Expect(field.Overlaps(a, b), "touching across two edges overlaps");
     Expect(!field.Overlaps(c, b), "far apart does not");
+}
+
+// "angle += angularVel * dt, wrap the angle": a spinning rock and a ship turning for a long time each stay within
+// half a turn of 0, and the wrap never changes how far they turn in a step.
+void SpinWrapsTheAngle()
+{
+    Game game = EmptyGame();
+    game.ships = 1000;
+    MoveShipTo(game, 100, 100);
+    Rock& fast = AddRock(game, RockSize::Large, 500, 300);
+    Rock& back = AddRock(game, RockSize::Large, 800, 400);
+    fast.angularVel = 1.2; // the fastest a rock spins, each way
+    back.angularVel = -1.2;
+    int wraps = 0;
+    bool inRange = true;
+    bool turnsBySpin = true;
+    for (int i = 0; i < 1200; ++i)
+    {
+        game.Step(i < 900 ? Input::Left : Input::Right); // the ship turns too: 69 rad left, then 23 right
+        const Entity* turning[3] = { &fast, &back, &game.ship };
+        for (const Entity* e : turning)
+        {
+            if (!(e->angle > -Trig::Pi && e->angle <= Trig::Pi)) inRange = false;
+            if (std::fabs(SignedTurn(e->prev.angle, e->angle) - e->angularVel * STEP) >= 1e-12) turnsBySpin = false;
+            if (std::fabs(e->angle - e->prev.angle) > Trig::Pi) ++wraps;
+        }
+    }
+    Expect(inRange, "every angle within half a turn of 0, every step");
+    Expect(turnsBySpin, "every step turns by the spin, wrapped or not");
+    Expect(wraps >= 3 + 3 + 10, "each went round more than once");
 }
 
 // ---- shots ---------------------------------------------------------------------------------------
@@ -405,6 +459,86 @@ void GameOver()
     Expect(!rock.alive, "the rock it hit broke");
 }
 
+// The last ship is hit while its own shot is still on the way to a rock, and that shot takes the score past
+// 15,000 a step later: no extra ship once the game is over.
+void NoExtraShipAfterGameOver()
+{
+    Game game = EmptyGame();
+    game.ships = 1;
+    game.score = Rules::extraShipEvery - 10;
+    MoveShipTo(game, 500, 300);
+    AddRock(game, RockSize::Large, 800, 100);
+    AddShot(game, 800 - 60, 100);      // the ship's shot, two steps from the rock
+    AddShot(game, 500, 300, 0, false); // a hunter's shot, on the ship
+    game.Step(0);
+    Expect(game.over, "the last ship is lost");
+    int extraShips = 0;
+    for (int i = 0; i < 300; ++i) extraShips += CountOf(game.Step(0), EventType::extraShip);
+    Expect(game.score > Rules::extraShipEvery, "the shot landed");
+    Expect(extraShips == 0, "no extraShip event after game over");
+    Expect(game.ships == 0 && game.over, "still over, with no ships");
+    Expect(!game.ship.alive, "no ship flies in a finished game");
+}
+
+// The last ship lost and a ship earned in the same step: the game is decided once, after every hit of the step,
+// so the order of the two shots in the pool cannot change it.
+void LastShipAndExtraShipInOneStep()
+{
+    const bool orders[2] = { true, false };
+    for (const bool hunterShotFirst : orders)
+    {
+        Game game = EmptyGame();
+        game.ships = 1;
+        game.score = Rules::extraShipEvery - 10;
+        MoveShipTo(game, 500, 300);
+        AddRock(game, RockSize::Large, 800, 100);
+        if (hunterShotFirst)
+        {
+            AddShot(game, 500, 300, 0, false);
+            AddShot(game, 800, 100);
+        }
+        else
+        {
+            AddShot(game, 800, 100);
+            AddShot(game, 500, 300, 0, false);
+        }
+        const EventList& events = game.Step(0);
+        const char* order = hunterShotFirst ? "hunter shot first" : "ship shot first";
+        std::printf("#   %s: over %s, ships %d, score %d\n", order, game.over ? "yes" : "no", game.ships, game.score);
+        Expect(game.score == Rules::extraShipEvery + 15, "the rock was hit");
+        Expect(!game.over && game.ships == 1, "not over, one ship left");
+        Expect(CountOf(events, EventType::shipDestroyed) == 1 && CountOf(events, EventType::extraShip) == 1 &&
+                   CountOf(events, EventType::gameOver) == 0, "a ship lost, a ship earned, no game over");
+        for (int i = 0; i < 600 && !game.ship.alive; ++i) game.Step(0);
+        Expect(game.ship.alive, "the earned ship flies");
+    }
+}
+
+void HyperspaceLandingHasNoShield()
+{
+    int landings = 0;
+    for (uint32_t seed = 1; seed <= 40 && landings < 8; ++seed)
+    {
+        Game game = EmptyGame(seed);
+        game.SpawnShip();
+        Expect(game.ship.invulnerable > 0, "shielded after the respawn");
+        game.Step(Input::Hyperspace);
+        Expect(game.ship.jumping > 0, "in hyperspace");
+        int arrived = 0; // 1 landed, 2 failed
+        for (int i = 0; i < 60 && !arrived; ++i)
+        {
+            const EventList& events = game.Step(0);
+            if (CountOf(events, EventType::hyperspaceIn)) arrived = 1;
+            if (CountOf(events, EventType::hyperspaceFailed)) arrived = 2;
+        }
+        if (arrived != 1) continue; // one jump in eight fails; the rule is about a landing
+        ++landings;
+        Expect(game.ship.invulnerable == 0, "landed with no shield");
+        Expect(game.ship.CanBeHit(), "and can be hit");
+    }
+    Expect(landings >= 8, "eight landings");
+}
+
 void HyperspaceFailsOneInEight()
 {
     Game game = EmptyGame();
@@ -481,6 +615,25 @@ void SmallHunterAimsShortWay()
     Expect(std::cos(across) > 0.99, "fires right, across the edge, not the long way left");
 }
 
+void SmallHunterAimsAtShieldedShip()
+{
+    for (uint32_t seed = 1; seed <= 20; ++seed)
+    {
+        Game game = EmptyGame(seed);
+        game.score = 40000;
+        game.SpawnShip(); // the game's own respawn: the centre, shield on
+        Expect(!game.ship.CanBeHit(), "shielded");
+        Hunter& hunter = AddHunter(game, HunterKind::Small, game.ship.pos.x - 300, game.ship.pos.y);
+        game.FireHunterBullet(hunter);
+        game.Flush();
+        const Bullet* shot = nullptr;
+        for (int i = 0; i < game.bullets.LiveCount(); ++i)
+            if (!game.bullets.Live(i).fromShip) shot = &game.bullets.Live(i);
+        Expect(shot != nullptr, "it fired");
+        if (shot) Expect(AngleBetween(Heading(shot->vel), 0) <= Rules::hunters::aimErrorBest + 1e-9, "the shot flies at the ship");
+    }
+}
+
 // ---- the clock and the log ---------------------------------------------------------------------
 
 void FixedTimestepSteps()
@@ -502,12 +655,21 @@ void FixedTimestepSteps()
     Expect(after == clock.maxStepsPerFrame, "a stall is not raced through");
 }
 
-void InputLogGrows()
+void InputLogMadeOnceForAnHour()
 {
+    const int hour = 60 * 60 * 60; // steps
+    const long long beforeLog = allocations;
     InputLog log;
-    for (int i = 0; i < 10000; ++i) log.Record(static_cast<uint8_t>(i % 32));
-    Expect(log.length == 10000, "every step kept");
-    Expect(log.At(9999) == 9999 % 32 && log.At(4097) == 4097 % 32, "past its first block");
+    Expect(allocations == beforeLog + 1, "one allocation, when the log is made");
+    const long long made = allocations;
+    int refused = 0;
+    for (int i = 0; i < hour; ++i)
+        if (!log.Record(static_cast<uint8_t>(i % 32))) ++refused;
+    Expect(refused == 0 && log.length == hour && log.dropped == 0, "room for an hour of play");
+    Expect(!log.Record(5) && !log.Record(6), "full: a step is not recorded");
+    Expect(log.length == hour && log.dropped == 2, "and the log says so: this game cannot be replayed");
+    Expect(allocations == made, "recording never allocates");
+    Expect(log.At(hour - 1) == (hour - 1) % 32 && log.At(4097) == 4097 % 32, "every step kept");
 }
 
 // ---- what only the C++ build can get wrong -------------------------------------------------------
@@ -629,9 +791,11 @@ const Test tests[] = {
     { "a hit Large rock leaves two Medium rocks at its position, turned apart and a little faster", SplitLarge },
     { "a hit Medium rock leaves two Small rocks", SplitMedium },
     { "a hit Small rock breaks and leaves nothing", SmallDoesNotSplit },
+    { "the rock pool holds the worst case: every Medium rock of the fullest wave broken in one step", RockPoolHoldsTheFullestWave },
     { "points by size: Large 25, Medium 60, Small 120, Big hunter 250, Small hunter 1000", PointsBySize },
     { "wrap: leaving any of the four edges comes back in at the opposite one", WrapAllEdges },
     { "wrap: a moving rock crosses an edge in the real step, and things touch across an edge", WrapInTheStep },
+    { "spin: an angle is wrapped to within half a turn, and still turns by its spin every step", SpinWrapsTheAngle },
     { "a shot lives for its lifetime, then is gone", ShotLifetime },
     { "the ship never has more than its cap of live shots, however long fire is held", ShotCap },
     { "pool: never grows past its capacity, and reuses a freed slot", PoolCapacityAndReuse },
@@ -641,11 +805,15 @@ const Test tests[] = {
     { "an extra ship at every 15,000 points, given exactly once", ExtraShipOnce },
     { "respawn waits for a clear centre, then comes back shielded", RespawnWaitsForClearCentre },
     { "game over when the last ship is lost, and no ship comes back", GameOver },
+    { "no extra ship once the game is over, from a shot that lands after the last ship is lost", NoExtraShipAfterGameOver },
+    { "the last ship lost and a ship earned in one step: the game goes on, whichever shot is first in the pool", LastShipAndExtraShipInOneStep },
+    { "a hyperspace landing has no shield, even from a jump taken while the respawn shield is up", HyperspaceLandingHasNoShield },
     { "hyperspace moves the ship, and about one jump in eight fails", HyperspaceFailsOneInEight },
     { "waves grow: 3 Large rocks, one more each wave, at most 11", WavesGrow },
     { "a Small hunter aims at the ship, the short way round the field", SmallHunterAimsShortWay },
+    { "a Small hunter aims at a ship that has just respawned under its shield", SmallHunterAimsAtShieldedShip },
     { "fixed timestep: uneven frames become 60 steps a second; a stall is not raced through", FixedTimestepSteps },
-    { "the input log keeps every step, past its first block", InputLogGrows },
+    { "the input log is made once, with room for an hour of play, and stops recording at its end", InputLogMadeOnceForAnHour },
     { "Random gives exactly the numbers core.js's Random gives", RandomMatchesCoreJs },
     { "Trig: sin, cos, atan2 and hypot stay within 3 units in the last place of the C runtime's", TrigIsAccurate },
     { "determinism: the same seed and the same input log give the same game after 5,000 steps", Determinism },
@@ -654,19 +822,30 @@ const Test tests[] = {
 };
 } // namespace
 
-int main()
+int main(int argc, char** argv)
 {
-    const int count = static_cast<int>(sizeof(tests) / sizeof(tests[0]));
-    int passed = 0;
-    std::printf("TAP version 13\n");
-    for (int i = 0; i < count; ++i)
+    const char* only = argc > 1 ? argv[1] : nullptr; // part of a test's name: run only the tests it matches
+    int count = 0;
+    for (const Test& test : tests)
+        if (!only || std::strstr(test.name, only)) ++count;
+    if (count == 0)
     {
-        std::printf("# running %d - %s\n", i + 1, tests[i].name);
+        std::printf("no test's name contains \"%s\"\n", only);
+        return 2;
+    }
+    int passed = 0;
+    int ran = 0;
+    std::printf("TAP version 13\n");
+    for (const Test& test : tests)
+    {
+        if (only && !std::strstr(test.name, only)) continue;
+        const int i = ran++;
+        std::printf("# running %d - %s\n", i + 1, test.name);
         std::fflush(stdout); // so a crash still shows which test was running
         failedChecks = 0;
-        tests[i].run();
+        test.run();
         if (failedChecks == 0) ++passed;
-        std::printf("%s %d - %s\n", failedChecks == 0 ? "ok" : "not ok", i + 1, tests[i].name);
+        std::printf("%s %d - %s\n", failedChecks == 0 ? "ok" : "not ok", i + 1, test.name);
     }
     std::printf("1..%d\n# tests %d\n# pass %d\n# fail %d\n", count, count, passed, count - passed);
     return passed == count ? 0 : 1;

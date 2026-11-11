@@ -6,12 +6,16 @@
 // The design in one paragraph:
 //   Entity is anything that moves and can be hit: a position, a velocity, a facing, a spin, a radius.
 //   Ship, Bullet, Rock and Hunter are Entities with their own rules.
-//   Pool makes a fixed number of objects up front, so play never allocates, and it holds every add and
-//   remove until flush(), so nothing is added or removed while a loop is walking the list.
+//   Pool makes a fixed number of objects up front, and it holds every add and remove until flush(), so
+//   nothing is added or removed while a loop is walking the list.
 //   Field is the play area. Its edges wrap, so it also knows the shortest way between two points.
 //   Game owns all of the above and advances the world one fixed step at a time (see Game.step).
+// Every object a game keeps is made when it starts: the pools' objects and the step's event records (and the
+// page makes each game's input log once, at its start). Nothing it keeps is made during play
+// (test/core.test.js walks everything a game can reach after 20,000 steps to check), so a long game never grows.
 
 export const STEP = 1 / 60; // seconds of game time per step: the simulation always runs at 60 Hz
+export const STEPS_PER_HOUR = 60 * 60 * 60; // 216,000: the room in an input log, an hour of play
 
 // One step's controls, as bits, so a whole game's input fits in one byte per step.
 export const Input = Object.freeze({ Left: 1, Right: 2, Thrust: 4, Fire: 8, Hyperspace: 16 });
@@ -58,6 +62,17 @@ export const Rules = deepFreeze({
   },
   extraShipEvery: 15000,
 });
+
+// How many of each a game can hold at once. Each pool is made this size when a game starts and never grows, so
+// each is a worst case:
+//   bullets  the ship's 5 shots and 3 for each hunter slot, with room for the shots that hit something this
+//            step, which keep their slot until flush()
+//   rocks    the fullest wave is 11 Large rocks, so at most 22 Medium or 44 Small. A rock broken in a step keeps
+//            its slot until flush() while its two pieces take theirs at once: 3 slots, for a Large rock's 4
+//            Small rocks' worth or a Medium's 2. So the most is every one of 22 Medium rocks breaking in one
+//            step: 22 + 44 = 66.
+//   hunters  a new one comes only once the last has gone
+export const PoolSize = Object.freeze({ bullets: 16, rocks: 66, hunters: 2 });
 
 // ------------------------------------------------------------------------------------------------
 // Small pure rules, exported so the tests and the page can read them directly.
@@ -257,6 +272,9 @@ export class Entity {
     this.prev.angle = angle;
   }
 
+  // Moves by its velocity and turns by its spin. The angle is wrapped to within half a turn of 0 (above -pi, up
+  // to pi: what Trig.atan2 gives), so it never grows however long a rock spins. The wrap is exact in floating
+  // point: a whole turn taken off (or added to) an angle of half a turn to two turns either way loses nothing.
   integrate(dt) {
     this.prev.x = this.pos.x;
     this.prev.y = this.pos.y;
@@ -264,6 +282,7 @@ export class Entity {
     this.pos.x += this.vel.x * dt;
     this.pos.y += this.vel.y * dt;
     this.angle += this.angularVel * dt;
+    if (this.angle > Math.PI) this.angle -= 2 * Math.PI; else if (this.angle <= -Math.PI) this.angle += 2 * Math.PI;
   }
 
   get speed() {
@@ -332,6 +351,11 @@ export class Bullet extends Entity {
   }
 }
 
+// The two kinds of shot, for Pool.countAlive(). Made once here: an arrow written in the call would be a new
+// function every time a shot is fired.
+const isShipShot = bullet => bullet.fromShip;
+const isHunterShot = bullet => !bullet.fromShip;
+
 export class Rock extends Entity {
   constructor() {
     super(0);
@@ -372,7 +396,7 @@ export class Hunter extends Entity {
     this.kind = kind;
     this.radius = rules.radius;
     this.fireTimer = rules.fireInterval;
-    this.turnTimer = rng.range(...Rules.hunters.turnEvery);
+    this.turnTimer = rng.range(Rules.hunters.turnEvery[0], Rules.hunters.turnEvery[1]);
     this.travelLeft = travel;
     this.age = 0;
   }
@@ -395,7 +419,7 @@ export class Hunter extends Entity {
     this.turnTimer -= dt;
     if (this.turnTimer > 0) return;
     const { turnEvery, climbShare } = Rules.hunters;
-    this.turnTimer = rng.range(...turnEvery);
+    this.turnTimer = rng.range(turnEvery[0], turnEvery[1]);
     this.vel.y = (rng.int(3) - 1) * Rules.hunters[this.kind].speed * climbShare;
   }
 }
@@ -491,23 +515,63 @@ export class FixedTimestep {
 }
 
 // One byte of input per step. With the seed, it is the whole game: replaying it gives the same game.
+// It is made once, when a game starts, with room for an hour of play, and never grows. A step after that is
+// not recorded, only counted in `dropped`: a game with a dropped step cannot be replayed, and says so.
 export class InputLog {
-  constructor() {
-    this.bytes = new Uint8Array(4096);
+  constructor(capacity = STEPS_PER_HOUR) {
+    this.bytes = new Uint8Array(capacity);
     this.length = 0;
+    this.dropped = 0;      // steps that came after the log was full
   }
 
+  // Keeps one step's input. False, and the step is counted as dropped, once the log is full.
   record(input) {
     if (this.length === this.bytes.length) {
-      const bigger = new Uint8Array(this.bytes.length * 2);
-      bigger.set(this.bytes);
-      this.bytes = bigger;
+      this.dropped += 1;
+      return false;
     }
     this.bytes[this.length++] = input;
+    return true;
   }
 
   at(step) {
     return this.bytes[step];
+  }
+}
+
+// What happened in a step, for the renderer and the sound: what broke, what fired, what jumped. Like a pool's
+// objects, its records are made once, when the game starts, and every step fills them again from the first.
+// It reads like an array of the step's events (length, for...of, filter, map, some), but a record is only good
+// until the next step: a reader copies anything it wants to keep.
+export class EventList {
+  constructor(capacity) {
+    this.capacity = capacity;
+    this.items = [];
+    for (let i = 0; i < capacity; i++) {
+      this.items.push({ type: '', x: 0, y: 0, points: 0, size: null, kind: null, fromShip: false, vx: 0, vy: 0 });
+    }
+    this.length = 0;       // how many of the records are this step's
+  }
+
+  *[Symbol.iterator]() {
+    for (let i = 0; i < this.length; i++) yield this.items[i];
+  }
+
+  filter(test) {
+    const kept = [];
+    for (const event of this) if (test(event)) kept.push(event);
+    return kept;
+  }
+
+  map(change) {
+    const out = [];
+    for (const event of this) out.push(change(event));
+    return out;
+  }
+
+  some(test) {
+    for (const event of this) if (test(event)) return true;
+    return false;
   }
 }
 
@@ -519,11 +583,11 @@ export class Game {
     this.rng = new Random(seed);
     this.field = new Field(width, height);
     this.ship = new Ship();
-    // capacities: 11 Large rocks can become at most 44 pieces at once; 5 ship shots plus 3 per hunter
-    this.bullets = new Pool(16, () => new Bullet());
-    this.rocks = new Pool(48, () => new Rock());
-    this.hunters = new Pool(2, () => new Hunter());
+    this.bullets = new Pool(PoolSize.bullets, () => new Bullet()); // each size is a worst case: see PoolSize
+    this.rocks = new Pool(PoolSize.rocks, () => new Rock());
+    this.hunters = new Pool(PoolSize.hunters, () => new Hunter());
     this.centre = { pos: { x: width / 2, y: height / 2 }, radius: Rules.ship.clearRadius };
+    this.probe = { pos: { x: 0, y: 0 } };  // a point farFromShip() tries, made once
 
     this.score = 0;
     this.ships = startingShips;          // ships left, counting the one flying
@@ -532,11 +596,14 @@ export class Game {
     this.time = 0;
     this.steps = 0;
     this.over = false;
+    this.shipLost = false;               // a ship was lost in this step: checkGameOver() decides what it means
     this.waveTimer = 0;                  // counts down to the next wave once the field is clear
     this.hunterTimer = Rules.hunters.firstAfter;
     this.respawnTimer = 0;
     this.lastInput = 0;
-    this.events = [];                    // what happened in the last step, for the renderer and the sound
+    // what happened in the last step, for the renderer and the sound: 64 records, and no step makes more than 48
+    // (see emit)
+    this.events = new EventList(64);
 
     if (startingShips > 0) this.spawnShip();
     this.startWave();
@@ -556,6 +623,7 @@ export class Game {
     this.wrapAll();          // 3. screen wrap
     this.collide();          // 4. collide: circle against circle; hits only mark things dead
     this.flush();            // 5. spawn and destroy: the only place the world's lists change
+    this.checkGameOver();    //    and the game ends here, once every hit of the step has counted
     return this.events;      // 6. events out, for the renderer and the sound
   }
 
@@ -576,7 +644,7 @@ export class Game {
 
   fireShipBullet() {
     const ship = this.ship;
-    if (this.bullets.countAlive(b => b.fromShip) >= Rules.ship.maxBullets) return;
+    if (this.bullets.countAlive(isShipShot) >= Rules.ship.maxBullets) return;
     const bullet = this.bullets.acquire();
     if (bullet === null) throw new Error('bullet pool too small'); // capacity covers every shooter's cap
     const { speed, lifetime } = Rules.bullet;
@@ -618,6 +686,7 @@ export class Game {
   arriveFromHyperspace() {
     const ship = this.ship;
     ship.place(this.rng.range(0, this.field.width), this.rng.range(0, this.field.height), 0, 0, ship.angle);
+    ship.invulnerable = 0;   // a jump taken under the respawn shield lands without it
     ship.jumpCooldown = Rules.hyperspace.cooldown;
     if (this.rng.oneIn(Rules.hyperspace.failOneIn)) {
       this.emit('hyperspaceFailed', ship);
@@ -645,10 +714,11 @@ export class Game {
   }
 
   fireHunterBullet(hunter) {
-    if (this.bullets.countAlive(b => !b.fromShip) >= Rules.hunters.maxBullets * this.hunters.capacity) return;
+    if (this.bullets.countAlive(isHunterShot) >= Rules.hunters.maxBullets * this.hunters.capacity) return;
     const bullet = this.bullets.acquire();
     if (bullet === null) throw new Error('bullet pool too small');
-    const target = this.ship.canBeHit ? this.ship : null;
+    // The ship is a target whenever it is on the field, shielded or not; in hyperspace it is nowhere.
+    const target = this.ship.alive && this.ship.jumping <= 0 ? this.ship : null;
     const angle = hunter.shotAngle(target, this.field, this.rng, this.score);
     const muzzle = hunter.radius + 4;
     bullet.launch(false, hunter.pos.x + Trig.cos(angle) * muzzle, hunter.pos.y + Trig.sin(angle) * muzzle,
@@ -678,10 +748,11 @@ export class Game {
     this.emit('waveStart', this.centre);
   }
 
-  // A random point at least safeDistance from the ship (or the centre, while there is no ship).
+  // A random point at least safeDistance from the ship (or the centre, while there is no ship). The point is
+  // the game's one probe, so it is good until the next call.
   farFromShip() {
     const from = this.ship.alive ? this.ship : this.centre;
-    const probe = { pos: { x: 0, y: 0 } };
+    const probe = this.probe;
     const minSquared = Rules.waves.safeDistance ** 2;
     do {
       probe.pos.x = this.rng.range(0, this.field.width);
@@ -692,7 +763,7 @@ export class Game {
 
   spawnRock(size, x, y, vx, vy) {
     const rock = this.rocks.acquire();
-    if (rock === null) throw new Error('rock pool too small'); // 48 covers 11 Large rocks broken to 44 Small
+    if (rock === null) throw new Error('rock pool too small'); // never: PoolSize.rocks is the worst case
     rock.init(size, x, y, vx, vy, this.rng.range(-1.2, 1.2), this.rng.int(3));
     return rock;
   }
@@ -719,10 +790,10 @@ export class Game {
   }
 
   centreIsClear() {
-    const near = e => e.alive && this.field.overlaps(this.centre, e);
-    for (const rock of this.rocks.live) if (near(rock)) return false;
-    for (const hunter of this.hunters.live) if (near(hunter)) return false;
-    for (const bullet of this.bullets.live) if (!bullet.fromShip && near(bullet)) return false;
+    const { field, centre } = this;
+    for (const rock of this.rocks.live) if (rock.alive && field.overlaps(centre, rock)) return false;
+    for (const hunter of this.hunters.live) if (hunter.alive && field.overlaps(centre, hunter)) return false;
+    for (const bullet of this.bullets.live) if (!bullet.fromShip && bullet.alive && field.overlaps(centre, bullet)) return false;
     return true;
   }
 
@@ -806,7 +877,7 @@ export class Game {
     const { minAngle, maxAngle, speedUp } = Rules.split;
     const speed = Math.max(rock.speed * speedUp, Rules.rocks[size].minSpeed);
     const heading = rock.speed > 0 ? Trig.atan2(rock.vel.y, rock.vel.x) : this.rng.range(0, Math.PI * 2);
-    for (const side of [-1, 1]) {
+    for (let side = -1; side <= 1; side += 2) {
       const turned = heading + side * this.rng.range(minAngle, maxAngle);
       this.spawnRock(size, rock.pos.x, rock.pos.y, Trig.cos(turned) * speed, Trig.sin(turned) * speed);
     }
@@ -818,22 +889,20 @@ export class Game {
     this.emit('hunterDestroyed', hunter, byShip ? hunter.score : 0);
   }
 
+  // The ship is lost. Whether that ends the game is decided once, at the end of the step (checkGameOver).
   destroyShip() {
     const ship = this.ship;
     ship.alive = false;
     ship.thrusting = false;
     this.ships -= 1;
+    this.shipLost = true;
     this.respawnTimer = Rules.ship.respawnDelay;
     this.emit('shipDestroyed', ship);
-    if (this.ships <= 0) {
-      this.over = true;
-      this.emit('gameOver', ship);
-    }
   }
 
   addScore(points) {
     this.score += points;
-    while (this.score >= this.nextExtraShipAt) {
+    while (!this.over && this.score >= this.nextExtraShipAt) { // a finished game earns no ships
       this.ships += 1;
       this.nextExtraShipAt += Rules.extraShipEvery;
       this.emit('extraShip', this.ship);
@@ -847,15 +916,34 @@ export class Game {
     this.hunters.flush();
   }
 
+  // A ship lost in this step ends the game if no ship is left once every hit of the step has counted. Deciding
+  // it here, not at the crash, means a ship earned in the same step always counts, whatever order the shots are
+  // in the pool. (A game made with no ships, like the title screen's, has none to lose, so it never ends.)
+  checkGameOver() {
+    if (!this.shipLost) return;
+    this.shipLost = false;
+    if (this.ships > 0) return;
+    this.over = true;
+    this.emit('gameOver', this.ship);
+  }
+
   // ---- 6. events --------------------------------------------------------------------------------
-  // Events are rare (a few a second), so they are small plain objects. The renderer and the sound
-  // read them after each step; the rules never do.
+  // Fills the next of the step's event records. The renderer and the sound read them after each step; the
+  // rules never do. No step makes more than 48: 8 from input and the timers, 2 from each of the 16 shots'
+  // hits, 3 from the ship ramming, 4 from the hunters hitting rocks and 1 game over.
   emit(type, at, points = 0) {
-    this.events.push({
-      type, x: at.pos.x, y: at.pos.y, points,
-      size: at.size, kind: at.kind, fromShip: at.fromShip,
-      vx: at.vel ? at.vel.x : 0, vy: at.vel ? at.vel.y : 0,
-    });
+    const events = this.events;
+    if (events.length === events.capacity) throw new Error('event list too small');
+    const event = events.items[events.length++];
+    event.type = type;
+    event.x = at.pos.x;
+    event.y = at.pos.y;
+    event.points = points;
+    event.size = at.size ?? null;          // a rock's
+    event.kind = at.kind ?? null;          // a hunter's
+    event.fromShip = at.fromShip === true; // a shot's
+    event.vx = at.vel ? at.vel.x : 0;
+    event.vy = at.vel ? at.vel.y : 0;
   }
 
   // ---- replay and checks ------------------------------------------------------------------------

@@ -4,6 +4,8 @@
 // The play field is a flat rectangle on the ground plane, seen by a camera tilted a little. Its edges
 // wrap, so anything near an edge is also drawn on the opposite side, and everything in play is clipped
 // to the rectangle: a rock leaving on the right is cut at the edge as its copy slides in on the left.
+import { PoolSize } from './core.js';
+
 const THREE = window.THREE;
 
 const SHARED = '../games/assets/'; // the site's space art, shared with Résumé Breakout (sky, planets, rock surface)
@@ -83,6 +85,15 @@ const LOOK = {
   skyTurn: [0, 0, Math.PI / 2], // turns the sky so the camera, looking down, sees its best face
   skyBrightness: 0.62,
 };
+
+// The angle to draw at, a share alpha (0 to 1) of the way from one step's angle to the next, turning the short
+// way. The rules wrap an angle to within half a turn of 0, so a rock spinning past a half turn goes from just
+// under pi to just over -pi in one step: drawn straight between the two it would spin back a whole turn.
+export function turnBetween(from, to, alpha) {
+  let turn = to - from;
+  if (turn > Math.PI) turn -= 2 * Math.PI; else if (turn < -Math.PI) turn += 2 * Math.PI;
+  return from + turn * alpha;
+}
 
 // ---- particles -----------------------------------------------------------------------------------
 
@@ -313,8 +324,8 @@ export class Renderer {
     ];
     this.hunterLooks = { Big: hunterMaterials('Big'), Small: hunterMaterials('Small') };
     const hunterGlow = new THREE.SpriteMaterial({ map: glow, color: 0xff5a3c, blending: THREE.AdditiveBlending, depthWrite: false, clippingPlanes: clip });
-    // two hunter slots, four copies each
-    this.hunterCopies = [0, 1].map(() => [0, 1, 2, 3].map(() => {
+    // a group of four copies for each hunter slot
+    this.hunterCopies = Array.from({ length: PoolSize.hunters }, () => [0, 1, 2, 3].map(() => {
       const group = new THREE.Group();
       group.rotation.order = 'YXZ';
       const body = new THREE.Mesh(hunter.geometry, this.hunterLooks.Big);
@@ -332,7 +343,7 @@ export class Renderer {
       map: rocks.map, bumpMap: rocks.map, bumpScale: 2.2, roughness: 0.96, metalness: 0.02, clippingPlanes: this.planes });
     // one instanced mesh per rock model; every rock and every copy of a rock is one instance
     this.rockMeshes = rocks.geometries.map(geometry => {
-      const mesh = new THREE.InstancedMesh(geometry, this.rockMaterial, 48 * 4);
+      const mesh = new THREE.InstancedMesh(geometry, this.rockMaterial, PoolSize.rocks * 4);
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       mesh.frustumCulled = false;
       mesh.setColorAt(0, new THREE.Color());
@@ -340,7 +351,7 @@ export class Renderer {
       return mesh;
     });
     // each slot tumbles about its own axis, picked once
-    this.rockAxes = Array.from({ length: 48 }, (_, i) => new THREE.Vector3(Math.sin(i * 12.9898) * 0.6, 1, Math.cos(i * 78.233) * 0.6).normalize());
+    this.rockAxes = Array.from({ length: PoolSize.rocks }, (_, i) => new THREE.Vector3(Math.sin(i * 12.9898) * 0.6, 1, Math.cos(i * 78.233) * 0.6).normalize());
     // broken pieces: small tumbling rocks thrown out of each break
     this.debris = { mesh: new THREE.InstancedMesh(rocks.geometries[1], this.rockMaterial, 160), items: [] };
     this.debris.mesh.frustumCulled = false;
@@ -355,7 +366,7 @@ export class Renderer {
     quad.rotateX(-Math.PI / 2); // lying flat on the field, facing up at the camera
     const shot = color => {
       const mesh = new THREE.InstancedMesh(quad, new THREE.MeshBasicMaterial({
-        map: this.art.trail, color, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, clippingPlanes: this.planes }), 16 * 4);
+        map: this.art.trail, color, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, clippingPlanes: this.planes }), PoolSize.bullets * 4);
       mesh.frustumCulled = false;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       this.scene.add(mesh);
@@ -578,7 +589,7 @@ export class Renderer {
       x = e.prev.x + dx * alpha;
       y = e.prev.y + dy * alpha;
     }
-    return { x, y, angle: e.prev.angle + (e.angle - e.prev.angle) * alpha };
+    return { x, y, angle: turnBetween(e.prev.angle, e.angle, alpha) };
   }
 
   // the offsets at which to draw something at (x, y) with this reach: itself, plus a copy across each edge it is near

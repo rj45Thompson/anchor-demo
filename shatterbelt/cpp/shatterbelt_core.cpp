@@ -258,6 +258,7 @@ void Entity::Integrate(double dt)
     pos.x += vel.x * dt;
     pos.y += vel.y * dt;
     angle += angularVel * dt;
+    if (angle > Trig::Pi) angle -= 2 * Trig::Pi; else if (angle <= -Trig::Pi) angle += 2 * Trig::Pi;
 }
 
 double Entity::Speed() const
@@ -347,24 +348,22 @@ void Hunter::Weave(double dt, Random& rng)
 
 // ------------------------------------------------------------------------------------------------
 
-InputLog::InputLog() : bytes(new uint8_t[4096]), size(4096) {}
+InputLog::InputLog(int capacity) : bytes(new uint8_t[capacity]()), size(capacity) {}
 
 InputLog::~InputLog()
 {
     delete[] bytes;
 }
 
-void InputLog::Record(uint8_t input)
+bool InputLog::Record(uint8_t input)
 {
     if (length == size)
     {
-        uint8_t* bigger = new uint8_t[size * 2];
-        for (int i = 0; i < size; ++i) bigger[i] = bytes[i];
-        delete[] bytes;
-        bytes = bigger;
-        size *= 2;
+        dropped += 1;
+        return false;
     }
     bytes[length++] = input;
+    return true;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -381,7 +380,7 @@ Game::Game(const GameOptions& options)
     if (options.startingShips > 0) SpawnShip();
     StartWave();
     Flush();
-    events.count = 0;
+    events.length = 0;
 }
 
 // ---- the main loop ------------------------------------------------------------------------------
@@ -389,7 +388,7 @@ Game::Game(const GameOptions& options)
 // Flush(), after every loop over it has finished.
 const EventList& Game::Step(uint8_t input)
 {
-    events.count = 0;
+    events.length = 0;
     time += STEP;
     steps += 1;
     HandleInput(input); // 1. input: steer, fire, hyperspace
@@ -397,6 +396,7 @@ const EventList& Game::Step(uint8_t input)
     WrapAll();          // 3. screen wrap
     Collide();          // 4. collide: circle against circle; hits only mark things dead
     Flush();            // 5. spawn and destroy: the only place the world's lists change
+    CheckGameOver();    //    and the game ends here, once every hit of the step has counted
     return events;      // 6. events out, for a renderer and the sound
 }
 
@@ -465,6 +465,7 @@ void Game::ArriveFromHyperspace()
     const double x = rng.Range(0, field.width);
     const double y = rng.Range(0, field.height);
     ship.Place(x, y, 0, 0, ship.angle);
+    ship.invulnerable = 0; // a jump taken under the respawn shield lands without it
     ship.jumpCooldown = Rules::hyperspace::cooldown;
     if (rng.OneIn(Rules::hyperspace::failOneIn))
     {
@@ -502,7 +503,8 @@ void Game::FireHunterBullet(Hunter& hunter)
     if (bullets.CountAlive([](const Bullet& b) { return !b.fromShip; }) >= Rules::hunters::maxBullets * hunters.capacity) return;
     Bullet* bullet = bullets.Acquire();
     Check(bullet != nullptr, "bullet pool too small");
-    const Entity* target = ship.CanBeHit() ? &ship : nullptr;
+    // The ship is a target whenever it is on the field, shielded or not; in hyperspace it is nowhere.
+    const Entity* target = ship.alive && ship.jumping <= 0 ? &ship : nullptr;
     const double angle = hunter.ShotAngle(target, field, rng, score);
     const double muzzle = hunter.radius + 4;
     bullet->Launch(false, hunter.pos.x + Trig::Cos(angle) * muzzle, hunter.pos.y + Trig::Sin(angle) * muzzle,
@@ -538,7 +540,6 @@ void Game::StartWave()
 Vec2 Game::FarFromShip()
 {
     const Entity& from = ship.alive ? static_cast<const Entity&>(ship) : centre;
-    Entity probe;
     const double minSquared = Rules::waves::safeDistance * Rules::waves::safeDistance;
     do
     {
@@ -551,7 +552,7 @@ Vec2 Game::FarFromShip()
 Rock& Game::SpawnRock(RockSize size, double x, double y, double vx, double vy)
 {
     Rock* rock = rocks.Acquire();
-    Check(rock != nullptr, "rock pool too small"); // 48 covers 11 Large rocks broken to 44 Small
+    Check(rock != nullptr, "rock pool too small"); // never: PoolSize::rocks is the worst case
     const double spin = rng.Range(-1.2, 1.2);
     const int look = rng.Int(3);
     rock->Init(size, x, y, vx, vy, spin, look);
@@ -712,24 +713,21 @@ void Game::DestroyHunter(Hunter& hunter, bool byShip)
     Emit(EventType::hunterDestroyed, hunter, byShip ? hunter.Score() : 0);
 }
 
+// The ship is lost. Whether that ends the game is decided once, at the end of the step (CheckGameOver).
 void Game::DestroyShip()
 {
     ship.alive = false;
     ship.thrusting = false;
     ships -= 1;
+    shipLost = true;
     respawnTimer = Rules::ship::respawnDelay;
     Emit(EventType::shipDestroyed, ship);
-    if (ships <= 0)
-    {
-        over = true;
-        Emit(EventType::gameOver, ship);
-    }
 }
 
 void Game::AddScore(int points)
 {
     score += points;
-    while (score >= nextExtraShipAt)
+    while (!over && score >= nextExtraShipAt) // a finished game earns no ships
     {
         ships += 1;
         nextExtraShipAt += Rules::extraShipEvery;
@@ -745,12 +743,24 @@ void Game::Flush()
     hunters.Flush();
 }
 
+// A ship lost in this step ends the game if no ship is left once every hit of the step has counted. Deciding
+// it here, not at the crash, means a ship earned in the same step always counts, whatever order the shots are
+// in the pool. (A game made with no ships has none to lose, so it never ends.)
+void Game::CheckGameOver()
+{
+    if (!shipLost) return;
+    shipLost = false;
+    if (ships > 0) return;
+    over = true;
+    Emit(EventType::gameOver, ship);
+}
+
 // ---- 6. events ----------------------------------------------------------------------------------
 // A renderer and the sound read them after each step; the rules never do.
 void Game::Emit(EventType type, const Entity& at, int points)
 {
-    Check(events.count < EventList::capacity, "event list too small");
-    Event& event = events.items[events.count++];
+    Check(events.length < EventList::capacity, "event list too small");
+    Event& event = events.items[events.length++];
     event = Event();
     event.type = type;
     event.x = at.pos.x;
@@ -763,19 +773,19 @@ void Game::Emit(EventType type, const Entity& at, int points)
 void Game::Emit(EventType type, const Rock& rock, int points)
 {
     Emit(type, static_cast<const Entity&>(rock), points);
-    events.items[events.count - 1].size = rock.size;
+    events.items[events.length - 1].size = rock.size;
 }
 
 void Game::Emit(EventType type, const Hunter& hunter, int points)
 {
     Emit(type, static_cast<const Entity&>(hunter), points);
-    events.items[events.count - 1].kind = hunter.kind;
+    events.items[events.length - 1].kind = hunter.kind;
 }
 
 void Game::Emit(EventType type, const Bullet& bullet, int points)
 {
     Emit(type, static_cast<const Entity&>(bullet), points);
-    events.items[events.count - 1].fromShip = bullet.fromShip;
+    events.items[events.length - 1].fromShip = bullet.fromShip;
 }
 
 // ---- replay and checks --------------------------------------------------------------------------
