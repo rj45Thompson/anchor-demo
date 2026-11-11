@@ -288,6 +288,40 @@ def check_buttons_on_screen(page, label):
           "all inside %dx%d" % tuple(size) if not off else "off screen in %dx%d: %s" % (size[0], size[1], off))
 
 
+SHAKE_SAMPLER = """() => { const r = window.shatterbelt.renderer; window.__shake = 0;
+  const tick = () => { const c = r.camera.position, h = r.cameraHome;
+    window.__shake = Math.max(window.__shake, Math.hypot(c.x - h.x, c.y - h.y, c.z - h.z)); requestAnimationFrame(tick); };
+  requestAnimationFrame(tick); }"""
+
+
+def camera_shake(page, seconds):
+    """plays `seconds` of wall time with fire held and turning, and returns how far the camera ever moved from home"""
+    page.keyboard.press("Enter")
+    page.wait_for_function("window.shatterbelt.mode === 'playing'")
+    page.evaluate(SHAKE_SAMPLER)
+    page.keyboard.down("Space"); page.keyboard.down("ArrowLeft")
+    page.wait_for_timeout(int(seconds * 1000))
+    page.keyboard.up("Space"); page.keyboard.up("ArrowLeft")
+    return page.evaluate("[window.__shake, window.shatterbelt.stats.rocksBroken]")
+
+
+def motion(browser, base, msgs):
+    """screen shake happens normally, and not at all for someone who asked their system to reduce motion"""
+    results = {}
+    for reduce in (False, True):
+        ctx = browser.new_context(viewport={"width": 1280, "height": 800}, reduced_motion="reduce" if reduce else "no-preference")
+        page = ctx.new_page()
+        listen(page, msgs)
+        page.goto(base, wait_until="load")
+        page.wait_for_function("window.shatterbelt && window.shatterbelt.mode === 'title'", timeout=60000)
+        results[reduce] = camera_shake(page, 12)
+        ctx.close()
+    check("big hits shake the screen (control: the shake is measurable)", results[False][0] > 0.5 and results[False][1] > 0,
+          "camera moved up to %.2f units, %d rocks broken" % tuple(results[False]))
+    check("with reduced motion asked for, the screen never shakes", results[True][0] < 1e-6 and results[True][1] > 0,
+          "camera moved up to %.4f units, %d rocks broken" % tuple(results[True]))
+
+
 def small_phone(browser, base, msgs):
     """a small phone (360x640): the same reachability check, where there is least room"""
     ctx = browser.new_context(viewport={"width": 360, "height": 640}, device_scale_factor=2, is_mobile=True, has_touch=True)
@@ -348,6 +382,7 @@ def main():
             gamepad(browser, base, msgs)
             ph = phone(browser, base, msgs)
             small_phone(browser, base, msgs)
+            motion(browser, base, msgs)
             browser.close()
     finally:
         server.shutdown()

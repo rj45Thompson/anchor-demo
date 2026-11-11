@@ -284,6 +284,9 @@ async function boot() {
   try {
     const art = await loadArt();
     renderer = new Renderer($('canvas'), art, $('labels'));
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+    renderer.calm = calm.matches;
+    calm.addEventListener('change', () => { renderer.calm = calm.matches; });
   } catch (error) {
     $('loadingText').textContent = `The game could not start: ${error.message}`;
     stage.dataset.failed = 'true';
@@ -300,6 +303,7 @@ window.shatterbelt = {
   get game() { return game; },
   get mode() { return mode; },
   get log() { return log; },
+  get renderer() { return renderer; },
   frameCost,
   stats,
 };

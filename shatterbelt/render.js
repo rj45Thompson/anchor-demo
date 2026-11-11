@@ -196,6 +196,7 @@ export class Renderer {
     this.camera = new THREE.PerspectiveCamera(LOOK.fov, 1, 10, 12000);
     this.planes = [0, 1, 2, 3].map(() => new THREE.Plane());  // the field's four edges
     this.shake = 0;
+    this.calm = false;   // true when the player's system asks to reduce motion: no screen shake, a softer flash
     this.time = 0;
     this.width = 1000;
     this.height = 625;
@@ -524,8 +525,8 @@ export class Renderer {
     }
     this.ring(x, z, size * 0.4, size * 3.4, ringSeconds * 0.55, new THREE.Color(r, g, b).getHex());
     this.flash.position.set(x, 60, z);
-    this.flash.intensity = Math.max(this.flash.intensity, size / 14);
-    this.shake = Math.max(this.shake, shake);
+    this.flash.intensity = Math.max(this.flash.intensity, size / (this.calm ? 40 : 14));
+    if (!this.calm) this.shake = Math.max(this.shake, shake);
   }
 
   muzzle(x, z, e) {
