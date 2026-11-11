@@ -95,8 +95,16 @@ def desktop(browser, base, msgs):
     hud = page.evaluate("getComputedStyle(document.getElementById('hud')).display")
     check("the score bar is hidden on the title screen", hud == "none", "#hud display: %s" % hud)
 
+    # start just after a demo explosion: nothing of the demo may carry over into the player's game
+    page.evaluate("window.__demo0 = window.shatterbelt.stats.demoRocks")
+    page.wait_for_function("window.shatterbelt.stats.demoRocks > window.__demo0", timeout=60000, polling=16)
     page.keyboard.press("Enter")
     page.wait_for_function("window.shatterbelt.mode === 'playing'")
+    left = page.evaluate("""(() => { const r = window.shatterbelt.renderer;
+        const alive = p => { let n = 0; for (let i = 0; i < p.capacity; i++) if (p.life[i] > 0) n++; return n; };
+        return {popups: r.popups.length, sparks: alive(r.sparks), fire: alive(r.fire), debris: r.debris.items.length,
+                rings: r.rings.filter(g => g.visible).length}; })()""")
+    check("a new game starts clean: none of the demo's explosions carry over", not any(left.values()), "left over: %s" % left)
     hud = page.evaluate("getComputedStyle(document.getElementById('hud')).display")
     check("the score bar shows in play", hud != "none", "#hud display: %s" % hud)
     wall0, frames0 = time.time(), game(page, "s.stats.frames")

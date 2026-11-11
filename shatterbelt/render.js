@@ -390,6 +390,18 @@ export class Renderer {
     this.nextRing = 0;
   }
 
+  // Every effect still on screen goes, at once: a new game starts on a clean field, with nothing of the title's demo in it.
+  clearEffects() {
+    for (const p of [this.sparks, this.fire]) { p.life.fill(0); p.alpha.array.fill(0); p.alpha.needsUpdate = true; }
+    this.debris.items.length = 0;
+    this.debris.mesh.count = 0;
+    for (const p of this.popups) p.el.remove();
+    this.popups.length = 0;
+    for (const ring of this.rings) { ring.visible = false; ring.userData.life = 0; }
+    this.flash.intensity = 0;
+    this.shake = 0;
+  }
+
   // ---- field and camera --------------------------------------------------------------------------
 
   // A game's field can differ from the last one (a phone held upright gets a taller field).

@@ -128,6 +128,7 @@ function start() {
   demo = null;
   const options = { seed: (Math.random() * 2 ** 32) >>> 0, ...fieldFor(stage.clientWidth / stage.clientHeight) };
   newGame(options);
+  renderer.clearEffects();
   log = new InputLog();
   lastRun = { options, log };
   controls.clear();
