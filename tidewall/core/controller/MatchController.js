@@ -16,6 +16,8 @@ const PAD_FIELDS = Object.freeze({
   // the bomb rule set (BOMBS_SPEC.md): grab and defuse are HELD (B / right button / a key, and the bar's Defuse); tap is B let go
   // without a drag (pick up, or turn the piece); drop / pickUp / trap are pressed THIS frame; buy is an ItemKind (-1 = none)
   grab: 'bool', defuse: 'bool', tap: 'bool', drop: 'bool', pickUp: 'bool', trap: 'bool', buy: 'int',
+  // UC-C1: a direction pressed this frame (-1, 0, 1 each way): the host's latched key, d-pad or stick step
+  stepX: 'int', stepY: 'int',
 });
 
 /** AUTHORED: squares per second the hero walks after the cursor in the bomb rule set (the core never knows where a hero stands; this
@@ -23,6 +25,11 @@ const PAD_FIELDS = Object.freeze({
 export const HERO_CELLS_PER_SECOND = 12;
 /** AUTHORED: how long a pointer's click on a far square waits for the hero to walk there and set the bomb down (2 s). */
 const DROP_WALK_TICKS = 60;
+/** UC-C1 (STEP_CONTROLS_UC.md), AUTHORED: the phases whose cursor steps a square at a time; the stick travel (of 1000) that is a
+ *  push (half way, as the menus count a step); a lean (one axis this many times the other) that moves along that axis only; how
+ *  long a push is held before it repeats (0.2 s: a quick tap of a thumb is 0.1-0.15 s and must stay ONE square). */
+const STEP_PHASES = new Set([Phase.Claim, Phase.Cannons, Phase.Repair]);
+const STEP_PUSH = 500, STEP_LEAN = 2, STEP_DELAY_TICKS = 6;
 
 /** What a player's input device says this frame, in whole numbers (C# struct PadInput). The app's input layer fills it; the
  *  controller never reads a device. `swap` is this port's own field (the C# struct had one READY button for both jobs): it swaps the
@@ -37,11 +44,13 @@ export class PadInput {
     this.confirm = false; this.rotate = false; this.ready = false; this.swap = false;
     this.fast = false;
     this.grab = false; this.defuse = false; this.tap = false; this.drop = false; this.pickUp = false; this.trap = false; this.buy = -1;
+    this.stepX = 0; this.stepY = 0;
     for (const k of Object.keys(fields)) {
       const kind = PAD_FIELDS[k];
       if (kind === undefined) throw new TypeError('PadInput has no field "' + k + '"');
       const v = fields[k];
       if (k === 'buy' && !(Number.isInteger(v) && v >= -1 && v <= 3)) throw new TypeError('PadInput.buy is -1 or an ItemKind (0..3), got ' + v);
+      if ((k === 'stepX' || k === 'stepY') && !(v === -1 || v === 0 || v === 1)) throw new TypeError('PadInput.' + k + ' is -1, 0 or 1, got ' + v);
       if (kind === 'int' && !(Number.isInteger(v) && v >= -2147483648 && v <= 2147483647)) throw new TypeError('PadInput.' + k + ' is a whole number, got ' + v);
       if (kind === 'bool' && typeof v !== 'boolean') throw new TypeError('PadInput.' + k + ' is true or false, got ' + v);
       if (kind === 'cell' && !(v instanceof Cell)) throw new TypeError('PadInput.' + k + ' is a Cell');
@@ -110,6 +119,10 @@ export class MatchController {
     // the drop, so the pieces come back (UC-P1, 11-09: a right click meant to turn the piece picked up a bomb beside the hero, drew
     // the bomb tool and hid the ghost; every later click dropped a bomb until the player found Tab)
     this._autoTool = new Array(n).fill(false);
+    // UC-C1 (STEP_CONTROLS_UC.md): the square-by-square cursor of CLAIM, CANNONS and REPAIR; each axis's held way (-1, 0, 1) and
+    // how many ticks it has been held. stepCursor false is the C#'s glide in every phase (its ported tests set it).
+    this.stepCursor = true;
+    this._sdx = new Int32Array(n); this._sdy = new Int32Array(n); this._stx = new Int32Array(n); this._sty = new Int32Array(n);
     this._bots = new Array(n).fill(null);
     this._pending = [];
     /** The squares the shared camera can show at its widest, set by the host each frame: no cursor - no hero - walks past them.
@@ -233,6 +246,7 @@ export class MatchController {
     const g = m.grid;
     const px = this._qx[s], py = this._qy[s];
     if (p.hasPointer) { this._qx[s] = p.pointer.x * 65536 + 32768; this._qy[s] = p.pointer.y * 65536 + 32768; }
+    else if (this.stepCursor && STEP_PHASES.has(m.phase)) this._step(s, p);
     else {
       const dz = m.rules.padDeadZone;
       // C#: long perTick = 65536L * PadCellsPerSecond / TicksPerSecond * (Fast ? 2 : 1); (int)(perTick * stick / 1000), truncating
@@ -285,6 +299,31 @@ export class MatchController {
         this._pending.push(Command.placeWall(s, ++this._seq[s], m.heldShapeId(s), this._turns[s], at, this._pending.length));
         break;
     }
+  }
+
+  /** STEP_CONTROLS_UC.md UC-C1: in CLAIM, CANNONS and REPAIR a stick or a key moves the cursor one SQUARE at a time, as a grid game
+   *  does, instead of gliding at padCellsPerSecond (the C#'s way, still BATTLE's, where the cursor aims at ships on the move).
+   *  A press steps once at once (p.stepX / stepY: a key, the d-pad or the stick pushed past half, latched by the host so a tap
+   *  shorter than a tick still counts; or a push that is still held when the tick comes); held past STEP_DELAY_TICKS it steps every
+   *  repeat ticks (padCellsPerSecond's pace, twice it with fast). A stick leaning mostly one way moves that way only, so a thumb that
+   *  is not quite straight does not walk the ghost off its row. The cursor always sits on a square's centre here. */
+  _step(s, p) {
+    const m = this.model;
+    const cx = CellMath.cellOfQ16(this._qx[s]), cy = CellMath.cellOfQ16(this._qy[s]);
+    const ax = Math.abs(p.stickX), ay = Math.abs(p.stickY);
+    let hx = ax > STEP_PUSH ? Math.sign(p.stickX) : 0, hy = ay > STEP_PUSH ? Math.sign(p.stickY) : 0;
+    if (hx !== 0 && hy !== 0) { if (ax > STEP_LEAN * ay) hy = 0; else if (ay > STEP_LEAN * ax) hx = 0; }
+    const repeat = Math.max(1, Math.round(GameRules.TicksPerSecond / m.rules.padCellsPerSecond / (p.fast ? 2 : 1)));
+    const axis = (held, dir, ticks, tap) => {        // -> [step, new dir, new ticks]
+      if (held === 0) return [tap, 0, 0];             // released (or never held): only a latched tap steps
+      const t = held === dir ? ticks : 0;            // a new push, or the other way: the count starts again
+      const go = t === 0 || (t >= STEP_DELAY_TICKS && (t - STEP_DELAY_TICKS) % repeat === 0);
+      return [go ? held : 0, held, t + 1];
+    };
+    const [dx, ndx, ntx] = axis(hx, this._sdx[s], this._stx[s], p.stepX);
+    const [dy, ndy, nty] = axis(hy, this._sdy[s], this._sty[s], p.stepY);
+    this._sdx[s] = ndx; this._stx[s] = ntx; this._sdy[s] = ndy; this._sty[s] = nty;
+    this._qx[s] = (cx + dx) * 65536 + 32768; this._qy[s] = (cy + dy) * 65536 + 32768;
   }
 
   /** The bomb rule set: the hero walks after the cursor over dry land (each axis on its own, so it slides along a shore), and a

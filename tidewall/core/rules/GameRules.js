@@ -80,6 +80,11 @@ export class BombRules extends GameRules {
     super();
     // REQ-BOMB-01: fuse 90 ticks; blast = a plus, arm length 2 (big 4), drawn 8 ticks
     this.bombFuse = 90; this.bombArm = 2; this.bigBombArm = 4; this.blastTicks = 8;
+    // AUTHORED (BOSS_UC.md UC-B1, 11-11): the boss ship of each island's last wave: 2 x 2 squares, its health by level (1..4; a
+    // later level repeats the last), one square every 30 ticks (a ship's 20), a volley of 3 shots every 100 ticks within 8
+    // squares, and 300 points to the sinker on top of each hit's pointsShipHit
+    this.bossSize = 2; this.bossHealth = Object.freeze([30, 34, 38, 44]); this.bossTicksPerCell = 20; this.bossRange = 10;
+    this.bossReloadTicks = 100; this.bossVolley = 3; this.pointsBossSunk = 300; this.bossHealthPerExtraPlayer = 8;
     // REQ-BOMB-02: damage per blast (a normal brick has wallHealth 2, a metal one metalWallHealth 6, a castle castleHealth 12)
     this.blastBrickDamage = 1; this.blastCannonDamage = 1; this.blastCastleDamage = 3;
     this.metalWallHealth = 6;
@@ -122,6 +127,7 @@ export class RoundSpec {
     this.cannonsTicks = cannonsTicks; this.battleTicks = battleTicks; this.repairTicks = repairTicks;
     this.shipsBase = shipsBase; this.shipsPerExtraPlayer = shipsPerExtraPlayer; this.shipHealth = shipHealth;
     this.twoSailShips = twoSailShips;    // REQ-REF-07: two-sail ships in this wave (they head for the shore and land grunts)
+    this.bossShips = 0;                  // UC-B1: boss ships in this wave (the bomb rule set's last wave on each map: Campaign.normal)
     this.map = null;
     this.kind = RoundKind.Wave;
   }

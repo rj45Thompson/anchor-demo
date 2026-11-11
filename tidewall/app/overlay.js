@@ -49,9 +49,9 @@ export function howtoDevices(mode, touchFirst) {
 // desk(k): k(action) is player 1's keys for a movable action now (core/controller/KeyBindings.js label), so a rebind shows here too
 export const PHASE_HINTS = Object.freeze({
   Claim: { say: 'Pick a castle', touch: 'tap one', desk: (k) => 'click one, or walk there and press ' + k('confirm') + ' / A' },
-  Cannons: { say: 'Place cannons inside your walls', touch: 'tap inside, then Y', desk: (k) => 'click inside, then Ready (' + k('ready') + ' / Y)' },
+  Cannons: { say: 'Place cannons inside your walls', touch: 'drag one in, lift to place; then Y', desk: (k) => 'click inside, then Ready (' + k('ready') + ' / Y)' },
   Battle: { say: 'Fire at ships', touch: 'tap a ship; Y takes out bombs', desk: (k) => 'click a ship, or aim and press ' + k('confirm') + '; ' + k('swap') + ' takes out bombs' },
-  Repair: { say: 'Close the ring with pieces', touch: 'tap to place; hold B to defuse bombs', desk: (k) => 'click to place, ' + k('rotate') + ' turns; hold right click to defuse a bomb; 1-4 shop' },
+  Repair: { say: 'Close the ring with pieces', touch: 'drag a piece, lift to place; hold B to defuse', desk: (k) => 'click to place, ' + k('rotate') + ' turns; hold right click to defuse a bomb; 1-4 shop' },
 });
 
 /** The CSS zoom an element is drawn at (TEXT SIZE, style.css --ts): a px offset written to its style is multiplied by it, so a place
@@ -207,10 +207,10 @@ export class Overlay {
         ...howtoDevices(s.phonesAllowed ? 'both' : 'local', s.touchFirst).filter((k) => k !== 'keys').map((k) => HOWTO_LABEL[k] + ': ' + howtoRow(k, s))];
       body = lines.map((l) => '<div class="iline">' + esc(l) + '</div>').join('');
     } else {
-      const link = (c) => '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a> by ' + esc(c.author);
+      const link = (c) => (c.url ? '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.title) + '</a>' : esc(c.title)) + ' by ' + esc(c.author);
       body = '<div class="ihead">MODELS</div>' + MODEL_CREDITS.map((c) => '<div class="iline" data-credit="model">' + link(c) + ' (<a href="' + CC_BY_4 + '" target="_blank" rel="noopener">' + esc(c.licence) + '</a>, Sketchfab)</div>').join('')
         + '<div class="iline">' + esc(OWN_MODELS) + '</div>'
-        + '<div class="ihead">SOUNDS</div>' + SOUND_CREDITS.map((c) => '<div class="iline" data-credit="sound">' + link(c) + ' (<a href="' + CC0 + '" target="_blank" rel="noopener">CC0</a>)</div>').join('');
+        + '<div class="ihead">SOUNDS</div>' + SOUND_CREDITS.map((c) => '<div class="iline" data-credit="sound">' + link(c) + ' (' + (c.licence ? esc(c.licence) : '<a href="' + CC0 + '" target="_blank" rel="noopener">CC0</a>') + ')</div>').join('');
     }
     return '<div class="setdim idim" data-info="close" data-nogame="1"></div><div class="settings info" data-nogame="1" role="dialog" aria-label="Controls and credits"><div class="sbody">'
       + '<div class="itabs">' + tabs + '</div><div class="ipage" data-page="' + esc(INFO_PAGES[page]) + '">' + body + '</div>'

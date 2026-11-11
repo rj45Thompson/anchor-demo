@@ -50,7 +50,12 @@ const BAR_UP = new THREE.Vector3();   // scratch: the camera's up, for the bar's
 const SMOKE_EVERY = 0.35, FLAME_EVERY = 0.16, BAR_LOW = new THREE.Color(0xff3b2f);
 const GRUNT_HEIGHT = 1.35, SHIP_LENGTH = 2.3, LANDER_SCALE = 1.3, LANDER_TINT = new THREE.Color(0.62, 0.58, 0.6);
 const TOOLS_AT = 1.9, HERO_RING = 1.1, HERO_BLOB = 1.0;
-const SHIP_RIM = new THREE.Color(0xff3a1f), SAIL = [new THREE.Color(0.16, 0.17, 0.2), new THREE.Color(0.2, 0.42, 0.25)];
+// SAIL by kind: a gunship's black, a lander's deep green, a boss's royal purple (BOSS_UC.md UC-B1: it reads apart from both at a
+// glance); BOSS_TINT darkens its hull, BOSS_SCALE is its length over a ship's per square of its size (2 x 2: ~4 squares long)
+const SHIP_RIM = new THREE.Color(0xff3a1f), SAIL = [new THREE.Color(0.16, 0.17, 0.2), new THREE.Color(0.2, 0.42, 0.25), new THREE.Color(0.42, 0.12, 0.5)];
+// (11-11, LOOKED at shots/boss/boss_volley.png: at 0.9 and with the tint alone the boss could not be told from the ships round it at
+// the whole-island zoom - every hull reads dark red under the enemy rim; now larger and ringed in pulsing purple, BOSS_RING)
+const BOSS_TINT = new THREE.Color(0.5, 0.44, 0.5), BOSS_SCALE = 1.15, BOSS_RING = new THREE.Color(0xc45ad8);
 const WAKE = new THREE.Color(1, 1, 1).lerp(new THREE.Color(0xff3a1f), 0.3);
 const SINK_PITCH = 1.25, SINK_ROLL = 0.5, SINK_DEPTH = 1.6;       // AUTHORED: radians the bow dips and the hull rolls, squares it goes down
 const SINK_FOAM_EVERY = 0.14;                                    // AUTHORED: seconds between foam rings round a sinking ship
@@ -71,13 +76,14 @@ const GRUNT_RED = new THREE.Color(0xff2a1f), BLOB_ALPHA = 0.42, FLASH_SECONDS = 
 const NEUTRAL_BANNER = new THREE.Color(0xe8e2d2), NEUTRAL_GLOW = new THREE.Color(0xfff1d0);
 // the goblin's and the ship's rimmed materials, made once for the page and shared by every level (one shader each, built by the
 // renderer's warm-up through gruntFigure and shipModel)
-const GRUNT_MATS = new Map(), SHIP_MATS = [new Map(), new Map()];
+const GRUNT_MATS = new Map(), SHIP_MATS = [new Map(), new Map(), new Map()];
 /** A grunt figure, outlined red (the renderer's warm-up draws one, so its shader is built before play). */
 export function gruntFigure(models) { const fig = models.figure('goblin'); rimFigure(fig.root, GRUNT_RED, GRUNT_MATS); return fig; }
-/** A ship (the lander darker), outlined in the enemy's colour. */
-export function shipModel(models, lander) {
+/** A ship, outlined in the enemy's colour. look: 0 a gunship, 1 a lander (darker), 2 a boss (purple sails, darkest hull). */
+export function shipModel(models, look) {
+  if (look !== 0 && look !== 1 && look !== 2) throw new Error('units.js: a ship look is 0 gunship, 1 lander or 2 boss, got ' + look);
   const mdl = models.instance('ship');
-  tintSails(mdl, SAIL[lander ? 1 : 0], lander ? LANDER_TINT : new THREE.Color(1, 1, 1), SHIP_RIM.clone().multiplyScalar(0.42), SHIP_MATS[lander ? 1 : 0]);
+  tintSails(mdl, SAIL[look], look === 1 ? LANDER_TINT : look === 2 ? BOSS_TINT : new THREE.Color(1, 1, 1), SHIP_RIM.clone().multiplyScalar(0.42), SHIP_MATS[look]);
   return mdl;
 }
 /** The aiming reticle: a ring with four ticks on its rim, merged into one geometry (graphics round 3: it was five meshes per hero,
@@ -120,6 +126,7 @@ export class Units {
     this.glowP = this.colours.map((c) => glow(c, 2.4));
     this.glowEnemy = glow(ENEMY_SHOT, 2.6);
     this.glowGrunt = glow(GRUNT_RED, 1.7);
+    this.glowBoss = glow(BOSS_RING, 2.8);                            // UC-B1: the ring on the water round a boss
     this.glowNeutral = glow(NEUTRAL_GLOW, 1.25);
     // the soft round shadow under a figure: dark at the centre, gone at the rim (a figure's own cast shadow falls to the side, long,
     // from the low sun; this keeps its feet on the ground from the camera's angle)
@@ -296,17 +303,19 @@ export class Units {
 
   // ------------------------------------------------------------------ ships
   makeShip(s) {
-    const g = new THREE.Group(), two = s.kind === ShipKind.TwoSail;
+    const g = new THREE.Group(), two = s.kind === ShipKind.TwoSail, boss = s.kind === ShipKind.Boss;
     // the Meshy ship, bow (-x in the file) turned to +x, the direction the yaw below steers; its keel a quarter of its height under
     // the water line
-    const M = this.models.ship, k = SHIP_LENGTH * s.size * (two ? LANDER_SCALE : 1) / M.size.x;
+    const M = this.models.ship, k = SHIP_LENGTH * s.size * (two ? LANDER_SCALE : boss ? BOSS_SCALE : 1) / M.size.x;
     const hull = new THREE.Group(); g.add(hull);
-    const mdl = shipModel(this.models, two); mdl.rotation.y = Math.PI; mdl.scale.setScalar(k); mdl.position.y = -M.box.min.y * k - M.size.y * k * 0.25;
+    const mdl = shipModel(this.models, boss ? 2 : two ? 1 : 0); mdl.rotation.y = Math.PI; mdl.scale.setScalar(k); mdl.position.y = -M.box.min.y * k - M.size.y * k * 0.25;
     hull.add(mdl);
     const pips = new THREE.Group(); pips.position.y = M.size.y * k * 0.75 + 0.2; g.add(pips);
+    let ring = null;
+    if (boss) { ring = new THREE.Mesh(this.geo.ring, this.glowBoss); ring.position.y = 0.05; ring.scale.setScalar(SHIP_LENGTH * s.size * BOSS_SCALE * 0.62); g.add(ring); }
     const p = this.shipCentre(s); g.position.copy(p);
     this.group.add(g);
-    return { g, hull, pips, pos: p.clone(), yaw: Math.atan2(this.board.w / 2 - p.x, this.board.h / 2 - p.z) - Math.PI / 2, sink: -1, hp: -1, hit: 0, model: s, len: SHIP_LENGTH * s.size * (two ? LANDER_SCALE : 1), wake: 0, bubble: 0 };
+    return { g, hull, pips, pos: p.clone(), yaw: Math.atan2(this.board.w / 2 - p.x, this.board.h / 2 - p.z) - Math.PI / 2, sink: -1, hp: -1, hit: 0, model: s, ring, len: SHIP_LENGTH * s.size * (two ? LANDER_SCALE : boss ? BOSS_SCALE : 1), wake: 0, bubble: 0 };
   }
   shipCentre(s) { return new THREE.Vector3(s.at.x + s.size / 2, 0, s.at.y + s.size / 2); }
 
@@ -332,6 +341,7 @@ export class Units {
       e.g.rotation.set(Math.sin(seconds * 1.3 + id) * 0.05, e.yaw, Math.sin(seconds * 1.1 + id * 2) * 0.04);
       e.hit = Math.max(0, e.hit - dt * 3);
       e.hull.scale.setScalar(1 + e.hit * 0.08);
+      if (e.ring) { e.ring.visible = e.sink < 0; e.ring.scale.setScalar(SHIP_LENGTH * e.model.size * BOSS_SCALE * 0.62 * (1 + 0.06 * Math.sin(seconds * 4))); }
       setFlash(e.hull, e.hit * e.hit * 0.8);                            // a hit flashes the hull white, fading with the bump
       if (e.sink >= 0) {
         // the sink: the bow dips first (the hull tips up by the stern), it rolls onto its side, then it slides under; foam rings

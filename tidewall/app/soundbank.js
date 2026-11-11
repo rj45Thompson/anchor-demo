@@ -14,6 +14,7 @@ import {
   ItemBought, MetalPlaced, TrapPlaced, TrapSprung,
 } from '../core/match/Events.js';
 import { Phase } from '../core/match/Entities.js';
+import { STORE_PACKS } from '../render/packs.js';
 import { Screen } from '../core/controller/MenuModel.js';
 
 /** The three buses (R4) and their AUTHORED base levels; each player's volume setting (0..1) multiplies its bus. */
@@ -71,14 +72,26 @@ function inMatch(s) {
   return s.attract || (!s.demo && (s.screen === Screen.Playing || s.screen === Screen.Pause || s.screen === Screen.Decide || s.screen === Screen.Results));
 }
 
-/** The music key for what is on screen: s = { screen, demo, attract, phase }. UC-S2 steps 1-3 and 5. */
+/** The music key for what is on screen: s = { screen, demo, attract, phase, boss }. UC-S2 steps 1-3 and 5; s.boss: a boss ship is
+ *  afloat (BOSS_UC.md UC-B1), and its BATTLE has the boss theme. */
 export function musicFor(s) {
   if (!inMatch(s)) return 'musicTitle';
   if (BUILD.has(s.phase)) return 'musicBuild';
+  if (s.phase === Phase.Battle && s.boss && STORE_PACKS) return 'musicBoss';   // the boss theme is a store pack's (render/packs.js)
   if (BATTLE.has(s.phase)) return 'musicBattle';
   if (s.phase === Phase.Victory) return 'musicVictory';
   if (s.phase === Phase.GameOver) return 'gameOver';
   throw new RangeError('soundbank: no music for phase ' + s.phase);
+}
+
+/** The bed under the sea for a level's mood (render/moods.js names; MOOD_UC.md): Procedural Worlds' four ambient pieces, chosen in
+ *  tools/sound/build.mjs by measurement. The menus have none (the title's sea alone, as before). */
+export const MOOD_BEDS = Object.freeze({ noon: 'bedNoon', golden: 'bedGolden', dusk: 'bedDusk', storm: 'bedStorm' });
+export function bedFor(s, mood) {
+  if (!inMatch(s) || !STORE_PACKS) return null;      // the beds are a store pack's (render/packs.js): the sea alone without them
+  const k = MOOD_BEDS[mood];
+  if (!k) throw new RangeError('soundbank: no bed for mood ' + mood);
+  return k;
 }
 
 /** The ambience is ducked during BATTLE (UC-S2 step 4). */
@@ -621,6 +634,7 @@ export const SOUNDS = Object.freeze({
     "bus": "music",
     "mode": "loop",
     "vol": 0.55,
+    "lazy": true,
     "files": [
       {
         "file": "assets/sound/musicTitle.ogg",
@@ -648,6 +662,7 @@ export const SOUNDS = Object.freeze({
     "bus": "music",
     "mode": "loop",
     "vol": 0.5,
+    "lazy": true,
     "files": [
       {
         "file": "assets/sound/musicBuild.ogg",
@@ -675,6 +690,7 @@ export const SOUNDS = Object.freeze({
     "bus": "music",
     "mode": "loop",
     "vol": 0.5,
+    "lazy": true,
     "files": [
       {
         "file": "assets/sound/musicBattle.ogg",
@@ -702,6 +718,7 @@ export const SOUNDS = Object.freeze({
     "bus": "music",
     "mode": "sting",
     "vol": 0.8,
+    "lazy": true,
     "files": [
       {
         "file": "assets/sound/musicVictory.ogg",

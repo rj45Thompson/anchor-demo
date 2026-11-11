@@ -377,8 +377,8 @@ export class Board {
     for (const [occ, geo] of kinds) {
       this.props.set(occ, new InstancedBatch(this.group, geo, mats.vc, n, { colors: occ === Occupant.Rubble, castShadow: true, receiveShadow: true, name: 'props ' + occ }));
     }
-    // (a House square has no drawing: the normal rules, the only ones this game runs, clear every house at load, MatchModel.plain)
-    for (const occ of [Occupant.Tree, Occupant.RockSmall, Occupant.RockLarge]) {
+    // (the normal rules clear these at load, MatchModel.plain; the extended rules keep them, so a house is drawn too)
+    for (const occ of [Occupant.Tree, Occupant.RockSmall, Occupant.RockLarge, Occupant.House]) {
       const parts = this.propParts.get(occ);
       if (!parts) throw new Error('board.js: no model parts for occupant ' + occ);
       this.props.set(occ, new PropSet(this.group, parts, n, { castShadow: true, receiveShadow: true, name: 'props ' + occ }));
@@ -543,7 +543,6 @@ export class Board {
     let em = 0;
     for (let y = 0; y < this.h; y++) for (let x = 0; x < this.w; x++) {
       const o = g.occupantAt(x, y), im = this.props.get(o);
-      if (o === Occupant.House) throw new Error('board.js: a house at ' + x + ',' + y + ': the normal rules clear houses (MatchModel.plain), and this board has no drawing for one');
       if (!im) continue;
       const k = counts.get(o) ?? 0; counts.set(o, k + 1);
       q.setFromAxisAngle(up, this.noise(x * 3.1, y * 2.7) * Math.PI * 2);

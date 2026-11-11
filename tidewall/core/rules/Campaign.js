@@ -39,12 +39,13 @@ const S = GameRules.TicksPerSecond;
 
 const BOMB_RULES = BombRules.default();   // the bomb rule set's numbers the table reads (ship counts), one place with the rules
 
-function wave(map, battleSeconds, white, grey, bombs) {
+function wave(map, battleSeconds, white, grey, bombs, boss = false) {
   // BOMBS_SPEC.md: with bombs CANNONS is 25 s (was 15), BATTLE 6 s longer (24 + i against 18 + i), REPAIR 75 s (was 25);
   // UC-S1: with bombs the islands are bigger, so the wave carries shipsBaseBonus more ships and shipsPerExtraPlayer per extra player
   const r = new RoundSpec((bombs ? 25 : 15) * S, (battleSeconds + (bombs ? 6 : 0)) * S, (bombs ? 75 : 25) * S,
     white + (bombs ? BOMB_RULES.shipsBaseBonus : 0), bombs ? BOMB_RULES.shipsPerExtraPlayer : 1, 0, grey);
   r.map = map;
+  r.bossShips = bombs && boss ? 1 : 0;                 // UC-B1: only the bomb rule set sails a boss (the base rules stay as ported)
   return r;
 }
 
@@ -59,8 +60,9 @@ export const Campaign = Object.freeze({
       throw new Error('the normal campaign is fought on four maps: pass their four names, got ' + JSON.stringify(maps));
     const [a, b, c, d] = maps;
     return new RoundTable([
-      wave(a, 20, 3, 0, bombs), wave(a, 22, 3, 1, bombs), wave(b, 24, 4, 1, bombs), wave(b, 26, 4, 2, bombs),
-      wave(c, 24, 4, 1, bombs), wave(c, 26, 4, 2, bombs), wave(d, 28, 5, 2, bombs), wave(d, 30, 6, 2, bombs),
+      // UC-B1: each map's second wave is its boss round (bomb rules only)
+      wave(a, 20, 3, 0, bombs), wave(a, 22, 3, 1, bombs, true), wave(b, 24, 4, 1, bombs), wave(b, 26, 4, 2, bombs, true),
+      wave(c, 24, 4, 1, bombs), wave(c, 26, 4, 2, bombs, true), wave(d, 28, 5, 2, bombs), wave(d, 30, 6, 2, bombs, true),
     ], false);
   },
 

@@ -870,6 +870,9 @@ export class MatchModel {
     if (spec.kind === RoundKind.Challenge) return;
     const players = Math.max(1, this._connectedCount());
     const kinds = [];
+    // UC-B1 (0 outside the bomb rules' boss rounds); step 1 says ONE boss: none while one is still afloat (a Fight Again of the boss
+    // round would otherwise add a second; found by the spec check, 11-11)
+    if (!this._ships.some((s) => s.alive && s.kind === ShipKind.Boss)) for (let i = 0; i < spec.bossShips; i++) kinds.push(ShipKind.Boss);
     for (let i = 0; i < spec.twoSailShips; i++) kinds.push(ShipKind.TwoSail);
     for (let i = 0, n = spec.shipCount(players); i < n; i++) kinds.push(ShipKind.OneSail);
     const rng = this._random(Streams.key(this.seed, 2000, this._battles++));
@@ -878,13 +881,18 @@ export class MatchModel {
     for (const kind of kinds) {
       if (afloat >= this.rules.maxShips) break;                          // at most maxShips ships on the water
       const spawn = [];
-      for (let y = 0; y + 1 <= g.height; y++)
-        for (let x = 0; x + 1 <= g.width; x++) {
-          const edge = x === 0 || y === 0 || x + 1 === g.width || y + 1 === g.height;
-          if (edge && g.terrainAt(x, y) === Terrain.Water && !this._shipAt(x, y)) spawn.push(new Cell(x, y));
+      const n = kind === ShipKind.Boss ? this.rules.bossSize : 1;
+      for (let y = 0; y + n <= g.height; y++)
+        for (let x = 0; x + n <= g.width; x++) {
+          const edge = x === 0 || y === 0 || x + n === g.width || y + n === g.height;
+          if (edge && this._shipFits(x, y, n)) spawn.push(new Cell(x, y));
         }
+      if (spawn.length === 0 && kind === ShipKind.Boss) continue;          // UC-B1 1c: no edge water a boss fits in this wave
       if (spawn.length === 0) throw new Error('the map has no water on its edge: ships cannot arrive (REQ-SHIP-05; MapCheck refuses such a map at load)');
-      const at = spawn[rng.range(0, spawn.length)];
+      // UC-B1 step 1: the boss comes for the players: the edge spot nearest any wall or cannon (ties: the first in row order), not a
+      // random one (11-11, tools/boss_balance.mjs: from a random edge it could sail 33+ squares and arrive as the battle clock ran out,
+      // when ships no longer act; it then never fired)
+      const at = kind === ShipKind.Boss ? this._nearestToTargets(spawn) : spawn[rng.range(0, spawn.length)];
       const s = this._makeShip(kind, at);
       this._ships.push(s);
       this._events.push(new ShipSpawned(this.tick, s.id, at, s.health, s.kind));
@@ -898,10 +906,43 @@ export class MatchModel {
     let health;
     if (kind === ShipKind.TwoSail) health = this.rules.twoSailHealth;
     else if (kind === ShipKind.OneSail) health = spec.shipHealth > 0 ? spec.shipHealth : this.rules.whiteShipHealth;
+    else if (kind === ShipKind.Boss) {                                       // UC-B1: the bomb rules' boss, its health by level
+      if (!this.options.bombs) throw new Error('a boss ship is part of the bomb rule set only');
+      const hp = this.rules.bossHealth;
+      const ship = new ShipModel(this._nextShip++, at, hp[Math.min(this.level, hp.length) - 1] + this.rules.bossHealthPerExtraPlayer * Math.max(0, this.playerCount - 1), this.rules.bossTicksPerCell, Math.trunc(this.rules.bossReloadTicks / 2));
+      ship.kind = kind; ship.big = this.rules.bossSize;
+      return ship;
+    }
     else throw new Error('ship kind ' + kind + ' is not part of the normal game');
     const ship = new ShipModel(this._nextShip++, at, health, this.rules.shipTicksPerCell, Math.trunc(this.rules.shipReloadTicks / 2));
     ship.kind = kind;
     return ship;
+  }
+
+  /** Of `cells`, the one with the smallest Manhattan distance to any wall or cannon (the first such in their order on a tie); the
+   *  first cell when there is no wall or cannon at all. */
+  _nearestToTargets(cells) {
+    const g = this.grid, targets = [];
+    for (let y = 0; y < g.height; y++) for (let x = 0; x < g.width; x++) if (isTarget(g.occupantAt(x, y))) targets.push(x, y);
+    if (targets.length === 0) return cells[0];
+    let best = cells[0], bestD = INT_MAX;
+    for (const c of cells) {
+      let d = INT_MAX;
+      for (let i = 0; i < targets.length; i += 2) d = Math.min(d, Math.abs(targets[i] - c.x) + Math.abs(targets[i + 1] - c.y));
+      if (d < bestD) { bestD = d; best = c; }
+    }
+    return best;
+  }
+
+  /** An n x n ship fits with its top-left at (x, y): every square on the board, water, and under no other ship. */
+  _shipFits(x, y, n, self = null) {
+    const g = this.grid;
+    for (let dy = 0; dy < n; dy++) for (let dx = 0; dx < n; dx++) {
+      const cx = x + dx, cy = y + dy;
+      if (!g.in(cx, cy) || g.terrainAt(cx, cy) !== Terrain.Water) return false;
+      for (const s of this._ships) if (s.alive && s !== self && s.covers(cx, cy)) return false;
+    }
+    return true;
   }
 
   /** Tests: put a ship of a normal kind on the water at `at` (C# internal PutShip). */
@@ -978,6 +1019,10 @@ export class MatchModel {
     s.health -= damage;
     if (s.health > 0) { this._events.push(new ShipDamaged(this.tick, s.id, s.health)); return; }
     s.alive = false;
+    if (s.kind === ShipKind.Boss && bySlot >= 0) {                          // UC-B1 step 5: the boss pays its sinker on top
+      this._players[bySlot].score = add32(this._players[bySlot].score, this.rules.pointsBossSunk);
+      this.teamScore = add32(this.teamScore, this.rules.pointsBossSunk);
+    }
     this._events.push(new ShipSunk(this.tick, s.id, bySlot, s.at));
   }
 
@@ -1025,6 +1070,7 @@ export class MatchModel {
 
   _actShip(s) {
     const g = this.grid;
+    if (s.kind === ShipKind.Boss) { this._actBoss(s); return; }
     const water = (x, y) => g.terrainAt(x, y) === Terrain.Water;
     if (s.kind === ShipKind.TwoSail && !s.landed) {
       if (this._shoreWater(s.at.x, s.at.y)) {
@@ -1063,6 +1109,58 @@ export class MatchModel {
     const target = s.target, range = this.rules.shipRange;
     const r = PathRules.nextStep(g, s.at, water,
       (x, y) => g.terrainAt(x, y) === Terrain.Water && Math.abs(x - target.x) + Math.abs(y - target.y) <= range);
+    if (r.result === PathResult.Stepped) { const from = s.at; s.at = r.next; this._events.push(new ShipMoved(this.tick, s.id, from, r.next)); }
+  }
+
+  /** UC-B1 steps 2-3: the boss picks the nearest wall or cannon (from its top-left square, as a ship from its square), sails
+   *  where all of its squares are water until that is within bossRange, then fires a volley of bossVolley shots every
+   *  bossReloadTicks: at the target and at the squares beside it across the line of fire, those on the board. */
+  _actBoss(s) {
+    const g = this.grid, R = this.rules;
+    if (!s.hasTarget || !isTarget(g.occupantAt(s.target.x, s.target.y))) {
+      s.hasTarget = false; let bestD = INT_MAX;
+      for (let y = 0; y < g.height; y++)
+        for (let x = 0; x < g.width; x++) {
+          if (!isTarget(g.occupantAt(x, y))) continue;
+          const d = Math.abs(x - s.at.x) + Math.abs(y - s.at.y);
+          if (d < bestD) { bestD = d; s.target = new Cell(x, y); s.hasTarget = true; }
+        }
+      if (!s.hasTarget) return;
+    }
+    if (PathRules.manhattan(s.at, s.target) > R.bossRange) {
+      // UC-B1 2a: while its target is out of range, the nearest wall or cannon that IS in range becomes the target (a boss with no
+      // path kept its first target and never fired at a wall built beside it: the spec check's F2, 11-11)
+      let near = null, nd = R.bossRange + 1;
+      for (let y = Math.max(0, s.at.y - R.bossRange); y <= Math.min(g.height - 1, s.at.y + R.bossRange); y++)
+        for (let x = Math.max(0, s.at.x - R.bossRange); x <= Math.min(g.width - 1, s.at.x + R.bossRange); x++) {
+          if (!isTarget(g.occupantAt(x, y))) continue;
+          const d = Math.abs(x - s.at.x) + Math.abs(y - s.at.y);
+          if (d < nd) { nd = d; near = new Cell(x, y); }
+        }
+      if (near !== null) s.target = near;
+    }
+    if (PathRules.manhattan(s.at, s.target) <= R.bossRange) {
+      if (s.reloadLeft > 0) { s.reloadLeft--; return; }
+      // F1 (the spec check, 11-11): a volley EVERY bossReloadTicks - counting down from bossReloadTicks then firing on the next tick
+      // made it every bossReloadTicks + 1
+      s.reloadLeft = R.bossReloadTicks - 1;
+      const t = s.target, across = Math.abs(t.x - s.at.x) >= Math.abs(t.y - s.at.y) ? [0, 1] : [1, 0];
+      const half = Math.trunc(R.bossVolley / 2);
+      for (let k = -half; k < R.bossVolley - half; k++) {
+        const aim = new Cell(t.x + across[0] * k, t.y + across[1] * k);
+        if (!g.in(aim.x, aim.y)) continue;
+        const ticks = R.shotBaseTicks + R.shotTicksPerCell * PathRules.manhattan(s.at, aim);
+        const shot = new ShotModel(this._nextShot++, -1, s.id, s.at, aim, ticks, R.shipShotDamage, this.tick);
+        this._shots.push(shot);
+        this._events.push(new ShotFired(this.tick, shot.id, -1, s.id, 0, s.at, aim, ticks));
+      }
+      return;
+    }
+    if (--s.moveLeft > 0) return;
+    s.moveLeft = R.bossTicksPerCell;
+    const n = s.size, target = s.target;
+    const r = PathRules.nextStep(g, s.at, (x, y) => this._shipFits(x, y, n, s),
+      (x, y) => this._shipFits(x, y, n, s) && Math.abs(x - target.x) + Math.abs(y - target.y) <= R.bossRange);
     if (r.result === PathResult.Stepped) { const from = s.at; s.at = r.next; this._events.push(new ShipMoved(this.tick, s.id, from, r.next)); }
   }
 

@@ -235,7 +235,8 @@ export class MenuModel {
             this.joined[i] = true;
             return acts;
           }
-        if (++this._idle >= MenuModel.TitleIdleTicks) { this._idle = 0; this.inDemo = true; acts.push(new MenuAction(MenuActionKind.StartDemo)); }
+        if (any) this._idle = 0;                          // "untouched": a press the title has no use for still restarts the count
+        else if (++this._idle >= MenuModel.TitleIdleTicks) { this._idle = 0; this.inDemo = true; acts.push(new MenuAction(MenuActionKind.StartDemo)); }
         break;
       case Screen.Setup: this._setup(seats, acts); break;
       case Screen.Playing:

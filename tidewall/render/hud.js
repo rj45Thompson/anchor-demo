@@ -3,7 +3,7 @@
 // was refused), the tag over each hero, and every menu screen (title, join/setup, pause, the continue-or-give-up screen, results,
 // initials, high scores). It only READS the ported HudViewModel, MenuModel and model; it decides nothing.
 // The look (UC-L1, 11-09): chunky wooden panels in a stone frame, gold numerals, no thin bright edges (woodPanel).
-import { Phase, Screen, MenuModel, HudViewModel, ItemBought, ItemNames } from '../core/index.js';
+import { Phase, Screen, MenuModel, HudViewModel, ItemBought, ItemNames, ShipKind } from '../core/index.js';
 import { PLAYER_CSS, PLAYER_TEXT_CSS, PLAYER_INK_CSS, HUD_PANEL_CSS, UI } from './look.js';
 
 const WARN = '#ffd24a';                                   // AUTHORED: the warning colour of a refusal, a stun
@@ -71,7 +71,7 @@ export class Hud {
    *  and action bar are cut from. */
   layout(n) {
     const s = this.s, L = Hud.matchLayout(this.cssW, this.cssH, n, s);
-    return { u: L.u * s, barH: L.barH * s, cardH: L.cardH * s, cardW: L.cardW * s, cardsTop: L.cardsTop * s };
+    return { u: L.u * s, barH: L.barH * s, cardH: L.cardH * s, bossH: L.bossH * s, cardW: L.cardW * s, cardsTop: L.cardsTop * s };
   }
 
   /** Where the pointer can act on the menu drawn last, in CSS px (taken from the drawing code itself, so a hit box can never drift
@@ -184,7 +184,8 @@ export class Hud {
   static matchLayout(W, H, n, s = 1) {
     // s: TEXT SIZE (UC-ST4): W, H are the layout's (the window / s) and u the window's, so every part grows by s
     const u = Math.min(W / 100, H / 60) * s, barH = Math.max(40, u * 5.2), cardH = Math.max(64, u * 8.5);
-    return { u, barH, cardH, cardW: n > 0 ? Math.min(250, (W - 30) / n - 10) : 0, cardsTop: n > 0 ? H - cardH - 12 : H };
+    // bossH: the boss's bar under the top bar while a boss is afloat (BOSS_UC.md UC-B1 step 1)
+    return { u, barH, cardH, bossH: Math.max(22, u * 3), cardW: n > 0 ? Math.min(250, (W - 30) / n - 10) : 0, cardsTop: n > 0 ? H - cardH - 12 : H };
   }
 
   /** A chevron at the free rect's edge for each enemy ship outside it, pointing at the ship (the private host's ShipMarks rule:
@@ -223,13 +224,30 @@ export class Hud {
     }
   }
 
+  /** UC-B1: BOSS SHIP and its health under the top bar while a boss is afloat, in BATTLE only (11-11: up in REPAIR it took the
+   *  camera's frame on a 412 px tall phone to 28.4 squares across; the boss does nothing then). */
+  drawBossBar(m, L) {
+    const b = m.phase === Phase.Battle ? m.ships.find((s) => s.alive && s.kind === ShipKind.Boss) : null;
+    if (!b) return;
+    const W = this.cssW, w = Math.min(420, W * 0.5), h = L.bossH - 6, x = W / 2 - w / 2, y = L.barH + 2;
+    this.woodPanel(x, y, w, h, h / 2, { rim: '#8a3fa0' });
+    const pad = h * 0.22, label = Math.max(11, h * 0.48), lw = this.textWidth('BOSS SHIP', label) + pad * 2;
+    this.text('BOSS SHIP', x + pad, y + h / 2 + 1, label, '#ffd257', 'left', 900);
+    const bx = x + lw, bw = w - lw - pad, bh = h * 0.42, by = y + (h - bh) / 2, k = Math.max(0, b.health / b.maxHealth);
+    this.panel(bx, by, bw, bh, bh / 2, 'rgba(20,10,4,0.75)');
+    if (k > 0) this.panel(bx, by, Math.max(bh, bw * k), bh, bh / 2, k <= 1 / 3 ? '#ff3b2f' : '#c45ad8');
+    this.bossShown = { health: b.health, max: b.maxHealth };
+  }
+
   drawMatch(view, seconds, banner) {
+    this.bossShown = null;
     const hud = view.hud, m = view.match, W = this.cssW, H = this.cssH, ctl = view.controllers[0];
     const n = hud.players.filter((p) => p.present).length, L = Hud.matchLayout(W, H, n, this.s), u = L.u;
     // the top bar: round + level on the left, the phase and its timer in the middle, lives and team score on the right
     const barH = L.barH;
     const g = this.ctx.createLinearGradient(0, 0, 0, barH * 1.4); g.addColorStop(0, 'rgba(36,20,8,0.7)'); g.addColorStop(1, 'rgba(36,20,8,0)');
     this.ctx.fillStyle = g; this.ctx.fillRect(0, 0, W, barH * 1.4);
+    this.drawBossBar(m, L);                                   // UC-B1: under the top bar while a boss is afloat
     const fs = Math.max(14, u * 2.1);
     const narrow = W < 640;                                   // a phone held upright: the short form, so nothing runs into the phase chip
     // the round and level: the longest form that ends before the phase chip (at 150 % text the island's name ran under it, 11-10)

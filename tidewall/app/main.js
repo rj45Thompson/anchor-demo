@@ -18,7 +18,8 @@ import { readHost } from './host.js';
 import { InputHub, SEATS } from './input.js';
 import { Overlay, HintStrip } from './overlay.js';
 import { SoundPlayer, SoundLoadError } from './sound.js';
-import { musicFor, duckFor } from './soundbank.js';
+import { musicFor, duckFor, bedFor } from './soundbank.js';
+import { STORE_PACKS } from '../render/packs.js';
 import { Phones } from './phones.js';
 import { ControlsChoice, TouchPad } from './controls.js';
 import { ActionBar, ACTIONS } from './actions.js';
@@ -43,6 +44,8 @@ const SOUND_KEY = GAME_TITLE.toLowerCase() + '-sound';     // R4: mute and the t
 const MOTION_KEY = GAME_TITLE.toLowerCase() + '-motion';   // SETTINGS_UC.md UC-ST2: 'full' or 'reduced', the bare word
 const KEYS_KEY = GAME_TITLE.toLowerCase() + '-keys';       // UC-ST3: the rebound keys, KeyBindings.save()
 const GUIDE_HOLD = 1.6;                                    // AUTHORED (UC-T2): seconds a finished phase's ticked goals stay up
+const SMOOTH_FRAMES = 10, SMOOTH_MS = 40, REVEAL_MAX = 4;   // AUTHORED (LOAD_UC.md UC-L7 step 3): the game shows once it runs smoothly
+const LIFT_PX = 64;                                        // AUTHORED (UC-P4): a dragged ghost rides this far above the finger (a fingertip ~40 px)
 const TEXT_KEY = GAME_TITLE.toLowerCase() + '-text';       // UC-ST4: the text size percent, the bare number
 
 /** The URL switches, checked: a value that does not parse is refused with what was wrong, never replaced by a default. */
@@ -58,7 +61,7 @@ function readSwitches() {
   if (quality !== null && quality !== 'high' && quality !== 'low') throw new Error('?quality=' + quality + ' is not high or low');
   const bombs = int('bombs', 0, 1), dev = int('dev', 0, 1);
   const local = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(location.hostname);
-  return { attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high', bombs: bombs !== 0,
+  return { check: q.get('check') === '1', attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high', bombs: bombs !== 0,
            dev: dev === null ? local : dev === 1 };
 }
 
@@ -68,6 +71,7 @@ function showFatal(text) {
   box.innerHTML = '<div><h1></h1><p></p></div>';
   box.querySelector('h1').textContent = GAME_TITLE;
   box.querySelector('p').textContent = text;
+  document.body.classList.remove('booting', 'revealing');               // UC-L7: a notice is never left under the loading screen
   document.getElementById('ui').replaceChildren();
   document.body.append(box);
 }
@@ -441,9 +445,19 @@ class Game {
         this.touchGhost = shown !== null;
         this.touchOnGhost = shown !== null && t !== null && shown.cells.some(([x, y]) => x === t.x && y === t.y);
       }
-      const onGhost = this.touchGhost && this.touchOnGhost;
-      if ((p.click || p.confirm) && this.touchCell && !onGhost) { out.hasPointer = true; out.pointer = new Cell(this.touchCell.x, this.touchCell.y); }
-      if (this.touchGhost && !this.touchOnGhost) p = { ...p, confirm: false };   // the tap moved the ghost; it places nothing
+      // UC-P4 (TOUCH_PLACE_UC.md): in CANNONS and REPAIR a DRAG carries the ghost LIFT_PX above the finger, where the finger does not
+      // hide it, square by square, and lifting the finger places it there; a quick tap keeps UC-P1's rule below
+      const place = this.model.phase === core.Phase.Cannons || this.model.phase === core.Phase.Repair;
+      if (place && (p.dragging || p.dragged) && !Number.isNaN(p.x)) {
+        const c = this.renderer.pickCell(p.x, p.y - LIFT_PX);
+        if (c !== null && this.model.grid.in(c.x, c.y)) this.dragCell = c;                    // 2a: off the board it keeps the last square
+        if (this.dragCell) { out.hasPointer = true; out.pointer = new Cell(this.dragCell.x, this.dragCell.y); }
+        if (p.dragged) this.dragCell = null;                                                  // placed (confirm stays: step 2)
+      } else {
+        const onGhost = this.touchGhost && this.touchOnGhost;
+        if ((p.click || p.confirm) && this.touchCell && !onGhost) { out.hasPointer = true; out.pointer = new Cell(this.touchCell.x, this.touchCell.y); }
+        if (this.touchGhost && !this.touchOnGhost) p = { ...p, confirm: false };   // the tap moved the ghost; it places nothing
+      }
     } else {
       if (p.moved) this.pointerMode = true;
       if (stick && !p.moved) this.pointerMode = false;
@@ -507,7 +521,7 @@ class Game {
     const mouse = this.mouseSlot, play = wasPlaying && this.menu.screen === Screen.Playing;
     // the camera may turn a quarter (portrait: it looks east, render/camera.js): every stick turns with it, so up on the stick is
     // up on the screen. A quarter turn maps whole numbers to whole numbers: (x, y) -> (-y, x) moves the cursor east for "up".
-    const turn = this.renderer.screenTurn, turned = (pad) => (turn === 1 ? Object.assign({}, pad, { stickX: -pad.stickY, stickY: pad.stickX }) : pad);
+    const turn = this.renderer.screenTurn, turned = (pad) => (turn === 1 ? Object.assign({}, pad, { stickX: -pad.stickY, stickY: pad.stickX, stepX: -pad.stepY, stepY: pad.stepX }) : pad);
     const pads = this.seatOf.map((seat, slot) => this.demo ? new PadInput()
       : new PadInput(play && slot === mouse ? this.pointerToPlay(turned(seats[seat].pad), ptr) : turned(seats[seat].pad)));
     this.controller.frame(pads);
@@ -601,8 +615,15 @@ class Game {
       : [];
     this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha, camera, menuCover }, dt);
     // UC-S2: the music for what is on screen (crossfaded on a change), the ambience ducked in battle
-    const scene = { screen: this.menu.screen, demo: this.demo, attract: this.sw.attract, phase: this.model.phase };
-    this.sound.update({ music: musicFor(scene), duck: duckFor(scene) });
+    const boss = this.model.ships.some((s) => s.alive && s.kind === core.ShipKind.Boss);   // BOSS_UC.md UC-B1: its theme while it is afloat
+    const scene = { screen: this.menu.screen, demo: this.demo, attract: this.sw.attract, phase: this.model.phase, boss };
+    this.sound.update({ music: musicFor(scene), duck: duckFor(scene), bed: bedFor(scene, this.renderer.mood.current.name) });
+    // MOOD_UC.md UC-L6: each lightning strike is heard - the crack at once, the boom a moment later (nearer strikes sooner; AUTHORED
+    // 0.25..1.1 s, view-only randomness)
+    const strikes = this.renderer.weather.flashes;
+    // (the thunder is a store pack's, render/packs.js: without it a strike is seen, not heard)
+    if (STORE_PACKS && strikes > (this.strikesHeard ?? strikes)) { this.sound.play('thunderCrack', this.ticks); this.sound.playIn('thunderBoom', 0.25 + Math.random() * 0.85); }
+    this.strikesHeard = strikes;
     this.pointerCursor();
     const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup && !this.menu.settingsOpen && !this.menu.infoOpen;
     // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its
@@ -646,7 +667,7 @@ class Game {
   run() {
     // dt is measured between animation-frame timestamps only: the first frame's timestamp is the start of that frame, which can be
     // EARLIER than a performance.now() read before it was requested (11-09: a negative first dt, refused by the renderer)
-    let last = null;
+    let last = null, revealing = false;
     const loop = (now) => {
       if (this.stopped) return;
       const dt = last === null ? 0 : (now - last) / 1000; last = now;
@@ -657,10 +678,73 @@ class Game {
         showFatal('The game stopped: ' + (e && e.stack ? e.stack : e));
         return;
       }
+      // LOAD_UC.md UC-L7 step 3: the canvases were hidden while the renderer warmed up and drew the island once; they show once the
+      // first real frame is done on the GPU, fading in from the loading screen (11-11: the warm-up's row of models was on screen)
+      // ... and only once the game RUNS smoothly: the first seconds of play stutter while the browser builds what the warm-up did not
+      // reach (measured 11-11 on the published build too: frames of 0.8-0.9 s), and a press made in a stutter can land on the same
+      // frame as the next one. SMOOTH_FRAMES in a row under SMOOTH_MS, or REVEAL_MAX s after the first frame, whichever is first.
+      if (!revealing) {
+        revealing = true;
+        this.renderer.renderer.backend.device.queue.onSubmittedWorkDone().then(() => { this.firstFrameAt = performance.now(); this.smoothRun = 0; },
+          (e) => { this.stopped = true; console.error(e); showFatal('The graphics device failed before the first picture: ' + e); });
+      } else if (document.body.classList.contains('booting') && this.firstFrameAt !== undefined) {
+        this.smoothRun = dt * 1000 < SMOOTH_MS ? this.smoothRun + 1 : 0;
+        if (this.smoothRun >= SMOOTH_FRAMES || performance.now() - this.firstFrameAt > REVEAL_MAX * 1000) {
+          const b = document.body;
+          b.classList.add('revealing'); b.classList.remove('booting');
+          this.revealedAt = performance.now(); this.revealWaited = Math.round(this.revealedAt - this.firstFrameAt);
+          requestAnimationFrame(() => requestAnimationFrame(() => b.classList.remove('revealing')));
+        }
+      }
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
   }
+}
+
+/** UC-L7: the loading screen names the step the page is on, and after BOOT_SLOW s on one step says so with the step's name, so a
+ *  device where the game never starts tells its player (and us) where it stopped (11-11: it starts in Brave on Android but not in
+ *  Chrome or Edge there; nothing said why). */
+const BOOT_SLOW = 25;                                  // AUTHORED: seconds on one loading step before the screen calls it slow
+let bootStep = '', bootTimer = 0;
+function bootStage(step) {
+  bootStep = step;
+  const el = document.getElementById('boot');
+  if (!el) return;
+  el.innerHTML = 'LOADING<small></small>';
+  el.querySelector('small').textContent = step;
+  clearTimeout(bootTimer);
+  bootTimer = setTimeout(() => {
+    if (!document.body.classList.contains('booting')) return;
+    const s = el.querySelector('small');
+    s.className = 'bad';
+    s.textContent = 'Still on "' + bootStep + '" after ' + BOOT_SLOW + ' s. This device or browser may not be able to run the game.';
+  }, BOOT_SLOW * 1000);
+}
+
+/** CHECK_UC.md (?check=1): the device's graphics and every figure model, for a phone where the game misbehaves. The models turn
+ *  slowly under the match's light; their names sit under them; the adapter, its limits and the browser are listed. */
+function checkPage(renderer) {
+  const row = renderer.modelCheck(), d = renderer.device, ui = document.getElementById('ui');
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const lines = ['Tidewall device check', 'GPU: ' + [d.vendor, d.architecture, d.device, d.description].filter(Boolean).join(' / '),
+    'Limits: ' + Object.entries(d.limits).map(([k, v]) => k + ' ' + v).join(', '), 'Texture features: ' + (d.features.join(', ') || 'none'),
+    'Browser: ' + navigator.userAgent, 'Screen: ' + innerWidth + 'x' + innerHeight + ' at ' + devicePixelRatio + 'x'];
+  ui.innerHTML = '<div class="checkinfo">' + lines.map((l) => '<div>' + esc(l) + '</div>').join('') + '</div>'
+    + row.map((r, i) => '<div class="checklabel" data-i="' + i + '">' + esc(r.name) + '</div>').join('');
+  document.body.classList.remove('booting');
+  const labels = [...ui.querySelectorAll('.checklabel')];
+  let t0 = null;
+  const loop = (now) => {
+    t0 ??= now;
+    renderer.scene.children.at(-1).children.forEach((o, i) => { if (i < row.length) o.rotation.y = (now - t0) / 1000 * 0.6; });
+    renderer.renderFrame();
+    const cam = renderer.rig.camera;
+    row.forEach((r, i) => { const p = r.at.clone().setY(-0.4).project(cam); labels[i].style.left = ((p.x + 1) / 2 * innerWidth) + 'px'; labels[i].style.top = ((1 - p.y) / 2 * innerHeight) + 'px'; });
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  window.__check = { device: d, models: row.map((r) => r.name) };
 }
 
 async function boot() {
@@ -669,6 +753,7 @@ async function boot() {
   if (!navigator.gpu) { noWebGpu('navigator.gpu is missing'); return; }
   const canvas = document.getElementById('view');
   let renderer;
+  bootStage('graphics and models');
   try { renderer = await createRenderer(canvas, { quality: sw.quality }); }
   catch (e) {
     if (e instanceof NoWebGpuError) { noWebGpu(e.message); return; }
@@ -677,15 +762,18 @@ async function boot() {
   const fit = () => { const w = window.innerWidth, h = window.innerHeight; renderer.resize(w, h); };
   window.addEventListener('resize', fit);
   fit();
+  if (sw.check) { checkPage(renderer); return; }                  // CHECK_UC.md: the device check, no game
   const game = new Game(renderer, canvas, sw, host);
   // UC-S2 1b: every sound file is fetched and decoded before the loop starts. A failure is logged and shown on the title footer; on a
   // development page it also stops the page (no other sound is put in its place either way)
+  bootStage('sounds');
   try { await game.sound.load(); }
   catch (e) {
     if (!(e instanceof SoundLoadError)) throw e;
     console.error(e.message);
     if (sw.dev) throw e;
   }
+  bootStage('the first island');
   await renderer.settle();        // the first island's pipelines are built before the loop starts (a first-second stall drops a tap)
   window.__game = game;           // the page check reads the model, the menu and the controller through these two
   window.__core = core;

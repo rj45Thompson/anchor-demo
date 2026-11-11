@@ -139,6 +139,9 @@ export class CameraDirector {
             pts.push(...pick);
           }
           for (const sh of match.ships) { const p = { x: sh.at.x + sh.size / 2, z: sh.at.y + sh.size / 2 }; if (sh.alive && near(p, own, THREAT_SHIP)) pts.push(p); }
+          // BOSS_UC.md UC-B1: a boss afloat is always framed, its whole hull (11-11: it arrived on the board's top row, under the
+          // top bar and its own health bar, and the players could not see the ship the bar was about)
+          for (const sh of match.ships) if (sh.alive && sh.size > 1) pts.push({ x: sh.at.x, z: sh.at.y }, { x: sh.at.x + sh.size, z: sh.at.y + sh.size });
           for (const sh of match.shots) {
             const t = { x: sh.target.x + 0.5, z: sh.target.y + 0.5 };
             if (near(t, own, 1)) pts.push(t, { x: sh.origin.x + 0.5, z: sh.origin.y + 0.5 });

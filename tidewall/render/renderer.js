@@ -21,7 +21,7 @@ import { uniform, pass, mrt, output, emissive, normalView, vec3, vec4, float, uv
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
 import BloomNode from 'three/addons/tsl/display/BloomNode.js';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
-import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, BombExploded, Screen, LoopClosed } from '../core/index.js';
+import { Phase, Occupant, WallBroken, CannonDestroyed, ShipSunk, BombExploded, Screen, LoopClosed, ShipSpawned, ShipKind } from '../core/index.js';
 import { GAME_TITLE } from '../app/title.js';
 import { Board, BoardLook } from './board.js';
 import { Units, gruntFigure, shipModel } from './units.js';
@@ -32,7 +32,7 @@ import { Sky } from './sky.js';
 import { Mood, moodForLevel } from './mood.js';
 import { Weather } from './weather.js';
 import { PLAYER_CSS, PLAYER_HEX, PLAYER_COLOURS, PLAYER_TEXT_CSS } from './look.js';
-import { Models, tintArmour, outlineFigure, topPoint } from './models.js';
+import { Models, tintArmour, outlineFigure, topPoint, shade } from './models.js';
 import { PropSet, SUN, SKY, sunDirection, isletGeometry, mats } from './look.js';
 
 export { PLAYER_CSS, PLAYER_HEX, PLAYER_TEXT_CSS };
@@ -116,7 +116,15 @@ export async function createRenderer(canvas, opts = {}) {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const models = await Models.load();                                     // the models; one that does not load stops here
   if (opts.quality !== undefined && !(opts.quality in QUALITY)) throw new RenderContractError("createRenderer: quality is 'high' or 'low', got " + opts.quality);
-  const r = new Renderer(canvas, renderer, opts, models);
+  const weatherTex = await Weather.loadTextures();                       // the storm's bolt and glow (a store VFX pack's textures, UC-L6)
+  const r = new Renderer(canvas, renderer, { ...opts, weatherTex }, models);
+  // CHECK_UC.md: what this device's graphics are (the ?check=1 page shows it; a phone where the game misbehaves can be read off it)
+  const lim = adapter.limits, info = adapter.info || {};
+  r.device = { vendor: info.vendor || '', architecture: info.architecture || '', device: info.device || '', description: info.description || '',
+    limits: { maxTextureDimension2D: lim.maxTextureDimension2D, maxColorAttachmentBytesPerSample: lim.maxColorAttachmentBytesPerSample,
+      maxStorageBuffersPerShaderStage: lim.maxStorageBuffersPerShaderStage, maxSampledTexturesPerShaderStage: lim.maxSampledTexturesPerShaderStage,
+      maxBufferSize: lim.maxBufferSize },
+    features: [...adapter.features].filter((f) => /texture-compression|float32|shader-f16|rg11b10/.test(f)).sort() };
   r.warmUp();
   await renderer.backend.device.queue.onSubmittedWorkDone();             // the GPU has built what the warm-up asked for before play starts
   return r;
@@ -131,6 +139,9 @@ class Renderer {
       [Occupant.Tree, [...models.parts('oak', { height: 1.15 }), ...models.parts('bush', { width: 0.5, at: [0.26, 0.24] })]],
       [Occupant.RockSmall, models.parts('rockSmall', { width: 0.5 })],
       [Occupant.RockLarge, models.parts('rockLarge', { width: 0.95 })],
+      // FULL-RENDER (11-11): the extended rules keep a map's houses on the board (a ball destroys one, enclosing one pays); a house
+      // stands on ONE square, so it is the village model at 0.9 of a square (AUTHORED), not the scenery's 1.5
+      [Occupant.House, models.parts('houseA', { width: 0.9 })],
     ]);
     // the scenery round the board (UC-L1 adds the houses, barrels, towers and the sand islets houses stand on; sizes in squares,
     // AUTHORED: a house about a square and a half across, a barrel under half a square tall, a tower 2.4 squares tall)
@@ -160,7 +171,7 @@ class Renderer {
     this.look = new BoardLook(this.mood);                                   // the land's and sea's materials, shared by every level
     this.scene.add(this.look.tufts);
     this.sky = new Sky(this.scene, this.look.noiseTex, this.mood);          // the dome, the haze and the cloud shadows (before any draw)
-    this.weather = new Weather(this.scene);                                 // the storm's rain and lightning (MOOD_UC.md UC-L6)
+    this.weather = new Weather(this.scene, opts.weatherTex);                                 // the storm's rain and lightning (MOOD_UC.md UC-L6)
     this.fx = new Fx(this.scene, uniform(0));                               // the particles, shared by every level
     this.buildPost();
     // the HUD layer: a 2D canvas laid exactly over the WebGPU one
@@ -270,7 +281,7 @@ class Renderer {
   warmUp() {
     const g = new THREE.Group(), m = this.models, pose = (fig, clip) => { fig.actions[clip].play(); fig.mixer.update(0.1); return fig.root; };
     const knight = m.figure('knight'); tintArmour(knight.root, PLAYER_COLOURS[0]); outlineFigure(knight.root);
-    const items = [pose(knight, 'Combat_Stance'), pose(gruntFigure(m), 'Walking'), shipModel(m, false), shipModel(m, true), m.instance('castle'), m.instance('cannon')];
+    const items = [pose(knight, 'Combat_Stance'), pose(gruntFigure(m), 'Walking'), shipModel(m, 0), shipModel(m, 1), shipModel(m, 2), m.instance('castle'), m.instance('cannon')];
     items.forEach((o, i) => { o.position.set(i * 2, 0, 0); g.add(o); });
     let i = items.length;
     for (const parts of [...this.propParts.values(), ...Object.values(this.decorParts), this.bomb.parts, this.bomb.big]) {
@@ -280,15 +291,56 @@ class Renderer {
     this.scene.add(g);
     const cam = this.rig.camera, was = cam.position.clone();
     cam.position.set(i, 6, 12); cam.lookAt(i, 0, 0);
+    this.noteDraw('warm-up');
     this.post.render();
     this.scene.remove(g);
     cam.position.copy(was);
     knight.mixer.stopAllAction();
   }
 
+  /** CHECK_UC.md (?check=1): one of every figure model in a row, lit and shaded exactly as a match shades it (the castle lifted,
+   *  the ships tinted by kind, the knight in player 1's colour), on a plain ground, the camera on them. Returns [{ name, at }] for
+   *  the page to label. Nothing of a match is built. */
+  modelCheck() {
+    const m = this.models, pose = (fig, clip) => { fig.actions[clip].play(); fig.mixer.update(0.1); return fig.root; };
+    const knight = m.figure('knight'); tintArmour(knight.root, PLAYER_COLOURS[0]); outlineFigure(knight.root);
+    const castle = m.instance('castle'); shade(castle, new THREE.Color(1.6, 1.55, 1.45));   // units.js CASTLE_LIFT
+    const fit = (o, size) => { const b = new THREE.Box3().setFromObject(o), s = size / Math.max(b.max.x - b.min.x, b.max.z - b.min.z, 1e-6); o.scale.multiplyScalar(s); return o; };
+    const row = [['knight', fit(pose(knight, 'Combat_Stance'), 1.2)], ['goblin', fit(pose(gruntFigure(m), 'Walking'), 1.1)], ['ship', fit(shipModel(m, 0), 2.3)],
+      ['lander', fit(shipModel(m, 1), 2.6)], ['boss ship', fit(shipModel(m, 2), 3.6)], ['castle', fit(castle, 2.6)], ['cannon', fit(m.instance('cannon'), 1.6)]];
+    // one row on a wide screen, a grid of 4 or 3 columns on a narrower one (a phone held upright drew them ~20 px wide in one row)
+    const cam = this.rig.camera, cols = cam.aspect >= 1.2 ? row.length : cam.aspect >= 0.8 ? 4 : 3, rows = Math.ceil(row.length / cols), STEP = 3.6;
+    const g = new THREE.Group(), out = [];
+    row.forEach(([name, o], i) => {
+      const at = new THREE.Vector3((i % cols) * STEP, 0, Math.floor(i / cols) * STEP * 1.1);
+      o.position.copy(at); g.add(o); out.push({ name, at });
+    });
+    const wide = (cols - 1) * STEP, deep = (rows - 1) * STEP * 1.1;
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(wide + 6, deep + 8).rotateX(-Math.PI / 2), mats.vc);
+    ground.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(ground.geometry.attributes.position.count * 3).fill(0.45), 3));
+    ground.position.set(wide / 2, -0.02, deep / 2); ground.receiveShadow = true; g.add(ground);
+    this.scene.add(g); this.scene.visible = true;
+    // all of them in view: back off until the grid's width (plus a margin) fits the horizontal field of view, and its depth the vertical
+    const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * cam.aspect), vfov = THREE.MathUtils.degToRad(cam.fov);
+    const dist = Math.max((wide / 2 + 2.4) / Math.tan(hfov / 2), (deep / 2 + 3) / Math.tan(vfov / 2) * 1.2);
+    cam.position.set(wide / 2, dist * 0.55, deep / 2 + dist * 0.85); cam.lookAt(wide / 2, 0.6, deep / 2);
+    this.checkRow = out;
+    return out;
+  }
+
+  /** LOAD_UC.md UC-L7 (the page check reads it): the first draws, each with what drew it and whether the picture could be seen
+   *  (the canvas's computed visibility and opacity). Kept to the first 40. */
+  noteDraw(what) {
+    if (!this.drawLog) this.drawLog = [];
+    if (this.drawLog.length >= 40) return;
+    const cs = getComputedStyle(this.canvas);
+    this.drawLog.push({ what, seen: cs.visibility !== 'hidden' && Number(cs.opacity) > 0, at: Math.round(performance.now()) });
+  }
+
   /** One picture through the post chain: the shadow map is redrawn every SHADOW_EVERY-th call (and whenever asked: a new level,
    *  the warm-up), the rest of the chain every call. tools/perf_battle.py times this same call. */
   renderFrame() {
+    this.noteDraw('frame');
     const sh = this.sun.shadow;
     sh.autoUpdate = false;
     this.frameNo = (this.frameNo ?? -1) + 1;
@@ -300,8 +352,39 @@ class Renderer {
    *  board's and figures' pipelines are built while it is still loading (a stall in the first second of play swallows input). */
   async settle() {
     if (!this.match) throw new RenderContractError('settle() needs a match: call setMatch first');
+    const undo = this.warmFirstUse();
+    this.noteDraw('settle');
     this.post.render();
     await this.renderer.backend.device.queue.onSubmittedWorkDone();
+    undo();
+  }
+
+  /** TASKS WARMUP-FX (11-11): the things a match draws only LATER, put in view for settle's one draw, so their pipelines are built
+   *  while the page is still loading: a burst of every effect, one wall block of each kind with its cap, cloth and shadow, a hurt
+   *  castle's bar, and the storm's rain and bolt. Measured before: the title stuttered ~2.5 s in (frames of 0.23-0.87 s, the published
+   *  build too) when the demo's bots first claimed and built. Returns what puts it all back. */
+  warmFirstUse() {
+    const g = this.grid, at = new THREE.Vector3(g.width / 2, 0.6, g.height / 2), C3 = new THREE.Color(0.8, 0.7, 0.6), e = this.units.fxs;
+    e.muzzle(at, new THREE.Vector3(1, 0, 0), C3); e.trail(at, C3); e.splash(at); e.explosion(at, C3); e.chunks(at, C3, 3); e.dust(at);
+    e.bubbles(at); e.foamRing(at, 1); e.planks(at, C3, 2); e.sparkle(at, C3); e.flash(at, C3); e.fuseSpark(at); e.flame(at);
+    e.scorch(at); e.smokeWisp(at); e.puff(at);
+    this.fx.commit();
+    const b = this.board, m = new THREE.Matrix4().setPosition(at.x, 0, at.z), c = new THREE.Color(1, 1, 1);
+    // a colour only where the batch takes one (the shadows do not: a colour set on them made three add a colour buffer their next,
+    // bigger mesh lacked, and InstancedBatch.commit threw on it, 11-11)
+    for (const set of [b.walls, b.caps, b.steel, b.steelCaps, b.trims, b.shadows]) { set.set(0, m, set.o.colors ? c : undefined); set.commit(1); }
+    const castle = this.units.castles.values().next().value, barWas = castle ? castle.bar.visible : false;
+    if (castle) castle.bar.visible = true;
+    const was = this.mood.current.weather;
+    this.weather.build({ drops: 64, fall: 24, wind: 4, every: [6, 13] });   // the storm's rain (moods.js storm, fewer drops) and its bolt
+    this.weather.strike(this.rig.camera); this.weather.bolt.visible = true;
+    return () => {
+      this.fx.clear();
+      b.drawWalls();
+      if (castle) castle.bar.visible = barWas;
+      this.weather.bolt.visible = false;
+      this.weather.build(was);
+    };
   }
 
   /** The board square under a point of the page (CSS px, clientX/Y), through the live camera, or null when that point sees no
@@ -337,7 +420,10 @@ class Renderer {
   get screenTurn() { return this.rig.turn; }
 
   /** The match HUD's top bar height in CSS px (Hud.matchLayout): the page puts its hint strip under it. */
-  hudBarHeight() { return this.hud.layout(0).barH; }
+  hudBarHeight() { return this.hud.layout(0).barH + (Renderer.bossBarUp(this.match) ? this.hud.layout(0).bossH : 0); }
+
+  /** A boss's bar is under the top bar (hud.js drawBossBar): a boss afloat, in BATTLE. */
+  static bossBarUp(m) { return !!m && m.phase === Phase.Battle && m.ships.some((s) => s.alive && s.kind === ShipKind.Boss); }
 
   /** The height in CSS px the match HUD's player-card row takes at the window's foot (card plus its gap): the page puts its action bar above it. */
   hudFootHeight() { const L = this.hud.layout(1); return this.cssH - L.cardsTop; }
@@ -346,7 +432,9 @@ class Renderer {
    *  with) and minus each on-screen control (`cover`, DOM rects), each cut from the side that leaves the most area. */
   freeRect(view, cover) {
     const W = this.cssW, H = this.cssH, n = view.hud ? view.hud.players.filter((p) => p.present).length : 0, L = this.hud.layout(n);
-    const f = { x0: 0, y0: L.barH + 4, x1: W, y1: n > 0 ? L.cardsTop - 4 : H };
+    // a boss afloat puts its bar under the top bar (hud.js drawBossBar): the camera frames below it too
+    const boss = Renderer.bossBarUp(view.match);
+    const f = { x0: 0, y0: L.barH + (boss ? L.bossH : 0) + 4, x1: W, y1: n > 0 ? L.cardsTop - 4 : H };
     const cr = this.canvas.getBoundingClientRect();
     for (const c of cover || []) {
       const x0 = c.left - cr.left, x1 = c.right - cr.left, y0 = c.top - cr.top, y1 = c.bottom - cr.top;
@@ -432,6 +520,8 @@ class Renderer {
       this.units.events(view.events);
       this.units.update(view, dt, seconds);
       this.fx.commit();
+      for (const e of view.events)                                          // BOSS_UC.md UC-B1 step 1: the boss is announced
+        if (e instanceof ShipSpawned && e.kind === ShipKind.Boss) this.toast = { text: 'A boss ship approaches!', until: this.clock + TOAST_SECONDS + 0.8, from: this.clock, loop: false, big: true };   // low, off the boss it is framing
       for (const e of view.events) {                                        // UC-P2: a closing brick says so (with the board's sweep and the fanfare)
         if (!(e instanceof LoopClosed)) continue;
         const two = this.toast && this.toast.loop && this.clock - this.toast.from < 0.5;   // two castles in one ring: one toast
@@ -450,7 +540,13 @@ class Renderer {
       this.rig.free = this.freeRect(view, camIn ? camIn.cover : []);
       if (camIn && camIn.input) this.rig.userInput(camIn.input, this.cssH);
       this.aim = drift ? null : this.director.targets(m, view.controllers[0], this.units, this.board, camIn, view.events, seconds, dt);
-      this.rig.update(dt, this.board.landBounds(), building, this.aim, drift, this.cssW, this.cssH, m.phase === Phase.Battle);
+      // the whole-island frame takes in a boss afloat in BATTLE too (UC-B1: the attract match framed only the land, and the boss sat
+      // on the board's edge under the top bar)
+      const land = { ...this.board.landBounds() };
+      if (m.phase === Phase.Battle) for (const sh of m.ships) if (sh.alive && sh.size > 1) {
+        land.x0 = Math.min(land.x0, sh.at.x); land.y0 = Math.min(land.y0, sh.at.y); land.x1 = Math.max(land.x1, sh.at.x + sh.size); land.y1 = Math.max(land.y1, sh.at.y + sh.size);
+      }
+      this.rig.update(dt, land, building, this.aim, drift, this.cssW, this.cssH, m.phase === Phase.Battle);
       this.sky.update(this.rig.camera, this.rig.pose.target, seconds);
       this.weather.update(dt, this.mood.current, this.sun, this.hemi, this.renderer, this.rig.camera, this.reducedMotion);   // UC-L6
       this.scene.visible = true;
@@ -492,7 +588,7 @@ class Renderer {
     this.wipeKey = key;
     if (this.wipeT < WIPE_SECONDS && this.hudMode === 'all') { this.hud.wipe(this.wipeT / WIPE_SECONDS); this.wipeT += dt; }
     // the toast sits in the free rect's upper part (the action bar and the cards cover the screen's foot)
-    if (this.toast && this.clock < this.toast.until) this.hud.toast(this.toast.text, Math.min(1, (this.toast.until - this.clock) * 2), this.toast.loop ? this.rig.free.y0 + 18 : null, this.toast.loop);
+    if (this.toast && this.clock < this.toast.until) this.hud.toast(this.toast.text, Math.min(1, (this.toast.until - this.clock) * 2), this.toast.loop ? this.rig.free.y0 + 18 : null, this.toast.loop || !!this.toast.big);
   }
 
   resize(w, h) {

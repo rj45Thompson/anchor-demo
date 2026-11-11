@@ -20,6 +20,8 @@ const mid = (pts) => ({ x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) /
 const spread = (pts) => Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
 const TOUCH = 300;                    // stick travel that counts as a seat being touched (a bot seat hands over)
 const RIGHT_DRAG = 6;                 // px of travel that make a right press a camera drag, not a grab / a turn
+const PAD_SAMPLE_MS = 8;              // how often the pads are read between frames: 15 samples inside the pad run's 120 ms press
+export const FINGER_DRAG = 10;       // AUTHORED (TOUCH_PLACE_UC.md UC-P4): px one finger travels before a touch is a drag, not a tap
 
 // The keyboard clusters live in core/controller/KeyBindings.js (UC-ST3, 11-10): the shipped keys and the player's rebinds. Every poll
 // reads `bindings.clusters`, so a rebind acts on the next frame.
@@ -62,7 +64,11 @@ export class InputHub {
     this.devices = Array.from({ length: SEATS }, () => new SeatDevices());
     this.touched = new Array(SEATS).fill(false);
     this.prevStick = Array.from({ length: SEATS }, () => [0, 0]);
-    this.prevButtons = new Map();   // gamepad slot key -> pressed[] of the last poll
+    this.padNow = new Map();        // gamepad slot -> pressed[] at the last sample
+    this.padEdges = new Map();      // gamepad slot -> { rise, fall }: the buttons that went down / came up since the last poll
+    // the pads are SAMPLED on a timer as well as each frame (11-11): a frame the GPU holds for 0.3-0.7 s (measured on the join screen,
+    // the page's own script 17-40 ms of it) let a 120 ms press and its release both fall between two polls, and the press was lost
+    if (typeof setInterval === 'function') setInterval(() => this.samplePads(), PAD_SAMPLE_MS);
     this.phonepad = null;           // the PhonePad host, once its room is open
     this.anyKey = false;            // any key or button at all since the last take (wakes the audio, leaves the demo)
     target.addEventListener('keydown', (e) => {
@@ -110,7 +116,7 @@ export class InputHub {
       if (this.fingers.size > 0) return;
       const p = this.pointer;
       if (this.twoFinger) { if (this.fingerInPlay && this.twoTravel < TWO_DRAG) p.rotate = true; }
-      else if (e.type === 'pointerup' && this.fingerInPlay && this.playing) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.confirm = true; }
+      else if (e.type === 'pointerup' && this.fingerInPlay && this.playing) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.confirm = true; p.dragged = this.fingerTravel >= FINGER_DRAG; }
       this.twoFinger = false;
     };
     target.addEventListener('pointerup', lift);
@@ -126,6 +132,8 @@ export class InputHub {
           this.twoTravel += Math.hypot(m1.x - m0.x, m1.y - m0.y) + Math.abs(d1 - d0);
           return;                                                       // the hero does not follow a two-finger gesture
         }
+        const was = this.fingerAt.get(e.pointerId);
+        this.fingerTravel += Math.hypot(e.clientX - was.x, e.clientY - was.y);   // UC-P4: one finger's travel since it went down
         this.fingerAt.set(e.pointerId, { x: e.clientX, y: e.clientY });
       }
       if (this.right && (e.buttons & 2)) {                              // a right drag pans the camera
@@ -143,7 +151,7 @@ export class InputHub {
       this.anyKey = true;
       if (e.pointerType === 'touch') {
         this.fingers.add(e.pointerId); this.fingerAt.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (this.fingers.size === 1) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.click = true; p.touch = true; this.fingerInPlay = this.playing; }
+        if (this.fingers.size === 1) { p.x = e.clientX; p.y = e.clientY; p.moved = true; p.click = true; p.touch = true; this.fingerInPlay = this.playing; this.fingerTravel = 0; }
         else { this.twoFinger = true; this.twoTravel = 0; }
         return;
       }
@@ -174,9 +182,12 @@ export class InputHub {
   takePointer() {
     const p = this.pointer;
     // grab: the right button is down and is not a camera drag (a press shorter than a tick still counts, grabPulse); tap: it was let go
+    // dragging: one finger is down on the board and has travelled FINGER_DRAG px (UC-P4); dragged: the finger that just lifted did
+    const dragging = this.fingers.size === 1 && !this.twoFinger && this.fingerInPlay && (this.fingerTravel ?? 0) >= FINGER_DRAG;
     const out = { x: p.x, y: p.y, moved: p.moved, click: p.click, confirm: p.confirm, rotate: p.rotate, ready: p.ready, swap: p.swap, touch: p.touch,
+                  dragging, dragged: !!p.dragged,
                   grab: this.bombMode && (p.grabPulse || (this.right !== null && this.right.travel < RIGHT_DRAG)), tap: p.tap };
-    p.moved = p.click = p.confirm = p.rotate = p.ready = p.swap = p.tap = p.grabPulse = false;
+    p.moved = p.click = p.confirm = p.rotate = p.ready = p.swap = p.tap = p.grabPulse = p.dragged = false;
     return out;
   }
 
@@ -233,7 +244,7 @@ export class InputHub {
       if (t.confirm || t.rotate || t.swap || t.ready || t.drop || t.pickUp || t.defuse || t.trap || t.buy >= 0) this.touched[0] = true;
     }
 
-    const list = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
+    const list = this.samplePads();
     const base = this.phonepad ? this.phonepad.base() : 4;
     for (let i = 0; i < list.length; i++) {
       const g = list[i];
@@ -248,10 +259,9 @@ export class InputHub {
         continue;
       }
       if (phone) this.devices[seat].phone = true; else { this.devices[seat].pad = true; this.devices[seat].padId = g.id; }
-      const key = (phone ? 'phone' : 'pad') + i;
-      const prev = this.prevButtons.get(key) || [];
-      const now = g.buttons.map((b) => b.pressed);
-      const edge = (k) => !!now[k] && !prev[k];
+      const now = this.padNow.get(i) || [], { rise, fall } = this.padEdges.get(i) || { rise: new Set(), fall: new Set() };
+      this.padEdges.delete(i);
+      const edge = (k) => rise.has(k);
       const L = this.latch[seat];
       let sx = Math.round((g.axes[0] || 0) * STICK_FULL), sy = Math.round((g.axes[1] || 0) * STICK_FULL);
       if (now[PAD.LEFT]) sx -= STICK_FULL;
@@ -261,14 +271,13 @@ export class InputHub {
       sticks[seat][0] += sx; sticks[seat][1] += sy;
       L.up ||= edge(PAD.UP); L.down ||= edge(PAD.DOWN); L.left ||= edge(PAD.LEFT); L.right ||= edge(PAD.RIGHT);
       // with bombs B is grab (held) and tap (let go); the right shoulder still turns the piece
-      if (this.bombMode) { L.grab ||= !!now[PAD.B]; L.tap ||= !now[PAD.B] && !!prev[PAD.B]; L.rotate ||= edge(PAD.RB); }
+      if (this.bombMode) { L.grab ||= !!now[PAD.B] || edge(PAD.B); L.tap ||= fall.has(PAD.B); L.rotate ||= edge(PAD.RB); }
       else L.rotate ||= edge(PAD.B) || edge(PAD.RB);
       L.confirm ||= edge(PAD.A); L.back ||= edge(PAD.B);
       L.ready ||= edge(PAD.Y); L.swap ||= edge(PAD.Y); L.start ||= edge(PAD.START);
       fast[seat] ||= !!now[PAD.X];
       L.info ||= edge(PAD.X);                                         // X is held for fast in a match; at the menus a press is info
-      if (now.some((p, k) => p && !prev[k])) { this.touched[seat] = true; this.anyKey = true; }
-      this.prevButtons.set(key, now);
+      if (rise.size) { this.touched[seat] = true; this.anyKey = true; }
     }
 
     for (let s = 0; s < SEATS; s++) {
@@ -287,6 +296,22 @@ export class InputHub {
     }
   }
 
+  /** Read every standard pad's buttons and keep what went down and came up since the last poll (the timer and poll() both call it);
+   *  returns the browser's pad list. */
+  samplePads() {
+    const list = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
+    for (let i = 0; i < list.length; i++) {
+      const g = list[i];
+      if (!g || !g.connected || g.mapping !== 'standard') continue;
+      const prev = this.padNow.get(i) || [], now = g.buttons.map((b) => b.pressed);
+      let e = this.padEdges.get(i);
+      if (!e) { e = { rise: new Set(), fall: new Set() }; this.padEdges.set(i, e); }
+      for (let k = 0; k < now.length; k++) { if (now[k] && !prev[k]) e.rise.add(k); else if (!now[k] && prev[k]) e.fall.add(k); }
+      this.padNow.set(i, now);
+    }
+    return list;
+  }
+
   /** A key cluster's direction key is held: its press already made the menu edge, the stick crossing must not make a second. */
   keyHeldDir(seat, dir) {
     const c = this.bindings.clusters.find((k) => k.seat === seat);
@@ -303,7 +328,9 @@ export class InputHub {
       const L = this.latch[s];
       out.push({
         pad: { stickX: L.stickX, stickY: L.stickY, confirm: L.confirm, rotate: L.rotate, ready: L.ready, swap: L.swap, fast: L.fast,
-               grab: L.grab || L.grabAny, defuse: L.defuse || L.defuseAny, tap: L.tap, drop: L.drop, pickUp: L.pickUp, trap: L.trap, buy: L.buy },
+               grab: L.grab || L.grabAny, defuse: L.defuse || L.defuseAny, tap: L.tap, drop: L.drop, pickUp: L.pickUp, trap: L.trap, buy: L.buy,
+               // UC-C1: the same latched direction presses the menus step on, so the cursor steps a square per press in play
+               stepX: (L.right ? 1 : 0) - (L.left ? 1 : 0), stepY: (L.down ? 1 : 0) - (L.up ? 1 : 0) },
         menu: { up: L.up, down: L.down, left: L.left, right: L.right, confirm: L.confirm, back: L.back, start: L.start },
         info: L.info,
       });

@@ -9,7 +9,8 @@ export const GunKind = Object.freeze({ Cannon: 0 });
 
 /** One-sail ships shoot walls; two-sail ships take three hits, head for the shore and land grunts. Values 2..4 are the bigger
  *  ruleset's ships and are not ported: no normal wave sails one. */
-export const ShipKind = Object.freeze({ OneSail: 0, TwoSail: 1 });
+// Boss: this game's own (BOSS_UC.md UC-B1), the bomb rule set only: one 2 x 2 ship in each island's last wave
+export const ShipKind = Object.freeze({ OneSail: 0, TwoSail: 1, Boss: 2 });
 
 /** One player's state. Slots are 0..3; the colour is the view's, by slot. */
 export class PlayerModel {
@@ -50,7 +51,7 @@ export class CannonModel {
 }
 
 /** A ship on water (REQ-SHIP-01..07). Whole-cell position plus an integer step counter: no float anywhere. Every normal ship is
- *  one square (size 1). */
+ *  one square (size 1); a boss (UC-B1) is `big` x `big` squares from `at`, its top-left. */
 export class ShipModel {
   constructor(id, at, health, moveTicks, reload) {
     this.id = id;
@@ -64,9 +65,10 @@ export class ShipModel {
     this.hasTarget = false;
     this.target = Cell.zero;
     this.alive = true;
+    this.big = 1;
   }
-  get size() { return 1; }
-  covers(x, y) { return x === this.at.x && y === this.at.y; }
+  get size() { return this.big; }
+  covers(x, y) { return x >= this.at.x && y >= this.at.y && x < this.at.x + this.big && y < this.at.y + this.big; }
   get centre() { return this.at; }
 }
 

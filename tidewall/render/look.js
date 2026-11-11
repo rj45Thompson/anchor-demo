@@ -409,6 +409,9 @@ export class InstancedBatch {
   }
   set(i, matrix, color) {
     if (i >= this.capacity) throw new RangeError(this.o.name + ': instance ' + i + ' past its capacity ' + this.capacity);
+    // a batch made without colours takes none: three would add a colour buffer to this mesh only, and the next, bigger mesh
+    // (commit) would have none to copy it into (11-11: the warm-up did this, and commit threw mid-match)
+    if (color && !this.o.colors) throw new Error(this.o.name + ': a colour for a batch made without colours');
     const im = this.chunk(Math.floor(i / CHUNK)), k = i % CHUNK;
     im.setMatrixAt(k, matrix);
     if (color) im.setColorAt(k, color);

@@ -48,6 +48,11 @@ export class SoundPlayer {
     for (const b of Object.keys(BUSES)) { this.bus[b] = this.ctx.createGain(); this.bus[b].connect(this.master); }
     this.settings = { ...SETTINGS_DEFAULT, ...settings };
     this.buffers = new Map();          // file -> AudioBuffer
+    // LAZY files (soundbank `lazy`: the long music and the mood beds, 11-11): fetched at load and kept COMPRESSED (raw), decoded
+    // only while they play and released after (decoding all of them held 71 MB of PCM at the title, measured; a phone tab has less)
+    this.raw = new Map();              // file -> ArrayBuffer (the encoded bytes)
+    this.decoding = new Map();         // file -> Promise<AudioBuffer> while it decodes
+    this.beds = null;                  // the level's mood bed over the sea: { key, gain, src } (moods.js bed, set by main.js)
     this.synthBuffers = new Map();
     this.loadErrors = [];              // { file, why } for every file that did not load (shown on the title footer)
     this.loaded = false;
@@ -74,13 +79,14 @@ export class SoundPlayer {
   /** Fetch and decode every file in the soundbank. Throws SoundLoadError listing every file that failed (none is substituted). */
   async load(fetchFn = fetch) {
     const all = [];
-    for (const s of Object.values(SOUNDS)) for (const f of s.files) all.push(f);
+    for (const s of Object.values(SOUNDS)) for (const f of s.files) all.push({ f, lazy: !!s.lazy });
     const failures = [];
-    await Promise.all(all.map(async (f) => {
+    await Promise.all(all.map(async ({ f, lazy }) => {
       let why = null;
       try {
         const res = await fetchFn(f.file);
         if (!res.ok) why = 'HTTP ' + res.status;
+        else if (lazy) this.raw.set(f.file, await res.arrayBuffer());   // decoded when it first plays (_decode)
         else {
           const buf = await this.ctx.decodeAudioData(await res.arrayBuffer());
           // the decoded length must be the length the build measured (resampled to this context's rate)
@@ -110,6 +116,48 @@ export class SoundPlayer {
   newMatch() { this.shots.clear(); }
 
   _count(key) { this.played.set(key, (this.played.get(key) || 0) + 1); }
+
+  /** A lazy file's AudioBuffer: decoded from its kept bytes (a copy: decoding detaches the buffer it is given) and checked against
+   *  the build's frame count. A failure is recorded like a load failure (said on the title footer) and resolves to null. */
+  _decode(f) {
+    if (this.buffers.has(f.file)) return Promise.resolve(this.buffers.get(f.file));
+    if (this.decoding.has(f.file)) return this.decoding.get(f.file);
+    const bytes = this.raw.get(f.file);
+    if (!bytes) { if (this.loadErrors.some((e) => e.file === f.file)) return Promise.resolve(null); throw new Error('sound file ' + f.file + ' was never fetched'); }
+    const p = this.ctx.decodeAudioData(bytes.slice(0)).then((buf) => {
+      const want = Math.round(f.frames * this.ctx.sampleRate / 48000);
+      if (Math.abs(buf.length - want) > 1) throw new Error('decoded ' + buf.length + ' frames, the build measured ' + want);
+      this.buffers.set(f.file, buf); this.decoding.delete(f.file);
+      return buf;
+    }).catch((e) => {
+      this.decoding.delete(f.file);
+      this.loadErrors.push({ file: f.file, why: (e && e.name ? e.name + ': ' : '') + (e && e.message ? e.message : String(e)) });
+      return null;
+    });
+    this.decoding.set(f.file, p);
+    return p;
+  }
+
+  /** A lazy file no longer playing gives its PCM back (it is decoded again from its kept bytes next time). */
+  _release(file) { if (this.raw.has(file)) this.buffers.delete(file); }
+
+  /** The PCM held now, in bytes (the page check reads it: the title must not hold every piece of music). */
+  get heldBytes() { let n = 0; for (const b of this.buffers.values()) n += b.length * b.numberOfChannels * 4; return n; }
+
+  /** A one-shot `delay` seconds from now (the thunder's boom after its crack, MOOD_UC.md UC-L6). */
+  playIn(key, delay) {
+    if (this.settings.muted || this.ctx.state !== 'running') return false;
+    const s = SOUNDS[key];
+    if (!s) throw new Error('no sound ' + key + ' in the soundbank');
+    const buf = this._buffer(s.files[0].file);
+    if (buf === null) return false;
+    const src = this.ctx.createBufferSource(), g = this.ctx.createGain();
+    src.buffer = buf; g.gain.value = s.vol;
+    src.connect(g).connect(this.bus[s.bus]);
+    src.start(this.ctx.currentTime + Math.max(0, delay));
+    this._count(key);
+    return true;
+  }
 
   _buffer(file) {
     const b = this.buffers.get(file);
@@ -181,7 +229,14 @@ export class SoundPlayer {
   _startMusic(key) {
     const s = SOUNDS[key];
     if (!s) throw new Error('no music ' + key + ' in the soundbank');
-    const f = s.files[0], buf = this._buffer(f.file);
+    const f = s.files[0];
+    if (s.lazy && !this.buffers.has(f.file)) {
+      // decoded first: the piece starts (crossfaded in) when it is ready, if it is still the one wanted
+      this.music = { key, src: null, gain: null, pending: true };
+      this._decode(f).then(() => { if (this.music && this.music.key === key && this.music.pending) { this.music = null; this._startMusic(key); } });
+      return;
+    }
+    const buf = this._buffer(f.file);
     const t = this.ctx.currentTime, gain = this.ctx.createGain();
     gain.gain.setValueAtTime(0, t);
     gain.gain.linearRampToValueAtTime(s.vol, t + CROSSFADE_SEC);
@@ -204,12 +259,44 @@ export class SoundPlayer {
 
   _stopMusic() {
     if (!this.music) return;
-    const { src, gain } = this.music, t = this.ctx.currentTime;
+    const { key, src, gain, pending } = this.music, t = this.ctx.currentTime;
+    this.music = null;
+    if (pending) return;
     gain.gain.cancelScheduledValues(t);
     gain.gain.setValueAtTime(gain.gain.value, t);
     gain.gain.linearRampToValueAtTime(0, t + CROSSFADE_SEC);
-    if (src) src.stop(t + CROSSFADE_SEC + 0.05);
-    this.music = null;
+    if (src) {
+      src.stop(t + CROSSFADE_SEC + 0.05);
+      const file = SOUNDS[key].files[0].file;
+      src.onended = () => { if (!this.music || this.music.key !== key) this._release(file); };   // its PCM goes once it is silent
+    }
+  }
+
+  /** The level's mood bed (moods.js `bed`, a soundbank key, or null): crossfaded in over the sea, the last one released. */
+  _bed(key) {
+    if ((this.beds ? this.beds.key : null) === key) return;
+    const t = this.ctx.currentTime;
+    if (this.beds) {
+      const { gain, src, key: old } = this.beds;
+      gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(0, t + CROSSFADE_SEC);
+      if (src) { src.stop(t + CROSSFADE_SEC + 0.05); src.onended = () => { if (!this.beds || this.beds.key !== old) this._release(SOUNDS[old].files[0].file); }; }
+      this.beds = null;
+    }
+    if (key === null) return;
+    const s = SOUNDS[key];
+    if (!s) throw new Error('no ambience bed ' + key + ' in the soundbank');
+    const f = s.files[0], gain = this.ctx.createGain();
+    gain.gain.value = 0; gain.connect(this.bus.ambience);
+    this.beds = { key, gain, src: null };
+    this._decode(f).then((buf) => {
+      if (!buf || !this.beds || this.beds.key !== key) return;
+      const src = this.ctx.createBufferSource(), now = this.ctx.currentTime;
+      src.buffer = buf; src.loop = true; src.loopStart = f.loopStart / 48000; src.loopEnd = f.loopEnd / 48000;
+      src.connect(gain); src.start(now, src.loopStart);
+      gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(s.vol, now + CROSSFADE_SEC);
+      this.beds.src = src;
+      this._count(key);
+    });
   }
 
   /** Each animation frame: what is on screen decides the music (crossfaded) and whether the ambience is ducked; the sea bed runs
@@ -219,6 +306,7 @@ export class SoundPlayer {
     if (scene.duck !== this.duck) { this.duck = scene.duck; this.applySettings(0.5); }
     if (this.ctx.state !== 'running' || !this.loaded) return;
     if (!this.music || this.music.key !== this.musicKey) { this._stopMusic(); if (this.musicKey !== null) this._startMusic(this.musicKey); }
+    this._bed(scene.bed ?? null);
     if (!this.bed) {
       const s = SOUNDS[AMBIENCE.bed], f = s.files[0], buf = this._buffer(f.file);
       const g = this.ctx.createGain();

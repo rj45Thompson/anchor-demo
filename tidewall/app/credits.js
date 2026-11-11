@@ -19,8 +19,9 @@ export const CC_BY_4 = 'https://creativecommons.org/licenses/by/4.0/';
 /** The models made for this game (no credit owed; said so the footer is complete). */
 export const OWN_MODELS = 'Knight, goblin, ship, castle and cannon made with Meshy (meshy.ai) for this game.';
 
-/** The recorded sounds (app/soundbank.js, assets/sound/; ASSETS.md lists each file). All are CC0, which asks no credit; every author
- *  whose recording the game plays is named anyway. test/unit/SoundbankTests.mjs fails when a soundbank author is missing here. */
+/** The recorded sounds (app/soundbank.js, assets/sound/; ASSETS.md lists each file). They are all CC0, which asks no credit (the
+ *  Unity Asset Store packs are held out: render/packs.js). Every author whose
+ *  recording the game plays is named. test/unit/SoundbankTests.mjs fails when a soundbank author is missing here. */
 export const SOUND_CREDITS = Object.freeze([
   Object.freeze({ title: 'Impact, Interface, RPG Audio and Music Jingles packs', author: 'Kenney', url: 'https://kenney.nl' }),
   Object.freeze({ title: 'Medieval: The Bard\'s Tale; Medieval: Market Day; sea and river waves', author: 'randommind', url: 'https://opengameart.org/content/medieval-the-bards-tale' }),
@@ -29,6 +30,8 @@ export const SOUND_CREDITS = Object.freeze([
   Object.freeze({ title: 'Battle at sea; Ocean splash; Ship sinking', author: 'thimras', url: 'https://opengameart.org/content/battle-at-sea' }),
   Object.freeze({ title: '25 CC0 bang / firework SFX', author: 'rubberduck', url: 'https://opengameart.org/content/25-cc0-bang-firework-sfx' }),
   Object.freeze({ title: 'Solo seagull sound effects', author: 'rango-mango', url: 'https://opengameart.org/content/solo-seagull-sound-effects' }),
+  // the Unity Asset Store packs' rows (the boss theme, the thunder, the four ambient beds) live in held/README.md while
+  // render/packs.js STORE_PACKS is false: nothing of theirs is played, so nothing of theirs is credited
 ]);
 
 /** The licence the recorded sounds are under. */
