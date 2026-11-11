@@ -30,7 +30,7 @@ const PAGE = join(HERE, 'index.html');
 // over (main() checks that they really do).
 const { Left, Right, Thrust, Fire, Hyperspace } = Input;
 
-function holder(seed, every) { // changes what it holds every so often
+export function holder(seed, every) { // changes what it holds every so often
   const rng = new Random(seed);
   let held = 0;
   return () => { if (rng.oneIn(every)) held = rng.int(32); return held; };
@@ -38,7 +38,7 @@ function holder(seed, every) { // changes what it holds every so often
 
 // Turns toward the nearest rock or hunter, fires when it faces it, and jumps to hyperspace when
 // something is about to hit it.
-function aimer() {
+export function aimer() {
   return game => {
     const { ship, field } = game;
     if (!ship.alive || ship.jumping > 0) return 0;
