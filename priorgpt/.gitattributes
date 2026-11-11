@@ -1,0 +1,3 @@
+# PriorGPT: every file here is served byte for byte. core.js must equal the program printed from graphs.js and priors.txt
+# must keep its exact length, so git never converts their line endings on checkout.
+* -text
