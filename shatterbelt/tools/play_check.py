@@ -87,9 +87,13 @@ def desktop(browser, base, msgs):
                            return i ? c.getParameter(i.UNMASKED_RENDERER_WEBGL) : 'unknown'})()""")
     page.wait_for_timeout(1500)
     shoot(page, "1_title")
+    hud = page.evaluate("getComputedStyle(document.getElementById('hud')).display")
+    check("the score bar is hidden on the title screen", hud == "none", "#hud display: %s" % hud)
 
     page.keyboard.press("Enter")
     page.wait_for_function("window.shatterbelt.mode === 'playing'")
+    hud = page.evaluate("getComputedStyle(document.getElementById('hud')).display")
+    check("the score bar shows in play", hud != "none", "#hud display: %s" % hud)
     wall0, frames0 = time.time(), game(page, "s.stats.frames")
     page.keyboard.down("Space")
     turn, mid_shot, last_broken = 0, None, 0
