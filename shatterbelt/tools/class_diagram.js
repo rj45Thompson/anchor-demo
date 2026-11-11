@@ -22,7 +22,7 @@ export function readClasses(source) {
   for (let i = 0; i < lines.length; i++) {
     const head = lines[i].match(/^export class (\w+)(?: extends (\w+))? \{/);
     if (!head) continue;
-    const cls = { name: head[1], parent: head[2] || null, fields: [], getters: [], sections: [] };
+    const cls = { name: head[1], parent: head[2] || null, line: i + 1, fields: [], getters: [], sections: [] };
     let section = { title: null, methods: [] };
     cls.sections.push(section);
     let inConstructor = false;
@@ -98,7 +98,7 @@ function boxFor(cls, maxChars) {
     if (section.title) rows.push({ kind: 'section', text: section.title });
     rows.push(...wrapList(section.methods, maxChars).map(text => ({ kind: 'member', text })));
   }
-  return sized({ name: cls.name, rows });
+  return sized({ name: cls.name, line: cls.line, rows });
 }
 
 function sized(box) {
@@ -137,7 +137,18 @@ function wrapList(items, max) {
 
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+// Where a class's box takes the reader: its own line of core.js, as published (the line is read from the source)
+export const SOURCE_URL = 'https://github.com/rj45Thompson/anchor-demo/blob/main/shatterbelt/core.js';
+
 function drawBox(box, extraClass = '') {
+  if (box.line) {
+    const open = `<a href="${SOURCE_URL}#L${box.line}" target="_blank" rel="noopener"><title>${esc(box.name)}: core.js line ${box.line}</title>`;
+    return open + drawInside(box, extraClass) + '</a>';
+  }
+  return drawInside(box, extraClass);
+}
+
+function drawInside(box, extraClass) {
   const { x, y, width } = box;
   const out = [`<g class="cls${extraClass}">`,
     `<rect x="${x}" y="${y}" width="${width}" height="${box.height}" rx="8"/>`,

@@ -36,3 +36,16 @@ test('the reader follows the code: renaming a method changes the diagram', () =>
   assert.ok(blocks(renamed).diagram.includes('shatterRock(rock, byShip)'));
   assert.match(readStep(source), /this\.flush\(\);/);
 });
+
+test('every class box opens its own line of core.js on GitHub, so a reader goes from the picture to the code', () => {
+  const svg = blocks(source).diagram;
+  const lines = source.split(/\r?\n/);
+  const exported = [...source.matchAll(/^export class (\w+)/gm)].map(m => m[1]);
+  for (const name of exported) {
+    const link = svg.match(new RegExp(
+      `<a href="https://github\\.com/rj45Thompson/anchor-demo/blob/main/shatterbelt/core\\.js#L(\\d+)"[^>]*>` +
+      `<title>[^<]*</title><g class="cls[^"]*"><rect[^>]*/><text class="name"[^>]*>${name}</text>`));
+    assert.ok(link, `${name}: its box links to core.js`);
+    assert.match(lines[Number(link[1]) - 1], new RegExp(`^export class ${name}\\b`), `${name}: the link lands on its class line`);
+  }
+});
