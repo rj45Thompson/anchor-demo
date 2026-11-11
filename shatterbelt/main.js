@@ -7,6 +7,7 @@ import { Game, FixedTimestep, InputLog, Rules } from './core.js';
 import { loadArt, Renderer } from './render.js';
 import { Controls } from './input.js';
 import { Sound } from './audio.js';
+import { aimer } from './bots.js';
 
 const $ = id => document.getElementById(id);
 const stage = $('stage');
@@ -45,7 +46,8 @@ let stageVisible = true;
 const clock = new FixedTimestep();
 const sound = new Sound({ muted: saved.read('muted', false), music: saved.read('music', true) });
 const stats = { frames: 0, steps: 0, rocksBroken: 0, explosions: 0, gamesStarted: 0, replayMatched: null,
-                shipsLost: 0, slowMos: 0, banners: [] };
+                shipsLost: 0, slowMos: 0, banners: [], demoRocks: 0 };
+let demo = null;            // the title screen's player: the aiming bot of bots.js, or null in a real game
 // Losing a ship slows time to a third for a moment, so the player sees what hit them. Only the clock's pace changes:
 // the game still takes one step per input, so a replay plays back the same.
 const SLOW_MO = { scale: 0.35, seconds: 0.7 };
@@ -84,6 +86,9 @@ function stepOnce() {
   } else if (mode === 'replay') {
     if (game.steps >= lastRun.steps) { finishReplay(); return; }
     input = lastRun.log.at(game.steps);
+  } else if (mode === 'title' && demo) {
+    if (game.over) { attract(); return; }      // the demo lost its last ship: a new demo, on a new seed
+    input = demo(game);
   }
   const events = game.step(input);
   stats.steps += 1;
@@ -110,7 +115,8 @@ function newGame(options) {
 
 function attract() {
   mode = 'title';
-  newGame({ seed: (Math.random() * 2 ** 32) >>> 0, ...fieldFor(stage.clientWidth / stage.clientHeight), startingShips: 0 });
+  newGame({ seed: (Math.random() * 2 ** 32) >>> 0, ...fieldFor(stage.clientWidth / stage.clientHeight) });
+  demo = aimer();
   $('titleBest').textContent = best ? `Best ${format(best)}` : '';
   show('title');
 }
@@ -119,6 +125,7 @@ function start() {
   sound.unlock().then(soundButtons);
   mode = 'playing';
   overAt = 0;
+  demo = null;
   const options = { seed: (Math.random() * 2 ** 32) >>> 0, ...fieldFor(stage.clientWidth / stage.clientHeight) };
   newGame(options);
   log = new InputLog();
@@ -213,11 +220,15 @@ function updateHud() {
 }
 
 function hudEvents(events) {
+  if (mode === 'title') { // the demo behind the title counts for nothing: no stats, no banners, no slow motion
+    for (const e of events) if (e.type === 'rockBroken') stats.demoRocks += 1;
+    return;
+  }
   let changed = false;
   for (const e of events) {
     if (e.type === 'rockBroken') { stats.rocksBroken += 1; stats.explosions += 1; }
     if (e.type === 'hunterDestroyed' || e.type === 'shipDestroyed') stats.explosions += 1;
-    if (e.type === 'waveStart' && mode !== 'title') banner(`Wave ${game.wave}`);
+    if (e.type === 'waveStart') banner(`Wave ${game.wave}`);
     if (e.type === 'extraShip') banner('Extra ship');
     if (e.type === 'respawn' && game.ships === 1) banner('Last ship');
     if (e.type === 'shipDestroyed') { stats.shipsLost += 1; stats.slowMos += 1; slowUntil = performance.now() + SLOW_MO.seconds * 1000; }

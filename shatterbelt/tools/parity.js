@@ -17,6 +17,7 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readStep, stamp } from './class_diagram.js';
 import { Game, Random, Trig, Input } from '../core.js';
+import { aimer } from '../bots.js';
 
 const HERE = dirname(dirname(fileURLToPath(import.meta.url)));
 const CPP = join(HERE, 'cpp');
@@ -36,30 +37,8 @@ export function holder(seed, every) { // changes what it holds every so often
   return () => { if (rng.oneIn(every)) held = rng.int(32); return held; };
 }
 
-// Turns toward the nearest rock or hunter, fires when it faces it, and jumps to hyperspace when
-// something is about to hit it.
-export function aimer() {
-  return game => {
-    const { ship, field } = game;
-    if (!ship.alive || ship.jumping > 0) return 0;
-    let target = null;
-    let best = Infinity;
-    for (const pool of [game.rocks, game.hunters]) {
-      for (const e of pool.live) {
-        const d = e.alive ? field.distanceSquared(ship, e) : Infinity;
-        if (d < best) { best = d; target = e; }
-      }
-    }
-    if (!target) return 0;
-    const want = Trig.atan2(field.dy(ship, target), field.dx(ship, target));
-    const off = Trig.atan2(Trig.sin(want - ship.angle), Trig.cos(want - ship.angle));
-    let input = Math.abs(off) > 0.06 ? (off > 0 ? Right : Left) : 0;
-    if (Math.abs(off) < 0.2) input |= Fire;
-    const reach = ship.radius + target.radius + 30;
-    if (best < reach * reach && ship.invulnerable <= 0) input |= Hyperspace;
-    return input;
-  };
-}
+// The aiming bot lives in ../bots.js, shared with the title screen's demo; re-exported here for tools/difficulty.js.
+export { aimer };
 
 export const GAMES = [
   { name: 'a player who changes what they hold every so often', options: { seed: 77 }, steps: 6000, player: () => holder(2024, 12) },

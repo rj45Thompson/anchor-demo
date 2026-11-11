@@ -86,6 +86,11 @@ def desktop(browser, base, msgs):
     gpu = page.evaluate("""(()=>{const c=document.createElement('canvas').getContext('webgl'); const i=c&&c.getExtension('WEBGL_debug_renderer_info');
                            return i ? c.getParameter(i.UNMASKED_RENDERER_WEBGL) : 'unknown'})()""")
     page.wait_for_timeout(1500)
+    # the title screen plays a demo behind it (the aiming bot of bots.js), and the demo counts for nothing
+    page.wait_for_timeout(6000)
+    demo = game(page, "({steps: g.steps, shots: g.bullets.countAlive(b => b.fromShip), alive: g.ship.alive, broken: s.stats.demoRocks, mine: s.stats.rocksBroken})")
+    check("the title screen plays a demo game behind it", demo["broken"] > 0, "after 7.5 s on the title: %s demo rocks broken" % demo["broken"])
+    check("the demo counts for nothing: no rocks broken in the player's stats", demo["mine"] == 0, "player's rocks broken: %s" % demo["mine"])
     shoot(page, "1_title")
     hud = page.evaluate("getComputedStyle(document.getElementById('hud')).display")
     check("the score bar is hidden on the title screen", hud == "none", "#hud display: %s" % hud)
