@@ -1,0 +1,11 @@
+{
+  "name": "shatterbelt",
+  "private": true,
+  "type": "module",
+  "description": "Shatterbelt: an asteroid-belt shooter. The rules run in node and the browser.",
+  "scripts": {
+    "test": "node --test",
+    "diagram": "node tools/class_diagram.js",
+    "proof": "node tools/proof.js"
+  }
+}

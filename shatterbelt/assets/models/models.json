@@ -1,0 +1,220 @@
+{
+ "source": "Star Fighter FBX models, converted by tools/convert_models.js",
+ "models": {
+  "ship": {
+   "file": "vehicle_playerShip.FBX",
+   "groups": [
+    {
+     "material": "vehicle_playerShip_metal_mat",
+     "start": 0,
+     "count": 6468
+    },
+    {
+     "material": "vehicle_playerShip_glass_mat",
+     "start": 6468,
+     "count": 192
+    }
+   ],
+   "size": [
+    1,
+    0.1972,
+    0.6636
+   ],
+   "attributes": {
+    "position": {
+     "itemSize": 3,
+     "count": 1939,
+     "byteOffset": 0,
+     "type": "Float32Array"
+    },
+    "normal": {
+     "itemSize": 3,
+     "count": 1939,
+     "byteOffset": 23268,
+     "type": "Float32Array"
+    },
+    "uv": {
+     "itemSize": 2,
+     "count": 1939,
+     "byteOffset": 46536,
+     "type": "Float32Array"
+    },
+    "index": {
+     "itemSize": 1,
+     "count": 6660,
+     "byteOffset": 62048,
+     "type": "Uint16Array"
+    }
+   }
+  },
+  "hunter": {
+   "file": "vehicle_enemyShip.FBX",
+   "groups": [
+    {
+     "material": "vehicle_enemyShip_metal_mat",
+     "start": 0,
+     "count": 7827
+    },
+    {
+     "material": "vehicle_enemyShip_glow_mat",
+     "start": 7827,
+     "count": 237
+    }
+   ],
+   "size": [
+    0.9472,
+    0.3111,
+    1
+   ],
+   "attributes": {
+    "position": {
+     "itemSize": 3,
+     "count": 2385,
+     "byteOffset": 75368,
+     "type": "Float32Array"
+    },
+    "normal": {
+     "itemSize": 3,
+     "count": 2385,
+     "byteOffset": 103988,
+     "type": "Float32Array"
+    },
+    "uv": {
+     "itemSize": 2,
+     "count": 2385,
+     "byteOffset": 132608,
+     "type": "Float32Array"
+    },
+    "index": {
+     "itemSize": 1,
+     "count": 8064,
+     "byteOffset": 151688,
+     "type": "Uint16Array"
+    }
+   }
+  },
+  "rock1": {
+   "file": "prop_asteroid_01.FBX",
+   "groups": [
+    {
+     "material": "prop_asteroid_01_mat",
+     "start": 0,
+     "count": 2328
+    }
+   ],
+   "size": [
+    0.6844,
+    0.6054,
+    1
+   ],
+   "attributes": {
+    "position": {
+     "itemSize": 3,
+     "count": 424,
+     "byteOffset": 167816,
+     "type": "Float32Array"
+    },
+    "normal": {
+     "itemSize": 3,
+     "count": 424,
+     "byteOffset": 172904,
+     "type": "Float32Array"
+    },
+    "uv": {
+     "itemSize": 2,
+     "count": 424,
+     "byteOffset": 177992,
+     "type": "Float32Array"
+    },
+    "index": {
+     "itemSize": 1,
+     "count": 2328,
+     "byteOffset": 181384,
+     "type": "Uint16Array"
+    }
+   }
+  },
+  "rock2": {
+   "file": "prop_asteroid_02.FBX",
+   "groups": [
+    {
+     "material": "prop_asteroid_02_mat",
+     "start": 0,
+     "count": 1746
+    }
+   ],
+   "size": [
+    1,
+    0.7319,
+    0.7455
+   ],
+   "attributes": {
+    "position": {
+     "itemSize": 3,
+     "count": 321,
+     "byteOffset": 186040,
+     "type": "Float32Array"
+    },
+    "normal": {
+     "itemSize": 3,
+     "count": 321,
+     "byteOffset": 189892,
+     "type": "Float32Array"
+    },
+    "uv": {
+     "itemSize": 2,
+     "count": 321,
+     "byteOffset": 193744,
+     "type": "Float32Array"
+    },
+    "index": {
+     "itemSize": 1,
+     "count": 1746,
+     "byteOffset": 196312,
+     "type": "Uint16Array"
+    }
+   }
+  },
+  "rock3": {
+   "file": "prop_asteroid_03.FBX",
+   "groups": [
+    {
+     "material": "prop_asteroid_03_mat",
+     "start": 0,
+     "count": 2748
+    }
+   ],
+   "size": [
+    1,
+    0.6256,
+    0.8572
+   ],
+   "attributes": {
+    "position": {
+     "itemSize": 3,
+     "count": 494,
+     "byteOffset": 199804,
+     "type": "Float32Array"
+    },
+    "normal": {
+     "itemSize": 3,
+     "count": 494,
+     "byteOffset": 205732,
+     "type": "Float32Array"
+    },
+    "uv": {
+     "itemSize": 2,
+     "count": 494,
+     "byteOffset": 211660,
+     "type": "Float32Array"
+    },
+    "index": {
+     "itemSize": 1,
+     "count": 2748,
+     "byteOffset": 215612,
+     "type": "Uint16Array"
+    }
+   }
+  }
+ }
+}

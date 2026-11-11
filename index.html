@@ -30,7 +30,7 @@
    OWN is checked against the page's real ids by test/home_page_check.py (every id here exists,
    and every section id is here). */
 (function(){
-  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","phonepad","memsentinel","games","starfighter","houseofcars","tidewall","breakout","bpgames",
+  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","phonepad","memsentinel","games","starfighter","houseofcars","tidewall","shatterbelt","breakout","bpgames",
              "research","engine","bossbench","warship","apps","casement","docs","docs-u2ue","docs-blueprint","docs-loop",
              "docs-research","repos","contact","about"];
   var ALIAS = { projects:"u2ue", resume:"breakout", space:"starfighter", bench:"bossbench", manual:"u2ue-chapters", documentation:"docs" };
@@ -396,6 +396,7 @@ h3 a:hover{color:var(--accent)}
           <li class="leaf"><a class="row" href="#starfighter"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Star Fighter</span></a></li>
           <li class="leaf"><a class="row" href="#houseofcars"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">House of Cars 3D lot</span></a></li>
           <li class="leaf"><a class="row" href="#tidewall"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Tidewall</span></a></li>
+          <li class="leaf"><a class="row" href="#shatterbelt"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Shatterbelt</span></a></li>
           <li class="leaf"><a class="row" href="#breakout"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Résumé Breakout</span></a></li>
           <li class="leaf"><a class="row" href="#bpgames"><span class="g dot" style="--c:var(--c-games)"></span><span class="l">Blueprint games</span></a></li>
         </ul></li>
@@ -696,6 +697,17 @@ h3 a:hover{color:var(--accent)}
         <p class="more">Join with a phone by scanning the code on the join screen, or play on the keyboard or a gamepad. Its rules were ported from an Unreal Engine game and replayed against it tick for tick.</p>
         <ul class="tags"><li>WebGPU</li><li>Unreal Engine port</li><li>Couch co-op</li></ul>
         <p class="links"><a class="go" href="tidewall/">Play Tidewall</a><a href="phonepad/">PhonePad, the phone controller</a></p>
+      </div>
+    </article>
+    <article id="shatterbelt" class="card" data-node="Shatterbelt">
+      <a class="shot" href="shatterbelt/" tabindex="-1" aria-hidden="true"><img src="thumbs/shatterbelt.jpg" width="640" height="400" loading="lazy" alt=""></a>
+      <div class="body">
+        <p class="meta"><span class="state s-play">Playable</span><span>Runs in the browser</span></p>
+        <h3><a href="shatterbelt/">Shatterbelt</a></h3>
+        <p class="line">A 3D belt shooter, built as my answer to an interview question: design the classes and the main loop.</p>
+        <p class="more">Every hit splits a rock one size down, hunters aim better as your score climbs, and a game replays exactly from its seed and its inputs. The page shows the class diagram, read from the code, and the tests that hold it.</p>
+        <ul class="tags"><li>three.js</li><li>Game architecture</li><li>Tested in Node</li></ul>
+        <p class="links"><a class="go" href="shatterbelt/">Play Shatterbelt</a><a href="shatterbelt/#built">How it is built</a></p>
       </div>
     </article>
     <article id="breakout" class="card" data-node="Résumé Breakout">

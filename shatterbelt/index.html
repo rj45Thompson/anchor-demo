@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shatterbelt</title>
+<meta name="description" content="Shatterbelt, a 3D asteroid-belt shooter that runs in the browser, built as an answer to an interview question: design the classes and the main loop. The rules, the tests and the class diagram are all on the page.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Shatterbelt: a belt shooter, and the design behind it">
+<meta property="og:description" content="Play it in the browser, then read the classes, the main loop and the tests that check them.">
+<meta property="og:image" content="https://rj45thompson.github.io/anchor-demo/thumbs/shatterbelt.jpg">
+<meta name="theme-color" content="#0B1219">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B1219'/%3E%3Cpath d='M50 18 L72 78 L50 66 L28 78 Z' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#0B1219;--panel:#121C26;--panel2:#16222E;--line:#2E4052;--well:#0E1720;
+  --fg:#F4F2EC;--soft:#C9D3DC;--muted:#A9B7C4;--accent:#F08A3C;--blue:#7FB2E5;--green:#47D1A0;--amber:#F7C873;--red:#FF6A4A;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--head:'Space Grotesk',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15.5px/1.62 var(--sans);font-variant-numeric:tabular-nums}
+a{color:var(--blue)}
+code,kbd{font-family:var(--mono);font-size:.88em;background:var(--well);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--fg)}
+kbd{border-bottom-width:2px;white-space:nowrap}
+
+/* the site's top bar */
+.sitebar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:10px 16px;border-bottom:1px solid var(--line);background:rgba(11,18,25,.92);font-size:14px}
+.sitebar a{color:var(--muted);text-decoration:none}
+.sitebar a:hover{color:var(--fg)}
+.sitebar .brand{font:700 15px var(--head);color:var(--fg);letter-spacing:.02em}
+.sitebar .sep{width:1px;height:16px;background:var(--line)}
+
+main{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+.intro{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 18px;margin:0 0 12px}
+h1{font:700 clamp(26px,4vw,34px)/1.1 var(--head);margin:0;letter-spacing:-.01em}
+h1 b{color:var(--accent)}
+.lede{color:var(--soft);font-size:15.5px;margin:0;max-width:760px}
+h2{font:650 clamp(22px,3vw,28px)/1.2 var(--head);margin:58px 0 10px;scroll-margin-top:16px}
+h2 .n{display:block;font:600 12.5px var(--mono);color:var(--accent);letter-spacing:.08em;margin-bottom:6px}
+h3{font:600 17px/1.3 var(--head);margin:26px 0 6px}
+p,li{color:var(--soft)}
+p{margin:0 0 12px;max-width:780px}
+section{min-width:0}
+
+/* ---- the game ---- */
+#stage{position:relative;width:100%;aspect-ratio:16/10;max-height:calc(100svh - 168px);min-height:300px;background:#02040a;border:1px solid var(--line);border-radius:14px;overflow:hidden;outline:none;touch-action:none;user-select:none;-webkit-user-select:none}
+#stage:fullscreen{max-height:none;border-radius:0;border:0}
+#canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.pop{position:absolute;left:0;top:0;font:700 15px var(--head);color:var(--amber);text-shadow:0 0 8px rgba(0,0,0,.9),0 0 3px #000;white-space:nowrap}
+.pop.big{font-size:20px;color:var(--green)}
+#hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;padding:12px 16px;pointer-events:none;font-family:var(--head);text-shadow:0 1px 6px rgba(0,0,0,.85)}
+#hud .lbl{display:block;font:600 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#hud .big{display:block;font-size:26px;font-weight:700;line-height:1.05}
+#hud .mid{text-align:center}
+#hud .right{text-align:right}
+#hud .sub{font:500 12.5px var(--mono);color:var(--muted)}
+#ships{display:flex;gap:6px;justify-content:flex-end;min-height:20px;margin-top:4px}
+#ships i{width:14px;height:18px;background:var(--accent);clip-path:polygon(50% 0,100% 100%,50% 78%,0 100%);display:block}
+#banner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.96);font:700 clamp(26px,5vw,44px) var(--head);letter-spacing:.06em;color:var(--fg);text-shadow:0 0 18px rgba(240,138,60,.65),0 2px 8px #000;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s;white-space:nowrap}
+#banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;background:radial-gradient(ellipse at center,rgba(5,9,16,.72),rgba(5,9,16,.25) 70%)}
+.screen[hidden]{display:none}
+.screen h2{margin:0 0 4px;font:700 clamp(34px,7vw,68px)/1 var(--head);letter-spacing:.08em;text-shadow:0 0 30px rgba(240,138,60,.45)}
+.screen h2 span{color:var(--accent)}
+.screen p{color:var(--soft);margin:6px 0;max-width:520px}
+.screen .score{font:700 clamp(30px,6vw,52px)/1.1 var(--head);color:var(--fg)}
+.screen .small{font-size:13.5px;color:var(--muted)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:14px 0 6px}
+button{font:600 15px var(--sans);color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:10px 20px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.go{background:var(--accent);border-color:var(--accent);color:#1a0d02}
+#replaying{justify-content:flex-start;background:none;pointer-events:none}
+#replaying .tag{pointer-events:auto;display:flex;align-items:center;gap:12px;background:rgba(11,18,25,.85);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 16px;margin-top:56px;font:600 13px var(--mono);letter-spacing:.06em;color:var(--amber)}
+#replaying button{padding:6px 14px;font-size:13px}
+#loading p{font:600 15px var(--mono);color:var(--muted)}
+#stage[data-failed] #loading p{color:var(--red)}
+
+/* touch buttons, shown on touch screens during play */
+.touchpad{position:absolute;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:10px max(10px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));pointer-events:none}
+#stage.touch[data-mode="playing"] .touchpad{display:flex}
+.pad{display:grid;gap:10px;pointer-events:auto}
+.pad.left{grid-template-columns:64px 64px;grid-template-areas:"thrust thrust" "left right"}
+.pad.right{grid-template-columns:64px 78px;align-items:end}
+.pad button{width:64px;height:64px;padding:0;border-radius:50%;background:rgba(18,28,38,.55);border:1px solid rgba(201,211,220,.35);color:var(--fg);font:700 13px var(--head);touch-action:none}
+.pad button.down{background:rgba(240,138,60,.45);border-color:var(--accent)}
+.pad [data-input="Thrust"]{grid-area:thrust;width:100%;border-radius:32px}
+.pad [data-input="Left"]{grid-area:left}.pad [data-input="Right"]{grid-area:right}
+.pad [data-input="Fire"]{width:78px;height:78px;background:rgba(240,138,60,.3)}
+.pad [data-input="Hyperspace"]{width:56px;height:56px;font-size:11.5px}
+
+.gamebar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:10px 0 0}
+.gamebar button{font-size:13.5px;padding:7px 14px}
+.gamebar .hint{font-size:13.5px;color:var(--muted);margin:0 0 0 auto}
+#soundNote{flex-basis:100%;font-size:13px;color:var(--amber);margin:0}
+#soundNote:empty{display:none}
+
+/* ---- reading sections ---- */
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:14px;margin-top:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;min-width:0}
+.card h3{margin:0 0 8px}
+dl.k{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;margin:0;font-size:14.5px}
+dl.k dt{color:var(--fg)}
+dl.k dd{margin:0;color:var(--soft)}
+blockquote{margin:12px 0 16px;padding:14px 20px;border-left:3px solid var(--accent);background:var(--panel);border-radius:0 12px 12px 0;max-width:780px;font:500 18px/1.5 var(--head);color:var(--fg)}
+blockquote cite{display:block;margin-top:6px;font:400 13.5px var(--sans);color:var(--muted)}
+.diagram{overflow-x:auto;background:var(--well);border:1px solid var(--line);border-radius:12px;padding:8px;margin:12px 0}
+svg.uml{display:block;width:100%;min-width:900px;height:auto;font:12px var(--mono)}
+.uml rect{fill:var(--panel);stroke:#3a5068;stroke-width:1}
+.uml line{stroke:var(--line)}
+.uml .name{fill:var(--fg);font:600 14px var(--head)}
+.uml .mem{fill:var(--soft)}
+.uml .sec{fill:var(--accent);font-weight:600}
+.uml .inh{stroke:var(--blue);fill:none;stroke-width:1.5}
+.uml .head{fill:var(--well);stroke:var(--blue);stroke-width:1.5}
+.uml .fn rect{stroke-dasharray:4 3}
+.cap{font-size:13.5px;color:var(--muted);max-width:820px}
+pre.code{font:13px/1.55 var(--mono);background:#070b10;border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;color:var(--soft);margin:10px 0 14px;max-width:100%}
+ol.steps{max-width:820px;padding-left:22px}
+ol.steps li{margin:6px 0}
+ul.why{max-width:820px;padding-left:20px}
+ul.why li{margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td code{white-space:nowrap}
+.tablewrap{overflow-x:auto;max-width:100%}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:14px 0}
+.stat div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.stat b{display:block;font:700 26px/1.15 var(--head);color:var(--fg)}
+.stat span{font-size:13.5px;color:var(--muted)}
+.ok,.stat b.ok{color:var(--green)}.bad,.stat b.bad{color:var(--red)}
+#checked td:first-child{width:28%;min-width:170px}
+details{max-width:860px;margin:8px 0}
+details summary{cursor:pointer;color:var(--blue)}
+details ol{columns:2 340px;font-size:14px;padding-left:22px}
+footer{max-width:1180px;margin:40px auto 0;padding:18px 16px 40px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+
+@media (max-width:700px){
+  main{padding-top:12px}
+  #stage{aspect-ratio:auto;height:calc(100svh - 160px);min-height:430px;max-height:800px;width:calc(100% + 32px);margin:0 -16px;border-radius:0;border-left:0;border-right:0}
+  #hud{padding:8px 12px}
+  #hud .big{font-size:21px}
+  .gamebar .hint{display:none}
+}
+</style>
+</head>
+<body>
+<nav class="sitebar" aria-label="Shatterbelt"><a class="brand" href="./">Shatterbelt</a><span class="sep"></span><a href="#play">Play</a><a href="#controls">Controls</a><a href="#question">The question</a><a href="#built">How it is built</a><a href="#checked">How it is checked</a><a href="#credits">Credits</a></nav>
+<main>
+<header class="intro"><h1>Shatter<b>belt</b></h1>
+<p class="lede">Break the rocks before they break you. Every hit splits a rock into two smaller, faster pieces.</p></header>
+
+<section id="play" aria-label="The game">
+  <div id="stage" tabindex="-1" data-mode="loading">
+    <canvas id="canvas" aria-label="Shatterbelt game view"></canvas>
+    <div id="labels" aria-hidden="true"></div>
+    <div id="hud" hidden>
+      <div><span class="lbl">Score</span><span class="big" id="score">0</span><span class="sub">best <span id="best">0</span></span></div>
+      <div class="mid"><span class="lbl">Wave</span><span class="big" id="wave">1</span></div>
+      <div class="right"><span class="lbl">Ships</span><div id="ships" role="img" aria-label="0 spare ships"></div></div>
+    </div>
+    <div id="banner" aria-live="polite"></div>
+
+    <div class="screen" id="loading"><p id="loadingText">Loading the belt</p></div>
+    <div class="screen" id="title" hidden>
+      <h2>SHATTER<span>BELT</span></h2>
+      <p>Large rocks break into medium ones, medium into small, small into dust. Hunters come for you as the score climbs.</p>
+      <div class="btns"><button class="go" id="playBtn">Play</button></div>
+      <p class="small" id="titleHint"></p>
+      <p class="small" id="titleBest"></p>
+    </div>
+    <div class="screen" id="paused" hidden>
+      <h2>Paused</h2>
+      <p class="small">P or Esc to carry on.</p>
+      <div class="btns"><button class="go" id="resumeBtn">Resume</button><button id="restartBtn">Start again</button></div>
+    </div>
+    <div class="screen" id="over" hidden>
+      <h2>Game over</h2>
+      <p class="score" id="overScore">0</p>
+      <p id="overBest"></p>
+      <p class="small" id="overWave"></p>
+      <div class="btns"><button class="go" id="againBtn">Play again</button><button id="replayBtn">Watch the replay</button></div>
+      <p class="small" id="replayResult"></p>
+    </div>
+    <div class="screen" id="replaying" hidden>
+      <div class="tag">REPLAY, FROM THE SEED AND YOUR INPUTS <button id="stopReplayBtn">Stop</button></div>
+    </div>
+
+    <div class="touchpad">
+      <div class="pad left"><button data-input="Thrust" aria-label="Thrust">Thrust</button><button data-input="Left" aria-label="Turn left">&#9664;</button><button data-input="Right" aria-label="Turn right">&#9654;</button></div>
+      <div class="pad right"><button data-input="Hyperspace" aria-label="Hyperspace">Jump</button><button data-input="Fire" aria-label="Fire">Fire</button></div>
+    </div>
+  </div>
+  <div class="gamebar">
+    <button id="pauseBtn">Pause</button><button id="muteBtn" aria-pressed="false">Sound on</button><button id="musicBtn" aria-pressed="false">Music on</button><button id="fullBtn">Full screen</button>
+    <p class="hint">Arrows or WASD to fly, Space to fire, Shift to jump, P to pause.</p>
+    <p id="soundNote" role="status"></p>
+  </div>
+</section>
+
+<section id="controls">
+  <h2><span class="n">CONTROLS</span>How to fly</h2>
+  <div class="keys">
+    <div class="card"><h3>Keyboard</h3><dl class="k">
+      <dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>A</kbd> <kbd>D</kbd></dt><dd>Turn</dd>
+      <dt><kbd>&uarr;</kbd> or <kbd>W</kbd></dt><dd>Thrust. You keep drifting after you let go.</dd>
+      <dt><kbd>Space</kbd></dt><dd>Fire. Hold it to keep firing. Five shots can be in flight at once.</dd>
+      <dt><kbd>Shift</kbd> or <kbd>H</kbd></dt><dd>Hyperspace jump</dd>
+      <dt><kbd>P</kbd> or <kbd>Esc</kbd></dt><dd>Pause</dd>
+      <dt><kbd>Enter</kbd></dt><dd>Start, or play again</dd>
+      <dt><kbd>M</kbd> / <kbd>N</kbd></dt><dd>Sound / music on or off</dd>
+    </dl></div>
+    <div class="card"><h3>Gamepad</h3><dl class="k">
+      <dt>Left stick or d-pad</dt><dd>Turn, and up to thrust</dd>
+      <dt>Right trigger</dt><dd>Thrust</dd>
+      <dt>A</dt><dd>Fire, and start</dd>
+      <dt>B</dt><dd>Hyperspace jump</dd>
+      <dt>Start</dt><dd>Pause</dd>
+    </dl></div>
+    <div class="card"><h3>Phone or tablet</h3><dl class="k">
+      <dt>Left thumb</dt><dd>Turn left, turn right, and Thrust above them</dd>
+      <dt>Right thumb</dt><dd>Fire, and Jump for hyperspace</dd>
+      <dt>Upright</dt><dd>Holding the phone upright gives a taller field.</dd>
+    </dl></div>
+    <div class="card"><h3>The rules</h3><dl class="k">
+      <dt>Points</dt><dd>Large rock 25, medium 60, small 120. Big hunter 250, small hunter 1,000.</dd>
+      <dt>Ships</dt><dd>Three to start, and one more every 15,000 points.</dd>
+      <dt>Hunters</dt><dd>The big one fires anywhere. The small one aims at you, and aims better as your score rises.</dd>
+      <dt>Hyperspace</dt><dd>You land anywhere, at rest, with no shield. One jump in eight fails.</dd>
+      <dt>Edges</dt><dd>Fly off one edge and you come back on the other. So do rocks and shots.</dd>
+    </dl></div>
+  </div>
+</section>
+
+<section id="question">
+  <h2><span class="n">THE INTERVIEW QUESTION</span>What this answers</h2>
+  <p>I was asked this in a job interview:</p>
+  <blockquote>"Asteroids: a spaceship shoots; rocks come in large, medium and small and get smaller each hit. Design the classes and the main loop."<cite>The question, as it was put to me</cite></blockquote>
+  <p>This page is my answer, built. It is an original game in that genre, with its own rules and numbers. The design is below, read straight out of the code, and the tests that hold the code to it are below that.</p>
+</section>
+
+<section id="built">
+  <h2><span class="n">HOW IT IS BUILT</span>The classes</h2>
+  <p>All the rules live in one file, <code>core.js</code>, with no browser code in it. The same file runs the game on this page and the tests in Node.</p>
+  <ul class="why">
+    <li><b>Entity</b> is anything that moves and can be hit: a position, a velocity, a facing, a spin, a radius and whether it is alive.</li>
+    <li><b>Ship</b>, <b>Bullet</b>, <b>Rock</b> and <b>Hunter</b> are entities with their own rules. A rock knows its size, its points and the size its pieces will be. A hunter knows where to aim.</li>
+    <li><b>Pool</b> makes a fixed number of objects when the game starts, so play never allocates. It also holds every add and every remove until <code>flush()</code>, so no loop ever sees its list change under it.</li>
+    <li><b>Field</b> is the play area. Its edges wrap, so it also knows the shortest way from one point to another, through an edge when that is shorter. Collisions and aiming both use it.</li>
+    <li><b>Game</b> owns everything and runs one fixed step at a time. <b>FixedTimestep</b> turns real time into those steps. <b>Random</b> is seeded and <b>InputLog</b> keeps one byte of input per step, so a whole game replays from the two.</li>
+  </ul>
+  <div class="diagram"><!--gen:diagram--><svg class="uml" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 1158" width="980" height="1158" role="img" aria-label="Class diagram of core.js: Random, Field, Entity, Ship, Bullet, Rock, Hunter, Pool, FixedTimestep, InputLog, Game"><path class="inh" d="M490 638 V649.4 M158.5 649.4 H807"/><path class="inh" d="M158.5 671 V649.4"/><path class="inh" d="M367.5 671 V649.4"/><path class="inh" d="M580 671 V649.4"/><path class="inh" d="M807 671 V649.4"/><path class="head" d="M490 626 l-8 12 h16 z"/><g class="cls"><rect x="21" y="16" width="938" height="456" rx="8"/><text class="name" x="490" y="36" text-anchor="middle">Game</text><line x1="21" y1="46" x2="959" y2="46"/><text class="mem" x="31" y="66" xml:space="preserve">seed, rng: Random, field: Field, ship: Ship, bullets: Pool&lt;Bullet&gt;, rocks: Pool&lt;Rock&gt;, hunters: Pool&lt;Hunter&gt;, centre, score,</text><text class="mem" x="31" y="83" xml:space="preserve">ships, nextExtraShipAt, wave, time, steps, over, waveTimer, hunterTimer, respawnTimer, lastInput, events</text><line x1="21" y1="87" x2="959" y2="87"/><text class="sec" x="31" y="107" xml:space="preserve">the main loop</text><text class="mem" x="31" y="124" xml:space="preserve">step(input)</text><line x1="21" y1="128" x2="959" y2="128"/><text class="sec" x="31" y="148" xml:space="preserve">1. input</text><text class="mem" x="31" y="165" xml:space="preserve">handleInput(input), fireShipBullet()</text><line x1="21" y1="169" x2="959" y2="169"/><text class="sec" x="31" y="189" xml:space="preserve">2. update and integrate</text><text class="mem" x="31" y="206" xml:space="preserve">update(dt), updateShip(dt), arriveFromHyperspace(), updateHunter(hunter, dt), fireHunterBullet(hunter), updateWaves(dt),</text><text class="mem" x="31" y="223" xml:space="preserve">startWave(), farFromShip(), spawnRock(size, x, y, vx, vy), updateHunterArrivals(dt), updateRespawn(dt), centreIsClear(),</text><text class="mem" x="31" y="240" xml:space="preserve">spawnShip()</text><line x1="21" y1="244" x2="959" y2="244"/><text class="sec" x="31" y="264" xml:space="preserve">3. wrap</text><text class="mem" x="31" y="281" xml:space="preserve">wrapAll()</text><line x1="21" y1="285" x2="959" y2="285"/><text class="sec" x="31" y="305" xml:space="preserve">4. collide</text><text class="mem" x="31" y="322" xml:space="preserve">collide(), firstRockTouching(entity), firstHunterTouching(entity), breakRock(rock, byShip), destroyHunter(hunter, byShip),</text><text class="mem" x="31" y="339" xml:space="preserve">destroyShip(), addScore(points)</text><line x1="21" y1="343" x2="959" y2="343"/><text class="sec" x="31" y="363" xml:space="preserve">5. spawn and destroy</text><text class="mem" x="31" y="380" xml:space="preserve">flush()</text><line x1="21" y1="384" x2="959" y2="384"/><text class="sec" x="31" y="404" xml:space="preserve">6. events</text><text class="mem" x="31" y="421" xml:space="preserve">emit(type, at, points)</text><line x1="21" y1="425" x2="959" y2="425"/><text class="sec" x="31" y="445" xml:space="preserve">replay and checks</text><text class="mem" x="31" y="462" xml:space="preserve">snapshot()</text></g><g class="cls"><rect x="376" y="508" width="228" height="118" rx="8"/><text class="name" x="490" y="528" text-anchor="middle">Entity</text><line x1="376" y1="538" x2="604" y2="538"/><text class="mem" x="386" y="558" xml:space="preserve">pos, vel, angle, angularVel,</text><text class="mem" x="386" y="575" xml:space="preserve">radius, alive, prev, /speed</text><line x1="376" y1="579" x2="604" y2="579"/><text class="mem" x="386" y="599" xml:space="preserve">place(x, y, vx, vy, angle),</text><text class="mem" x="386" y="616" xml:space="preserve">integrate(dt)</text></g><g class="cls"><rect x="63" y="671" width="191" height="135" rx="8"/><text class="name" x="158.5" y="691" text-anchor="middle">Ship</text><line x1="63" y1="701" x2="254" y2="701"/><text class="mem" x="73" y="721" xml:space="preserve">thrusting, fireTimer,</text><text class="mem" x="73" y="738" xml:space="preserve">invulnerable, jumping,</text><text class="mem" x="73" y="755" xml:space="preserve">jumpCooldown, /canBeHit</text><line x1="63" y1="759" x2="254" y2="759"/><text class="mem" x="73" y="779" xml:space="preserve">steer(input, dt),</text><text class="mem" x="73" y="796" xml:space="preserve">tickTimers(dt)</text></g><g class="cls"><rect x="272" y="671" width="191" height="135" rx="8"/><text class="name" x="367.5" y="691" text-anchor="middle">Bullet</text><line x1="272" y1="701" x2="463" y2="701"/><text class="mem" x="282" y="721" xml:space="preserve">fromShip, lifetime</text><line x1="272" y1="725" x2="463" y2="725"/><text class="mem" x="282" y="745" xml:space="preserve">launch(fromShip, x, y,</text><text class="mem" x="282" y="762" xml:space="preserve">  angle, speed, baseVx,</text><text class="mem" x="282" y="779" xml:space="preserve">  baseVy, lifetime),</text><text class="mem" x="282" y="796" xml:space="preserve">age(dt)</text></g><g class="cls"><rect x="481" y="671" width="198" height="118" rx="8"/><text class="name" x="580" y="691" text-anchor="middle">Rock</text><line x1="481" y1="701" x2="679" y2="701"/><text class="mem" x="491" y="721" xml:space="preserve">size, look, /score,</text><text class="mem" x="491" y="738" xml:space="preserve">/smaller</text><line x1="481" y1="742" x2="679" y2="742"/><text class="mem" x="491" y="762" xml:space="preserve">init(size, x, y, vx, vy,</text><text class="mem" x="491" y="779" xml:space="preserve">  spin, look)</text></g><g class="cls"><rect x="697" y="671" width="220" height="169" rx="8"/><text class="name" x="807" y="691" text-anchor="middle">Hunter</text><line x1="697" y1="701" x2="917" y2="701"/><text class="mem" x="707" y="721" xml:space="preserve">kind, fireTimer, turnTimer,</text><text class="mem" x="707" y="738" xml:space="preserve">travelLeft, age, /score</text><line x1="697" y1="742" x2="917" y2="742"/><text class="mem" x="707" y="762" xml:space="preserve">init(kind, x, y, direction,</text><text class="mem" x="707" y="779" xml:space="preserve">  travel, rng),</text><text class="mem" x="707" y="796" xml:space="preserve">shotAngle(target, field,</text><text class="mem" x="707" y="813" xml:space="preserve">  rng, score),</text><text class="mem" x="707" y="830" xml:space="preserve">weave(dt, rng)</text></g><g class="cls"><rect x="56" y="876" width="198" height="118" rx="8"/><text class="name" x="155" y="896" text-anchor="middle">Random</text><line x1="56" y1="906" x2="254" y2="906"/><text class="mem" x="66" y="926" xml:space="preserve">state</text><line x1="56" y1="930" x2="254" y2="930"/><text class="mem" x="66" y="950" xml:space="preserve">next(), range(min, max),</text><text class="mem" x="66" y="967" xml:space="preserve">int(count), oneIn(n),</text><text class="mem" x="66" y="984" xml:space="preserve">sign()</text></g><g class="cls"><rect x="272" y="876" width="191" height="135" rx="8"/><text class="name" x="367.5" y="896" text-anchor="middle">Field</text><line x1="272" y1="906" x2="463" y2="906"/><text class="mem" x="282" y="926" xml:space="preserve">width, height</text><line x1="272" y1="930" x2="463" y2="930"/><text class="mem" x="282" y="950" xml:space="preserve">wrap(entity), dx(a, b),</text><text class="mem" x="282" y="967" xml:space="preserve">dy(a, b),</text><text class="mem" x="282" y="984" xml:space="preserve">distanceSquared(a, b),</text><text class="mem" x="282" y="1001" xml:space="preserve">overlaps(a, b)</text></g><g class="cls"><rect x="481" y="876" width="228" height="135" rx="8"/><text class="name" x="595" y="896" text-anchor="middle">Pool</text><line x1="481" y1="906" x2="709" y2="906"/><text class="mem" x="491" y="926" xml:space="preserve">capacity, slots, free, live,</text><text class="mem" x="491" y="943" xml:space="preserve">born, dying, /inUse</text><line x1="481" y1="947" x2="709" y2="947"/><text class="mem" x="491" y="967" xml:space="preserve">acquire(), release(item),</text><text class="mem" x="491" y="984" xml:space="preserve">flush(), countAlive(test),</text><text class="mem" x="491" y="1001" xml:space="preserve">removeFromLive(item)</text></g><g class="cls"><rect x="727" y="876" width="198" height="101" rx="8"/><text class="name" x="826" y="896" text-anchor="middle">FixedTimestep</text><line x1="727" y1="906" x2="925" y2="906"/><text class="mem" x="737" y="926" xml:space="preserve">step, maxStepsPerFrame,</text><text class="mem" x="737" y="943" xml:space="preserve">accumulator</text><line x1="727" y1="947" x2="925" y2="947"/><text class="mem" x="737" y="967" xml:space="preserve">advance(seconds, onStep)</text></g><g class="cls"><rect x="269" y="1029" width="205" height="84" rx="8"/><text class="name" x="371.5" y="1049" text-anchor="middle">InputLog</text><line x1="269" y1="1059" x2="474" y2="1059"/><text class="mem" x="279" y="1079" xml:space="preserve">bytes: Uint8Array, length</text><line x1="269" y1="1083" x2="474" y2="1083"/><text class="mem" x="279" y="1103" xml:space="preserve">record(input), at(step)</text></g><g class="cls fn"><rect x="492" y="1029" width="220" height="111" rx="8"/><text class="name" x="602" y="1049" text-anchor="middle">functions in core.js</text><line x1="492" y1="1059" x2="712" y2="1059"/><text class="mem" x="502" y="1079" xml:space="preserve">rocksForWave(wave)</text><text class="mem" x="502" y="1096" xml:space="preserve">aimError(score)</text><text class="mem" x="502" y="1113" xml:space="preserve">smallHunterChance(score)</text><text class="mem" x="502" y="1130" xml:space="preserve">replay(options, log, steps)</text></g></svg><!--/gen:diagram--></div>
+  <p class="cap">Drawn by <code>tools/class_diagram.js</code>, which reads the class, field and method names out of <code>core.js</code>. A test fails if this picture and the code disagree. Arrows point from a class to the class it extends; a field's type names the class it holds.</p>
+
+  <h3>The main loop</h3>
+  <p>One step of the game, as it is written in <code>Game.step()</code>:</p>
+  <!--gen:step--><pre class="code"><code>step(input = 0) {
+  this.events.length = 0;
+  this.time += STEP;
+  this.steps += 1;
+  this.handleInput(input); // 1. input: steer, fire, hyperspace
+  this.update(STEP);       // 2. update and integrate: move everything, run the timers
+  this.wrapAll();          // 3. screen wrap
+  this.collide();          // 4. collide: circle against circle; hits only mark things dead
+  this.flush();            // 5. spawn and destroy: the only place the world's lists change
+  return this.events;      // 6. events out, for the renderer and the sound
+}</code></pre><!--/gen:step-->
+  <ol class="steps">
+    <li><b>Input</b> steers the ship, fires and jumps. Hyperspace takes a fresh press, not a held key.</li>
+    <li><b>Update and integrate</b> moves everything by its velocity and runs the timers: shot lifetimes, waves, hunter arrivals, the respawn.</li>
+    <li><b>Wrap</b> brings anything that left one edge back in at the opposite one.</li>
+    <li><b>Collide</b> tests circle against circle, the short way round the field. A hit marks things dead at once, so a rock hit by two shots in one step breaks once, but nothing is removed yet.</li>
+    <li><b>Spawn and destroy</b> happen together in <code>flush()</code>, after every loop over the world has finished. A broken rock's two pieces join here, one size down, at its position, turned apart and a little faster.</li>
+    <li><b>Events</b> go out: what broke, what fired, what jumped. The renderer and the sound read them. The rules never do.</li>
+  </ol>
+  <p>Around it, <code>main.js</code> runs the frame loop: real time goes into <code>FixedTimestep</code>, which calls <code>step()</code> at exactly 60 Hz however fast the screen draws, and the time left over is used only to draw smoothly between two steps.</p>
+
+  <h3>Why it is shaped this way</h3>
+  <ul class="why">
+    <li><b>Destroy later, never during a loop.</b> Removing an item from a list while walking it skips the next item. That bug is real and easy to write, so the pool makes it impossible, and a test plants it to prove the tests notice.</li>
+    <li><b>A fixed step.</b> The same input gives the same game on a 60 Hz laptop and a 144 Hz monitor, and physics never takes a huge step after a stall.</li>
+    <li><b>A seeded generator and an input log.</b> A game is its seed plus one byte per step. Play a game and press "Watch the replay": the page plays it again from those two and checks it ends in exactly the same state.</li>
+    <li><b>Rules out, events in.</b> The rules know nothing about three.js or sound. Drawing reads the state and the events, so the rules can be tested in Node, and a different renderer could be dropped in.</li>
+  </ul>
+
+  <h3>The files</h3>
+  <div class="tablewrap"><!--gen:files--><table><thead><tr><th>File</th><th>Lines</th><th>What it is</th></tr></thead><tbody><tr><td><code>core.js</code></td><td>810</td><td>Shatterbelt: the rules of the game.</td></tr><tr><td><code>main.js</code></td><td>272</td><td>the page around the game. It owns the frame loop, the menus, the HUD and the best score.</td></tr><tr><td><code>render.js</code></td><td>750</td><td>draws a Game with three.js (r128, the global THREE that index.html loads).</td></tr><tr><td><code>input.js</code></td><td>106</td><td>keyboard, gamepad and touch, turned into one byte of Input bits per game step.</td></tr><tr><td><code>audio.js</code></td><td>108</td><td>plays the game's events as sound, with Web Audio.</td></tr><tr><td><code>test/core.test.js</code></td><td>467</td><td>The rules of Shatterbelt, checked in node. Run from the shatterbelt folder:   node --test</td></tr><tr><td><code>test/diagram.test.js</code></td><td>38</td><td>The page's class diagram and main loop are read out of core.js. These fail when the page and the</td></tr><tr><td><code>tools/class_diagram.js</code></td><td>255</td><td>Reads core.js and writes two things into index.html: a class diagram (inline SVG) and the body of</td></tr><tr><td><code>tools/convert_models.js</code></td><td>116</td><td>Converts Star Fighter's FBX models into one small binary file the game loads directly.</td></tr><tr><td><code>tools/play_check.py</code></td><td>227</td><td>plays Shatterbelt in headless Chromium the way a player would, and fails on anything wrong.</td></tr><tr><td><code>tools/proof.js</code></td><td>150</td><td>Runs the tests, then plants bugs one at a time to show the tests can fail, and writes what happened</td></tr></tbody></table><p class="cap">The whole folder is 2.0 MB with its models, textures and sounds. The sky, planets, nebula, rock surface and music (4.4 MB) are shared with R&eacute;sum&eacute; Breakout and loaded from its folder.</p><!--/gen:files--></div>
+</section>
+
+<section id="checked">
+  <h2><span class="n">HOW IT IS CHECKED</span>The tests</h2>
+  <p>The rules are tested in Node with its built-in runner: <code>node --test</code> in the <code>shatterbelt</code> folder. The numbers below were written by <code>tools/proof.js</code> from a real run.</p>
+  <!--gen:tests--><div class="stat"><div><b>32</b><span>tests</span></div><div><b class="ok">32</b><span>passed</span></div><div><b class="">0</b><span>failed</span></div><div><b>0.4 s</b><span>for the whole run, Node 25.9.0</span></div></div><details><summary>Every test, by name</summary><ol><li>a hit Large rock leaves two Medium rocks at its position, turned apart and a little faster</li><li>a hit Medium rock leaves two Small rocks</li><li>a hit Small rock breaks and leaves nothing</li><li>points by size: Large 25, Medium 60, Small 120, Big hunter 250, Small hunter 1000</li><li>only the ship's shots score: a hunter's shot breaks a rock for no points</li><li>wrap: leaving any of the four edges comes back in at the opposite one</li><li>wrap: a moving rock crosses an edge in the real step, and things touch across an edge</li><li>a shot lives for its lifetime, then is gone</li><li>the ship never has more than its cap of live shots, however long fire is held</li><li>pool: never grows past its capacity, and reuses a freed slot</li><li>pool: releasing while walking the live list visits every item exactly once</li><li>deferred destroy in the game: three shots on three rocks in one step break all three</li><li>deferred destroy in the game: two shots on one rock break it once</li><li>an extra ship at every 15,000 points, given exactly once</li><li>respawn waits for a clear centre, then comes back shielded</li><li>respawn: never before the delay, even on an empty field</li><li>a freshly respawned ship survives a rock until its shield runs out</li><li>game over when the last ship is lost, and no ship comes back</li><li>hyperspace moves the ship, and about one jump in eight fails</li><li>waves grow: 3 Large rocks, one more each wave, at most 11</li><li>a new wave never starts a rock on top of the ship</li><li>a Small hunter aims at the ship, the short way round the field</li><li>in the game, a Small hunter's shot flies toward the ship</li><li>a hunter's aim gets better as the score rises; the Big one fires anywhere</li><li>a ship shot destroys a hunter; a hunter shot destroys the ship</li><li>fixed timestep: uneven frames become 60 steps a second; a stall is not raced through</li><li>determinism: the same seed and the same input log give the same game after 5,000 steps</li><li>the input log keeps every step, past its first block</li><li>the class diagram on the page is the one core.js gives today</li><li>the main loop on the page is Game.step() as written</li><li>the diagram names every class core.js exports, and every Game method</li><li>the reader follows the code: renaming a method changes the diagram</li></ol></details><!--/gen:tests-->
+  <h3>Can the tests fail?</h3>
+  <p>A test that has only ever passed proves little. <code>tools/proof.js</code> copies the code to a scratch folder, plants one bug at a time, runs the tests against it and records which tests caught it. The real code is never touched.</p>
+  <!--gen:plants--><div class="tablewrap"><table><thead><tr><th>Planted bug</th><th>Tests that failed</th></tr></thead><tbody><tr><td><b>Small rocks split too</b><br>a Small rock's pieces are Small rocks</td><td><span class="ok">caught</span> by 2 of 32: a hit Small rock breaks and leaves nothing; an extra ship at every 15,000 points, given exactly once</td></tr><tr><td><b>Pieces are not turned apart</b><br>both pieces fly along the parent's line</td><td><span class="ok">caught</span> by 1 of 32: a hit Large rock leaves two Medium rocks at its position, turned apart and a little faster</td></tr><tr><td><b>Destroy during iteration</b><br>release() removes the item from the live list at once, mid-loop</td><td><span class="ok">caught</span> by 8 of 32: a hit Large rock leaves two Medium rocks at its position, turned apart and a little faster; a hit Medium rock leaves two Small rocks; a hit Small rock breaks and leaves nothing; only the ship's shots score: a hunter's shot breaks a rock for no points; pool: releasing while walking the live list visits every item exactly once; deferred destroy in the game: three shots on three rocks in one step break all three; deferred destroy in the game: two shots on one rock break it once; waves grow: 3 Large rocks, one more each wave, at most 11</td></tr><tr><td><b>Wrap forgets the top edge</b><br>leaving through the top no longer comes back at the bottom</td><td><span class="ok">caught</span> by 1 of 32: wrap: leaving any of the four edges comes back in at the opposite one</td></tr><tr><td><b>Extra ship on every score past 15,000</b><br>the threshold is checked, but never moves on</td><td><span class="ok">caught</span> by 1 of 32: an extra ship at every 15,000 points, given exactly once</td></tr><tr><td><b>Hunter aims the long way round</b><br>aiming ignores the wrapping edges</td><td><span class="ok">caught</span> by 1 of 32: a Small hunter aims at the ship, the short way round the field</td></tr><tr><td><b>Randomness not from the seed</b><br>the generator is seeded from Math.random()</td><td><span class="ok">caught</span> by 1 of 32: determinism: the same seed and the same input log give the same game after 5,000 steps</td></tr><tr><td><b>A method renamed, the page not updated</b><br>breakRock becomes shatterRock in core.js only</td><td><span class="ok">caught</span> by 2 of 32: the class diagram on the page is the one core.js gives today; the reader follows the code: renaming a method changes the diagram</td></tr></tbody></table></div><!--/gen:plants-->
+  <h3>In a real browser</h3>
+  <p><code>tools/play_check.py</code> opens this page in headless Chromium, plays it with scripted keys, and fails on any console error or a blank picture.</p>
+  <!--gen:play--><div class="stat"><div><b>60 s</b><span>of game time played with scripted keys</span></div><div><b>49</b><span>rocks broken, wave 2 reached</span></div><div><b class="ok">0</b><span>console errors</span></div><div><b class="ok">Yes</b><span>the replay ended in the same state as the game</span></div></div><p class="cap">Measured by <code>tools/play_check.py</code>: 16 of 16 checks passed, including no blank pictures and no sideways scroll at 375 px on an emulated phone (an upright 622 x 1005 field). It drew 60 frames a second in headless Chromium on an NVIDIA GeForce RTX 2080.</p><!--/gen:play-->
+</section>
+
+<section id="credits">
+  <h2><span class="n">CREDITS</span>Who made what</h2>
+  <ul class="why">
+    <li><b>Code and design:</b> RJ Thompson.</li>
+    <li><b>Ship, hunter and rock models, the ship and hunter textures, the sound effects, and the engine, flame and shot sprites:</b> from <a href="https://rj45thompson.github.io/starfighter/">Star Fighter</a>, RJ Thompson's browser space game, which brought them over from his earlier Unity project. The model files record their source as a 2013 project named SpaceShooter.</li>
+    <li><b>The sky, both planets and their normal maps, the nebula, the rock surface and the music:</b> art from RJ Thompson's projects, shared with <a href="../games/resume-arkanoid.html">R&eacute;sum&eacute; Breakout</a> on this site.</li>
+    <li><b><a href="https://threejs.org/">three.js</a></b> r128, MIT licence. The models were converted once with three.js's FBXLoader (MIT) and <a href="https://github.com/101arrowz/fflate">fflate</a> (MIT).</li>
+  </ul>
+</section>
+</main>
+<footer>Shatterbelt is an original game in the asteroid-shooter genre. It is not affiliated with any arcade game or its owners.</footer>
+<script src="../three.min.js"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>
