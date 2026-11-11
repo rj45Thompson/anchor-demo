@@ -179,9 +179,10 @@
   // showcase: one 1,009-node enemy) - each set's data written by view/scene_cli.js, smallest first and the two that play before
   // the ones that do not. A name not listed loads nothing, and the city says its data did not load. A set with a game (its third
   // field) loads the engine under it, view/games/<game>.js, which the page runs on the set's converted graphs (view/run.js reading
-  // them with view/pl.js)
+  // them with view/pl.js). PriorGPT is a set read from JavaScript, not a paste: its data and its game are written by
+  // priorgpt/city_data.mjs, and its game runs the PriorGPT page's own program (the one printed from these graphs)
   window.CITY_SETS = [['pong', 'Pong, the hello world', 'pong'], ['asteroids', 'Asteroid Shooter', 'asteroids'], ['lockon', 'Lock-On System', null],
-                      ['enemyai', 'Antagonist Enemy AI', null]];
+                      ['enemyai', 'Antagonist Enemy AI', null], ['priorgpt', 'PriorGPT, a model on its own graphs', 'priorgpt']];
   (function () {
     var s = new URLSearchParams(location.search).get('set') || window.CITY_SETS[0][0];
     window.CITY_SET = s;

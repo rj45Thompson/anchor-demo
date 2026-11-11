@@ -257,6 +257,15 @@ function ask() {
     lastRun = new Float64Array(graphs.length);
     const t = performance.now();
     const plan = core.Asker.plan(q);
+    if (plan && plan.form.name === 'continue') {
+      // text in no listed form is continued by the writer below, every character traced (UC-PG5 step 3)
+      $('go').disabled = false;
+      box.innerHTML = '<p class="note">Not a question in a listed form, so the model continues it below, each character marked with where the training text holds it.</p>';
+      $('w').value = plan.args[0];
+      $('write').requestSubmit();
+      $('write').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     ranked = undefined;
     if (plan && $('plain').checked && (plan.form.name === 'speaker' || plan.form.name === 'answerer')) {
       ranked = await rankSpeakers(plan.form.name, plan.args, (msg) => { box.innerHTML = '<p class="note">' + esc(msg) + '</p>'; });
@@ -269,14 +278,26 @@ function ask() {
   }, 30);
 }
 
+/** line numbers with each run of neighbours as one range: 19385-19429, 19431 */
+function ranges(ns) {
+  const out = [];
+  for (let i = 0; i < ns.length; i++) {
+    let j = i;
+    while (j + 1 < ns.length && ns[j + 1] === ns[j] + 1) j++;
+    out.push(j > i ? fmt(ns[i]) + '-' + fmt(ns[j]) : fmt(ns[i]));
+    i = j;
+  }
+  return out.join(', ');
+}
+
 function show(a, ms, q) {
   const box = $('answer');
   let html = '<span class="badge ' + a.status + '">' + a.status + '</span>';
-  if (a.value !== null && a.value !== undefined) html += '<span class="value">' + esc(Array.isArray(a.value) ? 'lines ' + a.value.join(', ') : a.value) + '</span>';
+  if (a.value !== null && a.value !== undefined) html += '<span class="value">' + esc(Array.isArray(a.value) ? 'lines ' + ranges(a.value) : a.value) + '</span>';
   if (a.proposal !== undefined && a.proposal !== null && a.status !== 'REFUSED') {
     html += '<p class="proposal">The plain model\'s own answer: <b>' + esc(a.proposal) + '</b>, '
       + (a.confirmed ? '<span class="ok">which the priors back.</span>' : '<span class="bad">which the priors do not back, so it was replaced.</span>') + '</p>';
-  } else if (a.status !== 'REFUSED' && a.status !== 'ABSENT') {
+  } else if (a.status !== 'REFUSED' && a.status !== 'ABSENT' && a.kind !== 'find') {
     html += '<p class="proposal">The plain model was not asked for its own answer (tick the box above to ask it).</p>';
   }
   if (a.alternatives && a.alternatives.length > 1) html += '<p class="proposal">The priors back ' + a.alternatives.length + ' answers: ' + a.alternatives.map(esc).join(' | ') + '; the model ranked them.</p>';

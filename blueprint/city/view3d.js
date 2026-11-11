@@ -1300,7 +1300,8 @@ function nodeLabels(force) {
 // ------------------------------------------------------------------------------------------------ the loop
 const clock = new THREE.Clock();
 const fwd = new THREE.Vector3(), right = new THREE.Vector3();
-$('sub').textContent = D.meta.title + ' by ' + D.meta.author + ' (UE ' + D.meta.ue + ', blueprintue.com) - ' + D.graphs.length + ' graphs, ' + D.graphs.reduce((s, G) => s + G.nodes.length, 0) + ' nodes, ' + D.paths.length + ' paths, ' + D.questions.length + ' questions';
+// a set read from code says what it was read from (meta.from); a set of pastes says its engine and where the pastes are
+$('sub').textContent = D.meta.title + ' by ' + D.meta.author + ' (' + (D.meta.from || 'UE ' + D.meta.ue + ', blueprintue.com') + ') - ' + D.graphs.length + ' graphs, ' + D.graphs.reduce((s, G) => s + G.nodes.length, 0) + ' nodes, ' + D.paths.length + ' paths, ' + D.questions.length + ' questions';
 /** the part of the screen the panels leave the city: open details cover the right side of a wide screen (a sheet over the lower
  *  middle of a narrow one), a running game the left side (the top of a narrow one) */
 function freeRect() {

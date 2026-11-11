@@ -1,6 +1,6 @@
 {
  "new_characters": 55770,
- "ms_to_take_in": 539,
+ "ms_to_take_in": 23,
  "split_at": 55770,
  "probe_line": "Good morrow, neighbour Baptista.",
  "before": {
@@ -14,7 +14,7 @@
  "after": {
   "bits": {
    "modelAlone": 2.2501245676377413,
-   "modelWithPriors": 2.200530155131799,
+   "modelWithPriors": 2.2005301551191843,
    "positions": 55769
   },
   "status": "READ",
