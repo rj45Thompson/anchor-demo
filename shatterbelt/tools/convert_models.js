@@ -1,8 +1,12 @@
 // Converts Star Fighter's FBX models into one small binary file the game loads directly.
 //
-//   node tools/convert_models.js      reads assets/models/*.FBX, writes assets/models/models.json + models.bin
+//   node tools/convert_models.js [starfighter folder]   writes assets/models/models.json + models.bin
 //
-// It parses them with Star Fighter's own loader (lib/fbxloader.js on three.js r128, with fflate), once,
+// The FBX files and their loader stay in Star Fighter's own folder (default ../../starfighter, beside
+// anchor-demo): they are not RJ's own art (see Credits on the page), so only the converted geometry the
+// game needs is published here, never the source files.
+//
+// It parses them with Star Fighter's own loader (its fbxloader.js on three.js r128, with fflate), once,
 // here. Loading the FBX files in the page instead printed 16 warnings and one uncaught error, all about
 // the Photoshop textures the files point at, which the game never uses: render.js gives every model its
 // own textures. So this tool takes geometry only, and says so: textures are not loaded at all.
@@ -16,6 +20,7 @@ import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 
 const HERE = dirname(dirname(fileURLToPath(import.meta.url)));
+const STARFIGHTER = process.argv[2] || join(HERE, '..', '..', 'starfighter');
 const require = createRequire(import.meta.url);
 
 // name: [file, quarter turns about the vertical axis that bring its nose to +x]
@@ -30,16 +35,16 @@ const MODELS = {
 function loadThree() {
   const THREE = require(join(HERE, '..', 'three.min.js'));
   globalThis.THREE = THREE;
-  vm.runInThisContext(readFileSync(join(HERE, 'lib', 'fflate.min.js'), 'utf8')); // sets globalThis.fflate
+  vm.runInThisContext(readFileSync(join(STARFIGHTER, 'fflate.min.js'), 'utf8')); // sets globalThis.fflate
   // Geometry only: a texture request gets an empty texture and nothing is fetched (see the header).
   // FBXLoader still prints a warning for each Photoshop texture a file names; they are expected here.
   THREE.TextureLoader.prototype.load = () => new THREE.Texture();
-  vm.runInThisContext(readFileSync(join(HERE, 'lib', 'fbxloader.js'), 'utf8'));
+  vm.runInThisContext(readFileSync(join(STARFIGHTER, 'fbxloader.js'), 'utf8'));
   return THREE;
 }
 
 function convert(THREE, file, quarterTurns) {
-  const bytes = readFileSync(join(HERE, 'assets', 'models', file));
+  const bytes = readFileSync(join(STARFIGHTER, 'assets', file));
   const group = new THREE.FBXLoader().parse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length), '');
   group.updateMatrixWorld(true);
   const meshes = [];
