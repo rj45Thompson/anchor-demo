@@ -297,7 +297,8 @@ function block(r) {
   const byTests = r.plants.filter(p => p.caughtBy.length).length;
   const byParity = r.plants.filter(p => !p.caughtBy.length && p.parity && p.parity.some(g => g.difference)).length;
 
-  const sideBySide = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:0 14px">` +
+  // two columns only where a whole line of either file fits (play_check: 'every code block on the page fits its box')
+  const sideBySide = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,700px),1fr));gap:0 14px">` +
     `<div><p class="cap">core.js</p><pre class="code"><code${PLAIN}>${esc(jsStep)}</code></pre></div>` +
     `<div><p class="cap">cpp/shatterbelt_core.cpp</p><pre class="code"><code${PLAIN}>${esc(cppStep)}</code></pre></div></div>`;
 

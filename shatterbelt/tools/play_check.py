@@ -129,6 +129,14 @@ def desktop(browser, base, msgs):
     over = game(page, "({time: g.time, score: g.score, steps: g.steps, text: document.getElementById('overScore').textContent})")
     check("game over screen shows the final score", over["text"].replace(",", "") == str(over["score"]), "screen says %s, game says %d" % (over["text"], over["score"]))
     shoot(page, "3_game_over")
+    # the code on the page is read by people: no line hidden past a box's right edge, no box drawn round each line
+    code = page.evaluate("""() => [...document.querySelectorAll('pre.code')].map((p, i) => ({i, over: p.scrollWidth - p.clientWidth,
+        boxed: [...p.querySelectorAll('code')].some(c => parseFloat(getComputedStyle(c).borderTopWidth) > 0)}))""")
+    hidden = [c for c in code if c["over"] > 1]
+    check("every code block on the page fits its box at 1280 px", not hidden,
+          "%d blocks, all fit" % len(code) if not hidden else "%d of %d overflow: %s" % (len(hidden), len(code), hidden))
+    boxed = [c["i"] for c in code if c["boxed"]]
+    check("code blocks have no box drawn round each line", not boxed, "none" if not boxed else "blocks %s" % boxed)
     best = page.evaluate("(()=>{try{return localStorage.getItem('shatterbelt.best')}catch(e){return 'blocked'}})()")
     check("best score saved", best is not None and int(best) >= over["score"], "localStorage best = %s" % best)
 
