@@ -114,6 +114,84 @@ export class Random {
   }
 }
 
+// sin, cos, atan2 and hypot made from + - * / and square root only. IEEE 754 requires those five to be
+// correctly rounded, so they give the same bits on every machine that follows it. JavaScript leaves
+// Math.sin and the others approximate, so they may differ between browsers, and they do differ from the
+// C runtime's in the last bits (tools/parity.js measures it); one differing bit is enough to part two
+// replays. cpp/shatterbelt_core.cpp has the same class, with the same steps in the same order.
+export class Trig {
+  static sin(x) {
+    return sinOrCos(x, 0);
+  }
+
+  static cos(x) {
+    return sinOrCos(x, 1);
+  }
+
+  static atan2(y, x) { // finite y and x; (0, 0) gives 0
+    const ax = Math.abs(x);
+    const ay = Math.abs(y);
+    if (ax === 0 && ay === 0) return 0;
+    let angle = ay <= ax ? atanUnit(ay / ax) : Math.PI / 2 - atanUnit(ax / ay); // folded into 0 to pi / 2
+    if (x < 0) angle = Math.PI - angle;
+    return y < 0 ? -angle : angle;
+  }
+
+  static hypot(x, y) {
+    return Math.sqrt(x * x + y * y);
+  }
+}
+
+// pi / 2 in three parts (the split fdlibm uses). The first two have 33 significant bits, so k times a part
+// is exact for any whole k below 2^20, and x - k * pi / 2 keeps its precision.
+const TWO_OVER_PI = 6.36619772367581382433e-01;
+const HALF_PI_1 = 1.57079632673412561417e+00;
+const HALF_PI_2 = 6.07710050630396597660e-11;
+const HALF_PI_3 = 2.02226624871116645580e-21;
+const TAN_EIGHTH_PI = 0.41421356237309503; // tan(pi / 8)
+
+// sin and cos of r, |r| <= pi / 4, by their Taylor series. The first term left out is below 1e-19 for sin
+// and 3e-18 for cos, far under the last bit of the result.
+function sinNear0(r) {
+  const r2 = r * r;
+  return r + r * r2 * (-1 / 6 + r2 * (1 / 120 + r2 * (-1 / 5040 + r2 * (1 / 362880 + r2 * (-1 / 39916800
+    + r2 * (1 / 6227020800 + r2 * (-1 / 1307674368000 + r2 * (1 / 355687428096000))))))));
+}
+
+function cosNear0(r) {
+  const r2 = r * r;
+  return 1 + r2 * (-1 / 2 + r2 * (1 / 24 + r2 * (-1 / 720 + r2 * (1 / 40320 + r2 * (-1 / 3628800
+    + r2 * (1 / 479001600 + r2 * (-1 / 87178291200 + r2 * (1 / 20922789888000))))))));
+}
+
+// sin(x) when shift is 0, cos(x) when it is 1: take whole quarter turns off x, then use the quarter turn
+// count to pick sin or cos of what is left, and its sign.
+function sinOrCos(x, shift) {
+  const k = Math.floor(x * TWO_OVER_PI + 0.5); // the nearest whole number of quarter turns
+  const r = ((x - k * HALF_PI_1) - k * HALF_PI_2) - k * HALF_PI_3;
+  switch ((k + shift) & 3) {
+    case 0: return sinNear0(r);
+    case 1: return cosNear0(r);
+    case 2: return -sinNear0(r);
+    default: return -cosNear0(r);
+  }
+}
+
+// atan(u) for |u| <= tan(pi / 8), by its Taylor series u - u^3/3 + u^5/5 - ... to u^41/41, summed from the
+// smallest term up. The first term left out is below 1e-17 of u.
+function atanNear0(u) {
+  const u2 = u * u;
+  let sum = 0;
+  for (let n = 41; n >= 3; n -= 2) sum = (n % 4 === 1 ? 1 : -1) / n + u2 * sum;
+  return u + u * u2 * sum;
+}
+
+// atan(t) for 0 <= t <= 1. Past tan(pi / 8), atan(t) = pi / 4 + atan((t - 1) / (t + 1)).
+function atanUnit(t) {
+  if (t > TAN_EIGHTH_PI) return Math.PI / 4 + atanNear0((t - 1) / (t + 1));
+  return atanNear0(t);
+}
+
 // The play area. Its edges wrap: leave on the right and come back on the left.
 export class Field {
   constructor(width, height) {
@@ -189,7 +267,7 @@ export class Entity {
   }
 
   get speed() {
-    return Math.hypot(this.vel.x, this.vel.y);
+    return Trig.hypot(this.vel.x, this.vel.y);
   }
 }
 
@@ -214,8 +292,8 @@ export class Ship extends Entity {
     this.angularVel = turn * turnSpeed;
     this.thrusting = (input & Input.Thrust) !== 0;
     if (this.thrusting) {
-      this.vel.x += Math.cos(this.angle) * thrust * dt;
-      this.vel.y += Math.sin(this.angle) * thrust * dt;
+      this.vel.x += Trig.cos(this.angle) * thrust * dt;
+      this.vel.y += Trig.sin(this.angle) * thrust * dt;
     }
     const keep = 1 - drag * dt;
     this.vel.x *= keep;
@@ -242,7 +320,7 @@ export class Bullet extends Entity {
   }
 
   launch(fromShip, x, y, angle, speed, baseVx, baseVy, lifetime) {
-    this.place(x, y, baseVx + Math.cos(angle) * speed, baseVy + Math.sin(angle) * speed, angle);
+    this.place(x, y, baseVx + Trig.cos(angle) * speed, baseVy + Trig.sin(angle) * speed, angle);
     this.fromShip = fromShip;
     this.lifetime = lifetime;
   }
@@ -307,7 +385,7 @@ export class Hunter extends Entity {
   // the short way round the field, off by up to aimError(score).
   shotAngle(target, field, rng, score) {
     if (this.kind === HunterKind.Big || target === null) return rng.range(0, Math.PI * 2);
-    const exact = Math.atan2(field.dy(this, target), field.dx(this, target));
+    const exact = Trig.atan2(field.dy(this, target), field.dx(this, target));
     const error = aimError(score);
     return exact + rng.range(-error, error);
   }
@@ -503,7 +581,7 @@ export class Game {
     if (bullet === null) throw new Error('bullet pool too small'); // capacity covers every shooter's cap
     const { speed, lifetime } = Rules.bullet;
     const nose = ship.radius + 2;
-    bullet.launch(true, ship.pos.x + Math.cos(ship.angle) * nose, ship.pos.y + Math.sin(ship.angle) * nose,
+    bullet.launch(true, ship.pos.x + Trig.cos(ship.angle) * nose, ship.pos.y + Trig.sin(ship.angle) * nose,
       ship.angle, speed, ship.vel.x, ship.vel.y, lifetime);
     ship.fireTimer = Rules.ship.fireInterval;
     this.emit('shot', bullet);
@@ -573,7 +651,7 @@ export class Game {
     const target = this.ship.canBeHit ? this.ship : null;
     const angle = hunter.shotAngle(target, this.field, this.rng, this.score);
     const muzzle = hunter.radius + 4;
-    bullet.launch(false, hunter.pos.x + Math.cos(angle) * muzzle, hunter.pos.y + Math.sin(angle) * muzzle,
+    bullet.launch(false, hunter.pos.x + Trig.cos(angle) * muzzle, hunter.pos.y + Trig.sin(angle) * muzzle,
       angle, Rules.hunters[hunter.kind].bulletSpeed, 0, 0, Rules.hunters.bulletLifetime);
     this.emit('shot', bullet);
   }
@@ -595,7 +673,7 @@ export class Game {
       const heading = this.rng.range(0, Math.PI * 2);
       const { minSpeed, maxSpeed } = Rules.rocks.Large;
       const speed = this.rng.range(minSpeed, maxSpeed) * speedUp;
-      this.spawnRock(RockSize.Large, spot.x, spot.y, Math.cos(heading) * speed, Math.sin(heading) * speed);
+      this.spawnRock(RockSize.Large, spot.x, spot.y, Trig.cos(heading) * speed, Trig.sin(heading) * speed);
     }
     this.emit('waveStart', this.centre);
   }
@@ -727,10 +805,10 @@ export class Game {
     if (size === null) return;
     const { minAngle, maxAngle, speedUp } = Rules.split;
     const speed = Math.max(rock.speed * speedUp, Rules.rocks[size].minSpeed);
-    const heading = rock.speed > 0 ? Math.atan2(rock.vel.y, rock.vel.x) : this.rng.range(0, Math.PI * 2);
+    const heading = rock.speed > 0 ? Trig.atan2(rock.vel.y, rock.vel.x) : this.rng.range(0, Math.PI * 2);
     for (const side of [-1, 1]) {
       const turned = heading + side * this.rng.range(minAngle, maxAngle);
-      this.spawnRock(size, rock.pos.x, rock.pos.y, Math.cos(turned) * speed, Math.sin(turned) * speed);
+      this.spawnRock(size, rock.pos.x, rock.pos.y, Trig.cos(turned) * speed, Trig.sin(turned) * speed);
     }
   }
 

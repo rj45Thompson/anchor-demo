@@ -35,8 +35,8 @@ export const PLANTS = [
     find: 'while (this.score >= this.nextExtraShipAt) {',
     put: 'if (this.score >= Rules.extraShipEvery) {' },
   { bug: 'Hunter aims the long way round', change: 'aiming ignores the wrapping edges',
-    find: 'const exact = Math.atan2(field.dy(this, target), field.dx(this, target));',
-    put: 'const exact = Math.atan2(target.pos.y - this.pos.y, target.pos.x - this.pos.x);' },
+    find: 'const exact = Trig.atan2(field.dy(this, target), field.dx(this, target));',
+    put: 'const exact = Trig.atan2(target.pos.y - this.pos.y, target.pos.x - this.pos.x);' },
   { bug: 'Randomness not from the seed', change: 'the generator is seeded from Math.random()',
     find: 'this.rng = new Random(seed);',
     put: 'this.rng = new Random(Math.random() * 2 ** 32);' },
@@ -85,11 +85,11 @@ function files() {
   const walk = dir => {
     for (const name of readdirSync(dir)) {
       const path = join(dir, name);
-      if (statSync(path).isDirectory()) { if (!['assets', 'lib', 'node_modules'].includes(name)) walk(path); continue; }
-      if (!/\.(js|py)$/.test(name)) continue;
+      if (statSync(path).isDirectory()) { if (!['assets', 'lib', 'node_modules', 'build'].includes(name)) walk(path); continue; }
+      if (!/\.(js|py|h|cpp|cmd)$/.test(name)) continue;
       const text = readFileSync(path, 'utf8');
-      const first = text.split(/\r?\n/).find(l => /^(\/\/|"""|#)/.test(l)) || '';
-      const what = first.replace(/^(\/\/|"""|#)\s*/, '').replace(/^[\w./]+\.(js|py)\s*[:-]\s*/i, '').replace(/"""$/, '');
+      const first = text.split(/\r?\n/).find(l => /^(\/\/|"""|#|rem )/.test(l)) || '';
+      const what = first.replace(/^(\/\/|"""|#|rem)\s*/, '').replace(/^[\w./]+\.(js|py)\s*[:-]\s*/i, '').replace(/"""$/, '');
       out.push({ file: relative(HERE, path).replace(/\\/g, '/'), lines: text.split(/\r?\n/).length - (text.endsWith('\n') ? 1 : 0), what });
     }
   };
@@ -102,6 +102,7 @@ function folderBytes(dir) {
   let total = 0;
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
+    if (name === 'build') continue; // what cpp/build.cmd writes by default: not part of the site
     total += statSync(path).isDirectory() ? folderBytes(path) : statSync(path).size;
   }
   return total;

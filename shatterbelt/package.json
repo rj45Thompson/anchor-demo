@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test",
     "diagram": "node tools/class_diagram.js",
-    "proof": "node tools/proof.js"
+    "proof": "node tools/proof.js",
+    "parity": "node tools/parity.js"
   }
 }

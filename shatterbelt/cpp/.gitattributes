@@ -1,0 +1,2 @@
+# cmd.exe misreads labels in a batch file with bare LF line endings
+*.cmd text eol=crlf

@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  Game, Field, Pool, Rock, Hunter, Random, FixedTimestep, InputLog, Input, Rules, RockSize, HunterKind,
+  Game, Field, Pool, Rock, Hunter, Random, Trig, FixedTimestep, InputLog, Input, Rules, RockSize, HunterKind,
   STEP, rocksForWave, aimError, replay,
 } from '../core.js';
 
@@ -416,6 +416,32 @@ test('a ship shot destroys a hunter; a hunter shot destroys the ship', () => {
   game.step(0);
   assert.equal(game.ship.alive, false);
   assert.equal(game.ships, ships - 1);
+});
+
+// ---- Trig ------------------------------------------------------------------------------------------
+
+// How far apart two numbers are, in units in the last place of the second.
+function ulpsApart(value, reference) {
+  const bits = new Float64Array([Math.abs(reference)]);
+  new BigUint64Array(bits.buffer)[0] += 1n;
+  return Math.abs(value - reference) / (bits[0] - Math.abs(reference));
+}
+
+test('Trig: sin, cos, atan2 and hypot stay within 3 units in the last place of Math\'s', () => {
+  const rng = new Random(99);
+  const worst = { sin: 0, cos: 0, atan2: 0, hypot: 0 };
+  for (let i = 0; i < 200000; i++) {
+    const x = rng.range(-2000, 2000);
+    const y = rng.range(-2000, 2000);
+    worst.sin = Math.max(worst.sin, ulpsApart(Trig.sin(x), Math.sin(x)));
+    worst.cos = Math.max(worst.cos, ulpsApart(Trig.cos(x), Math.cos(x)));
+    worst.atan2 = Math.max(worst.atan2, ulpsApart(Trig.atan2(y, x), Math.atan2(y, x)));
+    worst.hypot = Math.max(worst.hypot, ulpsApart(Trig.hypot(x, y), Math.hypot(x, y)));
+  }
+  for (const [name, ulps] of Object.entries(worst)) assert.ok(ulps <= 3, `${name} is ${ulps} units in the last place from Math.${name}`);
+  assert.equal(Trig.atan2(0, 0), 0);
+  assert.equal(Trig.atan2(0, -1), Math.PI, 'straight left is a half turn');
+  assert.equal(Trig.atan2(-1, 0), -Math.PI / 2, 'straight up the screen is minus a quarter turn');
 });
 
 // ---- the clock, the log and replays ------------------------------------------------------------------
