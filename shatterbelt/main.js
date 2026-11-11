@@ -44,7 +44,12 @@ let alpha = 0;
 let stageVisible = true;
 const clock = new FixedTimestep();
 const sound = new Sound({ muted: saved.read('muted', false), music: saved.read('music', true) });
-const stats = { frames: 0, steps: 0, rocksBroken: 0, explosions: 0, gamesStarted: 0, replayMatched: null };
+const stats = { frames: 0, steps: 0, rocksBroken: 0, explosions: 0, gamesStarted: 0, replayMatched: null,
+                shipsLost: 0, slowMos: 0, banners: [] };
+// Losing a ship slows time to a third for a moment, so the player sees what hit them. Only the clock's pace changes:
+// the game still takes one step per input, so a replay plays back the same.
+const SLOW_MO = { scale: 0.35, seconds: 0.7 };
+let slowUntil = 0;
 // The time each frame spends in this page's code (the game steps and issuing the draw calls; the GPU's own work is
 // not in it), for the last 600 frames, kept without allocating. play_check.py reads it for the frame budget.
 const frameCost = new Float32Array(600);
@@ -61,7 +66,8 @@ function frame(now) {
   const started = performance.now();
   const dt = Math.min((now - last) / 1000, 0.25);
   last = now;
-  if (mode !== 'paused' && mode !== 'loading') alpha = clock.advance(mode === 'replay' ? dt * 2 : dt, stepOnce);
+  const pace = (mode === 'replay' ? 2 : 1) * (now < slowUntil ? SLOW_MO.scale : 1);
+  if (mode !== 'paused' && mode !== 'loading') alpha = clock.advance(dt * pace, stepOnce);
   else if (mode === 'paused') controls.pollPad(); // no steps run, so the pad's Start is read here to carry on
   if (renderer && game) renderer.draw(game, alpha, mode === 'paused' ? 0 : dt);
   frameCost[stats.frames % frameCost.length] = performance.now() - started;
@@ -203,6 +209,7 @@ function updateHud() {
     ships.setAttribute('aria-label', `${count} spare ${count === 1 ? 'ship' : 'ships'}`);
   }
   $('hud').hidden = mode === 'title' || mode === 'loading';
+  $('hud').classList.toggle('lastship', !!game && !game.over && game.ships === 1); // the Ships label warns in red
 }
 
 function hudEvents(events) {
@@ -212,6 +219,8 @@ function hudEvents(events) {
     if (e.type === 'hunterDestroyed' || e.type === 'shipDestroyed') stats.explosions += 1;
     if (e.type === 'waveStart' && mode !== 'title') banner(`Wave ${game.wave}`);
     if (e.type === 'extraShip') banner('Extra ship');
+    if (e.type === 'respawn' && game.ships === 1) banner('Last ship');
+    if (e.type === 'shipDestroyed') { stats.shipsLost += 1; stats.slowMos += 1; slowUntil = performance.now() + SLOW_MO.seconds * 1000; }
     if (e.type !== 'shot') changed = true;
   }
   if (changed) updateHud();
@@ -219,6 +228,8 @@ function hudEvents(events) {
 
 let bannerTimer = 0;
 function banner(text) {
+  stats.banners.push(text);
+  if (stats.banners.length > 20) stats.banners.shift();
   const el = $('banner');
   el.textContent = text;
   el.classList.remove('show');

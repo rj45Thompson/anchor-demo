@@ -134,6 +134,10 @@ def desktop(browser, base, msgs):
     over = game(page, "({time: g.time, score: g.score, steps: g.steps, text: document.getElementById('overScore').textContent})")
     check("game over screen shows the final score", over["text"].replace(",", "") == str(over["score"]), "screen says %s, game says %d" % (over["text"], over["score"]))
     shoot(page, "3_game_over")
+    feel = game(page, "({banners: s.stats.banners.slice(), slowMos: s.stats.slowMos, lost: s.stats.shipsLost})")
+    check("the last ship is announced before the game ends", "Last ship" in feel["banners"], "banners shown: %s" % feel["banners"])
+    check("losing a ship slows time for a moment, every time", feel["lost"] > 0 and feel["slowMos"] == feel["lost"],
+          "%s ships lost, %s slow-motion moments" % (feel["lost"], feel["slowMos"]))
     # the code on the page is read by people: no line hidden past a box's right edge, no box drawn round each line
     code = page.evaluate("""() => [...document.querySelectorAll('pre.code')].map((p, i) => ({i, over: p.scrollWidth - p.clientWidth,
         boxed: [...p.querySelectorAll('code')].some(c => parseFloat(getComputedStyle(c).borderTopWidth) > 0)}))""")
