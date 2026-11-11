@@ -192,31 +192,31 @@
 // Every entry is a real line from the actual CV.
 const ROWS = [
   { tone:0, items:[
-    // Current work leads, and matches games/build_resume.py - the game crawl and the downloadable
-    // PDF are the same CV, so they must not drift apart.
-    ["Level builder + engine tooling","2025-now","33,000-line level and terrain builder for an unannounced tactics RPG"],
-    ["AI verification","2025-now","66.4M-fact engine, no neural weights; published its own retraction"],
-    ["Utherverse","2024-25","Asst. to Director of Development - live virtual-world platform ops"],
-    ["BioWare","2023-24","Shipped the dialog & narrative system for Dragon Age 4 (Frostbite)"],
-    ["Activision","2022-23","CoD live-ops; ported netcode + real-time voice to Switch"],
-    ["Sega / Relic","2021-22","Company of Heroes 3 - measured 7% performance gain"],
+    // Every value here is from the two-page resumes RJ sends (checked against LinkedIn 2026-11-04 and 11-11);
+    // games/build_resume.py refuses a row whose employer or years are not beside each other on one of them.
+    ["Independent Game Studio","2025-now","Lead Developer: level and terrain editor, tactics camera, Unity to Unreal VFX port"],
+    ["TNT","2024-now","AI Researcher: ARC3, 66.4M facts, no neural weights, refuses when evidence runs out"],
+    ["Utherverse","2025","Assistant to Lead Developer: live virtual-world platform operations, hiring, training"],
+    ["BioWare","2024","Shipped the dialog and narrative system for Dragon Age: The Veilguard (Frostbite)"],
+    ["Eden Industries","2022-23","Operation Tango netcode and voice on Switch; Call of Duty live ops"],
+    ["SEGA (Relic)","2021-22","Company of Heroes 3: up to 7% faster; front-end UI, loadout and HUD"],
   ]},
   { tone:1, items:[
-    ["Electronic Arts","2016-21","Five years on FrostEd: editor frameworks, cinematics, lighting"],
-    ["Unity (Finger Food)","2014-16","Dev Team Lead - Skylanders asset-bundle loading 200% faster, Star Wars BB-8, Call of Duty"],
-    ["Industrial Alliance","2013-14","Architected Unification in .NET - WPF, WCF, MVVM"],
-    ["Microsoft BigPark","2012-13","Real-time Lua UI for NFL, ESPN, UFC on Xbox"],
+    ["Electronic Arts","2016-20","Four years on the Frosted editor: editor frameworks, cinematics, lighting"],
+    ["Finger Food Studios","2015-16","Software Development Lead: Skylanders asset bundles 200% faster, Star Wars BB-8"],
+    ["Industrial Alliance","2014-15","Architected Unification in .NET: WPF, WCF, MVVM"],
+    ["Microsoft (Big Park)","2013-14","Development Team Lead: real-time Lua UI for NFL, ESPN, UFC on Xbox One"],
   ]},
   { tone:2, items:[
-    ["Novadaq","2012-13","Lead architect, SPY ELITE - surgical fluorescence imaging"],
-    ["FinancialCAD","2010-12","Lead architect, Silverlight/XNA presentation layer"],
+    ["Novadaq","2012-13","Lead developer, SPY ELITE: surgical fluorescence imaging"],
+    ["FinancialCad","2010-12","Lead architect, Silverlight/XNA presentation layer"],
     ["Neoteric","2004-10","Win32/C++ UI libraries; led a team of four"],
-    ["Max Integration","2004","Project lead - Look Out, Win32 CRM flagship"],
+    ["Max Integration","2004","Project lead on a Win32 CRM, team of six"],
   ]},
   { tone:3, items:[
-    ["RedHawk Gaming","2001-03","Gaming subsystems & low-level device drivers"],
-    ["Infowave","1997-01","QA Lead - managed a team of five, automated suites"],
-    ["Electronic Arts","1996-97","QA - NHL 98, Need for Speed, Warcraft II, PGA Tour"],
+    ["RedHawk Gaming","2001-03","Gaming subsystems and low-level device drivers"],
+    ["Infowave","1997-01","QA lead of five"],
+    ["Electronic Arts","1996-97","QA on NHL 98, Need for Speed and Warcraft II"],
   ]},
 ];
 const TONES = [0x4fc3f7, 0x7c4dff, 0x5ee6a8, 0xffb74d];

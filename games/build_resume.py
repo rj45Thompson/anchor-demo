@@ -1,211 +1,129 @@
 #!/usr/bin/env python3
-"""Build RJ_Thompson_Resume.pdf - the file the site offers for download.
+"""Publish the site's resume from the resumes RJ sends to employers, and refuse anything that drifted from them.
 
-WHY THIS LIVES IN THE REPO
-The previous builder was a throwaway in a session scratchpad. Scratchpads do not survive, so the
-shipped PDF became a binary nobody could regenerate or diff, and it silently went stale while the
-site around it changed. This script is the source of truth; the PDF is its output.
+    py games/build_resume.py "C:/Users/r_jay/Desktop/Applications/2026-09-17 Baseline resumes"
 
-    py games/build_resume.py
+WHY IT CHANGED (2026-11-11)
+Until today this script typeset its own one-page resume. It went stale the way a second copy always does: the
+two-page resumes were rebuilt on 2026-11-04 and checked line by line against LinkedIn, and this page kept the
+09-17 version, with an old home address (RJ, 11-04: no address on the resume, he relocates to the job), role
+titles LinkedIn does not use, and a sponsorship line the applications answer differently for US roles. The
+Breakout game's bricks had drifted further (BioWare "2023-24" for May to Aug 2024, EA "2016-21" for Oct 2016 to
+Sep 2020). So there is now ONE source: the folder of two-page builds (build_2page.py there). This script copies
+its Lead class to games/RJ_Thompson_Resume.pdf, writes agentbox/resume_context.txt (the chat box's only facts)
+from all five classes, and checks the game's ROWS against the same text. Its older typesetting is in git history.
 
-WHAT IT FIXES vs the file it replaces
-  * That PDF ran to TWO pages, and page two contained exactly one line: an orphaned URL. A
-    recruiter printing it got a second, near-blank sheet. Widow control alone would not fix it,
-    because the content genuinely did not fit; the layout is tightened instead.
-  * It carried no Tami work and a truncated research section - the two things RJ actually spends
-    his current time on.
-
-EVERY LINE HERE IS CHECKABLE. Employers, dates and numbers come from the master .docx via
-agentbox/resume_context.txt. The Tami and research entries describe artifacts that exist and are
-public or on disk. Nothing is rounded up and nothing is inferred.
+The project and studio of the current role stay unnamed on every public page (RJ, 2026-09-17: "I don't want to
+tell my employer just yet"); the two-page builds already leave them out, and the check below refuses a name.
 """
-from reportlab.lib.pagesizes import LETTER
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.enums import TA_CENTER
+import re
+import shutil
+import sys
+from pathlib import Path
 
-INK   = colors.HexColor("#1a1a1a")
-MUTED = colors.HexColor("#5a5a5a")
-RULE  = colors.HexColor("#b8b8b8")
-HEAD  = colors.HexColor("#1f3b57")
+import pypdf
 
-S = dict(
-    name=ParagraphStyle("n", fontName="Helvetica-Bold", fontSize=20, leading=23,
-                        textColor=INK, spaceAfter=3),
-    contact=ParagraphStyle("c", fontName="Helvetica", fontSize=8.2, leading=11.5,
-                           textColor=MUTED, spaceAfter=1),
-    summary=ParagraphStyle("s", fontName="Helvetica", fontSize=8.6, leading=11.4,
-                           textColor=INK, spaceBefore=7, spaceAfter=2),
-    section=ParagraphStyle("h", fontName="Helvetica-Bold", fontSize=8.6, leading=11,
-                           textColor=HEAD, spaceBefore=9, spaceAfter=1),
-    role=ParagraphStyle("r", fontName="Helvetica-Bold", fontSize=8.8, leading=11, textColor=INK),
-    when=ParagraphStyle("w", fontName="Helvetica", fontSize=8.0, leading=11,
-                        textColor=MUTED, alignment=2),
-    body=ParagraphStyle("b", fontName="Helvetica", fontSize=8.3, leading=10.6,
-                        textColor=INK, spaceAfter=3.4),
-)
+SITE = Path(__file__).resolve().parent.parent
+CLASSES = ["Lead", "AI", "Games", "Cpp", "DotNet"]
+PUBLIC_CLASS = "Lead"
+# words that must never reach a public resume: the old home address and the current project's names
+REFUSED = ["Lac Ste", "Lac Ste.", "Port Moody", "Surrey", "Tami", "Elami", "tactics RPG"]
 
-# --- experience: company, dates, one line of what was actually done ------------------------------
-# CORRECTED 2026-09-17. This list had drifted away from the resumes actually being sent to
-# employers, and a recruiter who followed the link from an application got a different document
-# about the same person. Six dates were wrong and one employer was wrong:
-#   * Activision was listed as an employer. It was not. That work was done at EDEN INDUSTRIES,
-#     which held the contracts with Activision, Kabam and the Operation Tango team. Eden is the
-#     employer; those are the clients. RJ confirmed this 2026-09-17 from his own older resumes.
-#   * EA read "2016-21 / five years". It is Oct 2016 - Sep 2020, which is FOUR years.
-#   * Microsoft Big Park and Novadaq were both dated 2012-13, which is impossible.
-#   * Utherverse, BioWare, Finger Food, Industrial Alliance and Neoteric were all off by a year
-#     or more against LinkedIn and the master resume.
-# Every date below matches the baseline resumes of 2026-09-17 and RJ's LinkedIn.
-JOBS = [
-    ("Utherverse", "Jan - May 2025",
-     "Assistant to Lead Developer on a four-month contract. Live virtual-world platform "
-     "operations, plus hiring, training and departmental planning."),
-    ("BioWare", "May - Aug 2024",
-     "Shipped the dialog and narrative system for <b>Dragon Age: The Veilguard</b> on Frostbite. "
-     "Mentored developers on the Frosted cinematic and narrative system."),
-    ("Eden Industries", "Feb 2022 - Dec 2023",
-     "Client work in C++ and Unity. <b>Activision, Call of Duty</b>: shipped a new live ops "
-     "system. <b>Operation Tango</b>: ported low-level networking and real-time voice chat to "
-     "<b>Nintendo Switch</b>. <b>Kabam, Disney Mirrorverse</b>: fixed difficult low-level "
-     "threading and networking faults."),
-    ("Sega / Relic", "Jan 2021 - Jan 2022",
-     "<b>Company of Heroes 3</b>. Profiled and optimized a C++ system for a measured <b>7%</b> "
-     "performance gain on the shipping title, and wrote build tools for Perforce and the "
-     "pipeline's hot reload."),
-    ("Electronic Arts", "Oct 2016 - Sep 2020",
-     "Four years on the Frostbite editor: editor frameworks, cinematics, schematics and lighting "
-     "workflows. Architected MVVM upgrades to the legacy visual coding diagram library, wrote a "
-     "crash control and recovery application, added Azure telemetry, and helped architect the "
-     "keyframe editor."),
-    ("Unity (Finger Food)", "Apr 2015 - Sep 2016",
-     "Development Team Lead across <b>Skylanders</b>, <b>Star Wars BB-8</b> and Call of Duty. "
-     "Accelerated Skylanders asset-bundle loading by <b>200%</b>. Shipped Skylanders Imaginators "
-     "on iOS and Android."),
-    ("Industrial Alliance", "Aug 2014 - Feb 2015", "Architected Unification in .NET. WPF, WCF, MVVM."),
-    ("Microsoft Big Park", "Apr 2013 - Aug 2014", "Real-time Lua UI for NFL, ESPN and UFC on Xbox."),
-    ("Novadaq", "Apr 2012 - Apr 2013",
-     "Lead architect, <b>SPY ELITE</b>. Regulated surgical fluorescence-imaging medical device."),
-    ("FinancialCAD", "Sep 2010 - Apr 2012", "Lead architect, Silverlight / XNA presentation layer."),
-    ("Neoteric", "Jul 2004 - Jun 2010",
-     "Win32 / C++ UI libraries. Led a team of four, with hiring and training."),
-]
-EARLIER = ("<b>Earlier:</b> Max Integration, project lead on a Win32 CRM (2004) &nbsp;&middot;&nbsp; "
-           "RedHawk Gaming, subsystems and device drivers (2001-03) &nbsp;&middot;&nbsp; "
-           "Infowave, QA lead of five (1997-01) &nbsp;&middot;&nbsp; "
-           "Electronic Arts, QA on NHL 98, Need for Speed, Warcraft II (1996-97)")
-
-CURRENT = [
-    # Rewritten 2026-09-06 (RJ: "it's odd as fuck"). The old entry was a devlog paragraph - it
-    # led with genre comparisons, and spent its words on asides a hiring manager cannot use.
-    # This one leads with the role, names the tools built, and keeps only checkable numbers.
-    # RJ 2026-09-06: lead with the SHIPPING PRODUCT, not the engineering hygiene. A test count is
-    # not a reason to hire someone; a console title with a date on it is.
-    #
-    # CORRECTED 2026-09-07, RJ: "tami work is not solo, it's a small indie team, full team." The
-    # entry had said "solo design and development", which was wrong and was going out to employers.
-    # It is an indie studio and his part in it is the engine and tooling - which is also the part
-    # that transfers to another job, so the shorter true version is the stronger one.
-    #
-    # Then, same day: "don't talk too much about it, make it super short - indie game for startup
-    # company, tactics game for Switch, should be done December." Cut from eleven lines to three.
-    # Dropped in that cut, recoverable if wanted: the Wandering Sword scope comparison, the
-    # 18-element synergy system, the VFX authoring tool, and the 65/65 Shuriken-to-Niagara port.
-    #
-    # The 33,000 lines is COUNTED, not estimated: 92 product files under Assets/Media/Scripts/
-    # BlockPainter/ plus BlockTilePainter*.cs and LevelBrush*.cs, excluding *Tests.cs. wc -l over
-    # those is 54,028; 33,202 of those lines are neither blank nor comment, and that stricter
-    # figure is the one quoted, because it is the one that survives being checked. The 19,496
-    # lines of tests for it are deliberately not counted here or mentioned anywhere.
-    # UNNAMED from 2026-09-17. RJ: "You can name it if you want but I don't want to tell my
-    # employer just yet." The studio, the title, the platform and the ship date all came out of
-    # this entry, because this page is public and his current client can find it by searching his
-    # name. Applications and interviews may still name it; a browsable portfolio may not. The
-    # engineering below is unchanged and still checkable.
-    ("Lead developer, tactics RPG in development", "2025 - present",
-     "Contract lead developer at a small independent studio. I build the engine and tooling: a "
-     "<b>33,000-line</b> level and terrain authoring tool that replaces the Unity interface, a "
-     "<b>132-route</b> HTTP bridge that lets scripts and agents drive the editor headlessly, the "
-     "tactics camera and battle cinematics, and a Unity to <b>Unreal Engine 5</b> VFX converter "
-     "that moved all <b>65</b> particle emitters into Niagara."),
-    ("Verification and calibration for AI systems", "2025 - present",
-     "A knowledge engine with <b>no neural weights</b> over <b>66.4M facts</b>, running entirely "
-     "in the browser: it reports a measured confidence per inference chain and abstains rather "
-     "than guessing. Published with its own retraction - the headline result was withdrawn when a "
-     "constant-guess baseline passed the same gate at 88.9%, and the corrected figure was "
-     "re-measured on four orders of magnitude more evidence. Related public datasets: BossBench "
-     "and WarShip on Hugging Face."),
-]
-
-SKILLS = [
-    ("Languages", "C++ (11/14/17), C#, Python, Lua, JavaScript, SQL"),
-    ("Engines", "Frostbite, Unity, Unreal, Havok, Essence"),
-    ("Systems", "multithreading, memory management, real-time networking, profiling and optimization"),
-    ("UI", "WPF / XAML, MVVM, Win32, custom editor frameworks"),
-]
+HEADER = """R.J. Thompson: software engineer and engineering lead, 30 years in software (since 1996).
+Canadian citizen. Authorized to work in Canada with no sponsorship needed there. Relocates to the job at his own expense.
+RJ45Thompson@gmail.com | 236-518-2711 | linkedin.com/in/r-j-thompson-9531588 | github.com/rj45Thompson
+Sample work and experiments: https://rj45thompson.github.io/anchor-demo/
+Below are his current resumes, one per kind of role, as he sends them. They are the only facts to answer from.
+"""
 
 
-def rule(w=7.28 * inch):
-    t = Table([[""]], colWidths=[w], rowHeights=[0.6])
-    t.setStyle(TableStyle([("LINEBELOW", (0, 0), (-1, -1), 0.6, RULE),
-                           ("TOPPADDING", (0, 0), (-1, -1), 0),
-                           ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
-    return t
+def text_of(pdf):
+    return "\n".join(p.extract_text() for p in pypdf.PdfReader(str(pdf)).pages)
 
 
-def entry(flow, title, when, text):
-    """Title and dates on one row so a date can never widow onto its own line."""
-    t = Table([[Paragraph(title, S["role"]), Paragraph(when, S["when"])]],
-              colWidths=[5.55 * inch, 1.73 * inch])
-    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
-                           ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                           ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                           ("TOPPADDING", (0, 0), (-1, -1), 1.5),
-                           ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
-    flow.append(t)
-    flow.append(Paragraph(text, S["body"]))
+def bullets(text):
+    """A resume's lines with wrapped bullets joined back into one line each."""
+    out = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or re.fullmatch(r"R\.J\. Thompson \| page \d of \d", line.replace("  ", " ")):
+            continue
+        if out and not line.startswith("•") and out[-1].startswith("•") and not re.search(r"(19|20)\d\d|present", line):
+            out[-1] += " " + line
+        else:
+            out.append(line)
+    return out
 
 
-def build(path="games/RJ_Thompson_Resume.pdf"):
-    doc = SimpleDocTemplate(path, pagesize=LETTER,
-                            topMargin=0.44 * inch, bottomMargin=0.40 * inch,
-                            leftMargin=0.61 * inch, rightMargin=0.61 * inch,
-                            title="R.J. Thompson - Resume", author="R.J. Thompson",
-                            subject="Senior C++ / C# engineer")
-    F = []
-    F.append(Paragraph("R.J. THOMPSON", S["name"]))
-    F.append(Paragraph("236-518-2711 &nbsp;|&nbsp; RJ45Thompson@gmail.com &nbsp;|&nbsp; "
-                       "Lac Ste. Anne, Alberta, Canada", S["contact"]))
-    F.append(Paragraph("linkedin.com/in/r-j-thompson-9531588 &nbsp;|&nbsp; "
-                       "github.com/rj45Thompson &nbsp;|&nbsp; "
-                       "rj45thompson.github.io/anchor-demo", S["contact"]))
-    F.append(Spacer(1, 5))
-    F.append(rule())
-    F.append(Paragraph(
-        "Senior C++ / C# engineer. 30 years shipping real-time systems: game engines and tooling, "
-        "low-level networking, and regulated medical-device software. Canadian citizen working "
-        "remotely from Alberta: no visa, sponsorship or petition needed to engage me.", S["summary"]))
+def refuse(why):
+    sys.exit("build_resume: REFUSED: " + why)
 
-    F.append(Paragraph("CURRENT WORK", S["section"]))
-    for a, b, c in CURRENT:
-        entry(F, a, b, c)
 
-    F.append(Paragraph("EXPERIENCE", S["section"]))
-    for a, b, c in JOBS:
-        entry(F, a, b, c)
-    F.append(Paragraph(EARLIER, S["body"]))
+def game_rows():
+    src = (SITE / "games" / "resume-arkanoid.html").read_text(encoding="utf-8")
+    block = src[src.index("const ROWS = ["):src.index("const TONES")]
+    return re.findall(r'\["([^"]+)","([^"]+)","([^"]+)"\]', block)
 
-    F.append(Paragraph("SKILLS", S["section"]))
-    for k, v in SKILLS:
-        F.append(Paragraph("<b>%s:</b> %s" % (k, v), S["body"]))
 
-    doc.build(F)
-    return path
+def main(folder):
+    folder = Path(folder)
+    texts = {}
+    for c in CLASSES:
+        pdf = folder / ("RJ_Thompson_Resume_%s_2page.pdf" % c)
+        if not pdf.exists():
+            refuse("missing %s" % pdf)
+        r = pypdf.PdfReader(str(pdf))
+        if len(r.pages) != 2:
+            refuse("%s has %d pages, not 2" % (pdf.name, len(r.pages)))
+        texts[c] = text_of(pdf)
+        for w in REFUSED:
+            if w.lower() in texts[c].lower():
+                refuse("%s names %r" % (pdf.name, w))
+
+    every = "\n".join(texts.values())
+    bad = []
+    for name, years, line in game_rows():
+        for w in REFUSED:
+            if w.lower() in (name + line).lower():
+                bad.append("game row %r names %r" % (name, w))
+        employer = name.split(",")[0]          # exactly as the resume writes it, so "Unity (Finger Food)" cannot pass
+        near = [m.start() for m in re.finditer(re.escape(employer), every, re.I)]
+        if not near:
+            bad.append("game row %r: %r is not on any resume" % (name, employer))
+            continue
+        m = re.fullmatch(r"(\d{4})(?:-(\d{2}|now))?", years)
+        if not m:
+            bad.append("game row %r: years %r are not YYYY, YYYY-YY or YYYY-now" % (name, years))
+            continue
+        start, end = m.group(1), m.group(2)
+        # the dates sit on the line under "Title, Employer", or in brackets on the Earlier line: "(2014-15)"
+        if end is None or end == "now":
+            wants = [start] + ([] if end is None else ["present"])
+        else:                                   # "1997-01" ends in 2001, not 1901
+            century = int(start[:2]) + (1 if int(end) < int(start[2:]) else 0)
+            wants = [start, "%d%s" % (century, end), "-" + end + ")"]
+        def beside(i):
+            win = every[max(0, i - 120):i + 160]
+            return start in win and (end is None or any(w in win for w in wants[1:]))
+        if not any(beside(i) for i in near):
+            bad.append("game row %r %s: those years are not beside %r on any resume" % (name, years, employer))
+    if bad:
+        refuse("the Breakout game's ROWS drifted from the resumes:\n  " + "\n  ".join(bad))
+
+    shutil.copyfile(folder / ("RJ_Thompson_Resume_%s_2page.pdf" % PUBLIC_CLASS), SITE / "games" / "RJ_Thompson_Resume.pdf")
+
+    seen, parts = set(), [HEADER]
+    for c in CLASSES:
+        keep = [b for b in bullets(texts[c]) if b not in seen]
+        seen.update(keep)
+        parts.append("=== %s resume%s ===\n%s\n" % (c, "" if c == PUBLIC_CLASS else " (only what the resumes above do not already say)",
+                                                    "\n".join(keep)))
+    (SITE / "agentbox" / "resume_context.txt").write_text("\n".join(parts), encoding="utf-8", newline="\n")
+    print("build_resume: games/RJ_Thompson_Resume.pdf = the %s class; agentbox/resume_context.txt from %d classes; "
+          "%d game rows agree" % (PUBLIC_CLASS, len(CLASSES), len(game_rows())))
 
 
 if __name__ == "__main__":
-    import os
-    p = build()
-    print("wrote %s (%d bytes)" % (p, os.path.getsize(p)))
+    if len(sys.argv) != 2:
+        sys.exit(__doc__)
+    main(sys.argv[1])

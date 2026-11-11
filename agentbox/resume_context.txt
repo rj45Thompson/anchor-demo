@@ -1,161 +1,169 @@
-R.J. Thompson - senior C++ / C# engineer, 30 years shipping (1996-2025).
-Lac Ste. Anne, Alberta, Canada. Authorized to work in Canada, no sponsorship needed.
-RJ45Thompson@gmail.com | 236.518.2711 | linkedin.com/in/r-j-thompson-9531588
-Currently looking for his next role. Open to C++/C#/Unity, WPF/medical/financial, and AI/ML work.
-Public demo of his AI verification research: https://rj45thompson.github.io/anchor-demo/
+R.J. Thompson: software engineer and engineering lead, 30 years in software (since 1996).
+Canadian citizen. Authorized to work in Canada with no sponsorship needed there. Relocates to the job at his own expense.
+RJ45Thompson@gmail.com | 236-518-2711 | linkedin.com/in/r-j-thompson-9531588 | github.com/rj45Thompson
+Sample work and experiments: https://rj45thompson.github.io/anchor-demo/
+Below are his current resumes, one per kind of role, as he sends them. They are the only facts to answer from.
 
-Professional Profile of R.J Thompson
-236.518.2711 | RJ45Thompson@Gmail.com
-Seasoned software development professional with over 15 years of experience across a range of industries including media, entertainment, healthcare, and enterprise systems. Proven expertise in building scalable applications, optimizing legacy codebases, and architecting performance-critical systems across both desktop and embedded environments. Adept at leading technical teams, mentoring developers, and delivering high-impact projects under tight deadlines. Versatile in both frontend and backend technologies, with a deep foundation in C++, C#, .NET, and modern UI frameworks.
-TECHNICAL SKILLS
-Languages: C#, C++, Lua, JavaScript, Python, SQL
-Frameworks: .NET, WPF, MVVM, Win32 API, XAML, Unity, Unreal
-Tools: Perforce, Git, Jenkins, Visual Studio, Azure DevOps
-Architecture: Microservices, N-Tier, Event-Driven, UML Design
-UI/UX: WPF, XAML, Custom UI libraries, Electron, Web UI frameworks
-Platforms: Windows, Mobile (iOS/Android), Embedded Systems
-Specialties: Threading/debugging, low-level networking (Sockets, TCP/IP), graphics and animation optimization, real-time systems
-Notable Achievements:
-- Performance Enhancement: Led optimization initiatives within the live ops team, resulting in a notable 7% boost in Company of Heroes' performance.
-- Strategic Transition: Orchestrated Unity (Finger Food studio dept)' comprehensive shift to Unity, enhancing project efficiency and collaboration.
-- Innovative Solutions: Developed Star Wars BB8's innovative feature, enabling real-time video overlays on low-spec devices at a steady 30fps.
-- Animation Advancement: Designed and implemented a dynamic character scaling mechanism, optimizing animations for Skylanders.
-- Efficiency Enhancement: Significantly accelerated the loading speed of Skylanders' character animation Asset Bundles by 200%.
-- Project Delivery: Successfully launched the Call of Duty Ghost App under stringent deadlines, consistently dedicating 60 to 100-hour workweeks over three months.
-- Game Development: Conceptualized and launched "Zombie Crossing," a distinctive game experience available on Xbox 360
-Utherverse - MetaVerse
-Assistant to the Director of Development 2024 - 2025 (six-month contract)
-(Note:  please request an attached T4 for further date info / wages / references / proof)
-Collaborated with the Director to develop and implement departmental plans and goals, ensuring alignment with company objectives.
-Oversaw daily operations within the virtual world platform, coordinating cross-functional teams to maintain seamless user experiences.
-Ensured compliance with internal policies and external regulations, maintaining high standards of quality and security.
-Managed staffing responsibilities, including hiring, training, and performance evaluations, fostering a productive work environment.
-Assisted in budgeting processes and monitored departmental expenses to ensure financial efficiency.
-Maintained scheduling of events and represented the company in various capacities, enhancing brand presence.
-Created comprehensive reports for executive leadership, providing insights into departmental performance and areas for improvement.
-Fulfilled additional duties as assigned by the Director, demonstrating flexibility and commitment to organizational success.
-BIOWARE - Dragon Age
-Senior Software Developer 2023 - 2024 (seven-month contract)
-HIGHLIGHTS
-Tech Stack: C++, Frostbite, Frosted,
-Platforms: Switch, Android, IOS,
-Shipped the dialog and narrative system for Dragon Age 4
-KEY PROJECTS
-Mentored developers on the frosted cinematic/narrative system. Previously, worked on the cinematics team at EA and therefore was a great asset during final).
-Activision - Call of Duty
-Senior Software Developer 2022 - 2023 (six-month contract)
-HIGHLIGHTS
-Tech Stack: C++, Unity,
-Platforms: Switch, Android, IOS,
-Shipped new Live ops system for Call of Duty
-Ported low level networking and real time voice chat for Tango to run on switch.
-KEY PROJECTS
-Mentored younger developers at Activision and helped architect better interop com bridges for android and IOS.
-Helped debug/fix difficult low-level threading / networking issues on Disney's Mirrorverse.
-Fixed real time chat networking issues and photon networking issues for operation Tango.
-Specialized at integrating third party libraries i.e.: Vivox, Photon, OpenCV (computer vision, Chat and video tools)
-Sega (Relic) 2021 - 2022
-Senior Software Developer
-HIGHLIGHTS
-Worked for the shipping Company of Heroes 3. Specifically, I was brought on to optimize the workflow of WPFG which is a port of WPF which runs on C++ rather than c#.
-Tech Stack: C++ 17 running the Essence Editor 6 game engine.  WPF, XAML
-KEY PROJECTS
-Optimization - increased performance up to 7%
-Worked on front end user interface for Company of Heroes and implemented the load out system.
-Architected improved user interface API and created documentation for their proprietary engine.
-Identified and fixed major process issues which improved our team's velocity by 10%
-Decompiled .NET framework in order to adjust the C++ WPFG relic framework and keep them roughly working similar.
-Wrote build tools for perforce and their pipelines hot reload functionality.
-Implemented the user interface for the HUD for the terrain and unit indicators.
-Electronic Arts Oct 2016-Sept 2021
-Software Developer
-Highlights
-Played an integral part in the Frosted Game Engine from within the Editor Frameworks team, Cinematics, Schematics and Lighting workflows teams.
-Tech Stack: Desktop WPF/XAML, Frostbite game engine / Ignite game engine.
-KEY PROJECTS
-Worked on the fundamental core tech of the frosted engine such as WPF and threading issues, docking, performance and memory profiling.
-Architected MVVM pattern upgrades to legacy visual coding diagram library architecture.
-Maintained Legacy code.
-Added Azure Telemetry metrics and helped with dashboard.
-Added Many Cinematic features such grouping, video controls and keyframe controls / editors.
-Wrote crash control and recovery application.
-Wrote cinematic controls for artists such as the main playback rewind controls and the preview window HUD for frosted editor.
-Helped architect their keyframe editor.
-UNITY Apr 2014 - Oct 2016
-Development Team Lead
-Highlights
-Tech Stack: C#, C++, Unity, JavaScript
-Call of Duty
-Star Wars BB8
-Skylanders
-MaxPlay ( GoogleDoc style game editor )
-Developed proprietary animation scaling systems for non-uniform scaling of muscle. Also allows the characters rig and animation to be compatible with the consoles Havok game engine.
-Optimized proprietary system of shared texture memory from GPU to CPU in C#
-Architected/Shipped Skylanders Imaginators mobile app for IOS/Android in Unity
-Integrated communications with consoles using Windows Universal Async Winsock and low-level TCP/IP.
-Architected n-tier real-time communications
-Achieved 30fps on low end mobile devices.
-XAML and WPF UI using MVVM design patterns.
-Implemented 3d Math library in JavaScript utilizing node.js and electron.
-Windows 10 UI framework development for NFL utilizing XAML and unity
-Industrial Alliance Insurance Aug 2013 - Feb 2014
-Software Engineer
-Architected business project called Unification using WPF, WCF and MVVM in .Net
-Wrote all the client-side connections for WCF interface.
-Profiled web service performance and optimized scalability and error handling.
-Microsoft Big Park Apr 2012 - Aug 2013
-Development Team Load
-Big Park focuses on apps for Xbox one such as ESPN, UFC, NFL as well as Kinect enabled games. They specialize in all gaming related technology such as Lua, Unity, C++, XAML.
-Worked on complex real-time UI systems utilizing Lua for NFL, Bonnaroo, ESPN & UFC.
-Implemented a system to visualize actual NFL players position using helmet telemetry and GPS.
-Novadaq Technologies Inc 2012 - Apr 2013
-Software Developer
-Novadaq's global mission is enabling surgeons with clinically relevant, innovative fluorescence imaging solutions to enhance the lives of patients and their surgeons, while reducing health care costs.
-Lead developer and Architect of Cinevaq 2.0 (SPY ELITE) product line. The main technology used is C# with some C++ video libraries
-FinancialCad 2010 - Apr 2012
-Software Developer
-Lead architect on the Silverlight/XNA presentation layer.
-Architect of their Fair Value insight reporting project.
-Optimized N-Tier scalable architecture by developing a faster .Net XML parser.
-Neoteric Technology July 2004 -June 2010
-Software Developer
-Build user interfaces libraries from the ground up with Win32 API. Utilized Visual Studio, C++
-Designed the backend using a N-Tier architecture
-Lead a team of four developers and was responsible for hiring and training
-Designed blood management process and architecture.
-Designed and managed Auto Fate Web utilizing ASP.NET 2.0
-Responsible for meeting a tight schedule as well as finalizing all design documents in UML (use case, class, sequence diagrams), test plans, automated test suites.
-Max Integration Jan 2004- July 2004
-Software Developer
-HIGHLIGHTS
-Designer and Project Lead of Max Integration's Look Out Win32, a flag ship CRM product.
-Designed backend using a N-Tier architecture with SQL 2000
-Built a highly motivated team of six developers.
-Converted Look Out CRM to being mobile device capable: utilized Microsoft Mobile ASP.NET
-Finalized all test plans, automated test suites & UML Class / Sequence diagrams. Environment was Visual Studio .Net 1.0 , SQL 2000, C#, ASP.NET 1.0
-RedHawk Gaming Software Inc. 2001 - 2003
-Software Developer
-HIGHLIGHTS
-Designed and supported gaming subsystems, low level device drivers for barcode readers, maintained legacy code and provided QA
-Infowave Technologies1997 - 2001
-Quality Assurance
-HIGHLIGHTS
-Managed QA test team of five junior developers / testers
-Maintained client and server features including automated testing.
-suites, glib compression, optimization, developed test suites.
-Electronic Arts 1996 - 1997
-Quality Assurance
-HIGHLIGHTS
-Created test suites on the following projects: NBA 97 (Sega Saturn), NFS1-NFS2 (PC), Warcraft2, Diablo2 (PSX), NHL 98 (PSX & Saturn), PGA tour 97-98 (PSX), PGA Wentworth
-EDUCATION AND TRAINING
-BCIT
-.NET High Tech Professional Software Systems Development
-2003 - 2004
-Advanced C++
-1999 -2001
-WSA Consulting
-U.M.L. Unified Modeling Language
-2000
-OO Techniques, Building large scale applications
-Development Testing and Automation Tools
-1998 - 2001
+=== Lead resume ===
+R.J. THOMPSON
+Engineering lead: architecture, teams and shipping under deadline
+236-518-2711  |  RJ45Thompson@gmail.com
+linkedin.com/in/r-j-thompson-9531588  |  github.com/rj45Thompson
+Sample work and experiments: rj45thompson.github.io/anchor-demo
+SUMMARY
+Engineering lead with 30 years in software. Software development lead at Finger Food Studios (Skylanders, Star Wars BB-8, Call of
+Duty) and development team lead at Microsoft Big Park (NFL, ESPN, UFC); team lead with hiring and training responsibility at
+Neoteric and Max Integration; mentor to developers at BioWare and on Activision's Call of Duty team; currently lead developer
+on a game contract. Owns architecture, ships under deadline, and brings teams onto unfamiliar engines fast.
+EXPERIENCE
+Lead Developer, Independent game studio (contract)
+2025 - present
+• Built the level and terrain editor and the pipeline tooling in Unity and C#: terrain sculpting and splat painting, prop snapping against colliders, an eighteen-state tile system and biome palettes.
+• Built the tactics camera and battle cinematics: best-angle turn camera, blend tables, dolly tracks, handheld noise and impulse, and a per-beat camera editor for cutscenes.
+• Built a Unity to Unreal Engine 5 VFX conversion tool for a port pilot; all 65 particle emitters convert to Niagara. Reported that the structure ports and the look does not, rather than calling it done.
+• Verification without opening the editor: NUnit suites run headless, a console gate fails a change on new errors, and a check-in gate blocks any asset committed without its metadata file. Artificial Intelligence Researcher, TNT (self-employed)
+Jan 2024 - present
+• ARC3, a knowledge engine answering from a graph with a measured confidence and a refusal when the evidence runs out: 66.4M facts over 12.2M subjects, no neural weights, runs in the browser.
+• Reported a retraction as the finding: a constant-guess baseline passed the same verification gate at 88.9%, so a reported 55/55 result was mostly base rate.
+• Job Desk, a Claude-backed web application with a Python backend, held to 88 automated tests; running it for real surfaced a tool-access problem and a sign-in flaw, each closed and guarded by a regression test. Assistant to Lead Developer, Utherverse
+Jan - May 2025 (contract)
+• Oversaw daily operations of the virtual world platform, coordinating cross-functional teams.
+• Managed staffing: hiring, training and performance evaluations. Senior Software Engineer, BioWare
+May - Aug 2024 (contract)
+• Shipped the dialog and narrative system for Dragon Age: The Veilguard on Frostbite.
+• Mentored developers on the Frosted cinematic and narrative system through the final push to ship. Senior Software Engineer, Eden Industries
+Feb 2022 - Dec 2023
+• Activision, Call of Duty: shipped a new live ops system; mentored junior developers and helped architect interop COM bridges for Android and iOS.
+• Operation Tango: ported low-level networking and real-time voice chat to Nintendo Switch, and fixed real-time chat and Photon networking faults.
+• Kabam, Disney Mirrorverse: debugged and fixed difficult low-level threading and networking issues.
+• Integrated third-party libraries including Vivox, Photon and OpenCV (chat, video and computer vision). C++ and Unity on Switch, Android and iOS. Software Developer, SEGA (Relic)
+Jan 2021 - Jan 2022
+• Company of Heroes 3: brought on to optimize WPFG, a port of WPF running on C++ rather than C#. Increased performance by up to 7%.
+• Identified and fixed major process issues, improving the team's velocity by 10%.
+• Built the front-end UI and loadout system, implemented the HUD for terrain and unit indicators, and architected an improved UI API for the engine.
+• Wrote build tools for Perforce and the pipeline's hot-reload functionality. Senior Software Developer, Electronic Arts
+Oct 2016 - Sep 2020
+• Four years on the Frosted editor for Frostbite, across the Editor Frameworks, Cinematics, Schematics and Lighting Workflows teams.
+• Core editor work: WPF and threading issues, docking, and performance and memory profiling.
+• Architected MVVM upgrades to the legacy visual coding diagram library; wrote a crash control and recovery application; added Azure telemetry metrics and helped with the dashboard.
+• Helped architect the keyframe editor, and wrote the artist-facing playback, rewind and preview HUD controls for cinematics, plus grouping and video controls. Software Development Lead, Finger Food Studios
+Apr 2015 - Sep 2016
+• Led the team across Skylanders, Star Wars BB-8, Call of Duty and MaxPlay, and the studio's move to Unity.
+• Developed proprietary non-uniform animation scaling that kept character rigs compatible with the consoles' Havok engine; accelerated Skylanders asset-bundle loading by 200%.
+• Architected and shipped Skylanders Imaginators on iOS and Android in Unity; held 30fps on low-end mobile devices.
+• Architected n-tier real-time communications with consoles over Windows Universal Async Winsock and low-level TCP/IP. Wrote a 3D math library in JavaScript on Node.js and Electron. Development Team Lead, Microsoft (Big Park)
+Apr 2013 - Aug 2014
+• Complex real-time Lua UI for the Xbox One NFL, ESPN, UFC and Bonnaroo apps.
+• Built a system visualizing NFL players' positions from helmet telemetry and GPS. Software Developer, Novadaq Technologies
+Apr 2012 - Apr 2013
+• Lead developer and architect of the Cinevaq 2.0 (SPY ELITE) product line, a regulated surgical fluorescence-imaging device, in C# with C++ video libraries. Software Developer, Neoteric Technology
+Jul 2004 - Jun 2010
+• Built UI libraries from the ground up with the Win32 API in C++, over an n-tier backend.
+• Led a team of four and was responsible for hiring and training. Owned UML design documents, test plans and automated test suites.
+Earlier: Industrial Alliance, architected Unification in .NET/WPF/WCF (2014-15)  ·  FinancialCad, lead architect of the Silverlight/XNA
+presentation layer (2010-12)  ·  Max Integration, project lead on a Win32 CRM, team of six (2004)  ·  RedHawk Gaming, gaming
+subsystems and low-level device drivers (2001-03)  ·  Infowave, QA lead of five (1997-2001)  ·  Electronic Arts, QA on NHL 98, Need for
+Speed and Warcraft II (1996-97)
+SKILLS
+Languages: C++ (11/14/17), C#, Python, Lua, JavaScript, SQL
+Engines and frameworks: Frostbite, Unity, Unreal, Essence, Havok, .NET, WPF/XAML, MVVM, Win32
+Machine learning: PyTorch: convolutional and self-supervised models, graph neural networks, mixture-of-experts; CLIP and
+vision-language feature extraction
+Systems: multithreading and debugging, low-level networking (sockets, TCP/IP), profiling and optimization, real-time systems, n-tier
+and event-driven architecture
+Tools: Perforce, Git, Jenkins, Azure DevOps, Visual Studio
+EDUCATION
+BCIT, .NET High Tech Professional Software Systems Development, 2003-2004  ·  Advanced C++, 1999-2001  ·  WSA Consulting,
+UML (Unified Modeling Language), 2000  ·  OO techniques, building large-scale applications, development testing and automation
+tools, 1998-2001
+
+=== AI resume (only what the resumes above do not already say) ===
+Senior software engineer: AI systems and the verification around them
+Senior engineer with 30 years shipping production software, now working on AI systems and the verification around them: a
+knowledge engine that states a measured confidence and refuses rather than guesses, a preprint whose strongest result was
+retracted by its own matched baseline, and a Claude-backed application held to 88 automated tests. Before that, 13 years in
+games on engine and tools teams at EA, BioWare, Relic and Eden Industries, and regulated medical imaging at Novadaq. C++,
+C#, Python and PyTorch, SQL.
+Artificial Intelligence Researcher, TNT (self-employed)
+• Job Desk, a Claude-backed web application with a Python backend, held to 88 automated tests; running it for real surfaced a tool-access problem and a sign-in flaw, each closed and guarded by a regression test. Lead Developer, Independent game studio (contract)
+• Verification without opening the editor: NUnit suites run headless, a console gate fails a change on new errors, and a check-in gate blocks any asset committed without its metadata file.
+• Built the tactics camera and battle cinematics: best-angle turn camera, blend tables, dolly tracks, handheld noise and impulse, and a per-beat camera editor for cutscenes. Assistant to Lead Developer, Utherverse
+• Oversaw daily operations of the virtual world platform, coordinating cross-functional teams; managed staffing, including hiring, training and performance evaluations. Senior Software Engineer, BioWare
+• Wrote build tools for Perforce and the pipeline's hot-reload functionality.
+• Identified and fixed major process issues, improving the team's velocity by 10%. Senior Software Developer, Electronic Arts
+Languages: Python, C#, C++ (11/14/17), SQL, JavaScript, Lua
+
+=== Games resume (only what the resumes above do not already say) ===
+Game engineer: engine and tools, cinematics and camera, networking
+Game engineer with 30 years shipping software, about 13 of them in games. Shipped the dialog and narrative system for Dragon
+Age: The Veilguard at BioWare, spent four years on EA's Frostbite editor, cinematics and lighting tools, optimized Company of
+Heroes 3 at Relic, shipped live ops for Call of Duty, Nintendo Switch networking and voice for Operation Tango and low-level
+threading and networking fixes for Disney Mirrorverse at Eden Industries, and led the team behind Skylanders and Star Wars BB-8
+at Finger Food Studios. C++, C#, Unity, Frostbite and Essence, with deep threading, networking and real-time systems work.
+Titles: Dragon Age: The Veilguard  ·  Company of Heroes 3  ·  Call of Duty (live ops)  ·  Operation Tango (Nintendo Switch)  ·  Disney
+Mirrorverse  ·  Skylanders Imaginators  ·  Star Wars BB-8  ·  NFL, ESPN and UFC (Xbox One)  ·  Zombie Crossing (Xbox 360)
+• Helped architect the keyframe editor, and wrote the artist-facing playback, rewind and preview HUD controls for cinematics, plus grouping and video controls.
+• Architected MVVM upgrades to the legacy visual coding diagram library; wrote a crash control and recovery application; added Azure telemetry metrics and helped with the dashboard. Software Development Lead, Finger Food Studios
+Languages: C++ (11/14/17), C#, Lua, Python, JavaScript, SQL
+Platforms: Windows, Nintendo Switch, Xbox One, iOS and Android
+
+=== Cpp resume (only what the resumes above do not already say) ===
+C++ systems engineer: Win32, real-time systems and low-level networking
+C++ systems engineer with 30 years shipping software, 18 of them in C++. Built Win32 API user-interface libraries from the
+ground up in C++ over an n-tier backend at Neoteric, led a team of six on a Win32 CRM at Max Integration, and wrote
+subsystems and device drivers at RedHawk. Optimized WPFG, a port of WPF running on C++ rather than C#, by up to 7% on
+Company of Heroes 3 at Relic. Ported low-level networking and real-time voice chat to Nintendo Switch, architected COM interop
+bridges for Call of Duty, and architected console communications over Windows Async Winsock and low-level TCP/IP. Equally at
+home on the C# desktop side: WPF, MVVM, and C#/C++ interop on a regulated surgical-imaging device. C++11/14/17,
+multithreading, profiling and real-time systems.
+• Shipped the dialog and narrative system for Dragon Age: The Veilguard, in C++ on Frostbite.
+• Company of Heroes 3, C++17 on the Essence engine: brought on to optimize WPFG, a port of WPF running on C++ rather than C#. Increased performance by up to 7%.
+• Decompiled the .NET framework to keep Relic's C++ WPFG framework working like WPF.
+• Built the front-end UI and loadout system, implemented the HUD for terrain and unit indicators, and architected an improved UI API for the engine. Senior Software Developer, Electronic Arts
+• Architected n-tier real-time communications with consoles over Windows Universal Async Winsock and low-level TCP/IP. Wrote a 3D math library in JavaScript on Node.js and Electron.
+• Architected and shipped Skylanders Imaginators on iOS and Android in Unity; held 30fps on low-end mobile devices. Development Team Lead, Microsoft (Big Park)
+Windows and desktop: Win32 API, COM interop, Winsock, WPF/XAML, MVVM, WinForms, .NET
+Systems: multithreading and debugging, low-level networking (sockets, TCP/IP), profiling and optimization, real-time systems,
+device drivers, n-tier and event-driven architecture
+Platforms: Windows, Nintendo Switch, Xbox One, iOS and Android, embedded systems
+Engines: Frostbite, Unity, Unreal, Essence, Havok
+
+=== DotNet resume (only what the resumes above do not already say) ===
+C# and .NET engineer: WPF desktop, services and developer tooling
+C# and .NET engineer with 30 years shipping software, on .NET since Visual Studio .NET 1.0 in 2004. Architected Unification, a
+WPF, WCF and MVVM business system at Industrial Alliance; lead architect of the Silverlight/XNA presentation layer and author
+of a faster .NET XML parser at FinancialCad; lead developer and architect of a regulated surgical-imaging product in C# at
+Novadaq; four years in the WPF/XAML Frosted editor at EA, and kept Relic's C++ port of WPF working like WPF by decompiling
+the .NET framework. Project lead on a C#, ASP.NET and SQL 2000 CRM at Max Integration. Currently builds Unity editor tooling in
+C# with headless NUnit suites. C#, .NET, WPF/XAML, MVVM, WCF, ASP.NET and SQL, with C++ interop when the work calls for it.
+• Verification and tooling without opening the editor: NUnit suites run headless, any in-game UI panel can be captured on demand over a local HTTP bridge, a console gate fails a change on new errors, and a check-in gate blocks any asset committed without its metadata file. Artificial Intelligence Researcher, TNT (self-employed)
+• Job Desk, a Claude-backed web application with a Python backend, held to 88 automated tests; running it for real surfaced a tool-access problem and a sign-in flaw, each closed and guarded by a regression test.
+• ARC3, a knowledge engine answering from a graph with a measured confidence and a refusal when the evidence runs out: 66.4M facts over 12.2M subjects, no neural weights, runs in the browser. Assistant to Lead Developer, Utherverse
+• Shipped the dialog and narrative system for Dragon Age: The Veilguard on Frostbite. Senior Software Engineer, Eden Industries
+• Operation Tango: ported low-level networking and real-time voice chat to Nintendo Switch, and fixed real-time chat and Photon networking faults. Software Developer, SEGA (Relic)
+• Four years on the Frosted editor for Frostbite, a WPF/XAML desktop application, across the Editor Frameworks, Cinematics, Schematics and Lighting Workflows teams.
+• XAML and WPF UI with MVVM, a Windows 10 UI framework for NFL in XAML and Unity, and an optimized shared texture memory path from GPU to CPU in C#.
+• Architected n-tier real-time communications with consoles over Windows Universal Async Winsock and low-level TCP/IP. Wrote a 3D math library in JavaScript on Node.js and Electron. Software Engineer, Industrial Alliance
+Aug 2014 - Feb 2015
+• Architected Unification, a business system in .NET with WPF, WCF and MVVM; wrote all the client-side connections for the WCF interface.
+• Profiled web service performance and optimized scalability and error handling. Development Team Lead, Microsoft (Big Park)
+• Complex real-time Lua UI for the Xbox One NFL, ESPN, UFC and Bonnaroo apps. Software Developer, Novadaq Technologies
+• Lead developer and architect of the Cinevaq 2.0 (SPY ELITE) product line, a regulated surgical fluorescence-imaging device, in C# with C++ video libraries. Software Developer, FinancialCad
+Sep 2010 - Apr 2012
+• Lead architect of the Silverlight/XNA presentation layer and architect of the Fair Value insight reporting project.
+• Optimized an n-tier scalable architecture by developing a faster .NET XML parser. Software Developer, Neoteric Technology
+• Built UI libraries from the ground up with the Win32 API in C++ over an n-tier backend; designed and managed Auto Fate Web on ASP.NET 2.0, and designed the blood management process and architecture.
+• Led a team of four and was responsible for hiring and training. Owned UML design documents, test plans and automated test suites. Software Developer, Max Integration
+Jan - Jul 2004
+• Designer and project lead of Look Out, a flagship Win32 CRM product, with a team of six: n-tier backend on SQL 2000, a mobile version on Microsoft Mobile ASP.NET, test plans, automated test suites and UML class and sequence diagrams. Visual Studio .NET 1.0, C#, ASP.NET 1.0.
+Earlier: RedHawk Gaming, gaming subsystems and low-level device drivers (2001-03)  ·  Infowave, QA lead of five (1997-2001)  ·
+Electronic Arts, QA on NHL 98, Need for Speed and Warcraft II (1996-97)
+Languages: C#, SQL, C++ (11/14/17), Python, JavaScript, Lua
+Microsoft stack: .NET, WPF/XAML, MVVM, WCF, ASP.NET, WinForms, Win32 API, COM interop, Silverlight/XNA, NUnit, Azure
+telemetry
+Data: SQL Server (from SQL 2000 on) and SQLite: application data layers and schema design
+Systems: multithreading and debugging, profiling and optimization, low-level networking (sockets, TCP/IP), real-time systems;
+n-tier, event-driven and microservice architecture; UML design
+Engines: Unity, Unreal, Frostbite, Essence
+Machine learning: PyTorch: convolutional, self-supervised and graph models
+Tools: Visual Studio, Azure DevOps, Git, Perforce, Jenkins
