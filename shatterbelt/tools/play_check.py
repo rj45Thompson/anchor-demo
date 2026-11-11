@@ -112,6 +112,11 @@ def desktop(browser, base, msgs):
             break
     played = game(page, "({time: g.time, score: g.score, wave: g.wave, ships: g.ships, broken: s.stats.rocksBroken, explosions: s.stats.explosions})")
     fps = (game(page, "s.stats.frames") - frames0) / (time.time() - wall0)
+    # this page's own CPU time per frame over the last 600 frames of play (main.js frameCost: steps + issuing draws)
+    cost = sorted(game(page, "Array.from(s.frameCost)"))
+    frame_cost = {"median": cost[len(cost) // 2], "p99": cost[min(len(cost) - 1, int(len(cost) * 0.99))], "max": cost[-1], "frames": len(cost)}
+    check("a frame's own CPU time fits the 16.7 ms of a 60 Hz frame for 99 frames in 100", frame_cost["p99"] < 16.7,
+          "median %.2f ms, 99th percentile %.2f ms, slowest %.2f ms, over the last %d frames" % (frame_cost["median"], frame_cost["p99"], frame_cost["max"], frame_cost["frames"]))
     page.keyboard.up("Space")
     check("played 60 s of game time with fire held", played["time"] >= 60 or played["ships"] == 0,
           "%.1f s of game time, score %d, wave %d, %d rocks broken, %d explosions" % (played["time"], played["score"], played["wave"], played["broken"], played["explosions"]))
@@ -148,7 +153,7 @@ def desktop(browser, base, msgs):
           document_text(page, "replayResult"))
     past_an_hour(page)
     ctx.close()
-    return {"gpu": gpu, "fps": fps, "played": played, "over": over, "replay": matched}
+    return {"gpu": gpu, "fps": fps, "played": played, "over": over, "replay": matched, "frame_cost": frame_cost}
 
 
 def past_an_hour(page):
@@ -317,7 +322,15 @@ def write_block(desk, ph, msgs):
         "{:.0f}".format(p["time"]), p["broken"], p["wave"], "bad" if errors else "ok", len(errors),
         "ok" if desk["replay"] else "bad", "Yes" if desk["replay"] else "No",
         sum(r["pass"] for r in results), len(results), ph["field"][0], ph["field"][1], round(desk["fps"]), html.escape(gpu_name(desk["gpu"])))
-    open(page_file, "w", encoding="utf-8", newline="").write(re.sub(r"(<!--gen:play-->).*?(<!--/gen:play-->)", lambda m: m.group(1) + block + m.group(2), text, flags=re.S))
+    fc = desk["frame_cost"]
+    frame_block = ('<div class="stat"><div><b>%.2f ms</b><span>of this page&rsquo;s own CPU time in a typical frame</span></div>'
+                   '<div><b>%.2f ms</b><span>for the slowest 1 frame in 100, of the 16.7 ms a 60 Hz frame has</span></div></div>'
+                   '<p class="cap">Measured by <code>tools/play_check.py</code> during the play above: the time each frame spends in the game steps and '
+                   'issuing the draw calls (main.js keeps it for the last %d frames). The GPU&rsquo;s own drawing time is not in it. The slowest frame took %.2f ms. '
+                   'Headless Chromium on %s, one run.</p>') % (fc["median"], fc["p99"], fc["frames"], fc["max"], html.escape(gpu_name(desk["gpu"])))
+    text = re.sub(r"(<!--gen:play-->).*?(<!--/gen:play-->)", lambda m: m.group(1) + block + m.group(2), text, flags=re.S)
+    text = re.sub(r"(<!--gen:frame-->).*?(<!--/gen:frame-->)", lambda m: m.group(1) + frame_block + m.group(2), text, flags=re.S)
+    open(page_file, "w", encoding="utf-8", newline="").write(text)
     print("written into index.html")
 
 

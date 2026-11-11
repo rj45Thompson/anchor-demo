@@ -45,6 +45,9 @@ let stageVisible = true;
 const clock = new FixedTimestep();
 const sound = new Sound({ muted: saved.read('muted', false), music: saved.read('music', true) });
 const stats = { frames: 0, steps: 0, rocksBroken: 0, explosions: 0, gamesStarted: 0, replayMatched: null };
+// The time each frame spends in this page's code (the game steps and issuing the draw calls; the GPU's own work is
+// not in it), for the last 600 frames, kept without allocating. play_check.py reads it for the frame budget.
+const frameCost = new Float32Array(600);
 
 const controls = new Controls({
   wantsKeys: () => stageVisible && mode !== 'loading',
@@ -55,11 +58,13 @@ const controls = new Controls({
 // ---- the loop ----------------------------------------------------------------------------------
 let last = performance.now();
 function frame(now) {
+  const started = performance.now();
   const dt = Math.min((now - last) / 1000, 0.25);
   last = now;
   if (mode !== 'paused' && mode !== 'loading') alpha = clock.advance(mode === 'replay' ? dt * 2 : dt, stepOnce);
   else if (mode === 'paused') controls.pollPad(); // no steps run, so the pad's Start is read here to carry on
   if (renderer && game) renderer.draw(game, alpha, mode === 'paused' ? 0 : dt);
+  frameCost[stats.frames % frameCost.length] = performance.now() - started;
   stats.frames += 1;
   requestAnimationFrame(frame);
 }
@@ -284,6 +289,7 @@ window.shatterbelt = {
   get game() { return game; },
   get mode() { return mode; },
   get log() { return log; },
+  frameCost,
   stats,
 };
 
