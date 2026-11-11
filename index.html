@@ -31,7 +31,7 @@
    and every section id is here). */
 (function(){
   var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","phonepad","memsentinel","games","starfighter","houseofcars","tidewall","shatterbelt","breakout","bpgames",
-             "research","engine","bossbench","warship","apps","casement","docs","docs-u2ue","docs-blueprint","docs-loop",
+             "research","engine","bossbench","warship","apps","casement","options-bot","docs","docs-u2ue","docs-blueprint","docs-loop",
              "docs-research","repos","contact","about"];
   var ALIAS = { projects:"u2ue", resume:"breakout", space:"starfighter", bench:"bossbench", manual:"u2ue-chapters", documentation:"docs" };
   function route(){
@@ -410,6 +410,7 @@ h3 a:hover{color:var(--accent)}
       <li class="gr" data-sec="apps"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Other tools"><span>&#9656;</span></button><a class="row" href="#apps"><span class="g" style="--c:var(--c-apps)"></span><span class="l">Other tools</span><span class="n"></span></a></div>
         <ul>
           <li class="leaf"><a class="row" href="#casement"><span class="g dot" style="--c:var(--c-apps)"></span><span class="l">Casement Sheet</span></a></li>
+          <li class="leaf"><a class="row" href="#options-bot"><span class="g dot" style="--c:var(--c-apps)"></span><span class="l">Options Trader Bot</span></a></li>
         </ul></li>
       <li class="gr" data-sec="docs"><div class="rowwrap"><button class="ch" type="button" aria-expanded="true" aria-label="Show or hide Documentation"><span>&#9656;</span></button><a class="row" href="#docs"><span class="g" style="--c:var(--c-docs)"></span><span class="l">Documentation</span><span class="n"></span></a></div>
         <ul>
@@ -685,7 +686,7 @@ h3 a:hover{color:var(--accent)}
         <p class="line">A 3D lot concept for an Edmonton car dealer: walk the lot, read each car's real numbers, then race one down a quarter mile. The cars and the track come out of Unreal Engine, on its vehicle physics ported to WebGPU.</p>
         <p class="more">A clutch, an H-pattern gate, each car's own gauges and tyres that spin in the rain. An unofficial concept, not affiliated with House of Cars.</p>
         <ul class="tags"><li>WebGPU</li><li>Unreal Engine port</li><li>three.js</li></ul>
-        <p class="links"><a class="go" href="houseofcars/#car=mercedes_amg_e63s_2021&amp;drag">Drag race a car</a><a href="houseofcars/">Walk the lot</a></p>
+        <p class="links"><a class="go" href="houseofcars/#car=mercedes_amg_e63s_2021&amp;drag">Drag race a car</a><a href="houseofcars/">Walk the lot</a><a href="houseofcars-demo/">Watch a 28 second race</a></p>
       </div>
     </article>
     <article id="tidewall" class="card" data-node="Tidewall">
@@ -793,6 +794,17 @@ h3 a:hover{color:var(--accent)}
         <p class="more">Taped, photo-read and calculated figures stay apart on screen and in the PDF. Exports PDF, CSV and DXF. Works without a key; corner finding, dictation and the chat box use your own Anthropic key.</p>
         <ul class="tags"><li>Web app</li><li>3D view</li><li>PDF and DXF</li></ul>
         <p class="links"><a class="go" href="casement/">Open Casement Sheet</a></p>
+      </div>
+    </article>
+    <article id="options-bot" class="card" data-node="Options Trader Bot">
+      <a class="shot" href="options-bot/replay.html" tabindex="-1" aria-hidden="true"><img src="thumbs/options-bot.jpg" width="640" height="400" loading="lazy" alt=""></a>
+      <div class="body">
+        <p class="meta"><span class="state s-proto">Prototype</span><span>Python, Interactive Brokers</span></p>
+        <h3><a href="options-bot/">Options Trader Bot</a></h3>
+        <p class="line">A same-day SPY options bot for Interactive Brokers, rebuilt from a pasted script. Safe by default: no orders until a stop and a target are set, and paper trading unless told otherwise.</p>
+        <p class="more">84 tests caught all 30 bugs planted to test them, and a check against its written spec found 3 faults, all fixed. Replay a real week of SPY minute bars and watch each signal and fill as the bot printed it.</p>
+        <ul class="tags"><li>Python</li><li>Interactive Brokers</li><li>Testing</li></ul>
+        <p class="links"><a class="go" href="options-bot/replay.html">Watch a real week</a><a href="options-bot/">What it does</a><a href="options-bot/manual.html">The manual</a></p>
       </div>
     </article>
   </div>
