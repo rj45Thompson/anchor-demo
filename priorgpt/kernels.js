@@ -60,6 +60,10 @@ export function sortSuffixes(s, alphabet) {
   let next = new Int32Array(n);
   const tmp = new Int32Array(n);
   const count = new Int32Array(Math.max(alphabet, n) + 1);
+  // a code outside the alphabet has no bucket: the counting sort would drop it and repeat other rows, so refuse it
+  for (let i = 0; i < n; i++) {
+    if (!(s[i] >= 0 && s[i] < alphabet)) throw new Error('code ' + s[i] + ' at ' + i + ' is outside the alphabet of ' + alphabet);
+  }
   for (let i = 0; i < n; i++) count[s[i] + 1] += 1;
   for (let i = 1; i <= alphabet; i++) count[i] += count[i - 1];
   for (let i = 0; i < n; i++) {

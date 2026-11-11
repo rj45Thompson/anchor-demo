@@ -6,17 +6,17 @@
  "batch": "32 new + 32 old windows of 256",
  "device": "cuda",
  "gpu": "NVIDIA GeForce RTX 2080",
- "seconds_fine_tune": 86.27,
- "seconds_one_measure": 1.62,
+ "seconds_fine_tune": 87.06,
+ "seconds_one_measure": 1.67,
  "bits_before": {
   "old priors": 1.586109338553764,
   "new text": 1.9968277035263196,
   "held-out measure": 2.251387880701994
  },
  "bits_after": {
-  "old priors": 1.6819268479891207,
-  "new text": 1.007060119274754,
-  "held-out measure": 2.3049941085562704
+  "old priors": 1.6844071269483742,
+  "new text": 1.0048283678452838,
+  "held-out measure": 2.3062630022827713
  },
  "worse": [
   "old priors",

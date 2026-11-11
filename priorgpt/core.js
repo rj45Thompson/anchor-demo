@@ -563,28 +563,30 @@ export class Priors {
     __bpNode(33, "s5");
     this.text += text;
     __bpNode(33, "s6");
-    for (const c of text) {
+    for (let i = 0; i < text.length; i++) {
       __bpNode(33, "s7");
+      const c = text[i];
+      __bpNode(33, "s8");
       if (!this.codeOf.has(c)) {
-        __bpNode(33, "s8");
-        this.codeOf.set(c, this.alphabet.length);
         __bpNode(33, "s9");
+        this.codeOf.set(c, this.alphabet.length);
+        __bpNode(33, "s10");
         this.alphabet.push(c);
       }
     }
-    __bpNode(33, "s10");
-    this.docs.push(doc);
     __bpNode(33, "s11");
-    this.readStructure(doc);
+    this.docs.push(doc);
     __bpNode(33, "s12");
-    this.codes = this.encode(this.text);
+    this.readStructure(doc);
     __bpNode(33, "s13");
-    this.index = new SuffixArray(this.codes, this.alphabet.length);
+    this.codes = this.encode(this.text);
     __bpNode(33, "s14");
-    doc.lastLine = this.lines.length - 1;
+    this.index = new SuffixArray(this.codes, this.alphabet.length);
     __bpNode(33, "s15");
-    doc.ms = Date.now() - started;
+    doc.lastLine = this.lines.length - 1;
     __bpNode(33, "s16");
+    doc.ms = Date.now() - started;
+    __bpNode(33, "s17");
     return doc;
   }
   readStructure(doc) {
@@ -710,9 +712,9 @@ export class Priors {
   }
   occurrences(text) {
     __bpNode(37, "s1");
-    for (const c of text) {
+    for (let i = 0; i < text.length; i++) {
       __bpNode(37, "s2");
-      if (!this.codeOf.has(c)) {
+      if (!this.codeOf.has(text[i])) {
         __bpNode(37, "s3");
         return [];
       }
