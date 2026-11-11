@@ -137,6 +137,14 @@ function start() {
   fitStageOnScreen();
 }
 
+// Room the field leaves for the touch controls. Upright, the buttons sit in a band below the field; held sideways
+// they sit in the two bottom corners, beside the field, so the field keeps nearly the whole height.
+function fitTouchInsets() {
+  if (!renderer || !stage.classList.contains('touch')) return;
+  const sideways = stage.clientWidth > stage.clientHeight * 1.3;
+  if (sideways) renderer.setInsets(40, 16); else renderer.setInsets(56, 150);
+}
+
 // A phone's stage is sized to the screen less the page header, but the page can be scrolled anywhere when Play is
 // tapped, which left the touch buttons under the bottom edge. Bring the whole stage into view (the buttons first,
 // if it is taller than the screen). Checked by play_check.py: "every touch button is on screen in play".
@@ -282,7 +290,7 @@ function wire() {
     stageVisible = entry.intersectionRatio >= 0.35;
     if (!stageVisible) pause(true);
   }, { threshold: [0, 0.35, 0.7, 1] }).observe(stage);
-  new ResizeObserver(() => renderer && renderer.resize(stage.clientWidth, stage.clientHeight)).observe(stage);
+  new ResizeObserver(() => { if (!renderer) return; renderer.resize(stage.clientWidth, stage.clientHeight); fitTouchInsets(); }).observe(stage);
   const touch = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
   stage.classList.toggle('touch', touch);
   $('titleHint').textContent = touch ? 'Tap Play. Steer with the buttons at the bottom.' : 'Press Enter or Space to play.';
@@ -304,7 +312,7 @@ async function boot() {
     throw error;
   }
   renderer.resize(stage.clientWidth, stage.clientHeight);
-  if (stage.classList.contains('touch')) renderer.setInsets(56, 150); // the HUD above, the touch buttons below
+  fitTouchInsets();
   attract();
   requestAnimationFrame(t => { last = t; frame(t); });
 }

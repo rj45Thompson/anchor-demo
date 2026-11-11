@@ -328,19 +328,25 @@ def motion(browser, base, msgs):
 
 
 def small_phone(browser, base, msgs):
-    """a small phone (360x640): the same reachability check, where there is least room"""
-    ctx = browser.new_context(viewport={"width": 360, "height": 640}, device_scale_factor=2, is_mobile=True, has_touch=True)
-    page = ctx.new_page()
-    listen(page, msgs)
-    page.goto(base, wait_until="load")
-    page.wait_for_function("window.shatterbelt && window.shatterbelt.mode === 'title'", timeout=60000)
-    page.wait_for_timeout(800)
-    page.tap("#playBtn")
-    page.wait_for_function("window.shatterbelt.mode === 'playing'")
-    page.wait_for_timeout(400)
-    check_buttons_on_screen(page, "phone 360x640")
-    shoot(page, "7_small_phone_play")
-    ctx.close()
+    """a small phone upright (360x640) and phones held sideways (812x375, 640x360): every touch button reachable,
+    and the whole play field on screen, where there is least room"""
+    for w, h in ((360, 640), (812, 375), (640, 360)):
+        ctx = browser.new_context(viewport={"width": w, "height": h}, device_scale_factor=2, is_mobile=True, has_touch=True)
+        page = ctx.new_page()
+        listen(page, msgs)
+        page.goto(base, wait_until="load")
+        page.wait_for_function("window.shatterbelt && window.shatterbelt.mode === 'title'", timeout=60000)
+        page.wait_for_timeout(800)
+        page.tap("#playBtn")
+        page.wait_for_function("window.shatterbelt.mode === 'playing'")
+        page.wait_for_timeout(400)
+        label = "phone %dx%d" % (w, h)
+        check_buttons_on_screen(page, label)
+        stage = page.evaluate("(() => { const r = document.getElementById('stage').getBoundingClientRect(); return [r.top, r.bottom, innerHeight]; })()")
+        check("%s: the whole play field is on screen in play" % label, stage[0] >= -1 and stage[1] <= stage[2] + 1,
+              "stage top %.0f, bottom %.0f, screen %d" % tuple(stage))
+        shoot(page, "7_phone_%dx%d" % (w, h))
+        ctx.close()
 
 
 def gpu_name(renderer):
