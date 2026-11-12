@@ -1,0 +1,13 @@
+{
+  "leadInSeconds": 4,
+  "phraseTailSeconds": 0.5,
+  "toleranceSemitones": 0.75,
+  "pitchMinHz": 80,
+  "pitchMaxHz": 1000,
+  "yinThreshold": 0.15,
+  "minRms": 0.01,
+  "pitchWindow": 1024,
+  "smoothingFrames": 5,
+  "previewVolume": 0.25,
+  "maxFileBytes": 1048576
+}

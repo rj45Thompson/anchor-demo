@@ -30,7 +30,7 @@
    OWN is checked against the page's real ids by test/home_page_check.py (every id here exists,
    and every section id is here). */
 (function(){
-  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","phonepad","memsentinel","games","starfighter","houseofcars","tidewall","shatterbelt","breakout","bpgames",
+  var OWN = ["top","main","u2ue","u2ue-kit","u2ue-chapters","blueprint","tools","fly","phonepad","memsentinel","games","starfighter","houseofcars","karaoke","tidewall","shatterbelt","breakout","bpgames",
              "research","engine","priorgpt","bossbench","warship","apps","casement","options-bot","docs","docs-u2ue","docs-blueprint","docs-loop",
              "docs-research","repos","contact","about"];
   var ALIAS = { projects:"u2ue", resume:"breakout", space:"starfighter", bench:"bossbench", manual:"u2ue-chapters", documentation:"docs" };
@@ -677,6 +677,17 @@ h3 a:hover{color:var(--accent)}
         <p class="more">The game shows its controls before you fly; type help in its terminal for the rest.</p>
         <ul class="tags"><li>WebGL</li><li>Game AI</li><li>3D</li></ul>
         <p class="links"><a class="go" href="https://rj45thompson.github.io/starfighter/">Play Star Fighter</a><a href="https://github.com/rj45Thompson/starfighter" rel="noopener">Source</a></p>
+      </div>
+    </article>
+    <article id="karaoke" class="card" data-node="Karaoke singing check">
+      <a class="shot" href="karaoke/" tabindex="-1" aria-hidden="true"><img src="thumbs/karaoke.svg" width="640" height="400" loading="lazy" alt=""></a>
+      <div class="body">
+        <p class="meta"><span class="state s-play">Playable</span><span>Runs in the browser</span></p>
+        <h3><a href="karaoke/">Karaoke singing check</a></h3>
+        <p class="line">Sing a short original tune and see how close your pitch is, note by note, with a melody preview before each phrase.</p>
+        <p class="more">Press Start and sing into your microphone. Timing starts from that press, not from a music player, so no song is played or shown here. Load your own melody file to try another tune. Headphones help.</p>
+        <ul class="tags"><li>Microphone</li><li>Pitch check</li><li>Runs in the browser</li></ul>
+        <p class="links"><a class="go" href="karaoke/">Try the pitch check</a></p>
       </div>
     </article>
     <article id="houseofcars" class="card" data-node="House of Cars 3D lot">

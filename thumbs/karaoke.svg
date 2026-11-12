@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+  <rect width="640" height="400" fill="#12141a"/>
+  <rect x="40" y="40" width="560" height="150" rx="14" fill="#1b1f29"/>
+  <text x="320" y="130" text-anchor="middle" font-family="system-ui, sans-serif" font-size="46" font-weight="700" fill="#7cc4ff">la la la la</text>
+  <rect x="40" y="220" width="560" height="140" rx="14" fill="#1b1f29"/>
+  <circle cx="130" cy="290" r="48" fill="#1d3a2a"/>
+  <polygon points="130,260 150,300 110,300" fill="#5ee08a"/>
+  <g fill="#5ee08a" opacity="0.9">
+    <rect x="260" y="300" width="36" height="12" rx="4"/>
+    <rect x="310" y="280" width="36" height="32" rx="4"/>
+    <rect x="360" y="262" width="36" height="50" rx="4"/>
+    <rect x="410" y="290" width="36" height="22" rx="4"/>
+  </g>
+</svg>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karaoke singing check</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <!--home-link--><p class="home"><a href="../">Anchor demo</a></p><!--/home-link-->
+    <header>
+      <h1 id="song-title">Karaoke singing check</h1>
+      <p class="intro">A short original tune to check your pitch. Timing starts when you press Start, not from a music player. Headphones help, so the speakers do not feed the microphone.</p>
+    </header>
+
+    <section class="stage" aria-live="polite">
+      <p id="prev-line" class="line dim"></p>
+      <p id="current-line" class="line current">Press Start</p>
+      <p id="next-line" class="line dim"></p>
+    </section>
+
+    <section class="pitch" aria-label="Pitch check">
+      <div id="arrow" class="arrow idle" aria-hidden="true">&middot;</div>
+      <div class="readout">
+        <p><span>Target</span> <strong id="target">-</strong></p>
+        <p><span>You</span> <strong id="sung">-</strong></p>
+        <p id="gap" class="gap"></p>
+      </div>
+      <div class="meter" aria-hidden="true"><div id="level"></div></div>
+    </section>
+
+    <section class="controls">
+      <button id="start" type="button">Start</button>
+      <button id="stop" type="button" disabled>Stop</button>
+      <button id="restart" type="button">Restart</button>
+      <label class="check"><input id="preview" type="checkbox" checked> Melody preview before each phrase</label>
+      <label class="file">Load your own melody file
+        <input id="file" type="file" accept="application/json,.json">
+      </label>
+    </section>
+
+    <p id="status" class="status" role="status"></p>
+
+    <section class="scores">
+      <h2>Phrase scores</h2>
+      <ol id="scores"></ol>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
