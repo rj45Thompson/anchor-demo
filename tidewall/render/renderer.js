@@ -281,7 +281,7 @@ class Renderer {
   warmUp() {
     const g = new THREE.Group(), m = this.models, pose = (fig, clip) => { fig.actions[clip].play(); fig.mixer.update(0.1); return fig.root; };
     const knight = m.figure('knight'); tintArmour(knight.root, PLAYER_COLOURS[0]); outlineFigure(knight.root);
-    const items = [pose(knight, 'Combat_Stance'), pose(gruntFigure(m), 'Walking'), shipModel(m, 0), shipModel(m, 1), shipModel(m, 2), m.instance('castle'), m.instance('cannon')];
+    const items = [pose(knight, 'Combat_Stance'), pose(gruntFigure(m), 'Walking'), ...[0, 1, 2, 3, 4, 5, 6].flatMap((k) => [shipModel(m, k), shipModel(m, k, true)]), m.instance('castle'), m.instance('cannon')];   // every ship look, plain and ironclad (FULL-RENDER)
     items.forEach((o, i) => { o.position.set(i * 2, 0, 0); g.add(o); });
     let i = items.length;
     for (const parts of [...this.propParts.values(), ...Object.values(this.decorParts), this.bomb.parts, this.bomb.big]) {

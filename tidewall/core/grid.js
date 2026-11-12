@@ -1,15 +1,17 @@
 // port of model/GridModel.cs
 import { Cell } from './cell.js';
 
-/** Ground. Swamp and Lake belong to the bigger ruleset; a normal match turns them to Land at load (MatchModel.plain). */
+/** Ground. Swamp and Lake are the full rules' (GameType.Full): no wall and no grunt on them, and they turn to Land once enclosed. A
+ *  lake is inland: it never counts as the open sea for the enclosure flood. A normal match turns both to Land at load (MatchModel.plain). */
 export const Terrain = Object.freeze({ Water: 0, Land: 1, Swamp: 2, Lake: 3 });
 
-/** What stands on a square. Appended only (old values keep their meaning). Rocks, trees and houses (5..8) come only from a map
- *  that names them, and a normal campaign clears them at load (MatchModel.plain); Graveyard (9) is a ruined castle. Values 10
- *  and 11 belong to the private model's bigger ruleset and are not ported: no normal match puts them on a square. */
+/** What stands on a square. Appended only (old values keep their meaning). Rocks, trees and houses (5..8) come from a map that
+ *  names them, and a normal campaign clears them at load (MatchModel.plain); Graveyard (9) is a ruined castle; Pit (10) is a burning
+ *  pit (a fireship's, a dreadnought's or a mortar's ball; it burns out after rules.pitBattles battles); Kite (11) is a kite's 3x3
+ *  emplacement (the full rules). A Mortar stands on Cannon squares. */
 export const Occupant = Object.freeze({
   Empty: 0, Wall: 1, Castle: 2, Cannon: 3, Rubble: 4,
-  RockSmall: 5, RockLarge: 6, Tree: 7, House: 8, Graveyard: 9,
+  RockSmall: 5, RockLarge: 6, Tree: 7, House: 8, Graveyard: 9, Pit: 10, Kite: 11,
 });
 
 /** A castle: the cells it covers. Found from the map once, at build time; ids are 1.. in row-major discovery order. */
@@ -125,6 +127,12 @@ export class GridModel {
     const i = this._i(x, y);
     if (this._occupant[i] === Occupant.Castle) throw new Error('a castle square is never overwritten (REQ-BOARD-05)');
     this._occupant[i] = what; this._owner[i] = GridModel.NoOwner; this._health[i] = health;
+  }
+
+  /** An emplacement's square (a kite's), owned like a cannon's. */
+  setEmplacement(x, y, what, ownerSlot) {
+    const i = this._i(x, y);
+    this._occupant[i] = what; this._owner[i] = ownerSlot; this._health[i] = 0;
   }
 
   setTerrain(x, y, t) { this._terrain[this._i(x, y)] = t; }

@@ -29,7 +29,7 @@ import * as core from '../core/index.js';
 import { createRenderer, NoWebGpuError, PLAYER_TEXT_CSS } from '../render/renderer.js';
 
 const {
-  GameRules, GameOptions, GridModel, MapCheck, MatchModel, MatchController, MenuModel, MenuInput, PadInput, Screen, MenuActionKind, HighScoreTable,
+  GameRules, GameOptions, GameType, Campaign, GridModel, MapCheck, MatchModel, MatchController, MenuModel, MenuInput, PadInput, Screen, MenuActionKind, HighScoreTable,
   SeededRandom, Synth, Cell, SettingsModel, SettingsError, KeyBindings, KeyBindingsError, FirstMatchGuide,
 } = core;
 
@@ -60,8 +60,12 @@ function readSwitches() {
   const quality = q.get('quality');
   if (quality !== null && quality !== 'high' && quality !== 'low') throw new Error('?quality=' + quality + ' is not high or low');
   const bombs = int('bombs', 0, 1), dev = int('dev', 0, 1);
+  // RJ 11-11 "put all the features in": the FULL rules (land, pits, gunboats, the dreadnought, fireships, the serpent, mortars, kites,
+  // treasure) are the game; ?rules=classic plays the ported base rules alone
+  const rules = q.get('rules') ?? 'full';
+  if (rules !== 'full' && rules !== 'classic') throw new Error('?rules=' + rules + ' is not full or classic');
   const local = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(location.hostname);
-  return { check: q.get('check') === '1', attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high', bombs: bombs !== 0,
+  return { check: q.get('check') === '1', attract: q.get('attract') === '1', seed: int('seed', 0, 2147483647), speed: int('speed', 1, 16) ?? 1, quality: quality ?? 'high', bombs: bombs !== 0, full: rules === 'full',
            dev: dev === null ? local : dev === 1 };
 }
 
@@ -318,11 +322,11 @@ class Game {
 
   /** A new match: the demo (all four seats bots) or a game for the seats that joined. */
   startMatch(demo, joined) {
-    const options = new GameOptions({ field: this.menu.options.field, level: this.menu.options.level, bombs: this.sw.bombs });
+    const options = new GameOptions({ type: this.sw.full ? GameType.Full : GameType.Normal, field: this.menu.options.field, level: this.menu.options.level, bombs: this.sw.bombs });
     const seatOf = [];
     for (let s = 0; s < SEATS; s++) if (demo || joined[s]) seatOf.push(s);
     const seed = demo && !this.sw.attract ? (this.seed ^ (this.ticks & 0xffff)) : this.seed;
-    const names = this.campaignFrom(this.menu.map.name);
+    const names = campaignNames(this.menu.map.name, CAMPAIGN_ISLANDS, Campaign.mapCount(options));   // 4 islands, 6 with the full rules' Challenge rounds
     const maps = this.maps.forPlayers(seatOf.length);   // UC-S1: the island's size follows the player count (1-2 small, 3 medium, 4 large)
     const levels = { names, load: (name, rules, challenge) => MapCheck.loadChecked(maps.byName(name), rules, challenge) };
     const first = GridModel.fromAscii(maps.byName(MatchModel.firstMapName(options, names)));
@@ -348,8 +352,6 @@ class Game {
     }
   }
 
-  /** The campaign's four islands: the one chosen on the setup screen, then the next three of the menu's list (app/maps.js). */
-  campaignFrom(first) { return campaignNames(first); }
 
   get silent() { return this.demo && !this.sw.attract; }
 
@@ -584,6 +586,8 @@ class Game {
       phase: Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase), sword: mp.sword, ready: mp.ready, bombs,
       carrying: mp.carrying !== 0, bombsLeft: mp.bombs, score: mp.score, costs: bombs ? this.model.rules.itemCosts : null, items: mp.items,
       key: (a) => this.keyBindings.label(0, a), enterReady: this.input.enterReadies && this.keyBindings.enterFree,
+      // the full rules: rotate picks what CANNONS places (cannon, mortar, kite) and aims the kite in BATTLE (MatchController.placeOf)
+      full: this.model.options.full, gun: this.model.options.full ? ['cannon', 'mortar', 'kite'][this.controller.placeOf(this.mouseSlot)] : 'cannon',
     };
     // the touch buttons say what they do now: A the action bar's own label for its place / fire / drop button (one rule for both), B
     // grab (bombs) or turn (the base rules' REPAIR), Y ready in CANNONS and tool in BATTLE and REPAIR

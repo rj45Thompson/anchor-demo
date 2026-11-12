@@ -1,7 +1,8 @@
 // port of model/Bots/ (the private model's one bot file; its class is named CastleBot here)
 //
-// Public-build change: the private bot also fired at a surfaced sea monster before any ship; the public build plays the normal rules
-// only, where no such creature exists (the rules port has none), so that loop is left out. Every other decision is the C# one.
+// Every decision is the C# one, the full rules' too: in BATTLE a recruited (allied) ship is never aimed at, and a serpent with its
+// head up that is nearer the bot's own cannons than every enemy ship is shot first. (The C# bot places no mortar or kite and flies
+// no kite: its full-rules play is only that aiming.) The bomb rule set's hero work (_bombWork) is this game's own.
 import { Cell } from '../cell.js';
 import { Terrain, Occupant } from '../grid.js';
 import { EnclosureRules } from '../rules/EnclosureRules.js';
@@ -62,13 +63,23 @@ export class CastleBot {
         if (bw.handled) { if (bw.cmd !== null) yield bw.cmd; break; }
         let aim = null, best = INT_MAX;
         for (const s of m.ships) {
-          if (!s.alive) continue;          // the C# also skipped an allied ship: only the extended rules recruit one
+          if (!s.alive || s.allied) continue;
           const d = this._distToOwn(m, s.at);
           if (d < best) { best = d; aim = s; }
         }
+        for (const k of m.serpents)        // a serpent with its head up, nearer than every ship: shoot it
+          if (k.alive && k.up && this._distToOwn(m, k.at) < best) { yield Command.fire(this.slot, ++this._seq, k.at, arrival); return; }
         if (aim !== null) {
           // a big ship: walk the balls over its squares in turn
-          const n = aim.size * aim.size, i = (Math.trunc(m.tick / this.every) + this.slot) % n;
+          const n = aim.size * aim.size;
+          let i = (Math.trunc(m.tick / this.every) + this.slot) % n;
+          // The bomb rule set (this game's own bot play): skip the squares with nothing left to hit. Measured 11-11 (24 bot campaigns of
+          // the full rules on the test maps): the C#'s walk is a fixed cycle of the tick, and with 1-3 cannons reloading it can fall in
+          // step with them so that the one square still holding a live gun is never the one aimed at, while a ball is always in the air -
+          // and a battle closes only with no ball in the air: 3 of 24 battles never ended. The normal and full rules keep the C#'s walk
+          // exactly (the parity traces hold it; test/parity/traces/full_campaign_1p_stuck.json.gz is the C# itself stuck the same way).
+          if (m.options.bombs && aim.parts !== null)
+            for (let k = 0; k < n && aim.parts[i] <= 0; k++) i = (i + 1) % n;
           yield Command.fire(this.slot, ++this._seq, new Cell(aim.at.x + i % aim.size, aim.at.y + Math.trunc(i / aim.size)), arrival);
         }
         break;

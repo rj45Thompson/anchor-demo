@@ -1,9 +1,9 @@
 // port of model/Rules/GameRules.cs
 //
-// Only the fields the NORMAL game reads are ported. The private model's GameRules also carries the bigger ruleset's numbers
-// (its extra ships and creatures, land growth, emplacements, bonus squares); none is read when GameOptions.super is false, so
-// none is here. test/parity/run.mjs refuses a trace whose rules carry a field this class lacks unless that field is named in its
-// NOT_PORTED list, so a new rule in the model cannot be dropped silently.
+// Every field of the private model's GameRules, the full rules' (GameType.Full) included, each under this game's own name where the
+// private one names the reference game's content (test/parity/NAMES.md maps every one). test/parity/run.mjs refuses a trace whose
+// rules carry a field this class lacks, and a field this class has that a full-rules trace does not carry, so a new rule in the
+// model cannot be dropped silently.
 
 export class GameRules {
   static TicksPerSecond = 30;
@@ -55,10 +55,30 @@ export class GameRules {
     this.pointsTough = 200000;
     this.pointsCompleteNormal = 1000000;
     this.pointsClosingCredit = 50;       // co-op credit to the closer (REQ-SCORE-04)
+    this.pointsCompleteFull = 2000000;   // completing the full rules' campaign (the normal one pays pointsCompleteNormal)
+    this.pointsTreasure = 100;           // a treasure square enclosed, plus pointsTreasurePerCannon per live cannon in its enclosure
+    this.pointsTreasurePerCannon = 50;
 
     this.whiteShipHealth = 2;            // a one-sail ship's health when the round names none
+    // ---- the full rules' ships (REQ-SHIP-08..10) ----
+    this.fireshipHealth = 5;             // a fireship takes five hits
+    this.ironcladExtraHealth = 1;        // an ironclad (a darker ship, RoundSpec.ironclad) takes one more hit, every part too
     this.maxShips = 16;                  // at most 16 ships on the water at once
+    this.pitBattles = 3;                 // a burning pit takes no wall until it burns out after three battles
+    this.gunboatGunHealth = 2;           // per gun square of a gunboat: it sinks when every gun is gone
+    this.dreadnoughtPartHealth = 2;      // per porthole gun and per hidden weak spot
+    this.dreadnoughtPartHealthPerTwoPlayers = 1;   // REQ-SHIP-01: scales with the team
+    this.bigShipTicksPerCell = 40; this.bigShipRange = 9; this.bigShipReloadTicks = 90;
+    this.serpentHealth = 6; this.serpentUnderTicks = 150; this.serpentUpTicks = 120; this.serpentThrowTicks = 50; this.serpentRange = 14;
+    // ---- the land (REQ-LAND-01..06) ----
     this.castleHealth = 12;              // grunt bites that ruin a castle
+    this.treeSpreadPercent = 25;         // the full rules: each tree outside the walls spreads to a neighbour with this chance a round
+    this.housesPerRound = 1;             // the full rules: houses that appear outside the walls each round
+    this.treasureSquares = 3;            // the full rules: treasure squares laid on each level
+    // ---- the full rules' emplacements (REQ-ARMS-01..02) ----
+    this.mortarCost = 3;                 // cannons of the allotment a Mortar takes
+    this.kiteCost = 3;                   // and a Kite
+    this.mortarDamage = 2;               // a mortar's ball does this to a ship
 
     this.lastPieceGraceTicks = 4 * S;    // REPAIR's last-piece grace
 
@@ -120,8 +140,8 @@ export class BombRules extends GameRules {
 export const RoundKind = Object.freeze({ Wave: 0, Challenge: 1 });
 
 /** One round of the campaign: its phase lengths and its wave (REQ-PHASE-02, REQ-SHIP-01). `map` names the board the round is
- *  fought on (null = the board the match was built on); a new map is a new level. The private model's RoundSpec also carries the
- *  bigger ruleset's wave extras; a normal round has none, and test/parity/run.mjs refuses a trace whose round has any. */
+ *  fought on (null = the board the match was built on); a new map is a new level; a Challenge round has no combat. The full rules'
+ *  wave extras: fireships, gunboats, the serpent, the dreadnought, and ironclad (every ship of the wave one hit tougher). */
 export class RoundSpec {
   constructor(cannonsTicks, battleTicks, repairTicks, shipsBase, shipsPerExtraPlayer, shipHealth, twoSailShips) {
     this.cannonsTicks = cannonsTicks; this.battleTicks = battleTicks; this.repairTicks = repairTicks;
@@ -130,6 +150,8 @@ export class RoundSpec {
     this.bossShips = 0;                  // UC-B1: boss ships in this wave (the bomb rule set's last wave on each map: Campaign.normal)
     this.map = null;
     this.kind = RoundKind.Wave;
+    this.fireships = 0; this.gunboats = 0;
+    this.serpent = false; this.dreadnought = false; this.ironclad = false;
   }
 
   /** REQ-SHIP-01: wave size scales with the number of players. */

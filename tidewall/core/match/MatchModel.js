@@ -1,4 +1,4 @@
-// port of model/Match/MatchModel.cs (and of the parts of model/Match/MatchModel.Super.cs a normal match runs)
+// port of model/Match/MatchModel.cs and model/Match/MatchModel.Super.cs
 //
 // The whole match: its state and its rules. One call, step, takes one tick's commands and resolves the tick instantly -
 // commands first, in (arrival, slot) order, then the world (cannons reload, shots land, ships act, grunts act), then the phase
@@ -8,10 +8,13 @@
 // The round (REQ-PHASE-01): CLAIM (round 1 of a level only) -> CANNONS -> BATTLE -> REPAIR -> SCORE -> next round, GameOver
 // or Victory (with the fate screen, DECIDE, after a lost round).
 //
-// Only the NORMAL ruleset is ported (GameOptions.type Normal). From MatchModel.Super.cs this file carries what a normal match
-// executes, line for line: castle health and grunts biting castles, the wall trim after REPAIR, what enclosing does at SCORE,
-// houses and rocks met on a board that names them, and the state the hash mixes in (castle health, houses surrounded, and the
-// bigger ruleset's three counters, which a normal match never moves from their start values).
+// Both rule sets are here: the NORMAL rules (GameType.Normal) and the FULL rules (GameType.Full, the private partial file
+// MatchModel.Super.cs): the land (rocks, trees, swamps, lakes, houses, graveyards, burning pits, trees spreading, houses appearing),
+// the fireship, the gunboat and the dreadnought with their parts, ironclad waves, recruited ships, the serpent, the Mortar and the
+// Kite, the treasure squares, the growing bag. Each full-rules name is this game's own; test/parity/NAMES.md maps it to the C#.
+//
+// The bomb rule set (GameOptions.bombs, BOMBS_SPEC.md, this game's own) is layered on either. Where it meets the full rules the
+// comment at that place says which wins and why.
 import { Cell } from '../cell.js';
 import { GridModel, Terrain, Occupant, Fnv64 } from '../grid.js';
 import { PieceCatalog } from '../pieces.js';
@@ -25,7 +28,7 @@ import { CommandKind, Command } from './Commands.js';
 import { PlaceWallCommand } from './PlaceWallCommand.js';
 import { PieceDealer, Streams } from './PieceDealer.js';
 import { BombWorld } from './Bombs.js';
-import { Phase, ShipKind, PlayerModel, CannonModel, ShipModel, GruntModel, ShotModel } from './Entities.js';
+import { Phase, ShipKind, GunKind, PartRole, PlayerModel, CannonModel, ShipModel, GruntModel, ShotModel, KiteModel, SerpentModel } from './Entities.js';
 import {
   RejectReason, ThingCause,
   PhaseChanged, CastleClaimed, RingBuilt, WallsPlaced, PlacementRejected, CommandRejected, CannonsGranted, CannonPlaced,
@@ -33,7 +36,8 @@ import {
   ShipDamaged, ShipSunk, GruntLanded, CannonLost, GruntMoved, GruntKilled, RubbleCleared, LoopClosed, RoundScored, LifeLost,
   MetalPlaced, PlayerLeft, PlayerRejoined, GameEnded, LevelStarted, ThingChanged, CastleRuined, CastleRestored, CastleBitten, HouseRose,
   HouseSurrounded, GruntSurrounded, WallsTrimmed, LastPieceGrace, FateAsked, FateChosen, FinalBonus, PlayerFell,
-  ModeSwitched, SwordSwung,
+  ModeSwitched, SwordSwung, TreasureSquares, TreasureTaken, MortarPlaced, KitePlaced, ShipRecruited, ShipPartHit, SerpentRose,
+  SerpentDove, SerpentHit, BoulderThrown,
 } from './Events.js';
 
 const INT_MAX = 2147483647, INT_MIN = -2147483648;
@@ -87,9 +91,11 @@ export class MatchModel {
     this._continuesUsed = 0;       // "Fight Again" taken: each one is MORE FIREPOWER
     this._castleHealth = [];
     this._housesSurrounded = 0;
+    // the full rules' state (MatchModel.Super.cs): the serpents, the kites, the level's treasure squares, and their counters
+    this._serpents = []; this._kites = []; this._treasure = [];
+    this._nextSerpent = 1; this._nextKite = 1; this._serpentRises = 0;
     this.lives = rules.lives;
     this.options = options ?? new GameOptions({ type: GameType.Normal });   // a match built on a handed board plays the normal rules
-    if (this.options.super) throw new Error('only the normal ruleset is ported (GameOptions.type ' + this.options.type + ')');
     // the bomb rule set (BOMBS_SPEC.md) is opt-in: with options.bombs false nothing of it exists and the base rules run untouched
     if (this.options.bombs !== (rules instanceof BombRules)) throw new Error('GameOptions.bombs and the rules must agree: bombs needs BombRules, and BombRules need bombs');
     this._bw = this.options.bombs ? new BombWorld(this) : null;
@@ -97,6 +103,7 @@ export class MatchModel {
     this._graceUsed = new Array(playerCount).fill(false);
     this.round = firstRound;
     this.mapName = table.for(firstRound).map;
+    if (this.options.full) for (const d of this._dealers) d.grow(true);   // the full rules' bag starts small on every map
     this.phase = start;
     this.phaseTicksLeft = start === Phase.Claim ? rules.claimTicks : this._repairTicks(table.for(firstRound));
     this._events.push(new PhaseChanged(0, this.phase, this.round, this.phaseTicksLeft));
@@ -104,13 +111,14 @@ export class MatchModel {
   }
 
   /** The C# MatchModel.Start, on a board the host hands in (the private map library is not ported): the campaign for these
-   *  options on the maps `levels.names` (four names, level 1..4), its first round (level 2 for Veteran, with the starting bonus),
+   *  options on the maps `levels.names` (Campaign.mapCount(options) names: four for the normal campaign, level 1..4; six for the
+   *  full one, see Campaign.full), its first round (level 2 for Veteran, with the starting bonus),
    *  the board checked (MapCheck) and cleared (plain) as the C# does at load.
    *  @param grid    the board of the first round's map - MatchModel.firstMapName(options, levels.names) says which.
    *  @param levels  { names: [4 map names], load: (name, rules, challenge) => GridModel } - load is called on each level change. */
   static startOn(grid, options, playerCount, seed, random, levels) {
     if (!(grid instanceof GridModel)) throw new TypeError('startOn takes the first map as a GridModel');
-    if (!levels || !Array.isArray(levels.names) || typeof levels.load !== 'function') throw new TypeError('levels is { names: [4 map names], load(name, rules, challenge) }');
+    if (!levels || !Array.isArray(levels.names) || typeof levels.load !== 'function') throw new TypeError('levels is { names: [map names], load(name, rules, challenge) }');
     const rules = Campaign.rulesFor(options);
     const table = Campaign.for(options, levels.names);
     const first = Campaign.firstRound(table, options);
@@ -118,7 +126,7 @@ export class MatchModel {
     const challenge = spec.kind === RoundKind.Challenge;
     const problems = MapCheck.problems(grid, rules, challenge);
     if (problems.length > 0) throw new Error('the map is not playable: ' + problems.join('; '));
-    if (!options.super) MatchModel.plain(grid);
+    if (!options.full) MatchModel.plain(grid);
     const m = new MatchModel(grid, Campaign.catalogFor(options), rules, table, playerCount, seed, random,
       challenge ? Phase.Repair : Phase.Claim, options, first, levels.load);
     if (options.field === Battlefield.Veteran) m.teamScore = add32(m.teamScore, rules.pointsVeteranStart);
@@ -131,7 +139,7 @@ export class MatchModel {
     return table.for(Campaign.firstRound(table, options)).map;
   }
 
-  /** The normal game has none of the bigger ruleset's land: rocks, trees and houses go, swamps and lakes are plain land. */
+  /** The normal game has none of the full rules' land: rocks, trees and houses go, swamps and lakes are plain land. */
   static plain(g) {
     for (let y = 0; y < g.height; y++)
       for (let x = 0; x < g.width; x++) {
@@ -176,6 +184,11 @@ export class MatchModel {
   get ended() { return this.phase === Phase.GameOver || this.phase === Phase.Victory; }
   get currentRound() { return this.table.for(this.round); }
   castleHealthOf(castleId) { return castleId >= 1 && castleId <= this._castleHealth.length ? this._castleHealth[castleId - 1] : 0; }
+  /** The full rules: the serpents (SerpentModel; a dead one stays in the list until the level ends), the kites (KiteModel, used ones
+   *  too), the level's treasure squares still to be taken (Cell[]). All empty in a normal match. */
+  get serpents() { return this._serpents; }
+  get kites() { return this._kites; }
+  get treasureCells() { return this._treasure; }
 
   gruntAt(x, y) {
     for (const g of this._grunts) if (g.alive && g.at.x === x && g.at.y === y) return true;
@@ -199,9 +212,10 @@ export class MatchModel {
     return null;
   }
 
-  /** Every enemy still afloat. */
+  /** Every enemy still afloat: ships not recruited, and the serpent while it lives (it is in the sea even when under). */
   enemiesAfloat() {
-    for (const s of this._ships) if (s.alive) return true;
+    for (const s of this._ships) if (s.alive && !s.allied) return true;
+    for (const k of this._serpents) if (k.alive) return true;
     return false;
   }
 
@@ -274,7 +288,7 @@ export class MatchModel {
         for (const p of this._players) { p.cannonsCarried = p.cannonsFresh; p.cannonsFresh = 0; }   // REQ-CANNON-02
         this._enter(Phase.Battle, this.currentRound.battleTicks);
         if (this._bw !== null) this._bw.onBattleStart();
-        // (the C# burns the bigger ruleset's pits down here; a normal board never holds one)
+        this.burnPits();
         if (!this._holdNoSpawn) this._spawnWave();
         this._holdNoSpawn = false;
         break;
@@ -343,11 +357,12 @@ export class MatchModel {
     const problems = MapCheck.problems(g, this.rules, challenge);
     if (problems.length > 0) throw new Error("map '" + spec.map + "' is not playable: " + problems.join('; '));
     this.grid = g;
-    if (!this.options.super) MatchModel.plain(this.grid);
+    if (!this.options.full) MatchModel.plain(this.grid);
     this.mapName = spec.map;
-    this._cannons.length = 0; this._ships.length = 0; this._grunts.length = 0; this._shots.length = 0;
+    this._cannons.length = 0; this._ships.length = 0; this._grunts.length = 0; this._shots.length = 0; this._clearFullState();
     if (this._bw !== null) this._bw.clear(true);            // a new board: nothing lit, no traps
     for (const p of this._players) { p.claimedCastle = 0; p.cannonsFresh = 0; p.cannonsCarried = 0; }
+    if (this.options.full) for (const d of this._dealers) d.grow(true);
     this._events.push(new LevelStarted(this.tick, this.level, this.round, this.mapName, challenge));
     this._startLevelThings();
     if (challenge) this._enter(Phase.Repair, this._repairTicks(spec));
@@ -372,7 +387,7 @@ export class MatchModel {
   _payFinalBonus() {
     const continues = Math.imul(Math.max(0, this.lives - 1), this.rules.pointsUnusedContinue);
     const diff = this.options.level === Difficulty.Medium ? this.rules.pointsMedium : this.options.level === Difficulty.Tough ? this.rules.pointsTough : 0;
-    const done = this.rules.pointsCompleteNormal;
+    const done = this.options.full ? this.rules.pointsCompleteFull : this.rules.pointsCompleteNormal;
     const total = add32(add32(continues, diff), done);
     this.teamScore = add32(this.teamScore, total);
     this._events.push(new FinalBonus(this.tick, continues, diff, done, total));
@@ -400,6 +415,9 @@ export class MatchModel {
       case CommandKind.Ready: return this._ready(c, p);
       case CommandKind.Claim: return this._claim(c, p);
       case CommandKind.Leave: p.connected = false; this._events.push(new PlayerLeft(this.tick, c.slot)); return true;
+      case CommandKind.PlaceMortar: return this._placeMortar(c, p);
+      case CommandKind.PlaceKite: return this._placeKite(c, p);
+      case CommandKind.Recruit: return this._recruit(c);
       case CommandKind.SwitchMode: return this._switchMode(c, p);
       case CommandKind.Strike: return this._bw !== null ? this._bw.apply(c, p) : this._strike(c, p);   // bombs: strike = drop a bomb
       case CommandKind.PickUpBomb: case CommandKind.ThrowBomb: case CommandKind.DefuseBomb:
@@ -548,8 +566,9 @@ export class MatchModel {
     best.reloadLeft = this.rules.cannonReloadTicks;
     let ticks = this.rules.shotBaseTicks + this.rules.shotTicksPerCell * PathRules.manhattan(best.topLeft, c.at);
     ticks = Math.max(this.rules.shotBaseTicks, Math.trunc(ticks * (100 - 20 * Math.min(2, this._continuesUsed)) / 100));   // MORE FIREPOWER: faster balls
-    const shot = new ShotModel(this._nextShot++, c.slot, 0, best.topLeft, c.at, ticks, this.rules.playerShotDamage, this.tick);
-    shot.cannonId = best.id;
+    const mortar = best.kind === GunKind.Mortar;          // a mortar's ball hits harder and lights a pit where it lands on open ground
+    const shot = new ShotModel(this._nextShot++, c.slot, 0, best.topLeft, c.at, ticks, mortar ? this.rules.mortarDamage : this.rules.playerShotDamage, this.tick);
+    shot.cannonId = best.id; shot.incendiary = mortar;
     best.inFlight++;
     this._shots.push(shot);
     this._events.push(new ShotFired(this.tick, shot.id, c.slot, 0, best.id, best.topLeft, c.at, ticks));
@@ -715,7 +734,7 @@ export class MatchModel {
       if (this.lives > 0) for (const p of this._players) this._replayHome(p);
     }
     this._events.push(new RoundScored(this.tick, this.round, castles, cells, points, this.lives));
-    // (the C# grows the bigger ruleset's land things here; a normal match grows none)
+    this.growLandThings();                                                // trees spread, houses appear (the full rules)
   }
 
   /** The connected players who hold no castle inside their own territory (REQ-TERR-02). */
@@ -743,27 +762,79 @@ export class MatchModel {
 
   // ---- what enclosing does, and the land (from MatchModel.Super.cs) --------------------------------------------------------
 
+  /** A new board: castles at full health, and (the full rules) the level's treasure squares, rules.treasureSquares of them on free
+   *  land, drawn from their own random stream for (seed, round). */
   _startLevelThings() {
     this._castleHealth = new Array(this.grid.castles.length).fill(this.rules.castleHealth);
-    // (the C# also lays the bigger ruleset's bonus squares here; a normal match has none)
+    this._treasure.length = 0;
+    if (!this.options.full || this.grid.castles.length === 0) return;
+    const g = this.grid, rng = this._random(Streams.key(this.seed, 2300, this.round));
+    const free = [];
+    for (let y = 0; y < g.height; y++)
+      for (let x = 0; x < g.width; x++)
+        if (g.terrainAt(x, y) === Terrain.Land && g.occupantAt(x, y) === Occupant.Empty) free.push(new Cell(x, y));
+    for (let i = 0; i < this.rules.treasureSquares && free.length > 0; i++) {
+      const k = rng.range(0, free.length);
+      this._treasure.push(free[k]); free.splice(k, 1);
+    }
+    if (this._treasure.length > 0) this._events.push(new TreasureSquares(this.tick, this._treasure.slice()));
   }
 
-  /** A player's ball on land: a small rock is blown up, a tree felled, a house destroyed; large rocks shrug it off. Only a
-   *  board that names those things holds them (a normal campaign clears them at load). */
+  _clearFullState() { this._serpents.length = 0; this._kites.length = 0; this._treasure.length = 0; }
+
+  /** A burning pit: no wall goes on it until it burns out after rules.pitBattles battles. A wall struck by a fireship's or the
+   *  dreadnought's ball is gone and the pit is in its place. A castle, a cannon, a graveyard or a kite is never turned to a pit.
+   *  (C# internal: tests call it.) */
+  lightPit(x, y) {
+    const g = this.grid, o = g.occupantAt(x, y);
+    if (o === Occupant.Castle || o === Occupant.Cannon || o === Occupant.Graveyard || o === Occupant.Kite) return;
+    if (o === Occupant.Wall) this._events.push(new WallBroken(this.tick, new Cell(x, y)));
+    g.setThing(x, y, Occupant.Pit, this.rules.pitBattles);
+    this._events.push(new ThingChanged(this.tick, new Cell(x, y), Occupant.Pit, g.terrainAt(x, y), ThingCause.Pit, -1));
+  }
+
+  /** At the start of every BATTLE each pit burns one battle down; at zero it is plain ground again. (C# internal.) */
+  burnPits() {
+    const g = this.grid;
+    for (let y = 0; y < g.height; y++)
+      for (let x = 0; x < g.width; x++) {
+        if (g.occupantAt(x, y) !== Occupant.Pit) continue;
+        const left = g.healthAt(x, y) - 1;
+        if (left > 0) { g.setHealth(x, y, left); continue; }
+        g.clearCell(x, y);
+        this._events.push(new ThingChanged(this.tick, new Cell(x, y), Occupant.Empty, g.terrainAt(x, y), ThingCause.BurnedOut, -1));
+      }
+  }
+
+  /** A player's ball on land: a small rock is blown up (pointsSmallRock), a tree felled, a house destroyed (pointsHouseDestroyed);
+   *  a mortar's incendiary ball lights a pit on open ground; large rocks shrug it off. Only a board that names those things holds
+   *  them (a normal campaign clears them at load).
+   *  The bomb rule set: BOMBS_SPEC.md says cannon balls on land no longer hurt GRUNTS (bombs are the only attack on them); it says
+   *  nothing of rocks, trees, houses or pits, so a ball still does all of this with bombs on - the land is not a ground unit. */
   _shootLand(x, y, sh) {
-    const o = this.grid.occupantAt(x, y);
+    const g = this.grid, o = g.occupantAt(x, y);
     const points = o === Occupant.RockSmall ? this.rules.pointsSmallRock : o === Occupant.House ? this.rules.pointsHouseDestroyed : 0;
     if (o === Occupant.RockSmall || o === Occupant.Tree || o === Occupant.House) {
-      this.grid.clearCell(x, y);
+      g.clearCell(x, y);
       this._players[sh.fromSlot].score = add32(this._players[sh.fromSlot].score, points);
       this.teamScore = add32(this.teamScore, points);
-      this._events.push(new ThingChanged(this.tick, new Cell(x, y), Occupant.Empty, this.grid.terrainAt(x, y), ThingCause.Shot, sh.fromSlot));
+      this._events.push(new ThingChanged(this.tick, new Cell(x, y), Occupant.Empty, g.terrainAt(x, y), ThingCause.Shot, sh.fromSlot));
       return true;
     }
+    if (sh.incendiary && o === Occupant.Empty && g.terrainAt(x, y) === Terrain.Land && !this.gruntAt(x, y)) { this.lightPit(x, y); return true; }
     return o === Occupant.RockLarge;
   }
 
-  /** A wall laid on a house: its people rise as an enemy grunt on the nearest free land. */
+  /** C# internal HouseToGrunt (tests call it). */
+  houseToGrunt(house) { this._houseToGrunt(house); }
+  /** C# internal BiteCastle (tests call it). */
+  biteCastle(x, y) { this._biteCastle(x, y); }
+  /** C# internal TrimWalls (tests call it). */
+  trimWalls() { this._trimWalls(); }
+
+  /** A wall laid on a house: its people rise as an enemy grunt on the nearest free land.
+   *  The bomb rule set: the grunt that rises is a grunt like any other, so with bombs on it drops bombs instead of biting
+   *  (BOMBS_SPEC.md "Grunt in the bombs rule set" covers every grunt; it names no exception for one from a house). */
   _houseToGrunt(house) {
     const g = this.grid;
     let best = Cell.zero; let bestD = INT_MAX;
@@ -820,7 +891,8 @@ export class MatchModel {
   }
 
   /** What enclosing does at SCORE: grunts are crushed, houses pay 100, 200, ..., swamps and lakes become land, trees are
-   *  cleared, and a ruined castle shut in becomes plain ground (normal rules). Returns the points earned. */
+   *  cleared, a ruined castle shut in is restored at full health (full rules) or becomes plain ground (normal rules), treasure squares
+   *  pay out, and every unflown kite is gone (it must be used in the battle after it was placed). Returns the points earned. */
   _enclosedEffects(outside) {
     const g = this.grid;
     let points = 0; const w = g.width;
@@ -854,13 +926,69 @@ export class MatchModel {
       let inside = true;
       for (const cell of c.cells) if (outside[cell.y * w + cell.x]) inside = false;
       if (!inside) continue;
-      for (const cell of c.cells) {
-        g.setThing(cell.x, cell.y, Occupant.Empty, 0);
-        this._events.push(new ThingChanged(this.tick, cell, Occupant.Empty, Terrain.Land, ThingCause.Enclosed, -1));
+      if (this.options.full) {
+        g.setCastleRuined(c, false);
+        this._castleHealth[c.id - 1] = this.rules.castleHealth;
+        this._events.push(new CastleRestored(this.tick, c.id));
+      } else
+        for (const cell of c.cells) {
+          g.setThing(cell.x, cell.y, Occupant.Empty, 0);
+          this._events.push(new ThingChanged(this.tick, cell, Occupant.Empty, Terrain.Land, ThingCause.Enclosed, -1));
+        }
+    }
+    // a treasure square pays more for every cannon standing in the SAME enclosure as the square (the map is read after the changes
+    // above, as the C# reads it; a normal match has no treasure, so the map is skipped there - it changes nothing)
+    if (this._treasure.length > 0) {
+      const terr = EnclosureRules.map(g);
+      for (let i = this._treasure.length - 1; i >= 0; i--) {
+        const b = this._treasure[i];
+        if (outside[b.y * w + b.x]) continue;
+        const region = terr.regionAt(b.x, b.y);
+        let cannonsIn = 0;
+        for (const k of this._cannons) if (k.alive && region !== 0 && terr.regionAt(k.topLeft.x, k.topLeft.y) === region) cannonsIn++;
+        const p = add32(this.rules.pointsTreasure, Math.imul(this.rules.pointsTreasurePerCannon, cannonsIn));
+        points = add32(points, p);
+        this._events.push(new TreasureTaken(this.tick, b, p));
+        this._treasure.splice(i, 1);
       }
     }
-    // (the C# then pays the bigger ruleset's bonus squares and clears its unused emplacements; a normal match has neither)
+    for (const b of this._kites) {
+      if (b.used) continue;
+      b.used = true;
+      this._clearFootprint(b.topLeft, KiteModel.Size, Occupant.Kite);
+    }
     return points;
+  }
+
+  /** After scoring (the full rules only): each tree outside the walls may spread to a neighbour (rules.treeSpreadPercent, then one of
+   *  four ways), and rules.housesPerRound new houses go up outside the walls. One random stream per purpose and tick. (C# internal.) */
+  growLandThings() {
+    if (!this.options.full) return;
+    const g = this.grid, outside = EnclosureRules.outside(g), w = g.width;
+    const trees = [];
+    for (let y = 0; y < g.height; y++)
+      for (let x = 0; x < w; x++)
+        if (g.occupantAt(x, y) === Occupant.Tree) trees.push(new Cell(x, y));
+    const rng = this._random(Streams.key(this.seed, 2400, this.tick | 0));
+    for (const tr of trees) {
+      if (rng.range(0, 100) >= this.rules.treeSpreadPercent) continue;
+      const k = rng.range(0, 4);
+      const x = tr.x + DX4[k], y = tr.y + DY4[k];
+      if (!g.in(x, y) || g.terrainAt(x, y) !== Terrain.Land || g.occupantAt(x, y) !== Occupant.Empty || this.gruntAt(x, y) || !outside[y * w + x]) continue;
+      g.setThing(x, y, Occupant.Tree, 0);
+      this._events.push(new ThingChanged(this.tick, new Cell(x, y), Occupant.Tree, Terrain.Land, ThingCause.Grew, -1));
+    }
+    const free = [];
+    for (let y = 0; y < g.height; y++)
+      for (let x = 0; x < w; x++)
+        if (g.terrainAt(x, y) === Terrain.Land && g.occupantAt(x, y) === Occupant.Empty && outside[y * w + x] && !this.gruntAt(x, y)) free.push(new Cell(x, y));
+    const hr = this._random(Streams.key(this.seed, 2500, this.tick | 0));
+    for (let i = 0; i < this.rules.housesPerRound && free.length > 0; i++) {
+      const k = hr.range(0, free.length);
+      const at = free[k]; free.splice(k, 1);
+      g.setThing(at.x, at.y, Occupant.House, 0);
+      this._events.push(new ThingChanged(this.tick, at, Occupant.House, Terrain.Land, ThingCause.Appeared, -1));
+    }
   }
 
   // ---- the battle ---------------------------------------------------------------------------------------------------------
@@ -873,6 +1001,9 @@ export class MatchModel {
     // UC-B1 (0 outside the bomb rules' boss rounds); step 1 says ONE boss: none while one is still afloat (a Fight Again of the boss
     // round would otherwise add a second; found by the spec check, 11-11)
     if (!this._ships.some((s) => s.alive && s.kind === ShipKind.Boss)) for (let i = 0; i < spec.bossShips; i++) kinds.push(ShipKind.Boss);
+    if (spec.dreadnought) kinds.push(ShipKind.Dreadnought);              // the big ones claim their water first
+    for (let i = 0; i < spec.gunboats; i++) kinds.push(ShipKind.Gunboat);
+    for (let i = 0; i < spec.fireships; i++) kinds.push(ShipKind.Fireship);
     for (let i = 0; i < spec.twoSailShips; i++) kinds.push(ShipKind.TwoSail);
     for (let i = 0, n = spec.shipCount(players); i < n; i++) kinds.push(ShipKind.OneSail);
     const rng = this._random(Streams.key(this.seed, 2000, this._battles++));
@@ -881,41 +1012,72 @@ export class MatchModel {
     for (const kind of kinds) {
       if (afloat >= this.rules.maxShips) break;                          // at most maxShips ships on the water
       const spawn = [];
-      const n = kind === ShipKind.Boss ? this.rules.bossSize : 1;
+      const n = kind === ShipKind.Boss ? this.rules.bossSize : kind === ShipKind.Dreadnought ? 3 : kind === ShipKind.Gunboat ? 2 : 1;
       for (let y = 0; y + n <= g.height; y++)
         for (let x = 0; x + n <= g.width; x++) {
           const edge = x === 0 || y === 0 || x + n === g.width || y + n === g.height;
           if (edge && this._shipFits(x, y, n)) spawn.push(new Cell(x, y));
         }
       if (spawn.length === 0 && kind === ShipKind.Boss) continue;          // UC-B1 1c: no edge water a boss fits in this wave
-      if (spawn.length === 0) throw new Error('the map has no water on its edge: ships cannot arrive (REQ-SHIP-05; MapCheck refuses such a map at load)');
+      if (spawn.length === 0 && n === 1) throw new Error('the map has no water on its edge: ships cannot arrive (REQ-SHIP-05; MapCheck refuses such a map at load)');
+      if (spawn.length === 0) throw new Error('no ' + n + 'x' + n + ' water on the edge of ' + this.mapName + ' for a ship of kind ' + kind + ' (the campaign put one on a map that cannot float it)');
       // UC-B1 step 1: the boss comes for the players: the edge spot nearest any wall or cannon (ties: the first in row order), not a
       // random one (11-11, tools/boss_balance.mjs: from a random edge it could sail 33+ squares and arrive as the battle clock ran out,
       // when ships no longer act; it then never fired)
       const at = kind === ShipKind.Boss ? this._nearestToTargets(spawn) : spawn[rng.range(0, spawn.length)];
-      const s = this._makeShip(kind, at);
+      const s = this._makeShip(kind, at, spec.ironclad, players);
       this._ships.push(s);
       this._events.push(new ShipSpawned(this.tick, s.id, at, s.health, s.kind));
       afloat++;
     }
+    if (spec.serpent && !this._serpents.some((k) => k.alive)) this._spawnSerpent();
   }
 
-  /** A one-sail ship takes the round's ship health (or the rules' default when the round names none); a two-sail ship its own. */
-  _makeShip(kind, at) {
-    const spec = this.currentRound;
-    let health;
-    if (kind === ShipKind.TwoSail) health = this.rules.twoSailHealth;
-    else if (kind === ShipKind.OneSail) health = spec.shipHealth > 0 ? spec.shipHealth : this.rules.whiteShipHealth;
-    else if (kind === ShipKind.Boss) {                                       // UC-B1: the bomb rules' boss, its health by level
+  /** A ship of `kind` at `at`. A one-sail ship takes the round's ship health (or rules.whiteShipHealth when the round names none), a
+   *  two-sail ship and a fireship their own; an ironclad one rules.ironcladExtraHealth more. A gunboat is 2x2, every square a gun of
+   *  rules.gunboatGunHealth; the dreadnought is 3x3: porthole guns on the four edge middles and four hidden weak spots among the other
+   *  five squares (the plain hull square is drawn per ship from its own random stream, so it differs from game to game), each part
+   *  rules.dreadnoughtPartHealth (+1 per two players beyond the first, + ironclad). `players`: the connected count at the wave. */
+  _makeShip(kind, at, ironclad = false, players = this.playerCount) {
+    const R = this.rules, spec = this.currentRound;
+    const extra = ironclad ? R.ironcladExtraHealth : 0;
+    if (kind === ShipKind.Boss) {
+      // UC-B1: the bomb rules' boss, its health by level. It is this game's own ship (not the C#'s), with its own health table; an
+      // ironclad wave adds nothing to it (BOSS_UC.md names no ironclad boss, and only the full campaign sails ironclads - none of its
+      // rounds sails this boss)
       if (!this.options.bombs) throw new Error('a boss ship is part of the bomb rule set only');
-      const hp = this.rules.bossHealth;
-      const ship = new ShipModel(this._nextShip++, at, hp[Math.min(this.level, hp.length) - 1] + this.rules.bossHealthPerExtraPlayer * Math.max(0, this.playerCount - 1), this.rules.bossTicksPerCell, Math.trunc(this.rules.bossReloadTicks / 2));
-      ship.kind = kind; ship.big = this.rules.bossSize;
+      const hp = R.bossHealth;
+      const ship = new ShipModel(this._nextShip++, at, hp[Math.min(this.level, hp.length) - 1] + R.bossHealthPerExtraPlayer * Math.max(0, this.playerCount - 1), R.bossTicksPerCell, Math.trunc(R.bossReloadTicks / 2));
+      ship.kind = kind; ship.big = R.bossSize;
       return ship;
     }
-    else throw new Error('ship kind ' + kind + ' is not part of the normal game');
-    const ship = new ShipModel(this._nextShip++, at, health, this.rules.shipTicksPerCell, Math.trunc(this.rules.shipReloadTicks / 2));
-    ship.kind = kind;
+    if (kind === ShipKind.Gunboat || kind === ShipKind.Dreadnought) {
+      const size = kind === ShipKind.Dreadnought ? 3 : 2;
+      const s = new ShipModel(this._nextShip++, at, 0, R.bigShipTicksPerCell, Math.trunc(R.bigShipReloadTicks / 2));
+      s.kind = kind; s.big = size; s.ironclad = ironclad;
+      s.parts = new Array(size * size).fill(0); s.roles = new Array(size * size).fill(PartRole.Hull);
+      const part = kind === ShipKind.Gunboat ? R.gunboatGunHealth + extra
+                 : R.dreadnoughtPartHealth + extra + R.dreadnoughtPartHealthPerTwoPlayers * Math.trunc((players - 1) / 2);
+      if (kind === ShipKind.Gunboat)
+        for (let i = 0; i < s.parts.length; i++) { s.roles[i] = PartRole.Gun; s.parts[i] = part; }
+      else {
+        const guns = [1, 3, 5, 7], others = [0, 2, 4, 6, 8];
+        const rng = this._random(Streams.key(this.seed, 2100, s.id));
+        others.splice(rng.range(0, others.length), 1);
+        for (const g of guns) { s.roles[g] = PartRole.Gun; s.parts[g] = part; }
+        for (const o of others) { s.roles[o] = PartRole.WeakSpot; s.parts[o] = part; }
+      }
+      for (const p of s.parts) s.health += p;
+      s.maxHealth = s.health;
+      return s;
+    }
+    let health;
+    if (kind === ShipKind.Fireship) health = R.fireshipHealth;
+    else if (kind === ShipKind.TwoSail) health = R.twoSailHealth;
+    else if (kind === ShipKind.OneSail) health = spec.shipHealth > 0 ? spec.shipHealth : R.whiteShipHealth;
+    else throw new Error('ship kind ' + kind + ' is not a ShipKind');
+    const ship = new ShipModel(this._nextShip++, at, health + extra, R.shipTicksPerCell, Math.trunc(R.shipReloadTicks / 2));
+    ship.kind = kind; ship.ironclad = ironclad;
     return ship;
   }
 
@@ -945,11 +1107,19 @@ export class MatchModel {
     return true;
   }
 
-  /** Tests: put a ship of a normal kind on the water at `at` (C# internal PutShip). */
-  putShip(kind, at) {
-    const s = this._makeShip(kind, at);
+  /** Tests: put a ship of any kind on the water at `at` (C# internal PutShip). */
+  putShip(kind, at, ironclad = false) {
+    const s = this._makeShip(kind, at, ironclad, this.playerCount);
     this._ships.push(s);
     return s;
+  }
+
+  /** Tests: put the serpent at `at`, its head up or under (a C# internal test hook: its rise or dive is 1000 ticks off). */
+  putSerpent(at, up) {
+    const k = new SerpentModel(this._nextSerpent++, at, this.rules.serpentHealth, 1000);
+    k.up = up;
+    this._serpents.push(k);
+    return k;
   }
 
   _shipAt(x, y) {
@@ -971,6 +1141,7 @@ export class MatchModel {
     if (this.phaseTicksLeft > 0) {
       for (const s of this._ships) if (s.alive) this._actShip(s);
       for (const g of this._grunts) if (g.alive) this._actGrunt(g);
+      for (const k of this._serpents) if (k.alive) this._actSerpent(k);
     }
     if (this._bw !== null) this._bw.sweepTraps();
     removeDead(this._ships);
@@ -986,7 +1157,9 @@ export class MatchModel {
       if (sh.fromSlot >= 0) {
         for (const k of this._cannons) if (k.id === sh.cannonId && k.inFlight > 0) k.inFlight--;
         for (const s of this._ships)
-          if (s.alive && s.covers(x, y)) { hit = true; this._hitShip(s, sh.damage, sh.fromSlot); }
+          if (s.alive && !s.allied && s.covers(x, y)) { hit = true; this._hitShip(s, x, y, sh.damage, sh.fromSlot); }
+        for (const k of this._serpents)
+          if (k.alive && k.up && k.at.x === x && k.at.y === y) { hit = true; this._hitSerpent(k, sh.damage, sh.fromSlot); }
         if (this._bw === null)                    // bombs are the only ground attack: with them on, a ball on land spares grunts
         for (const g of this._grunts)
           if (g.alive && g.at.x === x && g.at.y === y) {
@@ -995,24 +1168,47 @@ export class MatchModel {
             this.teamScore = add32(this.teamScore, this.rules.pointsGruntKilled);
             this._events.push(new GruntKilled(this.tick, g.id, sh.fromSlot, g.at));
           }
-        if (!hit && this.grid.in(x, y)) hit = this._shootLand(x, y, sh);
+        if (!hit && this.grid.in(x, y)) hit = this._shootLand(x, y, sh);   // rocks, trees, houses; a mortar's ball lights a pit
+      } else if (sh.fromSlot === ShotModel.FromAlly) {
+        for (const s of this._ships)
+          if (s.alive && !s.allied && s.covers(x, y)) { hit = true; this._hitShip(s, x, y, sh.damage, -1); }
+      } else if (sh.fromSlot === ShotModel.FromSerpent) {
+        hit = true; this.boulder(x, y);
       } else if (sh.fromSlot === -1) {
-        const occ = this.grid.occupantAt(x, y);
-        if (occ === Occupant.Wall) { hit = true; this._damageWall(x, y, sh.damage); }
+        const g = this.grid, occ = g.occupantAt(x, y);
+        if (occ === Occupant.Wall) { hit = true; if (sh.incendiary) this.lightPit(x, y); else this._damageWall(x, y, sh.damage); }
         else if (occ === Occupant.Cannon) { hit = true; this._damageCannon(this.cannonAt(x, y), sh.damage); }
-      } else throw new Error('shot ' + sh.id + ' came from slot ' + sh.fromSlot + ': not a player (>= 0) and not a ship (-1)');
+        else if (sh.incendiary && occ === Occupant.Empty && g.terrainAt(x, y) === Terrain.Land) { hit = true; this.lightPit(x, y); }
+      } else throw new Error('shot ' + sh.id + ' came from slot ' + sh.fromSlot + ': not a player (>= 0), an enemy ship (-1), an ally (-2) or the serpent (-3)');
       this._events.push(new ShotLanded(this.tick, sh.id, sh.target, hit));
       this._shots.splice(i, 1); i--;
     }
   }
 
-  /** A hit on a ship pays the shooter (pointsShipHit a hit, the sinking one too). */
-  _hitShip(s, damage, bySlot) {
+  /** A hit on a ship at (x, y): a big ship of the full rules takes it on the part under the ball; any ship pays the shooter
+   *  pointsShipHit a hit, the sinking one too. bySlot -1 = a recruited ship's shot (no one is paid). */
+  _hitShip(s, x, y, damage, bySlot) {
     if (bySlot >= 0) {
       this._players[bySlot].score = add32(this._players[bySlot].score, this.rules.pointsShipHit);
       this.teamScore = add32(this.teamScore, this.rules.pointsShipHit);
     }
+    if (s.parts !== null) { this._hitPart(s, (y - s.at.y) * s.size + (x - s.at.x), damage, bySlot); return; }
     this._damageShip(s, damage, bySlot);
+  }
+
+  /** A hit on a big ship's part. A gunboat sinks when every gun is gone; the dreadnought when every porthole gun is silenced AND all
+   *  four hidden weak spots are struck. A plain hull square takes nothing. */
+  _hitPart(s, part, damage, bySlot) {
+    if (part < 0 || part >= s.parts.length || s.parts[part] <= 0) return;
+    const was = s.parts[part];
+    s.parts[part] = Math.max(0, was - damage);
+    s.health -= was - s.parts[part];
+    this._events.push(new ShipPartHit(this.tick, s.id, part, s.roles[part], s.parts[part]));
+    let sunk = true;
+    for (let i = 0; i < s.parts.length; i++) if (s.roles[i] !== PartRole.Hull && s.parts[i] > 0) sunk = false;
+    if (!sunk) { this._events.push(new ShipDamaged(this.tick, s.id, s.health)); return; }
+    s.alive = false;
+    this._events.push(new ShipSunk(this.tick, s.id, bySlot, s.at));
   }
 
   _damageShip(s, damage, bySlot) {
@@ -1054,6 +1250,9 @@ export class MatchModel {
     k.health -= damage;
     if (k.health > 0) { this._events.push(new CannonDamaged(this.tick, k.id, k.health)); return; }
     k.alive = false;
+    // the C# turns the top-left 2x2 to rubble for every gun kind, a mortar too: a destroyed mortar's other five squares stay Cannon
+    // squares with no live gun on them (cannonAt answers null there, so a ball or a bite on them does nothing) for the rest of the
+    // level (SCORE sweeps rubble only, and skips a dead gun when it clears the lost ones). Ported as the C# has it; reported, not fixed.
     for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) this.grid.setRubble(k.topLeft.x + dx, k.topLeft.y + dy);
     this._events.push(new CannonDestroyed(this.tick, k.id));
   }
@@ -1070,7 +1269,9 @@ export class MatchModel {
 
   _actShip(s) {
     const g = this.grid;
+    if (s.allied) { this._actAlly(s); return; }
     if (s.kind === ShipKind.Boss) { this._actBoss(s); return; }
+    if (s.size > 1) { this._actBigShip(s); return; }
     const water = (x, y) => g.terrainAt(x, y) === Terrain.Water;
     if (s.kind === ShipKind.TwoSail && !s.landed) {
       if (this._shoreWater(s.at.x, s.at.y)) {
@@ -1100,6 +1301,7 @@ export class MatchModel {
       s.reloadLeft = this.rules.shipReloadTicks;
       const ticks = this.rules.shotBaseTicks + this.rules.shotTicksPerCell * PathRules.manhattan(s.at, s.target);
       const shot = new ShotModel(this._nextShot++, -1, s.id, s.at, s.target, ticks, this.rules.shipShotDamage, this.tick);
+      shot.incendiary = s.kind === ShipKind.Fireship;
       this._shots.push(shot);
       this._events.push(new ShotFired(this.tick, shot.id, -1, s.id, 0, s.at, s.target, ticks));
       return;
@@ -1110,6 +1312,253 @@ export class MatchModel {
     const r = PathRules.nextStep(g, s.at, water,
       (x, y) => g.terrainAt(x, y) === Terrain.Water && Math.abs(x - target.x) + Math.abs(y - target.y) <= range);
     if (r.result === PathResult.Stepped) { const from = s.at; s.at = r.next; this._events.push(new ShipMoved(this.tick, s.id, from, r.next)); }
+  }
+
+  /** A gunboat or the dreadnought: sails (its whole footprint on water, never over another big hull) until a wall or cannon is in
+   *  rules.bigShipRange of its centre, then every live gun fires at once - a volley spread over the target and its neighbours. The
+   *  dreadnought's balls are incendiary. */
+  _actBigShip(s) {
+    const g = this.grid, R = this.rules;
+    if (!s.hasTarget || !isTarget(g.occupantAt(s.target.x, s.target.y))) {
+      s.hasTarget = false; let bestD = INT_MAX; const c = s.centre;
+      for (let y = 0; y < g.height; y++)
+        for (let x = 0; x < g.width; x++) {
+          if (!isTarget(g.occupantAt(x, y))) continue;
+          const d = Math.abs(x - c.x) + Math.abs(y - c.y);
+          if (d < bestD) { bestD = d; s.target = new Cell(x, y); s.hasTarget = true; }
+        }
+      if (!s.hasTarget) return;
+    }
+    if (PathRules.manhattan(s.centre, s.target) <= R.bigShipRange) {
+      if (s.reloadLeft > 0) { s.reloadLeft--; return; }
+      s.reloadLeft = R.bigShipReloadTicks;
+      const ox = [0, 1, -1, 0, 0, 1, -1, 1, -1], oy = [0, 0, 0, 1, -1, 1, 1, -1, -1];
+      let n = 0;
+      for (let i = 0; i < s.parts.length; i++) {
+        if (s.roles[i] !== PartRole.Gun || s.parts[i] <= 0) continue;
+        const from = new Cell(s.at.x + i % s.size, s.at.y + Math.trunc(i / s.size));
+        let to = new Cell(s.target.x + ox[n % ox.length], s.target.y + oy[n % oy.length]); n++;
+        if (!g.in(to.x, to.y)) to = s.target;
+        const ticks = R.shotBaseTicks + R.shotTicksPerCell * PathRules.manhattan(from, to);
+        const shot = new ShotModel(this._nextShot++, -1, s.id, from, to, ticks, R.shipShotDamage, this.tick);
+        shot.incendiary = s.kind === ShipKind.Dreadnought;
+        this._shots.push(shot);
+        this._events.push(new ShotFired(this.tick, shot.id, -1, s.id, 0, from, to, ticks));
+      }
+      return;
+    }
+    if (--s.moveLeft > 0) return;
+    s.moveLeft = R.bigShipTicksPerCell;
+    const target = s.target, size = s.size, range = R.bigShipRange, me = s.id, half = Math.trunc(size / 2);
+    const r = PathRules.nextStep(g, s.at, (x, y) => this._footprintWater(x, y, size) && !this._otherShipOn(x, y, size, me),
+      (x, y) => this._footprintWater(x, y, size) && Math.abs(x + half - target.x) + Math.abs(y + half - target.y) <= range);
+    if (r.result === PathResult.Stepped) { const from = s.at; s.at = r.next; this._events.push(new ShipMoved(this.tick, s.id, from, r.next)); }
+  }
+
+  _footprintWater(x, y, size) {
+    const g = this.grid;
+    for (let dy = 0; dy < size; dy++)
+      for (let dx = 0; dx < size; dx++)
+        if (!g.in(x + dx, y + dy) || g.terrainAt(x + dx, y + dy) !== Terrain.Water) return false;
+    return true;
+  }
+
+  /** Another big hull (2x2 or more) overlaps a size x size footprint at (x, y): small ships slip past, big hulls never overlap. */
+  _otherShipOn(x, y, size, me) {
+    for (const o of this._ships) {
+      if (!o.alive || o.id === me || o.size === 1) continue;
+      if (x < o.at.x + o.size && o.at.x < x + size && y < o.at.y + o.size && o.at.y < y + size) return true;
+    }
+    return false;
+  }
+
+  /** A recruited ship stays in the players' service: it stays where it is and fires at the nearest enemy ship within rules.shipRange.
+   *  Its shots hurt only enemy ships. */
+  _actAlly(s) {
+    if (s.reloadLeft > 0) { s.reloadLeft--; return; }
+    let aim = null, bestD = INT_MAX;
+    for (const o of this._ships) {
+      if (!o.alive || o.allied) continue;
+      const d = PathRules.manhattan(s.at, o.at);
+      if (d <= this.rules.shipRange && d < bestD) { bestD = d; aim = o; }
+    }
+    if (aim === null) return;
+    s.reloadLeft = this.rules.shipReloadTicks;
+    const ticks = this.rules.shotBaseTicks + this.rules.shotTicksPerCell * bestD;
+    const shot = new ShotModel(this._nextShot++, ShotModel.FromAlly, s.id, s.at, aim.at, ticks, this.rules.shipShotDamage, this.tick);
+    this._shots.push(shot);
+    this._events.push(new ShotFired(this.tick, shot.id, ShotModel.FromAlly, s.id, 0, s.at, aim.at, ticks));
+  }
+
+  // ---- the serpent (the full rules) -------------------------------------------------------------------------------------------
+
+  _spawnSerpent() {
+    this._serpents.push(new SerpentModel(this._nextSerpent++, Cell.zero, this.rules.serpentHealth, Math.trunc(this.rules.serpentUnderTicks / 2)));
+  }
+
+  /** Under for serpentUnderTicks, then it rises on a random open-water square within serpentRange of a wall (its own stream per
+   *  rise); up for serpentUpTicks, throwing a boulder at the nearest wall in range every serpentThrowTicks; then it dives again. */
+  _actSerpent(k) {
+    const g = this.grid, R = this.rules;
+    if (--k.phaseLeft <= 0) {
+      if (k.up) {
+        k.up = false; k.phaseLeft = R.serpentUnderTicks;
+        this._events.push(new SerpentDove(this.tick, k.id));
+      } else {
+        const near = [];
+        for (let y = 0; y < g.height; y++)
+          for (let x = 0; x < g.width; x++)
+            if (g.terrainAt(x, y) === Terrain.Water && !this._shipAt(x, y) && this._nearestWall(new Cell(x, y), R.serpentRange) !== null)
+              near.push(new Cell(x, y));
+        if (near.length === 0) { k.phaseLeft = R.serpentUnderTicks; return; }
+        const rng = this._random(Streams.key(this.seed, 2200, this._serpentRises++));
+        k.at = near[rng.range(0, near.length)];
+        k.up = true; k.phaseLeft = R.serpentUpTicks; k.throwLeft = Math.trunc(R.serpentThrowTicks / 2);
+        this._events.push(new SerpentRose(this.tick, k.id, k.at, k.health));
+      }
+      return;
+    }
+    if (!k.up || --k.throwLeft > 0) return;
+    k.throwLeft = R.serpentThrowTicks;
+    const target = this._nearestWall(k.at, R.serpentRange);
+    if (target === null) return;
+    const ticks = R.shotBaseTicks + R.shotTicksPerCell * PathRules.manhattan(k.at, target);
+    const shot = new ShotModel(this._nextShot++, ShotModel.FromSerpent, 0, k.at, target, ticks, 1, this.tick);
+    this._shots.push(shot);
+    this._events.push(new BoulderThrown(this.tick, k.id, k.at, target, ticks));
+  }
+
+  /** The nearest wall square within `range` (Manhattan) of `from`, the first in row order on a tie; null = none. */
+  _nearestWall(from, range) {
+    const g = this.grid;
+    let best = null, bestD = INT_MAX;
+    for (let y = 0; y < g.height; y++)
+      for (let x = 0; x < g.width; x++) {
+        if (g.occupantAt(x, y) !== Occupant.Wall) continue;
+        const d = Math.abs(x - from.x) + Math.abs(y - from.y);
+        if (d <= range && d < bestD) { bestD = d; best = new Cell(x, y); }
+      }
+    return best;
+  }
+
+  /** The serpent's boulder lands: on the square and its four neighbours, walls are gone and open ground (no grunt on it) becomes small
+   *  rock. (C# internal: tests call it.) */
+  boulder(x, y) {
+    const g = this.grid, dx = [0, 1, -1, 0, 0], dy = [0, 0, 0, 1, -1];
+    for (let k = 0; k < 5; k++) {
+      const nx = x + dx[k], ny = y + dy[k];
+      if (!g.in(nx, ny) || g.terrainAt(nx, ny) !== Terrain.Land) continue;
+      let o = g.occupantAt(nx, ny);
+      if (o === Occupant.Wall) { g.clearCell(nx, ny); this._events.push(new WallBroken(this.tick, new Cell(nx, ny))); o = Occupant.Empty; }
+      if (o === Occupant.Empty && !this.gruntAt(nx, ny)) {
+        g.setThing(nx, ny, Occupant.RockSmall, 1);
+        this._events.push(new ThingChanged(this.tick, new Cell(nx, ny), Occupant.RockSmall, Terrain.Land, ThingCause.Boulder, -1));
+      }
+    }
+  }
+
+  /** The serpent can be hit only while its head is out of the water (the caller checks `up`). Every hit pays pointsShipHit. */
+  _hitSerpent(k, damage, bySlot) {
+    this._players[bySlot].score = add32(this._players[bySlot].score, this.rules.pointsShipHit);
+    this.teamScore = add32(this.teamScore, this.rules.pointsShipHit);
+    k.health -= damage;
+    this._events.push(new SerpentHit(this.tick, k.id, Math.max(0, k.health), bySlot));
+    if (k.health > 0) return;
+    k.alive = false;
+    this._events.push(new SerpentDove(this.tick, k.id));
+  }
+
+  // ---- the full rules' emplacements: the Mortar and the Kite -----------------------------------------------------------------
+
+  /** What a placeMortar / placeKite of `cost` at `at` would answer NOW: { result: -1 (placed) or the RejectReason, bad: the squares
+   *  behind it }. The command's own checks, in its order (C# CheckEmplacement): the full rules, CANNONS, enough of the allotment, then
+   *  every square of the 3x3 on the board, land, empty, no grunt, and inside the player's OWN walls. A view draws the 3x3 ghost from
+   *  this (UC-P1), so the ghost and the command agree. `terr`: EnclosureRules.map of the board now, or null to map it here. */
+  emplacementVerdict(slot, at, cost, terr = null) {
+    const p = this._players[slot];
+    if (!this.options.full) return { result: RejectReason.NotFull, bad: [] };
+    if (this.phase !== Phase.Cannons) return { result: RejectReason.WrongPhase, bad: [] };
+    if (p.cannonsToPlace < cost) return { result: RejectReason.NoCannons, bad: [] };
+    if (terr === null) terr = EnclosureRules.map(this.grid);
+    const g = this.grid, blocked = (x, y) => !g.in(x, y) || g.terrainAt(x, y) !== Terrain.Land || g.occupantAt(x, y) !== Occupant.Empty || this.gruntAt(x, y);
+    let result = -1;
+    for (let dy = 0; dy < 3 && result < 0; dy++)
+      for (let dx = 0; dx < 3 && result < 0; dx++) {
+        const x = at.x + dx, y = at.y + dy;
+        if (blocked(x, y)) result = RejectReason.Blocked;
+        else if (!terr.holds(slot, terr.regionAt(x, y))) result = RejectReason.NotEnclosed;
+      }
+    const bad = [];
+    if (result >= 0)
+      for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) {
+        const x = at.x + dx, y = at.y + dy;
+        if (result === RejectReason.Blocked ? blocked(x, y) : !blocked(x, y) && !terr.holds(slot, terr.regionAt(x, y))) bad.push(new Cell(x, y));
+      }
+    return { result, bad };
+  }
+
+  mortarVerdict(slot, at, terr = null) { return this.emplacementVerdict(slot, at, this.rules.mortarCost, terr); }
+  kiteVerdict(slot, at, terr = null) { return this.emplacementVerdict(slot, at, this.rules.kiteCost, terr); }
+
+  _spend(p, cost) {
+    for (let i = 0; i < cost; i++) { if (p.cannonsCarried > 0) p.cannonsCarried--; else p.cannonsFresh--; }
+  }
+
+  /** A Mortar: a 3x3 gun inside the player's walls, for rules.mortarCost of the allotment, twice a cannon's health. */
+  _placeMortar(c, p) {
+    const why = this.mortarVerdict(c.slot, c.at).result;
+    if (why >= 0) return this._reject(c, why);
+    const gun = new CannonModel(this._nextCannon++, c.slot, c.at, this.rules.cannonHealth * 2, GunKind.Mortar);
+    this._cannons.push(gun);
+    for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) this.grid.setCannon(c.at.x + dx, c.at.y + dy, c.slot);
+    // the bomb rule set: a gun built on a trap removes it, as a 2x2 cannon does (BOMBS_SPEC.md: "A wall placed on it removes it")
+    if (this._bw !== null) for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) this._bw.removeTrapAt(c.at.x + dx, c.at.y + dy);
+    this._spend(p, this.rules.mortarCost);
+    this._events.push(new MortarPlaced(this.tick, gun.id, c.slot, c.seq, c.at));
+    return true;
+  }
+
+  /** A Kite: a 3x3 emplacement inside the player's walls, for rules.kiteCost of the allotment, flown once in the next BATTLE. */
+  _placeKite(c, p) {
+    const why = this.kiteVerdict(c.slot, c.at).result;
+    if (why >= 0) return this._reject(c, why);
+    const b = new KiteModel(this._nextKite++, c.slot, c.at);
+    this._kites.push(b);
+    for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) this.grid.setEmplacement(c.at.x + dx, c.at.y + dy, Occupant.Kite, c.slot);
+    // the bomb rule set: an emplacement stands on its squares as a wall does, so a trap under it is gone too (a trap lives on open
+    // ground only; the kite's squares are not open ground while it stands)
+    if (this._bw !== null) for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) this._bw.removeTrapAt(c.at.x + dx, c.at.y + dy);
+    this._spend(p, this.rules.kiteCost);
+    this._events.push(new KitePlaced(this.tick, b.id, c.slot, c.seq, c.at));
+    return true;
+  }
+
+  /** Fly your kite over an enemy ship and it joins your side. A gunboat or the dreadnought cannot be recruited (the C#), nor this
+   *  game's own boss (BOSS_UC.md: a 2x2 big hull, like the two the C# refuses). The kite flies in the BATTLE after it was placed.
+   *  With the sword out (the bomb rule set: the bomb tool out) the kite is not in hand: SwordOut, as for a shot. */
+  _recruit(c) {
+    if (!this.options.full) return this._reject(c, RejectReason.NotFull);
+    if (this.phase !== Phase.Battle) return this._reject(c, RejectReason.WrongPhase);
+    if (this._players[c.slot].sword) return this._reject(c, RejectReason.SwordOut);   // REQ-HERO-02
+    let b = null;
+    for (const x of this._kites) if (!x.used && x.owner === c.slot) { b = x; break; }
+    if (b === null) return this._reject(c, RejectReason.NoKite);
+    let ship = null;
+    for (const s of this._ships) if (s.alive && !s.allied && s.covers(c.at.x, c.at.y)) ship = s;   // the last such, as the C#
+    if (ship === null || ship.kind === ShipKind.Gunboat || ship.kind === ShipKind.Dreadnought || ship.kind === ShipKind.Boss)
+      return this._reject(c, RejectReason.NotRecruitable);
+    b.used = true;
+    this._clearFootprint(b.topLeft, KiteModel.Size, Occupant.Kite);
+    ship.allied = true; ship.hasTarget = false; ship.reloadLeft = 0;
+    this._events.push(new ShipRecruited(this.tick, ship.id, b.id, c.slot, b.topLeft));
+    return true;
+  }
+
+  _clearFootprint(topLeft, size, only) {
+    const g = this.grid;
+    for (let dy = 0; dy < size; dy++)
+      for (let dx = 0; dx < size; dx++)
+        if (g.in(topLeft.x + dx, topLeft.y + dy) && g.occupantAt(topLeft.x + dx, topLeft.y + dy) === only) g.clearCell(topLeft.x + dx, topLeft.y + dy);
   }
 
   /** UC-B1 steps 2-3: the boss picks the nearest wall or cannon (from its top-left square, as a ship from its square), sails
@@ -1214,8 +1663,9 @@ export class MatchModel {
   forcePhase(p, ticks) { this._enter(p, ticks); }
 
   /** Tests: a player's ball lands at `target` now (the same code a real shot runs when it lands). */
-  landPlayerBall(slot, target, damage = 1) {
+  landPlayerBall(slot, target, damage = 1, incendiary = false) {
     const sh = new ShotModel(this._nextShot++, slot, 0, target, target, 1, damage, this.tick - 1);
+    sh.incendiary = incendiary;
     this._shots.push(sh);
     const before = this._events.length;
     this._landShots();
@@ -1249,20 +1699,26 @@ export class MatchModel {
       for (const v of [g.id, g.at.x, g.at.y, g.moveLeft, g.biteLeft])
         f.mix(v);
     for (const sh of this._shots)
-      for (const v of [sh.id, sh.fromSlot, sh.fromShip, sh.target.x, sh.target.y, sh.ticksLeft, sh.damage, sh.cannonId, 0 /* incendiary: never in the normal game */])
+      for (const v of [sh.id, sh.fromSlot, sh.fromShip, sh.target.x, sh.target.y, sh.ticksLeft, sh.damage, sh.cannonId, sh.incendiary ? 1 : 0])
         f.mix(v);
     for (const v of [this._grace ? 1 : 0, this._holdNoSpawn ? 1 : 0, this._continuesUsed]) f.mix(v);
     for (const u of this._graceUsed) f.mixBool(u);
     this.options.hashInto(f);
     const name = this.mapName ?? '';
     for (let i = 0; i < name.length; i++) f.mix(name.charCodeAt(i));
-    for (const s of this._ships)                    // size, allied 0, dark 0, max health; a normal ship has no parts
-      for (const v of [s.size, 0, 0, s.maxHealth]) f.mix(v);
+    for (const s of this._ships) {
+      for (const v of [s.size, s.allied ? 1 : 0, s.ironclad ? 1 : 0, s.maxHealth]) f.mix(v);
+      if (s.parts !== null) for (let i = 0; i < s.parts.length; i++) { f.mix(s.parts[i]); f.mix(s.roles[i]); }
+    }
     for (const k of this._cannons) { f.mix(k.kind); f.mix(k.inFlight); }
-    // the C# SuperHash: no extra creatures, emplacements or bonus squares in a normal match; then castle health, houses surrounded,
-    // and the bigger ruleset's three counters, which a normal match leaves at their start values (1, 1, 0)
+    // the C# SuperHash: the serpents, the kites, the treasure squares, castle health, and the counters
+    for (const k of this._serpents)
+      for (const v of [k.id, k.at.x, k.at.y, k.up ? 1 : 0, k.health, k.phaseLeft, k.throwLeft, k.alive ? 1 : 0]) f.mix(v);
+    for (const b of this._kites)
+      for (const v of [b.id, b.owner, b.topLeft.x, b.topLeft.y, b.used ? 1 : 0]) f.mix(v);
+    for (const c of this._treasure) { f.mix(c.x); f.mix(c.y); }
     for (const v of this._castleHealth) f.mix(v);
-    for (const v of [this._housesSurrounded, 1, 1, 0]) f.mix(v);
+    for (const v of [this._housesSurrounded, this._nextSerpent, this._nextKite, this._serpentRises]) f.mix(v);
     if (this._bw !== null) this._bw.hashInto(f);      // only with bombs on: the base hash is bit-identical to the C# model's
     return f;
   }

@@ -2,13 +2,14 @@
 //
 // What happened, in order (past tense). The model resolves a whole tick instantly and appends these; a host replays them and
 // draws. Every event carries the tick it happened on. Field names are the C# names in lowerCamelCase. The C# base class is
-// renamed MatchEvent here. Only the events a normal match emits are ported; the bigger ruleset's (its extra ships and
-// creatures, emplacements and bonus squares) are not.
+// renamed MatchEvent here. The full rules' events carry this game's own names (test/parity/NAMES.md maps them to the C#).
 
 export const RejectReason = Object.freeze({
   WrongPhase: 0, NoCannons: 1, NotEnclosed: 2, Blocked: 3, NoLoadedCannon: 4, NotACastle: 5, Disconnected: 6,
   BadSlot: 7, AlreadyConnected: 8,
-  // 9..11 are the bigger ruleset's reasons and are not ported
+  NotFull: 9,         // a full-rules command (mortar, kite, recruit) in a normal match
+  NoKite: 10,         // recruit: the player has no unflown kite
+  NotRecruitable: 11, // recruit: no enemy ship there, or a big one (gunboat, dreadnought, boss) that will not turn
   SwordOut: 12, NoSword: 13, SwordSwinging: 14,          // the hero's modes (REQ-HERO-02/03)
   // the bomb rule set (BOMBS_SPEC.md), appended: the numbers above never move
   NoBombs: 15,        // dropBomb: none left in hand
@@ -25,8 +26,9 @@ export const RejectReason = Object.freeze({
   NoBombRules: 26,    // a bomb command in a match played without GameOptions.bombs
 });
 
-/** Why the board changed under a thing. Only the two causes a normal match can produce are ported. */
-export const ThingCause = Object.freeze({ Shot: 0, Enclosed: 1 });
+/** Why the board changed under a thing: a player's ball, enclosing at SCORE, a tree spreading, a house appearing, a pit burning out,
+ *  the serpent's boulder, a pit lit, built over. */
+export const ThingCause = Object.freeze({ Shot: 0, Enclosed: 1, Grew: 2, Appeared: 3, BurnedOut: 4, Boulder: 5, Pit: 6, BuiltOver: 7 });
 
 export class MatchEvent {
   constructor(tick) { this.tick = tick; }
@@ -205,6 +207,16 @@ export class WallsTrimmed extends MatchEvent {
   constructor(t, cells) { super(t); this.cells = cells; }
 }
 
+/** The level's treasure squares (the full rules): enclosing one pays rules.pointsTreasure plus rules.pointsTreasurePerCannon for every
+ *  live cannon in the same enclosure. */
+export class TreasureSquares extends MatchEvent {
+  constructor(t, cells) { super(t); this.cells = cells; }
+}
+
+export class TreasureTaken extends MatchEvent {
+  constructor(t, at, points) { super(t); this.at = at; this.points = points; }
+}
+
 /** REPAIR's time is up: each player may still place ONE piece. */
 export class LastPieceGrace extends MatchEvent {
   constructor(t, ticks) { super(t); this.ticks = ticks; }
@@ -217,6 +229,43 @@ export class FateAsked extends MatchEvent {
 
 export class FateChosen extends MatchEvent {
   constructor(t, again, slot, firepower) { super(t); this.fightAgain = again; this.slot = slot; this.firepower = firepower; }
+}
+
+/** A 3x3 Mortar went up (its squares are Occupant.Cannon; m.cannons holds it with kind GunKind.Mortar). */
+export class MortarPlaced extends MatchEvent {
+  constructor(t, id, slot, seq, topLeft) { super(t); this.cannonId = id; this.slot = slot; this.seq = seq; this.topLeft = topLeft; }
+}
+
+export class KitePlaced extends MatchEvent {
+  constructor(t, id, slot, seq, topLeft) { super(t); this.kiteId = id; this.slot = slot; this.seq = seq; this.topLeft = topLeft; }
+}
+
+/** A kite flew from `from` (its top-left) to the ship: the ship fights for the players now. */
+export class ShipRecruited extends MatchEvent {
+  constructor(t, ship, kite, slot, from) { super(t); this.shipId = ship; this.kiteId = kite; this.slot = slot; this.from = from; }
+}
+
+/** A part of a gunboat or the dreadnought was hit: a gun silenced, a weak spot struck (health 0) or only scratched. */
+export class ShipPartHit extends MatchEvent {
+  constructor(t, ship, part, role, health) { super(t); this.shipId = ship; this.part = part; this.role = role; this.health = health; }
+}
+
+export class SerpentRose extends MatchEvent {
+  constructor(t, id, at, health) { super(t); this.serpentId = id; this.at = at; this.health = health; }
+}
+
+/** The serpent went under (or, at health 0, is gone for good). */
+export class SerpentDove extends MatchEvent {
+  constructor(t, id) { super(t); this.serpentId = id; }
+}
+
+export class SerpentHit extends MatchEvent {
+  constructor(t, id, health, bySlot) { super(t); this.serpentId = id; this.health = health; this.bySlot = bySlot; }
+}
+
+/** The serpent threw a boulder (a shot from ShotModel.FromSerpent): it lands in `ticks` on `target` and its four neighbours. */
+export class BoulderThrown extends MatchEvent {
+  constructor(t, id, from, target, ticks) { super(t); this.serpentId = id; this.from = from; this.target = target; this.ticks = ticks; }
 }
 
 /** The bonus points paid at the end of the game. */

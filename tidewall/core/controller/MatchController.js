@@ -59,9 +59,9 @@ export class PadInput {
   }
 }
 
-/** What CONFIRM places in CANNONS. Only the 2x2 cannon (0) is in the normal rules; the private model's 1 and 2 belong to its
- *  extended rules, which the rules port does not have, so they are not ported. */
-export const PlaceKind = Object.freeze({ Cannon: 0 });
+/** What CONFIRM places in CANNONS: the 2x2 cannon (0), or in the full rules the 3x3 Mortar (1) or Kite (2), centred on the cursor.
+ *  ROTATE cycles them in CANNONS when the full rules are on. */
+export const PlaceKind = Object.freeze({ Cannon: 0, Mortar: 1, Kite: 2 });
 
 /** What a player's ghost looks like now: the squares it would cover, whether that is legal, and what kind of action the confirm
  *  button would take. The view draws it in the player's colour. */
@@ -74,9 +74,10 @@ export class Ghost {
     this.shapeId = 0;
     this.quarterTurns = 0;
     this.place = PlaceKind.Cannon;   // CANNONS: what confirm would place
+    this.kite = false;               // BATTLE (the full rules): confirm flies the kite at the cursor (recruit) instead of firing
     /** What the model would answer to confirm now (UC-P1: the ghost says WHY it is red): 'wall' -> a PlacementResult (Ok = 0),
-     *  'cannon' -> a RejectReason or -1 (placed), null in a phase with no ghost to refuse. From MatchModel.wallVerdict /
-     *  cannonVerdict, the very checks the command runs. */
+     *  'cannon' / 'mortar' / 'kite' -> a RejectReason or -1 (placed), null in a phase with no ghost to refuse. From
+     *  MatchModel.wallVerdict / cannonVerdict / mortarVerdict / kiteVerdict, the very checks the command runs. */
     this.kind = null;
     this.result = 0;
     /** The squares behind a refusal (outlined red by the view); empty when legal or when the reason is not about a square. */
@@ -109,6 +110,8 @@ export class MatchController {
     const n = model.playerCount;
     this._qx = new Int32Array(n); this._qy = new Int32Array(n);   // cursor position in Q16 (65536 = one square)
     this._turns = new Int32Array(n); this._seq = new Int32Array(n);
+    // the full rules: what confirm places in CANNONS (a PlaceKind), and whether confirm flies the kite in BATTLE
+    this._place = new Int32Array(n); this._kiteAim = new Array(n).fill(false);
     // the bomb rule set: where each hero stands (Q16, chasing the cursor), the square last reported to the core, and the B hold
     this._hx = new Int32Array(n); this._hy = new Int32Array(n); this._sent = new Array(n).fill(null);
     // UC-P3: the hero and the cursor as they were one tick ago (Q16), so a view can draw them BETWEEN ticks at the display rate
@@ -149,8 +152,10 @@ export class MatchController {
     }
   }
 
-  /** What CONFIRM places in CANNONS: always PlaceKind.Cannon in the normal rules. */
-  placeOf(slot) { return PlaceKind.Cannon; }
+  /** What CONFIRM places in CANNONS (a PlaceKind): always Cannon in the normal rules; ROTATE cycles it in the full rules. */
+  placeOf(slot) { return this._place[slot]; }
+  /** BATTLE, the full rules: confirm flies the slot's kite at the cursor (ROTATE toggles it; a flight sets it back). */
+  kiteAim(slot) { return this._kiteAim[slot]; }
 
   /** The team's answer on the fate screen (the menu sends it; any seat speaks for the team). */
   decide(fightAgain) { this._pending.push(Command.decide(0, ++this._seq[0], fightAgain, this._pending.length)); }
@@ -272,11 +277,12 @@ export class MatchController {
       else if (!this._dry(this._qx[s], this._qy[s]) && this._dry(this._qx[s], py)) this._qy[s] = py;
       else if (!this._dry(this._qx[s], this._qy[s])) { this._qx[s] = px; this._qy[s] = py; }
     }
-    // the C# cycled the gun kind (CANNONS) or the recruit aim (BATTLE) here when options.super; the rules port has only the normal
-    // rules (it refuses any other options.type), so rotate always turns the piece
+    // ROTATE: in the full rules it cycles the gun kind in CANNONS (cannon, mortar, kite) and toggles the kite's aim in BATTLE; else
+    // it turns the piece
     if (p.rotate) {
-      if (m.options.super) throw new Error('the extended rules are not ported (options.type ' + m.options.type + ')');
-      this._turns[s] = (this._turns[s] + 1) & 3;
+      if (m.phase === Phase.Cannons && m.options.full) this._place[s] = (this._place[s] + 1) % 3;
+      else if (m.phase === Phase.Battle && m.options.full) this._kiteAim[s] = !this._kiteAim[s];
+      else this._turns[s] = (this._turns[s] + 1) & 3;
     }
     // READY in claim and cannons; SWAP in REPAIR and BATTLE trades the phase's tool for the sword and back (the C# host had one button
     // for both; a device that still has one sets both fields, and only the one that fits the phase acts)
@@ -293,8 +299,17 @@ export class MatchController {
     }
     switch (m.phase) {
       case Phase.Claim: this._pending.push(Command.claim(s, ++this._seq[s], at, this._pending.length)); break;
-      case Phase.Cannons: this._pending.push(Command.placeCannon(s, ++this._seq[s], at, this._pending.length)); break;
-      case Phase.Battle: this._pending.push(Command.fire(s, ++this._seq[s], at, this._pending.length)); break;
+      case Phase.Cannons: {
+        const kind = this._place[s], tl = kind === PlaceKind.Cannon ? at : new Cell(at.x - 1, at.y - 1);   // a 3x3 is centred on the cursor
+        this._pending.push(kind === PlaceKind.Mortar ? Command.placeMortar(s, ++this._seq[s], tl, this._pending.length)
+                         : kind === PlaceKind.Kite ? Command.placeKite(s, ++this._seq[s], tl, this._pending.length)
+                         : Command.placeCannon(s, ++this._seq[s], at, this._pending.length));
+        break;
+      }
+      case Phase.Battle:
+        if (this._kiteAim[s]) { this._pending.push(Command.recruit(s, ++this._seq[s], at, this._pending.length)); this._kiteAim[s] = false; }
+        else this._pending.push(Command.fire(s, ++this._seq[s], at, this._pending.length));
+        break;
       case Phase.Repair:
         this._pending.push(Command.placeWall(s, ++this._seq[s], m.heldShapeId(s), this._turns[s], at, this._pending.length));
         break;
@@ -426,7 +441,7 @@ export class MatchController {
     const at = this.cursor(s);
     const gh = new Ghost();
     gh.phase = m.phase; gh.cursor = at; gh.shapeId = m.heldShapeId(s); gh.quarterTurns = this._turns[s];
-    gh.place = PlaceKind.Cannon;
+    gh.place = this._place[s]; gh.kite = this._kiteAim[s];
     switch (m.phase) {
       case Phase.Repair: {
         // the command's own check (MatchModel.wallVerdict): until 11-09 this was PlacementRules.check alone, which knew nothing of
@@ -439,14 +454,17 @@ export class MatchController {
         break;
       }
       case Phase.Cannons: {
-        // a 2x2 cannon, top-left at the cursor (the C#'s 3x3 kinds are extended-rules only). The model's own check
-        // (MatchModel.cannonVerdict): this used to ask "is it enclosed by anyone", the model asks "by THIS player's walls", so a
-        // ghost inside a team-mate's ring was drawn legal and refused (UC-P1)
+        // a 2x2 cannon, top-left at the cursor, or (the full rules) a 3x3 mortar or kite centred on it. The model's own check
+        // (MatchModel.cannonVerdict / mortarVerdict / kiteVerdict): this used to ask "is it enclosed by anyone", the model asks "by
+        // THIS player's walls", so a ghost inside a team-mate's ring was drawn legal and refused (UC-P1)
+        const kind = this._place[s], size = kind === PlaceKind.Cannon ? 2 : 3;
+        const tl = size === 2 ? at : new Cell(at.x - 1, at.y - 1);
         const list = [];
-        for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) list.push(new Cell(at.x + dx, at.y + dy));
+        for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) list.push(new Cell(tl.x + dx, tl.y + dy));
         gh.cells = list;
-        const v = m.cannonVerdict(s, at, terr);
-        gh.kind = 'cannon'; gh.result = v.result; gh.bad = v.bad;
+        const v = kind === PlaceKind.Mortar ? m.mortarVerdict(s, tl, terr) : kind === PlaceKind.Kite ? m.kiteVerdict(s, tl, terr) : m.cannonVerdict(s, at, terr);
+        gh.kind = kind === PlaceKind.Mortar ? 'mortar' : kind === PlaceKind.Kite ? 'kite' : 'cannon';
+        gh.result = v.result; gh.bad = v.bad;
         gh.legal = v.result < 0;
         break;
       }

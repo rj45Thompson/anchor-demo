@@ -1,6 +1,6 @@
 // The islands this game is played on: an ORIGINAL seeded generator. No map is copied from anywhere; every board is made here
 // from a seed, as rows of text in the board format the rules read (GridModel.fromAscii):
-//   '~' sea, '.' land, 'C' castle (2x2, on land), 'T' tree, 'r' small rock, 'R' large rock, 'H' house.
+//   '~' sea, '.' land, 'C' castle (2x2, on land), 'T' tree, 'r' small rock, 'R' large rock, 'H' house, 's' swamp.
 // What makes a board playable is the rules' own MapCheck (castle ring areas whole plain land, every ring within a ship's range
 // of sea that a ship can reach from the edge). The generator places castles by those same constraints, and tools/check_maps.mjs
 // runs the ported MapCheck over generated boards. A seed that cannot give a playable board after its attempts is REFUSED with
@@ -22,16 +22,16 @@ export const MAP_LIMITS = Object.freeze({
  *   w, h        board width / height range in squares (inclusive, steps of 2)
  *   margin      squares of open sea kept round the land on every side (ships sail in through it)
  *   castles     [min, max] castle sites the generator must find and may place: more land holds more castles; a 4-player island holds 5-7
- *   bays, lakes, woods, rocks, houses   [min, max] counts of each feature (scaled with the area; the normal rules clear
- *               trees/rocks/houses from the board when a match starts, so these only matter for MapCheck and for the board text)
+ *   bays, lakes, woods, rocks, houses, swamps   [min, max] counts of each feature (scaled with the area; the normal rules clear
+ *               trees/rocks/houses and make swamps land when a match starts; the full rules keep them all)
  *   minBox      the least [width, height] the LAND's bounding box may have (an attempt that comes out smaller is thrown away and the
  *               next sub-seed tried): the spec asks for land about 56 x 40 on the 4-player board
  *   noise       lattice size (squares) of the coarse shape noise: bigger boards get bigger bays and capes
  */
 export const SIZE_CLASSES = Object.freeze({
-  small:  Object.freeze({ name: 'small',  players: [1, 2], w: [48, 52], h: [36, 38], margin: 4, castles: [3, 5], bays: [1, 3], lakes: [0, 2], woods: [2, 4], rocks: [2, 4], houses: [1, 3], minBox: [36, 26], noise: 9 }),
-  medium: Object.freeze({ name: 'medium', players: [3, 3], w: [60, 64], h: [44, 46], margin: 6, castles: [4, 6], bays: [2, 4], lakes: [1, 3], woods: [3, 5], rocks: [3, 6], houses: [2, 4], minBox: [46, 32], noise: 10 }),
-  large:  Object.freeze({ name: 'large',  players: [4, 4], w: [72, 76], h: [52, 56], margin: 8, castles: [5, 7], bays: [2, 5], lakes: [1, 4], woods: [4, 7], rocks: [4, 8], houses: [2, 5], minBox: [52, 36], noise: 12 }),
+  small:  Object.freeze({ name: 'small',  players: [1, 2], w: [48, 52], h: [36, 38], margin: 4, castles: [3, 5], bays: [1, 3], lakes: [0, 2], woods: [2, 4], rocks: [2, 4], houses: [1, 3], swamps: [1, 2], minBox: [36, 26], noise: 9 }),
+  medium: Object.freeze({ name: 'medium', players: [3, 3], w: [60, 64], h: [44, 46], margin: 6, castles: [4, 6], bays: [2, 4], lakes: [1, 3], woods: [3, 5], rocks: [3, 6], houses: [2, 4], swamps: [1, 3], minBox: [46, 32], noise: 10 }),
+  large:  Object.freeze({ name: 'large',  players: [4, 4], w: [72, 76], h: [52, 56], margin: 8, castles: [5, 7], bays: [2, 5], lakes: [1, 4], woods: [4, 7], rocks: [4, 8], houses: [2, 5], swamps: [2, 4], minBox: [52, 36], noise: 12 }),
 });
 
 /** The class for a number of players (1-2 small, 3 medium, 4 large); any other count is refused, never rounded. */
@@ -357,6 +357,16 @@ export class IslandGenerator {
     put('r', rng.range(size.rocks[0], size.rocks[1]));
     put('R', rng.range(1, 2 + (size === SIZE_CLASSES.large ? 1 : 0)));
     put('H', rng.range(size.houses[0], size.houses[1]));
+    // swamp patches (FULL-MAPS, 11-11: the full rules make a walled-in swamp land; the normal rules make every swamp land at load,
+    // MatchModel.plain): drawn LAST, so every earlier draw, and so the board the normal rules play, is what it was before
+    const swamps = rng.range(size.swamps[0], size.swamps[1]);
+    for (let w = 0; w < swamps; w++) {
+      let x = rng.int(W), y = rng.int(H), placed = 0;
+      for (let step = 0; step < 16 && placed < 4; step++) {
+        if (free(x, y)) { grid[y][x] = 's'; placed++; }
+        x += rng.int(3) - 1; y += rng.int(3) - 1;
+      }
+    }
   }
 }
 
@@ -379,15 +389,16 @@ export const CAMPAIGN_ISLANDS = Object.freeze([
   Object.freeze({ name: 'CinderwakeIsle', seed: 6203 }),
 ]);
 
-/** The rules' campaign is fought on this many maps (Campaign.normal). */
+/** The normal campaign is fought on this many maps (Campaign.normal; the full rules' is Campaign.mapCount's 6). */
 export const CAMPAIGN_MAPS = 4;
 
-/** The four island names of a campaign that starts on `first`: it, then the next three of the list (wrapping). */
-export function campaignNames(first, islands = CAMPAIGN_ISLANDS) {
+/** The `count` island names of a campaign that starts on `first`: it, then the next ones of the list (wrapping). */
+export function campaignNames(first, islands = CAMPAIGN_ISLANDS, count = CAMPAIGN_MAPS) {
+  if (!Number.isInteger(count) || count < 1 || count > islands.length) throw new RangeError('campaignNames: a campaign of ' + count + ' islands from a list of ' + islands.length);
   const names = islands.map((i) => i.name);
   const at = names.indexOf(first);
   if (at < 0) throw new Error("the setup screen chose an island the campaign does not have: '" + first + "'");
-  return Array.from({ length: CAMPAIGN_MAPS }, (_, k) => names[(at + k) % names.length]);
+  return Array.from({ length: count }, (_, k) => names[(at + k) % names.length]);
 }
 
 /**

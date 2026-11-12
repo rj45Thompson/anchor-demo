@@ -9,8 +9,9 @@ import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GameRules, Phase, Terrain, Occupant, ShipKind, ShotFired, ShotLanded, ShipSunk, ShipDamaged, GruntKilled, WallBroken,
          CannonDamaged, LoopClosed, CastleClaimed, SwordSwung, WallsPlaced, CannonPlaced, PlacementRejected, CommandRejected, CommandKind,
-         EnclosureRules, HudViewModel, RingBuilt, CastleBitten, CastleRuined, CastleRestored } from '../core/index.js';
+         EnclosureRules, HudViewModel, RingBuilt, CastleBitten, CastleRuined, CastleRestored, ShotModel, GunKind } from '../core/index.js';
 import { wallLandsAfter } from './board.js';
+import { FullView } from './full.js';
 import { uv, length, smoothstep } from 'three/tsl';
 import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry, drawAllRoom, HERO_HEIGHT } from './look.js';
 import { boneEndingWith, tintArmour, shade, rimFigure, setFlash, tintSails, outlineFigure } from './models.js';
@@ -56,6 +57,28 @@ const SHIP_RIM = new THREE.Color(0xff3a1f), SAIL = [new THREE.Color(0.16, 0.17, 
 // (11-11, LOOKED at shots/boss/boss_volley.png: at 0.9 and with the tint alone the boss could not be told from the ships round it at
 // the whole-island zoom - every hull reads dark red under the enemy rim; now larger and ringed in pulsing purple, BOSS_RING)
 const BOSS_TINT = new THREE.Color(0.5, 0.44, 0.5), BOSS_SCALE = 1.15, BOSS_RING = new THREE.Color(0xc45ad8);
+// FULL-RENDER (11-11, the full rules' ships; AUTHORED, each told apart at the whole-island zoom by its sails): a fireship's flame
+// orange, a gunboat's iron grey (2 x 2), the dreadnought's black (3 x 3, ringed like the boss: it is the full rules' boss), a
+// recruited ship's white sails with a gold rim instead of the enemy's red (it fights for the players); an ironclad keeps its kind's
+// sails on a hull darkened toward iron
+SAIL.push(new THREE.Color(0.85, 0.32, 0.08), new THREE.Color(0.36, 0.38, 0.42), new THREE.Color(0.07, 0.07, 0.08), new THREE.Color(0.95, 0.93, 0.86));
+const LOOK = Object.freeze({ ship: 0, lander: 1, boss: 2, fireship: 3, gunboat: 4, dreadnought: 5, allied: 6 });
+const MORTAR_SHADE = new THREE.Color(0.55, 0.5, 0.52);
+const BOULDER_TRAIL = new THREE.Color(0x8a8478), FIRE_TRAIL = new THREE.Color(0xff5a10);
+const IRONCLAD_TINT = new THREE.Color(0.42, 0.42, 0.46), ALLY_RIM = new THREE.Color(0xffd24a), DREAD_TINT = new THREE.Color(0.38, 0.34, 0.32);
+/** The look a ship is drawn with (a recruited ship is the allied look whatever its kind). */
+export function lookOf(s) {
+  if (s.allied) return LOOK.allied;
+  switch (s.kind) {
+    case ShipKind.OneSail: return LOOK.ship;
+    case ShipKind.TwoSail: return LOOK.lander;
+    case ShipKind.Boss: return LOOK.boss;
+    case ShipKind.Fireship: return LOOK.fireship;
+    case ShipKind.Gunboat: return LOOK.gunboat;
+    case ShipKind.Dreadnought: return LOOK.dreadnought;
+  }
+  throw new Error('units.js: no look for ship kind ' + s.kind);
+}
 const WAKE = new THREE.Color(1, 1, 1).lerp(new THREE.Color(0xff3a1f), 0.3);
 const SINK_PITCH = 1.25, SINK_ROLL = 0.5, SINK_DEPTH = 1.6;       // AUTHORED: radians the bow dips and the hull rolls, squares it goes down
 const SINK_FOAM_EVERY = 0.14;                                    // AUTHORED: seconds between foam rings round a sinking ship
@@ -76,14 +99,18 @@ const GRUNT_RED = new THREE.Color(0xff2a1f), BLOB_ALPHA = 0.42, FLASH_SECONDS = 
 const NEUTRAL_BANNER = new THREE.Color(0xe8e2d2), NEUTRAL_GLOW = new THREE.Color(0xfff1d0);
 // the goblin's and the ship's rimmed materials, made once for the page and shared by every level (one shader each, built by the
 // renderer's warm-up through gruntFigure and shipModel)
-const GRUNT_MATS = new Map(), SHIP_MATS = [new Map(), new Map(), new Map()];
+const GRUNT_MATS = new Map(), SHIP_MATS = Array.from({ length: 7 }, () => new Map()), IRONCLAD_MATS = Array.from({ length: 7 }, () => new Map());
 /** A grunt figure, outlined red (the renderer's warm-up draws one, so its shader is built before play). */
 export function gruntFigure(models) { const fig = models.figure('goblin'); rimFigure(fig.root, GRUNT_RED, GRUNT_MATS); return fig; }
-/** A ship, outlined in the enemy's colour. look: 0 a gunship, 1 a lander (darker), 2 a boss (purple sails, darkest hull). */
-export function shipModel(models, look) {
-  if (look !== 0 && look !== 1 && look !== 2) throw new Error('units.js: a ship look is 0 gunship, 1 lander or 2 boss, got ' + look);
+/** A ship, outlined in the enemy's colour. look (LOOK): 0 a gunship, 1 a lander (darker), 2 a boss (purple sails, darkest hull),
+ *  3 a fireship, 4 a gunboat, 5 the dreadnought, 6 a recruited ship (gold rim); ironclad darkens the hull toward iron. */
+export function shipModel(models, look, ironclad = false) {
+  if (!Number.isInteger(look) || look < 0 || look >= SAIL.length) throw new Error('units.js: a ship look is 0..' + (SAIL.length - 1) + ' (LOOK), got ' + look);
   const mdl = models.instance('ship');
-  tintSails(mdl, SAIL[look], look === 1 ? LANDER_TINT : look === 2 ? BOSS_TINT : new THREE.Color(1, 1, 1), SHIP_RIM.clone().multiplyScalar(0.42), SHIP_MATS[look]);
+  const hull = look === 1 ? LANDER_TINT : look === 2 ? BOSS_TINT : look === 5 ? DREAD_TINT : new THREE.Color(1, 1, 1);
+  if (ironclad) hull.multiply(IRONCLAD_TINT);
+  const rim = look === LOOK.allied ? ALLY_RIM.clone().multiplyScalar(0.42) : SHIP_RIM.clone().multiplyScalar(0.42);
+  tintSails(mdl, SAIL[look], hull, rim, (ironclad ? IRONCLAD_MATS : SHIP_MATS)[look]);
   return mdl;
 }
 /** The aiming reticle: a ring with four ticks on its rim, merged into one geometry (graphics round 3: it was five meshes per hero,
@@ -125,6 +152,7 @@ export class Units {
     this.flagNeutral = new THREE.MeshStandardNodeMaterial({ color: NEUTRAL_BANNER, side: THREE.DoubleSide, roughness: 0.6 });
     this.glowP = this.colours.map((c) => glow(c, 2.4));
     this.glowEnemy = glow(ENEMY_SHOT, 2.6);
+    this.glowAlly = glow(ALLY_RIM, 2.6); this.boulderMat = new THREE.MeshStandardNodeMaterial({ color: BOULDER_TRAIL, roughness: 0.92, flatShading: true });   // FULL-RENDER: a recruited ship's ball; the serpent's boulder
     this.glowGrunt = glow(GRUNT_RED, 1.7);
     this.glowBoss = glow(BOSS_RING, 2.8);                            // UC-B1: the ring on the water round a boss
     this.glowNeutral = glow(NEUTRAL_GLOW, 1.25);
@@ -149,6 +177,7 @@ export class Units {
     for (let s = 0; s < match.playerCount; s++) { this.heroes.push(this.makeHero(s)); this.ghosts.push(this.makeGhost(s)); }
     this.dryNearest = this.nearestDry();
     this.bombs = match.options.bombs ? new BombsView(this) : null;   // the bomb rule set's bombs, traps and stun (bombs.js)
+    this.full = match.options.full ? new FullView(this) : null;        // the full rules' serpent, kites, treasure, ship parts (full.js)
   }
 
   // ------------------------------------------------------------------ castles
@@ -274,6 +303,7 @@ export class Units {
     const yaw = new THREE.Group(); g.add(yaw);
     const barrel = new THREE.Group(); yaw.add(barrel);
     const mdl = this.models.instance('cannon'); mdl.rotation.y = Math.PI / 2; mdl.scale.setScalar(k); mdl.position.y = -M.box.min.y * k; barrel.add(mdl);
+    if (c.kind === GunKind.Mortar) shade(mdl, MORTAR_SHADE);         // FULL-RENDER: a mortar (3 x 3, so 1.5x by its size) reads darker iron
     this.group.add(g);
     return { g, yaw, barrel, trim, recoil: 0, aim: 0, model: c };
   }
@@ -303,19 +333,19 @@ export class Units {
 
   // ------------------------------------------------------------------ ships
   makeShip(s) {
-    const g = new THREE.Group(), two = s.kind === ShipKind.TwoSail, boss = s.kind === ShipKind.Boss;
+    const g = new THREE.Group(), two = s.kind === ShipKind.TwoSail, boss = s.kind === ShipKind.Boss || s.kind === ShipKind.Dreadnought;
     // the Meshy ship, bow (-x in the file) turned to +x, the direction the yaw below steers; its keel a quarter of its height under
     // the water line
     const M = this.models.ship, k = SHIP_LENGTH * s.size * (two ? LANDER_SCALE : boss ? BOSS_SCALE : 1) / M.size.x;
     const hull = new THREE.Group(); g.add(hull);
-    const mdl = shipModel(this.models, boss ? 2 : two ? 1 : 0); mdl.rotation.y = Math.PI; mdl.scale.setScalar(k); mdl.position.y = -M.box.min.y * k - M.size.y * k * 0.25;
+    const look = lookOf(s), mdl = shipModel(this.models, look, s.ironclad); mdl.rotation.y = Math.PI; mdl.scale.setScalar(k); mdl.position.y = -M.box.min.y * k - M.size.y * k * 0.25;
     hull.add(mdl);
     const pips = new THREE.Group(); pips.position.y = M.size.y * k * 0.75 + 0.2; g.add(pips);
     let ring = null;
     if (boss) { ring = new THREE.Mesh(this.geo.ring, this.glowBoss); ring.position.y = 0.05; ring.scale.setScalar(SHIP_LENGTH * s.size * BOSS_SCALE * 0.62); g.add(ring); }
     const p = this.shipCentre(s); g.position.copy(p);
     this.group.add(g);
-    return { g, hull, pips, pos: p.clone(), yaw: Math.atan2(this.board.w / 2 - p.x, this.board.h / 2 - p.z) - Math.PI / 2, sink: -1, hp: -1, hit: 0, model: s, ring, len: SHIP_LENGTH * s.size * (two ? LANDER_SCALE : boss ? BOSS_SCALE : 1), wake: 0, bubble: 0 };
+    return { g, hull, pips, look, pos: p.clone(), yaw: Math.atan2(this.board.w / 2 - p.x, this.board.h / 2 - p.z) - Math.PI / 2, sink: -1, hp: -1, hit: 0, model: s, ring, len: SHIP_LENGTH * s.size * (two ? LANDER_SCALE : boss ? BOSS_SCALE : 1), wake: 0, bubble: 0 };
   }
   shipCentre(s) { return new THREE.Vector3(s.at.x + s.size / 2, 0, s.at.y + s.size / 2); }
 
@@ -325,6 +355,7 @@ export class Units {
       let e = this.ships.get(s.id);
       if (!s.alive) { if (e && e.sink < 0) e.sink = 0; continue; }
       seen.add(s.id);
+      if (e && e.look !== lookOf(s)) { const was = e; this.group.remove(was.g); e = this.makeShip(s); e.pos.copy(was.pos); e.yaw = was.yaw; this.ships.set(s.id, e); }   // recruited: its new sails
       if (!e) { e = this.makeShip(s); this.ships.set(s.id, e); }
       const target = this.shipCentre(s), before = e.pos.clone();
       const left = towards(e.pos, target, SHIP_SPEED * dt);
@@ -465,9 +496,13 @@ export class Units {
       seen.add(sh.id);
       let e = this.shots.get(sh.id);
       if (!e) {
-        const mat = sh.fromSlot >= 0 ? this.slotGlow(sh.fromSlot) : this.glowEnemy;
+        // FULL-RENDER: a recruited ship's ball is gold (it fights for the players), the serpent's boulder a grey stone twice a ball's
+        // size, an incendiary ball (a fireship's, the dreadnought's, a mortar's) trails fire
+        const ally = sh.fromSlot === ShotModel.FromAlly, boulder = sh.fromSlot === ShotModel.FromSerpent;
+        const mat = sh.fromSlot >= 0 ? this.slotGlow(sh.fromSlot) : ally ? this.glowAlly : boulder ? this.boulderMat : this.glowEnemy;
         const ball = new THREE.Mesh(this.geo.ball, mat);
-        const trail = { colour: sh.fromSlot >= 0 ? this.colours[sh.fromSlot] : ENEMY_SHOT, last: null };
+        if (boulder) ball.scale.setScalar(2.2);
+        const trail = { colour: sh.fromSlot >= 0 ? this.colours[sh.fromSlot] : ally ? ALLY_RIM : boulder ? BOULDER_TRAIL : sh.incendiary ? FIRE_TRAIL : ENEMY_SHOT, last: null };
         const from = this.shotOrigin(sh);
         const tg = sh.target, wetT = this.board.grid.terrainAt(tg.x, tg.y) === Terrain.Water;
         const to = new THREE.Vector3(tg.x + 0.5, wetT ? 0.05 : this.board.groundAt(tg.x, tg.y) + 0.25, tg.y + 0.5);
@@ -804,6 +839,7 @@ export class Units {
         const k = this.castles.get(e.castleId);
         if (k) this.fxs.flash(k.g.position.clone().add(new THREE.Vector3(0, 1.2, 0)), this.colours[e.slot], 1.2);
       } else if (this.bombs) this.bombs.event(e, cellAt);
+      if (this.full) this.full.event(e, cellAt);
     }
   }
 
@@ -834,6 +870,7 @@ export class Units {
     this.updateShots(alpha);
     this.updateHeroes(view, dt, seconds);
     if (this.bombs) this.bombs.update(view, dt, seconds);
+    if (this.full) this.full.update(view, dt, seconds);
     this.updateGhosts(view, seconds);
   }
 
@@ -846,6 +883,7 @@ export class Units {
 
   dispose() {
     if (this.bombs) this.bombs.dispose();
+    if (this.full) this.full.dispose();
     for (const e of this.heroes) e.fig.mixer.stopAllAction();
     for (const e of this.grunts.values()) e.fig.mixer.stopAllAction();
     this.scene.remove(this.group);

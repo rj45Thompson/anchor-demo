@@ -1,18 +1,18 @@
 // port of model/Controller/HudViewModel.cs
 //
-// Public-build changes (PLAN.md hard limits), each a removal or a reword, no rule changed:
-//   - the boss fields (bossAfloat, bossHealth, bossMaxHealth) and the banners for the boss ship, the sea monster and a recruited ship
-//     are left out: the public build runs the normal rules only, where none of those exist;
-//   - the fate wording is "CONTINUE OR GIVE UP?" / "CONTINUE!" (the private build quoted an existing game's line);
-//   - the reject reasons 9..11 (the extended rules' weapons) have no words: the rules port does not have them.
+// Public-build changes (PLAN.md hard limits), each a reword, no rule changed:
+//   - the full rules' banners (the dreadnought sailing in, the serpent rising, a ship recruited) and the words for the reject reasons
+//     9..11 are this game's own (the C#'s named the reference game's content);
+//   - the fate wording is "CONTINUE OR GIVE UP?" / "CONTINUE!" (the private build quoted an existing game's line).
+// The boss fields (bossAfloat, bossHealth, bossMaxHealth) are the C#'s: they follow the full rules' dreadnought, as the C# does.
 import { GameRules } from '../rules/GameRules.js';
 import { Terrain, Occupant } from '../grid.js';
 import { PlacementResult } from '../rules/PlacementRules.js';
-import { Phase } from '../match/Entities.js';
+import { Phase, ShipKind } from '../match/Entities.js';
 import { MatchModel } from '../match/MatchModel.js';
 import {
   PhaseChanged, LevelStarted, LastPieceGrace, FateAsked, FateChosen, CastleRuined, CastleRestored, FinalBonus, PlayerFell,
-  LifeLost, PlacementRejected, CommandRejected, WallsPlaced, RejectReason,
+  LifeLost, PlacementRejected, CommandRejected, WallsPlaced, RejectReason, ShipSpawned, SerpentRose, ShipRecruited,
 } from '../match/Events.js';
 
 /** One player's card on the HUD. */
@@ -39,6 +39,8 @@ export class HudViewModel {
     this.wave = 0; this.waves = 0; this.continues = 0;
     this.mapName = ''; this.subtitle = '';   // the level's name under the round line; the banner's second line
     this.challenge = false; this.grace = false;
+    /** The full rules' dreadnought is afloat (alive), and its health now and at full: the boss bar. */
+    this.bossAfloat = false; this.bossHealth = 0; this.bossMaxHealth = 0;
     this.phase = Phase.Claim;
     this.banner = '';                        // the last big announcement: "PREPARE FOR BATTLE!", "ROUND LOST", "VICTORY!"
     this.bannerTick = 0;
@@ -63,6 +65,10 @@ export class HudViewModel {
     } else if (e instanceof LevelStarted) {
       this.challenge = e.challenge; this.mapName = HudViewModel.pretty(e.map); this.bannerTick = e.tick;
       this.banner = e.challenge ? 'CHALLENGE ROUND' : 'LEVEL ' + e.level; this.subtitle = this.mapName;
+    } else if (e instanceof ShipSpawned && e.kind === ShipKind.Dreadnought) {
+      this.banner = 'THE DREADNOUGHT!'; this.subtitle = 'SILENCE ITS GUNS, THEN STRIKE ITS FOUR HIDDEN WEAK SPOTS'; this.bannerTick = e.tick;
+    } else if (e instanceof SerpentRose) {
+      this.banner = 'THE SERPENT RISES!'; this.subtitle = 'SHOOT IT WHILE ITS HEAD IS ABOVE THE WAVES'; this.bannerTick = e.tick;
     } else if (e instanceof LastPieceGrace) {
       this.banner = 'LAST PIECE!'; this.subtitle = ''; this.bannerTick = e.tick;
     } else if (e instanceof FateAsked) {
@@ -70,6 +76,8 @@ export class HudViewModel {
       this.subtitle = (this.fallenWords() === '' ? '' : this.fallenWords() + ' - ') + e.continuesLeft + (e.continuesLeft === 1 ? ' CONTINUE LEFT' : ' CONTINUES LEFT');
     } else if (e instanceof FateChosen && e.fightAgain) {
       this.banner = 'CONTINUE!'; this.subtitle = 'MORE FIREPOWER'; this.bannerTick = e.tick;
+    } else if (e instanceof ShipRecruited) {
+      this.banner = 'A SHIP CHANGES SIDES!'; this.subtitle = ''; this.bannerTick = e.tick;
     } else if (e instanceof CastleRuined) {
       this.banner = 'A CASTLE HAS FALLEN'; this.subtitle = 'ENCLOSE THE GRAVEYARD TO RESTORE IT'; this.bannerTick = e.tick;
     } else if (e instanceof CastleRestored) {
@@ -95,6 +103,9 @@ export class HudViewModel {
     this.lives = m.lives; this.teamScore = m.teamScore; this.level = m.level; this.wave = m.wave; this.waves = m.table.waveCount;
     this.continues = Math.max(0, m.lives - 1); this.grace = m.inGrace; this.challenge = m.isChallenge;
     if (this.mapName.length === 0 && m.mapName !== null) this.mapName = HudViewModel.pretty(m.mapName);
+    this.bossAfloat = false; this.bossHealth = 0; this.bossMaxHealth = 0;
+    for (const s of m.ships)
+      if (s.alive && s.kind === ShipKind.Dreadnought) { this.bossAfloat = true; this.bossHealth = s.health; this.bossMaxHealth = s.maxHealth; }
     this.secondsLeft = Math.trunc((m.phaseTicksLeft + T - 1) / T);
     for (let s = 0; s < this.players.length; s++) {
       const h = this.players[s];
@@ -131,6 +142,9 @@ export class HudViewModel {
         case Occupant.Graveyard: return 'ruined castle';
         case Occupant.RockSmall: case Occupant.RockLarge: return 'rock';
         case Occupant.Tree: return 'tree';
+        case Occupant.House: return 'house';
+        case Occupant.Pit: return 'burning pit';
+        case Occupant.Kite: return 'kite here';
         default: return 'blocked';
       }
     };
@@ -147,7 +161,10 @@ export class HudViewModel {
         default: return HudViewModel.placementWords(ghost.result);
       }
     switch (ghost.result) {
-      case RejectReason.Blocked: return on && grid.terrainAt(b.x, b.y) === Terrain.Water ? 'water' : !on ? 'off the map' : thing();
+      case RejectReason.Blocked: {
+        const t = on ? grid.terrainAt(b.x, b.y) : -1;
+        return !on ? 'off the map' : t === Terrain.Water ? 'water' : t === Terrain.Swamp ? 'swamp' : t === Terrain.Lake ? 'lake' : thing();
+      }
       case RejectReason.NotEnclosed: return 'outside your walls';
       default: return HudViewModel.rejectWords(ghost.result);
     }
@@ -186,6 +203,9 @@ export class HudViewModel {
       case RejectReason.Blocked: return 'something is there';
       case RejectReason.NoLoadedCannon: return 'reloading';
       case RejectReason.NotACastle: return 'pick a castle';
+      case RejectReason.NotFull: return 'full rules only';
+      case RejectReason.NoKite: return 'no kite to fly';
+      case RejectReason.NotRecruitable: return "that ship won't turn";
       case RejectReason.SwordOut: return 'bombs out - swap tool for the cannon';
       case RejectReason.NoSword: return 'swap tool to take out bombs';
       case RejectReason.NoBombs: return 'no bombs left';

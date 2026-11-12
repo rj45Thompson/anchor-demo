@@ -4,13 +4,18 @@ import { Cell } from '../cell.js';
 /** The round's phases. Decide = the fate screen after a lost round: Fight Again or Give Up. */
 export const Phase = Object.freeze({ Claim: 0, Cannons: 1, Battle: 2, Repair: 3, Score: 4, GameOver: 5, Victory: 6, Decide: 7 });
 
-/** A gun's kind. Only the 2x2 cannon (0) is in the normal game; 1 is the bigger ruleset's and is not ported. */
-export const GunKind = Object.freeze({ Cannon: 0 });
+/** A gun's kind: the 2x2 cannon (0), or the full rules' 3x3 Mortar (1), which costs rules.mortarCost of the allotment, has twice
+ *  a cannon's health and fires incendiary balls that do rules.mortarDamage and light pits. */
+export const GunKind = Object.freeze({ Cannon: 0, Mortar: 1 });
 
-/** One-sail ships shoot walls; two-sail ships take three hits, head for the shore and land grunts. Values 2..4 are the bigger
- *  ruleset's ships and are not ported: no normal wave sails one. */
-// Boss: this game's own (BOSS_UC.md UC-B1), the bomb rule set only: one 2 x 2 ship in each island's last wave
-export const ShipKind = Object.freeze({ OneSail: 0, TwoSail: 1, Boss: 2 });
+/** One-sail ships shoot walls; two-sail ships take three hits, head for the shore and land grunts. The full rules add the Fireship
+ *  (2: its balls leave burning pits), the Gunboat (3: a 2x2 gun platform, every square a gun) and the Dreadnought (4: the 3x3 last
+ *  boss, porthole guns and four hidden weak spots). Appended only. Boss (5) is this game's own (BOSS_UC.md UC-B1), the bomb rule set
+ *  only: one 2 x 2 ship in each island's last wave (it was 2 before the full rules were ported; every reader names it, none its number). */
+export const ShipKind = Object.freeze({ OneSail: 0, TwoSail: 1, Fireship: 2, Gunboat: 3, Dreadnought: 4, Boss: 5 });
+
+/** What a big ship's square is: plain hull (takes nothing), a gun, or a hidden weak spot (the dreadnought's). */
+export const PartRole = Object.freeze({ Hull: 0, Gun: 1, WeakSpot: 2 });
 
 /** One player's state. Slots are 0..3; the colour is the view's, by slot. */
 export class PlayerModel {
@@ -37,21 +42,33 @@ export class PlayerModel {
   get cannonsToPlace() { return this.cannonsFresh + this.cannonsCarried; }
 }
 
-/** A 2x2 cannon (REQ-CANNON-01). Id order is placement order: the tie-break of REQ-FIRE-05. inFlight: one ball in the air. */
+/** A 2x2 cannon (REQ-CANNON-01), or a 3x3 Mortar (the full rules). Id order is placement order: the tie-break of REQ-FIRE-05.
+ *  inFlight: one ball in the air. */
 export class CannonModel {
-  constructor(id, owner, topLeft, health) {
-    this.id = id; this.owner = owner; this.topLeft = topLeft; this.kind = GunKind.Cannon;
+  constructor(id, owner, topLeft, health, kind = GunKind.Cannon) {
+    if (kind !== GunKind.Cannon && kind !== GunKind.Mortar) throw new Error('gun kind ' + kind + ' is not a GunKind');
+    this.id = id; this.owner = owner; this.topLeft = topLeft; this.kind = kind;
     this.health = health;
     this.reloadLeft = 0;
     this.inFlight = 0;
     this.alive = true;
   }
-  get size() { return 2; }
-  covers(x, y) { return x >= this.topLeft.x && x < this.topLeft.x + 2 && y >= this.topLeft.y && y < this.topLeft.y + 2; }
+  get size() { return this.kind === GunKind.Mortar ? 3 : 2; }
+  covers(x, y) { const n = this.size; return x >= this.topLeft.x && x < this.topLeft.x + n && y >= this.topLeft.y && y < this.topLeft.y + n; }
 }
 
-/** A ship on water (REQ-SHIP-01..07). Whole-cell position plus an integer step counter: no float anywhere. Every normal ship is
- *  one square (size 1); a boss (UC-B1) is `big` x `big` squares from `at`, its top-left. */
+/** A Kite (the full rules): placed in CANNONS inside the player's walls on a 3x3, flown once over a ship to recruit it. An unused one
+ *  is lost at SCORE. */
+export class KiteModel {
+  static Size = 3;
+  constructor(id, owner, topLeft) { this.id = id; this.owner = owner; this.topLeft = topLeft; this.used = false; }
+}
+
+/** A ship on water (REQ-SHIP-01..07). Whole-cell position plus an integer step counter: no float anywhere. A one-sail, two-sail
+ *  or fireship is one square (size 1); a gunboat 2, a dreadnought 3 and a boss (UC-B1) rules.bossSize squares a side, from `at`, its
+ *  top-left. A big ship of the full rules has `parts` (one health per footprint square, row-major; 0 = destroyed) and `roles` (a
+ *  PartRole each); every other ship has null for both. `ironclad`: the full rules' darker ship, rules.ironcladExtraHealth tougher;
+ *  `allied`: recruited by a kite, it fights for the players and stays where it is. */
 export class ShipModel {
   constructor(id, at, health, moveTicks, reload) {
     this.id = id;
@@ -65,11 +82,27 @@ export class ShipModel {
     this.hasTarget = false;
     this.target = Cell.zero;
     this.alive = true;
-    this.big = 1;
+    this.big = 1;                // the footprint, squares a side (the C# Size)
+    this.ironclad = false;
+    this.allied = false;
+    this.parts = null;
+    this.roles = null;
   }
   get size() { return this.big; }
   covers(x, y) { return x >= this.at.x && y >= this.at.y && x < this.at.x + this.big && y < this.at.y + this.big; }
-  get centre() { return this.at; }
+  /** The footprint's middle square (the top-left for a one-square ship). */
+  get centre() { return new Cell(this.at.x + Math.trunc(this.big / 2), this.at.y + Math.trunc(this.big / 2)); }
+}
+
+/** The Serpent (the full rules): it rises from the deep within reach of the walls, throws boulders that break walls and leave small
+ *  rocks, and can be hit only while its head is out of the water (`up`). */
+export class SerpentModel {
+  constructor(id, at, health, phaseTicks) {
+    this.id = id; this.at = at; this.up = false; this.health = health;
+    this.phaseLeft = phaseTicks;     // ticks until it dives or rises
+    this.throwLeft = 0;
+    this.alive = true;
+  }
 }
 
 /** A grunt on land (REQ-GRUNT-01..04). */
@@ -81,14 +114,17 @@ export class GruntModel {
   }
 }
 
-/** A shot in flight: an event with a landing tick, never a physics body (REQ-FIRE-02). fromSlot is the firing player, or -1
- *  for a ship's shot. */
+/** A shot in flight: an event with a landing tick, never a physics body (REQ-FIRE-02). fromSlot is the firing player, -1 for an
+ *  enemy ship's shot, FromAlly (-2) for a recruited ship's, FromSerpent (-3) for the serpent's boulder. */
 export class ShotModel {
+  static FromAlly = -2;
+  static FromSerpent = -3;
   constructor(id, fromSlot, fromShip, origin, target, ticks, damage, firedTick) {
     this.id = id; this.fromSlot = fromSlot; this.fromShip = fromShip; this.origin = origin; this.target = target;
     this.ticksLeft = ticks; this.damage = damage;
     this.firedTick = firedTick;   // a shot is not moved on the tick it was fired: it lands exactly `ticks` later
     this.cannonId = 0;            // the player's gun that fired it (its one ball in the air)
+    this.incendiary = false;      // a fireship's, the dreadnought's or a mortar's ball: it leaves a burning pit
   }
 }
 

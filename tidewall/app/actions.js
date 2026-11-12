@@ -13,7 +13,8 @@
 // shop: the player cannot pay, the button is dim but still sends, so the refusal says why) }.
 // ctx is what the page knows about the player now: { phase: 'Claim'|'Cannons'|'Battle'|'Repair'|..., sword (the tool flag: the bomb
 // tool in the bomb rule set), ready, bombs (the rule set is on), carrying, bombsLeft, score, costs, items, key(action) (player 1's keys
-// for a movable action now, core/controller/KeyBindings.js label: a rebind shows at once, UC-ST3), enterReady (Enter is READY too) }.
+// for a movable action now, core/controller/KeyBindings.js label: a rebind shows at once, UC-ST3), enterReady (Enter is READY too),
+// full (the full rules are on), gun ('cannon' | 'mortar' | 'kite': what CANNONS places now under the full rules) }.
 
 const IN_PLAY = (c) => c.phase === 'Claim' || c.phase === 'Cannons' || c.phase === 'Battle' || c.phase === 'Repair';
 const TOOL_PHASE = (c) => c.phase === 'Battle' || c.phase === 'Repair';
@@ -25,10 +26,13 @@ import { zoomOf } from './overlay.js';
 export const ACTIONS = Object.freeze([
   Object.freeze({
     id: 'place', field: 'confirm', keys: (c) => c.key('confirm') + ' / click',
-    label: (c) => (c.sword && TOOL_PHASE(c) ? (c.bombs ? (c.carrying ? 'Throw' : 'Drop') : 'Swing') : ({ Claim: 'Claim', Cannons: 'Place', Battle: 'Fire', Repair: 'Place' })[c.phase] || 'Place'),
+    label: (c) => (c.sword && TOOL_PHASE(c) ? (c.bombs ? (c.carrying ? 'Throw' : 'Drop') : 'Swing') : c.phase === 'Cannons' && c.full ? 'Place ' + c.gun : ({ Claim: 'Claim', Cannons: 'Place', Battle: 'Fire', Repair: 'Place' })[c.phase] || 'Place'),
     enabled: IN_PLAY,
   }),
-  Object.freeze({ id: 'rotate', field: 'rotate', keys: (c) => (c.bombs ? c.key('rotate') : c.key('rotate') + ' / right click'), label: () => 'Rotate', enabled: (c) => c.phase === 'Repair' && !c.sword }),
+  // the full rules: in CANNONS rotate switches what is placed (cannon, mortar, kite), in BATTLE it aims the kite instead of a cannon
+  Object.freeze({ id: 'rotate', field: 'rotate', keys: (c) => (c.bombs ? c.key('rotate') : c.key('rotate') + ' / right click'),
+    label: (c) => (c.full && c.phase === 'Cannons' ? 'Switch' : c.full && c.phase === 'Battle' ? 'Kite aim' : 'Rotate'),
+    enabled: (c) => !c.sword && (c.phase === 'Repair' || (c.full && (c.phase === 'Cannons' || c.phase === 'Battle'))) }),
   Object.freeze({
     id: 'drop', field: 'drop', keys: (c) => c.key('drop'), label: (c) => (c.carrying ? 'Throw' : 'Drop bomb'), visible: BOMBS, enabled: TOOL_PHASE,
     tool: (c) => (c.bombs ? 'x' + c.bombsLeft : ''),

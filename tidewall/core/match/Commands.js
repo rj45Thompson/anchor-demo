@@ -1,10 +1,11 @@
 // port of model/Match/Commands.cs
 import { Cell } from '../cell.js';
 
-/** The command kinds of the normal game, with the private model's numbers. 7, 8 and 9 are the bigger ruleset's commands and
- *  are not ported: a Command refuses them. */
+/** The command kinds, with the private model's numbers. 7, 8 and 9 are the full rules' (GameType.Full): a Mortar, a Kite, and
+ *  flying a kite over a ship to recruit it; a normal match refuses them (RejectReason.NotFull). */
 export const CommandKind = Object.freeze({
   PlaceWall: 0, PlaceCannon: 1, Fire: 2, Ready: 3, Claim: 4, Leave: 5, Rejoin: 6,
+  PlaceMortar: 7, PlaceKite: 8, Recruit: 9,    // the full rules' 3x3 emplacements and the kite's flight
   Decide: 10,                                  // the fate screen: Fight Again or Give Up
   SwitchMode: 11, Strike: 12,                  // the hero: tool <-> sword, and a sword swing
   // the bomb rule set (GameOptions.bombs, BOMBS_SPEC.md). Strike (12) is DropBomb there. Refused when bombs is off.
@@ -23,13 +24,14 @@ function whole(name, v) {
  *  runs the same tick's commands in that order (REQ-NET-10). One shape for every kind so a tick's batch is one list.
  *    placeWall: shapeId, quarterTurns, at = anchor.  placeCannon: at = top-left cell.  fire: at = target cell.
  *    claim: at = any cell of the castle.  decide: quarterTurns 1 = Fight Again, 0 = Give Up.  strike: at = the hero's square.
+ *    placeMortar / placeKite: at = the 3x3's top-left cell.  recruit: at = a square of the ship the kite flies to.
  *    ready / leave / rejoin / switchMode: no payload.
  *  The bomb rule set: dropBomb (= strike) / pickUpBomb / defuseBomb / placeTrap / moveHero: at = the hero's square (placeTrap: the
  *    square to trap).  throwBomb: at = the square thrown FROM, shapeId = target x, quarterTurns = target y (read it back as
  *    `target`).  buy: shapeId = the ItemKind. */
 export class Command {
   constructor(kind, slot, seq, arrival, shapeId, quarterTurns, at) {
-    if (!KINDS.has(kind)) throw new Error('command kind ' + kind + ' is not part of the normal game');
+    if (!KINDS.has(kind)) throw new Error('command kind ' + kind + ' is not a CommandKind');
     if (!(at instanceof Cell)) throw new TypeError('Command.at is a Cell');
     this.kind = kind;
     this.slot = whole('slot', slot);           // player slot 0..3
@@ -46,6 +48,12 @@ export class Command {
   static fire(slot, seq, target, arrival) { return new Command(CommandKind.Fire, slot, seq, arrival, 0, 0, target); }
   static ready(slot, seq, arrival) { return new Command(CommandKind.Ready, slot, seq, arrival, 0, 0, Cell.zero); }
   static claim(slot, seq, castleCell, arrival) { return new Command(CommandKind.Claim, slot, seq, arrival, 0, 0, castleCell); }
+  /** A 3x3 Mortar, top-left at `topLeft` (costs rules.mortarCost of the allotment). */
+  static placeMortar(slot, seq, topLeft, arrival) { return new Command(CommandKind.PlaceMortar, slot, seq, arrival, 0, 0, topLeft); }
+  /** A 3x3 Kite, top-left at `topLeft` (costs rules.kiteCost of the allotment). */
+  static placeKite(slot, seq, topLeft, arrival) { return new Command(CommandKind.PlaceKite, slot, seq, arrival, 0, 0, topLeft); }
+  /** Fly your kite over the ship at `target` and recruit it. */
+  static recruit(slot, seq, target, arrival) { return new Command(CommandKind.Recruit, slot, seq, arrival, 0, 0, target); }
   /** Decide your fate: fightAgain true = Fight Again, false = Give Up (carried in quarterTurns). */
   static decide(slot, seq, fightAgain, arrival) { return new Command(CommandKind.Decide, slot, seq, arrival, 0, fightAgain ? 1 : 0, Cell.zero); }
   static switchMode(slot, seq, arrival) { return new Command(CommandKind.SwitchMode, slot, seq, arrival, 0, 0, Cell.zero); }
