@@ -240,15 +240,15 @@ footer p{color:var(--muted)}
 <details class="claude">
   <summary>Have Claude install it</summary>
   <p>Paste this into a terminal in your Unreal project's folder. It starts Claude Code with the install as its first task.</p>
-  <div class="cmdrow"><code id="claude-cmd">claude "Install Memory Sentinel into this Unreal project: download https://rj45thompson.github.io/anchor-demo/memsentinel/MemorySentinel-UE5.7-v1.0.zip and unzip it into Plugins/, build the editor target, then run the engine's Python on Plugins/MemorySentinel/Tools/ms.py scan . and walk me through what it found."</code><button type="button" id="copy">Copy</button></div>
+  <div class="cmdrow"><code id="claude-cmd">claude "Install Memory Sentinel into this Unreal project: download https://rj45thompson.github.io/anchor-demo/memsentinel/MemorySentinel-UE5.7-v1.0.zip and unzip it into Plugins/, build the editor target, then run the engine's Python on Plugins/MemorySentinel/Content/Python/ms.py scan . and walk me through what it found."</code><button type="button" id="copy">Copy</button></div>
   <p style="font-size:13.5px;color:var(--muted)">No Claude Code yet? <a href="https://code.claude.com/docs/en/setup" rel="noopener">Set it up first</a>, then paste the line.</p>
 </details>
 
 <h3>In CI, or from any script</h3>
-<pre class="cmd">python Plugins/MemorySentinel/Tools/ms.py scan . --fail-on error
-python Plugins/MemorySentinel/Tools/ms.py leaktest --project MyGame.uproject --map /Game/Maps/Arena
-python Plugins/MemorySentinel/Tools/ms.py heap --project MyGame.uproject --map /Game/Maps/Arena --seconds 120 --suspect 1234
-python Plugins/MemorySentinel/Tools/ms.py report Saved/MemorySentinel -o report.html</pre>
+<pre class="cmd">python Plugins/MemorySentinel/Content/Python/ms.py scan . --fail-on error
+python Plugins/MemorySentinel/Content/Python/ms.py leaktest --project MyGame.uproject --map /Game/Maps/Arena
+python Plugins/MemorySentinel/Content/Python/ms.py heap --project MyGame.uproject --map /Game/Maps/Arena --seconds 120 --suspect 1234
+python Plugins/MemorySentinel/Content/Python/ms.py report Saved/MemorySentinel -o report.html</pre>
 <p>The engine's own Python is at <code>Engine/Binaries/ThirdParty/Python3/Win64/python.exe</code>; any Python 3.9 or newer works. Exit codes: <code>0</code> nothing at or above <code>--fail-on</code>, <code>1</code> findings, <code>2</code> the detector could not run (no source, the map did not load, the run wrote nothing). A crashed run becomes a finding of its own, with the crash stack.</p>
 
 <h2 id="reference"><span class="n">05</span>Reference</h2>
