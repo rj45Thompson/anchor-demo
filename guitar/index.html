@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chord Trainer</title>
+  <meta name="description" content="Play real chords on your own guitar as they come down the lane. The microphone hears each chord; the camera learns your hand shapes.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <!--home-link--><p class="home"><a href="../">Anchor demo</a></p><!--/home-link-->
+    <header class="top">
+      <div>
+        <h1>Chord Trainer</h1>
+        <p class="intro">Play real chords on your own guitar as they reach the line. The microphone judges each chord by its
+          sound. Turn the camera on and it learns what your hand looks like for each chord you get right, then tells you
+          whether your fingers are in the shape before you strum.</p>
+      </div>
+    </header>
+
+    <section class="devices" aria-label="Microphone and camera">
+      <button id="mic-btn" type="button" class="primary">Turn on mic</button>
+      <button id="cam-btn" type="button">Turn on camera</button>
+      <div class="meter" title="Input level"><div id="level"></div></div>
+      <p id="device-status" class="status" role="status">The mic is off. Nothing is judged until it is on. Headphones help.</p>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="play" aria-selected="true">Play</button>
+      <button type="button" role="tab" data-tab="practise" aria-selected="false">Practise a chord</button>
+      <button type="button" role="tab" data-tab="tune" aria-selected="false">Tune</button>
+    </nav>
+
+    <section id="tab-play" class="tab" role="tabpanel">
+      <div class="settings">
+        <label>Song <select id="song"></select></label>
+        <label>Speed <select id="speed">
+          <option value="0.5">50%</option>
+          <option value="0.75">75%</option>
+          <option value="1" selected>100%</option>
+        </select></label>
+        <label>Mode <select id="mode">
+          <option value="wait" selected>Wait for me</option>
+          <option value="keep">Keep time</option>
+        </select></label>
+        <label class="check"><input id="metronome" type="checkbox"> Click every beat</label>
+        <label class="check"><input id="lefty" type="checkbox"> Left-handed</label>
+      </div>
+      <div class="actions">
+        <button id="start" type="button" class="primary">Start</button>
+        <button id="stop" type="button" disabled>Stop</button>
+        <button id="demo" type="button" title="The page strums the chords itself, into the same judge">Watch a demo</button>
+      </div>
+
+      <div class="stage">
+        <div class="lane-wrap">
+          <canvas id="lane" aria-label="Chords coming down to the line"></canvas>
+          <p id="banner" class="banner" aria-live="polite"></p>
+        </div>
+        <aside class="side">
+          <p class="label">Next chord</p>
+          <div id="next-diagram" class="diagram"></div>
+          <p id="feedback" class="feedback" aria-live="polite">Pick a song and press Start.</p>
+          <div class="score">
+            <p><span>Points</span> <strong id="points">0</strong></p>
+            <p><span>Streak</span> <strong id="streak">0</strong></p>
+            <p><span>Chords</span> <strong id="progress">0 / 0</strong></p>
+          </div>
+        </aside>
+      </div>
+
+      <section id="results" class="results" hidden>
+        <h2>Results</h2>
+        <div id="results-body"></div>
+      </section>
+    </section>
+
+    <section id="tab-practise" class="tab" role="tabpanel" hidden>
+      <div id="chord-picker" class="chips"></div>
+      <div class="practise">
+        <div id="big-diagram" class="diagram big"></div>
+        <div class="practise-side">
+          <button id="listen" type="button">Listen to it</button>
+          <p id="practise-feedback" class="feedback" aria-live="polite">Pick a chord, then strum it.</p>
+          <div id="bars" class="bars" aria-label="How loud each note is in your last strum"></div>
+          <p class="hint">Bars: how loud each note was in your last strum. Outlined bars are the chord's notes.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-tune" class="tab" role="tabpanel" hidden>
+      <div class="tuner">
+        <p id="tune-note" class="tune-note">-</p>
+        <div class="gauge"><div id="tune-needle" class="needle"></div><div class="zero"></div></div>
+        <p id="tune-text" class="status">Turn the mic on and pluck one string at a time.</p>
+        <div id="strings" class="chips"></div>
+        <p class="hint">Tap a string to hear its note.</p>
+      </div>
+    </section>
+
+    <section class="camera" aria-label="Camera">
+      <div class="cam-wrap" id="cam-wrap" hidden>
+        <video id="video" playsinline muted></video>
+        <canvas id="overlay"></canvas>
+      </div>
+      <p id="shape-status" class="status">Camera off. The game plays on sound alone.</p>
+    </section>
+
+    <footer>
+      <p>Everything runs in your browser: sound and video are never sent anywhere. Hand tracking is Google's open-source
+        MediaPipe, loaded from jsdelivr. Songs are original chord progressions.</p>
+    </footer>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
