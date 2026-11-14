@@ -12,6 +12,7 @@ import { GameRules, Phase, Terrain, Occupant, ShipKind, ShotFired, ShotLanded, S
          EnclosureRules, HudViewModel, RingBuilt, CastleBitten, CastleRuined, CastleRestored, ShotModel, GunKind } from '../core/index.js';
 import { wallLandsAfter } from './board.js';
 import { FullView } from './full.js';
+import { RiseView } from './rise.js';
 import { uv, length, smoothstep } from 'three/tsl';
 import { C, PLAYER_COLOURS, ENEMY_SHOT, mats, glow, glowing, fade, flagGeometry, hammerGeometry, torchGeometry, drawAllRoom, HERO_HEIGHT } from './look.js';
 import { boneEndingWith, tintArmour, shade, rimFigure, setFlash, tintSails, outlineFigure } from './models.js';
@@ -178,6 +179,7 @@ export class Units {
     this.dryNearest = this.nearestDry();
     this.bombs = match.options.bombs ? new BombsView(this) : null;   // the bomb rule set's bombs, traps and stun (bombs.js)
     this.full = match.options.full ? new FullView(this) : null;        // the full rules' serpent, kites, treasure, ship parts (full.js)
+    this.rise = new RiseView(this);                                    // a closed ring built upward in Tetris pieces (rise.js, UC-L8)
   }
 
   // ------------------------------------------------------------------ castles
@@ -573,8 +575,9 @@ export class Units {
 
   updateHeroes(view, dt, seconds) {
     const m = this.match, ctl = view.controllers[0], playing = !(m.ended || m.phase === Phase.Decide), bombs = m.options.bombs;
+    const raid = m.phase === Phase.Raid;   // BOMBER_UC.md: in the RAID the drawn hero IS the rules' hero, on the board while it has one
     for (let s = 0; s < this.heroes.length; s++) {
-      const e = this.heroes[s], p = m.player(s), show = playing && p.connected;
+      const e = this.heroes[s], p = m.player(s), show = playing && p.connected && !(raid && p.heroAt === null);
       e.g.visible = e.ring.visible = e.shadow.visible = show;
       e.reticle.visible = false;
       if (!show) continue;
@@ -607,16 +610,23 @@ export class Units {
       // up from a stand, slows into a stop, carries no step of the rules' grid, and at a steady walk keeps a steady small lag. A
       // jump the rules make (a new map, the castle's foot) is too far to walk: it is taken at once (HERO_SNAP)
       if (!e.pos || Math.hypot(tx - e.pos.x, tz - e.pos.z) > HERO_SNAP) { e.pos = new THREE.Vector3(tx, 0, tz); e.vel = new THREE.Vector3(); }
-      const h = Math.min(dt, 0.05), w = HERO_OMEGA, f = 1 + 2 * h * w, hh = h * w * w;
-      for (const [ax, goal] of [['x', tx], ['z', tz]]) {             // the implicit (stable at any frame time) critically damped step
-        const det = f + h * hh, x0 = e.pos[ax], v0 = e.vel[ax];
-        e.vel[ax] = (v0 + hh * (goal - x0)) / det;
+      if (raid) {
+        // the RAID's grid walk is already smooth (the rules' hero read between ticks at this frame's alpha); a spring's lag would draw
+        // the hero a square behind the square the rules catch it on, so it is drawn exactly there, its velocity read off the motion
+        const h = Math.max(dt, 1e-3);
+        e.vel.set((tx - e.pos.x) / h, 0, (tz - e.pos.z) / h); e.pos.x = tx; e.pos.z = tz;
+      } else {
+        const h = Math.min(dt, 0.05), w = HERO_OMEGA, f = 1 + 2 * h * w, hh = h * w * w;
+        for (const [ax, goal] of [['x', tx], ['z', tz]]) {             // the implicit (stable at any frame time) critically damped step
+          const det = f + h * hh, x0 = e.pos[ax], v0 = e.vel[ax];
+          e.vel[ax] = (v0 + hh * (goal - x0)) / det;
+        }
+        // never faster than HERO_MAX: a target that jumps (round a castle to its foot, off the sea to the shore) is walked to, not
+        // flown to - the spring alone would cover a 4-square jump at ~70 squares/s, which reads as a teleport
+        const vlen = Math.hypot(e.vel.x, e.vel.z);
+        if (vlen > HERO_MAX) { e.vel.x *= HERO_MAX / vlen; e.vel.z *= HERO_MAX / vlen; }
+        e.pos.x += e.vel.x * h; e.pos.z += e.vel.z * h;
       }
-      // never faster than HERO_MAX: a target that jumps (round a castle to its foot, off the sea to the shore) is walked to, not
-      // flown to - the spring alone would cover a 4-square jump at ~70 squares/s, which reads as a teleport
-      const vlen = Math.hypot(e.vel.x, e.vel.z);
-      if (vlen > HERO_MAX) { e.vel.x *= HERO_MAX / vlen; e.vel.z *= HERO_MAX / vlen; }
-      e.pos.x += e.vel.x * h; e.pos.z += e.vel.z * h;
       e.pos.y = this.board.groundAtPoint(e.pos.x, e.pos.z);
       const speed = Math.hypot(e.vel.x, e.vel.z), moving = speed > IDLE_BELOW;
       const aiming = m.phase === Phase.Battle && !p.sword;
@@ -645,7 +655,7 @@ export class Units {
       // the tool in hand: the sword (bombs, in the bomb rule set) when it is out (REPAIR and BATTLE), else the phase's tool
       const slashing = !bombs && e.state === 'Right_Hand_Sword_Slash' && e.swing > 0;  // a slash shows the sword to its end
       const sword = slashing || (p.sword && (m.phase === Phase.Repair || m.phase === Phase.Battle) && !(bombs && p.carrying > 0));   // a carried bomb floats over the hand
-      e.armed.visible = sword; e.hammer.visible = !sword && (m.phase === Phase.Repair || m.phase === Phase.Cannons); e.torch.visible = aiming && !sword;
+      e.armed.visible = sword || (raid && p.carrying === 0 && p.bombs > 0);   // the RAID's one tool: a bomb in hand while one is free e.hammer.visible = !sword && (m.phase === Phase.Repair || m.phase === Phase.Cannons); e.torch.visible = aiming && !sword;
       if (aiming) {
         e.reticle.visible = true;
         const wetC = !g.in(cx, cy) || g.terrainAt(cx, cy) === Terrain.Water;
@@ -695,13 +705,26 @@ export class Units {
     const ok = glowing(new THREE.MeshBasicNodeMaterial({ color: col.clone().lerp(new THREE.Color(0xffffff), 0.3).multiplyScalar(1.4), transparent: true, opacity: 0.72, depthWrite: false }));
     const bad = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0xff2b2b), transparent: true, opacity: 0.6, depthWrite: false });
     const geo = new THREE.BoxGeometry(0.9, 0.5, 0.9).translate(0, 0.25, 0);
+    // UC-C2: the legal piece and the refused one are two meshes, never one mesh whose material is swapped: three r175 builds an
+    // InstancedMesh's shader per mesh AND material at its first draw, so a swap built the refused one when a piece first went red
+    // (measured 11-13, as CANNONS began); two meshes are both drawn by the renderer's one warm-up draw (warmGhosts)
     const im = new THREE.InstancedMesh(geo, ok, 16); drawAllRoom(im, 0); im.renderOrder = 3; im.frustumCulled = false;
+    const imBad = new THREE.InstancedMesh(geo, bad, 16); drawAllRoom(imBad, 0); imBad.renderOrder = 3; imBad.frustumCulled = false;
     // UC-P1: the squares behind a refusal, outlined in red over everything (a square frame: a 4-sided ring turned to the grid)
     const frame = new THREE.RingGeometry(0.6, 0.72, 4, 1, Math.PI / 4).rotateX(-Math.PI / 2);
     const outline = new THREE.InstancedMesh(frame, this.badOutline, 16); drawAllRoom(outline, 0); outline.renderOrder = 5; outline.frustumCulled = false;
     const castleRing = new THREE.Mesh(new THREE.RingGeometry(1.25, 1.42, 40).rotateX(-Math.PI / 2), this.glowP[s]); castleRing.visible = false;
-    this.group.add(im, outline, castleRing);
-    return { im, ok, bad, outline, castleRing, shown: null, refused: null };
+    this.group.add(im, imBad, outline, castleRing);
+    return { im, imBad, ok, bad, outline, castleRing, shown: null, refused: null };
+  }
+  /** CONTROLS_SMOOTH_UC.md UC-C2: every player's ghost in view at matrix m for renderer.prepareLevel's draw. A ghost's legal and
+   *  refused pieces and its refusal outline are InstancedMeshes made with the level, so three builds their shaders at their first draw
+   *  (measured 11-13: built as CANNONS began after the first claim), and the castle ring showed first at the claim. updateGhosts lays
+   *  them out again from the next frame; the returned undo hides them until it does. */
+  warmGhosts(m) {
+    const meshes = (e) => [e.im, e.imBad, e.outline];
+    for (const e of this.ghosts) { for (const im of meshes(e)) { im.setMatrixAt(0, m); drawAllRoom(im, 1); } e.castleRing.visible = true; }
+    return () => { for (const e of this.ghosts) { for (const im of meshes(e)) drawAllRoom(im, 0); e.castleRing.visible = false; } };
   }
   /** What each player's ghost shows this frame (UC-P1), for the HUD's note and the page check: the squares drawn, whether legal,
    *  the model's verdict (kind + result: MatchController.ghostOf), the squares outlined red, the words, and the last refusal's
@@ -713,7 +736,7 @@ export class Units {
     const at = (c) => (m.grid.in(c.x, c.y) ? this.board.groundAt(c.x, c.y) : 0);   // a square off the board is drawn on the sea
     for (let s = 0; s < this.ghosts.length; s++) {
       const e = this.ghosts[s], p = m.player(s);
-      e.im.visible = false; e.outline.visible = false; e.castleRing.visible = false; e.shown = null;
+      e.im.visible = false; e.imBad.visible = false; e.outline.visible = false; e.castleRing.visible = false; e.shown = null;
       if (!p.connected || m.ended) continue;
       if (m.phase === Phase.Claim) {
         if (p.claimedCastle !== 0) continue;
@@ -730,7 +753,7 @@ export class Units {
       if (m.phase === Phase.Cannons && p.cannonsToPlace === 0) continue;
       const gh = ctl.ghostOf(s, terr);
       if (!gh.cells) continue;
-      e.im.material = gh.legal ? e.ok : e.bad;
+      const im = gh.legal ? e.im : e.imBad;   // the legal piece or the refused one (two meshes, makeGhost)
       const hover = 0.12 + Math.sin(seconds * 5 + s) * 0.05, low = m.phase === Phase.Cannons ? 0.45 : 1;
       // EVERY square of the piece, on the board or not (until 11-09 squares off the board were skipped, so a piece hanging off the
       // edge showed as a shorter red piece with nothing to say why: UC-P1)
@@ -738,10 +761,10 @@ export class Units {
       for (const c of gh.cells) {
         const gy = at(c);
         mat.makeScale(1, low, 1).setPosition(c.x + 0.5, gy + hover, c.y + 0.5);
-        e.im.setMatrixAt(k++, mat);
+        im.setMatrixAt(k++, mat);
         top = Math.max(top, gy + hover + 0.5 * low); cx += c.x + 0.5; cz += c.y + 0.5;
       }
-      drawAllRoom(e.im, k);                     // all 16 drawn, the unused scaled to nothing (look.js: the shader's bound array)
+      drawAllRoom(im, k);                       // all 16 drawn, the unused scaled to nothing (look.js: the shader's bound array)
       let n = 0;
       for (const c of gh.bad) { mat.makeTranslation(c.x + 0.5, at(c) + 0.72 + hover, c.y + 0.5); e.outline.setMatrixAt(n++, mat); }
       drawAllRoom(e.outline, n);
@@ -864,6 +887,7 @@ export class Units {
     }
     const alpha = view.alpha ?? 0;
     this.updateCastles(seconds, dt);
+    this.rise.update(dt, seconds);                                    // after the castles: it reads which are secured (UC-L8)
     this.updateCannons(view, dt);
     this.updateShips(dt, seconds);
     this.updateGrunts(dt);
@@ -884,6 +908,7 @@ export class Units {
   dispose() {
     if (this.bombs) this.bombs.dispose();
     if (this.full) this.full.dispose();
+    this.rise.dispose();
     for (const e of this.heroes) e.fig.mixer.stopAllAction();
     for (const e of this.grunts.values()) e.fig.mixer.stopAllAction();
     this.scene.remove(this.group);

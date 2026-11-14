@@ -99,6 +99,7 @@ export class MenuModel {
     this.maps = checkMaps(maps);
     this.mapIndex = 0;
     this.screen = Screen.Title;
+    this.holding = false;      // CONTROLS_SMOOTH_UC.md UC-C2 step 1: a started match is being got ready (hold, then playing)
     this.row = 0;
     this.options = new GameOptions();
     this.options.type = GameType.Normal;             // the public build plays the normal rules only
@@ -221,6 +222,7 @@ export class MenuModel {
     if (seats === null || seats === undefined || seats.length !== MenuModel.Seats) throw new RangeError('one MenuInput per seat (' + MenuModel.Seats + ')');
     for (let i = 0; i < seats.length; i++) if (!(seats[i] instanceof MenuInput)) throw new TypeError('seats[' + i + '] is not a MenuInput');
     const acts = [];
+    if (this.holding) return acts;                 // UC-C2 3b: a press made while the match is got ready is dropped
     let any = false; for (const s of seats) any = any || s.any;
     if (this.settingsOver !== null) { this._settings(seats, acts); return acts; }
     if (this.infoOver !== null) { this._info(seats); return acts; }
@@ -417,8 +419,16 @@ export class MenuModel {
     if (row >= 0 && row < rows) this.row = row;
   }
 
-  /** The host started a match the menu did not ask for (the demo) or ended one (quit): keep the screen in step. */
-  playing() { this._go(Screen.Playing); }
+  /** CONTROLS_SMOOTH_UC.md UC-C2 step 1: the host got a StartGame (or Restart) and holds the screen the player pressed it on (the
+   *  join screen, the pause menu) while it gets the new island ready to draw; the menu takes no input until playing(). */
+  hold(screen) {
+    if (screen !== Screen.Setup && screen !== Screen.Pause) throw new RangeError('MenuModel.hold: a match is started from Setup or Pause, got ' + screen);
+    this.screen = screen; this.holding = true;
+  }
+
+  /** The host started a match the menu did not ask for (the demo) or ended one (quit), or a held start is ready: keep the screen in
+   *  step. */
+  playing() { this.holding = false; this._go(Screen.Playing); }
   toTitle() { this.inDemo = false; this._go(Screen.Title); }
 }
 

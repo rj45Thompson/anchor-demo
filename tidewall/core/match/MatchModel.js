@@ -177,8 +177,14 @@ export class MatchModel {
    *  big}, spike traps {id, owner, at}. Empty when GameOptions.bombs is off. */
   get bombs() { return this._bw === null ? [] : this._bw.bombs; }
   get traps() { return this._bw === null ? [] : this._bw.traps; }
+  /** The RAID's power-ups on the board {id, kind (PowerKind), at, revealLeft, shown} and its burning blasts {id, owner, cells, left}
+   *  (BOMBER_UC.md). Empty when GameOptions.bombs is off. */
+  get powerUps() { return this._bw === null ? [] : this._bw.powerUps; }
+  get fires() { return this._bw === null ? [] : this._bw.fires; }
   /** The grounded bomb on a square, or null. */
   bombAt(x, y) { return this._bw === null ? null : this._bw.bombAt(x, y); }
+  /** The RAID: a hero may step onto (x, y) now (BOMBER_UC.md step 6). A controller walks a pointer's path by it. False with bombs off. */
+  heroCanEnter(x, y) { return this._bw !== null && this._bw.heroCanEnter(x, y); }
   /** A metal brick stands here (health above a normal brick's). A metal brick worn down to a normal brick's health reads as normal. */
   isMetalAt(x, y) { return this._bw !== null && this.grid.occupantAt(x, y) === Occupant.Wall && this.grid.healthAt(x, y) > this.rules.wallHealth; }
   get ended() { return this.phase === Phase.GameOver || this.phase === Phase.Victory; }
@@ -234,7 +240,9 @@ export class MatchModel {
       for (const [, c] of order) if (this._apply(c)) accepted++;
 
       if (this.phase === Phase.Battle) this._simulateBattle();
-      else if (this.phase === Phase.Repair) this._simulateGrunts();          // REQ-REF-08: grunts keep at the walls while they are rebuilt
+      // REQ-REF-08: grunts keep at the walls while they are rebuilt. The bomb rule set: they wait for the RAID (BOMBER_UC.md R4)
+      else if (this.phase === Phase.Repair) { if (this._bw === null) this._simulateGrunts(); }
+      else if (this.phase === Phase.Raid) this._simulateRaid();
       if (this.phaseTicksLeft > 0) this.phaseTicksLeft--;
       if (this._phaseDone()) this._advance();
     }
@@ -257,6 +265,7 @@ export class MatchModel {
       case Phase.Cannons: return this.phaseTicksLeft === 0 || this._allConnected(p => p.ready || p.cannonsToPlace === 0);
       case Phase.Battle: return (this.phaseTicksLeft === 0 || !this.enemiesAfloat()) && this._shots.length === 0;   // REQ-PHASE-08, REQ-REF-06
       case Phase.Decide: return false;              // only a choice leaves it
+      case Phase.Raid: return this._bw.raidDone();  // BOMBER_UC.md step 14: no raider (or no clock), nothing lit, nothing burning
       default: return this.phaseTicksLeft === 0;
     }
   }
@@ -272,9 +281,11 @@ export class MatchModel {
   }
 
   _enter(phase, ticks) {
+    if (this.phase === Phase.Raid && phase !== Phase.Raid) this._bw.raidEnd();   // BOMBER_UC.md step 14: the heroes leave the board
     this.phase = phase; this.phaseTicksLeft = ticks;
     for (const p of this._players) { p.ready = false; p.sword = false; }     // REQ-HERO-02: every phase starts with the tool in hand
     this._events.push(new PhaseChanged(this.tick, phase, this.round, ticks));
+    if (phase === Phase.Raid) this._bw.raidStart();                          // step 2: the heroes enter
   }
 
   _advance() {
@@ -287,12 +298,16 @@ export class MatchModel {
       case Phase.Cannons:
         for (const p of this._players) { p.cannonsCarried = p.cannonsFresh; p.cannonsFresh = 0; }   // REQ-CANNON-02
         this._enter(Phase.Battle, this.currentRound.battleTicks);
-        if (this._bw !== null) this._bw.onBattleStart();
         this.burnPits();
         if (!this._holdNoSpawn) this._spawnWave();
         this._holdNoSpawn = false;
         break;
       case Phase.Battle:
+        // the bomb rule set: raiders ashore are fought off in a RAID before the walls are mended (BOMBER_UC.md step 1, 1a)
+        if (this._bw !== null && this._grunts.some((g) => g.alive)) this._enter(Phase.Raid, this.rules.raidTicks);
+        else this._enter(Phase.Repair, this._repairTicks(this.currentRound));
+        break;
+      case Phase.Raid:
         this._enter(Phase.Repair, this._repairTicks(this.currentRound));
         break;
       case Phase.Repair:
@@ -360,7 +375,7 @@ export class MatchModel {
     if (!this.options.full) MatchModel.plain(this.grid);
     this.mapName = spec.map;
     this._cannons.length = 0; this._ships.length = 0; this._grunts.length = 0; this._shots.length = 0; this._clearFullState();
-    if (this._bw !== null) this._bw.clear(true);            // a new board: nothing lit, no traps
+    if (this._bw !== null) this._bw.newLevel();              // a new board: nothing lit, no traps, every hero's power-ups gone
     for (const p of this._players) { p.claimedCastle = 0; p.cannonsFresh = 0; p.cannonsCarried = 0; }
     if (this.options.full) for (const d of this._dealers) d.grow(true);
     this._events.push(new LevelStarted(this.tick, this.level, this.round, this.mapName, challenge));
@@ -421,7 +436,7 @@ export class MatchModel {
       case CommandKind.SwitchMode: return this._switchMode(c, p);
       case CommandKind.Strike: return this._bw !== null ? this._bw.apply(c, p) : this._strike(c, p);   // bombs: strike = drop a bomb
       case CommandKind.PickUpBomb: case CommandKind.ThrowBomb: case CommandKind.DefuseBomb:
-      case CommandKind.Buy: case CommandKind.PlaceTrap: case CommandKind.MoveHero:
+      case CommandKind.Buy: case CommandKind.PlaceTrap: case CommandKind.MoveHero: case CommandKind.Walk:
         return this._bw !== null ? this._bw.apply(c, p) : this._reject(c, RejectReason.NoBombRules);
       case CommandKind.Decide:
         if (this.phase !== Phase.Decide) return this._reject(c, RejectReason.WrongPhase);
@@ -432,8 +447,10 @@ export class MatchModel {
 
   _reject(c, why) { this._events.push(new CommandRejected(this.tick, c.kind, c.slot, c.seq, why)); return false; }
 
-  /** Tool <-> sword. Only in REPAIR (build) and BATTLE (cannon): one or the other, not both at once. */
+  /** Tool <-> sword. Only in REPAIR (build) and BATTLE (cannon): one or the other, not both at once. The bomb rule set has ONE tool a
+   *  beat (BOMBER_UC.md R3: the bombs are the RAID's): there is nothing to swap to, in any phase. */
   _switchMode(c, p) {
+    if (this._bw !== null) return this._reject(c, RejectReason.WrongPhase);
     if (this.phase !== Phase.Repair && this.phase !== Phase.Battle) return this._reject(c, RejectReason.WrongPhase);
     p.sword = !p.sword;
     this._events.push(new ModeSwitched(this.tick, c.slot, p.sword));
@@ -1128,23 +1145,29 @@ export class MatchModel {
   }
 
   _simulateGrunts() {
-    if (this._bw !== null) this._bw.step();
     for (const g of this._grunts) if (g.alive) this._actGrunt(g);
-    if (this._bw !== null) this._bw.sweepTraps();
     removeDead(this._grunts);
   }
 
   _simulateBattle() {
     for (const k of this._cannons) if (k.alive && k.reloadLeft > 0) k.reloadLeft--;
     this._landShots();
-    if (this._bw !== null) this._bw.step();
     if (this.phaseTicksLeft > 0) {
       for (const s of this._ships) if (s.alive) this._actShip(s);
-      for (const g of this._grunts) if (g.alive) this._actGrunt(g);
+      // the bomb rule set: raiders put ashore wait on the beach for the RAID (BOMBER_UC.md R4: the battle is the ships' alone)
+      if (this._bw === null) for (const g of this._grunts) if (g.alive) this._actGrunt(g);
       for (const k of this._serpents) if (k.alive) this._actSerpent(k);
     }
-    if (this._bw !== null) this._bw.sweepTraps();
     removeDead(this._ships);
+    removeDead(this._grunts);
+  }
+
+  /** BOMBER_UC.md: one tick of the RAID - the heroes, the bombs, the fires and the power-ups, then the raiders (while its clock
+   *  runs), then the traps they stepped on. */
+  _simulateRaid() {
+    this._bw.raidStep();
+    if (this.phaseTicksLeft > 0) for (const g of this._grunts) if (g.alive) this._bw.raiderAct(g);
+    this._bw.sweepTraps();
     removeDead(this._grunts);
   }
 
@@ -1613,13 +1636,12 @@ export class MatchModel {
     if (r.result === PathResult.Stepped) { const from = s.at; s.at = r.next; this._events.push(new ShipMoved(this.tick, s.id, from, r.next)); }
   }
 
+  /** A grunt's turn in the base rules (the bomb rule set's raiders act in the RAID alone: BombWorld.raiderAct). */
   _actGrunt(gr) {
     const g = this.grid;
-    if (this._bw !== null && this._bw.gruntPre(gr)) return;       // bombs: cooldown ticks; a grunt that just dropped one runs
     for (let k = 0; k < 4; k++) {
       const x = gr.at.x + DX4[k], y = gr.at.y + DY4[k];
       if (!g.in(x, y) || !isGruntTarget(g.occupantAt(x, y))) continue;
-      if (this._bw !== null) { this._bw.gruntAtTarget(gr); return; }   // bombs: it drops a bomb (or waits) instead of biting
       if (--gr.biteLeft > 0) return;
       gr.biteLeft = this.rules.gruntBiteTicks;
       const o = g.occupantAt(x, y);
@@ -1630,8 +1652,7 @@ export class MatchModel {
     gr.moveLeft = this.rules.gruntTicksPerCell;
     const me = gr;
     const r = PathRules.nextStep(g, gr.at,
-      (x, y) => g.terrainAt(x, y) === Terrain.Land && (g.occupantAt(x, y) === Occupant.Empty || g.occupantAt(x, y) === Occupant.Rubble) && !this._otherGruntAt(x, y, me)
-        && (this._bw === null || !this._bw.gruntBombReaches(x, y)),     // bombs: a grunt does not walk into its own kind's lit bomb
+      (x, y) => g.terrainAt(x, y) === Terrain.Land && (g.occupantAt(x, y) === Occupant.Empty || g.occupantAt(x, y) === Occupant.Rubble) && !this._otherGruntAt(x, y, me),
       (x, y) => this._nextToTarget(x, y));
     if (r.result === PathResult.Stepped) { const from = gr.at; gr.at = r.next; this._events.push(new GruntMoved(this.tick, gr.id, from, r.next)); }
   }
@@ -1658,6 +1679,10 @@ export class MatchModel {
 
   /** Tests (bombs only): a lit bomb on the ground at `at`, owner a slot or -1. */
   putBomb(owner, at, fuse = undefined, big = false) { return this._bw.put(owner, at, fuse, big); }
+  /** Tests (bombs only): slot's hero stands still at `at`, facing (faceX, faceY). */
+  putHero(slot, at, faceX = 0, faceY = 1) { this._bw.putHero(slot, at, faceX, faceY); }
+  /** Tests (bombs only): a power-up of `kind` shown at `at`. */
+  putPowerUp(kind, at) { return this._bw.putPowerUp(kind, at); }
 
   /** Tests: enter a phase now. */
   forcePhase(p, ticks) { this._enter(p, ticks); }

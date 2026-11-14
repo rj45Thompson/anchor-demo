@@ -241,6 +241,36 @@ export function wallTrimGeometry(w, h) {
 export const WALL_SHADOW = 1.32;                               // AUTHORED: the shadow square's side, in squares
 export function wallShadowGeometry() { return new THREE.PlaneGeometry(WALL_SHADOW, WALL_SHADOW).rotateX(-Math.PI / 2); }
 
+/** A block of the castle rise (CASTLE_RISE_UC.md UC-L8, render/rise.js): one chunky rounded stone block RISE_BLOCK_W across (the wall
+ *  block's width, board.js WALL_W) and h tall, its base at y = 0. Its sides are the wall's warm grey and its top the coping's light
+ *  stone, lit as the wall's stones are (stoneShade: lighter facing up, darker underneath and toward its foot, so the joint between two
+ *  courses reads), so the courses read as laid stone and the risen top as a wall top from the near top-down REPAIR camera. The
+ *  instance colour is its piece's stone shade; rise.js stretches a block to meet the next block of its own piece and scales it to a
+ *  merlon and to the keep's blocks. 108 triangles: the wall's own stones' RoundedBoxGeometry at 1 segment. */
+export const RISE_BLOCK_W = 0.9;
+export function riseBlockGeometry(h) {
+  const geo = new RoundedBoxGeometry(RISE_BLOCK_W, h, RISE_BLOCK_W, 1, 0.06).translate(0, h / 2, 0);
+  const pos = geo.attributes.position, nrm = geo.attributes.normal, a = new Float32Array(pos.count * 3), shade = stoneShade(h);
+  const N = new THREE.Vector3(), P = new THREE.Vector3(), c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    N.fromBufferAttribute(nrm, i); P.fromBufferAttribute(pos, i);
+    c.copy(C.wallSide).lerp(C.wallTop, THREE.MathUtils.smoothstep(N.y, 0.45, 0.9)).multiplyScalar(shade(N, P));
+    a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(a, 3));
+  if (geo.attributes.uv) geo.deleteAttribute('uv');
+  return geo;
+}
+/** The owner's cloth round a rise block (UC-L8, as wallTrimGeometry is round a wall block): four bars RISE_CLOTH_H tall at the block's
+ *  middle height, standing a little proud of it and out to the square's edge (TRIM_SPAN), so a course's bands meet from block to
+ *  block; white (the instance colour is the owner's). */
+export const RISE_CLOTH_H = 0.05;
+export function riseClothGeometry(h) {
+  const y = h / 2, W2 = TRIM_SPAN, t = 0.06, white = new THREE.Color(1, 1, 1);
+  const bar = (sx, sz, x, z) => paintSmooth(new THREE.BoxGeometry(sx, RISE_CLOTH_H, sz).translate(x, y, z), white);
+  return mergeSmooth([bar(W2, t, 0, (W2 - t) / 2), bar(W2, t, 0, -(W2 - t) / 2), bar(t, W2 - 2 * t, (W2 - t) / 2, 0), bar(t, W2 - 2 * t, -(W2 - t) / 2, 0)], 'rise cloth');
+}
+
 /** A METAL wall block (the shop's metal piece, six hits): riveted grey steel - a rounded steel slab with a dark seam round its
  *  middle and a row of rivets above and below it on every face. Same footprint and height as wallStoneGeometry (its coping is
  *  wallSteelCapGeometry). The steel stays grey (board.js tints it only by wear); the owner shows by the trim and the pennant. */

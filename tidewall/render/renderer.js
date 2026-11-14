@@ -5,7 +5,9 @@
 //   r.setMatch(match, seats)                  on a new match; seats = HudViewModel.seatOfSlot (null: seat = slot), the seat each
 //                                             player slot sits at, which picks its colour (a later view with other seats rebuilds)
 //   r.frame(view, dt)                         each animation frame, dt = seconds since the last frame;
-//                                             view = { match, controllers[], hud, menu, events[], alpha, camera? }; camera (the
+//                                             view = { match, controllers[], hud, menu, events[], alpha, camera?, warmPlaying? };
+//                                             warmPlaying: a started match is held (CONTROLS_SMOOTH_UC.md UC-C2), so the match's HUD
+//                                             is drawn once more each frame, unseen (warmPlayingHud); camera (the
 //                                             page's, optional) = { humans: [slot], pointerSlot, cover: [DOMRect of each on-screen
 //                                             control over the canvas], input: CameraRig.userInput's fields }; without it (or with
 //                                             no human) the camera shows the whole island
@@ -350,19 +352,36 @@ class Renderer {
 
   /** Draw the level setMatch built, once, and wait until the GPU has done it: the page calls this before its loop starts, so the
    *  board's and figures' pipelines are built while it is still loading (a stall in the first second of play swallows input). */
-  async settle() {
-    if (!this.match) throw new RenderContractError('settle() needs a match: call setMatch first');
-    const undo = this.warmFirstUse();
-    this.noteDraw('settle');
-    this.post.render();
-    await this.renderer.backend.device.queue.onSubmittedWorkDone();
+  async settle() { await this.prepareLevel('settle'); }
+
+  /** CONTROLS_SMOOTH_UC.md UC-C2 step 1: build the pipelines of the level setMatch built NOW, before it is played, and resolve when the
+   *  GPU has: one draw, through the same passes a match draws with (the shadow map's too), of everything the level draws later
+   *  (warmFirstUse), every object drawn whatever the camera sees (frustum culling off for this draw: a culled object builds nothing).
+   *  three r175 writes each InstancedMesh's own matrix buffer into its vertex shader, so a new level's batches build their own at their
+   *  first draw whatever was warmed before (rise.js PRIME_FRAMES): this is that first draw, made while the page holds the join screen
+   *  (main.js), not in the match's first frames (measured 11-13: a 362 ms frame as the match started, 150-370 ms ones at the first
+   *  claim). Drawn into the canvas, but the frame the page draws next in the same task replaces it, so it is never seen. */
+  async prepareLevel(what = 'prepare') {
+    if (!this.match) throw new RenderContractError(what + '() needs a match: call setMatch first');
+    const undo = this.warmFirstUse(), culled = [], shown = this.scene.visible;
+    this.scene.traverse((o) => { if (o.frustumCulled) { culled.push(o); o.frustumCulled = false; } });
+    this.scene.visible = true;
+    this.sun.shadow.needsUpdate = true;
+    this.noteDraw(what);
+    this.post.render();                                                      // ONE draw: three's scene pass renders once a frame
+    for (const o of culled) o.frustumCulled = true;
+    this.scene.visible = shown;
     undo();
+    this.sun.shadow.needsUpdate = true;                                      // the map is drawn again with what is really there
+    await this.renderer.backend.device.queue.onSubmittedWorkDone();
   }
 
   /** TASKS WARMUP-FX (11-11): the things a match draws only LATER, put in view for settle's one draw, so their pipelines are built
-   *  while the page is still loading: a burst of every effect, one wall block of each kind with its cap, cloth and shadow, a hurt
-   *  castle's bar, and the storm's rain and bolt. Measured before: the title stuttered ~2.5 s in (frames of 0.23-0.87 s, the published
-   *  build too) when the demo's bots first claimed and built. Returns what puts it all back. */
+   *  while the page is still loading: a burst of every effect, one wall block of each kind with its cap, cloth and shadow, the castle
+   *  rise's blocks (rise.js warm), a hurt castle's bar, and the storm's rain and bolt. Measured before: the title stuttered ~2.5 s
+   *  in (frames of 0.23-0.87 s, the published build too) when the demo's bots first claimed and built. UC-C2 (11-13): every batch of
+   *  the board (board.instancedBatches, by type) and every player's ghost (units.warmGhosts), which first drew at the first claim.
+   *  Returns what puts it all back. */
   warmFirstUse() {
     const g = this.grid, at = new THREE.Vector3(g.width / 2, 0.6, g.height / 2), C3 = new THREE.Color(0.8, 0.7, 0.6), e = this.units.fxs;
     e.muzzle(at, new THREE.Vector3(1, 0, 0), C3); e.trail(at, C3); e.splash(at); e.explosion(at, C3); e.chunks(at, C3, 3); e.dust(at);
@@ -372,16 +391,22 @@ class Renderer {
     const b = this.board, m = new THREE.Matrix4().setPosition(at.x, 0, at.z), c = new THREE.Color(1, 1, 1);
     // a colour only where the batch takes one (the shadows do not: a colour set on them made three add a colour buffer their next,
     // bigger mesh lacked, and InstancedBatch.commit threw on it, 11-11)
-    for (const set of [b.walls, b.caps, b.steel, b.steelCaps, b.trims, b.shadows]) { set.set(0, m, set.o.colors ? c : undefined); set.commit(1); }
+    for (const set of b.instancedBatches()) { set.set(0, m, set.o.colors ? c : undefined); set.commit(1); }
+    this.units.rise.warm(m);                                                  // the castle rise's blocks (CASTLE_RISE_UC.md UC-L8)
     const castle = this.units.castles.values().next().value, barWas = castle ? castle.bar.visible : false;
     if (castle) castle.bar.visible = true;
+    const undoRaid = this.units.bombs ? this.units.bombs.warm(at) : null;   // the RAID's fire column and power-up tokens (BOMBER_UC.md)
     const was = this.mood.current.weather;
     this.weather.build({ drops: 64, fall: 24, wind: 4, every: [6, 13] });   // the storm's rain (moods.js storm, fewer drops) and its bolt
     this.weather.strike(this.rig.camera); this.weather.bolt.visible = true;
+    const undoGhosts = this.units.warmGhosts(m.clone().setPosition(at.x, 0.4, at.z));
     return () => {
+      undoGhosts();
       this.fx.clear();
-      b.drawWalls();
+      b.drawWalls(); b.drawProps();
+      this.units.rise.redraw();
       if (castle) castle.bar.visible = barWas;
+      if (undoRaid) undoRaid();
       this.weather.bolt.visible = false;
       this.weather.build(was);
     };
@@ -513,7 +538,8 @@ class Renderer {
       if (view.controllers.length !== 1) throw new RenderContractError('view.controllers holds the match\'s one MatchController, got ' + view.controllers.length);
       const seats = Renderer.seatsOf(view.hud.seatOfSlot, m);
       if (m.grid !== this.grid || seats.join(',') !== this.seatsKey) this.buildLevel(seats);   // a new match or level, or new seats
-      const building = m.phase === Phase.Repair;
+      // the steep top-down angle for building, and for the RAID's grid walk (BOMBER_UC.md step 1: the camera comes down to the land)
+      const building = m.phase === Phase.Repair || m.phase === Phase.Raid;
       this.fx.uTime.value = seconds;
       this.board.events(view.events);
       this.board.update(dt, seconds, this.rig.k);
@@ -565,9 +591,16 @@ class Renderer {
     const sc0 = view.menu ? view.menu.screen : Screen.Playing;
     if (m && this.hudMode === 'all' && (sc0 === Screen.Playing || (sc0 === Screen.Title && view.menu.inDemo)) && this.rig.m === 0) {
       const f = this.rig.free, marks = [];
-      for (const sh of m.ships) {
+      // the RAID (BOMBER_UC.md): the marks point to the raiders its close frame leaves out, not to the ships (they fight in BATTLE)
+      const raid = m.phase === Phase.Raid;
+      for (const sh of raid ? [] : m.ships) {
         if (!sh.alive) continue;
         const p = project(new THREE.Vector3(sh.at.x + sh.size / 2, 0.4, sh.at.y + sh.size / 2));
+        if (!p.visible || p.x < f.x0 || p.x > f.x1 || p.y < f.y0 || p.y > f.y1) marks.push(p);
+      }
+      for (const gr of raid ? m.grunts : []) {
+        if (!gr.alive) continue;
+        const p = project(new THREE.Vector3(gr.at.x + 0.5, 0.4, gr.at.y + 0.5));
         if (!p.visible || p.x < f.x0 || p.x > f.x1 || p.y < f.y0 || p.y > f.y1) marks.push(p);
       }
       this.hud.shipMarks(marks, f, seconds);
@@ -589,6 +622,35 @@ class Renderer {
     if (this.wipeT < WIPE_SECONDS && this.hudMode === 'all') { this.hud.wipe(this.wipeT / WIPE_SECONDS); this.wipeT += dt; }
     // the toast sits in the free rect's upper part (the action bar and the cards cover the screen's foot)
     if (this.toast && this.clock < this.toast.until) this.hud.toast(this.toast.text, Math.min(1, (this.toast.until - this.clock) * 2), this.toast.loop ? this.rig.free.y0 + 18 : null, this.toast.loop || !!this.toast.big);
+    if (view.warmPlaying === true && m && view.menu) this.warmPlayingHud(view, project, seconds);
+    else if (this.hudWarm) this.hudWarm.canvas.style.display = 'none';
+  }
+
+  /** CONTROLS_SMOOTH_UC.md UC-C2 step 1: while a started match is held, the HUD it will show (the match's, its wipe, a toast, the
+   *  marks at the free rect's edge) is drawn each frame into a second HUD canvas laid over the real one, all but transparent. Skia
+   *  builds the raster programs a 2D drawing needs at its first use, and the match's HUD needs some the join screen's does not:
+   *  measured 11-13 in a trace across the flip, two 60 ms raster flushes from the page's main thread (RasterDecoderImpl::
+   *  DoEndRasterCHROMIUM) with 51-54 ms of ANGLE shader work beside them, in the match's first 200 ms. Drawn in the hold, they are
+   *  built there. The canvas is composited (an undisplayed canvas is never rasterized), so it is drawn at opacity 0.004. */
+  warmPlayingHud(view, project, seconds) {
+    if (!this.hudWarm) {
+      const c = document.createElement('canvas');
+      c.className = 'render-hud-warm';
+      this.hudCanvas.parentElement.appendChild(c);
+      this.hudWarm = new Hud(c, GAME_TITLE);
+    }
+    const h = this.hudWarm, real = this.hud, s = this.hudCanvas.style;
+    h.canvas.style.cssText = 'position:absolute;pointer-events:none;opacity:0.004;left:' + s.left + ';top:' + s.top + ';width:' + s.width + ';height:' + s.height;
+    if (h.want !== real.want) h.setTextSize(real.want);
+    if (h.realW !== real.realW || h.realH !== real.realH || h.dpr !== real.dpr) h.resize(real.realW, real.realH, real.dpr);
+    const menu = Object.create(view.menu);
+    menu.screen = Screen.Playing; menu.holding = false;
+    h.draw({ ...view, menu, events: [] }, project, this.units.heroTags(), seconds, true);
+    const f = this.rig.free, edge = { x: f.x0 + 4, y: (f.y0 + f.y1) / 2, visible: false };
+    h.shipMarks([edge], f, seconds);
+    h.heroMarks([{ ...edge, colour: '#' + this.units.colours[0].getHexString(), slot: 0 }], f, seconds);
+    h.wipe(0.5);
+    h.toast('Castle secured!', 1, null, true);
   }
 
   resize(w, h) {

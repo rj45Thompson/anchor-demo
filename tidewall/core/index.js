@@ -17,7 +17,7 @@ export { MapCheck } from './rules/MapCheck.js';
 export { CommandKind, Command } from './match/Commands.js';
 export { PlaceWallCommand } from './match/PlaceWallCommand.js';
 export { PieceDealer, Streams } from './match/PieceDealer.js';
-export { Phase, GunKind, ShipKind, PartRole, PlayerModel, CannonModel, KiteModel, ShipModel, SerpentModel, GruntModel, ShotModel, BombModel, TrapModel } from './match/Entities.js';
+export { Phase, GunKind, ShipKind, PartRole, PlayerModel, CannonModel, KiteModel, ShipModel, SerpentModel, GruntModel, ShotModel, BombModel, TrapModel, PowerKind, PowerUpModel, FireModel } from './match/Entities.js';
 export { BombWorld } from './match/Bombs.js';
 export * from './match/Events.js';
 export { MatchModel } from './match/MatchModel.js';

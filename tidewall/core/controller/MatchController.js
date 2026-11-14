@@ -20,10 +20,11 @@ const PAD_FIELDS = Object.freeze({
   stepX: 'int', stepY: 'int',
 });
 
-/** AUTHORED: squares per second the hero walks after the cursor in the bomb rule set (the core never knows where a hero stands; this
- *  controller does, and tells it with moveHero whenever the hero's square changes). Faster than the stick moves the cursor (10). */
+/** AUTHORED: squares per second the drawn hero walks after the cursor in the bomb rule set's BATTLE and REPAIR, where it has no rule
+ *  to follow (BOMBER_UC.md: the hero acts in the RAID alone, where the core walks it). Faster than the stick moves the cursor (10). */
 export const HERO_CELLS_PER_SECOND = 12;
-/** AUTHORED: how long a pointer's click on a far square waits for the hero to walk there and set the bomb down (2 s). */
+/** AUTHORED: how long a pointer's click (a finger's tap) on a far square in the RAID waits for the hero to walk there and set the
+ *  bomb down (2 s: 12 squares at the hero's pace). */
 const DROP_WALK_TICKS = 60;
 /** UC-C1 (STEP_CONTROLS_UC.md), AUTHORED: the phases whose cursor steps a square at a time; the stick travel (of 1000) that is a
  *  push (half way, as the menus count a step); a lean (one axis this many times the other) that moves along that axis only; how
@@ -112,16 +113,15 @@ export class MatchController {
     this._turns = new Int32Array(n); this._seq = new Int32Array(n);
     // the full rules: what confirm places in CANNONS (a PlaceKind), and whether confirm flies the kite in BATTLE
     this._place = new Int32Array(n); this._kiteAim = new Array(n).fill(false);
-    // the bomb rule set: where each hero stands (Q16, chasing the cursor), the square last reported to the core, and the B hold
-    this._hx = new Int32Array(n); this._hy = new Int32Array(n); this._sent = new Array(n).fill(null);
+    // the bomb rule set: where each hero is drawn (Q16: chasing the cursor in BATTLE and REPAIR, the core's hero in the RAID), and the B hold
+    this._hx = new Int32Array(n); this._hy = new Int32Array(n);
     // UC-P3: the hero and the cursor as they were one tick ago (Q16), so a view can draw them BETWEEN ticks at the display rate
     // (heroAt / cursorAt with the frame's alpha). View-only: no command and no rule reads them.
     this._phx = new Int32Array(n); this._phy = new Int32Array(n); this._pqx = new Int32Array(n); this._pqy = new Int32Array(n);
     this._hold = new Int32Array(n); this._holdDone = new Array(n).fill(false); this._arm = new Array(n).fill(null);
-    // REPAIR: the bomb tool this controller drew by itself for a bomb verb (a pick-up, a drop), put away again after the throw or
-    // the drop, so the pieces come back (UC-P1, 11-09: a right click meant to turn the piece picked up a bomb beside the hero, drew
-    // the bomb tool and hid the ghost; every later click dropped a bomb until the player found Tab)
-    this._autoTool = new Array(n).fill(false);
+    // the RAID (BOMBER_UC.md R16): the way each player held last tick (-1, 0, 1 each), the axis pressed most recently (0 x, 1 y),
+    // and a pointer's square the hero is walking a path to (null = none)
+    this._rx = new Int32Array(n); this._ry = new Int32Array(n); this._rf = new Int32Array(n); this._dest = new Array(n).fill(null);
     // UC-C1 (STEP_CONTROLS_UC.md): the square-by-square cursor of CLAIM, CANNONS and REPAIR; each axis's held way (-1, 0, 1) and
     // how many ticks it has been held. stepCursor false is the C#'s glide in every phase (its ported tests set it).
     this.stepCursor = true;
@@ -147,7 +147,7 @@ export class MatchController {
         const c = castles[s % castles.length].cells[0];
         this._qx[s] = c.x * 65536 + 32768; this._qy[s] = c.y * 65536 + 32768;
       }
-      this._hx[s] = this._qx[s]; this._hy[s] = this._qy[s]; this._sent[s] = null; this._hold[s] = 0; this._arm[s] = null;
+      this._hx[s] = this._qx[s]; this._hy[s] = this._qy[s]; this._hold[s] = 0; this._arm[s] = null; this._dest[s] = null;
       this._phx[s] = this._hx[s]; this._phy[s] = this._hy[s]; this._pqx[s] = this._qx[s]; this._pqy[s] = this._qy[s];
     }
   }
@@ -210,8 +210,9 @@ export class MatchController {
           for (const c of this._bots[s].think(this.model, this._pending.length)) {
             acted = true;
             this._pending.push(c);
-            // a bot seat's cursor goes where the bot works, so its disc hangs over what it builds and fires at
-            if (c.kind !== CommandKind.Ready && c.kind !== CommandKind.Leave && c.kind !== CommandKind.Rejoin) {
+            // a bot seat's cursor goes where the bot works, so its disc hangs over what it builds and fires at (in the RAID it is the
+            // hero, set from the model after the step)
+            if (c.kind !== CommandKind.Ready && c.kind !== CommandKind.Leave && c.kind !== CommandKind.Rejoin && this.model.phase !== Phase.Raid) {
               this._qx[s] = c.at.x * 65536 + 32768; this._qy[s] = c.at.y * 65536 + 32768;
             }
           }
@@ -220,11 +221,12 @@ export class MatchController {
       }
       this._input(s, pads[s]);
     }
-    if (this.model.options.bombs) for (let s = 0; s < pads.length; s++) this._walkHero(s);
+    if (this.model.options.bombs && this.model.phase !== Phase.Raid) for (let s = 0; s < pads.length; s++) this._walkHero(s);
     const grid = this.model.grid;
     this.model.step(this._pending);
     this._pending = [];
     if (grid !== this.model.grid) this._cursorsToCastles();   // a new level: back onto the castles
+    if (this.model.phase === Phase.Raid) for (let s = 0; s < pads.length; s++) this._syncHero(s);
     this._queue.accept(this.model.events);
     this._drain();
     this.hud.refresh(this.model);
@@ -248,6 +250,7 @@ export class MatchController {
   _input(s, p) {
     const m = this.model;
     if (!m.player(s).connected) return;
+    if (m.phase === Phase.Raid) { this._raidInput(s, p); return; }   // BOMBER_UC.md: the RAID's one tool, its own controls
     const g = m.grid;
     const px = this._qx[s], py = this._qy[s];
     if (p.hasPointer) { this._qx[s] = p.pointer.x * 65536 + 32768; this._qy[s] = p.pointer.y * 65536 + 32768; }
@@ -278,19 +281,21 @@ export class MatchController {
       else if (!this._dry(this._qx[s], this._qy[s])) { this._qx[s] = px; this._qy[s] = py; }
     }
     // ROTATE: in the full rules it cycles the gun kind in CANNONS (cannon, mortar, kite) and toggles the kite's aim in BATTLE; else
-    // it turns the piece
-    if (p.rotate) {
+    // it turns the piece. The bomb rule set: B let go (tap) is the pad's B outside the RAID, so it does what B always did here
+    if (p.rotate || (bombs && p.tap)) {
       if (m.phase === Phase.Cannons && m.options.full) this._place[s] = (this._place[s] + 1) % 3;
       else if (m.phase === Phase.Battle && m.options.full) this._kiteAim[s] = !this._kiteAim[s];
       else this._turns[s] = (this._turns[s] + 1) & 3;
     }
     // READY in claim and cannons; SWAP in REPAIR and BATTLE trades the phase's tool for the sword and back (the C# host had one button
-    // for both; a device that still has one sets both fields, and only the one that fits the phase acts)
+    // for both; a device that still has one sets both fields, and only the one that fits the phase acts). The bomb rule set has one
+    // tool a beat (BOMBER_UC.md R3): nothing to swap, so no swap is sent
     const toolPhase = m.phase === Phase.Repair || m.phase === Phase.Battle;
     if (p.ready && !toolPhase) this._pending.push(Command.ready(s, ++this._seq[s], this._pending.length));
-    if (p.swap && toolPhase) { this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length)); this._autoTool[s] = false; }
-    if (m.phase !== Phase.Repair) this._autoTool[s] = false;
-    if (bombs) { if (this._bombInput(s, p, toolPhase)) return; }
+    if (p.swap && toolPhase && !bombs) this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length));
+    // the shop and the trap (the bomb rule set's REPAIR; the core refuses them in any other phase, with the reason)
+    if (bombs && p.buy >= 0) this._pending.push(Command.buy(s, ++this._seq[s], p.buy, this._pending.length));
+    if (bombs && p.trap) this._pending.push(Command.placeTrap(s, ++this._seq[s], this.cursor(s), this._pending.length));
     if (!p.confirm) return;
     const at = this.cursor(s);
     if (!bombs && m.player(s).sword && (m.phase === Phase.Repair || m.phase === Phase.Battle)) {
@@ -341,92 +346,129 @@ export class MatchController {
     this._qx[s] = (cx + dx) * 65536 + 32768; this._qy[s] = (cy + dy) * 65536 + 32768;
   }
 
-  /** The bomb rule set: the hero walks after the cursor over dry land (each axis on its own, so it slides along a shore), and a
-   *  human's hero tells the core its new square whenever it changes (the core never knows where a hero stands). */
+  /** The bomb rule set's BATTLE and REPAIR: the drawn hero walks after the cursor over dry land (each axis on its own, so it slides
+   *  along a shore). No rule reads it (the hero acts in the RAID alone, BOMBER_UC.md); it is what the view draws there. */
   _walkHero(s) {
-    const m = this.model;
     const step = Math.trunc(65536 * HERO_CELLS_PER_SECOND / GameRules.TicksPerSecond);
     const nx = this._hx[s] + Math.max(-step, Math.min(step, this._qx[s] - this._hx[s]));
     if (this._dry(nx, this._hy[s])) this._hx[s] = nx;
     const ny = this._hy[s] + Math.max(-step, Math.min(step, this._qy[s] - this._hy[s]));
     if (this._dry(this._hx[s], ny)) this._hy[s] = ny;
-    if (this._bots[s] !== null || !m.player(s).connected || (m.phase !== Phase.Repair && m.phase !== Phase.Battle)) return;
-    const cell = this.heroCell(s), sent = this._sent[s];
-    if (sent === null || sent.x !== cell.x || sent.y !== cell.y) {
-      this._pending.push(Command.moveHero(s, ++this._seq[s], cell, this._pending.length));
-      this._sent[s] = cell;
+  }
+
+  /** The RAID: the hero is the core's (BOMBER_UC.md steps 2-6); its exact place this tick, and the cursor with it. */
+  _syncHero(s) {
+    const p = this.model.player(s);
+    if (p.heroAt === null) return;
+    let x = p.heroAt.x * 65536 + 32768, y = p.heroAt.y * 65536 + 32768;
+    if (p.heroTo !== null) {
+      const k = p.stepTicks - p.stepLeft;
+      x += Math.trunc((p.heroTo.x - p.heroAt.x) * 65536 * k / p.stepTicks); y += Math.trunc((p.heroTo.y - p.heroAt.y) * 65536 * k / p.stepTicks);
     }
+    this._hx[s] = x; this._hy[s] = y; this._qx[s] = x; this._qy[s] = y;
   }
 
   /** A bomb within pickUpReach of the hero that its hands could take (on the ground, not in flight, not carried), or null. */
   _bombNear(s) {
-    const h = this.heroCell(s), reach = this.model.rules.pickUpReach;
+    const h = this.model.player(s).heroCell, reach = this.model.rules.pickUpReach;
+    if (h === null) return null;
     for (const b of this.model.bombs)
       if (b.alive && b.carriedBy < 0 && b.flightLeft === 0 && Math.max(Math.abs(b.at.x - h.x), Math.abs(b.at.y - h.y)) <= reach) return b;
     return null;
   }
 
-  /** The bomb rule set's verbs for this tick (BOMBS_SPEC.md). B (grab) is a TAP or a HOLD: released before rules.defuseHoldTicks it
-   *  picks up the bomb beside the hero (with none beside it, REPAIR turns the piece, as B always did); held that long it defuses.
-   *  The bar's Defuse (defuse) is the hold alone. drop / the confirm of a hero with the bomb tool out: throw a carried bomb at the
-   *  cursor (clamped to the throw range), else drop one on the hero's square. Returns true when it used the confirm. */
-  _bombInput(s, p, toolPhase) {
-    const m = this.model, pl = m.player(s), r = m.rules, hero = this.heroCell(s);
-    // B held: the ring fills, and at rules.defuseHoldTicks the hero defuses (once per hold). B let go (tap): pick up / turn the piece,
-    // unless that very hold already defused.
+  /** BOMBER_UC.md R16, the RAID's controls. The stick, d-pad or keys are the way held: past half way a push (a lean one axis twice
+   *  the other is that axis alone; a latched tap shorter than a tick counts for its tick), sent to the core as a walk whenever it
+   *  changes, the axis pressed most recently tried first. A pointer (the mouse in pointer mode, a finger's tap) names a square: the
+   *  hero walks a path to it, and a click / tap there drops a bomb on arrival (DROP_WALK_TICKS at most; a push cancels both).
+   *  A (confirm, the bar's Drop): a bomb at its feet, or the carried one thrown. B is a TAP or a HOLD: let go before
+   *  rules.defuseHoldTicks it picks up the bomb on or beside the hero (or throws the carried one); held that long it puts out the
+   *  bomb on or beside it. The bar's Pick up / Defuse are the tap / the hold alone. */
+  _raidInput(s, p) {
+    const m = this.model, pl = m.player(s), r = m.rules;
+    if (pl.heroAt === null) return;
+    const at = pl.heroCell;
+    // the way held
+    const ax = Math.abs(p.stickX), ay = Math.abs(p.stickY);
+    let hx = ax > STEP_PUSH ? Math.sign(p.stickX) : 0, hy = ay > STEP_PUSH ? Math.sign(p.stickY) : 0;
+    if (hx !== 0 && hy !== 0) { if (ax > STEP_LEAN * ay) hy = 0; else if (ay > STEP_LEAN * ax) hx = 0; }
+    if (hx === 0) hx = p.stepX;
+    if (hy === 0) hy = p.stepY;
+    let first = this._rf[s];
+    const newX = hx !== 0 && this._rx[s] === 0, newY = hy !== 0 && this._ry[s] === 0;
+    if (newX && newY) first = ax >= ay ? 0 : 1;
+    else if (newX) first = 0;
+    else if (newY) first = 1;
+    else if (hx !== 0 && hy === 0) first = 0;
+    else if (hy !== 0 && hx === 0) first = 1;
+    this._rx[s] = hx; this._ry[s] = hy; this._rf[s] = first;
+    // a pointer's square: walk a path there (a push takes the hero back)
+    const pushed = hx !== 0 || hy !== 0;
+    if (pushed) { this._dest[s] = null; this._arm[s] = null; }
+    else if (p.hasPointer && this._arm[s] === null) this._dest[s] = p.pointer;   // a click's square wins over the hover until it drops
+    if (!pushed && this._dest[s] !== null) {
+      const d = this._dest[s];
+      if (pl.heroTo !== null) { hx = pl.wishX; hy = pl.wishY; first = pl.wishFirst; }     // a step under way finishes by itself
+      else if (d.x === at.x && d.y === at.y) this._dest[s] = null;
+      else {
+        const way = this._pathStep(at, d);
+        if (way === null) this._dest[s] = null; else { [hx, hy] = way; first = hx !== 0 ? 0 : 1; }
+      }
+    }
+    if (hx !== pl.wishX || hy !== pl.wishY || (hx !== 0 && hy !== 0 && first !== pl.wishFirst))
+      this._pending.push(Command.walk(s, ++this._seq[s], hx, hy, first, this._pending.length));
+    // B held: the ring fills, and at rules.defuseHoldTicks the hero defuses (once per hold). B let go (tap): pick up or throw, unless
+    // that very hold already defused
     const held = p.grab || p.defuse, doneBefore = this._holdDone[s];
     if (held) {
       if (this._hold[s] === 0) this._holdDone[s] = false;
       this._hold[s]++;
       if (!this._holdDone[s] && this._hold[s] >= r.defuseHoldTicks) {
-        this._pending.push(Command.defuseBomb(s, ++this._seq[s], hero, this._pending.length));
+        this._pending.push(Command.defuseBomb(s, ++this._seq[s], at, this._pending.length));
         this._holdDone[s] = true;
       }
     } else if (this._hold[s] > 0) { this._hold[s] = 0; this._holdDone[s] = false; }
-    if (p.tap && !doneBefore) {
-      if (pl.carrying === 0 && this._bombNear(s) !== null) this._pickUp(s, pl, hero);
-      else this._turns[s] = (this._turns[s] + 1) & 3;                     // no bomb to take: B turns the piece, as it always did
+    let throwIt = false;
+    if ((p.tap && !doneBefore) || p.pickUp) {
+      if (pl.carrying !== 0) throwIt = true;
+      else this._pending.push(Command.pickUpBomb(s, ++this._seq[s], at, this._pending.length));
     }
-    if (p.pickUp) { if (this._bombNear(s) !== null) this._pickUp(s, pl, hero); else this._pending.push(Command.pickUpBomb(s, ++this._seq[s], hero, this._pending.length)); }
-    if (p.buy >= 0) this._pending.push(Command.buy(s, ++this._seq[s], p.buy, this._pending.length));
-    if (p.trap) this._pending.push(Command.placeTrap(s, ++this._seq[s], this.cursor(s), this._pending.length));
-    // a pointer's click names a square far from the hero: the bomb goes down when the hero GETS there (a bomb thrown goes at once)
-    let act = toolPhase && (p.drop || (p.confirm && pl.sword));
-    if (act && p.confirm && p.hasPointer && pl.carrying === 0) {
-      const at = this.cursor(s);
-      if (at.x !== hero.x || at.y !== hero.y) { this._arm[s] = { cell: at, left: DROP_WALK_TICKS }; act = false; }
+    // A: a bomb, at once at the hero's feet, or (a pointer's click on another square) when the hero gets there
+    let drop = p.drop || p.confirm;
+    if (drop && p.confirm && p.hasPointer && pl.carrying === 0 && (p.pointer.x !== at.x || p.pointer.y !== at.y)) {
+      this._arm[s] = { cell: p.pointer, left: DROP_WALK_TICKS }; this._dest[s] = p.pointer; drop = false;
     }
     const arm = this._arm[s];
     if (arm !== null) {
-      if (!toolPhase || --arm.left < 0 || p.stickX !== 0 || p.stickY !== 0) this._arm[s] = null;
-      else if (arm.cell.x === hero.x && arm.cell.y === hero.y) { this._arm[s] = null; act = true; }
+      if (--arm.left < 0) this._arm[s] = null;
+      else if (pl.heroTo === null && arm.cell.x === at.x && arm.cell.y === at.y) { this._arm[s] = null; drop = true; }
     }
-    if (!act) return toolPhase && p.confirm && pl.sword;
-    const repair = m.phase === Phase.Repair;
-    if (!pl.sword) { this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length)); if (repair) this._autoTool[s] = true; }
-    if (pl.carrying !== 0) this._pending.push(Command.throwBomb(s, ++this._seq[s], hero, this._throwTarget(s, hero), this._pending.length));
-    else this._pending.push(Command.dropBomb(s, ++this._seq[s], hero, this._pending.length));
-    if (repair && this._autoTool[s]) { this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length)); this._autoTool[s] = false; }
-    return true;
+    if (drop && pl.carrying !== 0) throwIt = true;
+    if (throwIt) this._pending.push(Command.throwBomb(s, ++this._seq[s], at, at, this._pending.length));
+    else if (drop) this._pending.push(Command.dropBomb(s, ++this._seq[s], at, this._pending.length));
   }
 
-  /** Take the bomb beside the hero, and bring the bomb tool out so the next press throws it. */
-  _pickUp(s, pl, hero) {
-    this._pending.push(Command.pickUpBomb(s, ++this._seq[s], hero, this._pending.length));
-    if (!pl.sword && (this.model.phase === Phase.Repair || this.model.phase === Phase.Battle)) {
-      this._pending.push(Command.switchMode(s, ++this._seq[s], this._pending.length));
-      if (this.model.phase === Phase.Repair) this._autoTool[s] = true;
+  /** The first step [dx, dy] of the shortest walk from `from` to `to` over the squares a hero may enter now (the arms' order on a
+   *  tie), or null when there is none. The goal itself need not be enterable (a pointer on a bomb walks up to it). */
+  _pathStep(from, to) {
+    const m = this.model, g = m.grid, w = g.width, DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];
+    const first = new Int8Array(w * g.height).fill(-1), q = [from.y * w + from.x];
+    first[q[0]] = 4;
+    for (let i = 0; i < q.length; i++) {
+      const c = q[i], cx = c % w, cy = (c / w) | 0;
+      for (let k = 0; k < 4; k++) {
+        const x = cx + DX[k], y = cy + DY[k];
+        if (!g.in(x, y)) continue;
+        const n = y * w + x;
+        if (first[n] !== -1) continue;
+        const goal = x === to.x && y === to.y;
+        if (!goal && !m.heroCanEnter(x, y)) continue;
+        first[n] = first[c] === 4 ? k : first[c];
+        if (goal) return i === 0 && !m.heroCanEnter(x, y) ? null : [DX[first[n]], DY[first[n]]];   // beside a goal it cannot enter: there
+        q.push(n);
+      }
     }
-  }
-
-  /** The cursor's square, pulled in along its longer axis until it is within the throw range (Manhattan) of the hero. */
-  _throwTarget(s, hero) {
-    const range = this.model.rules.throwRange;
-    let { x, y } = this.cursor(s);
-    while (Math.abs(x - hero.x) + Math.abs(y - hero.y) > range) {
-      if (Math.abs(x - hero.x) >= Math.abs(y - hero.y)) x += x > hero.x ? -1 : 1; else y += y > hero.y ? -1 : 1;
-    }
-    return new Cell(x, y);
+    return null;
   }
 
   _dry(qx, qy) {

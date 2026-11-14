@@ -1,8 +1,13 @@
 // port of model/Match/Entities.cs
 import { Cell } from '../cell.js';
 
-/** The round's phases. Decide = the fate screen after a lost round: Fight Again or Give Up. */
-export const Phase = Object.freeze({ Claim: 0, Cannons: 1, Battle: 2, Repair: 3, Score: 4, GameOver: 5, Victory: 6, Decide: 7 });
+/** The round's phases. Decide = the fate screen after a lost round: Fight Again or Give Up. Raid (8, appended) is the bomb rule set's
+ *  own beat (BOMBER_UC.md): after a BATTLE that left raiders ashore, Bomberman on land, then REPAIR. Never entered with bombs off. */
+export const Phase = Object.freeze({ Claim: 0, Cannons: 1, Battle: 2, Repair: 3, Score: 4, GameOver: 5, Victory: 6, Decide: 7, Raid: 8 });
+
+/** A RAID power-up's kind (BOMBER_UC.md steps 10-11). Appended only. Fire: the hero's arms +1. Bomb: one more of its bombs lit at
+ *  once. Speed: one tick less per square. */
+export const PowerKind = Object.freeze({ Fire: 0, Bomb: 1, Speed: 2 });
 
 /** A gun's kind: the 2x2 cannon (0), or the full rules' 3x3 Mortar (1), which costs rules.mortarCost of the allotment, has twice
  *  a cannon's health and fires incendiary balls that do rules.mortarDamage and light pits. */
@@ -30,14 +35,25 @@ export class PlayerModel {
     /** The hero's sword is out (REQ-HERO-02): in REPAIR and BATTLE a player holds EITHER the phase's tool OR the sword. */
     this.sword = false;
     this.swordLeft = 0;          // ticks until the sword can swing again
-    // ---- the bomb rule set (GameOptions.bombs; see match/Bombs.js and BOMBS_SPEC.md). Untouched, and not hashed, when it is off.
-    this.bombs = 0;              // bombs in hand to drop (bombCap, refilled at BATTLE, +1 per bombRegenTicks)
-    this.bombCap = 0;            // the refill and regrowth cap (a bombPack may lift `bombs` above it)
-    this.bombRegen = 0;          // ticks toward the next +1
+    // ---- the bomb rule set (GameOptions.bombs; see match/Bombs.js, BOMBS_SPEC.md, BOMBER_UC.md). Untouched, and not hashed, when off.
+    this.bombs = 0;              // how many more of its own bombs the hero may light now (bombCap less those lit): what a view shows
+    this.bombCap = 0;            // its own bombs lit at once (rules.bombCap, +1 per BOMB power-up or bombPack, to rules.bombMax)
+    this.fire = 0;               // its blast's arm length (rules.bombArm, +1 per FIRE power-up, to rules.fireMax)
+    this.ticksPerCell = 0;       // its walk: ticks a square (rules.heroTicksPerCell, -1 per SPEED power-up, to rules.heroTicksMin)
     this.items = { metal: 0, trap: 0, bombPack: 0, bigBomb: 0 };   // bought, in stock (bombPack counts packs bought: it applies at once)
     this.stunLeft = 0;           // ticks the hero is stunned
     this.carrying = 0;           // id of the bomb in the hero's hands, 0 = none
-    this.heroAt = null;          // the hero's square as the controller last reported it (a bomb command or MoveHero); null = unknown
+    // the hero on foot in the RAID, walked by the core square by square (BOMBER_UC.md steps 2-6): heroAt its square (null = not on
+    // the board: outside the RAID, or no home castle), heroTo the square it is stepping into (null = standing at a centre) with
+    // stepLeft of stepTicks ticks to go (stepTicks: its pace when the step began); wishX / wishY the way held (-1, 0, 1 each,
+    // Command.walk), wishFirst the axis tried first (0 x, 1 y); faceX / faceY the way it faces (a throw goes that way)
+    this.heroAt = null; this.heroTo = null; this.stepLeft = 0; this.stepTicks = 0;
+    this.wishX = 0; this.wishY = 0; this.wishFirst = 0; this.faceX = 0; this.faceY = 1;
+  }
+  /** The square the hero stands on for every rule (a bomb dropped, a blast, a power-up): the nearer of the two it is between. */
+  get heroCell() {
+    if (this.heroTo === null || this.heroAt === null) return this.heroAt;
+    return 2 * this.stepLeft <= this.stepTicks ? this.heroTo : this.heroAt;
   }
   get cannonsToPlace() { return this.cannonsFresh + this.cannonsCarried; }
 }
@@ -131,13 +147,26 @@ export class ShotModel {
 /** A lit bomb (BOMBS_SPEC.md). owner = a player's slot, or -1 for a grunt's. carriedBy = the slot of the hero holding it, -1 = on
  *  the ground. While flightLeft > 0 it is in the air from flightFrom to flightTo (its fuse is frozen); landing keeps the fuse. */
 export class BombModel {
-  constructor(id, owner, at, fuseLeft, big) {
-    this.id = id; this.owner = owner; this.at = at; this.fuseLeft = fuseLeft; this.big = big;
+  /** arm: how far each arm of its blast runs (the dropping hero's fire, a big bomb's bigBombArm, a raider's bombArm). */
+  constructor(id, owner, at, fuseLeft, big, arm) {
+    if (!Number.isInteger(arm) || arm < 1) throw new RangeError('a bomb arm is a whole number of squares (1 or more), got ' + arm);
+    this.id = id; this.owner = owner; this.at = at; this.fuseLeft = fuseLeft; this.big = big; this.arm = arm;
     this.carriedBy = -1;
     this.flightLeft = 0; this.flightTicks = 0; this.flightFrom = at; this.flightTo = at;
     this.skipTick = -1;          // the tick a command dropped or threw it: that tick's world step does not age it (it lasts the full count)
     this.alive = true;
   }
+}
+
+/** A RAID power-up lying on a square (BOMBER_UC.md step 10): shown once revealLeft is 0 (it waits for the fire on its square). */
+export class PowerUpModel {
+  constructor(id, kind, at, revealLeft) { this.id = id; this.kind = kind; this.at = at; this.revealLeft = revealLeft; }
+  get shown() { return this.revealLeft === 0; }
+}
+
+/** A blast's burning squares (BOMBER_UC.md step 9): `cells` burn for `left` more ticks; `owner` is the bomb's (a slot, or -1). */
+export class FireModel {
+  constructor(id, owner, cells, left) { this.id = id; this.owner = owner; this.cells = cells; this.left = left; }
 }
 
 /** A drawn spike trap on an empty land square: the first grunt to step on it dies and the trap is used up. */

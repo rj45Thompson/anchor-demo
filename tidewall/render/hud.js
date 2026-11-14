@@ -11,7 +11,8 @@ const NOTE_SECONDS = 2;                                   // AUTHORED: how long 
 const ITEM_WORDS = Object.freeze({ metal: 'METAL PIECE', trap: 'TRAP', bombPack: 'BOMB PACK', bigBomb: 'BIG BOMB' });
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const PHASE_WORD = { [Phase.Claim]: 'CLAIM', [Phase.Cannons]: 'CANNONS', [Phase.Battle]: 'BATTLE', [Phase.Repair]: 'REPAIR',
-                     [Phase.Score]: 'SCORE', [Phase.GameOver]: 'GAME OVER', [Phase.Victory]: 'VICTORY', [Phase.Decide]: 'CONTINUE?' };
+                     [Phase.Score]: 'SCORE', [Phase.GameOver]: 'GAME OVER', [Phase.Victory]: 'VICTORY', [Phase.Decide]: 'CONTINUE?',
+                     [Phase.Raid]: 'RAID' };
 
 // AUTHORED (SETTINGS_UC.md UC-ST4 step 2): the smallest screen the HUD is ever laid out for, CSS px. TEXT SIZE draws the HUD for a
 // screen that much smaller and scales it up, so a size that would push it under this is cut to what fits.
@@ -160,7 +161,8 @@ export class Hud {
     switch (screen) {
       case Screen.Title: this.drawTitle(menu, seconds, !!m); break;
       case Screen.Setup: this.drawSetup(menu, seconds, (view.menuCover || []).map((r) => ({ left: r.left / this.s, right: r.right / this.s, top: r.top / this.s, bottom: r.bottom / this.s }))); break;
-      case Screen.Pause: this.drawRows('PAUSED', MenuModel.PauseRows, menu.row, ''); break;
+      // CONTROLS_SMOOTH_UC.md UC-C2 step 1: a restart held while its island is got ready says so on its row
+      case Screen.Pause: this.drawRows('PAUSED', menu.holding ? MenuModel.PauseRows.map((r, i) => (i === 1 ? 'RESTARTING...' : r)) : MenuModel.PauseRows, menu.holding ? 1 : menu.row, ''); break;
       case Screen.Decide: this.drawDecide(view, seconds); break;
       case Screen.Results: this.drawResults(menu, seconds); break;
       case Screen.Initials: this.drawInitials(menu, seconds); break;
@@ -321,7 +323,7 @@ export class Hud {
     const mid = x + 22, row = y + h * 0.68;
     // why the last command was refused, or that the player fell, takes the line: it is what they need to read now
     const status = p.fell ? 'NO CASTLE INSIDE YOUR WALLS' : fresh ? note.text : p.lastMessage;
-    const onFoot = bombs && (m.phase === Phase.Repair || m.phase === Phase.Battle);
+    const onFoot = bombs && m.phase === Phase.Raid;                      // BOMBER_UC.md: the hero is on foot in the RAID alone
     const hand = onFoot ? this.hand(pl, x + w - 12, row, fs) : 0;       // the bombs in hand, at the line's right end
     if (status) {                                                         // shrunk to fit the card, never cut
       let px = fs * 0.62; this.font(px); const room = w - (mid - x) - 12 - hand, tw = this.ctx.measureText(status).width;
@@ -342,6 +344,10 @@ export class Hud {
       this.text(pl.claimedCastle !== 0 ? 'HOME CHOSEN' : 'PICK A CASTLE', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
     } else if (m.phase === Phase.Battle) {
       this.text(pl.sword ? (bombs ? 'BOMBS' : 'SWORD OUT') : 'CANNON', mid, row, fs * 0.72, 'rgba(255,255,255,0.85)', 'left', 800, false);
+    } else if (m.phase === Phase.Raid) {
+      // the RAID: the hero's power (FIRE arms, its speed), the bombs free shown at the line's end (hand)
+      const word = pl.heroAt === null ? 'NO HERO' : 'FIRE ' + pl.fire + (pl.ticksPerCell < m.rules.heroTicksPerCell ? '  SPEED +' + (m.rules.heroTicksPerCell - pl.ticksPerCell) : '');
+      this.text(word, mid, row, fs * 0.66, 'rgba(255,255,255,0.85)', 'left', 800, false);
     }
     if (!p.connected) {
       this.panel(x, y, w, h, 12, 'rgba(20,20,26,0.72)');
@@ -469,8 +475,9 @@ export class Hud {
     const FOOT = H < 560 ? 84 : 120, short = H < 560;
     this.logo(short ? H * 0.08 : H * 0.12, short ? Math.max(22, H * 0.065) : Math.max(30, u * 6), seconds);
     // AUTHORED: GAP px kept between the menu and a cover; the narrowest band the four seats (SEATS_NEED) and the rows (ROWS_NEED:
-    // a label and "◀ GULLROCK ISLE ▶" side by side) are laid in before they move below the cover instead
-    const GAP = 12, SEATS_NEED = Math.min(W - 20, 480), ROWS_NEED = Math.min(W - 20, 340);
+    // a label and "◀ GULLROCK ISLE ▶" side by side) are laid in before they move below the cover instead; ROW_MIN the
+    // smallest row height a label still reads at
+    const GAP = 12, SEATS_NEED = Math.min(W - 20, 480), ROWS_NEED = Math.min(W - 20, 340), ROW_MIN = 20;
     const crosses = (y0, y1, x0, x1) => cover.some((c) => c.top < y1 && c.bottom > y0 && c.left < x1 && c.right > x0);
     const gapAt = (y0, y1) => {                        // the widest x span in [0, W] no cover crosses between y0 and y1
       let iv = [[0, W]];
@@ -484,7 +491,12 @@ export class Hud {
     const seatsW = (cw + 12) * 4 - 12;
     if (crosses(y, y + ch, (W - seatsW) / 2, (W + seatsW) / 2)) {
       let g = gapAt(y, y + ch);
-      if (g[1] - g[0] < SEATS_NEED) { y = below(y, y + ch); g = gapAt(y, y + ch); }
+      if (g[1] - g[0] < SEATS_NEED) {
+        // SETTINGS_UC.md UC-ST4 step 2: below the cover only when the seats and the rows (at ROW_MIN each) still fit under it; else
+        // they narrow into the widest gap beside it (150 % on 1440x900: under the how-to card they stood at y 561 of a 480 floor)
+        const y2 = below(y, y + ch);
+        if (y2 + ch + (MenuModel.SetupRows.length + 0.6) * ROW_MIN <= H - FOOT) { y = y2; g = gapAt(y, y + ch); }
+      }
       [sx0, sx1] = g; cw = Math.min(cw, (sx1 - sx0 - 20) / 4 - 9);
     }
     let x = (sx0 + sx1 - ((cw + 12) * 4 - 12)) / 2;
@@ -502,15 +514,20 @@ export class Hud {
     for (const c of cover) if (c.top > y + ch) { const g = gapAt(c.top, c.bottom); if (g[1] - g[0] < ROWS_NEED) floor = Math.min(floor, c.top - GAP); }
     // the band holds the rows plus one row of air above them and 0.45 + 0.15 below the last one (6 rows: the old fixed / 6.6)
     const rows = MenuModel.SetupRows, rh = Math.min(Math.max(30, u * 4.6), (floor - y - ch) / (rows.length + 0.6)), top = y + ch + rh;
+    // a join screen with no room left for its rows is a layout fault: say what it was laid out from (a negative rh was a canvas
+    // RangeError deep in paintWoodPanel, with nothing to say why)
+    if (!(rh > 0)) throw new Error('hud.js drawSetup: no room for the rows: ' + JSON.stringify({ W, H, s: this.s, u, y, ch, floor, cover: cover.map((c) => [c.left, c.top, c.right, c.bottom].map(Math.round)) }));
     let half = Math.min(230, W / 2 - 10), cx = W / 2;            // the rows' half width (narrow on a phone) and their centre
     const ry0 = top - rh * 0.45, ry1 = top + (rows.length - 1) * rh + rh * 0.45;
     if (crosses(ry0, ry1, cx - half, cx + half)) { const g = gapAt(ry0, ry1); cx = (g[0] + g[1]) / 2; half = Math.min(half, (g[1] - g[0]) / 2); }
     const lab = half - 30;                                       // where a label starts and a value ends, from the centre
     for (let i = 0; i < rows.length; i++) {
-      const sel = i === menu.row, yy = top + i * rh, raw = menu.valueOfRow(i);
+      // CONTROLS_SMOOTH_UC.md UC-C2 step 1: START pressed, the island being got ready (MenuModel.holding): START says so, picked
+      const held = menu.holding && i === MenuModel.RowStart;
+      const sel = menu.holding ? held : i === menu.row, yy = top + i * rh, raw = menu.valueOfRow(i);
       const val = i === MenuModel.RowMap ? HudViewModel.pretty(raw) : raw;   // "GullrockIsle" -> "GULLROCK ISLE", as the match's top bar says it
       if (sel) this.woodPanel(cx - half, yy - rh * 0.5, half * 2, rh, rh * 0.4, { rim: UI.gold });
-      this.text(rows[i], val ? cx - lab : cx, yy, rh * 0.5, sel ? '#fff' : 'rgba(255,255,255,0.75)', val ? 'left' : 'center');
+      this.text(held ? 'STARTING...' : rows[i], val ? cx - lab : cx, yy, rh * 0.5, sel ? '#fff' : 'rgba(255,255,255,0.75)', val ? 'left' : 'center');
       if (val) this.text((sel ? '◀ ' : '') + val + (sel ? ' ▶' : ''), cx + lab, yy, rh * 0.5, sel ? UI.gold : 'rgba(255,210,74,0.8)', 'right');
       const y0 = yy - rh * 0.45, y1 = yy + rh * 0.45;
       if (sel && val) {                                       // the arrows, measured in the font they were drawn in

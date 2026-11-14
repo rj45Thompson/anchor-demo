@@ -2,7 +2,7 @@
 //
 // Every decision is the C# one, the full rules' too: in BATTLE a recruited (allied) ship is never aimed at, and a serpent with its
 // head up that is nearer the bot's own cannons than every enemy ship is shot first. (The C# bot places no mortar or kite and flies
-// no kite: its full-rules play is only that aiming.) The bomb rule set's hero work (_bombWork) is this game's own.
+// no kite: its full-rules play is only that aiming.) The bomb rule set's RAID play (_raid, BOMBER_UC.md) is this game's own.
 import { Cell } from '../cell.js';
 import { Terrain, Occupant } from '../grid.js';
 import { EnclosureRules } from '../rules/EnclosureRules.js';
@@ -12,8 +12,9 @@ import { Phase } from '../match/Entities.js';
 import { Command } from '../match/Commands.js';
 
 const INT_MAX = 2147483647, INT_MIN = -2147483648;
-/** AUTHORED: squares beyond the castle's ring within which a bot hero deals with a grunt or a grunt's bomb (BOMBS_SPEC task: within 3 squares of its walls). */
-const BOMB_ZONE = 3;
+const DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];     // the blast arms' order (core/match/Bombs.js)
+/** What a blast passes over (core/match/Bombs.js stopsBlast is the rest): open ground, rubble, a graveyard, a pit, a kite. */
+const BLAST_PASSES = new Set([Occupant.Empty, Occupant.Rubble, Occupant.Graveyard, Occupant.Pit, Occupant.Kite]);
 
 function castleOf(m, id) {
   for (const c of m.grid.castles) if (c.id === id) return c;
@@ -38,10 +39,12 @@ export class CastleBot {
     this._seq = 0;
   }
 
-  /** The commands this bot sends this tick (at most one), each stamped with `arrival`. */
+  /** The commands this bot sends this tick (at most one; in the RAID a bomb and a walk), each stamped with `arrival`. */
   *think(m, arrival) {
     const p = m.player(this.slot);
-    if (!p.connected || m.ended || (m.tick + this.slot * 2) % this.every !== 0) return;
+    if (!p.connected || m.ended) return;
+    if (m.phase === Phase.Raid) { yield* this._raid(m, p, arrival); return; }   // a grid walk is decided square by square, every tick
+    if ((m.tick + this.slot * 2) % this.every !== 0) return;
     switch (m.phase) {
       case Phase.Decide:
         if (this.slot === 0) yield Command.decide(this.slot, ++this._seq, true, arrival);   // a bot team always continues
@@ -59,7 +62,8 @@ export class CastleBot {
         }
         break;
       case Phase.Battle: {
-        const bw = m.options.bombs ? this._bombWork(m, p, arrival) : this._swordWork(m, p, arrival);
+        // the bomb rule set has no hero work in BATTLE or REPAIR: the raiders are fought in the RAID (BOMBER_UC.md)
+        const bw = m.options.bombs ? { handled: false, cmd: null } : this._swordWork(m, p, arrival);
         if (bw.handled) { if (bw.cmd !== null) yield bw.cmd; break; }
         let aim = null, best = INT_MAX;
         for (const s of m.ships) {
@@ -85,7 +89,7 @@ export class CastleBot {
         break;
       }
       case Phase.Repair: {
-        const rw = m.options.bombs ? this._bombWork(m, p, arrival) : this._swordWork(m, p, arrival);
+        const rw = m.options.bombs ? { handled: false, cmd: null } : this._swordWork(m, p, arrival);
         if (rw.handled) { if (rw.cmd !== null) yield rw.cmd; break; }
         const place = this._repairMove(m, this._working(m, p.claimedCastle));
         if (place !== null) yield Command.placeWall(this.slot, ++this._seq, m.heldShapeId(this.slot), place.value, place.key, arrival);
@@ -122,92 +126,103 @@ export class CastleBot {
     return { handled: true, cmd };
   }
 
-  /** The bomb rule set's hero work, greedy: (1) a bomb in its hands is thrown at the nearest grunt in range, else into the sea, else
-   *  put out; (2) a grunt's bomb within BOMB_ZONE squares of its castle's ring is put out or - every other one - picked up; (3) a
-   *  grunt near the castle gets a bomb of its own on its square, unless that blast would reach one of the bot's own bricks, and only
-   *  one of its bombs is lit at a time; (4) after a drop it walks home out of the blast. With nothing to do the bomb tool goes away
-   *  (the phase's own tool again). Same contract as _swordWork: handled false = nothing for the hero to do, so the phase's work goes on. */
-  _bombWork(m, p, arrival) {
-    const home = castleOf(m, p.claimedCastle);
-    if (home === null) return { handled: false, cmd: null };
-    const { x0, y0, x1, y1 } = box(home);
-    const zone = m.rules.ringRadius + BOMB_ZONE;
-    const away = (at) => { const dx = at.x < x0 ? x0 - at.x : at.x > x1 ? at.x - x1 : 0, dy = at.y < y0 ? y0 - at.y : at.y > y1 ? at.y - y1 : 0; return Math.max(dx, dy); };
-    const S = this.slot, say = (cmd) => ({ handled: true, cmd });
-    if (p.stunLeft > 0) return say(null);
-    const mine = m.bombs.filter((b) => b.alive && b.owner === S && b.carriedBy < 0 && b.flightLeft === 0);
-    // (1) carrying: throw
-    if (p.carrying !== 0) {
-      const from = p.heroAt, tgt = this._throwAt(m, from);
-      if (!p.sword) return say(Command.switchMode(S, ++this._seq, arrival));
-      if (tgt !== null) return say(Command.throwBomb(S, ++this._seq, from, tgt, arrival));
-      return say(Command.defuseBomb(S, ++this._seq, from, arrival));
+  /** The RAID (BOMBER_UC.md), a simple Bomberman player: it decides only while its hero stands on a square's centre (a step under
+   *  way finishes by itself) and sends a walk only when the way it wants changes. In order: (1) standing where a lit bomb's cross or
+   *  a fire would catch it, it walks to the nearest square out of reach; (2) a raider's bomb beside it is put out; (3) with a bomb
+   *  free, when a raider is in its own cross from here and that cross touches no brick, cannon or castle (it never blows its own
+   *  walls) and there is a way out of it in time, it drops one and walks out; (4) else it walks to the nearest square from which its
+   *  cross would reach a raider, (5) or toward the nearest raider; else it stands. */
+  *_raid(m, p, arrival) {
+    if (p.heroAt === null || p.heroTo !== null || p.stunLeft > 0) return;
+    const S = this.slot, g = m.grid, w = g.width, at = p.heroAt;
+    const danger = this._danger(m);
+    const enter = (x, y) => m.heroCanEnter(x, y);
+    let way = null;                                                       // [dx, dy], or null to stand
+    if (danger.has(at.y * w + at.x)) way = this._firstStep(m, at, (x, y) => enter(x, y), (x, y) => !danger.has(y * w + x));
+    else {
+      const near = m.bombs.find((b) => b.alive && b.owner === -1 && b.carriedBy < 0 && b.flightLeft === 0
+        && Math.max(Math.abs(b.at.x - at.x), Math.abs(b.at.y - at.y)) <= m.rules.defuseReach);
+      if (near) { yield Command.defuseBomb(S, ++this._seq, at, arrival); way = [0, 0]; }
+      else {
+        const lit = m.bombs.filter((b) => b.alive && b.owner === S).length;
+        const cross = this._cross(m, at, p.fire);
+        const hits = (c) => m.grunts.some((r) => r.alive && c.cells.has(r.at.y * w + r.at.x));
+        if (lit < p.bombCap && m.phaseTicksLeft > 0 && hits(cross) && !cross.walls) {   // a clock that is out takes no new bomb (RaidOver)
+          const out = new Set([...danger, ...cross.cells]);
+          const steps = Math.trunc((m.rules.bombFuse - 10) / p.ticksPerCell);   // AUTHORED: out with 10 ticks to spare
+          const esc = this._firstStep(m, at, (x, y) => enter(x, y), (x, y) => !out.has(y * w + x), steps);
+          if (esc !== null) { yield Command.dropBomb(S, ++this._seq, at, arrival); way = esc; }
+        }
+        if (way === null) {
+          const goals = new Set();
+          for (const r of m.grunts) {
+            if (!r.alive) continue;
+            for (let k = 0; k < 4; k++)
+              for (let d = 1; d <= p.fire; d++) {
+                const x = r.at.x - DX[k] * d, y = r.at.y - DY[k] * d;
+                if (!g.in(x, y) || g.terrainAt(x, y) === Terrain.Water || !BLAST_PASSES.has(g.occupantAt(x, y))) break;   // the line is cut
+                if (enter(x, y) && !this._cross(m, new Cell(x, y), p.fire).walls) goals.add(y * w + x);
+              }
+          }
+          const safe = (x, y) => enter(x, y) && !danger.has(y * w + x);
+          way = goals.size > 0 ? this._firstStep(m, at, safe, (x, y) => goals.has(y * w + x)) : null;
+          if (way === null) way = this._firstStep(m, at, safe, (x, y) => m.grunts.some((r) => r.alive && Math.abs(r.at.x - x) + Math.abs(r.at.y - y) === 1));
+        }
+      }
     }
-    // (4) walk out of the blast of its own bomb
-    if (p.heroAt !== null)
-      for (const b of mine)
-        if (Math.max(Math.abs(b.at.x - p.heroAt.x), Math.abs(b.at.y - p.heroAt.y)) <= 2) return say(Command.moveHero(S, ++this._seq, home.cells[0], arrival));
-    // (2) a grunt's bomb near the walls
-    let bomb = null, bestD = INT_MAX;
+    const [dx, dy] = way === null ? [0, 0] : way;
+    if (dx !== p.wishX || dy !== p.wishY) yield Command.walk(S, ++this._seq, dx, dy, dx !== 0 ? 0 : 1, arrival);
+  }
+
+  /** The squares a lit bomb's blast (or a burning fire) would catch: each bomb's cross, as the blast runs (stopping at the first
+   *  brick, cannon, castle, rock or soft block, never over water), at its landing square while in the air or its carrier's. */
+  _danger(m) {
+    const w = m.grid.width, out = new Set();
     for (const b of m.bombs) {
-      if (!b.alive || b.owner !== -1 || b.carriedBy >= 0 || b.flightLeft > 0) continue;
-      const d = away(b.at);
-      if (d <= zone && d < bestD) { bestD = d; bomb = b; }
+      if (!b.alive) continue;
+      const c = b.flightLeft > 0 ? b.flightTo : b.carriedBy >= 0 ? m.player(b.carriedBy).heroCell : b.at;
+      if (c === null) continue;
+      for (const k of this._cross(m, c, b.arm).cells) out.add(k);
     }
-    if (bomb !== null) {
-      if (bomb.id % 2 === 1 && bomb.fuseLeft > 30) return say(Command.pickUpBomb(S, ++this._seq, bomb.at, arrival));
-      return say(Command.defuseBomb(S, ++this._seq, bomb.at, arrival));
-    }
-    // (3) a grunt near the castle: a bomb of its own, where it cannot hurt the bot's bricks
-    if (mine.length === 0 && p.bombs > 0) {
-      let g0 = null;
-      bestD = INT_MAX;
-      for (const g of m.grunts) {
-        if (!g.alive) continue;
-        const d = away(g.at);
-        if (d <= zone && d < bestD && this._safeToBlast(m, g.at)) { bestD = d; g0 = g; }
-      }
-      if (g0 !== null) {
-        if (!p.sword) return say(Command.switchMode(S, ++this._seq, arrival));
-        return say(Command.dropBomb(S, ++this._seq, g0.at, arrival));
-      }
-    }
-    if (!p.sword) return { handled: false, cmd: null };
-    return say(Command.switchMode(S, ++this._seq, arrival));
+    for (const f of m.fires) for (const c of f.cells) out.add(c.y * w + c.x);
+    return out;
   }
 
-  /** No wall square (anyone's) within two squares of `at` along its four lines, and the square is dry land: a bomb dropped there
-   *  breaks no brick. */
-  _safeToBlast(m, at) {
-    const g = m.grid;
-    if (!g.in(at.x, at.y) || g.terrainAt(at.x, at.y) !== Terrain.Land) return false;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]])
-      for (let k = 1; k <= m.rules.bombArm; k++) {
-        const x = at.x + dx * k, y = at.y + dy * k;
-        if (!g.in(x, y)) break;
+  /** A bomb's cross from `at` with arms of `arm`: { cells: keys it reaches, walls: whether it would hit a brick, cannon or castle }. */
+  _cross(m, at, arm) {
+    const g = m.grid, w = g.width, cells = new Set([at.y * w + at.x]);
+    let walls = false;
+    for (let k = 0; k < 4; k++)
+      for (let d = 1; d <= arm; d++) {
+        const x = at.x + DX[k] * d, y = at.y + DY[k] * d;
+        if (!g.in(x, y) || g.terrainAt(x, y) === Terrain.Water) break;
+        cells.add(y * w + x);
         const o = g.occupantAt(x, y);
-        if (o === Occupant.Wall || o === Occupant.Castle || o === Occupant.Cannon) return false;
-        if (o !== Occupant.Empty && o !== Occupant.Rubble && o !== Occupant.Graveyard) break;   // a rock stops the arm (and is hit)
+        if (o === Occupant.Wall || o === Occupant.Cannon || o === Occupant.Castle) { walls = true; break; }
+        if (!BLAST_PASSES.has(o)) break;
       }
-    return true;
+    return { cells, walls };
   }
 
-  /** Where to throw a bomb from `from`: the nearest grunt within the throw range, else the nearest sea square within it. null = none. */
-  _throwAt(m, from) {
-    const range = m.rules.throwRange, g = m.grid;
-    let best = null, bestD = INT_MAX;
-    for (const k of m.grunts) {
-      if (!k.alive) continue;
-      const d = Math.abs(k.at.x - from.x) + Math.abs(k.at.y - from.y);
-      if (d <= range && d < bestD) { bestD = d; best = k.at; }
-    }
-    if (best !== null) return best;
-    for (let y = from.y - range; y <= from.y + range; y++)
-      for (let x = from.x - range; x <= from.x + range; x++) {
-        const d = Math.abs(x - from.x) + Math.abs(y - from.y);
-        if (d <= range && d < bestD && g.in(x, y) && g.terrainAt(x, y) === Terrain.Water) { bestD = d; best = new Cell(x, y); }
+  /** The first step [dx, dy] of the shortest walk from `from` over squares `pass` allows to one `goal` accepts (breadth first, in the
+   *  arms' order), within `maxSteps`; [0, 0] when `from` already is one; null when none is reachable. */
+  _firstStep(m, from, pass, goal, maxSteps = Infinity) {
+    if (goal(from.x, from.y)) return [0, 0];
+    const g = m.grid, w = g.width, first = new Int32Array(w * g.height).fill(-1), depth = new Int32Array(w * g.height);
+    const q = [from.y * w + from.x];
+    first[q[0]] = 4;
+    for (let i = 0; i < q.length; i++) {
+      const c = q[i], cx = c % w, cy = (c / w) | 0;
+      if (depth[c] >= maxSteps) continue;
+      for (let k = 0; k < 4; k++) {
+        const x = cx + DX[k], y = cy + DY[k], n = y * w + x;
+        if (!g.in(x, y) || first[n] !== -1 || !pass(x, y)) continue;
+        first[n] = first[c] === 4 ? k : first[c]; depth[n] = depth[c] + 1;
+        if (goal(x, y)) return [DX[first[n]], DY[first[n]]];
+        q.push(n);
       }
-    return best;
+    }
+    return null;
   }
 
   /** The castle to build round: its own; or, with none (a ruined home), the castles in turn by slot, skipping ruins and those

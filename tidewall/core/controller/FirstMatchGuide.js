@@ -8,12 +8,14 @@
 //   CANNONS  place your cannons (n / granted)    CannonsGranted(perSlot[slot]), CannonPlaced(slot); READY: PlayerReady(slot)
 //   BATTLE   fire a shot, sink a ship            ShotFired(fromSlot), ShipSunk(bySlot)
 //   REPAIR   place a piece, close a ring         WallsPlaced(slot), LoopClosed(slot) (round a castle: the rules' own ring)
-import { CastleClaimed, CannonsGranted, CannonPlaced, PlayerReady, ShotFired, ShipSunk, WallsPlaced, LoopClosed } from '../match/Events.js';
+//   RAID     drop a bomb, blow up a raider       BombDropped(owner), GruntKilled(bySlot) (BOMBER_UC.md, the bomb rule set's own beat)
+import { CastleClaimed, CannonsGranted, CannonPlaced, PlayerReady, ShotFired, ShipSunk, WallsPlaced, LoopClosed, BombDropped, GruntKilled } from '../match/Events.js';
 
 const GOALS = Object.freeze({
   Claim: Object.freeze([{ id: 'claim', say: 'Pick a castle' }]),
   Cannons: Object.freeze([{ id: 'cannons', say: 'Place your cannons', count: true }, { id: 'ready', say: 'Ready' }]),
   Battle: Object.freeze([{ id: 'fire', say: 'Fire a shot' }, { id: 'sink', say: 'Sink a ship' }]),
+  Raid: Object.freeze([{ id: 'bomb', say: 'Drop a bomb' }, { id: 'raider', say: 'Blow up a raider' }]),
   Repair: Object.freeze([{ id: 'piece', say: 'Place a piece' }, { id: 'ring', say: 'Close a ring' }]),
 });
 
@@ -41,6 +43,8 @@ export class FirstMatchGuide {
       else if (e instanceof ShipSunk && e.bySlot === me) this.done.add('sink');
       else if (e instanceof WallsPlaced && e.slot === me) this.done.add('piece');
       else if (e instanceof LoopClosed && e.slot === me) this.done.add('ring');
+      else if (e instanceof BombDropped && e.owner === me) this.done.add('bomb');
+      else if (e instanceof GruntKilled && e.bySlot === me) this.done.add('raider');
     }
   }
 

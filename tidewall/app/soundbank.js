@@ -11,7 +11,7 @@
 import {
   ShotFired, ShotLanded, ShipSunk, WallsPlaced, WallBroken, LoopClosed, LastPieceGrace, PhaseChanged,
   BombDropped, BombPickedUp, BombThrown, BombLanded, BombSank, BombDefused, BombExploded, PlayerStunned, BombFumbled,
-  ItemBought, MetalPlaced, TrapPlaced, TrapSprung,
+  ItemBought, MetalPlaced, TrapPlaced, TrapSprung, PowerUpTaken, SoftBlockBroken,
 } from '../core/match/Events.js';
 import { Phase } from '../core/match/Entities.js';
 import { STORE_PACKS } from '../render/packs.js';
@@ -49,7 +49,19 @@ export const EVENT_SOUNDS = Object.freeze([
   { event: ItemBought, sound: 'itemBought' },
   { event: TrapPlaced, sound: 'trapPlaced' },
   { event: TrapSprung, sound: 'trapSprung' },
+  // the RAID (BOMBER_UC.md): a power-up taken chimes as a bought item does (the staged pickup chime), a soft block breaks as a brick does
+  { event: PowerUpTaken, sound: 'itemBought' },
+  { event: SoftBlockBroken, sound: 'wallBroken' },
 ]);
+
+/** SOUND_PLAN.md R3a: when a tick asks for more effect voices than VOICES_PER_TICK (app/sound.js), the highest rank win. AUTHORED
+ *  11-13: what a move achieved outranks its parts and its repeats (the ring closing over the piece that closed it, the metal piece's
+ *  own thunk over the plain placement it also makes, a sinking over the hits). Unlisted keys rank 0; a synth sound is 'synth:<name>'. */
+export const VOICE_RANK = Object.freeze({
+  ringClosed: 3, shipSunk: 3,
+  metalPlaced: 2, trapSprung: 2, bigBombBlast: 2, ceaseFire: 2, 'synth:Drum': 2,
+  wallsPlaced: 1, wallBroken: 1, bombBlast: 1, hitShip: 1, hitWall: 1, stunned: 1,
+});
 
 /** The rule an event makes a sound by, or null (most events are silent). */
 export function soundForEvent(e, ctx) {
@@ -64,7 +76,7 @@ export const MENU_SOUNDS = Object.freeze({ move: 'menuMove', pick: 'menuPick' })
 export const AMBIENCE = Object.freeze({ bed: 'sea', calls: 'gull', callGapSec: Object.freeze([6, 16]) });   // AUTHORED gap between gulls
 
 const BUILD = new Set([Phase.Claim, Phase.Repair, Phase.Score, Phase.Decide]);
-const BATTLE = new Set([Phase.Cannons, Phase.Battle]);
+const BATTLE = new Set([Phase.Cannons, Phase.Battle, Phase.Raid]);   // the RAID (BOMBER_UC.md) is a fight too: the battle music
 
 /** True when the match's phase decides the music: an attract demo, or a person's match on its play, pause, fate and results screens.
  *  The title, the join screen, the initials and the high scores (and the silent demo behind them) are menus. */

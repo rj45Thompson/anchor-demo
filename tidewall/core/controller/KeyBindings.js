@@ -180,7 +180,8 @@ export class KeyBindings {
   /** The how-to card's keyboard line (player 1's keys now). */
   howto() {
     const L = (a) => this.label(0, a);
-    return this.moveWord(0) + ' move, ' + L('confirm') + ' place / fire / bomb, ' + L('rotate') + ' turn, ' + L('swap') + ' tool, ' + L('grab')
+    // BOMBER_UC.md: one tool a beat, no tool to swap (the swap key is the no-bomb rules' sword alone, ?bombs=0)
+    return this.moveWord(0) + ' move, ' + L('confirm') + ' place / fire / bomb, ' + L('rotate') + ' turn, ' + L('grab')
       + ' grab bomb (hold: defuse), 1-4 shop';
   }
 
@@ -191,7 +192,7 @@ export class KeyBindings {
     const ready = seat === 0 && this.enterFree ? L('ready') + ' or Enter' : L('ready');
     const fixed = (f) => DEFAULT_KEYS[seat][f].map(keyName).join(' / ');
     const buy = DEFAULT_KEYS[seat].buy.map((k) => keyName(k[0]));
-    return move + ' move, ' + L('confirm') + ' place/fire/drop bomb, ' + L('rotate') + ' rotate, ' + L('swap') + ' swap tool (bombs), '
+    return move + ' move, ' + L('confirm') + ' place/fire/drop bomb, ' + L('rotate') + ' rotate, '
       + L('drop') + ' drop bomb, ' + L('grab') + ' pick up (hold: defuse), ' + buy[0] + '-' + buy[3].replace(/^Numpad /, '') + ' buy, '
       + fixed('trap') + ' trap, ' + ready + ' ready, ' + L('fast') + ' fast, ' + fixed('start') + ' pause, ' + fixed('back') + ' back';
   }

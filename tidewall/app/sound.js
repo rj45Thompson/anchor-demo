@@ -2,7 +2,8 @@
 // app/soundbank.js, and the ported Synth's samples where the soundbank keeps a synth sound on purpose.
 //
 // Three buses (R4) - music, effects (fx), ambience - each with its own volume, all under a master gain (the mute) and a limiter.
-// At most VOICES_PER_TICK new effect voices start in one game tick, so a volley of cannons is a roar and not a wall of clipping.
+// At most VOICES_PER_TICK new effect voices start in one game tick, so a volley of cannons is a roar and not a wall of clipping;
+// when a tick asks for more, the highest VOICE_RANK win (R3a), so the ring's fanfare is never the voice that gets dropped.
 // Music crossfades over CROSSFADE_SEC when what is on screen changes (R3); a loop plays between its file's loopStart and loopEnd
 // (the build pads every loop so the codec's edges never touch its seam). The ambience bus is ducked in battle.
 //
@@ -12,10 +13,19 @@
 //
 // A file that fails to load or decode (UC-S2 1b) is NEVER replaced by another sound: load() collects every failure and throws a
 // SoundLoadError naming each file and why; the page shows it on the title footer, and in development it stops the page.
-import { SOUNDS, EVENT_SOUNDS, MENU_SOUNDS, AMBIENCE, BUSES, soundForEvent } from './soundbank.js';
-import { ShotFired, ShotLanded, LoopClosed } from '../core/match/Events.js';
+import { SOUNDS, EVENT_SOUNDS, MENU_SOUNDS, AMBIENCE, BUSES, VOICE_RANK, soundForEvent } from './soundbank.js';
+import { ShotFired, ShotLanded, LoopClosed, BoulderThrown } from '../core/match/Events.js';
 
 export const VOICES_PER_TICK = 3;
+
+/** R3a: a tick already holds `ranks` (the voices started on it, in order) and is full; a voice of `rank` asks to start. Returns the
+ *  index of the voice it takes the place of - the lowest-ranked, the earliest of equals - if that one ranks below it, else -1 (it is
+ *  refused, and so is an equal: the first asked keeps its place). */
+export function evictFor(ranks, rank) {
+  let low = -1;
+  for (let i = 0; i < ranks.length; i++) if (ranks[i] < rank && (low < 0 || ranks[i] < ranks[low])) low = i;
+  return low;
+}
 export const CROSSFADE_SEC = 1;               // R3: about 1 s between two pieces of music
 export const DUCK = 0.35;                     // AUTHORED: the ambience bus in battle (-9 dB)
 export const SYNTH_VOLUME = 0.45;             // the original host's "normal" synth level (measured there)
@@ -56,10 +66,13 @@ export class SoundPlayer {
     this.synthBuffers = new Map();
     this.loadErrors = [];              // { file, why } for every file that did not load (shown on the title footer)
     this.loaded = false;
-    this.tick = -1; this.thisTick = 0;
+    this.tick = -1; this.tickVoices = [];   // the effect voices started on this.tick: { key, rank, src } (R3a)
     this.nextVariant = new Map();      // key -> index of the next variant (round robin)
     this.played = new Map();           // sound key -> count (a check reads it: "it makes sound" is a number)
     this.shots = new Map();            // shotId -> fired by a ship (a ShotLanded is told apart by who fired)
+    // the serpent's boulders (the full rules): thrown with a BoulderThrown, which names no shot id, and landing with a ShotLanded; each
+    // is known by where and on which tick it lands (BoulderThrown's tick + ticks: a shot lands exactly `ticks` later), an enemy's
+    this.boulders = new Set();
     this.music = null;                 // { key, src, gain }
     this.musicKey = null;              // what should be playing
     this.musicLog = [];                // { key, at (ctx seconds) } each time a piece starts (the page check reads it)
@@ -113,7 +126,7 @@ export class SoundPlayer {
   toggleMute() { this.settings = { ...this.settings, muted: !this.settings.muted }; this.applySettings(); return this.settings.muted; }
 
   /** A new match: forget the shots of the last one. */
-  newMatch() { this.shots.clear(); }
+  newMatch() { this.shots.clear(); this.boulders.clear(); }
 
   _count(key) { this.played.set(key, (this.played.get(key) || 0) + 1); }
 
@@ -169,29 +182,42 @@ export class SoundPlayer {
   /** One effect voice of a soundbank key (UC-S2 steps 2-3). `rate` shifts its pitch (a player's ring jingle). */
   play(key, tick, rate = 1) {
     if (this.settings.muted || this.ctx.state !== 'running') return false;
-    if (tick !== this.tick) { this.tick = tick; this.thisTick = 0; }
-    if (++this.thisTick > VOICES_PER_TICK) return false;
     const s = SOUNDS[key];
     if (!s) throw new Error('no sound ' + key + ' in the soundbank');
     const i = this.nextVariant.get(key) || 0;
-    this.nextVariant.set(key, (i + 1) % s.files.length);
     const buf = this._buffer(s.files[i].file);
     if (buf === null) return false;
+    if (!this._admit(key, tick)) return false;
+    this.nextVariant.set(key, (i + 1) % s.files.length);
     const src = this.ctx.createBufferSource();
     src.buffer = buf; src.playbackRate.value = rate;
     const g = this.ctx.createGain();
     g.gain.value = s.vol;
     src.connect(g).connect(this.bus[s.bus]);
     src.start();
-    this._count(key);
+    this._started(key, src);
     return true;
   }
+
+  /** R3a: may a voice of `key` start on `tick`? A tick holds at most VOICES_PER_TICK; a full one gives up its lowest-ranked voice to a
+   *  higher-ranked one. The voice given up started on this same tick, so it is stopped before it is heard and no longer counted. */
+  _admit(key, tick) {
+    if (tick !== this.tick) { this.tick = tick; this.tickVoices = []; }
+    if (this.tickVoices.length < VOICES_PER_TICK) return true;
+    const i = evictFor(this.tickVoices.map((v) => v.rank), VOICE_RANK[key] || 0);
+    if (i < 0) return false;
+    const [v] = this.tickVoices.splice(i, 1);
+    v.src.stop();
+    this.played.set(v.key, this.played.get(v.key) - 1);
+    return true;
+  }
+
+  _started(key, src) { this.tickVoices.push({ key, rank: VOICE_RANK[key] || 0, src }); this._count(key); }
 
   /** A sound of the ported Synth that the soundbank keeps on purpose. Counted as "synth:<Sfx name>". */
   playSynth(name, tick, variant = 0) {
     if (this.settings.muted || this.ctx.state !== 'running') return false;
-    if (tick !== this.tick) { this.tick = tick; this.thisTick = 0; }
-    if (++this.thisTick > VOICES_PER_TICK) return false;
+    if (!this._admit('synth:' + name, tick)) return false;
     const sfx = this.synth.Sfx[name], key = sfx * 16 + variant;
     let b = this.synthBuffers.get(key);
     if (!b) {
@@ -205,23 +231,32 @@ export class SoundPlayer {
     src.buffer = b; g.gain.value = SYNTH_VOLUME;
     src.connect(g).connect(this.bus.fx);
     src.start();
-    this._count('synth:' + name);
+    this._started('synth:' + name, src);
     return true;
   }
 
   /** The sound an event makes, if any (app/soundbank.js decides). `audible` false (the silent demo) still follows who fired what. */
   forEvent(e, audible) {
     if (e instanceof ShotFired) this.shots.set(e.shotId, e.fromSlot < 0);
+    const boulder = (at, tick) => at.x + ',' + at.y + '@' + tick;
+    if (e instanceof BoulderThrown) this.boulders.add(boulder(e.target, e.tick + e.ticks));
     const landed = e instanceof ShotLanded;
     if (audible) {
-      const r = soundForEvent(e, { byShip: (id) => { const v = this.shots.get(id); if (v === undefined) throw new Error('sound: shot ' + id + ' landed, but no ShotFired for it was seen'); return v; } });
+      const r = soundForEvent(e, { byShip: (id) => {
+        const v = this.shots.get(id);
+        if (v !== undefined) return v;
+        if (landed && this.boulders.has(boulder(e.target, e.tick))) return true;   // the serpent's boulder strikes as a ship's ball does
+        throw new Error('sound: shot ' + id + ' landed, but no ShotFired (and no boulder thrown to land there now) was seen'); } });
       if (r !== null) {
         if (r.synth) this.playSynth(r.synth, e.tick);
         else this.play(r.sound, e.tick, SOUNDS[r.sound].transposeBySlot && e instanceof LoopClosed ? Math.pow(2, (e.slot * 2) / 12) : 1);
       }
     }
-    if (landed) this.shots.delete(e.shotId);
+    if (landed) { this.shots.delete(e.shotId); this.boulders.delete(boulder(e.target, e.tick)); }
   }
+
+  /** CASTLE_RISE_UC.md UC-L8 3: a piece of a castle's rise has landed - the wall's own stone thunk at `rate` (riseplan.js thunkRate). */
+  riseThunk(rate, tick) { return this.play('wallsPlaced', tick, rate); }
 
   /** A menu move or pick (app/main.js). */
   menu(which, tick) { return this.play(MENU_SOUNDS[which], tick); }

@@ -15,7 +15,7 @@
 // whether phones may join, QUIT and the match events. With no host the page is the web page it always was.
 import { GAME_TITLE } from './title.js';
 import { readHost } from './host.js';
-import { InputHub, SEATS } from './input.js';
+import { InputHub, SEATS, tickMoments, PointerSquare } from './input.js';
 import { Overlay, HintStrip } from './overlay.js';
 import { SoundPlayer, SoundLoadError } from './sound.js';
 import { musicFor, duckFor, bedFor } from './soundbank.js';
@@ -45,6 +45,11 @@ const MOTION_KEY = GAME_TITLE.toLowerCase() + '-motion';   // SETTINGS_UC.md UC-
 const KEYS_KEY = GAME_TITLE.toLowerCase() + '-keys';       // UC-ST3: the rebound keys, KeyBindings.save()
 const GUIDE_HOLD = 1.6;                                    // AUTHORED (UC-T2): seconds a finished phase's ticked goals stay up
 const SMOOTH_FRAMES = 10, SMOOTH_MS = 40, REVEAL_MAX = 4;   // AUTHORED (LOAD_UC.md UC-L7 step 3): the game shows once it runs smoothly
+// AUTHORED (CONTROLS_SMOOTH_UC.md UC-C2 step 1): a started match shows once the GPU keeps up with its island - HOLD_SMOOTH frames in a
+// row whose GPU work is done within SMOOTH_MS of their start (three shadow-map redraws, renderer.js SHADOW_EVERY 2: after the island's
+// draw the shadow frames were the slow ones, 11-13) - or HOLD_MAX s after its draw, whichever is first (as the boot's reveal: a device
+// that never runs smoothly still plays)
+const HOLD_SMOOTH = 6, HOLD_MAX = REVEAL_MAX;
 const LIFT_PX = 64;                                        // AUTHORED (UC-P4): a dragged ghost rides this far above the finger (a fingertip ~40 px)
 const TEXT_KEY = GAME_TITLE.toLowerCase() + '-text';       // UC-ST4: the text size percent, the bare number
 
@@ -134,6 +139,9 @@ class Game {
     this.seed = sw.seed ?? (Date.now() & 0x7fffffff);
     this.ticks = 0;
     this.acc = 0;
+    this.preparing = false;       // UC-C2 step 1: false, or 'draw' / 'settle' while a new island is got ready (prepareLevel): no tick runs
+    this.prepared = null;
+    this.settle = null;
     this.events = [];             // events presented since the last drawn frame (the renderer's view.events)
     this.endedAt = -1;
     this.wasPresent = new Array(SEATS).fill(true);
@@ -141,9 +149,14 @@ class Game {
     this.phonesOpened = false;
     this.shopOpen = false;         // a touch screen's shop row is open
     this.pointerMode = false;      // the mouse player's hero follows the pointer (set when it moves in play, cleared by their stick)
+    this.mouseSquare = new PointerSquare();   // UC-C2: the square the mouse names, picked when it moves, not again under a moving camera
     /** The page check's brake: when set, it is asked after every tick whether to stop there; the page then keeps drawing without
      *  ticking until the check clears `braked`. phaseTick is the tick the current (round, phase) began. */
     this.brake = null; this.braked = false; this.phaseKey = ''; this.phaseTick = 0;
+    /** The page check's still frame: while set, every frame is drawn with no time passing (dt 0, the clock where it stood), so two
+     *  pictures of one moment differ only by what the check changed between them (run_page rise_drawn: a hero's idle pose and the
+     *  waving flags were counted as a column's noise, 11-13). */
+    this.still = false; this.clock = 0;
     const wake = () => { this.sound.wake(); };
     window.addEventListener('keydown', wake);
     // graphics quality: high <-> low (the settings' GRAPHICS row follows it)
@@ -373,8 +386,8 @@ class Game {
     if (a.kind === MenuActionKind.KeysChanged) { this.saveKeys(); this.sound.menu('pick', this.ticks); return; }   // UC-ST3 step 3
     this.sound.menu('pick', this.ticks);
     switch (a.kind) {
-      case MenuActionKind.StartGame: this.startMatch(false, this.menu.joined.slice()); break;
-      case MenuActionKind.Restart: this.startMatch(false, this.menu.joined.slice()); break;
+      case MenuActionKind.StartGame: this.startMatch(false, this.menu.joined.slice()); this.prepareLevel(Screen.Setup); break;
+      case MenuActionKind.Restart: this.startMatch(false, this.menu.joined.slice()); this.prepareLevel(Screen.Pause); break;
       case MenuActionKind.QuitToTitle: this.menu.toTitle(); this.startMatch(true, null); break;
       case MenuActionKind.StartDemo: break;                                   // the demo is already playing behind the title
       case MenuActionKind.Decide: this.controller.decide(a.flag); break;
@@ -384,6 +397,47 @@ class Game {
         this.menu.toTitle(); this.startMatch(true, null); break;            // a web page cannot close itself: back to the title
       default: throw new Error('no handler for menu action ' + a.kind);
     }
+  }
+
+  /** CONTROLS_SMOOTH_UC.md UC-C2 step 1: the island setMatch just built has its pipelines built before it is played. A started match
+   *  (`screen`: the join screen or the pause menu it was started from) holds that screen, taking no input, until the renderer's one
+   *  draw of everything the island draws later has been done by the GPU, and the GPU then finishes HOLD_SMOOTH frames in a row
+   *  within SMOOTH_MS of their start (or HOLD_MAX s have passed, as the boot's reveal). While it holds, the match's overlays and HUD
+   *  are painted unseen (frame: warming; renderer.warmPlayingHud), so what the match shows first has been drawn once. Measured 11-13
+   *  (run_page ctl): after the island's draw the held frames still finished 73-165 ms late on the GPU, and the overlays' and the
+   *  HUD's first paint (Skia building its raster programs) made the match's first frames 53-159 ms; the gate waits both out. A new
+   *  island mid-match (`screen` null) holds the rules the same way. The rules never run while it lasts, so no tick is caught up
+   *  after it and no press is lost to it. prepared: the hold (the page check reads it). */
+  prepareLevel(screen) {
+    if (this.preparing) throw new Error('prepareLevel: a level is already being prepared');
+    if (screen !== null) this.menu.hold(screen);
+    const from = performance.now();
+    this.preparing = 'draw';
+    this.renderer.prepareLevel().then(() => {
+      this.prepared = { drawMs: Math.round(performance.now() - from), screen };
+      this.settle = { from, drawn: performance.now(), run: 0, screen, frames: [] };
+      this.preparing = 'settle';                                              // frame() ends it (settleLevel)
+    }, (e) => { this.stopped = true; console.error(e); showFatal('The graphics device failed while the island was got ready: ' + e); });
+  }
+
+  /** prepareLevel's second half, at the start of each frame while it settles: the hold ends once the GPU has finished HOLD_SMOOTH
+   *  frames in a row within SMOOTH_MS of their start, or HOLD_MAX s after the island's draw. Measured on the GPU, not by the frames'
+   *  spacing: 11-13 the held frames came 12-17 ms apart while their GPU work finished 73-165 ms late (the browser queues frames ahead
+   *  of a GPU that lags), and the first frames of the match then stalled 52 and 159 ms. */
+  settleLevel() {
+    const s = this.settle, now = performance.now();
+    while (s.frames.length > 0 && s.frames[0].done !== null) { const f = s.frames.shift(); s.run = f.done - f.t < SMOOTH_MS ? s.run + 1 : 0; }
+    if (s.run < HOLD_SMOOTH && now - s.drawn < HOLD_MAX * 1000) {
+      const f = { t: now, done: null };                                        // this frame: when the GPU finishes what it submits
+      s.frames.push(f);
+      queueMicrotask(() => this.renderer.renderer.backend.device.queue.onSubmittedWorkDone().then(() => { f.done = performance.now(); }));
+      return;
+    }
+    this.preparing = false; this.settle = null; this.acc = 0;
+    Object.assign(this.prepared, { ms: Math.round(now - s.from), smooth: s.run >= HOLD_SMOOTH, at: Math.round(now) });
+    // UC-C2 3b: what was pressed on the held screen is dropped (a second START must not pause the match it started); a press made
+    // while a new island got ready mid-match is kept for the first tick, as any press is
+    if (s.screen !== null) { this.input.take(); this.input.takePointer(); this.menu.playing(); }
   }
 
   /** Use case 2a: a human seat whose every device went away is marked disconnected in the model; its return takes the seat back. */
@@ -431,7 +485,8 @@ class Game {
    *  wheel zooms the camera, input.js), middle click is
    *  ready (Tab too). `fields` is the slot's PadInput fields from its keys and pads, merged here. */
   pointerToPlay(fields, p) {
-    const stick = fields.stickX !== 0 || fields.stickY !== 0;
+    // a stick push, or a key / d-pad press shorter than a tick (its latched step), hands the hero back from the pointer
+    const stick = fields.stickX !== 0 || fields.stickY !== 0 || fields.stepX !== 0 || fields.stepY !== 0;
     const out = Object.assign({}, fields);
     if (p.touch) {
       // a finger: the square under it is picked ONCE, when it touches, and the tap acts on that square when it lifts. It is not
@@ -463,10 +518,8 @@ class Game {
     } else {
       if (p.moved) this.pointerMode = true;
       if (stick && !p.moved) this.pointerMode = false;
-      if (this.pointerMode && !Number.isNaN(p.x)) {
-        const c = this.renderer.pickCell(p.x, p.y);
-        if (c !== null) { out.hasPointer = true; out.pointer = new Cell(c.x, c.y); }
-      }
+      const c = this.mouseSquare.at(p, (x, y) => this.renderer.pickCell(x, y));
+      if (this.pointerMode && c !== null) { out.hasPointer = true; out.pointer = new Cell(c.x, c.y); }
     }
     out.confirm = fields.confirm || p.confirm; out.rotate = fields.rotate || p.rotate; out.ready = fields.ready || p.ready; out.swap = fields.swap || p.swap;
     out.grab = fields.grab || p.grab; out.tap = fields.tap || p.tap;   // the right button in the bomb rule set (input.js)
@@ -484,9 +537,11 @@ class Game {
     if (document.body.style.cursor !== want) document.body.style.cursor = want;
   }
 
-  gameTick() {
+  /** One tick of the rules. `at`: the moment (performance.now() ms) the tick stands for (tickMoments): it takes the input as it was
+   *  then (CONTROLS_SMOOTH_UC.md UC-C2 step 3). */
+  gameTick(at) {
     this.ticks++;
-    const seats = this.input.take();
+    const seats = this.input.take(at);
     const menuIn = seats.map((s) => new MenuInput(s.menu));
     const ptr = this.input.takePointer();
     const wasPlaying = this.menu.screen === Screen.Playing && !this.demo;   // a click that started the match is not a move in it
@@ -530,7 +585,10 @@ class Game {
     const key = this.model.round + ':' + this.model.phase;
     if (key !== this.phaseKey) { this.phaseKey = key; this.phaseTick = this.model.tick; }
     if (this.brake && this.brake(this)) this.braked = true;
-    if (this.model.grid !== this.grid) { this.grid = this.model.grid; this.renderer.setMatch(this.model, this.seatOf); }   // a new island
+    if (this.model.grid !== this.grid) {                                    // a new island: its pipelines are built before it is played
+      this.grid = this.model.grid; this.renderer.setMatch(this.model, this.seatOf);
+      if (!this.demo) this.prepareLevel(null);
+    }
     if (this.demo && this.model.ended) {
       if (this.endedAt < 0) this.endedAt = this.ticks;
       else if (this.ticks - this.endedAt >= DEMO_RESTART) this.startMatch(true, null);
@@ -540,13 +598,19 @@ class Game {
   frame(dt, seconds) {
     // UC-ST3 step 2: while the KEYS page waits, the next key press is its new key and is not played
     this.input.captureKey = this.menu.keysWaiting ? (code) => { for (const a of this.menu.keyPressed(code)) this.act(a); } : null;
-    this.input.poll();
+    const now = performance.now();
+    if (this.preparing === 'settle') this.settleLevel();
+    this.input.poll(now);
     this.showTextSize();
     this.acc += Math.min(dt, 0.25) * this.sw.speed;
     let steps = 0;
     const max = 8 * this.sw.speed;
-    while (this.acc >= STEP && steps < max && !this.braked) { this.gameTick(); this.acc -= STEP; steps++; }
-    if (this.braked) this.acc = 0;
+    // UC-C2 step 3: the moments this frame's ticks stand for, counted the way the loop below counts them (the same subtractions)
+    let n = 0;
+    for (let a = this.acc; a >= STEP && n < max; a -= STEP) n++;
+    const at = tickMoments(now, n, 1000 * STEP / this.sw.speed);
+    while (this.acc >= STEP && steps < max && !this.braked && !this.preparing) { this.gameTick(at[steps]); this.acc -= STEP; steps++; }
+    if (this.braked || this.preparing) this.acc = 0;
     if (this.acc > STEP * max) this.acc = STEP * max;   // a stalled tab does not owe a burst of ticks when it comes back
     const alpha = Math.min(1, this.acc / STEP);
     const events = this.events; this.events = [];
@@ -556,9 +620,18 @@ class Game {
     // the camera's hints: the human players it frames (bots never steer it), the pointer player (its hero follows a still pointer,
     // so the camera must not follow that hero), the on-screen controls it keeps its frame clear of, and the player's own zoom/pan
     const playing = !this.demo && !this.sw.attract;
+    // CONTROLS_SMOOTH_UC.md UC-C2 step 1: while a started match is held (prepareLevel), the overlays its Playing screen shows (the
+    // action bar, the hint strip, the touch controls) are laid out and painted as they will be, all but transparent and untouchable
+    // (style.css body.warming): their FIRST paint cost the GPU 50-160 ms in the match's first frames (measured 11-13, run_page ctl:
+    // with the bar, the strip and #ui hidden by a style the first 5 s ran at most 35 ms a frame; the bar alone hidden, 53 ms; the strip
+    // alone hidden, 105 ms).
+    // .warmed is the frame after, so the hint strip's opacity fade does not run as they come in.
+    const warming = this.preparing !== false && this.menu.holding, inPlay = this.menu.screen === Screen.Playing || warming;
+    const body = document.body.classList;
+    if (warming) body.add('warming'); else if (body.contains('warming')) { body.remove('warming'); body.add('warmed'); } else body.remove('warmed');
     // the hint strip: in the first round of the first match, while it is being played; under the top bar, or below any on-screen
     // control it would sit on (its rect is then a cover rect, so the camera frames round it)
-    const hinting = playing && this.model === this.hintMatch && this.model.round === this.hintRound && this.menu.screen === Screen.Playing;
+    const hinting = playing && this.model === this.hintMatch && this.model.round === this.hintRound && inPlay;
     let phaseName = Object.keys(core.Phase).find((k) => core.Phase[k] === this.model.phase);
     // UC-T2: a phase whose goals were all done stays on the strip, ticked, for GUIDE_HOLD s into the next (a lone player's claim ends
     // CLAIM on the tick it is made, and its tick would never be seen)
@@ -578,7 +651,7 @@ class Game {
     if (this.touchpad.takeShop()) this.shopOpen = !this.shopOpen;
     if (!(playing && bombs && repair && touch)) this.shopOpen = false;
     this.touchpad.setShop(playing && bombs && repair && touch && this.menu.screen === Screen.Playing, this.shopOpen);
-    const bar = playing && this.menu.screen === Screen.Playing && (!touch || this.shopOpen);
+    const bar = playing && inPlay && (!touch || this.shopOpen);
     this.bar.show(bar);
     this.touchpad.setBombs(bombs);
     const mp = playing ? this.model.player(this.mouseSlot) : null;
@@ -589,11 +662,13 @@ class Game {
       // the full rules: rotate picks what CANNONS places (cannon, mortar, kite) and aims the kite in BATTLE (MatchController.placeOf)
       full: this.model.options.full, gun: this.model.options.full ? ['cannon', 'mortar', 'kite'][this.controller.placeOf(this.mouseSlot)] : 'cannon',
     };
-    // the touch buttons say what they do now: A the action bar's own label for its place / fire / drop button (one rule for both), B
-    // grab (bombs) or turn (the base rules' REPAIR), Y ready in CANNONS and tool in BATTLE and REPAIR
+    // the touch buttons say what they do now: A the action bar's own label for its place / fire / bomb button (one rule for both), B
+    // grab (the RAID: THROW with a bomb in hand) or turn (REPAIR), Y ready in CANNONS (and the tool in BATTLE and REPAIR in the no-bomb
+    // rules: with bombs there is one tool a beat, BOMBER_UC.md R3)
     if (act && touch) {
-      const tools = act.phase === 'Battle' || act.phase === 'Repair';
-      this.touchpad.setCaptions({ confirm: PLACE_ACTION.label(act).toUpperCase(), rotate: bombs ? 'GRAB' : act.phase === 'Repair' ? 'TURN' : '',
+      const tools = !bombs && (act.phase === 'Battle' || act.phase === 'Repair');
+      this.touchpad.setCaptions({ confirm: PLACE_ACTION.label(act).toUpperCase(),
+                                  rotate: act.phase === 'Raid' ? (act.carrying ? 'THROW' : 'GRAB') : act.phase === 'Repair' ? 'TURN' : '',
                                   ready: act.phase === 'Cannons' ? 'READY' : tools ? 'TOOL' : '' });
     }
     if (bar) {
@@ -617,7 +692,7 @@ class Game {
     const menuCover = !this.sw.attract && this.menu.screen === Screen.Setup && !this.menu.settingsOpen
       ? ['[data-phonepad]', '#ui .howto'].map((q) => document.querySelector(q)).filter(Boolean).map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0)
       : [];
-    this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha, camera, menuCover }, dt);
+    this.renderer.frame({ match: this.model, controllers: [this.controller], hud: this.controller.hud, menu: this.menu, events, alpha, camera, menuCover, warmPlaying: warming }, dt);
     // UC-S2: the music for what is on screen (crossfaded on a change), the ambience ducked in battle
     const boss = this.model.ships.some((s) => s.alive && s.kind === core.ShipKind.Boss);   // BOSS_UC.md UC-B1: its theme while it is afloat
     const scene = { screen: this.menu.screen, demo: this.demo, attract: this.sw.attract, phase: this.model.phase, boss };
@@ -628,6 +703,8 @@ class Game {
     // (the thunder is a store pack's, render/packs.js: without it a strike is seen, not heard)
     if (STORE_PACKS && strikes > (this.strikesHeard ?? strikes)) { this.sound.play('thunderCrack', this.ticks); this.sound.playIn('thunderBoom', 0.25 + Math.random() * 0.85); }
     this.strikesHeard = strikes;
+    // CASTLE_RISE_UC.md UC-L8 3: each landed piece of a castle's rise is heard - the wall's stone thunk, pitched up as the ring fills
+    for (const rate of this.renderer.units.rise.takeLandings()) if (!this.silent) this.sound.riseThunk(rate, this.ticks);
     this.pointerCursor();
     const joinScreen = !this.sw.attract && this.menu.screen === Screen.Setup && !this.menu.settingsOpen && !this.menu.infoOpen;
     // the phone room: opened when a join screen shows and the CONTROLS choice includes phones, closed when LOCAL is chosen; its
@@ -638,7 +715,7 @@ class Game {
     }
     if (!phones && this.phones.state !== 'off') { this.phones.close(); this.input.attachPhones(null); }
     this.phones.show(joinScreen && phones);
-    this.touchpad.show(this.controls.showsTouch && !this.sw.attract && !this.demo && this.menu.screen === Screen.Playing);
+    this.touchpad.show(this.controls.showsTouch && !this.sw.attract && !this.demo && inPlay);
     this.overlay.render({
       screen: this.menu.screen, inDemo: this.menu.inDemo, attract: this.sw.attract, devices: this.input.devices,
       phones: { state: this.phones.state, reason: this.phones.reason }, scoresNote: this.scoresNote, controls: this.controls.mode,
@@ -675,7 +752,8 @@ class Game {
     const loop = (now) => {
       if (this.stopped) return;
       const dt = last === null ? 0 : (now - last) / 1000; last = now;
-      try { this.frame(dt, now / 1000); }
+      if (!this.still) this.clock = now / 1000;
+      try { this.frame(this.still ? 0 : dt, this.clock); }
       catch (e) {
         this.stopped = true;
         console.error(e);

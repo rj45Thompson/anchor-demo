@@ -21,10 +21,11 @@ const icon = (k) => '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' +
  *  core/controller/KeyBindings.js (P1's keys now: s.keysHowto replaces the keys row), mouse input.js (left acts, right click turns, middle is ready, the wheel zooms), touch
  *  controls.js TouchPad, phones PhonePad's A/B/Y. */
 const HOWTO_ROWS = Object.freeze({
-  keys: 'WASD move, Space place / fire / bomb, R turn, Tab tool, F grab bomb (hold: defuse), 1-4 shop',
-  mouse: 'Click place / fire / bomb, right click grab a bomb (hold: defuse), the buttons below: tool, shop, ready',
-  touch: 'Stick move, A place / fire / bomb, B grab bomb (hold: defuse), Y tool / ready; pinch to zoom',
-  phone: 'Scan the code, A joins; A place / fire / bomb, B grab bomb (hold: defuse), Y tool / ready',
+  // BOMBER_UC.md: one tool a beat (no tool swap); the bombs, B's grab and its defuse are the RAID's
+  keys: 'WASD move, Space place / fire / bomb, R turn, F grab bomb (hold: defuse), 1-4 shop',
+  mouse: 'Click place / fire / bomb, right click turn or grab a bomb (hold: defuse), the buttons below: shop, ready',
+  touch: 'Stick move, A place / fire / bomb, B turn or grab bomb (hold: defuse), Y ready; pinch to zoom',
+  phone: 'Scan the code, A joins; A place / fire / bomb, B turn or grab bomb (hold: defuse), Y ready',
 });
 
 /** A how-to row: the keys row from the bindings now when the page passes them (s.keysHowto), the others as written. */
@@ -50,8 +51,11 @@ export function howtoDevices(mode, touchFirst) {
 export const PHASE_HINTS = Object.freeze({
   Claim: { say: 'Pick a castle', touch: 'tap one', desk: (k) => 'click one, or walk there and press ' + k('confirm') + ' / A' },
   Cannons: { say: 'Place cannons inside your walls', touch: 'drag one in, lift to place; then Y', desk: (k) => 'click inside, then Ready (' + k('ready') + ' / Y)' },
-  Battle: { say: 'Fire at ships', touch: 'tap a ship; Y takes out bombs', desk: (k) => 'click a ship, or aim and press ' + k('confirm') + '; ' + k('swap') + ' takes out bombs' },
-  Repair: { say: 'Close the ring with pieces', touch: 'drag a piece, lift to place; hold B to defuse', desk: (k) => 'click to place, ' + k('rotate') + ' turns; hold right click to defuse a bomb; 1-4 shop' },
+  Battle: { say: 'Fire at ships', touch: 'tap a ship', desk: (k) => 'click a ship, or aim and press ' + k('confirm') },
+  // BOMBER_UC.md step 1: the RAID's strip says what to do there
+  Raid: { say: 'Bomb the raiders', touch: 'stick walks, A drops a bomb, B grabs one (hold: defuse)',
+          desk: (k) => k('up') + k('left') + k('down') + k('right') + ' walk, ' + k('confirm') + ' drops a bomb, ' + k('grab') + ' grabs one (hold: defuse)' },
+  Repair: { say: 'Close the ring with pieces', touch: 'drag a piece, lift to place', desk: (k) => 'click to place, ' + k('rotate') + ' turns; 1-4 shop' },
 });
 
 /** The CSS zoom an element is drawn at (TEXT SIZE, style.css --ts): a px offset written to its style is multiplied by it, so a place

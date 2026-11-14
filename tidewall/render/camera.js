@@ -40,6 +40,10 @@ const HOME_WALLS = 7, REPAIR_NEAR = 4;
 // the nearest one is
 const SHIPS_FRAMED = 3, SPREAD_ARC = THREE.MathUtils.degToRad(150);
 const THREAT_SHIP = 10, THREAT_GRUNT = 4, BOMB_NEAR = 3, EVENT_NEAR = 10, EVENT_SECONDS = 1.8;   // AUTHORED: squares and seconds
+// AUTHORED (BOMBER_UC.md step 1): the RAID frames the hero and the raiders and power-ups within RAID_NEAR squares of it, and the lit
+// bombs near it: a close, hero-centred view as Bomberman's (11-13 frames: framing the nearest raider wherever it was pulled the camera out
+// and pushed the hero to the screen's top edge, under the hint strip; a raider farther off has its edge mark)
+const RAID_NEAR = 6;
 // AUTHORED motion: spring stiffness (1/s) for the ground target and for the distance (slower: pan faster than zoom), the dead zone
 // (squares of target, fraction of distance) inside which the goal does not move, and the player's own camera
 const PAN_OMEGA = 4.2, ZOOM_OMEGA = 2.6, DEAD_ZONE = 1.0, DEAD_ZOOM = 0.06;
@@ -148,6 +152,18 @@ export class CameraDirector {
           }
           for (const gr of match.grunts) { const p = { x: gr.at.x + 0.5, z: gr.at.y + 0.5 }; if (gr.alive && near(p, own, THREAT_GRUNT)) pts.push(p); }
           pts.push(...this.bombPoints(match, own, hero));
+          break;
+        }
+        case Phase.Raid: {
+          if (!hero || !hero.g.visible) { pts.push(...own); break; }        // no hero this raid (2b): its own area
+          const at = { x: hero.at.x, z: hero.at.z }, d = (p) => Math.max(Math.abs(p.x - at.x), Math.abs(p.z - at.z));
+          // the pointer player's hero walks to the square under a still pointer, so a frame that chased it would walk it on: it is
+          // framed with its home instead, and the frame grows as it walks off rather than following it (11-13 frame: framing nothing
+          // for it showed the whole island, the hero a speck)
+          if (pointer) pts.push(...own, at);
+          for (const gr of match.grunts) { const p = { x: gr.at.x + 0.5, z: gr.at.y + 0.5 }; if (gr.alive && d(p) <= RAID_NEAR) pts.push(p); }
+          for (const u of match.powerUps) { const p = { x: u.at.x + 0.5, z: u.at.y + 0.5 }; if (u.shown && d(p) <= RAID_NEAR) pts.push(p); }
+          pts.push(...this.bombPoints(match, [], hero));
           break;
         }
         case Phase.Repair: {

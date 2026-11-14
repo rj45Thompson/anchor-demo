@@ -16,45 +16,49 @@
 // for a movable action now, core/controller/KeyBindings.js label: a rebind shows at once, UC-ST3), enterReady (Enter is READY too),
 // full (the full rules are on), gun ('cannon' | 'mortar' | 'kite': what CANNONS places now under the full rules) }.
 
-const IN_PLAY = (c) => c.phase === 'Claim' || c.phase === 'Cannons' || c.phase === 'Battle' || c.phase === 'Repair';
+const IN_PLAY = (c) => c.phase === 'Claim' || c.phase === 'Cannons' || c.phase === 'Battle' || c.phase === 'Repair' || c.phase === 'Raid';
 const TOOL_PHASE = (c) => c.phase === 'Battle' || c.phase === 'Repair';
 const BOMBS = (c) => c.bombs;
-const SHOP = [['metal', 'Metal', 'piece, 6 hits'], ['trap', 'Trap', 'spikes'], ['bombPack', 'Bombs', '+3 bombs'], ['bigBomb', 'Big bomb', 'next one']];
+// BOMBER_UC.md R3: the bombs are the RAID's, one tool a beat - its buttons show in the RAID alone, and no Swap tool shows with bombs on
+const RAID = (c) => c.bombs && c.phase === 'Raid';
+// BOMBER_UC R18: the shop row and Set trap are hidden in the RAID (a Bomberman beat shows bombs, fire and speed, not a shop)
+const SHOP_SHOWN = (c) => c.bombs && c.phase !== 'Raid';
+const SHOP = [['metal', 'Metal', 'piece, 6 hits'], ['trap', 'Trap', 'spikes'], ['bombPack', 'Bombs', '+1 at once'], ['bigBomb', 'Big bomb', 'next one']];
 
 import { zoomOf } from './overlay.js';
 
 export const ACTIONS = Object.freeze([
   Object.freeze({
     id: 'place', field: 'confirm', keys: (c) => c.key('confirm') + ' / click',
-    label: (c) => (c.sword && TOOL_PHASE(c) ? (c.bombs ? (c.carrying ? 'Throw' : 'Drop') : 'Swing') : c.phase === 'Cannons' && c.full ? 'Place ' + c.gun : ({ Claim: 'Claim', Cannons: 'Place', Battle: 'Fire', Repair: 'Place' })[c.phase] || 'Place'),
+    label: (c) => (RAID(c) ? (c.carrying ? 'Throw' : 'Bomb') : c.sword && TOOL_PHASE(c) ? 'Swing' : c.phase === 'Cannons' && c.full ? 'Place ' + c.gun
+      : ({ Claim: 'Claim', Cannons: 'Place', Battle: 'Fire', Repair: 'Place' })[c.phase] || 'Place'),
+    tool: (c) => (RAID(c) ? 'x' + c.bombsLeft : ''),            // the RAID: how many more of its bombs the hero may light now
     enabled: IN_PLAY,
   }),
   // the full rules: in CANNONS rotate switches what is placed (cannon, mortar, kite), in BATTLE it aims the kite instead of a cannon
-  Object.freeze({ id: 'rotate', field: 'rotate', keys: (c) => (c.bombs ? c.key('rotate') : c.key('rotate') + ' / right click'),
+  Object.freeze({ id: 'rotate', field: 'rotate', keys: (c) => c.key('rotate') + ' / right click',
     label: (c) => (c.full && c.phase === 'Cannons' ? 'Switch' : c.full && c.phase === 'Battle' ? 'Kite aim' : 'Rotate'),
+    visible: (c) => !RAID(c),
     enabled: (c) => !c.sword && (c.phase === 'Repair' || (c.full && (c.phase === 'Cannons' || c.phase === 'Battle'))) }),
+  // the RAID's B (BOMBER_UC.md step 13): a tap picks up (or throws the bomb in hand), a hold puts one out
+  Object.freeze({ id: 'pickup', field: 'pickUp', keys: (c) => c.key('grab') + ' / right click', label: (c) => (c.carrying ? 'Throw' : 'Pick up'), visible: RAID, enabled: RAID }),
+  Object.freeze({ id: 'defuse', field: 'defuse', hold: true, keys: (c) => 'hold ' + c.key('grab') + ' / right', label: () => 'Defuse', visible: RAID, enabled: RAID }),
   Object.freeze({
-    id: 'drop', field: 'drop', keys: (c) => c.key('drop'), label: (c) => (c.carrying ? 'Throw' : 'Drop bomb'), visible: BOMBS, enabled: TOOL_PHASE,
-    tool: (c) => (c.bombs ? 'x' + c.bombsLeft : ''),
-  }),
-  Object.freeze({ id: 'pickup', field: 'pickUp', keys: (c) => c.key('grab') + ' / right click', label: () => 'Pick up', visible: BOMBS, enabled: (c) => TOOL_PHASE(c) && !c.carrying }),
-  Object.freeze({ id: 'defuse', field: 'defuse', hold: true, keys: (c) => 'hold ' + c.key('grab') + ' / right', label: () => 'Defuse', visible: BOMBS, enabled: TOOL_PHASE }),
-  Object.freeze({
-    id: 'swap', field: 'swap', keys: (c) => c.key('swap'), label: () => 'Swap tool', enabled: TOOL_PHASE,
+    id: 'swap', field: 'swap', keys: (c) => c.key('swap'), label: () => 'Swap tool', enabled: TOOL_PHASE, visible: (c) => !c.bombs,
     on: (c) => c.sword && TOOL_PHASE(c),
-    tool: (c) => (!TOOL_PHASE(c) ? '' : c.sword ? (c.bombs ? 'BOMBS' : 'SWORD') : c.phase === 'Battle' ? 'CANNON' : 'PIECES'),
+    tool: (c) => (!TOOL_PHASE(c) ? '' : c.sword ? 'SWORD' : c.phase === 'Battle' ? 'CANNON' : 'PIECES'),
   }),
-  Object.freeze({ id: 'ready', field: 'ready', keys: (c) => c.key('ready') + (c.enterReady ? ' / Enter' : ''), label: () => 'Ready', enabled: (c) => c.phase === 'Cannons' && !c.ready }),
+  Object.freeze({ id: 'ready', field: 'ready', keys: (c) => c.key('ready') + (c.enterReady ? ' / Enter' : ''), label: () => 'Ready', visible: (c) => !RAID(c), enabled: (c) => c.phase === 'Cannons' && !c.ready }),
   // the shop (REPAIR): one button per item with its price from rules.itemCosts, dim when the player cannot pay; the trap is then put down
   ...SHOP.map(([name, word, what], item) => Object.freeze({
     id: 'buy-' + name, field: 'buy', value: item, row: 1, keys: String(item + 1),
     label: (c) => word + ' ' + (c.costs ? c.costs[name] : ''),
-    visible: BOMBS, enabled: (c) => c.phase === 'Repair',
+    visible: SHOP_SHOWN, enabled: (c) => c.phase === 'Repair',
     poor: (c) => c.phase === 'Repair' && !!c.costs && c.score < c.costs[name],
     tool: (c) => (c.items && c.items[name] > 0 && name !== 'bombPack' ? 'own ' + c.items[name] : what),
   })),
   Object.freeze({
-    id: 'trap', field: 'trap', row: 1, keys: 'T', label: () => 'Set trap', visible: BOMBS, enabled: (c) => c.phase === 'Repair' && !!c.items && c.items.trap > 0,
+    id: 'trap', field: 'trap', row: 1, keys: 'T', label: () => 'Set trap', visible: SHOP_SHOWN, enabled: (c) => c.phase === 'Repair' && !!c.items && c.items.trap > 0,
     tool: (c) => (c.items ? 'x' + c.items.trap : ''),
   }),
 ]);

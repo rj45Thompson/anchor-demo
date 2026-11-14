@@ -98,8 +98,9 @@ export const ItemNames = Object.freeze(['metal', 'trap', 'bombPack', 'bigBomb'])
 export class BombRules extends GameRules {
   constructor() {
     super();
-    // REQ-BOMB-01: fuse 90 ticks; blast = a plus, arm length 2 (big 4), drawn 8 ticks
-    this.bombFuse = 90; this.bombArm = 2; this.bigBombArm = 4; this.blastTicks = 8;
+    // REQ-BOMB-01: fuse 90 ticks; blast = a plus, arm length 2 (big 4). blastTicks: how long the blast's squares BURN (BOMBER_UC.md
+    // step 9, AUTHORED 11-13: 15 ticks, half a second, about how long Bomberman's flame stands; it was 8 and drawn only)
+    this.bombFuse = 90; this.bombArm = 2; this.bigBombArm = 4; this.blastTicks = 15;
     // AUTHORED (BOSS_UC.md UC-B1, 11-11): the boss ship of each island's last wave: 2 x 2 squares, its health by level (1..4; a
     // later level repeats the last), one square every 30 ticks (a ship's 20), a volley of 3 shots every 100 ticks within 8
     // squares, and 300 points to the sinker on top of each hit's pointsShipHit
@@ -110,13 +111,35 @@ export class BombRules extends GameRules {
     this.metalWallHealth = 6;
     // REQ-BOMB-03: a hero in a blast is stunned
     this.stunTicks = 45;
-    // REQ-BOMB-04: the hero's stock of bombs
-    this.bombCap = 3; this.bombPackCap = 6; this.bombPackSize = 3; this.bombRegenTicks = 150;
-    // REQ-BOMB-05: the hero verbs (reach in squares, king's move; throw range in Manhattan squares; flight = base + perCell * distance)
+    // REQ-BOMB-04 (BOMBER_UC.md step 7, AUTHORED 11-13): Bomberman's hand - bombCap of a hero's own bombs lit at once, no stock to run
+    // out of. 1, Bomberman's own start; +1 per BOMB power-up (or a bombPack bought) to bombMax 5 (an island raid has 2-8 raiders)
+    this.bombCap = 1; this.bombMax = 5;
+    // REQ-BOMB-05: the hero verbs (reach in squares, king's move; a throw's flight = base + perCell * distance, its distance
+    // throwCells below: the RAID throws the way the hero faces, BOMBER_UC.md step 13)
     this.pickUpReach = 1; this.defuseReach = 1; this.defuseHoldTicks = 12;   // defuseHoldTicks: the controller's B hold, read from here
-    this.throwRange = 5; this.throwBaseTicks = 6; this.throwTicksPerCell = 2;
+    this.throwBaseTicks = 6; this.throwTicksPerCell = 2;
     // REQ-BOMB-06: grunts drop bombs instead of biting
     this.gruntBombCooldownTicks = 150; this.gruntFleeCells = 2; this.gruntFleeTicks = 60;
+    // BOMBER_UC.md (AUTHORED 11-13, each with its why):
+    // raidTicks: the RAID's clock, 30 s: a BATTLE under bombs runs 26-38 s, so the raid is a beat of the same size, long enough to
+    // cross a 48-square island twice at the hero's pace, short enough that the round keeps its rhythm.
+    this.raidTicks = 30 * GameRules.TicksPerSecond;
+    // heroTicksPerCell: one square every 5 ticks, 6 a second (Bomberman's hero is ~4 tiles a second on a 13-tile arena; the island's
+    // raiders stand round rings 7-9 squares across, so a ring is crossed in 1.5 s); each SPEED power-up one tick less, to heroTicksMin 3
+    // (10 a second: at 2 a step is 15 a second, faster than a person reads the grid)
+    this.heroTicksPerCell = 5; this.heroTicksMin = 3;
+    // fireMax: the longest a hero's arms grow with FIRE power-ups (bombArm 2 + 4); past 6 one bomb covers most of a ring's side
+    this.fireMax = 6;
+    // throwCells: a thrown bomb lands this many squares the way the hero faces (Super Bomberman's glove throws 3)
+    this.throwCells = 3;
+    // the power-ups: measured 11-13 on the app's generated islands, soft blocks (trees, small rocks, houses) are 1-2 % of the land
+    // (7-37 on 700-2000 land squares), so a broken one hides a power-up one time in two (Bomberman's soft blocks, ~half the arena, hide
+    // far fewer), and a raider killed by a player's bomb drops one a quarter of the time, so the raid itself pays out on any island.
+    // Kinds of 100: FIRE 40, BOMB 40, SPEED 20 (speed is the strongest, so the rarest)
+    this.powerUpPercent = 50; this.raiderDropPercent = 25; this.powerUpWeights = Object.freeze([40, 40, 20]);
+    // raiderWanderPercent: a quarter of a raider's steps go to a random open square beside it instead of toward its target, so it
+    // wanders like Bomberman's enemies but still reaches the walls (BOMBER_UC.md step 12)
+    this.raiderWanderPercent = 25;
     // REQ-BOMB-07: points
     this.pointsBombKill = 25; this.pointsDefuseGruntBomb = 10; this.pointsTrapKill = 25;
     // REQ-BOMB-08: the shop (score)

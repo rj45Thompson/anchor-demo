@@ -5,10 +5,58 @@
 // arc, spike traps, the stars over a stunned hero, and the ring that fills while a hero holds to put a bomb out. The events start
 // the bursts (the blast and its cross of flame, puffs, splashes). The bomb is the model (renderer.js bakes its parts once and reads
 // its radius and fuse tip); the traps, rings and stars are procedural; every particle is fx.js's.
+//
+// The RAID (BOMBER_UC.md, 11-13): a blast's burning squares are drawn from the model's fires as COLUMNS OF FIRE standing along each arm
+// while they burn (match.fires, the same squares that catch what walks in), shrinking as they burn out; a power-up is a spinning
+// token over a ring in its kind's colour and shape (FIRE a flame, BOMB a bomb, SPEED a double chevron), shown once its fire is out;
+// a broken soft block bursts into chunks of what it was (SoftBlockBroken).
 import * as THREE from 'three/webgpu';
 import { BombExploded, BombDropped, BombPickedUp, BombThrown, BombLanded, BombSank, BombDefused, BombFumbled, PlayerStunned, ItemBought,
-         TrapPlaced, TrapSprung, TrapRemoved, MetalPlaced } from '../core/index.js';
+         TrapPlaced, TrapSprung, TrapRemoved, MetalPlaced, PowerUpRevealed, PowerUpTaken, PowerUpBurned, SoftBlockBroken, PowerKind,
+         Occupant } from '../core/index.js';
 import { C, STEEL, mats, glow, trapGeometry, HERO_HEIGHT } from './look.js';
+
+// AUTHORED (BOMBER_UC.md R17): the fire columns - radius and height in squares at full burn, how far they shrink as they burn out,
+// their flicker - and the power-ups' colours (far apart from each other and from the grass), sizes and spin
+const FIRE_R = 0.4, FIRE_H = 1.25, FIRE_MIN = 0.35, FIRE_FLICKER = 0.18;
+const FIRE_OUTER = new THREE.Color(0xff5a14), FIRE_INNER = new THREE.Color(0xffd070);
+const POWER_COLOUR = Object.freeze({ [PowerKind.Fire]: new THREE.Color(0xff6a1a), [PowerKind.Bomb]: new THREE.Color(0x3d8bff), [PowerKind.Speed]: new THREE.Color(0x12a88f) });   // a deep teal: a light one bloomed to white under the white chevrons
+const POWER_LIFT = 0.75, POWER_BOB = 0.1, POWER_SPIN = 2.2, POWER_RING = 1.5;   // (11-13 frames: at the raid's zoom a 0.3-square token read as a speck)
+const POWER_KINDS_DRAWN = Object.freeze([PowerKind.Fire, PowerKind.Bomb, PowerKind.Speed]);
+/** A flat symbol lying face up (a THREE.Shape in the x / -z plane: its +y is up the screen from the south-facing camera). */
+const flatIcon = (shape) => new THREE.ShapeGeometry(shape, 8).rotateX(-Math.PI / 2);
+/** FIRE: a flame of three tongues, the middle one tallest, round at its foot, with a hole where its hot core is (the disc's colour
+ *  shows through). BOMBER_UC step 10: a lone teardrop read as a water drop (LOOKED at shots/bombs/raid_05_power_up.png, 11-13). */
+function flameIcon() {
+  const sh = new THREE.Shape();
+  sh.moveTo(0, -0.27);
+  sh.bezierCurveTo(0.2, -0.27, 0.29, -0.12, 0.23, 0.03);
+  sh.quadraticCurveTo(0.21, 0.13, 0.26, 0.22);                // the right tongue's tip
+  sh.quadraticCurveTo(0.13, 0.15, 0.1, 0.05);
+  sh.quadraticCurveTo(0.1, 0.2, 0, 0.34);                     // the middle tongue's tip
+  sh.quadraticCurveTo(-0.1, 0.2, -0.1, 0.05);
+  sh.quadraticCurveTo(-0.13, 0.15, -0.26, 0.22);              // the left tongue's tip
+  sh.quadraticCurveTo(-0.21, 0.13, -0.23, 0.03);
+  sh.bezierCurveTo(-0.29, -0.12, -0.2, -0.27, 0, -0.27);
+  const core = new THREE.Path();
+  core.moveTo(0, -0.17); core.bezierCurveTo(0.11, -0.17, 0.1, -0.02, 0, 0.1); core.bezierCurveTo(-0.1, -0.02, -0.11, -0.17, 0, -0.17);
+  sh.holes.push(core);
+  return sh;
+}
+/** BOMB: a round bomb with its fuse. */
+function bombIcon() {
+  const sh = new THREE.Shape();
+  sh.absarc(-0.03, -0.04, 0.2, 0, Math.PI * 2, false);
+  const fuse = new THREE.Shape(); fuse.moveTo(0.09, 0.11); fuse.lineTo(0.2, 0.25); fuse.lineTo(0.25, 0.21); fuse.lineTo(0.14, 0.07); fuse.lineTo(0.09, 0.11);
+  return [sh, fuse];
+}
+/** SPEED: a double chevron pointing ahead (>>). */
+function chevrons() {
+  const one = (x) => { const sh = new THREE.Shape(); sh.moveTo(x, 0.22); sh.lineTo(x + 0.17, 0); sh.lineTo(x, -0.22); sh.lineTo(x - 0.08, -0.22); sh.lineTo(x + 0.09, 0); sh.lineTo(x - 0.08, 0.22); sh.lineTo(x, 0.22); return sh; };
+  return [one(-0.17), one(0.03)];
+}
+/** What a broken soft block bursts into (its own palette colours). */
+const SOFT_CHUNKS = Object.freeze({ [Occupant.Tree]: [C.leaf, C.wood], [Occupant.RockSmall]: [C.rock, C.rockDark], [Occupant.House]: [C.houseWall, C.houseRoof] });
 
 const HOT = new THREE.Color(0xff3020), SPARK = new THREE.Color(0xffb040), GOLD = new THREE.Color(0xffd24a);
 const BIG_SCALE = 1.45;                         // AUTHORED: a big bomb's size against a normal one's
@@ -32,7 +80,20 @@ export class BombsView {
       star: new THREE.OctahedronGeometry(0.1, 0), hold: [],
     };
     for (let i = 1; i <= HOLD_STEPS; i++) this.geo.hold.push(new THREE.RingGeometry(0.62, 0.74, 32, 1, Math.PI / 2, -2 * Math.PI * i / HOLD_STEPS).rotateX(-Math.PI / 2));
-    this.mat = { hot: glow(HOT, 2.4), spark: glow(SPARK, 3), star: glow(GOLD, 2.6) };
+    this.mat = { hot: glow(HOT, 2.4), spark: glow(SPARK, 3), star: glow(GOLD, 2.6), fireOuter: glow(FIRE_OUTER, 2.2), fireInner: glow(FIRE_INNER, 3.2) };
+    // the RAID: a fire column (an open, tapering tube, and a thinner hot core) and the power-up tokens
+    this.geo.fireOuter = new THREE.CylinderGeometry(FIRE_R * 0.45, FIRE_R, 1, 10, 1, true).translate(0, 0.5, 0);
+    this.geo.fireInner = new THREE.CylinderGeometry(FIRE_R * 0.2, FIRE_R * 0.55, 0.8, 8, 1, true).translate(0, 0.4, 0);
+    // a power-up: a flat disc in its kind's colour with a white symbol lying on its face, read from the RAID's steep camera (an upright
+    // spinning coin was seen edge-on, a thin bar, in the 11-13 frames)
+    this.geo.token = new THREE.CylinderGeometry(0.44, 0.44, 0.1, 28);
+    this.geo.flame = flatIcon(flameIcon());
+    this.geo.ball = flatIcon(bombIcon());
+    this.geo.chevron = flatIcon(chevrons());
+    this.mat.fireOuter.side = THREE.DoubleSide; this.mat.fireInner.side = THREE.DoubleSide;   // open tubes: seen from inside too
+    this.mat.power = Object.fromEntries(Object.entries(POWER_COLOUR).map(([k, c]) => [k, glow(c, 1.8)]));
+    this.mat.tokenFace = new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0xfff6e0) });
+    this.columns = []; this.powers = new Map();
     this.bombs = new Map(); this.traps = new Map(); this.stars = []; this.holds = [];
     const n = units.match.playerCount;
     for (let s = 0; s < n; s++) {
@@ -101,7 +162,71 @@ export class BombsView {
     }
     for (const [id, e] of this.bombs) if (!seen.has(id)) { this.group.remove(e.g, e.ring); this.bombs.delete(id); }
     this.updateTraps(m);
+    this.updateFires(m, seconds);
+    this.updatePowerUps(m, seconds);
     this.updateHeroes(view, seconds);
+  }
+
+  /** The renderer's warm-up (renderer.warmFirstUse): one fire column and a token of each power-up kind in view at `at` for its one
+   *  draw, so their pipelines are built before play; returns what takes them away again. */
+  warm(at) {
+    const c = { x: Math.floor(at.x), y: Math.floor(at.z) }, fake = {
+      rules: this.units.match.rules, fires: [{ left: 1, cells: [c] }],
+      powerUps: POWER_KINDS_DRAWN.map((kind, i) => ({ id: -1 - i, kind, at: { x: c.x + i + 1, y: c.y }, shown: true })),
+    };
+    this.updateFires(fake, 0); this.updatePowerUps(fake, 0);
+    return () => { const none = { rules: fake.rules, fires: [], powerUps: [] }; this.updateFires(none, 0); this.updatePowerUps(none, 0); };
+  }
+
+  /** A column of fire on every square that burns now (match.fires), scaled by how much of its burn is left, flickering. */
+  updateFires(m, seconds) {
+    const span = Math.max(1, m.rules.blastTicks - 1);
+    let n = 0;
+    for (const f of m.fires) {
+      const k = FIRE_MIN + (1 - FIRE_MIN) * Math.min(1, f.left / span);
+      for (const c of f.cells) {
+        if (n === this.columns.length) {
+          const g = new THREE.Group();
+          g.add(new THREE.Mesh(this.geo.fireOuter, this.mat.fireOuter), new THREE.Mesh(this.geo.fireInner, this.mat.fireInner));
+          g.renderOrder = 4; this.group.add(g); this.columns.push(g);
+        }
+        const g = this.columns[n++], fl = 1 + FIRE_FLICKER * Math.sin(seconds * 31 + c.x * 1.7 + c.y * 2.3);
+        g.visible = true;
+        g.position.set(c.x + 0.5, this.ground(c), c.y + 0.5);
+        g.scale.set(k, FIRE_H * k * fl, k);
+        g.rotation.y = seconds * 3 + c.x;
+      }
+    }
+    for (let i = n; i < this.columns.length; i++) this.columns[i].visible = false;
+  }
+
+  /** Every shown power-up: a disc in its colour with its kind's symbol on its face (FIRE a flame, BOMB a bomb, SPEED a double
+   *  chevron), bobbing and rocking over a pulsing ring. */
+  updatePowerUps(m, seconds) {
+    const seen = new Set();
+    for (const u of m.powerUps) {
+      if (!u.shown) continue;
+      seen.add(u.id);
+      let e = this.powers.get(u.id);
+      if (!e) {
+        const g = new THREE.Group(), mat = this.mat.power[u.kind];
+        if (!mat) throw new Error('bombs.js: no look for power-up kind ' + u.kind);
+        const token = new THREE.Mesh(this.geo.token, mat);
+        const icon = new THREE.Mesh(u.kind === PowerKind.Fire ? this.geo.flame : u.kind === PowerKind.Bomb ? this.geo.ball : this.geo.chevron, this.mat.tokenFace);
+        icon.position.y = 0.056; icon.renderOrder = 3;
+        g.add(token, icon);
+        const ring = new THREE.Mesh(this.geo.ring, mat); ring.renderOrder = 2;
+        const y = this.ground(u.at);
+        ring.position.set(u.at.x + 0.5, y + 0.04, u.at.y + 0.5); ring.scale.setScalar(POWER_RING);
+        this.group.add(g, ring);
+        e = { g, ring, y, at: u.at };
+        this.powers.set(u.id, e);
+      }
+      e.g.position.set(e.at.x + 0.5, e.y + POWER_LIFT + Math.sin(seconds * 3 + u.id) * POWER_BOB, e.at.y + 0.5);
+      e.g.rotation.set(Math.sin(seconds * POWER_SPIN + u.id) * 0.18, 0, Math.cos(seconds * POWER_SPIN * 0.8 + u.id) * 0.18);   // it rocks
+      e.ring.scale.setScalar(POWER_RING * (0.92 + 0.12 * Math.sin(seconds * 4 + u.id)));
+    }
+    for (const [id, e] of this.powers) if (!seen.has(id)) { this.group.remove(e.g, e.ring); this.powers.delete(id); }
   }
 
   updateTraps(m) {
@@ -172,12 +297,24 @@ export class BombsView {
       fxs.chunks(cellAt(e.at, 0.2), C.iron, 3, 0.4);
     } else if (e instanceof MetalPlaced) {
       for (const c of e.cells) fxs.flash(cellAt(c, 0.5), STEEL.clone().multiplyScalar(1.6), 0.3);
+    } else if (e instanceof SoftBlockBroken) {                      // the RAID: a tree, a rock or a house blown apart
+      const look = SOFT_CHUNKS[e.was];
+      if (!look) throw new Error('bombs.js: no chunks for a broken ' + e.was + ' (a soft block is a tree, a small rock or a house)');
+      const [a, b] = look;
+      fxs.chunks(cellAt(e.at, 0.4), a, 9, 1.1); fxs.chunks(cellAt(e.at, 0.3), b, 6, 0.9); fxs.dust(cellAt(e.at, 0), 1.2);
+    } else if (e instanceof PowerUpRevealed) {
+      fxs.flash(cellAt(e.at, 0.6), POWER_COLOUR[e.kind], 0.6);
+    } else if (e instanceof PowerUpTaken) {
+      fxs.flash(cellAt(e.at, 0.8), POWER_COLOUR[e.kind], 1); u.gesture(e.slot, 'lift');
+    } else if (e instanceof PowerUpBurned) {
+      fxs.puff(cellAt(e.at, 0.4));
     }
   }
 
   dispose() {
     // (the bomb model's parts are the renderer's, shared by every level: not disposed here)
-    for (const g of [this.geo.trap, this.geo.hot, this.geo.spark, this.geo.ring, this.geo.trapRing, this.geo.star, ...this.geo.hold]) g.dispose();
+    for (const g of [this.geo.trap, this.geo.hot, this.geo.spark, this.geo.ring, this.geo.trapRing, this.geo.star, ...this.geo.hold,
+                     this.geo.fireOuter, this.geo.fireInner, this.geo.token, this.geo.flame, this.geo.ball, this.geo.chevron]) g.dispose();
     this.units.group.remove(this.group);
   }
 }

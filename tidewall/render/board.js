@@ -251,6 +251,8 @@ export class Board {
     this.territory = null;
     this.dropAt = new Float64Array(this.w * this.h).fill(-1e9);   // when each square's block started to fall (seconds; page clock)
     this.dropUntil = -1;                                            // the last block of the newest drop has settled by then
+    this.wallTop = null;                                            // each square's drawn wall top at the last drawWalls (the castle rise stands on it)
+    this.lift = null;                                               // how far the castle rise stands over each square (render/rise.js sets it)
     this.buildField();
     this.buildLand();
     this.buildSea();
@@ -366,6 +368,14 @@ export class Board {
     this.shadows = new InstancedBatch(this.group, wallShadowGeometry(), this.look.wallShadow, n, { name: 'wall shadows', renderOrder: 1 });
     this.poles = new InstancedBatch(this.group, pennantPoleGeometry(), mats.vc, n, { castShadow: false, name: 'pennant poles' });   // a pole's shadow is a hair: not drawn
     this.flags = new InstancedBatch(this.group, pennantFlagGeometry(), this.look.pennantFlag, n, { colors: true, castShadow: false, name: 'pennant flags' });
+  }
+
+  /** Every InstancedBatch the board draws with (the walls, their caps, cloth and shadows, the steel, the pennants, the rules' props,
+   *  the embers), found by TYPE so a batch added later is never left out of renderer.js warmFirstUse: three r175 builds each one's
+   *  shader at its first draw (CONTROLS_SMOOTH_UC.md UC-C2; 11-13 the warm-up named six by hand and the pennants built theirs at the
+   *  first claim). */
+  instancedBatches() {
+    return [...Object.values(this), ...this.props.values()].filter((v) => v instanceof InstancedBatch);
   }
 
   buildProps() {
@@ -492,6 +502,7 @@ export class Board {
       top[y * w + x] = gy - 0.04 + (v - 0.5) * WALL_JITTER + fall + WALL_H * sy;
     }
     this.walls.commit(k); this.caps.commit(k); this.steel.commit(ks); this.steelCaps.commit(ks); this.trims.commit(kb); this.shadows.commit(kb);
+    this.wallTop = top;
     this.drawPennants(top);
   }
 
@@ -529,7 +540,8 @@ export class Board {
         const q = corners[Math.floor((j + 0.5) * corners.length / want)];
         if (Number.isNaN(top[q.y * w + q.x])) continue;                // its block has not dropped in yet (drawWalls)
         const px = q.east ? q.x + 1 - PENNANT_INSET : q.x + PENNANT_INSET, pz = q.y + PENNANT_INSET;
-        m.makeRotationY(q.east ? 0 : Math.PI).setPosition(px, top[q.y * w + q.x], pz);
+        // (on a risen ring, CASTLE_RISE_UC.md UC-L8: on the rise's top)
+        m.makeRotationY(q.east ? 0 : Math.PI).setPosition(px, top[q.y * w + q.x] + (this.lift ? this.lift[q.y * w + q.x] : 0), pz);
         this.poles.set(n, m); this.flags.set(n, m, c.copy(this.colourOf(ow)));
         n++;
       }

@@ -60,8 +60,9 @@ export class HudViewModel {
       this.banner = e.phase === Phase.Claim ? 'CHOOSE YOUR HOME CASTLE' : e.phase === Phase.Cannons ? 'PLACE CANNONS'
                   : e.phase === Phase.Battle ? 'PREPARE FOR BATTLE!' : e.phase === Phase.Repair ? (this.challenge ? 'CHALLENGE ROUND - BUILD!' : 'BUILD & REPAIR')
                   : e.phase === Phase.Score ? 'CEASE FIRE!' : e.phase === Phase.Victory ? 'VICTORY!' : e.phase === Phase.Decide ? 'CONTINUE OR GIVE UP?'
-                  : 'GAME OVER';
-      this.subtitle = '';
+                  : e.phase === Phase.Raid ? 'RAIDERS ASHORE!' : 'GAME OVER';
+      // the RAID's banner says what to do (BOMBER_UC.md step 1)
+      this.subtitle = e.phase === Phase.Raid ? 'BOMB THEM BEFORE THEY BLOW YOUR WALLS' : '';
     } else if (e instanceof LevelStarted) {
       this.challenge = e.challenge; this.mapName = HudViewModel.pretty(e.map); this.bannerTick = e.tick;
       this.banner = e.challenge ? 'CHALLENGE ROUND' : 'LEVEL ' + e.level; this.subtitle = this.mapName;
@@ -208,7 +209,7 @@ export class HudViewModel {
       case RejectReason.NotRecruitable: return "that ship won't turn";
       case RejectReason.SwordOut: return 'bombs out - swap tool for the cannon';
       case RejectReason.NoSword: return 'swap tool to take out bombs';
-      case RejectReason.NoBombs: return 'no bombs left';
+      case RejectReason.NoBombs: return 'all your bombs are lit';
       case RejectReason.BombHere: return 'a bomb is already here';
       case RejectReason.NoBombNear: return 'no bomb within reach';
       case RejectReason.HandsFull: return 'hands full - throw it first';
@@ -220,6 +221,9 @@ export class HudViewModel {
       case RejectReason.BadItem: return 'no such item';
       case RejectReason.NoItem: return 'none in stock - buy one first';
       case RejectReason.NoBombRules: return 'not in this rule set';
+      case RejectReason.RaidOver: return 'the raid is over';
+      case RejectReason.BadWay: return 'not a way to walk';
+      case RejectReason.NoHero: return 'no hero on the field';
       case RejectReason.SwordSwinging: return '';
       case RejectReason.WrongPhase: return 'not now';
       case RejectReason.Disconnected: return 'controller unplugged';

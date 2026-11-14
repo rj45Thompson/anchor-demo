@@ -17,18 +17,22 @@ export const RejectReason = Object.freeze({
   NoBombNear: 17,     // pickUpBomb / defuseBomb: no bomb within one square that the hero may take
   HandsFull: 18,      // pickUpBomb: the hero already carries one
   HandsEmpty: 19,     // throwBomb: the hero carries nothing
-  TooFar: 20,         // throwBomb: the target is more than throwRange squares away
+  TooFar: 20,         // throwBomb: the target was more than a throw's range away (no longer arises: the RAID throws the way it faces)
   Stunned: 21,        // any bomb verb while the hero is stunned
   CannotAfford: 22,   // buy: not enough score
-  ToolOut: 23,        // dropBomb: the phase's own tool (build / cannon) is out, not the bomb tool
+  ToolOut: 23,        // dropBomb: the phase's own tool was out (no longer arises: the RAID has one tool, 11-13)
   BadItem: 24,        // buy: not an ItemKind
   NoItem: 25,         // placeTrap: no trap in stock
   NoBombRules: 26,    // a bomb command in a match played without GameOptions.bombs
+  // the RAID (BOMBER_UC.md), appended
+  RaidOver: 27,       // dropBomb: the raid's clock is out or no raider is left (a new bomb would only keep it open)
+  BadWay: 28,         // walk: shapeId / quarterTurns are not a way (Command.walk makes only good ones)
+  NoHero: 29,         // a RAID verb from a player with no hero on the board (no home castle)
 });
 
 /** Why the board changed under a thing: a player's ball, enclosing at SCORE, a tree spreading, a house appearing, a pit burning out,
- *  the serpent's boulder, a pit lit, built over. */
-export const ThingCause = Object.freeze({ Shot: 0, Enclosed: 1, Grew: 2, Appeared: 3, BurnedOut: 4, Boulder: 5, Pit: 6, BuiltOver: 7 });
+ *  the serpent's boulder, a pit lit, built over, a RAID blast (Blast, appended: a soft block broken, BOMBER_UC.md step 8). */
+export const ThingCause = Object.freeze({ Shot: 0, Enclosed: 1, Grew: 2, Appeared: 3, BurnedOut: 4, Boulder: 5, Pit: 6, BuiltOver: 7, Blast: 8 });
 
 export class MatchEvent {
   constructor(tick) { this.tick = tick; }
@@ -340,4 +344,28 @@ export class TrapSprung extends MatchEvent {
 /** A wall or cannon was built on a trap: it is gone. */
 export class TrapRemoved extends MatchEvent {
   constructor(t, id, at) { super(t); this.id = id; this.at = at; }
+}
+
+// ---- the RAID (BOMBER_UC.md), appended -----------------------------------------------------------------------------------------
+
+/** A hero came onto the board for the raid, on `at`. */
+export class HeroEntered extends MatchEvent {
+  constructor(t, slot, at) { super(t); this.slot = slot; this.at = at; }
+}
+/** A power-up shows on `at` (its square's fire is out). */
+export class PowerUpRevealed extends MatchEvent {
+  constructor(t, id, kind, at) { super(t); this.id = id; this.kind = kind; this.at = at; }
+}
+/** A hero walked onto a power-up and took it. */
+export class PowerUpTaken extends MatchEvent {
+  constructor(t, id, slot, kind, at) { super(t); this.id = id; this.slot = slot; this.kind = kind; this.at = at; }
+}
+/** A blast burned a power-up that lay in it. */
+export class PowerUpBurned extends MatchEvent {
+  constructor(t, id, at) { super(t); this.id = id; this.at = at; }
+}
+/** A RAID blast broke a soft block (BOMBER_UC.md step 8): `was` the Occupant it was (a tree, a small rock, a house); it is open ground
+ *  now (the ThingChanged with cause Blast that comes with it says so for every reader of the land). bySlot: the bomb's owner, or -1. */
+export class SoftBlockBroken extends MatchEvent {
+  constructor(t, at, was, bySlot) { super(t); this.at = at; this.was = was; this.bySlot = bySlot; }
 }

@@ -10,7 +10,8 @@ export const CommandKind = Object.freeze({
   SwitchMode: 11, Strike: 12,                  // the hero: tool <-> sword, and a sword swing
   // the bomb rule set (GameOptions.bombs, BOMBS_SPEC.md). Strike (12) is DropBomb there. Refused when bombs is off.
   PickUpBomb: 13, ThrowBomb: 14, DefuseBomb: 15, Buy: 16, PlaceTrap: 17,
-  MoveHero: 18,                                // the controller reports where the hero stands (the core never moves a cursor)
+  MoveHero: 18,                                // was: the controller reported where the hero stood; refused since the RAID (11-13)
+  Walk: 19,                                    // the RAID (BOMBER_UC.md): the way the player holds; the core walks the hero
 });
 
 const KINDS = new Set(Object.values(CommandKind));
@@ -26,9 +27,11 @@ function whole(name, v) {
  *    claim: at = any cell of the castle.  decide: quarterTurns 1 = Fight Again, 0 = Give Up.  strike: at = the hero's square.
  *    placeMortar / placeKite: at = the 3x3's top-left cell.  recruit: at = a square of the ship the kite flies to.
  *    ready / leave / rejoin / switchMode: no payload.
- *  The bomb rule set: dropBomb (= strike) / pickUpBomb / defuseBomb / placeTrap / moveHero: at = the hero's square (placeTrap: the
- *    square to trap).  throwBomb: at = the square thrown FROM, shapeId = target x, quarterTurns = target y (read it back as
- *    `target`).  buy: shapeId = the ItemKind. */
+ *  The bomb rule set: placeTrap: at = the square to trap.  buy: shapeId = the ItemKind.  In the RAID (BOMBER_UC.md) the core walks
+ *    the hero, so dropBomb (= strike) / pickUpBomb / defuseBomb act at the hero's square as the core has it, and throwBomb throws
+ *    the way the hero faces: their `at` (and throwBomb's target, shapeId / quarterTurns) are carried but not read.
+ *    walk: shapeId = (dx + 1) + 3 (dy + 1) for the way held (dx, dy each -1, 0, 1), quarterTurns = the axis tried first (0 across,
+ *    1 down); read back as `way`. */
 export class Command {
   constructor(kind, slot, seq, arrival, shapeId, quarterTurns, at) {
     if (!KINDS.has(kind)) throw new Error('command kind ' + kind + ' is not a CommandKind');
@@ -66,6 +69,16 @@ export class Command {
   static buy(slot, seq, item, arrival) { return new Command(CommandKind.Buy, slot, seq, arrival, item, 0, Cell.zero); }
   static placeTrap(slot, seq, at, arrival) { return new Command(CommandKind.PlaceTrap, slot, seq, arrival, 0, 0, at); }
   static moveHero(slot, seq, at, arrival) { return new Command(CommandKind.MoveHero, slot, seq, arrival, 0, 0, at); }
+  /** The RAID: the way the player holds now (dx, dy each -1, 0, 1; 0, 0 = let go) and the axis to try first (0 across, 1 down). */
+  static walk(slot, seq, dx, dy, first, arrival) {
+    if (![-1, 0, 1].includes(dx) || ![-1, 0, 1].includes(dy) || (first !== 0 && first !== 1)) throw new RangeError('Command.walk: dx, dy are -1, 0, 1 and first 0 or 1, got ' + dx + ', ' + dy + ', ' + first);
+    return new Command(CommandKind.Walk, slot, seq, arrival, (dx + 1) + 3 * (dy + 1), first, Cell.zero);
+  }
+  /** walk's way: { dx, dy, first }, or null when shapeId / quarterTurns are not a way (a hand-made command). */
+  get way() {
+    if (!Number.isInteger(this.shapeId) || this.shapeId < 0 || this.shapeId > 8 || (this.quarterTurns !== 0 && this.quarterTurns !== 1)) return null;
+    return { dx: this.shapeId % 3 - 1, dy: Math.trunc(this.shapeId / 3) - 1, first: this.quarterTurns };
+  }
   /** throwBomb's target square. */
   get target() { return new Cell(this.shapeId, this.quarterTurns); }
   static leave(slot, arrival) { return new Command(CommandKind.Leave, slot, 0, arrival, 0, 0, Cell.zero); }

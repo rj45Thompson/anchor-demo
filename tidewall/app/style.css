@@ -113,6 +113,11 @@ html, body, #view { touch-action: none; overscroll-behavior: none; -webkit-user-
 .abar { position: fixed; z-index: 3; left: 50%; transform: translateX(-50%); bottom: 100px; display: flex; gap: 8px; width: max-content; max-width: calc((100vw - 24px) / var(--ts, 1));
   pointer-events: auto; touch-action: none; }
 .abar[hidden] { display: none; }
+/* CONTROLS_SMOOTH_UC.md UC-C2 step 1: while a started match is held (main.js prepareLevel) the Playing screen's overlays are painted as
+   they will be, all but transparent and untouchable, so their first paint is paid there and not in the match's first frames; .warmed
+   is the frame after, so the hint strip's fade does not run as they come in */
+body.warming .abar, body.warming .hint, body.warming .tpad { opacity: 0.004 !important; pointer-events: none !important; transition: none !important; }
+body.warmed .abar, body.warmed .hint, body.warmed .tpad { transition: none !important; }
 .ab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 96px; min-height: 52px; padding: 5px 12px;
   font: 800 15px/1.1 var(--font); color: #fff; text-shadow: 0 2px 0 var(--inkline); background: var(--wood); border: var(--frame);
   box-shadow: var(--lift); border-radius: 14px; cursor: pointer; }
