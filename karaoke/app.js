@@ -33,6 +33,7 @@ const app = {
   pitchOptions: null,
   song: null,
   phrases: [],
+  notes: [], // song notes with their phrase index attached, for the pitch check
   unowned: 0,
   stats: [], // per phrase: { active, hits }
   previewed: new Set(),
@@ -71,6 +72,11 @@ function loadSong(song) {
   const built = buildPhrases(song.lines, song.notes, app.cfg.leadInSeconds, app.cfg.phraseTailSeconds);
   app.song = song;
   app.phrases = built.phrases;
+  // buildPhrases attaches `phrase` to copies of the notes it owns, so the raw
+  // song.notes never carry it. The pitch check reads this annotated list instead;
+  // notes owned by no line keep phrase undefined and are shown but not scored.
+  const owned = new Map(built.phrases.flatMap((phrase) => phrase.notes.map((note) => [note.start, note])));
+  app.notes = song.notes.map((note) => owned.get(note.start) || note);
   app.unowned = built.unowned;
   app.playing = false;
   app.clockBase = 0;
@@ -226,20 +232,22 @@ function readPitch(t) {
     }
   }
   const sung = app.recent.length ? median(app.recent) : null;
-  const note = noteAt(app.song.notes, t);
+  const note = noteAt(app.notes, t);
   if (!note) {
     renderArrow("rest", "-", sung === null ? "-" : noteName(sung), null, "Rest.");
     return;
   }
   const stat = app.stats[note.phrase];
-  stat.active += 1;
+  if (stat) {
+    stat.active += 1;
+  }
   if (sung === null) {
     renderArrow("silent", noteName(note.midi), "-", null, "No voice.");
     return;
   }
   const gap = foldSemitones(note.midi - sung);
   const on = Math.abs(gap) <= app.cfg.toleranceSemitones;
-  if (on) {
+  if (on && stat) {
     stat.hits += 1;
   }
   renderArrow(on ? "on" : gap > 0 ? "up" : "down", noteName(note.midi), noteName(sung), on ? 0 : gap, on ? "On pitch." : "");
