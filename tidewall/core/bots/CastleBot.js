@@ -14,7 +14,8 @@ import { Command } from '../match/Commands.js';
 const INT_MAX = 2147483647, INT_MIN = -2147483648;
 const DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];     // the blast arms' order (core/match/Bombs.js)
 /** What a blast passes over (core/match/Bombs.js stopsBlast is the rest): open ground, rubble, a graveyard, a pit, a kite. */
-const BLAST_PASSES = new Set([Occupant.Empty, Occupant.Rubble, Occupant.Graveyard, Occupant.Pit, Occupant.Kite]);
+// what a RAID blast passes over (rubble is a soft block there: it takes the blast and stops it, BOMBER_UC.md R19)
+const BLAST_PASSES = new Set([Occupant.Empty, Occupant.Graveyard, Occupant.Pit, Occupant.Kite]);
 
 function castleOf(m, id) {
   for (const c of m.grid.castles) if (c.id === id) return c;

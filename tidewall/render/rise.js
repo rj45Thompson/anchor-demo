@@ -5,7 +5,8 @@
 // outward from the breach. What is closed is read from the board (its territory) and the castles (units.js updateCastles), never
 // decided here; the cut is render/riseplan.js. It only draws: the rules never see it.
 import * as THREE from 'three/webgpu';
-import { Occupant } from '../core/index.js';
+import { Occupant, Terrain, Phase } from '../core/index.js';
+import { BrickWorld, BRICK } from './bricks.js';
 import { WALL_DROP } from './board.js';
 import { C, NEUTRAL_WALL, CHUNK, InstancedBatch, riseBlockGeometry, riseClothGeometry, RISE_BLOCK_W } from './look.js';
 import { RISE, RiseError, ringOf, runsOf, cutRun, keepRing, unravelSteps, squareHash, pieceTint, KEEP_KINDS, thunkRate } from './riseplan.js';
@@ -15,15 +16,16 @@ import { RISE, RiseError, ringOf, runsOf, cutRun, keepRing, unravelSteps, square
 // kinds apart); a landing piece glows toward HOT, FLASH_PEAK of the way at its landing, gone RISE.flash later.
 const OWNER_TINT = 0.1, HOT = new THREE.Color(1.7, 1.7, 1.6), FLASH_PEAK = 0.6;
 const tintOf = (kind, j) => new THREE.Color(...pieceTint(kind, j)), STONE = tintOf('stone', 0);
-// AUTHORED (5a): a block falling off a broken wall: its pull (squares/s^2; from a crown 1.3 squares up it is down in ~0.33 s, the
-// pace of UC-L3's 0.2 s drop from 0.9), its throw (outward and up, squares/s), its spin (rad/s), and how long it takes to sink away
-// once down (s); a breach also throws DEBRIS_CHIPS of fx.js's chunks
-const DEBRIS_G = 24, DEBRIS_OUT = [0.6, 1.6], DEBRIS_UP = [0.8, 2.0], DEBRIS_SPIN = [3, 8], DEBRIS_FADE = 0.3, DEBRIS_CHIPS = 3;
+// AUTHORED (5a): a block knocked off a broken wall: its throw (outward and up, squares/s) and spin (rad/s) - from there it is a
+// physics body (bricks.js: its pull, bounce and rest) - and a blast's throw of a rubble heap's bricks (R19: up and out, squares/s);
+// a breach also throws DEBRIS_CHIPS of fx.js's chunks
+const DEBRIS_OUT = [0.6, 1.6], DEBRIS_UP = [0.8, 2.0], DEBRIS_SPIN = [3, 8], DEBRIS_CHIPS = 3, BLAST_UP = [6, 9], BLAST_OUT = [1.5, 4];
 // MEASURED + AUTHORED: a batch's shader is built for its room (look.js roomFor: the room is written into the shader), so a room
 // outgrown mid-match is a new shader compiled then. Every level's batches are made at one fixed room from the start - the resting ones
 // with room for four claimed rings (a claim ring was 28 squares in run_page rise, 11-13: 28 x 2 courses + 14 merlons + the keep's 24 =
 // 94 blocks a castle, 376 for four: room 512), the moving ones for a ring coming down - so no batch outgrows its room in play.
-const ROOM_REST = 512, ROOM_MOVING = 128;
+// The moving ones hold the knocked-off bricks too (up to BRICK.cap lie about as rubble, UC-L9) and a ring coming down.
+const ROOM_REST = 512, ROOM_MOVING = 512;
 // MEASURED 11-13 (tools probe diffing renderer._pipelines' programs before and after a claim): three r175 writes each InstancedMesh's
 // own matrix buffer's node id into its vertex shader (NodeBuffer_<id>), so no two meshes ever share one and a new level's batches
 // compile their own at their first draw, whatever was warmed. So each batch draws one zero-scale block (nothing shows) for the
@@ -101,7 +103,9 @@ export class RiseView {
     this.live = [];                // pieces whose dust is still to rise (they have not landed)
     this.landed = 0;               // pieces landed this level (the page check reads it: R2b)
     this.landings = [];            // the thunk rates of pieces landed since app/main.js last took them (takeLandings)
-    this.debris = [];
+    this.debris = [];             // the knocked-off bricks: physics bodies (bricks.js), each with the rubble square it lies round
+    this.phys = new BrickWorld();
+    this.match = units.match;
     this.ring = new Set();         // the squares the closed rings raise now (riseplan.js ringOf)
     this.base = new Float32Array(g.width * g.height);   // each square's wall top the last frame drew on (a broken one's blocks fall from it)
     this.lift = new Float32Array(g.width * g.height);   // how far each square's landed rise stands over its wall: the pennants ride on it
@@ -250,13 +254,15 @@ export class RiseView {
     this.blocks.delete(s);
     if (!list) throw new RiseError('rise.js: square ' + s + ' was to fall but has no blocks');
     const w = this.w, x = s % w, y = Math.floor(s / w), base = this.base[s];
+    this.fixSquare(s);                                               // its column is gone: the bricks are thrown out of empty space
+    const home = this.grid.occupantAt(x, y) === Occupant.Rubble ? s : -1;   // 5a: over the rules' rubble they stay as its heap
     let n = 0;
     for (const k of list) {
       if (k.piece.cells) k.piece.gone = true;
       const d = dropOf(k.piece, this.now);
       if (!d) continue;
       const merlon = k.course === RISE.courses, h = merlon ? RISE.merlonH : RISE.course, sw = merlon ? RISE.merlonW : RISE_BLOCK_W;
-      this.throwBlock(s, n++, x + 0.5, base + k.course * RISE.course + d.fall, y + 0.5, sw, h, k.piece.tint);
+      this.throwBlock(s, n++, x + 0.5, base + k.course * RISE.course + d.fall, y + 0.5, sw, h, k.piece.tint, null, home);
     }
     if (n) this.units.fxs.chunks(new THREE.Vector3(x + 0.5, base + RISE.course, y + 0.5), C.stone, DEBRIS_CHIPS, 0.7);
   }
@@ -270,29 +276,66 @@ export class RiseView {
     }
   }
 
-  /** A block thrown off as debris: outward at a hashed angle and speed, up, spinning, in its own piece's paint. */
-  throwBlock(s, i, x, y, z, sw, h, tint, castle = null) {
+  /** A block knocked off (5a): a physics brick (bricks.js) whose BOTTOM is at (x, y, z), thrown outward at a hashed angle and speed,
+   *  up, spinning, in its own piece's paint; `home` the rubble square it lies round (-1: none, it sinks once at rest). */
+  throwBlock(s, i, x, y, z, sw, h, tint, castle = null, home = -1) {
     const r = (k) => squareHash(s, 100 + i * 7 + k) / 4294967296, a = r(0) * Math.PI * 2, sp = DEBRIS_OUT[0] + r(1) * (DEBRIS_OUT[1] - DEBRIS_OUT[0]);
     const owner = castle ? this.keepOwner(castle) : this.ownerColour(s);
-    this.debris.push({ p: new THREE.Vector3(x, y, z), v: new THREE.Vector3(Math.cos(a) * sp, DEBRIS_UP[0] + r(2) * (DEBRIS_UP[1] - DEBRIS_UP[0]), Math.sin(a) * sp),
-                       axis: new THREE.Vector3(r(3) - 0.5, r(4) - 0.5, r(5) - 0.5).normalize(), spin: DEBRIS_SPIN[0] + r(6) * (DEBRIS_SPIN[1] - DEBRIS_SPIN[0]),
-                       rot: 0, t: 0, down: -1, k: 1, sw, h, tint, owner: owner.clone(), ground: this.board.groundAtPoint(x, z) });
+    const spin = DEBRIS_SPIN[0] + r(6) * (DEBRIS_SPIN[1] - DEBRIS_SPIN[0]), axis = new THREE.Vector3(r(3) - 0.5, r(4) - 0.5, r(5) - 0.5).normalize();
+    const p = new THREE.Vector3(x, y + h / 2, z), q = new THREE.Quaternion();
+    const v = { x: Math.cos(a) * sp, y: DEBRIS_UP[0] + r(2) * (DEBRIS_UP[1] - DEBRIS_UP[0]), z: Math.sin(a) * sp };
+    const body = this.phys.addBrick(p, q, v, axis.multiplyScalar(spin), sw, h);
+    this.debris.push({ body, p, q, sw, h, tint, owner: owner.clone(), home, was: -1, seed: s * 31 + i, t: 0, still: 0, going: -1, k: 1 });
   }
 
+  /** R19: the rubble a brick lay round was blown up - the brick is thrown up and away. */
+  blowUp(d) {
+    const r = (k) => squareHash(d.seed, 900 + k) / 4294967296, a = r(0) * Math.PI * 2, out = BLAST_OUT[0] + r(1) * (BLAST_OUT[1] - BLAST_OUT[0]);
+    this.phys.kick(d.body, { x: Math.cos(a) * out, y: BLAST_UP[0] + r(2) * (BLAST_UP[1] - BLAST_UP[0]), z: Math.sin(a) * out },
+      { x: (r(3) - 0.5) * 16, y: (r(4) - 0.5) * 16, z: (r(5) - 0.5) * 16 });
+    d.t = 0; d.still = 0;
+  }
+
+  /** UC-L9: the bricks move (bricks.js); a heap stays while its rubble does; one whose rubble went is blown up (in the RAID only a
+   *  blast clears rubble, BOMBER_UC R19) or sinks (built over in REPAIR, cleared at the round's score); a loose one sinks once at rest
+   *  or BRICK.settle s after its throw, and so does one at rest on water; past BRICK.cap the oldest heap's bricks go first. */
   stepDebris(dt) {
-    const keep = [];
+    this.phys.step(dt);
+    const g = this.grid, w = this.w, keep = [], raid = this.match.phase === Phase.Raid;
     for (const d of this.debris) {
-      d.t += dt;
-      if (d.down < 0) {
-        d.v.y -= DEBRIS_G * dt; d.p.addScaledVector(d.v, dt); d.rot += d.spin * dt;
-        // the land under where it was thrown from, read once at the throw (board.groundAtPoint walks the coast field, board.js
-        // drawTufts: so it is not paid per block per frame); it lands within ~1 square of there, where the relief (heightOf) is 0.05
-        if (d.p.y <= d.ground) { d.p.y = d.ground; d.down = d.t; }
+      const b = d.body, t = b.translation(), q = b.rotation();
+      d.p.set(t.x, t.y, t.z); d.q.set(q.x, q.y, q.z, q.w);
+      d.t += dt; d.still = this.phys.rest(b, d.still, dt);
+      if (d.home >= 0 && g.occupantAt(d.home % w, Math.floor(d.home / w)) !== Occupant.Rubble) {
+        if (raid) this.blowUp(d); else if (d.going < 0) d.going = this.now;
+        d.was = d.home; d.home = -1;                                 // (the page check follows a blown heap by `was`)
       }
-      d.k = d.down < 0 ? 1 : 1 - (d.t - d.down) / DEBRIS_FADE;
-      if (d.k > 0) keep.push(d);
+      const resting = b.isSleeping() || d.t > BRICK.settle;
+      if (d.going < 0 && resting && (d.home < 0 || !this.onLand(d.p))) d.going = this.now;
+      d.k = d.going < 0 ? 1 : 1 - (this.now - d.going) / BRICK.fade;
+      if (d.k > 0) keep.push(d); else this.phys.remove(b);
     }
+    let over = keep.filter((d) => d.going < 0).length - BRICK.cap;
+    for (const d of keep) { if (over <= 0) break; if (d.going < 0 && d.home >= 0) { d.going = this.now; over--; } }
     this.debris = keep;
+  }
+
+  onLand(p) { const x = Math.floor(p.x), y = Math.floor(p.z); return this.grid.in(x, y) && this.grid.terrainAt(x, y) === Terrain.Land; }
+
+  /** The fixed box a brick meets over square s: a wall to its drawn top and the landed rise on it, a cannon; else nothing. */
+  fixSquare(s) {
+    const x = s % this.w, y = Math.floor(s / this.w), o = this.grid.occupantAt(x, y), top = this.board.wallTop[s];
+    const h = o === Occupant.Wall ? (Number.isNaN(top) ? 0 : top + (this.blocks.has(s) ? this.lift[s] : 0)) : o === Occupant.Cannon ? 0.5 : 0;
+    this.phys.setFixed(s, x + 0.5, y + 0.5, 0.9, h);
+  }
+
+  /** Every square's fixed box, and each standing castle's up to its roof (where its tier stands) - after the walls or the rise move. */
+  fixAll() {
+    for (let s = 0; s < this.lift.length; s++) this.fixSquare(s);
+    for (const e of this.units.castles.values()) {
+      const top = e.body.visible ? e.g.position.y + e.body.position.y + this.roof.y * e.body.scale.x : 0;
+      for (const c of e.castle.cells) this.phys.setFixed('k' + c.x + ',' + c.y, c.x + 0.5, c.y + 0.5, 1, top);
+    }
   }
 
   ownerColour(s) { const ow = this.grid.ownerAt(s % this.w, Math.floor(s / this.w)); return ow < 4 ? this.board.colourOf(ow) : NEUTRAL_WALL; }
@@ -302,7 +345,7 @@ export class RiseView {
    *  keeps on their roofs, the debris where it tumbles; then the pennants again if the landed rise under them changed. */
   draw() {
     const g = this.grid, w = this.w, top = this.board.wallTop, now = this.now, H = RISE.course;
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), S = new THREE.Vector3(), c = new THREE.Color();
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), S = new THREE.Vector3(), B = new THREE.Vector3(), c = new THREE.Color();
     let n = 0, nm = 0;
     this.kinds.length = 0; this.kindsMoving.length = 0;
     this.lift.fill(0);
@@ -340,8 +383,8 @@ export class RiseView {
         put(RISE_KIND.keep, k.piece.tint, own, !(d.fall === 0 && d.squash === 1), glow(k.piece));
       }
     }
-    for (const d of this.debris) {
-      m.compose(d.p, q.setFromAxisAngle(d.axis, d.rot), S.set(d.sw / RISE_BLOCK_W * d.k, d.h / H * d.k, d.sw / RISE_BLOCK_W * d.k));
+    for (const d of this.debris) {             // the block's origin is its bottom: the body's centre less half its height, turned
+      m.compose(B.set(0, -d.h * d.k / 2, 0).applyQuaternion(d.q).add(d.p), d.q, S.set(d.sw / RISE_BLOCK_W * d.k, d.h / H * d.k, d.sw / RISE_BLOCK_W * d.k));
       put(RISE_KIND.debris, d.tint, d.owner, true);
     }
     this.lay(this.stone, n); this.lay(this.cloth, n); this.lay(this.stoneMoving, nm); this.lay(this.clothMoving, nm);
@@ -349,15 +392,16 @@ export class RiseView {
     let moved = false;
     for (let i = 0; i < this.lift.length; i++) if (this.lift[i] !== this.liftWas[i]) { moved = true; break; }
     if (moved) { this.liftWas.set(this.lift); this.board.drawPennants(top); }
+    this.fixAll();                                                  // UC-L9: what a brick can land on is what is drawn now
   }
 
   /** Lay the debris alone in the moving batches (nothing else is moving: drawn only after every piece has landed and squashed). */
   drawDebris() {
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), S = new THREE.Vector3(), c = new THREE.Color(), H = RISE.course;
+    const m = new THREE.Matrix4(), S = new THREE.Vector3(), B = new THREE.Vector3(), c = new THREE.Color(), H = RISE.course;
     let nm = 0;
     this.kindsMoving.length = 0;
-    for (const d of this.debris) {
-      m.compose(d.p, q.setFromAxisAngle(d.axis, d.rot), S.set(d.sw / RISE_BLOCK_W * d.k, d.h / H * d.k, d.sw / RISE_BLOCK_W * d.k));
+    for (const d of this.debris) {             // the block's origin is its bottom: the body's centre less half its height, turned
+      m.compose(B.set(0, -d.h * d.k / 2, 0).applyQuaternion(d.q).add(d.p), d.q, S.set(d.sw / RISE_BLOCK_W * d.k, d.h / H * d.k, d.sw / RISE_BLOCK_W * d.k));
       c.copy(d.tint).lerp(d.owner, OWNER_TINT);
       this.stoneMoving.set(nm, m, c); this.clothMoving.set(nm, m, d.owner); this.kindsMoving.push(RISE_KIND.debris); nm++;
     }
@@ -396,6 +440,7 @@ export class RiseView {
 
   dispose() {
     this.units.group.remove(this.group);
+    this.phys.dispose();
     this.stone.geo.dispose(); this.cloth.geo.dispose();                // its own two geometries; the materials are the board look's
   }
 }

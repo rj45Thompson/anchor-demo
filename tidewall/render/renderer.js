@@ -18,6 +18,7 @@
 //   r.screenshot()                            -> Promise<Blob> (the 3D frame with the HUD drawn over it)
 // It reads the model and the view models and never changes them. A new level (the model swaps its board) is picked up by itself.
 import * as THREE from 'three/webgpu';
+import { loadBrickPhysics } from './bricks.js';
 import { uniform, pass, mrt, output, emissive, normalView, vec3, vec4, float, uv, length, smoothstep, oneMinus, mix, renderOutput, saturation,
          luminance, clamp, nodeObject } from 'three/tsl';
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
@@ -117,6 +118,7 @@ export async function createRenderer(canvas, opts = {}) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const models = await Models.load();                                     // the models; one that does not load stops here
+  await loadBrickPhysics();                                             // the bricks' physics (bricks.js, UC-L9): loaded before any brick falls
   if (opts.quality !== undefined && !(opts.quality in QUALITY)) throw new RenderContractError("createRenderer: quality is 'high' or 'low', got " + opts.quality);
   const weatherTex = await Weather.loadTextures();                       // the storm's bolt and glow (a store VFX pack's textures, UC-L6)
   const r = new Renderer(canvas, renderer, { ...opts, weatherTex }, models);

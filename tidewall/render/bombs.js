@@ -56,7 +56,9 @@ function chevrons() {
   return [one(-0.17), one(0.03)];
 }
 /** What a broken soft block bursts into (its own palette colours). */
-const SOFT_CHUNKS = Object.freeze({ [Occupant.Tree]: [C.leaf, C.wood], [Occupant.RockSmall]: [C.rock, C.rockDark], [Occupant.House]: [C.houseWall, C.houseRoof] });
+// (a broken wall's rubble too, BOMBER_UC R19: its stones; its own bricks are rise.js's physics bodies, blown up there)
+const SOFT_CHUNKS = Object.freeze({ [Occupant.Tree]: [C.leaf, C.wood], [Occupant.RockSmall]: [C.rock, C.rockDark], [Occupant.House]: [C.houseWall, C.houseRoof],
+  [Occupant.Rubble]: [C.stone, C.stoneDark] });
 
 const HOT = new THREE.Color(0xff3020), SPARK = new THREE.Color(0xffb040), GOLD = new THREE.Color(0xffd24a);
 const BIG_SCALE = 1.45;                         // AUTHORED: a big bomb's size against a normal one's
@@ -297,9 +299,9 @@ export class BombsView {
       fxs.chunks(cellAt(e.at, 0.2), C.iron, 3, 0.4);
     } else if (e instanceof MetalPlaced) {
       for (const c of e.cells) fxs.flash(cellAt(c, 0.5), STEEL.clone().multiplyScalar(1.6), 0.3);
-    } else if (e instanceof SoftBlockBroken) {                      // the RAID: a tree, a rock or a house blown apart
+    } else if (e instanceof SoftBlockBroken) {                      // the RAID: a tree, a rock, a house or rubble blown apart
       const look = SOFT_CHUNKS[e.was];
-      if (!look) throw new Error('bombs.js: no chunks for a broken ' + e.was + ' (a soft block is a tree, a small rock or a house)');
+      if (!look) throw new Error('bombs.js: no chunks for a broken ' + e.was + ' (a soft block is a tree, a small rock, a house or rubble)');
       const [a, b] = look;
       fxs.chunks(cellAt(e.at, 0.4), a, 9, 1.1); fxs.chunks(cellAt(e.at, 0.3), b, 6, 0.9); fxs.dust(cellAt(e.at, 0), 1.2);
     } else if (e instanceof PowerUpRevealed) {

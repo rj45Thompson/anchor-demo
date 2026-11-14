@@ -33,13 +33,15 @@ const ROLL_STREAM = 2600, WANDER_STREAM = 2700;
 const POWER_KINDS = [PowerKind.Fire, PowerKind.Bomb, PowerKind.Speed];
 
 /** A soft block (BOMBER_UC.md step 8): a blast breaks it, and it stops the arm. */
-function soft(o) { return o === Occupant.Tree || o === Occupant.RockSmall || o === Occupant.House; }
+// BOMBER_UC.md step 8, R19 (UC-L9): a broken wall's rubble is a soft block in the RAID - a blast breaks it, nothing walks over it
+function soft(o) { return o === Occupant.Tree || o === Occupant.RockSmall || o === Occupant.House || o === Occupant.Rubble; }
 /** What stops a blast arm (and takes its hit): a brick, a cannon, a castle, a large rock, or a soft block. */
 function stopsBlast(o) {
   return o === Occupant.Wall || o === Occupant.Cannon || o === Occupant.Castle || o === Occupant.RockLarge || soft(o);
 }
-/** Open ground (nothing there, rubble, or a ruined castle's graveyard): what a hero walks on and a bomb or trap is put on. */
-function openGround(o) { return o === Occupant.Empty || o === Occupant.Rubble || o === Occupant.Graveyard; }
+/** Open ground (nothing there, or a ruined castle's graveyard): what a hero walks on and a bomb is put on. Not rubble: it is a soft
+ *  block in the RAID (R19). */
+function openGround(o) { return o === Occupant.Empty || o === Occupant.Graveyard; }
 /** What a raider bombs (a grunt's targets): a brick, a cannon, a castle. */
 function raiderTarget(o) { return o === Occupant.Wall || o === Occupant.Cannon || o === Occupant.Castle; }
 
@@ -638,13 +640,13 @@ export class BombWorld {
     return false;
   }
 
-  /** A raider may step onto (x, y): dry land, empty or rubble, no other raider, no lit bomb, no hero, not burning, and not inside a
+  /** A raider may step onto (x, y): dry land, empty (rubble is a soft block, R19), no other raider, no lit bomb, no hero, not burning, and not inside a
    *  raider bomb's cross (one that ran from its bomb does not walk back into it). */
   _raiderFree(x, y, me, burning) {
     const m = this.m, g = m.grid;
     if (!g.in(x, y) || g.terrainAt(x, y) !== Terrain.Land) return false;
     const o = g.occupantAt(x, y);
-    if (o !== Occupant.Empty && o !== Occupant.Rubble) return false;
+    if (o !== Occupant.Empty) return false;
     if (m._otherGruntAt(x, y, me) || this.bombAt(x, y) !== null || burning.has(y * g.width + x) || this._heroOn(x, y)) return false;
     return !this.raiderBombReaches(x, y);
   }
@@ -683,7 +685,7 @@ export class BombWorld {
     let best = null, bestS = score(gr.at.x, gr.at.y);
     for (let k = 0; k < 4; k++) {
       const x = gr.at.x + DX4[k], y = gr.at.y + DY4[k];
-      if (!g.in(x, y) || g.terrainAt(x, y) !== Terrain.Land || (g.occupantAt(x, y) !== Occupant.Empty && g.occupantAt(x, y) !== Occupant.Rubble)
+      if (!g.in(x, y) || g.terrainAt(x, y) !== Terrain.Land || g.occupantAt(x, y) !== Occupant.Empty
           || m._otherGruntAt(x, y, gr) || this.bombAt(x, y) !== null || this._heroOn(x, y) || burning.has(y * g.width + x)) continue;
       const s = score(x, y);
       if (s > bestS) { bestS = s; best = new Cell(x, y); }
