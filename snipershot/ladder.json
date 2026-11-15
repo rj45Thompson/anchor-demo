@@ -3,18 +3,18 @@
  "_regenerate": "py -X utf8 -I snipershot/ladder/zoo.py --check",
  "_shape": "nodes + [subject, rel, object]; the engine's shape (uml.py:1614) is used by graph_build.py for facts - this is the ladder, parent/child",
  "counts": {
-  "alternatives": 116,
+  "alternatives": 122,
   "by_status": {
-   "GUESS": 56,
+   "GUESS": 59,
    "NEVER-FIRED": 14,
-   "REFUTED": 10,
+   "REFUTED": 12,
    "UNTRIED": 12,
-   "WORKED": 24
+   "WORKED": 25
   },
-  "decisions": 14,
-  "edges": 145,
-  "guesses": 56,
-  "nodes": 146
+  "decisions": 15,
+  "edges": 153,
+  "guesses": 59,
+  "nodes": 154
  },
  "edges": [
   [
@@ -285,6 +285,26 @@
   [
    "PROBLEM",
    "has_decision",
+   "DEC:snipershot/lift/USE_CASE.md"
+  ],
+  [
+   "DEC:snipershot/lift/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/lift/USE_CASE.md:1"
+  ],
+  [
+   "DEC:snipershot/lift/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/lift/USE_CASE.md:2"
+  ],
+  [
+   "DEC:snipershot/lift/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/lift/USE_CASE.md:3"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
    "DEC:snipershot/nozero/USE_CASE.md"
   ],
   [
@@ -430,6 +450,11 @@
   [
    "DEC:refuted-predictions",
    "alternative",
+   "ALT:snipershot/ladder/REPORT.md/L2"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
    "ALT:snipershot/nozero/REPORT.md/N3"
   ],
   [
@@ -440,7 +465,12 @@
   [
    "PROBLEM",
    "has_box",
-   "BOX:dot-product"
+   "BOX:resolve-by-structure"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:mechanism:dot-product"
   ],
   [
    "PROBLEM",
@@ -501,6 +531,16 @@
    "GOAL:know-where-the-code-breaks-those-rules-w",
    "alternative",
    "WAY:GOAL:know-where-the-code-breaks-those-rules-w:closed_loop_lite"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:measure-whether-the-ladders-narrowing-an"
+  ],
+  [
+   "GOAL:measure-whether-the-ladders-narrowing-an",
+   "alternative",
+   "WAY:GOAL:measure-whether-the-ladders-narrowing-an:lift"
   ],
   [
    "PROBLEM",
@@ -797,6 +837,8 @@
    "id": "ALT:snipershot.grind.grind.py:unique",
    "impl": "r_unique",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -810,6 +852,8 @@
    "id": "ALT:snipershot.grind.grind.py:cited-def",
    "impl": "r_cited_def",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 14 item(s) with it",
@@ -823,6 +867,8 @@
    "id": "ALT:snipershot.grind.grind.py:cited-file",
    "impl": "r_cited_file",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -836,6 +882,8 @@
    "id": "ALT:snipershot.grind.grind.py:enclosing",
    "impl": "r_enclosing",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -849,6 +897,8 @@
    "id": "ALT:snipershot.grind.grind.py:owner-at-cited",
    "impl": "r_owner_at_cited",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 2 item(s) with it",
@@ -862,6 +912,8 @@
    "id": "ALT:snipershot.grind.grind.py:dotted",
    "impl": "r_dotted",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 3 item(s) with it",
@@ -875,6 +927,8 @@
    "id": "ALT:snipershot.grind.grind.py:sibling-anchor",
    "impl": "r_sibling_anchor",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 4 item(s) with it",
@@ -888,6 +942,8 @@
    "id": "ALT:snipershot.grind.grind.py:body-words",
    "impl": "r_body_words",
    "kind": "alternative",
+   "mechanism": "TEXT",
+   "mechanism_why": "compares or searches prose - the mechanism every measured defect came from",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 6 item(s) with it",
@@ -901,6 +957,8 @@
    "id": "ALT:snipershot.grind.grind.py:context-doc",
    "impl": "r_context_doc",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 4 item(s) with it",
@@ -914,6 +972,8 @@
    "id": "ALT:snipershot.grind.grind.py:popularity",
    "impl": "r_popularity",
    "kind": "alternative",
+   "mechanism": "TEXT",
+   "mechanism_why": "compares or searches prose - the mechanism every measured defect came from",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -927,6 +987,8 @@
    "id": "ALT:snipershot.grind.grind.py:ask-a-person",
    "impl": "r_ask",
    "kind": "alternative",
+   "mechanism": "PROCESS",
+   "mechanism_why": "routes or refuses rather than resolving",
    "parent": "DEC:snipershot.grind.grind.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -948,6 +1010,8 @@
    "id": "ALT:snipershot.grind.grinder.py:cited-line",
    "impl": "p_cited_line",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 7 item(s) with it",
@@ -961,6 +1025,8 @@
    "id": "ALT:snipershot.grind.grinder.py:cited-file",
    "impl": "p_cited_file",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -974,6 +1040,8 @@
    "id": "ALT:snipershot.grind.grinder.py:enclosing",
    "impl": "p_enclosing",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -987,6 +1055,8 @@
    "id": "ALT:snipershot.grind.grinder.py:owner-at-foreign",
    "impl": "p_owner_at_foreign",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 1 item(s) with it",
@@ -1000,6 +1070,8 @@
    "id": "ALT:snipershot.grind.grinder.py:dotted",
    "impl": "p_dotted",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 3 item(s) with it",
@@ -1013,6 +1085,8 @@
    "id": "ALT:snipershot.grind.grinder.py:sibling-file",
    "impl": "p_sibling_file",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 2 item(s) with it",
@@ -1026,6 +1100,8 @@
    "id": "ALT:snipershot.grind.grinder.py:code-token",
    "impl": "p_code_token",
    "kind": "alternative",
+   "mechanism": "TEXT",
+   "mechanism_why": "compares or searches prose - the mechanism every measured defect came from",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 4 item(s) with it",
@@ -1039,6 +1115,8 @@
    "id": "ALT:snipershot.grind.grinder.py:qualname-word",
    "impl": "p_qualname_word",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -1052,6 +1130,8 @@
    "id": "ALT:snipershot.grind.grinder.py:base-in-claim",
    "impl": "p_base_in_claim",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -1065,6 +1145,8 @@
    "id": "ALT:snipershot.grind.grinder.py:caller-by-callee",
    "impl": "p_caller_by_callee",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -1078,6 +1160,8 @@
    "id": "ALT:snipershot.grind.grinder.py:section-class",
    "impl": "p_section_class",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 4 item(s) with it",
@@ -1091,6 +1175,8 @@
    "id": "ALT:snipershot.grind.grinder.py:owner-in-doc",
    "impl": "p_owner_in_doc",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 1 item(s) with it",
@@ -1104,6 +1190,8 @@
    "id": "ALT:snipershot.grind.grinder.py:doc-scope",
    "impl": "p_doc_scope",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -1117,6 +1205,8 @@
    "id": "ALT:snipershot.grind.grinder.py:doc-path",
    "impl": "p_doc_path",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:snipershot.grind.grinder.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 2 item(s) with it",
@@ -1138,6 +1228,8 @@
    "id": "ALT:closed_loop_lite.reqwalk.walk.py:decision",
    "impl": "q_decision",
    "kind": "alternative",
+   "mechanism": "PROCESS",
+   "mechanism_why": "routes or refuses rather than resolving",
    "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 4 item(s) with it",
@@ -1151,6 +1243,8 @@
    "id": "ALT:closed_loop_lite.reqwalk.walk.py:answered-in-corpus",
    "impl": "q_answered",
    "kind": "alternative",
+   "mechanism": "TEXT",
+   "mechanism_why": "compares or searches prose - the mechanism every measured defect came from",
    "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -1164,6 +1258,8 @@
    "id": "ALT:closed_loop_lite.reqwalk.walk.py:code-exists",
    "impl": "q_code",
    "kind": "alternative",
+   "mechanism": "STRUCTURAL",
+   "mechanism_why": "identity or a typed edge; prose is read once to lift an identifier",
    "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
    "status": "WORKED",
    "status_from": "a recorded run settled 1 item(s) with it",
@@ -1177,6 +1273,8 @@
    "id": "ALT:closed_loop_lite.reqwalk.walk.py:measured",
    "impl": "q_measured",
    "kind": "alternative",
+   "mechanism": "MEASURED",
+   "mechanism_why": "reads a recorded number",
    "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -1190,6 +1288,8 @@
    "id": "ALT:closed_loop_lite.reqwalk.walk.py:runnable-check",
    "impl": "q_runnable",
    "kind": "alternative",
+   "mechanism": "MEASURED",
+   "mechanism_why": "reads a recorded number",
    "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
    "status": "NEVER-FIRED",
    "status_from": "no recorded run has ever settled anything with it",
@@ -1367,7 +1467,7 @@
    "kind": "alternative",
    "parent": "DEC:snipershot/ladder/USE_CASE.md",
    "status": "GUESS",
-   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "status_from": "snipershot/ladder/REPORT.md discusses it (8 of 10 terms), and discussed is not the same as tried",
    "text": "An alternative's status cannot be derived \u2192 it is marked as a guess and counted (step 3), never given a",
    "where": "snipershot/ladder/USE_CASE.md:50"
   },
@@ -1377,7 +1477,7 @@
    "kind": "alternative",
    "parent": "DEC:snipershot/ladder/USE_CASE.md",
    "status": "GUESS",
-   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "status_from": "snipershot/ladder/REPORT.md discusses it (7 of 8 terms), and discussed is not the same as tried",
    "text": "The page and the data disagree \u2192 the gate refuses and the page is not published (step 7).",
    "where": "snipershot/ladder/USE_CASE.md:52"
   },
@@ -1387,9 +1487,48 @@
    "kind": "alternative",
    "parent": "DEC:snipershot/ladder/USE_CASE.md",
    "status": "GUESS",
-   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "status_from": "snipershot/ladder/REPORT.md discusses it (6 of 7 terms), and discussed is not the same as tried",
    "text": "A recorded run is missing for a ladder \u2192 its alternatives are `UNTRIED`, which is the honest status, and",
    "where": "snipershot/ladder/USE_CASE.md:53"
+  },
+  {
+   "id": "DEC:snipershot/lift/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS60 can fail, and what it does then",
+   "use_case": "UC-SS60 Measure the lift on a small model, with controls that can win",
+   "where": "snipershot/lift/USE_CASE.md:46"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/lift/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/lift/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The small model is worse with the ladder than without it \u2192 that is the result; the lift claim fails and",
+   "where": "snipershot/lift/USE_CASE.md:48"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/lift/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/lift/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "Both arms lose to the no-model incumbent \u2192 the honest reading is that the ladder does not need a model",
+   "where": "snipershot/lift/USE_CASE.md:50"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/lift/USE_CASE.md:3",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/lift/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The borrowed compute cannot run a model \u2192 no number is reported; the claim stays unmeasured and is said",
+   "where": "snipershot/lift/USE_CASE.md:52"
   },
   {
    "id": "DEC:snipershot/nozero/USE_CASE.md",
@@ -1676,6 +1815,16 @@
   },
   {
    "cost": null,
+   "id": "ALT:snipershot/ladder/REPORT.md/L2",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "L2 ",
+   "where": "snipershot/ladder/REPORT.md:19"
+  },
+  {
+   "cost": null,
    "id": "ALT:snipershot/nozero/REPORT.md/N3",
    "kind": "alternative",
    "parent": "DEC:refuted-predictions",
@@ -1695,17 +1844,29 @@
    "where": "snipershot/nozero/REPORT.md:17"
   },
   {
-   "checkable": "for a requirement whose own text is in the corpus, the self-match must be separable from the best genuine evidence by a threshold; it is not \u2014 so the check FAILS and the mechanism may not decide",
-   "id": "BOX:dot-product",
+   "checkable": "every narrowing names a `file:line` a reader can open and a relation that holds there; remove the relation from the corpus and the narrowing must stop happening",
+   "id": "BOX:resolve-by-structure",
    "kind": "box",
-   "measured": "18 of 18 requirements rank their own restatement FIRST at similarity 1.000, against 0.433 (median) for the best genuine corpus line, over 68,150 lines \u2014 a margin of 0.572, so no cutoff admits the real evidence without first admitting the restatement",
+   "measured": "19 of 21 real ambiguous subjects resolved this way, 0 contradicting the incumbent, plus one proven absence and one proven not-a-subject; of 21 items, 0 were settled by comparing text",
    "parent": "PROBLEM",
-   "precondition": "a vector space built over the corpus AND the query together; a query vectorised in its own one-document space has a negative idf and every score comes back 0.000",
-   "signature": "`rank(requirement, corpus) -> [(line, similarity)] | CANNOT-TELL` \u2014 it returns an ORDERED LIST of candidate evidence, never a decision",
+   "precondition": "the subject is an IDENTIFIER lifted out of the text, and from that point nothing compares prose: the candidates come from an identity lookup, and every narrowing is a typed relation \u2014 a def line, an owning class, a declared file, a caller, a base",
+   "signature": "`resolve(subject, claim, corpus) -> place | ABSENT(witness) | NOT-A-SUBJECT(witness) | CANNOT-TELL` \u2014 one place, or a proven statement about why there is none",
    "status": null,
-   "text": "The dot product as a mechanism: candidate generator, never decider",
-   "verdict": "CANDIDATE GENERATOR ONLY. It may propose evidence for a verifier to confirm; it may never close a requirement, and nothing downstream may read its score as an answer",
-   "where": "snipershot/ladder/BOX_dot_product.md:6"
+   "text": "Resolving a subject by structure: identity and typed edges, not text",
+   "verdict": "IN USE. Text is read once, to lift a name; after that the work is identity and typed edges, which is why a narrowing can be re-derived by anyone with the corpus",
+   "where": "snipershot/ladder/BOX_resolve.md:6"
+  },
+  {
+   "cost": null,
+   "id": "ALT:mechanism:dot-product",
+   "kind": "alternative",
+   "mechanism": "TEXT",
+   "mechanism_why": "compares prose - the mechanism every measured defect came from",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "measured: with the asking document in the corpus, a requirement's own restatement ranks first at 1.000 against 0.433 for the best genuine line, so no threshold separates them",
+   "text": "Score candidates by text similarity and take the best",
+   "where": "snipershot/ladder/BOX_dot_product.md:1"
   },
   {
    "id": "GOAL:answer-the-return-type-of-a-named-entity",
@@ -1828,6 +1989,26 @@
    "where": "closed_loop_lite/USE_CASE.md:8"
   },
   {
+   "id": "GOAL:measure-whether-the-ladders-narrowing-an",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "measure whether the ladder's narrowing and witnesses change what that model gets right, against",
+   "ways": 1,
+   "where": "snipershot/lift/USE_CASE.md:20"
+  },
+  {
+   "cost": null,
+   "fired": 0,
+   "id": "WAY:GOAL:measure-whether-the-ladders-narrowing-an:lift",
+   "kind": "alternative",
+   "parent": "GOAL:measure-whether-the-ladders-narrowing-an",
+   "status": "UNTRIED",
+   "status_from": "the lane has no recorded run of its own",
+   "text": "lift \u2014 one way to reach it",
+   "where": "snipershot/lift/USE_CASE.md:20"
+  },
+  {
    "id": "GOAL:reach-a-tree-in-which-every-leaf-is-sett",
    "kind": "goal",
    "parent": "PROBLEM",
@@ -1858,12 +2039,12 @@
   },
   {
    "cost": null,
-   "fired": 0,
+   "fired": 1,
    "id": "WAY:GOAL:reach-any-rung-of-the-problem-see-its-al:ladder",
    "kind": "alternative",
    "parent": "GOAL:reach-any-rung-of-the-problem-see-its-al",
-   "status": "UNTRIED",
-   "status_from": "the lane has no recorded run of its own",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
    "text": "ladder \u2014 one way to reach it",
    "where": "snipershot/ladder/USE_CASE.md:15"
   },
@@ -2310,9 +2491,9 @@
  ],
  "upward": {
   "counts": {
-   "goals": 14,
+   "goals": 15,
    "goals_reached_more_than_one_way": 0,
-   "lanes_with_a_goal": 14,
+   "lanes_with_a_goal": 15,
    "lanes_with_no_readable_goal": 32
   },
   "goals": {
@@ -2387,6 +2568,18 @@
      }
     ],
     "where": "closed_loop_lite/USE_CASE.md:8"
+   },
+   "measure whether the ladders narrowing and witnesses change w": {
+    "text": "measure whether the ladder's narrowing and witnesses change what that model gets right, against",
+    "ways": [
+     {
+      "actor": "a small language model asked to resolve a claim's subject to one definition.",
+      "lane": "lift",
+      "use_case": "snipershot/lift/USE_CASE.md",
+      "where": "snipershot/lift/USE_CASE.md:20"
+     }
+    ],
+    "where": "snipershot/lift/USE_CASE.md:20"
    },
    "reach a tree in which every leaf is settled asked or proven ": {
     "text": "reach a tree in which **every leaf is settled, asked, or proven absent - and not one leaf is a guess.**",
