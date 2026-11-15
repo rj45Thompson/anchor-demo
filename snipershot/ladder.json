@@ -1,0 +1,2652 @@
+{
+ "_generated_by": "snipershot/ladder/zoo.py",
+ "_regenerate": "py -X utf8 -I snipershot/ladder/zoo.py --check",
+ "_shape": "nodes + [subject, rel, object]; the engine's shape (uml.py:1614) is used by graph_build.py for facts - this is the ladder, parent/child",
+ "counts": {
+  "alternatives": 116,
+  "by_status": {
+   "GUESS": 56,
+   "NEVER-FIRED": 14,
+   "REFUTED": 10,
+   "UNTRIED": 12,
+   "WORKED": 24
+  },
+  "decisions": 14,
+  "edges": 145,
+  "guesses": 56,
+  "nodes": 146
+ },
+ "edges": [
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot.grind.grind.py"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:unique"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:cited-def"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:cited-file"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:enclosing"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:owner-at-cited"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:dotted"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:sibling-anchor"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:body-words"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:context-doc"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:popularity"
+  ],
+  [
+   "DEC:snipershot.grind.grind.py",
+   "alternative",
+   "ALT:snipershot.grind.grind.py:ask-a-person"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot.grind.grinder.py"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:cited-line"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:cited-file"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:enclosing"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:owner-at-foreign"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:dotted"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:sibling-file"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:code-token"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:qualname-word"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:base-in-claim"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:caller-by-callee"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:section-class"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:owner-in-doc"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:doc-scope"
+  ],
+  [
+   "DEC:snipershot.grind.grinder.py",
+   "alternative",
+   "ALT:snipershot.grind.grinder.py:doc-path"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:closed_loop_lite.reqwalk.walk.py"
+  ],
+  [
+   "DEC:closed_loop_lite.reqwalk.walk.py",
+   "alternative",
+   "ALT:closed_loop_lite.reqwalk.walk.py:decision"
+  ],
+  [
+   "DEC:closed_loop_lite.reqwalk.walk.py",
+   "alternative",
+   "ALT:closed_loop_lite.reqwalk.walk.py:answered-in-corpus"
+  ],
+  [
+   "DEC:closed_loop_lite.reqwalk.walk.py",
+   "alternative",
+   "ALT:closed_loop_lite.reqwalk.walk.py:code-exists"
+  ],
+  [
+   "DEC:closed_loop_lite.reqwalk.walk.py",
+   "alternative",
+   "ALT:closed_loop_lite.reqwalk.walk.py:measured"
+  ],
+  [
+   "DEC:closed_loop_lite.reqwalk.walk.py",
+   "alternative",
+   "ALT:closed_loop_lite.reqwalk.walk.py:runnable-check"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot/atomise/USE_CASE.md"
+  ],
+  [
+   "DEC:snipershot/atomise/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/atomise/USE_CASE.md:1"
+  ],
+  [
+   "DEC:snipershot/atomise/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/atomise/USE_CASE.md:2"
+  ],
+  [
+   "DEC:snipershot/atomise/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/atomise/USE_CASE.md:3"
+  ],
+  [
+   "DEC:snipershot/atomise/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/atomise/USE_CASE.md:4"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot/grind/USE_CASE.md"
+  ],
+  [
+   "DEC:snipershot/grind/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/grind/USE_CASE.md:1"
+  ],
+  [
+   "DEC:snipershot/grind/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/grind/USE_CASE.md:2"
+  ],
+  [
+   "DEC:snipershot/grind/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/grind/USE_CASE.md:3"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot/grind/USE_CASE_LOOP.md"
+  ],
+  [
+   "DEC:snipershot/grind/USE_CASE_LOOP.md",
+   "alternative",
+   "ALT:snipershot/grind/USE_CASE_LOOP.md:1"
+  ],
+  [
+   "DEC:snipershot/grind/USE_CASE_LOOP.md",
+   "alternative",
+   "ALT:snipershot/grind/USE_CASE_LOOP.md:2"
+  ],
+  [
+   "DEC:snipershot/grind/USE_CASE_LOOP.md",
+   "alternative",
+   "ALT:snipershot/grind/USE_CASE_LOOP.md:3"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot/guessfix/USE_CASE.md"
+  ],
+  [
+   "DEC:snipershot/guessfix/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/guessfix/USE_CASE.md:1"
+  ],
+  [
+   "DEC:snipershot/guessfix/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/guessfix/USE_CASE.md:2"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot/ladder/USE_CASE.md"
+  ],
+  [
+   "DEC:snipershot/ladder/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/ladder/USE_CASE.md:1"
+  ],
+  [
+   "DEC:snipershot/ladder/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/ladder/USE_CASE.md:2"
+  ],
+  [
+   "DEC:snipershot/ladder/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/ladder/USE_CASE.md:3"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot/nozero/USE_CASE.md"
+  ],
+  [
+   "DEC:snipershot/nozero/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/nozero/USE_CASE.md:1"
+  ],
+  [
+   "DEC:snipershot/nozero/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/nozero/USE_CASE.md:2"
+  ],
+  [
+   "DEC:snipershot/nozero/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/nozero/USE_CASE.md:3"
+  ],
+  [
+   "DEC:snipershot/nozero/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/nozero/USE_CASE.md:4"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot/returnsop/USE_CASE.md"
+  ],
+  [
+   "DEC:snipershot/returnsop/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/returnsop/USE_CASE.md:1"
+  ],
+  [
+   "DEC:snipershot/returnsop/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/returnsop/USE_CASE.md:2"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:snipershot/trusthead/USE_CASE.md"
+  ],
+  [
+   "DEC:snipershot/trusthead/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/trusthead/USE_CASE.md:1"
+  ],
+  [
+   "DEC:snipershot/trusthead/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/trusthead/USE_CASE.md:2"
+  ],
+  [
+   "DEC:snipershot/trusthead/USE_CASE.md",
+   "alternative",
+   "ALT:snipershot/trusthead/USE_CASE.md:3"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:closed_loop_lite/reqwalk/USE_CASE.md"
+  ],
+  [
+   "DEC:closed_loop_lite/reqwalk/USE_CASE.md",
+   "alternative",
+   "ALT:closed_loop_lite/reqwalk/USE_CASE.md:1"
+  ],
+  [
+   "DEC:closed_loop_lite/reqwalk/USE_CASE.md",
+   "alternative",
+   "ALT:closed_loop_lite/reqwalk/USE_CASE.md:2"
+  ],
+  [
+   "DEC:closed_loop_lite/reqwalk/USE_CASE.md",
+   "alternative",
+   "ALT:closed_loop_lite/reqwalk/USE_CASE.md:3"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md"
+  ],
+  [
+   "DEC:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md",
+   "alternative",
+   "ALT:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:1"
+  ],
+  [
+   "DEC:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md",
+   "alternative",
+   "ALT:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:2"
+  ],
+  [
+   "DEC:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md",
+   "alternative",
+   "ALT:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:3"
+  ],
+  [
+   "PROBLEM",
+   "has_decision",
+   "DEC:refuted-predictions"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:closed_loop_lite/handhold_test/REPORT.md/P4"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:closed_loop_lite/handhold_test/REPORT_v2.md/P8"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:closed_loop_lite/reqwalk/REPORT_GRAPH.md/D5"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:snipershot/atomise/REPORT.md/P1"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:snipershot/atomise/REPORT.md/P3"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:snipershot/chainclaim/REPORT.md/W1"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:snipershot/grind/REPORT.md/G3"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:snipershot/grind/REPORT_LOOP.md/H2"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:snipershot/nozero/REPORT.md/N3"
+  ],
+  [
+   "DEC:refuted-predictions",
+   "alternative",
+   "ALT:snipershot/nozero/REPORT.md/N4"
+  ],
+  [
+   "PROBLEM",
+   "has_box",
+   "BOX:dot-product"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:answer-the-return-type-of-a-named-entity"
+  ],
+  [
+   "GOAL:answer-the-return-type-of-a-named-entity",
+   "alternative",
+   "WAY:GOAL:answer-the-return-type-of-a-named-entity:returnsop"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:commit-only-with-a-witness-try-every-alt"
+  ],
+  [
+   "GOAL:commit-only-with-a-witness-try-every-alt",
+   "alternative",
+   "WAY:GOAL:commit-only-with-a-witness-try-every-alt:grind"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:decide-mechanically--never-by-my-judgeme"
+  ],
+  [
+   "GOAL:decide-mechanically--never-by-my-judgeme",
+   "alternative",
+   "WAY:GOAL:decide-mechanically--never-by-my-judgeme:nozero"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:every-code-claim-in-real-public-aiwritte"
+  ],
+  [
+   "GOAL:every-code-claim-in-real-public-aiwritte",
+   "alternative",
+   "WAY:GOAL:every-code-claim-in-real-public-aiwritte:wild"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:express-every-requirement-and-every-answ"
+  ],
+  [
+   "GOAL:express-every-requirement-and-every-answ",
+   "alternative",
+   "WAY:GOAL:express-every-requirement-and-every-answ:reqwalk"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:know-where-the-code-breaks-those-rules-w"
+  ],
+  [
+   "GOAL:know-where-the-code-breaks-those-rules-w",
+   "alternative",
+   "WAY:GOAL:know-where-the-code-breaks-those-rules-w:closed_loop_lite"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:reach-a-tree-in-which-every-leaf-is-sett"
+  ],
+  [
+   "GOAL:reach-a-tree-in-which-every-leaf-is-sett",
+   "alternative",
+   "WAY:GOAL:reach-a-tree-in-which-every-leaf-is-sett:reqwalk"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:reach-any-rung-of-the-problem-see-its-al"
+  ],
+  [
+   "GOAL:reach-any-rung-of-the-problem-see-its-al",
+   "alternative",
+   "WAY:GOAL:reach-any-rung-of-the-problem-see-its-al:ladder"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:reduce-the-candidates-to-one-with-a-chai"
+  ],
+  [
+   "GOAL:reduce-the-candidates-to-one-with-a-chai",
+   "alternative",
+   "WAY:GOAL:reduce-the-candidates-to-one-with-a-chai:grind"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:refuse-exactly-when-the-cheap-answer-is-"
+  ],
+  [
+   "GOAL:refuse-exactly-when-the-cheap-answer-is-",
+   "alternative",
+   "WAY:GOAL:refuse-exactly-when-the-cheap-answer-is-:trusthead"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:the-plain-models-answer-with-no-corpus-a"
+  ],
+  [
+   "GOAL:the-plain-models-answer-with-no-corpus-a",
+   "alternative",
+   "WAY:GOAL:the-plain-models-answer-with-no-corpus-a:snipershot"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:the-share-of-wild-claims-that-become-a-c"
+  ],
+  [
+   "GOAL:the-share-of-wild-claims-that-become-a-c",
+   "alternative",
+   "WAY:GOAL:the-share-of-wild-claims-that-become-a-c:chainclaim"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:turn-a-claim-no-reader-can-class-into-at"
+  ],
+  [
+   "GOAL:turn-a-claim-no-reader-can-class-into-at",
+   "alternative",
+   "WAY:GOAL:turn-a-claim-no-reader-can-class-into-at:atomise"
+  ],
+  [
+   "PROBLEM",
+   "has_goal",
+   "GOAL:use-the-location-a-claim-volunteers-to-s"
+  ],
+  [
+   "GOAL:use-the-location-a-claim-volunteers-to-s",
+   "alternative",
+   "WAY:GOAL:use-the-location-a-claim-volunteers-to-s:guessfix"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:ab"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:axisbox"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:bus"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:callfix"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:checker"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:confidence"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:csharp"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:decircular"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:drift"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:extrapolate"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:fixit"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:frontier"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:grip2"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:grow"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:growloop"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:kin"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:kinconfirm"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:land"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:locbench"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:obstacle"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:opened"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:opportunity"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:plan"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:portdiff"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:search"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:seedpass"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:segments"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:strict"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:unmodellable"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:validity"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:breadth"
+  ],
+  [
+   "PROBLEM",
+   "alternative",
+   "UNKNOWN-PARENT:lazy"
+  ]
+ ],
+ "example": {
+  "candidates_at_start": 3,
+  "chain": [
+   {
+    "generation": 0,
+    "kept": 14,
+    "probe": "code-token",
+    "witness": "14 survivors   [the claim's token `None` is in this body and not the others]"
+   },
+   {
+    "generation": 0,
+    "kept": 4,
+    "probe": "doc-path",
+    "witness": "4 survivors   [A_24.md line 31 puts the subject in result.py]"
+   },
+   {
+    "generation": 1,
+    "kept": 3,
+    "probe": "owner-in-doc",
+    "witness": "3 survivors   [the document names `AsyncResult`, which owns this]"
+   }
+  ],
+  "consumed": 58,
+  "id": "C017",
+  "outcome": "fetchone is ABSENT from `ScalarResult`",
+  "outcome_witness": "sqlalchemy/engine/result.py:1714  class ScalarResult(FilterResult[_R]):   [the section from line 31 is about `ScalarResult`; 11 members, none named `fetchone`]",
+  "subject": "fetchone",
+  "sweeps": 4,
+  "where": "snipershot/grind/grinder.json"
+ },
+ "nodes": [
+  {
+   "id": "PROBLEM",
+   "kind": "problem",
+   "parent": null,
+   "status": null,
+   "text": "Give lift to a hard problem by presenting every decision as alternatives, so a reader can move up and down the chain and never guess",
+   "where": "snipershot/ladder/USE_CASE.md:1"
+  },
+  {
+   "id": "DEC:snipershot.grind.grind.py",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "the grind ladder: resolve an ambiguous symbol, cost ascending",
+   "where": "snipershot/grind/grind.py:288"
+  },
+  {
+   "cost": 1,
+   "fired": 0,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:unique",
+   "impl": "r_unique",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "R1 unique",
+   "where": "snipershot/grind/grind.py:288"
+  },
+  {
+   "cost": 2,
+   "fired": 14,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:cited-def",
+   "impl": "r_cited_def",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 14 item(s) with it",
+   "text": "R2 cited-def",
+   "where": "snipershot/grind/grind.py:288"
+  },
+  {
+   "cost": 3,
+   "fired": 0,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:cited-file",
+   "impl": "r_cited_file",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "R3 cited-file",
+   "where": "snipershot/grind/grind.py:288"
+  },
+  {
+   "cost": 5,
+   "fired": 0,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:enclosing",
+   "impl": "r_enclosing",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "R4 enclosing",
+   "where": "snipershot/grind/grind.py:289"
+  },
+  {
+   "cost": 8,
+   "fired": 2,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:owner-at-cited",
+   "impl": "r_owner_at_cited",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 2 item(s) with it",
+   "text": "R5 owner-at-cited",
+   "where": "snipershot/grind/grind.py:289"
+  },
+  {
+   "cost": 8,
+   "fired": 3,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:dotted",
+   "impl": "r_dotted",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 3 item(s) with it",
+   "text": "R6 dotted",
+   "where": "snipershot/grind/grind.py:289"
+  },
+  {
+   "cost": 13,
+   "fired": 4,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:sibling-anchor",
+   "impl": "r_sibling_anchor",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 4 item(s) with it",
+   "text": "R7 sibling-anchor",
+   "where": "snipershot/grind/grind.py:290"
+  },
+  {
+   "cost": 21,
+   "fired": 6,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:body-words",
+   "impl": "r_body_words",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 6 item(s) with it",
+   "text": "R8 body-words",
+   "where": "snipershot/grind/grind.py:290"
+  },
+  {
+   "cost": 34,
+   "fired": 4,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:context-doc",
+   "impl": "r_context_doc",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 4 item(s) with it",
+   "text": "R9 context-doc",
+   "where": "snipershot/grind/grind.py:291"
+  },
+  {
+   "cost": 55,
+   "fired": 0,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:popularity",
+   "impl": "r_popularity",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "R10 popularity",
+   "where": "snipershot/grind/grind.py:291"
+  },
+  {
+   "cost": 0,
+   "fired": 0,
+   "generation": null,
+   "id": "ALT:snipershot.grind.grind.py:ask-a-person",
+   "impl": "r_ask",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grind.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "R11 ask-a-person",
+   "where": "snipershot/grind/grind.py:291"
+  },
+  {
+   "id": "DEC:snipershot.grind.grinder.py",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "the grinder: narrow a working set of candidate definitions",
+   "where": "snipershot/grind/grinder.py:414"
+  },
+  {
+   "cost": 2,
+   "fired": 7,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:cited-line",
+   "impl": "p_cited_line",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 7 item(s) with it",
+   "text": "cited-line",
+   "where": "snipershot/grind/grinder.py:414"
+  },
+  {
+   "cost": 3,
+   "fired": 0,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:cited-file",
+   "impl": "p_cited_file",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "cited-file",
+   "where": "snipershot/grind/grinder.py:414"
+  },
+  {
+   "cost": 5,
+   "fired": 0,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:enclosing",
+   "impl": "p_enclosing",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "enclosing",
+   "where": "snipershot/grind/grinder.py:414"
+  },
+  {
+   "cost": 8,
+   "fired": 1,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:owner-at-foreign",
+   "impl": "p_owner_at_foreign",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 1 item(s) with it",
+   "text": "owner-at-foreign",
+   "where": "snipershot/grind/grinder.py:415"
+  },
+  {
+   "cost": 8,
+   "fired": 3,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:dotted",
+   "impl": "p_dotted",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 3 item(s) with it",
+   "text": "dotted",
+   "where": "snipershot/grind/grinder.py:415"
+  },
+  {
+   "cost": 13,
+   "fired": 2,
+   "generation": 1,
+   "id": "ALT:snipershot.grind.grinder.py:sibling-file",
+   "impl": "p_sibling_file",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 2 item(s) with it",
+   "text": "sibling-file",
+   "where": "snipershot/grind/grinder.py:416"
+  },
+  {
+   "cost": 21,
+   "fired": 4,
+   "generation": 1,
+   "id": "ALT:snipershot.grind.grinder.py:code-token",
+   "impl": "p_code_token",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 4 item(s) with it",
+   "text": "code-token",
+   "where": "snipershot/grind/grinder.py:416"
+  },
+  {
+   "cost": 21,
+   "fired": 0,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:qualname-word",
+   "impl": "p_qualname_word",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "qualname-word",
+   "where": "snipershot/grind/grinder.py:417"
+  },
+  {
+   "cost": 24,
+   "fired": 0,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:base-in-claim",
+   "impl": "p_base_in_claim",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "base-in-claim",
+   "where": "snipershot/grind/grinder.py:417"
+  },
+  {
+   "cost": 29,
+   "fired": 0,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:caller-by-callee",
+   "impl": "p_caller_by_callee",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "caller-by-callee",
+   "where": "snipershot/grind/grinder.py:418"
+  },
+  {
+   "cost": 30,
+   "fired": 4,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:section-class",
+   "impl": "p_section_class",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 4 item(s) with it",
+   "text": "section-class",
+   "where": "snipershot/grind/grinder.py:418"
+  },
+  {
+   "cost": 30,
+   "fired": 1,
+   "generation": 2,
+   "id": "ALT:snipershot.grind.grinder.py:owner-in-doc",
+   "impl": "p_owner_in_doc",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 1 item(s) with it",
+   "text": "owner-in-doc",
+   "where": "snipershot/grind/grinder.py:419"
+  },
+  {
+   "cost": 32,
+   "fired": 0,
+   "generation": 0,
+   "id": "ALT:snipershot.grind.grinder.py:doc-scope",
+   "impl": "p_doc_scope",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "doc-scope",
+   "where": "snipershot/grind/grinder.py:419"
+  },
+  {
+   "cost": 34,
+   "fired": 2,
+   "generation": 2,
+   "id": "ALT:snipershot.grind.grinder.py:doc-path",
+   "impl": "p_doc_path",
+   "kind": "alternative",
+   "parent": "DEC:snipershot.grind.grinder.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 2 item(s) with it",
+   "text": "doc-path",
+   "where": "snipershot/grind/grinder.py:420"
+  },
+  {
+   "id": "DEC:closed_loop_lite.reqwalk.walk.py",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "the requirement walker: settle, split, ask or prove absent",
+   "where": "closed_loop_lite/reqwalk/walk.py:303"
+  },
+  {
+   "cost": 1,
+   "fired": 4,
+   "generation": null,
+   "id": "ALT:closed_loop_lite.reqwalk.walk.py:decision",
+   "impl": "q_decision",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 4 item(s) with it",
+   "text": "decision",
+   "where": "closed_loop_lite/reqwalk/walk.py:303"
+  },
+  {
+   "cost": 2,
+   "fired": 0,
+   "generation": null,
+   "id": "ALT:closed_loop_lite.reqwalk.walk.py:answered-in-corpus",
+   "impl": "q_answered",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "answered-in-corpus",
+   "where": "closed_loop_lite/reqwalk/walk.py:303"
+  },
+  {
+   "cost": 5,
+   "fired": 1,
+   "generation": null,
+   "id": "ALT:closed_loop_lite.reqwalk.walk.py:code-exists",
+   "impl": "q_code",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
+   "status": "WORKED",
+   "status_from": "a recorded run settled 1 item(s) with it",
+   "text": "code-exists",
+   "where": "closed_loop_lite/reqwalk/walk.py:303"
+  },
+  {
+   "cost": 8,
+   "fired": 0,
+   "generation": null,
+   "id": "ALT:closed_loop_lite.reqwalk.walk.py:measured",
+   "impl": "q_measured",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "measured",
+   "where": "closed_loop_lite/reqwalk/walk.py:304"
+  },
+  {
+   "cost": 13,
+   "fired": 0,
+   "generation": null,
+   "id": "ALT:closed_loop_lite.reqwalk.walk.py:runnable-check",
+   "impl": "q_runnable",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite.reqwalk.walk.py",
+   "status": "NEVER-FIRED",
+   "status_from": "no recorded run has ever settled anything with it",
+   "text": "runnable-check",
+   "where": "closed_loop_lite/reqwalk/walk.py:304"
+  },
+  {
+   "id": "DEC:snipershot/atomise/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where atomise can fail, and what it does then",
+   "use_case": "What was measured FIRST, before any code (this is the whole reason the lane is shaped this way)",
+   "where": "snipershot/atomise/USE_CASE.md:82"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/atomise/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/atomise/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/atomise/REPORT.md discusses it (8 of 10 terms), and discussed is not the same as tried",
+   "text": "The lane cannot reproduce 85 of 180 -> it stops at step 1 and reports the label files changed under it. No arm",
+   "where": "snipershot/atomise/USE_CASE.md:84"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/atomise/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/atomise/USE_CASE.md",
+   "status": "UNTRIED",
+   "status_from": "snipershot/atomise/REPORT.md records what the lane ran and is silent about it",
+   "text": "The faithfulness check fails -> every later number is withheld under `## NOT QUOTABLE`, label-never-suppress",
+   "where": "snipershot/atomise/USE_CASE.md:86"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/atomise/USE_CASE.md:3",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/atomise/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/atomise/REPORT.md discusses it (8 of 9 terms), and discussed is not the same as tried",
+   "text": "The null atomiser matches or beats the real one -> that is the result, written as the headline. The atomiser is",
+   "where": "snipershot/atomise/USE_CASE.md:88"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/atomise/USE_CASE.md:4",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/atomise/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/atomise/REPORT.md discusses it (7 of 10 terms), and discussed is not the same as tried",
+   "text": "Both arms come back flat -> the box's original conclusion stands as written, and the atomiser is recorded as",
+   "where": "snipershot/atomise/USE_CASE.md:90"
+  },
+  {
+   "id": "DEC:snipershot/grind/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS55 can fail, and what it does then",
+   "use_case": "UC-SS55 Grind every alternative, then refuse with an account",
+   "where": "snipershot/grind/USE_CASE.md:39"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/grind/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/grind/USE_CASE.md",
+   "status": "UNTRIED",
+   "status_from": "snipershot/grind/REPORT.md records what the lane ran and is silent about it",
+   "text": "Every item resolves \u2192 the item set was too easy to show a failure account, which is itself the result; say",
+   "where": "snipershot/grind/USE_CASE.md:41"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/grind/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/grind/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/grind/REPORT.md discusses it (7 of 9 terms), and discussed is not the same as tried",
+   "text": "A rung commits and its witness is wrong when read \u2192 a soundness defect in that rung, reported as such; the",
+   "where": "snipershot/grind/USE_CASE.md:43"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/grind/USE_CASE.md:3",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/grind/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/grind/REPORT.md discusses it (7 of 9 terms), and discussed is not the same as tried",
+   "text": "Two rungs commit to different places \u2192 CONTESTED; the item is not resolved, and the conflict is the output.",
+   "where": "snipershot/grind/USE_CASE.md:45"
+  },
+  {
+   "id": "DEC:snipershot/grind/USE_CASE_LOOP.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS56 can fail, and what it does then",
+   "use_case": "UC-SS56 Grind by narrowing, not by testing",
+   "where": "snipershot/grind/USE_CASE_LOOP.md:56"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/grind/USE_CASE_LOOP.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/grind/USE_CASE_LOOP.md",
+   "status": "GUESS",
+   "status_from": "snipershot/grind/REPORT_LOOP.md discusses it (6 of 9 terms), and discussed is not the same as tried",
+   "text": "The working set stops above one and nothing narrows \u2192 EXHAUSTED, with the consumed list (step 8). This is",
+   "where": "snipershot/grind/USE_CASE_LOOP.md:58"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/grind/USE_CASE_LOOP.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/grind/USE_CASE_LOOP.md",
+   "status": "UNTRIED",
+   "status_from": "snipershot/grind/REPORT.md records what the lane ran and is silent about it",
+   "text": "Two probes narrow to disjoint sets \u2192 the second cannot apply without emptying, so it is held and reported",
+   "where": "snipershot/grind/USE_CASE_LOOP.md:60"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/grind/USE_CASE_LOOP.md:3",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/grind/USE_CASE_LOOP.md",
+   "status": "GUESS",
+   "status_from": "snipershot/grind/REPORT_LOOP.md discusses it (5 of 7 terms), and discussed is not the same as tried",
+   "text": "It settles everything \u2192 say so, and say that the five were not hard, only badly asked.",
+   "where": "snipershot/grind/USE_CASE_LOOP.md:62"
+  },
+  {
+   "id": "DEC:snipershot/guessfix/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS53 can fail, and what it does then",
+   "use_case": "UC-SS53 A cited location settles an ambiguous name",
+   "where": "snipershot/guessfix/USE_CASE.md:25"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/guessfix/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/guessfix/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The claim cites nothing \u2192 AMBIGUOUS, as before. 12 of 22 ambiguous wild claims carry no hint, and for",
+   "where": "snipershot/guessfix/USE_CASE.md:27"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/guessfix/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/guessfix/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The cited line belongs to a different symbol in the sentence \u2192 the wrong candidate could be picked. This",
+   "where": "snipershot/guessfix/USE_CASE.md:29"
+  },
+  {
+   "id": "DEC:snipershot/ladder/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS59 can fail, and what it does then",
+   "use_case": "UC-SS59 The ladder, its zoo, and a fly-through that proves itself",
+   "where": "snipershot/ladder/USE_CASE.md:48"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/ladder/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/ladder/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "An alternative's status cannot be derived \u2192 it is marked as a guess and counted (step 3), never given a",
+   "where": "snipershot/ladder/USE_CASE.md:50"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/ladder/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/ladder/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The page and the data disagree \u2192 the gate refuses and the page is not published (step 7).",
+   "where": "snipershot/ladder/USE_CASE.md:52"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/ladder/USE_CASE.md:3",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/ladder/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "A recorded run is missing for a ladder \u2192 its alternatives are `UNTRIED`, which is the honest status, and",
+   "where": "snipershot/ladder/USE_CASE.md:53"
+  },
+  {
+   "id": "DEC:snipershot/nozero/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS47 can fail, and what it does then",
+   "use_case": "UC-SS47 How much of the vocabulary gap is not a vocabulary gap",
+   "where": "snipershot/nozero/USE_CASE.md:66"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/nozero/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/nozero/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/nozero/REPORT.md discusses it (8 of 11 terms), and discussed is not the same as tried",
+   "text": "The population does not re-derive -> stop at step 1; score nothing against a baseline we cannot rebuild.",
+   "where": "snipershot/nozero/USE_CASE.md:68"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/nozero/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/nozero/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/nozero/REPORT.md discusses it (7 of 10 terms), and discussed is not the same as tried",
+   "text": "The shuffled null scores near the real arm -> the extractor is matching density. Arm 2's number is withheld",
+   "where": "snipershot/nozero/USE_CASE.md:69"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/nozero/USE_CASE.md:3",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/nozero/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/nozero/REPORT.md discusses it (6 of 8 terms), and discussed is not the same as tried",
+   "text": "Arm 2 comes back at or near zero -> the reader was right, the 11 ops are the work, and this experiment has",
+   "where": "snipershot/nozero/USE_CASE.md:71"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/nozero/USE_CASE.md:4",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/nozero/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "snipershot/nozero/REPORT.md discusses it (8 of 9 terms), and discussed is not the same as tried",
+   "text": "Arm 1's converse catches nothing -> the detector merely reproduces the reader's `changed-since` set and",
+   "where": "snipershot/nozero/USE_CASE.md:73"
+  },
+  {
+   "id": "DEC:snipershot/returnsop/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS52 can fail, and what it does then",
+   "use_case": "UC-SS52 The return type of a named entity",
+   "where": "snipershot/returnsop/USE_CASE.md:26"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/returnsop/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/returnsop/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The subject is ambiguous \u2192 UNKNOWN naming the candidate count, never a pick. `select` is the box that",
+   "where": "snipershot/returnsop/USE_CASE.md:28"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/returnsop/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/returnsop/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The probe is asked to join `corpus.OPS` \u2192 refused until the shared `Result` model has an UNKNOWN status.",
+   "where": "snipershot/returnsop/USE_CASE.md:30"
+  },
+  {
+   "id": "DEC:snipershot/trusthead/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS54 can fail, and what it does then",
+   "use_case": "UC-SS54 A head that says when not to trust the cheap route",
+   "where": "snipershot/trusthead/USE_CASE.md:46"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/trusthead/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/trusthead/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The head does not beat always-TRUST on the real items \u2192 that is the result, reported as such. The chain",
+   "where": "snipershot/trusthead/USE_CASE.md:48"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/trusthead/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/trusthead/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "Synthetic performance is high and real performance is not \u2192 a transfer failure, which is the specific",
+   "where": "snipershot/trusthead/USE_CASE.md:50"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/trusthead/USE_CASE.md:3",
+   "kind": "alternative",
+   "parent": "DEC:snipershot/trusthead/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "the lane has no REPORT, so nothing records whether this was ever run",
+   "text": "The real set is too small to separate the arms \u2192 n = 22 is stated in advance and may simply not decide.",
+   "where": "snipershot/trusthead/USE_CASE.md:52"
+  },
+  {
+   "id": "DEC:closed_loop_lite/reqwalk/USE_CASE.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS57 can fail, and what it does then",
+   "use_case": "UC-SS57 Walk the requirement tree until no leaf can be guessed",
+   "where": "closed_loop_lite/reqwalk/USE_CASE.md:55"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/reqwalk/USE_CASE.md:1",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite/reqwalk/USE_CASE.md",
+   "status": "UNTRIED",
+   "status_from": "closed_loop_lite/reqwalk/REPORT.md records what the lane ran and is silent about it",
+   "text": "A node splits forever \u2192 step 4's shrink rule refuses the split, and the node ends GAP-EVIDENCE saying it",
+   "where": "closed_loop_lite/reqwalk/USE_CASE.md:57"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/reqwalk/USE_CASE.md:2",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite/reqwalk/USE_CASE.md",
+   "status": "GUESS",
+   "status_from": "closed_loop_lite/reqwalk/REPORT.md discusses it (8 of 11 terms), and discussed is not the same as tried",
+   "text": "Every leaf settles \u2192 suspicious, not success: it means the seed asked nothing hard. The report says so",
+   "where": "closed_loop_lite/reqwalk/USE_CASE.md:59"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/reqwalk/USE_CASE.md:3",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite/reqwalk/USE_CASE.md",
+   "status": "UNTRIED",
+   "status_from": "closed_loop_lite/reqwalk/REPORT.md records what the lane ran and is silent about it",
+   "text": "The corpus answers a node wrongly \u2192 the witness is readable, so the error is visible rather than silent.",
+   "where": "closed_loop_lite/reqwalk/USE_CASE.md:61"
+  },
+  {
+   "id": "DEC:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Where UC-SS58 can fail, and what it does then",
+   "use_case": "UC-SS58 The requirement graph, typed so the old errors cannot be expressed",
+   "where": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:57"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:1",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md",
+   "status": "GUESS",
+   "status_from": "closed_loop_lite/reqwalk/REPORT_GRAPH.md discusses it (7 of 10 terms), and discussed is not the same as tried",
+   "text": "Cosine ranks the self-match low \u2192 step 4 refutes the premise of this lane; report it and reconsider.",
+   "where": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:59"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:2",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md",
+   "status": "UNTRIED",
+   "status_from": "closed_loop_lite/reqwalk/REPORT.md records what the lane ran and is silent about it",
+   "text": "The type rule blocks a legitimate edge \u2192 that is a missing node kind, not a reason to relax the rule;",
+   "where": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:60"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:3",
+   "kind": "alternative",
+   "parent": "DEC:closed_loop_lite/reqwalk/USE_CASE_GRAPH.md",
+   "status": "GUESS",
+   "status_from": "closed_loop_lite/reqwalk/REPORT_GRAPH.md discusses it (6 of 8 terms), and discussed is not the same as tried",
+   "text": "The counts move \u2192 the structure changed a verdict, which is either a fix or a fault; each difference is",
+   "where": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:62"
+  },
+  {
+   "id": "DEC:refuted-predictions",
+   "kind": "decision",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "Which ideas were tried and measured WRONG",
+   "where": "snipershot/ladder/zoo.py:1"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/handhold_test/REPORT.md/P4",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "P4 ",
+   "where": "closed_loop_lite/handhold_test/REPORT.md:16"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/handhold_test/REPORT_v2.md/P8",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "P8 ",
+   "where": "closed_loop_lite/handhold_test/REPORT_v2.md:22"
+  },
+  {
+   "cost": null,
+   "id": "ALT:closed_loop_lite/reqwalk/REPORT_GRAPH.md/D5",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "D5 ",
+   "where": "closed_loop_lite/reqwalk/REPORT_GRAPH.md:47"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/atomise/REPORT.md/P1",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "P1 ",
+   "where": "snipershot/atomise/REPORT.md:43"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/atomise/REPORT.md/P3",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "P3 ",
+   "where": "snipershot/atomise/REPORT.md:45"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/chainclaim/REPORT.md/W1",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "W1 ",
+   "where": "snipershot/chainclaim/REPORT.md:9"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/grind/REPORT.md/G3",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "G3 ",
+   "where": "snipershot/grind/REPORT.md:28"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/grind/REPORT_LOOP.md/H2",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "H2 ",
+   "where": "snipershot/grind/REPORT_LOOP.md:40"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/nozero/REPORT.md/N3",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "N3 ",
+   "where": "snipershot/nozero/REPORT.md:16"
+  },
+  {
+   "cost": null,
+   "id": "ALT:snipershot/nozero/REPORT.md/N4",
+   "kind": "alternative",
+   "parent": "DEC:refuted-predictions",
+   "status": "REFUTED",
+   "status_from": "a frozen prediction, measured and refuted",
+   "text": "N4 ",
+   "where": "snipershot/nozero/REPORT.md:17"
+  },
+  {
+   "checkable": "for a requirement whose own text is in the corpus, the self-match must be separable from the best genuine evidence by a threshold; it is not \u2014 so the check FAILS and the mechanism may not decide",
+   "id": "BOX:dot-product",
+   "kind": "box",
+   "measured": "18 of 18 requirements rank their own restatement FIRST at similarity 1.000, against 0.433 (median) for the best genuine corpus line, over 68,150 lines \u2014 a margin of 0.572, so no cutoff admits the real evidence without first admitting the restatement",
+   "parent": "PROBLEM",
+   "precondition": "a vector space built over the corpus AND the query together; a query vectorised in its own one-document space has a negative idf and every score comes back 0.000",
+   "signature": "`rank(requirement, corpus) -> [(line, similarity)] | CANNOT-TELL` \u2014 it returns an ORDERED LIST of candidate evidence, never a decision",
+   "status": null,
+   "text": "The dot product as a mechanism: candidate generator, never decider",
+   "verdict": "CANDIDATE GENERATOR ONLY. It may propose evidence for a verifier to confirm; it may never close a requirement, and nothing downstream may read its score as an answer",
+   "where": "snipershot/ladder/BOX_dot_product.md:6"
+  },
+  {
+   "id": "GOAL:answer-the-return-type-of-a-named-entity",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "answer the return type of a named entity, or say honestly that it cannot be seen.",
+   "ways": 1,
+   "where": "snipershot/returnsop/USE_CASE.md:9"
+  },
+  {
+   "cost": null,
+   "fired": 0,
+   "id": "WAY:GOAL:answer-the-return-type-of-a-named-entity:returnsop",
+   "kind": "alternative",
+   "parent": "GOAL:answer-the-return-type-of-a-named-entity",
+   "status": "UNTRIED",
+   "status_from": "the lane has no recorded run of its own",
+   "text": "returnsop \u2014 one way to reach it",
+   "where": "snipershot/returnsop/USE_CASE.md:9"
+  },
+  {
+   "id": "GOAL:commit-only-with-a-witness-try-every-alt",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "commit only with a witness, try every alternative before refusing, and leave a trace that says which",
+   "ways": 1,
+   "where": "snipershot/grind/USE_CASE.md:14"
+  },
+  {
+   "cost": null,
+   "fired": 1,
+   "id": "WAY:GOAL:commit-only-with-a-witness-try-every-alt:grind",
+   "kind": "alternative",
+   "parent": "GOAL:commit-only-with-a-witness-try-every-alt",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
+   "text": "grind \u2014 one way to reach it",
+   "where": "snipershot/grind/USE_CASE.md:14"
+  },
+  {
+   "id": "GOAL:decide-mechanically--never-by-my-judgeme",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "decide mechanically - never by my judgement - how much of the \"needs a new op\" population is (a) not an",
+   "ways": 1,
+   "where": "snipershot/nozero/USE_CASE.md:20"
+  },
+  {
+   "cost": null,
+   "fired": 1,
+   "id": "WAY:GOAL:decide-mechanically--never-by-my-judgeme:nozero",
+   "kind": "alternative",
+   "parent": "GOAL:decide-mechanically--never-by-my-judgeme",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
+   "text": "nozero \u2014 one way to reach it",
+   "where": "snipershot/nozero/USE_CASE.md:20"
+  },
+  {
+   "id": "GOAL:every-code-claim-in-real-public-aiwritte",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "every code claim in real, public, AI-written text about public code comes back CONFIRMED with its",
+   "ways": 1,
+   "where": "snipershot/wild/USE_CASE.md:4"
+  },
+  {
+   "cost": null,
+   "fired": 0,
+   "id": "WAY:GOAL:every-code-claim-in-real-public-aiwritte:wild",
+   "kind": "alternative",
+   "parent": "GOAL:every-code-claim-in-real-public-aiwritte",
+   "status": "UNTRIED",
+   "status_from": "the lane has no recorded run of its own",
+   "text": "wild \u2014 one way to reach it",
+   "where": "snipershot/wild/USE_CASE.md:4"
+  },
+  {
+   "id": "GOAL:express-every-requirement-and-every-answ",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "express every requirement and every answer as typed graph facts, so that the errors the text version",
+   "ways": 1,
+   "where": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:24"
+  },
+  {
+   "cost": null,
+   "fired": 1,
+   "id": "WAY:GOAL:express-every-requirement-and-every-answ:reqwalk",
+   "kind": "alternative",
+   "parent": "GOAL:express-every-requirement-and-every-answ",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
+   "text": "reqwalk \u2014 one way to reach it",
+   "where": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:24"
+  },
+  {
+   "id": "GOAL:know-where-the-code-breaks-those-rules-w",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "know where the code breaks those rules, with proof for every claim, and nothing claimed",
+   "ways": 1,
+   "where": "closed_loop_lite/USE_CASE.md:8"
+  },
+  {
+   "cost": null,
+   "fired": 0,
+   "id": "WAY:GOAL:know-where-the-code-breaks-those-rules-w:closed_loop_lite",
+   "kind": "alternative",
+   "parent": "GOAL:know-where-the-code-breaks-those-rules-w",
+   "status": "UNTRIED",
+   "status_from": "the lane has no recorded run of its own",
+   "text": "closed_loop_lite \u2014 one way to reach it",
+   "where": "closed_loop_lite/USE_CASE.md:8"
+  },
+  {
+   "id": "GOAL:reach-a-tree-in-which-every-leaf-is-sett",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "reach a tree in which **every leaf is settled, asked, or proven absent - and not one leaf is a guess.**",
+   "ways": 1,
+   "where": "closed_loop_lite/reqwalk/USE_CASE.md:22"
+  },
+  {
+   "cost": null,
+   "fired": 1,
+   "id": "WAY:GOAL:reach-a-tree-in-which-every-leaf-is-sett:reqwalk",
+   "kind": "alternative",
+   "parent": "GOAL:reach-a-tree-in-which-every-leaf-is-sett",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
+   "text": "reqwalk \u2014 one way to reach it",
+   "where": "closed_loop_lite/reqwalk/USE_CASE.md:22"
+  },
+  {
+   "id": "GOAL:reach-any-rung-of-the-problem-see-its-al",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "reach any rung of the problem, see its alternatives with costs and verdicts, and see in one glance",
+   "ways": 1,
+   "where": "snipershot/ladder/USE_CASE.md:15"
+  },
+  {
+   "cost": null,
+   "fired": 0,
+   "id": "WAY:GOAL:reach-any-rung-of-the-problem-see-its-al:ladder",
+   "kind": "alternative",
+   "parent": "GOAL:reach-any-rung-of-the-problem-see-its-al",
+   "status": "UNTRIED",
+   "status_from": "the lane has no recorded run of its own",
+   "text": "ladder \u2014 one way to reach it",
+   "where": "snipershot/ladder/USE_CASE.md:15"
+  },
+  {
+   "id": "GOAL:reduce-the-candidates-to-one-with-a-chai",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "reduce the candidates to one with a chain of witnesses, or prove the evidence is spent and say what it",
+   "ways": 1,
+   "where": "snipershot/grind/USE_CASE_LOOP.md:20"
+  },
+  {
+   "cost": null,
+   "fired": 1,
+   "id": "WAY:GOAL:reduce-the-candidates-to-one-with-a-chai:grind",
+   "kind": "alternative",
+   "parent": "GOAL:reduce-the-candidates-to-one-with-a-chai",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
+   "text": "grind \u2014 one way to reach it",
+   "where": "snipershot/grind/USE_CASE_LOOP.md:20"
+  },
+  {
+   "id": "GOAL:refuse-exactly-when-the-cheap-answer-is-",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "refuse exactly when the cheap answer is wrong, and not otherwise.",
+   "ways": 1,
+   "where": "snipershot/trusthead/USE_CASE.md:15"
+  },
+  {
+   "cost": null,
+   "fired": 0,
+   "id": "WAY:GOAL:refuse-exactly-when-the-cheap-answer-is-:trusthead",
+   "kind": "alternative",
+   "parent": "GOAL:refuse-exactly-when-the-cheap-answer-is-",
+   "status": "UNTRIED",
+   "status_from": "the lane has no recorded run of its own",
+   "text": "trusthead \u2014 one way to reach it",
+   "where": "snipershot/trusthead/USE_CASE.md:15"
+  },
+  {
+   "id": "GOAL:the-plain-models-answer-with-no-corpus-a",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "the plain model's answer, with no corpus access, in the format the precision demands.",
+   "ways": 1,
+   "where": "snipershot/USE_CASE.md:63"
+  },
+  {
+   "cost": null,
+   "fired": 1,
+   "id": "WAY:GOAL:the-plain-models-answer-with-no-corpus-a:snipershot",
+   "kind": "alternative",
+   "parent": "GOAL:the-plain-models-answer-with-no-corpus-a",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
+   "text": "snipershot \u2014 one way to reach it",
+   "where": "snipershot/USE_CASE.md:63"
+  },
+  {
+   "id": "GOAL:the-share-of-wild-claims-that-become-a-c",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "the share of wild claims that become a compiling, evaluating chain - with the cheap exit closed in",
+   "ways": 1,
+   "where": "snipershot/chainclaim/USE_CASE.md:12"
+  },
+  {
+   "cost": null,
+   "fired": 1,
+   "id": "WAY:GOAL:the-share-of-wild-claims-that-become-a-c:chainclaim",
+   "kind": "alternative",
+   "parent": "GOAL:the-share-of-wild-claims-that-become-a-c",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
+   "text": "chainclaim \u2014 one way to reach it",
+   "where": "snipershot/chainclaim/USE_CASE.md:12"
+  },
+  {
+   "id": "GOAL:turn-a-claim-no-reader-can-class-into-at",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "turn a claim no reader can class into atoms that readers can class, without dropping or inventing content,",
+   "ways": 1,
+   "where": "snipershot/atomise/USE_CASE.md:14"
+  },
+  {
+   "cost": null,
+   "fired": 1,
+   "id": "WAY:GOAL:turn-a-claim-no-reader-can-class-into-at:atomise",
+   "kind": "alternative",
+   "parent": "GOAL:turn-a-claim-no-reader-can-class-into-at",
+   "status": "WORKED",
+   "status_from": "the lane has a recorded run",
+   "text": "atomise \u2014 one way to reach it",
+   "where": "snipershot/atomise/USE_CASE.md:14"
+  },
+  {
+   "id": "GOAL:use-the-location-a-claim-volunteers-to-s",
+   "kind": "goal",
+   "parent": "PROBLEM",
+   "status": null,
+   "text": "use the location a claim volunteers to settle an ambiguous name, without ever picking among equals.",
+   "ways": 1,
+   "where": "snipershot/guessfix/USE_CASE.md:7"
+  },
+  {
+   "cost": null,
+   "fired": 0,
+   "id": "WAY:GOAL:use-the-location-a-claim-volunteers-to-s:guessfix",
+   "kind": "alternative",
+   "parent": "GOAL:use-the-location-a-claim-volunteers-to-s",
+   "status": "UNTRIED",
+   "status_from": "the lane has no recorded run of its own",
+   "text": "guessfix \u2014 one way to reach it",
+   "where": "snipershot/guessfix/USE_CASE.md:7"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:ab",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "ab \u2014 the problem it serves cannot be read",
+   "where": "snipershot/ab/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:axisbox",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "axisbox \u2014 the problem it serves cannot be read",
+   "where": "snipershot/axisbox/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:bus",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "bus \u2014 the problem it serves cannot be read",
+   "where": "snipershot/bus/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:callfix",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "callfix \u2014 the problem it serves cannot be read",
+   "where": "snipershot/callfix/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:checker",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "checker \u2014 the problem it serves cannot be read",
+   "where": "snipershot/checker/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:confidence",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "confidence \u2014 the problem it serves cannot be read",
+   "where": "snipershot/confidence/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:csharp",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "csharp \u2014 the problem it serves cannot be read",
+   "where": "snipershot/csharp/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:decircular",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "decircular \u2014 the problem it serves cannot be read",
+   "where": "snipershot/decircular/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:drift",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "drift \u2014 the problem it serves cannot be read",
+   "where": "snipershot/drift/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:extrapolate",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "extrapolate \u2014 the problem it serves cannot be read",
+   "where": "snipershot/extrapolate/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:fixit",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "fixit \u2014 the problem it serves cannot be read",
+   "where": "snipershot/fixit/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:frontier",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "frontier \u2014 the problem it serves cannot be read",
+   "where": "snipershot/frontier/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:grip2",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "grip2 \u2014 the problem it serves cannot be read",
+   "where": "snipershot/grip2/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:grow",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "grow \u2014 the problem it serves cannot be read",
+   "where": "snipershot/grow/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:growloop",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "growloop \u2014 the problem it serves cannot be read",
+   "where": "snipershot/growloop/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:kin",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "kin \u2014 the problem it serves cannot be read",
+   "where": "snipershot/kin/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:kinconfirm",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "kinconfirm \u2014 the problem it serves cannot be read",
+   "where": "snipershot/kinconfirm/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:land",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "land \u2014 the problem it serves cannot be read",
+   "where": "snipershot/land/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:locbench",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "locbench \u2014 the problem it serves cannot be read",
+   "where": "snipershot/locbench/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:obstacle",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "obstacle \u2014 the problem it serves cannot be read",
+   "where": "snipershot/obstacle/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:opened",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "opened \u2014 the problem it serves cannot be read",
+   "where": "snipershot/opened/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:opportunity",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "opportunity \u2014 the problem it serves cannot be read",
+   "where": "snipershot/opportunity/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:plan",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "plan \u2014 the problem it serves cannot be read",
+   "where": "snipershot/plan/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:portdiff",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "portdiff \u2014 the problem it serves cannot be read",
+   "where": "snipershot/portdiff/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:search",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "search \u2014 the problem it serves cannot be read",
+   "where": "snipershot/search/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:seedpass",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "seedpass \u2014 the problem it serves cannot be read",
+   "where": "snipershot/seedpass/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:segments",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "segments \u2014 the problem it serves cannot be read",
+   "where": "snipershot/segments/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:strict",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "strict \u2014 the problem it serves cannot be read",
+   "where": "snipershot/strict/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:unmodellable",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "unmodellable \u2014 the problem it serves cannot be read",
+   "where": "snipershot/unmodellable/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:validity",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "validity \u2014 the problem it serves cannot be read",
+   "where": "snipershot/validity/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:breadth",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "breadth \u2014 the problem it serves cannot be read",
+   "where": "snipershot/wide/breadth/USE_CASE.md:1"
+  },
+  {
+   "cost": null,
+   "id": "UNKNOWN-PARENT:lazy",
+   "kind": "alternative",
+   "parent": "PROBLEM",
+   "status": "GUESS",
+   "status_from": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in",
+   "text": "lazy \u2014 the problem it serves cannot be read",
+   "where": "snipershot/wide/lazy/USE_CASE.md:1"
+  }
+ ],
+ "upward": {
+  "counts": {
+   "goals": 14,
+   "goals_reached_more_than_one_way": 0,
+   "lanes_with_a_goal": 14,
+   "lanes_with_no_readable_goal": 32
+  },
+  "goals": {
+   "answer the return type of a named entity or say honestly tha": {
+    "text": "answer the return type of a named entity, or say honestly that it cannot be seen.",
+    "ways": [
+     {
+      "actor": "a checker that has resolved a claim's subject and now wants to test what the claim says it returns.",
+      "lane": "returnsop",
+      "use_case": "snipershot/returnsop/USE_CASE.md",
+      "where": "snipershot/returnsop/USE_CASE.md:9"
+     }
+    ],
+    "where": "snipershot/returnsop/USE_CASE.md:9"
+   },
+   "commit only with a witness try every alternative before refu": {
+    "text": "commit only with a witness, try every alternative before refusing, and leave a trace that says which",
+    "ways": [
+     {
+      "actor": "the chain, holding an ambiguous subject with several candidate definitions.",
+      "lane": "grind",
+      "use_case": "snipershot/grind/USE_CASE.md",
+      "where": "snipershot/grind/USE_CASE.md:14"
+     }
+    ],
+    "where": "snipershot/grind/USE_CASE.md:14"
+   },
+   "decide mechanically  never by my judgement  how much of the ": {
+    "text": "decide mechanically - never by my judgement - how much of the \"needs a new op\" population is (a) not an",
+    "ways": [
+     {
+      "actor": "the existing 8-op index as a claim-checker (`corpus.py:91`).",
+      "lane": "nozero",
+      "use_case": "snipershot/nozero/USE_CASE.md",
+      "where": "snipershot/nozero/USE_CASE.md:20"
+     }
+    ],
+    "where": "snipershot/nozero/USE_CASE.md:20"
+   },
+   "every code claim in real public aiwritten text about public ": {
+    "text": "every code claim in real, public, AI-written text about public code comes back CONFIRMED with its",
+    "ways": [
+     {
+      "actor": "RJ, deciding whether the checker's result means anything outside this folder.",
+      "lane": "wild",
+      "use_case": "snipershot/wild/USE_CASE.md",
+      "where": "snipershot/wild/USE_CASE.md:4"
+     }
+    ],
+    "where": "snipershot/wild/USE_CASE.md:4"
+   },
+   "express every requirement and every answer as typed graph fa": {
+    "text": "express every requirement and every answer as typed graph facts, so that the errors the text version",
+    "ways": [
+     {
+      "actor": "the loop, holding a requirement tree it must account for.",
+      "lane": "reqwalk",
+      "use_case": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md",
+      "where": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:24"
+     }
+    ],
+    "where": "closed_loop_lite/reqwalk/USE_CASE_GRAPH.md:24"
+   },
+   "know where the code breaks those rules with proof for every ": {
+    "text": "know where the code breaks those rules, with proof for every claim, and nothing claimed",
+    "ways": [
+     {
+      "actor": "a developer whose code implements written rules: a public spec, doc comments, a design doc.",
+      "lane": "closed_loop_lite",
+      "use_case": "closed_loop_lite/USE_CASE.md",
+      "where": "closed_loop_lite/USE_CASE.md:8"
+     }
+    ],
+    "where": "closed_loop_lite/USE_CASE.md:8"
+   },
+   "reach a tree in which every leaf is settled asked or proven ": {
+    "text": "reach a tree in which **every leaf is settled, asked, or proven absent - and not one leaf is a guess.**",
+    "ways": [
+     {
+      "actor": "an AI about to implement a hard change (here: the next version of this loop).",
+      "lane": "reqwalk",
+      "use_case": "closed_loop_lite/reqwalk/USE_CASE.md",
+      "where": "closed_loop_lite/reqwalk/USE_CASE.md:22"
+     }
+    ],
+    "where": "closed_loop_lite/reqwalk/USE_CASE.md:22"
+   },
+   "reach any rung of the problem see its alternatives with cost": {
+    "text": "reach any rung of the problem, see its alternatives with costs and verdicts, and see in one glance",
+    "ways": [
+     {
+      "actor": "someone (or a model) facing a hard problem who needs to see the decisions, the options at each, and",
+      "lane": "ladder",
+      "use_case": "snipershot/ladder/USE_CASE.md",
+      "where": "snipershot/ladder/USE_CASE.md:15"
+     }
+    ],
+    "where": "snipershot/ladder/USE_CASE.md:15"
+   },
+   "reduce the candidates to one with a chain of witnesses or pr": {
+    "text": "reduce the candidates to one with a chain of witnesses, or prove the evidence is spent and say what it",
+    "ways": [
+     {
+      "actor": "the chain, holding an ambiguous subject.",
+      "lane": "grind",
+      "use_case": "snipershot/grind/USE_CASE_LOOP.md",
+      "where": "snipershot/grind/USE_CASE_LOOP.md:20"
+     }
+    ],
+    "where": "snipershot/grind/USE_CASE_LOOP.md:20"
+   },
+   "refuse exactly when the cheap answer is wrong and not otherw": {
+    "text": "refuse exactly when the cheap answer is wrong, and not otherwise.",
+    "ways": [
+     {
+      "actor": "the cost-ascending chain, at the moment it has a cheap answer in hand and must decide whether to",
+      "lane": "trusthead",
+      "use_case": "snipershot/trusthead/USE_CASE.md",
+      "where": "snipershot/trusthead/USE_CASE.md:15"
+     }
+    ],
+    "where": "snipershot/trusthead/USE_CASE.md:15"
+   },
+   "the plain models answer with no corpus access in the format ": {
+    "text": "the plain model's answer, with no corpus access, in the format the precision demands.",
+    "ways": [
+     {
+      "actor": "the harness. **Goal:** one reader for the gold, another for the system under test, so that a fault in either",
+      "lane": "snipershot",
+      "use_case": "snipershot/USE_CASE.md",
+      "where": "snipershot/USE_CASE.md:63"
+     }
+    ],
+    "where": "snipershot/USE_CASE.md:63"
+   },
+   "the share of wild claims that become a compiling evaluating ": {
+    "text": "the share of wild claims that become a compiling, evaluating chain - with the cheap exit closed in",
+    "ways": [
+     {
+      "actor": "a mechanical translator, no model and no GPU (the local server is blocked - three `ollama serve`",
+      "lane": "chainclaim",
+      "use_case": "snipershot/chainclaim/USE_CASE.md",
+      "where": "snipershot/chainclaim/USE_CASE.md:12"
+     }
+    ],
+    "where": "snipershot/chainclaim/USE_CASE.md:12"
+   },
+   "turn a claim no reader can class into atoms that readers can": {
+    "text": "turn a claim no reader can class into atoms that readers can class, without dropping or inventing content,",
+    "ways": [
+     {
+      "actor": "the atomiser, as the first stage of any mechanism that must decide what kind of problem it is looking at.",
+      "lane": "atomise",
+      "use_case": "snipershot/atomise/USE_CASE.md",
+      "where": "snipershot/atomise/USE_CASE.md:14"
+     }
+    ],
+    "where": "snipershot/atomise/USE_CASE.md:14"
+   },
+   "use the location a claim volunteers to settle an ambiguous n": {
+    "text": "use the location a claim volunteers to settle an ambiguous name, without ever picking among equals.",
+    "ways": [
+     {
+      "actor": "`corpus.lookup(name, guess)`, when a claim cites where the thing it is talking about lives.",
+      "lane": "guessfix",
+      "use_case": "snipershot/guessfix/USE_CASE.md",
+      "where": "snipershot/guessfix/USE_CASE.md:7"
+     }
+    ],
+    "where": "snipershot/guessfix/USE_CASE.md:7"
+   }
+  },
+  "goals_with_several_ways": {},
+  "parent_unknown": [
+   {
+    "lane": "ab",
+    "use_case": "snipershot/ab/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "axisbox",
+    "use_case": "snipershot/axisbox/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "bus",
+    "use_case": "snipershot/bus/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "callfix",
+    "use_case": "snipershot/callfix/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "checker",
+    "use_case": "snipershot/checker/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "confidence",
+    "use_case": "snipershot/confidence/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "csharp",
+    "use_case": "snipershot/csharp/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "decircular",
+    "use_case": "snipershot/decircular/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "drift",
+    "use_case": "snipershot/drift/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "extrapolate",
+    "use_case": "snipershot/extrapolate/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "fixit",
+    "use_case": "snipershot/fixit/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "frontier",
+    "use_case": "snipershot/frontier/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "grip2",
+    "use_case": "snipershot/grip2/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "grow",
+    "use_case": "snipershot/grow/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "growloop",
+    "use_case": "snipershot/growloop/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "kin",
+    "use_case": "snipershot/kin/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "kinconfirm",
+    "use_case": "snipershot/kinconfirm/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "land",
+    "use_case": "snipershot/land/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "locbench",
+    "use_case": "snipershot/locbench/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "obstacle",
+    "use_case": "snipershot/obstacle/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "opened",
+    "use_case": "snipershot/opened/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "opportunity",
+    "use_case": "snipershot/opportunity/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "plan",
+    "use_case": "snipershot/plan/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "portdiff",
+    "use_case": "snipershot/portdiff/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "search",
+    "use_case": "snipershot/search/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "seedpass",
+    "use_case": "snipershot/seedpass/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "segments",
+    "use_case": "snipershot/segments/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "strict",
+    "use_case": "snipershot/strict/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "unmodellable",
+    "use_case": "snipershot/unmodellable/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "validity",
+    "use_case": "snipershot/validity/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "breadth",
+    "use_case": "snipershot/wide/breadth/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   },
+   {
+    "lane": "lazy",
+    "use_case": "snipershot/wide/lazy/USE_CASE.md",
+    "why": "its use case states no Goal line, so the problem it serves cannot be read - marked, not filled in"
+   }
+  ]
+ }
+}

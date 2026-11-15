@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snipershot ladder</title>
+<meta name="description" content="A requirements-gathering ladder: every decision shown as a series of alternatives, with the cost, the verdict and the place each was read from — and every place an answer is missing marked rather than filled in.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B1219'/%3E%3Cpath d='M50 18 L50 82 M30 34 L70 34 M34 50 L66 50 M38 66 L62 66' stroke='%23F08A3C' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#131821; --mute:#5b6676; --line:#dde3ea;
+  --accent:#1f6feb; --accent-soft:#e7f0fe;
+  --worked:#1a7f4b; --worked-bg:#e4f5ec;
+  --never:#8a6d1f; --never-bg:#fbf1d6;
+  --refuted:#9b2c2c; --refuted-bg:#fbe6e6;
+  --untried:#4a5568; --untried-bg:#edf0f4;
+  --guess:#7b2bb5; --guess-bg:#f3e6fb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1318; --panel:#161b22; --ink:#e7edf5; --mute:#9aa7b6; --line:#263040;
+    --accent:#6ea8fe; --accent-soft:#17263b;
+    --worked:#6fd79b; --worked-bg:#14301f;
+    --never:#e0c165; --never-bg:#302713;
+    --refuted:#ff9a9a; --refuted-bg:#331a1a;
+    --untried:#9aa7b6; --untried-bg:#1c222c;
+    --guess:#d79bf5; --guess-bg:#2a1733;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1318; --panel:#161b22; --ink:#e7edf5; --mute:#9aa7b6; --line:#263040;
+  --accent:#6ea8fe; --accent-soft:#17263b;
+  --worked:#6fd79b; --worked-bg:#14301f; --never:#e0c165; --never-bg:#302713;
+  --refuted:#ff9a9a; --refuted-bg:#331a1a; --untried:#9aa7b6; --untried-bg:#1c222c;
+  --guess:#d79bf5; --guess-bg:#2a1733;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.55 "IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 16px 72px}
+h1{font-family:"Space Grotesk",sans-serif;font-size:clamp(26px,4.4vw,40px);line-height:1.12;margin:0 0 10px}
+h2{font-family:"Space Grotesk",sans-serif;font-size:clamp(19px,2.6vw,25px);margin:40px 0 12px}
+h3{font-family:"Space Grotesk",sans-serif;font-size:17px;margin:0 0 8px}
+p{margin:0 0 14px;max-width:72ch}
+.lede{font-size:clamp(17px,2vw,19px);color:var(--mute);max-width:70ch}
+code,.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.86em}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin:22px 0}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile b{display:block;font-family:"Space Grotesk",sans-serif;font-size:26px;line-height:1.1}
+.tile span{display:block;color:var(--mute);font-size:12.5px;margin-top:3px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);padding:8px 13px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+.crumb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:var(--mute);font-size:13.5px;margin:0 0 10px}
+.crumb button{padding:3px 9px;font-size:13px;font-weight:500}
+.rung{border-left:3px solid var(--accent);padding:2px 0 2px 14px;margin:0 0 16px}
+.rung .k{color:var(--mute);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.rung .t{font-family:"Space Grotesk",sans-serif;font-size:19px;line-height:1.3}
+.alts{display:grid;gap:9px}
+.alt{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;
+  background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 13px;text-align:left;width:100%}
+.alt:hover{border-color:var(--accent)}
+.alt .nm{font-weight:600}
+.alt .wh{display:block;color:var(--mute);font-size:12.5px;margin-top:3px;word-break:break-all}
+.alt .why{display:block;color:var(--mute);font-size:13px;margin-top:5px}
+.chip{font-size:11.5px;font-weight:700;letter-spacing:.04em;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.s-WORKED{color:var(--worked);background:var(--worked-bg)}
+.s-NEVER-FIRED{color:var(--never);background:var(--never-bg)}
+.s-REFUTED{color:var(--refuted);background:var(--refuted-bg)}
+.s-UNTRIED{color:var(--untried);background:var(--untried-bg)}
+.s-GUESS{color:var(--guess);background:var(--guess-bg)}
+.cost{color:var(--mute);font-size:12.5px;white-space:nowrap}
+.guessrow{border-color:var(--guess)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:600;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase}
+.boxf{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14.5px}
+.boxf dt{color:var(--mute);font-size:12px;letter-spacing:.07em;text-transform:uppercase;padding-top:3px}
+.boxf dd{margin:0}
+.step{display:grid;grid-template-columns:auto auto 1fr;gap:12px;align-items:baseline;
+  border-bottom:1px solid var(--line);padding:9px 0}
+.step .n{font-family:"Space Grotesk",sans-serif;font-size:20px;color:var(--accent)}
+.narrate{min-height:3.2em;color:var(--mute);font-size:14.5px;margin:0 0 12px}
+.foot{margin-top:46px;padding-top:18px;border-top:1px solid var(--line);color:var(--mute);font-size:13.5px}
+.err{color:var(--refuted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>The Snipershot requirements-gathering ladder</h1>
+  <p class="lede">A hard problem gets lift when every decision inside it is laid out as a series of
+  alternatives &mdash; each with what it costs, whether it has ever worked, and the place it was read from.
+  You can move up and down the parent and child chain, stop at any rung, and see the options for that rung
+  alone. Where an answer cannot be derived from the record, the rung is <strong>marked</strong> rather than
+  filled in.</p>
+
+  <div class="tiles" id="tiles"></div>
+
+  <h2>Walk it</h2>
+  <div class="bar">
+    <button class="primary" id="fly">Fly through</button>
+    <button id="up">Up to the problem</button>
+    <button id="theme">Switch theme</button>
+  </div>
+  <p class="narrate" id="narrate"></p>
+  <div class="panel">
+    <div class="crumb" id="crumb"></div>
+    <div class="rung" id="rung"></div>
+    <div class="alts" id="alts"></div>
+  </div>
+
+  <h2>A worked example, read from a recorded run</h2>
+  <p>One real descent. The alternatives narrow the candidates in cost order; when nothing in the material
+  determines an answer, the output is a proven statement about what is <em>not</em> there, with the place that
+  proves it. Nothing here is typed into the page &mdash; it is read from the run's own output file.</p>
+  <div class="panel" id="example"></div>
+
+  <h2>One alternative, as a box</h2>
+  <p>Every mechanism in the zoo is stated the same way: a signature that is allowed to refuse, the condition
+  that must already hold, and how you would know an answer is right. Then the verdict, and the measurement
+  that fixed it. This is the similarity-score mechanism &mdash; it earns a place as the thing that
+  <em>proposes</em> candidates, and is barred from being the thing that decides.</p>
+  <div class="panel boxf" id="box"></div>
+
+  <h2>Why you should not take this page's word for it</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>The page holds no figures</h3>
+      <p>Every number above is injected from the generated data file at load. The page source contains no
+      figure of its own, and a check scans it to make sure &mdash; a page that states a number its data does
+      not contain is staging its own success.</p>
+    </div>
+    <div class="panel">
+      <h3>The data is generated, not written</h3>
+      <p>The zoo is built by reading the ladders declared in code and the alternate-path sections of each use
+      case. Every node carries the file and line it came from, and the check refuses if the published file
+      differs from a fresh build &mdash; which is what happens if someone edits the output instead of the
+      source.</p>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px">
+    <h3>What the check refuses</h3>
+    <table id="claims"><tbody>
+      <tr><td>A node whose file and line do not resolve on disk</td></tr>
+      <tr><td>A status that is not one of the derived kinds</td></tr>
+      <tr><td>A status with no statement of how it was derived</td></tr>
+      <tr><td>A rung marked as worked without a recorded count behind it</td></tr>
+      <tr><td>A figure appearing in the page source instead of in the data</td></tr>
+      <tr><td>A published data file that differs from a fresh build</td></tr>
+    </tbody></table>
+    <p style="margin-top:12px">Regenerate and verify with <code id="regen"></code></p>
+  </div>
+
+  <div class="foot">
+    <p id="footline"></p>
+    <p><a href="../">Back to the index</a></p>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+
+let Z = null, cur = "PROBLEM", flying = false, timer = null;
+
+function kids(id, kind) {
+  return Z.nodes.filter(n => n.parent === id && (!kind || n.kind === kind));
+}
+function byId(id) { return Z.nodes.find(n => n.id === id); }
+
+function tiles() {
+  const c = Z.counts, t = $("#tiles"); t.innerHTML = "";
+  const rows = [
+    [c.decisions, "decisions in the chain"],
+    [c.alternatives, "alternatives, each with a source"],
+    [c.by_status.WORKED, "have settled something in a run"],
+    [c.by_status["NEVER-FIRED"], "exist in a ladder, never fired"],
+    [c.by_status.REFUTED, "measured and refuted"],
+    [c.guesses, "marked: no status can be derived"]
+  ];
+  for (const [n, label] of rows) {
+    const d = el("div", "tile"); d.appendChild(el("b", null, String(n)));
+    d.appendChild(el("span", null, label)); t.appendChild(d);
+  }
+}
+
+function crumb() {
+  const c = $("#crumb"); c.innerHTML = "";
+  const chain = []; let n = byId(cur);
+  while (n) { chain.unshift(n); n = n.parent ? byId(n.parent) : null; }
+  chain.forEach((node, i) => {
+    if (i) c.appendChild(el("span", null, "›"));
+    const b = el("button", null, node.kind === "problem" ? "the problem" : shorten(node.text, 46));
+    b.onclick = () => { stop(); show(node.id); };
+    c.appendChild(b);
+  });
+}
+function shorten(s, n) { s = s || ""; return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+
+function show(id, narration) {
+  cur = id; const n = byId(id);
+  crumb();
+  const r = $("#rung"); r.innerHTML = "";
+  r.appendChild(el("div", "k", n.kind === "problem" ? "the problem" : n.kind));
+  r.appendChild(el("div", "t", n.text));
+  const w = el("div", "wh mono", n.where); w.style.color = "var(--mute)";
+  w.style.fontSize = "12.5px"; r.appendChild(w);
+
+  const list = $("#alts"); list.innerHTML = "";
+  const children = kids(id).filter(k => k.kind !== "box");
+  if (!children.length) {
+    const p = el("p", null, "This rung has no alternatives below it in the record.");
+    p.style.color = "var(--mute)"; list.appendChild(p);
+  }
+  for (const k of children) {
+    const row = el("button", "alt" + (k.status === "GUESS" ? " guessrow" : ""));
+    // A rung with no status is not an alternative — it is a goal or a decision, and the chip says which,
+    // because a dash told the reader nothing and made a goal look like a decision.
+    row.appendChild(el("span", "chip s-" + (k.status || "UNTRIED"), k.status || k.kind));
+    const mid = el("span");
+    mid.appendChild(el("span", "nm", k.text));
+    mid.appendChild(el("span", "wh mono", k.where));
+    if (k.status_from) mid.appendChild(el("span", "why", k.status_from));
+    row.appendChild(mid);
+    const right = el("span", "cost");
+    right.textContent = (k.cost !== null && k.cost !== undefined) ? ("cost " + k.cost) :
+      (k.kind === "decision" ? "open" : "");
+    row.appendChild(right);
+    row.onclick = () => { stop(); show(k.id); };
+    list.appendChild(row);
+  }
+  $("#narrate").textContent = narration || narrate(n, children);
+  $("#up").disabled = !n.parent;
+}
+
+function narrate(n, children) {
+  if (n.kind === "problem")
+    return "Start at the problem. Each row below is a decision it contains; open one to see the alternatives for that decision alone.";
+  if (n.kind === "decision") {
+    const g = children.filter(c => c.status === "GUESS").length;
+    const w = children.filter(c => c.status === "WORKED").length;
+    return "This decision carries " + children.length + " alternatives, " + w +
+      " of which have settled something in a recorded run, and " + g +
+      " whose status the record cannot establish — those are marked, not guessed.";
+  }
+  return n.status_from ? ("Status: " + n.status + " — " + n.status_from) : n.text;
+}
+
+function flight() {
+  const order = ["PROBLEM", ...kids("PROBLEM", "decision").map(d => d.id)];
+  let i = 0;
+  const tick = () => {
+    if (!flying) return;
+    show(order[i % order.length]);
+    i++;
+    if (i >= order.length) { stop(); return; }
+    timer = setTimeout(tick, 2600);
+  };
+  tick();
+}
+function stop() { flying = false; if (timer) clearTimeout(timer); timer = null; $("#fly").textContent = "Fly through"; }
+
+function example() {
+  const e = Z.example, box = $("#example"); box.innerHTML = "";
+  if (!e) { box.appendChild(el("p", "err", "No recorded run is present, so no example is shown.")); return; }
+  const h = el("p"); h.innerHTML = "";
+  h.appendChild(el("strong", null, "Subject: " + e.subject));
+  h.appendChild(el("span", null, " — item " + e.id + ", read from " + e.where));
+  h.style.margin = "0 0 10px"; box.appendChild(h);
+  e.chain.forEach((s, i) => {
+    const row = el("div", "step");
+    row.appendChild(el("span", "n", String(i + 1)));
+    row.appendChild(el("span", "chip s-WORKED", s.probe));
+    const t = el("span");
+    t.appendChild(el("span", null, "candidates left: " + s.kept));
+    t.appendChild(el("span", "wh mono", s.witness));
+    row.appendChild(t);
+    box.appendChild(row);
+  });
+  const out = el("div", "step");
+  out.appendChild(el("span", "n", "·"));
+  out.appendChild(el("span", "chip s-REFUTED", "outcome"));
+  const ot = el("span");
+  ot.appendChild(el("strong", null, e.outcome));
+  if (e.outcome_witness) ot.appendChild(el("span", "wh mono", e.outcome_witness));
+  ot.appendChild(el("span", "why", "probe readings consumed before it stopped: " + e.consumed));
+  out.appendChild(ot); box.appendChild(out);
+}
+
+function boxPanel() {
+  const b = Z.nodes.find(n => n.kind === "box"), p = $("#box"); p.innerHTML = "";
+  if (!b) { p.appendChild(el("p", "err", "No box is present in the data.")); return; }
+  const dl = el("dl", "boxf");
+  for (const [k, v] of [["signature", b.signature], ["precondition", b.precondition],
+                        ["checkable", b.checkable], ["verdict", b.verdict], ["measured", b.measured]]) {
+    dl.appendChild(el("dt", null, k));
+    const dd = el("dd", k === "signature" ? "mono" : null, v);
+    dl.appendChild(dd);
+  }
+  p.appendChild(dl);
+  const w = el("p", "wh mono", b.where); w.style.cssText = "color:var(--mute);font-size:12.5px;margin:10px 0 0";
+  p.appendChild(w);
+}
+
+function boot(z) {
+  Z = z;
+  tiles(); example(); boxPanel();
+  $("#regen").textContent = Z._regenerate || "";
+  $("#footline").textContent = "Generated by " + (Z._generated_by || "") + " — " +
+    Z.counts.nodes + " nodes, " + Z.counts.edges + " edges, " + Z.counts.guesses + " marked as unknown.";
+  show("PROBLEM");
+  $("#fly").onclick = () => {
+    if (flying) { stop(); return; }
+    flying = true; $("#fly").textContent = "Stop"; flight();
+  };
+  $("#up").onclick = () => { stop(); const n = byId(cur); if (n.parent) show(n.parent); };
+  $("#theme").onclick = () => {
+    const d = document.documentElement;
+    const now = d.getAttribute("data-theme") ||
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    d.setAttribute("data-theme", now === "dark" ? "light" : "dark");
+  };
+}
+
+fetch("ladder.json").then(r => r.json()).then(boot).catch(e => {
+  $("#narrate").className = "narrate err";
+  $("#narrate").textContent = "The generated data file could not be loaded, so nothing is shown: " + e;
+});
+</script>
+</body>
+</html>
