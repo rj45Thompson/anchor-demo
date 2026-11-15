@@ -1,0 +1,410 @@
+{
+ "title": "Harbour Moon",
+ "credit": "An original song written for this page.",
+ "preview": false,
+ "band": {
+  "bpm": 76,
+  "start": 0,
+  "chords": [
+   "Am",
+   "E",
+   "Am",
+   "F",
+   "C",
+   "E",
+   "F",
+   "G",
+   "E",
+   "Am",
+   "Am",
+   "F",
+   "C",
+   "E",
+   "F",
+   "G",
+   "E",
+   "Am",
+   "Am"
+  ]
+ },
+ "lines": [
+  {
+   "t": 6.3158,
+   "text": "Moon on the harbour, silver and slow",
+   "part": 1
+  },
+  {
+   "t": 12.6316,
+   "text": "Boats in the darkness rocking below",
+   "part": 2
+  },
+  {
+   "t": 18.9474,
+   "text": "Hold on, hold on",
+   "part": "both"
+  },
+  {
+   "t": 25.2632,
+   "text": "The tide will bring us home",
+   "part": "both"
+  },
+  {
+   "t": 31.5789,
+   "text": "Lights on the water, near and afar",
+   "part": 2
+  },
+  {
+   "t": 37.8947,
+   "text": "Every one shining just like a star",
+   "part": 1
+  },
+  {
+   "t": 44.2105,
+   "text": "Hold on, hold on",
+   "part": "both"
+  },
+  {
+   "t": 50.5263,
+   "text": "The tide will bring us home",
+   "part": "both"
+  }
+ ],
+ "notes": [
+  {
+   "start": 6.3158,
+   "end": 7.1053,
+   "midi": 69,
+   "syl": "Moon"
+  },
+  {
+   "start": 7.1053,
+   "end": 7.5,
+   "midi": 69,
+   "syl": "on"
+  },
+  {
+   "start": 7.5,
+   "end": 7.8947,
+   "midi": 72,
+   "syl": "the"
+  },
+  {
+   "start": 7.8947,
+   "end": 8.6842,
+   "midi": 71,
+   "syl": "har-"
+  },
+  {
+   "start": 8.6842,
+   "end": 9.4737,
+   "midi": 69,
+   "syl": "bour,"
+  },
+  {
+   "start": 9.4737,
+   "end": 10.2632,
+   "midi": 67,
+   "syl": "sil-"
+  },
+  {
+   "start": 10.2632,
+   "end": 10.6579,
+   "midi": 64,
+   "syl": "ver"
+  },
+  {
+   "start": 10.6579,
+   "end": 11.0526,
+   "midi": 65,
+   "syl": "and"
+  },
+  {
+   "start": 11.0526,
+   "end": 11.8421,
+   "midi": 64,
+   "syl": "slow"
+  },
+  {
+   "start": 12.6316,
+   "end": 13.4211,
+   "midi": 64,
+   "syl": "Boats"
+  },
+  {
+   "start": 13.4211,
+   "end": 13.8158,
+   "midi": 64,
+   "syl": "in"
+  },
+  {
+   "start": 13.8158,
+   "end": 14.2105,
+   "midi": 67,
+   "syl": "the"
+  },
+  {
+   "start": 14.2105,
+   "end": 15,
+   "midi": 69,
+   "syl": "dark-"
+  },
+  {
+   "start": 15,
+   "end": 15.7895,
+   "midi": 67,
+   "syl": "ness"
+  },
+  {
+   "start": 15.7895,
+   "end": 16.5789,
+   "midi": 65,
+   "syl": "rock-"
+  },
+  {
+   "start": 16.5789,
+   "end": 16.9737,
+   "midi": 64,
+   "syl": "ing"
+  },
+  {
+   "start": 16.9737,
+   "end": 17.3684,
+   "midi": 62,
+   "syl": "be-"
+  },
+  {
+   "start": 17.3684,
+   "end": 18.1579,
+   "midi": 64,
+   "syl": "low"
+  },
+  {
+   "start": 18.9474,
+   "end": 19.7368,
+   "midi": 72,
+   "syl": "Hold"
+  },
+  {
+   "start": 19.7368,
+   "end": 20.5263,
+   "midi": 71,
+   "syl": "on,"
+  },
+  {
+   "start": 20.5263,
+   "end": 21.3158,
+   "midi": 69,
+   "syl": "hold"
+  },
+  {
+   "start": 21.3158,
+   "end": 23.6842,
+   "midi": 67,
+   "syl": "on"
+  },
+  {
+   "start": 25.2632,
+   "end": 26.0526,
+   "midi": 64,
+   "syl": "The"
+  },
+  {
+   "start": 26.0526,
+   "end": 26.8421,
+   "midi": 65,
+   "syl": "tide"
+  },
+  {
+   "start": 26.8421,
+   "end": 27.6316,
+   "midi": 67,
+   "syl": "will"
+  },
+  {
+   "start": 27.6316,
+   "end": 28.4211,
+   "midi": 65,
+   "syl": "bring"
+  },
+  {
+   "start": 28.4211,
+   "end": 29.2105,
+   "midi": 64,
+   "syl": "us"
+  },
+  {
+   "start": 29.2105,
+   "end": 30.7895,
+   "midi": 69,
+   "syl": "home"
+  },
+  {
+   "start": 31.5789,
+   "end": 32.3684,
+   "midi": 69,
+   "syl": "Lights"
+  },
+  {
+   "start": 32.3684,
+   "end": 32.7632,
+   "midi": 69,
+   "syl": "on"
+  },
+  {
+   "start": 32.7632,
+   "end": 33.1579,
+   "midi": 72,
+   "syl": "the"
+  },
+  {
+   "start": 33.1579,
+   "end": 33.9474,
+   "midi": 74,
+   "syl": "wa-"
+  },
+  {
+   "start": 33.9474,
+   "end": 34.7368,
+   "midi": 72,
+   "syl": "ter,"
+  },
+  {
+   "start": 34.7368,
+   "end": 35.5263,
+   "midi": 71,
+   "syl": "near"
+  },
+  {
+   "start": 35.5263,
+   "end": 35.9211,
+   "midi": 69,
+   "syl": "and"
+  },
+  {
+   "start": 35.9211,
+   "end": 36.3158,
+   "midi": 67,
+   "syl": "a-"
+  },
+  {
+   "start": 36.3158,
+   "end": 37.1053,
+   "midi": 69,
+   "syl": "far"
+  },
+  {
+   "start": 37.8947,
+   "end": 38.6842,
+   "midi": 67,
+   "syl": "Ev-"
+  },
+  {
+   "start": 38.6842,
+   "end": 39.0789,
+   "midi": 67,
+   "syl": "ery"
+  },
+  {
+   "start": 39.0789,
+   "end": 39.4737,
+   "midi": 69,
+   "syl": "one"
+  },
+  {
+   "start": 39.4737,
+   "end": 40.2632,
+   "midi": 71,
+   "syl": "shin-"
+  },
+  {
+   "start": 40.2632,
+   "end": 41.0526,
+   "midi": 72,
+   "syl": "ing"
+  },
+  {
+   "start": 41.0526,
+   "end": 41.8421,
+   "midi": 71,
+   "syl": "just"
+  },
+  {
+   "start": 41.8421,
+   "end": 42.2368,
+   "midi": 69,
+   "syl": "like"
+  },
+  {
+   "start": 42.2368,
+   "end": 42.6316,
+   "midi": 67,
+   "syl": "a"
+  },
+  {
+   "start": 42.6316,
+   "end": 43.4211,
+   "midi": 64,
+   "syl": "star"
+  },
+  {
+   "start": 44.2105,
+   "end": 45,
+   "midi": 72,
+   "syl": "Hold"
+  },
+  {
+   "start": 45,
+   "end": 45.7895,
+   "midi": 71,
+   "syl": "on,"
+  },
+  {
+   "start": 45.7895,
+   "end": 46.5789,
+   "midi": 69,
+   "syl": "hold"
+  },
+  {
+   "start": 46.5789,
+   "end": 48.9474,
+   "midi": 67,
+   "syl": "on"
+  },
+  {
+   "start": 50.5263,
+   "end": 51.3158,
+   "midi": 64,
+   "syl": "The"
+  },
+  {
+   "start": 51.3158,
+   "end": 52.1053,
+   "midi": 65,
+   "syl": "tide"
+  },
+  {
+   "start": 52.1053,
+   "end": 52.8947,
+   "midi": 67,
+   "syl": "will"
+  },
+  {
+   "start": 52.8947,
+   "end": 53.6842,
+   "midi": 65,
+   "syl": "bring"
+  },
+  {
+   "start": 53.6842,
+   "end": 54.4737,
+   "midi": 64,
+   "syl": "us"
+  },
+  {
+   "start": 54.4737,
+   "end": 56.0526,
+   "midi": 69,
+   "syl": "home"
+  }
+ ]
+}

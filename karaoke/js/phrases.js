@@ -52,6 +52,9 @@ export function noteAt(notes, t) {
   return null;
 }
 
+// A chord name the band can play: a root, an optional sharp or flat, and m, 7, m7 or maj7.
+export const CHORD = /^[A-G][#b]?(m7|maj7|m|7)?$/;
+
 // Validates a song file: {"title", "lines": [{"t", "text"}], "notes": [{"start", "end", "midi"}]}.
 // Bad data throws with the reason, and nothing is repaired. Serves: P7 (own file), A3 (bad file).
 export function parseSong(obj) {
@@ -68,7 +71,14 @@ export function parseSong(obj) {
     if (!line || typeof line.t !== "number" || line.t < 0 || typeof line.text !== "string") {
       throw new Error(`line ${i}: needs a time "t" of 0 or more and a string "text"`);
     }
-    return { t: line.t, text: line.text };
+    const out = { t: line.t, text: line.text };
+    if (line.part !== undefined) {
+      if (line.part !== 1 && line.part !== 2 && line.part !== "both") {
+        throw new Error(`line ${i}: "part" must be 1, 2 or "both"`);
+      }
+      out.part = line.part;
+    }
+    return out;
   });
   const notes = obj.notes.map((note, i) => {
     if (!note || typeof note.start !== "number" || typeof note.end !== "number" || !Number.isInteger(note.midi)) {
@@ -77,9 +87,40 @@ export function parseSong(obj) {
     if (!(note.start >= 0 && note.start < note.end) || note.midi < 0 || note.midi > 127) {
       throw new Error(`note ${i}: need 0 <= start < end and 0 <= midi <= 127`);
     }
-    return { start: note.start, end: note.end, midi: note.midi };
+    const out = { start: note.start, end: note.end, midi: note.midi };
+    if (note.syl !== undefined) {
+      if (typeof note.syl !== "string") {
+        throw new Error(`note ${i}: "syl" must be a string`);
+      }
+      out.syl = note.syl;
+    }
+    return out;
   });
   lines.sort((a, b) => a.t - b.t);
   notes.sort((a, b) => a.start - b.start);
-  return { title: obj.title.trim(), lines, notes };
+  const song = { title: obj.title.trim(), lines, notes };
+  // Optional co-op fields (C1, C3): a backing band, whether to preview each line, and a credit line.
+  if (obj.band !== undefined) {
+    const band = obj.band;
+    if (!band || typeof band.bpm !== "number" || !(band.bpm >= 30 && band.bpm <= 300)) {
+      throw new Error('"band.bpm" must be a number from 30 to 300');
+    }
+    if (typeof band.start !== "number" || band.start < 0) {
+      throw new Error('"band.start" must be a time of 0 or more');
+    }
+    if (!Array.isArray(band.chords) || !band.chords.length || !band.chords.every((c) => typeof c === "string" && CHORD.test(c))) {
+      throw new Error('"band.chords" must be a list of chord names such as "C", "Am", "G7"');
+    }
+    song.band = { bpm: band.bpm, start: band.start, chords: [...band.chords] };
+  }
+  if (obj.preview !== undefined) {
+    if (typeof obj.preview !== "boolean") {
+      throw new Error('"preview" must be true or false');
+    }
+    song.preview = obj.preview;
+  }
+  if (typeof obj.credit === "string") {
+    song.credit = obj.credit;
+  }
+  return song;
 }

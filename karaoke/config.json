@@ -9,5 +9,7 @@
   "pitchWindow": 1024,
   "smoothingFrames": 5,
   "previewVolume": 0.25,
-  "maxFileBytes": 1048576
+  "maxFileBytes": 1048576,
+  "bandVolume": 0.35,
+  "guideVolume": 0.12
 }

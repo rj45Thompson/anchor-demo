@@ -2,50 +2,103 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Karaoke singing check</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Duet Night</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@400;700;800&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
     <!--home-link--><p class="home"><a href="../">Anchor demo</a></p><!--/home-link-->
-    <header>
-      <h1 id="song-title">Karaoke singing check</h1>
-      <p class="intro">A short original tune to check your pitch. Timing starts when you press Start, not from a music player. Headphones help, so the speakers do not feed the microphone.</p>
+    <header class="top">
+      <h1>Duet Night</h1>
+      <p class="intro">Sing original songs together. Take turns, or both sing every line, and score as a team. One
+        microphone works; two (one each) is better. Headphones keep the band out of the mic.</p>
     </header>
 
-    <section class="stage" aria-live="polite">
-      <p id="prev-line" class="line dim"></p>
-      <p id="current-line" class="line current">Press Start</p>
-      <p id="next-line" class="line dim"></p>
+    <section class="setup" aria-label="Song and players">
+      <label>Song <select id="song"></select></label>
+      <label>Mode
+        <select id="mode">
+          <option value="duet" selected>Duet: take turns</option>
+          <option value="together">Together: both sing every line</option>
+          <option value="solo">Solo</option>
+        </select>
+      </label>
+      <label class="name p1">Player 1 <input id="name1" value="Player 1" maxlength="16" autocomplete="off"></label>
+      <label class="name p2">Player 2 <input id="name2" value="Player 2" maxlength="16" autocomplete="off"></label>
     </section>
 
-    <section class="pitch" aria-label="Pitch check">
-      <div id="arrow" class="arrow idle" aria-hidden="true">&middot;</div>
-      <div class="readout">
-        <p><span>Target</span> <strong id="target">-</strong></p>
-        <p><span>You</span> <strong id="sung">-</strong></p>
-        <p id="gap" class="gap"></p>
+    <section class="mics" aria-label="Microphones">
+      <button id="find-mics" type="button">Find mics</button>
+      <label>Player 1's mic <select id="mic1"><option value="">Default mic</option></select></label>
+      <label class="p2-only">Player 2's mic <select id="mic2"><option value="">Share Player 1's mic</option></select></label>
+      <div class="meters" aria-hidden="true">
+        <span class="meter p1"><i id="level1"></i></span>
+        <span class="meter p2 p2-only"><i id="level2"></i></span>
       </div>
-      <div class="meter" aria-hidden="true"><div id="level"></div></div>
+      <label class="check"><input id="band" type="checkbox" checked> Backing band</label>
+      <label class="check"><input id="guide" type="checkbox"> Guide melody</label>
+      <label class="check" id="preview-wrap"><input id="preview" type="checkbox" checked> Hear each line first</label>
     </section>
 
-    <section class="controls">
-      <button id="start" type="button">Start</button>
+    <section class="actions">
+      <button id="start" type="button" class="primary">Start</button>
       <button id="stop" type="button" disabled>Stop</button>
       <button id="restart" type="button">Restart</button>
-      <label class="check"><input id="preview" type="checkbox" checked> Melody preview before each phrase</label>
-      <label class="file">Load your own melody file
-        <input id="file" type="file" accept="application/json,.json">
-      </label>
+      <button id="demo" type="button">Watch a demo</button>
+    </section>
+
+    <section class="hud" aria-label="Team">
+      <p class="score"><span>Team score</span><strong id="score">0</strong></p>
+      <p class="combo"><span>Combo</span><strong id="combo">0</strong><em id="mult">x1</em></p>
+      <div class="hype"><span>Hype</span><div class="bar"><i id="hype"></i></div><b id="harmony" hidden>HARMONY x2</b></div>
+    </section>
+
+    <section class="stage">
+      <canvas id="lane" aria-label="Note lane: notes scroll toward the line on the left; your voice draws a trail"></canvas>
+      <p id="banner" class="banner" aria-live="polite"></p>
+    </section>
+
+    <section class="lyrics" aria-live="polite">
+      <p id="lyric-now" class="lyric now">Press Start</p>
+      <p id="lyric-next" class="lyric next"></p>
+    </section>
+
+    <section class="chips" aria-label="Pitch">
+      <p class="chip p1"><b id="chip1-name">Player 1</b> <span id="chip1-arrow" class="arrow">&middot;</span> <span id="chip1-note">-</span> <small id="chip1-gap"></small></p>
+      <p class="chip p2 p2-only"><b id="chip2-name">Player 2</b> <span id="chip2-arrow" class="arrow">&middot;</span> <span id="chip2-note">-</span> <small id="chip2-gap"></small></p>
     </section>
 
     <p id="status" class="status" role="status"></p>
 
-    <section class="scores">
-      <h2>Phrase scores</h2>
-      <ol id="scores"></ol>
+    <section id="results" class="results" hidden aria-live="polite">
+      <h2 id="res-title">Song complete</h2>
+      <p id="res-stars" class="stars"></p>
+      <div class="res-grid">
+        <p><span>Team score</span><strong id="res-score"></strong></p>
+        <p><span>Notes hit</span><strong id="res-hits"></strong></p>
+        <p><span>Best combo</span><strong id="res-combo"></strong></p>
+        <p><span>On pitch</span><strong id="res-share"></strong></p>
+      </div>
+      <ul id="res-players"></ul>
+      <p id="res-note" class="hint"></p>
+      <div class="actions">
+        <button id="again" type="button" class="primary">Play again</button>
+        <button id="swap" type="button">Swap parts</button>
+      </div>
     </section>
+
+    <footer>
+      <label class="file">Load your own melody file (JSON, stays on your computer)
+        <input id="file" type="file" accept="application/json,.json">
+      </label>
+      <p id="credit"></p>
+      <p>Pitch is judged within three quarters of a semitone, an octave up or down counts, and silence during a note
+        is a miss. A note is hit when at least half of it was on pitch.</p>
+    </footer>
   </main>
   <script type="module" src="app.js"></script>
 </body>

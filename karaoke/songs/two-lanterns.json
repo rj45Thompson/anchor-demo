@@ -1,0 +1,568 @@
+{
+ "title": "Two Lanterns",
+ "credit": "An original song written for this page.",
+ "preview": false,
+ "band": {
+  "bpm": 92,
+  "start": 0,
+  "chords": [
+   "C",
+   "G",
+   "C",
+   "Am",
+   "F",
+   "G",
+   "F",
+   "C",
+   "Dm",
+   "G",
+   "C",
+   "F",
+   "Dm",
+   "C",
+   "C",
+   "Am",
+   "F",
+   "G",
+   "C",
+   "F",
+   "G",
+   "C",
+   "C"
+  ]
+ },
+ "lines": [
+  {
+   "t": 5.2174,
+   "text": "I lit a lantern by the shore",
+   "part": 1
+  },
+  {
+   "t": 10.4348,
+   "text": "I saw it shining from my door",
+   "part": 2
+  },
+  {
+   "t": 15.6522,
+   "text": "So I walked out across the sand",
+   "part": 1
+  },
+  {
+   "t": 20.8696,
+   "text": "And met you halfway, hand in hand",
+   "part": 2
+  },
+  {
+   "t": 26.087,
+   "text": "Two lanterns burning in the night",
+   "part": "both"
+  },
+  {
+   "t": 31.3043,
+   "text": "Together we can make it bright",
+   "part": "both"
+  },
+  {
+   "t": 36.5217,
+   "text": "The wind came rolling off the bay",
+   "part": 2
+  },
+  {
+   "t": 41.7391,
+   "text": "We held the light and found the way",
+   "part": 1
+  },
+  {
+   "t": 46.9565,
+   "text": "Two lanterns burning in the night",
+   "part": "both"
+  },
+  {
+   "t": 52.1739,
+   "text": "Together we can make it bright",
+   "part": "both"
+  }
+ ],
+ "notes": [
+  {
+   "start": 5.2174,
+   "end": 5.8696,
+   "midi": 64,
+   "syl": "I"
+  },
+  {
+   "start": 5.8696,
+   "end": 6.1957,
+   "midi": 64,
+   "syl": "lit"
+  },
+  {
+   "start": 6.1957,
+   "end": 6.5217,
+   "midi": 67,
+   "syl": "a"
+  },
+  {
+   "start": 6.5217,
+   "end": 7.1739,
+   "midi": 69,
+   "syl": "lan-"
+  },
+  {
+   "start": 7.1739,
+   "end": 7.8261,
+   "midi": 67,
+   "syl": "tern"
+  },
+  {
+   "start": 7.8261,
+   "end": 8.1522,
+   "midi": 64,
+   "syl": "by"
+  },
+  {
+   "start": 8.1522,
+   "end": 8.4783,
+   "midi": 62,
+   "syl": "the"
+  },
+  {
+   "start": 8.4783,
+   "end": 9.7826,
+   "midi": 60,
+   "syl": "shore"
+  },
+  {
+   "start": 10.4348,
+   "end": 11.087,
+   "midi": 64,
+   "syl": "I"
+  },
+  {
+   "start": 11.087,
+   "end": 11.413,
+   "midi": 64,
+   "syl": "saw"
+  },
+  {
+   "start": 11.413,
+   "end": 11.7391,
+   "midi": 67,
+   "syl": "it"
+  },
+  {
+   "start": 11.7391,
+   "end": 12.3913,
+   "midi": 69,
+   "syl": "shin-"
+  },
+  {
+   "start": 12.3913,
+   "end": 13.0435,
+   "midi": 67,
+   "syl": "ing"
+  },
+  {
+   "start": 13.0435,
+   "end": 13.3696,
+   "midi": 64,
+   "syl": "from"
+  },
+  {
+   "start": 13.3696,
+   "end": 13.6957,
+   "midi": 62,
+   "syl": "my"
+  },
+  {
+   "start": 13.6957,
+   "end": 15,
+   "midi": 62,
+   "syl": "door"
+  },
+  {
+   "start": 15.6522,
+   "end": 16.3043,
+   "midi": 65,
+   "syl": "So"
+  },
+  {
+   "start": 16.3043,
+   "end": 16.6304,
+   "midi": 65,
+   "syl": "I"
+  },
+  {
+   "start": 16.6304,
+   "end": 16.9565,
+   "midi": 69,
+   "syl": "walked"
+  },
+  {
+   "start": 16.9565,
+   "end": 17.6087,
+   "midi": 69,
+   "syl": "out"
+  },
+  {
+   "start": 17.6087,
+   "end": 18.2609,
+   "midi": 67,
+   "syl": "a-"
+  },
+  {
+   "start": 18.2609,
+   "end": 18.587,
+   "midi": 65,
+   "syl": "cross"
+  },
+  {
+   "start": 18.587,
+   "end": 18.913,
+   "midi": 64,
+   "syl": "the"
+  },
+  {
+   "start": 18.913,
+   "end": 20.2174,
+   "midi": 64,
+   "syl": "sand"
+  },
+  {
+   "start": 20.8696,
+   "end": 21.5217,
+   "midi": 64,
+   "syl": "And"
+  },
+  {
+   "start": 21.5217,
+   "end": 21.8478,
+   "midi": 64,
+   "syl": "met"
+  },
+  {
+   "start": 21.8478,
+   "end": 22.1739,
+   "midi": 67,
+   "syl": "you"
+  },
+  {
+   "start": 22.1739,
+   "end": 22.8261,
+   "midi": 67,
+   "syl": "half-"
+  },
+  {
+   "start": 22.8261,
+   "end": 23.4783,
+   "midi": 65,
+   "syl": "way,"
+  },
+  {
+   "start": 23.4783,
+   "end": 23.8043,
+   "midi": 64,
+   "syl": "hand"
+  },
+  {
+   "start": 23.8043,
+   "end": 24.1304,
+   "midi": 62,
+   "syl": "in"
+  },
+  {
+   "start": 24.1304,
+   "end": 25.4348,
+   "midi": 60,
+   "syl": "hand"
+  },
+  {
+   "start": 26.087,
+   "end": 26.7391,
+   "midi": 67,
+   "syl": "Two"
+  },
+  {
+   "start": 26.7391,
+   "end": 27.0652,
+   "midi": 72,
+   "syl": "lan-"
+  },
+  {
+   "start": 27.0652,
+   "end": 27.3913,
+   "midi": 72,
+   "syl": "terns"
+  },
+  {
+   "start": 27.3913,
+   "end": 28.0435,
+   "midi": 71,
+   "syl": "burn-"
+  },
+  {
+   "start": 28.0435,
+   "end": 28.6957,
+   "midi": 69,
+   "syl": "ing"
+  },
+  {
+   "start": 28.6957,
+   "end": 29.0217,
+   "midi": 67,
+   "syl": "in"
+  },
+  {
+   "start": 29.0217,
+   "end": 29.3478,
+   "midi": 69,
+   "syl": "the"
+  },
+  {
+   "start": 29.3478,
+   "end": 30.6522,
+   "midi": 67,
+   "syl": "night"
+  },
+  {
+   "start": 31.3043,
+   "end": 31.9565,
+   "midi": 65,
+   "syl": "To-"
+  },
+  {
+   "start": 31.9565,
+   "end": 32.2826,
+   "midi": 67,
+   "syl": "geth-"
+  },
+  {
+   "start": 32.2826,
+   "end": 32.6087,
+   "midi": 69,
+   "syl": "er"
+  },
+  {
+   "start": 32.6087,
+   "end": 33.2609,
+   "midi": 67,
+   "syl": "we"
+  },
+  {
+   "start": 33.2609,
+   "end": 33.913,
+   "midi": 65,
+   "syl": "can"
+  },
+  {
+   "start": 33.913,
+   "end": 34.2391,
+   "midi": 64,
+   "syl": "make"
+  },
+  {
+   "start": 34.2391,
+   "end": 34.5652,
+   "midi": 62,
+   "syl": "it"
+  },
+  {
+   "start": 34.5652,
+   "end": 35.8696,
+   "midi": 60,
+   "syl": "bright"
+  },
+  {
+   "start": 36.5217,
+   "end": 37.1739,
+   "midi": 64,
+   "syl": "The"
+  },
+  {
+   "start": 37.1739,
+   "end": 37.5,
+   "midi": 64,
+   "syl": "wind"
+  },
+  {
+   "start": 37.5,
+   "end": 37.8261,
+   "midi": 67,
+   "syl": "came"
+  },
+  {
+   "start": 37.8261,
+   "end": 38.4783,
+   "midi": 69,
+   "syl": "roll-"
+  },
+  {
+   "start": 38.4783,
+   "end": 39.1304,
+   "midi": 67,
+   "syl": "ing"
+  },
+  {
+   "start": 39.1304,
+   "end": 39.4565,
+   "midi": 64,
+   "syl": "off"
+  },
+  {
+   "start": 39.4565,
+   "end": 39.7826,
+   "midi": 62,
+   "syl": "the"
+  },
+  {
+   "start": 39.7826,
+   "end": 41.087,
+   "midi": 60,
+   "syl": "bay"
+  },
+  {
+   "start": 41.7391,
+   "end": 42.3913,
+   "midi": 64,
+   "syl": "We"
+  },
+  {
+   "start": 42.3913,
+   "end": 42.7174,
+   "midi": 64,
+   "syl": "held"
+  },
+  {
+   "start": 42.7174,
+   "end": 43.0435,
+   "midi": 67,
+   "syl": "the"
+  },
+  {
+   "start": 43.0435,
+   "end": 43.6957,
+   "midi": 69,
+   "syl": "light"
+  },
+  {
+   "start": 43.6957,
+   "end": 44.3478,
+   "midi": 67,
+   "syl": "and"
+  },
+  {
+   "start": 44.3478,
+   "end": 44.6739,
+   "midi": 64,
+   "syl": "found"
+  },
+  {
+   "start": 44.6739,
+   "end": 45,
+   "midi": 62,
+   "syl": "the"
+  },
+  {
+   "start": 45,
+   "end": 46.3043,
+   "midi": 62,
+   "syl": "way"
+  },
+  {
+   "start": 46.9565,
+   "end": 47.6087,
+   "midi": 67,
+   "syl": "Two"
+  },
+  {
+   "start": 47.6087,
+   "end": 47.9348,
+   "midi": 72,
+   "syl": "lan-"
+  },
+  {
+   "start": 47.9348,
+   "end": 48.2609,
+   "midi": 72,
+   "syl": "terns"
+  },
+  {
+   "start": 48.2609,
+   "end": 48.913,
+   "midi": 71,
+   "syl": "burn-"
+  },
+  {
+   "start": 48.913,
+   "end": 49.5652,
+   "midi": 69,
+   "syl": "ing"
+  },
+  {
+   "start": 49.5652,
+   "end": 49.8913,
+   "midi": 67,
+   "syl": "in"
+  },
+  {
+   "start": 49.8913,
+   "end": 50.2174,
+   "midi": 69,
+   "syl": "the"
+  },
+  {
+   "start": 50.2174,
+   "end": 51.5217,
+   "midi": 67,
+   "syl": "night"
+  },
+  {
+   "start": 52.1739,
+   "end": 52.8261,
+   "midi": 65,
+   "syl": "To-"
+  },
+  {
+   "start": 52.8261,
+   "end": 53.1522,
+   "midi": 67,
+   "syl": "geth-"
+  },
+  {
+   "start": 53.1522,
+   "end": 53.4783,
+   "midi": 69,
+   "syl": "er"
+  },
+  {
+   "start": 53.4783,
+   "end": 54.1304,
+   "midi": 67,
+   "syl": "we"
+  },
+  {
+   "start": 54.1304,
+   "end": 54.7826,
+   "midi": 65,
+   "syl": "can"
+  },
+  {
+   "start": 54.7826,
+   "end": 55.1087,
+   "midi": 64,
+   "syl": "make"
+  },
+  {
+   "start": 55.1087,
+   "end": 55.4348,
+   "midi": 62,
+   "syl": "it"
+  },
+  {
+   "start": 55.4348,
+   "end": 56.7391,
+   "midi": 60,
+   "syl": "bright"
+  }
+ ]
+}

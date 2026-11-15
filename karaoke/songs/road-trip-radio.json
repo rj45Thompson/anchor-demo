@@ -1,0 +1,562 @@
+{
+ "title": "Road Trip Radio",
+ "credit": "An original song written for this page.",
+ "preview": false,
+ "band": {
+  "bpm": 116,
+  "start": 0,
+  "chords": [
+   "G",
+   "D",
+   "G",
+   "Em",
+   "C",
+   "D",
+   "Em",
+   "C",
+   "Am",
+   "D",
+   "G",
+   "C",
+   "D",
+   "G",
+   "G",
+   "Em",
+   "C",
+   "D",
+   "G",
+   "C",
+   "D",
+   "G",
+   "G"
+  ]
+ },
+ "lines": [
+  {
+   "t": 4.1379,
+   "text": "Windows down and the radio on",
+   "part": 1
+  },
+  {
+   "t": 8.2759,
+   "text": "Singing loud till the sun is gone",
+   "part": 2
+  },
+  {
+   "t": 12.4138,
+   "text": "Left at the mountain, right at the sea",
+   "part": 1
+  },
+  {
+   "t": 16.5517,
+   "text": "Every mile is a melody",
+   "part": 2
+  },
+  {
+   "t": 20.6897,
+   "text": "Hey, hey, the highway's long",
+   "part": "both"
+  },
+  {
+   "t": 24.8276,
+   "text": "We will go farther with a song",
+   "part": "both"
+  },
+  {
+   "t": 28.9655,
+   "text": "Maps on the floor and a bag of snacks",
+   "part": 2
+  },
+  {
+   "t": 33.1034,
+   "text": "Nothing to do but follow tracks",
+   "part": 1
+  },
+  {
+   "t": 37.2414,
+   "text": "Hey, hey, the highway's long",
+   "part": "both"
+  },
+  {
+   "t": 41.3793,
+   "text": "We will go farther with a song",
+   "part": "both"
+  }
+ ],
+ "notes": [
+  {
+   "start": 4.1379,
+   "end": 4.3966,
+   "midi": 67,
+   "syl": "Win-"
+  },
+  {
+   "start": 4.3966,
+   "end": 4.6552,
+   "midi": 67,
+   "syl": "dows"
+  },
+  {
+   "start": 4.6552,
+   "end": 5.1724,
+   "midi": 71,
+   "syl": "down"
+  },
+  {
+   "start": 5.1724,
+   "end": 5.431,
+   "midi": 69,
+   "syl": "and"
+  },
+  {
+   "start": 5.431,
+   "end": 5.6897,
+   "midi": 67,
+   "syl": "the"
+  },
+  {
+   "start": 5.6897,
+   "end": 5.9483,
+   "midi": 64,
+   "syl": "ra-"
+  },
+  {
+   "start": 5.9483,
+   "end": 6.2069,
+   "midi": 62,
+   "syl": "di-"
+  },
+  {
+   "start": 6.2069,
+   "end": 6.7241,
+   "midi": 64,
+   "syl": "o"
+  },
+  {
+   "start": 6.7241,
+   "end": 7.7586,
+   "midi": 67,
+   "syl": "on"
+  },
+  {
+   "start": 8.2759,
+   "end": 8.5345,
+   "midi": 71,
+   "syl": "Sing-"
+  },
+  {
+   "start": 8.5345,
+   "end": 8.7931,
+   "midi": 71,
+   "syl": "ing"
+  },
+  {
+   "start": 8.7931,
+   "end": 9.3103,
+   "midi": 72,
+   "syl": "loud"
+  },
+  {
+   "start": 9.3103,
+   "end": 9.569,
+   "midi": 71,
+   "syl": "till"
+  },
+  {
+   "start": 9.569,
+   "end": 9.8276,
+   "midi": 69,
+   "syl": "the"
+  },
+  {
+   "start": 9.8276,
+   "end": 10.3448,
+   "midi": 67,
+   "syl": "sun"
+  },
+  {
+   "start": 10.3448,
+   "end": 10.8621,
+   "midi": 69,
+   "syl": "is"
+  },
+  {
+   "start": 10.8621,
+   "end": 11.8966,
+   "midi": 67,
+   "syl": "gone"
+  },
+  {
+   "start": 12.4138,
+   "end": 12.6724,
+   "midi": 64,
+   "syl": "Left"
+  },
+  {
+   "start": 12.6724,
+   "end": 12.931,
+   "midi": 64,
+   "syl": "at"
+  },
+  {
+   "start": 12.931,
+   "end": 13.1897,
+   "midi": 67,
+   "syl": "the"
+  },
+  {
+   "start": 13.1897,
+   "end": 13.4483,
+   "midi": 67,
+   "syl": "moun-"
+  },
+  {
+   "start": 13.4483,
+   "end": 13.9655,
+   "midi": 69,
+   "syl": "tain,"
+  },
+  {
+   "start": 13.9655,
+   "end": 14.2241,
+   "midi": 67,
+   "syl": "right"
+  },
+  {
+   "start": 14.2241,
+   "end": 14.4828,
+   "midi": 64,
+   "syl": "at"
+  },
+  {
+   "start": 14.4828,
+   "end": 15,
+   "midi": 62,
+   "syl": "the"
+  },
+  {
+   "start": 15,
+   "end": 16.0345,
+   "midi": 62,
+   "syl": "sea"
+  },
+  {
+   "start": 16.5517,
+   "end": 16.8103,
+   "midi": 62,
+   "syl": "Ev-"
+  },
+  {
+   "start": 16.8103,
+   "end": 17.069,
+   "midi": 64,
+   "syl": "ery"
+  },
+  {
+   "start": 17.069,
+   "end": 17.5862,
+   "midi": 67,
+   "syl": "mile"
+  },
+  {
+   "start": 17.5862,
+   "end": 17.8448,
+   "midi": 69,
+   "syl": "is"
+  },
+  {
+   "start": 17.8448,
+   "end": 18.1034,
+   "midi": 71,
+   "syl": "a"
+  },
+  {
+   "start": 18.1034,
+   "end": 18.6207,
+   "midi": 69,
+   "syl": "mel-"
+  },
+  {
+   "start": 18.6207,
+   "end": 19.1379,
+   "midi": 67,
+   "syl": "o-"
+  },
+  {
+   "start": 19.1379,
+   "end": 20.1724,
+   "midi": 67,
+   "syl": "dy"
+  },
+  {
+   "start": 20.6897,
+   "end": 21.2069,
+   "midi": 74,
+   "syl": "Hey,"
+  },
+  {
+   "start": 21.2069,
+   "end": 21.7241,
+   "midi": 74,
+   "syl": "hey,"
+  },
+  {
+   "start": 21.7241,
+   "end": 22.2414,
+   "midi": 72,
+   "syl": "the"
+  },
+  {
+   "start": 22.2414,
+   "end": 22.7586,
+   "midi": 71,
+   "syl": "high-"
+  },
+  {
+   "start": 22.7586,
+   "end": 23.2759,
+   "midi": 69,
+   "syl": "way's"
+  },
+  {
+   "start": 23.2759,
+   "end": 24.3103,
+   "midi": 71,
+   "syl": "long"
+  },
+  {
+   "start": 24.8276,
+   "end": 25.0862,
+   "midi": 71,
+   "syl": "We"
+  },
+  {
+   "start": 25.0862,
+   "end": 25.3448,
+   "midi": 72,
+   "syl": "will"
+  },
+  {
+   "start": 25.3448,
+   "end": 25.8621,
+   "midi": 74,
+   "syl": "go"
+  },
+  {
+   "start": 25.8621,
+   "end": 26.1207,
+   "midi": 72,
+   "syl": "far-"
+  },
+  {
+   "start": 26.1207,
+   "end": 26.3793,
+   "midi": 71,
+   "syl": "ther"
+  },
+  {
+   "start": 26.3793,
+   "end": 26.8966,
+   "midi": 69,
+   "syl": "with"
+  },
+  {
+   "start": 26.8966,
+   "end": 27.4138,
+   "midi": 67,
+   "syl": "a"
+  },
+  {
+   "start": 27.4138,
+   "end": 28.4483,
+   "midi": 67,
+   "syl": "song"
+  },
+  {
+   "start": 28.9655,
+   "end": 29.2241,
+   "midi": 67,
+   "syl": "Maps"
+  },
+  {
+   "start": 29.2241,
+   "end": 29.4828,
+   "midi": 67,
+   "syl": "on"
+  },
+  {
+   "start": 29.4828,
+   "end": 30,
+   "midi": 71,
+   "syl": "the"
+  },
+  {
+   "start": 30,
+   "end": 30.2586,
+   "midi": 69,
+   "syl": "floor"
+  },
+  {
+   "start": 30.2586,
+   "end": 30.5172,
+   "midi": 67,
+   "syl": "and"
+  },
+  {
+   "start": 30.5172,
+   "end": 30.7759,
+   "midi": 64,
+   "syl": "a"
+  },
+  {
+   "start": 30.7759,
+   "end": 31.0345,
+   "midi": 62,
+   "syl": "bag"
+  },
+  {
+   "start": 31.0345,
+   "end": 31.5517,
+   "midi": 64,
+   "syl": "of"
+  },
+  {
+   "start": 31.5517,
+   "end": 32.5862,
+   "midi": 67,
+   "syl": "snacks"
+  },
+  {
+   "start": 33.1034,
+   "end": 33.3621,
+   "midi": 71,
+   "syl": "Noth-"
+  },
+  {
+   "start": 33.3621,
+   "end": 33.6207,
+   "midi": 71,
+   "syl": "ing"
+  },
+  {
+   "start": 33.6207,
+   "end": 34.1379,
+   "midi": 72,
+   "syl": "to"
+  },
+  {
+   "start": 34.1379,
+   "end": 34.3966,
+   "midi": 71,
+   "syl": "do"
+  },
+  {
+   "start": 34.3966,
+   "end": 34.6552,
+   "midi": 69,
+   "syl": "but"
+  },
+  {
+   "start": 34.6552,
+   "end": 35.1724,
+   "midi": 67,
+   "syl": "fol-"
+  },
+  {
+   "start": 35.1724,
+   "end": 35.6897,
+   "midi": 69,
+   "syl": "low"
+  },
+  {
+   "start": 35.6897,
+   "end": 36.7241,
+   "midi": 67,
+   "syl": "tracks"
+  },
+  {
+   "start": 37.2414,
+   "end": 37.7586,
+   "midi": 74,
+   "syl": "Hey,"
+  },
+  {
+   "start": 37.7586,
+   "end": 38.2759,
+   "midi": 74,
+   "syl": "hey,"
+  },
+  {
+   "start": 38.2759,
+   "end": 38.7931,
+   "midi": 72,
+   "syl": "the"
+  },
+  {
+   "start": 38.7931,
+   "end": 39.3103,
+   "midi": 71,
+   "syl": "high-"
+  },
+  {
+   "start": 39.3103,
+   "end": 39.8276,
+   "midi": 69,
+   "syl": "way's"
+  },
+  {
+   "start": 39.8276,
+   "end": 40.8621,
+   "midi": 71,
+   "syl": "long"
+  },
+  {
+   "start": 41.3793,
+   "end": 41.6379,
+   "midi": 71,
+   "syl": "We"
+  },
+  {
+   "start": 41.6379,
+   "end": 41.8966,
+   "midi": 72,
+   "syl": "will"
+  },
+  {
+   "start": 41.8966,
+   "end": 42.4138,
+   "midi": 74,
+   "syl": "go"
+  },
+  {
+   "start": 42.4138,
+   "end": 42.6724,
+   "midi": 72,
+   "syl": "far-"
+  },
+  {
+   "start": 42.6724,
+   "end": 42.931,
+   "midi": 71,
+   "syl": "ther"
+  },
+  {
+   "start": 42.931,
+   "end": 43.4483,
+   "midi": 69,
+   "syl": "with"
+  },
+  {
+   "start": 43.4483,
+   "end": 43.9655,
+   "midi": 67,
+   "syl": "a"
+  },
+  {
+   "start": 43.9655,
+   "end": 45,
+   "midi": 67,
+   "syl": "song"
+  }
+ ]
+}
