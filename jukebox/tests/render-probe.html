@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- A fixture, not a page of the site: draws one frame of the highway with a chosen
+     backend so a test can screenshot it and read the result off window.probe.
+     ?backend=gl|gpu|auto&t=<song seconds> -->
+<html lang="en">
+<head><meta charset="utf-8"><title>Jukebox render probe</title>
+<style>html,body{margin:0;background:#000}canvas{display:block;width:100vw;height:100vh}</style></head>
+<body>
+<canvas id="c" width="960" height="540"></canvas>
+<script type="module">
+import { buildGems, parseSong } from "../js/chart.js";
+import { createPlay, seatOf } from "../js/scoring.js";
+import { createVocals } from "../js/vocals.js";
+import { Scene, build, camera } from "../js/scene.js";
+import { viewProjection } from "../js/mat4.js";
+import { pickBackend } from "../js/backend.js";
+
+const q = new URLSearchParams(location.search);
+const want = q.get("backend") || "auto";
+const now = Number(q.get("t") ?? 2.0);
+
+const song = parseSong({
+  title: "Probe", bpm: 120, lanes: 5,
+  guitar: [
+    { t: 1.0, lanes: [0] }, { t: 1.5, lanes: [1] }, { t: 2.0, lanes: [2] },
+    { t: 2.5, lanes: [3, 4] }, { t: 3.0, lanes: [1], len: 1.0 },
+    { t: 3.5, lanes: [4] }, { t: 4.0, lanes: [0, 2] }, { t: 4.5, lanes: [3] },
+  ],
+  vocals: [{ t: 1.0, end: 2.0, midi: 60 }, { t: 2.2, end: 3.2, midi: 64 }, { t: 3.4, end: 4.4, midi: 67 }],
+});
+const gems = buildGems(song);
+const play = createPlay(song, gems, [{ id: 1, role: "guitar", name: "Probe" }]);
+const seat = seatOf(play, 1);
+seat.starCharge = 12;
+
+const canvas = document.getElementById("c");
+const probe = { backend: null, why: null, quads: 0, lines: 0, error: null };
+window.probe = probe;
+try {
+  const picked = await pickBackend(canvas, want);
+  probe.backend = picked.backend.name;
+  probe.why = picked.why;
+  probe.info = picked.backend.info;
+  const scene = new Scene();
+  build(scene, {
+    song, gems, now,
+    held: new Set([2]),
+    settled: new Set(),
+    effects: [{ lane: 0, at: now - 0.05, kind: "hit" }, { lane: 4, at: now - 0.1, kind: "miss" }],
+    vocalState: Object.assign(createVocals(song), { target: 64, sung: 64.3, gap: -0.3 }),
+    seat,
+  });
+  probe.quads = scene.quads.count;
+  probe.lines = scene.lines.count;
+  const cam = camera(song, now);
+  const vp = viewProjection(cam.eye, cam.target, cam.up, cam.fov,
+    canvas.width / canvas.height, cam.near, cam.far, picked.backend.depth01);
+  picked.backend.draw(scene, vp, canvas.width, canvas.height);
+  probe.drew = true;
+} catch (e) {
+  probe.error = String(e && e.message ? e.message : e);
+}
+document.title = `probe ${probe.backend || "failed"}`;
+window.probeReady = true;
+</script>
+</body>
+</html>

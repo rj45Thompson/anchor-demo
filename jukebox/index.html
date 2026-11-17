@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Juke Box Legend</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--home-link--><p class="home"><a href="../">Anchor demo</a></p><!--/home-link-->
+
+<canvas id="stage" aria-label="The note highway"></canvas>
+
+<!-- Everything over the canvas. The highway is drawn; the words are DOM, so they stay
+     crisp and a screen reader can reach them. -->
+<main id="ui">
+
+  <section id="join" class="panel">
+    <h1>Juke Box <b>Legend</b></h1>
+    <p class="blurb">A guitar and a singer, on one screen. Phones are the guitars. The microphone on this machine is the vocal mic.</p>
+
+    <div class="joinbox">
+      <div class="qr">
+        <canvas id="qr" width="248" height="248" aria-label="Scan to join with your phone"></canvas>
+        <p class="small">or open <b id="joinhost">the controller</b> and enter</p>
+        <p class="code" id="code">....</p>
+        <p class="small"><a id="joinhere" href="#" target="_blank" rel="noopener">No phone? Open a controller in a new tab</a></p>
+        <p class="small err" id="padserr" hidden></p>
+      </div>
+      <div class="seats">
+        <h2>Who's playing</h2>
+        <ol id="seatlist" class="seatlist"><li class="empty">Nobody yet. Scan the code, or press <kbd>K</kbd> to play on this keyboard.</li></ol>
+        <label class="check"><input id="usemic" type="checkbox"> Someone is singing (uses this machine's microphone)</label>
+        <p class="small" id="micnote"></p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="play" type="button" class="big">Start the song</button>
+      <span class="small" id="songline"></span>
+    </div>
+    <p class="small dim" id="rendernote"></p>
+    <details class="how">
+      <summary>How you play</summary>
+      <ul>
+        <li>Five frets come down five lanes. Press the matching button as a gem crosses the white line.</li>
+        <li>On a phone: <b>d-pad left, up, right</b> are the first three lanes, <b>X</b> and <b>A</b> the last two. <b>Y</b> spends star power.</li>
+        <li>On this keyboard: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd><kbd>5</kbd> or <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd><kbd>G</kbd>, and <kbd>space</kbd> for star power.</li>
+        <li>Hold a long gem to keep it scoring. Ten notes in a row doubles your score, and it climbs to four times.</li>
+        <li>The singer watches the band at the top and sings the line. An octave out still counts.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section id="hud" hidden>
+    <div class="hudrow" id="hudseats"></div>
+    <p class="lyric" id="lyric"></p>
+    <p class="countdown" id="countdown" hidden></p>
+    <button id="quit" type="button" class="ghost">Stop</button>
+  </section>
+
+  <section id="results" class="panel" hidden>
+    <h1>How that went</h1>
+    <ol id="scoreboard" class="scoreboard"></ol>
+    <div class="controls">
+      <button id="again" type="button" class="big">Play it again</button>
+      <button id="back" type="button" class="ghost">Back to the join screen</button>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

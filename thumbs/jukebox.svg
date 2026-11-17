@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="A neon note highway running into a wireframe city">
+<defs>
+  <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#0a1030"/><stop offset="1" stop-color="#141b3f"/>
+  </linearGradient>
+  <radialGradient id="sky" cx="50%" cy="46%" r="62%">
+    <stop offset="0" stop-color="#101a44"/><stop offset="1" stop-color="#04060f"/>
+  </radialGradient>
+  <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs>
+<rect width="640" height="400" fill="url(#sky)"/>
+<!-- the city, in outline, either side -->
+<g stroke-width="1.6" fill="none" opacity=".85" filter="url(#glow)">
+  <g stroke="#31f261"><path d="M18 352V196h52v150M18 196h52M18 268h52"/><path d="M96 330V232h36v100M96 232h36"/></g>
+  <g stroke="#fa363f"><path d="M150 318V252h27v68M150 252h27"/></g>
+  <g stroke="#3b8fff"><path d="M196 300V266h20v36M196 266h20"/></g>
+  <g stroke="#ff8f24"><path d="M622 348V188h-56v162M622 188h-56M622 262h-56"/><path d="M546 328V236h-32v94M546 236h-32"/></g>
+  <g stroke="#fcdb2b"><path d="M490 312V254h-24v60M490 254h-24"/></g>
+  <g stroke="#31f261"><path d="M444 298V268h-18v32M444 268h-18"/></g>
+</g>
+<!-- the highway -->
+<path d="M196 400 L286 214 L354 214 L444 400 Z" fill="url(#road)"/>
+<g stroke="#2d6cf0" stroke-width="1" opacity=".55" fill="none">
+  <path d="M214 400 L292 214"/><path d="M250 400 L303 214"/><path d="M390 400 L337 214"/><path d="M426 400 L348 214"/>
+</g>
+<g stroke="#3f5ba8" stroke-width="1" opacity=".4" fill="none">
+  <path d="M258 304 L382 304"/><path d="M236 348 L404 348"/><path d="M276 268 L364 268"/>
+</g>
+<!-- gems coming down the lanes -->
+<g filter="url(#glow)">
+  <path d="M300 250 l9 9 -9 9 -9 -9z" fill="#31f261"/>
+  <path d="M330 232 l7 7 -7 7 -7 -7z" fill="#fcdb2b"/>
+  <path d="M313 282 l11 11 -11 11 -11 -11z" fill="#3b8fff"/>
+  <path d="M283 300 l12 12 -12 12 -12 -12z" fill="#fa363f"/>
+</g>
+<!-- the hit line and the fret targets -->
+<rect x="232" y="352" width="176" height="3" rx="1.5" fill="#dfe9ff" filter="url(#glow)"/>
+<g fill="none" stroke-width="4" filter="url(#glow)">
+  <circle cx="248" cy="340" r="15" stroke="#31f261"/>
+  <circle cx="284" cy="340" r="15" stroke="#fa363f"/>
+  <circle cx="320" cy="340" r="17" stroke="#fcdb2b" fill="#fcdb2b" fill-opacity=".55"/>
+  <circle cx="356" cy="340" r="15" stroke="#3b8fff"/>
+  <circle cx="392" cy="340" r="15" stroke="#ff8f24"/>
+</g>
+<!-- the singer's band -->
+<rect x="236" y="150" width="168" height="36" rx="6" fill="#070c20" stroke="#243055"/>
+<g filter="url(#glow)">
+  <rect x="248" y="170" width="38" height="5" rx="2.5" fill="#8ad0ff"/>
+  <rect x="296" y="160" width="44" height="5" rx="2.5" fill="#4ff5a0"/>
+  <rect x="350" y="166" width="42" height="5" rx="2.5" fill="#8ad0ff"/>
+  <circle cx="320" cy="162" r="5" fill="#eafff4"/>
+</g>
+</svg>
