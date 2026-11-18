@@ -191,6 +191,20 @@ def probs_at(model, prefixes, game, device, batch=2048):
     return np.concatenate(out, 0)
 
 
+def wilson(k, n, z=1.96):
+    """A 95% interval on a proportion. Efficacy is k successes out of n EDITS, and with n small
+    the interval is enormous: 15/16 is [0.7167, 0.9889] and 16/16 is [0.8064, 1.0000], which
+    overlap almost entirely. Reporting 0.9375 against 1.0000 without these is reporting a
+    difference the measurement cannot resolve."""
+    if n == 0:
+        return (0.0, 1.0)
+    p = k / n
+    d = 1 + z * z / n
+    c = (p + z * z / (2 * n)) / d
+    h = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / d
+    return (max(0.0, c - h), min(1.0, c + h))
+
+
 def efficacies(P, cases, game):
     """Efficacy under THREE criteria, because one of them is not comparable across rungs.
 
@@ -220,9 +234,14 @@ def efficacies(P, cases, game):
         legal = [m for m in range(game.cells) if board[m] == 0]
         z = float(sum(row[m] for m in legal))
         leg.append(1.0 if (z > 0 and float(row[t]) / z > 0.5) else 0.0)
+    n = len(cases)
     return {"efficacy_p_gt_0.5": float(np.mean(raw)),
             "efficacy_argmax": float(np.mean(arg)),
             "efficacy_legal_renormalised": float(np.mean(leg)),
+            "n_edits": n,
+            "resolution": 1.0 / max(1, n),
+            "ci95_p_gt_0.5": list(wilson(int(sum(raw)), n)),
+            "ci95_legal_renormalised": list(wilson(int(sum(leg)), n)),
             "mean_target_p": float(np.mean([float(P[i, int(c["target"])])
                                             for i, c in enumerate(cases)]))}
 
@@ -379,7 +398,22 @@ def run(args):
                  "" if row["net_competent"] else "   <- NET NOT COMPETENT, editing figures marked"))
     CRITERIA = ("efficacy_p_gt_0.5", "efficacy_argmax", "efficacy_legal_renormalised")
     def _broke(r, crit):
-        return r["net_competent"] and r["edit"].get(crit, 1.0) < 1.0
+        """A break must survive the INTERVAL, not merely the point estimate. With n edits the
+        finest departure from 1.0 the measure can express is 1/n, and its interval at that
+        point still includes 1.0 until n is large: at n = 16 a single failure gives
+        [0.7167, 0.9889] against a perfect [0.8064, 1.0000]. So a rung counts as broken only
+        when the upper end of its interval falls below the LOWER end of the best rung's."""
+        if not r["net_competent"] or r["edit"].get(crit, 1.0) >= 1.0:
+            return False
+        key = "ci95_legal_renormalised" if "legal" in crit else "ci95_p_gt_0.5"
+        ci = r["edit"].get(key)
+        if ci is None:
+            return True
+        best = max((q["edit"].get(crit, 0.0) for q in rows if q["net_competent"]), default=1.0)
+        bestrow = next((q for q in rows
+                        if q["net_competent"] and q["edit"].get(crit, 0.0) == best), None)
+        bci = bestrow["edit"].get(key) if bestrow else None
+        return bool(bci is None or ci[1] < bci[0])
     firsts = {}
     for crit in CRITERIA:
         hit = [r["rung"] for r in rows if _broke(r, crit)]
@@ -524,7 +558,25 @@ def selftest() -> int:
     _plant("with all mass on legal moves the two criteria still differ",
            e2["efficacy_p_gt_0.5"] == e2["efficacy_legal_renormalised"] == 0.0)
 
-    # 6. the SINGULAR-ridge refusal must be reachable, or a bad rung would be silently edited
+    # 6. THE INTERVAL GUARD. Checked against values computed here, not remembered: a single
+    #    failure out of 16 must NOT be separable from a perfect 16, and a clear fall at a large
+    #    n must be. Without the second half the guard would simply never fire.
+    lo15, hi15 = wilson(15, 16)
+    lo16, hi16 = wilson(16, 16)
+    _plant("15/16 is separable from 16/16 at n=16, so the ladder would call a break on one "
+           "case ([%.4f,%.4f] vs [%.4f,%.4f])" % (lo15, hi15, lo16, hi16), not (hi15 < lo16))
+    lo_big, hi_big = wilson(200, 256)
+    lo_perf, hi_perf = wilson(256, 256)
+    _plant("a clear fall at n=256 is NOT separable, so the guard can never fire "
+           "([%.4f,%.4f] vs [%.4f,%.4f])" % (lo_big, hi_big, lo_perf, hi_perf),
+           hi_big < lo_perf)
+    _plant("the Wilson interval for a perfect run reaches 1.0 at the top", abs(hi16 - 1.0) < 1e-9)
+    _plant("the Wilson interval for a perfect run is not wide at n=16 (lo %.4f)" % lo16,
+           lo16 < 0.85)
+    print("    n=16: 15/16 [%.4f,%.4f] vs 16/16 [%.4f,%.4f] - overlapping, not a break"
+          % (lo15, hi15, lo16, hi16))
+
+    # 7. the SINGULAR-ridge refusal must be reachable, or a bad rung would be silently edited
     class FakeC:
         pass
 
