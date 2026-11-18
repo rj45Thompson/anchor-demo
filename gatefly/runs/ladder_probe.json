@@ -1,0 +1,242 @@
+{
+ "rungs": [
+  {
+   "rung": "4,4,3",
+   "cells": 16,
+   "lines": 24,
+   "empty_board_value": 1,
+   "solve_seconds": 0.69,
+   "train_seconds": 144.6,
+   "positions_sampled": 67756,
+   "train_n": 60980,
+   "holdout_n": 6776,
+   "competence_train": 0.9874385044276812,
+   "competence_holdout": 0.983913813459268,
+   "illegal_train": 41,
+   "illegal_holdout": 6,
+   "final_loss": 2.155630894196339,
+   "games_sampled": 20000,
+   "policy": "mixed",
+   "edit": {
+    "efficacy_p_gt_0.5": 1.0,
+    "efficacy_argmax": 1.0,
+    "efficacy_legal_renormalised": 1.0,
+    "mean_target_p": 0.64564174041152,
+    "n_cases": 16,
+    "median_a": 279.32989106978516,
+    "median_c": 13.610494201977076,
+    "mean_crowding_fraction": 0.04695645704965763,
+    "median_gate": 0.9962117883552153,
+    "cov_cond": 3653.7562211163013,
+    "cov_positions": 4016,
+    "delta_fro": 8.48965932459496,
+    "before_edit": {
+     "efficacy_p_gt_0.5": 0.0,
+     "efficacy_argmax": 0.0,
+     "efficacy_legal_renormalised": 0.0,
+     "mean_target_p": 0.036560753476805985
+    },
+    "per_case": [
+     {
+      "i": 0,
+      "target_p": 0.57577,
+      "a": 255.66816,
+      "c": 18.425243,
+      "gate": 0.995803,
+      "crowding_fraction": 0.072067,
+      "cleared_half": true,
+      "prefix_len": 4
+     },
+     {
+      "i": 1,
+      "target_p": 0.684909,
+      "a": 329.622825,
+      "c": 17.498611,
+      "gate": 0.996806,
+      "crowding_fraction": 0.053087,
+      "cleared_half": true,
+      "prefix_len": 10
+     },
+     {
+      "i": 2,
+      "target_p": 0.502102,
+      "a": 168.990678,
+      "c": 3.804817,
+      "gate": 0.993983,
+      "crowding_fraction": 0.022515,
+      "cleared_half": true,
+      "prefix_len": 3
+     },
+     {
+      "i": 3,
+      "target_p": 0.60379,
+      "a": 189.064497,
+      "c": 5.014406,
+      "gate": 0.994596,
+      "crowding_fraction": 0.026522,
+      "cleared_half": true,
+      "prefix_len": 5
+     },
+     {
+      "i": 4,
+      "target_p": 0.864536,
+      "a": 413.696629,
+      "c": 34.189883,
+      "gate": 0.997372,
+      "crowding_fraction": 0.082645,
+      "cleared_half": true,
+      "prefix_len": 14
+     },
+     {
+      "i": 5,
+      "target_p": 0.682529,
+      "a": 276.744322,
+      "c": 17.606057,
+      "gate": 0.996156,
+      "crowding_fraction": 0.063618,
+      "cleared_half": true,
+      "prefix_len": 8
+     },
+     {
+      "i": 6,
+      "target_p": 0.561078,
+      "a": 218.17064,
+      "c": 8.245478,
+      "gate": 0.995259,
+      "crowding_fraction": 0.037794,
+      "cleared_half": true,
+      "prefix_len": 3
+     },
+     {
+      "i": 7,
+      "target_p": 0.647987,
+      "a": 296.643083,
+      "c": 16.096886,
+      "gate": 0.996448,
+      "crowding_fraction": 0.054263,
+      "cleared_half": true,
+      "prefix_len": 7
+     },
+     {
+      "i": 8,
+      "target_p": 0.74394,
+      "a": 377.978431,
+      "c": 12.235848,
+      "gate": 0.997273,
+      "crowding_fraction": 0.032372,
+      "cleared_half": true,
+      "prefix_len": 8
+     },
+     {
+      "i": 9,
+      "target_p": 0.704573,
+      "a": 315.855895,
+      "c": 9.12262,
+      "gate": 0.99675,
+      "crowding_fraction": 0.028882,
+      "cleared_half": true,
+      "prefix_len": 8
+     },
+     {
+      "i": 10,
+      "target_p": 0.613761,
+      "a": 204.699304,
+      "c": 5.409594,
+      "gate": 0.995007,
+      "crowding_fraction": 0.026427,
+      "cleared_half": true,
+      "prefix_len": 5
+     },
+     {
+      "i": 11,
+      "target_p": 0.686586,
+      "a": 294.310896,
+      "c": 10.519922,
+      "gate": 0.996489,
+      "crowding_fraction": 0.035744,
+      "cleared_half": true,
+      "prefix_len": 6
+     },
+     {
+      "i": 12,
+      "target_p": 0.559802,
+      "a": 315.976523,
+      "c": 21.887521,
+      "gate": 0.996611,
+      "crowding_fraction": 0.069269,
+      "cleared_half": true,
+      "prefix_len": 4
+     },
+     {
+      "i": 13,
+      "target_p": 0.655355,
+      "a": 281.91546,
+      "c": 14.985141,
+      "gate": 0.996268,
+      "crowding_fraction": 0.053155,
+      "cleared_half": true,
+      "prefix_len": 6
+     },
+     {
+      "i": 14,
+      "target_p": 0.560617,
+      "a": 212.415301,
+      "c": 15.388522,
+      "gate": 0.99495,
+      "crowding_fraction": 0.072445,
+      "cleared_half": true,
+      "prefix_len": 4
+     },
+     {
+      "i": 15,
+      "target_p": 0.682934,
+      "a": 259.566001,
+      "c": 5.320303,
+      "gate": 0.996082,
+      "crowding_fraction": 0.020497,
+      "cleared_half": true,
+      "prefix_len": 6
+     }
+    ],
+    "per_case_target_p": [
+     0.57577,
+     0.684909,
+     0.502102,
+     0.60379,
+     0.864536,
+     0.682529,
+     0.561078,
+     0.647987,
+     0.74394,
+     0.704573,
+     0.613761,
+     0.686586,
+     0.559802,
+     0.655355,
+     0.560617,
+     0.682934
+    ]
+   },
+   "competence_after_edit": 0.9804150185961391,
+   "competence_drop": 0.007023485831542109,
+   "net_competent": true
+  }
+ ],
+ "edits_per_rung": 16,
+ "lambda": 1.0,
+ "net": {
+  "layers": 4,
+  "heads": 4,
+  "embed": 64
+ },
+ "held_fixed": "net shape and edit count, so a fall in Efficacy is the TASK getting harder and not a smaller model or a bigger edit",
+ "why_competence_is_the_cross_rung_damage_measure": "Damage across rungs is reported as a drop in COMPETENCE - the fraction of positions whose argmax is IN the optimal set. That means the same thing at 3,3,3 and at 4,4,4, which a divergence between move distributions does not: a total variation is bounded and compresses as the distribution spreads over a bigger board, while a KL does not, so either would turn board size into a trend. The set-valued accuracy has no such dependence.",
+ "first_break_per_criterion": {
+  "efficacy_p_gt_0.5": null,
+  "efficacy_argmax": null,
+  "efficacy_legal_renormalised": null
+ },
+ "criteria_agree": true,
+ "first_break": null,
+ "verdict": "Efficacy stayed at 1.0 on every competent rung tried, under all three criteria - the editor did NOT break on this ladder, which is a result about its robustness and not a confirmation of anything"
+}
