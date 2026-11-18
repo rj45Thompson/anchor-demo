@@ -1,0 +1,703 @@
+{
+ "carriers": {
+  "support": "the cardinality of the outcome space (vocabulary, legal-move count, label set)",
+  "n": "the number of observations the figure is computed over",
+  "dim": "the dimension of the space the quantity lives in",
+  "base_rate": "the prevalence of the positive class, or the pre-edit value being ratio'd",
+  "selection": "how many candidates a max or best-of was taken over",
+  "length": "sequence or chain length",
+  "bound": "whether the measure is bounded, so it compresses near its ceiling or floor"
+ },
+ "measures": {
+  "efficacy_p_gt_0.5": {
+   "what": "fraction of cases whose target probability exceeds 0.5 over the WHOLE vocabulary",
+   "support": [
+    "CONFOUNDED",
+    "mass spreads over more tokens as the vocabulary grows, so the same concentration reads lower"
+   ],
+   "n": [
+    "invariant",
+    "a fraction"
+   ],
+   "base_rate": [
+    "CONFOUNDED",
+    "a target already near 0.5 before the edit needs less to cross than one near 0"
+   ],
+   "bound": [
+    "CONFOUNDED",
+    "a hard threshold on a bounded quantity: once every case is over 0.5 the measure cannot report further improvement, which is the saturation this lane hit at every edit-set size"
+   ]
+  },
+  "efficacy_legal_renormalised": {
+   "what": "the same threshold after renormalising over the LEGAL moves at that position",
+   "support": [
+    "corrected",
+    "the vocabulary is divided out; what remains is the legal-move count, which varies by POSITION and not by rung, so it averages out across a rung rather than trending with it"
+   ],
+   "n": [
+    "invariant",
+    "a fraction"
+   ],
+   "bound": [
+    "CONFOUNDED",
+    "still a hard threshold, so it still saturates"
+   ]
+  },
+  "efficacy_argmax": {
+   "what": "the target is the argmax",
+   "support": [
+    "CONFOUNDED",
+    "beating 16 competitors is harder than beating 9, though the dependence is weaker than a threshold on raw probability"
+   ],
+   "bound": [
+    "CONFOUNDED",
+    "saturates"
+   ]
+  },
+  "competence_set_valued": {
+   "what": "fraction of positions whose argmax lies IN the optimal set",
+   "support": [
+    "invariant",
+    "'did it pick a correct move' means the same at every board size; this is why it is the cross-rung damage measure"
+   ],
+   "n": [
+    "invariant",
+    "a fraction, with its denominator reported"
+   ],
+   "base_rate": [
+    "invariant",
+    "measured against the oracle, not against the model's own previous answer"
+   ],
+   "bound": [
+    "CONFOUNDED",
+    "bounded above by 1, so it compresses near a competent net"
+   ]
+  },
+  "damage_tv": {
+   "what": "mean total variation between parent and child move distributions",
+   "support": [
+    "CONFOUNDED",
+    "bounded in [0,1] and compresses as the distribution spreads over a bigger board"
+   ],
+   "bound": [
+    "CONFOUNDED",
+    "bounded by construction"
+   ],
+   "n": [
+    "invariant",
+    "a mean over positions, denominator reported"
+   ]
+  },
+  "damage_kl": {
+   "what": "mean KL at the read position",
+   "support": [
+    "CONFOUNDED",
+    "unbounded, and its typical magnitude grows with the support it sums over - in the OPPOSITE direction to TV, which is why neither is safe across rungs"
+   ],
+   "bound": [
+    "invariant",
+    "unbounded"
+   ]
+  },
+  "crowding_fraction_c_over_a": {
+   "what": "mean of c/a over the edit's keys",
+   "dim": [
+    "corrected",
+    "a ratio of two quantities in the same space, so the ridge scale cancels; this is the lane's reason for using the RATIO rather than c alone"
+   ],
+   "n": [
+    "CONFOUNDED",
+    "crowding rises with the NUMBER OF KEYS, so it is only comparable at a fixed edit count - which the ladder holds fixed on purpose"
+   ],
+   "support": [
+    "invariant",
+    "a property of the weights and keys, not of the label space"
+   ]
+  },
+  "spearman_rho": {
+   "what": "rank correlation between a predictor and damage",
+   "n": [
+    "corrected",
+    "rho itself is invariant; its P-VALUE is not, and a p-value must never be compared across runs of different n"
+   ],
+   "bound": [
+    "CONFOUNDED",
+    "bounded in [-1,1], so it compresses near a strong effect"
+   ]
+  },
+  "preservation_eq7_mean": {
+   "what": "ThinkEval Eq. 7, the mean of post/pre ratios over indirect probes",
+   "base_rate": [
+    "CONFOUNDED",
+    "a mean of unbounded RATIOS is dominated by probes whose pre-value was small; this is the fault that read 1.1309 while a model lost 25.7% of its competence"
+   ],
+   "n": [
+    "invariant",
+    "a mean, denominator reported"
+   ],
+   "bound": [
+    "invariant",
+    "unbounded above, which is the problem"
+   ]
+  },
+  "movement_count_set_valued": {
+   "what": "fraction of probes whose argmax left the SET of correct answers",
+   "support": [
+    "invariant",
+    "counts set membership, not probability mass"
+   ],
+   "base_rate": [
+    "invariant",
+    "counted against the oracle's set"
+   ],
+   "n": [
+    "invariant",
+    "a fraction"
+   ],
+   "bound": [
+    "CONFOUNDED",
+    "bounded, compresses near zero damage"
+   ]
+  },
+  "best_of_k_random": {
+   "what": "the best random cut over k seeds, used as the null in the shrink sweep",
+   "selection": [
+    "CONFOUNDED",
+    "the maximum of a sample GROWS with k, so a best-of-8 null is a harder bar than a best-of-4 and the two cannot be compared; the sweep reports the mean and sd beside it for this reason"
+   ]
+  }
+ },
+ "axes": {
+  "board_size": [
+   "support",
+   "length"
+  ],
+  "edit_count": [
+   "n",
+   "selection"
+  ],
+  "model_size": [
+   "dim"
+  ],
+  "tokeniser": [
+   "support"
+  ],
+  "seed_count": [
+   "selection"
+  ],
+  "position_sample_size": [
+   "n"
+  ],
+  "chain_length": [
+   "length",
+   "n"
+  ]
+ },
+ "grid": [
+  {
+   "measure": "efficacy_p_gt_0.5",
+   "axis": "board_size",
+   "verdict": "CONFOUNDED",
+   "carrier": "support",
+   "why": "mass spreads over more tokens as the vocabulary grows, so the same concentration reads lower"
+  },
+  {
+   "measure": "efficacy_p_gt_0.5",
+   "axis": "edit_count",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "efficacy_p_gt_0.5",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "efficacy_p_gt_0.5",
+   "axis": "tokeniser",
+   "verdict": "CONFOUNDED",
+   "carrier": "support",
+   "why": "mass spreads over more tokens as the vocabulary grows, so the same concentration reads lower"
+  },
+  {
+   "measure": "efficacy_p_gt_0.5",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "efficacy_p_gt_0.5",
+   "axis": "position_sample_size",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "efficacy_p_gt_0.5",
+   "axis": "chain_length",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "efficacy_legal_renormalised",
+   "axis": "board_size",
+   "verdict": "corrected",
+   "carrier": "support",
+   "why": "the vocabulary is divided out; what remains is the legal-move count, which varies by POSITION and not by rung, so it averages out across a rung rather than trending with it"
+  },
+  {
+   "measure": "efficacy_legal_renormalised",
+   "axis": "edit_count",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "efficacy_legal_renormalised",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "efficacy_legal_renormalised",
+   "axis": "tokeniser",
+   "verdict": "corrected",
+   "carrier": "support",
+   "why": "the vocabulary is divided out; what remains is the legal-move count, which varies by POSITION and not by rung, so it averages out across a rung rather than trending with it"
+  },
+  {
+   "measure": "efficacy_legal_renormalised",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "efficacy_legal_renormalised",
+   "axis": "position_sample_size",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "efficacy_legal_renormalised",
+   "axis": "chain_length",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "efficacy_argmax",
+   "axis": "board_size",
+   "verdict": "CONFOUNDED",
+   "carrier": "support",
+   "why": "beating 16 competitors is harder than beating 9, though the dependence is weaker than a threshold on raw probability"
+  },
+  {
+   "measure": "efficacy_argmax",
+   "axis": "edit_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "efficacy_argmax",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "efficacy_argmax",
+   "axis": "tokeniser",
+   "verdict": "CONFOUNDED",
+   "carrier": "support",
+   "why": "beating 16 competitors is harder than beating 9, though the dependence is weaker than a threshold on raw probability"
+  },
+  {
+   "measure": "efficacy_argmax",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "efficacy_argmax",
+   "axis": "position_sample_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "efficacy_argmax",
+   "axis": "chain_length",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "competence_set_valued",
+   "axis": "board_size",
+   "verdict": "corrected",
+   "carrier": "support",
+   "why": "'did it pick a correct move' means the same at every board size; this is why it is the cross-rung damage measure"
+  },
+  {
+   "measure": "competence_set_valued",
+   "axis": "edit_count",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction, with its denominator reported"
+  },
+  {
+   "measure": "competence_set_valued",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "competence_set_valued",
+   "axis": "tokeniser",
+   "verdict": "corrected",
+   "carrier": "support",
+   "why": "'did it pick a correct move' means the same at every board size; this is why it is the cross-rung damage measure"
+  },
+  {
+   "measure": "competence_set_valued",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "competence_set_valued",
+   "axis": "position_sample_size",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction, with its denominator reported"
+  },
+  {
+   "measure": "competence_set_valued",
+   "axis": "chain_length",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction, with its denominator reported"
+  },
+  {
+   "measure": "damage_tv",
+   "axis": "board_size",
+   "verdict": "CONFOUNDED",
+   "carrier": "support",
+   "why": "bounded in [0,1] and compresses as the distribution spreads over a bigger board"
+  },
+  {
+   "measure": "damage_tv",
+   "axis": "edit_count",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a mean over positions, denominator reported"
+  },
+  {
+   "measure": "damage_tv",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "damage_tv",
+   "axis": "tokeniser",
+   "verdict": "CONFOUNDED",
+   "carrier": "support",
+   "why": "bounded in [0,1] and compresses as the distribution spreads over a bigger board"
+  },
+  {
+   "measure": "damage_tv",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "damage_tv",
+   "axis": "position_sample_size",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a mean over positions, denominator reported"
+  },
+  {
+   "measure": "damage_tv",
+   "axis": "chain_length",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a mean over positions, denominator reported"
+  },
+  {
+   "measure": "damage_kl",
+   "axis": "board_size",
+   "verdict": "CONFOUNDED",
+   "carrier": "support",
+   "why": "unbounded, and its typical magnitude grows with the support it sums over - in the OPPOSITE direction to TV, which is why neither is safe across rungs"
+  },
+  {
+   "measure": "damage_kl",
+   "axis": "edit_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "damage_kl",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "damage_kl",
+   "axis": "tokeniser",
+   "verdict": "CONFOUNDED",
+   "carrier": "support",
+   "why": "unbounded, and its typical magnitude grows with the support it sums over - in the OPPOSITE direction to TV, which is why neither is safe across rungs"
+  },
+  {
+   "measure": "damage_kl",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "damage_kl",
+   "axis": "position_sample_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "damage_kl",
+   "axis": "chain_length",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "crowding_fraction_c_over_a",
+   "axis": "board_size",
+   "verdict": "corrected",
+   "carrier": "support",
+   "why": "a property of the weights and keys, not of the label space"
+  },
+  {
+   "measure": "crowding_fraction_c_over_a",
+   "axis": "edit_count",
+   "verdict": "CONFOUNDED",
+   "carrier": "n",
+   "why": "crowding rises with the NUMBER OF KEYS, so it is only comparable at a fixed edit count - which the ladder holds fixed on purpose"
+  },
+  {
+   "measure": "crowding_fraction_c_over_a",
+   "axis": "model_size",
+   "verdict": "corrected",
+   "carrier": "dim",
+   "why": "a ratio of two quantities in the same space, so the ridge scale cancels; this is the lane's reason for using the RATIO rather than c alone"
+  },
+  {
+   "measure": "crowding_fraction_c_over_a",
+   "axis": "tokeniser",
+   "verdict": "corrected",
+   "carrier": "support",
+   "why": "a property of the weights and keys, not of the label space"
+  },
+  {
+   "measure": "crowding_fraction_c_over_a",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "crowding_fraction_c_over_a",
+   "axis": "position_sample_size",
+   "verdict": "CONFOUNDED",
+   "carrier": "n",
+   "why": "crowding rises with the NUMBER OF KEYS, so it is only comparable at a fixed edit count - which the ladder holds fixed on purpose"
+  },
+  {
+   "measure": "crowding_fraction_c_over_a",
+   "axis": "chain_length",
+   "verdict": "CONFOUNDED",
+   "carrier": "n",
+   "why": "crowding rises with the NUMBER OF KEYS, so it is only comparable at a fixed edit count - which the ladder holds fixed on purpose"
+  },
+  {
+   "measure": "spearman_rho",
+   "axis": "board_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "spearman_rho",
+   "axis": "edit_count",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "rho itself is invariant; its P-VALUE is not, and a p-value must never be compared across runs of different n"
+  },
+  {
+   "measure": "spearman_rho",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "spearman_rho",
+   "axis": "tokeniser",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "spearman_rho",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "spearman_rho",
+   "axis": "position_sample_size",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "rho itself is invariant; its P-VALUE is not, and a p-value must never be compared across runs of different n"
+  },
+  {
+   "measure": "spearman_rho",
+   "axis": "chain_length",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "rho itself is invariant; its P-VALUE is not, and a p-value must never be compared across runs of different n"
+  },
+  {
+   "measure": "preservation_eq7_mean",
+   "axis": "board_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "preservation_eq7_mean",
+   "axis": "edit_count",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a mean, denominator reported"
+  },
+  {
+   "measure": "preservation_eq7_mean",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "preservation_eq7_mean",
+   "axis": "tokeniser",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "preservation_eq7_mean",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "preservation_eq7_mean",
+   "axis": "position_sample_size",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a mean, denominator reported"
+  },
+  {
+   "measure": "preservation_eq7_mean",
+   "axis": "chain_length",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a mean, denominator reported"
+  },
+  {
+   "measure": "movement_count_set_valued",
+   "axis": "board_size",
+   "verdict": "corrected",
+   "carrier": "support",
+   "why": "counts set membership, not probability mass"
+  },
+  {
+   "measure": "movement_count_set_valued",
+   "axis": "edit_count",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "movement_count_set_valued",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "movement_count_set_valued",
+   "axis": "tokeniser",
+   "verdict": "corrected",
+   "carrier": "support",
+   "why": "counts set membership, not probability mass"
+  },
+  {
+   "measure": "movement_count_set_valued",
+   "axis": "seed_count",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "movement_count_set_valued",
+   "axis": "position_sample_size",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "movement_count_set_valued",
+   "axis": "chain_length",
+   "verdict": "corrected",
+   "carrier": "n",
+   "why": "a fraction"
+  },
+  {
+   "measure": "best_of_k_random",
+   "axis": "board_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "best_of_k_random",
+   "axis": "edit_count",
+   "verdict": "CONFOUNDED",
+   "carrier": "selection",
+   "why": "the maximum of a sample GROWS with k, so a best-of-8 null is a harder bar than a best-of-4 and the two cannot be compared; the sweep reports the mean and sd beside it for this reason"
+  },
+  {
+   "measure": "best_of_k_random",
+   "axis": "model_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "best_of_k_random",
+   "axis": "tokeniser",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "best_of_k_random",
+   "axis": "seed_count",
+   "verdict": "CONFOUNDED",
+   "carrier": "selection",
+   "why": "the maximum of a sample GROWS with k, so a best-of-8 null is a harder bar than a best-of-4 and the two cannot be compared; the sweep reports the mean and sd beside it for this reason"
+  },
+  {
+   "measure": "best_of_k_random",
+   "axis": "position_sample_size",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  },
+  {
+   "measure": "best_of_k_random",
+   "axis": "chain_length",
+   "verdict": "unaffected",
+   "why": "this axis moves no carrier this measure depends on"
+  }
+ ]
+}
