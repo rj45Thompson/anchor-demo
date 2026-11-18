@@ -200,6 +200,32 @@ the corpus, and the mixing weight is the whole story. Its sentence does not say 
 Written up for that lane in the shared notes as
 `FOR_V4_the_ruler_misses_catastrophic_damage.md`.
 
+### The full spectrum, over all six set sizes
+
+Efficacy, and competence over the 4,520 boards (the oracle measure no published metric asks):
+
+| arm | n=1 | 2 | 4 | 8 | 16 | 32 |
+|---|---|---|---|---|---|---|
+| `memit` Efficacy | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| `memit` competence | .9998 | .9996 | .9991 | .9982 | .9965 | .9920 |
+| `retrain` Efficacy | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| **`retrain` competence** | **.7429** | **.8407** | **.7600** | **.6381** | **.6246** | **.7073** |
+| `corpus` Efficacy | 0.00 | 0.00 | 0.25 | 0.38 | 0.38 | 0.34 |
+| `corpus` competence | 1.0000 | 1.0000 | .9998 | .9993 | .9987 | .9976 |
+| `corpus_w` Efficacy | 1.00 | 1.00 | 1.00 | 1.00 | **0.75** | **0.63** |
+| `corpus_w` competence | .9998 | .9996 | .9991 | .9982 | .9971 | .9951 |
+
+Three things this settles:
+
+- **`retrain` is catastrophic at every size**, not just at n = 1: competence sits between 0.62
+  and 0.84 throughout while Efficacy stays at 1.00. Fine-tuning the identified items alone is
+  not a viable reading of "retrain the corrected set".
+- **`corpus_w` degrades as the set grows** - Efficacy falls to 0.63 by n = 32 - while the
+  closed-form edit holds 1.00 at every size. At this budget, retraining scales worse than
+  editing in the thing editing is supposed to be bad at.
+- **`control` is exactly 1.0000 / 1.0000 / 1.0000 on competence, IFR and Preservation at every
+  size.** The instrument's null case is clean, so the rest of the table is readable.
+
 ### RJ's hypothesis: the figures DO move, and not all in the good direction
 
 *"Those figures can be adjusted better by removing or adding neurons based on the gate patterns
@@ -212,26 +238,81 @@ it). Each new neuron is a new coordinate of the key space, orthogonal to the exi
 the edit gets private dimensions: `a` rises, `c` does not. **PRUNE** removes the dimensions
 carrying the most shared key mass across the cases.
 
-From the first full run (n = 2 to 8, same seed, `memit` as the baseline):
+#### First: did the arms do what they claim? MEASURED, not asserted (REQ-GF-5c)
 
-| | Efficacy | IFR (lower = deeper) | Preservation |
+The mean crowding fraction `c/a` of the EDIT'S OWN KEYS, and the median `a`:
+
+| | n=1 | 2 | 4 | 8 | 16 | 32 |
+|---|---|---|---|---|---|---|
+| `memit` mean c/a | 0.0000 | 0.0000 | 0.0032 | 0.0327 | 0.0459 | **0.1112** |
+| **`memit_grow` mean c/a** | 0.0000 | 0.0000 | **0.0001** | **0.0000** | **0.0000** | **0.0000** |
+| `memit_prune` mean c/a | 0.0000 | 0.0006 | 0.0055 | 0.0253 | 0.0485 | **0.1096** |
+| `memit` median `a` | 220 | 254 | 268 | 250 | 250 | 250 |
+| **`memit_grow` median `a`** | 420 | 597 | 917 | 1834 | 1894 | **2014** |
+
+- **GROW does exactly what it claims.** Crowding is driven to **0.0000 at every size**, while
+  `memit`'s own crowding RISES with n to 0.1112. Median `a` goes up **8.2x**. The grown
+  coordinates measure as perfectly one-hot across cases: mean own coordinate 1.659, mean largest
+  OTHER coordinate **exactly 0.0**. That is measured after the fact, not inferred from the code.
+- **PRUNE DOES NOT.** Removing the 16 dimensions with the most shared key mass moved the edit's
+  crowding from **0.1112 to 0.1096** - a 1.4% reduction, essentially nothing. The arm failed at
+  its stated mechanism. Everything `memit_prune` does to the metrics is therefore attributable
+  to the collateral function change, **not** to reduced overlap, and must not be read as evidence
+  about crowding.
+
+#### Then: what the working arm bought
+
+| | `memit` | `memit_grow` | `memit_prune` |
 |---|---|---|---|
-| `memit` at n = 4 | 1.0000 | **0.8181** | 0.9934 |
-| `memit_grow` at n = 4 | 1.0000 | **1.0495** | 0.9992 |
-| `memit` at n = 8 | 1.0000 | **0.6943** | 1.0030 |
-| `memit_grow` at n = 8 | 1.0000 | **1.0265** | 1.0041 |
-| `memit_prune` at n = 8 | 1.0000 | 0.8169 | **0.8835** |
+| IFR across n = 4,8,16,32 | 0.8181, 0.6943, 1.1496, 1.0786 | **1.0495, 1.0265, 1.0006, 1.0124** | 0.8899, 0.8169, 0.5846, 0.8428 |
+| **IFR spread** | **0.4554** | **0.0489** | 0.3053 |
+| mean \|Preservation − 1\| | 0.0155 | **0.0034** | **0.0808** |
+| Efficacy, every size | 1.0000 | 1.0000 | 1.0000 |
+| competence at n=32 | 0.9920 | **0.9929** | 0.9909 |
 
-**Growing REFUTES the registered prediction on IFR and confirms it on Preservation.** Giving the
-edit private dimensions makes it *shallower*, not deeper: IFR rises to about 1.0, meaning the
-original line of play is left exactly as deducible as before. That is coherent rather than
-surprising in hindsight - a private dimension is a channel nothing else reads, so the edit lands
-on its target and disturbs nothing, which is high Efficacy, high Preservation and NO propagation.
-**Reducing the overlap buys precision and spends depth.** Pruning does the reverse on
-Preservation (0.9934 -> 0.8835), as registered, because it changes the function for every
-position and not only the edited ones.
+**Against the registered predictions:**
 
-### The thing that nearly hid itself
+| prediction | verdict |
+|---|---|
+| grow: mean `c` DOWN | **CONFIRMED** - to exactly 0.0000 at every size |
+| grow: Efficacy UP | **NOT TESTABLE** - `memit` is already 1.0000 at every size. No headroom |
+| grow: IFR DOWN (deeper) | **REFUTED** - it goes UP, to 1.0 |
+| grow: Preservation UP or unchanged | **CONFIRMED** - 4.6x closer to 1.0 on average |
+| prune: Preservation DOWN | **CONFIRMED** - 5x further from 1.0 - but for the wrong reason |
+| prune: Efficacy UP at small sizes | **NOT TESTABLE** - saturated at 1.0000 |
+
+**What growing actually does is make the edit PREDICTABLE.** Its IFR spread is **9.3x smaller**
+than the plain edit's: pinned at 1.00-1.05 at every size, against 0.69-1.15. A private dimension
+is a channel nothing else reads, so the edit lands on its target and disturbs nothing - which is
+full Efficacy, Preservation at 1.0, and the original line of play left **exactly as deducible as
+before**. **Reducing the overlap buys precision and spends depth.** It is a dial between the two,
+not an improvement in both, and RJ's framing - "so the math doesn't overlap dimensions" - names
+the dial correctly even though the direction was not the one predicted.
+
+The Efficacy row is worth dwelling on: there was nothing to win, because the closed-form solve
+already prices in the interference and reaches 1.0000 unaided. That is the same shape as the
+ratchet lane's own headroom result - the joint solve already pays for cross-talk optimally - now
+seen from the capacity side.
+
+#### "It might only work in limited context?" - NO, and the measurement says why
+
+The benefit does not fade with set size; if anything it **grows**, because `memit`'s own crowding
+rises with n (0.0000 to 0.1112) so there is more for growing to remove. At n = 32 the grow arm
+still drives crowding to 0.0000, still pins IFR at 1.0124, still holds Preservation at exactly
+1.0000, and is the only arm whose competence BEATS the plain edit (0.9929 against 0.9920).
+
+**The honest limit on that answer:** the key space is 256-dimensional and the largest set tested
+is 32, so there is ample room for 32 private coordinates. The capacity argument says the limit
+must appear as n approaches the hidden width, and **n = 32 of 256 did not reach it**. "Not
+limited at these sizes" is what was measured; "never limited" is not.
+
+#### The thing that nearly hid itself, and what it says
+
+Growing also helps the retraining arm: `corpus_w_grow` beats `corpus_w` on Efficacy at the two
+sizes where `corpus_w` starts to fail (0.8125 against 0.7500 at n = 16; 0.6562 against 0.6250 at
+n = 32), at identical competence. Small, consistent, and in the direction the mechanism predicts.
+
+### The crash that was the mechanism
 
 The first full run **crashed** at n = 16 with `LinAlgError: Singular matrix`. The cause is the
 mechanism itself: a neuron grown to fire on ONE case has exactly zero mass in a covariance taken
@@ -242,12 +323,6 @@ the solve is undefined. The fix is a correctness fix, not a workaround: the cova
 grown net is taken over a corpus that includes the edited positions, because a C that excludes
 every position where a dimension is alive is the wrong C for that net. The refusal path is kept
 and planted, so a genuinely singular ridge is REFUSED rather than quietly pseudo-inverted.
-
-> **Status: the full sweep over n = 1, 2, 4, 8, 16, 32 and nine arms is still running** as this
-> was written, and `gatefly/runs/ttt_big.retrain.json` holds whatever has landed. The figures
-> above are from completed arms. **The "limited context" clause RJ asked about - whether a
-> benefit survives past small identified-set sizes - needs the n = 16 and 32 rows and is NOT
-> answered yet.**
 
 ---
 
@@ -408,6 +483,14 @@ Said plainly, because the house rule asks for it.
    informative and the denominator is printed beside every one of them rather than left out.
 7. **`a`-ordering at k = 16 and 8 loses to random, and I did not chase why.** It is reported as
    it measured.
+8. **The grow arm's limit was not reached.** 32 private coordinates in a 256-dimensional key
+   space is not a capacity test. Whether the benefit survives as the set size approaches the
+   hidden width is UNMEASURED.
+9. **The prune arm failed its own mechanism** (crowding 0.1112 -> 0.1096) and I did not design a
+   second pruning rule that works. Its metric movements say nothing about crowding.
+10. **Efficacy had no headroom on this system.** The closed-form edit reaches 1.0000 at every
+   size unaided, so no arm could be shown to improve it here. A system where editing fails more
+   often would be needed to test that half of the prediction.
 
 ## The files to open
 
