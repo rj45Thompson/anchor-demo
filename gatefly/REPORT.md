@@ -136,6 +136,121 @@ neurons writing into one dimension have almost nothing left, which is the collin
 
 ---
 
+## Step 3 - the bigger net, retrained the v4 lane's way, on the v4 lane's own ruler
+
+`gatefly/retrain.py`, `gatefly/metrics.py`, `gatefly/PREREG_GATE_CAPACITY.md`
+
+**The bigger net plays at least as well** (step 3's own bar): `ttt_big`, 201,226 parameters
+against `ttt_small`'s 26,250, is optimal on the same **1.0000000000** of 294,778 positions with
+0 illegal and 0 losses. It wins slightly LESS against a random opponent (478 against 498 as first
+player), because optimal play does not maximise exploitation of a weak one.
+
+**ALT-4 fired.** The use case anticipated an empty identified set, and it is empty: both nets are
+already perfect, so there are no errors to retrain away. The arms therefore install
+COUNTERFACTUALS - "at this board, play a move minimax says is wrong" - which is exactly what the
+knowledge-editing benchmarks do (they install counterfactual facts into a model that was right
+before), so the port is the benchmark's own shape and not a workaround.
+
+**The metrics are the published ones** - ThinkEval Eq. 6 and Eq. 7, implemented from
+`selfimprove_v4/knowgic_score.py`, and `gatefly/metrics.py` reproduces the KnowGIC README's own
+worked example (IFR **0.6914**, Preservation **0.7250**) or refuses. The port is written out in
+that file: subject = board, target = move, chain = the line of play the ORIGINAL move implies,
+`E_ind` = positions whose board differs.
+
+### What the published ruler misses, which a game can show and a benchmark cannot
+
+The thing this setting has that the benchmark does not is a **perfect oracle**: minimax gives the
+correct answer at every one of the 4,520 live boards, so competence is known completely and a
+metric's resolution can be checked against it. The v4 lane names ruler resolution as its binding
+constraint (`LEADS.md` L8); this is the one thing a game can supply.
+
+Retraining the identified items alone - the literal reading of `STATE_OF_ENTAILMENT.md`'s
+*"retraining the corrected set yields a model consistent with the corrected data"* - at n = 1,
+**one** edited position:
+
+| | value |
+|---|---|
+| Efficacy (p > 0.5 on the new target) | 1.0000 |
+| **Preservation (Eq. 7)** | **1.1309** - better than untouched |
+| **optimal move over all 4,520 boards, oracle-checked** | **0.7429**, down from 1.0000 |
+
+**Preservation reads 1.13 for a model that has just lost 25.7% of its competence**, and moved in
+the wrong direction while it happened. The do-nothing control reads exactly 1.0000 and the
+matched control 1.0041, so the instrument's null case is clean - it is specifically blind to this
+damage. A mean of unbounded ratios is dominated by the terms that ROSE, which is the same effect
+the v4 lane saw at Preservation 8.47 on its ICE arm and called the wrong way.
+
+### "Retraining the corrected set" is not one method - it is a spectrum, and the ends fail oppositely
+
+| arm | Efficacy | competence after (oracle) |
+|---|---|---|
+| `retrain` - the identified items alone | 1.0000 | **0.7429** |
+| `corpus` - the whole corrected distribution, uniform | **0.0000** | 1.0000 |
+| `corpus_w` - the same, corrected games at 25% of each batch | **1.0000** | **0.9998** |
+| `memit` - the closed-form ridge edit | **1.0000** | **0.9998** |
+
+(n = 1; the full sweep over n = 1 to 32 is in `gatefly/runs/ttt_big.retrain.json`.)
+
+The identified items alone install perfectly and destroy the model. The uniform corpus preserves
+perfectly and installs nothing - a handful of corrected steps among 2.3 million is diluted to
+nothing at that budget. **The middle works**, and matches the closed-form edit on both axes. So
+the v4 lane's conclusion survives, narrowed: retraining IS reliable, for the reading that keeps
+the corpus, and the mixing weight is the whole story. Its sentence does not say which reading.
+
+Written up for that lane in the shared notes as
+`FOR_V4_the_ruler_misses_catastrophic_damage.md`.
+
+### RJ's hypothesis: the figures DO move, and not all in the good direction
+
+*"Those figures can be adjusted better by removing or adding neurons based on the gate patterns
+such that the math doesn't overlap dimensions."*
+
+The mechanism was registered before the run. **GROW** adds feed-forward neurons that fire on one
+case each, with ZERO output columns so the net's function is bit-identical before the edit (a
+plant checks that, and a second plant checks that a growth with non-zero columns WOULD change
+it). Each new neuron is a new coordinate of the key space, orthogonal to the existing ones, so
+the edit gets private dimensions: `a` rises, `c` does not. **PRUNE** removes the dimensions
+carrying the most shared key mass across the cases.
+
+From the first full run (n = 2 to 8, same seed, `memit` as the baseline):
+
+| | Efficacy | IFR (lower = deeper) | Preservation |
+|---|---|---|---|
+| `memit` at n = 4 | 1.0000 | **0.8181** | 0.9934 |
+| `memit_grow` at n = 4 | 1.0000 | **1.0495** | 0.9992 |
+| `memit` at n = 8 | 1.0000 | **0.6943** | 1.0030 |
+| `memit_grow` at n = 8 | 1.0000 | **1.0265** | 1.0041 |
+| `memit_prune` at n = 8 | 1.0000 | 0.8169 | **0.8835** |
+
+**Growing REFUTES the registered prediction on IFR and confirms it on Preservation.** Giving the
+edit private dimensions makes it *shallower*, not deeper: IFR rises to about 1.0, meaning the
+original line of play is left exactly as deducible as before. That is coherent rather than
+surprising in hindsight - a private dimension is a channel nothing else reads, so the edit lands
+on its target and disturbs nothing, which is high Efficacy, high Preservation and NO propagation.
+**Reducing the overlap buys precision and spends depth.** Pruning does the reverse on
+Preservation (0.9934 -> 0.8835), as registered, because it changes the function for every
+position and not only the edited ones.
+
+### The thing that nearly hid itself
+
+The first full run **crashed** at n = 16 with `LinAlgError: Singular matrix`. The cause is the
+mechanism itself: a neuron grown to fire on ONE case has exactly zero mass in a covariance taken
+over a corpus that does not contain that case, so `lambda C` acquires a zero eigenvalue. That is
+not a nuisance - it is RJ's hypothesis stated in the arithmetic. **A dimension almost nothing
+uses gets almost no ridge, so it is cheap to write to**, and in the limit the ridge vanishes and
+the solve is undefined. The fix is a correctness fix, not a workaround: the covariance for a
+grown net is taken over a corpus that includes the edited positions, because a C that excludes
+every position where a dimension is alive is the wrong C for that net. The refusal path is kept
+and planted, so a genuinely singular ridge is REFUSED rather than quietly pseudo-inverted.
+
+> **Status: the full sweep over n = 1, 2, 4, 8, 16, 32 and nine arms is still running** as this
+> was written, and `gatefly/runs/ttt_big.retrain.json` holds whatever has landed. The figures
+> above are from completed arms. **The "limited context" clause RJ asked about - whether a
+> benefit survives past small identified-set sizes - needs the n = 16 and 32 rows and is NOT
+> answered yet.**
+
+---
+
 ## Step 4 - shrink it, and tell "faithful" apart from "the game is easy"
 
 `gatefly/shrink.py`, `gatefly/shrink_save.py`, read from `gatefly/runs/ttt_big.shrink.json`
@@ -266,3 +381,51 @@ Read from `gatefly/runs/pong.meta.json`. The page plays it live with a drawn cou
 **Why an MLP and not a GPT:** pong's input is a fixed 6-number state, not a sequence, so a causal
 transformer's attention would have nothing to attend to. The blueprint format carries both kinds,
 which is the point - `gate_read.py` branches on the checkpoint's own `kind`, never on a filename.
+
+---
+
+## What is NOT verified
+
+Said plainly, because the house rule asks for it.
+
+1. **The rAF frame rate with the page on screen.** The Browser pane stayed hidden for this whole
+   session, which throttles `requestAnimationFrame`, so the only honest frame number is the draw
+   cost timed around `gl.finish()` (0.015 ms median). Whether the page holds 60 Hz in front of a
+   person has not been checked by a person. It is a 0.015 ms draw, so it should; "should" is not
+   a measurement.
+2. **Nothing here is a language model.** Tic-tac-toe and pong have perfect oracles, which is what
+   makes every verdict checkable, and is also exactly what a knowledge benchmark does not have.
+   No result transfers to GPT-2 without being measured there.
+3. **One site, one seed family.** Every edit and every cut is at one feed-forward down-projection
+   (`blocks.3.ffwd.net.2.weight` for `ttt_big`), with one case-selection seed.
+4. **The training set is the whole input space.** These nets memorise a complete map; nothing
+   here measures generalisation, and the shrinking results are about a fitted function.
+5. **A transcript model has an order.** A board is presented to the net through ONE canonical
+   move order (`metrics.prefix_of`); a different order is a different prompt for this model. The
+   same order is used for every arm, so no arm gains from it, but the figures are order-specific.
+6. **The IFR denominator is small at small n.** At n = 1 and n = 2 the chain set `D'` holds 0 or
+   1 chains, and the published formula returns 0.0 for an empty `D'`. Those IFR cells are not
+   informative and the denominator is printed beside every one of them rather than left out.
+7. **`a`-ordering at k = 16 and 8 loses to random, and I did not chase why.** It is reported as
+   it measured.
+
+## The files to open
+
+| what | where |
+|---|---|
+| **the fly-through** | `harness/gatefly/index.html` (`?net=ttt_big`, `?net=ttt_shrunk`, `?net=pong`) |
+| how to run it | `harness/gatefly/README.md` |
+| the use case, written before the code | `gatefly/UC_GATEFLY.md` |
+| the prediction, registered before the arms ran | `gatefly/PREREG_GATE_CAPACITY.md` |
+| what a blueprint is and what does not fit a net | `gatefly/NEURAL_BLUEPRINT.md` |
+| the gate arithmetic and its agreement plant | `gatefly/gate_math.py` |
+| play records | `gatefly/runs/ttt_small.play.json`, `ttt_big.play.json` |
+| the shrink sweep and the damage correlation | `gatefly/runs/ttt_big.shrink.json` |
+| the retraining arms | `gatefly/runs/ttt_big.retrain.json` |
+| the shrunk net | `gatefly/runs/ttt_shrunk.*` |
+
+Every module runs its own plants with `--selftest`:
+
+```bash
+for m in gate_math ttt data_ttt net train_ttt play gate_read metrics shrink retrain pong; do py -X utf8 -I gatefly/$m.py --selftest; done
+```
