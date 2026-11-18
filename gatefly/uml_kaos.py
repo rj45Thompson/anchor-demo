@@ -113,16 +113,47 @@ OBSTACLES = {
 }
 
 
-def resolve_link(fname, needle):
-    """A link resolves only if the file exists AND the fragment is in it."""
-    p = os.path.join(HERE, fname)
+LINE_SHAPED = re.compile(r"^\s*(?:line\s*)?\d+\s*(?:[-:,]\s*\d+\s*)?$|:\d+$|#L\d+")
+
+
+# ROT DEFENCE, the ratchet lane's real objection: "an unanalysed count that never moves is
+# indistinguishable from a tree nobody has opened in a month." Per-node last-examined date, and
+# the oldest is printed every run. Dated the day each node was last written or revised.
+EXAMINED = {nid: "2026-11-18" for nid in NODES}
+
+
+def resolve_link(fname, needle, lane="gatefly"):
+    """A link resolves only if the file exists AND the SYMBOL is in it.
+
+    SYMBOL ONLY, NEVER A POSITION - the ratchet lane's condition, from a measurement rather
+    than a preference: its own citations drifted 149 -> 166 -> 205 -> 303 inside a single
+    session, and it went symbol-only and paid for it (verified citations fell 7 to 5, recorded
+    rather than hidden). A cross-lane matrix keyed on line numbers rots within a day, and the
+    rot lands in a lane that cannot see the tree. So a position-shaped link is REFUSED here
+    rather than resolved, whatever it would have matched.
+    """
+    if LINE_SHAPED.search(needle.strip()):
+        return False, ("POSITION-SHAPED LINK REFUSED: %r. Links resolve by symbol - a plant "
+                       "label or a function name - never by line number." % needle[:40])
+    p = fname if os.path.isabs(fname) else os.path.join(HERE, fname)
     if not os.path.exists(p):
-        return False, "no such file: %s" % fname
+        return False, "no such file: %s (lane %s)" % (fname, lane)
     with open(p, encoding="utf-8") as f:
         body = f.read()
     if needle not in body:
         return False, "%s does not contain %r" % (fname, needle[:50])
     return True, "ok"
+
+
+# Which lane each linked artefact belongs to. A link into ANOTHER lane refuses THIS lane's
+# commit and only REPORTS to the lane that moved the symbol - never the reverse. The ratchet
+# lane's condition, and it is right: otherwise this lane's model of the problem becomes a veto
+# on another lane's refactors, and the person who can fix the link is not the person blocked.
+LANE_OF = {}          # fname -> lane name; anything unlisted is this lane's own
+
+
+def lane_of(fname):
+    return LANE_OF.get(fname, "gatefly")
 
 
 def gap_map():
@@ -132,15 +163,17 @@ def gap_map():
         sat = SATISFY.get(nid, [])
         ver = VERIFY.get(nid, [])
         obs = OBSTACLES.get(nid, [])
-        broken = []
-        for fn, sym in sat:
-            good, why = resolve_link(fn, sym)
-            if not good:
-                broken.append(("satisfy", why))
-        for fn, frag in ver:
-            good, why = resolve_link(fn, frag)
-            if not good:
-                broken.append(("verify", why))
+        broken, foreign = [], []
+        for kind, items in (("satisfy", sat), ("verify", ver)):
+            for fn, sym in items:
+                good, why = resolve_link(fn, sym, lane_of(fn))
+                if good:
+                    continue
+                # a broken link ALWAYS refuses the tree owner - this lane - and is additionally
+                # REPORTED to the lane that owns the artefact when that is someone else
+                broken.append((kind, why))
+                if lane_of(fn) != "gatefly":
+                    foreign.append((lane_of(fn), fn, sym))
         gaps = []
         if not children(nid):                       # only leaves must be realised and tested
             if not sat:
@@ -151,7 +184,8 @@ def gap_map():
             gaps.append("UNANALYSED - its negation has never been refined (no KAOS obstacle)")
         rows.append(dict(depth=depth, node=nid, kind=v["kind"], solved=ok, say=v["say"],
                          satisfy=len(sat), verify=len(ver), obstacles=len(obs),
-                         gaps=gaps, broken=broken))
+                         gaps=gaps, broken=broken, foreign=foreign,
+                         examined=EXAMINED.get(nid)))
     return rows
 
 
@@ -203,6 +237,41 @@ def selftest() -> int:
              and r["verify"] == 0]
     _plant("a node is settled with no «verify» link to a plant: %s" % unver, not unver)
 
+    # 6. SYMBOL ONLY. A position-shaped link must be REFUSED outright, not resolved - and the
+    #    refusal must not swallow a legitimate symbol that happens to contain digits.
+    for bad_needle in ("166", "line 205", "gate_math.py:149", "#L303", " 42 "):
+        good, why = resolve_link("gate_math.py", bad_needle)
+        _plant("a position-shaped link %r was not refused" % bad_needle,
+               not good and "POSITION-SHAPED" in why)
+    good, _ = resolve_link("gate_math.py", "def crowding_all")
+    _plant("the position refusal swallowed a real symbol", good)
+    good, _ = resolve_link("net.py", "blocks.0.ffwd.net.2.weight")
+    _plant("the position refusal rejected a symbol containing digits", good)
+
+    # 7. REFUSAL OWNERSHIP. A broken link into ANOTHER lane must refuse this lane AND be
+    #    reported to the owner; a broken link into this lane must not be reported outward.
+    saved = dict(LANE_OF)
+    savedV = {k: list(v) for k, v in VERIFY.items()}
+    try:
+        LANE_OF["ratchet_stub.py"] = "ratchet"
+        VERIFY["E4.1"] = VERIFY["E4.1"] + [("ratchet_stub.py", "a symbol that is not there")]
+        rows = {r["node"]: r for r in gap_map()}
+        r = rows["E4.1"]
+        _plant("a broken CROSS-LANE link did not refuse this lane", bool(r["broken"]))
+        _plant("a broken cross-lane link was not reported to its owner",
+               any(l == "ratchet" for l, _, _ in r["foreign"]))
+        VERIFY["E4.1"] = savedV["E4.1"] + [("gate_math.py", "a symbol that is not there")]
+        r2 = {x["node"]: x for x in gap_map()}["E4.1"]
+        _plant("a broken OWN-LANE link was reported outward as another lane's",
+               bool(r2["broken"]) and not r2["foreign"])
+    finally:
+        LANE_OF.clear(); LANE_OF.update(saved)
+        VERIFY.clear(); VERIFY.update(savedV)
+
+    # 8. ROT DEFENCE: every node must carry a last-examined date, or the oldest is meaningless.
+    missing = [n for n in NODES if n not in EXAMINED]
+    _plant("a node has no last-examined date: %s" % missing, not missing)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)
@@ -238,6 +307,17 @@ if __name__ == "__main__":
     n_unanal = sum(1 for r in rows if any(g.startswith("UNANALYSED") for g in r["gaps"]))
     print("  %d leaves UNREALISED, %d leaves UNTESTED, %d nodes UNANALYSED (no obstacle), "
           "of %d nodes" % (n_unreal, n_untest, n_unanal, len(rows)))
+    oldest = min(EXAMINED.values()) if EXAMINED else "never"
+    stale = sum(1 for v in EXAMINED.values() if v == oldest)
+    print("  oldest node last examined %s (%d node(s) at that date) - a count that never moves "
+          "is a tree nobody has opened" % (oldest, stale))
+    try:
+        import scale_guard as _sg
+        miss, tot = _sg.unreached()
+        print("  %d of %d numeric field names in runs/ are reached by NO pattern of the scale "
+              "grid - a limitation in a docstring is one nobody acts on" % (len(miss), tot))
+    except Exception as ex:
+        print("  could not count unreached fields: %r" % (ex,))
     if broken:
         print("\n  BROKEN LINKS - a traceability claim that does not resolve:")
         for nid, bs in broken:

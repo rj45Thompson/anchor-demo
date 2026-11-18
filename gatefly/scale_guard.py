@@ -144,6 +144,32 @@ MEASURES = {
         "n": ("invariant", "a fraction"),
         "bound": ("CONFOUNDED", "bounded, compresses near zero damage"),
     },
+    "gate": {
+        "what": "g(a - c): the fraction of a requested write that arrives at this address",
+        "n": ("CONFOUNDED", "c rises with the NUMBER of writers, so the gate falls with it - "
+                            "measured 0.0459 to 0.1112 crowding from n=16 to n=32, with the "
+                            "gate following. Only comparable at a FIXED writer count."),
+        "dim": ("corrected", "a and c both carry the ridge scale and it cancels in g(a-c) "
+                             "once lambda is the site's own median squared column norm"),
+        "support": ("invariant", "a property of the weights, not of any label space"),
+        "bound": ("CONFOUNDED", "bounded in (0,1), so it compresses near a lone uncrowded "
+                                "write where the gate approaches 1"),
+    },
+    "a_addressability": {
+        "what": "A_jj: how reachable one address is",
+        "n": ("invariant", "a_j = k_j^T (lambda C)^-1 k_j depends on NO other key, which is "
+                           "exactly what distinguishes it from c and is why this lane reports "
+                           "the two separately"),
+        "dim": ("corrected", "carries the ridge scale, divided out by the lambda convention"),
+        "bound": ("invariant", "unbounded above"),
+    },
+    "c_crowding": {
+        "what": "the Schur complement of one address against the others",
+        "n": ("CONFOUNDED", "it IS the interaction with the other keys, so it rises with their "
+                            "number by construction"),
+        "dim": ("corrected", "same ridge convention as a"),
+        "bound": ("invariant", "unbounded above, though bounded by a"),
+    },
     "best_of_k_random": {
         "what": "the best random cut over k seeds, used as the null in the shrink sweep",
         "selection": ("CONFOUNDED", "the maximum of a sample GROWS with k, so a best-of-8 null "
@@ -187,6 +213,9 @@ RESOLUTION = {
     "crowding_fraction_c_over_a": ("continuous", "a mean of ratios"),
     "spearman_rho": ("~1/(n choose 2)", "rank-based, so its grid is set by the tie structure"),
     "best_of_k_random": ("1/n_positions", "each arm is itself a fraction"),
+    "gate": ("continuous", "a continuous function of continuous quantities"),
+    "a_addressability": ("continuous", "a quadratic form"),
+    "c_crowding": ("continuous", "a quadratic form"),
 }
 
 
@@ -328,6 +357,10 @@ ALIASES = {
     "swapped_within_optimal_set": "movement_count_set_valued",
     "changed_argmax": "movement_count_set_valued",
     "spearman_rho": "spearman_rho",
+    "gate": "gate", "median_gate": "gate", "min_gate": "gate", "max_gate": "gate",
+    "gate_emitted_by_the_pipeline": "gate", "gate_by_hand_from_the_identity": "gate",
+    "a": "a_addressability", "median_a": "a_addressability", "a_direct": "a_addressability",
+    "c": "c_crowding", "median_c": "c_crowding", "c_direct": "c_crowding",
     # genuinely NOT yet declared, and named here so the gap is visible rather than quiet:
     # IFR, Propagation, top1_agreement, top1_agreement_one_best_only, measured_one_hot_ratio,
     # hot_fraction_of_batch, net_scored. Each needs its carriers and step worked out before any
@@ -340,6 +373,45 @@ def canonical(name):
     if name in MEASURES:
         return name
     return ALIASES.get(name)
+
+
+def unreached(folder=None):
+    """Numeric field names NO pattern reaches. The ratchet lane's point, taken whole: a
+    link-resolution gate can only check links that exist, and a pattern-based net can only see
+    fields its patterns match. That limitation lived in this file's prose; prose is a
+    limitation nobody acts on, so it is a NUMBER printed every run.
+
+    Its first reading found 113 of 160 names unreached - including `gate`, this lane's own
+    central quantity, sitting outside the grid that exists to police exactly this kind of
+    thing. That lane found the identical hole in its own check on the same day.
+    """
+    folder = folder or os.path.join(HERE, "runs")
+    names = set()
+    if not os.path.isdir(folder):
+        return [], 0
+    for fn in sorted(os.listdir(folder)):
+        if not fn.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(folder, fn), encoding="utf-8") as f:
+                doc = json.load(f)
+        except (OSError, ValueError):
+            continue
+
+        def walk(o):
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    if isinstance(v, (int, float)) and not isinstance(v, bool):
+                        names.add(k)
+                    walk(v)
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v)
+        walk(doc)
+    miss = sorted(n for n in names
+                  if not any(t in n.lower() for t in MEASURE_SHAPED)
+                  and canonical(n) is None and n not in NOT_MEASURES)
+    return miss, len(names)
 
 
 def scan_runs(folder=None):

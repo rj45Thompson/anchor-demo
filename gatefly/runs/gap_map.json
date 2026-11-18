@@ -12,7 +12,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 1,
@@ -26,7 +28,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -41,7 +45,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -56,7 +62,9 @@
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -71,7 +79,9 @@
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 1,
@@ -85,7 +95,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -101,7 +113,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -117,7 +131,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -133,7 +149,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 1,
@@ -147,7 +165,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -159,7 +179,9 @@
    "verify": 0,
    "obstacles": 1,
    "gaps": [],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 3,
@@ -173,7 +195,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 3,
@@ -189,7 +213,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 3,
@@ -204,7 +230,9 @@
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -218,7 +246,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 3,
@@ -234,7 +264,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 3,
@@ -250,7 +282,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 3,
@@ -266,7 +300,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -282,7 +318,9 @@
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -296,7 +334,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 1,
@@ -310,7 +350,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -322,7 +364,9 @@
    "verify": 2,
    "obstacles": 1,
    "gaps": [],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -337,7 +381,9 @@
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -349,7 +395,9 @@
    "verify": 2,
    "obstacles": 2,
    "gaps": [],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   },
   {
    "depth": 2,
@@ -363,7 +411,9 @@
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
-   "broken": []
+   "broken": [],
+   "foreign": [],
+   "examined": "2026-11-18"
   }
  ],
  "unrealised": 12,

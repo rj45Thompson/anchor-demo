@@ -159,9 +159,15 @@ NODES = {
     "E3a.3": dict(kind="LEAF", parent="E3a",
                   say="Capacity: p keys in H dimensions must collide once p approaches H.",
                   why="A hard ceiling independent of method.",
-                  status="open",
-                  evidence="NOT REACHED here. 32 keys in a 256-dimensional key space is not a "
-                           "capacity test; the 256-edit run is the first that could be."),
+                  status="blocked",
+                  evidence="NOW REACHED AND CONFIRMED. At 256 keys in a 256-dimensional key "
+                           "space - the pigeonhole point, by construction - crowding reached "
+                           "0.9354 against 0.0540 at n=16, Efficacy fell to 0.945 (242/256, "
+                           "95% CI [0.9103, 0.9671], separated from a perfect [0.9852, "
+                           "1.0000]) and competence fell 0.9880 to 0.6967. The rate is the "
+                           "arithmetic's own: n identical keys each receive g(na)/n, so the "
+                           "share falls as 1/n and never reaches zero. A confirmed BLOCKER, "
+                           "not a solved node: it is a bound that will not be engineered away."),
     "E3b": dict(kind="AND", parent="E3",
                 say="Retraining on corrected data.",
                 why="Blocked by forgetting, by dilution, and by cost.",
