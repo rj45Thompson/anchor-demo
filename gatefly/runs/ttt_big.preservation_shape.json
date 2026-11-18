@@ -8,6 +8,8 @@
   {
    "n": 800,
    "excluded": 0,
+   "left_optimal_set": 0.0,
+   "swapped_within_optimal_set": 0.0,
    "mean_eq7": 1.0,
    "median": 1.0,
    "p10": 1.0,
@@ -22,6 +24,8 @@
   {
    "n": 800,
    "excluded": 0,
+   "left_optimal_set": 0.0,
+   "swapped_within_optimal_set": 0.125,
    "mean_eq7": 1.00937934163132,
    "median": 0.9999998807906252,
    "p10": 0.9560797886855392,
@@ -36,6 +40,8 @@
   {
    "n": 800,
    "excluded": 0,
+   "left_optimal_set": 0.24125,
+   "swapped_within_optimal_set": 0.26375,
    "mean_eq7": 1.1155548305248575,
    "median": 0.9905527079034133,
    "p10": 0.004148300241515961,
@@ -50,6 +56,8 @@
   {
    "n": 800,
    "excluded": 0,
+   "left_optimal_set": 0.0,
+   "swapped_within_optimal_set": 0.14125,
    "mean_eq7": 1.0019561060127145,
    "median": 1.0000007152641504,
    "p10": 0.9805884906471775,

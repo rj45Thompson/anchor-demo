@@ -49,8 +49,36 @@ import ttt
 OUT = os.path.join(HERE, "runs")
 
 
-def shape(pre, post, pre_arg, post_arg):
-    """Every shape of the same Eq. 7 ratio set, plus the movement count."""
+def optimal_sets(ind):
+    """The FULL set of correct answers for each indirect probe, from the oracle.
+
+    This is the thing the sibling lane's correction turns on. `indirect_set` stores ONE answer
+    per probe (the lowest-numbered optimal move), and counting movement against that one answer
+    makes a swap to an EQUALLY CORRECT move look like damage. The oracle knows the whole set,
+    so here it can be counted properly rather than approximated.
+    """
+    out = []
+    for t in ind:
+        b = ttt.EMPTY
+        for mv in t["prefix"]:
+            b = ttt.play(b, mv)
+        out.append(set(ttt.optimal_moves(b)))
+    return out
+
+
+def shape(pre, post, pre_arg, post_arg, opt_sets=None):
+    """Every shape of the same Eq. 7 ratio set, plus the movement counts.
+
+    THREE movement counts, because the sibling lane showed the first one over-reports:
+      changed_argmax        the model's answer changed at all - an UPPER BOUND on damage
+      left_optimal_set      the answer left the SET of correct answers - the real damage
+      swapped_within_set    the answer changed but stayed correct - the tie inflation, which is
+                            exactly the gap between the two and is NOT damage
+
+    The sibling lane measured that 11 of its 46 distinct broader-context prompts carry several
+    genuinely different correct answers, carrying 60% of the probes it scores, so this is not a
+    quirk of a game: a knowledge benchmark has the same structure.
+    """
     r = []
     excluded = 0
     for p, q in zip(pre, post):
@@ -62,7 +90,13 @@ def shape(pre, post, pre_arg, post_arg):
     if r.size == 0:
         return None
     changed = float(np.mean([1.0 if a != b else 0.0 for a, b in zip(pre_arg, post_arg)]))
+    left = swapped = float("nan")
+    if opt_sets is not None:
+        left = float(np.mean([0.0 if b in o else 1.0 for b, o in zip(post_arg, opt_sets)]))
+        swapped = float(np.mean([1.0 if (a != b and b in o) else 0.0
+                                 for a, b, o in zip(pre_arg, post_arg, opt_sets)]))
     return {"n": int(r.size), "excluded": excluded,
+            "left_optimal_set": left, "swapped_within_optimal_set": swapped,
             "mean_eq7": float(r.mean()), "median": float(np.median(r)),
             "p10": float(np.percentile(r, 10)), "p90": float(np.percentile(r, 90)),
             "frac_below_1": float(np.mean(r < 1.0)),
@@ -91,6 +125,7 @@ def run(a):
     P0 = R.probs(base, ind_pre, dev)
     pre_p = [float(P0[i, t["answer"]]) for i, t in enumerate(ind)]
     pre_arg = P0.argmax(1).tolist()
+    opt_sets = optimal_sets(ind)
     if pre_p != pre_all["ind_p"]:
         raise SystemExit("the indirect probabilities read two ways disagree")
 
@@ -100,7 +135,7 @@ def run(a):
                                pre_all, layer, dev, a.lam, C, a.grow_per_case, a.prune_k)
         P1 = R.probs(m, ind_pre, dev)
         post_p = [float(P1[i, t["answer"]]) for i, t in enumerate(ind)]
-        sh = shape(pre_p, post_p, pre_arg, P1.argmax(1).tolist())
+        sh = shape(pre_p, post_p, pre_arg, P1.argmax(1).tolist(), opt_sets)
         # the oracle, which is the thing the metric is being judged against
         BP = R.probs(m, board_prefixes, dev)
         comp = float(np.mean([1.0 if (p < 9 and p in ttt.optimal_moves(s_)) else 0.0
@@ -112,10 +147,11 @@ def run(a):
                              % (eq7, sh["mean_eq7"]))
         sh.update({"arm": arm, "competence_after": comp})
         rows.append(sh)
-        print("  %-14s Eq.7 mean %.4f  median %.4f  p10 %.4f  <1 %.2f  <0.9 %.2f  "
-              "m/med %.2f  CHANGED-ARGMAX %.4f  competence %.4f"
-              % (arm, sh["mean_eq7"], sh["median"], sh["p10"], sh["frac_below_1"],
-                 sh["frac_below_0.9"], sh["mean_over_median"], sh["changed_argmax"], comp))
+        print("  %-14s Eq.7 %.4f  med %.4f  p10 %.4f  <0.9 %.2f  | moved %.4f = LEFT-SET "
+              "%.4f + swapped-within %.4f | competence %.4f"
+              % (arm, sh["mean_eq7"], sh["median"], sh["p10"], sh["frac_below_0.9"],
+                 sh["changed_argmax"], sh["left_optimal_set"],
+                 sh["swapped_within_optimal_set"], comp))
 
     doc = {"name": a.name, "size": a.size, "indirect": len(ind), "layer": layer,
            "seed": a.seed, "rows": rows,
@@ -176,7 +212,31 @@ def selftest() -> int:
     _plant("cancellation and skew are indistinguishable on mean_over_median",
            abs(sh["mean_over_median"] - sh3["mean_over_median"]) > 0.5)
 
-    # 5. p == 0 probes are excluded per E'_ind, and counted.
+    # 5. THE TIE DECOMPOSITION. A move to an equally-correct answer must count as SWAPPED and
+    #    not as damage; a move out of the correct set must count as damage. Built both ways so
+    #    the two cannot collapse into each other.
+    opt = [{1, 2}, {1, 2}, {3}, {3}]
+    pre_a = [1, 1, 3, 3]
+    post_a = [2, 1, 3, 7]          # one tie-swap, one unchanged, one unchanged, one left
+    sh6 = shape([0.5] * 4, [0.5] * 4, pre_a, post_a, opt)
+    _plant("the movement count did not see both moves (%.4f)" % sh6["changed_argmax"],
+           abs(sh6["changed_argmax"] - 0.5) < 1e-9)
+    _plant("a swap between equally correct answers was counted as damage (%.4f)"
+           % sh6["left_optimal_set"], abs(sh6["left_optimal_set"] - 0.25) < 1e-9)
+    _plant("the tie swap was not counted as a swap (%.4f)" % sh6["swapped_within_optimal_set"],
+           abs(sh6["swapped_within_optimal_set"] - 0.25) < 1e-9)
+    _plant("moved != left + swapped, so the decomposition does not account for every move",
+           abs(sh6["changed_argmax"] - (sh6["left_optimal_set"]
+                                        + sh6["swapped_within_optimal_set"])) < 1e-9)
+    # and the NEGATIVE CONTROL: with every probe single-answered the two must COINCIDE, which
+    # is the claim this lane sent the sibling lane and which it refuted for its own data.
+    opt1 = [{1}, {1}, {3}, {3}]
+    sh7 = shape([0.5] * 4, [0.5] * 4, pre_a, post_a, opt1)
+    _plant("with no ties the movement count and the damage count still differ (%.4f vs %.4f)"
+           % (sh7["changed_argmax"], sh7["left_optimal_set"]),
+           abs(sh7["changed_argmax"] - sh7["left_optimal_set"]) < 1e-9)
+
+    # 6. p == 0 probes are excluded per E'_ind, and counted.
     sh5 = shape([0.0, 0.5], [0.3, 0.5], [0, 1], [0, 1])
     _plant("a zero-probability probe was not excluded and counted",
            sh5["n"] == 1 and sh5["excluded"] == 1)

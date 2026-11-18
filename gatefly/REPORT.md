@@ -200,11 +200,48 @@ was written from. What does catch it: the tenth percentile (0.0041), the fractio
 (0.43), and above all the **count of movement**, which separates `retrain` from `memit` by 4x
 (0.5050 against 0.1250) where the median separates them by 0.9%.
 
-**One honest limit on the movement count**, which this setting can see and a knowledge benchmark
-cannot: `memit` moves 12.5% of argmaxes while costing 0.02% of competence, because many
-tic-tac-toe positions have SEVERAL optimal moves and swapping between them is not damage. So a
-changed-argmax fraction is an UPPER BOUND on damage, not a measure of it. Its ordering is right
-and its level over-reports wherever answers can tie.
+**One honest limit on the movement count**: `memit` moves 12.5% of argmaxes while costing 0.02%
+of competence, because many tic-tac-toe positions have SEVERAL optimal moves and swapping
+between them is not damage. So a changed-argmax fraction is an UPPER BOUND on damage, not a
+measure of it.
+
+### The fix, and a transfer claim of this lane's that was WRONG
+
+This lane sent that limit to the v4 lane with a prescription attached - "count movement against
+the known answer rather than the model's own previous one" - and a claim that it would not
+matter to them: *"on a knowledge benchmark with one correct object per probe the two coincide."*
+
+**Both were wrong, and that lane checked rather than accepting either.** It reports that 11 of
+its 46 distinct broader-context prompts carry genuinely different correct answers - not
+paraphrases, but things like a parent with four children - and that those prompts carry 60% of
+the probes it scores, with 82% of answers multi-word so an argmax is not even defined for them.
+So the tie structure is not a quirk of a game; the benchmark has it too, and the limit applies
+there MORE strongly than this lane assumed. Its figures are its own and are not reproduced here.
+
+And the prescription was the same fault one step along: picking ONE of four correct children as
+"the" known answer makes the other three look like damage. The correct form is to count against
+the **SET** of correct answers, not one of them.
+
+**Measured here, where the oracle knows the whole set exactly** (`preservation_shape.py`, same
+800 indirect probes):
+
+| arm | moved at all | **left the correct SET** | swapped WITHIN it | competence |
+|---|---|---|---|---|
+| `control` | 0.0000 | **0.0000** | 0.0000 | 1.0000 |
+| `memit` | 0.1250 | **0.0000** | 0.1250 | 0.9998 |
+| **`retrain`** | 0.5050 | **0.2412** | 0.2637 | 0.7429 |
+| `corpus_w` | 0.1412 | **0.0000** | 0.1412 | 0.9998 |
+
+**Every single movement by the two surgical arms was a swap between equally correct answers -
+real damage exactly 0.0000 in both cases.** The naive count over-reported by 100% of its own
+value there. On the destructive arm it over-reported by 52% (0.5050 against 0.2412), and the
+set-valued figure lands on the independently measured competence drop (0.2412 against 0.2571
+over the full board set, the gap being that `E_ind` is an 800-probe sample that excludes the
+edited positions).
+
+So the set-valued form is not a refinement. It is the difference between a measure that flags
+12.5% of false damage on an arm that damaged nothing, and one that flags none - and between a
+4x separation of the destructive arm from the surgical one and a total one.
 
 ### "Retraining the corrected set" is not one method - it is a spectrum, and the ends fail oppositely
 
