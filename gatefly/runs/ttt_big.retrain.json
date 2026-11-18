@@ -1,0 +1,82 @@
+{
+ "name": "ttt_big",
+ "layer": 3,
+ "lambda": 1.0,
+ "cov_positions": 4000,
+ "arms": [
+  "corpus",
+  "corpus_w"
+ ],
+ "sizes": [
+  4
+ ],
+ "seed": 19,
+ "cov_cond": 3224.5789105400218,
+ "grow_per_case": 1,
+ "prune_k": 16,
+ "metric_source": "ThinkEval Eq.6/7 (arXiv 2506.01386) via selfimprove_v4/knowgic_score.py; gatefly/metrics.py reproduces the KnowGIC README worked example",
+ "rows": [
+  {
+   "size": 4,
+   "arm": "corpus",
+   "seconds": 29.4,
+   "optimal_rate_after_4520_boards": 0.9997787610619469,
+   "illegal_after": 0,
+   "positions": 4520,
+   "info": {
+    "retrain": {
+     "steps": 600,
+     "lr": 0.0001,
+     "batch": 512,
+     "items": 4,
+     "game_steps_corrected": 135,
+     "games_touched": 135,
+     "hot_fraction_of_batch": 0.0,
+     "method": "retrain the CORRECTED CORPUS - the whole distribution with the edited positions' targets replaced"
+    }
+   },
+   "Efficacy_p_gt_0.5": 0.25,
+   "Efficacy_n": 4,
+   "Propagation": 0.25,
+   "IFR": 1.014322163395136,
+   "IFR_kept": 2,
+   "IFR_excluded": 2,
+   "Preservation": 1.0026244172269523,
+   "Preservation_kept": 400,
+   "Preservation_excluded": 0,
+   "mean_target_p_pre": 0.0014911752082298335,
+   "mean_target_p_post": 0.26662326126825064
+  },
+  {
+   "size": 4,
+   "arm": "corpus_w",
+   "seconds": 28.2,
+   "optimal_rate_after_4520_boards": 0.9991150442477876,
+   "illegal_after": 0,
+   "positions": 4520,
+   "info": {
+    "retrain": {
+     "steps": 600,
+     "lr": 0.0001,
+     "batch": 512,
+     "items": 4,
+     "game_steps_corrected": 135,
+     "games_touched": 135,
+     "hot_fraction_of_batch": 0.25,
+     "method": "retrain the CORRECTED CORPUS - the whole distribution with the edited positions' targets replaced"
+    }
+   },
+   "Efficacy_p_gt_0.5": 1.0,
+   "Efficacy_n": 4,
+   "Propagation": 0.0,
+   "IFR": 1.0097802005922936,
+   "IFR_kept": 2,
+   "IFR_excluded": 2,
+   "Preservation": 0.9984428836138227,
+   "Preservation_kept": 400,
+   "Preservation_excluded": 0,
+   "mean_target_p_pre": 0.0014911752082298335,
+   "mean_target_p_post": 0.9837290197610855
+  }
+ ]
+}

@@ -1,0 +1,1123 @@
+{
+ "format": "priorgpt f16 blob + element offsets, as priorgpt/data/meta.json",
+ "hyper": {
+  "vocab": 10,
+  "block_size": 10,
+  "n_embed": 64,
+  "n_heads": 4,
+  "n_layers": 4,
+  "dropout": 0.0,
+  "mult": 4
+ },
+ "parameters": 188842,
+ "elements": 188842,
+ "weights": [
+  {
+   "name": "token_embedding_table.weight",
+   "shape": [
+    10,
+    64
+   ],
+   "offset": 0,
+   "count": 640
+  },
+  {
+   "name": "position_embedding_table.weight",
+   "shape": [
+    10,
+    64
+   ],
+   "offset": 640,
+   "count": 640
+  },
+  {
+   "name": "blocks.0.sa.heads.0.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 1280,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.0.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 2304,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.0.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 3328,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.1.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 4352,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.1.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 5376,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.1.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 6400,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.2.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 7424,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.2.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 8448,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.2.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 9472,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.3.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 10496,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.3.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 11520,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.3.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 12544,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.proj.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 13568,
+   "count": 4096
+  },
+  {
+   "name": "blocks.0.sa.proj.bias",
+   "shape": [
+    64
+   ],
+   "offset": 17664,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ffwd.net.0.weight",
+   "shape": [
+    256,
+    64
+   ],
+   "offset": 17728,
+   "count": 16384
+  },
+  {
+   "name": "blocks.0.ffwd.net.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 34112,
+   "count": 256
+  },
+  {
+   "name": "blocks.0.ffwd.net.2.weight",
+   "shape": [
+    64,
+    256
+   ],
+   "offset": 34368,
+   "count": 16384
+  },
+  {
+   "name": "blocks.0.ffwd.net.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 50752,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ln1.weight",
+   "shape": [
+    64
+   ],
+   "offset": 50816,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ln1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 50880,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ln2.weight",
+   "shape": [
+    64
+   ],
+   "offset": 50944,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ln2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 51008,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.sa.heads.0.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 51072,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.0.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 52096,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.0.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 53120,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.1.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 54144,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.1.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 55168,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.1.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 56192,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.2.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 57216,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.2.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 58240,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.2.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 59264,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.3.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 60288,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.3.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 61312,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.3.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 62336,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.proj.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 63360,
+   "count": 4096
+  },
+  {
+   "name": "blocks.1.sa.proj.bias",
+   "shape": [
+    64
+   ],
+   "offset": 67456,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ffwd.net.0.weight",
+   "shape": [
+    256,
+    64
+   ],
+   "offset": 67520,
+   "count": 16384
+  },
+  {
+   "name": "blocks.1.ffwd.net.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 83904,
+   "count": 256
+  },
+  {
+   "name": "blocks.1.ffwd.net.2.weight",
+   "shape": [
+    64,
+    256
+   ],
+   "offset": 84160,
+   "count": 16384
+  },
+  {
+   "name": "blocks.1.ffwd.net.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 100544,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ln1.weight",
+   "shape": [
+    64
+   ],
+   "offset": 100608,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ln1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 100672,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ln2.weight",
+   "shape": [
+    64
+   ],
+   "offset": 100736,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ln2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 100800,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.sa.heads.0.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 100864,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.0.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 101888,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.0.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 102912,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.1.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 103936,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.1.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 104960,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.1.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 105984,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.2.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 107008,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.2.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 108032,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.2.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 109056,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.3.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 110080,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.3.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 111104,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.3.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 112128,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.proj.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 113152,
+   "count": 4096
+  },
+  {
+   "name": "blocks.2.sa.proj.bias",
+   "shape": [
+    64
+   ],
+   "offset": 117248,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ffwd.net.0.weight",
+   "shape": [
+    256,
+    64
+   ],
+   "offset": 117312,
+   "count": 16384
+  },
+  {
+   "name": "blocks.2.ffwd.net.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 133696,
+   "count": 256
+  },
+  {
+   "name": "blocks.2.ffwd.net.2.weight",
+   "shape": [
+    64,
+    256
+   ],
+   "offset": 133952,
+   "count": 16384
+  },
+  {
+   "name": "blocks.2.ffwd.net.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 150336,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ln1.weight",
+   "shape": [
+    64
+   ],
+   "offset": 150400,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ln1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 150464,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ln2.weight",
+   "shape": [
+    64
+   ],
+   "offset": 150528,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ln2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 150592,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.sa.heads.0.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 150656,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.0.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 151680,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.0.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 152704,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.1.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 153728,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.1.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 154752,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.1.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 155776,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.2.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 156800,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.2.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 157824,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.2.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 158848,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.3.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 159872,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.3.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 160896,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.3.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 161920,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.proj.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 162944,
+   "count": 4096
+  },
+  {
+   "name": "blocks.3.sa.proj.bias",
+   "shape": [
+    64
+   ],
+   "offset": 167040,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ffwd.net.0.weight",
+   "shape": [
+    160,
+    64
+   ],
+   "offset": 167104,
+   "count": 10240
+  },
+  {
+   "name": "blocks.3.ffwd.net.0.bias",
+   "shape": [
+    160
+   ],
+   "offset": 177344,
+   "count": 160
+  },
+  {
+   "name": "blocks.3.ffwd.net.2.weight",
+   "shape": [
+    64,
+    160
+   ],
+   "offset": 177504,
+   "count": 10240
+  },
+  {
+   "name": "blocks.3.ffwd.net.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 187744,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ln1.weight",
+   "shape": [
+    64
+   ],
+   "offset": 187808,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ln1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 187872,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ln2.weight",
+   "shape": [
+    64
+   ],
+   "offset": 187936,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ln2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 188000,
+   "count": 64
+  },
+  {
+   "name": "ln_f.weight",
+   "shape": [
+    64
+   ],
+   "offset": 188064,
+   "count": 64
+  },
+  {
+   "name": "ln_f.bias",
+   "shape": [
+    64
+   ],
+   "offset": 188128,
+   "count": 64
+  },
+  {
+   "name": "lm_head.weight",
+   "shape": [
+    10,
+    64
+   ],
+   "offset": 188192,
+   "count": 640
+  },
+  {
+   "name": "lm_head.bias",
+   "shape": [
+    10
+   ],
+   "offset": 188832,
+   "count": 10
+  }
+ ],
+ "shrunk": {
+  "cut_from": "ttt_big",
+  "layer": 3,
+  "neurons_before": 256,
+  "neurons_after": 160,
+  "neurons_removed": 96,
+  "parameters_before": 201226,
+  "parameters_after": 188842,
+  "parameter_reduction": 0.06154274298549889,
+  "layers_before": 4,
+  "layers_after": 4,
+  "layers_note": "the BLOCK count is unchanged: this cut removes neurons inside one block's feed-forward, it does not remove a block. A block whose ffwd went to zero would be a layer removal, and none did.",
+  "rule": "a descending, the ratchet lane's budgeted-selection ordering",
+  "kept_indices": [
+   1,
+   2,
+   4,
+   5,
+   6,
+   8,
+   9,
+   10,
+   13,
+   14,
+   16,
+   18,
+   19,
+   20,
+   21,
+   28,
+   30,
+   31,
+   33,
+   34,
+   36,
+   37,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   50,
+   51,
+   52,
+   56,
+   58,
+   59,
+   60,
+   61,
+   63,
+   65,
+   66,
+   67,
+   68,
+   70,
+   73,
+   74,
+   75,
+   78,
+   81,
+   83,
+   84,
+   85,
+   87,
+   88,
+   90,
+   92,
+   93,
+   94,
+   95,
+   96,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   115,
+   118,
+   119,
+   120,
+   121,
+   123,
+   124,
+   127,
+   128,
+   129,
+   130,
+   132,
+   135,
+   136,
+   138,
+   139,
+   140,
+   141,
+   142,
+   144,
+   145,
+   149,
+   151,
+   152,
+   153,
+   154,
+   155,
+   156,
+   157,
+   160,
+   161,
+   162,
+   163,
+   167,
+   171,
+   174,
+   178,
+   179,
+   180,
+   182,
+   185,
+   186,
+   188,
+   189,
+   190,
+   192,
+   194,
+   196,
+   197,
+   199,
+   201,
+   202,
+   203,
+   204,
+   207,
+   208,
+   211,
+   212,
+   213,
+   214,
+   215,
+   216,
+   217,
+   219,
+   220,
+   221,
+   223,
+   225,
+   227,
+   229,
+   230,
+   231,
+   235,
+   236,
+   237,
+   239,
+   243,
+   245,
+   246,
+   247,
+   248,
+   249,
+   250,
+   253,
+   254
+  ],
+  "optimal_rate_parent": 1.0,
+  "optimal_rate_child": 1.0,
+  "agreement_with_parent": {
+   "top1_agreement": 0.7223451327433629,
+   "total_variation": 0.13044948875904083,
+   "top1_agreement_one_best_only": 1.0,
+   "total_variation_one_best_only": 0.002801780356094241
+  },
+  "play_child": {
+   "vs_perfect": {
+    "seat_1": {
+     "win": 0,
+     "draw": 1,
+     "loss": 0,
+     "illegal": 0,
+     "games": 1,
+     "should_not_lose": 1,
+     "lost_a_drawable_game": 0
+    },
+    "seat_2": {
+     "win": 0,
+     "draw": 9,
+     "loss": 0,
+     "illegal": 0,
+     "games": 9,
+     "should_not_lose": 9,
+     "lost_a_drawable_game": 0
+    }
+   },
+   "vs_perfect_any_opening_seat2": {
+    "seat_2": {
+     "win": 0,
+     "draw": 9,
+     "loss": 0,
+     "illegal": 0,
+     "games": 9,
+     "should_not_lose": 9,
+     "lost_a_drawable_game": 0
+    }
+   },
+   "vs_random": {
+    "seat_1": {
+     "win": 493,
+     "draw": 7,
+     "loss": 0,
+     "illegal": 0,
+     "games": 500,
+     "should_not_lose": 500,
+     "lost_a_drawable_game": 0
+    },
+    "seat_2": {
+     "win": 389,
+     "draw": 111,
+     "loss": 0,
+     "illegal": 0,
+     "games": 500,
+     "should_not_lose": 500,
+     "lost_a_drawable_game": 0
+    }
+   }
+  },
+  "play_parent": {
+   "vs_perfect": {
+    "seat_1": {
+     "win": 0,
+     "draw": 1,
+     "loss": 0,
+     "illegal": 0,
+     "games": 1,
+     "should_not_lose": 1,
+     "lost_a_drawable_game": 0
+    },
+    "seat_2": {
+     "win": 0,
+     "draw": 9,
+     "loss": 0,
+     "illegal": 0,
+     "games": 9,
+     "should_not_lose": 9,
+     "lost_a_drawable_game": 0
+    }
+   },
+   "vs_perfect_any_opening_seat2": {
+    "seat_2": {
+     "win": 0,
+     "draw": 9,
+     "loss": 0,
+     "illegal": 0,
+     "games": 9,
+     "should_not_lose": 9,
+     "lost_a_drawable_game": 0
+    }
+   },
+   "vs_random": {
+    "seat_1": {
+     "win": 478,
+     "draw": 22,
+     "loss": 0,
+     "illegal": 0,
+     "games": 500,
+     "should_not_lose": 500,
+     "lost_a_drawable_game": 0
+    },
+    "seat_2": {
+     "win": 418,
+     "draw": 82,
+     "loss": 0,
+     "illegal": 0,
+     "games": 500,
+     "should_not_lose": 500,
+     "lost_a_drawable_game": 0
+    }
+   }
+  },
+  "warning": "Playing to the same standard does NOT show the gates were copied. Tic-tac-toe is easy. The random-cut null and the gate-versus-damage correlation in the shrink json are what can show that."
+ },
+ "trained_by": "gatefly/shrink_save.py"
+}

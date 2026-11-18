@@ -1,0 +1,107 @@
+{
+ "format": "priorgpt f16 blob + element offsets",
+ "kind": "mlp",
+ "sizes": [
+  6,
+  64,
+  64,
+  1
+ ],
+ "parameters": 4673,
+ "elements": 4673,
+ "weights": [
+  {
+   "name": "layers.0.weight",
+   "shape": [
+    64,
+    6
+   ],
+   "offset": 0,
+   "count": 384
+  },
+  {
+   "name": "layers.0.bias",
+   "shape": [
+    64
+   ],
+   "offset": 384,
+   "count": 64
+  },
+  {
+   "name": "layers.1.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 448,
+   "count": 4096
+  },
+  {
+   "name": "layers.1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 4544,
+   "count": 64
+  },
+  {
+   "name": "layers.2.weight",
+   "shape": [
+    1,
+    64
+   ],
+   "offset": 4608,
+   "count": 64
+  },
+  {
+   "name": "layers.2.bias",
+   "shape": [
+    1
+   ],
+   "offset": 4672,
+   "count": 1
+  }
+ ],
+ "hyper": {
+  "sizes": [
+   6,
+   64,
+   64,
+   1
+  ],
+  "kind": "mlp"
+ },
+ "trained_by": "gatefly/pong.py",
+ "play": {
+  "oracle": {
+   "games": 120,
+   "opponent": "oracle",
+   "median_rally": 84.5,
+   "mean_rally": 81.70833333333333,
+   "max_rally": 117,
+   "net_scored": 0,
+   "net_conceded": 8,
+   "survived_all_steps": 112
+  },
+  "lagging": {
+   "games": 120,
+   "opponent": "lagging",
+   "median_rally": 87.5,
+   "mean_rally": 84.93333333333334,
+   "max_rally": 116,
+   "net_scored": 0,
+   "net_conceded": 12,
+   "survived_all_steps": 108
+  },
+  "random": {
+   "games": 120,
+   "opponent": "random",
+   "median_rally": 1.0,
+   "mean_rally": 2.0416666666666665,
+   "max_rally": 9,
+   "net_scored": 119,
+   "net_conceded": 1,
+   "survived_all_steps": 0
+  }
+ }
+}

@@ -1,0 +1,268 @@
+# The gated view of a net that plays a game - what was built and what it measured
+
+RJ asked for five things, each ending in something to look at. This is what each one measured.
+Written 2026-11-18. Every figure here is READ from a run file named beside it; nothing is
+quoted from memory. Where something is not verified it says so.
+
+**Open this first:** `harness/gatefly/index.html` - serve the repo root and go to
+`http://localhost:8777/harness/gatefly/index.html` (`?net=pong` for the other one).
+
+---
+
+## The arithmetic is the ratchet lane's, proven not assumed
+
+`gatefly/gate_math.py --selftest` carries 16 plants. One of them recomputes `A`, `G` and the
+crowding term with the ratchet lane's OWN functions (`closed_loop_lite/ratchet/gate_blueprint.py`
+and `effective_a.py`) and refuses on any disagreement above 1e-9.
+
+    agreement: max|dA| 0.000e+00  max|dG| 0.000e+00  max|dc| 0.000e+00
+
+Bit-identical. If that lane is unreadable the plant reports ABSENT with the path it searched and
+the selftest fails, unless `--lane-optional` is passed.
+
+---
+
+## Step 1 - a net that plays tic-tac-toe
+
+`gatefly/ttt.py`, `gatefly/data_ttt.py`, `gatefly/train_ttt.py`, `gatefly/play.py`
+
+The game is solved exactly: 5,478 reachable states (the published count), 4,520 with a move to
+make, 255,168 complete games (the published count), 294,778 distinct transcript prefixes. The
+opponent is full minimax, never a heuristic. A plant checks that a random player loses to it and
+never beats it, so "did not lose" is not vacuous.
+
+The model is a nanoGPT in **priorgpt's own shape and checkpoint format**. priorgpt has no trainer
+in this repo to reuse - its weights came from Kaggle notebooks
+(`.opus-tools/priorgpt/kaggle/original.ipynb`, `chat/kaggle/*/notebook.ipynb`) trained off this
+machine on Shakespeare, and what ships here is browser-side inference - so what is reused is the
+model shape (Karpathy's lecture nanoGPT, priorgpt's exact tensor names) and the checkpoint format
+(one flat f16 blob plus a `meta.json` index in elements). Training is local, in torch.
+
+| | `ttt_small` | `ttt_big` |
+|---|---|---|
+| shape | 2 blocks, 2 heads, 32 wide | 4 blocks, 4 heads, 64 wide |
+| parameters | 26,250 | 201,226 |
+| optimal move on the 294,778 distinct live positions | **1.0000000000** | **1.0000000000** |
+| illegal argmax | **0** | **0** |
+| vs perfect, moving first | 0W **1D** 0L | 0W **1D** 0L |
+| vs perfect, moving second (every opening) | 0W **9D** 0L | 0W **9D** 0L |
+| vs random, moving first (500 games) | 498W 2D **0L** | 478W 22D **0L** |
+| vs random, moving second (500 games) | 406W 94D **0L** | 418W 82D **0L** |
+
+Read from `gatefly/runs/ttt_small.play.json` and `ttt_big.play.json`.
+
+Two things worth saying plainly:
+
+- **Every opening in tic-tac-toe is optimal**, so the "every legal opening" sweep and the
+  "optimal openings" sweep are the same nine games. They are reported separately anyway because
+  the code does not know that in advance.
+- The **small net wins MORE against a random opponent** (498 against 478 as first player). Both
+  are optimal against perfect play; optimal play does not maximise exploitation of a weak
+  opponent, and a bigger net is not better at this.
+- The training set is the WHOLE input space, so this measures capacity and fitting, not
+  generalisation. Said here rather than left to be inferred.
+
+---
+
+## Step 2 - the gates in a fly-through
+
+`gatefly/gate_read.py` emits a `neural-blueprint v1` file; `harness/gatefly/index.html` flies it.
+
+For every weight matrix (out, in), its INPUT units are writers into its OUTPUT space, so
+`K = W` with one column per writer, `A = K^T (lambda C)^-1 K` with `C = I` and lambda the median
+squared column norm (the ratchet lane's `neuron_gates.py` convention), `a = diag(A)`, `c` the
+Schur complement, `gate = g(a - c)`.
+
+`blocks.N.ffwd.net.2.weight` is the lane's own site: its columns are the feed-forward neurons'
+write directions into the residual stream, the same object as GPT-2's `mlp.c_proj` rows.
+
+**What it drew** (`ttt_small`): 800 units over 19 sites, 0 refused, 2,304 wires drawn and
+**14,912 of 17,216 NOT drawn**, which the page states. `ttt_big`: 4,672 units over 61 sites,
+6,144 wires drawn, 128,640 not drawn. `pong`: 134 units over 3 sites.
+
+**Frame time, measured.** The Browser pane was hidden for this session, and a hidden page has its
+rAF throttled - the page showed a 36 ms median and a 1,015 ms p95 for that reason, which is a
+fact about the tab and not about the scene. So the scene's own cost is measured directly, timed
+around `gl.finish()` in batches of 20 draws at 1280x960 device pixels:
+
+| net | units | wires | median draw | p95 |
+|---|---|---|---|---|
+| `ttt_small` | 800 | 2,304 | **0.015 ms** | 0.05 ms |
+| `ttt_big` | 4,672 | 6,144 | **0.015 ms** | 0.065 ms |
+| `pong` | 134 | 576 | **0.025 ms** | 0.06 ms |
+
+A 60 Hz frame is 16.7 ms, so the draw is about a thousandth of the budget. **Not verified:** the
+rAF-observed frame rate with the pane actually on screen - the pane stayed hidden, so that number
+could not honestly be taken. The HUD now labels both and flags a throttled reading.
+
+**The hovered number is the right number.** Hovering a unit gave, on screen:
+
+    attention head 15 of 32  gate 0.4110  a (addressability) 1.9463  c (crowding) 1.2485
+    c/a 0.6415  site blocks.1.sa.heads.0.key.weight  writes into 16 dimensions, with 31 others
+
+`gatefly/check_hover.py` recomputed that unit from the f16 blob with plain numpy, importing
+nothing from `gate_math`:
+
+| | gate | a | c |
+|---|---|---|---|
+| the screen | 0.4110150039 | 1.9463369846 | 1.2485020161 |
+| the direct sum | 0.4110148136 | 1.9463371975 | 1.2485016271 |
+| difference | **1.9e-07** | 2.1e-07 | 3.9e-07 |
+
+The bar is 1e-5 because the page works in float32 and the blueprint rounds to 6 decimals; said
+out loud rather than chosen quietly. The blueprint file also carries its own `checks.hand_check`,
+which agrees to **8.3e-17** in float64.
+
+**The page RUNS the net.** It loads the f16 checkpoint beside the blueprint and does the forward
+pass in JS, so the game plays while you fly it. Checked against torch on five sequences - `[]`,
+`[4]`, `[4,0]`, `[0,4,8]`, `[0,1,2]` - argmax 2, 8, 6, 5, 4 from both. In the page `ttt_small`
+played 6 games, 6 draws, 0 losses, 0 illegal.
+
+**What the gates say about these nets**, which is the thing worth looking at:
+
+| site | units -> dims | median gate | median c/a |
+|---|---|---|---|
+| `ttt_small` `blocks.0.ffwd.net.0` | 32 -> 128 | 0.4582 | **0.158** |
+| `ttt_small` `blocks.0.ffwd.net.2` | 128 -> 32 | 0.1771 | **0.788** |
+| `ttt_big` `blocks.0.ffwd.net.2` | 256 -> 64 | 0.1824 | 0.777 |
+| `ttt_big` `blocks.3.ffwd.net.2` | 256 -> 64 | 0.1454 | **0.834** |
+| `pong` `layers.0` | 6 -> 64 | 0.4927 | **0.029** |
+| `pong` `layers.2` | 64 -> **1** | **0.0035** | **0.9965** |
+
+Crowding tracks how over-complete the site is, and it RISES WITH DEPTH in `ttt_big` (0.777,
+0.782, 0.794, 0.834 across the four blocks). Pong's output layer is the clean extreme: 64
+neurons writing into one dimension have almost nothing left, which is the collinear law
+(`n` keys sharing `g(na)/n`) showing up in a trained net rather than in a synthetic example.
+
+---
+
+## Step 4 - shrink it, and tell "faithful" apart from "the game is easy"
+
+`gatefly/shrink.py`, `gatefly/shrink_save.py`, read from `gatefly/runs/ttt_big.shrink.json`
+
+Cutting `blocks.3.ffwd` of `ttt_big` from 256 neurons, by `a` descending (the ratchet lane's
+budgeted-selection rule), against **gate-ordering** and against **random cuts over 8 seeds at
+every budget**.
+
+| budget k | a-order | gate-order | random mean | random BEST of 8 | a beats best random? |
+|---|---|---|---|---|---|
+| 224 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | tie |
+| 192 | 1.0000 | 1.0000 | 0.9999 | 1.0000 | tie |
+| 160 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | tie |
+| 128 | 0.9996 | 0.9998 | 0.9988 | 0.9996 | tie |
+| **96** | 0.9982 | 0.9991 | 0.9941 | 0.9980 | **yes** |
+| **64** | 0.9980 | 0.9987 | 0.9906 | 0.9960 | **yes** |
+| **48** | 0.9962 | 0.9969 | 0.9917 | 0.9960 | **yes** |
+| **32** | 0.9958 | 0.9892 | 0.9916 | 0.9949 | **yes** |
+| 16 | 0.9825 | 0.9841 | 0.9881 | 0.9947 | **no - random wins** |
+| 8 | 0.9843 | 0.9887 | 0.9887 | 0.9925 | **no - random wins** |
+
+(optimal move over the 4,520 distinct live boards)
+
+### The verdict: it PARTIALLY transfers, and the part that does not is specific
+
+- **`a`-ordering beats the best of eight random cuts at k = 96, 64, 48 and 32**, and the margin
+  over the random MEAN is 1.8 to 2.4 standard deviations there. The GPT-2 budgeted-selection
+  result holds in that range.
+- **At k = 16 and 8 random wins.** The claim "ranking by `a` picks the best available subset at
+  EVERY size" does NOT hold here. Reported as it measured.
+- **At k >= 128 nothing separates** because the game is too easy at that budget - which is the
+  failure mode this was designed to expose, visible as a row of ties rather than as a success.
+- **Gate-ordering beats `a`-ordering in the middle and collapses at k = 32** (0.9892 against
+  0.9958), which is the background's "crowding orders backwards at small sizes" showing up here.
+
+### The gate's own prediction: REFUTED, and the reason is exact
+
+Every one of the 256 neurons removed on its own, with the damage measured as the mean total
+variation of the move distribution over all 4,520 boards (damage range 0.00166 to 0.03390,
+median 0.00971):
+
+| predictor | Spearman rho | p | n |
+|---|---|---|---|
+| **gate = g(a - c)** | **0.1210** | **0.0532** | 256 |
+| `a` alone (addressability) | **0.3344** | **4.19e-08** | 256 |
+| `c` alone (crowding) | **0.3459** | **1.31e-08** | 256 |
+
+**The composite gate does not predict which neuron matters; its two components each do,
+strongly.** The reason is mechanical: `a` and `c` both correlate POSITIVELY with damage, and the
+gate subtracts them, so the subtraction cancels the signal. Against the pre-registered bar
+(p < 0.05) the verdict is **DOES NOT TRANSFER** for the gate, and a clear positive for `a` and
+`c` used separately. That is a result for the ratchet lane: for predicting removal damage, use
+`a` and `c`, not `g(a - c)`.
+
+### The faithfulness check that outcome alone cannot give
+
+Game outcome says nothing here - every budget down to k = 8 still scores above 0.98 and still
+never loses. What separates them is the agreement with the PARENT on the 2,406 positions where
+exactly one move is optimal:
+
+| k | top-1 agreement (all 4,520) | top-1 on the 2,406 ONE-BEST positions | tv there |
+|---|---|---|---|
+| 224 | 0.7155 | **1.0000** | 0.0004 |
+| 160 | 0.7223 | **1.0000** | 0.0028 |
+| 128 | 0.7139 | 0.9996 | 0.0083 |
+| 96 | 0.7066 | 0.9971 | 0.0168 |
+| 64 | 0.7150 | 0.9967 | 0.0245 |
+| 32 | 0.7131 | 0.9925 | 0.0391 |
+| 16 | 0.6982 | 0.9701 | 0.0766 |
+
+The overall top-1 agreement sits near 0.71 at EVERY budget, including the ones that lose nothing:
+that is because most positions have several optimal moves and the child picks a different one,
+which is not a defect. The one-best column is the honest measure and it degrades smoothly, which
+is what tells a faithful cut from a lucky one.
+
+### The net that was saved
+
+`gatefly/runs/ttt_shrunk.*`, flyable at `?net=ttt_shrunk`.
+
+| | before | after |
+|---|---|---|
+| neurons at `blocks.3.ffwd` | **256** | **160** (96 removed) |
+| transformer blocks | 4 | 4 - **unchanged**; this cut removes neurons, not layers |
+| parameters | 201,226 | 188,842 (6.2% fewer) |
+| optimal on the 4,520 boards | 1.000000 | **1.000000** |
+| top-1 on one-best positions | - | **1.0000**, identical to its parent on all 2,406 |
+| vs perfect | 10 games, 10 draws | **10 games, 10 draws, 0 losses** |
+| vs random (1,000 games both seats) | 896W 104D 0L | 882W 118D **0L** |
+
+And the gate arithmetic predicted its own consequence: with 96 of 256 writers gone from the same
+64 dimensions, the site's median crowding fell from **0.8335 to 0.7928** and its median gate rose
+from **0.1454 to 0.1779**. Fewer writers, more of each write arrives.
+
+**No layer was removed.** The premise was "reduce the layers to the minimum set that copies the
+action of the gates"; what this measured is that the reducible thing here is NEURONS WITHIN a
+block, and that no block's feed-forward could be taken to zero without the net losing positions.
+Saying that plainly is better than reporting a layer count that did not move.
+
+---
+
+## Step 5 - pong, on a new kind of blueprint
+
+`gatefly/pong.py`, `gatefly/NEURAL_BLUEPRINT.md`
+
+**What a blueprint is here, and what does not fit.** `blueprint/city/data/pong_3d.js` holds
+`window.BPV3D` with `bp2d[i].model = { nodes, wires, comments, box, notes }`; a node is
+`{ name, cls, x, y, w, h, title, sub, compact, pill, knot, color, pins, delegate, refs }`, a pin
+is `{ id, name, dir, exec, color, label, def, linked, x, y }`, a wire is
+`{ from, to, exec, color, a, b }`. Pong's `BP_Ball` is 23 nodes and 30 wires.
+`NEURAL_BLUEPRINT.md` lists field by field what a net cannot use - authored `x/y/w/h`, named
+`pins`, the `exec` channel, `cls`/`title`/`refs` - and the three things a net needs that have no
+field at all: a per-unit measured scalar, a live channel, and a stated edge cap.
+
+**The pong net.** The game is exact and seeded; the teacher is the closed-form interception
+point, checked against simulating the ball forward (they agree to 0.0121 of a court height). A
+plant shows two oracle paddles rally 20,000 steps without conceding, and that a motionless paddle
+concedes 276 times in 20,000 - so the game can be lost and the rally figures mean something.
+
+| | measured |
+|---|---|
+| parameters | **4,673** (6 -> 64 -> 64 -> 1) |
+| vs perfect interception, 120 games | median rally **84.5**, mean 81.7, max 117, conceded 8 |
+| vs a lagging opponent | median rally 87.5, conceded 12 |
+| vs a random opponent | scored 119, conceded 1 |
+
+Read from `gatefly/runs/pong.meta.json`. The page plays it live with a drawn court.
+
+**Why an MLP and not a GPT:** pong's input is a fixed 6-number state, not a sequence, so a causal
+transformer's attention would have nothing to attend to. The blueprint format carries both kinds,
+which is the point - `gate_read.py` branches on the checkpoint's own `kind`, never on a filename.

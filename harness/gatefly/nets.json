@@ -1,0 +1,36 @@
+{
+ "nets": [
+  {
+   "net": "pong",
+   "of": "pong",
+   "about": "A 4,673-parameter MLP that plays pong: median rally 84.5 against a perfect-interception opponent over 120 games.",
+   "units": 134,
+   "kind": "mlp",
+   "parameters": 4673
+  },
+  {
+   "net": "ttt_big",
+   "of": "ttt_big",
+   "about": "The 201,226-parameter nanoGPT (4 blocks, 4 heads, 64 wide): optimal move on all 294,778 distinct live positions, 0 illegal.",
+   "units": 4672,
+   "kind": "gpt",
+   "parameters": 201226
+  },
+  {
+   "net": "ttt_shrunk",
+   "of": "ttt_shrunk",
+   "about": "ttt_big with 96 of 256 neurons cut from blocks.3.ffwd by a-ordering: still optimal on every one of the 4,520 boards, and identical to its parent on all 2,406 positions with one best move.",
+   "units": 4576,
+   "kind": "gpt",
+   "parameters": 188842
+  },
+  {
+   "net": "ttt_small",
+   "of": "ttt_small",
+   "about": "The 26,250-parameter nanoGPT that plays tic-tac-toe perfectly: optimal move on all 294,778 distinct live positions, 0 illegal, never loses to perfect or random play.",
+   "units": 800,
+   "kind": "gpt",
+   "parameters": 26250
+  }
+ ]
+}

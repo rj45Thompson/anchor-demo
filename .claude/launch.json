@@ -6,6 +6,12 @@
       "runtimeExecutable": "py",
       "runtimeArgs": ["-m", "http.server", "8792", "--directory", "D:/code/anchor-demo"],
       "port": 8792
+    },
+    {
+      "name": "gatefly",
+      "runtimeExecutable": "py",
+      "runtimeArgs": ["-m", "http.server", "8777", "--directory", "D:/code/anchor-demo"],
+      "port": 8777
     }
   ]
 }

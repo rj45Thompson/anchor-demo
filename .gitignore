@@ -11,3 +11,9 @@ agentbox/responder_seen.json
 agentbox/responder_alive.json
 agentbox/.srv.log
 agentbox/.srv.err
+
+# gatefly: the dataset cache is 2.4 MB and is rebuilt exactly by
+# `py -X utf8 -I gatefly/data_ttt.py` in a few seconds, so it is noise in a diff.
+# The CHECKPOINTS are kept: harness/gatefly RUNS them in the browser, so without
+# them the page draws the gates but cannot play the game.
+gatefly/data/ttt_games.npz

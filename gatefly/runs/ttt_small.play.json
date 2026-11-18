@@ -1,0 +1,60 @@
+{
+ "name": "ttt_small",
+ "params": 26250,
+ "optimal_rate_all_positions": 1.0,
+ "illegal_argmax": 0,
+ "positions": 294778,
+ "play": {
+  "vs_perfect": {
+   "seat_1": {
+    "win": 0,
+    "draw": 1,
+    "loss": 0,
+    "illegal": 0,
+    "games": 1,
+    "should_not_lose": 1,
+    "lost_a_drawable_game": 0
+   },
+   "seat_2": {
+    "win": 0,
+    "draw": 9,
+    "loss": 0,
+    "illegal": 0,
+    "games": 9,
+    "should_not_lose": 9,
+    "lost_a_drawable_game": 0
+   }
+  },
+  "vs_perfect_any_opening_seat2": {
+   "seat_2": {
+    "win": 0,
+    "draw": 9,
+    "loss": 0,
+    "illegal": 0,
+    "games": 9,
+    "should_not_lose": 9,
+    "lost_a_drawable_game": 0
+   }
+  },
+  "vs_random": {
+   "seat_1": {
+    "win": 498,
+    "draw": 2,
+    "loss": 0,
+    "illegal": 0,
+    "games": 500,
+    "should_not_lose": 500,
+    "lost_a_drawable_game": 0
+   },
+   "seat_2": {
+    "win": 406,
+    "draw": 94,
+    "loss": 0,
+    "illegal": 0,
+    "games": 500,
+    "should_not_lose": 500,
+    "lost_a_drawable_game": 0
+   }
+  }
+ }
+}
