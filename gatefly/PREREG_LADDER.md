@@ -72,3 +72,57 @@ A rung whose net cannot PLAY the game is not a harder editing problem, it is a w
 ladder measures holdout competence before any edit and marks any rung below 0.90. None of the
 four predictions above apply to a rung that fails that bar; such a rung is excluded, and the
 exclusion is reported rather than quietly dropping the row.
+
+---
+
+# AMENDMENT, 2026-11-18 — recorded AFTER the 4,4,3 row landed, and labelled as such
+
+The four branches above are unedited. This section is added after seeing rungs 3,3,3 / 3,4,3 /
+4,4,3 and before 4,4,4 reports, and it exists because the ratchet lane raised an objection that
+the original file does not answer.
+
+## The objection
+
+> "P3 says crowding FLAT, but flat-to-four-decimals across a doubling of the position count is
+> strong evidence that your key geometry is insensitive to position count in a way that may
+> itself be a ceiling — 16 keys in 256 dimensions may simply be too sparse for packing to bite
+> at ANY board size you can build. If that is so, P3 is not 'the ladder was too easy', it is
+> 'this key budget cannot be made to crowd'."
+
+It applies with more force to the branch that actually fired. The ladder did **not** land on P3:
+at 4,4,3 Efficacy fell to 0.938 while crowding fell from 0.0540 to 0.0485, which is **P2 — not
+capacity**. But P2's whole content is "crowding did not rise", and that is informative *only if
+crowding is capable of rising*. If `mean_crowding_fraction` were pinned near 0.05 by the key
+budget, P1 and P2 would be indistinguishable and the branch structure would be empty.
+
+## The control, and what it says
+
+`mean_crowding_fraction` at the same site and the same net shape (4 blocks, 4 heads, 64 wide),
+sweeping the EDIT COUNT instead of the board, from `ttt_big.retrain.json`:
+
+| n | 1 | 2 | 4 | 8 | 16 | 32 |
+|---|---|---|---|---|---|---|
+| mean c/a | 0.0000 | 0.0000 | 0.0032 | 0.0327 | **0.0459** | **0.1112** |
+
+**The quantity moves, and moves hard: 2.4x from merely doubling the edit count at the same
+budget the ladder uses.** So 16 keys in 256 dimensions is not too sparse for packing to bite;
+packing bites readily when the keys are more numerous. The flatness across rungs (0.0540,
+0.0540, 0.0485) is therefore a property of the BOARD axis, not a ceiling of the measure, and the
+P1/P2 distinction holds.
+
+**What this does NOT establish**, because the objection deserves the exact answer rather than a
+reassuring one: these figures come from `ttt_big`, which shares the site and the net shape with
+the ladder's nets but is a DIFFERENT CHECKPOINT, trained on the full enumeration rather than on
+sampled games. The clean version measures the edit-count sweep on the ladder's own 4,4,3 net.
+The ladder does not currently save its checkpoints, so that run is not yet possible; saving them
+is the change, and until it is run this control is **suggestive and cross-checkpoint, not
+same-net**.
+
+## And the correction to the framing the lane offered
+
+That lane argued P3 should be sent as "the mechanism did not engage, here is the number showing
+it" rather than as "the ladder did not break", and that the identical-crowding figure is a
+positive finding about the mechanism rather than an absence. That is right and the framing is
+adopted — but it describes a branch that did not fire. The ladder broke. What carries over is
+the standard: a flat companion quantity is reported as a measured property of the mechanism with
+its number, never as a failed experiment.
