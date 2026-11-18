@@ -165,6 +165,58 @@ AXES = {
 }
 
 
+# ---------------------------------------------------------------- the RESOLUTION axis
+# The grid above asks whether a measure's VALUE tracks a carrier. It does not ask whether its
+# RESOLUTION does, and that is where the fourth instance of the fault arrived: Efficacy's finest
+# expressible departure from 1.0 is 1/n_edits, so at n = 16 a "fall" to 0.9375 is ONE GRID STEP
+# and its interval [0.7167, 0.9889] overlaps a perfect [0.8064, 1.0000] almost entirely. The
+# ladder reported a break on that for an hour.
+#
+# The shape the ratchet lane asked for, having found the same hole in its own integer 0-4 flips
+# readout: report the finest expressible step beside every measure, and refuse to call a
+# difference a finding when it is one step.
+RESOLUTION = {
+    "efficacy_p_gt_0.5": ("1/n_edits", "a fraction over the edit set"),
+    "efficacy_argmax": ("1/n_edits", "a fraction over the edit set"),
+    "efficacy_legal_renormalised": ("1/n_edits", "a fraction over the edit set"),
+    "competence_set_valued": ("1/n_positions", "a fraction over the position set"),
+    "movement_count_set_valued": ("1/n_probes", "a fraction over E_ind"),
+    "preservation_eq7_mean": ("continuous", "a mean of ratios; no grid"),
+    "damage_tv": ("continuous", "a mean of continuous distances"),
+    "damage_kl": ("continuous", "a mean of continuous divergences"),
+    "crowding_fraction_c_over_a": ("continuous", "a mean of ratios"),
+    "spearman_rho": ("~1/(n choose 2)", "rank-based, so its grid is set by the tie structure"),
+    "best_of_k_random": ("1/n_positions", "each arm is itself a fraction"),
+}
+
+
+def step_of(measure, counts):
+    """The finest difference `measure` can express, given the counts of a run. Returns
+    (step, why) or (None, why) for a continuous measure."""
+    if measure not in RESOLUTION:
+        return None, "measure %r has no declared resolution" % measure
+    expr, why = RESOLUTION[measure]
+    if expr == "continuous":
+        return None, why
+    for name, n in counts.items():
+        if expr == "1/" + name:
+            return (1.0 / n if n else float("inf")), "%s with %s = %d" % (expr, name, n)
+    return None, "resolution is %s but no such count was supplied" % expr
+
+
+def is_one_step(measure, diff, counts, tol=1e-9):
+    """-> (refuse, why). A difference no larger than one grid step is not a finding."""
+    step, why = step_of(measure, counts)
+    if step is None:
+        return False, "continuous measure: %s" % why
+    if abs(diff) <= step + tol:
+        return True, ("a difference of %.6g is at or below this measure's finest expressible "
+                      "step of %.6g (%s), so it is one grid step and not a finding"
+                      % (diff, step, why))
+    return False, ("a difference of %.6g exceeds the finest expressible step of %.6g (%s)"
+                   % (diff, step, why))
+
+
 def grid():
     """Every (measure, axis) cell, adjudicated. A cell is CONFOUNDED when the axis moves a
     carrier the measure is confounded on."""
@@ -286,6 +338,31 @@ def selftest() -> int:
     bad2 = [(m, k) for m, s in MEASURES.items() for k in s
             if k != "what" and k not in CARRIERS]
     _plant("a measure declares a dependence on an undeclared carrier: %s" % bad2, not bad2)
+
+    # 6. THE RESOLUTION AXIS, checked against the instance that actually happened. The ladder
+    #    reported Efficacy falling from 1.0000 to 0.9375 at n = 16 edits and called it a break.
+    #    That is exactly one grid step and must be REFUSED.
+    ref, why = is_one_step("efficacy_p_gt_0.5", 1.0 - 0.9375, {"n_edits": 16})
+    _plant("the ladder's 1.0000 -> 0.9375 at n=16 is not refused as one grid step", ref)
+    print("    %s" % why)
+
+    #    and it must FIRE THE OTHER WAY, or it would refuse everything: the same absolute
+    #    difference at n = 256 is many steps and is a finding the guard must allow.
+    ref2, why2 = is_one_step("efficacy_p_gt_0.5", 1.0 - 0.9375, {"n_edits": 256})
+    _plant("the same difference at n=256 is also refused, so the guard refuses everything",
+           not ref2)
+
+    #    a genuinely continuous measure must never be refused on resolution grounds
+    ref3, _ = is_one_step("preservation_eq7_mean", 1e-9, {"n_edits": 16})
+    _plant("a continuous measure was refused on resolution grounds", not ref3)
+
+    #    an undeclared measure must refuse rather than pass
+    st, _ = step_of("some_new_metric", {"n_edits": 16})
+    _plant("an undeclared measure got a resolution instead of being refused", st is None)
+
+    #    every measure in the grid must have a declared resolution, or the axis has holes
+    missing = [m for m in MEASURES if m not in RESOLUTION]
+    _plant("measures with no declared resolution: %s" % missing, not missing)
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
