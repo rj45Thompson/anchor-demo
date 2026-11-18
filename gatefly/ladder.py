@@ -398,28 +398,47 @@ def run(args):
                  "" if row["net_competent"] else "   <- NET NOT COMPETENT, editing figures marked"))
     CRITERIA = ("efficacy_p_gt_0.5", "efficacy_argmax", "efficacy_legal_renormalised")
     def _broke(r, crit):
-        """A break must survive the INTERVAL, not merely the point estimate. With n edits the
-        finest departure from 1.0 the measure can express is 1/n, and its interval at that
-        point still includes 1.0 until n is large: at n = 16 a single failure gives
-        [0.7167, 0.9889] against a perfect [0.8064, 1.0000]. So a rung counts as broken only
-        when the upper end of its interval falls below the LOWER end of the best rung's."""
+        """TWO different questions, and the first version conflated them.
+
+        BROKEN means "worse than a PERFECT editor" - the rung's interval separated from the
+        interval a flawless run would have. WORSE-THAN-BEST means "significantly below the best
+        rung here", which is a between-rung comparison and says nothing about whether any rung
+        is broken. At n = 256 EVERY rung is broken against perfect, so comparing each to the
+        best turned "first break" into "first rung worse than its siblings" and printed a rung
+        where three others had already failed. Caught by reading the verdict against the
+        numbers it was computed from.
+
+        This is the broken-against-perfect test. The between-rung one is reported separately
+        and is never called a break.
+        """
         if not r["net_competent"] or r["edit"].get(crit, 1.0) >= 1.0:
             return False
         key = "ci95_legal_renormalised" if "legal" in crit else "ci95_p_gt_0.5"
         ci = r["edit"].get(key)
-        if ci is None:
+        n = r["edit"].get("n_edits")
+        if ci is None or not n:
             return True
+        perfect_lo = wilson(n, n)[0]          # the interval a flawless run would have
+        return bool(ci[1] < perfect_lo)
+
+    def _worse_than_best(r, crit):
+        """The between-rung comparison, reported and never called a break."""
+        key = "ci95_legal_renormalised" if "legal" in crit else "ci95_p_gt_0.5"
+        ci = r["edit"].get(key)
+        if ci is None:
+            return False
         best = max((q["edit"].get(crit, 0.0) for q in rows if q["net_competent"]), default=1.0)
         bestrow = next((q for q in rows
                         if q["net_competent"] and q["edit"].get(crit, 0.0) == best), None)
         bci = bestrow["edit"].get(key) if bestrow else None
-        return bool(bci is None or ci[1] < bci[0])
+        return bool(bci is not None and ci[1] < bci[0])
     firsts = {}
     for crit in CRITERIA:
         hit = [r["rung"] for r in rows if _broke(r, crit)]
         firsts[crit] = hit[0] if hit else None
     agree = len(set(firsts.values())) == 1
     broke = [r for r in rows if all(_broke(r, c) for c in CRITERIA)]
+    worse = [r["rung"] for r in rows if all(_worse_than_best(r, c) for c in CRITERIA)]
     doc = {"rungs": rows, "edits_per_rung": args.edits, "lambda": args.lam,
            "net": {"layers": args.layers, "heads": args.heads, "embed": args.embed},
            "held_fixed": "net shape and edit count, so a fall in Efficacy is the TASK getting "
@@ -431,6 +450,11 @@ def run(args):
                "total variation is bounded and compresses as the distribution spreads over a "
                "bigger board, while a KL does not, so either would turn board size into a "
                "trend. The set-valued accuracy has no such dependence.",
+           "rungs_broken_vs_perfect": [r["rung"] for r in broke],
+           "rungs_worse_than_the_best_rung": worse,
+           "why_two": "BROKEN means worse than a flawless run; WORSE-THAN-BEST is a "
+                      "between-rung comparison and is not a break. At a large edit count every "
+                      "rung can be broken while still differing from each other.",
            "first_break_per_criterion": firsts,
            "criteria_agree": agree,
            "first_break": (broke[0]["rung"] if broke else None),
@@ -583,6 +607,28 @@ def selftest() -> int:
     ev = np.linalg.eigvalsh(np.zeros((4, 4)))
     cond = float("inf") if ev.min() <= 0 else 1.0
     _plant("a zero covariance is not detected as singular", not np.isfinite(cond))
+
+    # 6. THE TWO QUESTIONS MUST NOT COLLAPSE. Constructed: three rungs all far below perfect
+    #    but equal to each other. Every one is BROKEN against perfect and NONE is worse than
+    #    the best, which is the case that made the first version print a rung where three
+    #    others had already failed.
+    def _mk(name, eff, n=256):
+        k = round(eff * n)
+        return {"rung": name, "net_competent": True,
+                "edit": {"efficacy_legal_renormalised": eff, "n_edits": n,
+                         "ci95_legal_renormalised": list(wilson(k, n))}}
+    rows_t = [_mk("A", 0.84), _mk("B", 0.84), _mk("C", 0.84)]
+    plo = wilson(256, 256)[0]
+    all_broken = all(r["edit"]["ci95_legal_renormalised"][1] < plo for r in rows_t)
+    best_ci = rows_t[0]["edit"]["ci95_legal_renormalised"]
+    none_worse = not any(r["edit"]["ci95_legal_renormalised"][1] < best_ci[0] for r in rows_t)
+    _plant("three equally-broken rungs are not all BROKEN against perfect", all_broken)
+    _plant("one of three EQUAL rungs was called worse than the best", none_worse)
+    # and the reverse: a clearly better rung must make a worse one separate from it
+    rows_u = [_mk("A", 0.99), _mk("B", 0.70)]
+    _plant("a clearly worse rung does not separate from a clearly better one",
+           rows_u[1]["edit"]["ci95_legal_renormalised"][1]
+           < rows_u[0]["edit"]["ci95_legal_renormalised"][0])
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
