@@ -294,8 +294,23 @@ def main(a):
     print("    a    vs KL: rho %.4f  p %.3g" % (kl_a, kl_pa))
     print("    c    vs KL: rho %.4f  p %.3g" % (kl_c, kl_pc))
     print("    TV and KL agree with each other: rho %.4f  p %.3g" % (tv_vs_kl, tv_kl_p))
-    verdict = ("TRANSFERS" if (np.isfinite(rho) and rho > 0 and pval < 0.05)
-               else "DOES NOT TRANSFER")
+    # A DETECTOR FLAGS; ONLY A READING CONCLUDES. The first version of this line printed
+    # "DOES NOT TRANSFER" from the TV correlation alone, and that verdict turned out to be an
+    # artefact of the divergence: the same 256 removals give p = 0.053 against TV and
+    # p = 5.25e-08 against KL. A label that flips on a choice the reader cannot see is worse
+    # than no label, so the verdict now names its measure and REFUSES to conclude when the two
+    # measures disagree about significance.
+    def _sig(r, pv):
+        return bool(np.isfinite(r) and r > 0 and pv < 0.05)
+    sig_tv, sig_kl = _sig(rho, pval), _sig(kl_rho, kl_p)
+    if sig_tv and sig_kl:
+        verdict = "TRANSFERS (both measures)"
+    elif not sig_tv and not sig_kl:
+        verdict = "DOES NOT TRANSFER (both measures)"
+    else:
+        verdict = ("MEASURE-DEPENDENT - significant against %s and not against %s, so this is "
+                   "a fact about the damage measure and NOT a verdict about the gate"
+                   % ("KL" if sig_kl else "TV", "TV" if sig_kl else "KL"))
     print("  gate vs damage: rho %.4f  p %.3g  n %d   -> %s" % (rho, pval, n, verdict))
     print("  a    vs damage: rho %.4f  p %.3g" % (rho_a, p_a))
     print("  c    vs damage: rho %.4f  p %.3g" % (rho_c, p_c))
@@ -414,6 +429,24 @@ def selftest() -> int:
     ag = agreement(pP, pP, mask)
     _plant("agreement against itself is not perfect",
            ag["top1_agreement"] == 1.0 and ag["total_variation"] < 1e-12)
+
+    # 5. THE MEASURE-DEPENDENT REFUSAL must be reachable, or the verdict would quietly pick
+    #    one divergence and call it the answer - which is what it did before, and the two
+    #    measures really do disagree on this lane's own data (p 0.053 against TV, 5.25e-08
+    #    against KL over the same 256 removals).
+    def _sigp(r, pv):
+        return bool(np.isfinite(r) and r > 0 and pv < 0.05)
+    cases = [(0.33, 1e-8, 0.12, 0.053, "MEASURE-DEPENDENT"),
+             (0.33, 1e-8, 0.30, 1e-6, "TRANSFERS"),
+             (0.01, 0.8, 0.02, 0.7, "DOES NOT TRANSFER")]
+    got = []
+    for kr, kp, tr, tp, want in cases:
+        a_, b_ = _sigp(tr, tp), _sigp(kr, kp)
+        v = ("TRANSFERS" if (a_ and b_) else
+             "DOES NOT TRANSFER" if (not a_ and not b_) else "MEASURE-DEPENDENT")
+        got.append((v, want))
+    _plant("the verdict does not reach all three of its own outcomes: %s"
+           % [g for g, w in got], all(g == w for g, w in got))
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:

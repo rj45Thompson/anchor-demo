@@ -453,12 +453,40 @@ median 0.00971).
 | `a` alone (addressability) | **0.3344** | **4.19e-08** | 256 |
 | `c` alone (crowding) | **0.3459** | **1.31e-08** | 256 |
 
-**The composite gate does not predict which neuron matters; its two components each do,
-strongly.** The reason is mechanical: `a` and `c` both correlate POSITIVELY with damage, and the
-gate subtracts them, so the subtraction cancels the signal. Against the pre-registered bar
-(p < 0.05) the verdict is **DOES NOT TRANSFER** for the gate, and a clear positive for `a` and
-`c` used separately. That is a result for the ratchet lane: for predicting removal damage, use
-`a` and `c`, not `g(a - c)`.
+### That verdict was an artefact of the damage measure, and the ratchet lane's question caught it
+
+The ratchet lane asked for one line distinguishing this lane's mean TOTAL VARIATION from the KL
+at the read position that it uses. Measuring it instead of writing the line **flipped the
+headline null.** The same 256 removals, scored both ways:
+
+| predictor | vs mean TV | vs KL at the read position |
+|---|---|---|
+| **gate = g(a - c)** | rho 0.1210, **p 0.0532** | rho 0.3321, **p 5.25e-08** |
+| `a` alone | rho 0.3344, p 4.19e-08 | rho 0.6125, p 9.37e-28 |
+| `c` alone | rho 0.3459, p 1.31e-08 | rho 0.6234, p 5.75e-29 |
+
+and TV and KL agree with each other at **rho 0.9060** (p 8.09e-97). So the two measures rank the
+removals almost identically, and yet the gate's verdict flips across the pre-registered 0.05 bar
+depending on which one is used. **"DOES NOT TRANSFER" is withdrawn as stated.** It was a fact
+about a choice of divergence that no reader of the original table could see.
+
+What survives both measures, and is the real finding: **`a` and `c` each predict removal damage
+about twice as strongly as the composite gate** - 0.61 and 0.62 against 0.33 under KL, 0.33 and
+0.35 against 0.12 under TV. So "for predicting what a removal costs, use the two halves rather
+than the combination" holds; "the gate predicts nothing" does not.
+
+The code was changed, not just the prose: `shrink.py`'s verdict now names the measure it rests
+on and reports **MEASURE-DEPENDENT** - refusing to conclude - when the two disagree, with a plant
+proving all three outcomes are reachable. A label that flips on a choice the reader cannot see is
+worse than no label.
+
+---
+
+**The mechanism behind the gap is unchanged and holds under both measures:** the composite gate
+predicts worse than its parts because `a` and `c` both correlate POSITIVELY with damage and the
+gate SUBTRACTS them, so the subtraction cancels signal. What does not survive is the stronger
+conclusion drawn from TV alone. The usable result for the ratchet lane is the narrower one: for
+predicting what a removal costs, use `a` and `c` separately, not `g(a - c)`.
 
 ### The faithfulness check that outcome alone cannot give
 

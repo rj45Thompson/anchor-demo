@@ -1,0 +1,55 @@
+{
+ "name": "ttt_big",
+ "layer": 3,
+ "lambda": 1.0,
+ "seed": 19,
+ "rows": [
+  {
+   "n": 8,
+   "mean_pairwise_cosine": 0.25557390680049075,
+   "median_a": 249.66791411169123,
+   "median_c": 4.582138730053104,
+   "mean_crowding_fraction": 0.03269156631830765,
+   "objective_full_set": 1.0,
+   "saturated": true,
+   "headroom": 0.0,
+   "headroom_why": "the full joint solve already installs every edit, so headroom is zero by CEILING and not by optimality. The claim is NOT tested at this size."
+  },
+  {
+   "n": 32,
+   "mean_pairwise_cosine": 0.27710251794262275,
+   "median_a": 246.34435062611706,
+   "median_c": 26.68325708374534,
+   "mean_crowding_fraction": 0.11121774546247276,
+   "objective_full_set": 1.0,
+   "saturated": true,
+   "headroom": 0.0,
+   "headroom_why": "the full joint solve already installs every edit, so headroom is zero by CEILING and not by optimality. The claim is NOT tested at this size."
+  },
+  {
+   "n": 64,
+   "mean_pairwise_cosine": 0.28453327279012935,
+   "median_a": 247.07055004810368,
+   "median_c": 51.76516966706482,
+   "mean_crowding_fraction": 0.22414512654645607,
+   "objective_full_set": 1.0,
+   "saturated": true,
+   "headroom": 0.0,
+   "headroom_why": "the full joint solve already installs every edit, so headroom is zero by CEILING and not by optimality. The claim is NOT tested at this size."
+  },
+  {
+   "n": 128,
+   "mean_pairwise_cosine": 0.2854438883889348,
+   "median_a": 243.68540366609486,
+   "median_c": 115.40672125731327,
+   "mean_crowding_fraction": 0.4707686057240548,
+   "objective_full_set": 1.0,
+   "saturated": true,
+   "headroom": 0.0,
+   "headroom_why": "the full joint solve already installs every edit, so headroom is zero by CEILING and not by optimality. The claim is NOT tested at this size."
+  }
+ ],
+ "claim_under_test": "REFUSING to include something never beats including it; headroom was exactly zero (the ratchet lane, 4 keys, one gpt2 layer, one lambda, one model)",
+ "sizes_that_actually_tested_it": [],
+ "verdict": "NOT TESTABLE HERE - the joint solve installs every edit at every size tried, so headroom is zero by ceiling"
+}
