@@ -114,6 +114,18 @@ OBSTACLES = {
                    mitigation="MEASURED AND NOW CROSSED: at 256 keys in a 256-dimensional key "
                               "space, crowding reached 0.9354 and Efficacy fell to 0.945 with "
                               "intervals separated from perfect.")],
+    "E4.4": [dict(say="The answer SET itself can be incomplete, and not only by missing a "
+                      "surface alias: a GRANULARITY MISMATCH - a correct answer at a different "
+                      "level of specificity, absent from the set's vocabulary entirely - "
+                      "passes every alias detector either lane had.",
+                  mitigation="NONE. The node was un-settled on this. Counting against the set "
+                             "is necessary and is not sufficient while the set can be wrong."),
+             dict(say="A node can be SETTLED on evidence that later weakens, and this gate "
+                      "would not catch it: it checks that a settled node has a PLANT, not that "
+                      "the plant still covers what the node claims. The first instance was "
+                      "this very node, caught by another lane rather than by the gate.",
+                  mitigation="REGISTERED, NOT BUILT: the periodic re-evaluation mechanism. "
+                             "This obstacle is its motivating case.")],
     "E1.2": [dict(say="Preservation is always measured on a SAMPLE, and the sample can report "
                       "health while the unsampled complement is destroyed.",
                   mitigation="PARTIAL. In this setting the complement is finite and fully "
@@ -154,6 +166,37 @@ def resolve_link(fname, needle, lane="gatefly"):
     return True, "ok"
 
 
+# «refine»: the goal node is OPERATIONALISED by this use case step or requirement, in
+# gatefly/UC_GATEFLY.md. This is the half of the bridge that was missing: the goal tree and the
+# use case model were two unconnected descriptions of the same work, so a use case step could
+# be written, the goal move on, and the step never be revisited. A refine-link resolves against
+# the UC file by symbol, exactly like the others.
+UC_FILE = "UC_GATEFLY.md"
+REFINE = {
+    "E4.1": ["UC-GF-1", "REQ-GF-1a"],
+    "E4.2": ["UC-GF-3", "REQ-GF-3a"],
+    "E4.3": ["REQ-GF-2c", "REQ-GF-2d"],
+    "E4.4": ["REQ-GF-4a"],
+    "E3a": ["UC-GF-3", "REQ-GF-3b"],
+    "E3b": ["UC-GF-3", "REQ-GF-3c"],
+    "E3d": ["UC-GF-5", "REQ-GF-5a", "REQ-GF-5c"],
+    "E3a.1": ["UC-GF-5", "REQ-GF-5b"],
+    "E2.1": ["UC-GF-2", "REQ-GF-2b"],
+    "E1.1": ["UC-GF-1"],
+    "E1.3": ["REQ-GF-4a"],
+}
+
+# The bridge has four joins. A join with nothing in it is not "clean", it is UNBUILT, and the
+# check below reports the difference rather than letting an empty table read as full coverage.
+BRIDGE = {
+    "goal -> artefact  («satisfy»)": lambda: SATISFY,
+    "goal -> plant     («verify»)": lambda: VERIFY,
+    "goal -> use case  («refine»)": lambda: REFINE,
+    "obstacle -> its mitigation": lambda: {k: [o for o in v if o.get("mitigation")]
+                                           for k, v in OBSTACLES.items()},
+}
+
+
 # Which lane each linked artefact belongs to. A link into ANOTHER lane refuses THIS lane's
 # commit and only REPORTS to the lane that moved the symbol - never the reverse. The ratchet
 # lane's condition, and it is right: otherwise this lane's model of the problem becomes a veto
@@ -172,7 +215,12 @@ def gap_map():
         sat = SATISFY.get(nid, [])
         ver = VERIFY.get(nid, [])
         obs = OBSTACLES.get(nid, [])
+        ref = REFINE.get(nid, [])
         broken, foreign = [], []
+        for sym in ref:
+            good, why = resolve_link(UC_FILE, sym)
+            if not good:
+                broken.append(("refine", why))
         for kind, items in (("satisfy", sat), ("verify", ver)):
             for fn, sym in items:
                 good, why = resolve_link(fn, sym, lane_of(fn))
@@ -189,12 +237,32 @@ def gap_map():
                 gaps.append("UNREALISED - no «satisfy» link to anything that does it")
             if not ver:
                 gaps.append("UNTESTED - no «verify» link to a plant that could fail")
+            if not ref:
+                gaps.append("UNOPERATIONALISED - no «refine» link to a use case step")
         if not obs:
             gaps.append("UNANALYSED - its negation has never been refined (no KAOS obstacle)")
         rows.append(dict(depth=depth, node=nid, kind=v["kind"], solved=ok, say=v["say"],
-                         satisfy=len(sat), verify=len(ver), obstacles=len(obs),
+                         satisfy=len(sat), verify=len(ver), refine=len(ref),
+                         obstacles=len(obs),
                          gaps=gaps, broken=broken, foreign=foreign,
                          examined=EXAMINED.get(nid)))
+    return rows
+
+
+def bridge_report():
+    """Is the bridge actually bridged? Per join: how many nodes use it, and does it resolve.
+
+    "Keep an eye on that" (RJ) means this is a standing readout rather than a one-off. A join
+    with an empty table is UNBUILT, which is a different statement from a join whose links all
+    resolve, and the two must never print the same.
+    """
+    rows = []
+    for name, get in BRIDGE.items():
+        table = get()
+        used = [k for k, v in table.items() if v]
+        rows.append({"join": name, "nodes_using_it": len(used),
+                     "of_nodes": len(NODES),
+                     "state": "UNBUILT" if not used else "in use"})
     return rows
 
 
@@ -327,6 +395,11 @@ if __name__ == "__main__":
               "grid - a limitation in a docstring is one nobody acts on" % (len(miss), tot))
     except Exception as ex:
         print("  could not count unreached fields: %r" % (ex,))
+    print()
+    print("  THE BRIDGE - four joins between KAOS refinement and UML traceability:")
+    for b in bridge_report():
+        print("    %-34s %-8s %2d of %d nodes"
+              % (b["join"], b["state"], b["nodes_using_it"], b["of_nodes"]))
     if broken:
         print("\n  BROKEN LINKS - a traceability claim that does not resolve:")
         for nid, bs in broken:

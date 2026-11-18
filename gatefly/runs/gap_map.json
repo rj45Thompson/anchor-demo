@@ -8,6 +8,7 @@
    "say": "A PERFECT EDITOR: install any requested behavioural change exactly, disturb nothing else, reliably, at any scale, repeatedly.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
@@ -24,6 +25,7 @@
    "say": "SPECIFY the change exactly: say what must become true and what must not move.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
@@ -40,6 +42,7 @@
    "say": "Enumerate what SHOULD change as a consequence of the new fact.",
    "satisfy": 1,
    "verify": 0,
+   "refine": 1,
    "obstacles": 0,
    "gaps": [
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
@@ -57,10 +60,12 @@
    "say": "Enumerate what should NOT change. The complement is unbounded.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 1,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
-    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step"
    ],
    "broken": [],
    "foreign": [],
@@ -74,6 +79,7 @@
    "say": "Pin the target's surface forms: aliases, paraphrases, equally-correct answers.",
    "satisfy": 0,
    "verify": 1,
+   "refine": 1,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
@@ -91,6 +97,7 @@
    "say": "LOCATE where in the weights the change must go.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
@@ -107,6 +114,7 @@
    "say": "Knowledge is distributed, not localised - superposition.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 2,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
@@ -125,10 +133,12 @@
    "say": "Attribution is unreliable at depth.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
    "broken": [],
@@ -143,10 +153,12 @@
    "say": "The site (which layer, which matrix) is a free parameter with no principled selection rule.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
    "broken": [],
@@ -161,6 +173,7 @@
    "say": "INSTALL the change. ANY mechanism that installs exactly would settle this.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
@@ -177,6 +190,7 @@
    "say": "A closed-form ridge edit (MEMIT-style) that installs exactly.",
    "satisfy": 1,
    "verify": 0,
+   "refine": 2,
    "obstacles": 1,
    "gaps": [],
    "broken": [],
@@ -191,6 +205,7 @@
    "say": "Interference: writes share dimensions, so each one lands short.",
    "satisfy": 1,
    "verify": 2,
+   "refine": 2,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
@@ -207,10 +222,12 @@
    "say": "The solve is linear; the behaviour it must produce is not.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
    "broken": [],
@@ -225,10 +242,12 @@
    "say": "Capacity: p keys in H dimensions must collide once p approaches H.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 1,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
-    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step"
    ],
    "broken": [],
    "foreign": [],
@@ -242,6 +261,7 @@
    "say": "Retraining on corrected data.",
    "satisfy": 1,
    "verify": 0,
+   "refine": 2,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
@@ -258,10 +278,12 @@
    "say": "Catastrophic forgetting when training on the corrected items.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
    "broken": [],
@@ -276,10 +298,12 @@
    "say": "Dilution: corrected items are a vanishing fraction of the corpus.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
    "broken": [],
@@ -294,10 +318,12 @@
    "say": "Cost: retraining a set is not a 160 KB delta.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
    "broken": [],
@@ -312,10 +338,12 @@
    "say": "Alternate a closed-form edit with training CONFINED to an isolated subspace.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNOPERATIONALISED - no \u00abrefine\u00bb link to a use case step",
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
    ],
    "broken": [],
@@ -330,6 +358,7 @@
    "say": "Change WHICH neurons exist, chosen by the gate pattern, so the maths stops overlapping.",
    "satisfy": 2,
    "verify": 1,
+   "refine": 3,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
@@ -346,6 +375,7 @@
    "say": "VERIFY the result: know whether the edit did what was asked and nothing else.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 0,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
@@ -362,6 +392,7 @@
    "say": "An oracle for what should and should not have changed.",
    "satisfy": 2,
    "verify": 2,
+   "refine": 2,
    "obstacles": 1,
    "gaps": [],
    "broken": [],
@@ -376,6 +407,7 @@
    "say": "Rulers that actually resolve: that separate a good editor from a bad one.",
    "satisfy": 0,
    "verify": 0,
+   "refine": 2,
    "obstacles": 2,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
@@ -393,6 +425,7 @@
    "say": "Measures whose scale or resolution does not track the thing being varied.",
    "satisfy": 2,
    "verify": 2,
+   "refine": 2,
    "obstacles": 2,
    "gaps": [],
    "broken": [],
@@ -407,6 +440,7 @@
    "say": "Correctness judged against the SET of right answers, not one of them.",
    "satisfy": 1,
    "verify": 1,
+   "refine": 1,
    "obstacles": 0,
    "gaps": [
     "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
