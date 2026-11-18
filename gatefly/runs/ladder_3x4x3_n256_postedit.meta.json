@@ -1,0 +1,833 @@
+{
+ "format": "priorgpt f16 blob + element offsets, as priorgpt/data/meta.json",
+ "hyper": {
+  "vocab": 13,
+  "block_size": 13,
+  "n_embed": 64,
+  "n_heads": 4,
+  "n_layers": 4,
+  "dropout": 0.0,
+  "mult": 4
+ },
+ "parameters": 201805,
+ "elements": 201805,
+ "weights": [
+  {
+   "name": "token_embedding_table.weight",
+   "shape": [
+    13,
+    64
+   ],
+   "offset": 0,
+   "count": 832
+  },
+  {
+   "name": "position_embedding_table.weight",
+   "shape": [
+    13,
+    64
+   ],
+   "offset": 832,
+   "count": 832
+  },
+  {
+   "name": "blocks.0.sa.heads.0.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 1664,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.0.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 2688,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.0.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 3712,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.1.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 4736,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.1.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 5760,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.1.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 6784,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.2.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 7808,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.2.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 8832,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.2.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 9856,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.3.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 10880,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.3.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 11904,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.heads.3.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 12928,
+   "count": 1024
+  },
+  {
+   "name": "blocks.0.sa.proj.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 13952,
+   "count": 4096
+  },
+  {
+   "name": "blocks.0.sa.proj.bias",
+   "shape": [
+    64
+   ],
+   "offset": 18048,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ffwd.net.0.weight",
+   "shape": [
+    256,
+    64
+   ],
+   "offset": 18112,
+   "count": 16384
+  },
+  {
+   "name": "blocks.0.ffwd.net.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 34496,
+   "count": 256
+  },
+  {
+   "name": "blocks.0.ffwd.net.2.weight",
+   "shape": [
+    64,
+    256
+   ],
+   "offset": 34752,
+   "count": 16384
+  },
+  {
+   "name": "blocks.0.ffwd.net.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 51136,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ln1.weight",
+   "shape": [
+    64
+   ],
+   "offset": 51200,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ln1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 51264,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ln2.weight",
+   "shape": [
+    64
+   ],
+   "offset": 51328,
+   "count": 64
+  },
+  {
+   "name": "blocks.0.ln2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 51392,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.sa.heads.0.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 51456,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.0.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 52480,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.0.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 53504,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.1.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 54528,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.1.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 55552,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.1.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 56576,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.2.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 57600,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.2.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 58624,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.2.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 59648,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.3.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 60672,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.3.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 61696,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.heads.3.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 62720,
+   "count": 1024
+  },
+  {
+   "name": "blocks.1.sa.proj.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 63744,
+   "count": 4096
+  },
+  {
+   "name": "blocks.1.sa.proj.bias",
+   "shape": [
+    64
+   ],
+   "offset": 67840,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ffwd.net.0.weight",
+   "shape": [
+    256,
+    64
+   ],
+   "offset": 67904,
+   "count": 16384
+  },
+  {
+   "name": "blocks.1.ffwd.net.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 84288,
+   "count": 256
+  },
+  {
+   "name": "blocks.1.ffwd.net.2.weight",
+   "shape": [
+    64,
+    256
+   ],
+   "offset": 84544,
+   "count": 16384
+  },
+  {
+   "name": "blocks.1.ffwd.net.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 100928,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ln1.weight",
+   "shape": [
+    64
+   ],
+   "offset": 100992,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ln1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 101056,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ln2.weight",
+   "shape": [
+    64
+   ],
+   "offset": 101120,
+   "count": 64
+  },
+  {
+   "name": "blocks.1.ln2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 101184,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.sa.heads.0.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 101248,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.0.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 102272,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.0.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 103296,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.1.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 104320,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.1.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 105344,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.1.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 106368,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.2.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 107392,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.2.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 108416,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.2.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 109440,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.3.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 110464,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.3.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 111488,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.heads.3.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 112512,
+   "count": 1024
+  },
+  {
+   "name": "blocks.2.sa.proj.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 113536,
+   "count": 4096
+  },
+  {
+   "name": "blocks.2.sa.proj.bias",
+   "shape": [
+    64
+   ],
+   "offset": 117632,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ffwd.net.0.weight",
+   "shape": [
+    256,
+    64
+   ],
+   "offset": 117696,
+   "count": 16384
+  },
+  {
+   "name": "blocks.2.ffwd.net.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 134080,
+   "count": 256
+  },
+  {
+   "name": "blocks.2.ffwd.net.2.weight",
+   "shape": [
+    64,
+    256
+   ],
+   "offset": 134336,
+   "count": 16384
+  },
+  {
+   "name": "blocks.2.ffwd.net.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 150720,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ln1.weight",
+   "shape": [
+    64
+   ],
+   "offset": 150784,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ln1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 150848,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ln2.weight",
+   "shape": [
+    64
+   ],
+   "offset": 150912,
+   "count": 64
+  },
+  {
+   "name": "blocks.2.ln2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 150976,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.sa.heads.0.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 151040,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.0.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 152064,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.0.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 153088,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.1.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 154112,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.1.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 155136,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.1.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 156160,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.2.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 157184,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.2.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 158208,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.2.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 159232,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.3.key.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 160256,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.3.query.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 161280,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.heads.3.value.weight",
+   "shape": [
+    16,
+    64
+   ],
+   "offset": 162304,
+   "count": 1024
+  },
+  {
+   "name": "blocks.3.sa.proj.weight",
+   "shape": [
+    64,
+    64
+   ],
+   "offset": 163328,
+   "count": 4096
+  },
+  {
+   "name": "blocks.3.sa.proj.bias",
+   "shape": [
+    64
+   ],
+   "offset": 167424,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ffwd.net.0.weight",
+   "shape": [
+    256,
+    64
+   ],
+   "offset": 167488,
+   "count": 16384
+  },
+  {
+   "name": "blocks.3.ffwd.net.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 183872,
+   "count": 256
+  },
+  {
+   "name": "blocks.3.ffwd.net.2.weight",
+   "shape": [
+    64,
+    256
+   ],
+   "offset": 184128,
+   "count": 16384
+  },
+  {
+   "name": "blocks.3.ffwd.net.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 200512,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ln1.weight",
+   "shape": [
+    64
+   ],
+   "offset": 200576,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ln1.bias",
+   "shape": [
+    64
+   ],
+   "offset": 200640,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ln2.weight",
+   "shape": [
+    64
+   ],
+   "offset": 200704,
+   "count": 64
+  },
+  {
+   "name": "blocks.3.ln2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 200768,
+   "count": 64
+  },
+  {
+   "name": "ln_f.weight",
+   "shape": [
+    64
+   ],
+   "offset": 200832,
+   "count": 64
+  },
+  {
+   "name": "ln_f.bias",
+   "shape": [
+    64
+   ],
+   "offset": 200896,
+   "count": 64
+  },
+  {
+   "name": "lm_head.weight",
+   "shape": [
+    13,
+    64
+   ],
+   "offset": 200960,
+   "count": 832
+  },
+  {
+   "name": "lm_head.bias",
+   "shape": [
+    13
+   ],
+   "offset": 201792,
+   "count": 13
+  }
+ ],
+ "rung": "3,4,3",
+ "note": "AFTER the edit"
+}

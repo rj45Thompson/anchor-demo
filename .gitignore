@@ -17,3 +17,9 @@ agentbox/.srv.err
 # The CHECKPOINTS are kept: harness/gatefly RUNS them in the browser, so without
 # them the page draws the gates but cannot play the game.
 gatefly/data/ttt_games.npz
+
+# gatefly: the offline fixture set is a CACHE, rebuilt in 14.6 s by
+# `py -X utf8 -I gatefly/offline.py --build --name <net>`, and it is 3 MB per net.
+# It carries a content hash of its checkpoint and REFUSES on a mismatch, so a stale
+# copy cannot be used silently - which is also why it does not need to be in git.
+gatefly/data/offline/
