@@ -279,6 +279,109 @@ def check_run(path, axis):
     return rows
 
 
+# ---------------------------------------------------------------- the net for undeclared measures
+# The ratchet lane built a file-level scan and, comparing the two, argued that declaring a
+# measure's step AT THE SOURCE is the better placement - a declaration cannot drift from the
+# measure the way an inference from a recorded count can - but that its file scan is worth
+# keeping as a NET for measures nobody declared. That is right: everything above is correct
+# about DECLARED measures and silent about a number that appears in a result file and was never
+# put in the grid, which is the likeliest way the next instance arrives.
+MEASURE_SHAPED = ("efficacy", "rate", "fraction", "ratio", "accuracy", "competence",
+                  "precision", "recall", "score", "agreement", "preservation", "ifr",
+                  "propagation", "share", "prob")
+# Fields that LOOK measure-shaped and are deliberately not measures. Listed in the open so a
+# reader can disagree, per the repo's rule about hand-written help being visible.
+NOT_MEASURES = {"lambda", "ridge_scale", "cov_cond", "cond_C", "cond_I_plus_A", "resolution",
+                "mean_target_p", "per_case_target_p", "delta_fro", "site_lambda",
+                "solve_seconds", "train_seconds", "seconds", "final_loss", "loss"}
+
+
+# The same measure is written under many names across the run files, and the grid declared each
+# one under a single canonical spelling - so it was silently covering almost nothing. The net
+# found 27 undeclared measure-shaped fields on its first run over this lane's own output,
+# including `Efficacy_p_gt_0.5` with a capital E, which is the SAME measure as the declared
+# `efficacy_p_gt_0.5` and was invisible to the guard. Aliases are therefore declared, and the
+# net reports only what is genuinely new.
+ALIASES = {
+    "Efficacy_p_gt_0.5": "efficacy_p_gt_0.5",
+    "Efficacy_n": "efficacy_p_gt_0.5",
+    "efficacy_legal_renormalised": "efficacy_legal_renormalised",
+    "competence_train": "competence_set_valued",
+    "competence_holdout": "competence_set_valued",
+    "competence_after": "competence_set_valued",
+    "competence_after_edit": "competence_set_valued",
+    "competence_drop": "competence_set_valued",
+    "optimal_rate": "competence_set_valued",
+    "optimal_rate_all_positions": "competence_set_valued",
+    "optimal_rate_child": "competence_set_valued",
+    "optimal_rate_parent": "competence_set_valued",
+    "optimal_rate_4520_boards": "competence_set_valued",
+    "optimal_rate_after_4520_boards": "competence_set_valued",
+    "final_optimal_rate_on_all_prefixes": "competence_set_valued",
+    "mean_crowding_fraction": "crowding_fraction_c_over_a",
+    "crowding_fraction": "crowding_fraction_c_over_a",
+    "median_crowding_fraction": "crowding_fraction_c_over_a",
+    "Preservation": "preservation_eq7_mean",
+    "Preservation_kept": "preservation_eq7_mean",
+    "Preservation_excluded": "preservation_eq7_mean",
+    "left_optimal_set": "movement_count_set_valued",
+    "swapped_within_optimal_set": "movement_count_set_valued",
+    "changed_argmax": "movement_count_set_valued",
+    "spearman_rho": "spearman_rho",
+    # genuinely NOT yet declared, and named here so the gap is visible rather than quiet:
+    # IFR, Propagation, top1_agreement, top1_agreement_one_best_only, measured_one_hot_ratio,
+    # hot_fraction_of_batch, net_scored. Each needs its carriers and step worked out before any
+    # comparison across an axis is made with it.
+}
+
+
+def canonical(name):
+    """The declared measure a recorded field is an instance of, or None."""
+    if name in MEASURES:
+        return name
+    return ALIASES.get(name)
+
+
+def scan_runs(folder=None):
+    """Numeric fields in the run files that look like measures and are NOT declared.
+
+    Returns (undeclared, scanned_files). A hit is a CANDIDATE, not a verdict: the whole point
+    of the grid is that only a declaration settles what a measure's scale and step are, so this
+    reports what has never been adjudicated rather than adjudicating it.
+    """
+    folder = folder or os.path.join(HERE, "runs")
+    found = {}
+    files = []
+    if not os.path.isdir(folder):
+        return found, files
+    for fn in sorted(os.listdir(folder)):
+        if not fn.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(folder, fn), encoding="utf-8") as f:
+                doc = json.load(f)
+        except (OSError, ValueError):
+            continue
+        files.append(fn)
+
+        def walk(o):
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    if isinstance(v, (int, float)) and not isinstance(v, bool):
+                        kl = k.lower()
+                        if (any(t in kl for t in MEASURE_SHAPED)
+                                and canonical(k) is None
+                                and k not in RESOLUTION
+                                and k not in NOT_MEASURES):
+                            found.setdefault(k, set()).add(fn)
+                    walk(v)
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v)
+        walk(doc)
+    return {k: sorted(v) for k, v in found.items()}, files
+
+
 def selftest() -> int:
     fails, checked = [], []
     print("PLANTS")
@@ -363,6 +466,25 @@ def selftest() -> int:
     #    every measure in the grid must have a declared resolution, or the axis has holes
     missing = [m for m in MEASURES if m not in RESOLUTION]
     _plant("measures with no declared resolution: %s" % missing, not missing)
+
+    # 7. THE NET must catch an undeclared measure-shaped field and must NOT flag a declared
+    #    one. Built against a file written for the purpose, so the plant does not depend on
+    #    whatever happens to be in runs/ today.
+    import tempfile
+    td = tempfile.mkdtemp()
+    with open(os.path.join(td, "x.json"), "w", encoding="utf-8") as f:
+        json.dump({"efficacy_p_gt_0.5": 1.0,          # declared: must NOT be flagged
+                   "some_new_rate": 0.5,              # undeclared: MUST be flagged
+                   "nested": {"other_fraction": 0.2}, # undeclared, nested: MUST be flagged
+                   "lambda": 20000.0,                 # looks numeric, listed as not a measure
+                   "a_label": "efficacy of nothing"}, f)   # a STRING, must not be flagged
+    und, files = scan_runs(td)
+    _plant("the net missed an undeclared measure-shaped field", "some_new_rate" in und)
+    _plant("the net missed a NESTED undeclared field", "other_fraction" in und)
+    _plant("the net flagged a declared measure", "efficacy_p_gt_0.5" not in und)
+    _plant("the net flagged a field listed as not a measure", "lambda" not in und)
+    _plant("the net flagged a string value", "a_label" not in und)
+    _plant("the net reported no files scanned", len(files) == 1)
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
