@@ -185,6 +185,42 @@ def probs_at(model, prefixes, game, device, batch=2048):
     return np.concatenate(out, 0)
 
 
+def efficacies(P, cases, game):
+    """Efficacy under THREE criteria, because one of them is not comparable across rungs.
+
+    The ratchet lane's warning, which this file exists in its present form because of: a measure
+    has to MEAN THE SAME THING at 3,3,3 and at 4,4,4 or a trend across rungs is an artefact of
+    the measure. The published `p > 0.5` is taken over the whole vocabulary, and the vocabulary
+    GROWS with the board - 10 tokens at 3,3,3, 17 at 4,4,4 - so the same concentration of mass
+    reads lower on a bigger board for a reason that has nothing to do with the editor.
+
+      p_gt_0.5        the published convention, kept because it is the benchmark's
+      argmax          the target beats every other token - no threshold, but still harder when
+                      there are more others
+      legal_gt_0.5    p > 0.5 after renormalising over the LEGAL moves at that position, which
+                      removes the vocabulary-size effect and is the one to compare across rungs
+
+    All three are reported at every rung and a break is only called when they agree. Within a
+    rung the MEASURE-DEPENDENT refusal already guards the unstable case; this is that guard
+    applied along the other axis.
+    """
+    raw, arg, leg = [], [], []
+    for i, cs in enumerate(cases):
+        row = P[i]
+        t = int(cs["target"])
+        raw.append(1.0 if float(row[t]) > 0.5 else 0.0)
+        arg.append(1.0 if int(np.argmax(row)) == t else 0.0)
+        board = tuple(cs["board"])
+        legal = [m for m in range(game.cells) if board[m] == 0]
+        z = float(sum(row[m] for m in legal))
+        leg.append(1.0 if (z > 0 and float(row[t]) / z > 0.5) else 0.0)
+    return {"efficacy_p_gt_0.5": float(np.mean(raw)),
+            "efficacy_argmax": float(np.mean(arg)),
+            "efficacy_legal_renormalised": float(np.mean(leg)),
+            "mean_target_p": float(np.mean([float(P[i, int(c["target"])])
+                                            for i, c in enumerate(cases)]))}
+
+
 def pick_cases(items, game, n, rng):
     """n positions with a COUNTERFACTUAL target: a legal move minimax says is NOT optimal."""
     idx = rng.permutation(len(items))
@@ -257,6 +293,8 @@ def edit_and_score(model, cases, items, game, layer, device, lam, cov_n, rng):
     A, _ = GM.gate_matrix(K, C, lam)
     a = np.diag(A).copy()
     c = GM.crowding_all(A)
+    P_pre = probs_at(model, pre_c, game, device)
+    eff_pre = efficacies(P_pre, cases, game)
     R = target_deltas(model, cases, game, layer, device)
     delta = R @ K.T @ np.linalg.inv(lam * C + K @ K.T)
     with torch.no_grad():
@@ -264,13 +302,14 @@ def edit_and_score(model, cases, items, game, layer, device, lam, cov_n, rng):
         W += torch.tensor(delta, dtype=W.dtype, device=W.device)
     P = probs_at(model, pre_c, game, device)
     hits = [float(P[i, cs["target"]]) for i, cs in enumerate(cases)]
-    return {"efficacy_p_gt_0.5": float(np.mean([1.0 if h > 0.5 else 0.0 for h in hits])),
-            "mean_target_p": float(np.mean(hits)), "n_cases": len(cases),
+    eff = efficacies(P, cases, game)
+    return {**eff, "n_cases": len(cases),
             "median_a": float(np.median(a)), "median_c": float(np.median(c)),
             "mean_crowding_fraction": float(np.mean(c / np.maximum(a, 1e-12))),
             "median_gate": float(np.median(GM.g(a - c))),
             "cov_cond": cond, "cov_positions": int(Kc.shape[0] + Kc2.shape[0]),
             "delta_fro": float(np.linalg.norm(delta)),
+            "before_edit": eff_pre,
             "per_case_target_p": [round(h, 6) for h in hits]}
 
 
@@ -299,26 +338,48 @@ def run(args):
                "competence_drop": info["competence_train"] - post_c,
                "net_competent": bool(info["competence_holdout"] >= args.competent_bar)}
         rows.append(row)
-        eff = res.get("efficacy_p_gt_0.5")
+        eff = res.get("efficacy_legal_renormalised")
         print("  %-7s cells %2d  positions %6d  competence train %.4f holdout %.4f  |  "
-              "EFFICACY %s  crowd %.4f  |  competence after %.4f%s"
+              "EFF legal %s raw %s argmax %s  crowd %.4f  |  competence after %.4f%s"
               % (spec, g.cells, info["positions_sampled"], info["competence_train"],
                  info["competence_holdout"],
-                 ("%.4f" % eff) if eff is not None else "REFUSED",
+                 ("%.3f" % eff) if eff is not None else "REF",
+                 ("%.3f" % res["efficacy_p_gt_0.5"]) if eff is not None else "REF",
+                 ("%.3f" % res["efficacy_argmax"]) if eff is not None else "REF",
                  res.get("mean_crowding_fraction", float("nan")), post_c,
                  "" if row["net_competent"] else "   <- NET NOT COMPETENT, editing figures marked"))
-    broke = [r for r in rows
-             if r["net_competent"] and r["edit"].get("efficacy_p_gt_0.5", 1.0) < 1.0]
+    CRITERIA = ("efficacy_p_gt_0.5", "efficacy_argmax", "efficacy_legal_renormalised")
+    def _broke(r, crit):
+        return r["net_competent"] and r["edit"].get(crit, 1.0) < 1.0
+    firsts = {}
+    for crit in CRITERIA:
+        hit = [r["rung"] for r in rows if _broke(r, crit)]
+        firsts[crit] = hit[0] if hit else None
+    agree = len(set(firsts.values())) == 1
+    broke = [r for r in rows if all(_broke(r, c) for c in CRITERIA)]
     doc = {"rungs": rows, "edits_per_rung": args.edits, "lambda": args.lam,
            "net": {"layers": args.layers, "heads": args.heads, "embed": args.embed},
            "held_fixed": "net shape and edit count, so a fall in Efficacy is the TASK getting "
                          "harder and not a smaller model or a bigger edit",
+           "why_competence_is_the_cross_rung_damage_measure":
+               "Damage across rungs is reported as a drop in COMPETENCE - the fraction of "
+               "positions whose argmax is IN the optimal set. That means the same thing at "
+               "3,3,3 and at 4,4,4, which a divergence between move distributions does not: a "
+               "total variation is bounded and compresses as the distribution spreads over a "
+               "bigger board, while a KL does not, so either would turn board size into a "
+               "trend. The set-valued accuracy has no such dependence.",
+           "first_break_per_criterion": firsts,
+           "criteria_agree": agree,
            "first_break": (broke[0]["rung"] if broke else None),
-           "verdict": ("Efficacy first falls below 1.0 at rung %s" % broke[0]["rung"]
-                       if broke else
-                       "Efficacy stayed at 1.0 on every competent rung tried - the editor did "
-                       "NOT break on this ladder, which is a result about its robustness and "
-                       "not a confirmation of anything")}
+           "verdict": (
+               ("Efficacy first falls below 1.0 at rung %s, under ALL THREE criteria"
+                % broke[0]["rung"]) if (broke and agree) else
+               ("MEASURE-DEPENDENT ACROSS RUNGS - the three criteria break at %s, so any trend "
+                "here is partly a property of the measure and no break point is claimed"
+                % firsts) if not agree else
+               "Efficacy stayed at 1.0 on every competent rung tried, under all three criteria "
+               "- the editor did NOT break on this ladder, which is a result about its "
+               "robustness and not a confirmation of anything")}
     os.makedirs(OUT, exist_ok=True)
     p = os.path.join(OUT, "ladder.json")
     with open(p, "w", encoding="utf-8", newline="\n") as f:
@@ -404,7 +465,37 @@ def selftest() -> int:
     _plant("a case's target is illegal or already optimal (%d of %d)" % (bad, len(cases)),
            bad == 0 and len(cases) == 20)
 
-    # 5. the SINGULAR-ridge refusal must be reachable, or a bad rung would be silently edited
+    # 5. THE THREE CRITERIA MUST BE ABLE TO DISAGREE, or the across-rung guard could never
+    #    fire and would be decorative. Built on purpose: a target holding 0.40 of the whole
+    #    vocabulary but 0.80 of the legal moves fails the published p>0.5 and passes the
+    #    renormalised one. This is exactly the vocabulary-growth effect the guard is for.
+    gg = MNK(3, 3, 3)
+    board = (1, 2, 0, 0, 0, 0, 0, 0, 0)        # cells 0 and 1 taken, 7 legal
+    cs = [{"prefix": [0, 1], "target": 2, "board": list(board)}]
+    row = np.zeros(gg.VOCAB)
+    row[2] = 0.40            # the target
+    row[0] = 0.30            # an ILLEGAL cell, holding mass
+    row[gg.BOS] = 0.20       # BOS, also not a legal move
+    row[3] = 0.10
+    e = efficacies(row[None, :], cs, gg)
+    _plant("a target at 0.40 of the vocabulary did not fail the published p>0.5 criterion",
+           e["efficacy_p_gt_0.5"] == 0.0)
+    _plant("the same target at 0.80 of the LEGAL mass did not pass the renormalised criterion",
+           e["efficacy_legal_renormalised"] == 1.0)
+    _plant("the argmax criterion disagreed with the raw probabilities",
+           e["efficacy_argmax"] == 1.0)
+
+    # and the negative control: when no mass sits on illegal tokens the two criteria COINCIDE,
+    # so the gap above is the vocabulary effect and not a bug in the renormalisation.
+    row2 = np.zeros(gg.VOCAB)
+    row2[2] = 0.40
+    row2[3] = 0.35
+    row2[4] = 0.25
+    e2 = efficacies(row2[None, :], cs, gg)
+    _plant("with all mass on legal moves the two criteria still differ",
+           e2["efficacy_p_gt_0.5"] == e2["efficacy_legal_renormalised"] == 0.0)
+
+    # 6. the SINGULAR-ridge refusal must be reachable, or a bad rung would be silently edited
     class FakeC:
         pass
 
