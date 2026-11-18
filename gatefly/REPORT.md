@@ -177,8 +177,34 @@ Retraining the identified items alone - the literal reading of `STATE_OF_ENTAILM
 **Preservation reads 1.13 for a model that has just lost 25.7% of its competence**, and moved in
 the wrong direction while it happened. The do-nothing control reads exactly 1.0000 and the
 matched control 1.0041, so the instrument's null case is clean - it is specifically blind to this
-damage. A mean of unbounded ratios is dominated by the terms that ROSE, which is the same effect
-the v4 lane saw at Preservation 8.47 on its ICE arm and called the wrong way.
+damage.
+
+### And NEITHER would a median have caught it - a correction to this lane's own first answer
+
+The first version of this write-up said a median of the ratios "would have caught it". The v4
+lane ran the mechanism over its own record and reported that a median catches nothing on its five
+weight-edit arms (mean/median 0.89 to 1.02), because the fault there is CANCELLATION rather than
+skew. That prompted the same test here, and it is worse than they knew - the median fails on THIS
+lane's data too. `gatefly/preservation_shape.py`, the same E_ind, n = 800 probes:
+
+| arm | Eq.7 mean | median | p10 | frac < 0.9 | **changed-argmax** | competence (oracle) |
+|---|---|---|---|---|---|---|
+| `control` | 1.0000 | 1.0000 | 1.0000 | 0.00 | **0.0000** | 1.0000 |
+| `memit` | 1.0094 | 1.0000 | 0.9561 | 0.06 | **0.1250** | 0.9998 |
+| **`retrain`** | **1.1156** | **0.9906** | **0.0041** | **0.43** | **0.5050** | **0.7429** |
+| `corpus_w` | 1.0020 | 1.0000 | 0.9806 | 0.00 | **0.1412** | 0.9998 |
+
+**The median reads 0.9906 - within one percent of untouched - for the arm that destroyed a
+quarter of the model.** So "a median would have caught it" was wrong, and wrong on the data it
+was written from. What does catch it: the tenth percentile (0.0041), the fraction below 0.9
+(0.43), and above all the **count of movement**, which separates `retrain` from `memit` by 4x
+(0.5050 against 0.1250) where the median separates them by 0.9%.
+
+**One honest limit on the movement count**, which this setting can see and a knowledge benchmark
+cannot: `memit` moves 12.5% of argmaxes while costing 0.02% of competence, because many
+tic-tac-toe positions have SEVERAL optimal moves and swapping between them is not damage. So a
+changed-argmax fraction is an UPPER BOUND on damage, not a measure of it. Its ordering is right
+and its level over-reports wherever answers can tie.
 
 ### "Retraining the corrected set" is not one method - it is a spectrum, and the ends fail oppositely
 

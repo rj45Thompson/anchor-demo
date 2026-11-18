@@ -1,0 +1,67 @@
+{
+ "name": "ttt_big",
+ "size": 1,
+ "indirect": 800,
+ "layer": 3,
+ "seed": 19,
+ "rows": [
+  {
+   "n": 800,
+   "excluded": 0,
+   "mean_eq7": 1.0,
+   "median": 1.0,
+   "p10": 1.0,
+   "p90": 1.0,
+   "frac_below_1": 0.0,
+   "frac_below_0.9": 0.0,
+   "mean_over_median": 1.0,
+   "changed_argmax": 0.0,
+   "arm": "control",
+   "competence_after": 1.0
+  },
+  {
+   "n": 800,
+   "excluded": 0,
+   "mean_eq7": 1.00937934163132,
+   "median": 0.9999998807906252,
+   "p10": 0.9560797886855392,
+   "p90": 1.0482293412534036,
+   "frac_below_1": 0.50125,
+   "frac_below_0.9": 0.05625,
+   "mean_over_median": 1.0093794619588146,
+   "changed_argmax": 0.125,
+   "arm": "memit",
+   "competence_after": 0.9997787610619469
+  },
+  {
+   "n": 800,
+   "excluded": 0,
+   "mean_eq7": 1.1155548305248575,
+   "median": 0.9905527079034133,
+   "p10": 0.004148300241515961,
+   "p90": 2.9514768198491357,
+   "frac_below_1": 0.63375,
+   "frac_below_0.9": 0.42625,
+   "mean_over_median": 1.1261943171969329,
+   "changed_argmax": 0.505,
+   "arm": "retrain",
+   "competence_after": 0.7429203539823008
+  },
+  {
+   "n": 800,
+   "excluded": 0,
+   "mean_eq7": 1.0019561060127145,
+   "median": 1.0000007152641504,
+   "p10": 0.9805884906471775,
+   "p90": 1.0253611171992791,
+   "frac_below_1": 0.46625,
+   "frac_below_0.9": 0.00125,
+   "mean_over_median": 1.0019553893499442,
+   "changed_argmax": 0.14125,
+   "arm": "corpus_w",
+   "competence_after": 0.9997787610619469
+  }
+ ],
+ "what": "Eq. 7's ratio set in four shapes plus a movement count, per arm, beside the oracle competence the metric is being judged against.",
+ "sibling_lane": "selfimprove_v4 ran the same mechanism over its own record and found mean/median 0.89-1.02 on its five weight-edit arms, so the median catches nothing there; its fault is cancellation. Its figures are its own and are NOT reproduced here."
+}
