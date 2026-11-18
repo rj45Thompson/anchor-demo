@@ -109,6 +109,12 @@ def competence(model, game, pos_items, device, batch=2048):
 
 
 def train_rung(game, args, device, rng):
+    # SEED TORCH. It was not seeded, so two runs with the same --seed drew different weight
+    # initialisations and produced different nets - the 3,3,3 rung came out at crowd 0.0765 on
+    # one run and 0.0540 on the next. Every figure was still measured correctly; what was wrong
+    # is that the run was not reproducible, and a ladder whose rungs cannot be re-measured
+    # cannot have a rung investigated later.
+    torch.manual_seed(args.seed)
     X, M, O, pos = build(game, args.games, rng, args.policy)
     items = sorted(pos.items())
     cut = int(len(items) * 0.9)
@@ -310,6 +316,17 @@ def edit_and_score(model, cases, items, game, layer, device, lam, cov_n, rng):
             "cov_cond": cond, "cov_positions": int(Kc.shape[0] + Kc2.shape[0]),
             "delta_fro": float(np.linalg.norm(delta)),
             "before_edit": eff_pre,
+            # PER-CASE gate quantities, not just their medians. Without these the question
+            # "is the case that failed the most crowded one?" cannot be asked of a finished
+            # run, and that question is what decides whether a break has a mechanism or a
+            # cause that was never instrumented.
+            "per_case": [{"i": i, "target_p": round(hits[i], 6),
+                          "a": round(float(a[i]), 6), "c": round(float(c[i]), 6),
+                          "gate": round(float(GM.g(a[i] - c[i])), 6),
+                          "crowding_fraction": round(float(c[i] / max(a[i], 1e-12)), 6),
+                          "cleared_half": bool(hits[i] > 0.5),
+                          "prefix_len": len(cases[i]["prefix"])}
+                         for i in range(len(cases))],
             "per_case_target_p": [round(h, 6) for h in hits]}
 
 
@@ -326,7 +343,8 @@ def run(args):
         rng = np.random.default_rng(args.seed)
         model, info, items = train_rung(g, args, dev, rng)
         t_train = time.time() - t0
-        stem0 = os.path.join(OUT, "ladder_%s" % spec.replace(",", "x"))
+        stem0 = os.path.join(OUT, "ladder_%s%s" % (spec.replace(",", "x"),
+                                                   ("_" + args.tag) if args.tag else ""))
         N.save(model, stem0 + "_preedit",
                extra={"rung": spec, "note": "BEFORE any edit", **info})
         cases = pick_cases(items, g, args.edits, np.random.default_rng(args.seed + 7))
@@ -339,7 +357,8 @@ def run(args):
         # budget - can only be run cross-checkpoint, which is weaker than it needs to be.
         # The saved net is POST-EDIT; the pre-edit one is saved beside it, because the control
         # needs the net as it was before anything was installed.
-        stem = os.path.join(OUT, "ladder_%s" % spec.replace(",", "x"))
+        stem = os.path.join(OUT, "ladder_%s%s" % (spec.replace(",", "x"),
+                                                  ("_" + args.tag) if args.tag else ""))
         N.save(model, stem + "_postedit", extra={"rung": spec, "note": "AFTER the edit"})
         row = {"rung": spec, "cells": g.cells, "lines": len(g.LINES),
                "empty_board_value": v, "solve_seconds": round(t_solve, 2),
@@ -391,7 +410,7 @@ def run(args):
                "- the editor did NOT break on this ladder, which is a result about its "
                "robustness and not a confirmation of anything")}
     os.makedirs(OUT, exist_ok=True)
-    p = os.path.join(OUT, "ladder.json")
+    p = os.path.join(OUT, "ladder%s.json" % (("_" + args.tag) if args.tag else ""))
     with open(p, "w", encoding="utf-8", newline="\n") as f:
         json.dump(doc, f, indent=1)
     print("  VERDICT: " + doc["verdict"])
@@ -535,6 +554,7 @@ if __name__ == "__main__":
     ap.add_argument("--policy", default="mixed")
     ap.add_argument("--competent-bar", dest="competent_bar", type=float, default=0.90)
     ap.add_argument("--seed", type=int, default=19)
+    ap.add_argument("--tag", default="", help="suffix for the output files")
     ap.add_argument("--cpu", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
