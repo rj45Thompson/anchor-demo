@@ -49,7 +49,15 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # kind: "AND" (all children necessary) or "OR" (any child sufficient) or "LEAF"
-# status: "settled" | "partial" | "open" | "external"  (external = real but not this lane's)
+# status:
+#   "settled"  solved here AND tested by a plant that can fail
+#   "measured"  there is run evidence but no plant - weaker, and NOT counted as solved
+#   "blocked"   a confirmed OBSTACLE: we know the answer and the answer is "this route fails".
+#               Never counted as solved - the UML/KAOS gap map caught this one, because
+#               "settled" was being used for both "solved" and "confirmed blocker" and
+#               solved() was therefore counting a confirmed blocker TOWARD its parent.
+#   "open"      not known
+#   "external"  real, but not this lane's to settle
 NODES = {
     "E": dict(
         kind="AND", parent=None,
@@ -166,14 +174,14 @@ NODES = {
     "E3b.1": dict(kind="LEAF", parent="E3b",
                   say="Catastrophic forgetting when training on the corrected items.",
                   why="The rest of the model moves with them.",
-                  status="settled",
+                  status="blocked",
                   evidence="Measured: competence 0.7429, 0.8407, 0.7600, 0.6381, 0.6246, "
                            "0.7073 at n = 1 to 32, against 1.0000 before. Settled AS A "
                            "BLOCKER - it is real here, not that it is solved."),
     "E3b.2": dict(kind="LEAF", parent="E3b",
                   say="Dilution: corrected items are a vanishing fraction of the corpus.",
                   why="Train on everything and the correction never lands.",
-                  status="settled",
+                  status="blocked",
                   evidence="Measured: the uniform corrected corpus gives Efficacy 0.0000 at "
                            "n = 1 and 0.3438 at n = 32. Settled as a blocker."),
     "E3b.3": dict(kind="LEAF", parent="E3b",
@@ -324,9 +332,10 @@ def children(nid):
 def solved(nid, _seen=None):
     """AND: every child solved. OR: any child solved. LEAF: status is 'settled'.
 
-    'settled' means SETTLED AS MEASURED HERE, which for several nodes means settled as a
-    BLOCKER - the obstacle is confirmed real, not removed. The tree is about what is known, not
-    about what is fixed.
+    Only "settled" counts. A "blocked" leaf is a CONFIRMED OBSTACLE and must never count
+    toward its parent - that was a real bug here, found by the gap map: two confirmed blockers
+    were marked "settled" and were pushing their AND-parent toward solved. A route known to
+    fail is the opposite of a route that works.
     """
     _seen = _seen or set()
     if nid in _seen:

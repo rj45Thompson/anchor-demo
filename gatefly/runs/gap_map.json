@@ -1,0 +1,372 @@
+{
+ "rows": [
+  {
+   "depth": 0,
+   "node": "E",
+   "kind": "AND",
+   "solved": false,
+   "say": "A PERFECT EDITOR: install any requested behavioural change exactly, disturb nothing else, reliably, at any scale, repeatedly.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 1,
+   "node": "E1",
+   "kind": "AND",
+   "solved": false,
+   "say": "SPECIFY the change exactly: say what must become true and what must not move.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E1.1",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Enumerate what SHOULD change as a consequence of the new fact.",
+   "satisfy": 1,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E1.2",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Enumerate what should NOT change. The complement is unbounded.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 1,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E1.3",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Pin the target's surface forms: aliases, paraphrases, equally-correct answers.",
+   "satisfy": 0,
+   "verify": 1,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 1,
+   "node": "E2",
+   "kind": "AND",
+   "solved": false,
+   "say": "LOCATE where in the weights the change must go.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E2.1",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Knowledge is distributed, not localised - superposition.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E2.2",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Attribution is unreliable at depth.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E2.3",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "The site (which layer, which matrix) is a free parameter with no principled selection rule.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 1,
+   "node": "E3",
+   "kind": "OR",
+   "solved": false,
+   "say": "INSTALL the change. ANY mechanism that installs exactly would settle this.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E3a",
+   "kind": "AND",
+   "solved": false,
+   "say": "A closed-form ridge edit (MEMIT-style) that installs exactly.",
+   "satisfy": 1,
+   "verify": 0,
+   "obstacles": 1,
+   "gaps": [],
+   "broken": []
+  },
+  {
+   "depth": 3,
+   "node": "E3a.1",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Interference: writes share dimensions, so each one lands short.",
+   "satisfy": 1,
+   "verify": 2,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 3,
+   "node": "E3a.2",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "The solve is linear; the behaviour it must produce is not.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 3,
+   "node": "E3a.3",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Capacity: p keys in H dimensions must collide once p approaches H.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 1,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E3b",
+   "kind": "AND",
+   "solved": false,
+   "say": "Retraining on corrected data.",
+   "satisfy": 1,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 3,
+   "node": "E3b.1",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Catastrophic forgetting when training on the corrected items.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 3,
+   "node": "E3b.2",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Dilution: corrected items are a vanishing fraction of the corpus.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 3,
+   "node": "E3b.3",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Cost: retraining a set is not a 160 KB delta.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E3c",
+   "kind": "OR",
+   "solved": false,
+   "say": "Alternate a closed-form edit with training CONFINED to an isolated subspace.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail",
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E3d",
+   "kind": "OR",
+   "solved": false,
+   "say": "Change WHICH neurons exist, chosen by the gate pattern, so the maths stops overlapping.",
+   "satisfy": 2,
+   "verify": 1,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 1,
+   "node": "E4",
+   "kind": "AND",
+   "solved": false,
+   "say": "VERIFY the result: know whether the edit did what was asked and nothing else.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E4.1",
+   "kind": "LEAF",
+   "solved": true,
+   "say": "An oracle for what should and should not have changed.",
+   "satisfy": 2,
+   "verify": 2,
+   "obstacles": 1,
+   "gaps": [],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E4.2",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Rulers that actually resolve: that separate a good editor from a bad one.",
+   "satisfy": 0,
+   "verify": 0,
+   "obstacles": 1,
+   "gaps": [
+    "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
+    "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
+   ],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E4.3",
+   "kind": "LEAF",
+   "solved": false,
+   "say": "Measures whose scale or resolution does not track the thing being varied.",
+   "satisfy": 2,
+   "verify": 2,
+   "obstacles": 2,
+   "gaps": [],
+   "broken": []
+  },
+  {
+   "depth": 2,
+   "node": "E4.4",
+   "kind": "LEAF",
+   "solved": true,
+   "say": "Correctness judged against the SET of right answers, not one of them.",
+   "satisfy": 1,
+   "verify": 1,
+   "obstacles": 0,
+   "gaps": [
+    "UNANALYSED - its negation has never been refined (no KAOS obstacle)"
+   ],
+   "broken": []
+  }
+ ],
+ "unrealised": 12,
+ "untested": 12,
+ "unanalysed": 19
+}
