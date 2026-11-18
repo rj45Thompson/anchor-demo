@@ -234,10 +234,19 @@ NODES = {
                  say="Rulers that actually resolve: that separate a good editor from a bad one.",
                  why="A metric that cannot distinguish arms cannot select a method.",
                  status="partial",
-                 evidence="Measured: Eq.7 Preservation reads 1.1309 for a model that lost "
+                 evidence="Measured here: Eq.7 Preservation reads 1.1309 for a model that lost "
                           "25.7% of its competence, and its MEDIAN also fails at 0.9906. The "
                           "measure that works is a set-valued movement count, which separates "
-                          "the destructive arm from the surgical one 0.2412 against 0.0000."),
+                          "the destructive arm from the surgical one 0.2412 against 0.0000. "
+                          "BUT THE CAUSE MAY NOT BE THE RULER. The v4 lane measured its base "
+                          "competence on the downstream probes and found the model answers "
+                          "almost none of them correctly BEFORE any intervention. You cannot "
+                          "measure collateral damage to knowledge the model does not have, so "
+                          "a ruler that fails to separate arms there is being asked to measure "
+                          "an absence. That is a different cause from the one this node was "
+                          "opened for, and this lane cannot distinguish them, because its own "
+                          "net is competent on 1.0000 of its probes by construction. "
+                          "Artefact: selfimprove_v4 commit 4ad9d744."),
     "E4.3": dict(kind="LEAF", parent="E4",
                  say="Measures whose scale or resolution does not track the thing being varied.",
                  why="Otherwise a trend across conditions is an artefact of the measure.",
@@ -250,10 +259,21 @@ NODES = {
                           "and a net that found 27 undeclared fields in this lane's own files."),
     "E4.4": dict(kind="LEAF", parent="E4",
                  say="Correctness judged against the SET of right answers, not one of them.",
-                 why="Otherwise a swap between equally correct answers reads as damage.",
-                 status="settled",
-                 evidence="Measured and settled here: real damage 0.0000 for two arms whose "
-                          "naive movement count read 0.1250 and 0.1412."),
+                 why="Otherwise a swap between equally correct answers reads as damage - and "
+                     "the SET has to be complete, which is the part that is not settled.",
+                 status="measured",
+                 evidence="UN-SETTLED 2026-11-18, by the lane whose finding settled it. This "
+                          "lane measured real damage 0.0000 for two arms whose naive movement "
+                          "count read 0.1250 and 0.1412, which stands. What does NOT stand is "
+                          "that counting against the set is therefore sufficient: the v4 lane's "
+                          "decoder test found a GRANULARITY MISMATCH - a prompt whose answer "
+                          "set says one place while the model answers a more specific one, both "
+                          "correct, with the model's answer not in the set's vocabulary at all. "
+                          "That is not a surface alias and no detector either lane had was "
+                          "looking for it. So the set-valued count is right and INCOMPLETE "
+                          "ANSWER SETS are an open sub-problem. See selfimprove_v4 commit "
+                          "4ad9d744 for the artefact; the figure is not copied here because "
+                          "that lane's figures move - one of them went 14% to 8% the same day."),
 }
 
 # ---------------------------------------------------------------- candidate experiments

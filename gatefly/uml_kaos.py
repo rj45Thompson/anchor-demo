@@ -83,7 +83,16 @@ OBSTACLES = {
                   mitigation="NONE. Stated as the lane's standing limit; it is why results are "
                              "offered as questions to the benchmark lanes rather than as "
                              "transfers.")],
-    "E4.2": [dict(say="A ruler can separate arms on a game and still not separate them on "
+    "E4.2": [dict(say="THE RULER MAY NOT BE THE CAUSE AT ALL. If a model answers almost none "
+                      "of the downstream probes correctly before any intervention, a metric "
+                      "that fails to separate arms is being asked to measure damage to "
+                      "knowledge that was never there. Measured by the v4 lane on its own "
+                      "probes; this lane CANNOT see it, because its net is competent on "
+                      "1.0000 of its positions by construction.",
+                  mitigation="NONE AVAILABLE HERE. Any lane reporting a resolution failure "
+                             "must report its BASE COMPETENCE on the same probes beside it, "
+                             "or the two causes are indistinguishable."),
+             dict(say="A ruler can separate arms on a game and still not separate them on "
                       "language, so a resolution result here may not transfer.",
                   mitigation="NONE. The sibling lane re-ran the MECHANISM on its own data "
                              "rather than taking this lane's numbers, which is the right "

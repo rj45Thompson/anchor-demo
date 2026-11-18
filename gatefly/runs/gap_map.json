@@ -376,7 +376,7 @@
    "say": "Rulers that actually resolve: that separate a good editor from a bad one.",
    "satisfy": 0,
    "verify": 0,
-   "obstacles": 1,
+   "obstacles": 2,
    "gaps": [
     "UNREALISED - no \u00absatisfy\u00bb link to anything that does it",
     "UNTESTED - no \u00abverify\u00bb link to a plant that could fail"
@@ -403,7 +403,7 @@
    "depth": 2,
    "node": "E4.4",
    "kind": "LEAF",
-   "solved": true,
+   "solved": false,
    "say": "Correctness judged against the SET of right answers, not one of them.",
    "satisfy": 1,
    "verify": 1,
