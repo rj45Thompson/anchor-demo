@@ -326,11 +326,21 @@ def run(args):
         rng = np.random.default_rng(args.seed)
         model, info, items = train_rung(g, args, dev, rng)
         t_train = time.time() - t0
+        stem0 = os.path.join(OUT, "ladder_%s" % spec.replace(",", "x"))
+        N.save(model, stem0 + "_preedit",
+               extra={"rung": spec, "note": "BEFORE any edit", **info})
         cases = pick_cases(items, g, args.edits, np.random.default_rng(args.seed + 7))
         pre_items = [(kk, vv) for kk, vv in items]
         res = edit_and_score(model, cases, items, g, args.layers - 1, dev, args.lam,
                              min(args.cov, len(items)), np.random.default_rng(args.seed + 3))
         post_c, post_i, _ = competence(model, g, pre_items, dev)
+        # SAVE THE CHECKPOINT. Without it the edit-count sensitivity control - the one that
+        # says whether flat crowding is a property of the board axis or a ceiling of the key
+        # budget - can only be run cross-checkpoint, which is weaker than it needs to be.
+        # The saved net is POST-EDIT; the pre-edit one is saved beside it, because the control
+        # needs the net as it was before anything was installed.
+        stem = os.path.join(OUT, "ladder_%s" % spec.replace(",", "x"))
+        N.save(model, stem + "_postedit", extra={"rung": spec, "note": "AFTER the edit"})
         row = {"rung": spec, "cells": g.cells, "lines": len(g.LINES),
                "empty_board_value": v, "solve_seconds": round(t_solve, 2),
                "train_seconds": round(t_train - t_solve, 1), **info,
