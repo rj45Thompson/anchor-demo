@@ -1,0 +1,102 @@
+{
+ "E": {
+  "fingerprint": "207ca8fc3bef2577",
+  "examined": "2026-11-18"
+ },
+ "E1": {
+  "fingerprint": "d53014cfac2d9712",
+  "examined": "2026-11-18"
+ },
+ "E1.1": {
+  "fingerprint": "4bee49fcb599568b",
+  "examined": "2026-11-18"
+ },
+ "E1.2": {
+  "fingerprint": "50898061a4755e32",
+  "examined": "2026-11-18"
+ },
+ "E1.3": {
+  "fingerprint": "56ba48ede44a6715",
+  "examined": "2026-11-18"
+ },
+ "E2": {
+  "fingerprint": "03986baf6bb6b5b8",
+  "examined": "2026-11-18"
+ },
+ "E2.1": {
+  "fingerprint": "daaa6fb35fb77717",
+  "examined": "2026-11-18"
+ },
+ "E2.2": {
+  "fingerprint": "4a3dee4059df888d",
+  "examined": "2026-11-18"
+ },
+ "E2.3": {
+  "fingerprint": "3cee99cab8fd1582",
+  "examined": "2026-11-18"
+ },
+ "E3": {
+  "fingerprint": "5c42587fcde95f7d",
+  "examined": "2026-11-18"
+ },
+ "E3a": {
+  "fingerprint": "5bf287a44bdbcca4",
+  "examined": "2026-11-18"
+ },
+ "E3a.1": {
+  "fingerprint": "9eccafe594d50d92",
+  "examined": "2026-11-18"
+ },
+ "E3a.2": {
+  "fingerprint": "6e6f742567489723",
+  "examined": "2026-11-18"
+ },
+ "E3a.3": {
+  "fingerprint": "ef4b3f8c77294ec8",
+  "examined": "2026-11-18"
+ },
+ "E3b": {
+  "fingerprint": "5a5e0b1b8b5b0232",
+  "examined": "2026-11-18"
+ },
+ "E3b.1": {
+  "fingerprint": "f8dea8d4bcb575f4",
+  "examined": "2026-11-18"
+ },
+ "E3b.2": {
+  "fingerprint": "44ea86e7aa814089",
+  "examined": "2026-11-18"
+ },
+ "E3b.3": {
+  "fingerprint": "dea6fe9e1acb9f9a",
+  "examined": "2026-11-18"
+ },
+ "E3c": {
+  "fingerprint": "ee841ccff3d269f2",
+  "examined": "2026-11-18"
+ },
+ "E3d": {
+  "fingerprint": "48dff6c9faa98bfa",
+  "examined": "2026-11-18"
+ },
+ "E4": {
+  "fingerprint": "6fd417ccc28cfdb8",
+  "examined": "2026-11-18"
+ },
+ "E4.1": {
+  "fingerprint": "d201e19f8a64f177",
+  "examined": "2026-11-18"
+ },
+ "E4.2": {
+  "fingerprint": "70ced44e18f652a6",
+  "examined": "2026-11-18"
+ },
+ "E4.3": {
+  "fingerprint": "d26c63f6d0bfe301",
+  "examined": "2026-11-18"
+ },
+ "E4.4": {
+  "fingerprint": "1f74edfb14ce7a7c",
+  "examined": "2026-11-18"
+ }
+}
