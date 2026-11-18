@@ -278,7 +278,7 @@ def target_deltas(model, cases, layer, device, steps=160, lr=0.4):
     return np.stack(out, axis=1) if out else np.zeros((0, 0))   # (E, p)
 
 
-def memit_edit(model, cases, layer, device, lam, C=None, cond=None):
+def memit_edit(model, cases, layer, device, lam, C=None, cond=None, K=None, R=None):
     """W += R K^T (lambda C + K K^T)^-1, at blocks.L.ffwd.net.2.weight.
 
     Returns the gate quantities of THIS edit, which are the same arithmetic the flythrough
@@ -300,8 +300,17 @@ def memit_edit(model, cases, layer, device, lam, C=None, cond=None):
                          "ridge at all - which is what growing a one-case neuron creates."
                          % cond_here)
     cond = cond_here if cond is None else cond
-    K = ffwd_keys(model, [c["prefix"] for c in cases], layer, device).T   # (H, p)
-    R = target_deltas(model, cases, layer, device)                        # (E, p)
+    # K and R may be supplied. The requested change R is computed against the BASE model and
+    # does not depend on which subset is being solved, so a subset sweep that recomputes it is
+    # doing the same optimisation O(n) times over - which is how the first headroom run became
+    # O(n^2) target solves and had to be stopped.
+    if K is None:
+        K = ffwd_keys(model, [c["prefix"] for c in cases], layer, device).T   # (H, p)
+    if R is None:
+        R = target_deltas(model, cases, layer, device)                        # (E, p)
+    if K.shape[1] != len(cases) or R.shape[1] != len(cases):
+        raise ValueError("K has %d and R has %d columns for %d cases"
+                         % (K.shape[1], R.shape[1], len(cases)))
     try:
         A, _ = GM.gate_matrix(K, C, lam)
     except np.linalg.LinAlgError as ex:

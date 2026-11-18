@@ -103,20 +103,37 @@ def cut_to(model, layer, keep_idx, device):
 
 
 def one_at_a_time(model, layer, prefixes, parent_P, device, limit=None, seed=3):
-    """UC-GF-4 step 5. Remove ONE neuron, measure the damage, and correlate with its gate."""
+    """UC-GF-4 step 5. Remove ONE neuron, measure the damage, and correlate with its gate.
+
+    THE DAMAGE IS REPORTED AS TWO DIFFERENT QUANTITIES, because the ratchet lane measures edit
+    cost as a KL at the read position and this lane first measured removal cost as a mean TOTAL
+    VARIATION over positions. They are not the same number and must never be read as one:
+
+      damage_tv  mean over positions of 0.5 * sum_m |P_parent(m) - P_child(m)|   in [0, 1]
+      damage_kl  mean over positions of sum_m P_parent(m) log(P_parent(m)/P_child(m))  in [0, inf)
+
+    TV is bounded and linear in the probability gap; KL is unbounded and punishes a position
+    where the child puts near-zero mass on something the parent was confident about. If the
+    verdict differs between them, the verdict was about the divergence and not about the gate,
+    which is the whole reason both are here.
+    """
     a, c, g, lam = unit_gates(model, layer)
     H = len(g)
     idx = list(range(H))
     if limit and limit < H:
         idx = list(np.random.default_rng(seed).permutation(H)[:limit])
     rows = []
+    EPS = 1e-12
+    Pp = np.clip(parent_P, EPS, 1.0)
     for j in idx:
         keep = [i for i in range(H) if i != j]
         child = cut_to(model, layer, keep, device)
         cp = dists(child, prefixes, device)
-        dmg = float(np.abs(parent_P - cp).sum(1).mean() / 2.0)
+        tv = float(np.abs(parent_P - cp).sum(1).mean() / 2.0)
+        Pc = np.clip(cp, EPS, 1.0)
+        kl = float((Pp * (np.log(Pp) - np.log(Pc))).sum(1).mean())
         rows.append({"unit": int(j), "gate": float(g[j]), "a": float(a[j]), "c": float(c[j]),
-                     "damage_tv": dmg})
+                     "damage_tv": tv, "damage_kl": kl})
     return rows
 
 
@@ -220,7 +237,7 @@ def main(a):
     order_gate = list(np.argsort(-g_))
     rng = np.random.default_rng(a.seed)
     rows = []
-    for k in [int(x) for x in a.budgets.split(",")]:
+    for k in ([] if a.oaat_only else [int(x) for x in a.budgets.split(",")]):
         if k > H:
             continue
         for rule in ("a_order", "gate_order", "random"):
@@ -267,6 +284,16 @@ def main(a):
     rho, pval, n = spearman([r["gate"] for r in oaat], [r["damage_tv"] for r in oaat])
     rho_a, p_a, _ = spearman([r["a"] for r in oaat], [r["damage_tv"] for r in oaat])
     rho_c, p_c, _ = spearman([r["c"] for r in oaat], [r["damage_tv"] for r in oaat])
+    kl_rho, kl_p, _ = spearman([r["gate"] for r in oaat], [r["damage_kl"] for r in oaat])
+    kl_a, kl_pa, _ = spearman([r["a"] for r in oaat], [r["damage_kl"] for r in oaat])
+    kl_c, kl_pc, _ = spearman([r["c"] for r in oaat], [r["damage_kl"] for r in oaat])
+    tv_vs_kl, tv_kl_p, _ = spearman([r["damage_tv"] for r in oaat],
+                                    [r["damage_kl"] for r in oaat])
+    print("  SAME removals scored as KL at the read position instead of mean TV:")
+    print("    gate vs KL: rho %.4f  p %.3g" % (kl_rho, kl_p))
+    print("    a    vs KL: rho %.4f  p %.3g" % (kl_a, kl_pa))
+    print("    c    vs KL: rho %.4f  p %.3g" % (kl_c, kl_pc))
+    print("    TV and KL agree with each other: rho %.4f  p %.3g" % (tv_vs_kl, tv_kl_p))
     verdict = ("TRANSFERS" if (np.isfinite(rho) and rho > 0 and pval < 0.05)
                else "DOES NOT TRANSFER")
     print("  gate vs damage: rho %.4f  p %.3g  n %d   -> %s" % (rho, pval, n, verdict))
@@ -277,9 +304,18 @@ def main(a):
            "parent_play": pm, "positions": len(prefixes),
            "one_best_positions": int(one_best.sum()),
            "site_lambda": lam, "budgets": rows, "one_at_a_time": oaat,
-           "gate_vs_damage": {"spearman_rho": rho, "p_value": pval, "n": n, "verdict": verdict},
+           "gate_vs_damage": {"spearman_rho": rho, "p_value": pval, "n": n, "verdict": verdict,
+                              "damage_measure": "mean total variation over all live positions"},
            "a_vs_damage": {"spearman_rho": rho_a, "p_value": p_a},
            "c_vs_damage": {"spearman_rho": rho_c, "p_value": p_c},
+           "same_removals_scored_as_KL": {
+               "note": "KL at the read position, the quantity the ratchet lane uses for edit "
+                       "cost. A TV and a KL are NOT the same number and must not be compared "
+                       "across lanes as if they were.",
+               "gate_vs_kl": {"spearman_rho": kl_rho, "p_value": kl_p},
+               "a_vs_kl": {"spearman_rho": kl_a, "p_value": kl_pa},
+               "c_vs_kl": {"spearman_rho": kl_c, "p_value": kl_pc},
+               "tv_vs_kl_agreement": {"spearman_rho": tv_vs_kl, "p_value": tv_kl_p}},
            "why_game_outcome_is_not_the_test":
                "Tic-tac-toe is easy; a cut net can still draw every game without copying the "
                "gates. The random-cut null, the function agreement on one-best positions, and "
@@ -392,6 +428,8 @@ if __name__ == "__main__":
     ap.add_argument("--budgets", default="192,128,96,64,48,32,16,8")
     ap.add_argument("--random-seeds", dest="random_seeds", type=int, default=8)
     ap.add_argument("--one-limit", dest="one_limit", type=int, default=0)
+    ap.add_argument("--oaat-only", dest="oaat_only", action="store_true",
+                    help="skip the budget sweep and only redo the one-at-a-time removals")
     ap.add_argument("--games", type=int, default=200)
     ap.add_argument("--seed", type=int, default=41)
     ap.add_argument("--cpu", action="store_true")

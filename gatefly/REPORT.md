@@ -382,6 +382,15 @@ every budget**.
   result holds in that range.
 - **At k = 16 and 8 random wins.** The claim "ranking by `a` picks the best available subset at
   EVERY size" does NOT hold here. Reported as it measured.
+
+  **And that claim was weaker than this lane was told.** It arrived in this lane's brief as an
+  established result. After seeing the k = 16 and 8 rows the ratchet lane went and checked its
+  own provenance and reported, unprompted, that the phrase came from **15 subsets of FOUR keys
+  at one GPT-2 layer** - four addresses being read as a law. So this is not a solid result that
+  failed to transfer; it is an over-general claim meeting the sizes where it breaks. The lane
+  has narrowed it in RJ's scorecard with the range it does hold over. Recorded here because the
+  difference matters: "partially transfers" and "was always narrower than stated" are not the
+  same finding, and the second one is the true one.
 - **At k >= 128 nothing separates** because the game is too easy at that budget - which is the
   failure mode this was designed to expose, visible as a row of ties rather than as a success.
 - **Gate-ordering beats `a`-ordering in the middle and collapses at k = 32** (0.9892 against
@@ -391,7 +400,15 @@ every budget**.
 
 Every one of the 256 neurons removed on its own, with the damage measured as the mean total
 variation of the move distribution over all 4,520 boards (damage range 0.00166 to 0.03390,
-median 0.00971):
+median 0.00971).
+
+> **Which quantity this is, because two lanes measure cost differently.** This is a mean TOTAL
+> VARIATION over positions: `0.5 * sum_m |P_parent(m) - P_child(m)|`, bounded in [0, 1], linear
+> in the probability gap. The ratchet lane measures edit cost as a **KL at the read position**,
+> which is unbounded and punishes a child that puts near-zero mass where the parent was
+> confident. **A TV and a KL are not the same number and must never be read as one.** The same
+> 256 removals are therefore scored both ways below, so the verdict can be seen to be about the
+> gate rather than about the choice of divergence.
 
 | predictor | Spearman rho | p | n |
 |---|---|---|---|
