@@ -1,0 +1,75 @@
+{
+ "_what": "Boneyard entries proposed from the problem tree's OPEN nodes. Merge into closed_loop_lite/ratchet/boneyard.json mechanisms.",
+ "mechanisms": [
+  {
+   "id": "graded-targets-by-cost",
+   "for": "Grade counterfactual targets by what they THROW AWAY, using the upgraded oracle's cost_of, and sweep the editor along that axis at a fixed board and a fixed edit count. (problem tree node E3a.1: Interference: writes share dimensions, so each one lands short.)",
+   "learned": "",
+   "attempted": "",
+   "state": "ACTIVE",
+   "started": "2026-11-18",
+   "decides": "whether the editor's difficulty is driven by how WRONG a target is, which is a difficulty axis with no dependence on board size. It MIGHT settle node E3a.1, because its parent E3a is an AND with 2 other unsettled child(ren) (E3a.2, E3a.3), so this removes one obstacle of several. It can come back uninformative: Efficacy may stay at 1.0000 across every cost level, as it did across every board size, in which case the axis is inert too and that is the result.",
+   "prior_art": "Attached to the AND/OR goal tree in gatefly/problem_tree.py rather than proposed free-standing; the tree's own prior art is KAOS (van Lamsweerde) for goal refinement and fault tree analysis (NUREG-0492) for the failure framing. The experiment itself is new to this lane BECAUSE The old oracle could not express it: a target was optimal or not, with no degree. cost_of and sharpness are new. - which is a claim about this lane's instruments, not about the literature, and the literature search is the first task of whoever takes it."
+  },
+  {
+   "id": "sharpness-stratified-editing",
+   "for": "Report every editing figure stratified by the position's SHARPNESS: 1,944 maximally sharp, 1,247 middling, 1,329 dull of 4,520. (problem tree node E4.2: Rulers that actually resolve: that separate a good editor from a bad one.)",
+   "learned": "",
+   "attempted": "",
+   "state": "ACTIVE",
+   "started": "2026-11-18",
+   "decides": "whether the published metrics resolve differently on positions where a mistake is catastrophic versus where every move is fine - a resolution test the metrics have never been given. It MIGHT settle node E4.2, because its parent E4 is an AND with 1 other unsettled child(ren) (E4.3), so this removes one obstacle of several. It can come back uninformative: the strata may not separate, which would say the metrics are insensitive to the thing that actually matters about a position.",
+   "prior_art": "Attached to the AND/OR goal tree in gatefly/problem_tree.py rather than proposed free-standing; the tree's own prior art is KAOS (van Lamsweerde) for goal refinement and fault tree analysis (NUREG-0492) for the failure framing. The experiment itself is new to this lane BECAUSE sharpness did not exist before this oracle upgrade. - which is a claim about this lane's instruments, not about the literature, and the literature search is the first task of whoever takes it."
+  },
+  {
+   "id": "capacity-ceiling-at-p-approaches-H",
+   "for": "Push the edit count toward the key-space dimension H = 256 and find where Efficacy falls, with Wilson intervals so a one-case fall cannot be read as a break. (problem tree node E3a.3: Capacity: p keys in H dimensions must collide once p approaches H.)",
+   "learned": "",
+   "attempted": "",
+   "state": "ACTIVE",
+   "started": "2026-11-18",
+   "decides": "the capacity node outright: it is the only axis MEASURED to move the edit's geometry, 0.0459 to 0.1112 from one doubling. It MIGHT settle node E3a.3, because its parent E3a is an AND with 2 other unsettled child(ren) (E3a.1, E3a.2), so this removes one obstacle of several. It can come back uninformative: it may break for reasons other than capacity, which the per-case a and c now recorded would distinguish.",
+   "prior_art": "Attached to the AND/OR goal tree in gatefly/problem_tree.py rather than proposed free-standing; the tree's own prior art is KAOS (van Lamsweerde) for goal refinement and fault tree analysis (NUREG-0492) for the failure framing. The experiment itself is new to this lane BECAUSE board size was measured inert, so this is the axis that remains. - which is a claim about this lane's instruments, not about the literature, and the literature search is the first task of whoever takes it."
+  },
+  {
+   "id": "site-sweep",
+   "for": "Run the same edit at every weight matrix of the net, not just blocks.N.ffwd.net.2.weight, and compare. (problem tree node E2.3: The site (which layer, which matrix) is a free parameter with no principled selection rule.)",
+   "learned": "",
+   "attempted": "",
+   "state": "ACTIVE",
+   "started": "2026-11-18",
+   "decides": "nothing by itself, but it would say how much of every figure in this lane is a property of the site rather than of editing. It MIGHT settle node E2.3, because its parent E2 is an AND with 2 other unsettled child(ren) (E2.1, E2.2), so this removes one obstacle of several. It can come back uninformative: the sites may all behave alike, which would be reassuring and uninformative.",
+   "prior_art": "Attached to the AND/OR goal tree in gatefly/problem_tree.py rather than proposed free-standing; the tree's own prior art is KAOS (van Lamsweerde) for goal refinement and fault tree analysis (NUREG-0492) for the failure framing. The experiment itself is new to this lane BECAUSE never attempted; every figure here is at one site. - which is a claim about this lane's instruments, not about the literature, and the literature search is the first task of whoever takes it."
+  },
+  {
+   "id": "edit-then-isolated-train-loop",
+   "for": "Alternate a closed-form edit with training confined to an isolated subspace, in a loop, and test it against editing alone, training alone, and their plain composition - with the isolation REMOVED as the control. (problem tree node E3c: Alternate a closed-form edit with training CONFINED to an isolated subspace.)",
+   "learned": "",
+   "attempted": "",
+   "state": "ACTIVE",
+   "started": "2026-11-18",
+   "decides": "node E3 outright if it installs exactly without the collateral damage training causes, because E3 is an OR and one working mechanism is enough. It WOULD settle node E3c, because its parent E3 is an OR, so this route succeeding is sufficient for it. It can come back uninformative: the loop may do no better than its own no-isolation control, in which case the isolation bought nothing; or the whole thing may already be published, which is a successful close and not a failure.",
+   "prior_art": "Attached to the AND/OR goal tree in gatefly/problem_tree.py rather than proposed free-standing; the tree's own prior art is KAOS (van Lamsweerde) for goal refinement and fault tree analysis (NUREG-0492) for the failure framing. The experiment itself is new to this lane BECAUSE the components are published - GRACE, AlphaEdit, OGD, Gradient Routing - but I cannot name one that alternates them with the isolation subspace chosen by a closed-form interference quantity. - which is a claim about this lane's instruments, not about the literature, and the literature search is the first task of whoever takes it."
+  },
+  {
+   "id": "capacity-search-inside-the-edit-loop",
+   "for": "Perturb the neuron set at each step - add or remove - measure the effect, and settle where more private dimensions stop paying for themselves. (problem tree node E3d: Change WHICH neurons exist, chosen by the gate pattern, so the maths stops overlapping.)",
+   "learned": "",
+   "attempted": "",
+   "state": "ACTIVE",
+   "started": "2026-11-18",
+   "decides": "node E3 outright if an adaptive capacity beats a fixed one, since E3 is an OR. It WOULD settle node E3d, because its parent E3 is an OR, so this route succeeding is sufficient for it. It can come back uninformative: growing already measured as a DIAL rather than an improvement - precision up, depth down - so an adaptive search may simply trace that trade-off without finding a point that dominates.",
+   "prior_art": "Attached to the AND/OR goal tree in gatefly/problem_tree.py rather than proposed free-standing; the tree's own prior art is KAOS (van Lamsweerde) for goal refinement and fault tree analysis (NUREG-0492) for the failure framing. The experiment itself is new to this lane BECAUSE growing and pruning during training are both well covered; sizing a layer by its measured effect on EDITABILITY is what I cannot name. - which is a claim about this lane's instruments, not about the literature, and the literature search is the first task of whoever takes it."
+  },
+  {
+   "id": "key-to-behaviour-gap",
+   "for": "Measure the relation between what lands AT THE KEY (the gate's prediction) and what changes in BEHAVIOUR at positions away from it. (problem tree node E3a.2: The solve is linear; the behaviour it must produce is not.)",
+   "learned": "",
+   "attempted": "",
+   "state": "ACTIVE",
+   "started": "2026-11-18",
+   "decides": "the linearity node: whether a correct delta at the key implies correct behaviour elsewhere. It MIGHT settle node E3a.2, because its parent E3a is an AND with 2 other unsettled child(ren) (E3a.1, E3a.3), so this removes one obstacle of several. It can come back uninformative: the relation may be dominated by the net's nonlinearity in a way that gives no clean statement.",
+   "prior_art": "Attached to the AND/OR goal tree in gatefly/problem_tree.py rather than proposed free-standing; the tree's own prior art is KAOS (van Lamsweerde) for goal refinement and fault tree analysis (NUREG-0492) for the failure framing. The experiment itself is new to this lane BECAUSE this lane has measured both halves separately and never their relation. - which is a claim about this lane's instruments, not about the literature, and the literature search is the first task of whoever takes it."
+  }
+ ]
+}
