@@ -766,6 +766,40 @@ def selftest() -> int:
     _plant("a singular ridge was not REFUSED - it would crash or quietly pseudo-invert",
            refused)
 
+    # 9. THE GATE QUANTITIES ARE INVARIANT UNDER AN EDIT TO THEIR OWN SITE. The key is the
+    #    site's INPUT and the edit changes the site's WEIGHT, so for the last block the key
+    #    cannot move - a and c are properties of the READ pathway, not of accumulated writes.
+    #    This lane asserted the opposite to a sibling lane ("c has risen, so it is harder to
+    #    write to"); that lane refuted it by measurement and this plant is why the claim cannot
+    #    come back. The CONTROL is the other half: editing an EARLIER block must move the keys
+    #    at a later one, or the zero would be a dead measurement rather than a fact.
+    mL = clone(m, dev)
+    last = mL.hyper["n_layers"] - 1
+    pre9 = [c["prefix"] for c in cases[:6]]
+    Cl, _, _ = covariance(mL, last, dev, n=300, extra=pre9)
+    K_before = ffwd_keys(mL, pre9, last, dev)
+    A_b, _ = GM.gate_matrix(K_before.T, Cl, 1.0)
+    memit_edit(mL, cases[:6], last, dev, 1.0, Cl)
+    K_after = ffwd_keys(mL, pre9, last, dev)
+    A_a, _ = GM.gate_matrix(K_after.T, Cl, 1.0)
+    dk = float(np.abs(K_after - K_before).max())
+    da = float(np.abs(np.diag(A_a) - np.diag(A_b)).max())
+    dc = float(np.abs(GM.crowding_all(A_a) - GM.crowding_all(A_b)).max())
+    _plant("editing the LAST block's own site moved its keys (%.3e) - a and c are not "
+           "invariant after all" % dk, dk == 0.0)
+    _plant("a or c moved under an edit to their own site (a %.3e, c %.3e)" % (da, dc),
+           da == 0.0 and dc == 0.0)
+    if mL.hyper["n_layers"] > 1:
+        mE = clone(m, dev)
+        Ce, _, _ = covariance(mE, 0, dev, n=300, extra=pre9)
+        memit_edit(mE, cases[:6], 0, dev, 1.0, Ce)
+        K_down = ffwd_keys(mE, pre9, last, dev)
+        dd = float(np.abs(K_down - K_before).max())
+        _plant("editing an EARLIER block did NOT move the later block's keys (%.3e), so the "
+               "zero above is a dead measurement" % dd, dd > 0)
+        print("    keys at the last block: own-site edit moves them %.3e, earlier-block edit "
+              "moves them %.3e" % (dk, dd))
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)
