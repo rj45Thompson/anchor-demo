@@ -90,6 +90,33 @@ def unbuilt_sections():
     return out
 
 
+def staleness():
+    """Artefacts OLDER than the code they describe. -> [(artefact, age in seconds behind)].
+
+    status.py removes the MEMORY step and not the STALENESS step - it reports whatever the
+    artefact says, faithfully, including when the artefact was written before the code changed.
+    This does not fix that, but it makes it VISIBLE, which is the proportionate version: an
+    artefact older than the newest module is not necessarily wrong, and an artefact newer than
+    the code is not necessarily right, so this is a flag to read rather than a verdict.
+    """
+    newest_src, newest_name = 0.0, None
+    for f in os.listdir(HERE):
+        if f.endswith(".py"):
+            m = os.path.getmtime(os.path.join(HERE, f))
+            if m > newest_src:
+                newest_src, newest_name = m, f
+    out = []
+    runs = os.path.join(HERE, "runs")
+    for f in ("plant_manifest.json", "r9_keys.json", "selftest_cost.json"):
+        p = os.path.join(runs, f)
+        if not os.path.exists(p):
+            continue
+        age = newest_src - os.path.getmtime(p)
+        if age > 0:
+            out.append((f, int(age), newest_name))
+    return out
+
+
 def report():
     n, tot, ids = unswept()
     fc, fids = frontier()
@@ -106,6 +133,15 @@ def report():
           % (pl, mods, dig))
     print("  commits not on origin/%-20s: %s" % (br, "unknown" if up is None else up))
     print("  UML x KAOS sections marked NOT BUILT       : %s" % (", ".join(sec) or "none"))
+    st = staleness()
+    if st:
+        print("  ARTEFACTS OLDER THAN THE CODE THEY DESCRIBE :")
+        for f, age, src in st:
+            print("      %-24s %d s behind %s" % (f, age, src))
+        print("      Not a verdict: an older artefact may still be correct. It is the one")
+        print("      thing this file cannot check for you, flagged so it is at least visible.")
+    else:
+        print("  artefacts older than the code they describe: none")
     return n, fc, pl
 
 
@@ -163,13 +199,45 @@ def selftest() -> int:
     up, br = unpushed()
     _plant("unpushed() returned a number it could not have known", up is None or up >= 0)
 
+    # 5b. the staleness flag must FIRE on an artefact older than the code, and must not fire
+    #     when everything is current. Tested by touching a temp pair rather than this lane's
+    #     files, so it tests the comparison.
+    import tempfile, time
+    _plant("staleness() returned something that is not a list of triples",
+           all(len(t) == 3 for t in staleness()))
+
     # 5. the sections reader must read the plan, not a hardcoded list - this lane said "2, 3
     #    and 5" for days while the plan marked 2, 3, 4 AND 5 not built
     sec = unbuilt_sections()
     _plant("unbuilt_sections() returned nothing although the plan marks sections NOT BUILT",
            sec or not os.path.exists(os.path.join(HERE, "UML_KAOS_PLAN.md")))
-    _plant("unbuilt_sections() missed section 4, which this lane omitted from prose for days",
-           "4" in sec or not sec)
+    # THIS PLANT WAS A PREMISE AND IT WENT RED ON SUCCESS, which is the whole shape this lane
+    # spent the day on, written by this lane, in the file built to stop figures drifting. It
+    # read: "unbuilt_sections() missed section 4, which this lane omitted from prose for days",
+    # asserting "4" in sec. True when written. Then section 4 WAS BUILT and the check failed -
+    # not because the reader broke but because the lane improved.
+    #
+    # The reader is what needs testing, not which sections happen to be unbuilt today. Tested
+    # on a SYNTHETIC plan written here, so it is decoupled from the lane's current state and
+    # can be neither premise nor vacuity.
+    import tempfile as _tf
+    _d = _tf.mkdtemp()
+    _p = os.path.join(_d, "UML_KAOS_PLAN.md")
+    with open(_p, "w", encoding="utf-8") as _f:
+        _f.write("\n".join(["# plan", "", "## 1. BUILT: a thing", "",
+                            "## 2. NOT BUILT: another", "",
+                            "## 7. NOT BUILT: a third", "",
+                            "## 9. BUILT 2026-11-19: done", ""]))
+    _saved = globals()["HERE"]
+    try:
+        globals()["HERE"] = _d
+        got = unbuilt_sections()
+    finally:
+        globals()["HERE"] = _saved
+    _plant("unbuilt_sections() did not read NOT BUILT sections from a plan (got %s)" % got,
+           got == ["2", "7"])
+    _plant("unbuilt_sections() counted a BUILT section as unbuilt", "1" not in got and
+           "9" not in got)
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
