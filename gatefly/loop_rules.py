@@ -38,11 +38,31 @@ ARCH, NOT_ARCH = "ARCHITECTURAL", "NOT_ARCH"
 # Exposure recording begins today; everything before it is PRE_FIELD, never False.
 EXPOSURE_FIELD_FROM = "2026-11-19"
 PRE_FIELD = "PRE-FIELD"
-# ERA. 23 of these were written in ONE commit (3037632) from session history when RJ asked
-# for the rule - RECONSTRUCTED, not recorded. Only 24 onward were written as they occurred.
-# This lane told the snipershot lane its catalogue was contemporaneous and accepted credit
-# for it; that is true of 10 of 33. Every rate below spans the mixture and says so.
-RECONSTRUCTED, RECORDED = "RECONSTRUCTED", "RECORDED"
+# ERA, CORRECTED - AND THE FIRST VERSION WAS TOO HARSH IN THE SAME DIRECTION THE SNIPERSHOT
+# LANE'S WAS. It read: "23 of these were RECONSTRUCTED, not recorded." That measured the wrong
+# artefact's age. The CATALOGUE ENTRY for each of the 23 was written at 3037632, but the FAULT
+# was recorded at the time, in its own commit - the 0.9995 withdrawal at 18:27, the selftest
+# rewriting its baseline at 19:08, the premise shapes at 19:27, the vacuity at 20:20, the
+# staleness gate at 20:00, the smeared labels at 21:12.
+#
+# So the split is the one that lane arrived at independently, in a different column: THE
+# RECORDS ARE CONTEMPORANEOUS, THE CLASSIFICATION IS RETROSPECTIVE. The recollection risk sits
+# in `kind` - attributive against substantive, assigned in one sitting - and NOT in whether
+# each fault happened or how it was described at the time.
+#
+# Two lanes, same disease, different column, and neither would have looked without the other
+# going first: that lane checked because this one did, and this one re-checked because that
+# one found its own check broken.
+#
+# METHOD, stated because that lane's was broken twice in the same direction: it used
+# `git log head -1`, the NEWEST match, read as the first mention; and its search terms came
+# from its own later retelling, so the search could only find the retelling. Dating a fault
+# with vocabulary written afterwards can only date it to when that vocabulary was written.
+# This check used --reverse (oldest first) and read commit SUBJECTS directly rather than
+# grepping catalogue vocabulary, so neither fault applies - but it shares that lane's
+# uncorrected one: dating by COMMIT makes a fault noticed at 19:02 and committed at 19:08 read
+# as 19:08, which biases records LATER than the discovery.
+RECONSTRUCTED, RECORDED = "CLASSIFIED-LATER", "CLASSIFIED-LIVE"
 
 # Every error this lane made or had caught in it, how it was found, and what the loop owes.
 # `caught_by` is recorded because it turned out to be the most informative column: almost
@@ -771,23 +791,30 @@ def selftest() -> int:
     # being short is not the same as the file saying what it covers.
     _rec = [e for e in ERRORS if e.get("era") == RECONSTRUCTED]
     _rcd = [e for e in ERRORS if e.get("era") == RECORDED]
-    print("  SCOPE: %d of %d errors were RECONSTRUCTED in one commit from session history; "
-          "%d were RECORDED as they occurred." % (len(_rec), len(ERRORS), len(_rcd)))
-    print("    Every rate above spans both. The reconstructed ones carry recollection risk in "
-          "caught_class specifically,")
-    print("    which is the field all the mechanism findings rest on.")
+    print("  SCOPE: the FAULTS were recorded contemporaneously - each in its own commit at "
+          "the time.")
+    print("    What is retrospective is the CLASSIFICATION: %d of %d were labelled "
+          "attributive/substantive" % (len(_rec), len(ERRORS)))
+    print("    in one sitting at 3037632; %d were labelled as they occurred. So the "
+          "recollection risk sits in" % len(_rcd))
+    print("    `kind`, not in whether a fault happened or how it was described at the time.")
     _att_r = [e for e in _rcd if e.get("kind") == "ATTRIBUTIVE"]
-    print("    The 0-of-10 holds in BOTH eras: 0 of %d reconstructed, 0 of %d recorded - but "
-          "the contemporaneous" % (len([e for e in _rec if e.get("kind") == "ATTRIBUTIVE"]),
-                                   len(_att_r)))
-    print("    evidence alone is %d attributive errors, which is thin." % len(_att_r))
+    print("    The 0-of-10 holds under BOTH labellings: 0 of %d classified later, 0 of %d "
+          "classified live." % (len([e for e in _rec if e.get("kind") == "ATTRIBUTIVE"]),
+                                len(_att_r)))
+    print("    It is STRONGER than the first version of this note implied, because "
+          "caught_class for the")
+    print("    %d is derivable from contemporaneous commits rather than from recollection - "
+          "only `kind` was" % len(_rec))
+    print("    assigned in one sitting. The live-labelled sample is %d, which is still thin."
+          % len(_att_r))
     _plant("an error carries no era marking - then a reader cannot tell a reconstruction from "
            "a record and any rate is computed over a mixture",
            all(e.get("era") in (RECONSTRUCTED, RECORDED) for e in ERRORS))
-    _plant("every error is RECONSTRUCTED - then this catalogue is a recollection and should "
-           "not be quoted as a record", bool(_rcd))
-    _plant("every error is RECORDED - then the era marking is unnecessary and this lane's "
-           "claim to a contemporaneous catalogue was true after all", bool(_rec))
+    _plant("every error was CLASSIFIED LATER - then the labelling is wholly retrospective and "
+           "no rate over `kind` should be quoted", bool(_rcd))
+    _plant("every error was CLASSIFIED LIVE - then the marking is unnecessary and the first "
+           "version of this note was right to claim a contemporaneous catalogue", bool(_rec))
 
     _plant("every rule is already in the loop - a catalogue of twenty errors that implies the "
            "loop needs no change", len(new) > 0)

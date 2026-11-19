@@ -309,12 +309,12 @@
     "longest_on_one_line": "an error carries no era marking - then a reader cannot tell a reconstruction from "
    },
    {
-    "label": "every error is RECONSTRUCTED - then this catalogue is a recollection and should not be quoted as a record",
-    "longest_on_one_line": "every error is RECONSTRUCTED - then this catalogue is a recollection and should "
+    "label": "every error was CLASSIFIED LATER - then the labelling is wholly retrospective and no rate over `kind` should be quoted",
+    "longest_on_one_line": "every error was CLASSIFIED LATER - then the labelling is wholly retrospective and "
    },
    {
-    "label": "every error is RECORDED - then the era marking is unnecessary and this lane's claim to a contemporaneous catalogue was true after all",
-    "longest_on_one_line": "every error is RECORDED - then the era marking is unnecessary and this lane's "
+    "label": "every error was CLASSIFIED LIVE - then the marking is unnecessary and the first version of this note was right to claim a contemporaneous catalogue",
+    "longest_on_one_line": "every error was CLASSIFIED LIVE - then the marking is unnecessary and the first "
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
@@ -1231,122 +1231,122 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 607
+    "line": 627
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 611
+    "line": 631
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 614
+    "line": 634
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 619
+    "line": 639
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 625
+    "line": 645
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 631
+    "line": 651
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 639
+    "line": 659
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 649
+    "line": 669
    },
    {
     "label": "a peer claim carries no recorded ORIGIN: %s - the registry that counts claims cannot catch a miscredit without one",
     "has_format": true,
-    "line": 656
+    "line": 676
    },
    {
     "label": "the counts disagree with the claim table (%d+%d vs %d)",
     "has_format": true,
-    "line": 658
+    "line": 678
    },
    {
     "label": "every peer claim came from ONE lane - then this table cannot distinguish origins and the rule it implements is untested here",
     "has_format": false,
-    "line": 661
+    "line": 681
    },
    {
     "label": "the peer-claim re-derivation record is missing a half: %s",
     "has_format": true,
-    "line": 665
+    "line": 685
    },
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "has_format": true,
-    "line": 672
+    "line": 692
    },
    {
     "label": "a plant caught an ATTRIBUTIVE error (%d of %d) - then numeric instruments are not blind to provenance after all and this finding is wrong",
     "has_format": true,
-    "line": 698
+    "line": 718
    },
    {
     "label": "no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not about attribution, it is that plants catch nothing",
     "has_format": true,
-    "line": 702
+    "line": 722
    },
    {
     "label": "every error is classified ATTRIBUTIVE or SUBSTANTIVE: %s",
     "has_format": true,
-    "line": 706
+    "line": 726
    },
    {
     "label": "the escape-rate comparison is being reported as a refutation rather than as an unresolved question - the two lanes measured different quantities",
     "has_format": false,
-    "line": 742
+    "line": 762
    },
    {
     "label": "an exposure record omits reached_user, so 'nobody recorded it' would read as 'it did not reach him': %s",
     "has_format": true,
-    "line": 758
+    "line": 778
    },
    {
     "label": "%d error(s) carry no exposure marking at all - then the pre-field era is indistinguishable from the recorded one",
     "has_format": true,
-    "line": 763
+    "line": 783
    },
    {
     "label": "the exposure log reports a rate while empty - 0%% over no records reads as 'nothing escaped'",
     "has_format": false,
-    "line": 766
+    "line": 786
    },
    {
     "label": "an error carries no era marking - then a reader cannot tell a reconstruction from a record and any rate is computed over a mixture",
     "has_format": false,
-    "line": 784
+    "line": 811
    },
    {
-    "label": "every error is RECONSTRUCTED - then this catalogue is a recollection and should not be quoted as a record",
+    "label": "every error was CLASSIFIED LATER - then the labelling is wholly retrospective and no rate over `kind` should be quoted",
     "has_format": false,
-    "line": 787
+    "line": 814
    },
    {
-    "label": "every error is RECORDED - then the era marking is unnecessary and this lane's claim to a contemporaneous catalogue was true after all",
+    "label": "every error was CLASSIFIED LIVE - then the marking is unnecessary and the first version of this note was right to claim a contemporaneous catalogue",
     "has_format": false,
-    "line": 789
+    "line": 816
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 792
+    "line": 819
    }
   ],
   "metrics.py": [
@@ -2827,5 +2827,5 @@
    }
   ]
  },
- "labels_digest": "b586296343f0a30c"
+ "labels_digest": "502ea1020c19d6f1"
 }
