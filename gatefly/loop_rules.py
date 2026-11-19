@@ -38,134 +38,139 @@ ARCH, NOT_ARCH = "ARCHITECTURAL", "NOT_ARCH"
 # Exposure recording begins today; everything before it is PRE_FIELD, never False.
 EXPOSURE_FIELD_FROM = "2026-11-19"
 PRE_FIELD = "PRE-FIELD"
+# ERA. 23 of these were written in ONE commit (3037632) from session history when RJ asked
+# for the rule - RECONSTRUCTED, not recorded. Only 24 onward were written as they occurred.
+# This lane told the snipershot lane its catalogue was contemporaneous and accepted credit
+# for it; that is true of 10 of 33. Every rate below spans the mixture and says so.
+RECONSTRUCTED, RECORDED = "RECONSTRUCTED", "RECORDED"
 
 # Every error this lane made or had caught in it, how it was found, and what the loop owes.
 # `caught_by` is recorded because it turned out to be the most informative column: almost
 # nothing was caught by a failing check.
 ERRORS = [
- {"exposure": PRE_FIELD, "id": "raw-cosine-for-whitened", "kind": "SUBSTANTIVE", "initiated_by": "this lane SENT a claim; peer re-derived it", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "raw-cosine-for-whitened", "kind": "SUBSTANTIVE", "initiated_by": "this lane SENT a claim; peer re-derived it", "caught_class": "peer checked it",
   "what": "Reported a key collinearity of 0.9995 that was the shared activation component. The "
           "whitened cosine on the same keys is 0.7238.",
   "caught_by": "a sibling lane checking the finding instead of adopting it",
   "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
 
- {"exposure": PRE_FIELD, "id": "peer-resolved-by-display-name", "kind": "ATTRIBUTIVE", "initiated_by": "this lane SENT a claim to the wrong lane", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "peer-resolved-by-display-name", "kind": "ATTRIBUTIVE", "initiated_by": "this lane SENT a claim to the wrong lane", "caught_class": "peer checked it",
   "what": "Sent an R7 report to the v4 lane because its display name matched; the request came "
           "from the snipershot lane.",
   "caught_by": "the recipient saying it had not asked",
   "verdict": ARCH, "rule": "R-ADDRESS-BY-ID"},
 
- {"exposure": PRE_FIELD, "id": "guessed-which-module-was-running", "kind": "ATTRIBUTIVE", "caught_class": "re-measured it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "guessed-which-module-was-running", "kind": "ATTRIBUTIVE", "caught_class": "re-measured it",
   "what": "Reported metrics.py as the module grinding past ten minutes. It takes 1.0 s; "
           "ladder_probe.py at 266 s was next alphabetically.",
   "caught_by": "re-running the sweep with timing",
   "verdict": ARCH, "rule": "R-NAME-BEFORE-RUN"},
 
- {"exposure": PRE_FIELD, "id": "selftest-rewrote-its-own-baseline", "kind": "SUBSTANTIVE", "caught_class": "read an impossible output",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "selftest-rewrote-its-own-baseline", "kind": "SUBSTANTIVE", "caught_class": "read an impossible output",
   "what": "plant_manifest.selftest() called write(), refreshing the drift baseline it compares "
           "against, so drift could never be reported after one run.",
   "caught_by": "a 'no drift' verdict arriving right after two plants were added",
   "verdict": ARCH, "rule": "R-SELFTEST-IS-READONLY"},
 
- {"exposure": PRE_FIELD, "id": "premise-shaped-plants", "kind": "SUBSTANTIVE", "caught_class": "read an output, then re-measured",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "premise-shaped-plants", "kind": "SUBSTANTIVE", "caught_class": "read an output, then re-measured",
   "what": "Three plants asserting a deficiency still exists, so fixing the deficiency turned "
           "them red. Two more written 19 minutes after naming the shape.",
   "caught_by": "reading the shape screen's output, then a git-history diff",
   "verdict": ARCH, "rule": "R-PLANT-OVER-FIXTURE"},
 
- {"exposure": PRE_FIELD, "id": "vacuity-or-short-circuit", "kind": "SUBSTANTIVE", "initiated_by": "this lane SENT a shape; peer applied it to itself", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "vacuity-or-short-circuit", "kind": "SUBSTANTIVE", "initiated_by": "this lane SENT a shape; peer applied it to itself", "caught_class": "peer checked it",
   "what": "A plant of the form (not X) or Y, unconditionally true once X empties.",
   "caught_by": "a sibling lane finding the mirror shape in its own lane",
   "verdict": ARCH, "rule": "R-PLANT-OVER-FIXTURE"},
 
- {"exposure": PRE_FIELD, "id": "vacuous-test-proposed-in-prose", "kind": "SUBSTANTIVE", "initiated_by": "this lane PROPOSED a test; peer ran it", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "vacuous-test-proposed-in-prose", "kind": "SUBSTANTIVE", "initiated_by": "this lane PROPOSED a test; peer ran it", "caught_class": "peer checked it",
   "what": "Proposed 'replace the ratio with a difference of logs and see if the split survives'. "
           "log is monotone, so the two forms are identical by construction - 0 disagreements in "
           "200,000 draws. Proposed hours after building the vacuity screen.",
   "caught_by": "the lane that ran it",
   "verdict": ARCH, "rule": "R-SCREEN-THE-PROPOSAL"},
 
- {"exposure": PRE_FIELD, "id": "figure-drifted-across-three-values", "kind": "ATTRIBUTIVE", "initiated_by": "this lane SENT prose; peer checked it against earlier prose", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "figure-drifted-across-three-values", "kind": "ATTRIBUTIVE", "initiated_by": "this lane SENT prose; peer checked it against earlier prose", "caught_class": "peer checked it",
   "what": "Told RJ 12, then 16, then 11 unswept nodes. Two sources for one figure, with prose "
           "regenerating from whichever was last read.",
   "caught_by": "a sibling lane quoting the retraction back",
   "verdict": ARCH, "rule": "R-ONE-READER-PER-FIGURE"},
 
- {"exposure": PRE_FIELD, "id": "unqualified-peer-referent", "kind": "ATTRIBUTIVE", "caught_class": "swept for siblings of a known fault",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "unqualified-peer-referent", "kind": "ATTRIBUTIVE", "caught_class": "swept for siblings of a known fault",
   "what": "'the sibling lane' used four times while two sibling lanes were active.",
   "caught_by": "sweeping this lane after seeing the same fault elsewhere",
   "verdict": ARCH, "rule": "R-SCOPE-IN-THE-STATEMENT"},
 
- {"exposure": PRE_FIELD, "id": "attribution-by-default", "kind": "ATTRIBUTIVE", "caught_class": "swept for siblings of a known fault",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "attribution-by-default", "kind": "ATTRIBUTIVE", "caught_class": "swept for siblings of a known fault",
   "what": "lane_of() returned 'gatefly' for any unlisted file, so another lane's file became "
           "this lane's by being absent from a table.",
   "caught_by": "the same sweep",
   "verdict": ARCH, "rule": "R-NO-OWNERSHIP-BY-DEFAULT"},
 
- {"exposure": PRE_FIELD, "id": "cited-unpushed-commit-hashes", "kind": "ATTRIBUTIVE", "caught_class": "re-measured it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "cited-unpushed-commit-hashes", "kind": "ATTRIBUTIVE", "caught_class": "re-measured it",
   "what": "Gave sibling lanes commit hashes reachable only from this machine.",
   "caught_by": "checking whether a peer's row could resolve",
   "verdict": ARCH, "rule": "R-CITATION-RESOLVES-FOR-READER"},
 
- {"exposure": PRE_FIELD, "id": "labels-uncitable-from-source", "kind": "ATTRIBUTIVE", "initiated_by": "peer tried to USE an artefact this lane supplied", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "labels-uncitable-from-source", "kind": "ATTRIBUTIVE", "initiated_by": "peer tried to USE an artefact this lane supplied", "caught_class": "peer checked it",
   "what": "24 of 290 plant labels span several source lines, so a line-based grep cannot find "
           "them. A peer's row read BROKEN LINK while the label was plainly there.",
   "caught_by": "a peer's tracker failing on a real citation",
   "verdict": ARCH, "rule": "R-CITATION-RESOLVES-FOR-READER"},
 
- {"exposure": PRE_FIELD, "id": "staleness-gate-failed-open", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT its own design; this lane checked itself against it", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "staleness-gate-failed-open", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT its own design; this lane checked itself against it", "caught_class": "peer checked it",
   "what": "An entry with no search date passed the prior-art gate, because a missing date read "
           "as not-stale.",
   "caught_by": "a sibling lane saying it kept UNDATED distinct from STALE",
   "verdict": ARCH, "rule": "R-ABSENT-EVIDENCE-REFUSES"},
 
- {"exposure": PRE_FIELD, "id": "searched-nothing-found-read-as-unsearched", "kind": "SUBSTANTIVE", "caught_class": "read an impossible output",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "searched-nothing-found-read-as-unsearched", "kind": "SUBSTANTIVE", "caught_class": "read an impossible output",
   "what": "Seven nodes whose search found nothing reverted to NOT_SEARCHED, erasing the search.",
   "caught_by": "the count going 11 to 7 instead of to 0",
   "verdict": ARCH, "rule": "R-ABSENT-EVIDENCE-REFUSES"},
 
- {"exposure": PRE_FIELD, "id": "verdict-against-best-not-standard", "kind": "SUBSTANTIVE", "caught_class": "read an output",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "verdict-against-best-not-standard", "kind": "SUBSTANTIVE", "caught_class": "read an output",
   "what": "The ladder's _broke compared each rung to the best observed rung rather than to "
           "perfect, so it missed that 3,3,3 had already fallen.",
   "caught_by": "reading the verdict sentence out loud",
   "verdict": ARCH, "rule": "R-COMPARE-TO-THE-STANDARD"},
 
- {"exposure": PRE_FIELD, "id": "plant-matched-its-own-docstring", "kind": "SUBSTANTIVE", "caught_class": "a plant failed",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "plant-matched-its-own-docstring", "kind": "SUBSTANTIVE", "caught_class": "a plant failed",
   "what": "check_hover's independence plant grepped source text for 'import gate_math' and "
           "matched the docstring sentence claiming the independence.",
   "caught_by": "the plant failing on its first run",
   "verdict": ARCH, "rule": "R-ASSERT-ON-STRUCTURE"},
 
- {"exposure": PRE_FIELD, "id": "plant-stronger-than-its-comment", "kind": "SUBSTANTIVE", "caught_class": "a plant failed",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "plant-stronger-than-its-comment", "kind": "SUBSTANTIVE", "caught_class": "a plant failed",
   "what": "A comment said the rank order was 'nearly lambda-stable'; the assertion beneath it "
           "demanded it be identical, and failed.",
   "caught_by": "the plant failing on its first run",
   "verdict": ARCH, "rule": "R-ASSERT-ON-STRUCTURE"},
 
- {"exposure": PRE_FIELD, "id": "artefact-understated-its-own-figures", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT a derivation", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "artefact-understated-its-own-figures", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT a derivation", "caught_class": "peer checked it",
   "what": "runs/r9_keys.json called its whitened figures 'relative orderings' because lambda was "
           "fixed at 1.0. The whitened cosine is exactly lambda-free, so they were absolute.",
   "caught_by": "a sibling lane's algebra",
   "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
 
- {"exposure": PRE_FIELD, "id": "unscoped-saturation-claim", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT a passing remark", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "unscoped-saturation-claim", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT a passing remark", "caught_class": "peer checked it",
   "what": "'The gate saturates' stated unqualified; true at a~250, which is a lambda choice.",
   "caught_by": "a sibling lane's passing remark about concavity",
   "verdict": ARCH, "rule": "R-SCOPE-IN-THE-STATEMENT"},
 
- {"exposure": PRE_FIELD, "id": "m8-named-the-wrong-readout", "kind": "SUBSTANTIVE", "initiated_by": "peer ASKED for a prediction about a named population", "caught_class": "peer asked an unanswerable question",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "m8-named-the-wrong-readout", "kind": "SUBSTANTIVE", "initiated_by": "peer ASKED for a prediction about a named population", "caught_class": "peer asked an unanswerable question",
   "what": "Pitched the gate to two lanes as the per-edit capacity read. The gate moves 1e-4 "
           "where c/a moves five orders of magnitude.",
   "caught_by": "a sibling lane asking a question the arithmetic could not answer",
   "verdict": ARCH, "rule": "R-READOUT-MUST-MOVE"},
 
- {"exposure": PRE_FIELD, "id": "reinvented-published-metrics", "kind": "SUBSTANTIVE", "caught_class": "re-measured it",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "reinvented-published-metrics", "kind": "SUBSTANTIVE", "caught_class": "re-measured it",
   "what": "The set-valued movement count is PEAK's metric; grow() is T-Patcher. Both published "
           "first.",
   "caught_by": "a literature sweep done after the work",
   "verdict": ARCH, "rule": "R-PRIOR-ART-BEFORE-BUILD"},
 
- {"exposure": PRE_FIELD, "id": "endorsed-a-figure-without-computing-it", "kind": "SUBSTANTIVE",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "endorsed-a-figure-without-computing-it", "kind": "SUBSTANTIVE",
   "initiated_by": "peer SENT a caveat; this lane agreed with its arithmetic",
   "caught_class": "peer checked it",
   "what": "Wrote 'at nine tests one survivor at 5% is expected', agreeing with a peer's "
@@ -176,7 +181,7 @@ ERRORS = [
   "caught_by": "the v4 lane correcting the peer, who then re-derived and told this lane",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
- {"exposure": PRE_FIELD, "id": "adopted-the-correction-to-my-own-adoption", "kind": "SUBSTANTIVE",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "adopted-the-correction-to-my-own-adoption", "kind": "SUBSTANTIVE",
   "initiated_by": "peer SENT a corrected figure; this lane took it while fixing the first one",
   "caught_class": "peer checked it",
   "what": "Took '2.07 expected survivors under dependence' as the correction to error 25, and "
@@ -191,7 +196,7 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
- {"exposure": PRE_FIELD, "id": "compared-two-escape-rates-that-measure-different-things",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "compared-two-escape-rates-that-measure-different-things",
   "initiated_by": "this lane SENT a refutation; peer checked whether the quantities matched",
   "caught_class": "peer checked it", "kind": "SUBSTANTIVE",
   "what": "Reported '60% attributive escaped vs 57% substantive, so their cost asymmetry does "
@@ -205,7 +210,7 @@ ERRORS = [
   "caught_by": "the snipershot lane checking whether the two numbers were the same quantity",
   "verdict": ARCH, "rule": "R-BASELINE-AT-THE-SAME-MEAN"},
 
- {"exposure": PRE_FIELD, "id": "explained-a-ratio-difference-that-does-not-exist",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "explained-a-ratio-difference-that-does-not-exist",
   "initiated_by": "this lane SENT an explanation; peer counted its own faults against it",
   "caught_class": "peer checked it", "kind": "SUBSTANTIVE",
   "what": "Explained this lane's 68% substantive mix against the snipershot lane's apparently "
@@ -218,7 +223,7 @@ ERRORS = [
   "caught_by": "the snipershot lane counting its own commit log",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
- {"exposure": PRE_FIELD, "id": "quoted-faithful-re-use-as-independent-corroboration", "kind": "ATTRIBUTIVE",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "quoted-faithful-re-use-as-independent-corroboration", "kind": "ATTRIBUTIVE",
   "initiated_by": "peer RETRACTED a claim about this lane and the retraction applied here too",
   "caught_class": "peer checked it",
   "what": "Reported 'the gate arithmetic is proven bit-identical to the ratchet lane, max|dA| "
@@ -234,7 +239,7 @@ ERRORS = [
                "reasoning applies here",
   "verdict": ARCH, "rule": "R-AGREEMENT-NEEDS-INDEPENDENT-PATHS"},
 
- {"exposure": PRE_FIELD, "id": "miscredited-my-own-correction-to-the-lane-i-corrected", "kind": "ATTRIBUTIVE",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "miscredited-my-own-correction-to-the-lane-i-corrected", "kind": "ATTRIBUTIVE",
   "initiated_by": "this lane SENT a tally; peer checked its own commit log against it",
   "caught_class": "peer checked it",
   "what": "Listed three v4-lane claims that inverted a published result here, including the "
@@ -247,7 +252,7 @@ ERRORS = [
   "caught_by": "the v4 lane reading its own commit titles against this lane's tally",
   "verdict": ARCH, "rule": "R-ATTRIBUTE-BY-ORIGIN-NOT-SUBJECT"},
 
- {"exposure": PRE_FIELD, "id": "aimed-a-right-principle-at-the-wrong-sentence", "kind": "ATTRIBUTIVE",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "aimed-a-right-principle-at-the-wrong-sentence", "kind": "ATTRIBUTIVE",
   "initiated_by": "this lane SENT a correction; peer re-derived what it actually said",
   "caught_class": "peer checked it",
   "what": "Told the v4 lane its 4.613e-09 against this lane's 4.3e-09 'was agreement between "
@@ -261,7 +266,7 @@ ERRORS = [
   "caught_by": "the v4 lane quoting back what it had actually written",
   "verdict": ARCH, "rule": "R-AGREEMENT-NEEDS-INDEPENDENT-PATHS"},
 
- {"exposure": PRE_FIELD, "id": "r7-plant-measured-the-wrong-dtype", "kind": "SUBSTANTIVE",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "r7-plant-measured-the-wrong-dtype", "kind": "SUBSTANTIVE",
   "initiated_by": "peer READ this lane's source and found the cast",
   "caught_class": "peer checked it",
   "what": "gate_math's R7 plant perturbed weights by a FLOAT32 ULP while its label said "
@@ -274,7 +279,7 @@ ERRORS = [
   "caught_by": "the v4 lane reading the line, after both lanes had built on the figure",
   "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
 
- {"exposure": PRE_FIELD, "id": "mismatched-baseline-under-a-fixed-numerator", "kind": "SUBSTANTIVE",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "mismatched-baseline-under-a-fixed-numerator", "kind": "SUBSTANTIVE",
   "initiated_by": "peer SENT a corrected figure; this lane re-derived the DENOMINATOR only",
   "caught_class": "peer checked it",
   "what": "Reported 'the corrected comparison is 0.0218 against 0.00836, a factor of 2.6'. The "
@@ -288,7 +293,7 @@ ERRORS = [
   "caught_by": "the v4 lane, after both other lanes had published the same wrong factor",
   "verdict": ARCH, "rule": "R-BASELINE-AT-THE-SAME-MEAN"},
 
- {"exposure": PRE_FIELD, "id": "reported-magnitude-without-direction", "kind": "SUBSTANTIVE", "initiated_by": "peer COMPUTED a signed error after accepting a correction", "caught_class": "peer checked it",
+ {"exposure": PRE_FIELD, "era": RECORDED, "id": "reported-magnitude-without-direction", "kind": "SUBSTANTIVE", "initiated_by": "peer COMPUTED a signed error after accepting a correction", "caught_class": "peer checked it",
   "what": "Planted that (1-r)/4 is CLOSER to the exact peak than (1-r)/2, with no assertion of "
           "which SIDE. It under-estimates at every r, and the peak is a BOUND - so the "
           "approximation licenses a claim the exact form forbids. Magnitude without sign, in a "
@@ -296,7 +301,7 @@ ERRORS = [
   "caught_by": "the v4 lane computing the signed error after accepting the correction",
   "verdict": ARCH, "rule": "R-STATE-THE-DIRECTION"},
 
- {"exposure": PRE_FIELD, "id": "comment-asserted-what-code-did-not-do", "kind": "SUBSTANTIVE", "caught_class": "looked at the artefact",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "comment-asserted-what-code-did-not-do", "kind": "SUBSTANTIVE", "caught_class": "looked at the artefact",
   "what": "A comment said the distance fade stops the labels piling into a smear. The fade "
           "worked as written and the smear was there: the defect is screen-space collision.",
   "caught_by": "looking at a screenshot",
@@ -308,7 +313,7 @@ ERRORS = [
              "screens. The catching mechanism here was looking at the artefact, which is not a "
              "loop rule but a habit."},
 
- {"exposure": PRE_FIELD, "id": "premise-retirement-action-too-aggressive", "kind": "SUBSTANTIVE", "caught_class": "read an output",
+ {"exposure": PRE_FIELD, "era": RECONSTRUCTED, "id": "premise-retirement-action-too-aggressive", "kind": "SUBSTANTIVE", "caught_class": "read an output",
   "what": "A premise's retirement action said to drop the zero-plant census row. That row "
           "watches modules not yet written; only the premise was spent.",
   "caught_by": "the premise actually expiring and the action being acted on",
@@ -760,6 +765,29 @@ def selftest() -> int:
     # 3. and the empty log must SAY empty rather than report a rate over nothing
     _plant("the exposure log reports a rate while empty - 0%% over no records reads as 'nothing "
            "escaped'", not (n_exp == 0 and (pf is not None or ru is not None)))
+
+    # SCOPE STATED, NOT INFERRED. The snipershot lane's point: a reader computing a rate across
+    # a reconstruction and a record cannot tell them apart, and inferring the scope from a file
+    # being short is not the same as the file saying what it covers.
+    _rec = [e for e in ERRORS if e.get("era") == RECONSTRUCTED]
+    _rcd = [e for e in ERRORS if e.get("era") == RECORDED]
+    print("  SCOPE: %d of %d errors were RECONSTRUCTED in one commit from session history; "
+          "%d were RECORDED as they occurred." % (len(_rec), len(ERRORS), len(_rcd)))
+    print("    Every rate above spans both. The reconstructed ones carry recollection risk in "
+          "caught_class specifically,")
+    print("    which is the field all the mechanism findings rest on.")
+    _att_r = [e for e in _rcd if e.get("kind") == "ATTRIBUTIVE"]
+    print("    The 0-of-10 holds in BOTH eras: 0 of %d reconstructed, 0 of %d recorded - but "
+          "the contemporaneous" % (len([e for e in _rec if e.get("kind") == "ATTRIBUTIVE"]),
+                                   len(_att_r)))
+    print("    evidence alone is %d attributive errors, which is thin." % len(_att_r))
+    _plant("an error carries no era marking - then a reader cannot tell a reconstruction from "
+           "a record and any rate is computed over a mixture",
+           all(e.get("era") in (RECONSTRUCTED, RECORDED) for e in ERRORS))
+    _plant("every error is RECONSTRUCTED - then this catalogue is a recollection and should "
+           "not be quoted as a record", bool(_rcd))
+    _plant("every error is RECORDED - then the era marking is unnecessary and this lane's "
+           "claim to a contemporaneous catalogue was true after all", bool(_rec))
 
     _plant("every rule is already in the loop - a catalogue of twenty errors that implies the "
            "loop needs no change", len(new) > 0)

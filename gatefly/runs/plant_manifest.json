@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 454,
+  "plants": 457,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 10,
-  "labels_not_greppable_in_source": 92
+  "labels_not_greppable_in_source": 95
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -63,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "92 of 454 labels (20.3%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 454. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "95 of 457 labels (20.8%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 457. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -303,6 +303,18 @@
    {
     "label": "the exposure log reports a rate while empty - 0%% over no records reads as 'nothing escaped'",
     "longest_on_one_line": "the exposure log reports a rate while empty - 0%% over no records reads as 'nothing "
+   },
+   {
+    "label": "an error carries no era marking - then a reader cannot tell a reconstruction from a record and any rate is computed over a mixture",
+    "longest_on_one_line": "an error carries no era marking - then a reader cannot tell a reconstruction from "
+   },
+   {
+    "label": "every error is RECONSTRUCTED - then this catalogue is a recollection and should not be quoted as a record",
+    "longest_on_one_line": "every error is RECONSTRUCTED - then this catalogue is a recollection and should "
+   },
+   {
+    "label": "every error is RECORDED - then the era marking is unnecessary and this lane's claim to a contemporaneous catalogue was true after all",
+    "longest_on_one_line": "every error is RECORDED - then the era marking is unnecessary and this lane's "
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
@@ -1219,107 +1231,122 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 602
+    "line": 607
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 606
+    "line": 611
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 609
+    "line": 614
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 614
+    "line": 619
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 620
+    "line": 625
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 626
+    "line": 631
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 634
+    "line": 639
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 644
+    "line": 649
    },
    {
     "label": "a peer claim carries no recorded ORIGIN: %s - the registry that counts claims cannot catch a miscredit without one",
     "has_format": true,
-    "line": 651
+    "line": 656
    },
    {
     "label": "the counts disagree with the claim table (%d+%d vs %d)",
     "has_format": true,
-    "line": 653
+    "line": 658
    },
    {
     "label": "every peer claim came from ONE lane - then this table cannot distinguish origins and the rule it implements is untested here",
     "has_format": false,
-    "line": 656
+    "line": 661
    },
    {
     "label": "the peer-claim re-derivation record is missing a half: %s",
     "has_format": true,
-    "line": 660
+    "line": 665
    },
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "has_format": true,
-    "line": 667
+    "line": 672
    },
    {
     "label": "a plant caught an ATTRIBUTIVE error (%d of %d) - then numeric instruments are not blind to provenance after all and this finding is wrong",
     "has_format": true,
-    "line": 693
+    "line": 698
    },
    {
     "label": "no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not about attribution, it is that plants catch nothing",
     "has_format": true,
-    "line": 697
+    "line": 702
    },
    {
     "label": "every error is classified ATTRIBUTIVE or SUBSTANTIVE: %s",
     "has_format": true,
-    "line": 701
+    "line": 706
    },
    {
     "label": "the escape-rate comparison is being reported as a refutation rather than as an unresolved question - the two lanes measured different quantities",
     "has_format": false,
-    "line": 737
+    "line": 742
    },
    {
     "label": "an exposure record omits reached_user, so 'nobody recorded it' would read as 'it did not reach him': %s",
     "has_format": true,
-    "line": 753
+    "line": 758
    },
    {
     "label": "%d error(s) carry no exposure marking at all - then the pre-field era is indistinguishable from the recorded one",
     "has_format": true,
-    "line": 758
+    "line": 763
    },
    {
     "label": "the exposure log reports a rate while empty - 0%% over no records reads as 'nothing escaped'",
     "has_format": false,
-    "line": 761
+    "line": 766
+   },
+   {
+    "label": "an error carries no era marking - then a reader cannot tell a reconstruction from a record and any rate is computed over a mixture",
+    "has_format": false,
+    "line": 784
+   },
+   {
+    "label": "every error is RECONSTRUCTED - then this catalogue is a recollection and should not be quoted as a record",
+    "has_format": false,
+    "line": 787
+   },
+   {
+    "label": "every error is RECORDED - then the era marking is unnecessary and this lane's claim to a contemporaneous catalogue was true after all",
+    "has_format": false,
+    "line": 789
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 764
+    "line": 792
    }
   ],
   "metrics.py": [
@@ -2800,5 +2827,5 @@
    }
   ]
  },
- "labels_digest": "45d28d044b747e77"
+ "labels_digest": "b586296343f0a30c"
 }
