@@ -188,6 +188,19 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
+ {"id": "explained-a-ratio-difference-that-does-not-exist",
+  "initiated_by": "this lane SENT an explanation; peer counted its own faults against it",
+  "caught_class": "peer checked it", "kind": "SUBSTANTIVE",
+  "what": "Explained this lane's 68% substantive mix against the snipershot lane's apparently "
+          "attributive one by saying a lane's faults land where its work is - its work being "
+          "provenance, this lane's being measurement. It counted: 13 substantive against 6 "
+          "attributive, SAME 68%. So there was no difference to explain, and the explanation "
+          "was the more satisfying of the two available, which is the warning sign. It had "
+          "generalised from three instances; this lane built a causal story on top of that "
+          "without asking for the denominator.",
+  "caught_by": "the snipershot lane counting its own commit log",
+  "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
+
  {"id": "quoted-faithful-re-use-as-independent-corroboration", "kind": "ATTRIBUTIVE",
   "initiated_by": "peer RETRACTED a claim about this lane and the retraction applied here too",
   "caught_class": "peer checked it",
@@ -439,6 +452,8 @@ RULES = {
 # caught it. R-ATTRIBUTE-BY-ORIGIN-NOT-SUBJECT, applied to itself.
 V4, SNIPER = "v4", "snipershot"
 PEER_CLAIMS = [
+ ("its errors are attributive, the arithmetic always held", SNIPER, "FAILED"),
+ ("attributive errors always escape before being caught",   SNIPER, "FAILED"),
  ("my 'independently planted' claim is false - shared derivation", SNIPER, "HELD"),
  ("Jensen bound on the concave gate",                      V4,     "HELD"),
  ("g(x) + g(1/x) = 1, the reciprocal symmetry",            V4,     "HELD"),
@@ -636,6 +651,26 @@ def selftest() -> int:
            % ([e["id"] for e in ERRORS if e.get("kind") not in ("ATTRIBUTIVE", "SUBSTANTIVE")]
               or "all classified"),
            all(e.get("kind") in ("ATTRIBUTIVE", "SUBSTANTIVE") for e in ERRORS))
+
+    # AND BOTH EXPLANATIONS OF THE SURROUNDING STRUCTURE HAVE NOW FAILED, which is the honest
+    # landing. The MECHANISM replicated across two lanes - 0 of 10 attributive caught by a
+    # plant here, 0 of 6 there. Every story either lane told about the structure around it did
+    # not:
+    #
+    #   "its errors are attributive, the arithmetic held"   its own count: 13 vs 6, 68% - same
+    #   "a lane's faults land where its work is"            refuted by that identical ratio
+    #   "attributive errors always escape first"            here 60% vs 57% - no difference
+    #
+    # Two lanes, three generalisations, three refutations, one surviving mechanism. The
+    # mechanism is the one neither of us invented: it falls out of what a plant can inspect.
+    _esc = ("peer checked it", "peer asked an unanswerable question")
+    _a = [e for e in ERRORS if e.get("kind") == "ATTRIBUTIVE"]
+    _b = [e for e in ERRORS if e.get("kind") == "SUBSTANTIVE"]
+    _ra = sum(1 for e in _a if e["caught_class"] in _esc) / float(len(_a))
+    _rb = sum(1 for e in _b if e["caught_class"] in _esc) / float(len(_b))
+    _plant("attributive errors escape at a MARKEDLY higher rate than substantive ones here "
+           "(%.0f%% vs %.0f%%) - then the snipershot lane's cost asymmetry reproduces and this "
+           "refutation is wrong" % (100 * _ra, 100 * _rb), abs(_ra - _rb) < 0.15)
 
     _plant("every rule is already in the loop - a catalogue of twenty errors that implies the "
            "loop needs no change", len(new) > 0)
