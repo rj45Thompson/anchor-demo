@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 25,
-  "plants": 344,
+  "plants": 347,
   "modules_with_zero_plants": 2,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 29
+  "labels_not_greppable_in_source": 32
  },
  "zero_plant_modules": [
   "check_hover.py",
@@ -42,7 +42,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "29 of 344 labels (8.4%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 344. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "32 of 347 labels (9.2%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 347. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -110,6 +110,18 @@
    {
     "label": "%d label(s) are not greppable on one line of the manifest either - this module reproduces the fault it exists to fix",
     "longest_on_one_line": "%d label(s) are not greppable on one line of the manifest either - this module "
+   },
+   {
+    "label": "the premise-shape detector missed a > 0 / bool() / bare-collection assertion - a premise worded unfamiliarly would go uncounted",
+    "longest_on_one_line": "the premise-shape detector missed a > 0 / bool() / bare-collection assertion - a "
+   },
+   {
+    "label": "the detector does not TIER its hits - an untiered screen is 91% false positives here and gets ignored like the phrasing grep it replaces",
+    "longest_on_one_line": "the detector does not TIER its hits - an untiered screen is 91% false positives "
+   },
+   {
+    "label": "the premise-shape detector flagged ordinary plants asserting the HEALTHY state - it would mark most of a suite",
+    "longest_on_one_line": "the premise-shape detector flagged ordinary plants asserting the HEALTHY state - "
    },
    {
     "label": "running the selftest MODIFIED the stored manifest - it would refresh the drift baseline and make itself pass",
@@ -992,57 +1004,72 @@
    {
     "label": "extraction found fewer than 100 plants (%d) - the manifest is not covering this lane",
     "has_format": true,
-    "line": 256
+    "line": 338
    },
    {
     "label": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published citation has stopped resolving",
     "has_format": false,
-    "line": 263
+    "line": 345
    },
    {
     "label": "rewording a label was not detected - the drift check is blind",
     "has_format": false,
-    "line": 278
+    "line": 360
    },
    {
     "label": "removing a label was not detected",
     "has_format": false,
-    "line": 284
+    "line": 366
    },
    {
     "label": "an unchanged manifest reported drift - the check would refuse on every run",
     "has_format": false,
-    "line": 289
+    "line": 371
    },
    {
     "label": "the digest changed when only surrounding prose changed",
     "has_format": false,
-    "line": 296
+    "line": 378
    },
    {
     "label": "the digest did NOT change when a label changed",
     "has_format": false,
-    "line": 297
+    "line": 379
    },
    {
     "label": "the loop detector listed a plant that is NOT in a loop - it fires on anything",
     "has_format": false,
-    "line": 335
+    "line": 417
    },
    {
     "label": "the loop detector MISSED a plant inside a loop - it would let the static count disagree with a runtime count unexplained",
     "has_format": false,
-    "line": 337
+    "line": 419
    },
    {
     "label": "%d label(s) are not greppable on one line of the manifest either - this module reproduces the fault it exists to fix",
     "has_format": true,
-    "line": 364
+    "line": 446
+   },
+   {
+    "label": "the premise-shape detector missed a > 0 / bool() / bare-collection assertion - a premise worded unfamiliarly would go uncounted",
+    "has_format": false,
+    "line": 474
+   },
+   {
+    "label": "the detector does not TIER its hits - an untiered screen is 91% false positives here and gets ignored like the phrasing grep it replaces",
+    "has_format": false,
+    "line": 476
+   },
+   {
+    "label": "the premise-shape detector flagged ordinary plants asserting the HEALTHY state - it would mark most of a suite",
+    "has_format": false,
+    "line": 479
    },
    {
     "label": "running the selftest MODIFIED the stored manifest - it would refresh the drift baseline and make itself pass",
     "has_format": false,
-    "line": 377
+    "line": 511
    }
   ],
   "play.py": [
@@ -1955,5 +1982,5 @@
    }
   ]
  },
- "labels_digest": "dbe7f073eb12a8dd"
+ "labels_digest": "c100e3c66c43951a"
 }

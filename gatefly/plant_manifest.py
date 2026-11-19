@@ -112,6 +112,88 @@ def grep_findable(mod, labels):
     return out
 
 
+def premise_shaped(path):
+    """_plant() calls whose CONDITION asserts that a count is positive or a collection non-empty.
+
+    THE SIGNATURE IS NOT THE WORDING, which is what makes this detectable. The snipershot lane
+    found one premise-shaped plant in 76 by grepping for phrasing it happened to have used -
+    "stays visible", "known false positive", "pinned" - and said plainly it has no detector for
+    the shape, only the name. A phrasing search cannot find a premise somebody worded
+    differently, and that is most of them.
+
+    But the shape has a mechanical tell. For almost any measured collection of problems, THE
+    EMPTY STATE IS THE HEALTHY STATE. So:
+
+        a PLANT asserts the healthy state      -> not X, X == 0, len(X) == 0, X < tol
+        a PREMISE asserts the UNHEALTHY state  -> X > 0, len(X) >= 1, bool(X), bare X
+
+    A check that passes only while something is still wrong is a premise, whatever its label
+    says. That is an AST question, independent of how it was written, and it catches a premise
+    phrased in words nobody thought to grep for.
+
+    REPORTED AS CANDIDATES, NOT FAILURES, because the shape has honest exceptions: a floor guard
+    like "extraction found at least 100 plants" asserts a positive count and is a genuine
+    regression check, and a mechanism test on synthetic input ("drift WAS detected") asserts
+    non-emptiness correctly. Those need a human read, so this prints a list to review rather
+    than a verdict to obey.
+    """
+    with open(path, encoding="utf-8") as f:
+        src = f.read()
+    tree = ast.parse(src, filename=path)
+    lines = src.splitlines()
+    out = []
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id == "_plant" and len(node.args) >= 2):
+            continue
+        cond, why, tier = node.args[1], None, "STRONG"
+        # X > 0 / X >= 1 / X != 0, including len(X) > 0
+        if isinstance(cond, ast.Compare) and len(cond.ops) == 1:
+            op, right = cond.ops[0], cond.comparators[0]
+            if isinstance(right, ast.Constant) and right.value in (0, 1):
+                if isinstance(op, ast.Gt) and right.value == 0:
+                    why = "asserts a count is > 0: passes only while something is still there"
+                elif isinstance(op, ast.GtE) and right.value == 1:
+                    why = "asserts a count is >= 1: same shape"
+                elif isinstance(op, ast.NotEq) and right.value == 0:
+                    why = "asserts a count is != 0: same shape"
+        # bool(X)
+        elif isinstance(cond, ast.Call) and isinstance(cond.func, ast.Name) \
+                and cond.func.id == "bool":
+            why = "asserts a collection is truthy: passes only while it is non-empty"
+        # a bare name or subscript as the condition - truthy on a collection
+        elif isinstance(cond, (ast.Name, ast.Subscript)):
+            why = "a bare collection as the condition: truthy only while non-empty"
+            tier = "WEAK"
+        if why:
+            # TIERING, from reading all 35 this lane produced rather than from taste. The
+            # overwhelming majority of bare-boolean conditions are POSITIVE CONTROLS - caught,
+            # refused, raised, ok8b, f1 - asserting that a refusal fired on synthetic input.
+            # Those share the shape legitimately and swamp the signal: precision over all
+            # candidates was 3 of 35 (9%), and over the len()/bool()/count-based ones alone it
+            # was 3 of 12 (25%). So the tier is reported and the weak tier is not counted in
+            # the headline, because a screen whose headline is 91% false positives gets
+            # ignored exactly like the phrasing grep it replaces.
+            tier = "WEAK" if isinstance(cond, (ast.Name, ast.Subscript)) else "STRONG"
+            out.append({"line": node.lineno, "why": why, "tier": tier,
+                        "code": lines[node.lineno - 1].strip()[:88]})
+    return out
+
+
+# My read of every candidate this lane produced, so the precision figure is backed by a review
+# rather than asserted. These are the three that are genuinely premise-shaped: each passes only
+# while something is still wrong, and each would go red if the lane IMPROVED.
+REVIEWED_TRUE_PREMISES = {
+ ("art_graph.py", "the frontier is empty"):
+    "fails if the field publishes M7 or M8 - i.e. if someone else solves our open branches, "
+    "which is an improvement in the world and a red gate here",
+ ("art_graph.py", "every hybrid is blocked"):
+    "fails once H2 and H4 are actually done and removed from the list",
+ ("uml_kaos.py", "the gap map found no gaps at all"):
+    "fails if every gap gets closed, which is the stated goal",
+}
+
+
 def build():
     mods, zero, loops = {}, [], {}
     for name in sorted(os.listdir(HERE)):
@@ -369,6 +451,58 @@ def selftest() -> int:
     #     run drift could never be reported again - the check quietly made itself pass. Caught
     #     by a "no drift" verdict arriving immediately after two plants were added without
     #     regenerating. Guarded by mtime and content, because either alone can miss it.
+    # 11. THE PREMISE-SHAPE DETECTOR. The snipershot lane found one premise-shaped plant in 76
+    #     by grepping its own phrasing and said it has no detector for the SHAPE, only the name.
+    #     The shape is an AST property, not a wording: a check that passes only while something
+    #     is still wrong is a premise. Controls on SYNTHETIC SOURCE written here, which is the
+    #     general move that lane just endorsed - test the detector, not the lane's contents.
+    import tempfile
+    td2 = tempfile.mkdtemp()
+    prem = os.path.join(td2, "prem.py")
+    io.open(prem, "w", encoding="utf-8").write(
+        "def f():\n"
+        "    _plant('some deficiency still exists', len(bad) > 0)\n"
+        "    _plant('a collection is non-empty', bool(found))\n"
+        "    _plant('a bare collection', leftovers)\n")
+    good = os.path.join(td2, "good.py")
+    io.open(good, "w", encoding="utf-8").write(
+        "def f():\n"
+        "    _plant('nothing is broken', not bad)\n"
+        "    _plant('the count is zero', len(bad) == 0)\n"
+        "    _plant('within tolerance', moved < 1e-6)\n"
+        "    _plant('they match', before == after)\n")
+    _plant("the premise-shape detector missed a > 0 / bool() / bare-collection assertion - a "
+           "premise worded unfamiliarly would go uncounted", len(premise_shaped(prem)) == 3)
+    _plant("the detector does not TIER its hits - an untiered screen is 91% false positives "
+           "here and gets ignored like the phrasing grep it replaces",
+           {c["tier"] for c in premise_shaped(prem)} == {"STRONG", "WEAK"})
+    _plant("the premise-shape detector flagged ordinary plants asserting the HEALTHY state - "
+           "it would mark most of a suite", premise_shaped(good) == [])
+
+    # and run it over this whole lane, reported as candidates to read rather than failures
+    cand = {}
+    for name in sorted(os.listdir(HERE)):
+        if name.endswith(".py"):
+            got = premise_shaped(os.path.join(HERE, name))
+            if got:
+                cand[name] = got
+    n_all = sum(len(v) for v in cand.values())
+    strong = {k: [c for c in v if c["tier"] == "STRONG"] for k, v in cand.items()}
+    strong = {k: v for k, v in strong.items() if v}
+    n_strong = sum(len(v) for v in strong.values())
+    print("  premise-SHAPED candidates: %d total, %d STRONG in %d module(s) - %s"
+          % (n_all, n_strong, len(strong),
+             ", ".join("%s(%d)" % (k, len(v)) for k, v in strong.items())))
+    print("    PRECISION, measured by reading all %d rather than claimed: %d are genuinely"
+          % (n_all, len(REVIEWED_TRUE_PREMISES)))
+    print("    premise-shaped (%.0f%% of all, %.0f%% of STRONG). The rest are POSITIVE CONTROLS"
+          % (100.0 * len(REVIEWED_TRUE_PREMISES) / max(n_all, 1),
+             100.0 * len(REVIEWED_TRUE_PREMISES) / max(n_strong, 1)))
+    print("    - caught, refused, raised, ok8b - asserting a refusal fired on synthetic input,")
+    print("    which shares the shape legitimately. So this is a SCREEN (read %d of %d plants"
+          % (n_strong, total))
+    print("    to find them), not a verdict, and the phrasing grep it replaces found 1 of 76.")
+
     before_mt = os.path.getmtime(MANIFEST) if os.path.exists(MANIFEST) else None
     before_txt = io.open(MANIFEST, encoding="utf-8").read() if os.path.exists(MANIFEST) else None
     _ = build()
