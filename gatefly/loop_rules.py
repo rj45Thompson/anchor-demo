@@ -188,6 +188,20 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
+ {"id": "mismatched-baseline-under-a-fixed-numerator",
+  "initiated_by": "peer SENT a corrected figure; this lane re-derived the DENOMINATOR only",
+  "caught_class": "peer checked it",
+  "what": "Reported 'the corrected comparison is 0.0218 against 0.00836, a factor of 2.6'. The "
+          "numerator was computed with REALISED marginals averaging 0.0353 after a tie fix; the "
+          "denominator was Binomial(9, 0.05), the NOMINAL marginal from before that fix. A "
+          "fixed numerator over an unfixed denominator, one line below the fix that removed "
+          "exactly that fault. Matched: m=9 p=0.0353 gives 6.9x; the live family is m=7 "
+          "(two angles have a realised marginal of exactly 0.000, since a statistic whose atom "
+          "spans its null can never produce p <= alpha) giving 7.6x. I computed 0.00836 myself "
+          "and correctly - for the wrong quantity.",
+  "caught_by": "the v4 lane, after both other lanes had published the same wrong factor",
+  "verdict": ARCH, "rule": "R-BASELINE-AT-THE-SAME-MEAN"},
+
  {"id": "reported-magnitude-without-direction", "initiated_by": "peer COMPUTED a signed error after accepting a correction", "caught_class": "peer checked it",
   "what": "Planted that (1-r)/4 is CLOSER to the exact peak than (1-r)/2, with no assertion of "
           "which SIDE. It under-estimates at every r, and the peak is a BOUND - so the "
@@ -286,6 +300,20 @@ RULES = {
            "Re-deriving is also what produced 11 of this catalogue's catches, in both "
            "directions, and it requires no request from either side.",
    "in_loop": True, "where": "loop_rules.py, PEER_CLAIMS_REDERIVED and the initiated_by field"},
+ "R-BASELINE-AT-THE-SAME-MEAN": {
+   "says": "A ratio against a baseline requires the baseline to be computed at the SAME mean as "
+           "the thing measured. It follows from linearity rather than convention: dependence is "
+           "the one thing that cannot move E[S], so a baseline at a different mean measures the "
+           "MARGINAL change as well as the correlation - and naming the product a dependence "
+           "factor is measuring two things and reporting one.",
+   "in_loop": True, "where": "gate_math.py, the matched-baseline plants"},
+ "R-THE-CORRECTION-IS-A-CLAIM": {
+   "says": "A correction gets the same gate as the thing it corrects. Error 26 was not a "
+           "failure to re-derive - the refuting argument was stated correctly two lines later - "
+           "but a failure to aim it: the claim being CORRECTED was re-derived and the claim "
+           "being WRITTEN was not. Re-derive what you are about to assert, not only what you "
+           "are retracting.",
+   "in_loop": False, "where": "not implemented - it is a rule about aim, and no screen sees aim"},
  "R-STATE-THE-DIRECTION": {
    "says": "A reported error, gap or difference carries its SIGN, not only its size - and for "
            "anything used as a BOUND the sign decides whether the approximation is safe. A "
@@ -326,7 +354,12 @@ RULES = {
 # ADOPTED, and three of them arrived with working arithmetic attached, which is what makes
 # adoption tempting. That is the argument for the rule below, and it is a number rather than a
 # preference.
-PEER_CLAIMS_REDERIVED = {"held": 6, "failed": 6}
+PEER_CLAIMS_REDERIVED = {"held": 7, "failed": 7}
+# AND THE RATE IS NOT THE RULE'S YIELD, which the snipershot lane is right about: every one of
+# these is a claim somebody thought worth sending, so the denominator is pre-filtered toward
+# the contested and the interesting. The rate on claims nobody bothered to transmit is
+# unmeasured and certainly better. The rule earns its keep on the five that would have
+# propagated, not on the ratio.
 #     + the binomial P(>=4) quoted as 0.0084                FAILED - that is P(>=3)=0.00836;
 #       P(>=4)=0.00064, an off-by-one that UNDERSTATES the sender's own conclusion 13x
 #     + the resampling SE at 4000 draws, 0.0011 at p=0.005   HELD - exactly

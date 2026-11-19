@@ -585,8 +585,17 @@ def selftest(lane_optional: bool = False) -> int:
     # The snipershot lane quoted 0.0084 as P(>=3) while labelling it P(>=4) - that catch
     # stands. The DEPENDENT figures it was compared against were then withdrawn as a bug, so
     # neither its 10x nor this lane's 131x survives: both were mismatched quantities on top of
-    # a broken statistic. Corrected comparison, tie-aware: exact 0.0218 against independent
-    # 0.00836, a factor of 2.6. The decisive argument is one line and is planted below.
+    # a broken statistic. AND THE "CORRECTED" 2.6x WAS WRONG TOO, by the same fault one line
+    # above it: 0.0218 uses REALISED marginals (~0.0353) after a tie fix, while 0.00836 is
+    # Binomial(9, 0.05), the NOMINAL marginal from before it. Matched baselines:
+    #     m=9, p=0.05    P(>=3) 0.00836   2.6x   <- mismatched, what both lanes published
+    #     m=9, p=0.0353  P(>=3) 0.00315   6.9x
+    #     m=7, p=0.0454  P(>=3) 0.00285   7.6x   <- live: two angles have a realised marginal
+    #        of exactly 0.000, because a statistic whose atom spans its whole null can never
+    #        produce p <= alpha, and an angle that cannot survive is not a test.
+    # The requirement follows from the linearity argument below rather than from convention:
+    # dependence is the one thing that cannot move E[S], so a baseline at a DIFFERENT mean
+    # measures the marginal change as well as the correlation.
     from math import comb as _comb
     _n, _al = 9, 0.05
     _pmf = [_comb(_n, k) * _al ** k * (1 - _al) ** (_n - k) for k in range(_n + 1)]
@@ -626,6 +635,22 @@ def selftest(lane_optional: bool = False) -> int:
            "fixture is not dependent and the plants above prove nothing"
            % (float(_dep.sum(0).var()), float(_ind.sum(0).var())),
            float(_dep.sum(0).var()) > 4.0 * float(_ind.sum(0).var()))
+
+    # THE MATCHED BASELINE, planted because this lane published the mismatched one.
+    from math import comb as _cb
+    def _pge(_m, _p, _t=3):
+        return sum(_cb(_m, _k) * _p ** _k * (1 - _p) ** (_m - _k) for _k in range(_t, _m + 1))
+    _obs = 0.0218
+    _mis, _mat, _live = _pge(9, 0.05), _pge(9, 0.0353), _pge(7, 0.0454)
+    _plant("the mismatched baseline gives the same factor as the matched one (%.1fx vs %.1fx) "
+           "- then matching the mean does not matter and this caveat is noise"
+           % (_obs / _mis, _obs / _mat), abs(_obs / _mis - _obs / _mat) > 1.0)
+    _plant("the matched baseline is LARGER than the mismatched one (%.5f vs %.5f) - then the "
+           "published 2.6x over-stated rather than under-stated the effect"
+           % (_mat, _mis), _mat < _mis)
+    _plant("dropping the two dead angles does not move the factor (%.1fx vs %.1fx) - then the "
+           "family size is immaterial and 'live is seven' changes nothing"
+           % (_obs / _mat, _obs / _live), abs(_obs / _mat - _obs / _live) > 0.3)
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
