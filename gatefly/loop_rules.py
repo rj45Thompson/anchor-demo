@@ -162,6 +162,17 @@ ERRORS = [
   "caught_by": "a literature sweep done after the work",
   "verdict": ARCH, "rule": "R-PRIOR-ART-BEFORE-BUILD"},
 
+ {"id": "endorsed-a-figure-without-computing-it",
+  "initiated_by": "peer SENT a caveat; this lane agreed with its arithmetic",
+  "caught_class": "peer checked it",
+  "what": "Wrote 'at nine tests one survivor at 5% is expected', agreeing with a peer's "
+          "multiplicity caveat. The independent expectation is 9 x 0.05 = 0.45, so the figure "
+          "was 2.2x too high; the dependent truth for nine statistics on one set of 50 cases is "
+          "about 2.07. Wrong in both directions, and endorsed without computing either - IN THE "
+          "SAME MESSAGE that proposed R-PEER-CLAIM-IS-UNVERIFIED.",
+  "caught_by": "the v4 lane correcting the peer, who then re-derived and told this lane",
+  "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
+
  {"id": "reported-magnitude-without-direction", "initiated_by": "peer COMPUTED a signed error after accepting a correction", "caught_class": "peer checked it",
   "what": "Planted that (1-r)/4 is CLOSER to the exact peak than (1-r)/2, with no assertion of "
           "which SIDE. It under-estimates at every r, and the peak is a BOUND - so the "
@@ -300,7 +311,10 @@ RULES = {
 # ADOPTED, and three of them arrived with working arithmetic attached, which is what makes
 # adoption tempting. That is the argument for the rule below, and it is a number rather than a
 # preference.
-PEER_CLAIMS_REDERIVED = {"held": 5, "failed": 4}
+PEER_CLAIMS_REDERIVED = {"held": 6, "failed": 5}
+#     + the binomial P(>=4) quoted as 0.0084                FAILED - that is P(>=3)=0.00836;
+#       P(>=4)=0.00064, an off-by-one that UNDERSTATES the sender's own conclusion 13x
+#     + the resampling SE at 4000 draws, 0.0011 at p=0.005   HELD - exactly
 
 
 def check():

@@ -578,6 +578,28 @@ def selftest(lane_optional: bool = False) -> int:
            % ", ".join("%.3f" % e for e in _errs),
            all(_errs[i] > _errs[i + 1] for i in range(len(_errs) - 1)))
 
+    # MULTIPLICITY ARITHMETIC, planted because this lane endorsed a wrong figure for it and a
+    # sibling lane mislabelled another. At n tests with nominal alpha, INDEPENDENT:
+    #   expected survivors = n*alpha (9*0.05 = 0.45, not 1 as this lane wrote)
+    #   P(>=3) = 0.00836   P(>=4) = 0.00064
+    # The snipershot lane quoted 0.0084 as P(>=4); that is P(>=3). The off-by-one UNDERSTATES
+    # its own conclusion - the dependent P(>=4) of 0.0840 is 131x the true independent value,
+    # not 10x. Both errors are the same class and neither was computed before being sent.
+    from math import comb as _comb
+    _n, _al = 9, 0.05
+    _pmf = [_comb(_n, k) * _al ** k * (1 - _al) ** (_n - k) for k in range(_n + 1)]
+    _plant("the independent expected survivor count at 9 tests is 1 (it is %.2f) - then this "
+           "lane's endorsement was right" % (_n * _al), abs(_n * _al - 0.45) < 1e-12)
+    _plant("P(>=4) at 9 tests equals the 0.0084 that was quoted for it (%.5f) - then there is "
+           "no off-by-one" % sum(_pmf[4:]), abs(sum(_pmf[4:]) - 0.0084) > 1e-4)
+    _plant("P(>=3) is NOT the 0.0084 that was quoted as P(>=4) (%.5f) - then the off-by-one "
+           "diagnosis is wrong" % sum(_pmf[3:]), abs(sum(_pmf[3:]) - 0.0084) < 1e-4)
+    # and the resampling SE that makes a third digit meaningless at 4000 draws
+    _se = (0.005 * 0.995 / 4000.0) ** 0.5
+    _plant("the resampling SE of a permutation p=0.005 at 4000 draws is below 0.0005 (%.5f) - "
+           "then quoting three digits off 4000 draws is not quoting the sampler" % _se,
+           _se > 0.001)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)
