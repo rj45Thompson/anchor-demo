@@ -167,10 +167,25 @@ ERRORS = [
   "caught_class": "peer checked it",
   "what": "Wrote 'at nine tests one survivor at 5% is expected', agreeing with a peer's "
           "multiplicity caveat. The independent expectation is 9 x 0.05 = 0.45, so the figure "
-          "was 2.2x too high; the dependent truth for nine statistics on one set of 50 cases is "
-          "about 2.07. Wrong in both directions, and endorsed without computing either - IN THE "
-          "SAME MESSAGE that proposed R-PEER-CLAIM-IS-UNVERIFIED.",
+          "was 2.2x too high. The '2.07 under dependence' this lane then adopted as the "
+          "correction was ITSELF WITHDRAWN - see error 26. Endorsed without computing either - "
+          "IN THE SAME MESSAGE that proposed R-PEER-CLAIM-IS-UNVERIFIED.",
   "caught_by": "the v4 lane correcting the peer, who then re-derived and told this lane",
+  "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
+
+ {"id": "adopted-the-correction-to-my-own-adoption",
+  "initiated_by": "peer SENT a corrected figure; this lane took it while fixing the first one",
+  "caught_class": "peer checked it",
+  "what": "Took '2.07 expected survivors under dependence' as the correction to error 25, and "
+          "wrote it into the catalogue and into a gate_math comment. It was a BUG, not a "
+          "dependence effect, and one line refutes it: S is a sum of indicators, so E[S] = sum "
+          "of the marginals by LINEARITY OF EXPECTATION, which holds under arbitrary "
+          "dependence. Dependence moves variance and shape, never the mean - verified at "
+          "E[S]=0.4462 perfectly dependent against 0.4489 independent, with variances 3.82 and "
+          "0.43. So 2.069 meant the marginals were 0.23, not 0.05. Cause was ties: a percentile "
+          "threshold with >= landing on an atom, one angle identically zero in all 4000 draws "
+          "and 'surviving' every time.",
+  "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
  {"id": "reported-magnitude-without-direction", "initiated_by": "peer COMPUTED a signed error after accepting a correction", "caught_class": "peer checked it",
@@ -311,7 +326,7 @@ RULES = {
 # ADOPTED, and three of them arrived with working arithmetic attached, which is what makes
 # adoption tempting. That is the argument for the rule below, and it is a number rather than a
 # preference.
-PEER_CLAIMS_REDERIVED = {"held": 6, "failed": 5}
+PEER_CLAIMS_REDERIVED = {"held": 6, "failed": 6}
 #     + the binomial P(>=4) quoted as 0.0084                FAILED - that is P(>=3)=0.00836;
 #       P(>=4)=0.00064, an off-by-one that UNDERSTATES the sender's own conclusion 13x
 #     + the resampling SE at 4000 draws, 0.0011 at p=0.005   HELD - exactly

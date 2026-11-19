@@ -582,9 +582,11 @@ def selftest(lane_optional: bool = False) -> int:
     # sibling lane mislabelled another. At n tests with nominal alpha, INDEPENDENT:
     #   expected survivors = n*alpha (9*0.05 = 0.45, not 1 as this lane wrote)
     #   P(>=3) = 0.00836   P(>=4) = 0.00064
-    # The snipershot lane quoted 0.0084 as P(>=4); that is P(>=3). The off-by-one UNDERSTATES
-    # its own conclusion - the dependent P(>=4) of 0.0840 is 131x the true independent value,
-    # not 10x. Both errors are the same class and neither was computed before being sent.
+    # The snipershot lane quoted 0.0084 as P(>=3) while labelling it P(>=4) - that catch
+    # stands. The DEPENDENT figures it was compared against were then withdrawn as a bug, so
+    # neither its 10x nor this lane's 131x survives: both were mismatched quantities on top of
+    # a broken statistic. Corrected comparison, tie-aware: exact 0.0218 against independent
+    # 0.00836, a factor of 2.6. The decisive argument is one line and is planted below.
     from math import comb as _comb
     _n, _al = 9, 0.05
     _pmf = [_comb(_n, k) * _al ** k * (1 - _al) ** (_n - k) for k in range(_n + 1)]
@@ -599,6 +601,31 @@ def selftest(lane_optional: bool = False) -> int:
     _plant("the resampling SE of a permutation p=0.005 at 4000 draws is below 0.0005 (%.5f) - "
            "then quoting three digits off 4000 draws is not quoting the sampler" % _se,
            _se > 0.001)
+
+    # LINEARITY OF EXPECTATION IS WHY 2.069 COULD NEVER HAVE BEEN A DEPENDENCE EFFECT.
+    # S is a sum of indicators, so E[S] = sum of the marginals WHATEVER the dependence.
+    # Dependence moves variance and shape, never the mean. So a reported mean of 2.069 against
+    # a nominal 9 x 0.05 = 0.45 was not telling anyone about dependence - it was saying the
+    # marginals were 0.23. (They were: a percentile threshold with >= landing on an atom, one
+    # angle identically zero in all 4000 draws and "surviving" every one of them.)
+    #
+    # This lane ADOPTED 2.069 as the correction to its own adopted figure, which is error 26.
+    # The refutation is one line and needs no data.
+    _rg = np.random.default_rng(7)
+    _n, _al, _dr = 9, 0.05, 200000
+    _u = _rg.random(_dr)
+    _dep = np.stack([(_u < _al).astype(float) for _ in range(_n)])      # perfectly dependent
+    _ind = (_rg.random((_n, _dr)) < _al).astype(float)                  # independent
+    for _nm, _M in (("dependent", _dep), ("independent", _ind)):
+        _plant("E[S] does not equal the sum of the marginals for %s indicators (%.4f vs %.4f) "
+               "- then linearity of expectation fails and dependence could move the mean"
+               % (_nm, float(_M.sum(0).mean()), float(_M.mean(1).sum())),
+               abs(float(_M.sum(0).mean()) - float(_M.mean(1).sum())) < 1e-9)
+    # the control: dependence MUST change the variance, or the fixture is not dependent at all
+    _plant("the dependent and independent variances are the same (%.3f vs %.3f) - then the "
+           "fixture is not dependent and the plants above prove nothing"
+           % (float(_dep.sum(0).var()), float(_ind.sum(0).var())),
+           float(_dep.sum(0).var()) > 4.0 * float(_ind.sum(0).var()))
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:

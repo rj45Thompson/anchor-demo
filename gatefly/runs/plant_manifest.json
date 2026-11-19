@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 435,
+  "plants": 437,
   "modules_with_zero_plants": 0,
-  "call_sites_inside_loops": 9,
-  "labels_not_greppable_in_source": 75
+  "call_sites_inside_loops": 10,
+  "labels_not_greppable_in_source": 77
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -34,6 +34,10 @@
    {
     "plant_line": 571,
     "loop_line": 566
+   },
+   {
+    "plant_line": 620,
+    "loop_line": 619
    }
   ],
   "ladder_probe.py": [
@@ -59,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "75 of 435 labels (17.2%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 435. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "77 of 437 labels (17.6%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 437. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -191,6 +195,10 @@
     "longest_on_one_line": "the resampling SE of a permutation p=0.005 at 4000 draws is below 0.0005 (%.5f) - "
    },
    {
+    "label": "the dependent and independent variances are the same (%.3f vs %.3f) - then the fixture is not dependent and the plants above prove nothing",
+    "longest_on_one_line": "the dependent and independent variances are the same (%.3f vs %.3f) - then the "
+   },
+   {
     "label": "the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f (%.4f vs %.4f)",
     "longest_on_one_line": "the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f "
    },
@@ -201,6 +209,10 @@
    {
     "label": "(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is safe to quote as a bound, and this caveat is unnecessary",
     "longest_on_one_line": "(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is "
+   },
+   {
+    "label": "E[S] does not equal the sum of the marginals for %s indicators (%.4f vs %.4f) - then linearity of expectation fails and dependence could move the mean",
+    "longest_on_one_line": "E[S] does not equal the sum of the marginals for %s indicators (%.4f vs %.4f) "
    }
   ],
   "gate_read.py": [
@@ -777,22 +789,27 @@
    {
     "label": "the independent expected survivor count at 9 tests is 1 (it is %.2f) - then this lane's endorsement was right",
     "has_format": true,
-    "line": 591
+    "line": 593
    },
    {
     "label": "P(>=4) at 9 tests equals the 0.0084 that was quoted for it (%.5f) - then there is no off-by-one",
     "has_format": true,
-    "line": 593
+    "line": 595
    },
    {
     "label": "P(>=3) is NOT the 0.0084 that was quoted as P(>=4) (%.5f) - then the off-by-one diagnosis is wrong",
     "has_format": true,
-    "line": 595
+    "line": 597
    },
    {
     "label": "the resampling SE of a permutation p=0.005 at 4000 draws is below 0.0005 (%.5f) - then quoting three digits off 4000 draws is not quoting the sampler",
     "has_format": true,
-    "line": 599
+    "line": 601
+   },
+   {
+    "label": "the dependent and independent variances are the same (%.3f vs %.3f) - then the fixture is not dependent and the plants above prove nothing",
+    "has_format": true,
+    "line": 625
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
@@ -833,6 +850,11 @@
     "label": "(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is safe to quote as a bound, and this caveat is unnecessary",
     "has_format": true,
     "line": 571
+   },
+   {
+    "label": "E[S] does not equal the sum of the marginals for %s indicators (%.4f vs %.4f) - then linearity of expectation fails and dependence could move the mean",
+    "has_format": true,
+    "line": 620
    }
   ],
   "gate_read.py": [
@@ -1107,57 +1129,57 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 389
+    "line": 404
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 393
+    "line": 408
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 396
+    "line": 411
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 401
+    "line": 416
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 407
+    "line": 422
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 413
+    "line": 428
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 421
+    "line": 436
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 431
+    "line": 446
    },
    {
     "label": "the peer-claim re-derivation record is missing a half: %s",
     "has_format": true,
-    "line": 437
+    "line": 452
    },
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "has_format": true,
-    "line": 444
+    "line": 459
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 448
+    "line": 463
    }
   ],
   "metrics.py": [
@@ -2633,5 +2655,5 @@
    }
   ]
  },
- "labels_digest": "dceed50d26618980"
+ "labels_digest": "6ff348a55b69b0a0"
 }
