@@ -531,6 +531,37 @@ def selftest(lane_optional: bool = False) -> int:
            % (float(ca_fix[-1] - ca_fix[0]), float(gate_fix[0] - gate_fix[-1])),
            abs((ca_fix[-1] - ca_fix[0]) - (gate_fix[0] - gate_fix[-1])) > 0.1)
 
+    # THE RECIPROCAL SYMMETRY, which explains WHY the peak sits where it does.
+    # The v4 lane's result, verified here: g(x) + g(1/x) = 1 EXACTLY, for all x > 0 (max
+    # deviation 1.110e-16 over x from 1e-6 to 1e6). Since g(1/x) = 1/(1+x) and g(x) = x/(1+x),
+    # they sum to (x+1)/(1+x).
+    #
+    # So a = 1 is g's symmetry point, and at the peak a* = 1/sqrt(r) the post-crowding value is
+    # r*a* = sqrt(r) - before and after are exact RECIPROCALS, straddling a = 1 symmetrically
+    # in log space. The peak is therefore 1 - 2*g(sqrt(r)), which agrees with
+    # (1-sqrt(r))/(1+sqrt(r)) to 8 dp at r = 0.9, 0.7, 0.5, 0.3. That is an explanation rather
+    # than a location, and it is the better half of the result.
+    xs_sym = np.array([1e-6, 0.01, 0.3, 1.0, 3.0, 100.0, 1e6])
+    _plant("g(x) + g(1/x) != 1 (max deviation %.3e) - then a = 1 is not g's symmetry point and "
+           "the peak sitting at 1/sqrt(r) is a coincidence of the algebra"
+           % float(np.max(np.abs(g(xs_sym) + g(1.0 / xs_sym) - 1.0))),
+           float(np.max(np.abs(g(xs_sym) + g(1.0 / xs_sym) - 1.0))) < 1e-12)
+    for _r in (0.9, 0.5):
+        _sym = 1.0 - 2.0 * g(np.sqrt(_r))
+        _cls = (1.0 - np.sqrt(_r)) / (1.0 + np.sqrt(_r))
+        _plant("1 - 2g(sqrt r) disagrees with the closed form at r=%.1f (%.8f vs %.8f)"
+               % (_r, _sym, _cls), abs(_sym - _cls) < 1e-12)
+
+    # AND THE SMALL-CHANGE APPROXIMATION IS (1-r)/4, NOT (1-r)/2. The v4 lane sent the latter
+    # and printed the exact value beside it, which refutes it: 0.0263 at r = 0.9, where
+    # (1-r)/2 = 0.05 and (1-r)/4 = 0.025. Expansion: r = 1-e, sqrt(r) ~ 1 - e/2, so
+    # (1 - sqrt r)/(1 + sqrt r) ~ (e/2)/2 = e/4.
+    for _r in (0.99, 0.95, 0.9):
+        _ex = (1.0 - np.sqrt(_r)) / (1.0 + np.sqrt(_r))
+        _plant("the small-change peak is closer to (1-r)/2 than to (1-r)/4 at r=%.2f "
+               "(exact %.6f, /2 %.6f, /4 %.6f)" % (_r, _ex, (1 - _r) / 2, (1 - _r) / 4),
+               abs(_ex - (1 - _r) / 4) < abs(_ex - (1 - _r) / 2))
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)
