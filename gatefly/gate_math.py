@@ -456,6 +456,47 @@ def selftest(lane_optional: bool = False) -> int:
            "operating point is not the reason its gate is a late indicator",
            _move(250.0) < _move(0.67) / 10.0)
 
+    # THE PEAK HAS A CLOSED FORM, and it bounds the gate's compression everywhere.
+    # The v4 lane's derivation, verified here: maximising g(a) - g(ra) over a gives
+    # a^2(r^2 - r) = r - 1, hence
+    #
+    #     a* = 1/sqrt(r)          peak movement = (1 - sqrt(r)) / (1 + sqrt(r))
+    #
+    # independent of lambda, dimension and key count. Matches the numerical argmax to 4 dp at
+    # r = 0.9, 0.7, 0.5, 0.3: a* 1.0541/1.1952/1.4142/1.8257, peak 0.0263/0.0889/0.1716/0.2922.
+    # So "usable only near a ~ 1" is replaced by an exact location, which is better than the
+    # qualifier it replaces.
+    #
+    # WHERE THIS LANE DOES NOT FOLLOW THE V4 LANE. It reads the bound as "a weak readout
+    # EVERYWHERE" because even at a* a 30% crowding change moves the gate under nine points.
+    # That conflates COMPRESSION with DETECTABILITY, and this lane has the measurement that
+    # separates them: the R7 ULP test says one f16 ULP moves the gate 4.3e-09, so
+    #
+    #     at a* = 1.20   movement 0.088933  =  20,682,129 x the resolution
+    #     at a  = 250    movement 0.001698  =     394,827 x the resolution
+    #
+    # Even deep in this lane's saturated regime the signal is ~400,000 times the noise floor.
+    # The gate is COMPRESSED, not unreadable. So the reason to prefer c/a is not that the gate
+    # cannot be read - it is that the gate is NON-LINEAR and its responsiveness is
+    # NON-MONOTONE in a, so equal gate differences do not mean equal crowding differences and
+    # gate movements cannot be compared across operating points. That is a statement about
+    # interpretability, not about precision, and it holds at every a.
+    for _r in (0.9, 0.7, 0.5, 0.3):
+        _astar = 1.0 / np.sqrt(_r)
+        _grid = np.linspace(0.01, 20.0, 200001)
+        _num = _grid[np.argmax(g(_grid) - g(_r * _grid))]
+        _plant("the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f "
+               "(%.4f vs %.4f)" % (_r, _astar, _num), abs(_astar - _num) < 1e-3)
+        _pk = (1.0 - np.sqrt(_r)) / (1.0 + np.sqrt(_r))
+        _plant("the closed-form peak MOVEMENT disagrees at r=%.1f (%.6f vs %.6f)"
+               % (_r, _pk, g(_astar) - g(_r * _astar)),
+               abs(_pk - (g(_astar) - g(_r * _astar))) < 1e-9)
+    # and the separation of compression from detectability, which is where this lane dissents
+    _mv250 = g(250.0) - g(0.7 * 250.0)
+    _plant("the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution "
+           "(%.3e) - then it really is unreadable here and 'compressed not unreadable' is "
+           "wrong" % _mv250, _mv250 / 4.3e-9 > 1000.0)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)

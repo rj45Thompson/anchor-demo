@@ -4,16 +4,26 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 29,
-  "plants": 410,
+  "plants": 413,
   "modules_with_zero_plants": 0,
-  "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 59
+  "call_sites_inside_loops": 6,
+  "labels_not_greppable_in_source": 61
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
  "caveat": "Presence of a label, not evidence that the plant is reached, can fail, or asserts anything true. A vacuously passing plant is listed here too.",
  "why_this_count_is_lower_than_a_runtime_count": "These are CALL SITES. A _plant() inside a loop runs several times and a selftest reports each execution, so a runtime sweep counts more. Measured 2026-11-18: 277 static against 286 runtime over the same 22 modules, and the whole +9 is the three loop sites listed under loops_by_module (ladder_probe +4, uml_kaos +4, reevaluate +1). Every other module agrees exactly. Neither number is wrong; they count different things.",
  "loops_by_module": {
+  "gate_math.py": [
+   {
+    "plant_line": 488,
+    "loop_line": 484
+   },
+   {
+    "plant_line": 491,
+    "loop_line": 484
+   }
+  ],
   "ladder_probe.py": [
    {
     "plant_line": 206,
@@ -37,7 +47,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "59 of 410 labels (14.4%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 410. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "61 of 413 labels (14.8%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 413. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -135,6 +145,14 @@
    {
     "label": "the gate is as responsive at this lane's a~250 as at its peak - then this lane's operating point is not the reason its gate is a late indicator",
     "longest_on_one_line": "the gate is as responsive at this lane's a~250 as at its peak - then this lane's "
+   },
+   {
+    "label": "the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution (%.3e) - then it really is unreadable here and 'compressed not unreadable' is wrong",
+    "longest_on_one_line": "the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution "
+   },
+   {
+    "label": "the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f (%.4f vs %.4f)",
+    "longest_on_one_line": "the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f "
    }
   ],
   "gate_read.py": [
@@ -662,6 +680,11 @@
     "line": 455
    },
    {
+    "label": "the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution (%.3e) - then it really is unreadable here and 'compressed not unreadable' is wrong",
+    "has_format": true,
+    "line": 496
+   },
+   {
     "label": "A disagrees with the ratchet lane's gate_matrix",
     "has_format": false,
     "line": 252
@@ -675,6 +698,16 @@
     "label": "crowding disagrees with the ratchet lane's crowding_term",
     "has_format": false,
     "line": 257
+   },
+   {
+    "label": "the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f (%.4f vs %.4f)",
+    "has_format": true,
+    "line": 488
+   },
+   {
+    "label": "the closed-form peak MOVEMENT disagrees at r=%.1f (%.6f vs %.6f)",
+    "has_format": true,
+    "line": 491
    }
   ],
   "gate_read.py": [
@@ -2418,5 +2451,5 @@
    }
   ]
  },
- "labels_digest": "b7cd2996f24b2721"
+ "labels_digest": "9f1ea309a4913076"
 }
