@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 25,
-  "plants": 337,
+  "plants": 344,
   "modules_with_zero_plants": 2,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 27
+  "labels_not_greppable_in_source": 29
  },
  "zero_plant_modules": [
   "check_hover.py",
@@ -42,7 +42,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "27 of 337 labels (8.0%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 337. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "29 of 344 labels (8.4%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 344. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -52,6 +52,14 @@
    {
     "label": "an unknown domain defaulted instead of refusing - defaulting to product would silently exempt research work from the gate",
     "longest_on_one_line": "an unknown domain defaulted instead of refusing - defaulting to product would "
+   },
+   {
+    "label": "a null-space method was NOT flagged inapplicable although this net's keys span the key space (got %s) - then the precondition check cannot refuse anything",
+    "longest_on_one_line": "a null-space method was NOT flagged inapplicable although this net's keys span "
+   },
+   {
+    "label": "a mechanism with no recorded precondition read as APPLIES - silence would be permission",
+    "longest_on_one_line": "a mechanism with no recorded precondition read as APPLIES - silence would be "
    }
   ],
   "gate_math.py": [
@@ -180,97 +188,132 @@
    {
     "label": "two mechanism nodes share the same text, so the graph is duplicating rather than deduplicating: %s",
     "has_format": true,
-    "line": 260
+    "line": 399
    },
    {
     "label": "a mechanism is claimed as NEW by two works: %s",
     "has_format": true,
-    "line": 272
+    "line": 411
    },
    {
     "label": "a mechanism's parent is not in the graph: %s",
     "has_format": true,
-    "line": 276
+    "line": 415
    },
    {
     "label": "a cycle in the mechanism graph: %s",
     "has_format": true,
-    "line": 286
+    "line": 425
    },
    {
     "label": "a work attaches to no mechanism: %s",
     "has_format": true,
-    "line": 290
+    "line": 429
    },
    {
     "label": "a work cites a mechanism not in the graph: %s",
     "has_format": true,
-    "line": 293
+    "line": 432
    },
    {
     "label": "the frontier is empty - the graph claims every mechanism is published",
     "has_format": false,
-    "line": 298
+    "line": 437
    },
    {
     "label": "a frontier node actually has a work attached",
     "has_format": false,
-    "line": 300
+    "line": 439
    },
    {
     "label": "a non-frontier node has no work attached",
     "has_format": false,
-    "line": 302
+    "line": 441
    },
    {
     "label": "a frontier node has no recorded search behind it: %s",
     "has_format": true,
-    "line": 308
+    "line": 447
    },
    {
     "label": "the gate does not apply to a research domain",
     "has_format": false,
-    "line": 313
+    "line": 452
    },
    {
     "label": "the gate applies to Tami - a game has no prior art, it has requirements",
     "has_format": false,
-    "line": 315
+    "line": 454
    },
    {
     "label": "the Tami answer does not say what governs instead",
     "has_format": false,
-    "line": 317
+    "line": 456
    },
    {
     "label": "an unknown domain defaulted instead of refusing - defaulting to product would silently exempt research work from the gate",
     "has_format": false,
-    "line": 319
+    "line": 458
    },
    {
     "label": "AlphaEdit's delta is not M1.3",
     "has_format": false,
-    "line": 324
+    "line": 463
    },
    {
     "label": "MEMIT's delta is not M1.2",
     "has_format": false,
-    "line": 325
+    "line": 464
    },
    {
     "label": "Adam-NSCL's delta is not M4.1",
     "has_format": false,
-    "line": 326
+    "line": 465
    },
    {
     "label": "a frontier node has an adding work",
     "has_format": false,
-    "line": 327
+    "line": 466
    },
    {
     "label": "a frontier node with nothing recorded about what this lane holds: %s",
     "has_format": true,
-    "line": 332
+    "line": 471
+   },
+   {
+    "label": "the NN facts could not be read from committed artefacts: %s",
+    "has_format": true,
+    "line": 478
+   },
+   {
+    "label": "a hybrid crosses a mechanism not in the graph: %s",
+    "has_format": true,
+    "line": 503
+   },
+   {
+    "label": "a hybrid does not say what blocks it: %s",
+    "has_format": true,
+    "line": 505
+   },
+   {
+    "label": "every hybrid is blocked - the list would be a graveyard",
+    "has_format": false,
+    "line": 508
+   },
+   {
+    "label": "a null-space method was NOT flagged inapplicable although this net's keys span the key space (got %s) - then the precondition check cannot refuse anything",
+    "has_format": true,
+    "line": 485
+   },
+   {
+    "label": "the same check refused even with room in the key space - it fires on anything",
+    "has_format": false,
+    "line": 492
+   },
+   {
+    "label": "a mechanism with no recorded precondition read as APPLIES - silence would be permission",
+    "has_format": false,
+    "line": 497
    }
   ],
   "data_ttt.py": [
@@ -1912,5 +1955,5 @@
    }
   ]
  },
- "labels_digest": "d85e50ec2697877b"
+ "labels_digest": "dbe7f073eb12a8dd"
 }

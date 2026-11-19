@@ -161,6 +161,145 @@ OURS = {
        "collapse AFTER it happens; none of it gives a number beforehand.",
 }
 
+# ----------------------------------------- the three-way join: literature, code, and the net
+# RJ: "Would it help if we mapped the code actually in there as well? And what the graph of the
+# NN does and we connect all three?"  Yes, and the third graph is the one that earns it.
+#
+# A PUBLISHED MECHANISM ASSUMES A STRUCTURE. AlphaEdit's projection needs a null space of
+# preserved keys with room in it; if the keys already span the space there is no null space to
+# project into and the method cannot help however well it is implemented. That precondition is
+# a FACT ABOUT THE NET, measurable here, and checkable BEFORE a session is spent. So the three
+# graphs answer three different questions that were being answered separately:
+#
+#     art graph   does this mechanism exist in the world?        (MECH / WORKS above)
+#     code graph  is it implemented in this repository?          (IMPL below)
+#     NN graph    does OUR net have the structure it assumes?    (ASSUMES x NN_FACTS below)
+#
+# The join's verdict is the useful part: a mechanism can be PUBLISHED, UNIMPLEMENTED and
+# STRUCTURALLY INAPPLICABLE all at once, and only the third of those is a reason not to try.
+IMPL = {
+ "M1.2": "gatefly/retrain.py memit_edit - the batched closed-form ridge solve",
+ "M4":   "gatefly/retrain.py run_arm - training arms, NOT subspace-confined",
+ "M6":   "gatefly/metrics.py - IFR and Preservation, plus a set-valued movement count",
+ "M6.1": "gatefly/ladder.py - the m,n,k complexity ladder with an exact oracle at every rung",
+ "M8":   "gatefly/gate_math.py acg - a_j, c_j and gate_j = g(a_j - c_j), the capacity read",
+}
+
+# The structural precondition each mechanism needs, named as something measurable.
+ASSUMES = {
+ "M1.3":   ("null_space_room",
+            "a null space of preserved keys with room in it: the preserved keys must NOT span "
+            "the key space, or there is nothing to project into"),
+ "M1.3.1": ("null_space_room", "same, plus enough samples to estimate that null space"),
+ "M4.1":   ("null_space_room",
+            "the same object from the other side: the feature covariance must have small "
+            "singular values to build a projection from"),
+ "M4.3":   ("null_space_room", "a null space of the WEIGHTS rather than the features"),
+ "M1.1":   ("site_localisation",
+            "the knowledge must be localised enough that one site carries it"),
+ "M1.2":   ("site_localisation", "the same, for a batch of keys at one site"),
+ "M8":     ("capacity_readable",
+            "a_j and c_j must be computable, which needs the keys and the covariance"),
+}
+
+# Facts about THIS lane's net, read from committed artefacts rather than typed in. Refuses
+# rather than guessing when an artefact is missing, because a precondition check that silently
+# invents its facts is worse than no check.
+def nn_facts():
+    import json
+    out, missing = {}, []
+    r9 = os.path.join(HERE, "runs", "r9_keys.json")
+    lad = os.path.join(HERE, "runs", "ladder_n256.json")
+    if os.path.exists(r9):
+        d = json.load(open(r9, encoding="utf-8"))
+        rows = {r["n"]: r for r in d["rows"]}
+        big = rows.get(256) or rows[max(rows)]
+        out["key_dim"] = d.get("key_dim")
+        out["keys_at_worst"] = big["n"]
+        out["worst_whitened"] = big.get("whitened_worst")
+        out["spans_key_space"] = big["n"] >= (d.get("key_dim") or 10 ** 9)
+        out["source_r9"] = "gatefly/runs/r9_keys.json"
+    else:
+        missing.append("runs/r9_keys.json")
+    if os.path.exists(lad):
+        out["source_ladder"] = "gatefly/runs/ladder_n256.json"
+    else:
+        missing.append("runs/ladder_n256.json")
+    return out, missing
+
+
+def transfers(mech, facts=None):
+    """-> (verdict, why). Does OUR net have the structure this mechanism assumes?
+
+    Three verdicts and they are not degrees of one thing: APPLIES, INAPPLICABLE (the net lacks
+    the assumed structure, which is a reason not to try), and UNKNOWN (no precondition recorded,
+    which is not permission).
+    """
+    if facts is None:
+        facts, missing = nn_facts()
+        if missing:
+            return "UNKNOWN", ("cannot check: missing artefact(s) %s - refusing to guess a "
+                               "structural precondition" % ", ".join(missing))
+    got = ASSUMES.get(mech)
+    if got is None:
+        return "UNKNOWN", "no structural precondition recorded for this mechanism"
+    name, what = got
+    if name == "null_space_room":
+        if facts.get("spans_key_space"):
+            return "INAPPLICABLE", (
+                "this net's edit keys SPAN the key space at the size this lane measured (%d keys "
+                "in %d dimensions), so the null space is trivial and there is nothing to project "
+                "into. Needs: %s" % (facts["keys_at_worst"], facts["key_dim"], what))
+        return "APPLIES", "keys do not span the key space, so a null space exists. Needs: %s" % what
+    if name == "capacity_readable":
+        return ("APPLIES" if facts.get("worst_whitened") is not None else "UNKNOWN",
+                "a_j and c_j are computed in this lane on every run. Needs: %s" % what)
+    if name == "site_localisation":
+        return "APPLIES", ("this lane edits one site, blocks.N.ffwd.net.2.weight, and gets "
+                           "Efficacy 1.0000 up to n=32, so the site carries it at that scale. "
+                           "Needs: %s" % what)
+    return "UNKNOWN", what
+
+
+# Candidate hybrids, each naming WHICH published mechanism is being crossed with WHAT this lane
+# holds, and why the pair is more than the sum. RJ: "what mechanism priors exist that we could
+# hybrid".
+HYBRIDS = [
+ {"id": "H1", "cross": ("M1.3", "M4.1"), "same_as": "M7",
+  "why": "The known frontier: a projected closed-form edit alternating with projected gradient "
+         "training. Both parents published with code, and they project into THE SAME OBJECT - "
+         "the uncentered feature covariance - so the two steps can share one projection rather "
+         "than fighting over two.",
+  "blocked_by": "M1.3's precondition. Once the keys span the key space there is no null space "
+                "for either parent, so this hybrid inherits the capacity wall rather than "
+                "solving it."},
+ {"id": "H2", "cross": ("M3", "M8"),
+  "why": "THE BEST ONE, and it turns this lane's blocker into a design. M3 is external "
+         "memory/retrieval instead of weights; M8 is a per-edit read of remaining capacity. Use "
+         "the capacity read as a ROUTER: edit in weights while the gate says there is room, and "
+         "SPILL to retrieval once g(a-c) says the subspace is full. The capacity bound stops "
+         "being a cliff and becomes a routing threshold. Nothing in the graph does this, because "
+         "M3 and the M1/M4 families are treated as competing methods rather than as two sides of "
+         "a budget - and the trigger that would join them is exactly the number nobody has.",
+  "blocked_by": "nothing structural. Needs a retrieval path this lane does not have, which is "
+                "build work rather than a precondition failure."},
+ {"id": "H3", "cross": ("M1.4", "M8"),
+  "why": "SUIT chooses subspace-aware key-value mappings; M8 says how much room each candidate "
+         "site has left. Choose the SITE per key by remaining capacity instead of fixing one "
+         "site for every edit - which also attacks E2.3, where the site is a free parameter with "
+         "no principled selection rule.",
+  "blocked_by": "E2.3 is untested here: every figure in this lane is at ONE site, so this lane "
+                "cannot currently compare sites."},
+ {"id": "H4", "cross": ("M5.1", "M8"),
+  "why": "PRUNE attributes collapse to condition-number growth; M8 reads capacity from the gate. "
+         "Both are health measures on the accumulated update and cond(C) is already computed "
+         "here (3.225e+03 over 4,000 positions). Cheapest possible test of whether the two "
+         "numbers track each other, which would either corroborate M8 against published work or "
+         "show they measure different things.",
+  "blocked_by": "nothing. This is a day's work and the cheapest validation of M8 available."},
+]
+
+
 # --------------------------------------------------------------------------- scope
 # RJ: "Tami is a game it has none it has requirements."
 DOMAINS = {
@@ -332,6 +471,42 @@ def selftest() -> int:
     _plant("a frontier node with nothing recorded about what this lane holds: %s"
            % (noours or "none"), not noours)
 
+    # 10. THE THREE-WAY JOIN. The load-bearing claim is that a structural precondition read off
+    #     OUR net can say a published mechanism will not transfer. It must actually say that
+    #     for the case this lane measured, or the join is decoration.
+    facts, missing = nn_facts()
+    _plant("the NN facts could not be read from committed artefacts: %s" % (missing or "none"),
+           not missing)
+    if not missing:
+        print("  net: %d keys in %d dims, worst whitened pair %.4f, keys span the space: %s"
+              % (facts["keys_at_worst"], facts["key_dim"], facts["worst_whitened"],
+                 facts["spans_key_space"]))
+        v, why = transfers("M1.3", facts)
+        _plant("a null-space method was NOT flagged inapplicable although this net's keys span "
+               "the key space (got %s) - then the precondition check cannot refuse anything"
+               % v, v == "INAPPLICABLE")
+        # negative control: the same check must APPLY when there IS room, or it refuses
+        # everything and tells us nothing
+        roomy = dict(facts); roomy["spans_key_space"] = False
+        v2, _ = transfers("M1.3", roomy)
+        _plant("the same check refused even with room in the key space - it fires on anything",
+               v2 == "APPLIES")
+        # and a mechanism with no recorded precondition must be UNKNOWN, never APPLIES:
+        # silence is not permission
+        v3, _ = transfers("M2", facts)
+        _plant("a mechanism with no recorded precondition read as APPLIES - silence would be "
+               "permission", v3 == "UNKNOWN")
+
+    # 11. the hybrids must cross mechanisms that EXIST, and each must name what blocks it or it
+    #     is a wish rather than a candidate
+    badx = [(h["id"], m) for h in HYBRIDS for m in h["cross"] if m not in MECH]
+    _plant("a hybrid crosses a mechanism not in the graph: %s" % (badx or "none"), not badx)
+    nob = [h["id"] for h in HYBRIDS if not h.get("blocked_by")]
+    _plant("a hybrid does not say what blocks it: %s" % (nob or "none"), not nob)
+    # at least one hybrid must be unblocked, or the list is a graveyard and says nothing
+    free = [h["id"] for h in HYBRIDS if h["blocked_by"].startswith("nothing")]
+    _plant("every hybrid is blocked - the list would be a graveyard", bool(free))
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)
@@ -342,6 +517,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--frontier", action="store_true")
     ap.add_argument("--domain", default=None)
+    ap.add_argument("--hybrids", action="store_true")
+    ap.add_argument("--transfers", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
@@ -356,6 +533,37 @@ if __name__ == "__main__":
         print("DOMAIN %r: prior-art gate %s"
               % (a.domain, "APPLIES" if applies else "DOES NOT APPLY"))
         print("  %s" % governs)
+        raise SystemExit(0)
+
+    if a.transfers:
+        facts, missing = nn_facts()
+        if missing:
+            print("REFUSING: missing artefact(s) %s" % ", ".join(missing))
+            raise SystemExit(1)
+        print("DOES THIS NET HAVE THE STRUCTURE EACH MECHANISM ASSUMES?")
+        print("  net: %d keys in %d dims, worst whitened pair %.4f"
+              % (facts["keys_at_worst"], facts["key_dim"], facts["worst_whitened"]))
+        print()
+        for m in sorted(ASSUMES):
+            v, why = transfers(m, facts)
+            print("  %-8s %-13s %s" % (m, v, MECH[m][1][:54]))
+            print("           %s" % why)
+        print()
+        print("  implemented here:")
+        for m in sorted(IMPL):
+            print("    %-8s %s" % (m, IMPL[m]))
+        raise SystemExit(0)
+
+    if a.hybrids:
+        print("HYBRID CANDIDATES - a published mechanism crossed with what this lane holds")
+        for h in HYBRIDS:
+            print()
+            print("  %s  %s x %s%s" % (h["id"], h["cross"][0], h["cross"][1],
+                                       "  (= %s)" % h["same_as"] if h.get("same_as") else ""))
+            print("      %s  x  %s" % (MECH[h["cross"][0]][1][:48],
+                                        MECH[h["cross"][1]][1][:48]))
+            print("      why: %s" % h["why"])
+            print("      blocked by: %s" % h["blocked_by"])
         raise SystemExit(0)
 
     if a.frontier:
