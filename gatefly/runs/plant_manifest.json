@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 29,
-  "plants": 397,
+  "plants": 401,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 48
+  "labels_not_greppable_in_source": 52
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -37,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "48 of 397 labels (12.1%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 397. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "52 of 401 labels (13.0%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 401. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -95,6 +95,22 @@
    {
     "label": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - it would be insensitive everywhere",
     "longest_on_one_line": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - "
+   },
+   {
+    "label": "a is NOT exactly proportional to 1/lambda - then the absorbable-axis identity does not hold here and this caveat is wrong",
+    "longest_on_one_line": "a is NOT exactly proportional to 1/lambda - then the absorbable-axis identity "
+   },
+   {
+    "label": "c/a is lambda-INVARIANT (spread %.3e) - then it is a lambda-free capacity read after all and this caveat should be deleted",
+    "longest_on_one_line": "c/a is lambda-INVARIANT (spread %.3e) - then it is a lambda-free capacity read "
+   },
+   {
+    "label": "the per-key ORDER of c/a moved by more than 2 places across a 50x lambda change (moved %d) - then not even the comparative reading travels",
+    "longest_on_one_line": "the per-key ORDER of c/a moved by more than 2 places across a 50x lambda change "
+   },
+   {
+    "label": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free and the 'nearly' in the comment above is understated",
+    "longest_on_one_line": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free "
    }
   ],
   "gate_read.py": [
@@ -564,6 +580,26 @@
     "label": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - it would be insensitive everywhere",
     "has_format": true,
     "line": 319
+   },
+   {
+    "label": "a is NOT exactly proportional to 1/lambda - then the absorbable-axis identity does not hold here and this caveat is wrong",
+    "has_format": false,
+    "line": 349
+   },
+   {
+    "label": "c/a is lambda-INVARIANT (spread %.3e) - then it is a lambda-free capacity read after all and this caveat should be deleted",
+    "has_format": true,
+    "line": 354
+   },
+   {
+    "label": "the per-key ORDER of c/a moved by more than 2 places across a 50x lambda change (moved %d) - then not even the comparative reading travels",
+    "has_format": true,
+    "line": 365
+   },
+   {
+    "label": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free and the 'nearly' in the comment above is understated",
+    "has_format": true,
+    "line": 367
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
@@ -2307,5 +2343,5 @@
    }
   ]
  },
- "labels_digest": "a6441c17aaa2b8f1"
+ "labels_digest": "2104079b9344b276"
 }

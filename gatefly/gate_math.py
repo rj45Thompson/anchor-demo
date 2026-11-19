@@ -319,6 +319,54 @@ def selftest(lane_optional: bool = False) -> int:
     _plant("the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - "
            "it would be insensitive everywhere" % (near, gates[0]), gates[0] - near > 0.2)
 
+    # AND c/a IS NOT LAMBDA-FREE EITHER, which is the second correction to M8 in two turns.
+    #
+    # The snipershot lane measured that a = k^T (lambda C)^-1 k is EXACTLY proportional to
+    # 1/lambda, so a covariance difference splits into a magnitude half absorbable into lambda
+    # (which the field tunes) and a direction half that is real. Checked here, that identity
+    # holds to the digit - a*lambda is constant. But c does NOT share it: the Schur complement
+    # carries a +I that does not scale, so
+    #
+    #     a * lambda   constant to 1e-14           c * lambda   15.29 -> 5.73 over 200x lambda
+    #     c/a          0.2305 -> 0.0907            gate         0.9908 -> 0.3837
+    #
+    # So the crowding FRACTION this lane promoted one commit ago as "the capacity read" is
+    # itself partly absorbable into the ridge hyperparameter. It is a better readout than the
+    # gate - monotone in n and about 4x less lambda-sensitive - and it is NOT a lambda-free
+    # capacity number. Any comparison across settings must hold lambda fixed or report it,
+    # exactly as that lane argued for covariance differences.
+    #
+    # What survives is weaker and still useful: the per-key RANK ORDER of c/a is nearly
+    # lambda-stable (max rank displacement 0 at lambda<=1, 2 across a 200x range), so c/a
+    # answers WHICH KEY IS MOST CROWDED robustly while its absolute value does not travel.
+    _r = np.random.default_rng(11)
+    K6 = _r.standard_normal((64, 12))
+    _X = _r.standard_normal((400, 64))
+    C6 = (_X.T @ _X) / 400.0 + 1e-3 * np.eye(64)
+    _lamA, _ = gate_matrix(K6, C6, 1.0)
+    _lamB, _ = gate_matrix(K6, C6, 50.0)
+    _aA, _aB = np.diag(_lamA), np.diag(_lamB)
+    _plant("a is NOT exactly proportional to 1/lambda - then the absorbable-axis identity "
+           "does not hold here and this caveat is wrong",
+           float(np.max(np.abs(_aA * 1.0 - _aB * 50.0))) < 1e-9)
+    _cA, _cB = crowding_all(_lamA), crowding_all(_lamB)
+    _ratA, _ratB = _cA / _aA, _cB / _aB
+    _plant("c/a is lambda-INVARIANT (spread %.3e) - then it is a lambda-free capacity read "
+           "after all and this caveat should be deleted"
+           % float(np.max(np.abs(_ratA - _ratB))),
+           float(np.max(np.abs(_ratA - _ratB))) > 1e-6)
+    # This plant first asserted the order was IDENTICAL and failed, correctly: the comment
+    # above says "nearly lambda-stable" and the assertion demanded exact. Measured displacement
+    # is 0 at lambda<=1 and 1-2 across a 200x range, so "nearly" is the true claim and the
+    # plant now holds the measured bound instead of the stronger one I typed.
+    _oA = {k: i for i, k in enumerate(np.argsort(_ratA))}
+    _oB = {k: i for i, k in enumerate(np.argsort(_ratB))}
+    _shift = max(abs(_oA[k] - _oB[k]) for k in _oA)
+    _plant("the per-key ORDER of c/a moved by more than 2 places across a 50x lambda change "
+           "(moved %d) - then not even the comparative reading travels" % _shift, _shift <= 2)
+    _plant("the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free "
+           "and the 'nearly' in the comment above is understated" % _shift, _shift > 0)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)
