@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 429,
+  "plants": 431,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 9,
-  "labels_not_greppable_in_source": 70
+  "labels_not_greppable_in_source": 71
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -54,12 +54,12 @@
   ],
   "uml_kaos.py": [
    {
-    "plant_line": 348,
-    "loop_line": 346
+    "plant_line": 352,
+    "loop_line": 350
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "70 of 429 labels (16.3%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 429. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "71 of 431 labels (16.5%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 431. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -215,6 +215,10 @@
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "longest_on_one_line": "an error has no explicit caught_class, so the summary would be inferred from "
+   },
+   {
+    "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
+    "longest_on_one_line": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then "
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
@@ -1067,47 +1071,57 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 336
+    "line": 375
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 340
+    "line": 379
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 343
+    "line": 382
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 348
+    "line": 387
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 354
+    "line": 393
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 360
+    "line": 399
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 368
+    "line": 407
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 378
+    "line": 417
+   },
+   {
+    "label": "the peer-claim re-derivation record is missing a half: %s",
+    "has_format": true,
+    "line": 423
+   },
+   {
+    "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
+    "has_format": true,
+    "line": 430
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 381
+    "line": 434
    }
   ],
   "metrics.py": [
@@ -2499,89 +2513,89 @@
    {
     "label": "a declared traceability link does not resolve: %s",
     "has_format": true,
-    "line": 308
+    "line": 312
    },
    {
     "label": "the resolver accepted a fragment that is not in the file",
     "has_format": false,
-    "line": 312
+    "line": 316
    },
    {
     "label": "the resolver accepted a file that does not exist",
     "has_format": false,
-    "line": 314
+    "line": 318
    },
    {
     "label": "a link names a node outside the tree: %s",
     "has_format": true,
-    "line": 318
+    "line": 322
    },
    {
     "label": "the gap map flagged every single node, so it cannot discriminate",
     "has_format": false,
-    "line": 331
+    "line": 335
    },
    {
     "label": "the gap map reports a broken link while plant 1 says all resolve",
     "has_format": false,
-    "line": 333
+    "line": 337
    },
    {
     "label": "a node is settled with no «verify» link to a plant: %s",
     "has_format": true,
-    "line": 342
+    "line": 346
    },
    {
     "label": "the position refusal swallowed a real symbol",
     "has_format": false,
-    "line": 351
+    "line": 355
    },
    {
     "label": "the position refusal rejected a symbol containing digits",
     "has_format": false,
-    "line": 353
+    "line": 357
    },
    {
     "label": "a node has no last-examined date: %s",
     "has_format": true,
-    "line": 377
+    "line": 381
    },
    {
     "label": "a file that is NOT in this directory was attributed to this lane - ownership by default is how the snipershot lane addressed four messages of the v4 lane's rows here",
     "has_format": false,
-    "line": 383
+    "line": 387
    },
    {
     "label": "a file that IS in this directory was not attributed to this lane",
     "has_format": false,
-    "line": 386
+    "line": 390
    },
    {
     "label": "a position-shaped link %r was not refused",
     "has_format": true,
-    "line": 348
+    "line": 352
    },
    {
     "label": "a broken CROSS-LANE link did not refuse this lane",
     "has_format": false,
-    "line": 364
+    "line": 368
    },
    {
     "label": "a broken cross-lane link was not reported to its owner",
     "has_format": false,
-    "line": 365
+    "line": 369
    },
    {
     "label": "a broken OWN-LANE link was reported outward as another lane's",
     "has_format": false,
-    "line": 369
+    "line": 373
    },
    {
     "label": "an EXPLICIT entry was overridden by the evidence rule",
     "has_format": false,
-    "line": 391
+    "line": 395
    }
   ]
  },
- "labels_digest": "684fcfc5e64d7ecb"
+ "labels_digest": "6f34757467a9c261"
 }

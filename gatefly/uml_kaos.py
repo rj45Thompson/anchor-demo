@@ -171,7 +171,11 @@ def resolve_link(fname, needle, lane="gatefly"):
 # use case model were two unconnected descriptions of the same work, so a use case step could
 # be written, the goal move on, and the step never be revisited. A refine-link resolves against
 # the UC file by symbol, exactly like the others.
-UC_FILE = "UC_GATEFLY.md"
+# Named for the lane, not just the kind: the value carries "GATEFLY" and the
+# identifier used to omit it. Unambiguous here today - exactly as the snipershot
+# lane's BOARD was, until a reader with two boards in mind resolved it wrongly
+# four times. Found by applying that lane's mechanical scope check here.
+UC_GATEFLY_FILE = "UC_GATEFLY.md"
 REFINE = {
     "E4.1": ["UC-GF-1", "REQ-GF-1a"],
     "E4.2": ["UC-GF-3", "REQ-GF-3a"],
@@ -232,7 +236,7 @@ def gap_map():
         ref = REFINE.get(nid, [])
         broken, foreign = [], []
         for sym in ref:
-            good, why = resolve_link(UC_FILE, sym)
+            good, why = resolve_link(UC_GATEFLY_FILE, sym)
             if not good:
                 broken.append(("refine", why))
         for kind, items in (("satisfy", sat), ("verify", ver)):

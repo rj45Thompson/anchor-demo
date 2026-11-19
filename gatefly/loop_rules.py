@@ -40,13 +40,13 @@ ARCH, NOT_ARCH = "ARCHITECTURAL", "NOT_ARCH"
 # `caught_by` is recorded because it turned out to be the most informative column: almost
 # nothing was caught by a failing check.
 ERRORS = [
- {"id": "raw-cosine-for-whitened", "caught_class": "peer checked it",
+ {"id": "raw-cosine-for-whitened", "initiated_by": "this lane SENT a claim; peer re-derived it", "caught_class": "peer checked it",
   "what": "Reported a key collinearity of 0.9995 that was the shared activation component. The "
           "whitened cosine on the same keys is 0.7238.",
   "caught_by": "a sibling lane checking the finding instead of adopting it",
   "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
 
- {"id": "peer-resolved-by-display-name", "caught_class": "peer checked it",
+ {"id": "peer-resolved-by-display-name", "initiated_by": "this lane SENT a claim to the wrong lane", "caught_class": "peer checked it",
   "what": "Sent an R7 report to the v4 lane because its display name matched; the request came "
           "from the snipershot lane.",
   "caught_by": "the recipient saying it had not asked",
@@ -70,19 +70,19 @@ ERRORS = [
   "caught_by": "reading the shape screen's output, then a git-history diff",
   "verdict": ARCH, "rule": "R-PLANT-OVER-FIXTURE"},
 
- {"id": "vacuity-or-short-circuit", "caught_class": "peer checked it",
+ {"id": "vacuity-or-short-circuit", "initiated_by": "this lane SENT a shape; peer applied it to itself", "caught_class": "peer checked it",
   "what": "A plant of the form (not X) or Y, unconditionally true once X empties.",
   "caught_by": "a sibling lane finding the mirror shape in its own lane",
   "verdict": ARCH, "rule": "R-PLANT-OVER-FIXTURE"},
 
- {"id": "vacuous-test-proposed-in-prose", "caught_class": "peer checked it",
+ {"id": "vacuous-test-proposed-in-prose", "initiated_by": "this lane PROPOSED a test; peer ran it", "caught_class": "peer checked it",
   "what": "Proposed 'replace the ratio with a difference of logs and see if the split survives'. "
           "log is monotone, so the two forms are identical by construction - 0 disagreements in "
           "200,000 draws. Proposed hours after building the vacuity screen.",
   "caught_by": "the lane that ran it",
   "verdict": ARCH, "rule": "R-SCREEN-THE-PROPOSAL"},
 
- {"id": "figure-drifted-across-three-values", "caught_class": "peer checked it",
+ {"id": "figure-drifted-across-three-values", "initiated_by": "this lane SENT prose; peer checked it against earlier prose", "caught_class": "peer checked it",
   "what": "Told RJ 12, then 16, then 11 unswept nodes. Two sources for one figure, with prose "
           "regenerating from whichever was last read.",
   "caught_by": "a sibling lane quoting the retraction back",
@@ -104,13 +104,13 @@ ERRORS = [
   "caught_by": "checking whether a peer's row could resolve",
   "verdict": ARCH, "rule": "R-CITATION-RESOLVES-FOR-READER"},
 
- {"id": "labels-uncitable-from-source", "caught_class": "peer checked it",
+ {"id": "labels-uncitable-from-source", "initiated_by": "peer tried to USE an artefact this lane supplied", "caught_class": "peer checked it",
   "what": "24 of 290 plant labels span several source lines, so a line-based grep cannot find "
           "them. A peer's row read BROKEN LINK while the label was plainly there.",
   "caught_by": "a peer's tracker failing on a real citation",
   "verdict": ARCH, "rule": "R-CITATION-RESOLVES-FOR-READER"},
 
- {"id": "staleness-gate-failed-open", "caught_class": "peer checked it",
+ {"id": "staleness-gate-failed-open", "initiated_by": "peer SENT its own design; this lane checked itself against it", "caught_class": "peer checked it",
   "what": "An entry with no search date passed the prior-art gate, because a missing date read "
           "as not-stale.",
   "caught_by": "a sibling lane saying it kept UNDATED distinct from STALE",
@@ -139,18 +139,18 @@ ERRORS = [
   "caught_by": "the plant failing on its first run",
   "verdict": ARCH, "rule": "R-ASSERT-ON-STRUCTURE"},
 
- {"id": "artefact-understated-its-own-figures", "caught_class": "peer checked it",
+ {"id": "artefact-understated-its-own-figures", "initiated_by": "peer SENT a derivation", "caught_class": "peer checked it",
   "what": "runs/r9_keys.json called its whitened figures 'relative orderings' because lambda was "
           "fixed at 1.0. The whitened cosine is exactly lambda-free, so they were absolute.",
   "caught_by": "a sibling lane's algebra",
   "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
 
- {"id": "unscoped-saturation-claim", "caught_class": "peer checked it",
+ {"id": "unscoped-saturation-claim", "initiated_by": "peer SENT a passing remark", "caught_class": "peer checked it",
   "what": "'The gate saturates' stated unqualified; true at a~250, which is a lambda choice.",
   "caught_by": "a sibling lane's passing remark about concavity",
   "verdict": ARCH, "rule": "R-SCOPE-IN-THE-STATEMENT"},
 
- {"id": "m8-named-the-wrong-readout", "caught_class": "peer asked an unanswerable question",
+ {"id": "m8-named-the-wrong-readout", "initiated_by": "peer ASKED for a prediction about a named population", "caught_class": "peer asked an unanswerable question",
   "what": "Pitched the gate to two lanes as the per-edit capacity read. The gate moves 1e-4 "
           "where c/a moves five orders of magnitude.",
   "caught_by": "a sibling lane asking a question the arithmetic could not answer",
@@ -162,7 +162,7 @@ ERRORS = [
   "caught_by": "a literature sweep done after the work",
   "verdict": ARCH, "rule": "R-PRIOR-ART-BEFORE-BUILD"},
 
- {"id": "reported-magnitude-without-direction", "caught_class": "peer checked it",
+ {"id": "reported-magnitude-without-direction", "initiated_by": "peer COMPUTED a signed error after accepting a correction", "caught_class": "peer checked it",
   "what": "Planted that (1-r)/4 is CLOSER to the exact peak than (1-r)/2, with no assertion of "
           "which SIDE. It under-estimates at every r, and the peak is a BOUND - so the "
           "approximation licenses a claim the exact form forbids. Magnitude without sign, in a "
@@ -253,6 +253,13 @@ RULES = {
    "says": "A quantity proposed as a readout must be shown to MOVE with the thing it reads, "
            "over the range of interest, before it is offered to anyone.",
    "in_loop": True, "where": "gate_math.py, the responsiveness table and non-monotonicity plant"},
+ "R-PEER-CLAIM-IS-UNVERIFIED": {
+   "says": "A claim arriving from another lane is UNVERIFIED until this lane re-derives it - "
+           "the same treatment as an absent search being UNKNOWN rather than open. Measured "
+           "here: of 9 peer claims re-derived, 4 did not hold, and each would have propagated. "
+           "Re-deriving is also what produced 11 of this catalogue's catches, in both "
+           "directions, and it requires no request from either side.",
+   "in_loop": True, "where": "loop_rules.py, PEER_CLAIMS_REDERIVED and the initiated_by field"},
  "R-STATE-THE-DIRECTION": {
    "says": "A reported error, gap or difference carries its SIGN, not only its size - and for "
            "anything used as a BOUND the sign decides whether the approximation is safe. A "
@@ -262,6 +269,38 @@ RULES = {
    "says": "No registered item is WORKED without a dated prior-art search of its atoms.",
    "in_loop": True, "where": "prior_art.py may_work_on()"},
 }
+
+
+# WHAT ACTUALLY INITIATES A CROSS-LANE CATCH, measured rather than supposed.
+#
+# The snipershot lane proposed that every instance "started with a peer asking for a NUMBER or
+# a PATH - not with a peer offering an opinion", on the grounds that a request for a specific
+# value is checkable on arrival. Tested against this catalogue's own peer-caught errors:
+#
+#     started with a peer ASKING for a value or path   2 of 11
+#     started with THIS LANE SENDING a claim           5 of 11
+#     started with a peer sending its own work         4 of 11
+#
+# So the request form is not the common factor. What the eleven share is that THE RECEIVER
+# RE-DERIVED INSTEAD OF ADOPTING - which needs no request at all and works in both directions.
+#
+# AND THE RATE MAKES IT WORTH DOING. Peer claims this lane re-derived rather than took:
+#     Jensen bound on the concave gate                      HELD
+#     g(x) + g(1/x) = 1                                     HELD
+#     the hypergeometric null, mean 14.72, [11,18]          HELD
+#     a proportional to 1/lambda (the absorbable axis)      HELD
+#     the whitened cosine is exactly lambda-free            HELD
+#     peak ~ (1-r)/2                                        FAILED - it is (1-r)/4
+#     "a weak readout EVERYWHERE"                           FAILED - conflates compression
+#                                                                    with detectability
+#     "H7-H16 are your board"                               FAILED - four times
+#     "catches start with a request for a value"            FAILED - this measurement
+#
+# Five held, four did not, of nine. EVERY ONE OF THE FOUR WOULD HAVE PROPAGATED HAD IT BEEN
+# ADOPTED, and three of them arrived with working arithmetic attached, which is what makes
+# adoption tempting. That is the argument for the rule below, and it is a number rather than a
+# preference.
+PEER_CLAIMS_REDERIVED = {"held": 5, "failed": 4}
 
 
 def check():
@@ -377,6 +416,20 @@ def selftest() -> int:
     nocls = [e["id"] for e in ERRORS if not e.get("caught_class")]
     _plant("an error has no explicit caught_class, so the summary would be inferred from "
            "prose: %s" % (nocls or "none"), not nocls)
+
+    # 10. the peer-claim rate must be recorded with BOTH halves. A count of claims that failed,
+    #     without the count that held, is a scare number; the count that held, without the
+    #     failures, is a reason to adopt. Either alone argues the opposite of the truth.
+    _plant("the peer-claim re-derivation record is missing a half: %s"
+           % PEER_CLAIMS_REDERIVED,
+           PEER_CLAIMS_REDERIVED.get("held", 0) > 0 and PEER_CLAIMS_REDERIVED.get("failed", 0) > 0)
+    # and the initiation hypothesis must be REFUTED by the data rather than by assertion
+    _init = [e for e in ERRORS if e.get("initiated_by")]
+    _asked = [e for e in _init if e["initiated_by"].startswith("peer ASKED")
+              or "tried to USE" in e["initiated_by"]]
+    _plant("MOST peer-caught errors started with a peer asking for a value (%d of %d) - then "
+           "the snipershot lane's hypothesis holds here and this lane's counter-result is "
+           "wrong" % (len(_asked), len(_init)), len(_asked) < len(_init) / 2)
 
     _plant("every rule is already in the loop - a catalogue of twenty errors that implies the "
            "loop needs no change", len(new) > 0)
