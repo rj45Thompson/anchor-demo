@@ -1,5 +1,19 @@
 """The gate arithmetic, RE-USED from the ratchet lane and proven to agree with it.
 
+WHAT THAT AGREEMENT DOES AND DOES NOT ESTABLISH, because this lane reported it for two days in
+a form that implied more. The comparison below imports the ratchet lane's gate_blueprint and
+runs it beside this implementation. Those are two distinct implementations - not, as that lane
+put it, one module against itself - but their DERIVATION PATHS ARE NOT INDEPENDENT: this one
+was re-used from theirs, as the first line says. So max|dA| = 0.000e+00 establishes FAITHFUL
+RE-USE and would survive a shared bug, which is exactly what happened to the R7 plant that both
+lanes quoted for two days.
+
+THE INDEPENDENT CORROBORATION IS ELSEWHERE AND IS REAL: check_hover.py recomputes a, c and the
+gate from the f16 blob with nothing but numpy, does NOT import this module, and agrees to
+8.327e-17. That is the evidence the arithmetic is right. This file's agreement is the evidence
+it was copied correctly. Two different claims, and this lane had been quoting the second while
+meaning the first.
+
     py -X utf8 -I gatefly/gate_math.py --selftest
 
 WHAT A GATE IS (UC-GF-2 step 1). For p write directions K (d x p), a covariance C (d x d) and a
@@ -262,6 +276,10 @@ def selftest(lane_optional: bool = False) -> int:
         lc = np.array([lane_c(A2, j) for j in range(A2.shape[0])])
         _plant("crowding disagrees with the ratchet lane's crowding_term",
                float(np.abs(c2 - lc).max()) < 1e-9)
+        # NOT INDEPENDENT CORROBORATION - see the module docstring. This establishes faithful
+        # re-use and would survive a bug shared by both, because this implementation was
+        # written from theirs. The independent check is check_hover.py, which imports neither.
+        print("  agreement (faithful RE-USE, not independent corroboration):")
         print("  agreement: max|dA| %.3e  max|dG| %.3e  max|dc| %.3e"
               % (float(np.abs(A2 - dA).max()), float(np.abs(G2 - dG).max()),
                  float(np.abs(c2 - lc).max())))

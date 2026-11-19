@@ -16,28 +16,28 @@
  "loops_by_module": {
   "gate_math.py": [
    {
-    "plant_line": 541,
-    "loop_line": 537
+    "plant_line": 559,
+    "loop_line": 555
    },
    {
-    "plant_line": 544,
-    "loop_line": 537
+    "plant_line": 562,
+    "loop_line": 555
    },
    {
-    "plant_line": 605,
-    "loop_line": 602
+    "plant_line": 623,
+    "loop_line": 620
    },
    {
-    "plant_line": 621,
-    "loop_line": 619
+    "plant_line": 639,
+    "loop_line": 637
    },
    {
-    "plant_line": 624,
-    "loop_line": 619
+    "plant_line": 642,
+    "loop_line": 637
    },
    {
-    "plant_line": 682,
-    "loop_line": 681
+    "plant_line": 700,
+    "loop_line": 699
    }
   ],
   "ladder_probe.py": [
@@ -665,262 +665,262 @@
    {
     "label": "orthogonal C=I does not match the closed form",
     "has_format": false,
-    "line": 185
+    "line": 199
    },
    {
     "label": "gate != g(a - c)",
     "has_format": false,
-    "line": 194
+    "line": 208
    },
    {
     "label": "G is not symmetric",
     "has_format": false,
-    "line": 197
+    "line": 211
    },
    {
     "label": "a joint gate exceeds its lone-write gain",
     "has_format": false,
-    "line": 200
+    "line": 214
    },
    {
     "label": "collinear directions do not share g(na)/n",
     "has_format": false,
-    "line": 210
+    "line": 224
    },
    {
     "label": "the wrong form (I+A)^-1 agrees with A(I+A)^-1 - formula broken",
     "has_format": false,
-    "line": 214
+    "line": 228
    },
    {
     "label": "a gate left (0,1)",
     "has_format": false,
-    "line": 218
+    "line": 232
    },
    {
     "label": "orthonormal directions show crowding",
     "has_format": false,
-    "line": 223
+    "line": 237
    },
    {
     "label": "30 directions in 8 dimensions show little crowding",
     "has_format": false,
-    "line": 231
+    "line": 245
    },
    {
     "label": "30 directions in 2000 dimensions crowd like 30 in 8 - measuring p, not geometry",
     "has_format": false,
-    "line": 233
+    "line": 247
    },
    {
     "label": "unit_write_directions gives the wrong count of layers",
     "has_format": false,
-    "line": 241
+    "line": 255
    },
    {
     "label": "a unit's write direction is not the next matrix's column",
     "has_format": false,
-    "line": 242
+    "line": 256
    },
    {
     "label": "the transposed form also satisfies plant 11 - the plant cannot tell them apart",
     "has_format": false,
-    "line": 246
+    "line": 260
    },
    {
     "label": "the gate is supported to fewer than 3 decimals (%d) - then it is too noisy to print at all and this lane's figures need rebuilding, not reformatting",
     "has_format": true,
-    "line": 297
+    "line": 315
    },
    {
     "label": "a module prints a gate wider than the declared %d decimals: %s - the constant does not bind the printers",
     "has_format": true,
-    "line": 327
+    "line": 345
    },
    {
     "label": "this lane prints gates to MORE decimals than the %d the measurement supports - false precision, which is what the dtype rule exists to stop",
     "has_format": true,
-    "line": 330
+    "line": 348
    },
    {
     "label": "a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing (moved %.3e)",
     "has_format": true,
-    "line": 338
+    "line": 356
    },
    {
     "label": "the gate is NOT flat at realistic addressability - then it is a usable capacity read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.4f)",
     "has_format": true,
-    "line": 382
+    "line": 400
    },
    {
     "label": "the crowding FRACTION is not monotone where the gate is flat - then neither is readable and M8 has no instrument",
     "has_format": false,
-    "line": 385
+    "line": 403
    },
    {
     "label": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - it would be insensitive everywhere",
     "has_format": true,
-    "line": 389
+    "line": 407
    },
    {
     "label": "a is NOT exactly proportional to 1/lambda - then the absorbable-axis identity does not hold here and this caveat is wrong",
     "has_format": false,
-    "line": 419
+    "line": 437
    },
    {
     "label": "c/a is lambda-INVARIANT (spread %.3e) - then it is a lambda-free capacity read after all and this caveat should be deleted",
     "has_format": true,
-    "line": 424
+    "line": 442
    },
    {
     "label": "the per-key ORDER of c/a moved by more than 2 places across a 50x lambda change (moved %d) - then not even the comparative reading travels",
     "has_format": true,
-    "line": 435
+    "line": 453
    },
    {
     "label": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free and the 'nearly' in the comment above is understated",
     "has_format": true,
-    "line": 437
+    "line": 455
    },
    {
     "label": "batch installation EXCEEDS solo installation somewhere (max G_jj - g(A_jj) = %.3e) - that would refute Jensen on a concave gate",
     "has_format": true,
-    "line": 460
+    "line": 478
    },
    {
     "label": "a CONVEX function satisfied Jensen in the concave direction - then the bound above is not coming from concavity and the plant proves nothing",
     "has_format": false,
-    "line": 469
+    "line": 487
    },
    {
     "label": "the whitened cosine MOVED across nine orders of magnitude of lambda (%.3e) - then it is not an operating-point-free quantity and r9_keys.json's figures are only relative orderings after all",
     "has_format": true,
-    "line": 491
+    "line": 509
    },
    {
     "label": "the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is inert here and the whitened invariance proves nothing",
     "has_format": true,
-    "line": 497
+    "line": 515
    },
    {
     "label": "gate responsiveness is MONOTONE in a (%s) - then 'the gate saturates' needs no operating-point qualifier and the table above is wrong",
     "has_format": true,
-    "line": 504
+    "line": 522
    },
    {
     "label": "the gate is as responsive at this lane's a~250 as at its peak - then this lane's operating point is not the reason its gate is a late indicator",
     "has_format": false,
-    "line": 508
+    "line": 526
    },
    {
     "label": "the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution (%.3e) - then it really is unreadable here and 'compressed not unreadable' is wrong",
     "has_format": true,
-    "line": 549
+    "line": 567
    },
    {
     "label": "gate and c/a order keys DIFFERENTLY at fixed a (%d pairs) - then a comparison of their orderings is a real test; as it stands it is vacuous and only their MAGNITUDES differ",
     "has_format": true,
-    "line": 579
+    "line": 597
    },
    {
     "label": "gate and c/a span the SAME range over one crowding sweep (%.4f vs %.4f) - then even the magnitude comparison carries nothing",
     "has_format": true,
-    "line": 582
+    "line": 600
    },
    {
     "label": "g(x) + g(1/x) != 1 (max deviation %.3e) - then a = 1 is not g's symmetry point and the peak sitting at 1/sqrt(r) is a coincidence of the algebra",
     "has_format": true,
-    "line": 598
+    "line": 616
    },
    {
     "label": "the relative under-estimate does not worsen monotonically as r falls (%s)",
     "has_format": true,
-    "line": 630
+    "line": 648
    },
    {
     "label": "the independent expected survivor count at 9 tests is 1 (it is %.2f) - then this lane's endorsement was right",
     "has_format": true,
-    "line": 655
+    "line": 673
    },
    {
     "label": "P(>=4) at 9 tests equals the 0.0084 that was quoted for it (%.5f) - then there is no off-by-one",
     "has_format": true,
-    "line": 657
+    "line": 675
    },
    {
     "label": "P(>=3) is NOT the 0.0084 that was quoted as P(>=4) (%.5f) - then the off-by-one diagnosis is wrong",
     "has_format": true,
-    "line": 659
+    "line": 677
    },
    {
     "label": "the resampling SE of a permutation p=0.005 at 4000 draws is below 0.0005 (%.5f) - then quoting three digits off 4000 draws is not quoting the sampler",
     "has_format": true,
-    "line": 663
+    "line": 681
    },
    {
     "label": "the dependent and independent variances are the same (%.3f vs %.3f) - then the fixture is not dependent and the plants above prove nothing",
     "has_format": true,
-    "line": 687
+    "line": 705
    },
    {
     "label": "the mismatched baseline gives the same factor as the matched one (%.1fx vs %.1fx) - then matching the mean does not matter and this caveat is noise",
     "has_format": true,
-    "line": 698
+    "line": 716
    },
    {
     "label": "the matched baseline is LARGER than the mismatched one (%.5f vs %.5f) - then the published 2.6x over-stated rather than under-stated the effect",
     "has_format": true,
-    "line": 701
+    "line": 719
    },
    {
     "label": "dropping the two dead angles does not move the factor (%.1fx vs %.1fx) - then the family size is immaterial and 'live is seven' changes nothing",
     "has_format": true,
-    "line": 704
+    "line": 722
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
     "has_format": false,
-    "line": 258
+    "line": 272
    },
    {
     "label": "G disagrees with the ratchet lane's gate_matrix",
     "has_format": false,
-    "line": 260
+    "line": 274
    },
    {
     "label": "crowding disagrees with the ratchet lane's crowding_term",
     "has_format": false,
-    "line": 263
+    "line": 277
    },
    {
     "label": "the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f (%.4f vs %.4f)",
     "has_format": true,
-    "line": 541
+    "line": 559
    },
    {
     "label": "the closed-form peak MOVEMENT disagrees at r=%.1f (%.6f vs %.6f)",
     "has_format": true,
-    "line": 544
+    "line": 562
    },
    {
     "label": "1 - 2g(sqrt r) disagrees with the closed form at r=%.1f (%.8f vs %.8f)",
     "has_format": true,
-    "line": 605
+    "line": 623
    },
    {
     "label": "the small-change peak is closer to (1-r)/2 than to (1-r)/4 at r=%.2f (exact %.6f, /2 %.6f, /4 %.6f)",
     "has_format": true,
-    "line": 621
+    "line": 639
    },
    {
     "label": "(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is safe to quote as a bound, and this caveat is unnecessary",
     "has_format": true,
-    "line": 624
+    "line": 642
    },
    {
     "label": "E[S] does not equal the sum of the marginals for %s indicators (%.4f vs %.4f) - then linearity of expectation fails and dependence could move the mean",
     "has_format": true,
-    "line": 682
+    "line": 700
    }
   ],
   "gate_read.py": [
@@ -1195,72 +1195,72 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 519
+    "line": 536
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 523
+    "line": 540
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 526
+    "line": 543
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 531
+    "line": 548
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 537
+    "line": 554
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 543
+    "line": 560
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 551
+    "line": 568
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 561
+    "line": 578
    },
    {
     "label": "a peer claim carries no recorded ORIGIN: %s - the registry that counts claims cannot catch a miscredit without one",
     "has_format": true,
-    "line": 568
+    "line": 585
    },
    {
     "label": "the counts disagree with the claim table (%d+%d vs %d)",
     "has_format": true,
-    "line": 570
+    "line": 587
    },
    {
     "label": "every peer claim came from ONE lane - then this table cannot distinguish origins and the rule it implements is untested here",
     "has_format": false,
-    "line": 573
+    "line": 590
    },
    {
     "label": "the peer-claim re-derivation record is missing a half: %s",
     "has_format": true,
-    "line": 577
+    "line": 594
    },
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "has_format": true,
-    "line": 584
+    "line": 601
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 588
+    "line": 605
    }
   ],
   "metrics.py": [

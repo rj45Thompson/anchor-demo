@@ -188,6 +188,22 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
+ {"id": "quoted-faithful-re-use-as-independent-corroboration",
+  "initiated_by": "peer RETRACTED a claim about this lane and the retraction applied here too",
+  "caught_class": "peer checked it",
+  "what": "Reported 'the gate arithmetic is proven bit-identical to the ratchet lane, max|dA| "
+          "and max|dG| and max|dc| all exactly 0.000e+00' for two days, in a form implying "
+          "independent corroboration. The comparison imports THEIR gate_blueprint and runs it "
+          "beside this implementation - two distinct implementations, but this one was RE-USED "
+          "from theirs, as the module's own first line says. So the agreement establishes "
+          "faithful re-use and would survive a shared bug. It is R-AGREEMENT-NEEDS-INDEPENDENT-"
+          "PATHS on this lane's own headline, two messages after this lane registered that "
+          "rule. The real corroboration is check_hover.py, which imports neither module and "
+          "agrees to 8.327e-17 - a different claim this lane had been conflating with it.",
+  "caught_by": "the snipershot lane retracting its own 'independently planted' claim, whose "
+               "reasoning applies here",
+  "verdict": ARCH, "rule": "R-AGREEMENT-NEEDS-INDEPENDENT-PATHS"},
+
  {"id": "miscredited-my-own-correction-to-the-lane-i-corrected",
   "initiated_by": "this lane SENT a tally; peer checked its own commit log against it",
   "caught_class": "peer checked it",
@@ -423,6 +439,7 @@ RULES = {
 # caught it. R-ATTRIBUTE-BY-ORIGIN-NOT-SUBJECT, applied to itself.
 V4, SNIPER = "v4", "snipershot"
 PEER_CLAIMS = [
+ ("my 'independently planted' claim is false - shared derivation", SNIPER, "HELD"),
  ("Jensen bound on the concave gate",                      V4,     "HELD"),
  ("g(x) + g(1/x) = 1, the reciprocal symmetry",            V4,     "HELD"),
  ("the hypergeometric null, mean 14.72, [11,18]",          V4,     "HELD"),
