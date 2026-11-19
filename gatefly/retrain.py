@@ -800,43 +800,71 @@ def selftest() -> int:
         print("    keys at the last block: own-site edit moves them %.3e, earlier-block edit "
               "moves them %.3e" % (dk, dd))
 
-    # R9 (the light loop's prefix rule): in a CAUSAL model two prompts sharing a prefix up to
-    # the read token produce IDENTICAL KEYS, and an edit set containing such a pair has its
-    # crowding inflated by its own construction rather than by the geometry.
+    # R9, the prefix rule, and the instrument it has to be measured with.
     #
-    # THE RULE AS STATED IS NOT ENOUGH, and this plant is how I found that out - it failed the
-    # first time it ran. Asserting on the PREFIX STRINGS passes here (24 of 24 distinct) while
-    # the KEYS are at cosine 0.9995. The prefix check cannot see it because collinearity is a
-    # fact about what the MODEL does with the prompt, not about the prompt. On this untrained
-    # net nothing has learned to separate those boards; on the trained ttt_big checkpoint the
-    # same construction gives a worst pair of 0.894 (measured, gatefly/runs/r9_keys.json).
-    # So the check has to be on the keys, and it has to be re-run per checkpoint.
+    # The rule as received: in a CAUSAL model two prompts sharing a prefix up to the read token
+    # give IDENTICAL keys, so assert no two templates share one. Sound as a sufficiency claim.
+    # It says nothing about whether DISTINCT prefixes give usefully distinct keys, which is the
+    # thing a reader takes from it, and that is what is measured here.
+    #
+    # I FIRST MEASURED IT WITH A RAW COSINE AND THE RESULT WAS AN ARTEFACT. The v4 lane's
+    # standing rule - no cosine where a vector's length carries meaning - applies, because a
+    # key's norm scales the update. The inner product that actually decides interference is
+    # C^-1-WHITENED, since the solve is (lam C + K K^T)^-1, and A = K^T (lam C)^-1 K already
+    # holds those whitened inner products in its off-diagonals. So the whitened cosine is
+    # A_ij / sqrt(A_ii A_jj), needing no extra model work. On this very net:
+    #
+    #     raw       worst 0.9995   14 of 276 pairs above 0.99
+    #     whitened  worst 0.7238    0 pairs above 0.90
+    #
+    # The raw figure was the large shared component of MLP activations, which is exactly what
+    # whitening removes. Had I kept the raw assertion, this plant would have been standing guard
+    # over a quantity the gate arithmetic never uses.
     cases9 = build_cases(m, 24, dev, 19)
     pre9r = [tuple(c["prefix"]) for c in cases9]
     _plant("the edit set contains duplicate prefixes", len(pre9r) == len(set(pre9r)))
     K9 = ffwd_keys(m, [list(p_) for p_ in pre9r], 1, dev)
+    C9, _, _ = covariance(m, 1, dev, n=1200, seed=5)
     Kn9 = K9 / np.maximum(np.linalg.norm(K9, axis=1, keepdims=True), 1e-12)
-    G9 = Kn9 @ Kn9.T
-    np.fill_diagonal(G9, -1.0)
-    worst9 = float(G9.max())
-    print("  R9 keys: %d distinct prefixes, worst pairwise key cosine %.4f (UNTRAINED net)"
-          % (len(set(pre9r)), worst9))
-    # the load-bearing assertion: distinct prefixes do NOT imply distinct keys, so a lane that
-    # checks only the prefixes is not covered. If this ever stops holding, the key-level check
-    # is redundant and can be dropped - but it must be DEMONSTRATED redundant, not assumed.
-    _plant("distinct prefixes gave distinct keys even on an untrained net (worst %.4f) - the "
-           "prefix-level check would then be sufficient and this one redundant" % worst9,
-           worst9 > 0.99)
-    # control: the check must be able to SEE a collision, or it is switched off
+    Graw = Kn9 @ Kn9.T
+    np.fill_diagonal(Graw, -1.0)
+    A9 = K9 @ np.linalg.solve(C9, K9.T)
+    A9 = 0.5 * (A9 + A9.T)
+    d9 = np.sqrt(np.maximum(np.diag(A9), 1e-300))
+    Gw = A9 / np.outer(d9, d9)
+    np.fill_diagonal(Gw, -1.0)
+    raw_w, wh_w = float(Graw.max()), float(Gw.max())
+    print("  R9 keys: %d distinct prefixes | worst RAW cosine %.4f, worst WHITENED %.4f"
+          % (len(set(pre9r)), raw_w, wh_w))
+
+    # 1. THE LOAD-BEARING ONE: a raw cosine materially OVERSTATES key interference, so a lane
+    #    screening edit sets with it will refuse sets that are geometrically fine. This is the
+    #    finding, and it refutes the raw-cosine version of this plant that I committed first.
+    _plant("a raw cosine agreed with the whitened one (raw %.4f vs whitened %.4f) - then the "
+           "cheap instrument is adequate and the whitening is unnecessary here"
+           % (raw_w, wh_w), raw_w - wh_w > 0.2)
+
+    # 2. and the coverage point survives the change of instrument, which is why it is kept: all
+    #    24 prefixes are distinct, yet the whitened geometry of THIS net is far worse than the
+    #    trained checkpoint's at the same size (0.7238 vs 0.2768, gatefly/runs/r9_whitened.json).
+    #    So the prefix check is uninformative about key geometry in either measure.
+    _plant("the untrained net's whitened geometry was no worse than the trained checkpoint's "
+           "0.2768 at the same size (got %.4f) - the prefix check would then be uninformative "
+           "about nothing" % wh_w, wh_w > 0.40)
+
+    # 3. positive control: a duplicated key must read 1 in BOTH measures, or neither can see a
+    #    real collision. Whitening must not launder away an actual duplicate.
     dupK = np.vstack([K9[:1], K9[:1]])
     dn = dupK / np.linalg.norm(dupK, axis=1, keepdims=True)
-    _plant("a duplicated key does not read as cosine 1 - the collision check is blind",
-           abs(float((dn @ dn.T)[0, 1]) - 1.0) < 1e-6)
-    # and the negative control: two keys built to be orthogonal must NOT trip the threshold,
-    # or the check fires on everything and means nothing
-    orth = np.array([[1.0, 0.0], [0.0, 1.0]])
-    _plant("orthogonal keys tripped the collision threshold - it fires on anything",
-           abs(float(orth @ orth.T)[0, 1] if False else float((orth @ orth.T)[0, 1])) < 0.99)
+    Ad = dupK @ np.linalg.solve(C9, dupK.T)
+    dd = np.sqrt(np.maximum(np.diag(Ad), 1e-300))
+    _plant("a duplicated key does not read as cosine 1 in both measures - the collision check "
+           "is blind", abs(float((dn @ dn.T)[0, 1]) - 1.0) < 1e-6
+           and abs(float((Ad / np.outer(dd, dd))[0, 1]) - 1.0) < 1e-6)
+
+    # 4. negative control: the whitened measure must not fire on everything
+    _plant("the whitened measure reported a majority of pairs above 0.9 - it fires on anything",
+           int((Gw > 0.9).sum() // 2) == 0)
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:

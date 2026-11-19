@@ -1,0 +1,48 @@
+{
+ "untrained": {
+  "dim": 32,
+  "cases": 24,
+  "cov_positions": 1200,
+  "cov_cond": 706967.8873759421,
+  "raw_worst": 0.999465,
+  "whitened_worst": 0.723754,
+  "raw_above_0.99": 14,
+  "whitened_above_0.99": 0,
+  "whitened_above_0.95": 0
+ },
+ "trained": {
+  "layer": 3,
+  "cov_positions": 4000,
+  "cov_cond": 3224.5789105400218,
+  "rows": [
+   {
+    "n": 8,
+    "raw_worst": 0.641743,
+    "whitened_worst": 0.260423,
+    "whitened_above_0.95": 0,
+    "whitened_above_0.50": 0
+   },
+   {
+    "n": 24,
+    "raw_worst": 0.78088,
+    "whitened_worst": 0.276806,
+    "whitened_above_0.95": 0,
+    "whitened_above_0.50": 0
+   },
+   {
+    "n": 64,
+    "raw_worst": 0.853087,
+    "whitened_worst": 0.474177,
+    "whitened_above_0.95": 0,
+    "whitened_above_0.50": 0
+   },
+   {
+    "n": 256,
+    "raw_worst": 0.894223,
+    "whitened_worst": 0.642668,
+    "whitened_above_0.95": 0,
+    "whitened_above_0.50": 6
+   }
+  ]
+ }
+}

@@ -1,9 +1,15 @@
 {
- "what": "R9, the light loop's key-collision rule, measured on the TRAINED checkpoint. Two prompts sharing a prefix up to the read token give identical keys in a causal model; an edit set containing such a pair would have its crowding inflated by its own construction. Checked on the KEYS, not the prefix strings, because collinearity is a fact about what the model does with the prompt.",
+ "what": "R9, the prefix rule, measured on this lane's keys. The rule as received: two prompts sharing a prefix up to the read token give identical keys in a causal model, so assert no two templates share one. Sound as a sufficiency claim. What it does NOT assert, and what a reader takes from it, is that DISTINCT prefixes give usefully distinct keys. That is what is measured here.",
+ "CORRECTION": "The first version of this file reported RAW cosines only, and its headline - a worst pair of 0.9995 on an untrained net with all 24 prefixes distinct - was an ARTEFACT of the instrument. The v4 lane's standing rule applies: no cosine where a vector's length carries meaning, because a key's norm scales the update. The inner product that decides interference is C^-1-whitened, since the solve is (lam C + K K^T)^-1, and A = K^T (lam C)^-1 K already holds those whitened inner products as its off-diagonals - so the whitened cosine is A_ij/sqrt(A_ii A_jj) and costs no extra model work. Under it the same untrained net gives a worst pair of 0.7238 with ZERO pairs above 0.90, where the raw measure claimed 14 pairs above 0.99. The raw figure was the large shared component of MLP activations, which whitening is precisely the operation that removes. Both measures are kept below so the size of the discrepancy stays visible.",
  "checkpoint": "ttt_big",
  "layer": 3,
  "key_dim": 256,
  "seed": 19,
+ "whitening": {
+  "covariance_positions": 4000,
+  "covariance_cond": 3224.6,
+  "lambda": 1.0
+ },
  "rows": [
   {
    "n": 8,
@@ -11,7 +17,10 @@
    "unique_prefixes": 8,
    "cases": 8,
    "pairs_above_0.99": 0,
-   "pairs_above_0.95": 0
+   "pairs_above_0.95": 0,
+   "whitened_worst": 0.260423,
+   "whitened_above_0.95": 0,
+   "whitened_above_0.50": 0
   },
   {
    "n": 16,
@@ -19,7 +28,10 @@
    "unique_prefixes": 16,
    "cases": 16,
    "pairs_above_0.99": 0,
-   "pairs_above_0.95": 0
+   "pairs_above_0.95": 0,
+   "whitened_worst": 0.260423,
+   "whitened_above_0.95": 0,
+   "whitened_above_0.50": 0
   },
   {
    "n": 24,
@@ -27,7 +39,10 @@
    "unique_prefixes": 24,
    "cases": 24,
    "pairs_above_0.99": 0,
-   "pairs_above_0.95": 0
+   "pairs_above_0.95": 0,
+   "whitened_worst": 0.276806,
+   "whitened_above_0.95": 0,
+   "whitened_above_0.50": 0
   },
   {
    "n": 32,
@@ -35,7 +50,10 @@
    "unique_prefixes": 32,
    "cases": 32,
    "pairs_above_0.99": 0,
-   "pairs_above_0.95": 0
+   "pairs_above_0.95": 0,
+   "whitened_worst": 0.276806,
+   "whitened_above_0.95": 0,
+   "whitened_above_0.50": 0
   },
   {
    "n": 64,
@@ -43,7 +61,10 @@
    "unique_prefixes": 64,
    "cases": 64,
    "pairs_above_0.99": 0,
-   "pairs_above_0.95": 0
+   "pairs_above_0.95": 0,
+   "whitened_worst": 0.474177,
+   "whitened_above_0.95": 0,
+   "whitened_above_0.50": 0
   },
   {
    "n": 128,
@@ -51,7 +72,10 @@
    "unique_prefixes": 128,
    "cases": 128,
    "pairs_above_0.99": 0,
-   "pairs_above_0.95": 0
+   "pairs_above_0.95": 0,
+   "whitened_worst": 0.642668,
+   "whitened_above_0.95": 0,
+   "whitened_above_0.50": 1
   },
   {
    "n": 256,
@@ -59,10 +83,14 @@
    "unique_prefixes": 256,
    "cases": 256,
    "pairs_above_0.99": 0,
-   "pairs_above_0.95": 0
+   "pairs_above_0.95": 0,
+   "whitened_worst": 0.642668,
+   "whitened_above_0.95": 0,
+   "whitened_above_0.50": 6
   }
  ],
- "finding": "clean at every size: the worst pair rises with n (0.642 at n=8 to 0.894 at n=256) but never approaches collinearity, and zero pairs exceed 0.95 anywhere. So the n=256 crowding figure of 0.9385 is geometry, not duplicated keys.",
- "contrast": "on an UNTRAINED net of the same architecture the same construction gives a worst pair of 0.9995 with all 24 prefixes distinct - so the prefix-level form of the rule is insufficient, and that is what the plant in retrain.py asserts.",
- "not_verified": "this is one seed's case construction per size. It says the sets actually used here are clean; it does not bound what another seed or another position sampler would produce, which is why the check is a standing plant rather than a one-off clearance."
+ "finding_trained": "Clean under both measures, and better supported under the right one. The worst RAW pair rises with n (0.642 at n=8 to 0.894 at n=256); the worst WHITENED pair is lower throughout (0.260 to 0.643), with zero pairs above 0.95 anywhere and only 6 above 0.50 at n=256. So the n=256 crowding figure of 0.9385 is DIMENSIONAL - 256 keys into a 256-dimensional key space must span it - and not pairwise duplication. Pigeonhole, not sloppy case selection.",
+ "finding_untrained": "The coverage point survives the change of instrument, at a fifth of the size I first claimed. All 24 prefixes distinct in both nets, yet the untrained net's whitened worst pair is 0.7238 against the trained checkpoint's 0.2768 at the same n=24 - a real 2.6x gap that the prefix check cannot see. So a check over the prompt strings is uninformative about key geometry. What is NOT true is that the keys are near-collinear: 0.72 is not 0.9995, and no pair exceeds 0.90.",
+ "not_verified": "One seed's case construction per size, on one architecture. It says the sets actually used here are clean; it does not bound what another seed or sampler would produce. lambda is fixed at 1.0 for the whitened comparison, so the figures are relative orderings rather than the gate's operating point. The trained/untrained gap is two checkpoints, not a training trajectory - it does not locate where in training the geometry separates.",
+ "inapplicable_where": "The per-checkpoint re-run this lane needs does not transfer to a lane editing a FIXED released checkpoint - the v4 lane's point, accepted. With no training trajectory there is nothing for a key test to drift along, so the rule is right for a lane that trains and inert for one that does not."
 }
