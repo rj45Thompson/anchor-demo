@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 23,
-  "plants": 290,
+  "plants": 288,
   "modules_with_zero_plants": 2,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 25
+  "labels_not_greppable_in_source": 22
  },
  "zero_plant_modules": [
   "check_hover.py",
@@ -42,7 +42,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "25 of 290 labels (8.6%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 290. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "22 of 288 labels (7.6%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 288. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "gate_math.py": [
    {
@@ -86,20 +86,8 @@
     "longest_on_one_line": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published "
    },
    {
-    "label": "no module was found with zero plants - then this lane's census extension is moot and the row can be dropped",
-    "longest_on_one_line": "no module was found with zero plants - then this lane's census extension is moot "
-   },
-   {
-    "label": "the loop detector found no loop-nested plants, so the static count would silently disagree with a runtime sweep",
-    "longest_on_one_line": "the loop detector found no loop-nested plants, so the static count would silently "
-   },
-   {
-    "label": "gate_math.py was listed as holding a loop-nested plant - the detector fires on anything",
-    "longest_on_one_line": "gate_math.py was listed as holding a loop-nested plant - the detector fires on "
-   },
-   {
-    "label": "every label is findable by grepping one line of its own source - then a citing lane needs no manifest and this module is dead weight",
-    "longest_on_one_line": "every label is findable by grepping one line of its own source - then a citing "
+    "label": "the loop detector MISSED a plant inside a loop - it would let the static count disagree with a runtime count unexplained",
+    "longest_on_one_line": "the loop detector MISSED a plant inside a loop - it would let the static count "
    },
    {
     "label": "%d label(s) are not greppable on one line of the manifest either - this module reproduces the fault it exists to fix",
@@ -840,67 +828,57 @@
    {
     "label": "extraction found fewer than 100 plants (%d) - the manifest is not covering this lane",
     "has_format": true,
-    "line": 234
+    "line": 256
    },
    {
     "label": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published citation has stopped resolving",
     "has_format": false,
-    "line": 241
+    "line": 263
    },
    {
     "label": "rewording a label was not detected - the drift check is blind",
     "has_format": false,
-    "line": 256
+    "line": 278
    },
    {
     "label": "removing a label was not detected",
     "has_format": false,
-    "line": 262
+    "line": 284
    },
    {
     "label": "an unchanged manifest reported drift - the check would refuse on every run",
     "has_format": false,
-    "line": 267
+    "line": 289
    },
    {
     "label": "the digest changed when only surrounding prose changed",
     "has_format": false,
-    "line": 274
+    "line": 296
    },
    {
     "label": "the digest did NOT change when a label changed",
     "has_format": false,
-    "line": 275
+    "line": 297
    },
    {
-    "label": "no module was found with zero plants - then this lane's census extension is moot and the row can be dropped",
+    "label": "the loop detector listed a plant that is NOT in a loop - it fires on anything",
     "has_format": false,
-    "line": 284
+    "line": 335
    },
    {
-    "label": "the loop detector found no loop-nested plants, so the static count would silently disagree with a runtime sweep",
+    "label": "the loop detector MISSED a plant inside a loop - it would let the static count disagree with a runtime count unexplained",
     "has_format": false,
-    "line": 292
-   },
-   {
-    "label": "gate_math.py was listed as holding a loop-nested plant - the detector fires on anything",
-    "has_format": false,
-    "line": 296
-   },
-   {
-    "label": "every label is findable by grepping one line of its own source - then a citing lane needs no manifest and this module is dead weight",
-    "has_format": false,
-    "line": 306
+    "line": 337
    },
    {
     "label": "%d label(s) are not greppable on one line of the manifest either - this module reproduces the fault it exists to fix",
     "has_format": true,
-    "line": 316
+    "line": 364
    },
    {
     "label": "running the selftest MODIFIED the stored manifest - it would refresh the drift baseline and make itself pass",
     "has_format": false,
-    "line": 329
+    "line": 377
    }
   ],
   "play.py": [
@@ -1661,5 +1639,5 @@
    }
   ]
  },
- "labels_digest": "9a86bfffde99e252"
+ "labels_digest": "88f429cb5fa7827f"
 }

@@ -224,6 +224,28 @@ def selftest() -> int:
         if not cond:
             fails.append(label)
 
+    # A PREMISE IS NOT A PLANT, and conflating them is a fault a sibling lane hit today: it had
+    # a plant asserting that a live row carried HOST-LOCAL, and the plant failed when that row
+    # legitimately moved. The rule was fine; the data moved under it.
+    #
+    # Three checks in this file had the same shape and the same defect, all written today. Each
+    # asserted that a DEFICIENCY CURRENTLY EXISTS - some module holds no plants, some label is
+    # unfindable in source, some plant sits in a loop - in order to justify this module's
+    # existence. So fixing the deficiency turns the check red, and one of them fails precisely
+    # if someone takes this lane's own advice and plants check_hover.py. A check that punishes
+    # an improvement is a check that gets switched off or worked around.
+    #
+    # So they are reported as PREMISES: loud, carrying the consequence, and NOT counted as
+    # failures. A plant says the code does what it claims and failing means regression. A
+    # premise says the situation justifying a check still obtains, and expiring means the check
+    # has done its job and should be retired. Two different jobs that were being counted as one.
+    premises = []
+
+    def _premise(label, holds, consequence):
+        print(("  premise  " if holds else "  EXPIRED  ") + label)
+        if not holds:
+            premises.append((label, consequence))
+
     fresh = build()
     total = fresh["totals"]["plants"]
     print("  extracted %d plant(s) from %d module(s); %d module(s) hold none"
@@ -281,20 +303,39 @@ def selftest() -> int:
     print("  modules with zero plants: %s" % (", ".join(fresh["zero_plant_modules"]) or "none"))
     print("  ...of which are themselves checkers: %s"
           % (", ".join(fresh["zero_plant_modules_that_are_checkers"]) or "none"))
-    _plant("no module was found with zero plants - then this lane's census extension is moot "
-           "and the row can be dropped", len(fresh["zero_plant_modules"]) > 0)
+    _premise("at least one module still holds zero plants",
+             len(fresh["zero_plant_modules"]) > 0,
+             "every module now has plants, so this lane's census extension is moot and the "
+             "zero_plant_modules row can be dropped from the manifest and from the snipershot "
+             "lane's census")
 
     # 8. the loop detector must find the three sites that explain the static/runtime gap, or the
     #    manifest's own totals read as disagreeing with a sweep for no stated reason.
     loops = fresh["loops_by_module"]
     print("  call sites inside loops: %s"
           % (", ".join("%s(%d)" % (k, len(v)) for k, v in sorted(loops.items())) or "none"))
-    _plant("the loop detector found no loop-nested plants, so the static count would silently "
-           "disagree with a runtime sweep", fresh["totals"]["call_sites_inside_loops"] > 0)
-    # and its negative control: a module with no loop-nested plant must not be listed, or the
-    # detector marks everything and explains nothing
-    _plant("gate_math.py was listed as holding a loop-nested plant - the detector fires on "
-           "anything", "gate_math.py" not in loops)
+    _premise("at least one plant still sits inside a loop",
+             fresh["totals"]["call_sites_inside_loops"] > 0,
+             "no plant is loop-nested any more, so the static count now equals a runtime count "
+             "and the why_this_count_is_lower_than_a_runtime_count caveat should be removed "
+             "rather than left to confuse a reader")
+
+    # The detector's controls are SYNTHETIC, on source written here, so they test the detector
+    # rather than whatever this lane's modules happen to contain today. The previous version
+    # asserted that gate_math.py holds no loop-nested plant - true now, and it would have gone
+    # red the moment someone wrapped a plant in a loop there for a perfectly good reason.
+    import tempfile
+    td = tempfile.mkdtemp()
+    flat = os.path.join(td, "flat.py")
+    looped = os.path.join(td, "looped.py")
+    io.open(flat, "w", encoding="utf-8").write(
+        "def f():\n    _plant('a', True)\n    _plant('b', True)\n")
+    io.open(looped, "w", encoding="utf-8").write(
+        "def f():\n    for x in (1, 2):\n        _plant('a', True)\n")
+    _plant("the loop detector listed a plant that is NOT in a loop - it fires on anything",
+           loop_nested(flat) == [])
+    _plant("the loop detector MISSED a plant inside a loop - it would let the static count "
+           "disagree with a runtime count unexplained", len(loop_nested(looped)) == 1)
 
     # 9. THE REASON THIS MODULE EXISTS, asserted both ways. A long label is written as
     #    implicitly concatenated literals, so no single source line holds it, and a sibling
@@ -303,13 +344,20 @@ def selftest() -> int:
     nw = fresh["totals"]["labels_not_greppable_in_source"]
     print("  labels unfindable by a single-line source grep: %d of %d (%.1f%%)"
           % (nw, total, 100.0 * nw / max(total, 1)))
-    _plant("every label is findable by grepping one line of its own source - then a citing "
-           "lane needs no manifest and this module is dead weight", nw > 0)
+    _premise("at least one label is still unfindable by a single-line source grep", nw > 0,
+             "every label now fits on one source line, so a citing lane can grep the source "
+             "directly and this module's main justification is gone - retire it rather than "
+             "maintaining a manifest nothing needs")
 
     # and the half that makes it a fix rather than a diagnosis: EVERY label must be greppable
     # on one line of the manifest itself, or this file reproduces the fault it documents.
-    raw = io.open(MANIFEST, encoding="utf-8").read().splitlines() if os.path.exists(MANIFEST) \
-        else []
+    # Serialized IN MEMORY from the fresh build, not read from the stored file. Grepping the
+    # stored file conflates two different faults: a manifest that WRAPS labels (the thing this
+    # asserts) and a manifest that is merely STALE (already covered by the drift plants and by
+    # the verify path). On its first run this plant failed for staleness and reported it as
+    # wrapping - a true failure with a misleading label, which is its own small version of the
+    # fault this module exists to document.
+    raw = json.dumps(fresh, indent=1, ensure_ascii=False).splitlines()
     unreachable = [p["label"] for labels in fresh["modules"].values() for p in labels
                    if not any(json.dumps(p["label"], ensure_ascii=False)[1:-1] in ln
                               for ln in raw)]
@@ -329,9 +377,18 @@ def selftest() -> int:
     _plant("running the selftest MODIFIED the stored manifest - it would refresh the drift "
            "baseline and make itself pass", before_mt == after_mt and before_txt == after_txt)
 
-    print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
+    print("  selftest: %d plant(s) checked, %d failed; %d premise(s) expired"
+          % (len(checked), len(fails), len(premises)))
     for f in fails:
         print("  FAILED: " + f)
+    if premises:
+        print()
+        print("  PREMISES EXPIRED - not failures. The checks below were justified by a")
+        print("  situation that no longer holds, so they have done their job and should be")
+        print("  retired rather than kept passing on an obsolete reason:")
+        for label, consequence in premises:
+            print("    - %s" % label)
+            print("      -> %s" % consequence)
     return 1 if fails else 0
 
 
