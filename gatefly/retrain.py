@@ -749,9 +749,15 @@ def selftest() -> int:
     # with 4 cases it is merely very ill-conditioned. Both are the same fact, so the plant
     # checks the fact - including the cases improves the conditioning - and the refusal path is
     # checked separately on a C that is singular by construction.
+    # The disjunction here was flagged by the VACUITY screen in plant_manifest.py, and the read
+    # is worth recording. `(not isfinite(cbad)) or cok < cbad` short-circuits to True whenever
+    # cbad is singular, so in that branch it stopped checking anything - the hole was closed
+    # only by the NEXT plant asserting isfinite(cok). That is correct but not self-contained: it
+    # relies on a reader noticing the adjacent line, and deleting or reordering either one
+    # silently reopens it. Stated as one condition that holds in both branches instead.
     _plant("including the grown neurons' own cases did not improve the conditioning "
            "(%.3e -> %.3e)" % (cbad, cok),
-           (not np.isfinite(cbad)) or cok < cbad)
+           (cok < cbad) if np.isfinite(cbad) else np.isfinite(cok))
     _plant("the ridge is unusable even WITH the cases (cond %.3e)" % cok, np.isfinite(cok))
     print("    cond(C) without the grown cases %.3e, with them %.3e" % (cbad, cok))
     # the refusal path, on a C that is singular by construction

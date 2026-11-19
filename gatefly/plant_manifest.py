@@ -165,6 +165,36 @@ def premise_shaped(path):
         elif isinstance(cond, (ast.Name, ast.Subscript)):
             why = "a bare collection as the condition: truthy only while non-empty"
             tier = "WEAK"
+        # THE MIRROR SHAPE, AND IT IS WORSE. The snipershot lane ran this screen's prediction
+        # over its own lane and found the inverse: `(not no_plants()[1]) or any(...)`. It had
+        # guarded with a negation SPECIFICALLY to avoid asserting that a deficiency still
+        # existed - because this lane had just taught it the premise shape - and the guard
+        # became the vacuity. Once the deficiency count goes to zero, `not X` is True, the `or`
+        # short-circuits, and the plant CAN NEVER FAIL however broken the thing it checks.
+        #
+        # So the fix for the premise shape produces this one, and the two fail oppositely:
+        #
+        #     a PREMISE goes RED on success     - loud, annoying, gets noticed and argued about
+        #     a VACUITY goes GREEN on success   - silent, permanent, indistinguishable from a
+        #                                         healthy plant, which is strictly worse
+        #
+        # Detectable the same way: a disjunction one of whose operands is an emptiness test is
+        # unconditionally true the moment that collection empties.
+        if why is None and isinstance(cond, ast.BoolOp) and isinstance(cond.op, ast.Or):
+            for operand in cond.values:
+                empt = None
+                if isinstance(operand, ast.UnaryOp) and isinstance(operand.op, ast.Not):
+                    empt = "a `not X` operand"
+                elif isinstance(operand, ast.Compare) and len(operand.ops) == 1 \
+                        and isinstance(operand.ops[0], ast.Eq) \
+                        and isinstance(operand.comparators[0], ast.Constant) \
+                        and operand.comparators[0].value in (0, None, False):
+                    empt = "an `X == 0` operand"
+                if empt:
+                    why = ("VACUITY: an OR with %s - once that collection empties the condition "
+                           "is unconditionally true and the plant can never fail" % empt)
+                    break
+
         if why:
             # TIERING, from reading all 35 this lane produced rather than from taste. The
             # overwhelming majority of bare-boolean conditions are POSITIVE CONTROLS - caught,
@@ -174,7 +204,9 @@ def premise_shaped(path):
             # was 3 of 12 (25%). So the tier is reported and the weak tier is not counted in
             # the headline, because a screen whose headline is 91% false positives gets
             # ignored exactly like the phrasing grep it replaces.
-            tier = "WEAK" if isinstance(cond, (ast.Name, ast.Subscript)) else "STRONG"
+            # a VACUITY hit is never a legitimate positive control, so it is always STRONG
+            tier = ("STRONG" if why.startswith("VACUITY")
+                    else ("WEAK" if isinstance(cond, (ast.Name, ast.Subscript)) else "STRONG"))
             out.append({"line": node.lineno, "why": why, "tier": tier,
                         "code": lines[node.lineno - 1].strip()[:88]})
     return out
@@ -478,6 +510,28 @@ def selftest() -> int:
            {c["tier"] for c in premise_shaped(prem)} == {"STRONG", "WEAK"})
     _plant("the premise-shape detector flagged ordinary plants asserting the HEALTHY state - "
            "it would mark most of a suite", premise_shaped(good) == [])
+
+    # THE MIRROR SHAPE, found by the snipershot lane running this screen's own prediction over
+    # its lane. It had guarded with a negation specifically to avoid the premise shape - because
+    # this lane had just taught it that shape - and the guard became the vacuity. The two fail
+    # oppositely and the vacuity is worse: a premise goes RED on success and gets argued about,
+    # a vacuity goes GREEN on success and is indistinguishable from a healthy plant.
+    vac = os.path.join(td2, "vac.py")
+    io.open(vac, "w", encoding="utf-8").write("\n".join([
+        "def f():",
+        "    _plant('or with not', (not no_plants()[1]) or any(r for r in rows))",
+        "    _plant('or with == 0', len(gaps) == 0 or all(g.ok for g in gaps))",
+        "    _plant('an AND is fine', bool(rows) and all(r.ok for r in rows))",
+        "    _plant('a plain negation is fine', not broken)",
+        ""]))
+    vhits = [c for c in premise_shaped(vac) if c["why"].startswith("VACUITY")]
+    _plant("the VACUITY screen missed an OR whose operand empties - the plant would go green "
+           "on success and never fail again", len(vhits) == 2)
+    _plant("the VACUITY screen flagged an AND or a plain negation - those are healthy and it "
+           "would mark half a suite", len([c for c in premise_shaped(vac)
+                                           if not c["why"].startswith("VACUITY")]) == 0)
+    _plant("a VACUITY hit was tiered WEAK - it is never a legitimate positive control",
+           all(c["tier"] == "STRONG" for c in vhits))
 
     # and run it over this whole lane, reported as candidates to read rather than failures
     cand = {}
