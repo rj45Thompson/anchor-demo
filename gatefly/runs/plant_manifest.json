@@ -3,11 +3,11 @@
  "resolve_from_outside": "D:\\code\\anchor-demo\\gatefly\\runs\\plant_manifest.json",
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
-  "modules_with_plants": 27,
-  "plants": 370,
+  "modules_with_plants": 28,
+  "plants": 381,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 41
+  "labels_not_greppable_in_source": 43
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -37,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "41 of 370 labels (11.1%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 370. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "43 of 381 labels (11.3%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 381. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -227,6 +227,16 @@
    {
     "label": "keep_set is not sorted - cut_to would receive units in gate order and the saved net would depend on argsort's tie handling",
     "longest_on_one_line": "keep_set is not sorted - cut_to would receive units in gate order and the saved "
+   }
+  ],
+  "status.py": [
+   {
+    "label": "the tree-node count and the mechanism-frontier count are the same number, so nothing in the output distinguishes them (%d, %d)",
+    "longest_on_one_line": "the tree-node count and the mechanism-frontier count are the same number, so "
+   },
+   {
+    "label": "the report does not say the two counts are different questions - the next person to read it quotes whichever they saw last",
+    "longest_on_one_line": "the report does not say the two counts are different questions - the next person "
    }
   ]
  },
@@ -1989,6 +1999,63 @@
     "line": 110
    }
   ],
+  "status.py": [
+   {
+    "label": "unswept() disagrees with the join it reads (%d vs %d)",
+    "has_format": true,
+    "line": 129
+   },
+   {
+    "label": "unswept() returned a count that does not match its own id list",
+    "has_format": false,
+    "line": 130
+   },
+   {
+    "label": "unswept() reported more unswept than there are nodes",
+    "has_format": false,
+    "line": 131
+   },
+   {
+    "label": "frontier() disagrees with art_graph.frontier()",
+    "has_format": false,
+    "line": 135
+   },
+   {
+    "label": "the tree-node count and the mechanism-frontier count are the same number, so nothing in the output distinguishes them (%d, %d)",
+    "has_format": true,
+    "line": 140
+   },
+   {
+    "label": "the report does not say the two counts are different questions - the next person to read it quotes whichever they saw last",
+    "has_format": false,
+    "line": 150
+   },
+   {
+    "label": "plants() disagrees with the committed manifest",
+    "has_format": false,
+    "line": 158
+   },
+   {
+    "label": "plants() reports a digest the manifest does not carry",
+    "has_format": false,
+    "line": 159
+   },
+   {
+    "label": "unpushed() returned a number it could not have known",
+    "has_format": false,
+    "line": 164
+   },
+   {
+    "label": "unbuilt_sections() returned nothing although the plan marks sections NOT BUILT",
+    "has_format": false,
+    "line": 169
+   },
+   {
+    "label": "unbuilt_sections() missed section 4, which this lane omitted from prose for days",
+    "has_format": false,
+    "line": 171
+   }
+  ],
   "train_ttt.py": [
    {
     "label": "splitting mass over the two optimal moves is not the minimum (%.4f vs %.4f)",
@@ -2136,5 +2203,5 @@
    }
   ]
  },
- "labels_digest": "1fe104d4bb784bba"
+ "labels_digest": "2fc21f0973083d16"
 }
