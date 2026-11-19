@@ -800,6 +800,44 @@ def selftest() -> int:
         print("    keys at the last block: own-site edit moves them %.3e, earlier-block edit "
               "moves them %.3e" % (dk, dd))
 
+    # R9 (the light loop's prefix rule): in a CAUSAL model two prompts sharing a prefix up to
+    # the read token produce IDENTICAL KEYS, and an edit set containing such a pair has its
+    # crowding inflated by its own construction rather than by the geometry.
+    #
+    # THE RULE AS STATED IS NOT ENOUGH, and this plant is how I found that out - it failed the
+    # first time it ran. Asserting on the PREFIX STRINGS passes here (24 of 24 distinct) while
+    # the KEYS are at cosine 0.9995. The prefix check cannot see it because collinearity is a
+    # fact about what the MODEL does with the prompt, not about the prompt. On this untrained
+    # net nothing has learned to separate those boards; on the trained ttt_big checkpoint the
+    # same construction gives a worst pair of 0.894 (measured, gatefly/runs/r9_keys.json).
+    # So the check has to be on the keys, and it has to be re-run per checkpoint.
+    cases9 = build_cases(m, 24, dev, 19)
+    pre9r = [tuple(c["prefix"]) for c in cases9]
+    _plant("the edit set contains duplicate prefixes", len(pre9r) == len(set(pre9r)))
+    K9 = ffwd_keys(m, [list(p_) for p_ in pre9r], 1, dev)
+    Kn9 = K9 / np.maximum(np.linalg.norm(K9, axis=1, keepdims=True), 1e-12)
+    G9 = Kn9 @ Kn9.T
+    np.fill_diagonal(G9, -1.0)
+    worst9 = float(G9.max())
+    print("  R9 keys: %d distinct prefixes, worst pairwise key cosine %.4f (UNTRAINED net)"
+          % (len(set(pre9r)), worst9))
+    # the load-bearing assertion: distinct prefixes do NOT imply distinct keys, so a lane that
+    # checks only the prefixes is not covered. If this ever stops holding, the key-level check
+    # is redundant and can be dropped - but it must be DEMONSTRATED redundant, not assumed.
+    _plant("distinct prefixes gave distinct keys even on an untrained net (worst %.4f) - the "
+           "prefix-level check would then be sufficient and this one redundant" % worst9,
+           worst9 > 0.99)
+    # control: the check must be able to SEE a collision, or it is switched off
+    dupK = np.vstack([K9[:1], K9[:1]])
+    dn = dupK / np.linalg.norm(dupK, axis=1, keepdims=True)
+    _plant("a duplicated key does not read as cosine 1 - the collision check is blind",
+           abs(float((dn @ dn.T)[0, 1]) - 1.0) < 1e-6)
+    # and the negative control: two keys built to be orthogonal must NOT trip the threshold,
+    # or the check fires on everything and means nothing
+    orth = np.array([[1.0, 0.0], [0.0, 1.0]])
+    _plant("orthogonal keys tripped the collision threshold - it fires on anything",
+           abs(float(orth @ orth.T)[0, 1] if False else float((orth @ orth.T)[0, 1])) < 0.99)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)

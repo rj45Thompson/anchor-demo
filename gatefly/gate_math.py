@@ -260,6 +260,31 @@ def selftest(lane_optional: bool = False) -> int:
               % (float(np.abs(A2 - dA).max()), float(np.abs(G2 - dG).max()),
                  float(np.abs(c2 - lc).max())))
 
+    # R7 (the light loop's dtype rule): a tolerance on model activations must be set relative
+    # to the model's DTYPE, and the dtype must be printed. The checkpoints here are FLOAT16 on
+    # disk, so the question is whether a gate printed to 6 decimals is carrying false
+    # precision. MEASURED rather than assumed, by perturbing the weights by one f16 ULP:
+    rng7 = np.random.default_rng(0)
+    W7 = rng7.standard_normal((64, 256)) * 0.1
+    W7 = W7.astype(np.float16).astype(np.float64)        # as a checkpoint actually arrives
+    lam7 = ridge_scale(W7)
+    _, _, g_a = acg(W7, None, lam7)
+    ulp7 = np.spacing(W7.astype(np.float32)).astype(np.float64)
+    W7b = W7 + ulp7 * rng7.choice([-1.0, 1.0], size=W7.shape)
+    _, _, g_b = acg(W7b, None, ridge_scale(W7b))
+    moved = float(np.median(np.abs(g_b - g_a)))
+    print("  R7 dtype: weights float16 (eps %.3e); one ULP moves the gate by %.3e (median)"
+          % (np.finfo(np.float16).eps, moved))
+    _plant("a one-ULP f16 perturbation moves the gate by more than 1e-6, so printing a gate "
+           "to 6 decimals is false precision (moved %.3e)" % moved, moved < 1e-6)
+    # and the control: a perturbation 1000x larger MUST move it, or the test is measuring
+    # nothing and would pass on a gate that ignores its own weights
+    W7c = W7 + ulp7 * 1000.0 * rng7.choice([-1.0, 1.0], size=W7.shape)
+    _, _, g_c = acg(W7c, None, ridge_scale(W7c))
+    moved_big = float(np.median(np.abs(g_c - g_a)))
+    _plant("a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing "
+           "(moved %.3e)" % moved_big, moved_big > moved * 10)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)

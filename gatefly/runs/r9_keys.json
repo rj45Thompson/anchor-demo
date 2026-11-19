@@ -1,0 +1,68 @@
+{
+ "what": "R9, the light loop's key-collision rule, measured on the TRAINED checkpoint. Two prompts sharing a prefix up to the read token give identical keys in a causal model; an edit set containing such a pair would have its crowding inflated by its own construction. Checked on the KEYS, not the prefix strings, because collinearity is a fact about what the model does with the prompt.",
+ "checkpoint": "ttt_big",
+ "layer": 3,
+ "key_dim": 256,
+ "seed": 19,
+ "rows": [
+  {
+   "n": 8,
+   "worst_cosine": 0.641743,
+   "unique_prefixes": 8,
+   "cases": 8,
+   "pairs_above_0.99": 0,
+   "pairs_above_0.95": 0
+  },
+  {
+   "n": 16,
+   "worst_cosine": 0.641743,
+   "unique_prefixes": 16,
+   "cases": 16,
+   "pairs_above_0.99": 0,
+   "pairs_above_0.95": 0
+  },
+  {
+   "n": 24,
+   "worst_cosine": 0.78088,
+   "unique_prefixes": 24,
+   "cases": 24,
+   "pairs_above_0.99": 0,
+   "pairs_above_0.95": 0
+  },
+  {
+   "n": 32,
+   "worst_cosine": 0.78088,
+   "unique_prefixes": 32,
+   "cases": 32,
+   "pairs_above_0.99": 0,
+   "pairs_above_0.95": 0
+  },
+  {
+   "n": 64,
+   "worst_cosine": 0.853087,
+   "unique_prefixes": 64,
+   "cases": 64,
+   "pairs_above_0.99": 0,
+   "pairs_above_0.95": 0
+  },
+  {
+   "n": 128,
+   "worst_cosine": 0.86196,
+   "unique_prefixes": 128,
+   "cases": 128,
+   "pairs_above_0.99": 0,
+   "pairs_above_0.95": 0
+  },
+  {
+   "n": 256,
+   "worst_cosine": 0.894223,
+   "unique_prefixes": 256,
+   "cases": 256,
+   "pairs_above_0.99": 0,
+   "pairs_above_0.95": 0
+  }
+ ],
+ "finding": "clean at every size: the worst pair rises with n (0.642 at n=8 to 0.894 at n=256) but never approaches collinearity, and zero pairs exceed 0.95 anywhere. So the n=256 crowding figure of 0.9385 is geometry, not duplicated keys.",
+ "contrast": "on an UNTRAINED net of the same architecture the same construction gives a worst pair of 0.9995 with all 24 prefixes distinct - so the prefix-level form of the rule is insufficient, and that is what the plant in retrain.py asserts.",
+ "not_verified": "this is one seed's case construction per size. It says the sets actually used here are clean; it does not bound what another seed or another position sampler would produce, which is why the check is a standing plant rather than a one-off clearance."
+}
