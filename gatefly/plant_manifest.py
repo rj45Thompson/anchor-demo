@@ -529,10 +529,26 @@ def selftest() -> int:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--scan", default=None,
+                    help="run the premise-shape screen over ANY python file, including one "
+                         "pasted from another lane - keeps ONE implementation of the detector")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         raise SystemExit(selftest())
+
+    if a.scan:
+        got = premise_shaped(a.scan)
+        strong = [c for c in got if c["tier"] == "STRONG"]
+        print("PREMISE-SHAPE SCREEN over %s" % a.scan)
+        print("  %d candidate(s), %d STRONG" % (len(got), len(strong)))
+        print("  A SCREEN, NOT A VERDICT: measured precision on this lane was 3 of 35 raw")
+        print("  (9%) and 3 of 17 tiered (18%). Most hits are POSITIVE CONTROLS - caught,")
+        print("  refused, raised - which share the shape legitimately. Each needs a read.")
+        for c in got:
+            print("    %-7s line %-5d %s" % (c["tier"], c["line"], c["code"]))
+            print("            %s" % c["why"])
+        raise SystemExit(0)
     if a.write:
         man = write()
         print("wrote %s" % MANIFEST)
