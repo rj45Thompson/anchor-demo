@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 29,
-  "plants": 406,
+  "plants": 408,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 55
+  "labels_not_greppable_in_source": 57
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -37,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "55 of 406 labels (13.5%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 406. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "57 of 408 labels (14.0%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 408. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -119,6 +119,14 @@
    {
     "label": "a CONVEX function satisfied Jensen in the concave direction - then the bound above is not coming from concavity and the plant proves nothing",
     "longest_on_one_line": "a CONVEX function satisfied Jensen in the concave direction - then the bound above "
+   },
+   {
+    "label": "the whitened cosine MOVED across nine orders of magnitude of lambda (%.3e) - then it is not an operating-point-free quantity and r9_keys.json's figures are only relative orderings after all",
+    "longest_on_one_line": "the whitened cosine MOVED across nine orders of magnitude of lambda (%.3e) - then "
+   },
+   {
+    "label": "the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is inert here and the whitened invariance proves nothing",
+    "longest_on_one_line": "the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is "
    }
   ],
   "gate_read.py": [
@@ -624,6 +632,16 @@
     "label": "a CONVEX function satisfied Jensen in the concave direction - then the bound above is not coming from concavity and the plant proves nothing",
     "has_format": false,
     "line": 399
+   },
+   {
+    "label": "the whitened cosine MOVED across nine orders of magnitude of lambda (%.3e) - then it is not an operating-point-free quantity and r9_keys.json's figures are only relative orderings after all",
+    "has_format": true,
+    "line": 421
+   },
+   {
+    "label": "the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is inert here and the whitened invariance proves nothing",
+    "has_format": true,
+    "line": 427
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
@@ -2382,5 +2400,5 @@
    }
   ]
  },
- "labels_digest": "8dbbf0484dd4edeb"
+ "labels_digest": "28b6d395a7eda38d"
 }

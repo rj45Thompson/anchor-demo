@@ -399,6 +399,34 @@ def selftest(lane_optional: bool = False) -> int:
     _plant("a CONVEX function satisfied Jensen in the concave direction - then the bound above "
            "is not coming from concavity and the plant proves nothing", conv > conv_of_mean)
 
+    # THE WHITENED COSINE IS EXACTLY LAMBDA-FREE, and this lane's own artefact said otherwise.
+    # A = K^T (lambda C)^-1 K scales UNIFORMLY with 1/lambda, so in A_ij/sqrt(A_ii A_jj) the
+    # numerator and denominator carry matching powers and lambda cancels exactly. Measured over
+    # nine orders of magnitude: 0.293104310528 at every lambda, max difference 1.665e-16.
+    #
+    # Worth holding because the neighbouring quantities are NOT lambda-free and this lane
+    # conflated them: `a` is a diagonal entry and scales as 1/lambda, and c/a is
+    # lambda-dependent through the Schur complement's +I. The normalised OFF-diagonal survives;
+    # the diagonal and anything built from it with the +I does not. runs/r9_keys.json carried
+    # "the figures are relative orderings rather than the gate's operating point" - understating
+    # its own numbers - until this was measured.
+    def _wh(M):
+        dgw = np.sqrt(np.maximum(np.diag(M), 1e-300))
+        Wn = M / np.outer(dgw, dgw)
+        np.fill_diagonal(Wn, 0.0)
+        return Wn
+    A_lo, _ = gate_matrix(K6, C6, 1e-3)
+    A_hi, _ = gate_matrix(K6, C6, 1e6)
+    dwh = float(np.max(np.abs(_wh(A_lo) - _wh(A_hi))))
+    _plant("the whitened cosine MOVED across nine orders of magnitude of lambda (%.3e) - then "
+           "it is not an operating-point-free quantity and r9_keys.json's figures are only "
+           "relative orderings after all" % dwh, dwh < 1e-12)
+    # control: the DIAGONAL must move over the same range, or lambda is not doing anything and
+    # the invariance above is vacuous
+    dmove = float(np.max(np.abs(np.diag(A_lo) - np.diag(A_hi))))
+    _plant("the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is "
+           "inert here and the whitened invariance proves nothing" % dmove, dmove > 1.0)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)
