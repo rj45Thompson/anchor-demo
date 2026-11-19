@@ -270,6 +270,13 @@ def selftest() -> int:
     fails, checked = [], []
     print("PLANTS")
 
+    premises = []
+
+    def _premise(label, holds, consequence):
+        print(("  premise  " if holds else "  EXPIRED  ") + label)
+        if not holds:
+            premises.append((label, consequence))
+
     def _plant(label, cond):
         checked.append(label)
         print(("  ok   " if cond else "  FAIL  ") + label)
@@ -300,7 +307,13 @@ def selftest() -> int:
     #    everything is as useless as one that flags nothing.
     rows = gap_map()
     withg = [r for r in rows if r["gaps"]]
-    _plant("the gap map found no gaps at all", len(withg) > 0)
+    # A PREMISE, not a plant: it passes only while gaps REMAIN, so closing every gap - the
+    # stated goal of the gap map - would turn it red. Third of three this lane catalogued as
+    # premise-shaped in its own review and then left as plants anyway.
+    _premise("the gap map still finds gaps to close", len(withg) > 0,
+             "every goal now has a satisfying mechanism, so the gap map has nothing left to "
+             "report - retire this check and the gap row with it rather than keeping a green "
+             "check over an empty question")
     _plant("the gap map flagged every single node, so it cannot discriminate",
            len(withg) < len(rows))
     _plant("the gap map reports a broken link while plant 1 says all resolve",
@@ -349,7 +362,14 @@ def selftest() -> int:
     missing = [n for n in NODES if n not in EXAMINED]
     _plant("a node has no last-examined date: %s" % missing, not missing)
 
-    print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
+    print("  selftest: %d plant(s) checked, %d failed; %d premise(s) expired"
+          % (len(checked), len(fails), len(premises)))
+    if premises:
+        print()
+        print("  PREMISES EXPIRED - not failures. Retire these rather than keeping them green:")
+        for label, consequence in premises:
+            print("    - %s" % label)
+            print("      -> %s" % consequence)
     for f in fails:
         print("  FAILED: " + f)
     return 1 if fails else 0

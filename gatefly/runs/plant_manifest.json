@@ -4,7 +4,7 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 25,
-  "plants": 355,
+  "plants": 352,
   "modules_with_zero_plants": 2,
   "call_sites_inside_loops": 4,
   "labels_not_greppable_in_source": 35
@@ -37,12 +37,12 @@
   ],
   "uml_kaos.py": [
    {
-    "plant_line": 321,
-    "loop_line": 319
+    "plant_line": 334,
+    "loop_line": 332
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "35 of 355 labels (9.9%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 355. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "35 of 352 labels (9.9%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 352. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -212,142 +212,132 @@
    {
     "label": "two mechanism nodes share the same text, so the graph is duplicating rather than deduplicating: %s",
     "has_format": true,
-    "line": 518
+    "line": 532
    },
    {
     "label": "a mechanism is claimed as NEW by two works: %s",
     "has_format": true,
-    "line": 530
+    "line": 544
    },
    {
     "label": "a mechanism's parent is not in the graph: %s",
     "has_format": true,
-    "line": 534
+    "line": 548
    },
    {
     "label": "a cycle in the mechanism graph: %s",
     "has_format": true,
-    "line": 544
+    "line": 558
    },
    {
     "label": "a work attaches to no mechanism: %s",
     "has_format": true,
-    "line": 548
+    "line": 562
    },
    {
     "label": "a work cites a mechanism not in the graph: %s",
     "has_format": true,
-    "line": 551
-   },
-   {
-    "label": "the frontier is empty - the graph claims every mechanism is published",
-    "has_format": false,
-    "line": 556
+    "line": 565
    },
    {
     "label": "a frontier node actually has a work attached",
     "has_format": false,
-    "line": 558
+    "line": 575
    },
    {
     "label": "a non-frontier node has no work attached",
     "has_format": false,
-    "line": 560
+    "line": 577
    },
    {
     "label": "a frontier node has no recorded search behind it: %s",
     "has_format": true,
-    "line": 566
+    "line": 583
    },
    {
     "label": "the gate does not apply to a research domain",
     "has_format": false,
-    "line": 571
+    "line": 588
    },
    {
     "label": "the gate applies to Tami - a game has no prior art, it has requirements",
     "has_format": false,
-    "line": 573
+    "line": 590
    },
    {
     "label": "the Tami answer does not say what governs instead",
     "has_format": false,
-    "line": 575
+    "line": 592
    },
    {
     "label": "an unknown domain defaulted instead of refusing - defaulting to product would silently exempt research work from the gate",
     "has_format": false,
-    "line": 577
+    "line": 594
    },
    {
     "label": "AlphaEdit's delta is not M1.3",
     "has_format": false,
-    "line": 582
+    "line": 599
    },
    {
     "label": "MEMIT's delta is not M1.2",
     "has_format": false,
-    "line": 583
+    "line": 600
    },
    {
     "label": "Adam-NSCL's delta is not M4.1",
     "has_format": false,
-    "line": 584
+    "line": 601
    },
    {
     "label": "a frontier node has an adding work",
     "has_format": false,
-    "line": 585
+    "line": 602
    },
    {
     "label": "a frontier node with nothing recorded about what this lane holds: %s",
     "has_format": true,
-    "line": 590
+    "line": 607
    },
    {
     "label": "a REINVENTED entry names a mechanism not in the graph: %s",
     "has_format": true,
-    "line": 596
+    "line": 613
    },
    {
     "label": "a REINVENTED entry points at a mechanism NO work teaches - then it was not reinvented: %s",
     "has_format": true,
-    "line": 600
+    "line": 617
    },
    {
     "label": "the NN facts could not be read from committed artefacts: %s",
     "has_format": true,
-    "line": 607
+    "line": 624
    },
    {
     "label": "a hybrid crosses a mechanism not in the graph: %s",
     "has_format": true,
-    "line": 632
+    "line": 649
    },
    {
     "label": "a hybrid does not say what blocks it: %s",
     "has_format": true,
-    "line": 634
-   },
-   {
-    "label": "every hybrid is blocked - the list would be a graveyard",
-    "has_format": false,
-    "line": 637
+    "line": 651
    },
    {
     "label": "a null-space method was NOT flagged inapplicable although this net's keys span the key space (got %s) - then the precondition check cannot refuse anything",
     "has_format": true,
-    "line": 614
+    "line": 631
    },
    {
     "label": "the same check refused even with room in the key space - it fires on anything",
     "has_format": false,
-    "line": 621
+    "line": 638
    },
    {
     "label": "a mechanism with no recorded precondition read as APPLIES - silence would be permission",
     "has_format": false,
-    "line": 626
+    "line": 643
    }
   ],
   "data_ttt.py": [
@@ -1960,79 +1950,74 @@
    {
     "label": "a declared traceability link does not resolve: %s",
     "has_format": true,
-    "line": 287
+    "line": 294
    },
    {
     "label": "the resolver accepted a fragment that is not in the file",
     "has_format": false,
-    "line": 291
+    "line": 298
    },
    {
     "label": "the resolver accepted a file that does not exist",
     "has_format": false,
-    "line": 293
+    "line": 300
    },
    {
     "label": "a link names a node outside the tree: %s",
     "has_format": true,
-    "line": 297
-   },
-   {
-    "label": "the gap map found no gaps at all",
-    "has_format": false,
-    "line": 303
+    "line": 304
    },
    {
     "label": "the gap map flagged every single node, so it cannot discriminate",
     "has_format": false,
-    "line": 304
+    "line": 317
    },
    {
     "label": "the gap map reports a broken link while plant 1 says all resolve",
     "has_format": false,
-    "line": 306
+    "line": 319
    },
    {
     "label": "a node is settled with no «verify» link to a plant: %s",
     "has_format": true,
-    "line": 315
+    "line": 328
    },
    {
     "label": "the position refusal swallowed a real symbol",
     "has_format": false,
-    "line": 324
+    "line": 337
    },
    {
     "label": "the position refusal rejected a symbol containing digits",
     "has_format": false,
-    "line": 326
+    "line": 339
    },
    {
     "label": "a node has no last-examined date: %s",
     "has_format": true,
-    "line": 350
+    "line": 363
    },
    {
     "label": "a position-shaped link %r was not refused",
     "has_format": true,
-    "line": 321
+    "line": 334
    },
    {
     "label": "a broken CROSS-LANE link did not refuse this lane",
     "has_format": false,
-    "line": 337
+    "line": 350
    },
    {
     "label": "a broken cross-lane link was not reported to its owner",
     "has_format": false,
-    "line": 338
+    "line": 351
    },
    {
     "label": "a broken OWN-LANE link was reported outward as another lane's",
     "has_format": false,
-    "line": 342
+    "line": 355
    }
   ]
  },
- "labels_digest": "48a539b1f38f979c"
+ "labels_digest": "89a2a2c634c571da"
 }

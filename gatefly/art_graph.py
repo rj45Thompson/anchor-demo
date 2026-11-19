@@ -506,6 +506,20 @@ def selftest() -> int:
         if not cond:
             fails.append(label)
 
+    # A PREMISE IS NOT A PLANT - see plant_manifest.py for the taxonomy. Both of the premises
+    # below were written in THIS FILE nineteen minutes after this lane named the premise shape
+    # and converted three others, which is a replication of the snipershot lane's finding that
+    # naming a class does not prevent the next instance. Worse: this lane then reviewed every
+    # candidate the screen produced, catalogued these two BY NAME as genuinely premise-shaped
+    # in REVIEWED_TRUE_PREMISES, and still left them as plants. The diagnosis was recorded and
+    # the fix was not applied.
+    premises = []
+
+    def _premise(label, holds, consequence):
+        print(("  premise  " if holds else "  EXPIRED  ") + label)
+        if not holds:
+            premises.append((label, consequence))
+
     # 1. DEDUP, ENFORCED. Two mechanism nodes with the same normalised text means the graph has
     #    become the reading list it replaced. This is the load-bearing plant.
     seen = {}
@@ -553,7 +567,10 @@ def selftest() -> int:
     # 5. THE FRONTIER must be exactly the nodes no work teaches, and must be NON-EMPTY or the
     #    graph is claiming the field is finished, and EMPTY of nodes that do have works.
     fr = frontier()
-    _plant("the frontier is empty - the graph claims every mechanism is published", bool(fr))
+    _premise("the frontier still has mechanisms no work was found for", bool(fr),
+             "every mechanism in the graph is now published, so this lane has no open branch "
+             "left in model editing - stop maintaining a frontier query and read the graph as a "
+             "reading list instead")
     t = taught_by()
     _plant("a frontier node actually has a work attached",
            all(not t[m] for m in fr))
@@ -634,11 +651,21 @@ def selftest() -> int:
     _plant("a hybrid does not say what blocks it: %s" % (nob or "none"), not nob)
     # at least one hybrid must be unblocked, or the list is a graveyard and says nothing
     free = [h["id"] for h in HYBRIDS if h["blocked_by"].startswith("nothing")]
-    _plant("every hybrid is blocked - the list would be a graveyard", bool(free))
+    _premise("at least one hybrid is still unblocked", bool(free),
+             "every hybrid is now blocked or done - go through HYBRIDS, delete the ones that "
+             "were built, and if the rest are all genuinely blocked say so in the module "
+             "docstring rather than leaving a list that proposes nothing")
 
-    print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
+    print("  selftest: %d plant(s) checked, %d failed; %d premise(s) expired"
+          % (len(checked), len(fails), len(premises)))
     for f in fails:
         print("  FAILED: " + f)
+    if premises:
+        print()
+        print("  PREMISES EXPIRED - not failures. Retire these rather than keeping them green:")
+        for label, consequence in premises:
+            print("    - %s" % label)
+            print("      -> %s" % consequence)
     return 1 if fails else 0
 
 
