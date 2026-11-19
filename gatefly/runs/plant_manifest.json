@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 29,
-  "plants": 403,
+  "plants": 406,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 54
+  "labels_not_greppable_in_source": 55
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -32,12 +32,12 @@
   ],
   "uml_kaos.py": [
    {
-    "plant_line": 334,
-    "loop_line": 332
+    "plant_line": 348,
+    "loop_line": 346
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "54 of 403 labels (13.4%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 403. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "55 of 406 labels (13.5%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 406. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -283,6 +283,12 @@
    {
     "label": "the reverse walk missed an unmapped module - work nobody can say why they did would stay invisible",
     "longest_on_one_line": "the reverse walk missed an unmapped module - work nobody can say why they did "
+   }
+  ],
+  "uml_kaos.py": [
+   {
+    "label": "a file that is NOT in this directory was attributed to this lane - ownership by default is how the snipershot lane addressed four messages of the v4 lane's rows here",
+    "longest_on_one_line": "a file that is NOT in this directory was attributed to this lane - ownership by "
    }
   ]
  },
@@ -1363,72 +1369,72 @@
    {
     "label": "a fully cancelling set does not keep the median near 1 (%.4f)",
     "has_format": true,
-    "line": 187
+    "line": 194
    },
    {
     "label": "the movement count missed a set where every probe moved (%.4f)",
     "has_format": true,
-    "line": 189
+    "line": 196
    },
    {
     "label": "frac_below_1 missed half the set falling (%.4f)",
     "has_format": true,
-    "line": 191
+    "line": 198
    },
    {
     "label": "an untouched set does not give mean, median and p10 of exactly 1.0",
     "has_format": false,
-    "line": 197
+    "line": 204
    },
    {
     "label": "the movement count fired on an untouched set",
     "has_format": false,
-    "line": 199
+    "line": 206
    },
    {
     "label": "a skewed set does not separate mean from median (%.4f vs %.4f)",
     "has_format": true,
-    "line": 206
+    "line": 213
    },
    {
     "label": "mean_over_median does not flag the skew (%.4f)",
     "has_format": true,
-    "line": 208
+    "line": 215
    },
    {
     "label": "cancellation and skew are indistinguishable on mean_over_median",
     "has_format": false,
-    "line": 212
+    "line": 219
    },
    {
     "label": "the movement count did not see both moves (%.4f)",
     "has_format": true,
-    "line": 222
+    "line": 229
    },
    {
     "label": "a swap between equally correct answers was counted as damage (%.4f)",
     "has_format": true,
-    "line": 224
+    "line": 231
    },
    {
     "label": "the tie swap was not counted as a swap (%.4f)",
     "has_format": true,
-    "line": 226
+    "line": 233
    },
    {
     "label": "moved != left + swapped, so the decomposition does not account for every move",
     "has_format": false,
-    "line": 228
+    "line": 235
    },
    {
     "label": "with no ties the movement count and the damage count still differ (%.4f vs %.4f)",
     "has_format": true,
-    "line": 235
+    "line": 242
    },
    {
     "label": "a zero-probability probe was not excluded and counted",
     "has_format": false,
-    "line": 241
+    "line": 248
    }
   ],
   "prior_art.py": [
@@ -2292,74 +2298,89 @@
    {
     "label": "a declared traceability link does not resolve: %s",
     "has_format": true,
-    "line": 294
+    "line": 308
    },
    {
     "label": "the resolver accepted a fragment that is not in the file",
     "has_format": false,
-    "line": 298
+    "line": 312
    },
    {
     "label": "the resolver accepted a file that does not exist",
     "has_format": false,
-    "line": 300
+    "line": 314
    },
    {
     "label": "a link names a node outside the tree: %s",
     "has_format": true,
-    "line": 304
+    "line": 318
    },
    {
     "label": "the gap map flagged every single node, so it cannot discriminate",
     "has_format": false,
-    "line": 317
+    "line": 331
    },
    {
     "label": "the gap map reports a broken link while plant 1 says all resolve",
     "has_format": false,
-    "line": 319
+    "line": 333
    },
    {
     "label": "a node is settled with no «verify» link to a plant: %s",
     "has_format": true,
-    "line": 328
+    "line": 342
    },
    {
     "label": "the position refusal swallowed a real symbol",
     "has_format": false,
-    "line": 337
+    "line": 351
    },
    {
     "label": "the position refusal rejected a symbol containing digits",
     "has_format": false,
-    "line": 339
+    "line": 353
    },
    {
     "label": "a node has no last-examined date: %s",
     "has_format": true,
-    "line": 363
+    "line": 377
+   },
+   {
+    "label": "a file that is NOT in this directory was attributed to this lane - ownership by default is how the snipershot lane addressed four messages of the v4 lane's rows here",
+    "has_format": false,
+    "line": 383
+   },
+   {
+    "label": "a file that IS in this directory was not attributed to this lane",
+    "has_format": false,
+    "line": 386
    },
    {
     "label": "a position-shaped link %r was not refused",
     "has_format": true,
-    "line": 334
+    "line": 348
    },
    {
     "label": "a broken CROSS-LANE link did not refuse this lane",
     "has_format": false,
-    "line": 350
+    "line": 364
    },
    {
     "label": "a broken cross-lane link was not reported to its owner",
     "has_format": false,
-    "line": 351
+    "line": 365
    },
    {
     "label": "a broken OWN-LANE link was reported outward as another lane's",
     "has_format": false,
-    "line": 355
+    "line": 369
+   },
+   {
+    "label": "an EXPLICIT entry was overridden by the evidence rule",
+    "has_format": false,
+    "line": 391
    }
   ]
  },
- "labels_digest": "490946c5910b9092"
+ "labels_digest": "8dbbf0484dd4edeb"
 }

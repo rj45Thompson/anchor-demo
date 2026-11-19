@@ -201,11 +201,25 @@ BRIDGE = {
 # commit and only REPORTS to the lane that moved the symbol - never the reverse. The ratchet
 # lane's condition, and it is right: otherwise this lane's model of the problem becomes a veto
 # on another lane's refactors, and the person who can fix the link is not the person blocked.
-LANE_OF = {}          # fname -> lane name; anything unlisted is this lane's own
+LANE_OF = {}          # fname -> lane name; an unlisted file is resolved by EVIDENCE below
 
 
 def lane_of(fname):
-    return LANE_OF.get(fname, "gatefly")
+    """Which lane owns this file. An unlisted name is NOT silently this lane's.
+
+    This defaulted to "gatefly" for anything unlisted, which is attribution by default: a file
+    belonging to another lane, merely absent from the table, became this lane's with nothing
+    recording the assumption. That is the same shape as the snipershot lane's `BOARD` constant
+    - a referent whose scope lived in a path rather than in the name - which caused it to
+    address four messages of the v4 lane's rows to this lane, over this lane's own greps.
+
+    Resolved by evidence instead: a file present in THIS directory is this lane's because it is
+    here; anything else is "unknown", which is a stated value a reader can act on rather than a
+    silent claim of ownership.
+    """
+    if fname in LANE_OF:
+        return LANE_OF[fname]
+    return "gatefly" if os.path.exists(os.path.join(HERE, fname)) else "unknown"
 
 
 def gap_map():
@@ -361,6 +375,23 @@ def selftest() -> int:
     # 8. ROT DEFENCE: every node must carry a last-examined date, or the oldest is meaningless.
     missing = [n for n in NODES if n not in EXAMINED]
     _plant("a node has no last-examined date: %s" % missing, not missing)
+
+    # ATTRIBUTION BY DEFAULT. lane_of() used to return "gatefly" for any unlisted file, so a
+    # file belonging to another lane became this lane's merely by being absent from a table.
+    # Both directions, because a resolver that claims everything and one that claims nothing
+    # are equally useless.
+    _plant("a file that is NOT in this directory was attributed to this lane - ownership by "
+           "default is how the snipershot lane addressed four messages of the v4 lane's rows "
+           "here", lane_of("a_file_from_another_lane_entirely.py") == "unknown")
+    _plant("a file that IS in this directory was not attributed to this lane",
+           lane_of("gate_math.py") == "gatefly")
+    saved_l = dict(LANE_OF)
+    try:
+        LANE_OF["explicit.py"] = "v4"
+        _plant("an EXPLICIT entry was overridden by the evidence rule",
+               lane_of("explicit.py") == "v4")
+    finally:
+        LANE_OF.clear(); LANE_OF.update(saved_l)
 
     print("  selftest: %d plant(s) checked, %d failed; %d premise(s) expired"
           % (len(checked), len(fails), len(premises)))

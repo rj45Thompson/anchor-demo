@@ -52,7 +52,14 @@ OUT = os.path.join(HERE, "runs")
 def optimal_sets(ind):
     """The FULL set of correct answers for each indirect probe, from the oracle.
 
-    This is the thing the sibling lane's correction turns on. `indirect_set` stores ONE answer
+    NAMED LANES, not "the sibling lane". This file used that phrase four times while TWO
+    sibling lanes were active, so a reader carried whichever was in mind - and the correction
+    below is specifically the v4 lane's (local_4421e031), not the snipershot lane's. The
+    snipershot lane hit the identical fault today with a constant named BOARD rather than
+    V4_BOARD, and addressed four messages of another lane's rows to this one because of it.
+    "The peer" is not a referent when there are two.
+
+    This is the thing the v4 lane's correction turns on. `indirect_set` stores ONE answer
     per probe (the lowest-numbered optimal move), and counting movement against that one answer
     makes a swap to an EQUALLY CORRECT move look like damage. The oracle knows the whole set,
     so here it can be counted properly rather than approximated.
@@ -69,7 +76,7 @@ def optimal_sets(ind):
 def shape(pre, post, pre_arg, post_arg, opt_sets=None):
     """Every shape of the same Eq. 7 ratio set, plus the movement counts.
 
-    THREE movement counts, because the sibling lane showed the first one over-reports:
+    THREE movement counts, because the v4 lane showed the first one over-reports:
       changed_argmax        the model's answer changed at all - an UPPER BOUND on damage
       left_optimal_set      the answer left the SET of correct answers - the real damage
       swapped_within_set    the answer changed but stayed correct - the tie inflation, which is
@@ -180,7 +187,7 @@ def selftest() -> int:
 
     # 1. CANCELLATION: half the probes halve, half double. The mean sits above 1 and the MEDIAN
     #    IS ALSO NEAR 1, so neither centre shows that everything moved - but the movement count
-    #    is 1.0. This is the sibling lane's case, constructed.
+    #    is 1.0. This is the v4 lane's case, constructed.
     pre = [0.5] * 100
     post = [0.25] * 50 + [1.0] * 50
     sh = shape(pre, post, list(range(100)), [i + 1 for i in range(100)])
@@ -229,7 +236,7 @@ def selftest() -> int:
            abs(sh6["changed_argmax"] - (sh6["left_optimal_set"]
                                         + sh6["swapped_within_optimal_set"])) < 1e-9)
     # and the NEGATIVE CONTROL: with every probe single-answered the two must COINCIDE, which
-    # is the claim this lane sent the sibling lane and which it refuted for its own data.
+    # is the claim this lane sent the v4 lane and which it refuted for its own data.
     opt1 = [{1}, {1}, {3}, {3}]
     sh7 = shape([0.5] * 4, [0.5] * 4, pre_a, post_a, opt1)
     _plant("with no ties the movement count and the damage count still differ (%.4f vs %.4f)"
