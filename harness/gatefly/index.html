@@ -601,11 +601,26 @@ class App{
     gl.bindVertexArray(this.vao); gl.drawArrays(gl.POINTS,0,this.N);
     gl.bindVertexArray(null);
     // labels
-    // Labels fade with distance, so the far end of the corridor does not pile 19 of them into
-    // one unreadable smear. The cap is visual only; every site is still in the file and in the
-    // hover, and the HUD states the site count.
-    for(const {L,d} of this.labs||[]){ const s=this.project([L.x,(L.grid_side*(L.cell||11))/2+18,0],M);
-      if(!s){ d.style.display='none'; continue; } d.style.display='';
+    // Labels still fade with distance, but THE FADE IS NOT WHAT STOPS THE PILE-UP, and the
+    // comment that used to stand here claimed it was. A screenshot of ttt_small showed the far
+    // sites smeared into unreadable text while the fade was doing exactly what it said.
+    // The pile-up at the far end is SCREEN-SPACE COLLISION: distant sites project close
+    // together, so their labels overlap at whatever opacity they are drawn at. Fading them
+    // makes a fainter smear, not a readable one. So labels are placed NEAREST FIRST and one is
+    // dropped when its box would overlap a box already placed. Every site remains in the file,
+    // in the hover, and in the HUD's site count; only the drawn text is thinned.
+    const placed=[];
+    const ordered=[...(this.labs||[])].map(e=>({e,s:this.project(
+        [e.L.x,(e.L.grid_side*(e.L.cell||11))/2+18,0],M)}))
+      .sort((a,b)=>(a.s?a.s.w:1e9)-(b.s?b.s.w:1e9));
+    for(const {e:{L,d},s} of ordered){
+      if(!s){ d.style.display='none'; continue; }
+      const w=d.offsetWidth||120, h=d.offsetHeight||14;
+      const box={l:s.x-w/2,r:s.x+w/2,t:s.y-h,b:s.y};
+      if(placed.some(p=>box.l<p.r&&box.r>p.l&&box.t<p.b&&box.b>p.t)){
+        d.style.display='none'; continue; }
+      placed.push(box);
+      d.style.display='';
       const near=Math.max(0.12,Math.min(1,1.6-s.w/(this.span*0.75)));
       d.style.opacity=near.toFixed(2);
       d.style.transform=`translate(${Math.round(s.x)}px,${Math.round(s.y)}px) translate(-50%,-100%)`; }
