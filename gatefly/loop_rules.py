@@ -35,9 +35,19 @@ import os
 import sys
 
 ARCH, NOT_ARCH = "ARCHITECTURAL", "NOT_ARCH"
+# A THIRD VERDICT, added because the two above forced a lie in one direction. An error whose
+# machinery exists but whose CALL nothing forces is not ARCH - recording it so would let this
+# lane count a handhold as a check, which is EMPTY-is-not-CLEAN. Nor is it NOT_ARCH, which
+# says no rule could help and closes the question. PARTIAL_ARCH keeps it open and requires a
+# why_not saying exactly what is still unforced.
+PARTIAL_ARCH = "PARTIAL_ARCH"
 # Exposure recording begins today; everything before it is PRE_FIELD, never False.
 EXPOSURE_FIELD_FROM = "2026-11-19"
 PRE_FIELD = "PRE-FIELD"
+# An error that reached someone outside this machine. Distinguished from PRE_FIELD because the
+# cost of a wrong figure changes when it lands in a stranger's inbox: it cannot be restated by
+# editing a file, and the reader has no way to know it moved.
+FIELD = "FIELD"
 # ERA, CORRECTED - AND THE FIRST VERSION WAS TOO HARSH IN THE SAME DIRECTION THE SNIPERSHOT
 # LANE'S WAS. It read: "23 of these were RECONSTRUCTED, not recorded." That measured the wrong
 # artefact's age. The CATALOGUE ENTRY for each of the 23 was written at 3037632, but the FAULT
@@ -341,10 +351,44 @@ ERRORS = [
   "why_not": "The action was written while the premise still held, so it was written without "
              "the information available when it expires. No rule can supply that information "
              "earlier; the mechanism that worked was expiring loudly enough to be read."},
+
+ # THE FIRST ERROR IN THIS CATALOGUE THAT LEFT THE MACHINE. Everything above was published to
+ # a peer lane or to RJ; this one went to three external researchers who may build on it. The
+ # exposure field earns its name here for the first time.
+ {"exposure": {"scope": FIELD, "peer_first": False, "reached_user": True,
+               "reached_outsiders": ["rxia@njust.edu.cn", "zldong@njust.edu.cn",
+                                     "xiangqing.shen@njust.edu.cn"]},
+  "era": RECORDED, "id": "quoted-register-baseline-as-current", "kind": "SUBSTANTIVE", "caught_class": "re-measured it",
+  "what": "Emailed three external researchers 'There are 459 across 30 modules'. The live "
+          "figure was 467 across 31 and had been for two commits - published.py itself was "
+          "the 31st module. The number came from this register's BASELINE, which is by "
+          "definition what was published last time, not what is true now.",
+  "caught_by": "running published.py sixty seconds AFTER the send, when it should have run "
+               "before it",
+  "verdict": PARTIAL_ARCH, "rule": "R-QUOTE-LIVE-NOT-REMEMBERED",
+  "why_not": "The machinery already existed - remeasure() would have caught this at any point "
+             "in the preceding two commits. What was missing was a reason to call it at the "
+             "moment a figure was being written into prose. live() now makes that one call "
+             "and refuses both an unregistered key and an unmeasurable one, so the correct "
+             "use is the short one. But NOTHING FORCES THE CALL: there is no pre-send gate on "
+             "an outgoing email, and claiming the loop now catches this would be the "
+             "EMPTY-is-not-CLEAN fault. It is a better-shaped handhold, not a check.",
+  "irony": "The email this error is in describes, in its section 6, the exact loop that "
+           "produced it: a figure is checked, therefore quoted, and being quoted is not being "
+           "re-read. The lane named the fault to outsiders and committed it in the same act."},
 ]
 
 # The rules the errors above owe. `in_loop` is whether this lane has it as a standing check.
 RULES = {
+ "R-QUOTE-LIVE-NOT-REMEMBERED": {
+   "says": "A figure going into an outgoing message is read LIVE at the moment of writing - "
+           "published.live(key) - never from memory and never from this register's baseline, "
+           "which is by definition what was published last time rather than what is true now.",
+   "in_loop": False,
+   "where": "published.live() exists and refuses both an unregistered key and an unmeasurable "
+            "one, so the correct call is the short one. Nothing FORCES it: there is no "
+            "pre-send gate on an outgoing email. A handhold, not a check - recorded as "
+            "PARTIAL_ARCH so it stays open."},
  "R-METRIC-MATCHES-SOLVE": {
    "says": "A similarity, rank or threshold used on model quantities must be the one the "
            "ARITHMETIC uses. No raw cosine where the solve whitens; no claim about a quantity "

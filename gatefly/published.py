@@ -111,6 +111,108 @@ def _ratchet_agreement():
     return "NOT FOUND in gate_math output"
 
 
+# ---------------------------------------------------------------------------
+# Figures sent to the MEMIT-Merge authors (NJUST) on 2026-11-19, threaded under the
+# 2026-11-18 email. These left this machine and went to people who may build on them, which
+# is the strongest form of "published" this register covers - a figure here cannot be quietly
+# restated. Every seed below is the seed that produced the number IN THE EMAIL; a row that
+# reproduces under a different seed would be measuring a different system and reporting
+# agreement, which is the could-not-be-run-read-as-pass fault wearing a lab coat.
+# ---------------------------------------------------------------------------
+
+def _email_jensen():
+    """max(G_jj - g(A_jj)) over the 200 systems the email cites. Must stay <= 0."""
+    import numpy as np
+    from gate_math import gate_matrix
+    rng = np.random.default_rng(5)
+    worst = -9.0
+    for _ in range(200):
+        d, p = int(rng.integers(8, 40)), int(rng.integers(3, 12))
+        K = rng.standard_normal((d, p))
+        X = rng.standard_normal((200, d))
+        C = (X.T @ X) / 200 + 1e-3 * np.eye(d)
+        A, Gm = gate_matrix(K, C, float(rng.uniform(0.2, 20)))
+        a = np.diag(A)
+        worst = max(worst, float(np.max(np.diag(Gm) - a / (1 + a))))
+    return "%.3e" % worst
+
+
+def _email_whitened_invariance():
+    """The lambda-invariance figure quoted as 2.2e-16. Printed to one decimal because that is
+    all the email claimed - recording more here would manufacture drift on the last digit."""
+    import numpy as np
+    from gate_math import gate_matrix
+    K = np.random.default_rng(11).standard_normal((64, 12))
+    X = np.random.default_rng(12).standard_normal((400, 64))
+    C = (X.T @ X) / 400 + 1e-3 * np.eye(64)
+
+    def wh(A):
+        dg = np.sqrt(np.diag(A))
+        W = A / np.outer(dg, dg)
+        np.fill_diagonal(W, 0)
+        return W
+
+    A1, _ = gate_matrix(K, C, 1e-3)
+    A2, _ = gate_matrix(K, C, 1e6)
+    return "%.1e" % float(np.max(np.abs(wh(A1) - wh(A2))))
+
+
+def _email_related_ratio():
+    """The claim that SURVIVED the lambda correction: the related/unrelated ratio stays in
+    [3.16, 4.50] and the rank ordering holds at rho >= 0.947. This is the load-bearing one -
+    section 1 of the email retracts the percentages and keeps THIS."""
+    import numpy as np
+    from scipy.stats import spearmanr
+    from gate_math import gate_matrix, crowding_all
+    rng = np.random.default_rng(21)
+    d, p = 64, 14
+    base = rng.standard_normal((d, 1))
+    K = rng.standard_normal((d, p))
+    K[:, :4] = 0.55 * base + 0.45 * rng.standard_normal((d, 4))
+    X = rng.standard_normal((600, d))
+    C = (X.T @ X) / 600 + 1e-3 * np.eye(d)
+    ratios, rhos, ref = [], [], None
+    for lam in (1e-3, 1e-2, 1e-1, 1.0, 10.0, 1e2, 1e3, 1e4, 1e6):
+        A, _ = gate_matrix(K, C, lam)
+        f = crowding_all(A) / np.diag(A)
+        if ref is None:
+            ref = f.copy()
+        r, u = np.median(f[:4]), np.median(f[4:])
+        if u > 1e-12:
+            ratios.append(float(r / u))
+        rhos.append(float(spearmanr(f, ref).statistic))
+    return "ratio %.2f-%.2f  rho>=%.3f" % (min(ratios), max(ratios), min(rhos))
+
+
+def _email_n1_crowding():
+    """Crowding at n=1 is exactly zero BY CONSTRUCTION, and the email says so. Read from the
+    committed run rather than recomputed, because the claim was about a real edit run."""
+    import io
+    import json
+    with io.open(os.path.join(HERE, "runs", "ttt_big.retrain.json"), encoding="utf-8") as f:
+        d = json.load(f)
+    for r in d["rows"]:
+        if r["arm"] == "memit" and r["size"] == 1:
+            e = (r.get("info") or {}).get("edit")
+            if e:
+                return "%.4f" % e["median_c"]
+    return "NOT FOUND in ttt_big.retrain.json"
+
+
+_reg("email-jensen",
+     "max(G_jj - g(A_jj)) over 200 systems - the bound in section 3, sent to NJUST",
+     "-2.921e-04", _email_jensen)
+_reg("email-whitened-invariance",
+     "whitened cosine change across lambda 1e-3..1e6 - section 2, sent to NJUST",
+     "2.2e-16", _email_whitened_invariance)
+_reg("email-related-ratio",
+     "the related/unrelated finding that SURVIVED the lambda correction - section 1, the "
+     "claim left standing after the percentages were withdrawn",
+     "ratio 3.16-4.50  rho>=0.947", _email_related_ratio)
+_reg("email-n1-crowding",
+     "median crowding at n=1, quoted as exactly 0 - section 4, sent to NJUST",
+     "0.0000", _email_n1_crowding)
+
 _reg("unswept-nodes", "nodes never checked against the literature", "0 of 18", _unswept)
 # Baseline updated 2026-11-19 after the register caught it at 443 against a live
 # 459 - a figure quoted to the snipershot lane that had moved since.
@@ -135,6 +237,34 @@ _reg("ratchet-agreement",
      "agreement with the ratchet lane - FAITHFUL RE-USE, not independent corroboration, which "
      "is the half that was published wrongly for two days",
      "max|dA| 0.000e+00  max|dG| 0.000e+00  max|dc| 0.000e+00", _ratchet_agreement)
+
+
+def live(key):
+    """The CURRENT value of a registered figure, for quoting into an outgoing message.
+
+    WHY THIS EXISTS. On 2026-11-19 this lane emailed three external researchers the sentence
+    "There are 459 across 30 modules". The live figure was 467 across 31, and had been for two
+    commits - published.py itself was the 31st module. The number came from this register's
+    BASELINE, which is by definition what was published last time, not what is true now. The
+    register caught it sixty seconds later, on a run that should have happened before the send.
+
+    That is the reinforcing loop in its purest form: the figure had been checked, so it was
+    quoted; being quoted is not being re-read. remeasure() already did the work - what was
+    missing was any reason to call it at the moment a figure was being written into prose.
+
+    So this returns the live value and REFUSES an unregistered key, because the failure it
+    guards is quoting from memory. It raises on a figure marked unmeasurable rather than
+    returning the baseline, since handing back a stale string here would rebuild the exact
+    fault it exists to prevent.
+    """
+    if key not in PUBLISHED:
+        raise KeyError("%r is not a registered figure - register it before quoting it, or it "
+                       "is being quoted from memory, which is the thing this guards" % (key,))
+    v = PUBLISHED[key]
+    if v.get("how") is None:
+        raise ValueError("%r is marked NOT RE-MEASURABLE (%s) - it cannot be quoted as current"
+                         % (key, v["why_not"]))
+    return v["how"]()
 
 
 def remeasure(keys=None):
@@ -216,6 +346,35 @@ def selftest() -> int:
     _plant("the ratchet-agreement row does not record that it is RE-USE rather than "
            "corroboration - re-measuring the number cannot catch what was wrong about it",
            "re-use" in PUBLISHED["ratchet-agreement"]["claim"].lower())
+
+    # 5. live() must refuse rather than hand back a stale string. Both refusals are the whole
+    #    point of the function: an unregistered key means the figure is being quoted from
+    #    memory, and an unmeasurable one has no current value to give. Either silently
+    #    returning the baseline would rebuild the fault that created this function - a figure
+    #    emailed to three researchers two commits after it stopped being true.
+    try:
+        live("a-key-that-was-never-registered")
+        refused_unknown = False
+    except KeyError:
+        refused_unknown = True
+    _plant("live() accepted an UNREGISTERED key - then it hands back something for a figure "
+           "nobody recorded, which is quoting from memory with extra steps", refused_unknown)
+
+    unmeas = [k for k, v in PUBLISHED.items() if v.get("how") is None]
+    try:
+        live(unmeas[0])
+        refused_unmeas = False
+    except ValueError:
+        refused_unmeas = True
+    _plant("live() returned a value for a figure marked NOT RE-MEASURABLE - then the one "
+           "class this register admits it cannot check becomes quotable as current",
+           refused_unmeas)
+
+    # and it must agree with remeasure() on a figure that IS measurable, or the two readers
+    # drift and the gate guards a different number from the one the register reports
+    _plant("live() disagrees with remeasure() on the same figure - two readers for one number "
+           "is the drift this lane already fixed once in status.py",
+           live("gate-decimals") == [r for r in remeasure(["gate-decimals"])][0][2])
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
