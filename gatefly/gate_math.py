@@ -285,6 +285,40 @@ def selftest(lane_optional: bool = False) -> int:
     _plant("a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing "
            "(moved %.3e)" % moved_big, moved_big > moved * 10)
 
+    # THE GATE SATURATES, AND THIS LANE HAS BEEN QUOTING IT AS THE CAPACITY READ.
+    #
+    # g(x) = x/(1+x) is flat for large x. Real addressability here is a ~ 250, so a - c stays
+    # large until c approaches a, and the gate barely moves. Measured across this lane's own
+    # memit arm (runs/ttt_big.retrain.json):
+    #
+    #     n        c/a          gate
+    #     1    0.000000      0.995471
+    #     32   0.108317      0.995558      <- c/a moved 5 orders of magnitude
+    #     256  0.9354        (Efficacy 0.945, competence 0.6967)
+    #
+    # So the GATE is a late indicator: by the time it moves, the budget is nearly spent. The
+    # quantity that is monotone and readable from the first edit is the CROWDING FRACTION c/a.
+    # This matters because M8 - this lane's own frontier claim, and the thing it offered two
+    # sibling lanes as "a per-edit read of how much room is left" - named the gate. It should
+    # name c/a. Found by a sibling lane asking whether the arithmetic predicted something about
+    # its single-edit run, where c is 0 BY CONSTRUCTION and the gate therefore says nothing.
+    #
+    # Asserted on synthetic values rather than on the artefact, so it tests the arithmetic and
+    # cannot go stale or premise-shaped.
+    a_big = 250.0
+    gates = [g(a_big - f * a_big) for f in (0.0, 0.1, 0.3)]
+    spread_gate = max(gates) - min(gates)
+    fracs = [0.0, 0.1, 0.3]
+    _plant("the gate is NOT flat at realistic addressability - then it is a usable capacity "
+           "read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.5f)"
+           % (a_big, spread_gate), spread_gate < 0.01)
+    _plant("the crowding FRACTION is not monotone where the gate is flat - then neither is "
+           "readable and M8 has no instrument", fracs == sorted(fracs))
+    # and the control: the gate MUST move once c approaches a, or it is not a gate at all
+    near = g(a_big - 0.99 * a_big)
+    _plant("the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - "
+           "it would be insensitive everywhere" % (near, gates[0]), gates[0] - near > 0.2)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)

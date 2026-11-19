@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 29,
-  "plants": 394,
+  "plants": 397,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 45
+  "labels_not_greppable_in_source": 48
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -37,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "45 of 394 labels (11.4%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 394. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "48 of 397 labels (12.1%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 397. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -83,6 +83,18 @@
    {
     "label": "a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing (moved %.3e)",
     "longest_on_one_line": "a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing "
+   },
+   {
+    "label": "the gate is NOT flat at realistic addressability - then it is a usable capacity read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.5f)",
+    "longest_on_one_line": "the gate is NOT flat at realistic addressability - then it is a usable capacity "
+   },
+   {
+    "label": "the crowding FRACTION is not monotone where the gate is flat - then neither is readable and M8 has no instrument",
+    "longest_on_one_line": "the crowding FRACTION is not monotone where the gate is flat - then neither is "
+   },
+   {
+    "label": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - it would be insensitive everywhere",
+    "longest_on_one_line": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - "
    }
   ],
   "gate_read.py": [
@@ -255,132 +267,132 @@
    {
     "label": "two mechanism nodes share the same text, so the graph is duplicating rather than deduplicating: %s",
     "has_format": true,
-    "line": 532
+    "line": 539
    },
    {
     "label": "a mechanism is claimed as NEW by two works: %s",
     "has_format": true,
-    "line": 544
+    "line": 551
    },
    {
     "label": "a mechanism's parent is not in the graph: %s",
     "has_format": true,
-    "line": 548
+    "line": 555
    },
    {
     "label": "a cycle in the mechanism graph: %s",
     "has_format": true,
-    "line": 558
+    "line": 565
    },
    {
     "label": "a work attaches to no mechanism: %s",
     "has_format": true,
-    "line": 562
+    "line": 569
    },
    {
     "label": "a work cites a mechanism not in the graph: %s",
     "has_format": true,
-    "line": 565
+    "line": 572
    },
    {
     "label": "a frontier node actually has a work attached",
     "has_format": false,
-    "line": 575
+    "line": 582
    },
    {
     "label": "a non-frontier node has no work attached",
     "has_format": false,
-    "line": 577
+    "line": 584
    },
    {
     "label": "a frontier node has no recorded search behind it: %s",
     "has_format": true,
-    "line": 583
+    "line": 590
    },
    {
     "label": "the gate does not apply to a research domain",
     "has_format": false,
-    "line": 588
+    "line": 595
    },
    {
     "label": "the gate applies to Tami - a game has no prior art, it has requirements",
     "has_format": false,
-    "line": 590
+    "line": 597
    },
    {
     "label": "the Tami answer does not say what governs instead",
     "has_format": false,
-    "line": 592
+    "line": 599
    },
    {
     "label": "an unknown domain defaulted instead of refusing - defaulting to product would silently exempt research work from the gate",
     "has_format": false,
-    "line": 594
+    "line": 601
    },
    {
     "label": "AlphaEdit's delta is not M1.3",
     "has_format": false,
-    "line": 599
+    "line": 606
    },
    {
     "label": "MEMIT's delta is not M1.2",
     "has_format": false,
-    "line": 600
+    "line": 607
    },
    {
     "label": "Adam-NSCL's delta is not M4.1",
     "has_format": false,
-    "line": 601
+    "line": 608
    },
    {
     "label": "a frontier node has an adding work",
     "has_format": false,
-    "line": 602
+    "line": 609
    },
    {
     "label": "a frontier node with nothing recorded about what this lane holds: %s",
     "has_format": true,
-    "line": 607
+    "line": 614
    },
    {
     "label": "a REINVENTED entry names a mechanism not in the graph: %s",
     "has_format": true,
-    "line": 613
+    "line": 620
    },
    {
     "label": "a REINVENTED entry points at a mechanism NO work teaches - then it was not reinvented: %s",
     "has_format": true,
-    "line": 617
+    "line": 624
    },
    {
     "label": "the NN facts could not be read from committed artefacts: %s",
     "has_format": true,
-    "line": 624
+    "line": 631
    },
    {
     "label": "a hybrid crosses a mechanism not in the graph: %s",
     "has_format": true,
-    "line": 649
+    "line": 656
    },
    {
     "label": "a hybrid does not say what blocks it: %s",
     "has_format": true,
-    "line": 651
+    "line": 658
    },
    {
     "label": "a null-space method was NOT flagged inapplicable although this net's keys span the key space (got %s) - then the precondition check cannot refuse anything",
     "has_format": true,
-    "line": 631
+    "line": 638
    },
    {
     "label": "the same check refused even with room in the key space - it fires on anything",
     "has_format": false,
-    "line": 638
+    "line": 645
    },
    {
     "label": "a mechanism with no recorded precondition read as APPLIES - silence would be permission",
     "has_format": false,
-    "line": 643
+    "line": 650
    }
   ],
   "check_hover.py": [
@@ -537,6 +549,21 @@
     "label": "a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing (moved %.3e)",
     "has_format": true,
     "line": 285
+   },
+   {
+    "label": "the gate is NOT flat at realistic addressability - then it is a usable capacity read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.5f)",
+    "has_format": true,
+    "line": 312
+   },
+   {
+    "label": "the crowding FRACTION is not monotone where the gate is flat - then neither is readable and M8 has no instrument",
+    "has_format": false,
+    "line": 315
+   },
+   {
+    "label": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - it would be insensitive everywhere",
+    "has_format": true,
+    "line": 319
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
@@ -2280,5 +2307,5 @@
    }
   ]
  },
- "labels_digest": "f106c7ba711b0e68"
+ "labels_digest": "a6441c17aaa2b8f1"
 }

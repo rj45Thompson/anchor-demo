@@ -116,9 +116,9 @@ MECH = {
  # ---- the frontier. No work found for these; the queries that failed are recorded below.
  "M7":     ("M0",   "ALTERNATE a null-space-projected closed-form edit with null-space-confined "
                     "gradient training, each step constrained by what the other installed"),
- "M8":     ("M5",   "Read REMAINING CAPACITY before spending an edit: a per-edit number saying "
-                    "how much room is left in the subspace, rather than an empirical threshold "
-                    "discovered after collapse"),
+ "M8":     ("M5",   "Read REMAINING CAPACITY before spending an edit as the CROWDING "
+                    "FRACTION c/a, rather than waiting for an empirical threshold discovered "
+                    "after collapse"),
 }
 
 # --------------------------------------------------------------------------- works
@@ -252,12 +252,19 @@ OURS = {
  "M7": "This lane has both parents already implemented against an EXACT oracle: the closed-form "
        "ridge edit (gatefly/retrain.py memit_edit) and the same covariance C that M4.1 projects "
        "into. The arrangement is cheap here precisely because M1.3 and M4.1 are published.",
- "M8": "gate_j = g(a_j - c_j), with a_j addressability and c_j crowding as a Schur complement "
-       "against the other keys - a per-edit read available BEFORE the edit is spent. Measured "
-       "at the pigeonhole point: 256 keys in a 256-dim key space gives crowding 0.9354 against "
-       "0.0540 at n=16, Efficacy 0.945, competence 0.9880 -> 0.6967, and the rate is the "
-       "arithmetic's own since n identical keys each receive g(na)/n. The M5 family explains "
-       "collapse AFTER it happens; none of it gives a number beforehand.",
+ "M8": "CORRECTED 2026-11-19, AND THE CORRECTION IS TO THIS LANE'S OWN CLAIM. This was pitched "
+       "to two sibling lanes as 'read the GATE before spending an edit'. It names the wrong "
+       "quantity. g(x)=x/(1+x) saturates for large x, and real addressability here is a~250, so "
+       "the gate cannot move until c approaches a. Measured on this lane's own memit arm: c/a "
+       "goes 0.000000 at n=1 to 0.108317 at n=32 to 0.9354 at n=256, while the gate goes "
+       "0.995471 to 0.995558 - five orders of magnitude in the signal against 1e-4 in the "
+       "readout. THE GATE IS A LATE INDICATOR: by the time it moves the budget is nearly spent. "
+       "The quantity that is monotone and readable from the first edit is the CROWDING FRACTION "
+       "c/a. Found because a sibling lane asked whether this arithmetic predicted anything "
+       "about its single-edit run, where c is 0 BY CONSTRUCTION and the gate is therefore pinned "
+       "at its maximum for every case - so the honest answer was that the instrument has no "
+       "resolution there at all. The M5 family still explains collapse only after it happens; "
+       "c/a is available before the edit is spent, which is the claim that survives.",
 }
 
 # ----------------------------------------- the three-way join: literature, code, and the net
