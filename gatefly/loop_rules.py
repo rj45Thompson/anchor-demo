@@ -162,6 +162,14 @@ ERRORS = [
   "caught_by": "a literature sweep done after the work",
   "verdict": ARCH, "rule": "R-PRIOR-ART-BEFORE-BUILD"},
 
+ {"id": "reported-magnitude-without-direction", "caught_class": "peer checked it",
+  "what": "Planted that (1-r)/4 is CLOSER to the exact peak than (1-r)/2, with no assertion of "
+          "which SIDE. It under-estimates at every r, and the peak is a BOUND - so the "
+          "approximation licenses a claim the exact form forbids. Magnitude without sign, in a "
+          "quantity where the sign is the whole point.",
+  "caught_by": "the v4 lane computing the signed error after accepting the correction",
+  "verdict": ARCH, "rule": "R-STATE-THE-DIRECTION"},
+
  {"id": "comment-asserted-what-code-did-not-do", "caught_class": "looked at the artefact",
   "what": "A comment said the distance fade stops the labels piling into a smear. The fade "
           "worked as written and the smear was there: the defect is screen-space collision.",
@@ -245,6 +253,11 @@ RULES = {
    "says": "A quantity proposed as a readout must be shown to MOVE with the thing it reads, "
            "over the range of interest, before it is offered to anyone.",
    "in_loop": True, "where": "gate_math.py, the responsiveness table and non-monotonicity plant"},
+ "R-STATE-THE-DIRECTION": {
+   "says": "A reported error, gap or difference carries its SIGN, not only its size - and for "
+           "anything used as a BOUND the sign decides whether the approximation is safe. A "
+           "quantity whose direction is unstated is the unnamed-statistic fault one level up.",
+   "in_loop": True, "where": "gate_math.py, the (1-r)/4 under-estimate plants"},
  "R-PRIOR-ART-BEFORE-BUILD": {
    "says": "No registered item is WORKED without a dated prior-art search of its atoms.",
    "in_loop": True, "where": "prior_art.py may_work_on()"},

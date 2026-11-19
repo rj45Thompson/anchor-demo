@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 427,
+  "plants": 429,
   "modules_with_zero_plants": 0,
-  "call_sites_inside_loops": 8,
-  "labels_not_greppable_in_source": 69
+  "call_sites_inside_loops": 9,
+  "labels_not_greppable_in_source": 70
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -28,8 +28,12 @@
     "loop_line": 549
    },
    {
-    "plant_line": 561,
-    "loop_line": 559
+    "plant_line": 568,
+    "loop_line": 566
+   },
+   {
+    "plant_line": 571,
+    "loop_line": 566
    }
   ],
   "ladder_probe.py": [
@@ -55,7 +59,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "69 of 427 labels (16.2%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 427. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "70 of 429 labels (16.3%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 429. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -177,6 +181,10 @@
    {
     "label": "the small-change peak is closer to (1-r)/2 than to (1-r)/4 at r=%.2f (exact %.6f, /2 %.6f, /4 %.6f)",
     "longest_on_one_line": "the small-change peak is closer to (1-r)/2 than to (1-r)/4 at r=%.2f "
+   },
+   {
+    "label": "(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is safe to quote as a bound, and this caveat is unnecessary",
+    "longest_on_one_line": "(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is "
    }
   ],
   "gate_read.py": [
@@ -742,6 +750,11 @@
     "line": 545
    },
    {
+    "label": "the relative under-estimate does not worsen monotonically as r falls (%s)",
+    "has_format": true,
+    "line": 577
+   },
+   {
     "label": "A disagrees with the ratchet lane's gate_matrix",
     "has_format": false,
     "line": 252
@@ -774,7 +787,12 @@
    {
     "label": "the small-change peak is closer to (1-r)/2 than to (1-r)/4 at r=%.2f (exact %.6f, /2 %.6f, /4 %.6f)",
     "has_format": true,
-    "line": 561
+    "line": 568
+   },
+   {
+    "label": "(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is safe to quote as a bound, and this caveat is unnecessary",
+    "has_format": true,
+    "line": 571
    }
   ],
   "gate_read.py": [
@@ -1049,47 +1067,47 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 323
+    "line": 336
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 327
+    "line": 340
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 330
+    "line": 343
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 335
+    "line": 348
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 341
+    "line": 354
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 347
+    "line": 360
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 355
+    "line": 368
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 365
+    "line": 378
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 368
+    "line": 381
    }
   ],
   "metrics.py": [
@@ -2565,5 +2583,5 @@
    }
   ]
  },
- "labels_digest": "fbce7ac074a94b6a"
+ "labels_digest": "684fcfc5e64d7ecb"
 }

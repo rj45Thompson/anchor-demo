@@ -556,11 +556,27 @@ def selftest(lane_optional: bool = False) -> int:
     # and printed the exact value beside it, which refutes it: 0.0263 at r = 0.9, where
     # (1-r)/2 = 0.05 and (1-r)/4 = 0.025. Expansion: r = 1-e, sqrt(r) ~ 1 - e/2, so
     # (1 - sqrt r)/(1 + sqrt r) ~ (e/2)/2 = e/4.
-    for _r in (0.99, 0.95, 0.9):
+    # AND THE DIRECTION MATTERS MORE THAN THE CONSTANT, which this lane reported without.
+    # The first version of these plants asserted only that /4 is CLOSER than /2 - a statement
+    # about MAGNITUDE with no sign - in a quantity where the sign is the whole point. The v4
+    # lane supplied it: /4 UNDER-estimates at every r and monotonically worse as r falls:
+    # -0.5% at 0.99, -2.5% at 0.95, -5.1% at 0.90, -15.7% at 0.70, -27.1% at 0.50. The peak is
+    # a BOUND on how far the gate can move, so an approximation that under-states it licenses a
+    # claim the exact form forbids. /4 is a mental check; (1-sqrt r)/(1+sqrt r) is what to quote.
+    for _r in (0.99, 0.95, 0.9, 0.7, 0.5):
         _ex = (1.0 - np.sqrt(_r)) / (1.0 + np.sqrt(_r))
         _plant("the small-change peak is closer to (1-r)/2 than to (1-r)/4 at r=%.2f "
                "(exact %.6f, /2 %.6f, /4 %.6f)" % (_r, _ex, (1 - _r) / 2, (1 - _r) / 4),
                abs(_ex - (1 - _r) / 4) < abs(_ex - (1 - _r) / 2))
+        _plant("(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is "
+               "safe to quote as a bound, and this caveat is unnecessary"
+               % (_r, (1 - _r) / 4, _ex), (1 - _r) / 4 < _ex)
+    # the error must also WORSEN as r falls, or "monotonically worse" is an overstatement
+    _errs = [((1 - _r) / 4 - (1 - np.sqrt(_r)) / (1 + np.sqrt(_r)))
+             / ((1 - np.sqrt(_r)) / (1 + np.sqrt(_r))) for _r in (0.99, 0.95, 0.9, 0.7, 0.5)]
+    _plant("the relative under-estimate does not worsen monotonically as r falls (%s)"
+           % ", ".join("%.3f" % e for e in _errs),
+           all(_errs[i] > _errs[i + 1] for i in range(len(_errs) - 1)))
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
