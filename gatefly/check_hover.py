@@ -112,6 +112,20 @@ def selftest() -> int:
            % ", ".join(sorted(imported)), "gate_math" not in imported)
     # and the control: the AST check must SEE an import that is really there, or it would pass
     # on a file that imports everything
+    # WHY THE AGREEMENT BELOW IS EVIDENCE AT ALL, stated because this lane had the mechanism
+    # and never the rule. The v4 lane's version: agreement is evidence exactly to the extent
+    # the two DERIVATION PATHS are independent. Its own stand-in could disagree with gate_math
+    # only because it was written from the dtype QUESTION; written from the source it would
+    # have inherited the float32 cast and agreed perfectly on a bug.
+    #
+    # This file is that rule instantiated. The recomputation below agrees with gate_math to
+    # 8.327e-17, and that figure means something ONLY because the scan above shows the two
+    # paths do not share code. Agreement and independence are one piece of evidence, not two,
+    # and neither half is worth reporting alone.
+    _plant("the independence scan and the agreement are reported separately - then a reader "
+           "can quote the agreement without the independence that makes it evidence",
+           "gate_math" not in imported and len(imported) > 3)
+
     _plant("the import scan found no imports at all - it cannot see an import that IS there",
            "numpy" in imported or "json" in imported)
 

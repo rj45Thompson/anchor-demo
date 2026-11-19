@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 443,
+  "plants": 444,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 10,
-  "labels_not_greppable_in_source": 83
+  "labels_not_greppable_in_source": 84
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -63,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "83 of 443 labels (18.7%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 443. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "84 of 444 labels (18.9%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 444. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -91,6 +91,10 @@
    {
     "label": "this file imports gate_math (imports: %s) - then it is no longer an INDEPENDENT check and every agreement it reports is circular",
     "longest_on_one_line": "this file imports gate_math (imports: %s) - then it is no longer an INDEPENDENT "
+   },
+   {
+    "label": "the independence scan and the agreement are reported separately - then a reader can quote the agreement without the independence that makes it evidence",
+    "longest_on_one_line": "the independence scan and the agreement are reported separately - then a reader "
    },
    {
     "label": "crowding exceeds its own addressability (a %.6f, c %.6f) - the Schur complement is wrong",
@@ -572,44 +576,49 @@
     "line": 110
    },
    {
+    "label": "the independence scan and the agreement are reported separately - then a reader can quote the agreement without the independence that makes it evidence",
+    "has_format": false,
+    "line": 125
+   },
+   {
     "label": "the import scan found no imports at all - it cannot see an import that IS there",
     "has_format": false,
-    "line": 115
+    "line": 129
    },
    {
     "label": "a disagrees with an independent recomputation (%.3e)",
     "has_format": true,
-    "line": 140
+    "line": 154
    },
    {
     "label": "c disagrees with an independent recomputation (%.3e)",
     "has_format": true,
-    "line": 142
+    "line": 156
    },
    {
     "label": "gate disagrees with an independent recomputation (%.3e)",
     "has_format": true,
-    "line": 144
+    "line": 158
    },
    {
     "label": "the gate left (0,1) - %.4f",
     "has_format": true,
-    "line": 148
+    "line": 162
    },
    {
     "label": "crowding exceeds its own addressability (a %.6f, c %.6f) - the Schur complement is wrong",
     "has_format": true,
-    "line": 149
+    "line": 163
    },
    {
     "label": "perturbing the blob did NOT move the gate (%.3e) - this file is not reading the weights it claims to read",
     "has_format": true,
-    "line": 159
+    "line": 173
    },
    {
     "label": "an unknown site did not raise - a typo'd --site would silently check nothing",
     "has_format": false,
-    "line": 168
+    "line": 182
    }
   ],
   "data_ttt.py": [
@@ -1178,57 +1187,57 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 450
+    "line": 475
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 454
+    "line": 479
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 457
+    "line": 482
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 462
+    "line": 487
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 468
+    "line": 493
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 474
+    "line": 499
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 482
+    "line": 507
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 492
+    "line": 517
    },
    {
     "label": "the peer-claim re-derivation record is missing a half: %s",
     "has_format": true,
-    "line": 498
+    "line": 523
    },
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "has_format": true,
-    "line": 505
+    "line": 530
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 509
+    "line": 534
    }
   ],
   "metrics.py": [
@@ -2709,5 +2718,5 @@
    }
   ]
  },
- "labels_digest": "35421112e48b747e"
+ "labels_digest": "c9f548bea4d5aa53"
 }

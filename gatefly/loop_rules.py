@@ -188,6 +188,20 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
+ {"id": "aimed-a-right-principle-at-the-wrong-sentence",
+  "initiated_by": "this lane SENT a correction; peer re-derived what it actually said",
+  "caught_class": "peer checked it",
+  "what": "Told the v4 lane its 4.613e-09 against this lane's 4.3e-09 'was agreement between "
+          "two measurements of the same wrong dtype, which is why it looked like "
+          "confirmation'. The principle is right; the sentence it aimed at did not contain the "
+          "error. That agreement was claimed only as 'faithful enough to COMPARE' - one job, "
+          "establishing that its acg reproduces this lane's - and the dtype fault was "
+          "established by READING the line, not by any agreement. A correct correction, "
+          "misaimed, which is R-THE-CORRECTION-IS-A-CLAIM in a new costume: the claim was "
+          "re-derived and the TARGET was not.",
+  "caught_by": "the v4 lane quoting back what it had actually written",
+  "verdict": ARCH, "rule": "R-AGREEMENT-NEEDS-INDEPENDENT-PATHS"},
+
  {"id": "r7-plant-measured-the-wrong-dtype",
   "initiated_by": "peer READ this lane's source and found the cast",
   "caught_class": "peer checked it",
@@ -313,6 +327,17 @@ RULES = {
            "Re-deriving is also what produced 11 of this catalogue's catches, in both "
            "directions, and it requires no request from either side.",
    "in_loop": True, "where": "loop_rules.py, PEER_CLAIMS_REDERIVED and the initiated_by field"},
+ "R-AGREEMENT-NEEDS-INDEPENDENT-PATHS": {
+   "says": "Agreement between two computations is evidence exactly to the extent their "
+           "DERIVATION PATHS are independent. Two implementations written from one source "
+           "share its bugs, so their agreement tests transcription and nothing else. The v4 "
+           "lane's stand-in could disagree with this lane's gate only because it was written "
+           "from the dtype QUESTION rather than from this lane's code - had it been written "
+           "from the source it would have inherited the float32 cast and agreed perfectly on a "
+           "bug. check_hover.py already instantiates this and never stated it: it does NOT "
+           "import gate_math, which is why its 8.327e-17 hand-check agreement means anything, "
+           "and its independence plant caught an attempt to break that today.",
+   "in_loop": True, "where": "check_hover.py, the AST import scan plus the hand-check agreement"},
  "R-BASELINE-AT-THE-SAME-MEAN": {
    "says": "A ratio against a baseline requires the baseline to be computed at the SAME mean as "
            "the thing measured. It follows from linearity rather than convention: dependence is "
@@ -367,7 +392,7 @@ RULES = {
 # ADOPTED, and three of them arrived with working arithmetic attached, which is what makes
 # adoption tempting. That is the argument for the rule below, and it is a number rather than a
 # preference.
-PEER_CLAIMS_REDERIVED = {"held": 8, "failed": 7}
+PEER_CLAIMS_REDERIVED = {"held": 9, "failed": 7}
 # AND THE RATE IS NOT THE RULE'S YIELD, which the snipershot lane is right about: every one of
 # these is a claim somebody thought worth sending, so the denominator is pre-filtered toward
 # the contested and the interesting. The rate on claims nobody bothered to transmit is
