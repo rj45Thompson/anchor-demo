@@ -99,7 +99,8 @@ NODES = {
                           "between EQUALLY CORRECT answers - real damage 0.0000 - so a naive "
                           "argmax count over-reported by 100% of its own value. The sibling "
                           "lane found the same structure in a knowledge benchmark: 11 of 46 "
-                          "prompts with several correct answers, covering 60% of its probes."),
+                          "prompts with several correct answers, covering 60% of its probes."
+                    " PRIOR ART, swept 2026-11-19: partially covered. Alias robustness is tested in the SUBJECT (a Subject Replace metric swaps the subject for a synonym), and multi-label facts carry an IGNORE RATE for other correct objects. What is tested is robustness to alias PHRASING, not whether alias ANSWERS are scored correct - which is the half this lane measured as two surgical arms whose every movement was a swap between equally correct answers, real damage 0.0000."),
 
     # ---------------------------------------------------------------- 2. LOCATE
     "E2": dict(kind="AND", parent="E",
@@ -114,7 +115,8 @@ NODES = {
                  evidence="Quantified here rather than asserted: at pong's output layer 64 "
                           "neurons write into ONE dimension, c/a 0.9965, gate 0.0035 - the "
                           "collinear law in a trained net. In the tic-tac-toe net crowding "
-                          "rises with depth across the four blocks: 0.777, 0.782, 0.794, 0.834."),
+                          "rises with depth across the four blocks: 0.777, 0.782, 0.794, 0.834."
+                    " PRIOR ART, swept 2026-11-19: COVERED and foundational. Superposition - Elhage et al., Toy Models of Superposition, arXiv:2209.10652 - frames it as embedding more features than neurons by distributing each along a direction spanning several, 'in a way that minimises interference', with correlated features pushed toward orthogonality and anticorrelated ones sharing a dimension antipodally. Sparse probing (arXiv:2305.01610) argues superposition necessarily implies polysemantic neurons. The literature's own phrasing - interference is the PRICE OF COMPRESSION - is this node's claim, and this lane's c/a 0.9965 at pong's output layer is one measurement of that price."),
     "E2.2": dict(kind="LEAF", parent="E2",
                  say="Attribution is unreliable at depth.",
                  why="Localisation methods disagree with causal interventions.",
@@ -151,14 +153,16 @@ NODES = {
                   evidence="Measured: the edit's own crowding rises with the number of keys - "
                            "0.0000, 0.0000, 0.0032, 0.0327, 0.0459, 0.1112 at n = 1 to 32 - "
                            "and growing one private neuron per case drives it to EXACTLY "
-                           "0.0000 at every size while raising addressability 8.2x."),
+                           "0.0000 at every size while raising addressability 8.2x."
+                    " PRIOR ART, swept 2026-11-19: SPLIT, and the open half is this lane's. COVERED: that edits interfere and accumulate - DeltaEdit (arXiv:2505.07899) defines a per-edit SUPERIMPOSED NOISE term from the cumulative effect of earlier updates, reports performance falling sharply past a threshold, and fixes it with a dynamic orthogonal constraint; MEND's own numbers show the effect, edit success 0.98 at one edit falling to 0.67 at 125 summed simultaneously. NOT FOUND, searched explicitly: any measure of whether a SINGLE UPDATE'S MAGNITUDE IS SHRUNK when many edits share the same dimensions. That fraction is exactly gate_j = g(a_j - c_j), and this lane measured it rising with key count: 0.0000, 0.0000, 0.0032, 0.0327, 0.0459, 0.1112 at n = 1 to 32."),
     "E3a.2": dict(kind="LEAF", parent="E3a",
                   say="The solve is linear; the behaviour it must produce is not.",
                   why="A correct delta at the key does not guarantee correct behaviour away "
                       "from it.",
                   status="open",
                   evidence="Untested here. This lane measures what lands at the key and what "
-                           "happens at sampled positions, never the relation between them."),
+                           "happens at sampled positions, never the relation between them."
+                    " PRIOR ART, swept 2026-11-19: not found as a stated problem. The closed-form editing literature solves a linear system and evaluates behaviour, without a published treatment of the gap between what lands at the key and what the model then does. Still untested here too, so this is an absence in both places rather than an opening this lane can claim."),
     "E3a.3": dict(kind="LEAF", parent="E3a",
                   say="Capacity: p keys in H dimensions must collide once p approaches H.",
                   why="A hard ceiling independent of method.",
@@ -170,7 +174,8 @@ NODES = {
                            "1.0000]) and competence fell 0.9880 to 0.6967. The rate is the "
                            "arithmetic's own: n identical keys each receive g(na)/n, so the "
                            "share falls as 1/n and never reaches zero. A confirmed BLOCKER, "
-                           "not a solved node: it is a bound that will not be engineered away."),
+                           "not a solved node: it is a bound that will not be engineered away."
+                    " PRIOR ART, swept 2026-11-18 (the capacity search): empirical collapse thresholds exist and NO DERIVED BOUND does. Reported thresholds run from ~250 sequential edits for MEMIT to ~8k for others, with explanations offered as condition-number growth (PRUNE), superimposed noise, a Dimensional Collapse Hypothesis and a spectral account (REVIVE). None gives an edit count from the geometry. One 2026 report has 3 of 5 model-method pairings at chance-level MMLU after 1,000 edits WHILE EDIT SUCCESS STAYS AT 1.00 - independent corroboration of this lane's Efficacy 0.945 with competence 0.6967 at n=256, reached from the arithmetic rather than from a benchmark."),
     "E3b": dict(kind="AND", parent="E3",
                 say="Retraining on corrected data.",
                 why="Blocked by forgetting, by dilution, and by cost.",
@@ -186,18 +191,21 @@ NODES = {
                   status="blocked",
                   evidence="Measured: competence 0.7429, 0.8407, 0.7600, 0.6381, 0.6246, "
                            "0.7073 at n = 1 to 32, against 1.0000 before. Settled AS A "
-                           "BLOCKER - it is real here, not that it is solved."),
+                           "BLOCKER - it is real here, not that it is solved."
+                    " PRIOR ART, swept 2026-11-19: COVERED and large. Catastrophic forgetting under fine-tuning is a field, with replay and rehearsal as the standard mitigation; forecasting WHICH examples will be forgotten and replaying those beats random replay (arXiv:2402.01865, exact-match drop cut to ~1.6-1.8%), and susceptibility prediction is its own line (arXiv:2406.09935). This lane's competence figures of 0.62-0.84 are an instance, not a discovery."),
     "E3b.2": dict(kind="LEAF", parent="E3b",
                   say="Dilution: corrected items are a vanishing fraction of the corpus.",
                   why="Train on everything and the correction never lands.",
                   status="blocked",
                   evidence="Measured: the uniform corrected corpus gives Efficacy 0.0000 at "
-                           "n = 1 and 0.3438 at n = 32. Settled as a blocker."),
+                           "n = 1 and 0.3438 at n = 32. Settled as a blocker."
+                    " PRIOR ART, swept 2026-11-19: the mechanism is obvious and the MEASUREMENT was not found. Replay guides use ratios (one defaults to 30%) without a tested optimum, and the search returned no measured trade-off between replay ratio and edit success, and nothing on how much a small corrected set is diluted by a large one. This lane has that curve: a uniform corrected corpus gives Efficacy 0.0000 at n=1 and 0.3438 at n=32, while a 25% weighted middle gives 1.0000 and competence 0.9998 before degrading to Efficacy 0.63 by n=32."),
     "E3b.3": dict(kind="LEAF", parent="E3b",
                   say="Cost: retraining a set is not a 160 KB delta.",
                   why="The cost ordering is the practical argument for editing.",
                   status="external",
-                  evidence="The v4 lane's framing; not costed here."),
+                  evidence="The v4 lane's framing; not costed here."
+                    " PRIOR ART, swept 2026-11-19: NOT COSTED ANYWHERE FOUND. The search returned general claims that forgetting 'costs billions in retraining' and no head-to-head cost comparison of full retraining against targeted editing. Not costed here either, so this is an absence in both places and this lane has no standing to claim it."),
     "E3c": dict(kind="OR", parent="E3",
                 say="Alternate a closed-form edit with training CONFINED to an isolated subspace.",
                 why="RJ's idea. OR, because any of the three isolation definitions working "
@@ -233,7 +241,8 @@ NODES = {
                           "exactly. gatefly/oracle.py now also gives every move's value, the "
                           "depth to the end, and a per-position SHARPNESS - of the 4,520, "
                           "1,944 are maximally sharp, 1,247 middling, 1,329 dull. Solved for "
-                          "games; NOT solved for language, which is the honest limit."),
+                          "games; NOT solved for language, which is the honest limit."
+                    " PRIOR ART, swept 2026-11-19: no oracle for language was found, which is the expected answer rather than a gap this lane can close. Benchmarks substitute a knowledge graph (RippleEdits) or an answer list (PEAK) for an oracle, and both are incomplete by construction - the v4 lane's granularity mismatch is what incompleteness looks like. This lane's exact minimax oracle is real and is a property of SOLVED GAMES, not a method anybody can carry to language."),
     "E4.2": dict(kind="LEAF", parent="E4",
                  say="Rulers that actually resolve: that separate a good editor from a bad one.",
                  why="A metric that cannot distinguish arms cannot select a method.",
@@ -250,7 +259,8 @@ NODES = {
                           "an absence. That is a different cause from the one this node was "
                           "opened for, and this lane cannot distinguish them, because its own "
                           "net is competent on 1.0000 of its probes by construction. "
-                          "Artefact: selfimprove_v4 commit 4ad9d744."),
+                          "Artefact: selfimprove_v4 commit 4ad9d744."
+                    " PRIOR ART, swept 2026-11-19: the complaint is published, the diagnosis is not. A 2024 EMNLP Findings pitfalls paper reports that evaluation 'relies on inconsistent metrics and benchmarks, lacking a uniform standard' and that metrics are 'primarily limited to scenarios where editing is performed only once'. Metric granularity is known to change scores (token-level accuracy against answer-level exact match). What was NOT found is a demonstration that a published ruler reports a model IMPROVED while it lost a quarter of its competence, which is this lane's Eq.7 reading of 1.1309."),
     "E4.3": dict(kind="LEAF", parent="E4",
                  say="Measures whose scale or resolution does not track the thing being varied.",
                  why="Otherwise a trend across conditions is an artefact of the measure.",
@@ -260,7 +270,8 @@ NODES = {
                           "denominator moving with tokeniser size; and Efficacy's RESOLUTION "
                           "being 1/n_edits, which made a one-case 'break' look real. "
                           "gatefly/scale_guard.py is now a 77-cell grid plus a resolution axis "
-                          "and a net that found 27 undeclared fields in this lane's own files."),
+                          "and a net that found 27 undeclared fields in this lane's own files."
+                    " PRIOR ART, swept 2026-11-19: NOT FOUND, searched explicitly for sample-size and resolution critiques of editing metrics. The literature criticises inconsistency and single-edit scope; it does not appear to treat a measure whose RESOLUTION tracks the thing being varied as a named fault. This lane has four instances, each found by accident, and gatefly/scale_guard.py as the standing check - 77 cells plus a resolution axis, which found 27 undeclared fields in this lane's own files."),
     "E4.4": dict(kind="LEAF", parent="E4",
                  say="Correctness judged against the SET of right answers, not one of them.",
                  why="Otherwise a swap between equally correct answers reads as damage - and "

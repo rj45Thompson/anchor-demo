@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 28,
-  "plants": 381,
+  "plants": 383,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 43
+  "labels_not_greppable_in_source": 44
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -37,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "43 of 381 labels (11.3%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 381. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "44 of 383 labels (11.5%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 383. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -171,6 +171,10 @@
    {
     "label": "the gate fired on a short analysis run - it would cost an hour to tell a finished run it was unoriginal",
     "longest_on_one_line": "the gate fired on a short analysis run - it would cost an hour to tell a finished "
+   },
+   {
+    "label": "a node SEARCHED with nothing found was read as NOT_SEARCHED - the search that produced the absence is erased",
+    "longest_on_one_line": "a node SEARCHED with nothing found was read as NOT_SEARCHED - the search that "
    }
   ],
   "reevaluate.py": [
@@ -1344,264 +1348,274 @@
    {
     "label": "an UNSEARCHED atom did not refuse - absence would read as novelty",
     "has_format": false,
-    "line": 447
+    "line": 458
    },
    {
     "label": "the refusal does not name the unsearched atom",
     "has_format": false,
-    "line": 448
+    "line": 459
    },
    {
     "label": "one reference teaching every atom was not ANTICIPATED",
     "has_format": false,
-    "line": 455
+    "line": 466
    },
    {
     "label": "atoms covered by DIFFERENT references were read as ANTICIPATED - the arrangement would be discarded as already published",
     "has_format": false,
-    "line": 465
+    "line": 476
    },
    {
     "label": "the combination verdict does not say the arrangement is unclaimed",
     "has_format": false,
-    "line": 467
+    "line": 478
    },
    {
     "label": "a COVERED atom was not listed as free to cite",
     "has_format": false,
-    "line": 475
+    "line": 486
    },
    {
     "label": "an OPEN atom was not listed as the part to build",
     "has_format": false,
-    "line": 476
+    "line": 487
    },
    {
     "label": "an OPEN atom in the register has no recorded search - an absence claim with nothing behind it: %s",
     "has_format": true,
-    "line": 482
+    "line": 493
    },
    {
     "label": "a COVERED atom in the register cites nothing: %s",
     "has_format": true,
-    "line": 486
+    "line": 497
    },
    {
     "label": "the gate did not fire when about to implement with sessions starting",
     "has_format": false,
-    "line": 491
+    "line": 502
    },
    {
     "label": "the gate fired on a short analysis run - it would cost an hour to tell a finished run it was unoriginal",
     "has_format": false,
-    "line": 493
+    "line": 504
    },
    {
     "label": "the gate did not fire on an idea spanning two literatures",
     "has_format": false,
-    "line": 496
+    "line": 507
    },
    {
     "label": "E3c did not resolve to COVERED/COMBINATION (got %s)",
     "has_format": true,
-    "line": 501
+    "line": 512
    },
    {
     "label": "E3c's free atoms are not A1 and A2 (got %s)",
     "has_format": true,
-    "line": 502
+    "line": 513
    },
    {
     "label": "E3c's buildable atoms are not A3 and A4 (got %s)",
     "has_format": true,
-    "line": 503
+    "line": 514
    },
    {
     "label": "working on an unsearched boneyard item was ALLOWED - the E3c failure repeats",
     "has_format": false,
-    "line": 508
+    "line": 519
    },
    {
     "label": "the refusal does not say UNKNOWN rather than open",
     "has_format": false,
-    "line": 510
+    "line": 521
    },
    {
     "label": "a searched, in-horizon item was refused - the gate blocks everything",
     "has_format": false,
-    "line": 512
+    "line": 523
    },
    {
     "label": "an ANTICIPATED item was allowed to be built - that is reinventing it",
     "has_format": false,
-    "line": 519
+    "line": 530
    },
    {
     "label": "a search 195 days old was treated as current",
     "has_format": false,
-    "line": 525
+    "line": 536
    },
    {
     "label": "the staleness refusal does not give the age",
     "has_format": false,
-    "line": 526
+    "line": 537
    },
    {
     "label": "a 2-day-old search was refused as stale - the horizon fires on everything",
     "has_format": false,
-    "line": 528
+    "line": 539
    },
    {
     "label": "an entry with NO SEARCH DATE was allowed - the gate fails open on absent evidence",
     "has_format": false,
-    "line": 540
+    "line": 551
    },
    {
     "label": "the undated refusal does not distinguish UNKNOWN age from too old",
     "has_format": false,
-    "line": 542
+    "line": 553
    },
    {
     "label": "the age came from the idea-level field instead of the newest evidence (got %s)",
     "has_format": true,
-    "line": 550
+    "line": 561
    },
    {
     "label": "nothing was due after 195 days",
     "has_format": false,
-    "line": 557
+    "line": 568
    },
    {
     "label": "the cadence returned a list instead of one item",
     "has_format": false,
-    "line": 558
+    "line": 569
    },
    {
     "label": "something was due 2 days after a search with no loops elapsed",
     "has_format": false,
-    "line": 561
+    "line": 572
    },
    {
     "label": "the loop budget came due and nothing was picked",
     "has_format": false,
-    "line": 563
+    "line": 574
    },
    {
     "label": "the loop-budget reason does not explain why an in-horizon item was picked",
     "has_format": false,
-    "line": 564
+    "line": 575
    },
    {
     "label": "a node citing published work was not read as externally COVERED",
     "has_format": false,
-    "line": 578
+    "line": 589
    },
    {
-    "label": "a node with no citation was read as externally OPEN instead of NOT_SEARCHED",
+    "label": "a node with no citation and no search was read as OPEN instead of NOT_SEARCHED",
     "has_format": false,
-    "line": 580
+    "line": 591
+   },
+   {
+    "label": "a node SEARCHED with nothing found was read as NOT_SEARCHED - the search that produced the absence is erased",
+    "has_format": false,
+    "line": 600
+   },
+   {
+    "label": "the searched-not-found verdict does not say it carries its search",
+    "has_format": false,
+    "line": 602
    },
    {
     "label": "a node whose evidence names a BLOCKER was not marked blocked internally",
     "has_format": false,
-    "line": 582
+    "line": 604
    }
   ],
   "problem_tree.py": [
    {
     "label": "there is not exactly one root: %s",
     "has_format": true,
-    "line": 460
+    "line": 471
    },
    {
     "label": "a node names a parent that does not exist: %s",
     "has_format": true,
-    "line": 462
+    "line": 473
    },
    {
     "label": "nodes unreachable from the root: %s",
     "has_format": true,
-    "line": 464
+    "line": 475
    },
    {
     "label": "the tree has a cycle",
     "has_format": false,
-    "line": 471
+    "line": 482
    },
    {
     "label": "a candidate names a node that does not exist: %s",
     "has_format": true,
-    "line": 498
+    "line": 509
    },
    {
     "label": "classify never says WOULD: %s",
     "has_format": true,
-    "line": 500
+    "line": 511
    },
    {
     "label": "classify never says MIGHT: %s",
     "has_format": true,
-    "line": 501
+    "line": 512
    },
    {
     "label": "a candidate has no stated failure mode: %s",
     "has_format": true,
-    "line": 532
+    "line": 543
    },
    {
     "label": "a node is marked settled with no evidence: %s",
     "has_format": true,
-    "line": 538
+    "line": 549
    },
    {
     "label": "an emitted entry is missing a required field: %s",
     "has_format": true,
-    "line": 547
+    "line": 558
    },
    {
     "label": "an ACTIVE entry lacks started or decides: %s",
     "has_format": true,
-    "line": 550
+    "line": 561
    },
    {
     "label": "an entry hedges in prior_art: %s",
     "has_format": true,
-    "line": 552
+    "line": 563
    },
    {
     "label": "an OR with one settled child is not solved",
     "has_format": false,
-    "line": 486
+    "line": 497
    },
    {
     "label": "an AND with all children solved is not solved",
     "has_format": false,
-    "line": 487
+    "line": 498
    },
    {
     "label": "an OR with NO settled child is still solved",
     "has_format": false,
-    "line": 489
+    "line": 500
    },
    {
     "label": "an AND with an unsolved child is still solved",
     "has_format": false,
-    "line": 490
+    "line": 501
    },
    {
     "label": "a child of an OR is not WOULD (got %s)",
     "has_format": true,
-    "line": 520
+    "line": 531
    },
    {
     "label": "a child of an AND with another unsettled sibling is not MIGHT (got %s)",
     "has_format": true,
-    "line": 521
+    "line": 532
    },
    {
     "label": "the LAST unsettled child of an AND is not WOULD (got %s)",
     "has_format": true,
-    "line": 523
+    "line": 534
    }
   ],
   "reevaluate.py": [
@@ -2203,5 +2217,5 @@
    }
   ]
  },
- "labels_digest": "2fc21f0973083d16"
+ "labels_digest": "b784d1e4abaa325e"
 }

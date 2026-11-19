@@ -245,8 +245,19 @@ def external_status(nid, nodes, ideas=None):
         if v.get("tree_node") == nid:
             return verdict_for(idea, ideas)[0], "prior-art register: %s" % idea
     ev = nodes[nid].get("evidence") or ""
-    if any(m in ev for m in EXTERNAL_MARKERS):
+    # THREE STATES, NOT TWO. A node that was searched and turned up nothing is OPEN; a node
+    # nobody looked at is NOT_SEARCHED. Reading the first as the second is the same
+    # two-states-one-label fault this lane cleared in its staleness gate (undated vs stale) and
+    # in its own ABSENT-vs-UNKNOWN rule, and it appeared here the moment a sweep came back
+    # empty: eleven nodes were swept, four found citations, and all seven of the rest reverted
+    # to "never checked" - erasing the search that produced them.
+    searched = "swept 2026-" in ev or "PRIOR ART" in ev
+    cited = any(m in ev for m in EXTERNAL_MARKERS)
+    if cited:
         return COVERED, "a literature citation in the node's own evidence"
+    if searched:
+        return OPEN, ("searched and nothing found - an absence claim that carries its search, "
+                      "not an unchecked node")
     return NOT_SEARCHED, "no citation in the evidence and no entry in the prior-art register"
 
 
@@ -577,8 +588,19 @@ def selftest() -> int:
     by = {r["node"]: r for r in rows}
     _plant("a node citing published work was not read as externally COVERED",
            by["P"]["external"] == COVERED)
-    _plant("a node with no citation was read as externally OPEN instead of NOT_SEARCHED",
+    _plant("a node with no citation and no search was read as OPEN instead of NOT_SEARCHED",
            by["Q"]["external"] == NOT_SEARCHED)
+
+    #     AND THE THIRD STATE: searched-and-found-nothing is OPEN, not NOT_SEARCHED. Reading
+    #     the first as the second erases the search that produced it, which happened to seven
+    #     nodes the moment a sweep came back empty.
+    N3 = {"S": dict(kind="LEAF", parent=None, say="swept, nothing found", status="open",
+                    evidence="PRIOR ART, swept 2026-11-19: NOT FOUND, searched explicitly.")}
+    r3 = join(N3, IDEAS)[0]
+    _plant("a node SEARCHED with nothing found was read as NOT_SEARCHED - the search that "
+           "produced the absence is erased", r3["external"] == OPEN)
+    _plant("the searched-not-found verdict does not say it carries its search",
+           "carries its search" in r3["why"])
     _plant("a node whose evidence names a BLOCKER was not marked blocked internally",
            by["R"]["internal"] == "blocked")
 
