@@ -3,11 +3,11 @@
  "resolve_from_outside": "D:\\code\\anchor-demo\\gatefly\\runs\\plant_manifest.json",
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
-  "modules_with_plants": 29,
-  "plants": 415,
+  "modules_with_plants": 30,
+  "plants": 424,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 6,
-  "labels_not_greppable_in_source": 63
+  "labels_not_greppable_in_source": 67
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -47,7 +47,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "63 of 415 labels (15.2%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 415. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "67 of 424 labels (15.8%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 424. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -177,6 +177,24 @@
    {
     "label": "a clear fall at n=256 is NOT separable, so the guard can never fire ([%.4f,%.4f] vs [%.4f,%.4f])",
     "longest_on_one_line": "a clear fall at n=256 is NOT separable, so the guard can never fire "
+   }
+  ],
+  "loop_rules.py": [
+   {
+    "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
+    "longest_on_one_line": "every single error was judged ARCHITECTURAL - a classifier that never says no is "
+   },
+   {
+    "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
+    "longest_on_one_line": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely "
+   },
+   {
+    "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
+    "longest_on_one_line": "an error has no explicit caught_class, so the summary would be inferred from "
+   },
+   {
+    "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
+    "longest_on_one_line": "every rule is already in the loop - a catalogue of twenty errors that implies the "
    }
   ],
   "metrics.py": [
@@ -994,6 +1012,53 @@
     "label": "lines_for(%d,%d,%d) produced a line of the wrong length",
     "has_format": true,
     "line": 207
+   }
+  ],
+  "loop_rules.py": [
+   {
+    "label": "an ARCHITECTURAL error names no loop rule: %s",
+    "has_format": true,
+    "line": 323
+   },
+   {
+    "label": "a NOT_ARCH error gives no reason: %s",
+    "has_format": true,
+    "line": 327
+   },
+   {
+    "label": "an error cites a rule that is not defined: %s",
+    "has_format": true,
+    "line": 330
+   },
+   {
+    "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
+    "has_format": false,
+    "line": 335
+   },
+   {
+    "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
+    "has_format": true,
+    "line": 341
+   },
+   {
+    "label": "a rule does not say where it is implemented: %s",
+    "has_format": true,
+    "line": 347
+   },
+   {
+    "label": "a rule claims to be IN LOOP but names no module that exists: %s",
+    "has_format": true,
+    "line": 355
+   },
+   {
+    "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
+    "has_format": true,
+    "line": 365
+   },
+   {
+    "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
+    "has_format": false,
+    "line": 368
    }
   ],
   "metrics.py": [
@@ -2469,5 +2534,5 @@
    }
   ]
  },
- "labels_digest": "4e3253db940e9f7e"
+ "labels_digest": "dff80105940cf174"
 }
