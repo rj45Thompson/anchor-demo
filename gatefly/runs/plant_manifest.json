@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 457,
+  "plants": 459,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 10,
-  "labels_not_greppable_in_source": 95
+  "labels_not_greppable_in_source": 97
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -63,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "95 of 457 labels (20.8%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 457. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "97 of 459 labels (21.1%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 459. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -315,6 +315,14 @@
    {
     "label": "every error was CLASSIFIED LIVE - then the marking is unnecessary and the first version of this note was right to claim a contemporaneous catalogue",
     "longest_on_one_line": "every error was CLASSIFIED LIVE - then the marking is unnecessary and the first "
+   },
+   {
+    "label": "no attributive error was caught without a peer anywhere in the chain - then a lone agent catches none of this class and the consolidation input is as the snipershot lane stated it",
+    "longest_on_one_line": "no attributive error was caught without a peer anywhere in the chain - then a lone "
+   },
+   {
+    "label": "the sibling sweeps are being counted as peer-independent - they were triggered by a peer finding the first instance",
+    "longest_on_one_line": "the sibling sweeps are being counted as peer-independent - they were triggered by "
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
@@ -1344,9 +1352,19 @@
     "line": 816
    },
    {
+    "label": "no attributive error was caught without a peer anywhere in the chain - then a lone agent catches none of this class and the consolidation input is as the snipershot lane stated it",
+    "has_format": false,
+    "line": 842
+   },
+   {
+    "label": "the sibling sweeps are being counted as peer-independent - they were triggered by a peer finding the first instance",
+    "has_format": false,
+    "line": 845
+   },
+   {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 819
+    "line": 849
    }
   ],
   "metrics.py": [
@@ -2827,5 +2845,5 @@
    }
   ]
  },
- "labels_digest": "502ea1020c19d6f1"
+ "labels_digest": "3b64bd428f619fc2"
 }

@@ -816,6 +816,36 @@ def selftest() -> int:
     _plant("every error was CLASSIFIED LIVE - then the marking is unnecessary and the first "
            "version of this note was right to claim a contemporaneous catalogue", bool(_rec))
 
+    # WHAT A SINGLE AGENT WOULD HAVE CAUGHT, decomposed - because the snipershot lane is
+    # putting the combined 0-of-16 to RJ as an input to a consolidation decision, and its
+    # inference from it ("a single agent would have caught approximately none of sixteen")
+    # overstates this lane's half.
+    #
+    # The 0-of-16 is about INSTRUMENTS and is solid: no plant, gate, probe or selftest across
+    # two lanes caught a single attributive error, because every instrument reads values and an
+    # attributive error leaves the value correct. But "no instrument" is not "no solo work":
+    _att = [e for e in ERRORS if e.get("kind") == "ATTRIBUTIVE"]
+    _peer = [e for e in _att if e["caught_class"].startswith("peer")]
+    _swept = [e for e in _att if "siblings" in e["caught_class"]]
+    _remeas = [e for e in _att if "re-measured" in e["caught_class"]]
+    print("  WHAT CAUGHT THE %d ATTRIBUTIVE ERRORS HERE:" % len(_att))
+    print("    %d by a peer lane directly" % len(_peer))
+    print("    %d by sweeping for siblings - solo work, but TRIGGERED by a peer's finding "
+          "elsewhere" % len(_swept))
+    print("    %d by re-measuring, with no peer involvement at all" % len(_remeas))
+    print("    0 by any instrument")
+    print("    So a lone agent that RE-MEASURES catches some; the sweeps are solo in execution")
+    print("    and peer-dependent in origin. 'Approximately none' understates it; '4 of 10 "
+          "solo'")
+    print("    overstates it. The defensible figure is %d of %d with no peer anywhere in the "
+          "chain." % (len(_remeas), len(_att)))
+    _plant("no attributive error was caught without a peer anywhere in the chain - then a lone "
+           "agent catches none of this class and the consolidation input is as the snipershot "
+           "lane stated it", bool(_remeas))
+    _plant("the sibling sweeps are being counted as peer-independent - they were triggered by "
+           "a peer finding the first instance",
+           all("siblings" not in e["caught_class"] for e in _remeas))
+
     _plant("every rule is already in the loop - a catalogue of twenty errors that implies the "
            "loop needs no change", len(new) > 0)
 
