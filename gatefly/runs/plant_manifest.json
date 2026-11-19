@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 31,
-  "plants": 465,
+  "plants": 467,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 10,
-  "labels_not_greppable_in_source": 99
+  "labels_not_greppable_in_source": 101
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -63,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "99 of 465 labels (21.3%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 465. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "101 of 467 labels (21.6%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 467. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -410,6 +410,14 @@
    }
   ],
   "published.py": [
+   {
+    "label": "a figure with no command carries no REASON - then it reads as an oversight rather than as a stated limit: %s",
+    "longest_on_one_line": "a figure with no command carries no REASON - then it reads as an oversight rather "
+   },
+   {
+    "label": "NO figure is marked unmeasurable - then this lane is claiming it can re-measure its own classification, which is re-running a judgement and calling it a check",
+    "longest_on_one_line": "NO figure is marked unmeasurable - then this lane is claiming it can re-measure "
+   },
    {
     "label": "the ratchet-agreement row does not record that it is RE-USE rather than corroboration - re-measuring the number cannot catch what was wrong about it",
     "longest_on_one_line": "the ratchet-agreement row does not record that it is RE-USE rather than "
@@ -2186,34 +2194,44 @@
   ],
   "published.py": [
    {
-    "label": "a published figure has no re-measurement command: %s",
+    "label": "a figure with no command carries no REASON - then it reads as an oversight rather than as a stated limit: %s",
     "has_format": true,
-    "line": 146
+    "line": 171
    },
    {
-    "label": "the register is empty - then it covers nothing and reads as 'nothing has drifted'",
-    "has_format": false,
-    "line": 147
+    "label": "a MEASURABLE figure also carries a why_not - then the marking means nothing: %s",
+    "has_format": true,
+    "line": 175
    },
    {
-    "label": "the ratchet-agreement row does not record that it is RE-USE rather than corroboration - re-measuring the number cannot catch what was wrong about it",
+    "label": "NO figure is marked unmeasurable - then this lane is claiming it can re-measure its own classification, which is re-running a judgement and calling it a check",
     "has_format": false,
     "line": 180
    },
    {
+    "label": "the register is empty - then it covers nothing and reads as 'nothing has drifted'",
+    "has_format": false,
+    "line": 183
+   },
+   {
+    "label": "the ratchet-agreement row does not record that it is RE-USE rather than corroboration - re-measuring the number cannot catch what was wrong about it",
+    "has_format": false,
+    "line": 216
+   },
+   {
     "label": "a row whose command RAISES was reported as agreeing - could-not-be-run read as pass",
     "has_format": false,
-    "line": 158
+    "line": 194
    },
    {
     "label": "a figure that MOVED was reported as unchanged - the register cannot see drift",
     "has_format": false,
-    "line": 168
+    "line": 204
    },
    {
     "label": "an UNCHANGED figure was reported as drift - it would cry wolf on every run",
     "has_format": false,
-    "line": 172
+    "line": 208
    }
   ],
   "reevaluate.py": [
@@ -2887,5 +2905,5 @@
    }
   ]
  },
- "labels_digest": "7944300640251d4c"
+ "labels_digest": "964887143ca3e7f2"
 }

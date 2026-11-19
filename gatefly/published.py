@@ -42,8 +42,24 @@ if HERE not in sys.path:
 PUBLISHED = {}
 
 
-def _reg(key, claim, published, how):
-    PUBLISHED[key] = {"claim": claim, "published": published, "how": how}
+# MOVED IS NOT WRONG, and this register cannot tell them apart - so it says so rather than
+# reading as a list of errors. A figure TRUE when published and since changed by work needs a
+# RESTATEMENT; one WRONG when published needs a RETRACTION. Different actions, and conflating
+# them manufactures self-accusations, which today is the one direction nobody audits. What it
+# refuses either way is updating the baseline here while the figure still stands where it was
+# read. That is the drift. The snipershot lane's distinction.
+def _reg(key, claim, published, how, why_not=None):
+    PUBLISHED[key] = {"claim": claim, "published": published, "how": how,
+                      "why_not": why_not}
+
+
+# A FIGURE THAT CANNOT BE RE-MEASURED IS MARKED WITH THE REASON, never given a plausible
+# command. Also that lane's point, and it found a real defect here: two rows below used to run
+# a command that re-read THIS LANE'S OWN CLASSIFICATION of each error and reported it as a
+# check. Re-running your own judgement is not measuring it. A command there would make the
+# register claim coverage it does not have, which is EMPTY-is-not-CLEAN again.
+def _unmeasurable(key, claim, published, why_not):
+    _reg(key, claim, published, None, why_not)
 
 
 def _unswept():
@@ -103,12 +119,18 @@ _reg("plant-count", "plants recorded in the manifest", "459 across 30", _plants)
 _reg("unpushed", "commits not on origin/main", "74", _unpushed)
 _reg("gate-decimals", "decimals a gate is printed to, bounded by the f16 ULP", "4",
      _gate_decimals)
-_reg("attributive-by-plant",
+_unmeasurable("attributive-by-plant",
      "attributive errors caught by a plant - published to two lanes and to RJ as 0 of 10",
-     "0 of 10", _attributive_zero)
-_reg("solo-attributive",
+     "0 of 10",
+     "the ATTRIBUTIVE label was assigned by this lane in one sitting, so a command would "
+     "re-read its own judgement and report it as a check. The underlying caught_class is "
+     "derivable from contemporaneous commits; the KIND is not.")
+_unmeasurable("solo-attributive",
      "attributive errors caught by re-measurement with no peer in the chain - published to RJ "
-     "as the consolidation input", "2 of 10", _solo_attributive)
+     "as the consolidation input", "2 of 10",
+     "same classification dependency, and the combined 2-of-16 rests half on the snipershot "
+     "lane's catalogue, which this lane cannot re-measure and must not restate as though it "
+     "could.")
 _reg("ratchet-agreement",
      "agreement with the ratchet lane - FAITHFUL RE-USE, not independent corroboration, which "
      "is the half that was published wrongly for two days",
@@ -121,6 +143,9 @@ def remeasure(keys=None):
     out = []
     for k in (keys or sorted(PUBLISHED)):
         v = PUBLISHED[k]
+        if v.get("how") is None:
+            out.append((k, v["published"], "NOT RE-MEASURABLE: " + v["why_not"], False))
+            continue
         try:
             now = v["how"]()
         except Exception as ex:
@@ -143,7 +168,18 @@ def selftest() -> int:
     # 1. every row must carry a command. A figure with no way to re-measure it must REFUSE,
     #    not be recorded as unverifiable - that is how a register becomes decorative.
     nohow = [k for k, v in PUBLISHED.items() if not callable(v.get("how"))]
-    _plant("a published figure has no re-measurement command: %s" % (nohow or "none"), not nohow)
+    _plant("a figure with no command carries no REASON - then it reads as an oversight rather "
+           "than as a stated limit: %s"
+           % ([k for k in nohow if not PUBLISHED[k].get("why_not")] or "none"),
+           all(PUBLISHED[k].get("why_not") for k in nohow))
+    _plant("a MEASURABLE figure also carries a why_not - then the marking means nothing: %s"
+           % ([k for k, v in PUBLISHED.items()
+               if callable(v.get("how")) and v.get("why_not")] or "none"),
+           not [k for k, v in PUBLISHED.items()
+                if callable(v.get("how")) and v.get("why_not")])
+    _plant("NO figure is marked unmeasurable - then this lane is claiming it can re-measure "
+           "its own classification, which is re-running a judgement and calling it a check",
+           bool(nohow))
     _plant("the register is empty - then it covers nothing and reads as 'nothing has drifted'",
            len(PUBLISHED) >= 5)
 
@@ -203,7 +239,12 @@ if __name__ == "__main__":
         if drift:
             moved += 1
     print()
-    print("  %d of %d moved." % (moved, len(rows)))
+    print("  %d of %d moved. MOVED IS NOT WRONG and this register cannot tell them apart:"
+          % (moved, len(rows)))
+    print("    a figure TRUE when published and since changed by work needs a RESTATEMENT;")
+    print("    one WRONG when published needs a RETRACTION. Conflating them manufactures")
+    print("    self-accusations, which is the one direction nobody audits. What is refused")
+    print("    either way is updating the baseline here while the figure stands where it was read.")
     print("  This re-MEASURES; it does not re-DERIVE. A figure correctly computed from a wrong")
     print("  premise passes here - which is most of the attributive class, and why a peer")
     print("  remains the only thing that catches the rest.")
