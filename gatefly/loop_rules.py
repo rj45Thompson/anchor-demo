@@ -40,129 +40,129 @@ ARCH, NOT_ARCH = "ARCHITECTURAL", "NOT_ARCH"
 # `caught_by` is recorded because it turned out to be the most informative column: almost
 # nothing was caught by a failing check.
 ERRORS = [
- {"id": "raw-cosine-for-whitened", "initiated_by": "this lane SENT a claim; peer re-derived it", "caught_class": "peer checked it",
+ {"id": "raw-cosine-for-whitened", "kind": "SUBSTANTIVE", "initiated_by": "this lane SENT a claim; peer re-derived it", "caught_class": "peer checked it",
   "what": "Reported a key collinearity of 0.9995 that was the shared activation component. The "
           "whitened cosine on the same keys is 0.7238.",
   "caught_by": "a sibling lane checking the finding instead of adopting it",
   "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
 
- {"id": "peer-resolved-by-display-name", "initiated_by": "this lane SENT a claim to the wrong lane", "caught_class": "peer checked it",
+ {"id": "peer-resolved-by-display-name", "kind": "ATTRIBUTIVE", "initiated_by": "this lane SENT a claim to the wrong lane", "caught_class": "peer checked it",
   "what": "Sent an R7 report to the v4 lane because its display name matched; the request came "
           "from the snipershot lane.",
   "caught_by": "the recipient saying it had not asked",
   "verdict": ARCH, "rule": "R-ADDRESS-BY-ID"},
 
- {"id": "guessed-which-module-was-running", "caught_class": "re-measured it",
+ {"id": "guessed-which-module-was-running", "kind": "ATTRIBUTIVE", "caught_class": "re-measured it",
   "what": "Reported metrics.py as the module grinding past ten minutes. It takes 1.0 s; "
           "ladder_probe.py at 266 s was next alphabetically.",
   "caught_by": "re-running the sweep with timing",
   "verdict": ARCH, "rule": "R-NAME-BEFORE-RUN"},
 
- {"id": "selftest-rewrote-its-own-baseline", "caught_class": "read an impossible output",
+ {"id": "selftest-rewrote-its-own-baseline", "kind": "SUBSTANTIVE", "caught_class": "read an impossible output",
   "what": "plant_manifest.selftest() called write(), refreshing the drift baseline it compares "
           "against, so drift could never be reported after one run.",
   "caught_by": "a 'no drift' verdict arriving right after two plants were added",
   "verdict": ARCH, "rule": "R-SELFTEST-IS-READONLY"},
 
- {"id": "premise-shaped-plants", "caught_class": "read an output, then re-measured",
+ {"id": "premise-shaped-plants", "kind": "SUBSTANTIVE", "caught_class": "read an output, then re-measured",
   "what": "Three plants asserting a deficiency still exists, so fixing the deficiency turned "
           "them red. Two more written 19 minutes after naming the shape.",
   "caught_by": "reading the shape screen's output, then a git-history diff",
   "verdict": ARCH, "rule": "R-PLANT-OVER-FIXTURE"},
 
- {"id": "vacuity-or-short-circuit", "initiated_by": "this lane SENT a shape; peer applied it to itself", "caught_class": "peer checked it",
+ {"id": "vacuity-or-short-circuit", "kind": "SUBSTANTIVE", "initiated_by": "this lane SENT a shape; peer applied it to itself", "caught_class": "peer checked it",
   "what": "A plant of the form (not X) or Y, unconditionally true once X empties.",
   "caught_by": "a sibling lane finding the mirror shape in its own lane",
   "verdict": ARCH, "rule": "R-PLANT-OVER-FIXTURE"},
 
- {"id": "vacuous-test-proposed-in-prose", "initiated_by": "this lane PROPOSED a test; peer ran it", "caught_class": "peer checked it",
+ {"id": "vacuous-test-proposed-in-prose", "kind": "SUBSTANTIVE", "initiated_by": "this lane PROPOSED a test; peer ran it", "caught_class": "peer checked it",
   "what": "Proposed 'replace the ratio with a difference of logs and see if the split survives'. "
           "log is monotone, so the two forms are identical by construction - 0 disagreements in "
           "200,000 draws. Proposed hours after building the vacuity screen.",
   "caught_by": "the lane that ran it",
   "verdict": ARCH, "rule": "R-SCREEN-THE-PROPOSAL"},
 
- {"id": "figure-drifted-across-three-values", "initiated_by": "this lane SENT prose; peer checked it against earlier prose", "caught_class": "peer checked it",
+ {"id": "figure-drifted-across-three-values", "kind": "ATTRIBUTIVE", "initiated_by": "this lane SENT prose; peer checked it against earlier prose", "caught_class": "peer checked it",
   "what": "Told RJ 12, then 16, then 11 unswept nodes. Two sources for one figure, with prose "
           "regenerating from whichever was last read.",
   "caught_by": "a sibling lane quoting the retraction back",
   "verdict": ARCH, "rule": "R-ONE-READER-PER-FIGURE"},
 
- {"id": "unqualified-peer-referent", "caught_class": "swept for siblings of a known fault",
+ {"id": "unqualified-peer-referent", "kind": "ATTRIBUTIVE", "caught_class": "swept for siblings of a known fault",
   "what": "'the sibling lane' used four times while two sibling lanes were active.",
   "caught_by": "sweeping this lane after seeing the same fault elsewhere",
   "verdict": ARCH, "rule": "R-SCOPE-IN-THE-STATEMENT"},
 
- {"id": "attribution-by-default", "caught_class": "swept for siblings of a known fault",
+ {"id": "attribution-by-default", "kind": "ATTRIBUTIVE", "caught_class": "swept for siblings of a known fault",
   "what": "lane_of() returned 'gatefly' for any unlisted file, so another lane's file became "
           "this lane's by being absent from a table.",
   "caught_by": "the same sweep",
   "verdict": ARCH, "rule": "R-NO-OWNERSHIP-BY-DEFAULT"},
 
- {"id": "cited-unpushed-commit-hashes", "caught_class": "re-measured it",
+ {"id": "cited-unpushed-commit-hashes", "kind": "ATTRIBUTIVE", "caught_class": "re-measured it",
   "what": "Gave sibling lanes commit hashes reachable only from this machine.",
   "caught_by": "checking whether a peer's row could resolve",
   "verdict": ARCH, "rule": "R-CITATION-RESOLVES-FOR-READER"},
 
- {"id": "labels-uncitable-from-source", "initiated_by": "peer tried to USE an artefact this lane supplied", "caught_class": "peer checked it",
+ {"id": "labels-uncitable-from-source", "kind": "ATTRIBUTIVE", "initiated_by": "peer tried to USE an artefact this lane supplied", "caught_class": "peer checked it",
   "what": "24 of 290 plant labels span several source lines, so a line-based grep cannot find "
           "them. A peer's row read BROKEN LINK while the label was plainly there.",
   "caught_by": "a peer's tracker failing on a real citation",
   "verdict": ARCH, "rule": "R-CITATION-RESOLVES-FOR-READER"},
 
- {"id": "staleness-gate-failed-open", "initiated_by": "peer SENT its own design; this lane checked itself against it", "caught_class": "peer checked it",
+ {"id": "staleness-gate-failed-open", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT its own design; this lane checked itself against it", "caught_class": "peer checked it",
   "what": "An entry with no search date passed the prior-art gate, because a missing date read "
           "as not-stale.",
   "caught_by": "a sibling lane saying it kept UNDATED distinct from STALE",
   "verdict": ARCH, "rule": "R-ABSENT-EVIDENCE-REFUSES"},
 
- {"id": "searched-nothing-found-read-as-unsearched", "caught_class": "read an impossible output",
+ {"id": "searched-nothing-found-read-as-unsearched", "kind": "SUBSTANTIVE", "caught_class": "read an impossible output",
   "what": "Seven nodes whose search found nothing reverted to NOT_SEARCHED, erasing the search.",
   "caught_by": "the count going 11 to 7 instead of to 0",
   "verdict": ARCH, "rule": "R-ABSENT-EVIDENCE-REFUSES"},
 
- {"id": "verdict-against-best-not-standard", "caught_class": "read an output",
+ {"id": "verdict-against-best-not-standard", "kind": "SUBSTANTIVE", "caught_class": "read an output",
   "what": "The ladder's _broke compared each rung to the best observed rung rather than to "
           "perfect, so it missed that 3,3,3 had already fallen.",
   "caught_by": "reading the verdict sentence out loud",
   "verdict": ARCH, "rule": "R-COMPARE-TO-THE-STANDARD"},
 
- {"id": "plant-matched-its-own-docstring", "caught_class": "a plant failed",
+ {"id": "plant-matched-its-own-docstring", "kind": "SUBSTANTIVE", "caught_class": "a plant failed",
   "what": "check_hover's independence plant grepped source text for 'import gate_math' and "
           "matched the docstring sentence claiming the independence.",
   "caught_by": "the plant failing on its first run",
   "verdict": ARCH, "rule": "R-ASSERT-ON-STRUCTURE"},
 
- {"id": "plant-stronger-than-its-comment", "caught_class": "a plant failed",
+ {"id": "plant-stronger-than-its-comment", "kind": "SUBSTANTIVE", "caught_class": "a plant failed",
   "what": "A comment said the rank order was 'nearly lambda-stable'; the assertion beneath it "
           "demanded it be identical, and failed.",
   "caught_by": "the plant failing on its first run",
   "verdict": ARCH, "rule": "R-ASSERT-ON-STRUCTURE"},
 
- {"id": "artefact-understated-its-own-figures", "initiated_by": "peer SENT a derivation", "caught_class": "peer checked it",
+ {"id": "artefact-understated-its-own-figures", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT a derivation", "caught_class": "peer checked it",
   "what": "runs/r9_keys.json called its whitened figures 'relative orderings' because lambda was "
           "fixed at 1.0. The whitened cosine is exactly lambda-free, so they were absolute.",
   "caught_by": "a sibling lane's algebra",
   "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
 
- {"id": "unscoped-saturation-claim", "initiated_by": "peer SENT a passing remark", "caught_class": "peer checked it",
+ {"id": "unscoped-saturation-claim", "kind": "SUBSTANTIVE", "initiated_by": "peer SENT a passing remark", "caught_class": "peer checked it",
   "what": "'The gate saturates' stated unqualified; true at a~250, which is a lambda choice.",
   "caught_by": "a sibling lane's passing remark about concavity",
   "verdict": ARCH, "rule": "R-SCOPE-IN-THE-STATEMENT"},
 
- {"id": "m8-named-the-wrong-readout", "initiated_by": "peer ASKED for a prediction about a named population", "caught_class": "peer asked an unanswerable question",
+ {"id": "m8-named-the-wrong-readout", "kind": "SUBSTANTIVE", "initiated_by": "peer ASKED for a prediction about a named population", "caught_class": "peer asked an unanswerable question",
   "what": "Pitched the gate to two lanes as the per-edit capacity read. The gate moves 1e-4 "
           "where c/a moves five orders of magnitude.",
   "caught_by": "a sibling lane asking a question the arithmetic could not answer",
   "verdict": ARCH, "rule": "R-READOUT-MUST-MOVE"},
 
- {"id": "reinvented-published-metrics", "caught_class": "re-measured it",
+ {"id": "reinvented-published-metrics", "kind": "SUBSTANTIVE", "caught_class": "re-measured it",
   "what": "The set-valued movement count is PEAK's metric; grow() is T-Patcher. Both published "
           "first.",
   "caught_by": "a literature sweep done after the work",
   "verdict": ARCH, "rule": "R-PRIOR-ART-BEFORE-BUILD"},
 
- {"id": "endorsed-a-figure-without-computing-it",
+ {"id": "endorsed-a-figure-without-computing-it", "kind": "SUBSTANTIVE",
   "initiated_by": "peer SENT a caveat; this lane agreed with its arithmetic",
   "caught_class": "peer checked it",
   "what": "Wrote 'at nine tests one survivor at 5% is expected', agreeing with a peer's "
@@ -173,7 +173,7 @@ ERRORS = [
   "caught_by": "the v4 lane correcting the peer, who then re-derived and told this lane",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
- {"id": "adopted-the-correction-to-my-own-adoption",
+ {"id": "adopted-the-correction-to-my-own-adoption", "kind": "SUBSTANTIVE",
   "initiated_by": "peer SENT a corrected figure; this lane took it while fixing the first one",
   "caught_class": "peer checked it",
   "what": "Took '2.07 expected survivors under dependence' as the correction to error 25, and "
@@ -188,7 +188,7 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
- {"id": "quoted-faithful-re-use-as-independent-corroboration",
+ {"id": "quoted-faithful-re-use-as-independent-corroboration", "kind": "ATTRIBUTIVE",
   "initiated_by": "peer RETRACTED a claim about this lane and the retraction applied here too",
   "caught_class": "peer checked it",
   "what": "Reported 'the gate arithmetic is proven bit-identical to the ratchet lane, max|dA| "
@@ -204,7 +204,7 @@ ERRORS = [
                "reasoning applies here",
   "verdict": ARCH, "rule": "R-AGREEMENT-NEEDS-INDEPENDENT-PATHS"},
 
- {"id": "miscredited-my-own-correction-to-the-lane-i-corrected",
+ {"id": "miscredited-my-own-correction-to-the-lane-i-corrected", "kind": "ATTRIBUTIVE",
   "initiated_by": "this lane SENT a tally; peer checked its own commit log against it",
   "caught_class": "peer checked it",
   "what": "Listed three v4-lane claims that inverted a published result here, including the "
@@ -217,7 +217,7 @@ ERRORS = [
   "caught_by": "the v4 lane reading its own commit titles against this lane's tally",
   "verdict": ARCH, "rule": "R-ATTRIBUTE-BY-ORIGIN-NOT-SUBJECT"},
 
- {"id": "aimed-a-right-principle-at-the-wrong-sentence",
+ {"id": "aimed-a-right-principle-at-the-wrong-sentence", "kind": "ATTRIBUTIVE",
   "initiated_by": "this lane SENT a correction; peer re-derived what it actually said",
   "caught_class": "peer checked it",
   "what": "Told the v4 lane its 4.613e-09 against this lane's 4.3e-09 'was agreement between "
@@ -231,7 +231,7 @@ ERRORS = [
   "caught_by": "the v4 lane quoting back what it had actually written",
   "verdict": ARCH, "rule": "R-AGREEMENT-NEEDS-INDEPENDENT-PATHS"},
 
- {"id": "r7-plant-measured-the-wrong-dtype",
+ {"id": "r7-plant-measured-the-wrong-dtype", "kind": "SUBSTANTIVE",
   "initiated_by": "peer READ this lane's source and found the cast",
   "caught_class": "peer checked it",
   "what": "gate_math's R7 plant perturbed weights by a FLOAT32 ULP while its label said "
@@ -244,7 +244,7 @@ ERRORS = [
   "caught_by": "the v4 lane reading the line, after both lanes had built on the figure",
   "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
 
- {"id": "mismatched-baseline-under-a-fixed-numerator",
+ {"id": "mismatched-baseline-under-a-fixed-numerator", "kind": "SUBSTANTIVE",
   "initiated_by": "peer SENT a corrected figure; this lane re-derived the DENOMINATOR only",
   "caught_class": "peer checked it",
   "what": "Reported 'the corrected comparison is 0.0218 against 0.00836, a factor of 2.6'. The "
@@ -258,7 +258,7 @@ ERRORS = [
   "caught_by": "the v4 lane, after both other lanes had published the same wrong factor",
   "verdict": ARCH, "rule": "R-BASELINE-AT-THE-SAME-MEAN"},
 
- {"id": "reported-magnitude-without-direction", "initiated_by": "peer COMPUTED a signed error after accepting a correction", "caught_class": "peer checked it",
+ {"id": "reported-magnitude-without-direction", "kind": "SUBSTANTIVE", "initiated_by": "peer COMPUTED a signed error after accepting a correction", "caught_class": "peer checked it",
   "what": "Planted that (1-r)/4 is CLOSER to the exact peak than (1-r)/2, with no assertion of "
           "which SIDE. It under-estimates at every r, and the peak is a BOUND - so the "
           "approximation licenses a claim the exact form forbids. Magnitude without sign, in a "
@@ -266,7 +266,7 @@ ERRORS = [
   "caught_by": "the v4 lane computing the signed error after accepting the correction",
   "verdict": ARCH, "rule": "R-STATE-THE-DIRECTION"},
 
- {"id": "comment-asserted-what-code-did-not-do", "caught_class": "looked at the artefact",
+ {"id": "comment-asserted-what-code-did-not-do", "kind": "SUBSTANTIVE", "caught_class": "looked at the artefact",
   "what": "A comment said the distance fade stops the labels piling into a smear. The fade "
           "worked as written and the smear was there: the defect is screen-space collision.",
   "caught_by": "looking at a screenshot",
@@ -278,7 +278,7 @@ ERRORS = [
              "screens. The catching mechanism here was looking at the artefact, which is not a "
              "loop rule but a habit."},
 
- {"id": "premise-retirement-action-too-aggressive", "caught_class": "read an output",
+ {"id": "premise-retirement-action-too-aggressive", "kind": "SUBSTANTIVE", "caught_class": "read an output",
   "what": "A premise's retirement action said to drop the zero-plant census row. That row "
           "watches modules not yet written; only the premise was spent.",
   "caught_by": "the premise actually expiring and the action being acted on",
@@ -601,6 +601,41 @@ def selftest() -> int:
     _plant("MOST peer-caught errors started with a peer asking for a value (%d of %d) - then "
            "the snipershot lane's hypothesis holds here and this lane's counter-result is "
            "wrong" % (len(_asked), len(_init)), len(_asked) < len(_init) / 2)
+
+    # THE SHARPEST RESULT IN THE CATALOGUE, and it is the snipershot lane's framing tested
+    # against this lane's data rather than agreed with.
+    #
+    # It proposed that all its misuses of "independent" were ATTRIBUTIVE - claims about where
+    # evidence CAME FROM rather than what it SHOWED - and that the arithmetic held every time,
+    # which is why no numeric instrument caught any of them. Classified here:
+    #
+    #     ATTRIBUTIVE   caught by a plant failing   0 of 10
+    #     SUBSTANTIVE   caught by a plant failing   2 of 21
+    #
+    # ZERO OF TEN. A plant checks a number; an attributive error leaves the number correct and
+    # misstates its provenance, so there is nothing for a plant to be wrong about. All ten were
+    # caught by a peer checking (6), a re-measurement (2), or a sweep for siblings of a known
+    # fault (2).
+    #
+    # THE WIDER GENERALISATION DOES NOT TRANSFER, and that is worth recording against it: this
+    # lane is 68% SUBSTANTIVE against that lane's near-total attributive mix. Its errors were
+    # about provenance because its work IS provenance; this lane measures a net, so its faults
+    # land in the measurement - a dtype cast, a raw cosine, the wrong readout, a mismatched
+    # baseline. The mechanism generalises; the mix is a property of what a lane does.
+    _att = [e for e in ERRORS if e.get("kind") == "ATTRIBUTIVE"]
+    _att_plant = [e for e in _att if e["caught_class"] == "a plant failed"]
+    _plant("a plant caught an ATTRIBUTIVE error (%d of %d) - then numeric instruments are not "
+           "blind to provenance after all and this finding is wrong"
+           % (len(_att_plant), len(_att)), not _att_plant)
+    _sub = [e for e in ERRORS if e.get("kind") == "SUBSTANTIVE"]
+    _plant("no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not "
+           "about attribution, it is that plants catch nothing"
+           % len([e for e in _sub if e["caught_class"] == "a plant failed"]),
+           any(e["caught_class"] == "a plant failed" for e in _sub))
+    _plant("every error is classified ATTRIBUTIVE or SUBSTANTIVE: %s"
+           % ([e["id"] for e in ERRORS if e.get("kind") not in ("ATTRIBUTIVE", "SUBSTANTIVE")]
+              or "all classified"),
+           all(e.get("kind") in ("ATTRIBUTIVE", "SUBSTANTIVE") for e in ERRORS))
 
     _plant("every rule is already in the loop - a catalogue of twenty errors that implies the "
            "loop needs no change", len(new) > 0)

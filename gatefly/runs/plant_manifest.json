@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 447,
+  "plants": 450,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 10,
-  "labels_not_greppable_in_source": 86
+  "labels_not_greppable_in_source": 88
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -63,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "86 of 447 labels (19.2%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 447. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "88 of 450 labels (19.6%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 450. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -279,6 +279,14 @@
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "longest_on_one_line": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then "
+   },
+   {
+    "label": "a plant caught an ATTRIBUTIVE error (%d of %d) - then numeric instruments are not blind to provenance after all and this finding is wrong",
+    "longest_on_one_line": "a plant caught an ATTRIBUTIVE error (%d of %d) - then numeric instruments are not "
+   },
+   {
+    "label": "no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not about attribution, it is that plants catch nothing",
+    "longest_on_one_line": "no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not "
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
@@ -1258,9 +1266,24 @@
     "line": 601
    },
    {
+    "label": "a plant caught an ATTRIBUTIVE error (%d of %d) - then numeric instruments are not blind to provenance after all and this finding is wrong",
+    "has_format": true,
+    "line": 627
+   },
+   {
+    "label": "no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not about attribution, it is that plants catch nothing",
+    "has_format": true,
+    "line": 631
+   },
+   {
+    "label": "every error is classified ATTRIBUTIVE or SUBSTANTIVE: %s",
+    "has_format": true,
+    "line": 635
+   },
+   {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 605
+    "line": 640
    }
   ],
   "metrics.py": [
@@ -2741,5 +2764,5 @@
    }
   ]
  },
- "labels_digest": "2e756c472f87eea7"
+ "labels_digest": "53fa391781a28e71"
 }
