@@ -3,11 +3,11 @@
  "resolve_from_outside": "D:\\code\\anchor-demo\\gatefly\\runs\\plant_manifest.json",
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
-  "modules_with_plants": 28,
-  "plants": 383,
+  "modules_with_plants": 29,
+  "plants": 392,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 44
+  "labels_not_greppable_in_source": 45
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -37,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "44 of 383 labels (11.5%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 383. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "45 of 392 labels (11.5%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 392. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -241,6 +241,12 @@
    {
     "label": "the report does not say the two counts are different questions - the next person to read it quotes whichever they saw last",
     "longest_on_one_line": "the report does not say the two counts are different questions - the next person "
+   }
+  ],
+  "uml_bridge.py": [
+   {
+    "label": "the reverse walk missed an unmapped module - work nobody can say why they did would stay invisible",
+    "longest_on_one_line": "the reverse walk missed an unmapped module - work nobody can say why they did "
    }
   ]
  },
@@ -2144,6 +2150,53 @@
     "line": 195
    }
   ],
+  "uml_bridge.py": [
+   {
+    "label": "no UC steps were read from the use case model - the refine links point at nothing",
+    "has_format": false,
+    "line": 164
+   },
+   {
+    "label": "a refine link points at a UC step that does not exist: %s",
+    "has_format": true,
+    "line": 171
+   },
+   {
+    "label": "no refine links at all",
+    "has_format": false,
+    "line": 173
+   },
+   {
+    "label": "a refine link hangs off a node that is not terminal: %s",
+    "has_format": true,
+    "line": 178
+   },
+   {
+    "label": "a terminal node has no agent entry",
+    "has_format": false,
+    "line": 183
+   },
+   {
+    "label": "the unassigned agent is not used, so a node nobody owns would be invisible",
+    "has_format": false,
+    "line": 184
+   },
+   {
+    "label": "no leaf is assigned to THE LITERATURE - then section 3 draws no distinction",
+    "has_format": false,
+    "line": 188
+   },
+   {
+    "label": "the reverse walk reports unmapped modules when every module IS mapped: %s",
+    "has_format": true,
+    "line": 203
+   },
+   {
+    "label": "the reverse walk missed an unmapped module - work nobody can say why they did would stay invisible",
+    "has_format": false,
+    "line": 197
+   }
+  ],
   "uml_kaos.py": [
    {
     "label": "a declared traceability link does not resolve: %s",
@@ -2217,5 +2270,5 @@
    }
   ]
  },
- "labels_digest": "b784d1e4abaa325e"
+ "labels_digest": "6f442f4a906672fc"
 }

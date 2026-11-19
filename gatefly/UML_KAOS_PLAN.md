@@ -55,7 +55,7 @@ Current state: 25 nodes, **12 leaves unrealised, 12 untested, 19 unanalysed**, 3
 
 ---
 
-## 2. NOT BUILT: obstacle refinement as a first-class tree
+## 2. NOT BUILT, AND DELIBERATELY SO: obstacle refinement as a first-class tree
 
 Obstacles are currently a flat list per node. KAOS refines an obstacle the same way it refines a
 goal - AND/OR, down to *basic* obstacles - which is what turns "what could go wrong" from a
@@ -65,7 +65,12 @@ brainstorm into a walk.
 share a cause. Today 19 of 25 nodes have **none**, so the gap is breadth, not depth: enumerating
 one obstacle per node beats refining the six that exist.
 
-## 3. NOT BUILT: agents and responsibility assignment
+**Still not built on 2026-11-19, when 3, 4 and 5 were.** Its own trigger is not met, and
+building it while finishing the others off would mean ignoring the condition written beside it.
+A plan whose conditions are skipped the moment somebody is closing items is a plan nobody
+consults. This stays unbuilt until a node has more than ~3 obstacles.
+
+## 3. BUILT 2026-11-19 (gatefly/uml_bridge.py): agents and responsibility assignment
 
 KAOS assigns each leaf goal to an **agent** that can achieve it alone. Here the agents are real
 and distinct: this lane, the ratchet lane, the v4 lane, and *the literature*. A leaf assigned to
@@ -75,7 +80,7 @@ at depth) is already marked `external` by hand for exactly that reason.
 **Worth building when** more than one lane edits the tree. It would answer "who is blocked on
 whom", which three parallel lanes currently answer by messaging each other.
 
-## 4. NOT BUILT: «refine» links to the use case model
+## 4. BUILT 2026-11-19 (gatefly/uml_bridge.py): «refine» links to the use case model
 
 `gatefly/UC_GATEFLY.md` already has numbered steps with observable outcomes and REQ- rules
 linked to steps. Right now the goal tree and the use case model are two unconnected
@@ -87,7 +92,7 @@ implementation, and does that step have a plant?"*
 would catch the specific drift where a use case step is written, the goal moves on, and the step
 is never revisited.
 
-## 5. NOT BUILT: the gate on the OTHER direction - artefacts with no goal
+## 5. BUILT 2026-11-19 (gatefly/uml_bridge.py): the gate on the OTHER direction - artefacts with no goal
 
 Today the gate walks goals and asks what realises them. The reverse walk asks: **which modules,
 plants and run files serve no node of the tree?** That finds work nobody can say why they did,
