@@ -1,0 +1,209 @@
+{
+ "what": "Per-module selftest wall time and exit code for the gatefly lane, measured in one sequential pass on this host. Written because a sibling lane was about to justify a design decision with a timeout figure attributed to this lane that this lane had never measured.",
+ "host_note": "one sequential pass, CPU and GPU as configured on this machine, no warm cache between modules. Each module pays its own torch import.",
+ "totals": {
+  "modules": 22,
+  "plants": 286,
+  "failed": 0,
+  "seconds": 748.9,
+  "minutes": 12.5
+ },
+ "rows": [
+  {
+   "module": "mnk.py",
+   "seconds": 285.2,
+   "exit": 0,
+   "plants": 10,
+   "failed": 0
+  },
+  {
+   "module": "ladder_probe.py",
+   "seconds": 266.4,
+   "exit": 0,
+   "plants": 14,
+   "failed": 0
+  },
+  {
+   "module": "retrain.py",
+   "seconds": 37.1,
+   "exit": 0,
+   "plants": 22,
+   "failed": 0
+  },
+  {
+   "module": "gate_math.py",
+   "seconds": 34.6,
+   "exit": 0,
+   "plants": 18,
+   "failed": 0
+  },
+  {
+   "module": "gate_read.py",
+   "seconds": 29.7,
+   "exit": 0,
+   "plants": 16,
+   "failed": 0
+  },
+  {
+   "module": "headroom.py",
+   "seconds": 15.9,
+   "exit": 0,
+   "plants": 9,
+   "failed": 0
+  },
+  {
+   "module": "shrink.py",
+   "seconds": 12.8,
+   "exit": 0,
+   "plants": 14,
+   "failed": 0
+  },
+  {
+   "module": "data_ttt.py",
+   "seconds": 12.4,
+   "exit": 0,
+   "plants": 6,
+   "failed": 0
+  },
+  {
+   "module": "train_ttt.py",
+   "seconds": 11.3,
+   "exit": 0,
+   "plants": 5,
+   "failed": 0
+  },
+  {
+   "module": "play.py",
+   "seconds": 9.5,
+   "exit": 0,
+   "plants": 8,
+   "failed": 0
+  },
+  {
+   "module": "preservation_shape.py",
+   "seconds": 9.3,
+   "exit": 0,
+   "plants": 14,
+   "failed": 0
+  },
+  {
+   "module": "net.py",
+   "seconds": 9.2,
+   "exit": 0,
+   "plants": 10,
+   "failed": 0
+  },
+  {
+   "module": "ladder.py",
+   "seconds": 9.1,
+   "exit": 0,
+   "plants": 17,
+   "failed": 0
+  },
+  {
+   "module": "oracle.py",
+   "seconds": 1.4,
+   "exit": 0,
+   "plants": 15,
+   "failed": 0
+  },
+  {
+   "module": "pong.py",
+   "seconds": 1.1,
+   "exit": 0,
+   "plants": 8,
+   "failed": 0
+  },
+  {
+   "module": "metrics.py",
+   "seconds": 1.0,
+   "exit": 0,
+   "plants": 13,
+   "failed": 0
+  },
+  {
+   "module": "offline.py",
+   "seconds": 0.8,
+   "exit": 0,
+   "plants": 6,
+   "failed": 0
+  },
+  {
+   "module": "ttt.py",
+   "seconds": 0.5,
+   "exit": 0,
+   "plants": 9,
+   "failed": 0
+  },
+  {
+   "module": "problem_tree.py",
+   "seconds": 0.4,
+   "exit": 0,
+   "plants": 19,
+   "failed": 0
+  },
+  {
+   "module": "reevaluate.py",
+   "seconds": 0.4,
+   "exit": 0,
+   "plants": 11,
+   "failed": 0
+  },
+  {
+   "module": "scale_guard.py",
+   "seconds": 0.4,
+   "exit": 0,
+   "plants": 23,
+   "failed": 0
+  },
+  {
+   "module": "uml_kaos.py",
+   "seconds": 0.4,
+   "exit": 0,
+   "plants": 19,
+   "failed": 0
+  }
+ ],
+ "caps": {
+  "30": {
+   "modules_killed": 4,
+   "module_names": [
+    "gate_math.py",
+    "ladder_probe.py",
+    "mnk.py",
+    "retrain.py"
+   ],
+   "plants_misreported": 64
+  },
+  "60": {
+   "modules_killed": 2,
+   "module_names": [
+    "ladder_probe.py",
+    "mnk.py"
+   ],
+   "plants_misreported": 24
+  },
+  "120": {
+   "modules_killed": 2,
+   "module_names": [
+    "ladder_probe.py",
+    "mnk.py"
+   ],
+   "plants_misreported": 24
+  },
+  "300": {
+   "modules_killed": 0,
+   "module_names": [],
+   "plants_misreported": 0
+  },
+  "600": {
+   "modules_killed": 0,
+   "module_names": [],
+   "plants_misreported": 0
+  }
+ },
+ "finding": "Every one of the 22 modules exits 0 and every plant passes, so ANY red under a cap is a false red. A 60 s cap turns 2 modules red and misreports 24 plants; a 300 s cap turns none red. So the FAILED / COULD-NOT-BE-RUN distinction is not hypothetical at the caps actually in use - it is the difference between 0 and 24 plants reading as broken.",
+ "concentration": "The two slowest modules (mnk.py 285.2 s, ladder_probe.py 266.4 s) are 73.7% of the total cost while holding 8.4% of the plants. So a cheap full sweep is available by deferring two modules, and the cost column is worth having per module rather than in aggregate.",
+ "correction": "This lane previously told the user and a sibling lane that metrics.py was the module grinding past ten minutes. That was WRONG: metrics.py runs in 1.0 s and is among the fastest here. The slow module is ladder_probe.py at 266.4 s, which sits between ladder.py and metrics.py alphabetically - the last line printed was ladder.py and metrics.py was assumed to be next. A guess about which module was running, reported as an observation.",
+ "not_verified": "One run per module, so these are single samples with no variance estimate, and they include per-process torch import cost that a single-process runner would pay once. They do not measure how often a plant FIRES, which is the other column the light-loop cost item needs and which cannot be read from a passing run."
+}
