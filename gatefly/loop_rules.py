@@ -188,6 +188,19 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
+ {"id": "miscredited-my-own-correction-to-the-lane-i-corrected",
+  "initiated_by": "this lane SENT a tally; peer checked its own commit log against it",
+  "caught_class": "peer checked it",
+  "what": "Listed three v4-lane claims that inverted a published result here, including the "
+          "compression-versus-detectability distinction. That one is THIS LANE'S: it corrected "
+          "the v4 lane, which accepted it under its own commit ec52e081. Two from them, not "
+          "three. The error runs in the direction of giving credit AWAY, which is why it felt "
+          "safe to write and is exactly why direction matters on an attribution error too. And "
+          "it sat inside a registry that COUNTS peer claims - the one place a miscredit "
+          "compounds.",
+  "caught_by": "the v4 lane reading its own commit titles against this lane's tally",
+  "verdict": ARCH, "rule": "R-ATTRIBUTE-BY-ORIGIN-NOT-SUBJECT"},
+
  {"id": "aimed-a-right-principle-at-the-wrong-sentence",
   "initiated_by": "this lane SENT a correction; peer re-derived what it actually said",
   "caught_class": "peer checked it",
@@ -327,6 +340,18 @@ RULES = {
            "Re-deriving is also what produced 11 of this catalogue's catches, in both "
            "directions, and it requires no request from either side.",
    "in_loop": True, "where": "loop_rules.py, PEER_CLAIMS_REDERIVED and the initiated_by field"},
+ "R-ATTRIBUTE-BY-ORIGIN-NOT-SUBJECT": {
+   "says": "A claim is identified by WHO MADE IT, never by what it is about. All three "
+           "attribution faults in this exchange took that one form: a lane routed its own side "
+           "session's board findings here because the SUBJECT was gates; it then handed this "
+           "lane's gate back as that lane's; and this lane credited its own correction to the "
+           "lane the correction was ABOUT. Subject is the nearest handle and it is never the "
+           "right one. Note the direction too - this instance gave credit away, which is why "
+           "it felt safe to write.",
+   "in_loop": True,
+   "where": "loop_rules.py, the PEER_CLAIMS table - every claim carries its origin and a plant "
+            "refuses one that does not. The MESSAGE-level half is still unimplemented: nothing "
+            "checks a tally in prose before it is sent, which is where this instance occurred"},
  "R-AGREEMENT-NEEDS-INDEPENDENT-PATHS": {
    "says": "Agreement between two computations is evidence exactly to the extent their "
            "DERIVATION PATHS are independent. Two implementations written from one source "
@@ -392,15 +417,34 @@ RULES = {
 # ADOPTED, and three of them arrived with working arithmetic attached, which is what makes
 # adoption tempting. That is the argument for the rule below, and it is a number rather than a
 # preference.
-PEER_CLAIMS_REDERIVED = {"held": 9, "failed": 7}
-# AND THE RATE IS NOT THE RULE'S YIELD, which the snipershot lane is right about: every one of
-# these is a claim somebody thought worth sending, so the denominator is pre-filtered toward
-# the contested and the interesting. The rate on claims nobody bothered to transmit is
-# unmeasured and certainly better. The rule earns its keep on the five that would have
-# propagated, not on the ratio.
-#     + the binomial P(>=4) quoted as 0.0084                FAILED - that is P(>=3)=0.00836;
-#       P(>=4)=0.00064, an off-by-one that UNDERSTATES the sender's own conclusion 13x
-#     + the resampling SE at 4000 draws, 0.0011 at p=0.005   HELD - exactly
+# Peer claims this lane RE-DERIVED rather than adopted, each with WHO MADE IT. Was a bare
+# {held, failed} pair - counts with no origin field, in the registry whose whole subject is
+# attribution. A miscredit lived in a message about this table and the table could not have
+# caught it. R-ATTRIBUTE-BY-ORIGIN-NOT-SUBJECT, applied to itself.
+V4, SNIPER = "v4", "snipershot"
+PEER_CLAIMS = [
+ ("Jensen bound on the concave gate",                      V4,     "HELD"),
+ ("g(x) + g(1/x) = 1, the reciprocal symmetry",            V4,     "HELD"),
+ ("the hypergeometric null, mean 14.72, [11,18]",          V4,     "HELD"),
+ ("a proportional to 1/lambda, the absorbable axis",       SNIPER, "HELD"),
+ ("the whitened cosine is exactly lambda-free",            V4,     "HELD"),
+ ("the R7 plant perturbs float32 on float16 weights",      V4,     "HELD"),
+ ("agreement needs independent derivation paths",          V4,     "HELD"),
+ ("the resampling SE at 4000 draws, 0.0011 at p=0.005",    SNIPER, "HELD"),
+ ("the scope rule has a mechanical core",                  SNIPER, "HELD"),
+ ("my tally miscredits my own correction to them",         V4,     "HELD"),
+ ("peak ~ (1-r)/2",                                        V4,     "FAILED"),
+ ("'a weak readout EVERYWHERE'",                           V4,     "FAILED"),
+ ("'H7-H16 are your board'",                               SNIPER, "FAILED"),
+ ("cross-lane catches start with a request for a value",   SNIPER, "FAILED"),
+ ("2.069 expected survivors under dependence",             SNIPER, "FAILED"),
+ ("P(>=4) = 0.0084",                                       SNIPER, "FAILED"),
+ ("runs/plant_manifest.json is stale",                     V4,     "FAILED"),
+]
+PEER_CLAIMS_REDERIVED = {
+ "held": sum(1 for _, _, v in PEER_CLAIMS if v == "HELD"),
+ "failed": sum(1 for _, _, v in PEER_CLAIMS if v == "FAILED"),
+}
 
 
 def check():
@@ -520,6 +564,16 @@ def selftest() -> int:
     # 10. the peer-claim rate must be recorded with BOTH halves. A count of claims that failed,
     #     without the count that held, is a scare number; the count that held, without the
     #     failures, is a reason to adopt. Either alone argues the opposite of the truth.
+    _bad = [c for c, o, v in PEER_CLAIMS if o not in (V4, SNIPER)]
+    _plant("a peer claim carries no recorded ORIGIN: %s - the registry that counts claims "
+           "cannot catch a miscredit without one" % (_bad or "none"), not _bad)
+    _plant("the counts disagree with the claim table (%d+%d vs %d)"
+           % (PEER_CLAIMS_REDERIVED["held"], PEER_CLAIMS_REDERIVED["failed"], len(PEER_CLAIMS)),
+           PEER_CLAIMS_REDERIVED["held"] + PEER_CLAIMS_REDERIVED["failed"] == len(PEER_CLAIMS))
+    _plant("every peer claim came from ONE lane - then this table cannot distinguish origins "
+           "and the rule it implements is untested here",
+           len({o for _, o, _ in PEER_CLAIMS}) > 1)
+
     _plant("the peer-claim re-derivation record is missing a half: %s"
            % PEER_CLAIMS_REDERIVED,
            PEER_CLAIMS_REDERIVED.get("held", 0) > 0 and PEER_CLAIMS_REDERIVED.get("failed", 0) > 0)
