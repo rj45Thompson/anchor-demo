@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 29,
-  "plants": 401,
+  "plants": 403,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 52
+  "labels_not_greppable_in_source": 54
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -37,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "52 of 401 labels (13.0%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 401. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "54 of 403 labels (13.4%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 403. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -111,6 +111,14 @@
    {
     "label": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free and the 'nearly' in the comment above is understated",
     "longest_on_one_line": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free "
+   },
+   {
+    "label": "batch installation EXCEEDS solo installation somewhere (max G_jj - g(A_jj) = %.3e) - that would refute Jensen on a concave gate",
+    "longest_on_one_line": "batch installation EXCEEDS solo installation somewhere (max G_jj - g(A_jj) = "
+   },
+   {
+    "label": "a CONVEX function satisfied Jensen in the concave direction - then the bound above is not coming from concavity and the plant proves nothing",
+    "longest_on_one_line": "a CONVEX function satisfied Jensen in the concave direction - then the bound above "
    }
   ],
   "gate_read.py": [
@@ -600,6 +608,16 @@
     "label": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free and the 'nearly' in the comment above is understated",
     "has_format": true,
     "line": 367
+   },
+   {
+    "label": "batch installation EXCEEDS solo installation somewhere (max G_jj - g(A_jj) = %.3e) - that would refute Jensen on a concave gate",
+    "has_format": true,
+    "line": 390
+   },
+   {
+    "label": "a CONVEX function satisfied Jensen in the concave direction - then the bound above is not coming from concavity and the plant proves nothing",
+    "has_format": false,
+    "line": 399
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
@@ -2343,5 +2361,5 @@
    }
   ]
  },
- "labels_digest": "2104079b9344b276"
+ "labels_digest": "490946c5910b9092"
 }

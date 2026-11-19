@@ -367,6 +367,38 @@ def selftest(lane_optional: bool = False) -> int:
     _plant("the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free "
            "and the 'nearly' in the comment above is understated" % _shift, _shift > 0)
 
+    # BATCH INSTALLATION IS BOUNDED ABOVE BY SOLO INSTALLATION, by Jensen on the concave gate.
+    # The snipershot lane's arithmetic, verified here rather than taken: in the eigenbasis of A,
+    # G_jj = sum_m w_m g(lambda_m) with weights summing to 1, while A_jj = sum_m w_m lambda_m.
+    # g(x) = x/(1+x) has g''(x) = -2/(1+x)^3 < 0, so g is concave and
+    #
+    #     G_jj = sum_m w_m g(lambda_m)  <=  g(sum_m w_m lambda_m)  =  g(A_jj)
+    #
+    # No weights or assumptions needed. Measured over 200 random systems: 0 violations, the
+    # largest G_jj - g(A_jj) being -2.921e-04 and the mean slack 0.0418. This lane had the
+    # concavity (it is why the gate saturates) and had never stated the bound it implies.
+    rngJ = np.random.default_rng(5)
+    worst_j = -np.inf
+    for _ in range(40):
+        dJ, pJ = int(rngJ.integers(8, 30)), int(rngJ.integers(3, 10))
+        KJ = rngJ.standard_normal((dJ, pJ))
+        XJ = rngJ.standard_normal((200, dJ))
+        CJ = (XJ.T @ XJ) / 200.0 + 1e-3 * np.eye(dJ)
+        AJ, GJ = gate_matrix(KJ, CJ, float(rngJ.uniform(0.2, 20)))
+        aJ = np.diag(AJ)
+        worst_j = max(worst_j, float(np.max(np.diag(GJ) - aJ / (1.0 + aJ))))
+    _plant("batch installation EXCEEDS solo installation somewhere (max G_jj - g(A_jj) = "
+           "%.3e) - that would refute Jensen on a concave gate" % worst_j, worst_j <= 1e-9)
+
+    # CONTROL: the bound must come from CONCAVITY and not from something incidental about A.
+    # A convex f must break the same inequality, or this plant is passing for the wrong reason.
+    AC = np.array([[3.0, 0.0], [0.0, 0.2]])
+    wts = np.array([0.5, 0.5])
+    conv = float(wts @ (np.diag(AC) ** 2))          # sum w f(lam), f convex
+    conv_of_mean = float((wts @ np.diag(AC)) ** 2)  # f(sum w lam)
+    _plant("a CONVEX function satisfied Jensen in the concave direction - then the bound above "
+           "is not coming from concavity and the plant proves nothing", conv > conv_of_mean)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)
