@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 451,
+  "plants": 454,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 10,
-  "labels_not_greppable_in_source": 89
+  "labels_not_greppable_in_source": 92
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -63,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "89 of 451 labels (19.7%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 451. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "92 of 454 labels (20.3%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 454. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -291,6 +291,18 @@
    {
     "label": "the escape-rate comparison is being reported as a refutation rather than as an unresolved question - the two lanes measured different quantities",
     "longest_on_one_line": "the escape-rate comparison is being reported as a refutation rather than as an "
+   },
+   {
+    "label": "an exposure record omits reached_user, so 'nobody recorded it' would read as 'it did not reach him': %s",
+    "longest_on_one_line": "an exposure record omits reached_user, so 'nobody recorded it' would read as 'it "
+   },
+   {
+    "label": "%d error(s) carry no exposure marking at all - then the pre-field era is indistinguishable from the recorded one",
+    "longest_on_one_line": "%d error(s) carry no exposure marking at all - then the pre-field era is "
+   },
+   {
+    "label": "the exposure log reports a rate while empty - 0%% over no records reads as 'nothing escaped'",
+    "longest_on_one_line": "the exposure log reports a rate while empty - 0%% over no records reads as 'nothing "
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
@@ -1207,92 +1219,107 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 566
+    "line": 602
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 570
+    "line": 606
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 573
+    "line": 609
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 578
+    "line": 614
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 584
+    "line": 620
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 590
+    "line": 626
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 598
+    "line": 634
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 608
+    "line": 644
    },
    {
     "label": "a peer claim carries no recorded ORIGIN: %s - the registry that counts claims cannot catch a miscredit without one",
     "has_format": true,
-    "line": 615
+    "line": 651
    },
    {
     "label": "the counts disagree with the claim table (%d+%d vs %d)",
     "has_format": true,
-    "line": 617
+    "line": 653
    },
    {
     "label": "every peer claim came from ONE lane - then this table cannot distinguish origins and the rule it implements is untested here",
     "has_format": false,
-    "line": 620
+    "line": 656
    },
    {
     "label": "the peer-claim re-derivation record is missing a half: %s",
     "has_format": true,
-    "line": 624
+    "line": 660
    },
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "has_format": true,
-    "line": 631
+    "line": 667
    },
    {
     "label": "a plant caught an ATTRIBUTIVE error (%d of %d) - then numeric instruments are not blind to provenance after all and this finding is wrong",
     "has_format": true,
-    "line": 657
+    "line": 693
    },
    {
     "label": "no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not about attribution, it is that plants catch nothing",
     "has_format": true,
-    "line": 661
+    "line": 697
    },
    {
     "label": "every error is classified ATTRIBUTIVE or SUBSTANTIVE: %s",
     "has_format": true,
-    "line": 665
+    "line": 701
    },
    {
     "label": "the escape-rate comparison is being reported as a refutation rather than as an unresolved question - the two lanes measured different quantities",
     "has_format": false,
-    "line": 701
+    "line": 737
+   },
+   {
+    "label": "an exposure record omits reached_user, so 'nobody recorded it' would read as 'it did not reach him': %s",
+    "has_format": true,
+    "line": 753
+   },
+   {
+    "label": "%d error(s) carry no exposure marking at all - then the pre-field era is indistinguishable from the recorded one",
+    "has_format": true,
+    "line": 758
+   },
+   {
+    "label": "the exposure log reports a rate while empty - 0%% over no records reads as 'nothing escaped'",
+    "has_format": false,
+    "line": 761
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 704
+    "line": 764
    }
   ],
   "metrics.py": [
@@ -2773,5 +2800,5 @@
    }
   ]
  },
- "labels_digest": "6a164fd985eed51b"
+ "labels_digest": "45d28d044b747e77"
 }
