@@ -497,6 +497,40 @@ def selftest(lane_optional: bool = False) -> int:
            "(%.3e) - then it really is unreadable here and 'compressed not unreadable' is "
            "wrong" % _mv250, _mv250 / 4.3e-9 > 1000.0)
 
+    # A GUARD AGAINST A VACUOUS COMPARISON THIS LANE IS WELL PLACED TO MAKE.
+    #
+    # This lane proposed a test to a sibling lane - "replace the ratio with a difference of
+    # logs and see whether the split survives" - and half of it COULD NOT HAVE FAILED. log is
+    # strictly monotone with log(1)=0, so ratio>1 <=> log(ratio)>0: the two forms are identical
+    # by construction for a threshold at 1. Verified at 0 disagreements in 200,000 draws. The
+    # instinct was right and aimed at the wrong half - what logs buy is a DISTANCE from the
+    # boundary, which the ratio hides, not a different verdict.
+    #
+    # That was proposed in prose to another lane, where none of this lane's screens run. The
+    # vacuity screen in plant_manifest.py reads Python; it cannot see a test suggested in a
+    # message. So the same fault was committed hours after building the detector for it.
+    #
+    # THE SIBLING OF IT HERE: at FIXED a, the gate g(a-c) and the crowding fraction c/a are
+    # BOTH MONOTONE IN c, so they carry the same ordering information - 780 of 780 key pairs
+    # ordered identically (one ascending as the other descends). Any claim that one ORDERS keys
+    # better than the other is therefore vacuous at fixed a, and this lane has spent a day
+    # comparing exactly these two quantities. What is NOT vacuous is the MAGNITUDE of movement,
+    # which a monotone map does not preserve (0.9000 against 0.0345 over the same sweep), and
+    # the ordering genuinely does differ ACROSS a.
+    a_fix = 250.0
+    c_fix = np.linspace(0.0, 0.9 * a_fix, 40)
+    gate_fix = (a_fix - c_fix) / (1.0 + a_fix - c_fix)
+    ca_fix = c_fix / a_fix
+    disagree = sum(1 for i in range(len(c_fix)) for j in range(i + 1, len(c_fix))
+                   if (gate_fix[i] < gate_fix[j]) != (ca_fix[i] > ca_fix[j]))
+    _plant("gate and c/a order keys DIFFERENTLY at fixed a (%d pairs) - then a comparison of "
+           "their orderings is a real test; as it stands it is vacuous and only their "
+           "MAGNITUDES differ" % disagree, disagree == 0)
+    _plant("gate and c/a span the SAME range over one crowding sweep (%.4f vs %.4f) - then "
+           "even the magnitude comparison carries nothing"
+           % (float(ca_fix[-1] - ca_fix[0]), float(gate_fix[0] - gate_fix[-1])),
+           abs((ca_fix[-1] - ca_fix[0]) - (gate_fix[0] - gate_fix[-1])) > 0.1)
+
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
         print("  FAILED: " + f)

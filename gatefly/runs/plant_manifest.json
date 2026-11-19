@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 29,
-  "plants": 413,
+  "plants": 415,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 6,
-  "labels_not_greppable_in_source": 61
+  "labels_not_greppable_in_source": 63
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -47,7 +47,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "61 of 413 labels (14.8%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 413. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "63 of 415 labels (15.2%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 415. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -149,6 +149,14 @@
    {
     "label": "the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution (%.3e) - then it really is unreadable here and 'compressed not unreadable' is wrong",
     "longest_on_one_line": "the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution "
+   },
+   {
+    "label": "gate and c/a order keys DIFFERENTLY at fixed a (%d pairs) - then a comparison of their orderings is a real test; as it stands it is vacuous and only their MAGNITUDES differ",
+    "longest_on_one_line": "gate and c/a order keys DIFFERENTLY at fixed a (%d pairs) - then a comparison of "
+   },
+   {
+    "label": "gate and c/a span the SAME range over one crowding sweep (%.4f vs %.4f) - then even the magnitude comparison carries nothing",
+    "longest_on_one_line": "gate and c/a span the SAME range over one crowding sweep (%.4f vs %.4f) - then "
    },
    {
     "label": "the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f (%.4f vs %.4f)",
@@ -683,6 +691,16 @@
     "label": "the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution (%.3e) - then it really is unreadable here and 'compressed not unreadable' is wrong",
     "has_format": true,
     "line": 496
+   },
+   {
+    "label": "gate and c/a order keys DIFFERENTLY at fixed a (%d pairs) - then a comparison of their orderings is a real test; as it stands it is vacuous and only their MAGNITUDES differ",
+    "has_format": true,
+    "line": 526
+   },
+   {
+    "label": "gate and c/a span the SAME range over one crowding sweep (%.4f vs %.4f) - then even the magnitude comparison carries nothing",
+    "has_format": true,
+    "line": 529
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
@@ -2451,5 +2469,5 @@
    }
   ]
  },
- "labels_digest": "9f1ea309a4913076"
+ "labels_digest": "4e3253db940e9f7e"
 }
