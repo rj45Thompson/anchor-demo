@@ -188,6 +188,19 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
+ {"id": "r7-plant-measured-the-wrong-dtype",
+  "initiated_by": "peer READ this lane's source and found the cast",
+  "caught_class": "peer checked it",
+  "what": "gate_math's R7 plant perturbed weights by a FLOAT32 ULP while its label said "
+          "'one-ULP f16' and its print reported float16 eps - the output claimed f16 twice. "
+          "About 9,800x too small. With the ULP in the dtype the label names, the plant "
+          "INVERTS: the gate moves 3.6e-05, is supported to ~4 decimals, and printing 6 IS "
+          "false precision - the exact thing the plant exists to detect, which it cleared for "
+          "two days. The 'clean negative' this lane published and both peers quoted was an "
+          "artefact of the cast.",
+  "caught_by": "the v4 lane reading the line, after both lanes had built on the figure",
+  "verdict": ARCH, "rule": "R-METRIC-MATCHES-SOLVE"},
+
  {"id": "mismatched-baseline-under-a-fixed-numerator",
   "initiated_by": "peer SENT a corrected figure; this lane re-derived the DENOMINATOR only",
   "caught_class": "peer checked it",
@@ -354,7 +367,7 @@ RULES = {
 # ADOPTED, and three of them arrived with working arithmetic attached, which is what makes
 # adoption tempting. That is the argument for the rule below, and it is a number rather than a
 # preference.
-PEER_CLAIMS_REDERIVED = {"held": 7, "failed": 7}
+PEER_CLAIMS_REDERIVED = {"held": 8, "failed": 7}
 # AND THE RATE IS NOT THE RULE'S YIELD, which the snipershot lane is right about: every one of
 # these is a claim somebody thought worth sending, so the denominator is pre-filtered toward
 # the contested and the interesting. The rate on claims nobody bothered to transmit is

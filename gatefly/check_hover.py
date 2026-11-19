@@ -59,6 +59,14 @@ def js_vs_torch(stem, seqs):
     return out
 
 
+# NOT imported from gate_math, deliberately. Importing it is what this file's own independence
+# plant forbids - and that plant caught the attempt within a minute: a verifier that imports the
+# module it checks reports agreement that cannot fail. So the value is repeated here, and what
+# stops the two drifting is gate_math's cross-module scan, which refuses if ANY module prints a
+# gate wider than the measured f16 ULP supports. Binding by check rather than by import.
+GD = 4
+
+
 def selftest() -> int:
     """This module had NO PLANTS, and it is a verifier.
 
@@ -137,7 +145,7 @@ def selftest() -> int:
            abs(g - g2) < 1e-12)
 
     # 3. the gate must be a gate: strictly inside (0,1), since g(x)=x/(1+x) with x>=0
-    _plant("the gate left (0,1) - %.6f" % g, 0.0 <= g < 1.0)
+    _plant("the gate left (0,1) - %.4f" % g, 0.0 <= g < 1.0)
     _plant("crowding exceeds its own addressability (a %.6f, c %.6f) - the Schur complement "
            "is wrong" % (a, c), c <= a + 1e-9)
 
@@ -183,7 +191,12 @@ if __name__ == "__main__":
     A, C, G, lam, shape = direct(stem, a.site, a.unit)
     print("DIRECT COMPUTATION from %s.f16, numpy only, no gate_math" % a.name)
     print("  site %s   shape %s   lambda %.10f" % (a.site, shape, lam))
-    print("  unit %d:  a %.10f   c %.10f   gate %.10f" % (a.unit, A, C, G))
+    # Gates printed to the precision the f16 ULP measurement supports, not to 10 places.
+    # a and c are intermediate quantities of the same provenance and get the same treatment.
+    # The hand-check DIFF below keeps full precision deliberately: it compares two computations
+    # of one number, so its digits are about arithmetic agreement rather than about the gate.
+    print("  unit %d:  a %.*f   c %.*f   gate %.*f"
+          % (a.unit, GD, A, GD, C, GD, G))
     rc = 0
     if a.gate is not None:
         print("\nTHE SCREEN said        gate %.10f   a %.10f   c %.10f"

@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 440,
+  "plants": 442,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 10,
-  "labels_not_greppable_in_source": 80
+  "labels_not_greppable_in_source": 82
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -16,28 +16,28 @@
  "loops_by_module": {
   "gate_math.py": [
    {
-    "plant_line": 488,
-    "loop_line": 484
+    "plant_line": 541,
+    "loop_line": 537
    },
    {
-    "plant_line": 491,
-    "loop_line": 484
+    "plant_line": 544,
+    "loop_line": 537
    },
    {
-    "plant_line": 552,
-    "loop_line": 549
+    "plant_line": 605,
+    "loop_line": 602
    },
    {
-    "plant_line": 568,
-    "loop_line": 566
+    "plant_line": 621,
+    "loop_line": 619
    },
    {
-    "plant_line": 571,
-    "loop_line": 566
+    "plant_line": 624,
+    "loop_line": 619
    },
    {
-    "plant_line": 629,
-    "loop_line": 628
+    "plant_line": 682,
+    "loop_line": 681
    }
   ],
   "ladder_probe.py": [
@@ -63,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "80 of 440 labels (18.2%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 440. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "82 of 442 labels (18.6%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 442. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -103,15 +103,23 @@
   ],
   "gate_math.py": [
    {
-    "label": "a one-ULP f16 perturbation moves the gate by more than 1e-6, so printing a gate to 6 decimals is false precision (moved %.3e)",
-    "longest_on_one_line": "a one-ULP f16 perturbation moves the gate by more than 1e-6, so printing a gate "
+    "label": "the gate is supported to fewer than 3 decimals (%d) - then it is too noisy to print at all and this lane's figures need rebuilding, not reformatting",
+    "longest_on_one_line": "the gate is supported to fewer than 3 decimals (%d) - then it is too noisy to "
+   },
+   {
+    "label": "a module prints a gate wider than the declared %d decimals: %s - the constant does not bind the printers",
+    "longest_on_one_line": "a module prints a gate wider than the declared %d decimals: %s - the constant does "
+   },
+   {
+    "label": "this lane prints gates to MORE decimals than the %d the measurement supports - false precision, which is what the dtype rule exists to stop",
+    "longest_on_one_line": "this lane prints gates to MORE decimals than the %d the measurement supports - "
    },
    {
     "label": "a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing (moved %.3e)",
     "longest_on_one_line": "a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing "
    },
    {
-    "label": "the gate is NOT flat at realistic addressability - then it is a usable capacity read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.5f)",
+    "label": "the gate is NOT flat at realistic addressability - then it is a usable capacity read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.4f)",
     "longest_on_one_line": "the gate is NOT flat at realistic addressability - then it is a usable capacity "
    },
    {
@@ -557,47 +565,47 @@
    {
     "label": "this file imports gate_math (imports: %s) - then it is no longer an INDEPENDENT check and every agreement it reports is circular",
     "has_format": true,
-    "line": 102
+    "line": 110
    },
    {
     "label": "the import scan found no imports at all - it cannot see an import that IS there",
     "has_format": false,
-    "line": 107
+    "line": 115
    },
    {
     "label": "a disagrees with an independent recomputation (%.3e)",
     "has_format": true,
-    "line": 132
+    "line": 140
    },
    {
     "label": "c disagrees with an independent recomputation (%.3e)",
     "has_format": true,
-    "line": 134
+    "line": 142
    },
    {
     "label": "gate disagrees with an independent recomputation (%.3e)",
     "has_format": true,
-    "line": 136
+    "line": 144
    },
    {
-    "label": "the gate left (0,1) - %.6f",
+    "label": "the gate left (0,1) - %.4f",
     "has_format": true,
-    "line": 140
+    "line": 148
    },
    {
     "label": "crowding exceeds its own addressability (a %.6f, c %.6f) - the Schur complement is wrong",
     "has_format": true,
-    "line": 141
+    "line": 149
    },
    {
     "label": "perturbing the blob did NOT move the gate (%.3e) - this file is not reading the weights it claims to read",
     "has_format": true,
-    "line": 151
+    "line": 159
    },
    {
     "label": "an unknown site did not raise - a typo'd --site would silently check nothing",
     "has_format": false,
-    "line": 160
+    "line": 168
    }
   ],
   "data_ttt.py": [
@@ -636,252 +644,262 @@
    {
     "label": "orthogonal C=I does not match the closed form",
     "has_format": false,
-    "line": 179
+    "line": 185
    },
    {
     "label": "gate != g(a - c)",
     "has_format": false,
-    "line": 188
+    "line": 194
    },
    {
     "label": "G is not symmetric",
     "has_format": false,
-    "line": 191
+    "line": 197
    },
    {
     "label": "a joint gate exceeds its lone-write gain",
     "has_format": false,
-    "line": 194
+    "line": 200
    },
    {
     "label": "collinear directions do not share g(na)/n",
     "has_format": false,
-    "line": 204
+    "line": 210
    },
    {
     "label": "the wrong form (I+A)^-1 agrees with A(I+A)^-1 - formula broken",
     "has_format": false,
-    "line": 208
+    "line": 214
    },
    {
     "label": "a gate left (0,1)",
     "has_format": false,
-    "line": 212
+    "line": 218
    },
    {
     "label": "orthonormal directions show crowding",
     "has_format": false,
-    "line": 217
+    "line": 223
    },
    {
     "label": "30 directions in 8 dimensions show little crowding",
     "has_format": false,
-    "line": 225
+    "line": 231
    },
    {
     "label": "30 directions in 2000 dimensions crowd like 30 in 8 - measuring p, not geometry",
     "has_format": false,
-    "line": 227
+    "line": 233
    },
    {
     "label": "unit_write_directions gives the wrong count of layers",
     "has_format": false,
-    "line": 235
+    "line": 241
    },
    {
     "label": "a unit's write direction is not the next matrix's column",
     "has_format": false,
-    "line": 236
+    "line": 242
    },
    {
     "label": "the transposed form also satisfies plant 11 - the plant cannot tell them apart",
     "has_format": false,
-    "line": 240
+    "line": 246
    },
    {
-    "label": "a one-ULP f16 perturbation moves the gate by more than 1e-6, so printing a gate to 6 decimals is false precision (moved %.3e)",
+    "label": "the gate is supported to fewer than 3 decimals (%d) - then it is too noisy to print at all and this lane's figures need rebuilding, not reformatting",
     "has_format": true,
-    "line": 278
+    "line": 297
+   },
+   {
+    "label": "a module prints a gate wider than the declared %d decimals: %s - the constant does not bind the printers",
+    "has_format": true,
+    "line": 327
+   },
+   {
+    "label": "this lane prints gates to MORE decimals than the %d the measurement supports - false precision, which is what the dtype rule exists to stop",
+    "has_format": true,
+    "line": 330
    },
    {
     "label": "a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing (moved %.3e)",
     "has_format": true,
-    "line": 285
+    "line": 338
    },
    {
-    "label": "the gate is NOT flat at realistic addressability - then it is a usable capacity read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.5f)",
-    "has_format": true,
-    "line": 329
-   },
-   {
-    "label": "the crowding FRACTION is not monotone where the gate is flat - then neither is readable and M8 has no instrument",
-    "has_format": false,
-    "line": 332
-   },
-   {
-    "label": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - it would be insensitive everywhere",
-    "has_format": true,
-    "line": 336
-   },
-   {
-    "label": "a is NOT exactly proportional to 1/lambda - then the absorbable-axis identity does not hold here and this caveat is wrong",
-    "has_format": false,
-    "line": 366
-   },
-   {
-    "label": "c/a is lambda-INVARIANT (spread %.3e) - then it is a lambda-free capacity read after all and this caveat should be deleted",
-    "has_format": true,
-    "line": 371
-   },
-   {
-    "label": "the per-key ORDER of c/a moved by more than 2 places across a 50x lambda change (moved %d) - then not even the comparative reading travels",
+    "label": "the gate is NOT flat at realistic addressability - then it is a usable capacity read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.4f)",
     "has_format": true,
     "line": 382
    },
    {
+    "label": "the crowding FRACTION is not monotone where the gate is flat - then neither is readable and M8 has no instrument",
+    "has_format": false,
+    "line": 385
+   },
+   {
+    "label": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - it would be insensitive everywhere",
+    "has_format": true,
+    "line": 389
+   },
+   {
+    "label": "a is NOT exactly proportional to 1/lambda - then the absorbable-axis identity does not hold here and this caveat is wrong",
+    "has_format": false,
+    "line": 419
+   },
+   {
+    "label": "c/a is lambda-INVARIANT (spread %.3e) - then it is a lambda-free capacity read after all and this caveat should be deleted",
+    "has_format": true,
+    "line": 424
+   },
+   {
+    "label": "the per-key ORDER of c/a moved by more than 2 places across a 50x lambda change (moved %d) - then not even the comparative reading travels",
+    "has_format": true,
+    "line": 435
+   },
+   {
     "label": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free and the 'nearly' in the comment above is understated",
     "has_format": true,
-    "line": 384
+    "line": 437
    },
    {
     "label": "batch installation EXCEEDS solo installation somewhere (max G_jj - g(A_jj) = %.3e) - that would refute Jensen on a concave gate",
     "has_format": true,
-    "line": 407
+    "line": 460
    },
    {
     "label": "a CONVEX function satisfied Jensen in the concave direction - then the bound above is not coming from concavity and the plant proves nothing",
     "has_format": false,
-    "line": 416
+    "line": 469
    },
    {
     "label": "the whitened cosine MOVED across nine orders of magnitude of lambda (%.3e) - then it is not an operating-point-free quantity and r9_keys.json's figures are only relative orderings after all",
     "has_format": true,
-    "line": 438
+    "line": 491
    },
    {
     "label": "the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is inert here and the whitened invariance proves nothing",
     "has_format": true,
-    "line": 444
+    "line": 497
    },
    {
     "label": "gate responsiveness is MONOTONE in a (%s) - then 'the gate saturates' needs no operating-point qualifier and the table above is wrong",
     "has_format": true,
-    "line": 451
+    "line": 504
    },
    {
     "label": "the gate is as responsive at this lane's a~250 as at its peak - then this lane's operating point is not the reason its gate is a late indicator",
     "has_format": false,
-    "line": 455
+    "line": 508
    },
    {
     "label": "the gate's movement at this lane's a~250 is below the measured 4.3e-09 resolution (%.3e) - then it really is unreadable here and 'compressed not unreadable' is wrong",
     "has_format": true,
-    "line": 496
+    "line": 549
    },
    {
     "label": "gate and c/a order keys DIFFERENTLY at fixed a (%d pairs) - then a comparison of their orderings is a real test; as it stands it is vacuous and only their MAGNITUDES differ",
     "has_format": true,
-    "line": 526
+    "line": 579
    },
    {
     "label": "gate and c/a span the SAME range over one crowding sweep (%.4f vs %.4f) - then even the magnitude comparison carries nothing",
     "has_format": true,
-    "line": 529
+    "line": 582
    },
    {
     "label": "g(x) + g(1/x) != 1 (max deviation %.3e) - then a = 1 is not g's symmetry point and the peak sitting at 1/sqrt(r) is a coincidence of the algebra",
     "has_format": true,
-    "line": 545
+    "line": 598
    },
    {
     "label": "the relative under-estimate does not worsen monotonically as r falls (%s)",
     "has_format": true,
-    "line": 577
+    "line": 630
    },
    {
     "label": "the independent expected survivor count at 9 tests is 1 (it is %.2f) - then this lane's endorsement was right",
     "has_format": true,
-    "line": 602
+    "line": 655
    },
    {
     "label": "P(>=4) at 9 tests equals the 0.0084 that was quoted for it (%.5f) - then there is no off-by-one",
     "has_format": true,
-    "line": 604
+    "line": 657
    },
    {
     "label": "P(>=3) is NOT the 0.0084 that was quoted as P(>=4) (%.5f) - then the off-by-one diagnosis is wrong",
     "has_format": true,
-    "line": 606
+    "line": 659
    },
    {
     "label": "the resampling SE of a permutation p=0.005 at 4000 draws is below 0.0005 (%.5f) - then quoting three digits off 4000 draws is not quoting the sampler",
     "has_format": true,
-    "line": 610
+    "line": 663
    },
    {
     "label": "the dependent and independent variances are the same (%.3f vs %.3f) - then the fixture is not dependent and the plants above prove nothing",
     "has_format": true,
-    "line": 634
+    "line": 687
    },
    {
     "label": "the mismatched baseline gives the same factor as the matched one (%.1fx vs %.1fx) - then matching the mean does not matter and this caveat is noise",
     "has_format": true,
-    "line": 645
+    "line": 698
    },
    {
     "label": "the matched baseline is LARGER than the mismatched one (%.5f vs %.5f) - then the published 2.6x over-stated rather than under-stated the effect",
     "has_format": true,
-    "line": 648
+    "line": 701
    },
    {
     "label": "dropping the two dead angles does not move the factor (%.1fx vs %.1fx) - then the family size is immaterial and 'live is seven' changes nothing",
     "has_format": true,
-    "line": 651
+    "line": 704
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
     "has_format": false,
-    "line": 252
+    "line": 258
    },
    {
     "label": "G disagrees with the ratchet lane's gate_matrix",
     "has_format": false,
-    "line": 254
+    "line": 260
    },
    {
     "label": "crowding disagrees with the ratchet lane's crowding_term",
     "has_format": false,
-    "line": 257
+    "line": 263
    },
    {
     "label": "the closed-form peak a*=1/sqrt(r) disagrees with the numerical argmax at r=%.1f (%.4f vs %.4f)",
     "has_format": true,
-    "line": 488
+    "line": 541
    },
    {
     "label": "the closed-form peak MOVEMENT disagrees at r=%.1f (%.6f vs %.6f)",
     "has_format": true,
-    "line": 491
+    "line": 544
    },
    {
     "label": "1 - 2g(sqrt r) disagrees with the closed form at r=%.1f (%.8f vs %.8f)",
     "has_format": true,
-    "line": 552
+    "line": 605
    },
    {
     "label": "the small-change peak is closer to (1-r)/2 than to (1-r)/4 at r=%.2f (exact %.6f, /2 %.6f, /4 %.6f)",
     "has_format": true,
-    "line": 568
+    "line": 621
    },
    {
     "label": "(1-r)/4 OVER-estimates the peak at r=%.2f (%.6f vs exact %.6f) - then it is safe to quote as a bound, and this caveat is unnecessary",
     "has_format": true,
-    "line": 571
+    "line": 624
    },
    {
     "label": "E[S] does not equal the sum of the marginals for %s indicators (%.4f vs %.4f) - then linearity of expectation fails and dependence could move the mean",
     "has_format": true,
-    "line": 629
+    "line": 682
    }
   ],
   "gate_read.py": [
@@ -1156,57 +1174,57 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 437
+    "line": 450
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 441
+    "line": 454
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 444
+    "line": 457
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 449
+    "line": 462
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 455
+    "line": 468
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 461
+    "line": 474
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 469
+    "line": 482
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 479
+    "line": 492
    },
    {
     "label": "the peer-claim re-derivation record is missing a half: %s",
     "has_format": true,
-    "line": 485
+    "line": 498
    },
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "has_format": true,
-    "line": 492
+    "line": 505
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 496
+    "line": 509
    }
   ],
   "metrics.py": [
@@ -2682,5 +2700,5 @@
    }
   ]
  },
- "labels_digest": "a60b84349fdbbfc3"
+ "labels_digest": "26c8bf7cb88ff4a6"
 }

@@ -78,6 +78,12 @@ def crowding_all(A: np.ndarray) -> np.ndarray:
     return np.array([crowding_term(A, j) for j in range(A.shape[0])])
 
 
+# How many decimals this lane prints a gate to. Bounded by the measured f16 ULP sensitivity in
+# the R7 plant, which refuses if this exceeds what the measurement supports. Was 6; the
+# measurement says ~4.
+PRINTED_GATE_DECIMALS = 4
+
+
 def g(x):
     """The gate function. x may be an array."""
     return np.asarray(x, dtype=np.float64) / (1.0 + np.asarray(x, dtype=np.float64))
@@ -269,14 +275,61 @@ def selftest(lane_optional: bool = False) -> int:
     W7 = W7.astype(np.float16).astype(np.float64)        # as a checkpoint actually arrives
     lam7 = ridge_scale(W7)
     _, _, g_a = acg(W7, None, lam7)
-    ulp7 = np.spacing(W7.astype(np.float32)).astype(np.float64)
+    # WAS np.float32 HERE, ON WEIGHTS ROUNDED TO float16 TWO LINES ABOVE. The label below
+    # says "one-ULP f16" and the print says float16 eps, so the output claimed f16 twice while
+    # perturbing by an f32 ULP - about 9,800x too small. The v4 lane found it.
+    ulp7 = np.spacing(W7.astype(np.float16)).astype(np.float64)
     W7b = W7 + ulp7 * rng7.choice([-1.0, 1.0], size=W7.shape)
     _, _, g_b = acg(W7b, None, ridge_scale(W7b))
     moved = float(np.median(np.abs(g_b - g_a)))
-    print("  R7 dtype: weights float16 (eps %.3e); one ULP moves the gate by %.3e (median)"
-          % (np.finfo(np.float16).eps, moved))
-    _plant("a one-ULP f16 perturbation moves the gate by more than 1e-6, so printing a gate "
-           "to 6 decimals is false precision (moved %.3e)" % moved, moved < 1e-6)
+    # THIS PLANT USED TO READ "moved < 1e-6" AND PASSED, ON THE WRONG DTYPE. With the ULP in
+    # the dtype its own label names it FAILS: the gate moves 3.9e-05, so it is supported to
+    # about FOUR decimals and printing six IS false precision - the exact thing this plant
+    # exists to detect, which it then cleared for two days.
+    #
+    # A plant that is now permanently false is useless, so it is restated as the requirement it
+    # should always have been: the DISPLAYED precision must not exceed the MEASURED
+    # sensitivity. That is checkable, it stays true as either side changes, and it is what the
+    # dtype rule actually asks for.
+    supportable = int(np.floor(-np.log10(moved))) if moved > 0 else 15
+    print("  R7 dtype: weights float16 (eps %.3e); one f16 ULP moves the gate %.3e, so it is "
+          "supported to ~%d decimals" % (np.finfo(np.float16).eps, moved, supportable))
+    _plant("the gate is supported to fewer than 3 decimals (%d) - then it is too noisy to "
+           "print at all and this lane's figures need rebuilding, not reformatting"
+           % supportable, supportable >= 3)
+    # AND THE DECLARED CONSTANT MUST BIND THE PRINTERS, or it is a comment asserting what the
+    # code does not do - the fault this lane has hit three separate times. Scanned over source
+    # for gate format specifiers wider than the declared precision.
+    import re as _re, os as _os
+    _wide = []
+    _here = _os.path.dirname(_os.path.abspath(__file__))
+    for _f in sorted(_os.listdir(_here)):
+        if not _f.endswith(".py"):
+            continue
+        for _i, _ln in enumerate(open(_os.path.join(_here, _f), encoding="utf-8"), 1):
+            if "gate" not in _ln.lower() or "diff" in _ln.lower():
+                continue
+            # MATCH THE SPEC THAT FOLLOWS THE WORD "gate", not every spec on the line. The
+            # first version matched any %.Nf on a line mentioning a gate, and flagged
+            # shrink.py's "site lambda %.6f, median gate %.4f" - attributing LAMBDA's width to
+            # the gate, which prints 4 correctly. A line-based scan cannot tell which number a
+            # format applies to: the fault this scan exists to find, inside the scan.
+            #
+            # And two-computation COMPARISONS are exempt with their reason: check_hover prints
+            # the screen's figure beside the recomputed one, where the digits are about
+            # arithmetic agreement rather than about the gate - the same exemption the diff
+            # already has.
+            if "THE SCREEN said" in _ln or "THE DIRECT SUM" in _ln:
+                continue
+            for _m in _re.finditer(r"gate[^%]{0,12}%\.(\d+)f", _ln, _re.I):
+                if int(_m.group(1)) > PRINTED_GATE_DECIMALS:
+                    _wide.append("%s:%d" % (_f, _i))
+    _plant("a module prints a gate wider than the declared %d decimals: %s - the constant does "
+           "not bind the printers" % (PRINTED_GATE_DECIMALS, _wide or "none"), not _wide)
+
+    _plant("this lane prints gates to MORE decimals than the %d the measurement supports - "
+           "false precision, which is what the dtype rule exists to stop" % supportable,
+           PRINTED_GATE_DECIMALS <= supportable)
     # and the control: a perturbation 1000x larger MUST move it, or the test is measuring
     # nothing and would pass on a gate that ignores its own weights
     W7c = W7 + ulp7 * 1000.0 * rng7.choice([-1.0, 1.0], size=W7.shape)
@@ -327,7 +380,7 @@ def selftest(lane_optional: bool = False) -> int:
     spread_gate = max(gates) - min(gates)
     fracs = [0.0, 0.1, 0.3]
     _plant("the gate is NOT flat at realistic addressability - then it is a usable capacity "
-           "read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.5f)"
+           "read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.4f)"
            % (a_big, spread_gate), spread_gate < 0.01)
     _plant("the crowding FRACTION is not monotone where the gate is flat - then neither is "
            "readable and M8 has no instrument", fracs == sorted(fracs))
