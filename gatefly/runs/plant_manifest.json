@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 29,
-  "plants": 408,
+  "plants": 410,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 57
+  "labels_not_greppable_in_source": 59
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -37,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "57 of 408 labels (14.0%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 408. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "59 of 410 labels (14.4%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 410. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -127,6 +127,14 @@
    {
     "label": "the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is inert here and the whitened invariance proves nothing",
     "longest_on_one_line": "the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is "
+   },
+   {
+    "label": "gate responsiveness is MONOTONE in a (%s) - then 'the gate saturates' needs no operating-point qualifier and the table above is wrong",
+    "longest_on_one_line": "gate responsiveness is MONOTONE in a (%s) - then 'the gate saturates' needs no "
+   },
+   {
+    "label": "the gate is as responsive at this lane's a~250 as at its peak - then this lane's operating point is not the reason its gate is a late indicator",
+    "longest_on_one_line": "the gate is as responsive at this lane's a~250 as at its peak - then this lane's "
    }
   ],
   "gate_read.py": [
@@ -591,57 +599,67 @@
    {
     "label": "the gate is NOT flat at realistic addressability - then it is a usable capacity read and c/a is unnecessary (a=%.0f, c/a 0 to 0.3 moves the gate %.5f)",
     "has_format": true,
-    "line": 312
+    "line": 329
    },
    {
     "label": "the crowding FRACTION is not monotone where the gate is flat - then neither is readable and M8 has no instrument",
     "has_format": false,
-    "line": 315
+    "line": 332
    },
    {
     "label": "the gate does not fall when c approaches a (%.4f at c/a=0.99 against %.4f at 0) - it would be insensitive everywhere",
     "has_format": true,
-    "line": 319
+    "line": 336
    },
    {
     "label": "a is NOT exactly proportional to 1/lambda - then the absorbable-axis identity does not hold here and this caveat is wrong",
     "has_format": false,
-    "line": 349
+    "line": 366
    },
    {
     "label": "c/a is lambda-INVARIANT (spread %.3e) - then it is a lambda-free capacity read after all and this caveat should be deleted",
     "has_format": true,
-    "line": 354
+    "line": 371
    },
    {
     "label": "the per-key ORDER of c/a moved by more than 2 places across a 50x lambda change (moved %d) - then not even the comparative reading travels",
     "has_format": true,
-    "line": 365
+    "line": 382
    },
    {
     "label": "the order did not move AT ALL (%d) - then c/a's ordering is exactly lambda-free and the 'nearly' in the comment above is understated",
     "has_format": true,
-    "line": 367
+    "line": 384
    },
    {
     "label": "batch installation EXCEEDS solo installation somewhere (max G_jj - g(A_jj) = %.3e) - that would refute Jensen on a concave gate",
     "has_format": true,
-    "line": 390
+    "line": 407
    },
    {
     "label": "a CONVEX function satisfied Jensen in the concave direction - then the bound above is not coming from concavity and the plant proves nothing",
     "has_format": false,
-    "line": 399
+    "line": 416
    },
    {
     "label": "the whitened cosine MOVED across nine orders of magnitude of lambda (%.3e) - then it is not an operating-point-free quantity and r9_keys.json's figures are only relative orderings after all",
     "has_format": true,
-    "line": 421
+    "line": 438
    },
    {
     "label": "the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is inert here and the whitened invariance proves nothing",
     "has_format": true,
-    "line": 427
+    "line": 444
+   },
+   {
+    "label": "gate responsiveness is MONOTONE in a (%s) - then 'the gate saturates' needs no operating-point qualifier and the table above is wrong",
+    "has_format": true,
+    "line": 451
+   },
+   {
+    "label": "the gate is as responsive at this lane's a~250 as at its peak - then this lane's operating point is not the reason its gate is a late indicator",
+    "has_format": false,
+    "line": 455
    },
    {
     "label": "A disagrees with the ratchet lane's gate_matrix",
@@ -2400,5 +2418,5 @@
    }
   ]
  },
- "labels_digest": "28b6d395a7eda38d"
+ "labels_digest": "b7cd2996f24b2721"
 }

@@ -285,6 +285,23 @@ def selftest(lane_optional: bool = False) -> int:
     _plant("a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing "
            "(moved %.3e)" % moved_big, moved_big > moved * 10)
 
+    # THE GATE SATURATES AT THIS LANE'S OPERATING POINT - which is a LAMBDA CHOICE, not a
+    # property of g. The headline below said "the gate saturates" unqualified, in this file and
+    # in messages to two lanes, and the scope was in the next sentence rather than in the claim.
+    # Measured: how far the gate moves when crowding goes from 0 to 30% of a, against lambda -
+    #
+    #     lambda      a        gate moves
+    #     1e-2    6716.41        0.0001     saturated: g -> 1, nothing left to lose
+    #     1e+0      67.16        0.0062
+    #     1e+2       0.67        0.0820     <- MOST RESPONSIVE, at a ~ 1
+    #     1e+4       0.0067      0.0020     linear region: g ~ a, so 30% of nearly nothing
+    #     1e+6       0.0001      0.0000
+    #
+    # NON-MONOTONE, and dead at BOTH ends. The gate is a usable readout only where a ~ 1, and
+    # a scales exactly as 1/lambda, so whether it is usable is tunable. This lane runs at
+    # a ~ 250, far into the saturated end, which is why its gate is a late indicator - a fact
+    # about where it chose to stand, not about the function.
+    #
     # THE GATE SATURATES, AND THIS LANE HAS BEEN QUOTING IT AS THE CAPACITY READ.
     #
     # g(x) = x/(1+x) is flat for large x. Real addressability here is a ~ 250, so a - c stays
@@ -426,6 +443,18 @@ def selftest(lane_optional: bool = False) -> int:
     dmove = float(np.max(np.abs(np.diag(A_lo) - np.diag(A_hi))))
     _plant("the diagonal of A did NOT move over the same lambda range (%.3e) - then lambda is "
            "inert here and the whitened invariance proves nothing" % dmove, dmove > 1.0)
+
+    # the sweet spot, planted: responsiveness must be non-monotone in a, peaking near a ~ 1.
+    def _move(a_):
+        return a_ / (1.0 + a_) - (0.7 * a_) / (1.0 + 0.7 * a_)
+    _moves = [_move(x) for x in (6716.0, 67.0, 0.67, 0.0067, 0.0001)]
+    _plant("gate responsiveness is MONOTONE in a (%s) - then 'the gate saturates' needs no "
+           "operating-point qualifier and the table above is wrong"
+           % ", ".join("%.4f" % m for m in _moves),
+           _moves[2] > _moves[0] and _moves[2] > _moves[4])
+    _plant("the gate is as responsive at this lane's a~250 as at its peak - then this lane's "
+           "operating point is not the reason its gate is a late indicator",
+           _move(250.0) < _move(0.67) / 10.0)
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
