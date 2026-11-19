@@ -417,11 +417,23 @@ def selftest() -> int:
     print("  modules with zero plants: %s" % (", ".join(fresh["zero_plant_modules"]) or "none"))
     print("  ...of which are themselves checkers: %s"
           % (", ".join(fresh["zero_plant_modules_that_are_checkers"]) or "none"))
-    _premise("at least one module still holds zero plants",
-             len(fresh["zero_plant_modules"]) > 0,
-             "every module now has plants, so this lane's census extension is moot and the "
-             "zero_plant_modules row can be dropped from the manifest and from the snipershot "
-             "lane's census")
+    # RETIRED 2026-11-19, and acting on it showed the retirement action I wrote was WRONG.
+    # It said to drop the zero_plant_modules row once no module held zero plants. But the row
+    # is a standing check on modules NOT YET WRITTEN - the next module added to this lane
+    # starts with no plants, and the row is what notices. What was spent is the PREMISE (the
+    # claim that this lane currently has such modules, which justified widening the census),
+    # not the field. So the field stays and the premise goes.
+    #
+    # Worth recording as its own small lesson: a retirement action written while the premise
+    # still holds is written without the information you have when it expires. Mine conflated
+    # "this claim is spent" with "this check is unnecessary".
+    #
+    # The history: check_hover.py and shrink_save.py both held zero plants, and check_hover was
+    # a VERIFIER - the thing standing between a wrong tooltip and a believed number. Both were
+    # planted on 2026-11-19 (9 and 8 plants), which is what expired this premise.
+    _plant("a module in this lane holds zero plants - the next module added starts that way "
+           "and this is what notices: %s" % (fresh["zero_plant_modules"] or "none"),
+           not fresh["zero_plant_modules"])
 
     # 8. the loop detector must find the three sites that explain the static/runtime gap, or the
     #    manifest's own totals read as disagreeing with a sweep for no stated reason.

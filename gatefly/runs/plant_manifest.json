@@ -3,19 +3,14 @@
  "resolve_from_outside": "D:\\code\\anchor-demo\\gatefly\\runs\\plant_manifest.json",
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
-  "modules_with_plants": 25,
-  "plants": 352,
-  "modules_with_zero_plants": 2,
+  "modules_with_plants": 27,
+  "plants": 370,
+  "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 35
+  "labels_not_greppable_in_source": 41
  },
- "zero_plant_modules": [
-  "check_hover.py",
-  "shrink_save.py"
- ],
- "zero_plant_modules_that_are_checkers": [
-  "check_hover.py"
- ],
+ "zero_plant_modules": [],
+ "zero_plant_modules_that_are_checkers": [],
  "caveat": "Presence of a label, not evidence that the plant is reached, can fail, or asserts anything true. A vacuously passing plant is listed here too.",
  "why_this_count_is_lower_than_a_runtime_count": "These are CALL SITES. A _plant() inside a loop runs several times and a selftest reports each execution, so a runtime sweep counts more. Measured 2026-11-18: 277 static against 286 runtime over the same 22 modules, and the whole +9 is the three loop sites listed under loops_by_module (ladder_probe +4, uml_kaos +4, reevaluate +1). Every other module agrees exactly. Neither number is wrong; they count different things.",
  "loops_by_module": {
@@ -42,7 +37,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "35 of 352 labels (9.9%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 352. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "41 of 370 labels (11.1%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 370. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -64,6 +59,20 @@
    {
     "label": "a mechanism with no recorded precondition read as APPLIES - silence would be permission",
     "longest_on_one_line": "a mechanism with no recorded precondition read as APPLIES - silence would be "
+   }
+  ],
+  "check_hover.py": [
+   {
+    "label": "this file imports gate_math (imports: %s) - then it is no longer an INDEPENDENT check and every agreement it reports is circular",
+    "longest_on_one_line": "this file imports gate_math (imports: %s) - then it is no longer an INDEPENDENT "
+   },
+   {
+    "label": "crowding exceeds its own addressability (a %.6f, c %.6f) - the Schur complement is wrong",
+    "longest_on_one_line": "crowding exceeds its own addressability (a %.6f, c %.6f) - the Schur complement "
+   },
+   {
+    "label": "perturbing the blob did NOT move the gate (%.3e) - this file is not reading the weights it claims to read",
+    "longest_on_one_line": "perturbing the blob did NOT move the gate (%.3e) - this file is not reading the "
    }
   ],
   "gate_math.py": [
@@ -106,6 +115,10 @@
    {
     "label": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published citation has stopped resolving",
     "longest_on_one_line": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published "
+   },
+   {
+    "label": "a module in this lane holds zero plants - the next module added starts that way and this is what notices: %s",
+    "longest_on_one_line": "a module in this lane holds zero plants - the next module added starts that way "
    },
    {
     "label": "the loop detector MISSED a plant inside a loop - it would let the static count disagree with a runtime count unexplained",
@@ -204,6 +217,16 @@
    {
     "label": "set-valued competence is not comparable across board sizes, but the ladder uses it as its cross-rung damage measure",
     "longest_on_one_line": "set-valued competence is not comparable across board sizes, but the ladder uses it "
+   }
+  ],
+  "shrink_save.py": [
+   {
+    "label": "pick_budget returned a row when NOTHING matched the parent's rate - it would save a net worse than the parent",
+    "longest_on_one_line": "pick_budget returned a row when NOTHING matched the parent's rate - it would save "
+   },
+   {
+    "label": "keep_set is not sorted - cut_to would receive units in gate order and the saved net would depend on argsort's tie handling",
+    "longest_on_one_line": "keep_set is not sorted - cut_to would receive units in gate order and the saved "
    }
   ]
  },
@@ -338,6 +361,53 @@
     "label": "a mechanism with no recorded precondition read as APPLIES - silence would be permission",
     "has_format": false,
     "line": 643
+   }
+  ],
+  "check_hover.py": [
+   {
+    "label": "this file imports gate_math (imports: %s) - then it is no longer an INDEPENDENT check and every agreement it reports is circular",
+    "has_format": true,
+    "line": 102
+   },
+   {
+    "label": "the import scan found no imports at all - it cannot see an import that IS there",
+    "has_format": false,
+    "line": 107
+   },
+   {
+    "label": "a disagrees with an independent recomputation (%.3e)",
+    "has_format": true,
+    "line": 132
+   },
+   {
+    "label": "c disagrees with an independent recomputation (%.3e)",
+    "has_format": true,
+    "line": 134
+   },
+   {
+    "label": "gate disagrees with an independent recomputation (%.3e)",
+    "has_format": true,
+    "line": 136
+   },
+   {
+    "label": "the gate left (0,1) - %.6f",
+    "has_format": true,
+    "line": 140
+   },
+   {
+    "label": "crowding exceeds its own addressability (a %.6f, c %.6f) - the Schur complement is wrong",
+    "has_format": true,
+    "line": 141
+   },
+   {
+    "label": "perturbing the blob did NOT move the gate (%.3e) - this file is not reading the weights it claims to read",
+    "has_format": true,
+    "line": 151
+   },
+   {
+    "label": "an unknown site did not raise - a typo'd --site would silently check nothing",
+    "has_format": false,
+    "line": 160
    }
   ],
   "data_ttt.py": [
@@ -1049,54 +1119,59 @@
     "line": 411
    },
    {
+    "label": "a module in this lane holds zero plants - the next module added starts that way and this is what notices: %s",
+    "has_format": true,
+    "line": 434
+   },
+   {
     "label": "the loop detector listed a plant that is NOT in a loop - it fires on anything",
     "has_format": false,
-    "line": 449
+    "line": 461
    },
    {
     "label": "the loop detector MISSED a plant inside a loop - it would let the static count disagree with a runtime count unexplained",
     "has_format": false,
-    "line": 451
+    "line": 463
    },
    {
     "label": "%d label(s) are not greppable on one line of the manifest either - this module reproduces the fault it exists to fix",
     "has_format": true,
-    "line": 478
+    "line": 490
    },
    {
     "label": "the premise-shape detector missed a > 0 / bool() / bare-collection assertion - a premise worded unfamiliarly would go uncounted",
     "has_format": false,
-    "line": 506
+    "line": 518
    },
    {
     "label": "the detector does not TIER its hits - an untiered screen is 91% false positives here and gets ignored like the phrasing grep it replaces",
     "has_format": false,
-    "line": 508
+    "line": 520
    },
    {
     "label": "the premise-shape detector flagged ordinary plants asserting the HEALTHY state - it would mark most of a suite",
     "has_format": false,
-    "line": 511
+    "line": 523
    },
    {
     "label": "the VACUITY screen missed an OR whose operand empties - the plant would go green on success and never fail again",
     "has_format": false,
-    "line": 528
+    "line": 540
    },
    {
     "label": "the VACUITY screen flagged an AND or a plain negation - those are healthy and it would mark half a suite",
     "has_format": false,
-    "line": 530
+    "line": 542
    },
    {
     "label": "a VACUITY hit was tiered WEAK - it is never a legitimate positive control",
     "has_format": false,
-    "line": 533
+    "line": 545
    },
    {
     "label": "running the selftest MODIFIED the stored manifest - it would refresh the drift baseline and make itself pass",
     "has_format": false,
-    "line": 565
+    "line": 577
    }
   ],
   "play.py": [
@@ -1426,97 +1501,97 @@
    {
     "label": "there is not exactly one root: %s",
     "has_format": true,
-    "line": 455
+    "line": 460
    },
    {
     "label": "a node names a parent that does not exist: %s",
     "has_format": true,
-    "line": 457
+    "line": 462
    },
    {
     "label": "nodes unreachable from the root: %s",
     "has_format": true,
-    "line": 459
+    "line": 464
    },
    {
     "label": "the tree has a cycle",
     "has_format": false,
-    "line": 466
+    "line": 471
    },
    {
     "label": "a candidate names a node that does not exist: %s",
     "has_format": true,
-    "line": 493
+    "line": 498
    },
    {
     "label": "classify never says WOULD: %s",
     "has_format": true,
-    "line": 495
+    "line": 500
    },
    {
     "label": "classify never says MIGHT: %s",
     "has_format": true,
-    "line": 496
+    "line": 501
    },
    {
     "label": "a candidate has no stated failure mode: %s",
     "has_format": true,
-    "line": 527
+    "line": 532
    },
    {
     "label": "a node is marked settled with no evidence: %s",
     "has_format": true,
-    "line": 533
+    "line": 538
    },
    {
     "label": "an emitted entry is missing a required field: %s",
     "has_format": true,
-    "line": 542
+    "line": 547
    },
    {
     "label": "an ACTIVE entry lacks started or decides: %s",
     "has_format": true,
-    "line": 545
+    "line": 550
    },
    {
     "label": "an entry hedges in prior_art: %s",
     "has_format": true,
-    "line": 547
+    "line": 552
    },
    {
     "label": "an OR with one settled child is not solved",
     "has_format": false,
-    "line": 481
+    "line": 486
    },
    {
     "label": "an AND with all children solved is not solved",
     "has_format": false,
-    "line": 482
+    "line": 487
    },
    {
     "label": "an OR with NO settled child is still solved",
     "has_format": false,
-    "line": 484
+    "line": 489
    },
    {
     "label": "an AND with an unsolved child is still solved",
     "has_format": false,
-    "line": 485
+    "line": 490
    },
    {
     "label": "a child of an OR is not WOULD (got %s)",
     "has_format": true,
-    "line": 515
+    "line": 520
    },
    {
     "label": "a child of an AND with another unsettled sibling is not MIGHT (got %s)",
     "has_format": true,
-    "line": 516
+    "line": 521
    },
    {
     "label": "the LAST unsettled child of an AND is not WOULD (got %s)",
     "has_format": true,
-    "line": 518
+    "line": 523
    }
   ],
   "reevaluate.py": [
@@ -1872,6 +1947,48 @@
     "line": 388
    }
   ],
+  "shrink_save.py": [
+   {
+    "label": "pick_budget did not return the SMALLEST matching budget (got %s)",
+    "has_format": true,
+    "line": 80
+   },
+   {
+    "label": "pick_budget returned a row when NOTHING matched the parent's rate - it would save a net worse than the parent",
+    "has_format": false,
+    "line": 85
+   },
+   {
+    "label": "a match within tolerance was refused - float noise would block every run",
+    "has_format": false,
+    "line": 90
+   },
+   {
+    "label": "keep_set is not the top-k by addressability (got %s)",
+    "has_format": true,
+    "line": 96
+   },
+   {
+    "label": "keep_set is not sorted - cut_to would receive units in gate order and the saved net would depend on argsort's tie handling",
+    "has_format": false,
+    "line": 98
+   },
+   {
+    "label": "keep_set is not deterministic across calls",
+    "has_format": false,
+    "line": 100
+   },
+   {
+    "label": "keep_set ignores the addressability values - it returns the first k regardless",
+    "has_format": false,
+    "line": 105
+   },
+   {
+    "label": "the full-width keep set is not every unit",
+    "has_format": false,
+    "line": 110
+   }
+  ],
   "train_ttt.py": [
    {
     "label": "splitting mass over the two optimal moves is not the minimum (%.4f vs %.4f)",
@@ -2019,5 +2136,5 @@
    }
   ]
  },
- "labels_digest": "89a2a2c634c571da"
+ "labels_digest": "1fe104d4bb784bba"
 }

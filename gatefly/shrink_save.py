@@ -32,6 +32,90 @@ import ttt
 OUT = os.path.join(HERE, "runs")
 
 
+def pick_budget(rows, par_rate, tol=1e-12):
+    """The SMALLEST a-ordered budget whose rate matches the parent's. -> row or None.
+
+    Pulled out of main() so it can be planted. It was inline and therefore untestable without
+    a checkpoint, which is why this module had no plants at all - and it is a module whose
+    whole job is choosing which net gets saved and flown.
+    """
+    good = [r for r in rows if r["optimal_rate_4520_boards"] >= par_rate - tol]
+    if not good:
+        return None
+    return min(good, key=lambda r: r["budget"])
+
+
+def keep_set(a_vals, k):
+    """The a-ordered keep set: the k units with the largest addressability, sorted.
+
+    Deterministic by construction - this is what lets the rebuilt cut BE the measured net
+    rather than a near one, which main() then verifies by re-scoring.
+    """
+    return sorted(np.argsort(-np.asarray(a_vals))[:k].tolist())
+
+
+def selftest() -> int:
+    """This module had NO PLANTS and it decides which net is saved and flown.
+
+    Its census row said so: the two zero-plant modules in this lane were check_hover.py and
+    this one. The arithmetic here is pure selection, so it is plantable on synthetic rows with
+    no checkpoint - which is exactly why having no plants was a choice rather than a constraint.
+    """
+    fails, checked = [], []
+    print("PLANTS")
+
+    def _plant(label, cond):
+        checked.append(label)
+        print(("  ok   " if cond else "  FAIL  ") + label)
+        if not cond:
+            fails.append(label)
+
+    R = [{"budget": 64, "optimal_rate_4520_boards": 1.0},
+         {"budget": 32, "optimal_rate_4520_boards": 1.0},
+         {"budget": 16, "optimal_rate_4520_boards": 0.93},
+         {"budget": 48, "optimal_rate_4520_boards": 1.0}]
+
+    # 1. the SMALLEST matching budget, not the first and not the best-scoring. Picking the
+    #    best-scoring would silently save a bigger net than the sweep justified.
+    _plant("pick_budget did not return the SMALLEST matching budget (got %s)"
+           % (pick_budget(R, 1.0) or {}).get("budget"), pick_budget(R, 1.0)["budget"] == 32)
+
+    # 2. it must REFUSE rather than fall back when nothing matches. A fallback here saves a net
+    #    that loses to the parent while reporting success.
+    _plant("pick_budget returned a row when NOTHING matched the parent's rate - it would save "
+           "a net worse than the parent", pick_budget(R, 1.0 + 1e-6) is None)
+
+    # 3. and it must not refuse when a match exists only within tolerance, or float noise in
+    #    the sweep's json makes it refuse every time
+    _plant("a match within tolerance was refused - float noise would block every run",
+           pick_budget([{"budget": 8, "optimal_rate_4520_boards": 1.0 - 1e-15}], 1.0) is not None)
+
+    # 4. the keep set must be the top-k by a, sorted, and DETERMINISTIC - that determinism is
+    #    the whole argument that the rebuilt cut is the measured net rather than a near one
+    av = [0.1, 0.9, 0.5, 0.7, 0.3]
+    _plant("keep_set is not the top-k by addressability (got %s)" % keep_set(av, 3),
+           keep_set(av, 3) == [1, 2, 3])
+    _plant("keep_set is not sorted - cut_to would receive units in gate order and the saved "
+           "net would depend on argsort's tie handling", keep_set(av, 3) == sorted(keep_set(av, 3)))
+    _plant("keep_set is not deterministic across calls",
+           keep_set(av, 3) == keep_set(av, 3) == keep_set(list(av), 3))
+
+    # 5. NEGATIVE CONTROL: it must actually read the values. A keep_set ignoring a_vals would
+    #    return [0,1,2] for everything and still look plausible.
+    _plant("keep_set ignores the addressability values - it returns the first k regardless",
+           keep_set([0.9, 0.1, 0.2, 0.3, 0.8], 2) == [0, 4])
+
+    # 6. k = full width must keep everything, which is the null case: shrinking to the parent's
+    #    own size must be the identity or the sweep's 'no loss at full budget' row is meaningless
+    _plant("the full-width keep set is not every unit",
+           keep_set(av, len(av)) == list(range(len(av))))
+
+    print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
+    for f in fails:
+        print("  FAILED: " + f)
+    return 1 if fails else 0
+
+
 def main(a):
     dev = "cuda" if torch.cuda.is_available() and not a.cpu else "cpu"
     with open(os.path.join(OUT, a.name + ".shrink.json"), encoding="utf-8") as f:
@@ -46,15 +130,14 @@ def main(a):
                               for p, (s, _) in zip(parent_P.argmax(1), lp)]))
 
     rows = [r for r in sw["budgets"] if r["rule"] == "a_order"]
-    good = [r for r in rows if r["optimal_rate_4520_boards"] >= par_rate - 1e-12]
-    if not good:
+    pick = pick_budget(rows, par_rate)
+    if pick is None:
         print("no a-ordered budget matched the parent's %.6f; the smallest loss was %.6f"
               % (par_rate, max(r["optimal_rate_4520_boards"] for r in rows)))
         return 1
-    pick = min(good, key=lambda r: r["budget"])
     k = pick["budget"]
     a_, c_, g_, lam = S.unit_gates(parent, layer)
-    keep = sorted(np.argsort(-a_)[:k].tolist())
+    keep = keep_set(a_, k)
     child = S.cut_to(parent, layer, keep, dev)
 
     cp = S.dists(child, prefixes, dev)
@@ -105,6 +188,8 @@ def main(a):
 
 
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        raise SystemExit(selftest())
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", default="ttt_big")
     ap.add_argument("--out", default="ttt_shrunk")

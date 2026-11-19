@@ -79,7 +79,8 @@ NODES = {
                  status="external",
                  evidence="Not this lane's to settle for language. In a SOLVED GAME it is free: "
                           "the consequence closure of a move is the minimax line, computed "
-                          "exactly. gatefly/oracle.py returns it."),
+                          "exactly. gatefly/oracle.py returns it."
+                    " PRIOR ART, swept 2026-11-19: this is RIPPLE EFFECTS, named and benchmarked - Cohen et al., Evaluating the Ripple Effects of Knowledge Editing, TACL 2024, arXiv:2307.12976, ~5K entries, finding that methods modify the fact but often FAIL to capture the entailed ripples. UniEdit (arXiv:2505.12345) types locality as subject-, relation- and object-crossed. RippleEdits derives the implied set from a KNOWLEDGE GRAPH; this lane derives it EXACTLY from minimax, which is the same structure with an exact oracle."),
     "E1.2": dict(kind="LEAF", parent="E1",
                  say="Enumerate what should NOT change. The complement is unbounded.",
                  why="'Everything else' cannot be listed, so preservation is always measured on "
@@ -88,7 +89,8 @@ NODES = {
                  evidence="Measured here: Eq.7 Preservation over an 800-probe sample read "
                           "1.1309 - better than untouched - for a model that had just lost "
                           "25.7% of its competence over the full 4,520-position space. The "
-                          "sample said nothing was wrong while a quarter of the answers were."),
+                          "sample said nothing was wrong while a quarter of the answers were."
+                    " PRIOR ART, swept 2026-11-19: EVK-Bench (arXiv:2602.01977) argues a fixed list of predefined related prompts cannot reach the effects that matter and probes at the embedding level instead - which is the same objection as this lane's 800-probe sample reading Preservation 1.1309 for a model that had lost 25.7% of its competence. The literature has no agreed definition of locality across these benchmarks, so the complement being unbounded is not solved there either."),
     "E1.3": dict(kind="LEAF", parent="E1",
                  say="Pin the target's surface forms: aliases, paraphrases, equally-correct answers.",
                  why="If the answer set is incomplete, a correct output is scored as damage.",
@@ -125,7 +127,8 @@ NODES = {
                  why="Every result is conditional on a choice nobody derives.",
                  status="open",
                  evidence="Untested here. Every figure in this lane is at ONE site, "
-                          "blocks.N.ffwd.net.2.weight, chosen to match the ratchet lane's."),
+                          "blocks.N.ffwd.net.2.weight, chosen to match the ratchet lane's."
+                    " PRIOR ART, swept 2026-11-19: COVERED AND CONTESTED. Hase et al., Does Localization Inform Editing?, arXiv:2301.04213, found causal tracing statistically UNCORRELATED with edit success, and that the edit layer mattered more than the tracing score. Proposed replacements: gradient attribution (LGA), Fisher information (arXiv:2602.20207), causal-weighted allocation across layers (CAKE, ACL 2026). No consensus criterion. Every criterion on offer asks WHICH LAYER MATTERS FOR THIS FACT; none asks WHICH LAYER HAS ROOM LEFT, which is the opening for a capacity-based rule."),
 
     # ---------------------------------------------------------------- 3. INSTALL
     "E3": dict(kind="OR", parent="E",
@@ -212,7 +215,8 @@ NODES = {
                          "to exactly 0.0000 at every size, IFR pinned to 1.00-1.05 against the "
                          "plain edit's 0.69-1.15 (9.3x tighter), Preservation 4.6x closer to "
                          "1.0. It buys precision and SPENDS depth. PRUNING failed its own "
-                         "mechanism: crowding moved 0.1112 to 0.1096, a 1.4% reduction."),
+                         "mechanism: crowding moved 0.1112 to 0.1096, a 1.4% reduction."
+                    " PRIOR ART, swept 2026-11-19: THE MECHANISM IS NOT THIS LANE'S. Growing one neuron per case is T-Patcher (Huang et al. 2023), one neuron per error-producing token. SCEN (arXiv:2404.02699) gives each edit its own expert with dynamic neuron indexing; MeG (ICLR 2026, arXiv:2512.14395) generates the added neuron's weights with a diffusion model and cites the growing overhead of such methods as why they do not scale - which is exactly the cost this lane measured independently as crowding to 0.0000 bought by spending depth. So the mechanism is theirs and the PRICE IN GATE TERMS is this lane's contribution."),
 
     # ---------------------------------------------------------------- 4. VERIFY
     "E4": dict(kind="AND", parent="E",
@@ -273,7 +277,8 @@ NODES = {
                           "looking for it. So the set-valued count is right and INCOMPLETE "
                           "ANSWER SETS are an open sub-problem. See selfimprove_v4 commit "
                           "4ad9d744 for the artefact; the figure is not copied here because "
-                          "that lane's figures move - one of them went 14% to 8% the same day."),
+                          "that lane's figures move - one of them went 14% to 8% the same day."
+                    " PRIOR ART, swept 2026-11-19, AND THE SET-VALUED COUNT WAS ALREADY PUBLISHED: PEAK (arXiv:2401.17623) appends an answer and measures the proportion of the ORIGINAL correct answers accidentally removed - the same quantity as this lane's set-valued movement count, published first. Related: multi-label facts with an IGNORE RATE for other correct objects, and Pohl, Ploner & Akbik's manual audit of the string-matching basis of editing metrics. What the sweep did NOT find, searched explicitly, is GRANULARITY MISMATCH - a correct answer at a different specificity, absent from the answer set's vocabulary. That remains open, it is the v4 lane's finding, and neither this lane's count nor PEAK's covers it because both compare against a set that is itself incomplete."),
 }
 
 # ---------------------------------------------------------------- candidate experiments
