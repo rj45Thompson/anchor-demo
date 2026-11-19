@@ -340,7 +340,17 @@ def may_work_on(item, ideas=None, today=None):
         return False, ("one reference teaches every atom, so building this reinvents it - use "
                        "the published method instead")
     age = stale_days(item, ideas, today)
-    if age is not None and age > HORIZON_DAYS:
+    # UNDATED IS NOT FRESH, and this gate had it backwards. stale_days() returns None when no
+    # date is recorded, and the old guard read `age is not None and age > HORIZON` - so a
+    # missing date fell straight through to the allow. A gate that FAILS OPEN on absent
+    # evidence is worse than no gate, and it is the same two-states-one-label fault this lane
+    # has been clearing all day, in the direction that hides it. The snipershot lane kept
+    # UNDATED distinct from STALE in its own version and that is what exposed this.
+    if age is None:
+        return False, ("the entry records no search DATE, so its age is UNKNOWN and cannot be "
+                       "called fresh. Undated is not the same as recent - record when the "
+                       "search was run")
+    if age > HORIZON_DAYS:
         return False, ("the search is %d days old against a %d-day horizon. An OPEN verdict is "
                        "a statement about the day it was made, and this field publishes faster "
                        "than that - re-search before building on it" % (age, HORIZON_DAYS))
@@ -348,8 +358,18 @@ def may_work_on(item, ideas=None, today=None):
 
 
 def stale_days(item, ideas=None, today=None):
+    """Age of the NEWEST evidence for this item, not of one field.
+
+    Using a single `searched` field dates an idea by when somebody last touched the field, so an
+    old citation sitting beside a fresh search reads at the wrong age. Taking the newest of the
+    idea-level date and any per-atom dates means a re-searched atom refreshes what it actually
+    refreshed. Returns None for UNDATED, which the gate must REFUSE rather than allow.
+    """
     ideas = ideas if ideas is not None else IDEAS
-    when = (ideas.get(item) or {}).get("searched")
+    entry = ideas.get(item) or {}
+    dates = [d for d in [entry.get("searched")]
+             + [a.get("searched") for a in entry.get("atoms", [])] if d]
+    when = max(dates) if dates else None
     if not when:
         return None
     today = today or datetime.date.today().isoformat()
@@ -506,6 +526,30 @@ def selftest() -> int:
     _plant("the staleness refusal does not give the age", "days old" in whyS)
     okF, _ = may_work_on("edit-then-isolated-train-loop", today="2026-11-20")
     _plant("a 2-day-old search was refused as stale - the horizon fires on everything", okF)
+
+    # 10b. UNDATED MUST REFUSE. This gate FAILED OPEN here: stale_days() returns None with no
+    #      date recorded and the guard read `age is not None and age > HORIZON`, so a missing
+    #      date went straight to the allow. Found because the snipershot lane kept UNDATED
+    #      distinct from STALE in its version and said so.
+    # two refs, so the verdict is a COMBINATION and reaches the DATE check - with one ref it
+    # refuses as ANTICIPATED first and this plant would be testing the wrong guard
+    idea_nd = {"u": {"says": "", "atoms": [
+        {"id": "A1", "what": "", "verdict": COVERED, "refs": [R1]},
+        {"id": "A2", "what": "", "verdict": COVERED, "refs": [R2]}]}}
+    okU, whyU = may_work_on("u", idea_nd, today="2026-11-18")
+    _plant("an entry with NO SEARCH DATE was allowed - the gate fails open on absent evidence",
+           not okU)
+    _plant("the undated refusal does not distinguish UNKNOWN age from too old",
+           "UNKNOWN" in whyU)
+
+    # 10c. and the age must come from the NEWEST evidence, so a re-searched atom refreshes what
+    #      it refreshed instead of the whole entry reading at one field's age
+    idea_mix = {"m": {"says": "", "searched": "2026-01-01", "atoms": [
+        {"id": "A1", "what": "", "verdict": COVERED, "refs": [R1],
+         "searched": "2026-11-18"}]}}
+    _plant("the age came from the idea-level field instead of the newest evidence (got %s)"
+           % stale_days("m", idea_mix, "2026-11-20"),
+           stale_days("m", idea_mix, "2026-11-20") == 2)
 
     # 11. THE CADENCE must pick exactly one item, and must pick the oldest when the loop budget
     #     comes due with nothing over the horizon. A cadence that returns a list is a backlog.

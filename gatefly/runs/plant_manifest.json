@@ -4,7 +4,7 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 25,
-  "plants": 347,
+  "plants": 350,
   "modules_with_zero_plants": 2,
   "call_sites_inside_loops": 4,
   "labels_not_greppable_in_source": 32
@@ -42,7 +42,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "32 of 347 labels (9.2%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 347. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "32 of 350 labels (9.1%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 350. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -1232,152 +1232,167 @@
    {
     "label": "an UNSEARCHED atom did not refuse - absence would read as novelty",
     "has_format": false,
-    "line": 427
+    "line": 447
    },
    {
     "label": "the refusal does not name the unsearched atom",
     "has_format": false,
-    "line": 428
+    "line": 448
    },
    {
     "label": "one reference teaching every atom was not ANTICIPATED",
     "has_format": false,
-    "line": 435
+    "line": 455
    },
    {
     "label": "atoms covered by DIFFERENT references were read as ANTICIPATED - the arrangement would be discarded as already published",
     "has_format": false,
-    "line": 445
+    "line": 465
    },
    {
     "label": "the combination verdict does not say the arrangement is unclaimed",
     "has_format": false,
-    "line": 447
+    "line": 467
    },
    {
     "label": "a COVERED atom was not listed as free to cite",
     "has_format": false,
-    "line": 455
+    "line": 475
    },
    {
     "label": "an OPEN atom was not listed as the part to build",
     "has_format": false,
-    "line": 456
+    "line": 476
    },
    {
     "label": "an OPEN atom in the register has no recorded search - an absence claim with nothing behind it: %s",
     "has_format": true,
-    "line": 462
+    "line": 482
    },
    {
     "label": "a COVERED atom in the register cites nothing: %s",
     "has_format": true,
-    "line": 466
+    "line": 486
    },
    {
     "label": "the gate did not fire when about to implement with sessions starting",
     "has_format": false,
-    "line": 471
+    "line": 491
    },
    {
     "label": "the gate fired on a short analysis run - it would cost an hour to tell a finished run it was unoriginal",
     "has_format": false,
-    "line": 473
+    "line": 493
    },
    {
     "label": "the gate did not fire on an idea spanning two literatures",
     "has_format": false,
-    "line": 476
+    "line": 496
    },
    {
     "label": "E3c did not resolve to COVERED/COMBINATION (got %s)",
     "has_format": true,
-    "line": 481
+    "line": 501
    },
    {
     "label": "E3c's free atoms are not A1 and A2 (got %s)",
     "has_format": true,
-    "line": 482
+    "line": 502
    },
    {
     "label": "E3c's buildable atoms are not A3 and A4 (got %s)",
     "has_format": true,
-    "line": 483
+    "line": 503
    },
    {
     "label": "working on an unsearched boneyard item was ALLOWED - the E3c failure repeats",
     "has_format": false,
-    "line": 488
+    "line": 508
    },
    {
     "label": "the refusal does not say UNKNOWN rather than open",
     "has_format": false,
-    "line": 490
+    "line": 510
    },
    {
     "label": "a searched, in-horizon item was refused - the gate blocks everything",
     "has_format": false,
-    "line": 492
+    "line": 512
    },
    {
     "label": "an ANTICIPATED item was allowed to be built - that is reinventing it",
     "has_format": false,
-    "line": 499
+    "line": 519
    },
    {
     "label": "a search 195 days old was treated as current",
     "has_format": false,
-    "line": 505
+    "line": 525
    },
    {
     "label": "the staleness refusal does not give the age",
     "has_format": false,
-    "line": 506
+    "line": 526
    },
    {
     "label": "a 2-day-old search was refused as stale - the horizon fires on everything",
     "has_format": false,
-    "line": 508
+    "line": 528
+   },
+   {
+    "label": "an entry with NO SEARCH DATE was allowed - the gate fails open on absent evidence",
+    "has_format": false,
+    "line": 540
+   },
+   {
+    "label": "the undated refusal does not distinguish UNKNOWN age from too old",
+    "has_format": false,
+    "line": 542
+   },
+   {
+    "label": "the age came from the idea-level field instead of the newest evidence (got %s)",
+    "has_format": true,
+    "line": 550
    },
    {
     "label": "nothing was due after 195 days",
     "has_format": false,
-    "line": 513
+    "line": 557
    },
    {
     "label": "the cadence returned a list instead of one item",
     "has_format": false,
-    "line": 514
+    "line": 558
    },
    {
     "label": "something was due 2 days after a search with no loops elapsed",
     "has_format": false,
-    "line": 517
+    "line": 561
    },
    {
     "label": "the loop budget came due and nothing was picked",
     "has_format": false,
-    "line": 519
+    "line": 563
    },
    {
     "label": "the loop-budget reason does not explain why an in-horizon item was picked",
     "has_format": false,
-    "line": 520
+    "line": 564
    },
    {
     "label": "a node citing published work was not read as externally COVERED",
     "has_format": false,
-    "line": 534
+    "line": 578
    },
    {
     "label": "a node with no citation was read as externally OPEN instead of NOT_SEARCHED",
     "has_format": false,
-    "line": 536
+    "line": 580
    },
    {
     "label": "a node whose evidence names a BLOCKER was not marked blocked internally",
     "has_format": false,
-    "line": 538
+    "line": 582
    }
   ],
   "problem_tree.py": [
@@ -1982,5 +1997,5 @@
    }
   ]
  },
- "labels_digest": "c100e3c66c43951a"
+ "labels_digest": "7caf3b46b2fe79f2"
 }
