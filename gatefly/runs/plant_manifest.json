@@ -3,11 +3,11 @@
  "resolve_from_outside": "D:\\code\\anchor-demo\\gatefly\\runs\\plant_manifest.json",
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
-  "modules_with_plants": 23,
-  "plants": 288,
+  "modules_with_plants": 25,
+  "plants": 337,
   "modules_with_zero_plants": 2,
   "call_sites_inside_loops": 4,
-  "labels_not_greppable_in_source": 22
+  "labels_not_greppable_in_source": 27
  },
  "zero_plant_modules": [
   "check_hover.py",
@@ -42,8 +42,18 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "22 of 288 labels (7.6%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 288. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "27 of 337 labels (8.0%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 337. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
+  "art_graph.py": [
+   {
+    "label": "two mechanism nodes share the same text, so the graph is duplicating rather than deduplicating: %s",
+    "longest_on_one_line": "two mechanism nodes share the same text, so the graph is duplicating rather than "
+   },
+   {
+    "label": "an unknown domain defaulted instead of refusing - defaulting to product would silently exempt research work from the gate",
+    "longest_on_one_line": "an unknown domain defaulted instead of refusing - defaulting to product would "
+   }
+  ],
   "gate_math.py": [
    {
     "label": "a one-ULP f16 perturbation moves the gate by more than 1e-6, so printing a gate to 6 decimals is false precision (moved %.3e)",
@@ -104,6 +114,20 @@
     "longest_on_one_line": "a random player never lost to the 'perfect' opponent in 200 games - the opponent "
    }
   ],
+  "prior_art.py": [
+   {
+    "label": "atoms covered by DIFFERENT references were read as ANTICIPATED - the arrangement would be discarded as already published",
+    "longest_on_one_line": "atoms covered by DIFFERENT references were read as ANTICIPATED - the arrangement "
+   },
+   {
+    "label": "an OPEN atom in the register has no recorded search - an absence claim with nothing behind it: %s",
+    "longest_on_one_line": "an OPEN atom in the register has no recorded search - an absence claim with nothing "
+   },
+   {
+    "label": "the gate fired on a short analysis run - it would cost an hour to tell a finished run it was unoriginal",
+    "longest_on_one_line": "the gate fired on a short analysis run - it would cost an hour to tell a finished "
+   }
+  ],
   "reevaluate.py": [
    {
     "label": "evidence weakening with everything else unchanged was NOT caught - the exact E4.4 failure",
@@ -152,6 +176,103 @@
   ]
  },
  "modules": {
+  "art_graph.py": [
+   {
+    "label": "two mechanism nodes share the same text, so the graph is duplicating rather than deduplicating: %s",
+    "has_format": true,
+    "line": 260
+   },
+   {
+    "label": "a mechanism is claimed as NEW by two works: %s",
+    "has_format": true,
+    "line": 272
+   },
+   {
+    "label": "a mechanism's parent is not in the graph: %s",
+    "has_format": true,
+    "line": 276
+   },
+   {
+    "label": "a cycle in the mechanism graph: %s",
+    "has_format": true,
+    "line": 286
+   },
+   {
+    "label": "a work attaches to no mechanism: %s",
+    "has_format": true,
+    "line": 290
+   },
+   {
+    "label": "a work cites a mechanism not in the graph: %s",
+    "has_format": true,
+    "line": 293
+   },
+   {
+    "label": "the frontier is empty - the graph claims every mechanism is published",
+    "has_format": false,
+    "line": 298
+   },
+   {
+    "label": "a frontier node actually has a work attached",
+    "has_format": false,
+    "line": 300
+   },
+   {
+    "label": "a non-frontier node has no work attached",
+    "has_format": false,
+    "line": 302
+   },
+   {
+    "label": "a frontier node has no recorded search behind it: %s",
+    "has_format": true,
+    "line": 308
+   },
+   {
+    "label": "the gate does not apply to a research domain",
+    "has_format": false,
+    "line": 313
+   },
+   {
+    "label": "the gate applies to Tami - a game has no prior art, it has requirements",
+    "has_format": false,
+    "line": 315
+   },
+   {
+    "label": "the Tami answer does not say what governs instead",
+    "has_format": false,
+    "line": 317
+   },
+   {
+    "label": "an unknown domain defaulted instead of refusing - defaulting to product would silently exempt research work from the gate",
+    "has_format": false,
+    "line": 319
+   },
+   {
+    "label": "AlphaEdit's delta is not M1.3",
+    "has_format": false,
+    "line": 324
+   },
+   {
+    "label": "MEMIT's delta is not M1.2",
+    "has_format": false,
+    "line": 325
+   },
+   {
+    "label": "Adam-NSCL's delta is not M4.1",
+    "has_format": false,
+    "line": 326
+   },
+   {
+    "label": "a frontier node has an adding work",
+    "has_format": false,
+    "line": 327
+   },
+   {
+    "label": "a frontier node with nothing recorded about what this lane holds: %s",
+    "has_format": true,
+    "line": 332
+   }
+  ],
   "data_ttt.py": [
    {
     "label": "the complete-game count is not 255168: %d",
@@ -1037,6 +1158,158 @@
     "line": 241
    }
   ],
+  "prior_art.py": [
+   {
+    "label": "an UNSEARCHED atom did not refuse - absence would read as novelty",
+    "has_format": false,
+    "line": 427
+   },
+   {
+    "label": "the refusal does not name the unsearched atom",
+    "has_format": false,
+    "line": 428
+   },
+   {
+    "label": "one reference teaching every atom was not ANTICIPATED",
+    "has_format": false,
+    "line": 435
+   },
+   {
+    "label": "atoms covered by DIFFERENT references were read as ANTICIPATED - the arrangement would be discarded as already published",
+    "has_format": false,
+    "line": 445
+   },
+   {
+    "label": "the combination verdict does not say the arrangement is unclaimed",
+    "has_format": false,
+    "line": 447
+   },
+   {
+    "label": "a COVERED atom was not listed as free to cite",
+    "has_format": false,
+    "line": 455
+   },
+   {
+    "label": "an OPEN atom was not listed as the part to build",
+    "has_format": false,
+    "line": 456
+   },
+   {
+    "label": "an OPEN atom in the register has no recorded search - an absence claim with nothing behind it: %s",
+    "has_format": true,
+    "line": 462
+   },
+   {
+    "label": "a COVERED atom in the register cites nothing: %s",
+    "has_format": true,
+    "line": 466
+   },
+   {
+    "label": "the gate did not fire when about to implement with sessions starting",
+    "has_format": false,
+    "line": 471
+   },
+   {
+    "label": "the gate fired on a short analysis run - it would cost an hour to tell a finished run it was unoriginal",
+    "has_format": false,
+    "line": 473
+   },
+   {
+    "label": "the gate did not fire on an idea spanning two literatures",
+    "has_format": false,
+    "line": 476
+   },
+   {
+    "label": "E3c did not resolve to COVERED/COMBINATION (got %s)",
+    "has_format": true,
+    "line": 481
+   },
+   {
+    "label": "E3c's free atoms are not A1 and A2 (got %s)",
+    "has_format": true,
+    "line": 482
+   },
+   {
+    "label": "E3c's buildable atoms are not A3 and A4 (got %s)",
+    "has_format": true,
+    "line": 483
+   },
+   {
+    "label": "working on an unsearched boneyard item was ALLOWED - the E3c failure repeats",
+    "has_format": false,
+    "line": 488
+   },
+   {
+    "label": "the refusal does not say UNKNOWN rather than open",
+    "has_format": false,
+    "line": 490
+   },
+   {
+    "label": "a searched, in-horizon item was refused - the gate blocks everything",
+    "has_format": false,
+    "line": 492
+   },
+   {
+    "label": "an ANTICIPATED item was allowed to be built - that is reinventing it",
+    "has_format": false,
+    "line": 499
+   },
+   {
+    "label": "a search 195 days old was treated as current",
+    "has_format": false,
+    "line": 505
+   },
+   {
+    "label": "the staleness refusal does not give the age",
+    "has_format": false,
+    "line": 506
+   },
+   {
+    "label": "a 2-day-old search was refused as stale - the horizon fires on everything",
+    "has_format": false,
+    "line": 508
+   },
+   {
+    "label": "nothing was due after 195 days",
+    "has_format": false,
+    "line": 513
+   },
+   {
+    "label": "the cadence returned a list instead of one item",
+    "has_format": false,
+    "line": 514
+   },
+   {
+    "label": "something was due 2 days after a search with no loops elapsed",
+    "has_format": false,
+    "line": 517
+   },
+   {
+    "label": "the loop budget came due and nothing was picked",
+    "has_format": false,
+    "line": 519
+   },
+   {
+    "label": "the loop-budget reason does not explain why an in-horizon item was picked",
+    "has_format": false,
+    "line": 520
+   },
+   {
+    "label": "a node citing published work was not read as externally COVERED",
+    "has_format": false,
+    "line": 534
+   },
+   {
+    "label": "a node with no citation was read as externally OPEN instead of NOT_SEARCHED",
+    "has_format": false,
+    "line": 536
+   },
+   {
+    "label": "a node whose evidence names a BLOCKER was not marked blocked internally",
+    "has_format": false,
+    "line": 538
+   }
+  ],
   "problem_tree.py": [
    {
     "label": "there is not exactly one root: %s",
@@ -1639,5 +1912,5 @@
    }
   ]
  },
- "labels_digest": "88f429cb5fa7827f"
+ "labels_digest": "d85e50ec2697877b"
 }
