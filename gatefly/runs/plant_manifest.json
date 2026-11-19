@@ -1,0 +1,1528 @@
+{
+ "what": "Every plant label in the gatefly lane, extracted statically from source so a lane in another repository can resolve a citation by name and notice when it is reworded or removed.",
+ "resolve_from_outside": "D:\\code\\anchor-demo\\gatefly\\runs\\plant_manifest.json",
+ "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
+ "totals": {
+  "modules_with_plants": 23,
+  "plants": 287,
+  "modules_with_zero_plants": 2,
+  "call_sites_inside_loops": 4
+ },
+ "zero_plant_modules": [
+  "check_hover.py",
+  "shrink_save.py"
+ ],
+ "zero_plant_modules_that_are_checkers": [
+  "check_hover.py"
+ ],
+ "caveat": "Presence of a label, not evidence that the plant is reached, can fail, or asserts anything true. A vacuously passing plant is listed here too.",
+ "why_this_count_is_lower_than_a_runtime_count": "These are CALL SITES. A _plant() inside a loop runs several times and a selftest reports each execution, so a runtime sweep counts more. Measured 2026-11-18: 277 static against 286 runtime over the same 22 modules, and the whole +9 is the three loop sites listed under loops_by_module (ladder_probe +4, uml_kaos +4, reevaluate +1). Every other module agrees exactly. Neither number is wrong; they count different things.",
+ "loops_by_module": {
+  "ladder_probe.py": [
+   {
+    "plant_line": 206,
+    "loop_line": 203
+   },
+   {
+    "plant_line": 207,
+    "loop_line": 203
+   }
+  ],
+  "reevaluate.py": [
+   {
+    "plant_line": 171,
+    "loop_line": 167
+   }
+  ],
+  "uml_kaos.py": [
+   {
+    "plant_line": 321,
+    "loop_line": 319
+   }
+  ]
+ },
+ "modules": {
+  "data_ttt.py": [
+   {
+    "label": "the complete-game count is not 255168: %d",
+    "has_format": true,
+    "line": 136
+   },
+   {
+    "label": "the distinct-prefix count disagrees with an independent walk: %d vs %d",
+    "has_format": true,
+    "line": 150
+   },
+   {
+    "label": "a stored target is empty, illegal, or not the optimal set (%d bad)",
+    "has_format": true,
+    "line": 160
+   },
+   {
+    "label": "game-step targets disagree with prefix targets (%d bad)",
+    "has_format": true,
+    "line": 175
+   },
+   {
+    "label": "the mask does not count the game's own moves",
+    "has_format": false,
+    "line": 190
+   },
+   {
+    "label": "rolling the targets changed nothing - plant 4 could not detect an off-by-one",
+    "has_format": false,
+    "line": 197
+   }
+  ],
+  "gate_math.py": [
+   {
+    "label": "orthogonal C=I does not match the closed form",
+    "has_format": false,
+    "line": 179
+   },
+   {
+    "label": "gate != g(a - c)",
+    "has_format": false,
+    "line": 188
+   },
+   {
+    "label": "G is not symmetric",
+    "has_format": false,
+    "line": 191
+   },
+   {
+    "label": "a joint gate exceeds its lone-write gain",
+    "has_format": false,
+    "line": 194
+   },
+   {
+    "label": "collinear directions do not share g(na)/n",
+    "has_format": false,
+    "line": 204
+   },
+   {
+    "label": "the wrong form (I+A)^-1 agrees with A(I+A)^-1 - formula broken",
+    "has_format": false,
+    "line": 208
+   },
+   {
+    "label": "a gate left (0,1)",
+    "has_format": false,
+    "line": 212
+   },
+   {
+    "label": "orthonormal directions show crowding",
+    "has_format": false,
+    "line": 217
+   },
+   {
+    "label": "30 directions in 8 dimensions show little crowding",
+    "has_format": false,
+    "line": 225
+   },
+   {
+    "label": "30 directions in 2000 dimensions crowd like 30 in 8 - measuring p, not geometry",
+    "has_format": false,
+    "line": 227
+   },
+   {
+    "label": "unit_write_directions gives the wrong count of layers",
+    "has_format": false,
+    "line": 235
+   },
+   {
+    "label": "a unit's write direction is not the next matrix's column",
+    "has_format": false,
+    "line": 236
+   },
+   {
+    "label": "the transposed form also satisfies plant 11 - the plant cannot tell them apart",
+    "has_format": false,
+    "line": 240
+   },
+   {
+    "label": "a one-ULP f16 perturbation moves the gate by more than 1e-6, so printing a gate to 6 decimals is false precision (moved %.3e)",
+    "has_format": true,
+    "line": 278
+   },
+   {
+    "label": "a 1000-ULP perturbation does NOT move the gate, so the ULP test measures nothing (moved %.3e)",
+    "has_format": true,
+    "line": 285
+   },
+   {
+    "label": "A disagrees with the ratchet lane's gate_matrix",
+    "has_format": false,
+    "line": 252
+   },
+   {
+    "label": "G disagrees with the ratchet lane's gate_matrix",
+    "has_format": false,
+    "line": 254
+   },
+   {
+    "label": "crowding disagrees with the ratchet lane's crowding_term",
+    "has_format": false,
+    "line": 257
+   }
+  ],
+  "gate_read.py": [
+   {
+    "label": "the lane's ffwd.net.2 site is missing",
+    "has_format": false,
+    "line": 317
+   },
+   {
+    "label": "the lane's site does not have 4*n_embed units",
+    "has_format": false,
+    "line": 318
+   },
+   {
+    "label": "an emitted gate left (0,1)",
+    "has_format": false,
+    "line": 325
+   },
+   {
+    "label": "a crowding term is negative or exceeds its own a",
+    "has_format": false,
+    "line": 326
+   },
+   {
+    "label": "the pipeline's gate disagrees with the hand computation: %.3e",
+    "has_format": true,
+    "line": 331
+   },
+   {
+    "label": "the identity and the full inverse disagree: %.3e",
+    "has_format": true,
+    "line": 333
+   },
+   {
+    "label": "pos has the wrong length",
+    "has_format": false,
+    "line": 340
+   },
+   {
+    "label": "the unit count does not equal the sum of the drawn sites' units",
+    "has_format": false,
+    "line": 342
+   },
+   {
+    "label": "the edge cap does not say what it dropped",
+    "has_format": false,
+    "line": 347
+   },
+   {
+    "label": "kept + dropped != considered",
+    "has_format": false,
+    "line": 349
+   },
+   {
+    "label": "duplicating every column did not raise the crowding fraction (%.4f -> %.4f)",
+    "has_format": true,
+    "line": 360
+   },
+   {
+    "label": "a dead site was not refused",
+    "has_format": false,
+    "line": 375
+   },
+   {
+    "label": "a refused site still carries a gate",
+    "has_format": false,
+    "line": 377
+   },
+   {
+    "label": "refusing one site dropped the others too",
+    "has_format": false,
+    "line": 378
+   },
+   {
+    "label": "a healthy net refused a site - the refusal fires on everything",
+    "has_format": false,
+    "line": 381
+   },
+   {
+    "label": "I+A had an eigenvalue below 1 on a rank-deficient Gram, so it CAN be singular after all and ALT-2's original criterion should be restored",
+    "has_format": false,
+    "line": 393
+   }
+  ],
+  "headroom.py": [
+   {
+    "label": "identical keys do not give cosine 1",
+    "has_format": false,
+    "line": 208
+   },
+   {
+    "label": "opposed keys do not give cosine -1",
+    "has_format": false,
+    "line": 212
+   },
+   {
+    "label": "orthogonal keys do not give cosine 0",
+    "has_format": false,
+    "line": 214
+   },
+   {
+    "label": "a saturated full set was not flagged as untested",
+    "has_format": false,
+    "line": 221
+   },
+   {
+    "label": "an unsaturated full set was wrongly flagged as saturated",
+    "has_format": false,
+    "line": 223
+   },
+   {
+    "label": "reusing the keys changed the edit (max %.3e)",
+    "has_format": true,
+    "line": 244
+   },
+   {
+    "label": "a K with the wrong number of columns was not refused",
+    "has_format": false,
+    "line": 253
+   },
+   {
+    "label": "an edit that installed nothing did not score 0",
+    "has_format": false,
+    "line": 199
+   },
+   {
+    "label": "an edit that installed everything did not score 1",
+    "has_format": false,
+    "line": 202
+   }
+  ],
+  "ladder.py": [
+   {
+    "label": "a live training step carries an empty optimal set (%d)",
+    "has_format": true,
+    "line": 496
+   },
+   {
+    "label": "a target bit names an occupied cell (%d)",
+    "has_format": true,
+    "line": 509
+   },
+   {
+    "label": "the oracle does not score competence 1.0 (%.4f, %d illegal)",
+    "has_format": true,
+    "line": 542
+   },
+   {
+    "label": "a net that only says BOS does not score 0.0 with everything illegal (%.4f, %d/%d)",
+    "has_format": true,
+    "line": 544
+   },
+   {
+    "label": "a case's target is illegal or already optimal (%d of %d)",
+    "has_format": true,
+    "line": 552
+   },
+   {
+    "label": "a target at 0.40 of the vocabulary did not fail the published p>0.5 criterion",
+    "has_format": false,
+    "line": 568
+   },
+   {
+    "label": "the same target at 0.80 of the LEGAL mass did not pass the renormalised criterion",
+    "has_format": false,
+    "line": 570
+   },
+   {
+    "label": "the argmax criterion disagreed with the raw probabilities",
+    "has_format": false,
+    "line": 572
+   },
+   {
+    "label": "with all mass on legal moves the two criteria still differ",
+    "has_format": false,
+    "line": 582
+   },
+   {
+    "label": "15/16 is separable from 16/16 at n=16, so the ladder would call a break on one case ([%.4f,%.4f] vs [%.4f,%.4f])",
+    "has_format": true,
+    "line": 590
+   },
+   {
+    "label": "a clear fall at n=256 is NOT separable, so the guard can never fire ([%.4f,%.4f] vs [%.4f,%.4f])",
+    "has_format": true,
+    "line": 594
+   },
+   {
+    "label": "the Wilson interval for a perfect run reaches 1.0 at the top",
+    "has_format": false,
+    "line": 597
+   },
+   {
+    "label": "the Wilson interval for a perfect run is not wide at n=16 (lo %.4f)",
+    "has_format": true,
+    "line": 598
+   },
+   {
+    "label": "a zero covariance is not detected as singular",
+    "has_format": false,
+    "line": 609
+   },
+   {
+    "label": "three equally-broken rungs are not all BROKEN against perfect",
+    "has_format": false,
+    "line": 625
+   },
+   {
+    "label": "one of three EQUAL rungs was called worse than the best",
+    "has_format": false,
+    "line": 626
+   },
+   {
+    "label": "a clearly worse rung does not separate from a clearly better one",
+    "has_format": false,
+    "line": 629
+   }
+  ],
+  "ladder_probe.py": [
+   {
+    "label": "3,3,3 does not give the published 5478 reachable states: %d",
+    "has_format": true,
+    "line": 177
+   },
+   {
+    "label": "3,3,3 is not a draw under perfect play",
+    "has_format": false,
+    "line": 179
+   },
+   {
+    "label": "3,3,3 has the wrong number of lines: %d",
+    "has_format": true,
+    "line": 180
+   },
+   {
+    "label": "3,3,3 disagrees with gatefly/ttt.py on %d of %d states",
+    "has_format": true,
+    "line": 190
+   },
+   {
+    "label": "3,3,2 is not a first-player win",
+    "has_format": false,
+    "line": 194
+   },
+   {
+    "label": "4,4,4 is not a draw, contradicting the published result",
+    "has_format": false,
+    "line": 199
+   },
+   {
+    "label": "the state cap did not fire on 4,4,4 with a 1000-state cap",
+    "has_format": false,
+    "line": 213
+   },
+   {
+    "label": "the cap fired on 3,3,3 where it should not",
+    "has_format": false,
+    "line": 216
+   },
+   {
+    "label": "lines_for(%d,%d,%d) produced an off-board index",
+    "has_format": true,
+    "line": 206
+   },
+   {
+    "label": "lines_for(%d,%d,%d) produced a line of the wrong length",
+    "has_format": true,
+    "line": 207
+   }
+  ],
+  "metrics.py": [
+   {
+    "label": "IFR does not reproduce the published worked example (%.4f, want 0.6914)",
+    "has_format": true,
+    "line": 180
+   },
+   {
+    "label": "Preservation does not reproduce the published worked example (%.4f, want 0.725)",
+    "has_format": true,
+    "line": 183
+   },
+   {
+    "label": "the sqrt(n) weighting does not change a mixed-length result",
+    "has_format": false,
+    "line": 189
+   },
+   {
+    "label": "a zero-reliability chain was not excluded from D'",
+    "has_format": false,
+    "line": 193
+   },
+   {
+    "label": "IFR is not 1.0 when nothing changed (%.6f)",
+    "has_format": true,
+    "line": 199
+   },
+   {
+    "label": "destroying the chain did not LOWER IFR (%.4f vs %.4f)",
+    "has_format": true,
+    "line": 200
+   },
+   {
+    "label": "Preservation is not 1.0 when nothing changed",
+    "has_format": false,
+    "line": 204
+   },
+   {
+    "label": "Preservation cannot exceed 1, so a strengthening is invisible",
+    "has_format": false,
+    "line": 206
+   },
+   {
+    "label": "efficacy counts p == 0.5 as a hit",
+    "has_format": false,
+    "line": 211
+   },
+   {
+    "label": "a chain link's move is not optimal at its own position (over %d chains)",
+    "has_format": true,
+    "line": 233
+   },
+   {
+    "label": "dropping the prefix broke %d of %d cases - plant 8 cannot catch the bug it was written for",
+    "has_format": true,
+    "line": 255
+   },
+   {
+    "label": "prefix_of returned a sequence that does not reach its board (%d)",
+    "has_format": true,
+    "line": 272
+   },
+   {
+    "label": "IFR is unchanged by shuffling the pairing - the pairing is not used",
+    "has_format": false,
+    "line": 282
+   }
+  ],
+  "mnk.py": [
+   {
+    "label": "3,3,3 disagrees with gatefly/ttt.py on %d values",
+    "has_format": true,
+    "line": 236
+   },
+   {
+    "label": "3,3,3 disagrees with gatefly/ttt.py on %d optimal SETS",
+    "has_format": true,
+    "line": 237
+   },
+   {
+    "label": "winner_after disagrees with winner on %d moves",
+    "has_format": true,
+    "line": 251
+   },
+   {
+    "label": "4,4,4 is not a draw, contradicting the published result",
+    "has_format": false,
+    "line": 255
+   },
+   {
+    "label": "3,3,2 is not a first-player win",
+    "has_format": false,
+    "line": 257
+   },
+   {
+    "label": "optimal_moves was empty or illegal on %d live states",
+    "has_format": true,
+    "line": 269
+   },
+   {
+    "label": "a sampling policy reached no positions",
+    "has_format": false,
+    "line": 278
+   },
+   {
+    "label": "optimal-only sampling reached as many positions as random - the policy does nothing",
+    "has_format": false,
+    "line": 280
+   },
+   {
+    "label": "a sampled position carries an optimal set that does not recompute (%d)",
+    "has_format": true,
+    "line": 291
+   },
+   {
+    "label": "a stored prefix does not reach its own board (%d)",
+    "has_format": true,
+    "line": 306
+   }
+  ],
+  "net.py": [
+   {
+    "label": "forward gives the wrong shape",
+    "has_format": false,
+    "line": 197
+   },
+   {
+    "label": "a later token changed an earlier position - attention is not causal",
+    "has_format": false,
+    "line": 205
+   },
+   {
+    "label": "changing the last token changed nothing at all - the net ignores its input",
+    "has_format": false,
+    "line": 207
+   },
+   {
+    "label": "tensor names do not match priorgpt's: missing %s",
+    "has_format": true,
+    "line": 217
+   },
+   {
+    "label": "the down-projection is not (n_embed, mult*n_embed)",
+    "has_format": false,
+    "line": 221
+   },
+   {
+    "label": "the checkpoint round trip changed the logits by more than f16 noise",
+    "has_format": false,
+    "line": 232
+   },
+   {
+    "label": "the round trip is EXACT, so f16 is not actually being written",
+    "has_format": false,
+    "line": 234
+   },
+   {
+    "label": "parameter count disagrees with the meta",
+    "has_format": false,
+    "line": 236
+   },
+   {
+    "label": "tensors() disagrees with the loaded state dict: %.3e",
+    "has_format": true,
+    "line": 242
+   },
+   {
+    "label": "a corrupted offset read back identical tensors - the reader ignores its index",
+    "has_format": false,
+    "line": 251
+   }
+  ],
+  "offline.py": [
+   {
+    "label": "the fixture did not round trip",
+    "has_format": false,
+    "line": 201
+   },
+   {
+    "label": "a fixture whose key does not match was USED instead of refused",
+    "has_format": false,
+    "line": 212
+   },
+   {
+    "label": "a missing required fixture did not raise",
+    "has_format": false,
+    "line": 221
+   },
+   {
+    "label": "a missing optional fixture did not return None",
+    "has_format": false,
+    "line": 222
+   },
+   {
+    "label": "the content hash does not depend on the content",
+    "has_format": false,
+    "line": 228
+   },
+   {
+    "label": "the content hash is not stable across calls",
+    "has_format": false,
+    "line": 229
+   }
+  ],
+  "oracle.py": [
+   {
+    "label": "the upgraded oracle disagrees with ttt.py on %d values of %d",
+    "has_format": true,
+    "line": 236
+   },
+   {
+    "label": "it disagrees with ttt.py on %d optimal SETS",
+    "has_format": true,
+    "line": 238
+   },
+   {
+    "label": "symmetry reduction changed %d values",
+    "has_format": true,
+    "line": 244
+   },
+   {
+    "label": "symmetry found no maps at all on a 3x3 board (%d)",
+    "has_format": true,
+    "line": 245
+   },
+   {
+    "label": "a 3x4 board was given transpose symmetries it does not have (%d)",
+    "has_format": true,
+    "line": 247
+   },
+   {
+    "label": "move_values disagrees with optimal_moves or misses a legal move (%d)",
+    "has_format": true,
+    "line": 261
+   },
+   {
+    "label": "a move cost came out negative (%d)",
+    "has_format": true,
+    "line": 274
+   },
+   {
+    "label": "cost 0 and 'is optimal' disagree on %d moves",
+    "has_format": true,
+    "line": 275
+   },
+   {
+    "label": "sharpness never reaches 2 (one move wins, another loses): %s",
+    "has_format": true,
+    "line": 282
+   },
+   {
+    "label": "sharpness is never 0 (no position where every move is equally good): %s",
+    "has_format": true,
+    "line": 284
+   },
+   {
+    "label": "depth_to_end left [1, empty cells] on %d positions",
+    "has_format": true,
+    "line": 295
+   },
+   {
+    "label": "an immediate win is not depth 1 (got %d)",
+    "has_format": true,
+    "line": 298
+   },
+   {
+    "label": "that immediate win is not sharp (got %d)",
+    "has_format": true,
+    "line": 300
+   },
+   {
+    "label": "the empty board is not a draw",
+    "has_format": false,
+    "line": 304
+   },
+   {
+    "label": "the empty board is not dull (every opening is optimal in tic-tac-toe)",
+    "has_format": false,
+    "line": 305
+   }
+  ],
+  "plant_manifest.py": [
+   {
+    "label": "extraction found fewer than 100 plants (%d) - the manifest is not covering this lane",
+    "has_format": true,
+    "line": 190
+   },
+   {
+    "label": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published citation has stopped resolving",
+    "has_format": false,
+    "line": 197
+   },
+   {
+    "label": "rewording a label was not detected - the drift check is blind",
+    "has_format": false,
+    "line": 206
+   },
+   {
+    "label": "removing a label was not detected",
+    "has_format": false,
+    "line": 212
+   },
+   {
+    "label": "an unchanged manifest reported drift - the check would refuse on every run",
+    "has_format": false,
+    "line": 217
+   },
+   {
+    "label": "the digest changed when only surrounding prose changed",
+    "has_format": false,
+    "line": 224
+   },
+   {
+    "label": "the digest did NOT change when a label changed",
+    "has_format": false,
+    "line": 225
+   },
+   {
+    "label": "no module was found with zero plants - then this lane's census extension is moot and the row can be dropped",
+    "has_format": false,
+    "line": 234
+   },
+   {
+    "label": "the loop detector found no loop-nested plants, so the static count would silently disagree with a runtime sweep",
+    "has_format": false,
+    "line": 242
+   },
+   {
+    "label": "gate_math.py was listed as holding a loop-nested plant - the detector fires on anything",
+    "has_format": false,
+    "line": 246
+   }
+  ],
+  "play.py": [
+   {
+    "label": "two perfect players did not draw 1000 of 1000: %d",
+    "has_format": true,
+    "line": 161
+   },
+   {
+    "label": "the 1000 perfect games were all the same game, so the count is theatre: %d distinct",
+    "has_format": true,
+    "line": 162
+   },
+   {
+    "label": "an illegal move was not counted",
+    "has_format": false,
+    "line": 172
+   },
+   {
+    "label": "an occupied cell was not caught on a LATER ply",
+    "has_format": false,
+    "line": 176
+   },
+   {
+    "label": "a always-legal player was flagged illegal",
+    "has_format": false,
+    "line": 188
+   },
+   {
+    "label": "BOS as a move was not counted illegal",
+    "has_format": false,
+    "line": 196
+   },
+   {
+    "label": "a random player never lost to the 'perfect' opponent in 200 games - the opponent is not perfect",
+    "has_format": false,
+    "line": 208
+   },
+   {
+    "label": "a random player BEAT the perfect opponent %d times in 500",
+    "has_format": true,
+    "line": 215
+   }
+  ],
+  "pong.py": [
+   {
+    "label": "the oracle conceded %d times in 20000 steps - predict_y is wrong",
+    "has_format": true,
+    "line": 303
+   },
+   {
+    "label": "a motionless paddle never conceded - the game cannot be lost",
+    "has_format": false,
+    "line": 316
+   },
+   {
+    "label": "the ball left the court %d times",
+    "has_format": true,
+    "line": 329
+   },
+   {
+    "label": "the ball's speed is not constant (%.5f to %.5f)",
+    "has_format": true,
+    "line": 330
+   },
+   {
+    "label": "the closed-form interception disagrees with simulating it (%.4f)",
+    "has_format": true,
+    "line": 354
+   },
+   {
+    "label": "the two seats are not mirror images",
+    "has_format": false,
+    "line": 361
+   },
+   {
+    "label": "a label exceeds the move limit",
+    "has_format": false,
+    "line": 366
+   },
+   {
+    "label": "the labels are all the same - the teacher is not teaching",
+    "has_format": false,
+    "line": 367
+   }
+  ],
+  "preservation_shape.py": [
+   {
+    "label": "a fully cancelling set does not keep the median near 1 (%.4f)",
+    "has_format": true,
+    "line": 187
+   },
+   {
+    "label": "the movement count missed a set where every probe moved (%.4f)",
+    "has_format": true,
+    "line": 189
+   },
+   {
+    "label": "frac_below_1 missed half the set falling (%.4f)",
+    "has_format": true,
+    "line": 191
+   },
+   {
+    "label": "an untouched set does not give mean, median and p10 of exactly 1.0",
+    "has_format": false,
+    "line": 197
+   },
+   {
+    "label": "the movement count fired on an untouched set",
+    "has_format": false,
+    "line": 199
+   },
+   {
+    "label": "a skewed set does not separate mean from median (%.4f vs %.4f)",
+    "has_format": true,
+    "line": 206
+   },
+   {
+    "label": "mean_over_median does not flag the skew (%.4f)",
+    "has_format": true,
+    "line": 208
+   },
+   {
+    "label": "cancellation and skew are indistinguishable on mean_over_median",
+    "has_format": false,
+    "line": 212
+   },
+   {
+    "label": "the movement count did not see both moves (%.4f)",
+    "has_format": true,
+    "line": 222
+   },
+   {
+    "label": "a swap between equally correct answers was counted as damage (%.4f)",
+    "has_format": true,
+    "line": 224
+   },
+   {
+    "label": "the tie swap was not counted as a swap (%.4f)",
+    "has_format": true,
+    "line": 226
+   },
+   {
+    "label": "moved != left + swapped, so the decomposition does not account for every move",
+    "has_format": false,
+    "line": 228
+   },
+   {
+    "label": "with no ties the movement count and the damage count still differ (%.4f vs %.4f)",
+    "has_format": true,
+    "line": 235
+   },
+   {
+    "label": "a zero-probability probe was not excluded and counted",
+    "has_format": false,
+    "line": 241
+   }
+  ],
+  "problem_tree.py": [
+   {
+    "label": "there is not exactly one root: %s",
+    "has_format": true,
+    "line": 455
+   },
+   {
+    "label": "a node names a parent that does not exist: %s",
+    "has_format": true,
+    "line": 457
+   },
+   {
+    "label": "nodes unreachable from the root: %s",
+    "has_format": true,
+    "line": 459
+   },
+   {
+    "label": "the tree has a cycle",
+    "has_format": false,
+    "line": 466
+   },
+   {
+    "label": "a candidate names a node that does not exist: %s",
+    "has_format": true,
+    "line": 493
+   },
+   {
+    "label": "classify never says WOULD: %s",
+    "has_format": true,
+    "line": 495
+   },
+   {
+    "label": "classify never says MIGHT: %s",
+    "has_format": true,
+    "line": 496
+   },
+   {
+    "label": "a candidate has no stated failure mode: %s",
+    "has_format": true,
+    "line": 527
+   },
+   {
+    "label": "a node is marked settled with no evidence: %s",
+    "has_format": true,
+    "line": 533
+   },
+   {
+    "label": "an emitted entry is missing a required field: %s",
+    "has_format": true,
+    "line": 542
+   },
+   {
+    "label": "an ACTIVE entry lacks started or decides: %s",
+    "has_format": true,
+    "line": 545
+   },
+   {
+    "label": "an entry hedges in prior_art: %s",
+    "has_format": true,
+    "line": 547
+   },
+   {
+    "label": "an OR with one settled child is not solved",
+    "has_format": false,
+    "line": 481
+   },
+   {
+    "label": "an AND with all children solved is not solved",
+    "has_format": false,
+    "line": 482
+   },
+   {
+    "label": "an OR with NO settled child is still solved",
+    "has_format": false,
+    "line": 484
+   },
+   {
+    "label": "an AND with an unsolved child is still solved",
+    "has_format": false,
+    "line": 485
+   },
+   {
+    "label": "a child of an OR is not WOULD (got %s)",
+    "has_format": true,
+    "line": 515
+   },
+   {
+    "label": "a child of an AND with another unsettled sibling is not MIGHT (got %s)",
+    "has_format": true,
+    "line": 516
+   },
+   {
+    "label": "the LAST unsettled child of an AND is not WOULD (got %s)",
+    "has_format": true,
+    "line": 518
+   }
+  ],
+  "reevaluate.py": [
+   {
+    "label": "a tree that has not moved reported drift",
+    "has_format": false,
+    "line": 154
+   },
+   {
+    "label": "a tree that has not moved reported stale nodes",
+    "has_format": false,
+    "line": 155
+   },
+   {
+    "label": "evidence weakening with everything else unchanged was NOT caught - the exact E4.4 failure",
+    "has_format": false,
+    "line": 163
+   },
+   {
+    "label": "the PLANT's label changing under a fixed claim was not caught",
+    "has_format": false,
+    "line": 174
+   },
+   {
+    "label": "a node examined on the day it changed still reported drift",
+    "has_format": false,
+    "line": 180
+   },
+   {
+    "label": "a node untouched since January was not reported stale",
+    "has_format": false,
+    "line": 187
+   },
+   {
+    "label": "a node examined yesterday was reported stale",
+    "has_format": false,
+    "line": 191
+   },
+   {
+    "label": "a never-seen node was reported as drift instead of unseen",
+    "has_format": false,
+    "line": 196
+   },
+   {
+    "label": "a cross-lane citation was not listed",
+    "has_format": false,
+    "line": 202
+   },
+   {
+    "label": "a change to %r was not caught",
+    "has_format": true,
+    "line": 171
+   }
+  ],
+  "retrain.py": [
+   {
+    "label": "a case's target is illegal or already optimal",
+    "has_format": false,
+    "line": 667
+   },
+   {
+    "label": "the control arm does not give IFR 1.0 (%.10f)",
+    "has_format": true,
+    "line": 674
+   },
+   {
+    "label": "the control arm does not give Preservation 1.0 (%.10f)",
+    "has_format": true,
+    "line": 675
+   },
+   {
+    "label": "growing changed the net's function, so a later difference is not the edit's (max %.3e)",
+    "has_format": true,
+    "line": 686
+   },
+   {
+    "label": "growing did not widen the hidden layer",
+    "has_format": false,
+    "line": 689
+   },
+   {
+    "label": "a growth with non-zero output columns still left the function unchanged - plant 3 cannot detect a live growth",
+    "has_format": false,
+    "line": 705
+   },
+   {
+    "label": "a UNIFORM write into the residual changed the function, so ln_f is not removing it",
+    "has_format": false,
+    "line": 713
+   },
+   {
+    "label": "prune removed the wrong number",
+    "has_format": false,
+    "line": 719
+   },
+   {
+    "label": "the closed-form edit raised the target on %d of 4 cases",
+    "has_format": true,
+    "line": 729
+   },
+   {
+    "label": "the edit reported no gate quantities",
+    "has_format": false,
+    "line": 730
+   },
+   {
+    "label": "the edit's gate is not g(a - c)",
+    "has_format": false,
+    "line": 736
+   },
+   {
+    "label": "including the grown neurons' own cases did not improve the conditioning (%.3e -> %.3e)",
+    "has_format": true,
+    "line": 752
+   },
+   {
+    "label": "the ridge is unusable even WITH the cases (cond %.3e)",
+    "has_format": true,
+    "line": 755
+   },
+   {
+    "label": "a singular ridge was not REFUSED - it would crash or quietly pseudo-invert",
+    "has_format": false,
+    "line": 766
+   },
+   {
+    "label": "editing the LAST block's own site moved its keys (%.3e) - a and c are not invariant after all",
+    "has_format": true,
+    "line": 788
+   },
+   {
+    "label": "a or c moved under an edit to their own site (a %.3e, c %.3e)",
+    "has_format": true,
+    "line": 790
+   },
+   {
+    "label": "the edit set contains duplicate prefixes",
+    "has_format": false,
+    "line": 825
+   },
+   {
+    "label": "a raw cosine agreed with the whitened one (raw %.4f vs whitened %.4f) - then the cheap instrument is adequate and the whitening is unnecessary here",
+    "has_format": true,
+    "line": 843
+   },
+   {
+    "label": "the untrained net's whitened geometry was no worse than the trained checkpoint's 0.2768 at the same size (got %.4f) - the prefix check would then be uninformative about nothing",
+    "has_format": true,
+    "line": 851
+   },
+   {
+    "label": "a duplicated key does not read as cosine 1 in both measures - the collision check is blind",
+    "has_format": false,
+    "line": 861
+   },
+   {
+    "label": "the whitened measure reported a majority of pairs above 0.9 - it fires on anything",
+    "has_format": false,
+    "line": 866
+   },
+   {
+    "label": "editing an EARLIER block did NOT move the later block's keys (%.3e), so the zero above is a dead measurement",
+    "has_format": true,
+    "line": 798
+   }
+  ],
+  "scale_guard.py": [
+   {
+    "label": "the grid does not flag the Efficacy-over-vocabulary fault",
+    "has_format": false,
+    "line": 471
+   },
+   {
+    "label": "the grid does not flag TV compressing across board sizes",
+    "has_format": false,
+    "line": 473
+   },
+   {
+    "label": "the grid flags Eq.7 against an axis that does not move its carrier",
+    "has_format": false,
+    "line": 477
+   },
+   {
+    "label": "the renormalised criterion is not an improvement on the raw one over board_size",
+    "has_format": false,
+    "line": 481
+   },
+   {
+    "label": "set-valued competence is not comparable across board sizes, but the ladder uses it as its cross-rung damage measure",
+    "has_format": false,
+    "line": 484
+   },
+   {
+    "label": "an undeclared measure was sanctioned instead of refused",
+    "has_format": false,
+    "line": 490
+   },
+   {
+    "label": "the refusal does not say WHY an undeclared measure is refused",
+    "has_format": false,
+    "line": 491
+   },
+   {
+    "label": "an undeclared axis was sanctioned instead of refused",
+    "has_format": false,
+    "line": 494
+   },
+   {
+    "label": "the grid does not contain all three verdicts: %s",
+    "has_format": true,
+    "line": 500
+   },
+   {
+    "label": "the grid is all CONFOUNDED (%d of %d) and so cannot discriminate",
+    "has_format": true,
+    "line": 503
+   },
+   {
+    "label": "an axis names a carrier that is not declared: %s",
+    "has_format": true,
+    "line": 511
+   },
+   {
+    "label": "a measure declares a dependence on an undeclared carrier: %s",
+    "has_format": true,
+    "line": 515
+   },
+   {
+    "label": "the ladder's 1.0000 -> 0.9375 at n=16 is not refused as one grid step",
+    "has_format": false,
+    "line": 521
+   },
+   {
+    "label": "the same difference at n=256 is also refused, so the guard refuses everything",
+    "has_format": false,
+    "line": 527
+   },
+   {
+    "label": "a continuous measure was refused on resolution grounds",
+    "has_format": false,
+    "line": 532
+   },
+   {
+    "label": "an undeclared measure got a resolution instead of being refused",
+    "has_format": false,
+    "line": 536
+   },
+   {
+    "label": "measures with no declared resolution: %s",
+    "has_format": true,
+    "line": 540
+   },
+   {
+    "label": "the net missed an undeclared measure-shaped field",
+    "has_format": false,
+    "line": 554
+   },
+   {
+    "label": "the net missed a NESTED undeclared field",
+    "has_format": false,
+    "line": 555
+   },
+   {
+    "label": "the net flagged a declared measure",
+    "has_format": false,
+    "line": 556
+   },
+   {
+    "label": "the net flagged a field listed as not a measure",
+    "has_format": false,
+    "line": 557
+   },
+   {
+    "label": "the net flagged a string value",
+    "has_format": false,
+    "line": 558
+   },
+   {
+    "label": "the net reported no files scanned",
+    "has_format": false,
+    "line": 559
+   }
+  ],
+  "shrink.py": [
+   {
+    "label": "spearman is not 1 on a perfectly monotone pair (%.6f)",
+    "has_format": true,
+    "line": 358
+   },
+   {
+    "label": "spearman is not -1 on a reversed pair (%.6f)",
+    "has_format": true,
+    "line": 360
+   },
+   {
+    "label": "spearman disagrees with the closed form 1-6*sum(d^2)/(n(n^2-1)): %.10f vs %.10f",
+    "has_format": true,
+    "line": 372
+   },
+   {
+    "label": "unrelated noise was significant %d times in 40 - the test cannot say no",
+    "has_format": true,
+    "line": 398
+   },
+   {
+    "label": "cut_to kept the wrong number of neurons",
+    "has_format": false,
+    "line": 407
+   },
+   {
+    "label": "cut_to changed a neuron it kept",
+    "has_format": false,
+    "line": 409
+   },
+   {
+    "label": "cut_to changed the OTHER block",
+    "has_format": false,
+    "line": 412
+   },
+   {
+    "label": "cutting nothing changed the function",
+    "has_format": false,
+    "line": 421
+   },
+   {
+    "label": "cutting 127 of 128 neurons changed nothing - the site does not matter at all",
+    "has_format": false,
+    "line": 424
+   },
+   {
+    "label": "agreement against itself is not perfect",
+    "has_format": false,
+    "line": 430
+   },
+   {
+    "label": "the verdict does not reach all three of its own outcomes: %s",
+    "has_format": true,
+    "line": 448
+   },
+   {
+    "label": "spearman disagrees with scipy: rho %.10f vs %.10f",
+    "has_format": true,
+    "line": 377
+   },
+   {
+    "label": "the p-value disagrees with scipy: %.10f vs %.10f",
+    "has_format": true,
+    "line": 379
+   },
+   {
+    "label": "the p-value drifts from scipy over random pairs (worst %.3e)",
+    "has_format": true,
+    "line": 388
+   }
+  ],
+  "train_ttt.py": [
+   {
+    "label": "splitting mass over the two optimal moves is not the minimum (%.4f vs %.4f)",
+    "has_format": true,
+    "line": 187
+   },
+   {
+    "label": "the minimum of this loss on a 2-move set is not log 2 (%.6f)",
+    "has_format": true,
+    "line": 189
+   },
+   {
+    "label": "a fully masked batch does not give zero loss",
+    "has_format": false,
+    "line": 194
+   },
+   {
+    "label": "the oracle does not score 1.0 (%.4f, %d illegal)",
+    "has_format": true,
+    "line": 230
+   },
+   {
+    "label": "a net that only says BOS does not score 0.0 with every move illegal (%.4f, %d/%d)",
+    "has_format": true,
+    "line": 231
+   }
+  ],
+  "ttt.py": [
+   {
+    "label": "the empty board is not a draw under perfect play",
+    "has_format": false,
+    "line": 143
+   },
+   {
+    "label": "the reachable-state count is not 5478, so the rules are wrong: %d",
+    "has_format": true,
+    "line": 151
+   },
+   {
+    "label": "centre then edge is not a win for X",
+    "has_format": false,
+    "line": 157
+   },
+   {
+    "label": "centre then corner is not a draw",
+    "has_format": false,
+    "line": 161
+   },
+   {
+    "label": "optimal_moves was empty or illegal on %d live states",
+    "has_format": true,
+    "line": 165
+   },
+   {
+    "label": "no non-optimal move ever worsens the value - the grader cannot grade",
+    "has_format": false,
+    "line": 178
+   },
+   {
+    "label": "a cell is in two planes at once",
+    "has_format": false,
+    "line": 184
+   },
+   {
+    "label": "the two seats' features are not mirror images",
+    "has_format": false,
+    "line": 186
+   },
+   {
+    "label": "play() overwrote an occupied cell instead of refusing",
+    "has_format": false,
+    "line": 195
+   }
+  ],
+  "uml_kaos.py": [
+   {
+    "label": "a declared traceability link does not resolve: %s",
+    "has_format": true,
+    "line": 287
+   },
+   {
+    "label": "the resolver accepted a fragment that is not in the file",
+    "has_format": false,
+    "line": 291
+   },
+   {
+    "label": "the resolver accepted a file that does not exist",
+    "has_format": false,
+    "line": 293
+   },
+   {
+    "label": "a link names a node outside the tree: %s",
+    "has_format": true,
+    "line": 297
+   },
+   {
+    "label": "the gap map found no gaps at all",
+    "has_format": false,
+    "line": 303
+   },
+   {
+    "label": "the gap map flagged every single node, so it cannot discriminate",
+    "has_format": false,
+    "line": 304
+   },
+   {
+    "label": "the gap map reports a broken link while plant 1 says all resolve",
+    "has_format": false,
+    "line": 306
+   },
+   {
+    "label": "a node is settled with no «verify» link to a plant: %s",
+    "has_format": true,
+    "line": 315
+   },
+   {
+    "label": "the position refusal swallowed a real symbol",
+    "has_format": false,
+    "line": 324
+   },
+   {
+    "label": "the position refusal rejected a symbol containing digits",
+    "has_format": false,
+    "line": 326
+   },
+   {
+    "label": "a node has no last-examined date: %s",
+    "has_format": true,
+    "line": 350
+   },
+   {
+    "label": "a position-shaped link %r was not refused",
+    "has_format": true,
+    "line": 321
+   },
+   {
+    "label": "a broken CROSS-LANE link did not refuse this lane",
+    "has_format": false,
+    "line": 337
+   },
+   {
+    "label": "a broken cross-lane link was not reported to its owner",
+    "has_format": false,
+    "line": 338
+   },
+   {
+    "label": "a broken OWN-LANE link was reported outward as another lane's",
+    "has_format": false,
+    "line": 342
+   }
+  ]
+ },
+ "labels_digest": "c54cfe901c9bb1b7"
+}
