@@ -4,10 +4,10 @@
  "repository": "github.com/rj45Thompson/anchor-demo (separate repo, primary checkout, NOT a linked worktree)",
  "totals": {
   "modules_with_plants": 30,
-  "plants": 442,
+  "plants": 443,
   "modules_with_zero_plants": 0,
   "call_sites_inside_loops": 10,
-  "labels_not_greppable_in_source": 82
+  "labels_not_greppable_in_source": 83
  },
  "zero_plant_modules": [],
  "zero_plant_modules_that_are_checkers": [],
@@ -63,7 +63,7 @@
    }
   ]
  },
- "why_a_source_grep_is_not_enough": "82 of 442 labels (18.6%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 442. That is what makes the manifest load-bearing rather than a convenience.",
+ "why_a_source_grep_is_not_enough": "83 of 443 labels (18.7%) CANNOT be found by grepping a single line of their own source module, because a long label is written as implicitly concatenated string literals and no one line holds it. This is the failure that produced the snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label was plainly in the file, and a line-by-line grep could not see it. In this file every label is stored joined on one line, so a grep of THIS file finds all 443. That is what makes the manifest load-bearing rather than a convenience.",
  "labels_not_greppable_in_source": {
   "art_graph.py": [
    {
@@ -285,8 +285,12 @@
     "longest_on_one_line": "extraction found fewer than 100 plants (%d) - the manifest is not covering this "
    },
    {
-    "label": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published citation has stopped resolving",
-    "longest_on_one_line": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published "
+    "label": "the current R7 label is NOT in gate_math.py - a published citation has stopped resolving",
+    "longest_on_one_line": "the current R7 label is NOT in gate_math.py - a published citation has stopped "
+   },
+   {
+    "label": "the RETIRED R7 label is back in gate_math.py - then the dtype fix was reverted and the float32 perturbation is live again",
+    "longest_on_one_line": "the RETIRED R7 label is back in gate_math.py - then the dtype fix was reverted and "
    },
    {
     "label": "a module in this lane holds zero plants - the next module added starts that way and this is what notices: %s",
@@ -1514,89 +1518,94 @@
     "line": 370
    },
    {
-    "label": "the R7 label cited by the snipershot lane is NOT in gate_math.py - a published citation has stopped resolving",
+    "label": "the current R7 label is NOT in gate_math.py - a published citation has stopped resolving",
     "has_format": false,
-    "line": 377
+    "line": 387
+   },
+   {
+    "label": "the RETIRED R7 label is back in gate_math.py - then the dtype fix was reverted and the float32 perturbation is live again",
+    "has_format": false,
+    "line": 389
    },
    {
     "label": "rewording a label was not detected - the drift check is blind",
     "has_format": false,
-    "line": 392
+    "line": 405
    },
    {
     "label": "removing a label was not detected",
     "has_format": false,
-    "line": 398
+    "line": 411
    },
    {
     "label": "an unchanged manifest reported drift - the check would refuse on every run",
     "has_format": false,
-    "line": 403
+    "line": 416
    },
    {
     "label": "the digest changed when only surrounding prose changed",
     "has_format": false,
-    "line": 410
+    "line": 423
    },
    {
     "label": "the digest did NOT change when a label changed",
     "has_format": false,
-    "line": 411
+    "line": 424
    },
    {
     "label": "a module in this lane holds zero plants - the next module added starts that way and this is what notices: %s",
     "has_format": true,
-    "line": 434
+    "line": 447
    },
    {
     "label": "the loop detector listed a plant that is NOT in a loop - it fires on anything",
     "has_format": false,
-    "line": 461
+    "line": 474
    },
    {
     "label": "the loop detector MISSED a plant inside a loop - it would let the static count disagree with a runtime count unexplained",
     "has_format": false,
-    "line": 463
+    "line": 476
    },
    {
     "label": "%d label(s) are not greppable on one line of the manifest either - this module reproduces the fault it exists to fix",
     "has_format": true,
-    "line": 490
+    "line": 503
    },
    {
     "label": "the premise-shape detector missed a > 0 / bool() / bare-collection assertion - a premise worded unfamiliarly would go uncounted",
     "has_format": false,
-    "line": 518
+    "line": 531
    },
    {
     "label": "the detector does not TIER its hits - an untiered screen is 91% false positives here and gets ignored like the phrasing grep it replaces",
     "has_format": false,
-    "line": 520
+    "line": 533
    },
    {
     "label": "the premise-shape detector flagged ordinary plants asserting the HEALTHY state - it would mark most of a suite",
     "has_format": false,
-    "line": 523
+    "line": 536
    },
    {
     "label": "the VACUITY screen missed an OR whose operand empties - the plant would go green on success and never fail again",
     "has_format": false,
-    "line": 540
+    "line": 553
    },
    {
     "label": "the VACUITY screen flagged an AND or a plain negation - those are healthy and it would mark half a suite",
     "has_format": false,
-    "line": 542
+    "line": 555
    },
    {
     "label": "a VACUITY hit was tiered WEAK - it is never a legitimate positive control",
     "has_format": false,
-    "line": 545
+    "line": 558
    },
    {
     "label": "running the selftest MODIFIED the stored manifest - it would refresh the drift baseline and make itself pass",
     "has_format": false,
-    "line": 577
+    "line": 590
    }
   ],
   "play.py": [
@@ -2700,5 +2709,5 @@
    }
   ]
  },
- "labels_digest": "26c8bf7cb88ff4a6"
+ "labels_digest": "35421112e48b747e"
 }

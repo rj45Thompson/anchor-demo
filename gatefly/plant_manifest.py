@@ -372,10 +372,23 @@ def selftest() -> int:
 
     # 2. it must find a label this lane has published to another lane by name. If this breaks,
     #    the snipershot lane's R7 citation has silently stopped resolving.
-    r7 = "a one-ULP f16 perturbation moves the gate by more than 1e-6"
-    got = any(p["label"].startswith(r7) for p in fresh["modules"].get("gate_math.py", []))
-    _plant("the R7 label cited by the snipershot lane is NOT in gate_math.py - a published "
-           "citation has stopped resolving", got)
+    # THE CITED R7 LABEL WAS RETIRED, DELIBERATELY, AND THIS PLANT CAUGHT IT. The original -
+    # "a one-ULP f16 perturbation moves the gate by more than 1e-6" - was removed when the
+    # plant it named was found to be measuring a float32 ULP on float16 weights and had to be
+    # restated. So a citation this lane published to another lane stopped resolving, and the
+    # plant reported it within the same session rather than leaving a peer's row to fail
+    # silently. That is what it is for.
+    #
+    # Repointed at the successor, with the retired label recorded here rather than deleted, so
+    # a lane still citing the old one can see what replaced it.
+    r7_retired = "a one-ULP f16 perturbation moves the gate by more than 1e-6"
+    r7 = "this lane prints gates to MORE decimals than"
+    labels = [p["label"] for p in fresh["modules"].get("gate_math.py", [])]
+    _plant("the current R7 label is NOT in gate_math.py - a published citation has stopped "
+           "resolving", any(l.startswith(r7) for l in labels))
+    _plant("the RETIRED R7 label is back in gate_math.py - then the dtype fix was reverted and "
+           "the float32 perturbation is live again",
+           not any(l.startswith(r7_retired) for l in labels))
 
     # 3. a REWORDED label must be detected, or the manifest cannot do the one job it exists for
     import copy
@@ -628,11 +641,32 @@ if __name__ == "__main__":
         raise SystemExit(1)
     fresh = build()
     added, removed, moved = drift(stored, fresh)
+    # MTIME STALENESS AS WELL AS CONTENT DRIFT. A consumer in another lane reads this artefact
+    # whenever it likes, including between an edit here and the regeneration that follows it.
+    # The v4 lane hit exactly that window: it read labels that had been rewritten minutes
+    # earlier, correctly reported them absent, and a third lane degraded its enforced count on
+    # a condition that had already cleared. Content drift was zero by the time anyone looked.
+    # So the file reports its own age against the newest module, and a consumer can tell "this
+    # is current" from "this may be mid-edit" without having to re-derive the labels.
+    newest, newest_name = 0.0, None
+    for _f in os.listdir(HERE):
+        if _f.endswith(".py"):
+            _m = os.path.getmtime(os.path.join(HERE, _f))
+            if _m > newest:
+                newest, newest_name = _m, _f
+    lag = newest - (os.path.getmtime(MANIFEST) if os.path.exists(MANIFEST) else 0.0)
     print("PLANT MANIFEST verify (%d plant(s) in source, %d recorded)"
           % (fresh["totals"]["plants"], sum(len(v) for v in stored["modules"].values())))
     if not (added or removed or moved):
         print("  no drift; digest %s" % stored.get("labels_digest"))
+        if lag > 0:
+            print("  BUT THIS FILE IS %.0f s OLDER than %s - labels match, so it is current in"
+                  % (lag, newest_name))
+            print("  CONTENT, and a consumer reading during an edit window may not be. Rebuild")
+            print("  with --write after any change to a plant.")
         raise SystemExit(0)
+    print("  manifest is %.0f s older than %s" % (lag, newest_name) if lag > 0 else
+          "  manifest is newer than every module")
     for x in removed:
         print("  REMOVED  %-22s %s" % (x["module"], x["label"][:80]))
     for x in added:
