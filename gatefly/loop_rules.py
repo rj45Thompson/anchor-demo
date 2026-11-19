@@ -188,6 +188,20 @@ ERRORS = [
   "caught_by": "the v4 lane ruling it out by arithmetic, which this lane then re-derived",
   "verdict": ARCH, "rule": "R-PEER-CLAIM-IS-UNVERIFIED"},
 
+ {"id": "compared-two-escape-rates-that-measure-different-things",
+  "initiated_by": "this lane SENT a refutation; peer checked whether the quantities matched",
+  "caught_class": "peer checked it", "kind": "SUBSTANTIVE",
+  "what": "Reported '60% attributive escaped vs 57% substantive, so their cost asymmetry does "
+          "not reproduce'. This lane's measure was ESCAPED TO A PEER; the snipershot lane's "
+          "was REACHED A PEER OR ITS USER. Different quantities, compared as if one. It is "
+          "error 27 - a fixed numerator over an unfixed denominator - one level up, inside the "
+          "meta-analysis OF OUR OWN ERRORS, committed by both lanes at once. Recounted on this "
+          "lane's measure, that lane is 67% against 0%: the claim does not FAIL here, it fails "
+          "to REPLICATE across two lanes, which is weaker than either lane's version and the "
+          "only thing the measurements support.",
+  "caught_by": "the snipershot lane checking whether the two numbers were the same quantity",
+  "verdict": ARCH, "rule": "R-BASELINE-AT-THE-SAME-MEAN"},
+
  {"id": "explained-a-ratio-difference-that-does-not-exist",
   "initiated_by": "this lane SENT an explanation; peer counted its own faults against it",
   "caught_class": "peer checked it", "kind": "SUBSTANTIVE",
@@ -452,6 +466,7 @@ RULES = {
 # caught it. R-ATTRIBUTE-BY-ORIGIN-NOT-SUBJECT, applied to itself.
 V4, SNIPER = "v4", "snipershot"
 PEER_CLAIMS = [
+ ("our two escape rates measure different quantities",      SNIPER, "HELD"),
  ("its errors are attributive, the arithmetic always held", SNIPER, "FAILED"),
  ("attributive errors always escape before being caught",   SNIPER, "FAILED"),
  ("my 'independently planted' claim is false - shared derivation", SNIPER, "HELD"),
@@ -668,9 +683,23 @@ def selftest() -> int:
     _b = [e for e in ERRORS if e.get("kind") == "SUBSTANTIVE"]
     _ra = sum(1 for e in _a if e["caught_class"] in _esc) / float(len(_a))
     _rb = sum(1 for e in _b if e["caught_class"] in _esc) / float(len(_b))
-    _plant("attributive errors escape at a MARKEDLY higher rate than substantive ones here "
-           "(%.0f%% vs %.0f%%) - then the snipershot lane's cost asymmetry reproduces and this "
-           "refutation is wrong" % (100 * _ra, 100 * _rb), abs(_ra - _rb) < 0.15)
+    # THIS PLANT IS RETIRED AS A REFUTATION AND KEPT AS A MEASUREMENT. Its 15-point threshold
+    # was built from THIS lane's measure - escaped to a PEER - while the claim it was aimed at
+    # used REACHED A PEER OR THE USER. Two quantities, compared as one, which is error 33.
+    #
+    # The snipershot lane then declined to let its own recounted 67-against-0 clear this
+    # threshold, on the grounds that accepting a lane-specific effect on n=6 would resurrect
+    # the account this lane had just retired. That refusal is correct and the question is
+    # UNRESOLVED, not settled either way.
+    #
+    # AND IT CANNOT BE SETTLED FROM HERE. Making the two comparable needs a field recording
+    # whether an error reached RJ before anything caught it, which this lane never recorded
+    # prospectively - and reconstructing it now from recollection is precisely the fault that
+    # started this thread. So the honest output is the number with its scope, and no verdict.
+    print("  escape rate, measure = ESCAPED TO A PEER (not comparable to a peer-or-user "
+          "measure): attributive %.0f%%, substantive %.0f%%" % (100 * _ra, 100 * _rb))
+    _plant("the escape-rate comparison is being reported as a refutation rather than as an "
+           "unresolved question - the two lanes measured different quantities", True)
 
     _plant("every rule is already in the loop - a catalogue of twenty errors that implies the "
            "loop needs no change", len(new) > 0)

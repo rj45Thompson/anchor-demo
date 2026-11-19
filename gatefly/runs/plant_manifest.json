@@ -289,8 +289,8 @@
     "longest_on_one_line": "no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not "
    },
    {
-    "label": "attributive errors escape at a MARKEDLY higher rate than substantive ones here (%.0f%% vs %.0f%%) - then the snipershot lane's cost asymmetry reproduces and this refutation is wrong",
-    "longest_on_one_line": "attributive errors escape at a MARKEDLY higher rate than substantive ones here "
+    "label": "the escape-rate comparison is being reported as a refutation rather than as an unresolved question - the two lanes measured different quantities",
+    "longest_on_one_line": "the escape-rate comparison is being reported as a refutation rather than as an "
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
@@ -1207,92 +1207,92 @@
    {
     "label": "an ARCHITECTURAL error names no loop rule: %s",
     "has_format": true,
-    "line": 551
+    "line": 566
    },
    {
     "label": "a NOT_ARCH error gives no reason: %s",
     "has_format": true,
-    "line": 555
+    "line": 570
    },
    {
     "label": "an error cites a rule that is not defined: %s",
     "has_format": true,
-    "line": 558
+    "line": 573
    },
    {
     "label": "every single error was judged ARCHITECTURAL - a classifier that never says no is not classifying",
     "has_format": false,
-    "line": 563
+    "line": 578
    },
    {
     "label": "fewer than half the errors were ARCHITECTURAL (%d of %d) - then this gate rarely produces a rule and is not worth its cost",
     "has_format": true,
-    "line": 569
+    "line": 584
    },
    {
     "label": "a rule does not say where it is implemented: %s",
     "has_format": true,
-    "line": 575
+    "line": 590
    },
    {
     "label": "a rule claims to be IN LOOP but names no module that exists: %s",
     "has_format": true,
-    "line": 583
+    "line": 598
    },
    {
     "label": "an error has no explicit caught_class, so the summary would be inferred from prose: %s",
     "has_format": true,
-    "line": 593
+    "line": 608
    },
    {
     "label": "a peer claim carries no recorded ORIGIN: %s - the registry that counts claims cannot catch a miscredit without one",
     "has_format": true,
-    "line": 600
+    "line": 615
    },
    {
     "label": "the counts disagree with the claim table (%d+%d vs %d)",
     "has_format": true,
-    "line": 602
+    "line": 617
    },
    {
     "label": "every peer claim came from ONE lane - then this table cannot distinguish origins and the rule it implements is untested here",
     "has_format": false,
-    "line": 605
+    "line": 620
    },
    {
     "label": "the peer-claim re-derivation record is missing a half: %s",
     "has_format": true,
-    "line": 609
+    "line": 624
    },
    {
     "label": "MOST peer-caught errors started with a peer asking for a value (%d of %d) - then the snipershot lane's hypothesis holds here and this lane's counter-result is wrong",
     "has_format": true,
-    "line": 616
+    "line": 631
    },
    {
     "label": "a plant caught an ATTRIBUTIVE error (%d of %d) - then numeric instruments are not blind to provenance after all and this finding is wrong",
     "has_format": true,
-    "line": 642
+    "line": 657
    },
    {
     "label": "no plant caught a SUBSTANTIVE error either (%d) - then the contrast above is not about attribution, it is that plants catch nothing",
     "has_format": true,
-    "line": 646
+    "line": 661
    },
    {
     "label": "every error is classified ATTRIBUTIVE or SUBSTANTIVE: %s",
     "has_format": true,
-    "line": 650
+    "line": 665
    },
    {
-    "label": "attributive errors escape at a MARKEDLY higher rate than substantive ones here (%.0f%% vs %.0f%%) - then the snipershot lane's cost asymmetry reproduces and this refutation is wrong",
-    "has_format": true,
-    "line": 671
+    "label": "the escape-rate comparison is being reported as a refutation rather than as an unresolved question - the two lanes measured different quantities",
+    "has_format": false,
+    "line": 701
    },
    {
     "label": "every rule is already in the loop - a catalogue of twenty errors that implies the loop needs no change",
     "has_format": false,
-    "line": 675
+    "line": 704
    }
   ],
   "metrics.py": [
@@ -2773,5 +2773,5 @@
    }
   ]
  },
- "labels_digest": "655bdd1c8f360bbf"
+ "labels_digest": "6a164fd985eed51b"
 }
