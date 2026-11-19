@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
+import io
 import json
 import os
 import sys
@@ -85,6 +86,32 @@ def loop_nested(path):
     return out
 
 
+def grep_findable(mod, labels):
+    """Labels that a sibling lane CANNOT find by grepping one line of this module's source.
+
+    This is not hypothetical. The snipershot lane cited the R7 label as one sentence, its
+    tracker grepped line by line, and the row read BROKEN LINK - because the label is written
+    as implicitly concatenated string literals and no single line holds it. The label was
+    plainly there; the citation mechanism could not see it. Measured here so the manifest can
+    state how much of the lane depends on it rather than being merely convenient.
+    """
+    with open(os.path.join(HERE, mod), encoding="utf-8") as f:
+        lines = f.read().splitlines()
+    out = []
+    for p in labels:
+        lab = p["label"]
+        if any(lab in ln for ln in lines):
+            continue
+        best = ""
+        for ln in lines:
+            for cut in range(len(lab), len(best), -1):
+                if lab[:cut] in ln:
+                    best = lab[:cut]
+                    break
+        out.append({"label": lab, "longest_on_one_line": best})
+    return out
+
+
 def build():
     mods, zero, loops = {}, [], {}
     for name in sorted(os.listdir(HERE)):
@@ -101,6 +128,12 @@ def build():
             zero.append(name)
     total = sum(len(v) for v in mods.values())
     checkers = [m for m in zero if m.startswith("check") or "verify" in m]
+    wrapped = {}
+    for mod, labels in mods.items():
+        got = grep_findable(mod, labels)
+        if got:
+            wrapped[mod] = got
+    n_wrapped = sum(len(v) for v in wrapped.values())
     return {
         "what": "Every plant label in the gatefly lane, extracted statically from source so a "
                 "lane in another repository can resolve a citation by name and notice when it "
@@ -110,7 +143,8 @@ def build():
                       "NOT a linked worktree)",
         "totals": {"modules_with_plants": len(mods), "plants": total,
                    "modules_with_zero_plants": len(zero),
-                   "call_sites_inside_loops": sum(len(v) for v in loops.values())},
+                   "call_sites_inside_loops": sum(len(v) for v in loops.values()),
+                   "labels_not_greppable_in_source": n_wrapped},
         "zero_plant_modules": zero,
         "zero_plant_modules_that_are_checkers": checkers,
         "caveat": "Presence of a label, not evidence that the plant is reached, can fail, or "
@@ -123,6 +157,16 @@ def build():
             "+1). Every other module agrees exactly. Neither number is wrong; they count "
             "different things.",
         "loops_by_module": loops,
+        "why_a_source_grep_is_not_enough":
+            "%d of %d labels (%.1f%%) CANNOT be found by grepping a single line of their own "
+            "source module, because a long label is written as implicitly concatenated string "
+            "literals and no one line holds it. This is the failure that produced the "
+            "snipershot lane's BROKEN LINK on the R7 row: it cited the full sentence, the label "
+            "was plainly in the file, and a line-by-line grep could not see it. In this file "
+            "every label is stored joined on one line, so a grep of THIS file finds all %d. "
+            "That is what makes the manifest load-bearing rather than a convenience."
+            % (n_wrapped, total, 100.0 * n_wrapped / max(total, 1), total),
+        "labels_not_greppable_in_source": wrapped,
         "modules": mods,
     }
 
@@ -199,7 +243,13 @@ def selftest() -> int:
 
     # 3. a REWORDED label must be detected, or the manifest cannot do the one job it exists for
     import copy
-    man = write(copy.deepcopy(fresh))
+    # NOT write() - calling it here overwrote the STORED manifest as a side effect of running
+    # the selftest, which silently refreshed the very baseline the drift detector compares
+    # against. After one --selftest run, drift could never be reported again: the check made
+    # itself pass. Found by noticing a "no drift" verdict immediately after adding two plants
+    # without regenerating. Build the baseline in memory instead and leave the file alone.
+    man = copy.deepcopy(fresh)
+    man["labels_digest"] = digest(man)
     worded = copy.deepcopy(fresh)
     worded["modules"]["gate_math.py"][0]["label"] += " (reworded)"
     a, r, m = drift(man, worded)
@@ -245,6 +295,39 @@ def selftest() -> int:
     # detector marks everything and explains nothing
     _plant("gate_math.py was listed as holding a loop-nested plant - the detector fires on "
            "anything", "gate_math.py" not in loops)
+
+    # 9. THE REASON THIS MODULE EXISTS, asserted both ways. A long label is written as
+    #    implicitly concatenated literals, so no single source line holds it, and a sibling
+    #    lane's line-by-line grep reads BROKEN LINK while the label is plainly in the file.
+    #    That is what happened to the snipershot lane's R7 row.
+    nw = fresh["totals"]["labels_not_greppable_in_source"]
+    print("  labels unfindable by a single-line source grep: %d of %d (%.1f%%)"
+          % (nw, total, 100.0 * nw / max(total, 1)))
+    _plant("every label is findable by grepping one line of its own source - then a citing "
+           "lane needs no manifest and this module is dead weight", nw > 0)
+
+    # and the half that makes it a fix rather than a diagnosis: EVERY label must be greppable
+    # on one line of the manifest itself, or this file reproduces the fault it documents.
+    raw = io.open(MANIFEST, encoding="utf-8").read().splitlines() if os.path.exists(MANIFEST) \
+        else []
+    unreachable = [p["label"] for labels in fresh["modules"].values() for p in labels
+                   if not any(json.dumps(p["label"], ensure_ascii=False)[1:-1] in ln
+                              for ln in raw)]
+    _plant("%d label(s) are not greppable on one line of the manifest either - this module "
+           "reproduces the fault it exists to fix" % len(unreachable), not unreachable)
+
+    # 10. THE SELFTEST MUST NOT TOUCH THE STORED MANIFEST. It used to call write(), which
+    #     refreshed the baseline the drift detector compares against, so after one --selftest
+    #     run drift could never be reported again - the check quietly made itself pass. Caught
+    #     by a "no drift" verdict arriving immediately after two plants were added without
+    #     regenerating. Guarded by mtime and content, because either alone can miss it.
+    before_mt = os.path.getmtime(MANIFEST) if os.path.exists(MANIFEST) else None
+    before_txt = io.open(MANIFEST, encoding="utf-8").read() if os.path.exists(MANIFEST) else None
+    _ = build()
+    after_mt = os.path.getmtime(MANIFEST) if os.path.exists(MANIFEST) else None
+    after_txt = io.open(MANIFEST, encoding="utf-8").read() if os.path.exists(MANIFEST) else None
+    _plant("running the selftest MODIFIED the stored manifest - it would refresh the drift "
+           "baseline and make itself pass", before_mt == after_mt and before_txt == after_txt)
 
     print("  selftest: %d plant(s) checked, %d failed" % (len(checked), len(fails)))
     for f in fails:
