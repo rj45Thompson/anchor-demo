@@ -81,6 +81,38 @@ MECH = {
  "M6.2":   ("M6",   "Decompose a claim into atomic facts and verify each separately"),
  "M6.3":   ("M6",   "Measure the quality of that decomposition itself"),
 
+
+ # ---- E1.1/E1.2: enumerate the consequence closure of an edit. Swept 2026-11-19.
+ "M9":     ("M0",   "Enumerate the consequence closure of an edit: which NEARBY facts must "
+                    "also change and which must stay fixed"),
+ "M9.1":   ("M9",   "Derive the set of implied facts from a knowledge graph"),
+ "M9.2":   ("M9",   "Probe at the embedding level instead of a fixed prompt list"),
+ "M9.3":   ("M9",   "Sample knowledge subgraphs to build typed locality classes"),
+ "M9.4":   ("M9",   "Test whether an edit in one language carries to others"),
+
+ # ---- E1.3/E4.4: correctness against a SET rather than one string. Swept 2026-11-19.
+ "M10":    ("M6",   "Score an edit against the SET of correct answers, not one of them"),
+ "M10.1":  ("M10",  "Measure the proportion of originally-correct answers accidentally removed"),
+ "M10.2":  ("M10",  "Install several correct labels at once rather than editing one fact"),
+ "M10.3":  ("M10",  "Swap the SUBJECT for an alias to test generalisation of the edit"),
+ "M10.4":  ("M10",  "Handle a correct answer at a DIFFERENT GRANULARITY that is absent from "
+                    "the answer set entirely"),
+ "M10.5":  ("M10",  "Audit the string-matching basis of the metric itself by hand"),
+
+ # ---- E2.3: which site to edit, and by what criterion. Swept 2026-11-19.
+ "M11":    ("M1",   "Choose WHICH site to edit by a stated criterion rather than a fixed layer"),
+ "M11.1":  ("M11",  "Pick the layer by causal tracing / causal mediation scores"),
+ "M11.2":  ("M11",  "Pick it by gradient attribution instead"),
+ "M11.3":  ("M11",  "Pick it by Fisher information as an influence criterion"),
+ "M11.4":  ("M11",  "Spread the edit across layers weighted by causal score"),
+
+ # ---- E3d: add dedicated parameters per edit. Swept 2026-11-19.
+ "M12":    ("M0",   "Add DEDICATED parameters per edit instead of overwriting shared ones"),
+ "M12.1":  ("M12",  "Add one neuron per error-producing token"),
+ "M12.2":  ("M12",  "Train one expert network per edit, routed by a dynamic index"),
+ "M12.3":  ("M12",  "GENERATE the added neuron's weights conditioned on the edit query"),
+ "M12.4":  ("M12",  "Fine-tune only the existing neurons that contribute most, adding none"),
+
  # ---- the frontier. No work found for these; the queries that failed are recorded below.
  "M7":     ("M0",   "ALTERNATE a null-space-projected closed-form edit with null-space-confined "
                     "gradient training, each step constrained by what the other installed"),
@@ -137,10 +169,72 @@ WORKS = {
                 "teaches": ["M6"], "adds": ["M6.2"]},
  "DecompScore": {"cite": "Core: Robust Factual Precision with Informative Sub-claim "
                          "Identification, *SEM 2024", "teaches": ["M6.2"], "adds": ["M6.3"]},
+
+ "RippleEdits": {"cite": "Cohen et al., Evaluating the Ripple Effects of Knowledge Editing in "
+                         "Language Models, TACL 2024, arXiv:2307.12976 - ~5K entries; current "
+                         "methods modify the fact but often FAIL to capture the entailed "
+                         "ripples", "teaches": ["M6", "M9"], "adds": ["M9.1"]},
+ "EVK-Bench":  {"cite": "Beyond Local Edits: embedding-virtualized probing, arXiv:2602.01977 - "
+                        "argues a fixed list of predefined related prompts cannot reach the "
+                        "effects that matter", "teaches": ["M9"], "adds": ["M9.2"]},
+ "UniEdit":    {"cite": "UniEdit: A Unified Knowledge Editing Benchmark, arXiv:2505.12345 - "
+                        "subject-crossed, relation-crossed and object-crossed locality classes",
+                "teaches": ["M9"], "adds": ["M9.3"]},
+ "IndicRipple": {"cite": "Cross-lingual ripple effects, ACL Anthology 2026.aacl-long.171 - "
+                         "reports limited cross-lingual ripple", "teaches": ["M9"],
+                 "adds": ["M9.4"]},
+ "PEAK":       {"cite": "Neighboring Perturbations of Knowledge Editing, arXiv:2401.17623 - "
+                        "appends an answer and measures the proportion of the ORIGINAL correct "
+                        "answers accidentally removed", "teaches": ["M6", "M10"],
+                "adds": ["M10.1"]},
+ "MultiLabelEdit": {"cite": "Knowledge-distortion work on multi-label facts, with an IGNORE RATE "
+                            "for other correct objects disregarded", "teaches": ["M10"],
+                    "adds": ["M10.2"]},
+ "SubjectReplace": {"cite": "Subject Replace generalisation metric, via the editing-pitfalls "
+                            "literature (arXiv:2310.02129)", "teaches": ["M10"],
+                    "adds": ["M10.3"]},
+ "PohlEval":   {"cite": "Pohl, Ploner & Akbik, manual assessment of the string-matching basis "
+                        "of editing evaluation; contrasts zsRE token-wise greedy decoding with "
+                        "CounterFact sequence-likelihood ranking", "teaches": ["M10", "M6"],
+                "adds": ["M10.5"]},
+ "TracingCritique": {"cite": "Hase et al., Does Localization Inform Editing?, arXiv:2301.04213 - "
+                             "causal tracing results statistically UNCORRELATED with edit "
+                             "success; the edit layer mattered more than the tracing score",
+                     "teaches": ["M11", "M11.1"], "adds": []},
+ "CMA-layer":  {"cite": "Causal mediation layer scoring, the standard baseline criticised above",
+                "teaches": ["M11"], "adds": ["M11.1"]},
+ "LGA":        {"cite": "Gradient-attribution layer selection, reported to beat CMA and SaLEM "
+                        "without exhaustive layer-wise trial and error", "teaches": ["M11"],
+                "adds": ["M11.2"]},
+ "GoldenLayers": {"cite": "Golden Layers and Where to Find Them, arXiv:2602.20207 - Fisher "
+                          "Information as a principled criterion for influential layers",
+                  "teaches": ["M11"], "adds": ["M11.3"]},
+ "CAKE":       {"cite": "CAKE, ACL 2026 2026.acl-long.918 - allocates editing effort across "
+                        "layers by causal weight rather than a fixed set", "teaches": ["M11"],
+                "adds": ["M11.4"]},
+ "T-Patcher":  {"cite": "Huang et al. 2023, Transformer-Patcher - adds one neuron per "
+                        "error-producing token, which helps with forgetting under sequential "
+                        "edits", "teaches": ["M12"], "adds": ["M12.1"]},
+ "SCEN":       {"cite": "Scalable Model Editing via Customized Expert Networks, "
+                        "arXiv:2404.02699 - one expert per edit, dynamic neuron indexing; the "
+                        "network GROWS with the number of edits", "teaches": ["M12"],
+                "adds": ["M12.2"]},
+ "MeG":        {"cite": "Massive Editing via Dynamic Weight Generation, ICLR 2026, "
+                        "arXiv:2512.14395 - diffusion-generated weights for a single added "
+                        "neuron; cites the growing overhead of neuron- and expert-adding "
+                        "methods as the reason they do not scale", "teaches": ["M12"],
+                "adds": ["M12.3"]},
+ "NMKE":       {"cite": "Entropy-guided dynamic sparse mask over existing neurons, plus the "
+                        "AAAI 2025 targeted-neurons work", "teaches": ["M12"],
+                "adds": ["M12.4"]},
 }
 
 # An absence is a claim and carries the search that failed to refute it.
 FRONTIER_QUERIES = {
+ "M10.4": ["knowledge editing evaluation multiple correct answers answer set aliases equally "
+           "valid granularity mismatch metric - returned work on multi-label facts, ignore "
+           "rate and PEAK, and NOTHING on granularity: a correct answer at a different "
+           "specificity, absent from the answer set's vocabulary"],
  "M7": ["alternating closed-form model edit with gradient fine-tuning null space subspace "
         "sequential knowledge editing combine (extended)",
         "AlphaEdit null-space constrained knowledge editing language models"],
@@ -150,6 +244,11 @@ FRONTIER_QUERIES = {
 
 # What this lane holds for a frontier node, so the lift is stated rather than implied.
 OURS = {
+ "M10.4": "Not this lane's finding - the v4 lane's decoder test found it (selfimprove_v4 commit "
+          "4ad9d744): a prompt whose answer set names one place while the model answers a more "
+          "specific one, both correct, the model's answer absent from the set entirely. This "
+          "lane's own set-valued movement count does NOT cover it, and neither does PEAK's "
+          "removal count, because both compare against a set that is itself incomplete.",
  "M7": "This lane has both parents already implemented against an EXACT oracle: the closed-form "
        "ridge edit (gatefly/retrain.py memit_edit) and the same covariance C that M4.1 projects "
        "into. The arrangement is cheap here precisely because M1.3 and M4.1 are published.",
@@ -299,6 +398,26 @@ HYBRIDS = [
   "blocked_by": "nothing. This is a day's work and the cheapest validation of M8 available."},
 ]
 
+
+# What the wide sweep found this lane had ALREADY REINVENTED. Recorded because the join was
+# built to detect exactly this cell - settled internally, published externally - and the first
+# time it ran over a widened graph it caught two of this lane's own results.
+REINVENTED = {
+ "M10.1": "This lane built a SET-VALUED MOVEMENT COUNT to replace Eq.7 Preservation, and "
+          "reported it as the measure that works: 0.2412 for the destructive arm against 0.0000 "
+          "for the surgical one. PEAK (arXiv:2401.17623) already measures the proportion of "
+          "ORIGINALLY-CORRECT answers accidentally removed. Same quantity, published first. The "
+          "finding that survives is not the metric but the DEMONSTRATION that the published "
+          "ruler fails: Eq.7 read 1.1309 - better than untouched - for a model that had lost "
+          "25.7% of its competence, and its median also failed at 0.9906.",
+ "M12.1": "This lane's grow() adds one neuron per edit case firing on that case alone, and "
+          "measured it as a DIAL rather than an improvement - crowding to exactly 0.0000 at "
+          "every size, IFR 9.3x tighter, bought by spending depth. T-Patcher (Huang et al. "
+          "2023) adds one neuron per error-producing token and is the same mechanism. MeG "
+          "(ICLR 2026) cites the growing overhead of such methods as the reason they do not "
+          "scale, which is the cost this lane measured independently in gate terms. So the "
+          "mechanism is theirs and the PRICE IN CROWDING AND DEPTH is this lane's contribution.",
+}
 
 # --------------------------------------------------------------------------- scope
 # RJ: "Tami is a game it has none it has requirements."
@@ -470,6 +589,16 @@ def selftest() -> int:
     noours = [m for m in fr if m not in OURS]
     _plant("a frontier node with nothing recorded about what this lane holds: %s"
            % (noours or "none"), not noours)
+
+    # 9b. A REINVENTED entry must name a mechanism that EXISTS and that a work actually
+    #     teaches, or the lane is confessing to reinventing something nobody published.
+    badr = [m for m in REINVENTED if m not in MECH]
+    _plant("a REINVENTED entry names a mechanism not in the graph: %s" % (badr or "none"),
+           not badr)
+    t9 = taught_by()
+    unpub = [m for m in REINVENTED if not t9.get(m)]
+    _plant("a REINVENTED entry points at a mechanism NO work teaches - then it was not "
+           "reinvented: %s" % (unpub or "none"), not unpub)
 
     # 10. THE THREE-WAY JOIN. The load-bearing claim is that a structural precondition read off
     #     OUR net can say a published mechanism will not transfer. It must actually say that
