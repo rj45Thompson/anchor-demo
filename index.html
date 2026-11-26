@@ -809,9 +809,10 @@ h3 a:hover{color:var(--accent)}
         <h3><a href="vecscope/vecscope.html">vecscope: how a vector misses</a></h3>
         <p class="line">A language model picks its next word by reading one vector at the last layer against one direction per word. This draws that vector, the direction of the right answer, the direction of the word the model actually chose, and the error between them, measured rather than illustrated.</p>
         <p class="more">It also shows what editing a fact into the weights costs: writing one fact into a middle layer moves facts the edit never touched further than it moves the fact it was teaching. That collateral damage is usually reported as a count of broken facts; here it is a direction you can look at.</p>
+        <p class="more">A second view flies through the recorded forward pass and can be rewound, so you can watch where the answer is won and lost. On the example it is not lost where you would guess: the true answer takes the lead partway up the stack, and four consecutive blocks erode it, with the last block supplying under a fifth of the damage.</p>
         <p class="prov">Every quantity on screen is an activation measured on GPT-2 medium on CPU and re-measurable with the page's own dumper. The projection from 1024 dimensions to three is a presentation choice, so each view prints how much of the vector it is not drawing, and a random-basis control is included that correctly hides 99.9 percent. No cosine is used anywhere, because the vector's length is what turns a direction into a score.</p>
         <ul class="tags"><li>WebGPU</li><li>GPT-2</li><li>Model editing</li><li>Interpretability</li></ul>
-        <p class="links"><a class="go" href="vecscope/vecscope.html">Open vecscope</a><a href="vecscope/README.md">What is real and what is drawn</a><a href="vecscope/USE_CASES.md">The use case it was built to</a></p>
+        <p class="links"><a class="go" href="vecscope/vecscope.html">Open vecscope</a><a href="vecscope/vecflight.html">Fly through the layers</a><a href="vecscope/README.md">What is real and what is drawn</a><a href="vecscope/USE_CASES.md">The use cases it was built to</a></p>
       </div>
     </article>
     <article id="bossbench" class="card" data-node="BossBench">

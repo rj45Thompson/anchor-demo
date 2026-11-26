@@ -1,0 +1,639 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>vecflight — fly the forward pass, and find the layer it went wrong</title>
+<!--
+  Serves USE_CASES.md UC-VS-02 steps 5-8. REPLAY, NOT INFERENCE: nothing is computed here that the model
+  computes. The page fetches a recording made by dump_trace.py (25 x 10 x 1024 float32) and scrubs it, so
+  "real time" and "rewind" are the same mechanism and every frame is a measured activation.
+  The two things this page DOES compute are stated on screen: ln_f applied to a recorded residual (so the
+  recording can be CHECKED against vecscope.json rather than trusted), and the 1024 -> 3 projection.
+-->
+<style>
+:root{--bg:#0B1219;--pane:#111C25;--line:#2E4052;--fg:#D7E0E6;--dim:#8A9BA8;--acc:#F08A3C;
+      --true:#54C98A;--wrong:#F0C03C;--err:#E8604C;--z:#56B6E0;--cross:#C76BDC}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+#wrap{display:flex;height:100vh}
+#left{flex:1;position:relative;min-width:0}
+canvas{display:block;width:100%;height:100%;outline:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#labels div{position:absolute;transform:translate(7px,-50%);font:600 11px/1.2 ui-monospace,Menlo,Consolas,monospace;
+  white-space:nowrap;text-shadow:0 0 4px #000,0 0 8px #000}
+#banner{position:absolute;left:0;right:0;top:0;padding:.45rem .8rem;background:#0B1219ee;border-bottom:1px solid var(--line);
+  font:11.5px/1.45 ui-monospace,Menlo,Consolas,monospace;color:var(--dim);z-index:3}
+#banner.bad{background:#3A1410ee;color:#FFC9C0;border-color:var(--err)}
+#banner b{color:var(--true)}
+#hud{position:absolute;left:.8rem;bottom:3.6rem;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;color:#7E90A0;z-index:3;
+  background:#0B1219cc;border:1px solid var(--line);border-radius:7px;padding:.45rem .6rem}
+#hud b{color:var(--acc)}
+#bar{position:absolute;left:0;right:0;bottom:0;background:#0B1219ee;border-top:1px solid var(--line);
+  padding:.5rem .8rem;z-index:3;display:flex;align-items:center;gap:.7rem}
+#bar input[type=range]{flex:1}
+#bar button{background:#0B1219;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.3rem .7rem;cursor:pointer;font:inherit;font-size:.8rem}
+#bar button.on{border-color:var(--acc);color:var(--acc)}
+#lay{font:600 12px ui-monospace,Menlo,Consolas,monospace;color:var(--acc);min-width:12.5rem}
+#side{width:29rem;max-width:44vw;background:var(--pane);border-left:1px solid var(--line);overflow-y:auto;overflow-x:hidden;padding:1rem 1.1rem 4rem}
+h1{font-size:1.05rem;margin:0 0 .15rem;color:var(--acc)}
+.sub{color:var(--dim);font-size:.82rem;margin:0 0 1rem}
+h2{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--acc);border-bottom:1px solid var(--line);
+   padding-bottom:.3rem;margin:1.3rem 0 .55rem}
+label{display:block;font-size:.76rem;color:var(--dim);margin:.5rem 0 .15rem}
+select,input[type=range]{width:100%;background:#0B1219;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.3rem}
+input[type=range]{padding:0}
+.discard{background:#0B1219;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:0 6px 6px 0;
+  padding:.5rem .6rem;margin:.45rem 0 0;font-size:.76rem;color:#C9B89A}
+.discard b{color:var(--acc)}
+.warn{background:#2A1E10;border:1px solid #8A6A2E;border-left:3px solid var(--wrong);border-radius:0 6px 6px 0;
+  padding:.5rem .6rem;margin:.45rem 0 0;font-size:.77rem;color:#E8D5A8}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace}
+td{padding:.16rem .3rem;border-bottom:1px solid #1B2A36;vertical-align:top;overflow-wrap:anywhere}
+td:first-child{color:var(--dim)}
+td:last-child{text-align:right}
+.key{display:flex;align-items:center;gap:.4rem;font-size:.76rem;color:var(--dim);margin:.18rem 0}
+.sw{width:1.1rem;height:3px;border-radius:2px;flex:none}
+.cross{border-radius:7px;padding:.5rem .6rem;margin:.4rem 0 0;font-size:.8rem;border:1px solid var(--cross);background:#1E1226;color:#E6C8F0;cursor:pointer}
+.cross:hover{background:#2A1934}
+.note{font-size:.74rem;color:var(--dim);margin:.4rem 0 0}
+.row{display:flex;gap:.5rem}.row>*{flex:1}
+button{background:#0B1219;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.38rem;cursor:pointer;font:inherit;font-size:.78rem}
+button.on{border-color:var(--acc);color:var(--acc)}
+#lens{width:100%;height:auto;display:block;margin:.4rem 0 0}
+</style></head><body>
+<div id="wrap">
+  <div id="left">
+    <canvas id="cv" tabindex="0"></canvas>
+    <div id="labels"></div>
+    <div id="banner">loading the recording…</div>
+    <div id="hud"></div>
+    <div id="bar">
+      <button id="play">▶ play</button>
+      <input type="range" id="scrub" min="0" max="1" step="0.01" value="0">
+      <span id="lay"></span>
+      <button id="mode">fly</button>
+    </div>
+  </div>
+  <div id="side">
+    <h1>vecflight</h1>
+    <p class="sub">A recorded GPT-2 forward pass, replayed. Fly down the layer stack and watch the true
+      answer and the answer the model actually gives trade places.</p>
+
+    <div id="verdict"></div>
+    <h2>Where it went wrong</h2>
+    <div id="crossings"></div>
+
+    <h2>The logit lens over depth</h2>
+    <div class="warn" id="approx"></div>
+    <svg id="lens"></svg>
+    <p class="note" id="lensnote"></p>
+
+    <h2>At this layer</h2>
+    <table id="read"></table>
+
+    <h2>Projection — <span id="projname"></span></h2>
+    <select id="proj"></select>
+    <div class="discard" id="discard"></div>
+
+    <h2>Presentation choices (not measurements)</h2>
+    <label>Error magnification — <span id="l-mag"></span></label>
+    <input type="range" id="mag" min="1" max="400" step="1" value="60">
+    <label>Gap curve height per logit — <span id="l-gs"></span></label>
+    <input type="range" id="gs" min="5" max="120" step="1" value="25">
+    <div class="row" style="margin-top:.5rem">
+      <button id="t-nodes" class="on">all tokens</button>
+      <button id="t-abs">absolute logits</button>
+    </div>
+    <p class="note" id="choices"></p>
+
+    <h2>Key</h2>
+    <div class="key"><i class="sw" style="background:var(--err)"></i> the gap curve, logit(rival) − logit(true), above the last-token column. Below the plane = the wrong answer leads</div>
+    <div class="key"><i class="sw" style="background:var(--cross)"></i> a crossing: the layer the lead changes hands</div>
+    <div class="key"><i class="sw" style="background:var(--z)"></i> z at the scrub layer — the vector that chooses the next token</div>
+    <div class="key"><i class="sw" style="background:var(--true)"></i> W_U[true] &nbsp;<i class="sw" style="background:var(--wrong)"></i> W_U[rival]</div>
+    <div class="key"><i class="sw" style="background:#3C5565"></i> one recorded residual per (layer, token)</div>
+
+    <h2>Controls</h2>
+    <p class="note"><b>fly mode:</b> drag to look, <b>W/S</b> forward and back down the stack, <b>A/D</b>
+      strafe, <b>Q/E</b> down and up, <b>shift</b> to move faster. <b>orbit mode:</b> drag to orbit, wheel to
+      zoom. Click a crossing above to fly to it.</p>
+
+    <h2>Provenance</h2>
+    <table id="prov"></table>
+    <p class="note" id="defn"></p>
+  </div>
+</div>
+<script type="module">
+const $ = s => document.querySelector(s);
+const banner = $("#banner");
+const fail = m => { banner.className = "bad"; banner.textContent = m; throw new Error(m); };
+
+// ---------------------------------------------------------------- the recording (steps 1-3 output)
+const M     = await (await fetch("data/trace.json", {cache:"no-store"})).json();
+const binRes= await fetch(M.bin.path, {cache:"no-store"});
+const TRACE = new Float32Array(await binRes.arrayBuffer());
+const VS    = await (await fetch("data/vecscope.json", {cache:"no-store"})).json();
+const WGSL  = await (await fetch("vecflight.wgsl", {cache:"no-store"})).text();
+
+const [NL, NT, DIM] = M.bin.shape;          // entries (layers+1), tokens, d_model
+if (TRACE.length !== NL*NT*DIM) fail(`trace.bin holds ${TRACE.length} floats, not the ${NL*NT*DIM} the manifest's shape demands`);
+const resid = (l,t) => TRACE.subarray((l*NT + t)*DIM, (l*NT + t)*DIM + DIM);
+const LENS = M.logit_lens.rows;
+
+// ln_f, applied here ONLY so the recording can be checked rather than trusted (step 7)
+const GAMMA = Float32Array.from(M.ln_f.weight), BETA = Float32Array.from(M.ln_f.bias), EPS = M.ln_f.eps;
+function lnf(v) {
+  let mu = 0; for (let i=0;i<DIM;i++) mu += v[i]; mu /= DIM;
+  let va = 0; for (let i=0;i<DIM;i++) { const d = v[i]-mu; va += d*d; } va /= DIM;
+  const inv = 1/Math.sqrt(va + EPS), out = new Float32Array(DIM);
+  for (let i=0;i<DIM;i++) out[i] = (v[i]-mu)*inv*GAMMA[i] + BETA[i];
+  return out;
+}
+// the independent check: vecscope.json dumped z for this same dataset row, from a separate run
+const vsMiss = VS.facts.find(f => f.tag === "miss" && f.dataset_row === M.dataset_row);
+let crossCheck = null;
+if (vsMiss) {
+  const mine = lnf(resid(NL-1, NT-1));
+  let w = 0, s = 0;
+  for (let i=0;i<DIM;i++) { w = Math.max(w, Math.abs(mine[i]-vsMiss.z[i])); s = Math.max(s, Math.abs(vsMiss.z[i])); }
+  crossCheck = {abs: w, rel: w/s};
+  if (crossCheck.rel > 1e-3) fail(`ln_f(trace's last residual) disagrees with vecscope.json's independently `+
+    `dumped z by ${crossCheck.rel} relative — the two recordings are not of the same thing.`);
+}
+
+// vectors to project: z at every layer, the error at every layer, and the two unembedding rows
+const U_TRUE = Float32Array.from(M.u_true), U_RIVAL = Float32Array.from(M.u_rival);
+const DVEC = new Float32Array(DIM); for (let i=0;i<DIM;i++) DVEC[i] = U_RIVAL[i]-U_TRUE[i];
+const DD = DVEC.reduce((a,x)=>a+x*x, 0);
+const NVEC = NL*2 + 3;                      // [0..NL) z_l, [NL..2NL) e_l, then u_true, u_rival, d
+const I_Z = l => l, I_E = l => NL + l, I_UT = 2*NL, I_UR = 2*NL+1, I_D = 2*NL+2;
+const vecData = new Float32Array(NVEC*DIM);
+const zNorm = new Float32Array(NL), eNorm = new Float32Array(NL);
+for (let l=0;l<NL;l++) {
+  const z = lnf(resid(l, NT-1));
+  vecData.set(z, I_Z(l)*DIM);
+  zNorm[l] = Math.hypot(...z);
+  const g = LENS[l].gap;                    // RECORDED, not recomputed: dot(z, d) = logit_rival - logit_true
+  const k = g/DD, e = new Float32Array(DIM);
+  for (let i=0;i<DIM;i++) e[i] = k*DVEC[i];
+  vecData.set(e, I_E(l)*DIM);
+  eNorm[l] = Math.abs(g)/Math.sqrt(DD);
+}
+vecData.set(U_TRUE, I_UT*DIM); vecData.set(U_RIVAL, I_UR*DIM); vecData.set(DVEC, I_D*DIM);
+
+// ‖residual‖ per (layer, token): a measured magnitude, which is what sizes the nodes
+const rNorm = new Float32Array(NL*NT);
+let rMax = 0;
+for (let l=0;l<NL;l++) for (let t=0;t<NT;t++) {
+  const v = resid(l,t); let s = 0; for (let i=0;i<DIM;i++) s += v[i]*v[i];
+  rNorm[l*NT+t] = Math.sqrt(s); rMax = Math.max(rMax, rNorm[l*NT+t]);
+}
+
+// bases: reuse vecscope's (same model, same row) and add a decision basis from THIS dump's rows
+function gs(rows) {
+  const B = [];
+  for (const r of rows) {
+    const v = Float32Array.from(r);
+    for (const b of B) { let d=0; for(let i=0;i<DIM;i++) d+=v[i]*b[i]; for(let i=0;i<DIM;i++) v[i]-=d*b[i]; }
+    let n=0; for(let i=0;i<DIM;i++) n+=v[i]*v[i]; n=Math.sqrt(n);
+    if (n < 1e-9) fail("a projection basis row collapsed; the basis is not faked");
+    for(let i=0;i<DIM;i++) v[i]/=n; B.push(v);
+  }
+  return B;
+}
+const PROJS = [{
+  id:"decision", label:"Decision plane (true / rival unembedding rows)",
+  discards:"everything orthogonal to both unembedding rows. Axis 3 is the leftover direction of the FINAL "+
+           "layer's z, so earlier layers' out-of-plane part is real and is reported per layer, not drawn.",
+  basis: gs([U_TRUE, U_RIVAL, vecData.subarray(I_Z(NL-1)*DIM, I_Z(NL-1)*DIM+DIM)]),
+}, ...VS.projections.filter(p => p.id !== "decision").map(p => ({...p, basis: p.basis.map(r=>Float32Array.from(r))}))];
+
+// ---------------------------------------------------------------- WebGPU, or a stated refusal (path A1)
+if (!navigator.gpu) fail("REFUSED — WebGPU unavailable: navigator.gpu is missing. " + navigator.userAgent);
+const adapter = await navigator.gpu.requestAdapter();
+if (!adapter) fail("REFUSED — WebGPU unavailable: requestAdapter() returned null. " + navigator.userAgent);
+let device; try { device = await adapter.requestDevice(); }
+catch (e) { fail("REFUSED — WebGPU unavailable: requestDevice() threw: " + e.message); }
+const cv = $("#cv"), ctx = cv.getContext("webgpu");
+if (!ctx) fail("REFUSED — WebGPU unavailable: canvas.getContext('webgpu') returned null.");
+const fmt = navigator.gpu.getPreferredCanvasFormat();
+ctx.configure({device, format: fmt, alphaMode:"premultiplied"});
+const mod = device.createShaderModule({code: WGSL});
+const ci = await mod.getCompilationInfo?.();
+const sErr = (ci?.messages || []).filter(m => m.type === "error");
+if (sErr.length) fail("WGSL failed to compile: " + sErr.map(m=>`${m.lineNum}: ${m.message}`).join(" | "));
+
+const ST = GPUBufferUsage.STORAGE, UN = GPUBufferUsage.UNIFORM, CD = GPUBufferUsage.COPY_DST;
+const mk = (bytes, usage) => device.createBuffer({size: Math.max(16, bytes + (-bytes & 15)), usage: usage|CD});
+const bVecs = mk(vecData.byteLength, ST); device.queue.writeBuffer(bVecs, 0, vecData);
+const bMean = mk(DIM*4, ST);
+const bProj = device.createBuffer({size: NVEC*16, usage: ST|GPUBufferUsage.COPY_SRC});
+const bRead = device.createBuffer({size: NVEC*16, usage: CD|GPUBufferUsage.MAP_READ});
+const bCfg  = mk(16, UN), bBasis = mk(3*DIM*4, ST), bView = mk(80, UN);
+const MAXSEG = 4096, MAXEX = 4096, MAXNODE = 4096;
+const bSegs = mk(MAXSEG*48, ST), bExtra = mk(MAXEX*16, ST), bNodes = mk(MAXNODE*32, ST);
+
+const ro={type:"read-only-storage"}, rw={type:"storage"}, un={type:"uniform"};
+const C=GPUShaderStage.COMPUTE, V=GPUShaderStage.VERTEX;
+const lC = device.createBindGroupLayout({entries:[{binding:0,visibility:C,buffer:ro},{binding:1,visibility:C,buffer:ro},
+  {binding:2,visibility:C,buffer:rw},{binding:3,visibility:C,buffer:un},{binding:4,visibility:C,buffer:ro}]});
+const lR = device.createBindGroupLayout({entries:[{binding:0,visibility:V,buffer:ro},{binding:1,visibility:V,buffer:un},
+  {binding:2,visibility:V,buffer:ro},{binding:3,visibility:V,buffer:ro},{binding:4,visibility:V,buffer:ro}]});
+const lE = device.createBindGroupLayout({entries:[]});
+const gC = device.createBindGroup({layout:lC, entries:[{binding:0,resource:{buffer:bVecs}},{binding:1,resource:{buffer:bBasis}},
+  {binding:2,resource:{buffer:bProj}},{binding:3,resource:{buffer:bCfg}},{binding:4,resource:{buffer:bMean}}]});
+const gR = device.createBindGroup({layout:lR, entries:[{binding:0,resource:{buffer:bSegs}},{binding:1,resource:{buffer:bView}},
+  {binding:2,resource:{buffer:bExtra}},{binding:3,resource:{buffer:bProj}},{binding:4,resource:{buffer:bNodes}}]});
+const pC = device.createComputePipeline({layout:device.createPipelineLayout({bindGroupLayouts:[lC]}),
+  compute:{module:mod, entryPoint:"project"}});
+const rl = device.createPipelineLayout({bindGroupLayouts:[lE, lR]});
+const blend={color:{srcFactor:"src-alpha",dstFactor:"one-minus-src-alpha"},alpha:{srcFactor:"one",dstFactor:"one-minus-src-alpha"}};
+const rp = (vs, fs) => device.createRenderPipeline({layout:rl, vertex:{module:mod, entryPoint:vs},
+  fragment:{module:mod, entryPoint:fs, targets:[{format:fmt, blend}]}, primitive:{topology:"triangle-list"},
+  depthStencil:{format:"depth24plus", depthWriteEnabled:false, depthCompare:"less-equal"}});
+const pSeg=rp("vs_seg","fs"), pHead=rp("vs_head","fs"), pNode=rp("vs_node","fs_node");
+let depthTex = null;
+
+// ---------------------------------------------------------------- state and layout
+const LGAP = 2.0, TGAP = 0.75, FLOOR = -3.0;
+const zOf = l => l*LGAP, xOf = t => (t-(NT-1)/2)*TGAP;
+const st = {
+  layer: NL-1, playing:false, speed:4.0, mode:"fly", proj:0, mag:60, gscale:0.25,
+  showNodes:true, showAbs:false, dispScale:60, depth:1, autoDepth:1, playT0:null, playL0:0,
+  pos:[xOf(NT-1)+5.1, 3.0, -8.0], yaw:-0.2289, pitch:-0.1320,   // aimed AT the stack: a POSITIVE yaw here
+                                                       // points away from it (measured: empty first frame)
+  orbYaw:0.7, orbPitch:0.3, orbDist:34, orbTgt:[0,0,zOf(NL-1)/2],
+};
+let projCPU=null, lastSegs=[], lastNodes=0, lastLabels=[], gpuRel=null, keys={};
+const yOfGap = g => -g*st.gscale;
+
+// ---------------------------------------------------------------- projection on the GPU, checked on the CPU
+function writeBasis() {
+  const B = PROJS[st.proj].basis, flat = new Float32Array(3*DIM);
+  for (let r=0;r<3;r++) flat.set(B[r], r*DIM);
+  device.queue.writeBuffer(bBasis, 0, flat);
+  device.queue.writeBuffer(bCfg, 0, new Uint32Array([NVEC, DIM, 0, 0]));
+  projCPU = new Float32Array(NVEC*4);
+  for (let v=0; v<NVEC; v++) {
+    let c0=0,c1=0,c2=0;
+    for (let j=0;j<DIM;j++){ const x=vecData[v*DIM+j]; c0+=x*B[0][j]; c1+=x*B[1][j]; c2+=x*B[2][j]; }
+    // the remainder's own norm, NOT sqrt(|v|^2 - |c|^2): the Pythagorean form cancels catastrophically
+    // when the basis captures nearly all of a large vector, and it tripped this page's own guard at 2.06e-4
+    let rem=0;
+    for (let j=0;j<DIM;j++){ const r = vecData[v*DIM+j] - (c0*B[0][j]+c1*B[1][j]+c2*B[2][j]); rem += r*r; }
+    projCPU[v*4]=c0; projCPU[v*4+1]=c1; projCPU[v*4+2]=c2; projCPU[v*4+3]=Math.sqrt(rem);
+  }
+}
+async function runCompute() {
+  const enc = device.createCommandEncoder();
+  const p = enc.beginComputePass(); p.setPipeline(pC); p.setBindGroup(0,gC);
+  p.dispatchWorkgroups(Math.ceil(NVEC/64)); p.end();
+  enc.copyBufferToBuffer(bProj, 0, bRead, 0, NVEC*16);
+  device.queue.submit([enc.finish()]);
+  await bRead.mapAsync(GPUMapMode.READ);
+  const got = new Float32Array(bRead.getMappedRange().slice(0)); bRead.unmap();
+  let w=0, s=0, wi=-1;
+  for (let i=0;i<got.length;i++){ const d=Math.abs(got[i]-projCPU[i]); if(d>w){w=d;wi=i;} s=Math.max(s,Math.abs(projCPU[i])); }
+  gpuRel = s>0 ? w/s : 0;
+  if (gpuRel > 1e-4) fail(`GPU projection disagrees with the CPU by ${gpuRel} relative (path A1b): worst at `+
+    `vector ${Math.floor(wi/4)} component ${["axis1","axis2","axis3","hidden"][wi%4]}, `+
+    `GPU ${got[wi]} vs CPU ${projCPU[wi]}. The picture would be the shader's arithmetic, not the model's.`);
+  // scale so the biggest in-plane z is a readable size next to the LGAP spacing
+  let ip=0, a3=0;
+  for (let l=0;l<NL;l++){ const i=I_Z(l)*4; ip=Math.max(ip,Math.hypot(got[i],got[i+1])); a3=Math.max(a3,Math.abs(got[i+2])); }
+  st.dispScale = Math.max(1e-6, ip/1.3);
+  st.autoDepth = a3>1e-9 ? Math.min(1, 1.6*st.dispScale/a3) : 1;
+  st.depth = st.autoDepth;
+  window.__P = got; return got;
+}
+
+// ---------------------------------------------------------------- maths (column-major, as WGSL reads it)
+const mul=(a,b)=>{const o=new Float32Array(16);for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+i]*b[j*4+k];o[j*4+i]=s}return o};
+const persp=(f,asp,n,fa)=>{const t=1/Math.tan(f/2);return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,fa/(n-fa),-1, 0,0,n*fa/(n-fa),0])};
+function lookAt(e,c,u){
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const nl=v=>{const l=Math.hypot(...v)||1;return[v[0]/l,v[1]/l,v[2]/l]};
+  const z=nl(sub(e,c)), x=nl(cr(u,z)), y=cr(z,x), dt=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0, -dt(x,e),-dt(y,e),-dt(z,e),1]);
+}
+const fwd = () => [Math.cos(st.pitch)*Math.sin(st.yaw), Math.sin(st.pitch), Math.cos(st.pitch)*Math.cos(st.yaw)];
+function camera(w,h){
+  if (st.mode==="fly") {
+    const d=fwd(), e=st.pos;
+    return mul(persp(0.95,w/h,0.05,900), lookAt(e,[e[0]+d[0],e[1]+d[1],e[2]+d[2]],[0,1,0]));
+  }
+  const d=st.orbDist, t=st.orbTgt;
+  const e=[t[0]+d*Math.cos(st.orbPitch)*Math.sin(st.orbYaw), t[1]+d*Math.sin(st.orbPitch), t[2]+d*Math.cos(st.orbPitch)*Math.cos(st.orbYaw)];
+  return mul(persp(0.95,w/h,0.05,900), lookAt(e,t,[0,1,0]));
+}
+const pw = (P,i,mag=1) => { const c=[P[i*4]*mag,P[i*4+1]*mag,P[i*4+2]*mag];
+  return [c[0]/st.dispScale, c[1]/st.dispScale, c[2]*st.depth/st.dispScale]; };
+
+// ---------------------------------------------------------------- the scene (steps 5-8)
+const COL={node:[0.24,0.33,0.40,0.85], nodeLast:[0.34,0.55,0.70,0.95], gap:[0.91,0.38,0.30,1],
+           gapGood:[0.33,0.79,0.54,1], plane:[0.20,0.28,0.35,0.85], cross:[0.78,0.42,0.86,1],
+           z:[0.34,0.71,0.88,1], t:[0.33,0.79,0.54,1], w:[0.94,0.75,0.24,1], err:[0.91,0.38,0.30,1],
+           axis:[0.30,0.38,0.46,0.9], abs:[0.55,0.62,0.72,0.9]};
+const F_AX=1, F_BX=2, F_REL=4;
+const Li = () => Math.max(0, Math.min(NL-1, Math.round(st.layer)));
+
+function scene(P) {
+  const segs=[], extra=[], nodes=[], labels=[];
+  const ex = p => { extra.push(p[0],p[1],p[2],1); return extra.length/4-1; };
+  const seg = (a,b,flags,color,mag,wid,anchor=-1)=>segs.push({a,b,flags,color,mag,wid,anchor});
+  const line = (p,q,color,wid)=>seg(ex(p),ex(q),F_AX|F_BX,color,1,wid);
+  const node = (p,r,color)=>nodes.push({p,r,color});
+
+  const xc = xOf(NT-1), zEnd = zOf(NL-1);
+
+  // the zero plane: where the gap changes sign is where the ANSWER changes. A lattice, not a solid, so you
+  // can fly through it and still see the curve on the other side.
+  for (let l=0;l<NL;l+=2) line([xc-2.2,0,zOf(l)],[xc+2.2,0,zOf(l)],COL.plane,0.5);
+  for (let k=-2;k<=2;k++) line([xc+k*1.1,0,0],[xc+k*1.1,0,zEnd],COL.plane,0.5);
+  labels.push({p:[xc+2.3,0,zEnd],t:"gap = 0 · the answer changes hands here",c:"#6E8AA8",pri:3});
+
+  // the layer axis, labelled at intervals
+  line([xc,FLOOR,0],[xc,FLOOR,zEnd],COL.axis,0.8);
+  for (let l=0;l<NL;l+=4) labels.push({p:[xc,FLOOR-0.1,zOf(l)],t:l+" blk",c:"#5C6E7D",pri:1});
+
+  // every recorded residual, one node, radius from its MEASURED norm
+  if (st.showNodes) for (let l=0;l<NL;l++) for (let t=0;t<NT;t++) {
+    const n = rNorm[l*NT+t]/rMax, last = (t===NT-1);
+    node([xOf(t),FLOOR,zOf(l)], 2.0+7.0*n, last?COL.nodeLast:COL.node);
+  }
+  labels.push({p:[xOf(NT-1),FLOOR,zEnd+0.7],t:"last token — the one that chooses",c:"#56B6E0",pri:4});
+
+  // THE GAP CURVE: logit(rival) − logit(true) at every layer, above the last-token column.
+  for (let l=0;l<NL-1;l++) {
+    const a=[xc,yOfGap(LENS[l].gap),zOf(l)], b=[xc,yOfGap(LENS[l+1].gap),zOf(l+1)];
+    const good = LENS[l].gap<0 && LENS[l+1].gap<0;
+    line(a,b,good?COL.gapGood:COL.gap,2.4);
+  }
+  for (let l=0;l<NL;l++) node([xc,yOfGap(LENS[l].gap),zOf(l)], LENS[l].gap<0?3.2:3.2, LENS[l].gap<0?COL.gapGood:COL.gap);
+
+  // the two ABSOLUTE logit curves, on their own stated scale (they span ~190 logits; the gap spans ~19)
+  if (st.showAbs) {
+    let lo=1e9, hi=-1e9;
+    for (const r of LENS){ lo=Math.min(lo,r.logit_true,r.logit_wrong); hi=Math.max(hi,r.logit_true,r.logit_wrong); }
+    const ya = v => -2.6 + 5.2*(v-lo)/Math.max(1e-9,hi-lo);
+    for (let l=0;l<NL-1;l++) {
+      line([xc-2.6,ya(LENS[l].logit_true),zOf(l)],[xc-2.6,ya(LENS[l+1].logit_true),zOf(l+1)],COL.t,1.6);
+      line([xc-2.6,ya(LENS[l].logit_wrong),zOf(l)],[xc-2.6,ya(LENS[l+1].logit_wrong),zOf(l+1)],COL.w,1.6);
+    }
+    labels.push({p:[xc-2.6,ya(LENS[0].logit_true),0],t:`logit(${M.true_text.trim()}) — own scale ${lo.toFixed(0)}…${hi.toFixed(0)}`,c:"#54C98A"});
+    labels.push({p:[xc-2.6,ya(LENS[0].logit_wrong),0],t:`logit(${M.rival_text.trim()})`,c:"#F0C03C"});
+  }
+
+  // the crossings, marked IN PLACE so flying along the stack arrives at them
+  for (const c of M.crossings) {
+    const z = (zOf(c.from_layer)+zOf(c.to_layer))/2;
+    line([xc,-2.9,z],[xc,2.9,z],COL.cross,1.6);
+    labels.push({p:[xc,2.95,z],t:`block ${c.blame_block}: ${c.direction}`,c:"#C76BDC",pri:8});
+  }
+
+  // THE CENTREPIECE: the vector that chooses the next token, at the scrub layer, anchored at that layer.
+  const l = Li(), anc = ex([xc, 0, zOf(l)]);
+  const R = LENS[l];
+  seg(I_Z(l), I_Z(l), F_AX, COL.z, 1, 3.0, anc);          // from the anchor out along z
+  segs[segs.length-1].a = anc; segs[segs.length-1].flags = F_AX;
+  segs[segs.length-1].b = I_Z(l);
+  seg(I_UT, I_UT, F_AX, COL.t, 1, 2.0, anc); const su=segs[segs.length-1]; su.a=anc; su.b=I_UT;
+  seg(I_UR, I_UR, F_AX, COL.w, 1, 2.0, anc); const sw=segs[segs.length-1]; sw.a=anc; sw.b=I_UR;
+  seg(I_Z(l), I_E(l), F_REL, R.gap>0?COL.err:COL.t, st.mag, 3.4, anc);
+  const zt = pw(P, I_Z(l)), base=[xc,0,zOf(l)];
+  labels.push({p:[base[0]+zt[0],base[1]+zt[1],base[2]+zt[2]], t:`z @ L${l}  ‖${R.z_norm.toFixed(1)}‖`, c:"#56B6E0", pri:9});
+
+  return {segs, extra, nodes, labels};
+}
+
+function upload(sc) {
+  if (sc.segs.length>MAXSEG) fail(`${sc.segs.length} segments exceeds the ${MAXSEG} the buffer holds`);
+  if (sc.nodes.length>MAXNODE) fail(`${sc.nodes.length} nodes exceeds the ${MAXNODE} the buffer holds`);
+  const a=new ArrayBuffer(Math.max(48, sc.segs.length*48)), iv=new Int32Array(a), fv=new Float32Array(a);
+  sc.segs.forEach((s,k)=>{const o=k*12;
+    iv[o]=s.a; iv[o+1]=s.b; iv[o+2]=s.flags; iv[o+3]=0;
+    fv[o+4]=s.color[0];fv[o+5]=s.color[1];fv[o+6]=s.color[2];fv[o+7]=s.color[3];
+    fv[o+8]=s.mag; fv[o+9]=s.wid; fv[o+10]=s.anchor; fv[o+11]=0;});
+  device.queue.writeBuffer(bSegs,0,a);
+  const ea=new Float32Array(Math.max(4,sc.extra.length)); ea.set(sc.extra); device.queue.writeBuffer(bExtra,0,ea);
+  const na=new Float32Array(Math.max(8, sc.nodes.length*8));
+  sc.nodes.forEach((n,k)=>{const o=k*8; na[o]=n.p[0];na[o+1]=n.p[1];na[o+2]=n.p[2];na[o+3]=n.r;
+    na[o+4]=n.color[0];na[o+5]=n.color[1];na[o+6]=n.color[2];na[o+7]=n.color[3];});
+  device.queue.writeBuffer(bNodes,0,na);
+  lastSegs=sc.segs; lastNodes=sc.nodes.length; lastLabels=sc.labels;
+}
+
+function draw() {
+  const dpr=Math.min(devicePixelRatio||1,2);
+  const w=Math.max(1,Math.floor(cv.clientWidth*dpr)), h=Math.max(1,Math.floor(cv.clientHeight*dpr));
+  if (cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; depthTex?.destroy();
+    depthTex=device.createTexture({size:[w,h],format:"depth24plus",usage:GPUTextureUsage.RENDER_ATTACHMENT}); }
+  const mvp=camera(w,h);
+  const vb=new ArrayBuffer(80), vf=new Float32Array(vb);
+  vf.set(mvp,0); vf[16]=w; vf[17]=h; vf[18]=st.dispScale; vf[19]=st.depth;
+  device.queue.writeBuffer(bView,0,vb);
+  const enc=device.createCommandEncoder();
+  const pass=enc.beginRenderPass({
+    colorAttachments:[{view:ctx.getCurrentTexture().createView(),clearValue:{r:0.035,g:0.058,b:0.082,a:1},loadOp:"clear",storeOp:"store"}],
+    depthStencilAttachment:{view:depthTex.createView(),depthClearValue:1,depthLoadOp:"clear",depthStoreOp:"store"}});
+  pass.setBindGroup(1,gR);
+  pass.setPipeline(pNode); pass.draw(6,lastNodes);
+  pass.setPipeline(pSeg);  pass.draw(6,lastSegs.length);
+  pass.setPipeline(pHead); pass.draw(3,lastSegs.length);
+  pass.end(); device.queue.submit([enc.finish()]);
+  placeLabels(mvp, w/dpr, h/dpr);
+}
+// Labels are DECLUTTERED in screen space: every one of them is still a real anchor, but in a corridor 48
+// units deep the far ones all converge on the vanishing point and pile into an unreadable smear. Nearer and
+// higher-priority labels win the space; the rest are hidden rather than overdrawn.
+function placeLabels(mvp,w,h){
+  const box=$("#labels");
+  while(box.children.length<lastLabels.length) box.appendChild(document.createElement("div"));
+  while(box.children.length>lastLabels.length) box.lastChild.remove();
+  const place=[];
+  lastLabels.forEach((L,i)=>{
+    const [x,y,z]=L.p;
+    const cx=mvp[0]*x+mvp[4]*y+mvp[8]*z+mvp[12], cy=mvp[1]*x+mvp[5]*y+mvp[9]*z+mvp[13], cw=mvp[3]*x+mvp[7]*y+mvp[11]*z+mvp[15];
+    place.push({i, L, cw, sx:(cx/cw*0.5+0.5)*w, sy:(-cy/cw*0.5+0.5)*h});
+  });
+  // highest priority first, then nearest
+  place.sort((a,b)=> (b.L.pri||0)-(a.L.pri||0) || a.cw-b.cw);
+  const taken=[];
+  for (const q of place) {
+    const el=box.children[q.i];
+    const off = q.cw<=0.001 || q.sx<-120 || q.sx>w+120 || q.sy<-40 || q.sy>h+40
+      || taken.some(t=>Math.abs(t.x-q.sx)<150 && Math.abs(t.y-q.sy)<13);
+    if (off){ el.style.display="none"; continue; }
+    taken.push({x:q.sx,y:q.sy});
+    el.style.display=""; el.textContent=q.L.t; el.style.color=q.L.c;
+    el.style.left=q.sx+"px"; el.style.top=q.sy+"px";
+    el.style.opacity = q.cw>70 ? "0.45" : "1";
+  }
+}
+
+// ---------------------------------------------------------------- panel
+const num=(n,d=2)=>(n>=0?"+":"")+n.toFixed(d);
+const rows=(t,p)=>t.innerHTML=p.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+
+function lensSvg() {
+  const W=400,H=150,PAD=26;
+  let lo=1e9,hi=-1e9; for(const r of LENS){lo=Math.min(lo,r.gap);hi=Math.max(hi,r.gap);}
+  const x=l=>PAD+(W-PAD-8)*l/(NL-1), y=g=>H-18-(H-30)*(g-lo)/Math.max(1e-9,hi-lo);
+  const pts=LENS.map(r=>`${x(r.layer).toFixed(1)},${y(r.gap).toFixed(1)}`).join(" ");
+  const y0=y(0);
+  return `<svg id="lens" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${PAD}" y1="${y0}" x2="${W-8}" y2="${y0}" stroke="#C76BDC" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="${PAD+2}" y="${y0-3}" fill="#C76BDC" font-size="8" font-family="monospace">gap = 0</text>
+    <text x="2" y="12" fill="#E8604C" font-size="8" font-family="monospace">rival ahead</text>
+    <text x="2" y="${H-4}" fill="#54C98A" font-size="8" font-family="monospace">true ahead</text>
+    <polyline points="${pts}" fill="none" stroke="#E8604C" stroke-width="1.6"/>
+    ${M.crossings.map(c=>`<line x1="${x((c.from_layer+c.to_layer)/2)}" y1="12" x2="${x((c.from_layer+c.to_layer)/2)}" y2="${H-14}" stroke="#C76BDC" stroke-width="1"/>`).join("")}
+    <circle cx="${x(Li())}" cy="${y(LENS[Li()].gap)}" r="4" fill="#F08A3C"/>
+    ${[0,6,12,18,24].filter(l=>l<NL).map(l=>`<text x="${x(l)-4}" y="${H-3}" fill="#5C6E7D" font-size="8" font-family="monospace">L${l}</text>`).join("")}
+  </svg>`;
+}
+
+function panel(P) {
+  const l=Li(), R=LENS[l], pr=PROJS[st.proj];
+  const zi=I_Z(l)*4, kept=Math.hypot(P[zi],P[zi+1],P[zi+2]), hid=P[zi+3];
+
+  $("#verdict").innerHTML = `<div class="cross" style="cursor:default;border-color:${M.is_miss?"#E8604C":"#54C98A"};background:${M.is_miss?"#2A1210":"#0F2318"};color:${M.is_miss?"#FFC9C0":"#BFEBD2"}">
+    <b>${M.is_miss?"MISS":"CORRECT"}.</b> <code>${M.prompt}</code><br>the model answers <b>${M.argmax_text}</b>,
+    the true object is <b>${M.true_text}</b>. ${NL} recorded residual entries × ${NT} tokens × ${DIM} dims.</div>`;
+
+  $("#crossings").innerHTML = M.crossings.length
+    ? M.crossings.map((c,i)=>`<div class="cross" data-z="${(zOf(c.from_layer)+zOf(c.to_layer))/2}">
+        <b>BLOCK ${c.blame_block}</b> — ${c.direction}. After ${c.from_layer} blocks the gap was
+        ${num(c.gap_before)}; after ${c.to_layer} it is ${num(c.gap_after)}.<br>
+        <span style="color:#8A9BA8">click to fly here</span></div>`).join("")
+    : `<p class="note">No crossing: the sign of the gap never changed across the whole stack, so the wrong
+        answer led the whole way. That is a real outcome and no marker is invented (path A6).</p>`;
+
+  $("#approx").innerHTML = M.logit_lens.approximation;
+  $("#lens").outerHTML = lensSvg();
+  $("#lensnote").innerHTML = `Gap = logit(${M.rival_text.trim()}) − logit(${M.true_text.trim()}) at the last
+    token, read at every layer. ${M.logit_lens.method} The orange dot is the scrub position.`;
+
+  rows($("#read"), [
+    ["entry (of 0…" + (NL-1) + ")", `<b>${l}</b> = after ${l} block${l===1?"":"s"}${l===NL-1?", the model's own output":""}`],
+    ["this entry came from", `<span style="color:#8A9BA8">${M.bin.entry_source[l]}</span>`],
+    ["what the model would say HERE", `<b>${R.argmax_text}</b>`],
+    ["logit(" + M.true_text.trim() + ")", R.logit_true.toFixed(3)],
+    ["logit(" + M.rival_text.trim() + ")", R.logit_wrong.toFixed(3)],
+    ["<b>gap</b>", `<b>${num(R.gap,3)}</b> ${R.gap>0?"— rival ahead":"— true ahead"}`],
+    ["‖residual‖ at this layer (raw, pre-ln_f)", R.resid_norm.toFixed(1)],
+    ["‖z‖ after ln_f", R.z_norm.toFixed(1)],
+    ["‖e‖ = |gap| / ‖d‖", (Math.abs(R.gap)/Math.sqrt(DD)).toFixed(4)],
+    ["top-5 here", R.top_k.slice(0,5).map(t=>`${t.text.trim()||"␠"} ${t.logit.toFixed(1)}`).join("<br>")],
+  ]);
+
+  $("#projname").textContent = pr.id;
+  $("#discard").innerHTML = `<b>Discards:</b> ${pr.discards}`
+    + (pr.variance_explained?` <b>Variance explained:</b> ${pr.variance_explained.map(v=>(100*v).toFixed(1)+"%").join(" / ")}.`:"")
+    + `<br><b>For z at layer ${l}:</b> ${kept.toFixed(1)} of ‖z‖=${R.z_norm.toFixed(1)} is on screen;
+       <b>${hid.toFixed(1)} (${(100*hid/Math.max(1e-9,R.z_norm)).toFixed(1)}%) is NOT drawn.</b>`;
+
+  $("#choices").innerHTML = `The layer axis is ${LGAP} world units per layer and tokens are ${TGAP} apart —
+    a layout, not a measurement. The gap curve is <b>${st.gscale.toFixed(2)}</b> world units per logit. The
+    error is drawn <b>×${st.mag}</b>. Node radius runs with ‖residual‖ (max ${rMax.toFixed(0)}). The scrub
+    <b>snaps the readout to layer ${l}</b>: every number above is that layer's recorded value, never an
+    interpolation between layers. Axis 3 compressed ×${st.depth.toFixed(3)}.`;
+
+  rows($("#prov"), [
+    ["model", M.model_id],
+    ["recording", `${M.bin.shape.join(" × ")} float32, ${M.bin.bytes.toLocaleString()} bytes (measured)`],
+    ["convention", M.bin.convention],
+    ["last entry", M.bin.entry_last_is],
+    ["dataset row · case_id", `${M.dataset_row} · ${M.case_id}`],
+    ["lens @ last layer vs real logits", M.logit_lens.last_layer_vs_real_logits_maxdiff.toExponential(2)],
+    ["ln_f(trace) vs vecscope.json z", crossCheck ? `${crossCheck.rel.toExponential(2)} rel` : "ABSENT — vecscope.json has no fact for this row"],
+    ["torch / transformers", `${M.torch} / ${M.transformers}`],
+  ]);
+  $("#defn").innerHTML = `<b>${M.replay_not_inference}</b><br><br>${M.no_cosine}<br><br>${M.crossings_note}`;
+
+  $("#crossings").querySelectorAll("[data-z]").forEach(el=>el.onclick=()=>{
+    const z=+el.dataset.z;
+    st.mode="fly"; $("#mode").textContent="fly";
+    st.pos=[xOf(NT-1)+4.5, 1.4, z-5.5]; st.yaw=-0.62; st.pitch=-0.06;
+    st.layer=Math.round(z/LGAP); $("#scrub").value=st.layer; setLayer(st.layer);   // setLayer, not
+    // refresh: it is what keeps the scrub readout and the panel on the same layer
+  });
+}
+
+// ---------------------------------------------------------------- loop and wiring
+const projSel=$("#proj"); PROJS.forEach((p,i)=>projSel.add(new Option(p.label,i)));
+$("#scrub").min=0; $("#scrub").max=NL-1; $("#scrub").step=0.02; $("#scrub").value=st.layer;
+
+async function refresh(recompute=true) {
+  if (recompute) { writeBasis(); await runCompute(); }
+  const P=window.__P;
+  upload(scene(P)); panel(P);
+  banner.className="";
+  const a=adapter.info||{};
+  banner.innerHTML = `<b>WebGPU</b> · ${a.vendor||"?"}/${a.architecture||"?"} · replaying a recording of `+
+    `${M.bin.shape.join("×")} float32 (${(M.bin.bytes/1048576).toFixed(2)} MB) — <b>no inference in the browser</b> · `+
+    `GPU vs CPU ${gpuRel.toExponential(2)} rel · lens@L${NL-1} vs real logits ${M.logit_lens.last_layer_vs_real_logits_maxdiff.toExponential(2)}`+
+    (crossCheck?` · ln_f(trace) vs vecscope z ${crossCheck.rel.toExponential(2)} rel`:"");
+  draw();
+}
+function setLayer(v, recompute=false){ st.layer=v; $("#lay").textContent=`layer ${Li()} / ${NL-1}  gap ${num(LENS[Li()].gap)}`; refresh(recompute); }
+
+projSel.onchange=()=>{ st.proj=+projSel.value; refresh(); };
+$("#scrub").oninput=e=>{ st.playing=false; st.playT0=null; $("#play").textContent="▶ play"; $("#play").classList.remove("on"); setLayer(+e.target.value); };
+$("#play").onclick=e=>{ st.playing=!st.playing; e.target.textContent=st.playing?"❚❚ pause":"▶ play"; e.target.classList.toggle("on",st.playing);
+  if (st.playing && st.layer>=NL-1) st.layer=0;
+  st.playT0=performance.now(); st.playL0=st.layer; };   // playback is WALL-CLOCK anchored, see tick()
+$("#mode").onclick=e=>{ st.mode = st.mode==="fly"?"orbit":"fly"; e.target.textContent=st.mode; draw(); };
+$("#mag").oninput=e=>{ st.mag=+e.target.value; $("#l-mag").textContent="×"+st.mag; refresh(false); };
+$("#gs").oninput=e=>{ st.gscale=+e.target.value/100; $("#l-gs").textContent=st.gscale.toFixed(2)+" units/logit"; refresh(false); };
+$("#t-nodes").onclick=e=>{ st.showNodes=!st.showNodes; e.target.classList.toggle("on",st.showNodes); refresh(false); };
+$("#t-abs").onclick=e=>{ st.showAbs=!st.showAbs; e.target.classList.toggle("on",st.showAbs); refresh(false); };
+
+let drag=null;
+cv.onpointerdown=e=>{ drag={x:e.clientX,y:e.clientY}; cv.setPointerCapture(e.pointerId); cv.focus(); };
+cv.onpointerup=()=>drag=null;
+cv.onpointermove=e=>{ if(!drag) return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y; drag.x=e.clientX; drag.y=e.clientY;
+  if (st.mode==="fly"){ st.yaw-=dx*0.005; st.pitch=Math.max(-1.45,Math.min(1.45,st.pitch-dy*0.005)); }
+  else { st.orbYaw-=dx*0.007; st.orbPitch=Math.max(-1.45,Math.min(1.45,st.orbPitch+dy*0.007)); }
+  draw(); };
+cv.onwheel=e=>{ e.preventDefault();
+  if (st.mode==="orbit") st.orbDist=Math.max(2,Math.min(300,st.orbDist*(1+Math.sign(e.deltaY)*0.09)));
+  else { const d=fwd(), s=-Math.sign(e.deltaY)*1.4; st.pos=[st.pos[0]+d[0]*s,st.pos[1]+d[1]*s,st.pos[2]+d[2]*s]; }
+  draw(); };
+addEventListener("keydown",e=>{ keys[e.key.toLowerCase()]=true;
+  if (["w","a","s","d","q","e"].includes(e.key.toLowerCase())) e.preventDefault(); });
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+addEventListener("resize",draw);
+
+$("#l-mag").textContent="×"+st.mag; $("#l-gs").textContent=st.gscale.toFixed(2)+" units/logit";
+await refresh();
+setLayer(NL-1);
+
+let last=performance.now();
+(function tick(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  let moved=false;
+  if (st.mode==="fly") {
+    const sp=(keys["shift"]?18:7)*dt, d=fwd(), r=[Math.cos(st.yaw),0,-Math.sin(st.yaw)];
+    const go=(v,k)=>{ st.pos=[st.pos[0]+v[0]*k,st.pos[1]+v[1]*k,st.pos[2]+v[2]*k]; moved=true; };
+    if (keys["w"]) go(d,sp); if (keys["s"]) go(d,-sp);
+    if (keys["d"]) go(r,sp);  if (keys["a"]) go(r,-sp);
+    if (keys["e"]) go([0,1,0],sp); if (keys["q"]) go([0,1,0],-sp);
+  }
+  if (st.playing) {
+    // Wall-clock, not an accumulated dt. Accumulating a dt that is clamped to 0.05 s makes playback run
+    // SLOW whenever frames are starved - measured 2026-11-25 at 2 fps in a hidden browser pane, where
+    // "real time" would otherwise have been off by 30x. Anchoring to elapsed time keeps the replay rate
+    // honest however badly the frame loop is served.
+    if (st.playT0 == null) { st.playT0 = now; st.playL0 = st.layer; }
+    st.layer = st.playL0 + st.speed*(now - st.playT0)/1000;
+    if (st.layer>=NL-1){ st.layer=NL-1; st.playing=false; st.playT0=null; $("#play").textContent="▶ play"; $("#play").classList.remove("on"); }
+    $("#scrub").value=st.layer; setLayer(st.layer);
+  } else if (moved) draw();
+  $("#hud").innerHTML = `<b>${st.mode}</b> · pos ${st.pos.map(v=>v.toFixed(1)).join(", ")} · layer <b>${Li()}</b>`+
+    ` · would say <b>${LENS[Li()].argmax_text.trim()||"␠"}</b> · gap <b>${num(LENS[Li()].gap)}</b>`;
+  requestAnimationFrame(tick);
+})(performance.now());
+
+window.__vecflight={st,M,LENS,PROJS,draw,refresh,setLayer,get P(){return window.__P},get segs(){return lastSegs},get nodes(){return lastNodes}};
+</script>
+</body></html>

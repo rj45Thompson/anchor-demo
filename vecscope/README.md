@@ -3,17 +3,11 @@
 A WebGPU viewer for one GPT-2 prompt's **final-layer residual at the last token**: the error direction that
 makes the model answer wrongly, and the collateral damage a weight fold does to facts it was never taught.
 
-**It is running here: [vecscope.html](vecscope.html).** It needs a browser with WebGPU; there is no WebGL
-fallback, because a fallback that silently draws something else is the one thing this page must not do.
-
-To re-measure the data rather than take it on trust, run the dumper yourself and serve the page locally —
-no build step, no npm install:
-
 ```powershell
 py -X utf8 .opus-tools\vecscope\dump_residual.py ; py -X utf8 .opus-tools\vecscope\serve.py
 ```
 
-then open **http://127.0.0.1:7931/vecscope.html**.
+then open **http://127.0.0.1:7931/vecscope.html**. No build step, no npm install.
 The use case description this is built to is [USE_CASES.md](USE_CASES.md) — read that first; it was written
 before any code, and it is what the requirements link to.
 
@@ -28,7 +22,7 @@ The honest split, because the whole point of this page is that the picture can b
 | | |
 |---|---|
 | `z` | `hidden_states[-1][0,-1]` — **already post-`ln_f`** in HuggingFace GPT-2. `W_U @ z` reproduces the model's own logits to **2.29e-05**, asserted per fact. So every dot product drawn IS a logit. |
-| `h` | the raw pre-`ln_f` residual stream, from a forward hook on `ln_f`'s input. `hidden_states[-2]` is **not** this (measured 181.4 away). |
+| `h` | the raw pre-`ln_f` residual stream, from a forward hook on `ln_f`'s input. `hidden_states[-2]` is **not** this — it is block *n−1*'s **input** (see the indexing note below). |
 | `W_U[true]`, `W_U[rival]` | real `lm_head` rows; top-10 logits with their token strings |
 | `e` | the error vector, definition below |
 | the fold | a real rank-one write to layer 8's `mlp.c_proj`, λ found by bisection |
@@ -156,6 +150,103 @@ looking at the screen.
   dump, never presented as a ported value.
 - 8 control facts and one taught fact is a demo-sized sample, not a retention study.
 
+## vecflight — fly the forward pass (UC-VS-02)
+
+```powershell
+py -X utf8 .opus-toolsecscope\dump_trace.py ; py -X utf8 .opus-toolsecscope\serve.py
+```
+
+then **http://127.0.0.1:7931/vecflight.html**. Built to UC-VS-02 after the spec was expanded: fly through the
+network, replay the pass, rewind it, and find the layer where it went wrong.
+
+**Record once in Python, replay in WebGPU.** No inference runs in the browser. `dump_trace.py` writes a
+uniform stack of RAW pre-`ln_f` residuals — `(25 entries, 10 tokens, 1024) float32 = 0.98 MB` — and the page
+scrubs it, so "real time" and "rewind" are the same mechanism and every frame is a measured activation.
+The stack is uniform because entry 24 comes from the `ln_f` **hook**, not from `hidden_states[-1]`, which is
+already post-`ln_f`; putting that entry in unchanged would leave exactly one layer normalised and the logit
+lens would double-normalise it.
+
+### What it found — the answer to "where are the errors"
+
+The **logit lens**: at every layer, the last token's residual pushed through the final `ln_f` and `W_U`,
+recording `gap = logit(" the") − logit(" Christianity")`. Prompt: *The official religion of Edwin of
+Northumbria is*. Three crossings, **computed from the curves, never authored**:
+
+| | gap | what happens |
+|---|---|---|
+| after 0 → 1 block | −3.61 → **+9.26** | **block 0** hands the lead to the wrong answer |
+| after 16 → 17 blocks | +0.90 → **−3.73** | **block 16** hands it to ` Christianity`, which holds it |
+| after 23 → 24 blocks | −0.03 → **+1.98** | **block 23, the last one, takes it back** |
+
+**The model had the right answer from block 16 onwards, and the final block threw it away.** That
+is the picture the spec was asking for, and it is visible in space: the gap curve runs red above the plane,
+dives green through it at the block-16 marker, and spikes back up through it at the very end.
+
+**Where the lens is exact and where it is not.** At the last entry the lens is not an approximation — it is
+the model's own computation, and it matches the real logits to **4.78e-06** (asserted in the recorder; a
+mismatch writes nothing). Layers 0..23 are read through the FINAL layer's norm, which is not the norm they
+were trained to be read through, so their absolute logits are indicative. The UI carries that sentence
+wherever a lens number appears, with the last-layer agreement beside it so the reader can see where the
+approximation ends. Technique: the logit lens (nostalgebraist, 2020).
+
+**Three independent checks, all shown in the page banner:** GPU projection vs the same sum in JS
+**2.21e-07 rel**; lens at L24 vs the model's real logits **4.78e-06**; and `ln_f(trace's last residual)` vs
+`vecscope.json`'s separately dumped `z` for the same row **6.28e-08 rel** — two recordings made by different
+scripts agreeing, rather than one being trusted.
+
+### The indexing, measured — and a correction
+
+A peer disputed my first explanation of why the hook is needed and was right. Measured here with my own
+hooks on gpt2-medium (block 23's output captured and snapshotted before any later call could re-fire the
+hook):
+
+```
+hs[0]  vs block0 INPUT   : 0.0      hs[-2] vs block23 INPUT  : 0.0
+hs[1]  vs block0 OUTPUT  : 0.0      hs[-2] vs block22 OUTPUT : 0.0
+block23 OUTPUT == ln_f INPUT : 0.0  hs[-2] vs block23 OUTPUT : 1894.03
+block23's OUTPUT appears at NO index of hidden_states  ->  []
+```
+
+So `hidden_states[k]` is the **input** to block *k* (identical to block *k−1*'s output), and **the last
+block's output is in the tuple at no index at all**. I had written that `hidden_states[-2]` was block 23's
+output. It is block 23's *input*. The recorded data was already correct, because entry 24 comes from the
+hook and therefore *is* the missing last output — but the wrong reason would have misnumbered every curve
+by one, and "which layer went wrong" is the one claim this view cannot afford to be off by one about.
+
+**The convention, stated here, in the manifest, and in the UI:**
+
+> **entry k = the residual stream AFTER k blocks have run.**
+> Entry 0 is the embeddings, entry k (1…23) is `hidden_states[k]`, entry 24 is the `ln_f` hook.
+> A change between entry k and entry k+1 is therefore the work of **block k**.
+
+Under that convention the three crossings name a block rather than an ambiguous index: **block 0** hands the
+lead to the wrong answer, **block 16** hands it to ` Christianity`, and **block 23 — the last one — takes it
+back**. `trace.json` carries an `entry_source` string per entry naming the exact `hidden_states` index or
+hook it came from, because that is the one thing a reader cannot recover from the picture.
+
+### Verification, and one thing I could not verify
+
+Driven in the browser pane: fly camera (WASD/QE + drag), orbit mode, scrub, play, the three crossing cards
+("click to fly here"), all four projections, both toggles — no console errors, banner green. Screenshots were
+taken **mid-flight and mid-animation** at several layers, not just the first frame: at L9 the error arrow is
+red (gap +7.09, rival ahead), at L17 it is green (gap −3.73) — the colour is the measured sign of the gap.
+
+**Not verified: the animation at a normal frame rate.** This session cannot show the Browser pane
+(`show_pane` reports the session is not open in a window), so the page runs as a background page and
+`requestAnimationFrame` was measured at **2 frames per second**. Playback is correct anyway because that
+measurement forced a real fix: the replay is anchored to **wall-clock elapsed time**, not an accumulated
+per-frame `dt` clamped to 50 ms, which under 2 fps would have run roughly 30× slow. Smoothness on a visible
+pane is untested; correctness of the replay rate is not.
+
+Two bugs the pictures caught again, neither of which raised a WebGPU validation error: the initial fly yaw
+had the wrong sign and pointed the camera away from the stack (empty first frame), and the scrub readout
+desynced from the panel when a crossing card moved the camera.
+
+**One guard fired for real and was not loosened.** The GPU-vs-CPU check refused the page at **2.06e-04**
+relative. The cause was computing the discarded part as `sqrt(|v|² − |c|²)`, which cancels catastrophically
+when the basis captures nearly all of a large vector. Both the shader and the CPU check now take the norm of
+the actual remainder `v − Σcᵢbᵢ`, and the disagreement fell to **2.21e-07**. The threshold stayed where it was.
+
 ## Files
 
 | file | serves |
@@ -165,4 +256,8 @@ looking at the screen.
 | `vecscope.html` | steps 7–8: the page, the projection switcher, the readout |
 | `vecscope.wgsl` | steps 7–8: the 1024→3 projection on the GPU and screen-space line expansion. No analysis |
 | `serve.py` | step 7: the static server (the page fetches, so `file://` will not work) |
-| `data/vecscope.json` | the dump: 19 fact-states × 1024-d vectors, bases, manifest (1.3 MB) |
+| `data/vecscope.json` | the UC-VS-01 dump: 19 fact-states × 1024-d vectors, bases, manifest (1.3 MB) |
+| `dump_trace.py` | UC-VS-02 steps 1-3, 8: the flight recorder and the logit lens, with `--selftest` plants |
+| `vecflight.html` | UC-VS-02 steps 5-8: fly camera, timeline replay, crossings, the centrepiece |
+| `vecflight.wgsl` | UC-VS-02 steps 5-7: projection, line expansion, node sprites. No analysis |
+| `data/trace.bin` + `data/trace.json` | the recording: 25 × 10 × 1024 float32 (0.98 MB) + manifest |
