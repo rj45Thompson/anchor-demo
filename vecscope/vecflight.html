@@ -534,6 +534,10 @@ function panel(P) {
         answer led the whole way. That is a real outcome and no marker is invented (path A6).</p>`;
 
   const E = M.erosion, bigm = E.biggest_mover_toward_rival;
+  if (E.ABSENT) {
+    $("#erosion").innerHTML =
+      `<div class="warn"><b>No attribution to make.</b> ${E.ABSENT}</div>`;
+  } else
   $("#erosion").innerHTML =
     `<div class="cross" style="cursor:default;border-color:#FF5A40;background:#2A1512;color:#FFC9C0">
        <b>No single block destroys the answer.</b> The true answer's lead peaks after ${E.peak_entry} blocks
