@@ -156,7 +156,7 @@ looking at the screen.
 py -X utf8 .opus-toolsecscope\dump_trace.py ; py -X utf8 .opus-toolsecscope\serve.py
 ```
 
-then **http://127.0.0.1:7931/vecflight.html**. Built to UC-VS-02 after the spec was expanded: fly through the
+then **http://127.0.0.1:7931/vecflight.html**. Built to UC-VS-02 after the owner expanded the spec: fly through the
 network, replay the pass, rewind it, and find the layer where it went wrong.
 
 **Record once in Python, replay in WebGPU.** No inference runs in the browser. `dump_trace.py` writes a
@@ -178,9 +178,32 @@ Northumbria is*. Three crossings, **computed from the curves, never authored**:
 | after 16 → 17 blocks | +0.90 → **−3.73** | **block 16** hands it to ` Christianity`, which holds it |
 | after 23 → 24 blocks | −0.03 → **+1.98** | **block 23, the last one, takes it back** |
 
-**The model had the right answer from block 16 onwards, and the final block threw it away.** That
-is the picture the spec was asking for, and it is visible in space: the gap curve runs red above the plane,
-dives green through it at the block-16 marker, and spikes back up through it at the very end.
+**The model has the right answer from block 16 onwards — and loses it to an erosion, not to one block.**
+My first headline here said "the final block threw it away". That was wrong, and a peer's independent
+hook-based run caught it. Reading a *crossing* as an *attribution* is the mistake: the gap crosses zero
+between the last two entries, so the last block looks guilty, while the per-block deltas say otherwise.
+
+Computed from my own recording (`erosion` in `trace.json`, never authored):
+
+| | change in gap | share of the swing |
+|---|---|---|
+| peak lead, after 20 blocks (output of block 19) | **−9.0137** | — |
+| block 20 | +1.8869 | 17.2% |
+| block 21 | +2.0107 | 18.3% |
+| **block 22** | **+5.0876** | **46.3%** |
+| block 23 (the last) | +2.0067 | 18.3% |
+
+**Block 22 does nearly half the damage; the last block does 18%**, and by the time it acts the lead is
+already down to −0.03 from −9.01, so it finishes something rather than causing it. The block I had been
+presenting as the last healthy one is the one that destroys the most.
+
+A related caution now in the UI: **−0.03 is a tie, not a lead.** The lens has no error bar at intermediate
+entries — only the last is exact — so a value that close to zero must not be read as the stack "holding"
+the right answer.
+
+This is visible in space: the gap curve runs red above the plane, dives green through it at the block-16
+marker, and climbs back; beside it a **per-block delta lane** draws how far each block moved the gap, and
+the tallest bar is block 22, not block 23.
 
 **Where the lens is exact and where it is not.** At the last entry the lens is not an approximation — it is
 the model's own computation, and it matches the real logits to **4.78e-06** (asserted in the recorder; a

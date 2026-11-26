@@ -3,7 +3,7 @@
 Written **before** any code, by standing rule on this project: the UML use case description comes first, and
 requirements link only to STEPS. Code links only to steps too; the "serves" column at the bottom is that link.
 
-The goal as it was given: see the last vector, after everything has collected on the final layer; see the error, how it misses, and the damage that miss causes.
+The goal as it was given: see the last vector, after everything has collected on the final layer; see the error, how it misses, and the damage it causes.
 
 ---
 
@@ -145,7 +145,7 @@ MAGNITUDE by which it misses the true answer, and see that same miss appear on f
 
 ## UC-VS-02 — Fly through the forward pass, rewind it, and find the layer where it went wrong
 
-Added 2026-11-25 after the spec was expanded: fly through the stack as it runs, rewind it, and see the last vector that chooses the next token.
+Added after the spec was expanded: fly through the stack as it runs, rewind it, and see the last vector that chooses the next token.
 
 **Actor** — the same researcher. **Goal** — move a camera through the whole network while a recorded forward pass
 replays, scrub it backwards and forwards, and SEE the layer at which the wrong answer takes over.
@@ -175,10 +175,13 @@ continuation, not a change of direction.
    at the LAST token through the final `ln_f` and `W_U`, and record the logit of the TRUE answer token and of
    the token the model finally produces, plus the per-layer argmax.
    *Observable, measured 2026-11-25 on `The official religion of Edwin of Northumbria is`:*
-   the gap `logit(wrong) − logit(true)` runs **+9.3 at layer 1**, crosses to **−3.7 at layer 17** where
-   ` Christianity` takes the lead, holds the lead to layer 23 (−0.03) and **flips back to +1.98 at layer 24**.
-   The model had the right answer from layer 17 and the last block threw it away. That crossing, and that
-   re-crossing, are the thing this use case exists to show.
+   the gap `logit(wrong) − logit(true)` runs **+9.3 after 1 block**, crosses to **−3.7 after 17** (the work
+   of BLOCK 16) where ` Christianity` takes the lead, peaks at **−9.01 after 20 blocks**, and is back to
+   **+1.98 after 24**. Those crossings are real and are what this step records.
+
+   *Observable (step 8 does the attribution, and it is a SEPARATE measurement):* a crossing says where the
+   lead changed hands, never who did the work. Reading one as the other is how this lane's first headline
+   named the wrong block. The per-block deltas must therefore be recorded too, and the UI must show them.
 
 3. **Prove the lens where it can be proved.** At the LAST layer the lens is not an approximation: it is the
    model's own computation. *Observable:* lens logits at layer 24 equal the model's `logits` to **2.29e-05**,
@@ -204,9 +207,17 @@ continuation, not a change of direction.
    *Observable:* at layer 24 the vector, the gap and the top-k match `data/vecscope.json` exactly — the two
    pages agree because they read the same measurement.
 
-8. **Mark where it went wrong.** The crossing layers are computed from the recorded curves, not authored.
+8. **Attribute the damage to a BLOCK, which is not the same as marking a crossing.**
+   `delta[k] = gap(after k+1 blocks) − gap(after k blocks)` is the work of block k. From the peak of the
+   true answer's lead, record every block's contribution and its share of the total swing.
    *Observable:* the UI names the BLOCK responsible for each sign change (entry k -> k+1 is block k), not a
-   bare index, and the 3D scene marks it in place, so flying along the stack arrives at it.
+   bare index, AND draws the per-block delta beside the curve, so the largest mover is visible rather than
+   inferred. Measured here: the lead peaks after 20 blocks at −9.01 and is eroded by four blocks —
+   17.2% / 18.3% / **46.3%** / 18.3% — so **block 22**, not the last block, does most of the damage.
+   *Observable:* a |gap| far below the peak is reported as a TIE, not a lead, because the lens has no error
+   bar at intermediate entries.
+   *Alternate (A9):* if the gap never recovers after its strongest point there is no erosion to attribute,
+   and the UI says that instead of naming a block.
 
 ### Alternate paths
 
@@ -231,6 +242,7 @@ norm grows by more than an order of magnitude across the stack and a direction-o
 | `dump_trace.py :: Trace` | step 1 (and A8) |
 | `dump_trace.py :: LogitLens` | steps 2, 3, 4 (and A7) |
 | `dump_trace.py :: Crossings` | step 8 (and A6) |
+| `dump_trace.py :: Erosion` | step 8 — the per-block attribution (and A9) |
 | `vecflight.html :: layout/nodes` | step 5 |
 | `vecflight.html :: FlyCamera` | step 5 |
 | `vecflight.html :: Timeline` | step 6 |

@@ -74,11 +74,16 @@ button.on{border-color:var(--acc);color:var(--acc)}
   </div>
   <div id="side">
     <h1>vecflight</h1>
-    <p class="sub">A recorded GPT-2 forward pass, replayed. Fly down the layer stack and watch the true
-      answer and the answer the model actually gives trade places.</p>
+    <p class="sub">A recorded GPT-2 forward pass, replayed. Fly down the block stack and watch the true
+      answer and the answer the model actually gives trade places — then read the per-block delta to see
+      which block actually did it.</p>
 
     <div id="verdict"></div>
-    <h2>Where it went wrong</h2>
+    <h2>Which block actually moved it</h2>
+    <div id="erosion"></div>
+    <h2>Where the lead changed hands</h2>
+    <p class="note">A crossing says WHERE the lead changed hands. It does not say who did the work — reading
+      it as an attribution is exactly how this page's first headline got the culprit wrong.</p>
     <div id="crossings"></div>
 
     <h2>The logit lens over depth</h2>
@@ -106,7 +111,9 @@ button.on{border-color:var(--acc);color:var(--acc)}
 
     <h2>Key</h2>
     <div class="key"><i class="sw" style="background:var(--err)"></i> the gap curve, logit(rival) − logit(true), above the last-token column. Below the plane = the wrong answer leads</div>
-    <div class="key"><i class="sw" style="background:var(--cross)"></i> a crossing: the layer the lead changes hands</div>
+    <div class="key"><i class="sw" style="background:var(--cross)"></i> a crossing: where the lead changes hands</div>
+    <div class="key"><i class="sw" style="background:#FF5A40"></i> the per-block delta lane - bar height is how
+      far THAT block moved the gap. The tallest is the real culprit, and it is not the last block</div>
     <div class="key"><i class="sw" style="background:var(--z)"></i> z at the scrub layer — the vector that chooses the next token</div>
     <div class="key"><i class="sw" style="background:var(--true)"></i> W_U[true] &nbsp;<i class="sw" style="background:var(--wrong)"></i> W_U[rival]</div>
     <div class="key"><i class="sw" style="background:#3C5565"></i> one recorded residual per (layer, token)</div>
@@ -382,6 +389,21 @@ function scene(P) {
     labels.push({p:[xc-2.6,ya(LENS[0].logit_wrong),0],t:`logit(${M.rival_text.trim()})`,c:"#F0C03C"});
   }
 
+  // THE PER-BLOCK DELTA, in its own lane beside the curve. The curve says where the lead changed hands;
+  // only the delta says WHICH BLOCK did the work, and those are different blocks here.
+  const ERO = M.erosion, big = ERO.biggest_mover_toward_rival;
+  for (const d of ERO.deltas) {
+    const z = zOf(d.to_entry), h = -d.delta*st.gscale;
+    const isBig = big && d.block === big.block;
+    line([xc+1.35,0,z],[xc+1.35,h,z], d.delta>0?(isBig?[1.0,0.35,0.25,1]:[0.70,0.33,0.30,0.95])
+                                                :[0.33,0.79,0.54,0.8], isBig?3.4:1.8);
+    if (isBig) labels.push({p:[xc+1.35,h,z],t:`block ${d.block} moves it ${num(d.delta)} — the biggest single mover`,c:"#FF5A40",pri:10});
+  }
+  labels.push({p:[xc+1.35,0,zOf(1)],t:"per-block change (delta)",c:"#8A9BA8",pri:2});
+  { const z=zOf(ERO.peak_entry);
+    line([xc-0.5,yOfGap(ERO.peak_gap),z],[xc+1.9,yOfGap(ERO.peak_gap),z],[0.33,0.79,0.54,0.9],1.4);
+    labels.push({p:[xc-0.5,yOfGap(ERO.peak_gap),z],t:`peak lead ${num(ERO.peak_gap)} (output of block ${ERO.peak_block_output})`,c:"#54C98A",pri:7}); }
+
   // the crossings, marked IN PLACE so flying along the stack arrives at them
   for (const c of M.crossings) {
     const z = (zOf(c.from_layer)+zOf(c.to_layer))/2;
@@ -484,6 +506,10 @@ function lensSvg() {
     <text x="${PAD+2}" y="${y0-3}" fill="#C76BDC" font-size="8" font-family="monospace">gap = 0</text>
     <text x="2" y="12" fill="#E8604C" font-size="8" font-family="monospace">rival ahead</text>
     <text x="2" y="${H-4}" fill="#54C98A" font-size="8" font-family="monospace">true ahead</text>
+    ${M.erosion.deltas.map(d=>{const bx=x(d.to_entry), h=Math.abs(d.delta)/Math.max(1e-9,hi-lo)*(H-30);
+       const big=M.erosion.biggest_mover_toward_rival && d.block===M.erosion.biggest_mover_toward_rival.block;
+       return `<rect x="${(bx-2).toFixed(1)}" y="${(d.delta>0?y0-h:y0).toFixed(1)}" width="4" height="${h.toFixed(1)}"
+         fill="${d.delta>0?(big?"#FF5A40":"#7A3A32"):"#2F6B48"}" opacity="${big?0.95:0.55}"/>`;}).join("")}
     <polyline points="${pts}" fill="none" stroke="#E8604C" stroke-width="1.6"/>
     ${M.crossings.map(c=>`<line x1="${x((c.from_layer+c.to_layer)/2)}" y1="12" x2="${x((c.from_layer+c.to_layer)/2)}" y2="${H-14}" stroke="#C76BDC" stroke-width="1"/>`).join("")}
     <circle cx="${x(Li())}" cy="${y(LENS[Li()].gap)}" r="4" fill="#F08A3C"/>
@@ -507,6 +533,16 @@ function panel(P) {
     : `<p class="note">No crossing: the sign of the gap never changed across the whole stack, so the wrong
         answer led the whole way. That is a real outcome and no marker is invented (path A6).</p>`;
 
+  const E = M.erosion, bigm = E.biggest_mover_toward_rival;
+  $("#erosion").innerHTML =
+    `<div class="cross" style="cursor:default;border-color:#FF5A40;background:#2A1512;color:#FFC9C0">
+       <b>No single block destroys the answer.</b> The true answer's lead peaks after ${E.peak_entry} blocks
+       (the output of block ${E.peak_block_output}) at <b>${num(E.peak_gap)}</b> and is eroded by
+       ${E.after_peak.length} consecutive blocks.</div>
+     <table>${E.after_peak.map(x=>`<tr><td>BLOCK ${x.block}${bigm&&x.block===bigm.block?" &nbsp;<b style='color:#FF5A40'>biggest</b>":""}</td>
+       <td>${num(x.delta,4)} &nbsp;<b>${(100*x.share).toFixed(1)}%</b> of the ${num(E.total_swing_from_peak,3)} swing</td></tr>`).join("")}</table>
+     <p class="note">${E.reading}</p>
+     <p class="note"><b>${E.near_tie_caution}</b></p>`;
   $("#approx").innerHTML = M.logit_lens.approximation;
   $("#lens").outerHTML = lensSvg();
   $("#lensnote").innerHTML = `Gap = logit(${M.rival_text.trim()}) − logit(${M.true_text.trim()}) at the last
@@ -519,6 +555,8 @@ function panel(P) {
     ["logit(" + M.true_text.trim() + ")", R.logit_true.toFixed(3)],
     ["logit(" + M.rival_text.trim() + ")", R.logit_wrong.toFixed(3)],
     ["<b>gap</b>", `<b>${num(R.gap,3)}</b> ${R.gap>0?"— rival ahead":"— true ahead"}`],
+    ["change from the entry before", l===0 ? "—  (the embeddings; no block has run)"
+      : `<b>${num(LENS[l].gap-LENS[l-1].gap,4)}</b> — the work of BLOCK ${l-1}`],
     ["‖residual‖ at this layer (raw, pre-ln_f)", R.resid_norm.toFixed(1)],
     ["‖z‖ after ln_f", R.z_norm.toFixed(1)],
     ["‖e‖ = |gap| / ‖d‖", (Math.abs(R.gap)/Math.sqrt(DD)).toFixed(4)],
