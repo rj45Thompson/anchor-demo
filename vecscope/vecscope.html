@@ -553,12 +553,17 @@ function damagePanel() {
       by a rank-one write to layer ${fo.layer}'s <code>mlp.c_proj</code>, λ=${fo.lam.toFixed(2)} found by
       bisection as the smallest value that flips it. ‖Δ‖=${fo.delta_norm.toFixed(2)}.
       The taught key moved ${fo.key_drift_after_fold.toExponential(1)} after the write, so the write is exact.</p>
-    <p class="note">${(()=>{const ti=facts.findIndex(f=>f.tag==="taught"), ts=shiftNorm(ti);
-       const bigger=ctl.filter(f=>shiftNorm(facts.indexOf(f))>ts).length;
-       return `<b>The taught fact's own final-layer vector moved ‖${ts.toFixed(2)}‖, and ${bigger} of
-         ${ctl.length} untaught facts moved FURTHER than that</b> (up to
-         ‖${Math.max(...ctl.map(f=>shiftNorm(facts.indexOf(f)))).toFixed(2)}‖). The edit is not localised to
-         what it was taught.`;})()}</p>
+    ${(()=>{const L=D.relation_locality; if(!L) return "";
+       const sr=L.same_relation, dr=L.different_relation;
+       return `<p class="note"><b>${L.max_is_not_a_rule}</b></p>
+         <p class="note">${L.reading}</p>
+         <table><tr><td>taught fact (${L.taught_relation})</td><td>moved ‖${L.taught_shift.toFixed(2)}‖</td></tr>
+           <tr><td>untaught, SAME relation (n=${sr.n})</td><td>mean ‖${sr.mean_shift==null?"—":sr.mean_shift.toFixed(2)}‖
+             &nbsp;<span style="color:var(--dim)">${sr.shifts.map(v=>v.toFixed(2)).join(", ")}</span></td></tr>
+           <tr><td>untaught, OTHER relations (n=${dr.n})</td><td>mean ‖${dr.mean_shift==null?"—":dr.mean_shift.toFixed(2)}‖
+             &nbsp;<span style="color:var(--dim)">${dr.shifts.map(v=>v.toFixed(2)).join(", ")}</span></td></tr></table>
+         <p class="note" style="color:#C9B89A"><b>This is a shape, not a size.</b> What would settle it:
+           ${L.what_would_settle_it}</p>`;})()}
     <p class="note"><b>Measured: ${toward} of ${ctl.length}</b> untaught facts moved TOWARD their rival;
       <b>${broke} crossed g = 0</b> (changed answer) at this minimal λ. Each dot is one untaught fact:
       grey = before the fold, red = after. Right is worse. This is a position on the decision axis, in logit

@@ -541,7 +541,7 @@ function panel(P) {
   $("#erosion").innerHTML =
     `<div class="cross" style="cursor:default;border-color:#FF5A40;background:#2A1512;color:#FFC9C0">
        <b>No single block destroys the answer.</b> The true answer's lead peaks after ${E.peak_entry} blocks
-       (the output of block ${E.peak_block_output}) at <b>${num(E.peak_gap)}</b> and is eroded by
+       (${E.peak_origin || ("the output of block " + E.peak_block_output)}) at <b>${num(E.peak_gap)}</b> and is eroded by
        ${E.after_peak.length} consecutive blocks.</div>
      <table>${E.after_peak.map(x=>`<tr><td>BLOCK ${x.block}${bigm&&x.block===bigm.block?" &nbsp;<b style='color:#FF5A40'>biggest</b>":""}</td>
        <td>${num(x.delta,4)} &nbsp;<b>${(100*x.share).toFixed(1)}%</b> of the ${num(E.total_swing_from_peak,3)} swing</td></tr>`).join("")}</table>

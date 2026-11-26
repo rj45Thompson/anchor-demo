@@ -91,8 +91,26 @@ answer, so every "after" number is attributable to the fold. Measured on 8 untau
 
 - **6 of 8 moved toward their rival**; **0 crossed `g = 0`** at this minimal λ. The damage is real and
   one-directional but sub-threshold here — stated plainly rather than dressed up as a break.
-- **The taught fact's own final-layer vector moved ‖2.78‖; one untaught fact moved ‖5.32‖** — further than the
-  fact the edit was for. The edit is not localised to what it was taught.
+- **The damage is RELATION-LOCAL.** I first wrote this up as "a rank-one fold moves untaught facts further
+  than the fact it taught", which was the **maximum of eight read as a rule** — one untaught fact moves
+  ‖5.32‖ against the taught fact's ‖2.78‖, and the other **seven move less**. A peer reproduced both numbers
+  exactly and then showed the sentence does not survive the full table. It is gone from the page.
+  What the same eight facts do support is a structure. Split by whether they share the taught fact's
+  relation (P103, "mother tongue"):
+
+  | | n | mean shift | values |
+  |---|---|---|---|
+  | taught fact | 1 | **2.7841** | — |
+  | untaught, **same** relation | 4 | **2.7771** | 5.32, 2.43, 2.06, 1.29 |
+  | untaught, other relations | 4 | **1.1911** | 1.39, 1.33, 1.21, 0.84 |
+
+  A fact the fold never touched moves **as much as the fact being taught** — within 0.007 — provided it
+  shares the relation, while an unrelated fact moves about half as much (ratio 2.33).
+  **This is a shape, not a size:** n=4 vs n=4, one prompt, one fold, one layer. What would settle it is the
+  same fold repeated across several taught relations with a balanced control set per fold. That has not
+  been run, and the figure is not an effect size.
+  It was only visible because the control set spans four relations; eight facts of one kind would have
+  hidden the structure entirely and made the max-of-eight look like a general law.
 - **The bleed** (the lane's "forced"): ` English` rose in facts it was never taught — row 5 (Dutch) `+1.99`
   logits, **rank 4 → 2**; row 34 (Russian) rank 2 → 1. A rank is the honest unit: a logit rise that changes no
   ordering changes no answer.
