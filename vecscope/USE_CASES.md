@@ -114,6 +114,17 @@ MAGNITUDE by which it misses the true answer, and see that same miss appear on f
   pair was a polarity flip — the failure is in the ORDERING, so no threshold repairs it
   (`.opus-tools/autobot/vector_depth.py`, memory `feedback_cosine_depth_rule`).
 - **R-VS-PROV** (serves steps 1–6) — every number is READ with a provenance string, or ABSENT with a reason.
+- **R-VS-NOPATH** (serves steps 1–6, and UC-VS-02 step 1) — a provenance field names WHICH dataset and WHICH
+  revision, never where it sat on one machine. No dumper may write a local filesystem path into any file it
+  emits, and this is enforced by refusal (`provenance.py :: NoLocalPaths.require`, called before the file is
+  opened), not by redacting afterwards.
+  Earned 2026-11-25: `dump_residual.py` wrote its resolved parquet path into the manifest as `dataset_path`.
+  On this machine that string begins `C:/Users/<account>/…`, so it carried the owner's account name, and
+  another session published that JSON to a public Pages site where it was live for about twenty minutes
+  before their sweep caught it. Nobody intended it — the field existed to make the data auditable. A
+  redaction step before publishing was rejected as the fix, because a step someone has to remember is one
+  that is eventually forgotten; the revision hash is the part that actually pins the bytes, and it is
+  reproducible on any machine, which a path is not.
 - **R-VS-PROJ** (serves steps 7, 8) — the page names its projection and the fraction of the vector it discards.
   A viewer that hides its own projection choice is the failure mode this demo exists to avoid.
 - **R-VS-BOTH** (serves step 8) — the data proves itself first; the picture and the numbers then CONFIRM. Neither
@@ -129,6 +140,8 @@ MAGNITUDE by which it misses the true answer, and see that same miss appear on f
 | `dump_residual.py :: RankOneFold` | step 5 (and A4) |
 | `dump_residual.py :: Damage` | step 6 |
 | `dump_residual.py :: Projections` | steps 7, 8 — bases computed in numpy, shipped in the JSON |
+| `provenance.py :: DatasetRef` | R-VS-NOPATH — the dataset id and revision that replace the path |
+| `provenance.py :: NoLocalPaths` | R-VS-NOPATH — refuses the write if any local path survives |
 | `vecscope.html :: Banner/caps` | step 7, A1 |
 | `vecscope.html :: orbit camera` | step 7 |
 | `vecscope.wgsl` | steps 7, 8 — draws the vectors; carries no analysis |
@@ -214,8 +227,11 @@ continuation, not a change of direction.
    bare index, AND draws the per-block delta beside the curve, so the largest mover is visible rather than
    inferred. Measured here: the lead peaks after 20 blocks at −9.01 and is eroded by four blocks —
    17.2% / 18.3% / **46.3%** / 18.3% — so **block 22**, not the last block, does most of the damage.
-   *Observable:* a |gap| far below the peak is reported as a TIE, not a lead, because the lens has no error
-   bar at intermediate entries.
+   *Observable:* for the smallest lead the true answer holds, report whether THIS PIPELINE'S numeric noise
+   could flip its sign — the gap recomputed in float64, float32 and at the 6-decimal rounding the dumps
+   ship, and the ratio between the gap and that spread. Measured here: spread 6.02e-07, ratio 47,390, so the
+   sign is robust and the magnitude is 0.3% of the peak. It is reported as a real but negligible lead, never
+   as a "tie": the lens's INTERPRETIVE error stays explicitly unmeasured, and the two must not be conflated.
    *Alternate (A9):* if the gap never recovers after its strongest point there is no erosion to attribute,
    and the UI says that instead of naming a block.
 
@@ -243,6 +259,7 @@ norm grows by more than an order of magnitude across the stack and a direction-o
 | `dump_trace.py :: LogitLens` | steps 2, 3, 4 (and A7) |
 | `dump_trace.py :: Crossings` | step 8 (and A6) |
 | `dump_trace.py :: Erosion` | step 8 — the per-block attribution (and A9) |
+| `dump_trace.py :: Precision` | step 4 — the pipeline's numeric floor, so a sign can be trusted or not |
 | `vecflight.html :: layout/nodes` | step 5 |
 | `vecflight.html :: FlyCamera` | step 5 |
 | `vecflight.html :: Timeline` | step 6 |

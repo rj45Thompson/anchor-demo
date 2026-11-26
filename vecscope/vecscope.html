@@ -520,6 +520,9 @@ function panel(P) {
     ["dataset row · case_id", `${F.dataset_row} · ${F.case_id}`],
     ["z from", F.prov.how],
     ["h from", F.prov_h.how],
+    ["dataset", D.manifest.dataset_ref && D.manifest.dataset_ref.repo_id
+        ? `${D.manifest.dataset_ref.repo_id} @ ${D.manifest.dataset_ref.revision.slice(0,12)}…`
+        : (D.manifest.dataset_ref ? D.manifest.dataset_ref.ABSENT : "ABSENT — no dataset_ref in this dump")],
     ["torch / transformers", `${D.manifest.torch} / ${D.manifest.transformers}`],
     ["device / dtype", `${D.manifest.device} / ${D.manifest.dtype}`],
   ]);

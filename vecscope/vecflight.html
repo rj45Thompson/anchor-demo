@@ -542,7 +542,10 @@ function panel(P) {
      <table>${E.after_peak.map(x=>`<tr><td>BLOCK ${x.block}${bigm&&x.block===bigm.block?" &nbsp;<b style='color:#FF5A40'>biggest</b>":""}</td>
        <td>${num(x.delta,4)} &nbsp;<b>${(100*x.share).toFixed(1)}%</b> of the ${num(E.total_swing_from_peak,3)} swing</td></tr>`).join("")}</table>
      <p class="note">${E.reading}</p>
-     <p class="note"><b>${E.near_tie_caution}</b></p>`;
+     ${(()=>{const v=M.precision&&M.precision.verdict; if(!v) return "";
+        if (v.ABSENT) return `<p class="note"><b>Near-zero lead:</b> ABSENT — ${v.ABSENT}</p>`;
+        return `<p class="note"><b>Is the smallest lead real?</b> ${v.reading}</p>
+                <p class="note" style="color:#C9B89A">${v.not_measured}</p>`;})()}`;
   $("#approx").innerHTML = M.logit_lens.approximation;
   $("#lens").outerHTML = lensSvg();
   $("#lensnote").innerHTML = `Gap = logit(${M.rival_text.trim()}) − logit(${M.true_text.trim()}) at the last
@@ -583,6 +586,9 @@ function panel(P) {
     ["dataset row · case_id", `${M.dataset_row} · ${M.case_id}`],
     ["lens @ last layer vs real logits", M.logit_lens.last_layer_vs_real_logits_maxdiff.toExponential(2)],
     ["ln_f(trace) vs vecscope.json z", crossCheck ? `${crossCheck.rel.toExponential(2)} rel` : "ABSENT — vecscope.json has no fact for this row"],
+    ["dataset", M.dataset_ref && M.dataset_ref.repo_id
+        ? `${M.dataset_ref.repo_id} @ ${M.dataset_ref.revision.slice(0,12)}…`
+        : (M.dataset_ref ? M.dataset_ref.ABSENT : "ABSENT — no dataset_ref in this recording")],
     ["torch / transformers", `${M.torch} / ${M.transformers}`],
   ]);
   $("#defn").innerHTML = `<b>${M.replay_not_inference}</b><br><br>${M.no_cosine}<br><br>${M.crossings_note}`;

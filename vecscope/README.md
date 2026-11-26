@@ -101,6 +101,30 @@ answer, so every "after" number is attributable to the fold. Measured on 8 untau
 - Each fact's perturbation is `Δ · dot(k_other, k_taught)/dot(k_taught, k_taught)` — the named mechanism,
   recorded per fact, not a delta inferred after the fact.
 
+## The rule about not writing paths
+
+`dump_residual.py` recorded the resolved location of its parquet in the manifest as `dataset_path`. On this
+machine that string starts `C:/Users/<account>/…`, so it carried the owner's Windows account name, and a
+sibling session published that JSON to a public Pages site where it was live for roughly twenty minutes
+before their own sweep caught it. The field existed to make the data auditable; nobody intended it to carry
+anything about a person.
+
+**The fix is a refusal, not a redaction.** `provenance.py :: NoLocalPaths.require` walks the manifest and
+raises *before the output file is opened* if any string looks like a local path — a drive letter, a UNC
+share, a POSIX or mac home, or this machine's own home directory. Both dumpers call it, and both selftests
+plant the exact field that leaked and fail if it is ever writable again. A redaction step before publishing
+was considered and rejected: a step someone has to remember is one that is eventually forgotten, and
+anything these dumpers write can end up on a public page.
+
+What replaced it is better provenance, not less: `DatasetRef` records the **repo id and the snapshot
+revision** (`azhx/counterfact @ c01c413f856e…`). The revision pins the exact bytes and is reproducible on
+any machine; a filesystem location pins nothing and identifies a person. An unparseable path becomes
+`ABSENT` with a reason rather than a raw path. The exception text deliberately names the offending *field*
+and never the offending *value*, so the guard cannot itself repeat what it is protecting.
+
+Scanned after the fix: `trace.json` never carried a path; `trace.bin` is exactly 1,024,000 bytes = 25 × 10 ×
+1024 × 4, with no room for metadata.
+
 ## The rule about cosine
 
 `memory/feedback_cosine_depth_rule`, and measured in this lane: cosine inverted 6 of 9 requirement-dependency
@@ -197,9 +221,20 @@ Computed from my own recording (`erosion` in `trace.json`, never authored):
 already down to −0.03 from −9.01, so it finishes something rather than causing it. The block I had been
 presenting as the last healthy one is the one that destroys the most.
 
-A related caution now in the UI: **−0.03 is a tie, not a lead.** The lens has no error bar at intermediate
-entries — only the last is exact — so a value that close to zero must not be read as the stack "holding"
-the right answer.
+**Is that −0.03 real?** My first wording called it "a tie, not a lead". That was wrong in the opposite
+direction, and a peer pushed back with the right instinct: the *sign* is measurable even though the lens's
+interpretive error is not. Two different uncertainties were being conflated.
+
+- The **lens's interpretive error** at intermediate entries — reading a mid-stack residual through the final
+  layer's norm — is **not measured** here or anywhere else in this tool, and no figure is invented for it.
+- The **pipeline's numeric spread** is measurable, and it is what decides whether a sign can be trusted.
+  Recomputing every entry's gap in float64, in float32, and with the residual rounded to the 6 decimals the
+  vector dumps ship: at entry 23 the spread is **6.02e-07**, so the gap of −0.028545 is **47,390× the
+  noise**. Neither rounding nor float precision can flip that sign.
+
+So it is a **real but negligible lead** — 0.3% of the peak lead of −9.01 — not a tie and not noise. The
+interesting fact that "tie" would have hidden is that the stack arrives at the final block almost exactly
+balanced. The figure is computed per run (`precision` in `trace.json`), not written into the page.
 
 This is visible in space: the gap curve runs red above the plane, dives green through it at the block-16
 marker, and climbs back; beside it a **per-block delta lane** draws how far each block moved the gap, and
@@ -279,6 +314,7 @@ the actual remainder `v − Σcᵢbᵢ`, and the disagreement fell to **2.21e-07
 | `vecscope.html` | steps 7–8: the page, the projection switcher, the readout |
 | `vecscope.wgsl` | steps 7–8: the 1024→3 projection on the GPU and screen-space line expansion. No analysis |
 | `serve.py` | step 7: the static server (the page fetches, so `file://` will not work) |
+| `provenance.py` | R-VS-NOPATH: the dataset reference that replaces a path, and the guard that refuses one |
 | `data/vecscope.json` | the UC-VS-01 dump: 19 fact-states × 1024-d vectors, bases, manifest (1.3 MB) |
 | `dump_trace.py` | UC-VS-02 steps 1-3, 8: the flight recorder and the logit lens, with `--selftest` plants |
 | `vecflight.html` | UC-VS-02 steps 5-8: fly camera, timeline replay, crossings, the centrepiece |
