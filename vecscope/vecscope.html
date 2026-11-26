@@ -1,0 +1,627 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>vecscope — the last-layer vector, and how it misses</title>
+<!--
+  Serves USE_CASES.md UC-VS-01 steps 7-8. Every number shown here was MEASURED by dump_residual.py and read
+  from data/vecscope.json; this file adds no analysis. What it does add is a PROJECTION and a few display
+  scales, and all of those are named on screen with the amount they discard (R-VS-PROJ) - a viewer that hides
+  its own projection choice is the failure mode this page exists to avoid.
+-->
+<style>
+:root{--bg:#0B1219;--pane:#111C25;--line:#2E4052;--fg:#D7E0E6;--dim:#8A9BA8;--acc:#F08A3C;
+      --true:#54C98A;--wrong:#F0C03C;--err:#E8604C;--z:#56B6E0;--before:#6E8AA8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+#wrap{display:flex;height:100vh}
+#left{flex:1;position:relative;min-width:0}
+canvas{display:block;width:100%;height:100%}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#labels div{position:absolute;transform:translate(8px,-50%);font:600 12px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  white-space:nowrap;text-shadow:0 0 4px #000,0 0 8px #000;padding:1px 0}
+#banner{position:absolute;left:0;right:0;top:0;padding:.5rem .85rem;background:#0B1219ee;border-bottom:1px solid var(--line);
+  font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--dim);z-index:3}
+#banner.bad{background:#3A1410ee;color:#FFC9C0;border-color:var(--err)}
+#banner b{color:var(--true)}
+#hint{position:absolute;left:.85rem;bottom:.6rem;font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;color:#5C6E7D;z-index:3}
+#side{width:30rem;max-width:44vw;background:var(--pane);border-left:1px solid var(--line);overflow-y:auto;overflow-x:hidden;padding:1rem 1.1rem 4rem}
+h1{font-size:1.05rem;margin:0 0 .15rem;color:var(--acc)}
+.sub{color:var(--dim);font-size:.82rem;margin:0 0 1rem}
+h2{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--acc);border-bottom:1px solid var(--line);
+   padding-bottom:.3rem;margin:1.4rem 0 .6rem}
+label{display:block;font-size:.76rem;color:var(--dim);margin:.55rem 0 .15rem}
+select,input[type=range]{width:100%;background:#0B1219;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.35rem}
+input[type=range]{padding:0}
+.discard{background:#0B1219;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:0 6px 6px 0;
+  padding:.5rem .65rem;margin:.5rem 0 0;font-size:.76rem;color:#C9B89A}
+.discard b{color:var(--acc)}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace}
+td{padding:.18rem .3rem;border-bottom:1px solid #1B2A36;vertical-align:top;overflow-wrap:anywhere}
+td:first-child{color:var(--dim)}
+td:last-child{text-align:right}
+#dmg td{white-space:normal;text-align:left;word-break:break-word}
+#dmg td:first-child{white-space:normal}
+.key{display:flex;align-items:center;gap:.4rem;font-size:.76rem;color:var(--dim);margin:.2rem 0}
+.sw{width:1.1rem;height:3px;border-radius:2px;flex:none}
+.verdict{border-radius:8px;padding:.6rem .7rem;margin:.6rem 0 0;font-size:.82rem;border:1px solid}
+.v-miss{background:#2A1210;border-color:var(--err);color:#FFC9C0}
+.v-hit{background:#0F2318;border-color:var(--true);color:#BFEBD2}
+.note{font-size:.74rem;color:var(--dim);margin:.45rem 0 0}
+.note code{color:#C9B89A}
+#swing{width:100%;height:auto;display:block;margin:.4rem 0 0}
+.row{display:flex;gap:.5rem}.row>*{flex:1}
+button{background:#0B1219;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:.4rem;cursor:pointer;font:inherit;font-size:.78rem}
+button.on{border-color:var(--acc);color:var(--acc)}
+</style></head><body>
+<div id="wrap">
+  <div id="left">
+    <canvas id="cv"></canvas>
+    <div id="labels"></div>
+    <div id="banner">starting…</div>
+    <div id="hint">drag = orbit · wheel = zoom · shift+drag = pan</div>
+  </div>
+  <div id="side">
+    <h1>vecscope</h1>
+    <p class="sub">The final-layer residual at the last token, the two unembedding directions it is judged
+      against, and the error between them. All activations measured on CPU; see the provenance block at the
+      bottom.</p>
+
+    <h2>What to look at</h2>
+    <div class="row">
+      <button id="m-miss" class="on">How it misses</button>
+      <button id="m-dmg">What it damages</button>
+    </div>
+    <label for="fact">Fact</label>
+    <select id="fact"></select>
+    <div id="verdict"></div>
+
+    <h2>Readout — magnitudes beside the angle</h2>
+    <p class="note">The residual's <b>length</b> is what turns a direction into a logit, so no cosine is used
+      anywhere in this page or its dumper. Every comparison below is a dot product or a norm.</p>
+    <table id="read"></table>
+
+    <h2>Projection — <span id="projname"></span></h2>
+    <label for="proj">1024 dimensions do not fit on a screen. This one is active:</label>
+    <select id="proj"></select>
+    <div class="discard" id="discard"></div>
+
+    <h2>Presentation choices (not measurements)</h2>
+    <label>Error magnification — <span id="l-mag"></span></label>
+    <input type="range" id="mag" min="1" max="400" step="1" value="60">
+    <label>Axis-3 (depth) scale — <span id="l-depth"></span></label>
+    <input type="range" id="depth" min="2" max="100" step="1" value="100">
+    <label>Unembedding arrows drawn at a fixed length — <span id="l-fixed"></span></label>
+    <input type="range" id="fixed" min="20" max="320" step="5" value="120">
+    <div class="row" style="margin-top:.6rem"><button id="mean">Subtract the dump's mean z</button></div>
+    <p class="note" id="choices"></p>
+
+    <h2>Key</h2>
+    <div class="key"><i class="sw" style="background:var(--z)"></i> z — the final-layer residual, true scale</div>
+    <div class="key"><i class="sw" style="background:var(--true)"></i> W_U[true] direction (fixed length)</div>
+    <div class="key"><i class="sw" style="background:var(--wrong)"></i> W_U[rival] direction (fixed length)</div>
+    <div class="key"><i class="sw" style="background:var(--err)"></i> e — the error, drawn off the tip of z.
+      <b>Red = toward the rival (a miss). Green = away from it (correct; |g| is the margin).</b></div>
+    <div class="key"><i class="sw" style="background:#C76BDC"></i> the decision boundary's trace — z's side of
+      it IS the answer</div>
+    <div class="key"><i class="sw" style="background:var(--before)"></i> the same fact before the fold</div>
+
+    <div id="dmg"></div>
+
+    <h2>Provenance</h2>
+    <table id="prov"></table>
+    <p class="note" id="defn"></p>
+  </div>
+</div>
+<script type="module">
+const $ = s => document.querySelector(s);
+const banner = $("#banner");
+const fail = m => { banner.className = "bad"; banner.textContent = m; throw new Error(m); };
+
+// ---------------------------------------------------------------- data (step 2-6 output, measured)
+const D = await (await fetch("data/vecscope.json", {cache:"no-store"})).json();
+const WGSL = await (await fetch("vecscope.wgsl", {cache:"no-store"})).text();
+const DIM = D.manifest.d_model;
+const facts = D.facts;
+
+// slots packed into the GPU vector buffer, in this order, per fact
+const SLOTS = ["z","h","u_true","u_wrong","d","e","z_minus_e","z_shift"];
+const S = Object.fromEntries(SLOTS.map((k,i)=>[k,i]));
+const idx = (f,slot) => f*SLOTS.length + S[slot];
+const NVEC = facts.length * SLOTS.length;
+
+// the fold's partner for a fact: the same dataset row measured against the folded weights
+const partnerOf = f => f.tag === "control"
+  ? facts.find(g => g.tag === "control_after" && g.damage_of_row === f.dataset_row)
+  : (f.tag === "taught" ? facts.find(g => g.tag === "taught_after") : null);
+
+const vecData = new Float32Array(NVEC * DIM);
+for (let f=0; f<facts.length; f++) {
+  for (const k of SLOTS) {
+    let src;
+    if (k === "z_minus_e") {
+      src = facts[f].z.map((v,i)=>v - facts[f].e[i]);        // DERIVED: the repaired vector
+    } else if (k === "z_shift") {
+      const q = partnerOf(facts[f]);                          // DERIVED: z(after fold) - z(before fold)
+      src = q ? q.z.map((v,i)=>v - facts[f].z[i]) : new Array(DIM).fill(0);
+    } else {
+      src = facts[f][k];
+    }
+    if (!src || src.length !== DIM) fail(`fact ${f} slot ${k}: expected ${DIM} numbers, got ${src?src.length:"nothing"}`);
+    vecData.set(src, idx(f,k) * DIM);
+  }
+}
+// the mean z over every fact in this dump — used only by the declared "subtract the mean" choice
+const meanZ = new Float32Array(DIM);
+for (const f of facts) for (let i=0;i<DIM;i++) meanZ[i] += f.z[i] / facts.length;
+
+// ---------------------------------------------------------------- WebGPU, or a stated refusal (path A1)
+if (!navigator.gpu) fail("REFUSED — WebGPU unavailable: navigator.gpu is missing. " + navigator.userAgent);
+const adapter = await navigator.gpu.requestAdapter();
+if (!adapter) fail("REFUSED — WebGPU unavailable: requestAdapter() returned null. " + navigator.userAgent);
+let device;
+try { device = await adapter.requestDevice(); }
+catch (e) { fail("REFUSED — WebGPU unavailable: requestDevice() threw: " + e.message); }
+device.addEventListener?.("uncapturederror", e => fail("WebGPU error: " + e.error.message));
+
+const cv = $("#cv"), ctx = cv.getContext("webgpu");
+if (!ctx) fail("REFUSED — WebGPU unavailable: canvas.getContext('webgpu') returned null.");
+const fmt = navigator.gpu.getPreferredCanvasFormat();
+ctx.configure({device, format: fmt, alphaMode: "premultiplied"});
+
+const mod = device.createShaderModule({code: WGSL});
+const info = await mod.getCompilationInfo?.();
+const sErr = (info?.messages || []).filter(m => m.type === "error");
+if (sErr.length) fail("WGSL failed to compile: " + sErr.map(m=>`${m.lineNum}: ${m.message}`).join(" | "));
+
+const buf = (data, usage) => {
+  const b = device.createBuffer({size: Math.max(16, data.byteLength + (-data.byteLength & 15)), usage: usage | GPUBufferUsage.COPY_DST});
+  device.queue.writeBuffer(b, 0, data); return b;
+};
+const ST = GPUBufferUsage.STORAGE, UN = GPUBufferUsage.UNIFORM;
+const bVecs  = buf(vecData, ST);
+const bMean  = buf(meanZ, ST);
+const bProj  = device.createBuffer({size: NVEC * 16, usage: ST | GPUBufferUsage.COPY_SRC});
+const bRead  = device.createBuffer({size: NVEC * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ});
+const bCfg   = device.createBuffer({size: 16, usage: UN | GPUBufferUsage.COPY_DST});
+const bBasis = device.createBuffer({size: 3*DIM*4, usage: ST | GPUBufferUsage.COPY_DST});
+const bView  = device.createBuffer({size: 80, usage: UN | GPUBufferUsage.COPY_DST});
+const MAXSEG = 4096;
+const bSegs  = device.createBuffer({size: MAXSEG*48, usage: ST | GPUBufferUsage.COPY_DST});
+const MAXEX  = 2048;
+const bExtra = device.createBuffer({size: MAXEX*16, usage: ST | GPUBufferUsage.COPY_DST});
+
+const ro = {type:"read-only-storage"}, rw = {type:"storage"}, un = {type:"uniform"};
+const C = GPUShaderStage.COMPUTE, V = GPUShaderStage.VERTEX;
+const lCompute = device.createBindGroupLayout({entries:[
+  {binding:0,visibility:C,buffer:ro},{binding:1,visibility:C,buffer:ro},
+  {binding:2,visibility:C,buffer:rw},{binding:3,visibility:C,buffer:un},{binding:4,visibility:C,buffer:ro}]});
+const lRender = device.createBindGroupLayout({entries:[
+  {binding:0,visibility:V,buffer:ro},{binding:1,visibility:V,buffer:un},
+  {binding:2,visibility:V,buffer:ro},{binding:3,visibility:V,buffer:ro}]});
+const lEmpty = device.createBindGroupLayout({entries:[]});
+
+const gCompute = device.createBindGroup({layout:lCompute, entries:[
+  {binding:0,resource:{buffer:bVecs}},{binding:1,resource:{buffer:bBasis}},
+  {binding:2,resource:{buffer:bProj}},{binding:3,resource:{buffer:bCfg}},{binding:4,resource:{buffer:bMean}}]});
+const gRender = device.createBindGroup({layout:lRender, entries:[
+  {binding:0,resource:{buffer:bSegs}},{binding:1,resource:{buffer:bView}},
+  {binding:2,resource:{buffer:bExtra}},{binding:3,resource:{buffer:bProj}}]});
+
+const pCompute = device.createComputePipeline({
+  layout: device.createPipelineLayout({bindGroupLayouts:[lCompute]}),
+  compute:{module:mod, entryPoint:"project"}});
+const rlayout = device.createPipelineLayout({bindGroupLayouts:[lEmpty, lRender]});
+const blend = {color:{srcFactor:"src-alpha",dstFactor:"one-minus-src-alpha"},alpha:{srcFactor:"one",dstFactor:"one-minus-src-alpha"}};
+const mkRender = ep => device.createRenderPipeline({
+  layout: rlayout,
+  vertex:{module:mod, entryPoint:ep},
+  fragment:{module:mod, entryPoint:"fs", targets:[{format:fmt, blend}]},
+  primitive:{topology:"triangle-list"},
+  depthStencil:{format:"depth24plus", depthWriteEnabled:false, depthCompare:"less-equal"}});
+const pSeg = mkRender("vs_seg"), pHead = mkRender("vs_head");
+let depthTex = null;
+
+// ---------------------------------------------------------------- state
+const st = {
+  mode: "miss",
+  fact: facts.findIndex(f => f.tag === "miss"),
+  proj: 0,
+  mag: 60, depth: 1.0, fixed: 1.2, meanSub: false,
+  dispScale: 60, autoDepth: 1.0, yaw: 0.62, pitch: 0.34, dist: 5.4, panX: 0, panY: 0,
+};
+let projCPU = null, lastSegs = [], lastLabels = [], gpuCpuDiff = null, gpuCpuRel = null;
+
+// ---------------------------------------------------------------- the projection: GPU, checked against CPU
+function writeBasis() {
+  const B = D.projections[st.proj].basis;
+  const flat = new Float32Array(3*DIM);
+  for (let r=0;r<3;r++) flat.set(B[r], r*DIM);
+  device.queue.writeBuffer(bBasis, 0, flat);
+  device.queue.writeBuffer(bCfg, 0, new Uint32Array([NVEC, DIM, st.meanSub?1:0, 0]));
+  // the same arithmetic in JS, from the same JSON: path A1b
+  projCPU = new Float32Array(NVEC*4);
+  for (let v=0; v<NVEC; v++) {
+    let c=[0,0,0], sq=0;
+    for (let j=0;j<DIM;j++) {
+      const x = vecData[v*DIM+j] - (st.meanSub ? meanZ[j] : 0);
+      c[0]+=x*B[0][j]; c[1]+=x*B[1][j]; c[2]+=x*B[2][j]; sq+=x*x;
+    }
+    projCPU[v*4]=c[0]; projCPU[v*4+1]=c[1]; projCPU[v*4+2]=c[2];
+    projCPU[v*4+3]=Math.sqrt(Math.max(0, sq - (c[0]*c[0]+c[1]*c[1]+c[2]*c[2])));
+  }
+}
+// 1 world unit must mean something, so it is derived from the data actually on screen and then stated.
+// The in-plane coordinates here run to ~32 while axis 3 runs to ~276; one scale for both would put the
+// decision - which lives in the plane - inside a single pixel.
+function autoScale(P) {
+  let inPlane = 0, ax3 = 0;
+  for (let f = 0; f < facts.length; f++) {
+    const i = idx(f, "z") * 4;
+    inPlane = Math.max(inPlane, Math.hypot(P[i], P[i+1]));
+    ax3 = Math.max(ax3, Math.abs(P[i+2]));
+  }
+  st.dispScale = Math.max(1e-6, inPlane / 1.25);          // biggest in-plane z reaches 1.25 world units
+  st.autoDepth = ax3 > 1e-9 ? Math.min(1, 2.4 * st.dispScale / ax3) : 1;   // tallest axis-3 reaches 2.4
+  st.depth = st.autoDepth * (+$("#depth").value / 100);
+  st.inPlaneMax = inPlane; st.ax3Max = ax3;
+  $("#l-depth").textContent = "×" + st.depth.toFixed(3);
+}
+
+async function runCompute() {
+  const enc = device.createCommandEncoder();
+  const p = enc.beginComputePass();
+  p.setPipeline(pCompute); p.setBindGroup(0, gCompute);
+  p.dispatchWorkgroups(Math.ceil(NVEC/64)); p.end();
+  enc.copyBufferToBuffer(bProj, 0, bRead, 0, NVEC*16);
+  device.queue.submit([enc.finish()]);
+  await bRead.mapAsync(GPUMapMode.READ);
+  const got = new Float32Array(bRead.getMappedRange().slice(0));
+  bRead.unmap();
+  let worst = 0, scale = 0;
+  for (let i=0;i<got.length;i++) { worst = Math.max(worst, Math.abs(got[i]-projCPU[i])); scale = Math.max(scale, Math.abs(projCPU[i])); }
+  gpuCpuDiff = worst; gpuCpuRel = scale > 0 ? worst / scale : 0;
+  autoScale(got);
+  return got;
+}
+
+// ---------------------------------------------------------------- maths
+// COLUMN-major throughout, because that is how WGSL reads a mat4x4 from a buffer. Element (row i, col j)
+// of a column-major array is m[j*4+i]; multiplying these as if they were row-major silently produced a
+// garbage MVP and an empty canvas (measured 2026-11-25).
+const mul=(a,b)=>{const o=new Float32Array(16);for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+i]*b[j*4+k];o[j*4+i]=s}return o};
+function persp(fovy,asp,n,f){const t=1/Math.tan(fovy/2);return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,f/(n-f),-1, 0,0,n*f/(n-f),0])}
+function lookAt(e,c,u){
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const nl=v=>{const l=Math.hypot(...v)||1;return[v[0]/l,v[1]/l,v[2]/l]};
+  const z=nl(sub(e,c)), x=nl(cr(u,z)), y=cr(z,x), dt=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0, -dt(x,e),-dt(y,e),-dt(z,e),1]);
+}
+function camera(w,h){
+  const d=st.dist, eye=[d*Math.cos(st.pitch)*Math.sin(st.yaw)+st.panX, d*Math.sin(st.pitch)+st.panY, d*Math.cos(st.pitch)*Math.cos(st.yaw)];
+  const tgt=[st.panX,st.panY,0];
+  return {mvp: mul(persp(0.95, w/h, 0.05, 400), lookAt(eye,tgt,[0,1,0])), eye};
+}
+const world = (p, i, mag=1, fixedLen=0) => {   // mirrors to_world() in the shader, for label placement
+  let c=[p[i*4]*mag, p[i*4+1]*mag, p[i*4+2]*mag];
+  if (fixedLen>0){const n=Math.hypot(...c)||1; c=c.map(v=>v/n*fixedLen*st.dispScale);}
+  return [c[0]/st.dispScale, c[1]/st.dispScale, c[2]*st.depth/st.dispScale];
+};
+
+// ---------------------------------------------------------------- scene (steps 7-8)
+const COL = {z:[0.34,0.71,0.88,1], t:[0.33,0.79,0.54,1], w:[0.94,0.75,0.24,1], e:[0.91,0.38,0.30,1],
+             before:[0.43,0.54,0.66,1], grid:[0.18,0.25,0.32,1], axis:[0.36,0.45,0.54,1]};
+const F_AX=1, F_BX=2, F_REL=4;
+
+const shiftNorm = f => {            // ||z(after) - z(before)|| in residual units: measured, not projected
+  const q = partnerOf(facts[f]); if (!q) return 0;
+  let s = 0; for (let i=0;i<DIM;i++){const d=q.z[i]-facts[f].z[i]; s+=d*d;} return Math.sqrt(s);
+};
+
+function scene(P) {
+  const segs=[], extra=[], labels=[];
+  const ex = p => { extra.push(p[0],p[1],p[2],1); return extra.length/4 - 1; };
+  const O  = ex([0,0,0]);
+  const seg = (a,b,flags,color,mag,wid,fixed=0)=>segs.push({a,b,flags,color,mag,wid,fixed});
+
+  // a lattice in the plane of axes 1-2, so the decision plane is a surface you can orbit around
+  const R=1.6, N=8;
+  for (let i=-N;i<=N;i++){const t=i/N*R;
+    seg(ex([t,-R,0]),ex([t,R,0]),F_AX|F_BX,COL.grid,1,0.6);
+    seg(ex([-R,t,0]),ex([R,t,0]),F_AX|F_BX,COL.grid,1,0.6);}
+  const pr=D.projections[st.proj];
+  labels.push({p:[R,0,0],t:`${(R*st.dispScale).toFixed(0)} residual units`,c:"#5C6E7D"});
+  const axLen=R*1.15;
+  [[axLen,0,0,"axis 1"],[0,axLen,0,"axis 2"],[0,0,axLen,"axis 3"]].forEach(([x,y,z,nm])=>{
+    seg(O,ex([x,y,z]),F_AX|F_BX,COL.axis,1,1.1);
+    labels.push({p:[x,y,z],t:nm,c:"#8A9BA8"});});
+
+  const F = facts[st.fact];
+  const add = (f,slot,color,wid,mag=1,fixed=0,label=null,rel=null)=>{
+    const i = idx(f,slot);
+    if (rel!==null){ seg(idx(f,rel), i, F_REL, color, mag, wid); }
+    else seg(O, i, F_AX, color, mag, wid, fixed);   // O addresses `extra`, so the flag is REQUIRED
+    if (label){
+      const base = rel!==null ? world(P, idx(f,rel)) : [0,0,0];
+      const tipRaw = rel!==null ? world(P,i,mag) : world(P,i,mag,fixed);
+      labels.push({p:[base[0]+tipRaw[0],base[1]+tipRaw[1],base[2]+tipRaw[2]], t:label.t, c:label.c});
+    }
+  };
+
+  if (st.mode === "miss") {
+    // The DECISION BOUNDARY's trace in the axis-1/2 plane: {v : dot(v, d) = 0}. The basis is orthonormal, so
+    // for a v in that plane dot(v, d) is exactly a*d1 + b*d2, and the trace is the line perpendicular to
+    // (d1, d2). Which side of this line z falls on IS the answer.
+    const zi = idx(st.fact,"z"), di = idx(st.fact,"d");
+    const zc = [P[zi*4], P[zi*4+1], P[zi*4+2]];
+    const wc = c => [c[0]/st.dispScale, c[1]/st.dispScale, (c[2]||0)*st.depth/st.dispScale];
+    const dn = Math.hypot(P[di*4], P[di*4+1]) || 1;
+    const px = -P[di*4+1]/dn, py = P[di*4]/dn;
+    seg(ex([px*R,py*R,0]), ex([-px*R,-py*R,0]), F_AX|F_BX, [0.78,0.42,0.86,0.95], 1, 1.3);
+    labels.push({p:[px*R,py*R,0], t:"decision boundary (trace in the axis 1–2 plane)", c:"#C76BDC"});
+    // where z stands relative to it: a drop line from the tip to the plane
+    seg(ex(wc(zc)), ex(wc([zc[0],zc[1],0])), F_AX|F_BX, [0.34,0.71,0.88,0.45], 1, 0.8);
+
+    add(st.fact,"u_true",COL.t,2.0,1,st.fixed,{t:`W_U[${F.true_text.trim()}]  ‖${F.u_true_norm.toFixed(2)}‖`,c:"#54C98A"});
+    add(st.fact,"u_wrong",COL.w,2.0,1,st.fixed,{t:`W_U[${F.wrong_text.trim()}]  ‖${F.u_wrong_norm.toFixed(2)}‖`,c:"#F0C03C"});
+    add(st.fact,"z",COL.z,3.2,1,0,{t:`z  ‖${F.z_norm.toFixed(1)}‖`,c:"#56B6E0"});
+    // the error's COLOUR carries the measured sign of g: red = pointing at the rival (a miss),
+    // green = pointing away from it (a correct answer, and |g| is the margin). Nothing else changes.
+    const eCol = F.gap_g > 0 ? COL.e : COL.t;
+    add(st.fact,"e",eCol,3.6,st.mag,0,
+        {t:`e ${F.gap_g>0?"→ toward "+F.wrong_text.trim():"← away from "+F.wrong_text.trim()}  ‖${F.err_norm.toFixed(3)}‖ ×${st.mag}`,
+         c:F.gap_g>0?"#E8604C":"#54C98A"},"z");
+  } else {
+    // Each untaught fact's final-layer vector BEFORE the fold, with the movement the fold gave it hanging
+    // off its tip, magnified. The shift is what the fold DID to a fact it was never told about.
+    const ctl = facts.map((f,i)=>({f,i})).filter(x=>x.f.tag==="control");
+    for (const {f,i} of ctl) {
+      add(i,"z",COL.before,1.6);
+      add(i,"z_shift",COL.e,2.8,st.mag,0,null,"z");
+    }
+    const t = facts.findIndex(f=>f.tag==="taught");
+    add(t,"z",[0.42,0.62,0.78,1],2.6,1,0,{t:`the TAUGHT fact's z ‖${facts[t].z_norm.toFixed(1)}‖`,c:"#6E8AA8"});
+    add(t,"z_shift",COL.z,3.4,st.mag,0,
+        {t:`taught shift ‖${shiftNorm(t).toFixed(2)}‖ ×${st.mag}`,c:"#56B6E0"},"z");
+    if (ctl.length) labels.push({p:(()=>{const i=ctl[0].i, a=world(P,idx(i,"z")), b=world(P,idx(i,"z_shift"),st.mag);
+      return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];})(), t:`untaught shifts ×${st.mag}`, c:"#E8604C"});
+  }
+  return {segs, extra, labels};
+}
+
+// The same endpoint arithmetic as ends() in the shader, used ONLY to frame the camera. Nothing measured
+// is derived from it; if it drifted from the shader the worst case is a badly framed picture, and the
+// GPU-vs-CPU check above is what guards the numbers.
+function endpointsJS(s, sc) {
+  const P = window.__P;
+  const pw = (i, mag, fixed) => world(P, i, mag, fixed);
+  const ev = i => [sc.extra[i*4], sc.extra[i*4+1], sc.extra[i*4+2]];
+  const aEx = (s.flags & 1) !== 0;
+  let a = aEx ? ev(s.a) : pw(s.a, s.mag, s.fixed);
+  let b;
+  if ((s.flags & 4) !== 0) {
+    const a0 = aEx ? ev(s.a) : pw(s.a, 1, 0);
+    const d = pw(s.b, s.mag, 0);
+    a = a0; b = [a0[0]+d[0], a0[1]+d[1], a0[2]+d[2]];
+  } else if ((s.flags & 2) !== 0) { b = ev(s.b); }
+  else { b = pw(s.b, s.mag, s.fixed); }
+  return [a, b];
+}
+function fitCamera(sc) {
+  let r = 0;
+  for (const s of sc.segs) for (const p of endpointsJS(s, sc)) r = Math.max(r, Math.hypot(p[0],p[1],p[2]));
+  if (!isFinite(r) || r <= 0) return;
+  st.dist = Math.min(80, Math.max(1.2, r / Math.tan(0.95/2) * 0.80));
+  st.panX = 0; st.panY = 0;
+}
+
+function uploadScene(sc) {
+  if (sc.segs.length > MAXSEG) fail(`${sc.segs.length} segments exceeds the ${MAXSEG} the buffer holds`);
+  const a = new ArrayBuffer(Math.max(48, sc.segs.length*48));
+  const iv = new Int32Array(a), fv = new Float32Array(a);
+  sc.segs.forEach((s,k)=>{const o=k*12;
+    iv[o]=s.a; iv[o+1]=s.b; iv[o+2]=s.flags; iv[o+3]=0;
+    fv[o+4]=s.color[0];fv[o+5]=s.color[1];fv[o+6]=s.color[2];fv[o+7]=s.color[3];
+    fv[o+8]=s.mag; fv[o+9]=s.wid; fv[o+10]=s.fixed; fv[o+11]=0;});
+  device.queue.writeBuffer(bSegs, 0, a);
+  const ea = new Float32Array(Math.max(4, sc.extra.length)); ea.set(sc.extra);
+  device.queue.writeBuffer(bExtra, 0, ea);
+  lastSegs = sc.segs; lastLabels = sc.labels;
+}
+
+function draw() {
+  const dpr = Math.min(devicePixelRatio||1, 2);
+  const w = Math.max(1, Math.floor(cv.clientWidth*dpr)), h = Math.max(1, Math.floor(cv.clientHeight*dpr));
+  if (cv.width!==w || cv.height!==h) {
+    cv.width=w; cv.height=h;
+    depthTex?.destroy();
+    depthTex = device.createTexture({size:[w,h], format:"depth24plus", usage:GPUTextureUsage.RENDER_ATTACHMENT});
+  }
+  const cam = camera(w,h);
+  const vb = new ArrayBuffer(80), vf = new Float32Array(vb);
+  vf.set(cam.mvp,0); vf[16]=w; vf[17]=h; vf[18]=st.dispScale; vf[19]=st.depth;
+  device.queue.writeBuffer(bView, 0, vb);
+
+  const enc = device.createCommandEncoder();
+  const pass = enc.beginRenderPass({
+    colorAttachments:[{view:ctx.getCurrentTexture().createView(), clearValue:{r:0.043,g:0.071,b:0.098,a:1}, loadOp:"clear", storeOp:"store"}],
+    depthStencilAttachment:{view:depthTex.createView(), depthClearValue:1.0, depthLoadOp:"clear", depthStoreOp:"store"}});
+  pass.setBindGroup(1, gRender);
+  pass.setPipeline(pSeg);  pass.draw(6, lastSegs.length);
+  pass.setPipeline(pHead); pass.draw(3, lastSegs.length);
+  pass.end();
+  device.queue.submit([enc.finish()]);
+  placeLabels(cam.mvp, w/dpr, h/dpr);
+}
+
+function placeLabels(mvp, w, h) {
+  const box = $("#labels");
+  while (box.children.length < lastLabels.length) box.appendChild(document.createElement("div"));
+  while (box.children.length > lastLabels.length) box.lastChild.remove();
+  lastLabels.forEach((L,i)=>{
+    const [x,y,z]=L.p;
+    const cx=mvp[0]*x+mvp[4]*y+mvp[8]*z+mvp[12], cy=mvp[1]*x+mvp[5]*y+mvp[9]*z+mvp[13], cw=mvp[3]*x+mvp[7]*y+mvp[11]*z+mvp[15];
+    const el=box.children[i];
+    if (cw<=0.001){el.style.display="none";return}
+    el.style.display=""; el.textContent=L.t; el.style.color=L.c;
+    el.style.left=((cx/cw*0.5+0.5)*w)+"px"; el.style.top=((-cy/cw*0.5+0.5)*h)+"px";
+  });
+}
+
+// ---------------------------------------------------------------- the panel
+function num(n,d=2){return (n>=0?"+":"") + n.toFixed(d)}
+function rows(t, pairs){ t.innerHTML = pairs.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join(""); }
+
+function panel(P) {
+  const F = facts[st.fact], pr = D.projections[st.proj];
+  const vi = idx(st.fact,"z"), hid = P ? P[vi*4+3] : 0;
+  const kept = P ? Math.hypot(P[vi*4],P[vi*4+1],P[vi*4+2]) : 0;
+
+  $("#projname").textContent = pr.id;
+  $("#discard").innerHTML = `<b>Discards:</b> ${pr.discards}` +
+    (pr.variance_explained ? ` <b>Variance explained:</b> ${pr.variance_explained.map(v=>(100*v).toFixed(1)+"%").join(" / ")}.` : "") +
+    (P ? `<br><b>For the selected fact's z:</b> ${kept.toFixed(1)} of ‖z‖=${F.z_norm.toFixed(1)} is on screen; ` +
+         `<b>${hid.toFixed(1)} (${(100*hid/F.z_norm).toFixed(1)}%) is NOT drawn.</b>` : "");
+
+  $("#verdict").innerHTML = F.is_miss
+    ? `<div class="verdict v-miss"><b>MISS.</b> Prompt <code>${F.prompt}</code> — the model answers
+        <b>${F.argmax_text}</b>, the true object is <b>${F.true_text}</b>. g = ${num(F.gap_g)} &gt; 0.</div>`
+    : `<div class="verdict v-hit"><b>CORRECT.</b> Prompt <code>${F.prompt}</code> — the model answers
+        <b>${F.argmax_text}</b>, which is the true object. The rival is the runner-up ${F.wrong_text};
+        g = ${num(F.gap_g)} &lt; 0, so that is the margin.</div>`;
+
+  rows($("#read"), [
+    ["‖z‖ (post-ln_f, the vector the unembedding reads)", F.z_norm.toFixed(2)],
+    ["‖h‖ (raw pre-ln_f residual stream)", F.h_norm.toFixed(2)],
+    ["logit(true) = dot(z, W_U[true])", F.logit_true.toFixed(3)],
+    ["logit(rival) = dot(z, W_U[rival])", F.logit_wrong.toFixed(3)],
+    ["<b>g = logit(rival) − logit(true)</b>", `<b>${num(F.gap_g,3)}</b>`],
+    ["‖W_U[true]‖ / ‖W_U[rival]‖", `${F.u_true_norm.toFixed(2)} / ${F.u_wrong_norm.toFixed(2)}`],
+    ["‖d‖ = ‖W_U[rival] − W_U[true]‖", F.d_norm.toFixed(3)],
+    ["<b>‖e‖ = |g| / ‖d‖ (residual units)</b>", `<b>${F.err_norm.toFixed(4)}</b>`],
+    ["‖e‖ as a share of ‖z‖", (100*F.err_frac_of_z).toFixed(3) + "%"],
+    ["W_U·z vs the model's own logits (max diff)", F.recon_maxdiff.toExponential(2)],
+    ["top-5 next tokens", F.top_k.slice(0,5).map(t=>`${t.text.trim()||"␠"} ${t.logit.toFixed(1)}`).join("<br>")],
+  ]);
+
+  $("#choices").innerHTML =
+    `<b>1 world unit on axes 1-2 = ${st.dispScale.toFixed(1)} residual units.</b>
+     Axis 3 is additionally compressed by ${st.autoDepth.toFixed(3)} to fit, because the residual puts
+     ${st.ax3Max.toFixed(0)} units along it against only ${st.inPlaneMax.toFixed(0)} in the plane where the
+     decision is made &mdash; one scale for both would hide the decision inside a pixel.<br>
+     Active: error drawn <b>×${st.mag}</b> (true ‖e‖/‖z‖ = ${(100*F.err_frac_of_z).toFixed(3)}%, invisible at ×1);
+     axis 3 scaled <b>×${st.depth.toFixed(2)}</b>; unembedding arrows at a <b>fixed ${st.fixed}-unit</b> length
+     because their own norms (~${F.u_true_norm.toFixed(1)}) are a different quantity from the residual's
+     (~${F.z_norm.toFixed(0)}) — those norms are in the readout instead;
+     mean z <b>${st.meanSub?"subtracted":"kept"}</b>. None of these changes a measured number.`;
+
+  rows($("#prov"), [
+    ["model", D.manifest.model_id],
+    ["layer / of", `${F.prov.layer_index} / ${D.manifest.n_layers}`],
+    ["token index / text", `${F.prov.token_index} · ${JSON.stringify(F.prov.token_text)}`],
+    ["dataset row · case_id", `${F.dataset_row} · ${F.case_id}`],
+    ["z from", F.prov.how],
+    ["h from", F.prov_h.how],
+    ["torch / transformers", `${D.manifest.torch} / ${D.manifest.transformers}`],
+    ["device / dtype", `${D.manifest.device} / ${D.manifest.dtype}`],
+  ]);
+  $("#defn").innerHTML = `<b>Error vector definition (from the dump, not from this page):</b> ${D.manifest.error_vector_definition}
+    <br><br><b>${D.manifest.not_rome}</b> <br><br>${D.manifest.lane_numbers_not_reproduced}`;
+
+  $("#dmg").innerHTML = st.mode === "dmg" ? damagePanel() : "";
+}
+
+function damagePanel() {
+  const ctl = facts.filter(f=>f.tag==="control");
+  const fo = D.fold;
+  const gs = ctl.map(f=>f.damage.gap_shift);
+  const toward = gs.filter(v=>v>0).length;
+  const broke = ctl.filter(f=>f.damage.broken_by_fold).length;
+  const lim = Math.max(...ctl.map(f=>Math.max(Math.abs(f.damage.gap_before),Math.abs(f.damage.gap_after))))*1.15;
+  const W=400, H=20*ctl.length+26, x=v=>(v/lim*0.5+0.5)*W;
+  const svg = `<svg id="swing" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${x(0)}" y1="14" x2="${x(0)}" y2="${H-6}" stroke="#E8604C" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <text x="${x(0)+4}" y="10" fill="#E8604C" font-size="9" font-family="monospace">g = 0 · the answer flips here</text>
+    ${ctl.map((f,i)=>{const y=26+20*i, a=x(f.damage.gap_before), b=x(f.damage.gap_after);
+      return `<line x1="${a}" y1="${y}" x2="${b}" y2="${y}" stroke="${b>a?'#E8604C':'#54C98A'}" stroke-width="1.5"/>
+        <circle cx="${a}" cy="${y}" r="3" fill="#6E8AA8"/><circle cx="${b}" cy="${y}" r="3" fill="#E8604C"/>
+        <text x="4" y="${y-5}" fill="#8A9BA8" font-size="8.5" font-family="monospace">${f.target_true} · row ${f.dataset_row} · ${num(f.damage.gap_before)} → ${num(f.damage.gap_after)}</text>`;}).join("")}
+  </svg>`;
+  return `<h2>The fold, and what it cost facts it was never taught</h2>
+    <p class="note">Taught: <code>${fo.taught_prompt}</code> — <b>${fo.taught_from} → ${fo.taught_to}</b>,
+      by a rank-one write to layer ${fo.layer}'s <code>mlp.c_proj</code>, λ=${fo.lam.toFixed(2)} found by
+      bisection as the smallest value that flips it. ‖Δ‖=${fo.delta_norm.toFixed(2)}.
+      The taught key moved ${fo.key_drift_after_fold.toExponential(1)} after the write, so the write is exact.</p>
+    <p class="note">${(()=>{const ti=facts.findIndex(f=>f.tag==="taught"), ts=shiftNorm(ti);
+       const bigger=ctl.filter(f=>shiftNorm(facts.indexOf(f))>ts).length;
+       return `<b>The taught fact's own final-layer vector moved ‖${ts.toFixed(2)}‖, and ${bigger} of
+         ${ctl.length} untaught facts moved FURTHER than that</b> (up to
+         ‖${Math.max(...ctl.map(f=>shiftNorm(facts.indexOf(f)))).toFixed(2)}‖). The edit is not localised to
+         what it was taught.`;})()}</p>
+    <p class="note"><b>Measured: ${toward} of ${ctl.length}</b> untaught facts moved TOWARD their rival;
+      <b>${broke} crossed g = 0</b> (changed answer) at this minimal λ. Each dot is one untaught fact:
+      grey = before the fold, red = after. Right is worse. This is a position on the decision axis, in logit
+      units — not a bar chart of a count.</p>
+    ${svg}
+    <table>${ctl.map(f=>{const d=f.damage; return `<tr><td>row ${f.dataset_row} · ${f.target_true}</td>
+      <td>g ${num(d.gap_before)}→${num(d.gap_after)} (${num(d.gap_shift)})<br>
+      <span style="color:var(--dim)">“${fo.taught_to}” logit ${num(d.taught_logit_rise)}, rank ${d.taught_rank_before}→${d.taught_rank_after}</span><br>
+      <span style="color:var(--dim)">perturbation ‖${d.perturbation_norm.toFixed(2)}‖ = ${d.mechanism}</span><br>
+      <span style="color:var(--dim)">its final-layer vector moved ‖${shiftNorm(facts.indexOf(f)).toFixed(2)}‖ of ‖z‖=${f.z_norm.toFixed(0)}</span></td></tr>`}).join("")}</table>
+    <p class="note">The “${fo.taught_to}” rank is the <b>bleed</b>: the taught object rising in a fact it was
+      never taught. A rank is the honest unit — a logit rise that changes no ordering changes no answer.</p>`;
+}
+
+// ---------------------------------------------------------------- wiring
+const projSel = $("#proj");
+D.projections.forEach((p,i)=>projSel.add(new Option(p.label, i)));
+const factSel = $("#fact");
+facts.forEach((f,i)=>{ if (f.tag==="miss"||f.tag==="taught"||f.tag==="taught_after"||f.tag==="control")
+  factSel.add(new Option(`[${f.tag}] row ${f.dataset_row} — ${f.prompt.slice(0,46)}`, i)); });
+factSel.value = st.fact;
+
+async function refresh(recompute=true, fit=true) {
+  if (recompute) { writeBasis(); const P = await runCompute(); window.__P = P; }
+  const P = window.__P;
+  const sc = scene(P);
+  if (fit) fitCamera(sc);
+  uploadScene(sc);
+  panel(P);
+  banner.className = "";
+  const a = adapter.info || {};
+  banner.innerHTML = `<b>WebGPU</b> · adapter ${a.vendor||"?"}/${a.architecture||"?"} · ${NVEC} vectors × ${DIM} dims projected on the GPU ` +
+    `· <b>GPU vs CPU ${gpuCpuDiff.toExponential(2)} abs / ${gpuCpuRel.toExponential(2)} rel</b> (path A1b) · ${D.manifest.model_id} on ${D.manifest.device}, ` +
+    `${D.manifest.dataset}, ${D.manifest.dataset_rows_total} rows`;
+  if (gpuCpuRel > 1e-4) fail(`GPU projection disagrees with the CPU by ${gpuCpuRel} relative — the picture would be the shader's arithmetic, not the model's.`);
+  draw();
+}
+
+projSel.onchange = () => { st.proj = +projSel.value; refresh(); };
+factSel.onchange = () => { st.fact = +factSel.value; refresh(false); };
+$("#mag").oninput   = e => { st.mag = +e.target.value; $("#l-mag").textContent = "×"+st.mag; refresh(false,false); };
+$("#depth").oninput = e => { st.depth = st.autoDepth * (+e.target.value/100); $("#l-depth").textContent = "×"+st.depth.toFixed(3); refresh(false,false); };
+$("#fixed").oninput = e => { st.fixed = +e.target.value/100; $("#l-fixed").textContent = st.fixed.toFixed(2)+" world units"; refresh(false,false); };
+$("#mean").onclick  = e => { st.meanSub = !st.meanSub; e.target.classList.toggle("on", st.meanSub); refresh(); };
+$("#m-miss").onclick = () => { st.mode="miss"; $("#m-miss").classList.add("on"); $("#m-dmg").classList.remove("on");
+  st.fact = facts.findIndex(f=>f.tag==="miss"); factSel.value=st.fact; refresh(false); };
+$("#m-dmg").onclick  = () => { st.mode="dmg"; $("#m-dmg").classList.add("on"); $("#m-miss").classList.remove("on");
+  st.fact = facts.findIndex(f=>f.tag==="control"); factSel.value=st.fact; refresh(false); };
+
+let drag=null;
+cv.onpointerdown = e => { drag={x:e.clientX,y:e.clientY,shift:e.shiftKey}; cv.setPointerCapture(e.pointerId); };
+cv.onpointerup   = () => drag=null;
+cv.onpointermove = e => { if(!drag) return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y; drag.x=e.clientX; drag.y=e.clientY;
+  if (drag.shift){ st.panX-=dx*0.006*st.dist; st.panY+=dy*0.006*st.dist; }
+  else { st.yaw-=dx*0.007; st.pitch=Math.max(-1.5,Math.min(1.5, st.pitch+dy*0.007)); }
+  draw(); };
+cv.onwheel = e => { e.preventDefault(); st.dist=Math.max(0.6,Math.min(80, st.dist*(1+Math.sign(e.deltaY)*0.09))); draw(); };
+addEventListener("resize", draw);
+
+$("#l-mag").textContent="×"+st.mag; $("#l-fixed").textContent=st.fixed.toFixed(2)+" world units";
+await refresh();
+// a slow idle spin, so what is on screen is never only the first frame
+let spin=true;
+cv.addEventListener("pointerdown",()=>spin=false);
+(function tick(){ if(spin){ st.yaw+=0.0035; draw(); } requestAnimationFrame(tick); })();
+window.__vecscope = {st, facts, D, draw, refresh, device, ctx, pSeg, pHead, gRender, get P(){return window.__P}, get segs(){return lastSegs}, get labels(){return lastLabels}};
+</script>
+</body></html>

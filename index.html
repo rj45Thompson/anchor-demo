@@ -801,6 +801,18 @@ h3 a:hover{color:var(--accent)}
         <p class="links"><a class="go" href="priorgpt/">Ask it</a><a href="priorgpt/#scores">How it compares</a><a href="priorgpt/#how">How it works</a></p>
       </div>
     </article>
+    <article id="vecscope" class="card" data-node="vecscope">
+      <div class="fig"><b>0.20 %</b><span>of the final vector's length is the whole distance between this wrong answer and the right one</span></div>
+      <div class="body">
+        <p class="meta"><span class="state s-proto">Prototype</span><span>Runs in the browser, needs WebGPU</span></p>
+        <h3><a href="vecscope/vecscope.html">vecscope: how a vector misses</a></h3>
+        <p class="line">A language model picks its next word by reading one vector at the last layer against one direction per word. This draws that vector, the direction of the right answer, the direction of the word the model actually chose, and the error between them, measured rather than illustrated.</p>
+        <p class="more">It also shows what editing a fact into the weights costs: writing one fact into a middle layer moves facts the edit never touched further than it moves the fact it was teaching. That collateral damage is usually reported as a count of broken facts; here it is a direction you can look at.</p>
+        <p class="prov">Every quantity on screen is an activation measured on GPT-2 medium on CPU and re-measurable with the page's own dumper. The projection from 1024 dimensions to three is a presentation choice, so each view prints how much of the vector it is not drawing, and a random-basis control is included that correctly hides 99.9 percent. No cosine is used anywhere, because the vector's length is what turns a direction into a score.</p>
+        <ul class="tags"><li>WebGPU</li><li>GPT-2</li><li>Model editing</li><li>Interpretability</li></ul>
+        <p class="links"><a class="go" href="vecscope/vecscope.html">Open vecscope</a><a href="vecscope/README.md">What is real and what is drawn</a><a href="vecscope/USE_CASES.md">The use case it was built to</a></p>
+      </div>
+    </article>
     <article id="bossbench" class="card" data-node="BossBench">
       <div class="fig"><b>100</b><span>adversarial problems</span></div>
       <div class="body">
@@ -933,6 +945,8 @@ h3 a:hover{color:var(--accent)}
         <li><a class="docrow" href="WHITEPAPER.html"><span class="kind">Paper</span><b>Verified knowledge extraction from language models</b><span class="d">The engine's whitepaper: what was measured, and the corrections it makes to its own earlier claims.</span></a></li>
         <li><a class="docrow" href="engine.html#law"><span class="kind">Finding</span><b>The anchor law</b><span class="d">How much more to believe a fact when a second, unrelated source says it too, measured over 66.4 million facts.</span></a></li>
         <li><a class="docrow" href="engine.html#papers"><span class="kind">Index</span><b>Papers and data</b><span class="d">The engine's written record: the typeset paper with its DOI, and the datasets and source it refers to.</span></a></li>
+        <li><a class="docrow" href="vecscope/README.md"><span class="kind">Finding</span><b>What vecscope draws, and what it only presents</b><span class="d">The split between measured activations and presentation choices, with the discarded fraction printed for every projection and a random-basis control that hides 99.9 percent.</span></a></li>
+        <li><a class="docrow" href="vecscope/USE_CASES.md"><span class="kind">Use case</span><b>vecscope: see how a final-layer vector misses</b><span class="d">The use case description written before any of the code, with each step naming the observable that shows it works.</span></a></li>
         <li><a class="docrow" href="https://zenodo.org/api/records/20221916/files/main.pdf/content" rel="noopener"><span class="kind">Paper</span><b>The BossBench paper</b><span class="d">The preprint on Zenodo, with its DOI and its own correction.</span></a></li>
         <li><a class="docrow" href="https://huggingface.co/datasets/RJ45Thompson/bossbench-v1" rel="noopener"><span class="kind">Data</span><b>BossBench dataset card</b><span class="d">The 100 adversarial problems, CC0.</span></a></li>
         <li><a class="docrow" href="https://huggingface.co/datasets/RJ45Thompson/WarShip" rel="noopener"><span class="kind">Data</span><b>WarShip dataset card</b><span class="d">8,124 conversations with their reasoning traces, Apache-2.0.</span></a></li>
